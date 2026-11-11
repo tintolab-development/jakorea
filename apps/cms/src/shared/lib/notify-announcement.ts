@@ -5,7 +5,7 @@
  * 발표일 값은 GET `recruitments[].finalPassAnnouncementAt`(Instant). 기준은 서울 시간이다.
  * - 서울 00:00:00이면 날짜만 지정한 발표일로 본다 → 서울 날짜가 발표일보다 뒤일 때 경과.
  * - 그 외 시각이 있으면 그 시각이 지났을 때 경과.
- * 값이 없거나 해석할 수 없으면 경과로 보지 않는다(기존 동작 유지 — 서버가 미설정을 거부한다).
+ * 값이 없거나 해석할 수 없으면 경과로 보지 않는다. 미설정 비활성은 `isNotifyAnnouncementOptionDisabled`.
  */
 
 const SEOUL_PARTS_FORMAT = new Intl.DateTimeFormat('en-CA', {
@@ -48,4 +48,16 @@ export function isNotifyAnnouncementPassed(
     return seoulParts(now).dateKey > atParts.dateKey
   }
   return now.getTime() > at.getTime()
+}
+
+/**
+ * 「발표일에 맞춰서」 비활성 여부 — 발표일을 아는 화면(Provider·prop) 기준.
+ * 발표일이 null(미설정·행 값이 서로 달라 판단 불가)이거나 해석할 수 없거나 지났으면 비활성.
+ */
+export function isNotifyAnnouncementOptionDisabled(
+  announcementAt: string | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (typeof announcementAt !== 'string' || !parseAnnouncementAt(announcementAt)) return true
+  return isNotifyAnnouncementPassed(announcementAt, now)
 }

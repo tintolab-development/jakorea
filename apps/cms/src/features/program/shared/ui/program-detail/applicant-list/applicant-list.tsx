@@ -1260,7 +1260,8 @@ export function ApplicantList({
             : menu === 'volunteers'
               ? 'volunteer'
               : null
-    return audience ? resolveRecruitmentFinalAnnouncementAt(program, audience) : null
+    // 모집을 모르는 메뉴는 undefined — Provider 밖과 같게 기존 동작
+    return audience ? resolveRecruitmentFinalAnnouncementAt(program, audience) : undefined
   }, [menu, program])
 
   return (

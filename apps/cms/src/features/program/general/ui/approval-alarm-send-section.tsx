@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { CmsRadio } from '@/shared/ui'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
-import { useNotifyAnnouncementPassed } from '@/shared/components/notify-announcement-context'
+import { useNotifyAnnouncementDisabled } from '@/shared/components/notify-announcement-context'
 import {
   getDefaultManualNotifyAt,
   getMinimumManualNotifyAt,
@@ -71,13 +71,13 @@ export function ApprovalAlarmSendSection({
     onChange?.(next, null)
   }
 
-  /** 발표일 경과 — 「발표일에 맞춰서」 비활성(Provider 발표일). 골라 둔 상태면 즉시로 되돌린다 */
-  const announcementPassed = useNotifyAnnouncementPassed()
+  /** 발표일 경과·미설정 — 「발표일에 맞춰서」 비활성(Provider 발표일). 골라 둔 상태면 즉시로 되돌린다 */
+  const announcementDisabled = useNotifyAnnouncementDisabled()
   useEffect(() => {
-    if (!announcementPassed || currentValue !== 'on_announcement') return
+    if (!announcementDisabled || currentValue !== 'on_announcement') return
     if (!isControlled) setInternalValue('immediate')
     onChange?.('immediate', null)
-  }, [announcementPassed, currentValue, isControlled, onChange])
+  }, [announcementDisabled, currentValue, isControlled, onChange])
 
   const handleManualDateChange = (date: Dayjs) => {
     if (!isControlled) setInternalManual(date)
@@ -102,7 +102,7 @@ export function ApprovalAlarmSendSection({
           <CmsRadio value="immediate" size="large">
             즉시
           </CmsRadio>
-          <CmsRadio value="on_announcement" size="large" disabled={announcementPassed}>
+          <CmsRadio value="on_announcement" size="large" disabled={announcementDisabled}>
             발표일에 맞춰서
           </CmsRadio>
           <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">

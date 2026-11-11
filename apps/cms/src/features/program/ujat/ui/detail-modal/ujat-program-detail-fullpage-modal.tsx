@@ -1716,7 +1716,8 @@ function UjatProgramDetailFullPageModalContent({
                 ? resolveRecruitmentFinalAnnouncementAt(displayProgram, 'volunteer', {
                     recruitTerm: activeLnb === 'volunteer_h2' ? 'SECOND_HALF' : 'FIRST_HALF',
                   })
-                : null
+                : // 그 외 LNB(교육 진행 배정 등)는 따를 모집을 정하지 않았다 — 기존 동작
+                  undefined
           }
         >
         <>

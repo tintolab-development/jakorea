@@ -32,7 +32,7 @@ import {
   getUnsupportedNotifyTimingMessage,
   type NotifyTimingCapability,
 } from '@/shared/lib/notify-timing-capability'
-import { useNotifyAnnouncementPassed } from '@/shared/components/notify-announcement-context'
+import { useNotifyAnnouncementDisabled } from '@/shared/components/notify-announcement-context'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
@@ -83,7 +83,7 @@ export type InstructorFeeApprovalModalProps = {
    * `onAnnouncement`가 true면 「발표일에 맞춰서」 라디오를 함께 노출한다(일반 기관형 시안 05-2).
    */
   notifyTimingCapability?: NotifyTimingCapability
-  /** 강사 모집 최종 합격 발표일(ISO). 지났으면 「발표일에 맞춰서」 비활성. 생략 시 Provider 값 */
+  /** 강사 모집 최종 합격 발표일(ISO). 지났거나 null(미설정)이면 「발표일에 맞춰서」 비활성. 생략 시 Provider 값 */
   announcementAt?: string | null
 }
 
@@ -115,7 +115,7 @@ export function InstructorFeeApprovalModal({
   announcementAt,
 }: InstructorFeeApprovalModalProps) {
   const { showAlert } = useCmsAlert()
-  const announcementPassed = useNotifyAnnouncementPassed(announcementAt)
+  const announcementDisabled = useNotifyAnnouncementDisabled(announcementAt)
   const {
     lectureFeeBasisType,
     instructorFeeGrade,
@@ -139,11 +139,11 @@ export function InstructorFeeApprovalModal({
     buildConfirmDetail,
   } = useInstructorFeeApprovalModal({ open, instructorFeeGradeLabel, feePolicyContext })
 
-  /** 발표일 경과 — 「발표일에 맞춰서」를 골라 둔 상태면 즉시로 되돌린다 */
+  /** 발표일 경과·미설정 — 「발표일에 맞춰서」를 골라 둔 상태면 즉시로 되돌린다 */
   useEffect(() => {
-    if (!open || !announcementPassed || notifyTiming !== 'on_announcement') return
+    if (!open || !announcementDisabled || notifyTiming !== 'on_announcement') return
     handleNotifyTimingChange('immediate')
-  }, [open, announcementPassed, notifyTiming, handleNotifyTimingChange])
+  }, [open, announcementDisabled, notifyTiming, handleNotifyTimingChange])
 
   useEffect(() => {
     if (!open || !feePolicyError) return
@@ -281,7 +281,7 @@ export function InstructorFeeApprovalModal({
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
               {notifyTimingCapability.onAnnouncement ? (
-                <CmsRadio value="on_announcement" disabled={announcementPassed}>
+                <CmsRadio value="on_announcement" disabled={announcementDisabled}>
                   발표일에 맞춰서
                 </CmsRadio>
               ) : null}

@@ -70,12 +70,30 @@ describe('PermissionModal — 발표일 경과 시 「발표일에 맞춰서」 
     expect(announcementRadio().disabled).toBe(false)
   })
 
-  it('발표일 미설정(null)·Provider 없음은 기존처럼 선택 가능', () => {
+  it('Provider 안에서 발표일 미설정(null)이면 비활성', () => {
     render(withAnnouncement(null, permissionModal()))
-    expect(announcementRadio().disabled).toBe(false)
-    cleanup()
+    expect(announcementRadio().disabled).toBe(true)
+  })
+
+  it('Provider 없음·모집을 모르는 화면(undefined)은 기존처럼 선택 가능', () => {
     render(permissionModal())
     expect(announcementRadio().disabled).toBe(false)
+    cleanup()
+    render(
+      <NotifyAnnouncementProvider announcementAt={undefined}>
+        {permissionModal()}
+      </NotifyAnnouncementProvider>
+    )
+    expect(announcementRadio().disabled).toBe(false)
+  })
+
+  it('골라 둔 상태에서 발표일이 미설정(null)로 바뀌면 즉시로 되돌린다', () => {
+    const { rerender } = render(withAnnouncement(FUTURE, permissionModal()))
+    fireEvent.click(announcementRadio())
+    expect(announcementRadio().checked).toBe(true)
+    rerender(withAnnouncement(null, permissionModal()))
+    expect(announcementRadio().checked).toBe(false)
+    expect((screen.getByRole('radio', { name: '즉시' }) as HTMLInputElement).checked).toBe(true)
   })
 
   it('announcementAt prop이 Provider보다 우선한다', () => {
@@ -104,8 +122,11 @@ describe('강사비 책정 및 승인 팝업 — 같은 규칙', () => {
     })
   }
 
-  it('강사 모집 발표일이 지났으면 비활성, 남았으면 선택 가능', () => {
+  it('강사 모집 발표일이 지났거나 미설정이면 비활성, 남았으면 선택 가능', () => {
     render(withAnnouncement(PASSED, feeModal()))
+    expect(announcementRadio().disabled).toBe(true)
+    cleanup()
+    render(withAnnouncement(null, feeModal()))
     expect(announcementRadio().disabled).toBe(true)
     cleanup()
     render(withAnnouncement(FUTURE, feeModal()))
@@ -124,8 +145,11 @@ describe('UJAT 봉사자 2차 면접 일괄 합격 팝업 — 같은 규칙', ()
     })
   }
 
-  it('봉사자 모집 발표일이 지났으면 비활성, 남았으면 선택 가능', () => {
+  it('봉사자 모집 발표일이 지났거나 미설정이면 비활성, 남았으면 선택 가능', () => {
     render(withAnnouncement(PASSED, bulkPassModal()))
+    expect(announcementRadio().disabled).toBe(true)
+    cleanup()
+    render(withAnnouncement(null, bulkPassModal()))
     expect(announcementRadio().disabled).toBe(true)
     cleanup()
     render(withAnnouncement(FUTURE, bulkPassModal()))
