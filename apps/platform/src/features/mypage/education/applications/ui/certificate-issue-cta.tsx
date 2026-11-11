@@ -109,7 +109,8 @@ export function CertificateIssueCta({
     const availability = availabilityQuery.data
     if (view.kind === 'download') {
       setConfirmOpen(false)
-      await handleDownload(view.issueId)
+      // 재다운로드 파일명 날짜 = 발급일(availability.issuedAt). 없으면 다운로드일.
+      await handleDownload(view.issueId, availability?.issuedAt)
       return
     }
     const participantId = availability?.participantId
@@ -167,7 +168,7 @@ export function CertificateIssueCta({
             className={styles.submitButton}
             onClick={() => {
               if (view.kind === 'download') {
-                void handleDownload(view.issueId)
+                void handleDownload(view.issueId, availabilityQuery.data?.issuedAt)
                 return
               }
               setConfirmOpen(true)

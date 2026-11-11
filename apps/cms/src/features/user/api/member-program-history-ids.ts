@@ -37,6 +37,26 @@ export function resolveParticipantIdFromHistoryRow(
   return undefined
 }
 
+/**
+ * 선택한 행 ID로 증명서 발급 대상 participantId를 모은다.
+ * 신청 이력 행(`app-`)은 응답의 participantId(customFields)를 쓰고, 없으면(null) 제외한다. 중복은 1번만.
+ */
+export function collectParticipantIdsFromHistoryRows(
+  rowIds: readonly string[],
+  rows: readonly (Application | UserHistory)[]
+): number[] {
+  const rowById = new Map(rows.map(row => [row.id, row]))
+  const ids = new Set<number>()
+  for (const rowId of rowIds) {
+    const row = rowById.get(rowId)
+    const participantId = row
+      ? resolveParticipantIdFromHistoryRow(row)
+      : collectParticipantIdsFromHistoryRowIds([rowId])[0]
+    if (participantId != null) ids.add(participantId)
+  }
+  return [...ids]
+}
+
 export function collectParticipantIdsFromHistoryRowIds(rowIds: readonly string[]): number[] {
   const ids = new Set<number>()
   for (const rowId of rowIds) {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   collectParticipantIdsFromHistoryRowIds,
+  collectParticipantIdsFromHistoryRows,
   parseMemberProgramHistoryRowId,
   resolveMemberApplicationIdFromApplication,
   resolveParticipantIdFromHistoryRow,
@@ -55,5 +56,24 @@ describe('collectParticipantIdsFromHistoryRowIds', () => {
     expect(collectParticipantIdsFromHistoryRowIds(['app-1', 'part-2', 'ph-2', 'ph-3'])).toEqual([
       2, 3,
     ])
+  })
+})
+
+describe('collectParticipantIdsFromHistoryRows', () => {
+  const appRow = (id: string, participantId?: number) =>
+    ({
+      id,
+      customFields: participantId != null ? { participantId } : {},
+    }) as unknown as Application
+
+  it('uses participantId on application rows and drops rows without it', () => {
+    const rows = [appRow('app-10', 7001), appRow('app-11'), appRow('app-12', 7001)]
+    expect(collectParticipantIdsFromHistoryRows(['app-10', 'app-11', 'app-12'], rows)).toEqual([
+      7001,
+    ])
+  })
+
+  it('keeps participant row ids even when the row is not in the list', () => {
+    expect(collectParticipantIdsFromHistoryRows(['part-5', 'ph-6', 'app-1'], [])).toEqual([5, 6])
   })
 })

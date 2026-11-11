@@ -90,7 +90,8 @@ function isBlob(value: unknown): value is Blob {
  */
 export async function downloadUjatClassAssignmentConsentDocuments(
   downloadPath: string,
-  fallbackFileName = 'ujat-volunteer-consents.zip',
+  // 저장 이름: [JA Korea] 성범죄경력 조회 동의서_YYMMDD.zip (학생 초상권 동의서 ZIP과 같은 형식)
+  fallbackFileName = '성범죄경력 조회 동의서.zip',
 ): Promise<void> {
   const path = downloadPath.trim()
   if (!path) throw new Error('다운로드 경로가 없습니다.')
