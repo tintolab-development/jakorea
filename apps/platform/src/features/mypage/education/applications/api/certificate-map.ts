@@ -24,6 +24,8 @@ export type PortalCertificateAvailability = {
   certificatePeriodStartDate?: string | null
   certificatePeriodEndDate?: string | null
   certificatePeriodLabel?: string | null
+  /** existingIssueId 발급 건의 발급 일시(PDF 발급일). 발급 이력이 없으면 null */
+  issuedAt?: string | null
 }
 
 export type PortalCertificateIssueRequest = {
@@ -89,6 +91,7 @@ export function mapPortalCertificateAvailability(
     certificatePeriodStartDate: readOptionalString(record.certificatePeriodStartDate),
     certificatePeriodEndDate: readOptionalString(record.certificatePeriodEndDate),
     certificatePeriodLabel: readOptionalString(record.certificatePeriodLabel),
+    issuedAt: readOptionalString(record.issuedAt),
   }
 }
 

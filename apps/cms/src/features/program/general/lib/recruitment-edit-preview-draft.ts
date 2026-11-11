@@ -3,6 +3,7 @@
  * overlay store를 바꾸지 않는다. 미리보기 열 때 extraOverlay로만 덮는다.
  */
 
+import { resolveInstructorRowRemarksNotApplicable } from '@/features/program/general/lib/instructor-remarks-not-applicable'
 import type { Program } from '@/types/domain'
 import {
   applyRecruitmentDetailInfoFields,
@@ -98,7 +99,14 @@ export function buildRecruitmentEditPreviewDraft(input: {
       ? values.participantRecruitmentNotesNotApplicable === 'not_applicable'
       : audience === 'volunteer'
         ? values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
-        : undefined
+        : audience === 'instructor' && writesRowFields
+          ? values.instructorRecruitmentNotesNotApplicable === 'not_applicable'
+          : undefined
+  const instructorRowRemarksNotApplicable = resolveInstructorRowRemarksNotApplicable(
+    values,
+    audience,
+    writesRowFields
+  )
   const contact = contactFromValues(values, audience)
 
   let patch = detailEditValuesToProgramPatch(values, program, {
@@ -119,6 +127,9 @@ export function buildRecruitmentEditPreviewDraft(input: {
         ? values.instructorRecruitmentRemarks
         : values[notesField],
     notesNotApplicable,
+    ...(instructorRowRemarksNotApplicable !== undefined
+      ? { rowRemarksNotApplicable: instructorRowRemarksNotApplicable }
+      : {}),
     ...(writesRowFields
       ? {
           contactName: contact.contactName ?? '',

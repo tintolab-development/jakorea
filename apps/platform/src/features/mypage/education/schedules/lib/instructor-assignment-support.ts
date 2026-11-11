@@ -182,6 +182,7 @@ export function formatAssignmentSessionLabel(
     educationSlotKey?: string | null
     scheduleKind?: string | null
     curriculumSessionCount?: number | null
+    recognizedClassCount?: number | null
   },
   useScheduleName: boolean,
 ): string {

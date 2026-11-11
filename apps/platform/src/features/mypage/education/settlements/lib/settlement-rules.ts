@@ -114,13 +114,19 @@ export function compareAssignedSettlementSchedules(
   return left.sessionNumber - right.sessionNumber
 }
 
+/**
+ * 정산 카드 진행 뱃지.
+ * 출결 → API `scheduleStatus` → 종료 시각(`endAt`, 지나면 완료) → 종료 시각이 없을 때만 교육일(일 단위) 순.
+ */
 export function resolveSettlementEducationProgress(
-  item: Pick<EducationScheduleItem, 'heldAt' | 'attendanceStatus' | 'scheduleStatus'>,
+  item: Pick<EducationScheduleItem, 'heldAt' | 'endAt' | 'attendanceStatus' | 'scheduleStatus'>,
   now = new Date(),
 ): EducationSettlementProgress {
   if (item.attendanceStatus != null) return 'completed'
   const scheduleStatus = (item.scheduleStatus ?? '').trim().toUpperCase()
   if (COMPLETED_SCHEDULE.has(scheduleStatus)) return 'completed'
+  const endAt = item.endAt?.trim() ? Date.parse(item.endAt) : Number.NaN
+  if (Number.isFinite(endAt)) return endAt <= now.getTime() ? 'completed' : 'upcoming'
   return resolveEducationScheduleProgressStatus(item.heldAt, now) === 'completed'
     ? 'completed'
     : 'upcoming'
@@ -138,8 +144,16 @@ export type ResolveEducationSettlementStatusInput = {
   statementStatus?: string | null
   paymentStatus?: string | null
   correctionStatus?: string | null
+  /** 정정 승인 후 지급조서 재신청 대기 — 서버 statementReapplyAvailable */
+  statementReapplyAvailable?: boolean | null
   receiptDeadlineAt?: string | null
+  /** 강사 지급조서: 제출 마감일(운영 기간 종료일). 영수증: 사업 운영 종료일 */
   operationEndAt?: string | null
+  /**
+   * 강사 지급조서 사업 운영 종료일. 있으면 operationEndAt은 제출 마감일로만 보고,
+   * 운영 종료(제출 불가)는 이 값으로 판단한다. 없으면 operationEndAt을 운영 종료로 본다(기존 동작).
+   */
+  businessEndAt?: string | null
   canSubmit?: boolean
   deadlinePolicy?: SettlementDeadlinePolicy
   isResubmitted?: boolean
@@ -182,18 +196,32 @@ export function resolveEducationSettlementStatusResult(
     statementStatus: input.statementStatus ?? input.reviewStatus,
     paymentStatus: input.paymentStatus,
     correctionStatus: input.correctionStatus,
+    statementReapplyAvailable: input.statementReapplyAvailable,
   })
 
   if (input.deadlinePolicy === 'payment_statement') {
     if (mapped) return { status: mapped }
     if (input.hasSubmission === true) return { status: 'unresolved' }
-    if (input.lectureReportSubmitted === false) return { status: 'report_pending' }
-    if (isTimestampPassed(input.operationEndAt, now)) {
-      return { status: 'overdue', deadlineNotice: 'operation_ended' }
+    const hasBusinessEnd = Boolean(input.businessEndAt?.trim())
+    const operationEnded = hasBusinessEnd
+      ? isTimestampPassed(input.businessEndAt, now)
+      : isTimestampPassed(input.operationEndAt, now)
+    const deadlinePassed =
+      isTimestampPassed(input.receiptDeadlineAt, now) ||
+      (hasBusinessEnd && isTimestampPassed(input.operationEndAt, now))
+    // 운영 종료가 가장 우선, 그다음 강의보고서 미작성(마감 후면 마감 안내를 함께), 그다음 마감
+    if (operationEnded) {
+      return {
+        status: input.lectureReportSubmitted === false ? 'report_pending' : 'overdue',
+        deadlineNotice: 'operation_ended',
+      }
     }
-    if (isTimestampPassed(input.receiptDeadlineAt, now)) {
-      return { status: 'overdue', deadlineNotice: 'overdue' }
+    if (input.lectureReportSubmitted === false) {
+      return deadlinePassed
+        ? { status: 'report_pending', deadlineNotice: 'overdue' }
+        : { status: 'report_pending' }
     }
+    if (deadlinePassed) return { status: 'overdue', deadlineNotice: 'overdue' }
     return { status: 'pending_submit' }
   }
 
@@ -213,6 +241,14 @@ export function resolveEducationSettlementStatusResult(
     return { status: 'overdue', deadlineNotice: 'overdue' }
   }
   return { status: 'pending_submit' }
+}
+
+/** 강사 지급조서: 사업 운영 종료일이 지났는지 */
+export function isPaymentStatementOperationEnded(
+  businessEndAt: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  return isTimestampPassed(businessEndAt, now)
 }
 
 export function canSubmitFromAvailableActions(

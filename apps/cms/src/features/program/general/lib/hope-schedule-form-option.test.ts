@@ -30,17 +30,18 @@ function fixedDateBridge(
   }
 }
 
+// 예정일 줄(문자열)에는 실제 회차(sessionNo)가 없다 — 줄 입력 순서로 「N회차」를 붙이지 않는다
 describe('hope-schedule-form-option', () => {
   it('날짜만 있는 신청 응답도 폼 선택지 문구(시각 포함)로 표시한다', () => {
     expect(
       formatHopeScheduleFormOptionLine(session({ date: '2026.11.03' }), fixedDateBridge())
-    ).toBe('2026.11.03(화) 10:00 ~ 12:00 | 1회차')
+    ).toBe('2026.11.03(화) 10:00 ~ 12:00')
     expect(
       formatHopeScheduleFormOptionLine(
         session({ date: '2026.11.27', dayOfWeek: '금', round: 2, classNum: '2지망' }),
         fixedDateBridge()
       )
-    ).toBe('2026.11.27(금) 10:38 ~ 11:38 | 2회차')
+    ).toBe('2026.11.27(금) 10:38 ~ 11:38')
   })
 
   it('line:N 선택은 해당 인덱스 선택지 문구를 쓴다', () => {
@@ -49,7 +50,7 @@ describe('hope-schedule-form-option', () => {
         session({ scheduleLabel: 'line:1', date: '-' }),
         fixedDateBridge()
       )
-    ).toBe('2026.11.27(금) 10:38 ~ 11:38 | 2회차')
+    ).toBe('2026.11.27(금) 10:38 ~ 11:38')
   })
 
   it('기간형 지망은 폼 고정 선택지가 아니므로 덮지 않는다', () => {
@@ -71,7 +72,7 @@ describe('hope-schedule-form-option', () => {
         fixedDateBridge(),
         { preferFormOptionLabel: true }
       )
-    ).toBe('2026.11.03(화) 10:00 ~ 12:00 | 1회차')
+    ).toBe('2026.11.03(화) 10:00 ~ 12:00')
   })
 
   it('preferFormOptionLabel이 없으면 배정 시각을 폼 문구로 덮지 않는다', () => {

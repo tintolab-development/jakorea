@@ -24,4 +24,8 @@ export interface AssignedItem {
   distanceKm?: number | null;
   /** 표시용 일정 라벨 목록. 없으면 빈 배열 */
   scheduleLines?: string[];
+  /** scheduleLines와 같은 순서·길이의 일정 ID 목록. 없으면 빈 배열 */
+  scheduleIds?: number[];
+  /** scheduleLines와 같은 순서·길이의 회차 번호(program_schedule.session_no) 목록. 회차가 없는 일정(사전교육 등)은 해당 원소가 null. 없으면 빈 배열 */
+  sessionNos?: number[];
 }

@@ -211,9 +211,10 @@ assert.equal(
   individualMultiSchedule.paragraphDescription,
   '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 )
+// 예정일 줄에는 실제 회차(sessionNo)가 없다 — 입력 순서로 「1회차」를 만들지 않는다
 assert.equal(
   individualMultiSchedule.items[0]?.label,
-  '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차'
+  '26년 4월 20일(월) 9:30 ~ 12:20'
 )
 
 const individualMulti차시Title = applyProgramLinkedApplicationDraftPatches(
@@ -233,9 +234,10 @@ const individualMulti차시Title = applyProgramLinkedApplicationDraftPatches(
 const individualMulti차시Paragraph = individualMulti차시Title.paragraphs.find(
   p => p.id === 'program-participant-application-seed-schedule'
 )
+// 1회차 2차시·2회차 4차시 — 회차별 차시 수가 다르므로 「2차시*2회」를 만들지 않는다
 assert.equal(
   individualMulti차시Paragraph?.paragraphDescription,
-  '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+  '진행 가능한 일정을 모두 선택해 주세요.'
 )
 
 const individualMultiBotTitle = applyProgramLinkedApplicationDraftPatches(

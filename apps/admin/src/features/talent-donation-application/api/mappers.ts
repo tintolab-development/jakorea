@@ -29,8 +29,11 @@ function toDomainStatus(status: string | undefined): ApplicationStatus {
   return status === 'confirmed' ? 'confirmed' : 'pending'
 }
 
-function toDomainGender(gender: string | null | undefined): ApplicantGender {
-  return gender === 'female' ? 'female' : 'male'
+/** null·마스킹(`**`)·알 수 없는 값은 null — 남성으로 추정하지 않는다(정책 §4-1, Step 6). */
+function toDomainGender(gender: string | null | undefined): ApplicantGender | null {
+  if (gender === 'female') return 'female'
+  if (gender === 'male') return 'male'
+  return null
 }
 
 function firstApplicationAttachment(

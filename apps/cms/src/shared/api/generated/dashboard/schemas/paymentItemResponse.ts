@@ -23,6 +23,6 @@ export interface PaymentItemResponse {
   description?: string;
   /** 지급요건/비고는 detailJson.qualificationLines / remarkLines 전용. 교통 minOneWayKm·minDistanceKm dual-write */
   detailJson?: string;
-  /** 정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION */
+  /** 정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION|VOLUNTEER. 카탈로그 항목 유형이면 항상 채워진다: TRANSPORT_INSTRUCTOR·LODGING_* = INSTRUCTOR, TRANSPORT_STUDENT = 참여자·VOLUNTEER, MEAL·ACTIVITY = INSTRUCTOR·참여자·VOLUNTEER. 카탈로그 외 유형은 빈 배열. */
   eligiblePayeeTypes?: string[] | null;
 }

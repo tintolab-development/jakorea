@@ -7,7 +7,7 @@ export function LectureHistoryView({
   loading,
   onRowClick,
   onBulkDeleteHistory,
-  onVolunteerCertificateBulkIssue,
+  onInstructorCertificateBulkIssue,
 }: RendererProps) {
   return (
     <MemberProgramLectureHistory
@@ -16,7 +16,7 @@ export function LectureHistoryView({
       memberId={user.memberId}
       onRowClick={onRowClick}
       onBulkDelete={onBulkDeleteHistory}
-      onCertificateIssue={onVolunteerCertificateBulkIssue}
+      onCertificateIssue={onInstructorCertificateBulkIssue}
     />
   )
 }

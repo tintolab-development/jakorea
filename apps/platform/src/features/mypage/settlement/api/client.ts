@@ -56,14 +56,18 @@ export function mapSettlementOverviewStatus(input: {
   status?: string | null
   statementStatus?: string | null
   paymentStatus?: string | null
+  statementReapplyAvailable?: boolean | null
 }): SettlementOverviewStatus | null {
   const payment = normalizeStatusToken(input.paymentStatus)
   const statement = normalizeStatusToken(input.statementStatus ?? input.status)
 
   if (payment === 'PAID' || statement === 'PAID') return 'paid'
+  // DRAFT = 정정 승인 후 강사 재신청 대기. 강의 상세 정산 탭·CMS와 같이 "지급 정정 요청"으로 본다
   if (
     statement === 'CORRECTION_REQUESTED' ||
-    payment === 'CORRECTION_REQUESTED'
+    payment === 'CORRECTION_REQUESTED' ||
+    statement === 'DRAFT' ||
+    input.statementReapplyAvailable === true
   ) {
     return 'correction_requested'
   }
@@ -110,9 +114,66 @@ function sumSubmittedAmounts(
   return hasAmount ? total : null
 }
 
+function readTimeMs(value: unknown): number {
+  const text = readOptionalText(value)
+  const ms = text ? Date.parse(text) : Number.NaN
+  return Number.isFinite(ms) ? ms : Number.NEGATIVE_INFINITY
+}
+
+/** 이전 재신청 이력 행 노출 여부 — 시안 확정 전까지 false(최신 신청만 보인다) */
+const SHOW_SUPERSEDED_INSTRUCTOR_HISTORY = false
+
+/**
+ * 재신청 이력은 한 줄씩 보여 준다. 같은 assignmentId에서 가장 늦게 만든 신청(같으면 applicationId가 큰 쪽)만
+ * 현재 건이고, 나머지는 다음 revision으로 대체된 이전 신청이다. 이전 신청의 applicationId 집합을 돌려준다.
+ */
+export function findSupersededInstructorApplicationIds(
+  rows: readonly PortalSettlementApplication[],
+): Set<number> {
+  const latestByAssignment = new Map<number, PortalSettlementApplication>()
+  for (const row of rows) {
+    const assignmentId = readOptionalNumber(row.assignmentId)
+    if (assignmentId == null) continue
+    const current = latestByAssignment.get(assignmentId)
+    if (!current) {
+      latestByAssignment.set(assignmentId, row)
+      continue
+    }
+    const byCreated = readTimeMs(row.createdAt) - readTimeMs(current.createdAt)
+    const byId =
+      (readOptionalNumber(row.applicationId) ?? 0) - (readOptionalNumber(current.applicationId) ?? 0)
+    if (byCreated > 0 || (byCreated === 0 && byId > 0)) {
+      latestByAssignment.set(assignmentId, row)
+    }
+  }
+  const superseded = new Set<number>()
+  for (const row of rows) {
+    const assignmentId = readOptionalNumber(row.assignmentId)
+    const applicationId = readOptionalNumber(row.applicationId)
+    if (assignmentId == null || applicationId == null) continue
+    if (latestByAssignment.get(assignmentId) !== row) superseded.add(applicationId)
+  }
+  return superseded
+}
+
+/**
+ * 강사 정산 행의 교육 진행 일시. 목록 응답의 회차 일시(scheduleStartAt·scheduleEndAt)를 쓰고,
+ * 둘 다 없을 때만 제출(없으면 생성) 시각으로 대체한다.
+ */
+export function resolveInstructorSettlementPeriod(
+  row: PortalSettlementApplication,
+): { startsAt: string; endsAt: string } {
+  const start = readOptionalText(row.scheduleStartAt)
+  const end = readOptionalText(row.scheduleEndAt)
+  if (start || end) return { startsAt: start ?? end ?? '', endsAt: end ?? start ?? '' }
+  const fallback = readOptionalText(row.submittedAt) ?? readOptionalText(row.createdAt) ?? ''
+  return { startsAt: fallback, endsAt: fallback }
+}
+
 function mapInstructorSettlementItem(
   row: PortalSettlementApplication,
   programTitleByProgramId: Map<string, string>,
+  superseded: boolean,
 ): SettlementOverviewItem | null {
   const id = readOptionalNumber(row.applicationId)
   if (id == null) return null
@@ -120,21 +181,24 @@ function mapInstructorSettlementItem(
     status: row.status,
     statementStatus: row.statementStatus,
     paymentStatus: row.paymentStatus,
+    statementReapplyAvailable: row.statementReapplyAvailable,
   })
   if (!status) return null
   const programId = readOptionalNumber(row.programId)
   const programName =
     (programId != null ? programTitleByProgramId.get(String(programId)) : null) ?? '-'
+  const { startsAt, endsAt } = resolveInstructorSettlementPeriod(row)
   return {
     id: String(id),
     programName,
     organizationName: '-',
-    startsAt: readOptionalText(row.submittedAt) ?? readOptionalText(row.createdAt) ?? '',
-    endsAt: readOptionalText(row.submittedAt) ?? readOptionalText(row.createdAt) ?? '',
+    startsAt,
+    endsAt,
     sessionLabel: '',
     status,
     appliedAmount:
       readOptionalNumber(row.netPaymentAmount) ?? readOptionalNumber(row.grossAmount),
+    ...(superseded ? { superseded: true } : {}),
   }
 }
 
@@ -171,7 +235,8 @@ function buildSummary(
 
   for (const item of items) {
     const amount = item.appliedAmount
-    if (amount == null) continue
+    // 대체된 이전 신청은 합계에서 뺀다
+    if (amount == null || item.superseded) continue
     const inMonth =
       item.startsAt.slice(0, 7) === monthKey || item.endsAt.slice(0, 7) === monthKey
 
@@ -246,8 +311,13 @@ export async function fetchSettlementOverviewPageData(input?: {
 
   const items: SettlementOverviewItem[] = []
 
+  const supersededIds = findSupersededInstructorApplicationIds(instructorRows)
   for (const row of instructorRows) {
-    const mapped = mapInstructorSettlementItem(row, programTitleByProgramId)
+    const applicationId = readOptionalNumber(row.applicationId)
+    const superseded = applicationId != null && supersededIds.has(applicationId)
+    // 이전 재신청 이력 행(상태 '-'·금액 취소선)은 시안 확정 전까지 비노출
+    if (superseded && !SHOW_SUPERSEDED_INSTRUCTOR_HISTORY) continue
+    const mapped = mapInstructorSettlementItem(row, programTitleByProgramId, superseded)
     if (mapped) items.push(mapped)
   }
 

@@ -20,7 +20,10 @@ export type CurriculumMultiDateFixedScheduleMetaInput = {
 
 export type CurriculumMultiDateFixedScheduleMeta = {
   educationRoundCount?: number
+  /** 모든 회차의 진행 차시 수가 같을 때만 그 값. 회차별로 다르면 undefined */
   sessionsPerRound?: number
+  /** curriculumSessions 기준 회차별 진행 차시 수가 서로 다르면 true */
+  sessionsPerRoundVaries?: boolean
 }
 
 function readPositiveInt(value: unknown): number | undefined {
@@ -69,17 +72,31 @@ function readProgressSessionCountFromRoundTitle(title: string | undefined): numb
   return undefined
 }
 
+/**
+ * 회차 행 title(진행 차시 수)을 모두 읽는다. 첫 회차만 보고 전체 회차 차시 수로 쓰지 않는다.
+ * - 모든 회차 값이 같으면 `{ sessionsPerRound }`
+ * - 읽힌 값끼리 다르면 `{ varies: true }`
+ * - 일부만 읽히고 읽힌 값이 같으면 판단하지 않는다(undefined)
+ */
 function readSessionsPerRoundFromSessions(
   sessions: readonly CurriculumSessionMetaRow[] | undefined
-): number | undefined {
-  if (!sessions?.length) return undefined
-  const rounds = sessions.filter(
+): { sessionsPerRound?: number; varies: boolean } {
+  if (!sessions?.length) return { varies: false }
+  const labeledRounds = sessions.filter(
     session =>
       sessionHasRoundLabel(session) && !isPreEducationSessionLabel(session.sessionLabel ?? '')
   )
-  const first = rounds[0] ?? sessions.find(s => !isPreEducationSessionLabel(s.sessionLabel ?? ''))
-  if (!first) return undefined
-  return readProgressSessionCountFromRoundTitle(first.title)
+  const rounds =
+    labeledRounds.length > 0
+      ? labeledRounds
+      : sessions.filter(s => !isPreEducationSessionLabel(s.sessionLabel ?? '')).slice(0, 1)
+  if (rounds.length === 0) return { varies: false }
+  const counts = rounds.map(round => readProgressSessionCountFromRoundTitle(round.title))
+  const known = counts.filter((count): count is number => count != null)
+  if (known.length === 0) return { varies: false }
+  if (new Set(known).size > 1) return { varies: true }
+  if (known.length !== counts.length) return { varies: false }
+  return { sessionsPerRound: known[0], varies: false }
 }
 
 /** 기관 커리큘럼 + 복수 회차 + 날짜 지정 — 일정×회차 체크박스 matrix */
@@ -115,8 +132,8 @@ export function readCurriculumPreferredScheduleDailySessionCountForCopy(input: {
   educationRoundCount?: number
 }): number | undefined {
   if (input.sessionRound === 'multi') {
-    const meta = readCurriculumMultiDateFixedScheduleMeta(input)
-    return readPositiveInt(input.sessionsPerRound) ?? meta.sessionsPerRound
+    // 회차별 차시 수가 다르면 meta.sessionsPerRound는 undefined — 1회차 값을 일괄 차시로 쓰지 않는다.
+    return readCurriculumMultiDateFixedScheduleMeta(input).sessionsPerRound
   }
   return (
     readPositiveInt(input.curriculumChartSessionCount) ??
@@ -130,9 +147,13 @@ export function readCurriculumMultiDateFixedScheduleMeta(
   const educationRoundCount =
     readPositiveInt(input.educationRoundCount) ??
     countEducationRoundsFromSessions(input.curriculumSessions)
+  const fromSessions = readSessionsPerRoundFromSessions(input.curriculumSessions)
+  // 회차별 차시 수가 다르면 넘겨받은 1회차 값(sessionsPerRound)도 전체 회차 값으로 쓰지 않는다.
+  if (fromSessions.varies) {
+    return { educationRoundCount, sessionsPerRound: undefined, sessionsPerRoundVaries: true }
+  }
   const sessionsPerRound =
-    readPositiveInt(input.sessionsPerRound) ??
-    readSessionsPerRoundFromSessions(input.curriculumSessions)
+    readPositiveInt(input.sessionsPerRound) ?? fromSessions.sessionsPerRound
   return { educationRoundCount, sessionsPerRound }
 }
 
@@ -203,18 +224,21 @@ export function appendCurriculumSingleDateFixedScheduleSessionSuffix(
 
 const FIXED_SCHEDULE_ROUND_SUFFIX_RE = /\|\s*\d+\s*회차(?:\s*\(\s*\d+\s*차시\s*\))?\s*$/
 
-/** 커리큘럼·복수·날짜 고정 일정 — 예정일 줄 i(입력 순서)는 i+1회차. 라벨 `일시 | (i+1)회차`. */
+/**
+ * 커리큘럼·복수·날짜 고정 일정 — 그 일정의 실제 회차(program_schedule.session_no)를 알 때만 `일시 | N회차`.
+ * 예정일 줄 입력 순서로 회차 번호를 만들지 않는다. 회차를 모르면 일시만 둔다.
+ */
 export function appendCurriculumMultiDateFixedScheduleRoundSuffix(
   baseLabel: string,
   visibility: ApplicationScheduleVisibilityInput,
-  lineIndex: number
+  sessionNo?: number | null
 ): string {
   const trimmed = baseLabel.trim()
   if (!trimmed) return baseLabel
   if (!shouldUseCurriculumMultiDateFixedScheduleMatrix(visibility)) return trimmed
-  if (!Number.isInteger(lineIndex) || lineIndex < 0) return trimmed
+  if (sessionNo == null || !Number.isInteger(sessionNo) || sessionNo < 1) return trimmed
   if (FIXED_SCHEDULE_ROUND_SUFFIX_RE.test(trimmed)) return trimmed
-  return `${trimmed} | ${lineIndex + 1}회차`
+  return `${trimmed} | ${sessionNo}회차`
 }
 
 export function resolveFixedScheduleLinesToChoiceItems(
@@ -225,10 +249,10 @@ export function resolveFixedScheduleLinesToChoiceItems(
   const trimmed = expandEducationScheduleChoiceSlots(lines)
   return trimmed.map((label, index) => ({
     id: `line:${index}`,
+    // 예정일 줄(문자열)에는 실제 회차(sessionNo)가 없으므로 회차 번호를 붙이지 않는다.
     label: appendCurriculumMultiDateFixedScheduleRoundSuffix(
       appendCurriculumSingleDateFixedScheduleSessionSuffix(label, visibility, metaInput, index),
-      visibility,
-      index
+      visibility
     ),
   }))
 }

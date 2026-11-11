@@ -1,4 +1,5 @@
 import { type Page, expect } from '@playwright/test'
+import { isE2eStableViteNavEnabled } from '../helpers/silence-vite-hmr'
 import { generateSync } from 'otplib'
 
 /** 로그인 페이지 「권한별 로그인」 마스터 버튼 (현재 UI 라벨 'Master', 이전 '마스터') */
@@ -17,6 +18,15 @@ export class LoginPage {
   constructor(private readonly page: Page) {}
 
   async goto() {
+    if (isE2eStableViteNavEnabled()) {
+      // 옵트인: Vite HMR full reload가 load/domcontentloaded를 막으면
+      // 문서 commit 후 로그인 버튼 노출로 진입을 확인한다.
+      await this.page.goto('/login', { waitUntil: 'commit', timeout: 60_000 })
+      await expect(this.page.getByRole('button', { name: '로그인하기' })).toBeVisible({
+        timeout: 180_000,
+      })
+      return
+    }
     await this.page.goto('/login')
     await expect(this.page.getByRole('button', { name: '로그인하기' })).toBeVisible()
   }
@@ -41,10 +51,15 @@ export class LoginPage {
       await this.submitMfa(code)
     }
 
-    await this.page.waitForURL(url => {
-      const { pathname } = new URL(url)
-      return pathname === '/' || pathname === ''
-    })
+    await this.page.waitForURL(
+      url => {
+        const { pathname } = new URL(url)
+        return pathname === '/' || pathname === ''
+      },
+      isE2eStableViteNavEnabled()
+        ? { waitUntil: 'commit', timeout: 60_000 }
+        : undefined
+    )
   }
 
   private async resolveMfaCode(): Promise<string> {

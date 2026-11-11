@@ -1,6 +1,6 @@
 import { formatBusinessIncomeDisplay } from '@jakorea/domain/instructor/business-income'
 import type { PortalProfileResponse } from '@/features/auth/sign-in'
-import { mapInstructorFeeGradeLabel } from '@/features/mypage/instructor-apply/api/response-codes'
+import { mapInstructorFeeGradeLabel } from '../../../instructor-apply/api/response-codes.ts'
 
 const MISSING = '-'
 

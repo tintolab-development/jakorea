@@ -5,16 +5,17 @@ import {
   formatMailVariableToken,
   getMailVariableLabel,
   groupMailTemplateVariablesFromCatalog,
+  getMailVariablePanelNote,
 } from './variables'
 
 describe('MAIL_TEMPLATE_VARIABLE_GROUPS', () => {
-  it('matches the design: 11 categories and 72 variables', () => {
+  it('matches the design: 11 categories and 73 variables (+ BE N2 교육 진행 회차)', () => {
     expect(MAIL_TEMPLATE_VARIABLE_GROUPS).toHaveLength(11)
     const total = MAIL_TEMPLATE_VARIABLE_GROUPS.reduce(
       (count, group) => count + group.items.length,
       0
     )
-    expect(total).toBe(72)
+    expect(total).toBe(73)
   })
 
   it('does not include variables outside the design spec', () => {
@@ -41,6 +42,37 @@ describe('MAIL_TEMPLATE_VARIABLE_GROUPS', () => {
       { label: '활동비' },
       { label: '정산금액', hint: '*세금 미제외 금액' },
     ])
+  })
+})
+
+describe('교육 진행 차시 · 교육 진행 회차 (BE N2)', () => {
+  it('시간 그룹에 차시(개수)와 회차(번호)를 구분해 둔다', () => {
+    const time = MAIL_TEMPLATE_VARIABLE_GROUPS.find(group => group.id === 'time')
+    expect(time?.items.map(getMailVariableLabel)).toEqual([
+      '교육 진행 수업 시간',
+      '교육 진행 차시',
+      '교육 진행 회차',
+    ])
+    expect(time?.items[1]?.hint).toContain('정산 인정 차시')
+    expect(time?.items[1]?.hint).toContain('#{교육 진행 회차}')
+    expect(getMailVariablePanelNote('교육 진행 차시')).toBe('차시 개수 · 회차는 #{교육 진행 회차}')
+    expect(getMailVariablePanelNote('교육 진행 회차')).toBe('회차 번호(N회차)')
+    expect(getMailVariablePanelNote('회원명')).toBeUndefined()
+  })
+
+  it('카탈로그 설명보다 FE 차시 설명을 우선하고, 카탈로그에 없는 변수는 끼워 넣지 않는다', () => {
+    const groups = groupMailTemplateVariablesFromCatalog([
+      {
+        key: '교육 진행 차시',
+        description: '교육 진행 차시',
+        requiresProgram: true,
+        enabled: false,
+        categoryCode: 'TIME',
+        categoryLabel: '시간',
+      },
+    ])
+    expect(groups[0]?.items).toHaveLength(1)
+    expect(groups[0]?.items[0]?.hint).toContain('차시 개수')
   })
 })
 

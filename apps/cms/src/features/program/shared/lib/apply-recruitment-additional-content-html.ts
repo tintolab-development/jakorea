@@ -68,6 +68,11 @@ export type RecruitmentDetailInfoFields = {
   /** 모집 비고 — 기타 안내(`program.otherNotes` / otherMatters)와 분리 */
   remarks?: string
   notesNotApplicable?: boolean
+  /**
+   * 모집 행 `remarksNotApplicable`(비고 해당 없음)에 그대로 쓴다. 생략 시 행 값을 건드리지 않는다.
+   * 일반 프로그램 강사 모집에서만 넘긴다 — 참여자·봉사자·타 유형 기존 저장 경로 유지.
+   */
+  rowRemarksNotApplicable?: boolean
   /** @deprecated 비고는 `remarks`. 호환용 별칭 */
   otherNotes?: string
   /** 이 모집 행 공고 제목. 프로그램 공고명에는 쓰지 않는다. */
@@ -193,6 +198,9 @@ export function applyRecruitmentDetailInfoFields(
       : {}),
     ...(remarks !== undefined || notesNotApplicable
       ? { remarks: notesNotApplicable ? null : remarks?.trim() || null }
+      : {}),
+    ...(fields.rowRemarksNotApplicable !== undefined
+      ? { remarksNotApplicable: fields.rowRemarksNotApplicable }
       : {}),
     ...(fields.otherMatters !== undefined && audience !== 'participant'
       ? { otherMatters: fields.otherMatters.trim() || null }

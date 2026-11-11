@@ -8,6 +8,7 @@ import {
   mapGeneralProgramToUpdateRequest,
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
+import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { applyAudienceProgramOperationToRecruitmentWindows } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import {
@@ -1768,5 +1769,91 @@ describe('general-program-adapters', () => {
 
     expect(program.createdByName).toBe('곽도규')
     expect(program.updatedByName).toBe('김도영')
+  })
+})
+
+describe('등록 위저드 강사 모집 비고 「해당 없음」 → 생성 요청 remarksNotApplicable', () => {
+  function createWith(instructorInfo: Record<string, unknown>) {
+    return mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
+      volunteerApplicationStartDate: '2026-09-18T15:00:00.000Z',
+      volunteerApplicationEndDate: '2026-09-21T15:00:00.000Z',
+      generalCommonInfo: {
+        participantRecruitmentInfo: { contactOrganizationName: '최수아', remarks: '참여기관 비고' },
+        instructorRecruitmentInfo: { contactOrganizationName: '강사 담당', ...instructorInfo },
+        volunteerRecruitmentInfo: { contactOrganizationName: '정민재', remarks: '봉사자 비고' },
+      },
+    })
+  }
+  const rowsOf = (request: ReturnType<typeof createWith>) => ({
+    org: request.recruitments?.find(row => row.targetType === 'ORGANIZATION'),
+    instructor: request.recruitments?.find(row => row.recruitmentType === 'INSTRUCTOR'),
+    volunteer: request.recruitments?.find(row => row.recruitmentType === 'VOLUNTEER'),
+  })
+
+  it('해당 없음(true) → 강사 행 remarksNotApplicable=true, remarks 빈 문자열', () => {
+    const { instructor } = rowsOf(createWith({ notesNotApplicable: true, remarks: '남은 비고' }))
+    expect(instructor?.remarksNotApplicable).toBe(true)
+    expect(instructor?.remarks).toBe('')
+  })
+
+  it('해당 없음 해제(false) → remarksNotApplicable=false, 비고 유지', () => {
+    const { instructor } = rowsOf(createWith({ notesNotApplicable: false, remarks: '강사 비고' }))
+    expect(instructor?.remarksNotApplicable).toBe(false)
+    expect(instructor?.remarks).toBe('강사 비고')
+  })
+
+  it('미입력 → remarksNotApplicable 키를 넣지 않는다', () => {
+    const { instructor } = rowsOf(createWith({ remarks: '강사 비고' }))
+    expect(instructor).not.toHaveProperty('remarksNotApplicable')
+    expect(instructor?.remarks).toBe('강사 비고')
+  })
+
+  it('참여자·봉사자 행 payload는 강사 해당 없음 여부와 무관하게 같다', () => {
+    const base = rowsOf(createWith({ remarks: '강사 비고' }))
+    const withNa = rowsOf(createWith({ notesNotApplicable: true, remarks: '강사 비고' }))
+    expect(JSON.stringify(withNa.org)).toBe(JSON.stringify(base.org))
+    expect(JSON.stringify(withNa.volunteer)).toBe(JSON.stringify(base.volunteer))
+    expect(base.org).not.toHaveProperty('remarksNotApplicable')
+    expect(base.volunteer).not.toHaveProperty('remarksNotApplicable')
+  })
+
+  it('overlay recruit.instructor.notesNotApplicable → nested instructorRecruitmentInfo.notesNotApplicable', () => {
+    const fromOverlay = applyGeneralRecruitOverlayToProgram(
+      {
+        ...sampleProgram,
+        generalProgramAudience: 'organization',
+        generalCommonInfo: { instructorRecruitmentInfo: {} },
+      },
+      { 'recruit.instructor.notesNotApplicable': true },
+      { preferOverlay: true }
+    )
+    expect(fromOverlay.generalCommonInfo?.instructorRecruitmentInfo?.notesNotApplicable).toBe(true)
+
+    // 참여자 유형이 없는 draft(1사1교 typed parity 등)는 옮기지 않는다
+    const noAudience = applyGeneralRecruitOverlayToProgram(
+      {
+        ...sampleProgram,
+        generalProgramAudience: undefined,
+        generalParticipantTypes: undefined,
+        generalCommonInfo: { instructorRecruitmentInfo: {} },
+      },
+      { 'recruit.instructor.notesNotApplicable': true },
+      { preferOverlay: true }
+    )
+    expect(noAudience.generalCommonInfo?.instructorRecruitmentInfo).not.toHaveProperty(
+      'notesNotApplicable'
+    )
+
+    const untouched = applyGeneralRecruitOverlayToProgram(
+      { ...sampleProgram, generalCommonInfo: { instructorRecruitmentInfo: {} } },
+      {},
+      { preferOverlay: true }
+    )
+    expect(untouched.generalCommonInfo?.instructorRecruitmentInfo).not.toHaveProperty(
+      'notesNotApplicable'
+    )
   })
 })

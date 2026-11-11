@@ -229,6 +229,8 @@ export function useProgressInstructorList({
     handleInstructorDeleteClick,
     handleInstructorDeleteConfirm,
     assignedOrganizationNamesByMemberId,
+    /** 배정 보드(배정 목록·프로그램 일정) — 개인형 참여 강사 캘린더 일정 SSOT */
+    assignmentBoard: assignmentsQuery.data,
     applicationsLoading:
       remoteEnabled &&
       ((remoteQuery.isFetching && remoteQuery.data === undefined) ||

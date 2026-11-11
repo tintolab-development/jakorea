@@ -9,7 +9,7 @@ import type { SessionProgressScheduleRole } from './sessionProgressScheduleRole'
 import type { SessionProgressScheduleStatus } from './sessionProgressScheduleStatus';
 
 /**
- * 참여 일정. 기관·개인 참여자 모두 해당 참여자에 실제 배정된 프로그램 일정만 반환한다. 개인(INDIVIDUAL) 배정 SSOT는 GET …/participants/{participantId}/education-scope 의 scheduleIds. 신청 희망 일정은 실제 배정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 배정되지 않은 프로그램 일정·미확정 희망 일정은 목록 sessions·출석 상세·회차 집계에서 제외한다. sessions가 없으면 빈 배열. null은 반환하지 않는다.
+ * 참여 일정. 기관·개인 참여자 모두 해당 참여자에 실제 배정된 프로그램 일정만 반환한다. 개인(INDIVIDUAL) 배정 SSOT는 GET …/participants/{participantId}/education-scope 의 scheduleIds. 봉사자(VOLUNTEER)는 일반 기관형·UJAT이면 봉사자 배정(ASSIGNED) 일정, 일반 개인형이면 교육 범위 확정 일정만 반환하고 배정이 없으면 빈 배열이다. 신청 희망 일정은 실제 배정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 배정되지 않은 프로그램 일정·미확정 희망 일정은 목록 sessions·출석 상세·회차 집계에서 제외한다. sessions가 없으면 빈 배열. null은 반환하지 않는다.
  */
 export interface SessionProgress {
   /** 실제 반환 대상 program_schedule id. 값이 없으면 null */

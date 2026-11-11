@@ -5,6 +5,7 @@ import type {
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
 import { parseParticipatingSessionTimeRange } from '../ui/detail-modal/program-status/participating-institutions-calendar-day-list'
+import { formatParticipatingSessionClassNumWithTime } from '@/features/program/general/lib/participating-school-session-display'
 import type { CalendarMainEventInput } from '@/shared/components/calendar/model/calendar-main-event-input'
 
 export type ParticipatingVolunteerCalendarEventItem = {
@@ -13,6 +14,10 @@ export type ParticipatingVolunteerCalendarEventItem = {
   volunteerName: string
   /** 활동 포기 처리된 봉사자 — 캘린더 우측 카드 「활동 포기」 뱃지 */
   activityWithdrawn?: boolean
+  /** 기관형 우측 카드 「거리 · 출강 · 장거리」 — participants 지표(null이면 '-') */
+  distanceKm?: number | null
+  programDispatchCount?: number | null
+  programLongDistanceDispatchCount?: number | null
   sessionsOnDate: ParticipatingSchoolSession[]
   educationGrade: string
   desiredEducationPeriod: string
@@ -64,10 +69,8 @@ export function buildParticipatingVolunteerCalendarEvents(
       const sessionDate = parseSessionDate(session.date)
       const times = parseParticipatingSessionTimeRange(session.timeRange)
       const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
-      const periodLabel = session.classNum.endsWith('교시')
-        ? session.classNum
-        : `${session.classNum}교시`
-      const periodStr = `${periodLabel} (${timeRangeDisplay})`
+      // classNum이 비거나 교시가 아닌 값(회차·지망 등)이면 `교시`를 붙이지 않는다
+      const periodStr = formatParticipatingSessionClassNumWithTime(session.classNum, timeRangeDisplay)
       const dateKey = sessionDate.format('YYYY-MM-DD')
 
       events.push({
@@ -82,6 +85,9 @@ export function buildParticipatingVolunteerCalendarEvents(
           volunteerId: volunteer.id,
           volunteerName: volunteer.volunteerName,
           activityWithdrawn: volunteer.activityWithdrawn === true,
+          distanceKm: volunteer.distanceKm ?? null,
+          programDispatchCount: volunteer.programDispatchCount ?? null,
+          programLongDistanceDispatchCount: volunteer.programLongDistanceDispatchCount ?? null,
           sessionsOnDate: [session],
           educationGrade: school.educationGrade,
           desiredEducationPeriod: periodStr,

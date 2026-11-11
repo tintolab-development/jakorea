@@ -1,3 +1,4 @@
+import { formatBirthWithOptionalAge } from '@/features/user/api/format-gender-birth-display'
 import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -26,9 +27,32 @@ export type GeneralVolunteerApplicantBasicInfoStatusRow =
   | 'second_interview'
   | 'none'
 
+/**
+ * 결과 알림 발송 일시 — 시안 「1차 서류 심사 현황 | 서류 합격 | [알림 재발송] 2026.01.15 09:15:42」.
+ * 재발송 버튼 바로 뒤에는 구분선 없이, 버튼이 없으면 구분선 뒤에 둔다. 값이 없으면 숨긴다.
+ */
+function ResultNotificationSentAt({
+  sentAt,
+  afterResendButton,
+}: {
+  sentAt?: string
+  afterResendButton: boolean
+}) {
+  if (!sentAt) return null
+  return (
+    <>
+      {afterResendButton ? null : (
+        <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+      )}
+      <span className="applicant-institution-basic-info__approval-notification-sent-at">
+        {sentAt}
+      </span>
+    </>
+  )
+}
+
 function formatBirthDateAndAge(birthDate: string, age: number): string {
-  const formatted = birthDate.replace(/\./g, '. ')
-  return `${formatted} (만 ${age}세)`
+  return formatBirthWithOptionalAge(birthDate, age)
 }
 
 export interface GeneralVolunteerApplicantBasicInfoProps {
@@ -45,13 +69,20 @@ function resolveStatusField(
 ): { label: string; value: ReactNode } {
   if (statusRow === 'second_interview') {
     const effectiveStatus = resolveGeneralEffectiveSecondInterviewStatus(applicant)
+    // 최종 결과(면접/최종)는 재발송 API가 없어 버튼 없이 발송 일시만
     return {
       label: '2차 면접 심사 현황',
       value:
         effectiveStatus === 'withdrawn' ? (
           <GeneralInterviewAssignmentStatusText status="withdrawn" />
         ) : (
-          <GeneralSecondInterviewStatusText status={effectiveStatus} />
+          <div className="applicant-institution-basic-info__approval-status-row">
+            <GeneralSecondInterviewStatusText status={effectiveStatus} />
+            <ResultNotificationSentAt
+              sentAt={applicant.finalResultNotificationSentAt}
+              afterResendButton={false}
+            />
+          </div>
         ),
     }
   }
@@ -66,6 +97,11 @@ function resolveStatusField(
             <>
               <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
               <SendNotiButton mode="resend" onClick={onResendDocumentNotificationClick} />
+              {/* 이 버튼은 1차 서류 결과 알림 재발송 — 그 발송 일시 */}
+              <ResultNotificationSentAt
+                sentAt={applicant.documentResultNotificationSentAt}
+                afterResendButton
+              />
             </>
           ) : null}
         </div>
@@ -102,6 +138,10 @@ function resolveStatusField(
             <SendNotiButton mode="resend" onClick={onResendDocumentNotificationClick} />
           </>
         ) : null}
+        <ResultNotificationSentAt
+          sentAt={applicant.documentResultNotificationSentAt}
+          afterResendButton={onResendDocumentNotificationClick != null}
+        />
       </div>
     ),
   }

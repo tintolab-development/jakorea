@@ -1,6 +1,9 @@
 /**
  * 자택 주소 마스킹 표시 — CMS program-pii-display SSOT.
  * BE MASKED 응답을 FE에서 재마스킹하지 않고, `*****`(FE blur) / `****`(BE maskAddress) 구간만 blur.
+ * 마스킹 모드에서 입력이 이미 마스킹되었다고 가정하지 않는다(Step 6.1): `*`가 없는 원문 주소는
+ * BE와 같은 규칙(maskHomeAddressLine)으로 가리고, 원문 상세주소는 표시하지 않는다.
+ * 원문 열람(revealed) 모드는 그대로 보여준다. 소속 기관 주소에는 쓰지 않는다.
  */
 
 import type { ReactNode } from 'react'
@@ -8,10 +11,16 @@ import {
   PRIVACY_ADDRESS_BE_MASK_RUN,
   PRIVACY_ADDRESS_BLUR_TOKEN,
 } from './constants'
+import { HOME_ADDRESS_UNDISCLOSED, isMaskedHomeAddressLine, maskHomeAddressLine } from './mask-home-address'
 import './privacy-home-address-display.css'
 
 export { PRIVACY_ADDRESS_BLUR_TOKEN, PRIVACY_ADDRESS_BE_MASK_RUN } from './constants'
 export { displayServerPiiAsIs } from './display-server-pii'
+export {
+  HOME_ADDRESS_UNDISCLOSED,
+  isMaskedHomeAddressLine,
+  maskHomeAddressLine,
+} from './mask-home-address'
 
 export function isPrivacyAddressBlurToken(value: string | null | undefined): boolean {
   return (value ?? '').trim() === PRIVACY_ADDRESS_BLUR_TOKEN
@@ -124,15 +133,29 @@ export function PrivacyHomeAddressDisplay({
 }: PrivacyHomeAddressDisplayProps): ReactNode {
   const isRevealed = revealed ?? (mask === undefined ? false : !mask)
 
-  const base = address?.trim() ?? ''
+  const rawBase = address?.trim() ?? ''
   const detailRaw = addressDetail === undefined ? undefined : addressDetail
-  const detail = detailRaw == null ? null : detailRaw.trim()
+  const rawDetail = detailRaw == null ? null : detailRaw.trim()
+  // 마스킹 모드 방어: 원문 주소는 정책 규칙으로 가리고, 원문 상세주소는 블러 토큰으로 바꾼다.
+  const maskRawBase = !isRevealed && rawBase !== '' && !isMaskedHomeAddressLine(rawBase)
+  const base = maskRawBase ? maskHomeAddressLine(rawBase) : rawBase
+  // FE가 원문 주소를 가렸으면 그 결과(` *****`)가 상세주소 블러를 대신한다.
+  const detail = maskRawBase
+    ? rawDetail == null ? rawDetail : null
+    : isRevealed || rawDetail == null || rawDetail === '' || rawDetail.includes('*')
+      ? rawDetail
+      : PRIVACY_ADDRESS_BLUR_TOKEN
 
   if (!base && (detail == null || detail === '')) {
     return <HomeAddressValueShell shellClassName={valueShellClassName}>{empty}</HomeAddressValueShell>
   }
 
   let body: ReactNode
+
+  if (!isRevealed && base === HOME_ADDRESS_UNDISCLOSED) {
+    // 판단할 수 없는 주소: 원문·블러 없이 '비공개'만 표시한다.
+    return <HomeAddressValueShell shellClassName={valueShellClassName}>{base}</HomeAddressValueShell>
+  }
 
   if (isRevealed) {
     if (detailRaw === undefined) {

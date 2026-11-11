@@ -18,6 +18,8 @@ export type RegisteredSurvey = {
   targetScopeId?: number | null
   targetScopeLabel?: string | null
   displayDeadlineAt?: string | null
+  /** form-binding `submissionEndAt` — 강의평가 답변 수정 기한 */
+  submissionEndAt?: string | null
   resultDownloadable?: boolean | null
   satisfactionRunMode?: 'PER_SCHEDULE' | 'ONCE_AT_END' | null
   satisfactionWindowDays?: number | null

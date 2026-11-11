@@ -1,3 +1,4 @@
+import { toPolicyMaskedBirthDisplay } from '@/features/user/api/format-gender-birth-display'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User } from '@/types/user'
 import { composeUserDetailAddressLine } from '@/features/user/detail/ui/user-basic-info/display'
@@ -149,7 +150,15 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     approvalStatus: mapApprovalStatus(user.instructorApprovalStatus),
     schoolName: user.schoolInfo?.schoolName ?? user.affiliatedSchoolName ?? '-',
     nameEnglish: user.nameEn ?? (remoteResume ? '-' : 'Park Tinto'),
-    birthDate: user.birthDate ? formatDate(user.birthDate) : remoteResume ? '-' : '1990.09.15',
+    // 마스킹 생년월일(yyyy-**-**)은 날짜 포맷터에서 사라지지 않도록 정책 표기로 보여준다.
+    birthDate: user.birthDate
+      ? typeof user.birthDate === 'string' &&
+        toPolicyMaskedBirthDisplay(user.birthDate) !== user.birthDate.trim()
+        ? toPolicyMaskedBirthDisplay(user.birthDate)
+        : formatDate(user.birthDate)
+      : remoteResume
+        ? '-'
+        : '1990.09.15',
     gender: (() => {
       const display = toDisplayGender(user.gender)
       if (display !== '-') return display

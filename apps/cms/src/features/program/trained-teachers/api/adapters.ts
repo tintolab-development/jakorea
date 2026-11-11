@@ -24,7 +24,6 @@ import {
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
 import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
-import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
@@ -415,7 +414,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
     schedules: mapProgramSchedules(dto.schedules),
   })
-  return applyBusinessPeriodHistoriesFromDto(mapped, dto)
+  return mapped
 }
 
 function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {

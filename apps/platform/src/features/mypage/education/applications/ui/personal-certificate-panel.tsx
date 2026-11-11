@@ -150,13 +150,15 @@ export function EducationPersonalCertificatePanel({
       availabilityParticipantId: availability?.participantId,
     })
 
-  const handleDownload = async (issueId: number, documentLabel: string) => {
+  /** issuedAt: 발급 일시 — 파일명 날짜(Asia/Seoul). 없으면 다운로드일. */
+  const handleDownload = async (issueId: number, documentLabel: string, issuedAt?: string | null) => {
     try {
       await downloadMutation.mutateAsync({
         certificateIssueId: issueId,
         fileName: buildCertificateDownloadFileName({
           documentLabel,
           memberName: displayName,
+          issuedAt,
         }),
       })
     } catch (error) {
@@ -198,7 +200,7 @@ export function EducationPersonalCertificatePanel({
       if (kind === 'COMPLETION') {
         setLocalIssueIds(prev => ({ ...prev, [kind]: certificateIssueId }))
       }
-      await handleDownload(certificateIssueId, documentLabel)
+      await handleDownload(certificateIssueId, documentLabel, issuedResponse?.issuedAt)
       await completionQuery.refetch()
     } catch (error) {
       setAlertMessage(
@@ -226,7 +228,8 @@ export function EducationPersonalCertificatePanel({
           }
           onClick={() => {
             if (activeView.kind === 'download') {
-              void handleDownload(activeView.issueId, documentLabel)
+              // 재다운로드 파일명 날짜 = 발급일(availability.issuedAt)
+              void handleDownload(activeView.issueId, documentLabel, activeAvailability?.issuedAt)
               return
             }
             if (activeKind === 'COMPLETION' && localIssueId != null) {

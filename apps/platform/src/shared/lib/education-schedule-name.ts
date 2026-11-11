@@ -77,8 +77,6 @@ export function stripDefaultEducationSlotNameFromLabel(label: string | null | un
 /** 교육 진행 예정일 줄 slot key (`general-common-line:N`, N = 입력 순서 1-base). */
 const EDUCATION_LINE_SLOT_KEY_RE = /^general-common-line:(\d+)$/u
 const DEFAULT_EDUCATION_SLOT_NAME_NUMBER_RE = /^공통\s*교육\s*예정\s*(\d+)$/u
-const TRAILING_DEFAULT_EDUCATION_SLOT_NAME_NUMBER_RE =
-  /(?<=\d{1,2}:\d{2}|\)|일)\s+공통\s*교육\s*예정\s*(\d+)\s*$/u
 const ROUND_SUFFIX_RE = /(?:^|\|)\s*\d+\s*회차(?:\s*\(\s*\d+\s*차시\s*\))?\s*$/u
 
 function positiveInt(raw: string | undefined): number | null {
@@ -103,17 +101,22 @@ export function readDefaultEducationSlotNameNumber(value: string | null | undefi
   return match ? positiveInt(match[1]) : null
 }
 
-/** `일시 | N회차` (+ ` (k차시)`). 이미 회차 접미가 있거나 회차를 모르면 label 그대로. */
+/**
+ * `일시 | N회차` (+ ` (k차시)`). 이미 회차 접미가 있거나 회차를 모르면 label 그대로.
+ * k는 그 회차에 연결된 커리큘럼 차시 '개수'(curriculumSessionCount)다.
+ */
 export function appendEducationRoundSuffix(
   label: string,
   roundNumber: number | null | undefined,
-  curriculumSessionNo?: number | null,
+  curriculumSessionCount?: number | null,
 ): string {
   const trimmed = label.trim()
   if (roundNumber == null || !(roundNumber > 0)) return trimmed
   if (ROUND_SUFFIX_RE.test(trimmed)) return trimmed
   const sessionPart =
-    curriculumSessionNo != null && curriculumSessionNo > 0 ? ` (${curriculumSessionNo}차시)` : ''
+    curriculumSessionCount != null && curriculumSessionCount > 0
+      ? ` (${curriculumSessionCount}차시)`
+      : ''
   const roundPart = `${roundNumber}회차${sessionPart}`
   return trimmed ? `${trimmed} | ${roundPart}` : roundPart
 }
@@ -214,40 +217,6 @@ export function formatEducationScheduleUnitLabel(input: EducationScheduleLabelIn
   })
 }
 
-/**
- * 서버 라벨의 자동 기본명(`공통 교육 예정 N`, N = 교육 진행 예정일 입력 순서)을 `N회차`로 바꾼다.
- * 번호 없는 기본명은 제거만 한다. 사용자 일정명은 그대로 둔다.
- */
-export function replaceDefaultEducationSlotNameWithRound(label: string | null | undefined): string {
-  const trimmed = typeof label === 'string' ? label.trim() : ''
-  if (!trimmed) return ''
-  const whole = readDefaultEducationSlotNameNumber(trimmed)
-  if (whole != null) return `${whole}회차`
-  const segments = trimmed.split(/\s*\|\s*/u)
-  let round: number | null = null
-  let kept = segments
-  if (segments.length > 1) {
-    kept = segments.filter(segment => {
-      const n = readDefaultEducationSlotNameNumber(segment)
-      if (n != null) {
-        round = round ?? n
-        return false
-      }
-      return !DEFAULT_EDUCATION_SLOT_NAME_RE.test(segment.trim())
-    })
-  }
-  let joined = kept.join(' | ')
-  if (round == null) {
-    const trailing = TRAILING_DEFAULT_EDUCATION_SLOT_NAME_NUMBER_RE.exec(joined)
-    if (trailing) {
-      round = positiveInt(trailing[1])
-      joined = joined.slice(0, trailing.index).trim()
-    }
-  }
-  joined = joined.replace(TRAILING_DEFAULT_EDUCATION_SLOT_NAME_RE, '').trim()
-  return appendEducationRoundSuffix(joined, round)
-}
-
 const SATISFACTION_DOT_DATE_RE = /(\d{4})\.(\d{1,2})\.(\d{1,2})\(([일월화수목금토])\)/u
 const SATISFACTION_KO_DATE_RE = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\(([일월화수목금토])\)/u
 
@@ -310,16 +279,17 @@ export function formatSatisfactionPerScheduleDisplayName(input: {
   scheduleLine?: string | null
 }): string {
   const custom = toDisplayEducationScheduleName(input.scheduleName)
+  // 회차는 실제 sessionNo만. 자동 기본명 번호(「공통 교육 예정 N」, 입력 순서)로 만들지 않는다.
   const sessionNo =
     typeof input.sessionNo === 'number' && Number.isInteger(input.sessionNo) && input.sessionNo > 0
       ? input.sessionNo
-      : readDefaultEducationSlotNameNumber(input.scheduleName)
-  const replaced = replaceDefaultEducationSlotNameWithRound(input.scheduleName).trim()
-  const name = custom ?? (sessionNo != null ? `${sessionNo}회차` : null) ?? (replaced || null) ?? '일정'
+      : null
+  const name = custom ?? (sessionNo != null ? `${sessionNo}회차` : null)
   const date =
     formatSatisfactionScheduleCalendarDate(input.startAt) ??
     formatSatisfactionCalendarDateFromScheduleLine(input.scheduleLine)
-  return date ? `${name} · ${date}` : name
+  if (name && date) return `${name} · ${date}`
+  return name ?? date ?? '일정'
 }
 
 export function hasSatisfactionScheduleDisplayParts(input: {
@@ -332,10 +302,7 @@ export function hasSatisfactionScheduleDisplayParts(input: {
   if (typeof input.sessionNo === 'number' && Number.isInteger(input.sessionNo) && input.sessionNo > 0) {
     return true
   }
-  return (
-    toDisplayEducationScheduleName(input.scheduleName) != null ||
-    readDefaultEducationSlotNameNumber(input.scheduleName) != null
-  )
+  return toDisplayEducationScheduleName(input.scheduleName) != null
 }
 
 export function isSatisfactionPerScheduleBinding(input: {

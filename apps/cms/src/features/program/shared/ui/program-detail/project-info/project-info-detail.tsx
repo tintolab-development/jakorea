@@ -39,7 +39,6 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import './project-info-form-shared.css'
 import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
-import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
 import { isCommonInfoEditPeriodOpen } from '@/features/program/shared/lib/program-edit-window'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -206,12 +205,7 @@ function ProjectInfoDetailTabsRow({
     displayProgram != null ? (
       <>
         {activeTab === 'info' ? (
-          <BusinessPeriodExtendToolbar
-            program={displayProgram}
-            editDisabled={infoEditDisabled}
-            hideExtend={isEditModeInfo} >
-            {editInfoButton(isEditModeInfo, onInfoSave, infoEditDisabled)}
-          </BusinessPeriodExtendToolbar>
+          editInfoButton(isEditModeInfo, onInfoSave, infoEditDisabled)
         ) : activeTab === 'institutions'
             ? editInfoButton(isEditModeInstitutions, onInstitutionsSave)
             : activeTab === 'volunteers'
@@ -257,18 +251,14 @@ function ProjectInfoHiddenTabsInfoActions({
 
   return (
     <div className="project-info-detail__hidden-tabs-info-actions">
-      <BusinessPeriodExtendToolbar
-        program={program}
-        editDisabled={editDisabled}
-        hideExtend={isEditModeInfo} >
-        <ProgramEditInfoActions
-          isEditing={isEditModeInfo}
-          idleVariant="secondary"
-          disabled={editDisabled}
-          onEdit={onInfoEdit}
-          onCancel={onCancel}
-          onSave={onInfoSave} />
-      </BusinessPeriodExtendToolbar>
+      <ProgramEditInfoActions
+        isEditing={isEditModeInfo}
+        idleVariant="secondary"
+        disabled={editDisabled}
+        onEdit={onInfoEdit}
+        onCancel={onCancel}
+        onSave={onInfoSave}
+      />
     </div>
   )
 }

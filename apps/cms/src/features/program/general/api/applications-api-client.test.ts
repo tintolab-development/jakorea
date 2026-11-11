@@ -25,6 +25,8 @@ import {
   cancelVolunteerApplicationApprovalRemote,
   cancelVolunteerApplicationRejectionRemote,
   cancelOrganizationApplicationApprovalRemote,
+  cancelOrganizationApplicationRejectionRemote,
+  toOrganizationApplicationDecisionCancelRequest,
   updateIndividualApplication,
   updateIndividualDocumentEvaluationRemote,
   updateInstructorApplication,
@@ -796,6 +798,58 @@ describe('individual scope approve/reject notify payload', () => {
       url: '/api/admin/organization-applications/101/reject',
       method: 'POST',
       data: { reason: '반려', timing: 'ON_ANNOUNCEMENT' },
+    })
+  })
+})
+
+describe('기관 승인 취소·반려 취소 — 발표일에 맞춰서 (BE 항목 7)', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('ON_ANNOUNCEMENT는 scheduledAt 없이, SCHEDULED만 scheduledAt, 알 수 없는 timing은 notification 제외', () => {
+    expect(
+      toOrganizationApplicationDecisionCancelRequest({
+        reason: '발표일 취소',
+        notification: { timing: 'ON_ANNOUNCEMENT', scheduledAt: '2026-11-20T00:00:00Z' },
+      })
+    ).toEqual({ reason: '발표일 취소', notification: { timing: 'ON_ANNOUNCEMENT' } })
+    expect(
+      toOrganizationApplicationDecisionCancelRequest({
+        reason: '예약',
+        notification: { timing: 'SCHEDULED', scheduledAt: '2026-11-20T00:00:00Z' },
+      })
+    ).toEqual({
+      reason: '예약',
+      notification: { timing: 'SCHEDULED', scheduledAt: '2026-11-20T00:00:00Z' },
+    })
+    expect(
+      toOrganizationApplicationDecisionCancelRequest({
+        reason: '즉시',
+        notification: { timing: 'IMMEDIATE', scheduledAt: null },
+      })
+    ).toEqual({ reason: '즉시', notification: { timing: 'IMMEDIATE' } })
+    expect(
+      toOrganizationApplicationDecisionCancelRequest({
+        reason: '모름',
+        notification: { timing: 'LATER' },
+      })
+    ).toEqual({ reason: '모름' })
+    expect(toOrganizationApplicationDecisionCancelRequest({ reason: '사유만' })).toEqual({
+      reason: '사유만',
+    })
+  })
+
+  it('반려 취소도 ON_ANNOUNCEMENT를 그대로 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({ applicationId: 1690800 })
+    await cancelOrganizationApplicationRejectionRemote('1690800', {
+      reason: '반려 취소',
+      notification: { timing: 'ON_ANNOUNCEMENT', scheduledAt: null },
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/1690800/cancel-rejection',
+      method: 'POST',
+      data: { reason: '반려 취소', notification: { timing: 'ON_ANNOUNCEMENT' } },
     })
   })
 })

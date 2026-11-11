@@ -115,6 +115,7 @@ import {
   toEconomyPreferredScheduleAnswerValue,
   type EconomyPreferredScheduleBlock,
 } from '@/features/program/lib/economy-preferred-schedule'
+import { buildTrainedTeachersSessionCountOptions } from '@/features/program/lib/trained-teachers-preferred-schedule'
 import {
   ApplyEconomyEducationExperience,
   ApplyEconomyLessonReply,
@@ -191,6 +192,7 @@ import {
   isGeminiTrainingRequestPeriodConfigured,
   readGeminiTrainingRequestDateBounds,
   isTrainedTeachersOrganizationPeriodDateRequests,
+  buildScheduleChoiceSessionNoLookup,
   readInstitutionFixedScheduleChoiceItems,
   readRuntimeFixedScheduleChoiceItems,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
@@ -856,21 +858,28 @@ export function ProgramApplyPage() {
       // 구 runtime에 programType/flavor가 없을 때: 기간형 + 기관 신청만 동일 경로
       (applicationScheduleVisibility.educationScheduleMode === 'period' &&
         (focusedApplicationType === 'ORGANIZATION' || applyCase === 'trained-teachers')))
+  /** 선택지 「N회차」는 공개 상세 schedules[].sessionNo(실제 회차)로만 붙인다 */
+  const scheduleChoiceSessionNoLookup = useMemo(
+    () => buildScheduleChoiceSessionNoLookup(program?.scheduleOptionLookup),
+    [program?.scheduleOptionLookup]
+  )
   const trainedTeachersRuntimeFixedScheduleChoices = useMemo(
     () =>
       readRuntimeFixedScheduleChoiceItems(
         applicationFormDocument?.runtimeContext,
-        trainedTeachersScheduleParagraph
+        trainedTeachersScheduleParagraph,
+        scheduleChoiceSessionNoLookup
       ),
-    [applicationFormDocument, trainedTeachersScheduleParagraph]
+    [applicationFormDocument, scheduleChoiceSessionNoLookup, trainedTeachersScheduleParagraph]
   )
   const institutionRuntimeFixedScheduleChoices = useMemo(
     () =>
       readRuntimeFixedScheduleChoiceItems(
         applicationFormDocument?.runtimeContext,
-        institutionScheduleParagraph
+        institutionScheduleParagraph,
+        scheduleChoiceSessionNoLookup
       ),
-    [applicationFormDocument, institutionScheduleParagraph]
+    [applicationFormDocument, institutionScheduleParagraph, scheduleChoiceSessionNoLookup]
   )
   const applyScheduleParagraphForcedHidden = isApplyScheduleParagraphForcedHidden(
     applicationScheduleVisibility
@@ -1011,6 +1020,25 @@ export function ProgramApplyPage() {
       shouldShowApplySchedulePeriodDateOnlyPreferred(trainedTeachersScheduleVisibility),
     [showTrainedTeachersPreferredSchedule, trainedTeachersScheduleVisibility]
   )
+  /**
+   * 교육받은교사 기간형 — 지망마다 희망 차시(그날 수업 개수) + 차시별 교시·시작~종료 줄.
+   * 희망 차시 상한은 모집 1일 최대 차시, 없으면 1사1교와 같은 2차시.
+   */
+  const trainedTeachersSessionRows = useMemo(() => {
+    if (!program || !showTrainedTeachersPreferredSchedule || trainedTeachersDateOnlyPreferred) {
+      return undefined
+    }
+    return {
+      sessionOptions: buildTrainedTeachersSessionCountOptions(
+        resolveApplyPreferredMaxSessionsPerDay(program, applicationFormRuntimeContext)
+      ),
+    }
+  }, [
+    applicationFormRuntimeContext,
+    program,
+    showTrainedTeachersPreferredSchedule,
+    trainedTeachersDateOnlyPreferred,
+  ])
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
     if (showGeminiInstitutionApply) return GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT
@@ -1038,7 +1066,10 @@ export function ProgramApplyPage() {
                   ? { singleRound: true, sessionCount: generalInstitutionPreferredSessionCount }
                   : {},
               }
-            : undefined,
+            : trainedTeachersSessionRows
+              ? // 교육받은교사 — sessionCount = 차시 수, sessionTimes[i].classPeriod = 그 차시 교시
+                { trainedTeachersSessionRows: true as const }
+              : undefined,
     [
       generalInstitutionPreferredSessionCount,
       generalInstitutionSingleRound,
@@ -1046,6 +1077,7 @@ export function ProgramApplyPage() {
       showGeminiInstitutionApply,
       showGeneralPreferredSchedule,
       trainedTeachersDateOnlyPreferred,
+      trainedTeachersSessionRows,
     ]
   )
   const trainedTeachersEnabledDates = useMemo(() => {
@@ -1973,6 +2005,7 @@ export function ProgramApplyPage() {
               allowRemove={!showGeminiInstitutionApply}
               showSessionUnit={!showGeminiInstitutionApply && !useInstitutionScheduleBounds}
               showClassPeriodInput={!useInstitutionScheduleBounds}
+              trainedTeachersSessionRows={trainedTeachersSessionRows}
               datePlaceholder={
                 showGeminiInstitutionApply
                   ? '날짜를 선택해 주세요'
@@ -2079,7 +2112,8 @@ export function ProgramApplyPage() {
                       curriculumChartSessionCount:
                         applyScheduleChoiceMeta?.curriculumChartSessionCount,
                       curriculumSessions: applyScheduleChoiceMeta?.curriculumSessions,
-                    }
+                    },
+                    scheduleChoiceSessionNoLookup
                   ) ?? paragraph.items)
               : paragraph.items
         if (choiceItems.length === 0) {
@@ -2223,6 +2257,7 @@ export function ProgramApplyPage() {
     [
       program,
       preferredBlocks,
+      scheduleChoiceSessionNoLookup,
       geminiContact,
       geminiOfficialDocument,
       geminiTrainingInfo,

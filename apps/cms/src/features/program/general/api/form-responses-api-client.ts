@@ -70,6 +70,21 @@ export async function updateFormResponseRemote(
 }
 
 /**
+ * OpenAPI operationId: deleteResponse — 강의평가 응답 관리자 삭제(본인 응답만, 204).
+ * 삭제된 응답은 CANCELLED가 되어 목록·summary·submittedCount에서 빠지고, 다시 제출할 수 있다.
+ */
+export async function deleteFormResponseRemote(
+  responseId: number,
+  payload?: { reason?: string }
+): Promise<void> {
+  await customInstance<void>({
+    url: `/api/admin/form-responses/${encodeURIComponent(String(responseId))}`,
+    method: 'DELETE',
+    ...(payload != null ? { headers: { 'Content-Type': 'application/json' }, data: payload } : {}),
+  })
+}
+
+/**
  * context 기준 최신 form_response 상세 (answers 포함).
  * list → id로 get 하여 answers를 확실히 로드한다.
  */

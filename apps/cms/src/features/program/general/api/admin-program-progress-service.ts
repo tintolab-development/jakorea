@@ -16,6 +16,8 @@ import {
   createProgramParticipantRemote,
   patchParticipantTextbookDeliveryRemote,
   putParticipantAssignedOrganizationsRemote,
+  fetchVolunteerAssignmentsRemote,
+  type VolunteerAssignedOrganizationsRequest,
   changeParticipantSchedulesRemote,
   putScheduleAttendancesRemote,
   fetchParticipantEducationScopeRemote,
@@ -465,14 +467,20 @@ export async function updateGeneralParticipatingInstitutionTextbookDelivery(
 export async function saveGeneralVolunteerAssignedOrganizations(
   programId: string,
   participantId: string,
-  payload: {
-    organizationApplicationIds: number[]
-    expectedRevision?: number
-    reason?: string
-  }
+  payload: VolunteerAssignedOrganizationsRequest
 ) {
   assertProgramProgressRemoteReady()
   return putParticipantAssignedOrganizationsRemote(programId, participantId, payload)
+}
+
+/** 기관형 봉사자 배정 회차 행(기관별 배정 알림 상태 포함) */
+export async function fetchGeneralVolunteerAssignments(
+  programId: string,
+  volunteerParticipantId: string,
+  signal?: AbortSignal
+) {
+  assertProgramProgressRemoteReady()
+  return fetchVolunteerAssignmentsRemote(programId, { volunteerParticipantId }, signal)
 }
 
 export async function giveUpGeneralParticipatingInstitution(

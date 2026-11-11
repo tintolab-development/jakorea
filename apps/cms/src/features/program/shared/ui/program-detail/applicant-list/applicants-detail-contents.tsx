@@ -161,7 +161,6 @@ type ApplicantHeaderActionItem = {
   label: string
   disabled?: boolean
   loading?: boolean
-  title?: string
   onClick?: () => void
   /** 기본 `filter` — 개인정보 상세보기 등은 `filter-wide` */
   size?: 'filter' | 'filter-wide'
@@ -194,7 +193,6 @@ function ApplicantHeaderActionsExtra({
             key={a.key}
             {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
             disabled={a.disabled}
-            title={a.title}
             onClick={a.onClick}
           >
             {a.label}
@@ -206,7 +204,6 @@ function ApplicantHeaderActionsExtra({
             size="large"
             disabled={a.disabled}
             loading={a.loading}
-            title={a.title}
             onClick={a.onClick}
           >
             {a.label}
@@ -237,7 +234,6 @@ function headerBtnCancelApproval(
     variant: 'delete',
     label: '승인 취소',
     disabled: cancelApprovalState.disabled,
-    title: cancelApprovalState.reason ?? undefined,
     onClick: cancelApprovalState.disabled ? undefined : () => onCancelApproval?.(applicantId),
   }
 }
@@ -351,7 +347,7 @@ function headerBtnsPendingParticipation(
   onRevealPersonalInfo: () => void,
   availableActions?: string[],
   labels: { reject: string; approve: string } = individualApplicationDecisionButtonLabels(false),
-  approveGate?: { disabled: boolean; title?: string },
+  approveGate?: { disabled: boolean },
   applicationStatus?: string | null,
   hideReject = false
 ): ApplicantHeaderActionItem[] {
@@ -374,7 +370,6 @@ function headerBtnsPendingParticipation(
       variant: 'secondary',
       label: labels.approve,
       disabled: approveDisabled,
-      title: approveDisabled ? approveGate?.title : undefined,
       onClick: approveDisabled ? undefined : () => onApprove(applicantId),
     })
   }
@@ -661,7 +656,7 @@ function resolveApplicantHeaderItems(params: {
       isIndividual
         ? individualApplicationDecisionButtonLabels(useDocumentDecisionLabels)
         : undefined,
-      blockFinalApprove ? { disabled: true, title: '면접 합격 후 최종 승인' } : undefined,
+      blockFinalApprove ? { disabled: true } : undefined,
       isInstructor
         ? instructorApplicationStatus
         : isInstitution

@@ -17,12 +17,15 @@ import {
   clearRegistrationOperationalFormDrafts,
   collectOperationalOverlayForCatalogId,
   collectSelectedRecruitOverlaysForProgram,
+  createSeedDraftForOperationalCatalogId,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   listRegistrationOperationalFormDraftStorageKeys,
+  mergeOperationalOverlayForPersist,
   persistRegistrationOperationalOverlaysToLocal,
   loadOperationalFormDraftForProgram,
   resetOperationalOverlayForCatalogId,
   resolveOperationalDraftStorageKey,
+  stripEphemeralRecruitOverlayMedia,
 } from './registration-operational-form-drafts'
 import {
   peekApplicantRecruitInstitutionOverlayRecord,
@@ -314,6 +317,57 @@ describe('registration operational draft-owned helpers', () => {
     ).toBe('typed 강사')
   })
 
+  it('임시저장 overlay는 시드 썸네일·blob을 버리고 live fileObjectId를 남긴다', () => {
+    const saved = {
+      'recruit.inquiryContact': '담당',
+      'recruit.detailInfo.thumbFileObjectId': 50,
+      'recruit.detailInfo.thumbFileName': 'seed.png',
+      'recruit.detailInfo.thumbObjectUrl': 'blob:http://localhost/seed',
+      'recruit.detailInfo.thumbContentUrl': '/api/admin/files/50/content',
+    }
+    const live = {
+      'recruit.inquiryContact': '담당',
+      'recruit.detailInfo.programDescription': '설명',
+      'recruit.detailInfo.thumbFileObjectId': 100,
+      'recruit.detailInfo.thumbFileName': 'mine.png',
+      'recruit.detailInfo.thumbContentUrl': '/api/admin/files/100/content',
+    }
+    const merged = mergeOperationalOverlayForPersist(saved, live, ['recruit.detailInfo'])
+    expect(merged['recruit.detailInfo.thumbFileObjectId']).toBe(100)
+    expect(merged['recruit.detailInfo.thumbFileName']).toBe('mine.png')
+    expect(merged['recruit.detailInfo.thumbContentUrl']).toBe('/api/admin/files/100/content')
+    expect(merged['recruit.detailInfo.thumbObjectUrl']).toBeUndefined()
+    expect(merged['recruit.inquiryContact']).toBe('담당')
+    expect(JSON.stringify(merged)).not.toContain('blob:')
+  })
+
+  it('live에 썸네일이 없으면 저장본 시드 미디어를 카탈로그 prefix에서 제거한다', () => {
+    const merged = mergeOperationalOverlayForPersist(
+      {
+        'recruit.individual.inquiryContact': '개인',
+        'recruit.detailInfo.thumbFileObjectId': 50,
+        'recruit.detailInfo.thumbFileName': 'seed.png',
+      },
+      { 'recruit.individual.inquiryContact': '개인' },
+      ['recruit.individual', 'recruit.detailInfo']
+    )
+    expect(merged['recruit.detailInfo.thumbFileObjectId']).toBeUndefined()
+    expect(merged['recruit.detailInfo.thumbFileName']).toBeUndefined()
+    expect(merged['recruit.individual.inquiryContact']).toBe('개인')
+  })
+
+  it('stripEphemeralRecruitOverlayMedia는 blob 미리보기만 뺀다', () => {
+    expect(
+      stripEphemeralRecruitOverlayMedia({
+        'recruit.detailInfo.thumbFileObjectId': 9,
+        'recruit.detailInfo.thumbObjectUrl': 'blob:http://localhost/x',
+        'recruit.detailInfo.thumbContentUrl': 'blob:http://localhost/x',
+      })
+    ).toEqual({
+      'recruit.detailInfo.thumbFileObjectId': 9,
+    })
+  })
+
   it('임시저장 시 registration-general settingsJson을 overlay 재기록으로 덮지 않는다', async () => {
     setRegistrationStepTemplateSelection('GENERAL', 'program', 'registration-general')
     loadRegistrationWizardFormDraft.mockImplementation(
@@ -341,5 +395,47 @@ describe('registration operational draft-owned helpers', () => {
         call => (call[0] as { templateCode?: string } | undefined)?.templateCode
       )
     ).not.toContain('registration-general')
+  })
+
+  it('임시저장은 저장본 시드 썸네일 대신 live 업로드 fileObjectId를 기록한다', async () => {
+    const persisted = new Map<string, Record<string, unknown> | undefined>()
+    loadRegistrationWizardFormDraft.mockImplementation(
+      async (args: { templateCode: string }) => {
+        if (args.templateCode === 'recruitment-participant-school') {
+          return {
+            draft: createSeedDraftForOperationalCatalogId(args.templateCode),
+            overlay: {
+              'recruit.detailInfo.thumbFileObjectId': 50,
+              'recruit.detailInfo.thumbFileName': 'seed.png',
+              'recruit.detailInfo.thumbObjectUrl': 'blob:http://localhost/seed',
+            },
+          }
+        }
+        return {
+          draft: createSeedDraftForOperationalCatalogId(args.templateCode),
+          overlay: persisted.get(args.templateCode),
+        }
+      }
+    )
+    persistRegistrationWizardFormDraft.mockImplementation(
+      async (args: { templateCode: string; overlay?: Record<string, unknown> }) => {
+        persisted.set(args.templateCode, args.overlay)
+      }
+    )
+
+    setOperationalOverlayScope('recruitment-participant-school')
+    applyOperationalOverlayForCatalogId('recruitment-participant-school', {
+      'recruit.detailInfo.thumbFileObjectId': 100,
+      'recruit.detailInfo.thumbFileName': 'mine.png',
+      'recruit.detailInfo.thumbContentUrl': '/api/admin/files/100/content',
+    })
+
+    await persistRegistrationOperationalOverlaysToLocal('GENERAL', 'general')
+
+    const overlay = persisted.get('recruitment-participant-school')
+    expect(overlay?.['recruit.detailInfo.thumbFileObjectId']).toBe(100)
+    expect(overlay?.['recruit.detailInfo.thumbFileName']).toBe('mine.png')
+    expect(overlay?.['recruit.detailInfo.thumbObjectUrl']).toBeUndefined()
+    expect(JSON.stringify(overlay)).not.toContain('blob:')
   })
 })

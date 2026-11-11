@@ -138,7 +138,8 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   institutionName: string
   /** 강의일 (ISO YYYY-MM-DD) */
   lectureDate: string
-  sessionOrdinal: number
+  /** 일정 회차 번호(`session_no`). 없으면(사전교육 등) null — 0회차로 만들지 않는다. */
+  sessionOrdinal: number | null
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
   /** 일괄 확인 시 선택한 강사비 지급 예정일 (ISO YYYY-MM-DD) */
@@ -178,7 +179,8 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   programName: string
   institutionName: string
   lectureDate: string
-  sessionOrdinal: number
+  /** 일정 회차 번호(`session_no`). 없으면(사전교육 등) null — 0회차로 만들지 않는다. */
+  sessionOrdinal: number | null
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
   /** 일괄 확인 시 선택한 강사비 지급 예정일 (ISO YYYY-MM-DD) */
@@ -228,6 +230,11 @@ export interface PaymentOrderCalculationStatementProgramBasicInfo {
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
+  /**
+   * 지급조서 「교육 진행 차시」 = 인정 차시(`SettlementFrontendResponse.recognizedSessionCount`, BE N5).
+   * 없으면 null — 진행 회차·회차 번호로 대체하지 않는다.
+   */
+  recognizedSessionCount?: number | null
 }
 
 /** 산출 내역서 모달 — 기본 정보(강사 맥락 `applicant-instructor-basic-info` 5열·2블록) */
@@ -266,6 +273,11 @@ export interface PaymentOrderCalculationStatementInstructorBasicInfo {
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
+  /**
+   * 지급조서 「교육 진행 차시」 = 인정 차시(`SettlementFrontendResponse.recognizedSessionCount`, BE N5).
+   * 없으면 null — 진행 회차·회차 번호로 대체하지 않는다.
+   */
+  recognizedSessionCount?: number | null
 }
 
 export interface PaymentOrderCalculationStatementLine {

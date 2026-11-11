@@ -7,6 +7,7 @@ import { mapLectureReportDtoToInstructorRow } from '@/features/program/general/a
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import type { Program } from '@/types/domain'
 
 export type { ParticipatingInstructorLectureReportRow }
 
@@ -14,6 +15,8 @@ export type UseProgramLectureReportsOptions = {
   /** 참여 강사 상세 — 해당 강사 행만 (서버 미지원 시 FE 필터) */
   instructorMemberId?: number | null
   instructor?: ParticipatingInstructorRow | null
+  /** 일정 라벨 교육 구조 분기(일정형=세부 일정명, 단일 회차=차시 수) */
+  program?: Program | null
 }
 
 /**
@@ -34,6 +37,7 @@ export function useProgramLectureReports(
     options?.instructorMemberId != null && Number.isFinite(options.instructorMemberId)
       ? options.instructorMemberId
       : undefined
+  const program = options?.program ?? null
 
   const query = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.lectureReports(
@@ -57,7 +61,7 @@ export function useProgramLectureReports(
       .flatMap(page =>
         page.rows.map((item, index) => ({ item, index: page.page * page.size + index }))
       )
-      .map(({ item, index }) => mapLectureReportDtoToInstructorRow(item, index))
+      .map(({ item, index }) => mapLectureReportDtoToInstructorRow(item, index, program))
       .filter((row): row is ParticipatingInstructorLectureReportRow => row != null)
 
     // OpenAPI list에 instructorMemberId 쿼리가 보장되지 않음 → 필드가 있으면 FE 필터
@@ -71,7 +75,7 @@ export function useProgramLectureReports(
         : mapped
 
     return filtered.map((row, index) => ({ ...row, no: index + 1 }))
-  }, [instructorMemberId, query.data, remoteEnabled])
+  }, [instructorMemberId, program, query.data, remoteEnabled])
 
   const rows = remoteRows
 

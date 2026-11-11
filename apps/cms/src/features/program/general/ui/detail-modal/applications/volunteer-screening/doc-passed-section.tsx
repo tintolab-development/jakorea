@@ -50,9 +50,12 @@ export function GeneralVolunteerDocPassedSection({
     [subjectKind]
   )
   const listTitle = screeningDocPassedListTitle(subjectKind)
-  /** 봉사자 시안(07-1·07-2) 카피 — 개인형 참여자는 기존 문구 유지 */
+  /**
+   * 활동 포기 팝업만 봉사자 전용(일정 기반 포기). 툴바·건수·캘린더 카드는
+   * 개인 시안 02-1·02-2(4512:76565·4512:99037)도 봉사자 시안 07-1·07-2와 같다.
+   */
   const volunteerCopy = subjectKind === 'volunteer'
-  /** 봉사자 캘린더 우측 카드 체크 — 선택 시 엑셀은 선택 행만, 없으면 전체 */
+  /** 캘린더 우측 카드 체크 — 선택 시 엑셀은 선택 행만, 없으면 전체 */
   const [calendarSelectedKeys, setCalendarSelectedKeys] = useState<Key[]>([])
   const {
     list,
@@ -208,7 +211,7 @@ export function GeneralVolunteerDocPassedSection({
         variant="secondary"
         icon={<ButtonCalendarIcon />}
         onClick={handleViewCalendar} >
-        {volunteerCopy ? '캘린더 뷰 보기' : '캘린더 뷰로 보기'}
+        캘린더 뷰 보기
       </FilterTableToolbarButton>
     ) : (
       <FilterTableToolbarButton
@@ -216,7 +219,7 @@ export function GeneralVolunteerDocPassedSection({
         variant="secondary"
         icon={<ButtonListIcon />}
         onClick={handleViewList} >
-        {volunteerCopy ? '리스트 뷰 보기' : '리스트 뷰로 보기'}
+        리스트 뷰 보기
       </FilterTableToolbarButton>
     )
 
@@ -284,15 +287,13 @@ export function GeneralVolunteerDocPassedSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title={listTitle}
-        description={
-          volunteerCopy ? `총 ${count.toLocaleString()}건` : `${count.toLocaleString()}건`
-        }
+        description={`총 ${count.toLocaleString()}건`}
         actions={viewToggleButton}
         excelExport={{
           accessLog: { downloadKind: 'PROGRAM_SCREENING_DOC_PASSED_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
-          ...(volunteerCopy && viewMode === 'calendar' && calendarSelectedKeys.length > 0
+          ...(viewMode === 'calendar' && calendarSelectedKeys.length > 0
             ? { selectedRowKeys: calendarSelectedKeys }
             : {}),
         }}
@@ -324,7 +325,7 @@ export function GeneralVolunteerDocPassedSection({
           <div className="general-volunteer-doc-passed__calendar-container">
             <GeneralVolunteerDocPassedCalendarView
               events={calendarEvents}
-              cardPreset={volunteerCopy ? 'volunteer' : 'default'}
+              cardPreset="volunteer"
               selectedRowKeys={calendarSelectedKeys}
               onSelectionChange={setCalendarSelectedKeys}
               onItemClick={openApplicantDetail}

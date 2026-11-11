@@ -28,7 +28,8 @@ import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 async function fetchAllLectureReportRows(
   programId: string,
-  instructorMemberId?: number
+  instructorMemberId?: number,
+  program?: Program | null
 ): Promise<ParticipatingInstructorLectureReportRow[]> {
   const dtos: unknown[] = []
   let page = 0
@@ -42,7 +43,7 @@ async function fetchAllLectureReportRows(
   }
 
   const mapped = dtos
-    .map((item, index) => mapLectureReportDtoToInstructorRow(item, index))
+    .map((item, index) => mapLectureReportDtoToInstructorRow(item, index, program))
     .filter((row): row is ParticipatingInstructorLectureReportRow => row != null)
 
   const filtered =
@@ -193,7 +194,8 @@ export function useLectureReportBulkPdfExport(options: {
     try {
       const allRows = await fetchAllLectureReportRows(
         options.programId,
-        options.instructorMemberId
+        options.instructorMemberId,
+        options.program
       )
       const targets = filterLectureReportBulkPdfRows(allRows)
       if (targets.length === 0) {
@@ -213,6 +215,7 @@ export function useLectureReportBulkPdfExport(options: {
     bulkDownloading,
     canBulkDownloadFiles,
     options.instructorMemberId,
+    options.program,
     options.programId,
     options.remoteEnabled,
     options.unavailableContext,

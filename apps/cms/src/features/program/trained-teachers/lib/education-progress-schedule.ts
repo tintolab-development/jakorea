@@ -1,13 +1,5 @@
 import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
-import type { GeneralEducationScheduleShape } from '@/features/program/general/lib/participating-school-session-display'
-
-/** TT 참여기관 상세 교육 진행 일정 — 일시 | 1차시. 지망은 행 라벨만. */
-export const TRAINED_TEACHER_EDUCATION_PROGRESS_SHAPE: GeneralEducationScheduleShape = {
-  educationStructure: 'curriculum',
-  sessionRound: 'multi',
-  educationScheduleMode: 'date',
-}
 
 export type TrainedTeacherEducationProgressRow = {
   rowLabel: string
@@ -107,8 +99,21 @@ export function resolveTrainedTeacherEducationProgressBadge(
   return null
 }
 
+/** 같은 날 일정들의 진행 상태 — 모두 같으면 그 값, 진행 중·완료가 섞이면 진행 중, 그 외 첫 값 */
+function combineDayDeliveryStatus(statuses: readonly string[]): string {
+  const known = statuses.filter(Boolean)
+  if (known.length === 0) return ''
+  const unique = [...new Set(known)]
+  if (unique.length === 1) return unique[0]!
+  if (unique.includes('IN_PROGRESS') || unique.includes('COMPLETED')) return 'IN_PROGRESS'
+  return known[0]!
+}
+
 /**
- * 상세 GET educationSchedules[] 한 건 = 운영 일정 1행. 서버 배열 순서를 유지한다.
+ * 상세 GET educationSchedules[] → 교육 진행 일정 행. 서버 배열 순서를 유지한다.
+ * TT 차시 = 그날 수업 개수이고 운영 일정 1건 = 1차시(1시간 슬롯)이므로, 같은 날 일정을 한 행으로 묶어
+ * `일시(첫 시작 ~ 마지막 종료) | N차시`로 표시한다(CMS-FUNC-0072 — 2차시 신청은 일정 두 건을 한 줄로).
+ * 출석 조회는 묶인 일정 id 전부(`attendanceScheduleIds`)를 유지한다.
  * preferredScheduleBlocks로 행을 채우거나 MATCHED 지망을 자르지 않는다.
  * 지망 라벨은 MATCHED preferredScheduleBlocks.scheduleId → preferenceRank 룩업만.
  */
@@ -121,20 +126,47 @@ export function buildTrainedTeacherEducationProgressRows(
 
   const matchedRank = matchedPreferredRankByScheduleId(preferredBlocks)
 
-  return source.map(session => {
-    const scheduleId = sessionScheduleId(session)
-    const preferenceRank = scheduleId != null ? matchedRank.get(scheduleId) : undefined
-    const { start, end } = splitTimeRange(session.timeRange ?? '')
-    const status = (session.deliveryScheduleStatus ?? '').trim().toUpperCase()
+  const groups: ParticipatingSchoolSession[][] = []
+  const groupByDate = new Map<string, ParticipatingSchoolSession[]>()
+  for (const session of source) {
+    const dateKey = (session.date ?? '').trim()
+    const existing = dateKey ? groupByDate.get(dateKey) : undefined
+    if (existing) {
+      existing.push(session)
+      continue
+    }
+    const group = [session]
+    groups.push(group)
+    if (dateKey) groupByDate.set(dateKey, group)
+  }
+
+  return groups.map(group => {
+    const first = group[0]!
+    const last = group[group.length - 1]!
+    const scheduleIds = group
+      .map(sessionScheduleId)
+      .filter((id): id is number => id != null)
+    const preferenceRank = scheduleIds
+      .map(id => matchedRank.get(id))
+      .find((rank): rank is number => rank != null)
+    const ranges = group.map(session => splitTimeRange(session.timeRange ?? ''))
+    const starts = ranges.map(range => range.start).filter(Boolean).sort()
+    const ends = ranges.map(range => range.end).filter(Boolean).sort()
+    const start = starts[0] ?? ''
+    const end = ends[ends.length - 1] ?? ''
+    const status = combineDayDeliveryStatus(
+      group.map(session => (session.deliveryScheduleStatus ?? '').trim().toUpperCase())
+    )
 
     return {
       rowLabel: preferenceRank != null ? `${preferenceRank}지망` : '',
-      attendanceScheduleIds: scheduleId != null ? [scheduleId] : [],
+      attendanceScheduleIds: scheduleIds,
       session: {
-        ...session,
+        ...first,
         classNum: '',
-        duration: '1차시',
-        timeRange: start && end ? `${start}~${end}` : session.timeRange,
+        duration: `${group.length}차시`,
+        timeRange: start && end ? `${start}~${end}` : first.timeRange,
+        endAt: last.endAt ?? first.endAt ?? null,
         ...(status ? { deliveryScheduleStatus: status } : { deliveryScheduleStatus: undefined }),
         status: undefined,
       },

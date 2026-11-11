@@ -27,6 +27,14 @@ export function PreferredSchedules({ schedules }: PreferredSchedulesProps) {
               className={styles.scheduleValue}
               partClassName={styles.schedulePart}
             />
+            {schedule.sessionLines?.map(line => (
+              <PipeSeparatedInlineText
+                key={line}
+                value={line}
+                className={styles.scheduleValue}
+                partClassName={styles.schedulePart}
+              />
+            ))}
             {schedule.statusLabel ? (
               <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
                 {schedule.statusLabel}

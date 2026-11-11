@@ -53,6 +53,7 @@ describe('UJAT 프로그램 상세 URL 계약', () => {
     expect(isUjatEducationProgressInstitutionDetailTab('application')).toBe(true)
     expect(isUjatEducationProgressInstitutionDetailTab('unknown')).toBe(false)
     expect(isUjatEducationProgressVolunteerDetailTab('assignment_progress')).toBe(true)
+    expect(isUjatEducationProgressVolunteerDetailTab('settlement')).toBe(true)
     expect(isUjatEducationProgressVolunteerDetailTab('unknown')).toBe(false)
     expect(isUjatVolunteerApplicantDetailTab('vh2_interview2')).toBe(true)
     expect(isUjatVolunteerApplicantDetailTab('interview2')).toBe(false)

@@ -189,20 +189,40 @@ function expandSchoolSessionsToWaitingRows(
   })
 }
 
-/** 배정 대기 기관 목록 — 기관+일정별 행 분리, 배정 완료 건 비노출 */
+/**
+ * 시작된(startAt ≤ now) 배정 후보 회차가 있는 기관인지.
+ * BE `PUT …/assigned-organizations`는 기관의 회차를 한꺼번에 배정하고, 시작된 회차가 하나라도 있으면
+ * 409 `VOLUNTEER_ASSIGNMENT_STARTED_USE_GIVE_UP`로 전체를 거절한다 → 배정 대기 목록에서 기관째 뺀다.
+ */
+export function hasStartedVolunteerAssignmentSession(
+  school: Pick<ParticipatingSchoolRow, 'sessions'>,
+  now: Date = new Date()
+): boolean {
+  return getParticipatingSchoolAssignmentSessions(school).some(session => {
+    const startAt = session.startAt?.trim()
+    if (!startAt) return false
+    const start = new Date(startAt).getTime()
+    return Number.isFinite(start) && start <= now.getTime()
+  })
+}
+
+/** 배정 대기 기관 목록 — 기관+일정별 행 분리, 배정 완료 건·시작된 회차가 있는 기관 비노출 */
 export function buildVolunteerWaitingInstitutionRows(
   volunteer: ParticipatingVolunteerRow,
   schoolRows: ParticipatingSchoolRow[],
   volunteerList: ParticipatingVolunteerRow[],
   assignedRowIds: Set<string>,
-  program?: Program
+  program?: Program,
+  now: Date = new Date()
 ): VolunteerWaitingInstitutionRow[] {
   const schoolPool = resolveVolunteerAssignmentSchoolPool(schoolRows)
   const assignedSchoolIds = new Set(
     [...assignedRowIds].map(id => id.split('__assigned')[0] ?? id)
   )
   const occupiedSlots = buildOccupiedVolunteerScheduleSlots(volunteer)
-  const candidateSchools = schoolPool.filter(s => !assignedSchoolIds.has(s.id))
+  const candidateSchools = schoolPool.filter(
+    s => !assignedSchoolIds.has(s.id) && !hasStartedVolunteerAssignmentSession(s, now)
+  )
 
   const sorted = [...candidateSchools].sort(
     (a, b) => hash(a.id + volunteer.id + 'w') - hash(b.id + volunteer.id + 'w')

@@ -91,11 +91,16 @@ export async function downloadBlob(
 export async function downloadExcel(
   buffer: ArrayBuffer,
   filename: string,
-  options?: Pick<DownloadBlobOptions, 'accessLog'>
+  options?: Pick<DownloadBlobOptions, 'accessLog' | 'skipAccessLog'>
 ): Promise<void> {
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
+  if (options?.skipAccessLog) {
+    // 서버가 이미 이력을 남긴 다운로드 — 클라이언트 이력을 중복으로 남기지 않는다.
+    await downloadBlob(blob, filename, { skipAccessLog: true })
+    return
+  }
   if (options?.accessLog) {
     await downloadBlob(blob, filename, { accessLog: options.accessLog })
     return

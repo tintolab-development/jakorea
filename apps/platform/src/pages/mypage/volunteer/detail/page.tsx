@@ -543,6 +543,9 @@ export function MypageVolunteerDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           operationEndAt={program.operatingPeriodEnd}
+          // 봉사자 일정별 영수증 정산 API 분기(resolveScheduleSettlementAudience)에 programType이 필요하다
+          programType={program.programType ?? application.programType}
+          detailCase={program.detailCase}
           lastParticipatedSession={lastParticipatedSession}
         />
       )

@@ -9,6 +9,11 @@ import '@/features/program/shared/ui/detail-modal/components/instructor-bulk-app
 export type GeneralVolunteerApplicationApproveModalProps = {
   open: boolean
   volunteerName: string
+  /**
+   * 「일정 및 기관 배정은 승인 후 … 개별 설정」 안내. 기본 true.
+   * 개인 프로그램은 승인 다음 단계에서 교육 배정 안내가 이어져 false.
+   */
+  showAssignCallout?: boolean
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
@@ -64,6 +69,7 @@ function VolunteerApplicationBulkApproveInfoCallout() {
 export function GeneralVolunteerApplicationApproveModal({
   open,
   volunteerName,
+  showAssignCallout = true,
   onCancel,
   onConfirm,
   zIndex,
@@ -76,7 +82,7 @@ export function GeneralVolunteerApplicationApproveModal({
       className="instructor-bulk-approve-modal"
       title={copy.title}
       message={copy.message}
-      infoCallout={<VolunteerApplicationBulkApproveInfoCallout />}
+      infoCallout={showAssignCallout ? <VolunteerApplicationBulkApproveInfoCallout /> : undefined}
       confirmLabel="승인"
       onCancel={onCancel}
       onConfirm={onConfirm}

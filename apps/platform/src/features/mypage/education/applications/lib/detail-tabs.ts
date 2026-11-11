@@ -156,6 +156,8 @@ function appendSurveySatisfactionTabs(
     items.push({ key: 'survey', label: '설문조사' })
   }
   if (isGeminiTraining(options)) return
+  // 봉사자 만족도조사는 UJAT에서만 실시한다 — 일반(기관형·개인형) 봉사현황은 탭을 두지 않는다
+  if (options.detailCase === 'volunteer') return
   if (
     isTrainedTeacher(options)
       ? options.satisfactionConfigured === true

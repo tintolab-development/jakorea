@@ -43,7 +43,7 @@ export interface ProgramFormBindingResponse {
   availableActions?: string[];
   /** 대상별 예상 응답 인원. submittedCount(실제 제출 수)와 별개다. 대상을 확정할 수 없으면 null. 0은 그 대상 참여 인원이 0명일 때만. */
   expectedRespondentCount?: number | null;
-  /** SATISFACTION만. 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다. */
+  /** SATISFACTION: 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다. LECTURE_EVALUATION: progressStatus=FINISHED이고 호출 관리자에게 해당 프로그램 FILE_DOWNLOAD가 있을 때만 true (프로그램 담당자 Viewer는 false). 그 외 formType은 null. */
   resultDownloadable?: boolean | null;
   /** SATISFACTION만. 사용자 표시용 마감 시각(23:59:59 KST). 저장값은 exclusive next-day 00:00일 수 있다. */
   displayDeadlineAt?: string | null;

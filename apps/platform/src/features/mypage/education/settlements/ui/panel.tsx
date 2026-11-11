@@ -47,8 +47,10 @@ type EducationSettlementPanelProps = {
   applicationId: string
   applicationType?: ProgramApplicationType | null
   lastParticipatedSession?: number
-  /** 프로그램 사업 운영 종료일. 없으면 제출 마감일을 표시하지 않는다. */
+  /** 프로그램 운영 기간 종료일. 강사 지급조서는 제출 마감일로, 영수증은 사업 운영 종료일로 쓴다. 없으면 제출 마감일을 표시하지 않는다. */
   operationEndAt?: string | null
+  /** 강사 지급조서 사업 운영 종료일(businessEndDate). 지나면 작성·재신청을 막는다. */
+  businessEndAt?: string | null
   programType?: string | null
   detailCase?: string | null
 }
@@ -59,6 +61,7 @@ export function EducationSettlementPanel({
   applicationType,
   lastParticipatedSession,
   operationEndAt,
+  businessEndAt,
   programType,
   detailCase,
 }: EducationSettlementPanelProps) {
@@ -72,7 +75,7 @@ export function EducationSettlementPanel({
     applicationType,
     applicationId,
     programId,
-    { operationEndAt, programType, enabled: !isGemini },
+    { operationEndAt, businessEndAt, programType, enabled: !isGemini },
   )
   const geminiSettlements = useGeminiSettlementTabQuery(applicationType, applicationId, isGemini)
   const settlementSearchParams = useMemo(

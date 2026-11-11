@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '@/shared/components/calendar'
+import type { Program } from '@/types/domain'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { CalendarApprovalStatusBadge } from '@/shared/components/calendar/ui/item-list/calendar-approval-status-badge'
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'
@@ -47,22 +48,28 @@ type InstitutionCalendarPreviewTooltipParams = {
   colorMap: Map<string | number, ScheduleColorPair>
 }
 
+/** 일반 프로그램 — 일정 라벨 교육 구조별(일정형=일정명, 단일=N차시, 복수=N회차). 없으면 기존 표기 */
+type InstitutionCalendarPreviewTooltipOptions = { program?: Program | null }
+
 export function renderGeneralInstitutionCalendarPreviewTooltipContent(
-  params: InstitutionCalendarPreviewTooltipParams
+  params: InstitutionCalendarPreviewTooltipParams,
+  options: InstitutionCalendarPreviewTooltipOptions = {}
 ): ReactNode {
-  return renderInstitutionCalendarPreviewTooltipContent(params, true)
+  return renderInstitutionCalendarPreviewTooltipContent(params, true, options)
 }
 
 /** 일반(기관형) 기관 신청 — 시안 1141:236526: 기관명 + 메타 한 줄, 승인 상태 뱃지 없음 */
 export function renderGeneralInstitutionCalendarPreviewTooltipContentWithoutBadge(
-  params: InstitutionCalendarPreviewTooltipParams
+  params: InstitutionCalendarPreviewTooltipParams,
+  options: InstitutionCalendarPreviewTooltipOptions = {}
 ): ReactNode {
-  return renderInstitutionCalendarPreviewTooltipContent(params, false)
+  return renderInstitutionCalendarPreviewTooltipContent(params, false, options)
 }
 
 function renderInstitutionCalendarPreviewTooltipContent(
   { events }: InstitutionCalendarPreviewTooltipParams,
-  showApprovalStatusBadge: boolean
+  showApprovalStatusBadge: boolean,
+  options: InstitutionCalendarPreviewTooltipOptions = {}
 ): ReactNode {
   const seenInstitutionIds = new Set<string>()
 
@@ -84,7 +91,8 @@ function renderInstitutionCalendarPreviewTooltipContent(
         const metaLine = formatInstitutionCalendarHoverMetaLine(
           institution,
           sessions,
-          institution.desiredEducationPeriod
+          institution.desiredEducationPeriod,
+          options.program
         )
         const approvalStatus = approvalStatusModifier(
           institution.approvalStatus as ApprovalStatusKey | undefined

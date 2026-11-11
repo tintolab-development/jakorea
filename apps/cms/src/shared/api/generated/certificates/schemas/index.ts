@@ -11,4 +11,5 @@ export * from './certificateDownloadLogResponse';
 export * from './certificateSerialAllocateRequest';
 export * from './certificateSerialAllocateRequestCertificateType';
 export * from './certificateSerialAllocateRequestIssuanceSource';
+export * from './certificateSerialAllocateRequestIssueReason';
 export * from './certificateSerialAllocateResponse';

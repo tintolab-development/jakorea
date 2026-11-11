@@ -22,8 +22,17 @@ export const MAIL_PREVIEW_SAMPLE_RECIPIENT = {
   extraCount: 914,
 } as const
 
+/**
+ * 회차·차시를 구분해 보여야 하는 변수만 예시값으로 바꾼다(BE N2). 그 외 변수는 토큰 그대로.
+ * 실제 값은 발송 시 BE가 치환한다.
+ */
+export const MAIL_PREVIEW_SAMPLE_VALUES: Readonly<Record<string, string>> = {
+  '교육 진행 차시': '2차시',
+  '교육 진행 회차': '3회차',
+}
+
 export function mailPreviewSampleValue(label: string): string {
-  return `#{${label}}`
+  return MAIL_PREVIEW_SAMPLE_VALUES[label.trim()] ?? `#{${label}}`
 }
 
 export function applyMailPreviewTokens(text: string): string {

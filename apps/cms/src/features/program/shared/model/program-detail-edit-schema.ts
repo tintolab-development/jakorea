@@ -332,6 +332,11 @@ const programDetailEditSchemaBase = z.object({
   remarks: z.string().optional(),
   /** 강사 모집 비고 (강사 행 remarks) — 기타사항 otherNotes(otherMatters)와 분리 */
   instructorRecruitmentRemarks: z.string().optional(),
+  /**
+   * 일반 프로그램 강사 모집 비고 — 「해당 없음」. 강사 모집 행 `remarksNotApplicable`이 정본.
+   * 생략 시 저장 payload에 넣지 않는다(1사1교·UJAT·교육받은 교사 기존 동작).
+   */
+  instructorRecruitmentNotesNotApplicable: z.enum(['applicable', 'not_applicable']).optional(),
   /** 교육 대상 상세 (BE educationTargetDetail) — district 와 분리 */
   educationTargetDetail: z.string().optional(),
   /** 참여자 모집 문의처 기관명 (nested contactOrganizationName) */

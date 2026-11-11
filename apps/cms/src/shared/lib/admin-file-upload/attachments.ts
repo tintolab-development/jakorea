@@ -1,10 +1,16 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  AxiosError,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 import type { FileAttachmentCreateRequest } from '@/shared/api/generated/posts/schemas/fileAttachmentCreateRequest'
 import type { FileAttachmentResponse } from '@/shared/api/generated/posts/schemas/fileAttachmentResponse'
 import type { FileDownloadResolveResponse } from '@/shared/api/generated/posts/schemas/fileDownloadResolveResponse'
 import type { FilePageResponseFileAttachmentResponse } from '@/shared/api/generated/posts/schemas/filePageResponseFileAttachmentResponse'
 import { customInstance } from '@/shared/api/orval-mutator'
-import { downloadBlob } from '@/shared/utils/file-download'
+import { axiosClient } from '@/shared/instance/axios-instance'
+import { downloadBlob, ruleFileNameFromContentDisposition } from '@/shared/utils/file-download'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload/upload'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
@@ -313,6 +319,47 @@ export function isServerRecordedRelayDownloadUrl(downloadUrl: string): boolean {
   }
 }
 
+/** 영수증 relay: 성공은 바이너리, 실패(403/409)는 ApiResponse JSON. */
+const RECEIPT_RELAY_ACCEPT = 'application/octet-stream, application/json'
+
+function readContentDisposition(headers: unknown): string | null {
+  if (!headers || typeof headers !== 'object') return null
+  for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
+    if (key.toLowerCase() !== 'content-disposition') continue
+    return typeof value === 'string' && value.trim() ? value : null
+  }
+  return null
+}
+
+/**
+ * 지출 증빙 relay 주소를 받는다. 토큰이 인증이라 Bearer 없이 보낸다.
+ * 실패 응답은 JSON 본문을 복원한 axios 오류로 던져 화면이 서버 안내(error.message)를 보여 주게 한다.
+ */
+async function readReceiptRelayDownload(
+  downloadUrl: string,
+  headers: Record<string, string>
+): Promise<{ blob: Blob; contentDisposition: string | null }> {
+  const url = toSameOriginApiPath(downloadUrl, getApiBaseUrl()) ?? downloadUrl
+  let response: AxiosResponse<unknown>
+  try {
+    response = await axiosClient.request<unknown>({
+      url,
+      method: 'GET',
+      responseType: 'blob',
+      headers: { ...headers, Accept: RECEIPT_RELAY_ACCEPT },
+      skipGlobalErrorAlert: true,
+      skipAuth: true,
+    } as AxiosRequestConfig & { skipGlobalErrorAlert: boolean; skipAuth: boolean })
+  } catch (error) {
+    throw await hydrateAxiosBlobError(error)
+  }
+  const blob = response.data
+  if (!(blob instanceof Blob) || blob.size < 1 || blob.type.includes('json')) {
+    throw new Error('첨부파일 다운로드에 실패했습니다.')
+  }
+  return { blob, contentDisposition: readContentDisposition(response.headers) }
+}
+
 const DOWNLOAD_EXTENSION_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -346,6 +393,16 @@ export async function downloadAdminFile(input: {
   }
   const fileName = input.fileName.trim() || `첨부파일-${input.fileObjectId}`
   const headers = headerRecord(resolved.requiredHeaders)
+  if (isServerRecordedRelayDownloadUrl(downloadUrl)) {
+    // 서버가 DOWNLOAD_COMPLETED 이력을 남기고 헤더에 규칙 이름을 준다. 헤더가 없을 때만 원본 이름에 규칙을 적용한다.
+    const relay = await readReceiptRelayDownload(downloadUrl, headers)
+    const saveName = ruleFileNameFromContentDisposition(
+      relay.contentDisposition,
+      withDownloadExtension(fileName, relay.blob.type)
+    )
+    await downloadBlob(relay.blob, saveName, { skipAccessLog: true })
+    return
+  }
   let blob: Blob
   try {
     blob = await readDownloadBlob(downloadUrl, headers)

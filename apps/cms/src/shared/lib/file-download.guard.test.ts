@@ -121,6 +121,17 @@ describe('downloadBlob / downloadExcel access log', () => {
     expect(saveAs).toHaveBeenCalledTimes(1)
   })
 
+  it('downloadExcel도 skipAccessLog면 클라이언트 이력 없이 저장한다(서버 이력 1건)', async () => {
+    await downloadExcel(new ArrayBuffer(8), '[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx', {
+      skipAccessLog: true,
+    })
+    expect(listDownloadLogMemory()).toHaveLength(0)
+    expect(saveAs).toHaveBeenCalledWith(
+      expect.anything(),
+      '[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx'
+    )
+  })
+
   it('실 API 이력 기록 실패 시 파일을 저장하지 않는다', async () => {
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
     vi.mocked(postFileAccessLog).mockRejectedValueOnce(new Error('log failed'))

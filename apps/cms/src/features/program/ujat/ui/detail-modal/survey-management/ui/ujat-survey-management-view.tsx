@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -47,6 +48,7 @@ import {
   UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
   UJAT_LECTURE_EVAL_DOWNLOAD_MODAL_COPY,
   UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY,
+  UJAT_LECTURE_EVAL_RESPONSE_DELETE_COPY,
 } from '../lib/ujat-survey-copy'
 import type { UjatSurveyPollRawResponse } from '@/features/program/ujat/model/ujat-survey-poll'
 import {
@@ -59,7 +61,14 @@ import {
   validateLectureEvalFormDraft,
   type UjatLectureEvalTabKey,
 } from '../lib/ujat-lecture-eval-survey'
-import { parseLectureEvalFormResponseId } from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
+import {
+  applyLectureEvalAnswersToDraft,
+  canDownloadLectureEvalResults,
+  findOwnLectureEvalResponse,
+  parseOwnLectureEvalFormResponseId,
+} from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
+import { isLectureEvalStaleStateError } from '@/features/program/shared/lib/survey-management/lecture-eval-api-error'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   buildLectureEvalResultsPdfFileName,
   exportLectureEvalResultsPdf,
@@ -116,7 +125,7 @@ import {
   pickLastSurveyPollEducationSlot,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import { resolveUjatSurveyScheduleFieldFromOptions } from '../lib/ujat-survey-schedule-register'
-import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import { loadProgramSurveyFormEditForCreate } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { isSatisfactionPerScheduleWritingPeriodLocked } from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
@@ -132,6 +141,7 @@ import {
   createGeneralProgramSurveyShareLink,
   submitGeneralProgramFormResponse,
   updateGeneralProgramFormResponse,
+  deleteGeneralProgramFormResponse,
 } from '@/features/program/general/api/admin-general-programs-service'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { loadFormTemplateVersionDraftByVersionId } from '@/features/template/api/admin-form-templates-service'
@@ -186,6 +196,8 @@ export function UjatSurveyManagementView({
   const programId = program.id
   const displayProgram = program
   const queryClient = useQueryClient()
+  /** 강의평가 「내 응답」 판정 — 응답 `submittedByAdminId`와 비교 */
+  const adminAccountId = useAuthStore(state => state.user?.adminAccountId ?? null)
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
@@ -221,6 +233,8 @@ export function UjatSurveyManagementView({
   const [submittingSatisfactionSurvey, setSubmittingSatisfactionSurvey] = useState(false)
   const [satisfactionDeleteModalOpen, setSatisfactionDeleteModalOpen] = useState(false)
   const [satisfactionDeleteConfirmWord, setSatisfactionDeleteConfirmWord] = useState('')
+  const [lectureEvalDeleteModalOpen, setLectureEvalDeleteModalOpen] = useState(false)
+  const [lectureEvalDeleteConfirmWord, setLectureEvalDeleteConfirmWord] = useState('')
   const [satisfactionDownloadModalOpen, setSatisfactionDownloadModalOpen] = useState(false)
   const [downloadingSatisfactionResults, setDownloadingSatisfactionResults] = useState(false)
   const [shareToastOpen, setShareToastOpen] = useState(false)
@@ -245,6 +259,8 @@ export function UjatSurveyManagementView({
   const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<UjatLectureEvalTabKey>('eval')
   const [lectureEvalCreateModalOpen, setLectureEvalCreateModalOpen] = useState(false)
   const [lectureEvalIncompleteModalOpen, setLectureEvalIncompleteModalOpen] = useState(false)
+  const [lectureEvalResponseDeleteOpen, setLectureEvalResponseDeleteOpen] = useState(false)
+  const [deletingLectureEvalResponse, setDeletingLectureEvalResponse] = useState(false)
   const [selectedLectureEvalTemplateId, setSelectedLectureEvalTemplateId] = useState<string | null>(
     null
   )
@@ -577,13 +593,17 @@ export function UjatSurveyManagementView({
     remotePollSummaryCount,
   ])
 
+  // 종료 전 목록은 서버가 본인 응답만 준다. 종료 후에는 전체라서 submittedByAdminId로 내 응답을 고른다.
   useEffect(() => {
-    if (!lectureResponsesRemote) return
-    if (remoteLectureResponses && remoteLectureResponses.length > 0) {
-      setLectureEvalResponses(remoteLectureResponses)
-      setLectureEvalSubmitted(true)
-    }
-  }, [lectureResponsesRemote, remoteLectureResponses])
+    if (!lectureResponsesRemote || remoteLectureResponses == null) return
+    setLectureEvalResponses(remoteLectureResponses)
+    setLectureEvalSubmitted(findOwnLectureEvalResponse(remoteLectureResponses, adminAccountId) != null)
+  }, [adminAccountId, lectureResponsesRemote, remoteLectureResponses])
+
+  const ownLectureEvalResponse = useMemo(
+    () => findOwnLectureEvalResponse(lectureEvalResponses, adminAccountId),
+    [adminAccountId, lectureEvalResponses]
+  )
 
   const satisfactionAudienceTabs = useMemo(
     () => getSatisfactionAudienceTabsForSurveyTab(activeTab),
@@ -649,29 +669,22 @@ export function UjatSurveyManagementView({
           required: false,
           ...targetScopePayload,
         }
-        const result = await createBinding(payload)
-        if (!result.ok) {
-          await invalidateSurveyCaches()
-          void showAlert({ title: '등록 실패', content: result.message })
-          return
-        }
-        if (displayProgram != null && result.binding != null) {
-          const editLoad = await loadProgramSurveyFormEditAfterBinding(
-            String(displayProgram.id),
-            result.binding,
-            selectedSurveyTemplateId,
-            { schedules: surveyScheduleOptionsQuery.schedules }
-          )
-          setSurveyCreateModalOpen(false)
-          setSelectedSurveyScheduleValue(null)
-          if (editLoad.ok) {
-            setProgramFormEdit(editLoad.edit)
-          } else {
-            void showAlert({ title: '양식 편집', content: editLoad.message })
-          }
+        if (displayProgram == null) return
+        // 등록 버튼에서는 바인딩을 만들지 않는다. 에디터 「저장」 때 양식 게시 후 바인딩을 만든다.
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(displayProgram.id),
+          [payload],
+          selectedSurveyTemplateId,
+          createBinding,
+          { schedules: surveyScheduleOptionsQuery.schedules }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setSurveyCreateModalOpen(false)
+        setSelectedSurveyScheduleValue(null)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -697,7 +710,6 @@ export function UjatSurveyManagementView({
     classifiedBindings,
     createBinding,
     displayProgram,
-    invalidateSurveyCaches,
     registerScheduleOptions.length,
     registeredSurveys.length,
     resolveRegisterScheduleTarget,
@@ -893,38 +905,26 @@ export function UjatSurveyManagementView({
           startAtLocked: false,
           startImmediately: false,
         } as ProgramFormBindingRequest
-        const result = await createBinding(payload)
-        if (!result.ok) {
-          await invalidateSurveyCaches()
-          void showAlert({ title: '등록 실패', content: result.message })
-          return
-        }
-        if (displayProgram != null && result.binding != null) {
-          const editLoad = await loadProgramSurveyFormEditAfterBinding(
-            String(displayProgram.id),
-            {
-              ...result.binding,
-              formType: result.binding.formType ?? payload.formType,
-              targetScope: result.binding.targetScope ?? payload.targetScope,
-              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
-            },
-            selectedSatisfactionTemplateId,
-            {
-              schedules: surveyScheduleOptionsQuery.schedules,
-              windowDays: 7,
-              targetScope: result.binding.targetScope ?? payload.targetScope,
-              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
-            }
-          )
-          setSatisfactionCreateModalOpen(false)
-          if (editLoad.ok) {
-            setProgramFormEdit(editLoad.edit)
-          } else {
-            void showAlert({ title: '양식 편집', content: editLoad.message })
+        if (displayProgram == null) return
+        // 등록 버튼에서는 바인딩을 만들지 않는다. 에디터 「저장」 때 양식 게시 후 바인딩을 만든다.
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(displayProgram.id),
+          [payload],
+          selectedSatisfactionTemplateId,
+          createBinding,
+          {
+            schedules: surveyScheduleOptionsQuery.schedules,
+            windowDays: 7,
+            targetScope: payload.targetScope ?? undefined,
+            targetScopeId: payload.targetScopeId ?? undefined,
           }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setSatisfactionCreateModalOpen(false)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -950,7 +950,6 @@ export function UjatSurveyManagementView({
     activeSatisfactionAudience,
     createBinding,
     displayProgram,
-    invalidateSurveyCaches,
     resolveRegisterScheduleTarget,
     selectedSatisfactionTemplateId,
     showAlert,
@@ -997,6 +996,40 @@ export function UjatSurveyManagementView({
     setSatisfactionDeleteModalOpen(false)
     setSatisfactionDeleteConfirmWord('')
   }, [satisfactionDeleteConfirmWord, handleDeleteSatisfactionSurvey])
+
+  /** 강의평가 진행 전 — 등록된 매핑 삭제 (설문조사·만족도조사와 동일) */
+  const handleDeleteLectureEvalSurvey = useCallback(async () => {
+    if (!lectureEvalSurvey || lectureEvalSurvey.status !== 'before_start') return
+    if (surveysRemote && lectureEvalSurvey.bindingId) {
+      const result = await deleteBinding(lectureEvalSurvey.bindingId)
+      if (!result.ok) {
+        void showAlert({ title: '삭제 실패', content: result.message })
+      }
+      return
+    }
+    void showAlert({
+      title: '삭제 불가',
+      content: '강의평가 삭제는 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+    })
+  }, [deleteBinding, lectureEvalSurvey, showAlert, surveysRemote])
+
+  const handleOpenLectureEvalDeleteModal = useCallback(() => {
+    if (!lectureEvalSurvey || lectureEvalSurvey.status !== 'before_start') return
+    setLectureEvalDeleteConfirmWord('')
+    setLectureEvalDeleteModalOpen(true)
+  }, [lectureEvalSurvey])
+
+  const handleCloseLectureEvalDeleteModal = useCallback(() => {
+    setLectureEvalDeleteModalOpen(false)
+    setLectureEvalDeleteConfirmWord('')
+  }, [])
+
+  const handleConfirmLectureEvalDelete = useCallback(() => {
+    if (lectureEvalDeleteConfirmWord.trim() !== '삭제') return
+    void handleDeleteLectureEvalSurvey()
+    setLectureEvalDeleteModalOpen(false)
+    setLectureEvalDeleteConfirmWord('')
+  }, [handleDeleteLectureEvalSurvey, lectureEvalDeleteConfirmWord])
 
   const handleOpenSatisfactionTemplatePreview = useCallback(() => {
     if (!activeSatisfactionSurvey) return
@@ -1148,6 +1181,19 @@ export function UjatSurveyManagementView({
       })
   }, [lectureEvalSurvey])
 
+  // 답변 수정 — 내 응답을 폼에 채운다(일반 프로그램과 동일). 양식이 늦게 로드돼도 다시 채운다.
+  const lectureEvalDraftReady = lectureEvalFormDraft != null
+  useEffect(() => {
+    if (!lectureEvalSubmitted) return
+    const answers = ownLectureEvalResponse?.answers
+    if (answers == null || Object.keys(answers).length === 0) return
+    const current = lectureEvalDraftRef.current
+    if (current == null) return
+    const next = applyLectureEvalAnswersToDraft(current, answers)
+    lectureEvalDraftRef.current = next
+    setLectureEvalFormDraft(next)
+  }, [lectureEvalDraftReady, lectureEvalSubmitted, ownLectureEvalResponse])
+
   useEffect(() => {
     if (lectureEvalSurvey == null) {
       lectureEvalDraftRef.current = null
@@ -1208,13 +1254,22 @@ export function UjatSurveyManagementView({
           active: true,
           required: false,
         }
-        const result = await createBinding(payload)
-        if (!result.ok) {
-          await invalidateSurveyCaches()
-          void showAlert({ title: '등록 실패', content: result.message })
+        if (displayProgram == null) return
+        // 설문조사와 같이 에디터 「저장」 때 양식 게시 후 바인딩을 만든다(취소 시 미등록).
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(displayProgram.id),
+          [payload],
+          selectedLectureEvalTemplateId,
+          createBinding,
+          { schedules: surveyScheduleOptionsQuery.schedules }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setLectureEvalCreateModalOpen(false)
+        setSelectedSurveyScheduleValue(null)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -1238,10 +1293,11 @@ export function UjatSurveyManagementView({
     }
   }, [
     createBinding,
-    invalidateSurveyCaches,
+    displayProgram,
     resolveRegisterScheduleTarget,
     selectedLectureEvalTemplateId,
     showAlert,
+    surveyScheduleOptionsQuery.schedules,
     surveysRemote,
   ])
 
@@ -1330,20 +1386,72 @@ export function UjatSurveyManagementView({
     showAlert,
   ])
 
+  const handleConfirmLectureEvalResponseDelete = useCallback(async () => {
+    if (lectureEvalSurvey == null || !canEditLectureEvalResponse(lectureEvalSurvey)) return
+    const responseId = parseOwnLectureEvalFormResponseId(lectureEvalResponses, adminAccountId)
+    if (!surveysRemote || responseId == null) {
+      setLectureEvalResponseDeleteOpen(false)
+      void showAlert({
+        title: '삭제 실패',
+        content: '삭제할 강의평가 답변을 찾지 못했습니다. 화면을 다시 불러온 뒤 확인해 주세요.',
+      })
+      return
+    }
+    setDeletingLectureEvalResponse(true)
+    try {
+      await deleteGeneralProgramFormResponse(responseId)
+    } catch (error) {
+      handleError(error, { context: 'ujatLectureEvalResponseDelete' })
+      if (isLectureEvalStaleStateError(error)) void invalidateSurveyCaches()
+      setLectureEvalResponseDeleteOpen(false)
+      void showAlert({
+        title: '삭제 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '강의평가 답변 삭제 중 오류가 발생했습니다. 다시 시도해 주세요.'
+        ),
+      })
+      return
+    } finally {
+      setDeletingLectureEvalResponse(false)
+    }
+    // 삭제된 응답(CANCELLED)은 목록·제출 수에서 빠진다 — 미제출로 돌리고 빈 양식을 다시 연다.
+    setLectureEvalResponses(prev => {
+      const own = findOwnLectureEvalResponse(prev, adminAccountId)
+      return prev.filter(row => row !== own)
+    })
+    setLectureEvalSubmitted(false)
+    lectureEvalDraftRef.current = null
+    setLectureEvalFormDraft(null)
+    ensureLectureEvalFormDraft()
+    setLectureEvalResponseDeleteOpen(false)
+    void invalidateSurveyCaches()
+    void showAlert({
+      title: UJAT_LECTURE_EVAL_RESPONSE_DELETE_COPY.completeTitle,
+      content: UJAT_LECTURE_EVAL_RESPONSE_DELETE_COPY.completeContent,
+    })
+  }, [
+    adminAccountId,
+    ensureLectureEvalFormDraft,
+    invalidateSurveyCaches,
+    lectureEvalResponses,
+    lectureEvalSurvey,
+    showAlert,
+    surveysRemote,
+  ])
+
   const handleLectureEvalTabChange = useCallback(
     (tab: UjatLectureEvalTabKey) => {
+      // 결과는 강의평가 종료(FINISHED) 후에만 — 제출 여부와 무관
       const resultsReady =
-        lectureEvalSurvey != null &&
-        (isLectureEvalResultsTabAccessible(lectureEvalSurvey) ||
-          lectureEvalSubmitted ||
-          lectureEvalResponses.length > 0)
+        lectureEvalSurvey != null && isLectureEvalResultsTabAccessible(lectureEvalSurvey)
       if (tab === 'results' && !resultsReady) {
         setLectureEvalIncompleteModalOpen(true)
         return
       }
       setActiveLectureEvalTab(tab)
     },
-    [lectureEvalResponses.length, lectureEvalSubmitted, lectureEvalSurvey]
+    [lectureEvalSurvey]
   )
 
   const handleLectureEvalDraftChange = useCallback((draft: WritingFormDraft) => {
@@ -1382,7 +1490,10 @@ export function UjatSurveyManagementView({
       })
       return
     }
-    const existingResponseId = parseLectureEvalFormResponseId(lectureEvalResponses)
+    const existingResponseId = parseOwnLectureEvalFormResponseId(
+      lectureEvalResponses,
+      adminAccountId
+    )
     const lectureBinding = classifiedBindings?.find(
       item => item.kind === 'lecture_evaluation'
     )?.binding
@@ -1419,11 +1530,14 @@ export function UjatSurveyManagementView({
       await queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.surveyResponses(
           String(programId),
-          String(templateVersionId)
+          String(templateVersionId),
+          lectureEvalSurvey.bindingId ?? ''
         ),
       })
     } catch (error) {
       handleError(error, { context: 'ujatLectureEvalSubmit' })
+      // 소유권·작성 기간 거절 — 진행 상태·내 응답을 서버 기준으로 다시 맞춘다.
+      if (isLectureEvalStaleStateError(error)) void invalidateSurveyCaches()
       void showAlert({
         title: existingResponseId != null ? '수정 실패' : '제출 실패',
         content: getGeneralProgramApiErrorMessage(
@@ -1438,11 +1552,14 @@ export function UjatSurveyManagementView({
 
     setLectureEvalSubmitted(true)
     setLectureEvalResponses(prev => {
-      const existingId = parseLectureEvalFormResponseId(prev)
+      const own = findOwnLectureEvalResponse(prev, adminAccountId)
+      const existingId = parseOwnLectureEvalFormResponseId(prev, adminAccountId)
       return [
+        ...prev.filter(row => row !== own),
         {
           ...pollResponse,
           respondentId: existingId != null ? String(existingId) : pollResponse.respondentId,
+          ...(adminAccountId != null ? { submittedByAdminId: adminAccountId } : {}),
         },
       ]
     })
@@ -1455,7 +1572,9 @@ export function UjatSurveyManagementView({
       }
     })
   }, [
+    adminAccountId,
     classifiedBindings,
+    invalidateSurveyCaches,
     lectureEvalResponses,
     lectureEvalSurvey,
     program.totalParticipants,
@@ -1468,13 +1587,19 @@ export function UjatSurveyManagementView({
 
   const handleLectureEvalEditResponse = useCallback(() => {
     if (!lectureEvalSurvey || lectureEvalFormDraft == null) return
-    if (!canEditLectureEvalResponse(lectureEvalSurvey, lectureEvalFormDraft)) return
+    if (!canEditLectureEvalResponse(lectureEvalSurvey)) return
     setLectureEvalSubmitted(false)
   }, [lectureEvalSurvey, lectureEvalFormDraft])
 
   const handleDownloadLectureEvalResults = useCallback(
     async (format: SurveyResultsDownloadFormat) => {
-      if (lectureEvalSurvey == null || displayProgram == null) return
+      if (
+        lectureEvalSurvey == null ||
+        displayProgram == null ||
+        !canDownloadLectureEvalResults(lectureEvalSurvey)
+      ) {
+        return
+      }
       setDownloadingLectureEvalResults(true)
       try {
         if (format === 'pdf') {
@@ -1631,14 +1756,32 @@ export function UjatSurveyManagementView({
                 resultsExportRef={lectureEvalResultsExportRef}
                 onTabChange={handleLectureEvalTabChange}
                 onRegisterClick={handleOpenLectureEvalCreateModal}
+                onDeleteClick={handleOpenLectureEvalDeleteModal}
                 onOpenTemplatePreview={handleOpenLectureEvalPreview}
                 onFormDraftChange={handleLectureEvalDraftChange}
                 onSubmitClick={handleLectureEvalSubmit}
                 onEditResponseClick={handleLectureEvalEditResponse}
+                onDeleteResponseClick={() => setLectureEvalResponseDeleteOpen(true)}
                 onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
               />
               )
             ) : null)}
+
+      <ConfirmModal
+        open={lectureEvalResponseDeleteOpen}
+        title={UJAT_LECTURE_EVAL_RESPONSE_DELETE_COPY.title}
+        content={UJAT_LECTURE_EVAL_RESPONSE_DELETE_COPY.content}
+        confirmText={UJAT_LECTURE_EVAL_RESPONSE_DELETE_COPY.confirmButton}
+        cancelText={UJAT_LECTURE_EVAL_RESPONSE_DELETE_COPY.cancelButton}
+        danger
+        confirmLoading={deletingLectureEvalResponse}
+        onCancel={() => {
+          if (!deletingLectureEvalResponse) setLectureEvalResponseDeleteOpen(false)
+        }}
+        onConfirm={() => {
+          void handleConfirmLectureEvalResponseDelete()
+        }}
+      />
 
       <SurveyPollRegisterModal
         open={surveyCreateModalOpen}
@@ -1695,6 +1838,45 @@ export function UjatSurveyManagementView({
             placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
             value={surveyDeleteConfirmWord}
             onChange={e => setSurveyDeleteConfirmWord(e.target.value)}
+          />
+        </div>
+      </ContentModal>
+      <ContentModal
+        open={lectureEvalDeleteModalOpen}
+        onCancel={handleCloseLectureEvalDeleteModal}
+        title="강의평가 삭제 안내"
+        width={600}
+        modalStyles={{
+          content: { minHeight: 310 },
+        }}
+        className="ujat-survey-delete-modal"
+        description={`**[${lectureEvalSurvey?.title ?? '강의평가'}]** 강의평가를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        footer={
+          <>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={handleCloseLectureEvalDeleteModal} >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="delete"
+              size="medium"
+              type="button"
+              disabled={lectureEvalDeleteConfirmWord.trim() !== '삭제'}
+              onClick={handleConfirmLectureEvalDelete} >
+              설문 삭제
+            </CmsButton>
+          </>
+        }
+      >
+        <div className="ujat-survey-delete-modal__field">
+          <CmsInput
+            width="100%"
+            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+            value={lectureEvalDeleteConfirmWord}
+            onChange={e => setLectureEvalDeleteConfirmWord(e.target.value)}
           />
         </div>
       </ContentModal>

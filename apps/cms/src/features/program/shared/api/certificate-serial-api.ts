@@ -18,6 +18,7 @@ import {
   isAllowedCertificateSerialType,
   isFormTemplateCertificateSerialSubject,
   isRosterCertificateSerialSubject,
+  normalizeCertificateIssueReasonCode,
   parseCertificateIssueId,
   parseCertificateSerialInt64,
   parseIssuedCertificateSerial,
@@ -168,9 +169,12 @@ export function getCertificateSerialAllocateErrorMessage(error: unknown): string
  * 서버는 호출마다 새 번호를 발급하므로 `reused`는 하위 호환 필드로만 전달하며,
  * 발급 또는 PDF 생성 여부를 결정하는 데 사용하지 않는다. 정상 응답에서는 false다.
  */
+/** 발급 사유 `issueReason`은 생성 타입 `CertificateSerialAllocateRequest`의 옵셔널 필드다. */
+export type CertificateSerialAllocateRequestWithReason = CertificateSerialAllocateRequest
+
 export function buildCertificateSerialAllocateRequest(
   subject: CertificateSerialSubject
-): CertificateSerialAllocateRequest {
+): CertificateSerialAllocateRequestWithReason {
   if (!isAllowedCertificateSerialType(subject.certificateType)) {
     throw new CertificateSerialAllocateError('지원하지 않는 인증서 유형입니다.')
   }
@@ -191,11 +195,13 @@ export function buildCertificateSerialAllocateRequest(
     throw new CertificateSerialAllocateError('참가자 정보가 없어 고유번호를 발급할 수 없습니다.')
   }
 
+  const issueReason = normalizeCertificateIssueReasonCode(subject.issueReason)
   return {
     programId,
     participantId,
     certificateType: subject.certificateType,
     issuanceSource: CERTIFICATE_SERIAL_ISSUANCE_PROGRAM,
+    ...(issueReason ? { issueReason } : {}),
   }
 }
 

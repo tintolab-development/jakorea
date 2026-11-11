@@ -41,3 +41,18 @@ describe('mapMemberApplicationHistoryItem subjectType', () => {
     expect(app.subjectType).toBe('instructor')
   })
 })
+
+describe('mapMemberApplicationHistoryItem participantId', () => {
+  it('keeps live participantId in customFields and skips null', () => {
+    const withParticipant = mapMemberApplicationHistoryItem(
+      { applicationId: 9101, programId: 5001, applicationType: 'VOLUNTEER', participantId: 7001 } as never,
+      'member-1'
+    )
+    expect(withParticipant.customFields?.participantId).toBe(7001)
+    const withoutParticipant = mapMemberApplicationHistoryItem(
+      { applicationId: 9102, programId: 5001, applicationType: 'VOLUNTEER', participantId: null } as never,
+      'member-1'
+    )
+    expect(withoutParticipant.customFields).not.toHaveProperty('participantId')
+  })
+})

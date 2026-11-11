@@ -1,6 +1,7 @@
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { getSessionLineParts } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
+import { resolveGeneralScheduleUnitLabel } from '@/features/program/general/lib/schedule-unit-label'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
 import type {
   ActivityWithdrawScheduleConfirmPayload,
@@ -24,12 +25,41 @@ export function buildParticipatingSchoolSessionKey(
   return `${session.round}-${session.date}-${index}`
 }
 
+/**
+ * 일정 단위 접미 — 일반 프로그램은 교육 구조별(단일 회차=N차시, 복수=N회차, 일정형=세부 일정명),
+ * 그 외 유형은 기존 회차 접미. 행 라벨에 이미 들어 있으면 반복하지 않는다.
+ */
+function resolveActivityWithdrawUnitPart(
+  program: Program,
+  session: ParticipatingSchoolSession,
+  rowLabel: string
+): string {
+  const generalUnit = resolveGeneralScheduleUnitLabel(
+    {
+      sessionNo: session.sessionNo,
+      curriculumSessionCount: session.curriculumSessionCount,
+      scheduleRole: session.scheduleRole,
+      educationSlotKey: session.educationSlotKey,
+      scheduleName: session.scheduleName ?? session.educationScheduleLabel,
+    },
+    program
+  )
+  const unit =
+    generalUnit !== undefined
+      ? (generalUnit ?? '')
+      : getSessionLineParts(session, 'general-detail').periodPart
+  if (!unit) return ''
+  if (rowLabel !== '교육 일정' && rowLabel.includes(unit)) return ''
+  return unit
+}
+
 export function formatParticipatingInstitutionActivityWithdrawScheduleOptionLabel(
   program: Program,
   session: ParticipatingSchoolSession
 ): string {
   const rowLabel = resolveParticipatingInstitutionScheduleRowLabel(program, session)
-  const { datePart, periodPart } = getSessionLineParts(session, 'general-detail')
+  const { datePart } = getSessionLineParts(session, 'general-detail')
+  const periodPart = resolveActivityWithdrawUnitPart(program, session, rowLabel)
   const [startRaw, endRaw] = session.timeRange.split('~')
   const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
   const dateTimePart = `${datePart} ${timePart}`

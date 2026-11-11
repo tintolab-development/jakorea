@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'
-import { buildGeneralInstructorCalendarListRows } from './applicant-general-calendar-list-rows'
+import {
+  buildGeneralInstitutionCalendarListRows,
+  buildGeneralInstructorCalendarListRows,
+} from './applicant-general-calendar-list-rows'
+import type { Program } from '@/types/domain'
 
 const instructor = {
   id: 'inst-1',
@@ -52,5 +56,103 @@ describe('buildGeneralInstructorCalendarListRows 거리', () => {
     const [row] = buildGeneralInstructorCalendarListRows([eventFor('999', '다른학교')])
     expect(row?.distanceKm).toBeNull()
     expect(row?.distanceDisplay).toBe('-')
+  })
+})
+
+describe('buildGeneralInstitutionCalendarListRows 일정 라벨(교육 구조별)', () => {
+  function institutionEvent(sessionNo: number, scheduleName?: string): ApplicantCalendarEvent {
+    const institution = {
+      id: 'org-1',
+      schoolName: '제이초',
+      region: '서울특별시 중구',
+      educationGrade: '3학년',
+      approvalStatus: 'approved',
+      sessions: [
+        {
+          round: 1,
+          sessionNo,
+          ...(scheduleName ? { scheduleName } : {}),
+          date: '2026.11.20',
+          dayOfWeek: '금',
+          duration: '-',
+          format: '-',
+          classNum: '',
+          timeRange: '09:00 ~ 10:00',
+        },
+      ],
+    } as unknown as ApplicantSchoolRow
+    return {
+      id: 'ev-1',
+      title: '제이초',
+      startDate: '2026-11-20T00:00:00',
+      endDate: '2026-11-20T01:00:00',
+      originalItem: institution,
+    } as unknown as ApplicantCalendarEvent
+  }
+  function program(structure: 'curriculum' | 'schedule', round: 'single' | 'multi'): Program {
+    return {
+      id: 'p-1',
+      generalProgramAudience: 'organization',
+      generalProgramEducationStructure: structure,
+      generalProgramSessionRound: round,
+      generalCommonInfo: {
+        curriculumSessions:
+          structure === 'curriculum'
+            ? [
+                { sessionLabel: round === 'multi' ? '1회차' : '1차시', title: '', description: '' },
+                { sessionLabel: round === 'multi' ? '2회차' : '2차시', title: '', description: '' },
+              ]
+            : [],
+        scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '오리엔테이션' }],
+      },
+    } as unknown as Program
+  }
+
+  it('program이 없으면 지망·순번을 회차로 쓰지 않고 시간만', () => {
+    expect(buildGeneralInstitutionCalendarListRows([institutionEvent(2)])[0]?.sessionLabel).toBe(
+      '09:00 ~ 10:00'
+    )
+  })
+
+  it('일정형=세부 일정명, 단일=N차시, 복수=sessionNo 회차', () => {
+    expect(
+      buildGeneralInstitutionCalendarListRows([institutionEvent(1, '현장 견학')], {
+        program: program('schedule', 'multi'),
+      })[0]?.sessionLabel
+    ).toBe('현장 견학 (09:00 ~ 10:00)')
+    expect(
+      buildGeneralInstitutionCalendarListRows([institutionEvent(1)], {
+        program: program('curriculum', 'single'),
+      })[0]?.sessionLabel
+    ).toBe('2차시 (09:00 ~ 10:00)')
+    expect(
+      buildGeneralInstitutionCalendarListRows([institutionEvent(2)], {
+        program: program('curriculum', 'multi'),
+      })[0]?.sessionLabel
+    ).toMatch(/^2회차/)
+  })
+})
+
+describe('buildGeneralInstructorCalendarListRows 활동 포기', () => {
+  const withdrawn = { ...instructor, activityWithdrawn: true } as ApplicantInstructorRow
+  function withdrawnEvent(): ApplicantCalendarEvent {
+    const event = eventFor('501', '계남중학교')
+    return {
+      ...event,
+      originalItem: {
+        ...(event.originalItem as object),
+        calendarInstitutionInstructors: [withdrawn],
+      },
+    } as unknown as ApplicantCalendarEvent
+  }
+
+  it('일반 기관형(showActivityWithdrawn)에서만 activityWithdrawn을 카드에 싣는다', () => {
+    const [shown] = buildGeneralInstructorCalendarListRows([withdrawnEvent()], {
+      showActivityWithdrawn: true,
+    })
+    expect(shown?.activityWithdrawn).toBe(true)
+    // 1사1교 등 옵션 생략 — 기존처럼 뱃지 없음
+    const [hidden] = buildGeneralInstructorCalendarListRows([withdrawnEvent()])
+    expect(hidden?.activityWithdrawn).toBeUndefined()
   })
 })

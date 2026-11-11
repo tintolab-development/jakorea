@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { RevisionDetail } from './revisionDetail';
+import type { SettlementDetailApplicationType } from './settlementDetailApplicationType';
 
 export interface SettlementDetail {
   settlementApplicationId?: number;
@@ -17,4 +18,6 @@ export interface SettlementDetail {
   status?: string;
   currentRevisionNo?: number;
   revisions?: RevisionDetail[];
+  /** INDIVIDUAL: applicationId = program_individual_application.id, VOLUNTEER: applicationId = program_volunteer_application.id */
+  applicationType?: SettlementDetailApplicationType;
 }

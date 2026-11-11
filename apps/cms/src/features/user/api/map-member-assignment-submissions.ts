@@ -81,7 +81,8 @@ export function mapMemberAssignmentSubmissionsToDetail(
 
     return {
       id: String(item.submissionId ?? index + 1),
-      roundNumber: extended.roundNumber ?? index + 1,
+      // 회차 번호는 서버 값만. 행 순서로 회차를 만들지 않는다
+      roundNumber: extended.roundNumber ?? null,
       teamRole: mapTeamRole(extended.teamRole),
       teamName: extended.teamName?.trim() || '-',
       educationDateLabel:

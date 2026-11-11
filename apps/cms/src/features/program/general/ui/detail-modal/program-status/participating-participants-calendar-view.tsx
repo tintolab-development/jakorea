@@ -8,6 +8,7 @@ import {
   IndividualPersonCalendarView,
   type IndividualPersonCalendarAccessors,
 } from './individual-person-calendar-view'
+import type { Program } from '@/types/domain'
 
 const PARTICIPANT_CALENDAR_ACCESSORS: IndividualPersonCalendarAccessors<ParticipatingIndividualParticipantRow> =
   {
@@ -27,6 +28,8 @@ export interface ParticipatingParticipantsCalendarViewProps {
   onParticipantClick: (participant: ParticipatingIndividualParticipantRow) => void
   calendarGranularity?: 'month' | 'week'
   onCalendarGranularityChange?: (mode: 'month' | 'week') => void
+  /** 일정 라벨 교육 구조 분기(일정형=세부 일정명, 단일 회차=N차시, 복수 회차=N회차) */
+  program?: Program | null
 }
 
 export function ParticipatingParticipantsCalendarView({
@@ -36,6 +39,7 @@ export function ParticipatingParticipantsCalendarView({
   onParticipantClick,
   calendarGranularity,
   onCalendarGranularityChange,
+  program,
 }: ParticipatingParticipantsCalendarViewProps) {
   return (
     <IndividualPersonCalendarView
@@ -46,6 +50,7 @@ export function ParticipatingParticipantsCalendarView({
       onPersonClick={onParticipantClick}
       calendarGranularity={calendarGranularity}
       onCalendarGranularityChange={onCalendarGranularityChange}
+      program={program}
     />
   )
 }

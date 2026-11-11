@@ -5,6 +5,7 @@ import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
 
 const COMPLETED = new Set(['COMPLETED', 'DONE', 'HELD', 'FINISHED'])
 
+/** 정산 인정 차시. sessionNo(회차)로 대신하지 않는다. */
 function recognizedClassCountOf(item: GeminiLectureScheduleItem): number | null {
   if (typeof item.recognizedClassCount === 'number' && Number.isFinite(item.recognizedClassCount)) {
     return item.recognizedClassCount
@@ -14,8 +15,18 @@ function recognizedClassCountOf(item: GeminiLectureScheduleItem): number | null 
     const parsed = Number(fromText[1])
     if (Number.isFinite(parsed) && parsed > 0) return parsed
   }
-  if (typeof item.sessionNo === 'number' && Number.isFinite(item.sessionNo)) return item.sessionNo
   return null
+}
+
+function sessionNoOf(item: GeminiLectureScheduleItem): number | null {
+  return typeof item.sessionNo === 'number' && Number.isInteger(item.sessionNo) && item.sessionNo > 0
+    ? item.sessionNo
+    : null
+}
+
+/** 회차 번호 — sessionNo, 없으면 서버 응답 순서(1-based). 인정 차시를 넣지 않는다. */
+function roundNumberOf(item: GeminiLectureScheduleItem, index: number): number {
+  return sessionNoOf(item) ?? index + 1
 }
 
 function formatSessionMeta(item: GeminiLectureScheduleItem): string {
@@ -24,11 +35,14 @@ function formatSessionMeta(item: GeminiLectureScheduleItem): string {
   const end = item.endAt ? formatDisplayDateTime(item.endAt) : ''
   const time = trainingTime || (start && end ? `${start}~${end}` : start || end)
   const sessionCount = recognizedClassCountOf(item)
+  const sessionNo = sessionNoOf(item)
   const session = trainingTime.includes('차시')
     ? ''
     : sessionCount != null
       ? `${sessionCount}차시`
-      : ''
+      : sessionNo != null
+        ? `${sessionNo}회차`
+        : ''
   return [time, session].filter(Boolean).join(' ') || '-'
 }
 
@@ -62,10 +76,12 @@ export function mapGeminiLectureSchedulesToSettlementItems(
     }
     const institution = row.institutionName?.trim()
     const grade = row.grade?.trim()
+    const recognizedClassCount = recognizedClassCountOf(row)
     return {
       id: row.scheduleId != null ? String(row.scheduleId) : `gemini-schedule-${index + 1}`,
       scheduleId: row.scheduleId ?? undefined,
-      sessionNumber: recognizedClassCountOf(row) ?? index + 1,
+      sessionNumber: roundNumberOf(row, index),
+      ...(recognizedClassCount != null ? { recognizedClassCount } : {}),
       heldAt: row.startAt ?? row.endAt ?? '',
       sessionMeta: formatSessionMeta(row),
       ...(institution ? { institutionName: institution, institutionLabel: institution } : {}),
@@ -80,17 +96,19 @@ export function mapGeminiLectureSchedulesToEducationScheduleItems(
   rows: readonly GeminiLectureScheduleItem[],
 ): EducationScheduleItem[] {
   return rows.map((row, index) => {
-    const sessionCount = recognizedClassCountOf(row)
-    const sessionLabel = sessionCount != null ? `${sessionCount}차시` : undefined
+    const recognizedClassCount = recognizedClassCountOf(row)
+    // 인정 차시는 커리큘럼 차시 라벨(sessionLabel/rowLabel)이 아니라 별도 필드로 둔다.
+    const recognizedClassCountLabel =
+      recognizedClassCount != null ? `${recognizedClassCount}차시` : undefined
     const trainingTime = row.trainingTimeText?.trim() || undefined
     const institution = row.institutionName?.trim() || undefined
     return {
       id: row.scheduleId != null ? String(row.scheduleId) : `gemini-lecture-${index + 1}`,
       ...(row.scheduleId != null ? { scheduleId: row.scheduleId } : {}),
-      sessionNumber: sessionCount ?? index + 1,
+      sessionNumber: roundNumberOf(row, index),
       heldAt: row.startAt ?? row.endAt ?? '',
       title: institution ?? '-',
-      ...(sessionLabel ? { sessionLabel, rowLabel: sessionLabel } : {}),
+      ...(recognizedClassCountLabel ? { recognizedClassCountLabel } : {}),
       attendanceStatus: null,
       ...(trainingTime ? { progressTimeLabel: trainingTime } : {}),
       ...(institution ? { locationName: institution } : {}),

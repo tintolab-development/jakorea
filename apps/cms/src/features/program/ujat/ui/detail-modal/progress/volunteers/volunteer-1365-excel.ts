@@ -76,7 +76,6 @@ export async function exportVolunteer1365Excel(input: {
   }))
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, fileName, {
-    accessLog: { downloadKind: 'VOLUNTEER_1365_HOURS_EXPORT', containedPiiTypes: ['NAME'] },
-  })
+  // 서버 DOWNLOAD 이력에 파일명·분류(VOLUNTEER_1365_HOURS_EXPORT, NAME)가 남으므로 클라이언트 이력은 남기지 않는다(1회 = 1건).
+  await downloadExcel(buffer, fileName, { skipAccessLog: true })
 }

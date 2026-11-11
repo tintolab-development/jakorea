@@ -511,16 +511,21 @@ export function ParticipatingVolunteersSection({
         width: 120,
         align: 'center',
       },
-      {
-        title: institutionColumnTitle,
-        key: 'assignedInstitutionNames',
-        width: 160,
-        minWidth: 160,
-        ellipsis: { showTitle: true },
-        align: 'center',
-        render: (_: unknown, record) =>
-          formatParticipatingVolunteerInstitutionCell(record, program),
-      },
+      // 개인형 시안 4515:103527 — 기관 열 없음(엑셀도 같은 columns를 쓴다)
+      ...(isIndividualProgram
+        ? []
+        : [
+            {
+              title: institutionColumnTitle,
+              key: 'assignedInstitutionNames',
+              width: 160,
+              minWidth: 160,
+              ellipsis: { showTitle: true },
+              align: 'center' as const,
+              render: (_: unknown, record: ParticipatingVolunteerRow) =>
+                formatParticipatingVolunteerInstitutionCell(record, program),
+            },
+          ]),
       {
         title: '봉사 진행 일정',
         key: 'sessions',
@@ -567,7 +572,7 @@ export function ParticipatingVolunteersSection({
         render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
     ]
-  }, [institutionColumnTitle, isInstitutionSurface, program])
+  }, [institutionColumnTitle, isIndividualProgram, isInstitutionSurface, program])
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
     columns as ColumnsType<unknown>,
@@ -714,6 +719,7 @@ export function ParticipatingVolunteersSection({
                 onPersonClick={volunteer => onVolunteerRowClick?.(volunteer)}
                 calendarGranularity={progressCalendarGranularity}
                 onCalendarGranularityChange={setProgressCalendarGranularity}
+                program={program}
               />
             ) : (
               <ParticipatingInstitutionsCalendarView

@@ -1,3 +1,4 @@
+import { toPolicyMaskedBirthDisplay } from '@/features/user/api/format-gender-birth-display'
 import dayjs from 'dayjs'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { Program } from '@/types/domain'
@@ -115,6 +116,9 @@ function mapGenderLabel(gender?: string | null): string {
 }
 
 function mapBirthLabel(birthDate?: string | null): string {
+  // BE 마스킹(yyyy-**-**)은 정책 표기(yyyy.**.**) — 날짜 파서에 넣지 않는다.
+  const masked = toPolicyMaskedBirthDisplay(birthDate)
+  if (masked && masked !== (birthDate?.trim() ?? '')) return masked
   return formatDateLabel(birthDate, 'YYYY.MM.DD') || '-'
 }
 
@@ -141,7 +145,12 @@ function formatScheduleHeader(
     : program && scheduleDirect
       ? resolveGeneralScheduleSingleDateDetailName(program, schedule)
       : program
-        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round, {
+            curriculumSessionCount: (schedule as { curriculumSessionCount?: number | null })
+              .curriculumSessionCount,
+            scheduleRole: schedule.scheduleRole,
+            educationSlotKey: schedule.educationSlotKey,
+          })
         : `${round}회차`
   const built = buildGeneralProgressSessionTableHeader({
     round,

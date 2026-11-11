@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
-import { TEMPLATE_FORM_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
@@ -32,7 +31,9 @@ import {
 } from '../../lib/survey-management/use-survey-writing-save-validation-feedback'
 import {
   resolveProgramSurveyFormEditFailure,
+  saveProgramSurveyFormCreate,
   saveProgramSurveyFormEdit,
+  type ProgramSurveyFormCreatePlan,
   type ProgramSurveyFormEditTarget,
 } from '../../lib/survey-management/save-program-survey-form-edit'
 import {
@@ -55,6 +56,8 @@ export type ProgramSurveyFormEdit = {
   displayPeriod?: SatisfactionFormEditPeriod | null
   /** 만족도조사 일정별 — 제목 단락「작성 기간」인풋 비활성 */
   lockWritingPeriodInput?: boolean
+  /** 신규 등록 — 「저장」 때만 양식을 게시하고 프로그램에 바인딩한다(취소 시 미등록). */
+  create?: ProgramSurveyFormCreatePlan
 }
 
 export type SurveyTemplateEditModalProps = {
@@ -187,15 +190,18 @@ function SurveyTemplateEditModalInner({
   const handleSave = useCallback(() => {
     void (async () => {
       try {
-        const result =
+        const programTarget =
           programEdit != null
-            ? await saveProgramSurveyFormEdit(
-                {
-                  ...programEdit.target,
-                  title: readProgramSurveyTitle(draftRef.current) || programEdit.target.title,
-                },
-                draftRef.current
-              )
+            ? {
+                ...programEdit.target,
+                title: readProgramSurveyTitle(draftRef.current) || programEdit.target.title,
+              }
+            : null
+        const result =
+          programEdit != null && programTarget != null
+            ? programEdit.create != null
+              ? await saveProgramSurveyFormCreate(programTarget, programEdit.create, draftRef.current)
+              : await saveProgramSurveyFormEdit(programTarget, draftRef.current)
             : await saveSurveyWritingTemplate(templateId, draftRef.current)
         if (!result.ok) {
           if ('refetchBindings' in result && result.refetchBindings) onBindingsStale?.()
@@ -247,7 +253,6 @@ function SurveyTemplateEditModalInner({
       {...(programEdit != null && !generalVariant
         ? { onTitleCommit: handleProgramTitleCommit }
         : {})}
-      description={TEMPLATE_FORM_MODAL_DESCRIPTION}
       {...(generalVariant
         ? {
             titleReadOnly: true,
@@ -255,9 +260,6 @@ function SurveyTemplateEditModalInner({
             showCloseButton: true,
             saveLabel: '저장',
             closeLabel: '취소',
-            bodyHeaderLeading: (
-              <p className="full-page-modal__description">{TEMPLATE_FORM_MODAL_DESCRIPTION}</p>
-            ),
           }
         : {})}
       templateTabType="writing"

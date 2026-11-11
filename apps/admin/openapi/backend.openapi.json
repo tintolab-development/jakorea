@@ -3407,7 +3407,7 @@
           "talent-application-admin-controller"
         ],
         "summary": "Download a talent application attachment by asset id",
-        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename=\"<ASCII fallback>\"; filename*=UTF-8''<RFC 5987>.",
         "operationId": "attachmentDownloadByAsset",
         "parameters": [
           {
@@ -3460,7 +3460,7 @@
           "talent-application-admin-controller"
         ],
         "summary": "Download talent application attachment",
-        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename=\"<ASCII fallback>\"; filename*=UTF-8''<RFC 5987>.",
         "operationId": "attachmentDownload",
         "parameters": [
           {
@@ -3629,7 +3629,7 @@
           "corporate-consultation-admin-controller"
         ],
         "summary": "Download a corporate consultation attachment by asset id",
-        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename=\"<ASCII fallback>\"; filename*=UTF-8''<RFC 5987>.",
         "operationId": "attachmentDownloadByAsset_1",
         "parameters": [
           {
@@ -3682,7 +3682,7 @@
           "corporate-consultation-admin-controller"
         ],
         "summary": "Download corporate consultation attachment",
-        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename=\"<ASCII fallback>\"; filename*=UTF-8''<RFC 5987>.",
         "operationId": "attachmentDownload_1",
         "parameters": [
           {
@@ -5745,7 +5745,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Download a career talent application attachment by asset id",
-        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename=\"<ASCII fallback>\"; filename*=UTF-8''<RFC 5987>.",
         "operationId": "attachmentDownloadByAsset_2",
         "parameters": [
           {
@@ -5798,7 +5798,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Download career talent application attachment",
-        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename=\"<ASCII fallback>\"; filename*=UTF-8''<RFC 5987>.",
         "operationId": "attachmentDownload_2",
         "parameters": [
           {
@@ -8269,7 +8269,7 @@
           "talent-application-admin-controller"
         ],
         "summary": "Export talent applications as XLSX",
-        "description": "Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).",
+        "description": "Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT). File name: [JA Korea] 홈페이지 어드민_재능기부 신청 목록_{YYMMDD}.xlsx (download day, Asia/Seoul), sent as Content-Disposition filename* and stored as the download history original_name.",
         "operationId": "export",
         "parameters": [
           {
@@ -8596,7 +8596,7 @@
           "corporate-consultation-admin-controller"
         ],
         "summary": "Export corporate consultations as XLSX",
-        "description": "Same filters, sort and masking as the list GET (contactName original, phone masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).",
+        "description": "Same filters, sort and masking as the list GET (contactName original, phone masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT). File name: [JA Korea] 홈페이지 어드민_기업 후원 상담 신청 목록_{YYMMDD}.xlsx (download day, Asia/Seoul), sent as Content-Disposition filename* and stored as the download history original_name.",
         "operationId": "export_1",
         "parameters": [
           {
@@ -9745,7 +9745,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Export career talent applications as XLSX",
-        "description": "Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).",
+        "description": "Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT). File name: [JA Korea] 홈페이지 어드민_인재채용 신청 목록_{YYMMDD}.xlsx (download day, Asia/Seoul), sent as Content-Disposition filename* and stored as the download history original_name.",
         "operationId": "export_2",
         "parameters": [
           {
@@ -11549,8 +11549,12 @@
             "minLength": 0
           },
           "thumbnailAssetId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optional report thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail."
           },
           "attachmentAssetId": {
             "type": "integer",
@@ -11563,7 +11567,6 @@
         },
         "required": [
           "attachmentAssetId",
-          "thumbnailAssetId",
           "title",
           "version"
         ]
@@ -11586,6 +11589,7 @@
             "type": "string"
           },
           "thumbnail": {
+            "type": "null",
             "$ref": "#/components/schemas/AssetResponse"
           },
           "attachment": {
@@ -13460,8 +13464,12 @@
             "minLength": 0
           },
           "thumbnailAssetId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optional card thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail."
           },
           "attachmentAssetIds": {
             "type": "array",
@@ -13487,7 +13495,6 @@
           "pinned",
           "publishAt",
           "published",
-          "thumbnailAssetId",
           "title",
           "version"
         ]
@@ -15535,8 +15542,12 @@
             "minLength": 0
           },
           "thumbnailAssetId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optional report thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail."
           },
           "attachmentAssetId": {
             "type": "integer",
@@ -15545,7 +15556,6 @@
         },
         "required": [
           "attachmentAssetId",
-          "thumbnailAssetId",
           "title"
         ]
       },
@@ -15780,8 +15790,12 @@
             "minLength": 0
           },
           "thumbnailAssetId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optional card thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail."
           },
           "attachmentAssetIds": {
             "type": "array",
@@ -15803,7 +15817,6 @@
           "pinned",
           "publishAt",
           "published",
-          "thumbnailAssetId",
           "title"
         ]
       },
@@ -17380,7 +17393,10 @@
             "type": "string"
           },
           "thumbnailUrl": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "attachmentFileName": {
             "type": "string"

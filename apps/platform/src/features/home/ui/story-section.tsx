@@ -7,7 +7,6 @@ import {
   useHomeImpactSubStories,
 } from '@/features/impact-story'
 import defaultThumbnailUrl from '@/features/impact-story/image/illustration/card-default.png'
-import { useRemoteThumbnailUrl } from '@/shared/hooks'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import { useHomeMain } from '../api/use-home-main'
 import { FALLBACK_IMPACT_TITLE } from '../lib/view'
@@ -31,9 +30,8 @@ function TitleLines({ title }: { title: string }) {
 }
 
 function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
-  // 어드민 「썸네일 없음」 표식(1×1 투명 PNG)은 이미지 없음으로 보고 기본 썸네일을 쓴다
-  const remoteSrc =
-    useRemoteThumbnailUrl(story.featuredImageUrl || story.imageUrl) || defaultThumbnailUrl
+  // 썸네일 없음(서버 null) → 기본 썸네일
+  const remoteSrc = story.featuredImageUrl || story.imageUrl || defaultThumbnailUrl
   const [src, setSrc] = useState(remoteSrc)
 
   useEffect(() => {
@@ -90,7 +88,7 @@ function SubStoryCardSkeleton() {
 }
 
 function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
-  const imageUrl = useRemoteThumbnailUrl(story.imageUrl)
+  const imageUrl = story.imageUrl || undefined
   return (
     <Link
       className={styles.subCard}

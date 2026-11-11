@@ -28,10 +28,18 @@ function toSeoulCalendarDate(startAt: string): string {
   return startAt.slice(0, 10)
 }
 
+/**
+ * 일정 선택지 `{단위} · {날짜}`.
+ * 단위 = 사전교육 / 세부 일정명(일정형 — 자동 기본명 제외) / 없으면 `N회차`(+차시 수).
+ * 일정형 일정에 회차 번호를 함께 붙이지 않는다.
+ */
 function formatSessionProgressLabel(session: SessionProgress): string {
   const parts: string[] = []
+  const scheduleName = toDisplayEducationScheduleName(session.scheduleName)
   if (isProgramSchedulePreEducation(session)) {
     parts.push(PRE_EDUCATION_DISPLAY_LABEL)
+  } else if (scheduleName && scheduleName !== PRE_EDUCATION_DISPLAY_LABEL) {
+    parts.push(scheduleName)
   } else {
     const roundLabel = formatEducationScheduleUnitLabel({
       sessionNo: session.sessionNo,
@@ -41,8 +49,6 @@ function formatSessionProgressLabel(session: SessionProgress): string {
     })
     if (roundLabel) parts.push(roundLabel)
   }
-  const scheduleName = toDisplayEducationScheduleName(session.scheduleName)
-  if (scheduleName && scheduleName !== PRE_EDUCATION_DISPLAY_LABEL) parts.push(scheduleName)
   if (session.startAt?.trim()) {
     const date = toSeoulCalendarDate(session.startAt.trim()).replace(/-/g, '.')
     parts.push(date)

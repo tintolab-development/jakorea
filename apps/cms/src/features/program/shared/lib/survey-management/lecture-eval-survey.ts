@@ -402,21 +402,68 @@ export function validateLectureEvalFormDraft(draft: WritingFormDraft): LectureEv
   return { valid: true }
 }
 
+/** 결과 탭·전체 응답·summary — 강의평가가 끝난 뒤(FINISHED)에만. 종료 전 서버는 본인 응답만 주고 summary는 409다. */
 export function isLectureEvalResultsTabAccessible(survey: RegisteredSurvey): boolean {
   return survey.status === 'finished'
 }
 
+/**
+ * 답변 수정 가능 여부 — 바인딩 `submissionEndAt` 전까지. 종료(FINISHED) 후에는 수정 UI를 숨긴다.
+ * 마감일을 모르면 진행 중일 때만 허용하고 판정은 서버(409 LECTURE_EVALUATION_EDIT_PERIOD_ENDED)에 맡긴다.
+ */
 export function canEditLectureEvalResponse(
-  _survey: RegisteredSurvey,
-  formDraft?: WritingFormDraft | null
+  survey: Pick<RegisteredSurvey, 'status' | 'submissionEndAt'>,
+  now: Date = new Date()
 ): boolean {
-  const endAt = getLectureEvalPeriodEndAt(formDraft)
+  if (survey.status !== 'in_progress') return false
+  const endAt = survey.submissionEndAt?.trim()
   if (endAt == null || endAt === '') return true
-  const today = new Date().toISOString().slice(0, 10)
-  return today <= endAt
+  const end = new Date(endAt)
+  if (Number.isNaN(end.getTime())) return true
+  return now.getTime() < end.getTime()
 }
 
-export function isLectureEvalFormPhase(survey: RegisteredSurvey, submitted: boolean): boolean {
+/** 제출 폼은 진행 중이고 내 응답이 없을 때만. 시작 전은 진행 전 안내, 종료 후는 종료 안내를 보인다. */
+export function isLectureEvalFormPhase(
+  survey: Pick<RegisteredSurvey, 'status'>,
+  submitted: boolean
+): boolean {
   if (submitted) return false
-  return survey.status === 'in_progress' || survey.status === 'finished'
+  return survey.status === 'in_progress'
+}
+
+/** 결과 다운로드 — 서버 바인딩 `resultDownloadable`(FINISHED + 호출자 FILE_DOWNLOAD)만 따른다. */
+export function canDownloadLectureEvalResults(
+  survey: Pick<RegisteredSurvey, 'resultDownloadable'> | null | undefined
+): boolean {
+  return survey?.resultDownloadable === true
+}
+
+/**
+ * 응답 목록에서 로그인 관리자가 제출한 강의평가를 찾는다(첫 번째 응답을 쓰지 않는다).
+ * 종료 후 목록에는 다른 담당자 응답도 있으므로 `submittedByAdminId`로만 고른다.
+ * 로컬(remote 미사용) 응답은 제출자 id가 없어 관리자 id도 없을 때만 내 응답으로 본다.
+ */
+export function findOwnLectureEvalResponse<T extends Pick<SurveyPollRawResponse, 'submittedByAdminId'>>(
+  responses: readonly T[],
+  adminAccountId: number | null | undefined
+): T | null {
+  const me = adminAccountId ?? null
+  return (
+    responses.find(row => {
+      const owner = row.submittedByAdminId ?? null
+      return owner == null ? me == null : owner === me
+    }) ?? null
+  )
+}
+
+/** 내 응답의 formResponseId (수정 PATCH 대상) */
+export function parseOwnLectureEvalFormResponseId(
+  responses: readonly SurveyPollRawResponse[],
+  adminAccountId: number | null | undefined
+): number | null {
+  const own = findOwnLectureEvalResponse(responses, adminAccountId)
+  if (own == null) return null
+  const n = Number(own.respondentId)
+  return Number.isSafeInteger(n) && n > 0 ? n : null
 }

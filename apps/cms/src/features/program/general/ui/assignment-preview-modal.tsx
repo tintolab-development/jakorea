@@ -13,8 +13,8 @@ export interface AssignmentPreviewModalProps {
   onCancel: () => void
   /** 학생명 (예: 최학생) */
   studentName: string
-  /** 회차 번호 (예: 1) */
-  roundNumber: number
+  /** 회차 번호 (예: 1). 없으면 null — 회차 문구를 생략한다 */
+  roundNumber: number | null
   /** 파일 다운로드 클릭 시 (선택) */
   onDownload?: () => void
   downloadLoading?: boolean
@@ -63,7 +63,7 @@ export function AssignmentPreviewModal({
           <span className="assignment-preview-modal__description-name">[{studentName}]</span>
           <span className="assignment-preview-modal__description-text">
             {' '}
-            학생의 {roundNumber}회차 과제입니다.
+            학생의 {roundNumber != null ? `${roundNumber}회차 ` : ''}과제입니다.
           </span>
         </p>
         <div className="assignment-preview-modal__preview" aria-label="과제 미리보기 영역">

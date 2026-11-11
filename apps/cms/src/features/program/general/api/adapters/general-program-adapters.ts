@@ -40,7 +40,6 @@ import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shar
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
-import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   isRecruitmentStartLocked,
   isRecruitmentTypeGeneralInfoClosed,
@@ -88,6 +87,7 @@ import {
   toOperationCalendarDate,
 } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { participantRecruitmentAnnouncementRequestFields } from '@/features/program/general/lib/participant-recruitment-announcement-request'
+import { volunteerRecruitmentCreateFields } from '@/features/program/general/lib/volunteer-recruitment-create-fields'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
@@ -628,19 +628,16 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ...typedVolunteerInterviewProgramFields(dto),
   })
 
-  return applyBusinessPeriodHistoriesFromDto(
-    hydrateRecruitmentWindowsOntoProgram(
-      hydrateGeneralRecruitmentInfoFromRows(
-        applyResolvedAnnouncementTitle(
-          applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-          {
-            serviceDetailJson: dto.serviceDetailJson,
-            overlay: serviceDetail.registrationOverlay,
-          }
-        )
+  return hydrateRecruitmentWindowsOntoProgram(
+    hydrateGeneralRecruitmentInfoFromRows(
+      applyResolvedAnnouncementTitle(
+        applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+        {
+          serviceDetailJson: dto.serviceDetailJson,
+          overlay: serviceDetail.registrationOverlay,
+        }
       )
-    ),
-    dto
+    )
   )
 }
 
@@ -908,6 +905,7 @@ function createRowContactOf(
   audience: RecruitmentCopyAudience
 ): Pick<ProgramRecruitmentRequest, 'contactName' | 'contactPhone' | 'contactEmail' | 'remarks'> & {
   otherMatters?: string
+  remarksNotApplicable?: boolean
 } {
   const common = program.generalCommonInfo
   const info =
@@ -929,8 +927,26 @@ function createRowContactOf(
       info?.contactOrganizationName?.trim() || participantContactName?.trim() || undefined,
     contactPhone: toRequestPhone(info?.contactPhone ?? info?.inquiryTel ?? info?.tel) || undefined,
     contactEmail: (info?.contactEmail ?? info?.inquiryEmail ?? info?.email)?.trim() || undefined,
-    remarks: notesNotApplicable ? undefined : info?.remarks?.trim() || undefined,
+    ...(audience === 'instructor'
+      ? instructorCreateRemarksFields(info, notesNotApplicable)
+      : { remarks: notesNotApplicable ? undefined : info?.remarks?.trim() || undefined }),
     ...(otherMatters ? { otherMatters } : {}),
+  }
+}
+
+/**
+ * 강사 모집 행(INSTRUCTOR) 생성 — 등록 위저드 비고 「해당 없음」을 행 `remarksNotApplicable`로 보낸다.
+ * nested 값이 없으면(미입력) 필드를 넣지 않는다. 참여자·봉사자 행은 기존 `remarks`만 유지.
+ */
+function instructorCreateRemarksFields(
+  info: { remarks?: string; notesNotApplicable?: boolean } | undefined,
+  notesNotApplicable: boolean
+): { remarks?: string; remarksNotApplicable?: boolean } {
+  const flag = typeof info?.notesNotApplicable === 'boolean' ? info.notesNotApplicable : undefined
+  if (notesNotApplicable) return { remarks: '', remarksNotApplicable: true }
+  return {
+    remarks: info?.remarks?.trim() || undefined,
+    ...(flag === false ? { remarksNotApplicable: false } : {}),
   }
 }
 
@@ -1216,11 +1232,12 @@ function withTypedVolunteerInterviewConfigForCreate(
     volunteerInterviewRequiredFromOverlay(overlay) ??
     false
   const period = interviewEnabled ? volunteerInterviewPeriodForCreate(detail, overlay) : {}
+  const copyFields = volunteerRecruitmentCreateFields(overlay, program, interviewEnabled)
   return {
     ...body,
     recruitments: rows.map((row, index) =>
       index === target
-        ? ({ ...row, interviewEnabled, ...period, interviewConfig } as typeof row)
+        ? ({ ...row, ...copyFields, interviewEnabled, ...period, interviewConfig } as typeof row)
         : row
     ),
     serviceDetailJson: omitVolunteerInterviewSaveKeysFromServiceDetailJson(body.serviceDetailJson),

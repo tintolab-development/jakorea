@@ -88,7 +88,8 @@ export function AssignmentSubmissionModal({
   }, [open, student, schoolId, application, userName, programTitle, assignmentRoleRevision, remoteDetail])
 
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [previewRound, setPreviewRound] = useState<number>(1)
+  /** 미리보기 대상 회차 — 서버 회차가 없으면 null(회차 표기 생략) */
+  const [previewRound, setPreviewRound] = useState<number | null>(null)
   const [previewFileIds, setPreviewFileIds] = useState<number[]>([])
   const [previewDownloading, setPreviewDownloading] = useState(false)
   const [openTeamRoleDropdownRowId, setOpenTeamRoleDropdownRowId] = useState<string | null>(null)
@@ -124,7 +125,10 @@ export function AssignmentSubmissionModal({
     }
     setPreviewDownloading(true)
     try {
-      await downloadFormSubmissionFileRemote(fileId, `과제_${previewRound}회차`)
+      await downloadFormSubmissionFileRemote(
+        fileId,
+        previewRound != null ? `과제_${previewRound}회차` : '과제'
+      )
     } catch (error) {
       showAlert({
         title: '안내',
@@ -284,7 +288,7 @@ export function AssignmentSubmissionModal({
         mode={feedbackMode ?? 'write'}
         volunteerName={feedbackStudentName}
         docTypeLabel={
-          feedbackTarget != null ? `${feedbackTarget.roundNumber}회차 과제` : '과제'
+          feedbackTarget?.roundNumber != null ? `${feedbackTarget.roundNumber}회차 과제` : '과제'
         }
         submitting={createFeedbackMutation.isPending}
         onSubmit={handleFeedbackSubmit}

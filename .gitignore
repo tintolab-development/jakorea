@@ -16,3 +16,6 @@ apps/*/tests/e2e/.auth/
 .playwright-mcp/
 .dev-mock/
 **/.vercel
+.vscode/
+.claude/
+docs/tmp/

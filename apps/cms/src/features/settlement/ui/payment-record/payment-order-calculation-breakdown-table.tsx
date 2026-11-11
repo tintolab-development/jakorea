@@ -77,6 +77,10 @@ export function formatPaymentOrderCalculationWonPlain(n: number): string {
   return `${n.toLocaleString('ko-KR')}원`
 }
 
+/**
+ * 일정 칸 세션 구간은 `lectureSessionDisplay` 원문 그대로 쓴다.
+ * 회차와 차시는 다른 값이므로 차시 → 회차(또는 반대)로 단위를 바꾸지 않는다. `_mode`는 호출 호환용.
+ */
 function formatLectureSessionSegment(raw: string, _mode: 'session' | 'round' | undefined): string {
   return raw
 }
@@ -85,7 +89,7 @@ export function getPaymentOrderCalculationColumns(options?: {
   onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
   /** @deprecated use onBasisDetailClick */
   onDetailClick?: () => void
-  /** 강의 진행 일자 열의 세션 구간: `round`이면 차시 → 회차 (계좌 지급 현황 상세 등) */
+  /** 호출 호환용. 일정 칸은 `lectureSessionDisplay` 원문만 쓰며 차시·회차 단위를 바꾸지 않는다. */
   lectureSessionSegmentLabel?: 'session' | 'round'
   /** 산출 내역서(1340px) · 계좌 지급 현황 상세 · compact */
   columnWidthPreset?: 'statement-modal' | 'compact' | 'account-payment-detail'
@@ -228,7 +232,7 @@ export interface PaymentOrderCalculationBreakdownTableProps {
    * 미전달 시 발급 진행 — 호출부에서 조건 검증.
    */
   paymentStatementIssueDisabled?: boolean
-  /** 계좌 지급 현황 상세 등: 산출 내역 강의 진행 일자 열에서 차시 대신 회차 표기 */
+  /** 호출 호환용. 일정 칸은 `lectureSessionDisplay` 원문만 쓰며 차시·회차 단위를 바꾸지 않는다. */
   lectureSessionSegmentLabel?: 'session' | 'round'
   /** 산정 기준 상세 모달 열기 */
   onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void

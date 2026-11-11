@@ -12,6 +12,7 @@ export interface ReportCreateRequest {
      * @maxLength 500
      */
   title: string;
-  thumbnailAssetId: number;
+  /** Optional report thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail. */
+  thumbnailAssetId?: number | null;
   attachmentAssetId: number;
 }

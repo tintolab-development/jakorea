@@ -3,7 +3,11 @@ import {
   canUseNotificationSendTemplateForProgram,
   listNotificationSendTemplateDisabledKeysForProgram,
 } from '@/features/notifications/model/shared/template-usable-for-program'
-import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
+import {
+  isNotificationCatalogVariableDisabled,
+  isNotificationCatalogVariablePendingRecipientType,
+  type NotificationRecipientTypeScope,
+} from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
   isAlimtalkEventOnlyVariableKey,
   resolveAlimtalkCatalogSourceMode,
@@ -65,7 +69,10 @@ function findCatalogItem(
   })
 }
 
-function reasonFrom(code: AlimtalkManualSendUnusableCode, keys: string[]): AlimtalkManualSendUnusableReason {
+function reasonFrom(
+  code: AlimtalkManualSendUnusableCode,
+  keys: string[]
+): AlimtalkManualSendUnusableReason {
   const summary = UNUSABLE_SUMMARY[code]
   const uniqueKeys = [...new Set(keys.filter(Boolean))]
   return {
@@ -95,6 +102,8 @@ export function listAlimtalkManualSendUnusableKeys(input: {
   template?: Parameters<typeof collectTemplatePlaceholderKeys>[0]
   catalog: AlimtalkVariableCatalogEntry[] | null | undefined
   programNumericId?: number | null
+  /** 템플릿 선택 단계에서만 넘긴다 — 수신자 유형이 안 정해져서만 비활성인 키는 막지 않는다 */
+  recipientTypeScope?: NotificationRecipientTypeScope | null
 }): AlimtalkManualSendUnusableKeys {
   if (input.catalog == null) {
     return {
@@ -113,6 +122,7 @@ export function listAlimtalkManualSendUnusableKeys(input: {
     usedKeys,
     catalog: input.catalog,
     programNumericId: input.programNumericId,
+    recipientTypeScope: input.recipientTypeScope,
   })
   const eventOnly = listAlimtalkManualSendEventOnlyKeys({
     usedKeys,
@@ -121,8 +131,7 @@ export function listAlimtalkManualSendUnusableKeys(input: {
   const unregistered: string[] = []
   const programRequired: string[] = []
   const catalogConditionDisabled: string[] = []
-  const hasProgram =
-    input.programNumericId != null && Number.isFinite(input.programNumericId)
+  const hasProgram = input.programNumericId != null && Number.isFinite(input.programNumericId)
   for (const raw of usedKeys) {
     const key = raw.trim()
     if (!key || eventOnly.includes(key)) continue
@@ -135,7 +144,14 @@ export function listAlimtalkManualSendUnusableKeys(input: {
       programRequired.push(key)
       continue
     }
-    if (isNotificationCatalogVariableDisabled(item, input.programNumericId)) {
+    if (
+      isNotificationCatalogVariableDisabled(item, input.programNumericId) &&
+      !isNotificationCatalogVariablePendingRecipientType(
+        item,
+        input.programNumericId,
+        input.recipientTypeScope
+      )
+    ) {
       catalogConditionDisabled.push(key)
     }
   }
@@ -171,6 +187,8 @@ export function diagnoseAlimtalkManualSendUnusable(input: {
   template?: Parameters<typeof collectTemplatePlaceholderKeys>[0]
   catalog: AlimtalkVariableCatalogEntry[] | null | undefined
   programNumericId?: number | null
+  /** 템플릿 선택 단계에서만 넘긴다 — 수신자 유형이 안 정해져서만 비활성인 키는 막지 않는다 */
+  recipientTypeScope?: NotificationRecipientTypeScope | null
 }): AlimtalkManualSendUnusableReason[] {
   const unusable = listAlimtalkManualSendUnusableKeys(input)
   const byCode: Array<[AlimtalkManualSendUnusableCode, string[]]> = [
@@ -201,16 +219,17 @@ export function canUseAlimtalkSendTemplateForManualSend(input: {
   template?: Parameters<typeof collectTemplatePlaceholderKeys>[0]
   catalog: AlimtalkVariableCatalogEntry[] | null | undefined
   programNumericId?: number | null
+  /** 템플릿 선택 단계에서만 넘긴다 — 수신자 유형이 안 정해져서만 비활성인 키는 막지 않는다 */
+  recipientTypeScope?: NotificationRecipientTypeScope | null
 }): boolean {
   if (input.catalog == null) return false
-  const usedKeys = input.usedKeys
-    ? input.usedKeys
-    : collectTemplatePlaceholderKeys(input.template)
+  const usedKeys = input.usedKeys ? input.usedKeys : collectTemplatePlaceholderKeys(input.template)
   if (
     !canUseNotificationSendTemplateForProgram({
       usedKeys,
       catalog: input.catalog,
       programNumericId: input.programNumericId,
+      recipientTypeScope: input.recipientTypeScope,
     })
   ) {
     return false
@@ -219,6 +238,7 @@ export function canUseAlimtalkSendTemplateForManualSend(input: {
     usedKeys,
     catalog: input.catalog,
     programNumericId: input.programNumericId,
+    recipientTypeScope: input.recipientTypeScope,
   })
   return (
     unusable.eventOnly.length === 0 &&

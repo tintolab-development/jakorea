@@ -68,6 +68,10 @@ export type AlimtalkVariableCatalogEntry = {
   enabled?: boolean
   requiresProgram?: boolean
   sourceMode?: AlimtalkCatalogSourceMode | null
+  programGroups?: string[]
+  recruitmentTypes?: string[]
+  participantTypes?: string[]
+  memberTypes?: string[]
 }
 
 export type AlimtalkPlaceholderDisposition =

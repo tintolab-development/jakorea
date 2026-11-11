@@ -1,5 +1,8 @@
 import type { SlotRequest } from '@/shared/api/generated/dashboard/schemas/slotRequest'
-import { stripDefaultEducationSlotNameFromLabel } from '@/shared/lib/education-schedule-name'
+import {
+  stripDefaultEducationSlotNameFromLabel,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -235,6 +238,11 @@ function assignmentNoteFor(
   }
 }
 
+/**
+ * 공통 교육 슬롯 라벨 `{단위} · {일시}`.
+ * 단위 = 세부 일정명(일정형)·사전교육 — 자동 기본명(`공통 교육 예정 N`)이면 `N회차`(sessionNo).
+ * 일정형 일정을 회차 번호로 표기하지 않는다.
+ */
 function formatAssignableEducationSlotLabel(slot: ProgramScheduleResponse): string {
   const sessionNo =
     typeof slot.sessionNo === 'number' && Number.isFinite(slot.sessionNo) && slot.sessionNo > 0
@@ -244,7 +252,9 @@ function formatAssignableEducationSlotLabel(slot: ProgramScheduleResponse): stri
     slot.startAt ?? slot.startDate,
     slot.endAt ?? slot.endDate
   )
-  const session = sessionNo != null ? `${sessionNo}회차` : ''
+  const session =
+    toDisplayEducationScheduleName(slot.scheduleName) ??
+    (sessionNo != null ? `${sessionNo}회차` : '')
   return [session, when].filter(Boolean).join(' · ') || `일정 ${slot.id}`
 }
 

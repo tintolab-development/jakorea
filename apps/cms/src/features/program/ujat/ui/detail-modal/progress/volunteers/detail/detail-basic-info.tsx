@@ -1,3 +1,4 @@
+import { mask1365IdForDisplay } from '@/features/user/api/map-external-identifiers'
 import type { ReactNode } from 'react'
 import type { Program } from '@/types/domain'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
@@ -62,10 +63,10 @@ function toTableRows(
   return rows
 }
 
+/** 1365 ID: 정책 §4-1 뒤 2자리 마스킹(공통 mask1365IdForDisplay). 이미 마스킹된 값은 그대로. */
 function maskId1365(id: string): string {
   if (!id || id === '—' || id === '-') return id || '-'
-  if (id.length <= 4) return '*'.repeat(id.length)
-  return `${id.slice(0, 4)}***`
+  return mask1365IdForDisplay(id)
 }
 
 function displayOrDash(value: string | null | undefined): string {

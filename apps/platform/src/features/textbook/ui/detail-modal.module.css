@@ -281,21 +281,25 @@
   border-radius: var(--radius-4);
 }
 
+/*
+ * 폭은 고정값 + max-width 100%.
+ * PC 미만에서는 칸이 내용 폭만큼 줄어(shrink-to-fit) 퍼센트 폭이 짧게 잡히기 때문이다.
+ */
 /* hl-lg 24px */
 .skeletonTitle {
-  width: 60%;
+  width: 240px;
   height: 36px;
 }
 
 /* bd-md 16px */
 .skeletonDescription,
 .skeletonUnitDescription {
-  width: 100%;
+  width: 480px;
   height: 24px;
 }
 
 .skeletonDescriptionShort {
-  width: 70%;
+  width: 320px;
   height: 24px;
 }
 

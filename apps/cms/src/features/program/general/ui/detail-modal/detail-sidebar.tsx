@@ -4,7 +4,6 @@
 
 import { useCallback, useState, type ReactNode } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
-import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
 import type {
   GeneralProgressMenuItem,
   GeneralSurveyMenuItem,
@@ -14,15 +13,14 @@ import {
   defaultParticipantApplicationTab,
   PARTICIPANT_INTERVIEW_CHILD_ROWS,
 } from '@/features/program/general/lib/progress-tabs'
+import { LnbIconApplicants, LnbIconManagers, LnbIconProgress, LnbIconProjectInfo } from './program-detail-lnb-icons'
 import {
-  GeneralLnbInstitutionApplicationIcon,
-  GeneralLnbInstructorApplicationIcon,
-  GeneralLnbSurveyManagementIcon,
-  GeneralLnbVolunteerHandshakeIcon,
-  LnbIconManagers,
-  LnbIconProgress,
-  LnbIconProjectInfo,
-} from './detail-lnb-icons'
+  LnbFigmaArrowDown,
+  LnbFigmaInstitutionApplicationIcon,
+  LnbFigmaSurveyManagementIcon,
+  LnbFigmaVolunteerApplicationIcon,
+} from './lnb-figma-icons'
+import './detail-sidebar.css'
 
 type TopAccordionKey =
   | 'info'
@@ -149,7 +147,10 @@ export function GeneralProgramDetailSidebar({
   const surveyHasChildren = surveyItems.length > 0
 
   return (
-    <nav className="detail-fullpage-modal__lnb" aria-label="일반 프로그램 상세 메뉴">
+    <nav
+      className="detail-fullpage-modal__lnb detail-fullpage-modal__lnb--program-detail"
+      aria-label="일반 프로그램 상세 메뉴"
+    >
       <DetailFullpageModalLnbBrand />
       <div className="detail-fullpage-modal__lnb-body">
         <ul className="detail-fullpage-modal__lnb-list">
@@ -163,7 +164,7 @@ export function GeneralProgramDetailSidebar({
                 <LnbIconProjectInfo />
               </span>
               <span className="detail-fullpage-modal__lnb-item-label">프로그램 정보</span>
-              <DetailFullpageModalLnbArrowDown
+              <LnbFigmaArrowDown
                 className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('info') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
               />
             </button>
@@ -222,12 +223,12 @@ export function GeneralProgramDetailSidebar({
                   onClick={() => toggleTopBody('institution_applications')}
                 >
                   <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                    <GeneralLnbInstitutionApplicationIcon />
+                    <LnbFigmaInstitutionApplicationIcon />
                   </span>
                   <span className="detail-fullpage-modal__lnb-item-label">
                     {participantApplicationsLnbLabel}
                   </span>
-                  <DetailFullpageModalLnbArrowDown
+                  <LnbFigmaArrowDown
                     className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('institution_applications') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                   />
                 </button>
@@ -270,7 +271,7 @@ export function GeneralProgramDetailSidebar({
                 }
               >
                 <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                  <GeneralLnbInstitutionApplicationIcon />
+                  <LnbFigmaInstitutionApplicationIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">
                   {participantApplicationsLnbLabel}
@@ -288,7 +289,7 @@ export function GeneralProgramDetailSidebar({
                 onClick={() => handleSelectChildTab('instructor_applications', 'main')}
               >
                 <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                  <GeneralLnbInstructorApplicationIcon />
+                  <LnbIconApplicants />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">강사 신청 목록</span>
               </button>
@@ -305,10 +306,10 @@ export function GeneralProgramDetailSidebar({
                     onClick={() => toggleTopBody('volunteer_applications')}
                   >
                     <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                      <GeneralLnbVolunteerHandshakeIcon />
+                      <LnbFigmaVolunteerApplicationIcon />
                     </span>
                     <span className="detail-fullpage-modal__lnb-item-label">봉사자 신청 목록</span>
-                    <DetailFullpageModalLnbArrowDown
+                    <LnbFigmaArrowDown
                       className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('volunteer_applications') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                     />
                   </button>
@@ -344,7 +345,7 @@ export function GeneralProgramDetailSidebar({
                   onClick={() => handleSelectChildTab('volunteer_applications', 'vol_all')}
                 >
                   <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                    <GeneralLnbVolunteerHandshakeIcon />
+                    <LnbFigmaVolunteerApplicationIcon />
                   </span>
                   <span className="detail-fullpage-modal__lnb-item-label">봉사자 신청 목록</span>
                 </button>
@@ -363,7 +364,7 @@ export function GeneralProgramDetailSidebar({
                   <LnbIconProgress />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">프로그램 진행 현황</span>
-                <DetailFullpageModalLnbArrowDown
+                <LnbFigmaArrowDown
                   className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('progress') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                 />
               </button>
@@ -402,10 +403,10 @@ export function GeneralProgramDetailSidebar({
                 onClick={() => toggleTopBody('survey')}
               >
                 <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                  <GeneralLnbSurveyManagementIcon />
+                  <LnbFigmaSurveyManagementIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
-                <DetailFullpageModalLnbArrowDown
+                <LnbFigmaArrowDown
                   className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                 />
               </button>

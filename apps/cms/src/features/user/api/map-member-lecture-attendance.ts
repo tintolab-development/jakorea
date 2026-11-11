@@ -20,8 +20,9 @@ export function mapMemberLectureAttendanceToDetail(
   response: MemberLectureAttendanceResponse,
   fallbackStudentName: string
 ): LectureAttendanceDetail {
-  const sessions: LectureAttendanceSession[] = (response.sessions ?? []).map((session, index) => ({
-    roundNumber: session.roundNumber ?? index + 1,
+  const sessions: LectureAttendanceSession[] = (response.sessions ?? []).map(session => ({
+    // 회차 번호는 서버 값만. 행 순서로 회차를 만들지 않는다(없으면 null → 라벨에서 회차 생략)
+    roundNumber: session.roundNumber ?? null,
     status: mapSessionStatus(session.status),
   }))
 

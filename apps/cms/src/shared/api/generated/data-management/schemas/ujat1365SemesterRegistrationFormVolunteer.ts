@@ -8,8 +8,8 @@
 import type { Ujat1365SemesterRegistrationFormCell } from './ujat1365SemesterRegistrationFormCell';
 
 export interface Ujat1365SemesterRegistrationFormVolunteer {
-  participantId: number;
-  memberId?: number | null;
+  participantId?: number;
+  memberId?: number;
   name?: string | null;
   /** 생년월일 원문 */
   birthDate?: string | null;
@@ -17,10 +17,10 @@ export interface Ujat1365SemesterRegistrationFormVolunteer {
   external1365Id?: string | null;
   educationRegionCode?: string | null;
   educationRegionName?: string | null;
-  /** 활동 포기 여부. 포기 이후 교육일은 출결이 없으므로 NOT_COMPLETED. */
-  givenUp: boolean;
+  /** 활동 포기 여부. 포기 이후 교육일은 출결이 없으므로 NOT_COMPLETED입니다. */
+  givenUp?: boolean;
   /** columns.openingCeremony가 null이면 null. */
   openingCeremony?: Ujat1365SemesterRegistrationFormCell | null;
   /** columns.sessions와 같은 순서·개수 */
-  sessions: Ujat1365SemesterRegistrationFormCell[];
+  sessions?: Ujat1365SemesterRegistrationFormCell[];
 }

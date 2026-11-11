@@ -94,7 +94,6 @@ export function PreviewModal({
                   size="large"
                   type="button"
                   disabled={useTemplateDisabled}
-                  title={useTemplateDisabledReason ?? undefined}
                   onClick={onUseTemplate}
                 >
                   템플릿 사용

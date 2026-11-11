@@ -46,7 +46,7 @@ describe('resolveWagePaymentItemIds', () => {
       ])
     ).toEqual(['p-1', 'p-3'])
     expect(resolveWagePaymentItemsView('교통비, 숙박비, 활동비')).toBe(
-      '강사 교통비, 숙박비, 참여자 활동비'
+      '강사 교통비, 숙박비, 활동비'
     )
   })
 

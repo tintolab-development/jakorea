@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
+  buildParticipatingSchoolPreferredScheduleLines,
   formatGeneralEducationScheduleLine,
   formatParticipatingProgressEducationScheduleLine,
   formatParticipatingSchoolSessionLine,
   formatVolunteerAssignmentScheduleLine,
   prepareGeneralEducationScheduleSessions,
   resolveParticipatingInstitutionScheduleRowLabel,
+  resolveParticipatingSessionClassNumLead,
   resolveScheduleDetailTimeSpan,
 } from './participating-school-session-display'
 import type { Program } from '@/types/domain'
@@ -576,5 +578,48 @@ describe('formatParticipatingProgressEducationScheduleLine', () => {
     expect(
       formatParticipatingProgressEducationScheduleLine(dated({ round: 0, sessionNo: null, classNum: '' }))
     ).toBe('2026.04.20(월) 09:30 ~ 12:20')
+  })
+})
+
+describe('buildParticipatingSchoolPreferredScheduleLines — 차시 수 출처', () => {
+  const day = (overrides: Partial<ParticipatingSchoolSession>): ParticipatingSchoolSession => ({
+    round: 1,
+    date: '2026.04.27',
+    dayOfWeek: '월',
+    duration: '90분',
+    format: '-',
+    classNum: '1지망',
+    timeRange: '09:00 ~ 10:30',
+    status: 'pending',
+    ...overrides,
+  })
+
+  it('legacy(기본)는 기존처럼 일정 건수를 쓴다', () => {
+    expect(buildParticipatingSchoolPreferredScheduleLines([day({})])).toEqual([
+      '2026.04.27(월) 09:00 ~ 10:30 | 1차시',
+    ])
+  })
+
+  it('known-only(1사1교)는 신청·연결 차시 수만 쓰고, 모르면 차시 표기를 생략한다', () => {
+    const knownOnly = { sessionCountSource: 'known-only' as const }
+    expect(
+      buildParticipatingSchoolPreferredScheduleLines([day({ requestedSessionCount: 2 })], knownOnly)
+    ).toEqual(['2026.04.27(월) 09:00 ~ 10:30 | 2차시'])
+    expect(
+      buildParticipatingSchoolPreferredScheduleLines([day({ curriculumSessionCount: 2 })], knownOnly)
+    ).toEqual(['2026.04.27(월) 09:00 ~ 10:30 | 2차시'])
+    expect(buildParticipatingSchoolPreferredScheduleLines([day({})], knownOnly)).toEqual([
+      '2026.04.27(월) 09:00 ~ 10:30',
+    ])
+  })
+})
+
+describe('resolveParticipatingSessionClassNumLead', () => {
+  it('교시를 지어내지 않는다 — 숫자만 교시, 빈 값은 없음, 그 외 원문', () => {
+    expect(resolveParticipatingSessionClassNumLead('')).toBeNull()
+    expect(resolveParticipatingSessionClassNumLead('2')).toBe('2교시')
+    expect(resolveParticipatingSessionClassNumLead('2교시')).toBe('2교시')
+    expect(resolveParticipatingSessionClassNumLead('1회차')).toBe('1회차')
+    expect(resolveParticipatingSessionClassNumLead('1지망')).toBe('1지망')
   })
 })

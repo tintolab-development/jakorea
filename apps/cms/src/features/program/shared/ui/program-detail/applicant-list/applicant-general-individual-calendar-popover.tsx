@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '@/shared/components/calendar'
+import type { Program } from '@/types/domain'
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'
 import {
   findInstitutionSessionForDate,
@@ -34,12 +35,16 @@ function resolveIndividualFromCalendarItem(item: CalendarItem): {
   return { applicant, dateKey }
 }
 
-export function renderGeneralIndividualCalendarPreviewTooltipContent({
-  events,
-}: {
-  events: CalendarItem[]
-  colorMap: Map<string | number, ScheduleColorPair>
-}): ReactNode {
+export function renderGeneralIndividualCalendarPreviewTooltipContent(
+  {
+    events,
+  }: {
+    events: CalendarItem[]
+    colorMap: Map<string | number, ScheduleColorPair>
+  },
+  /** 일반 프로그램 — 일정 라벨 교육 구조별. 없으면 시간(·신청 차시 수)만 */
+  options: { program?: Program | null } = {}
+): ReactNode {
   return (
     <div className="calendar-preview-popover">
       {events.map(item => {
@@ -48,7 +53,11 @@ export function renderGeneralIndividualCalendarPreviewTooltipContent({
 
         const { applicant, dateKey } = resolved
         const session = findInstitutionSessionForDate(applicant, dateKey)
-        const sessionLine = formatInstitutionCalendarSessionTimeDisplay(session)
+        const sessionLine = formatInstitutionCalendarSessionTimeDisplay(
+          session,
+          undefined,
+          options.program
+        )
         const gradeLabel = applicant.educationGrade?.trim() || '-'
 
         return (

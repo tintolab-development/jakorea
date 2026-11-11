@@ -17,6 +17,7 @@ import {
   isPaymentStatementStatusConflictError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import { canConfirmPaymentStatement } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
@@ -916,18 +917,23 @@ export function usePaymentOrderDetailLinesController(
 
   const excelExport = useMemo((): FilterTableExcelExportConfig<PaymentOrderDetailLineExcelRow> => {
     const nameTitle = mode === 'program' ? '신청자명' : '프로그램명'
-    const data: PaymentOrderDetailLineExcelRow[] = filteredRows.map(row => ({
-      id: row.id,
-      no: row.no,
-      name:
-        mode === 'program'
-          ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName
-          : (row as PaymentOrderAdminInstructorDetailProgramRow).programName,
-      institutionName: row.institutionName,
-      lectureDateSession: `${formatKoreanDateWithWeekday(row.lectureDate)} | ${row.sessionOrdinal}회차`,
-      processingStatusLabel: PAYMENT_ORDER_LINE_STATUS_LABELS_FULL[row.processingStatus],
-      estimatedAmountLabel: formatWon(row.estimatedAmount),
-    }))
+    const data: PaymentOrderDetailLineExcelRow[] = filteredRows.map(row => {
+      const dateLabel = formatKoreanDateWithWeekday(row.lectureDate)
+      // 회차(session_no)가 없으면(사전교육 등) 날짜만 — 0회차를 만들지 않는다.
+      const roundLabel = formatLectureSessionLabel(row.sessionOrdinal)
+      return {
+        id: row.id,
+        no: row.no,
+        name:
+          mode === 'program'
+            ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName
+            : (row as PaymentOrderAdminInstructorDetailProgramRow).programName,
+        institutionName: row.institutionName,
+        lectureDateSession: roundLabel !== '-' ? `${dateLabel} | ${roundLabel}` : dateLabel,
+        processingStatusLabel: PAYMENT_ORDER_LINE_STATUS_LABELS_FULL[row.processingStatus],
+        estimatedAmountLabel: formatWon(row.estimatedAmount),
+      }
+    })
 
     const columns: ColumnsType<PaymentOrderDetailLineExcelRow> = [
       { title: 'No.', dataIndex: 'no', key: 'no' },

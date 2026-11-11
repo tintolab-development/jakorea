@@ -18,6 +18,7 @@ import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/
 import {
   buildCompanySchoolAssignedInstructorRows,
   buildCompanySchoolWaitingInstructorRows,
+  omitCompanySchoolScheduleRoundLabels,
   type CompanySchoolAssignedInstructorRow,
   type CompanySchoolWaitingInstructorRow,
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
@@ -67,7 +68,8 @@ export function ApplicantInstitutionInstructorAssignTab({
       assignments: boardQuery.data.assignments,
       organizationApplicationId,
       instructorNameByMemberId: boardQuery.data.instructorNameByMemberId,
-      scheduleLabelById: boardQuery.data.scheduleLabelById,
+      // 1사1교는 회차가 없다 — sessionNo 「N회차」를 배정 일정에 붙이지 않는다
+      scheduleLabelById: omitCompanySchoolScheduleRoundLabels(boardQuery.data.scheduleLabelById),
     })
   }, [boardQuery.data, organizationApplicationId])
 
@@ -89,6 +91,8 @@ export function ApplicantInstitutionInstructorAssignTab({
       approvedInstructors: boardQuery.data.approvedInstructorApplications,
       assignedInstructorMemberIds: assignedMemberIds,
       occupiedLectureDatesByInstructorId: boardQuery.data.occupiedLectureDatesByInstructorId,
+      // 1사1교 희망 일정 번호는 지망 순위다 — 「N회차」가 아니라 「N지망」
+      hopeSessionLabel: 'preference-only',
     })
   }, [boardQuery.data, organizationApplicationId, schoolName, sessions])
 
@@ -132,14 +136,6 @@ export function ApplicantInstitutionInstructorAssignTab({
         dataIndex: 'assignedTime',
         key: 'assignedTime',
         width: 180,
-        render: (v: string | undefined) => v ?? '-',
-      },
-      {
-        title: '교육 담당 차시',
-        dataIndex: 'assignedSession',
-        key: 'assignedSession',
-        width: 100,
-        align: 'center',
         render: (v: string | undefined) => v ?? '-',
       },
       {

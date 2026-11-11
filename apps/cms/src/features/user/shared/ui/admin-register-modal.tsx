@@ -28,7 +28,8 @@ type GenderValue = 'male' | 'female'
 
 export interface AdminRegisterModalFormValues {
   name: string
-  gender: GenderValue
+  /** 수정 폼에서 미등록·마스킹 성별은 undefined(선택 안 됨) — 남성으로 추정하지 않는다. */
+  gender: GenderValue | undefined
   birthDate: string
   contact: string
   email: string
@@ -57,7 +58,8 @@ const GENDER_OPTIONS = [
 
 const INITIAL_VALUES: AdminRegisterModalFormValues = {
   name: '',
-  gender: 'male',
+  // 신규 등록은 미선택으로 시작 — 남성으로 추정하지 않는다.
+  gender: undefined,
   birthDate: '',
   contact: '',
   email: '',
@@ -91,7 +93,7 @@ function normalizeSubmitValues(values: AdminRegisterModalFormValues): AdminRegis
   }
 }
 
-function collectAdminRegisterValidation(values: AdminRegisterModalFormValues): {
+export function collectAdminRegisterValidation(values: AdminRegisterModalFormValues): {
   missingRequired: boolean
   formatMessages: string[]
 } {
@@ -99,6 +101,10 @@ function collectAdminRegisterValidation(values: AdminRegisterModalFormValues): {
   const formatMessages: string[] = []
 
   if (!values.name?.trim()) {
+    missingRequired = true
+  }
+
+  if (values.gender !== 'male' && values.gender !== 'female') {
     missingRequired = true
   }
 

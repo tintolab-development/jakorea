@@ -1,3 +1,4 @@
+import { toPolicyMaskedBirthDisplay } from '@/features/user/api/format-gender-birth-display'
 import dayjs from 'dayjs'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { Program } from '@/types/domain'
@@ -83,7 +84,10 @@ function formatScheduleHeader(
     program && scheduleDirect
       ? resolveGeneralScheduleSingleDateDetailName(program, schedule)
       : program
-        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round, {
+            curriculumSessionCount: (schedule as { curriculumSessionCount?: number | null })
+              .curriculumSessionCount,
+          })
         : `${round}회차`
   const built = buildGeneralProgressSessionTableHeader({
     round,
@@ -121,6 +125,9 @@ function mapGenderLabel(gender?: string | null): string {
 }
 
 function mapBirthLabel(birthDate?: string | null): string {
+  // BE 마스킹(yyyy-**-**)은 정책 표기(yyyy.**.**) — 날짜 파서에 넣지 않는다.
+  const masked = toPolicyMaskedBirthDisplay(birthDate)
+  if (masked && masked !== (birthDate?.trim() ?? '')) return masked
   return formatDateLabel(birthDate, 'YYYY.MM.DD') || '-'
 }
 
@@ -174,9 +181,22 @@ function mapSubmission(
   return { kind: 'not_submitted' }
 }
 
+function readAssignmentFormResponseId(
+  participant: GeneralAssignmentSubmissionParticipantDto
+): number | undefined {
+  const raw = participant.formResponseId ?? participant.submissionId
+  return typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? raw : undefined
+}
+
 function mapParticipantRow(
   participant: GeneralAssignmentSubmissionParticipantDto
 ): ParticipatingIndividualProgressAssignmentParticipantRow {
+  const assignmentFormResponseId = readAssignmentFormResponseId(participant)
+  // BE N7: 행 루트 `formResponseId` 키가 항상 온다(미제출 null). 키 자체가 없으면 구버전 응답
+  const assignmentFeedbackFieldsProvided = Object.prototype.hasOwnProperty.call(
+    participant,
+    'formResponseId'
+  )
   const participantId = String(participant.participantId ?? '')
   const affiliation = participant.affiliation?.trim() || participant.organizationName?.trim() || '-'
   const educationGrade = participant.grade?.trim() || '-'
@@ -203,6 +223,11 @@ function mapParticipantRow(
     remarkDateLabel: formatDateLabel(participant.remarkAt, 'YY.MM.DD') || undefined,
     surveyResponse: parseParticipantSurveyViewKey(participant.surveyResponse),
     satisfactionResponse: parseParticipantSurveyViewKey(participant.satisfactionResponse),
+    ...(assignmentFormResponseId != null ? { assignmentFormResponseId } : {}),
+    ...(assignmentFeedbackFieldsProvided ? { assignmentFeedbackFieldsProvided: true } : {}),
+    ...(typeof participant.hasFeedback === 'boolean'
+      ? { assignmentHasFeedback: participant.hasFeedback }
+      : {}),
   }
 }
 

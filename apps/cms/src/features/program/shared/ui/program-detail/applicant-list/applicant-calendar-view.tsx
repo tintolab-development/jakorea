@@ -4,6 +4,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+import type { Program } from '@/types/domain'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
@@ -37,7 +38,10 @@ import {
   renderGeneralInstitutionCalendarPreviewTooltipContentWithoutBadge,
 } from './applicant-general-institution-calendar-popover'
 import { renderGeneralIndividualCalendarPreviewTooltipContent } from './applicant-general-individual-calendar-popover'
-import { renderGeneralInstructorCalendarPreviewTooltipContent } from './applicant-general-instructor-calendar-popover'
+import {
+  renderGeneralInstructorCalendarPreviewTooltipContent,
+  type GeneralInstructorCalendarSessionLabelFormatter,
+} from './applicant-general-instructor-calendar-popover'
 import { renderProgramCalendarEventsDefaultTooltipContent } from '@/shared/components/calendar/ui/preview-tooltip/program'
 import {
   resolveGeneralInstructorCalendarEventTitle,
@@ -75,6 +79,18 @@ interface ApplicantCalendarViewProps {
   scheduleListEmptyDescription?: string
   /** 일반(기관형) 기관 신청 — 시안 1141:236526 날짜 hover 팝오버에 승인 상태 뱃지 없음. 기본 false(1사1교 유지) */
   hideInstitutionPreviewApprovalBadge?: boolean
+  /**
+   * `general-instructor` 전용 — 일정 라벨 formatter(일반 기관형: 회차·차시·세부 일정명·사전교육).
+   * 생략·null이면 기존 표기(1사1교 유지).
+   */
+  formatInstructorSessionLabel?: GeneralInstructorCalendarSessionLabelFormatter
+  /** `general-instructor` 전용 — 우측 카드 「활동 포기」 뱃지(일반 기관형). 기본 false(1사1교 유지) */
+  showInstructorActivityWithdrawn?: boolean
+  /**
+   * `general-institution`·`general-individual` — 일반 프로그램이면 우측 목록·팝오버 일정 라벨을 교육 구조별로
+   * (일정형=세부 일정명, 단일 회차=N차시, 복수 회차=N회차). 1사1교 등은 기존 표기.
+   */
+  program?: Program | null
 }
 
 function findInstitutionForRow(
@@ -142,6 +158,9 @@ export function ApplicantCalendarView({
   useSplitCardPageScroll = false,
   scheduleListEmptyDescription,
   hideInstitutionPreviewApprovalBadge = false,
+  formatInstructorSessionLabel,
+  showInstructorActivityWithdrawn = false,
+  program = null,
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
   const isGeneralInstitution = calendarVariant === 'general-institution'
@@ -257,18 +276,33 @@ export function ApplicantCalendarView({
   )
 
   const institutionListRows = useMemo(
-    () => (isGeneralInstitution ? buildGeneralInstitutionCalendarListRows(filteredDayEvents) : []),
-    [filteredDayEvents, isGeneralInstitution]
+    () =>
+      isGeneralInstitution
+        ? buildGeneralInstitutionCalendarListRows(filteredDayEvents, { program })
+        : [],
+    [filteredDayEvents, isGeneralInstitution, program]
   )
 
   const instructorListRows = useMemo(
-    () => (isGeneralInstructor ? buildGeneralInstructorCalendarListRows(filteredDayEvents) : []),
-    [filteredDayEvents, isGeneralInstructor]
+    () =>
+      isGeneralInstructor
+        ? buildGeneralInstructorCalendarListRows(filteredDayEvents, {
+            formatSessionLabel: formatInstructorSessionLabel,
+            showActivityWithdrawn: showInstructorActivityWithdrawn,
+          })
+        : [],
+    [
+      filteredDayEvents,
+      formatInstructorSessionLabel,
+      isGeneralInstructor,
+      showInstructorActivityWithdrawn,
+    ]
   )
 
   const individualListRows = useMemo(
-    () => (isGeneralIndividual ? buildGeneralIndividualCalendarListRows(filteredDayEvents) : []),
-    [filteredDayEvents, isGeneralIndividual]
+    () =>
+      isGeneralIndividual ? buildGeneralIndividualCalendarListRows(filteredDayEvents, { program }) : [],
+    [filteredDayEvents, isGeneralIndividual, program]
   )
 
   const handleDateSelect = (date: Dayjs) => {
@@ -376,12 +410,16 @@ export function ApplicantCalendarView({
       previewTooltipContent={
         isGeneralInstitution
           ? hideInstitutionPreviewApprovalBadge
-            ? renderGeneralInstitutionCalendarPreviewTooltipContentWithoutBadge
-            : renderGeneralInstitutionCalendarPreviewTooltipContent
+            ? args =>
+                renderGeneralInstitutionCalendarPreviewTooltipContentWithoutBadge(args, { program })
+            : args => renderGeneralInstitutionCalendarPreviewTooltipContent(args, { program })
           : isGeneralIndividual
-            ? renderGeneralIndividualCalendarPreviewTooltipContent
+            ? args => renderGeneralIndividualCalendarPreviewTooltipContent(args, { program })
             : isGeneralInstructor
-              ? renderGeneralInstructorCalendarPreviewTooltipContent
+              ? args =>
+                  renderGeneralInstructorCalendarPreviewTooltipContent(args, {
+                    formatSessionLabel: formatInstructorSessionLabel,
+                  })
               : renderProgramCalendarEventsDefaultTooltipContent
       }
       {...(isGeneralInstructor

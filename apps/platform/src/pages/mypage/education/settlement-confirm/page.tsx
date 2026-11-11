@@ -63,8 +63,14 @@ import {
   RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
   individualSettlementApiErrorMessage,
   isReceiptPreConsentRequiredError,
+  readIndividualSettlementErrorCode,
   resolveScheduleSettlementAudience,
 } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
+import {
+  PAYMENT_ITEM_LIMIT_EXCEEDED_CODE,
+  findExceededReceiptItemLimit,
+  paymentItemLimitExceededMessage,
+} from '@/features/mypage/education/settlements/lib/payment-item-limit'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
@@ -339,6 +345,12 @@ export function MypageEducationSettlementConfirmPage() {
         setAlertOpen(true)
         return
       }
+      const exceededLimitWon = findExceededReceiptItemLimit(draft)
+      if (exceededLimitWon != null) {
+        setAlertMessage(paymentItemLimitExceededMessage(exceededLimitWon))
+        setAlertOpen(true)
+        return
+      }
       if (isInstructorSubmit) {
         const resubmit =
           draft.meta.resubmit === true && settlementApplicationId != null
@@ -393,6 +405,14 @@ export function MypageEducationSettlementConfirmPage() {
             setAlertMessage(RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
             setAlertOpen(true)
             return
+          }
+          if (readIndividualSettlementErrorCode(error) === PAYMENT_ITEM_LIMIT_EXCEEDED_CODE) {
+            const limitWon = findExceededReceiptItemLimit(draft)
+            if (limitWon != null) {
+              setAlertMessage(paymentItemLimitExceededMessage(limitWon))
+              setAlertOpen(true)
+              return
+            }
           }
           setAlertMessage(
             individualSettlementApiErrorMessage(

@@ -12,6 +12,11 @@ import {
   type LectureReportProgressLabel,
   type LectureReportSubmissionLabel,
 } from '@/features/program/shared/lib/lecture-report-status'
+import {
+  resolveGeneralProgramScheduleStructure,
+  resolveGeneralScheduleUnitLabel,
+} from '@/features/program/general/lib/schedule-unit-label'
+import type { Program } from '@/types/domain'
 
 /**
  * GET …/programs/{id}/lecture-reports 응답 → 강사 강의보고서 테이블 row.
@@ -118,24 +123,54 @@ function isLegacySessionNoAsSessionLabel(label: string, sessionNo: number | unde
 }
 
 /**
- * 강의보고서 일정 라벨. canonical 필드로 재조립하고, 구버전 `N차시` dateRoundTimeLabel은 쓰지 않는다.
- * 표시: 날짜 · 회차 · 차시(연결 있을 때만) · 시각. 회차와 차시를 괄호로 합치지 않는다.
+ * 일정 단위 토큰. 회차와 차시를 괄호로 합치지 않는다.
+ * - 일반 프로그램 일정형: 세부 일정명 / 커리큘럼형 단일 회차: `N차시`(회차 표기 없음)
+ * - 커리큘럼형 복수 회차·사전교육·그 외 유형(1사1교 등): `N회차`, `K차시`
  */
-export function buildLectureReportEducationScheduleLabel(
-  dto: unknown,
-  fields: LectureReportScheduleFields = readLectureReportScheduleFields(dto)
-): string {
-  const isPreEducation = isEducationSchedulePreEducation({
-    scheduleRole: fields.scheduleRole,
-    educationSlotKey: fields.educationSlotKey,
-  })
-  const unitTokens = formatEducationScheduleLabelTokens({
+function resolveLectureReportUnitTokens(
+  fields: LectureReportScheduleFields,
+  isPreEducation: boolean,
+  program?: Program | null
+): string[] {
+  const tokens = formatEducationScheduleLabelTokens({
     sessionNo: fields.sessionNo,
     curriculumSessionCount: fields.curriculumSessionCount,
     scheduleRole: fields.scheduleRole,
     educationSlotKey: fields.educationSlotKey,
   })
-  const canCompose = isPreEducation || fields.sessionNo != null
+  if (isPreEducation) return tokens
+  const structure = resolveGeneralProgramScheduleStructure(program)
+  if (structure == null) return tokens
+  if (structure.educationStructure === 'curriculum' && structure.sessionRound === 'multi') {
+    return tokens
+  }
+  const unit = resolveGeneralScheduleUnitLabel(
+    {
+      sessionNo: fields.sessionNo,
+      curriculumSessionCount: fields.curriculumSessionCount,
+      scheduleRole: fields.scheduleRole,
+      educationSlotKey: fields.educationSlotKey,
+    },
+    program
+  )
+  return unit ? [unit] : []
+}
+
+/**
+ * 강의보고서 일정 라벨. canonical 필드로 재조립하고, 구버전 `N차시` dateRoundTimeLabel은 쓰지 않는다.
+ * 표시: 날짜 · 일정 단위(교육 구조별) · 시각.
+ */
+export function buildLectureReportEducationScheduleLabel(
+  dto: unknown,
+  fields: LectureReportScheduleFields = readLectureReportScheduleFields(dto),
+  program?: Program | null
+): string {
+  const isPreEducation = isEducationSchedulePreEducation({
+    scheduleRole: fields.scheduleRole,
+    educationSlotKey: fields.educationSlotKey,
+  })
+  const unitTokens = resolveLectureReportUnitTokens(fields, isPreEducation, program)
+  const canCompose = isPreEducation || fields.sessionNo != null || unitTokens.length > 0
   if (canCompose) {
     const parts: string[] = []
     const dateToken = lectureReportDateToken(fields.lectureDate)
@@ -160,13 +195,10 @@ export function buildLectureReportEducationScheduleLabel(
   return '-'
 }
 
-function buildScheduleLabel(row: LectureReportListItemResponse): string {
-  return buildLectureReportEducationScheduleLabel(row)
-}
-
 export function mapLectureReportDtoToInstructorRow(
   dto: unknown,
-  index: number
+  index: number,
+  program?: Program | null
 ): ParticipatingInstructorLectureReportRow | null {
   if (dto == null || typeof dto !== 'object') return null
   const row = dto as LectureReportListItemResponse & Record<string, unknown>
@@ -211,7 +243,7 @@ export function mapLectureReportDtoToInstructorRow(
         : undefined,
     schoolName: typeof row.schoolName === 'string' && row.schoolName.trim() ? row.schoolName : '-',
     educationGrade: grade,
-    educationScheduleLabel: buildScheduleLabel(row),
+    educationScheduleLabel: buildLectureReportEducationScheduleLabel(row, scheduleFields, program),
     lectureDate: scheduleFields.lectureDate,
     sessionNo: scheduleFields.sessionNo,
     curriculumSessionCount: scheduleFields.curriculumSessionCount,

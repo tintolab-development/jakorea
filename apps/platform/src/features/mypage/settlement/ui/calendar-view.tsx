@@ -59,6 +59,10 @@ export function SettlementCalendarView({
     [date, viewMonth],
   )
   const events = useMemo(() => toEvents(items), [items])
+  const supersededIds = useMemo(
+    () => new Set(items.filter(item => item.superseded).map(item => item.id)),
+    [items],
+  )
   const weekLayouts = useMemo(() => {
     const days = getMonthGridDays(viewMonth)
     return buildCalendarWeekLayouts(days, events)
@@ -222,7 +226,15 @@ export function SettlementCalendarView({
                               : 'transparent',
                           }}
                         >
-                          <span className={calendarStyles.eventBarTitle}>{segment.title}</span>
+                          <span
+                            className={
+                              supersededIds.has(segment.eventId)
+                                ? `${calendarStyles.eventBarTitle} ${styles.supersededAmount}`
+                                : calendarStyles.eventBarTitle
+                            }
+                          >
+                            {segment.title}
+                          </span>
                         </div>
                       )
                     })}
@@ -278,9 +290,18 @@ export function SettlementCalendarView({
                     </PFText>
                     <div className={styles.listDetail}>
                       <PFText as="p" typo="bd-md-sb" color="black" className={styles.listTitle}>
-                        {SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
+                        {item.superseded ? '-' : SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
                       </PFText>
-                      <PFText as="p" typo="bd-sm-rg" color="black" className={styles.listAmount}>
+                      <PFText
+                        as="p"
+                        typo="bd-sm-rg"
+                        color="black"
+                        className={
+                          item.superseded
+                            ? `${styles.listAmount} ${styles.supersededAmount}`
+                            : styles.listAmount
+                        }
+                      >
                         {formatSignedWonAmount(item.appliedAmount)}
                       </PFText>
                     </div>

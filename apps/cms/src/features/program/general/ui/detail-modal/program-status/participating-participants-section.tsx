@@ -520,6 +520,7 @@ export function ParticipatingParticipantsSection({
               onParticipantClick={participant => onParticipantRowClick?.(participant)}
               calendarGranularity={progressCalendarGranularity}
               onCalendarGranularityChange={setProgressCalendarGranularity}
+              program={program}
             />
           </div>
         )}

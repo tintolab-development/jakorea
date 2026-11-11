@@ -14,7 +14,9 @@ export function mapStatementStatusToProcessingStatus(
   switch (status?.toUpperCase()) {
     case 'CONFIRMED':
       return 'confirmed'
+    // DRAFT = 정정 승인 후 강사 재신청 대기. 확인 불가, 재신청 전까지 "지급 정정 요청"으로 본다
     case 'CORRECTION_REQUESTED':
+    case 'DRAFT':
       return 'correction'
     case 'REJECTED':
       return 'application_rejected'
@@ -39,7 +41,9 @@ export function mapStatementStatusToLineStatus(
   switch (status?.toUpperCase()) {
     case 'CONFIRMED':
       return 'confirmed'
+    // DRAFT = 정정 승인 후 강사 재신청 대기. 확인 불가, 재신청 전까지 "지급 정정 요청"으로 본다
     case 'CORRECTION_REQUESTED':
+    case 'DRAFT':
       return 'correction'
     case 'REJECTED':
       return 'application_rejected'
