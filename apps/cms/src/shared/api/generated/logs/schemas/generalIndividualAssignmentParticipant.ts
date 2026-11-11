@@ -31,4 +31,8 @@ export interface GeneralIndividualAssignmentParticipant {
   links?: SubmissionLink[];
   surveyResponse?: FormResponseRef;
   satisfactionResponse?: FormResponseRef;
+  /** 이 회차 과제 제출 form_response.id(최신 유효 revision). 미제출이면 null. 피드백 작성/조회 대상 ID. */
+  formResponseId: number | null;
+  /** 이 과제 제출에 삭제되지 않은 피드백이 있으면 true. 미제출이면 false. */
+  hasFeedback: boolean;
 }

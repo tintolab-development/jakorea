@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { VolunteerAssignmentCancellationNotification } from './volunteerAssignmentCancellationNotification';
 
 export interface VolunteerOrganizationAssignmentReplaceRequest {
   organizationApplicationIds: number[];
@@ -15,4 +16,6 @@ export interface VolunteerOrganizationAssignmentReplaceRequest {
      * @maxLength 500
      */
   reason: string;
+  /** 빠지는 기관의 배정 알림이 이미 발송(SENT)된 경우 보내는 취소 알림 시점. 생략하면 즉시 발송. 발송 전(NONE/SCHEDULED)이면 예약 알림만 중단하고 무시됩니다. */
+  notification?: VolunteerAssignmentCancellationNotification | null;
 }

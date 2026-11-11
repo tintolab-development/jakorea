@@ -721,6 +721,17 @@
               "FORM_TEMPLATE"
             ],
             "example": "PROGRAM"
+          },
+          "issueReason": {
+            "type": "string",
+            "description": "발급 사유 코드. 회원 포털 CertificateIssueRequest.issueReason과 같은 코드 체계(한글 별칭 기관 제출용·교육 이수 증빙용·개인 보관용도 허용). 생략하면 기존과 동일하게 사유 없이 발급합니다. 허용 외 값은 400 CERTIFICATE_ISSUE_REASON_INVALID. 이미 발급번호가 있는 재사용(reused=true)이면 기존 사유를 바꾸지 않습니다.",
+            "enum": [
+              "INSTITUTION_SUBMISSION",
+              "EDUCATION_COMPLETION_PROOF",
+              "PERSONAL_ARCHIVE"
+            ],
+            "example": "INSTITUTION_SUBMISSION",
+            "nullable": true
           }
         },
         "required": [
@@ -729,36 +740,31 @@
       },
       "CertificateSerialAllocateResponse": {
         "type": "object",
-        "description": "인증서 고유번호 발급 data",
-        "required": [
-          "serialNumber",
-          "issueId",
-          "reused"
-        ],
+        "description": "인증서 고유번호 발급 응답",
         "properties": {
           "serialNumber": {
             "type": "string",
-            "pattern": "^\\d{2}-JA-\\d{5}$",
+            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것",
             "example": "26-JA-00017",
-            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것"
+            "pattern": "^\\d{2}-JA-\\d{5}$"
           },
           "issueId": {
             "type": "integer",
             "format": "int64",
-            "example": 12,
-            "description": "certificate_issue 장부 PK"
+            "description": "certificate_issue 장부 PK",
+            "example": 12
           },
           "reused": {
             "type": "boolean",
-            "example": false,
-            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상"
+            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상",
+            "example": false
           },
           "issuedAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true,
+            "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시입니다. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다.",
             "example": "2026-11-10T01:00:00Z",
-            "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용"
+            "nullable": true
           }
         },
         "required": [

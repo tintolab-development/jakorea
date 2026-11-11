@@ -32,4 +32,6 @@ export interface CertificateIssueResponse {
   downloadCount?: number;
   /** 마지막 다운로드 시각 */
   lastDownloadedAt?: string;
+  /** 발급 사유 코드(certificate_issue.issue_reason_code). 관리자 일련번호 발급의 issueReason 또는 회원 포털 발급 사유. 사유 없이 발급됐으면 null */
+  issueReason?: string | null;
 }

@@ -40,6 +40,12 @@ export interface SettlementApplicationListItemResponse {
   statementStatus?: string | null;
   /** 최신 정산 revision의 계좌 지급 상태. 정산이 아직 없으면 null. */
   paymentStatus?: string | null;
-  /** 지급조서 재신청 가능 여부. 최신 revision이 지급 정정 승인으로 만들어졌고 지급조서가 DRAFT이면 true (POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply 대상). 그 외 false. */
+  /** 지급조서 재신청 가능 여부. 최신 revision이 지급 정정 승인으로 만들어졌고 지급조서가 DRAFT이며 재신청 기한(statementReapplyDeadlineDate) 안이면 true (POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply 대상). 기한이 지났거나 그 외에는 false. */
   statementReapplyAvailable?: boolean;
+  /** 지급조서 재신청 마감일(Asia/Seoul, 그날 포함). 정정 처리일로부터 14일과 사업 운영 종료일 중 빠른 날. 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT)에만 값이 있고, 기한이 지나도 그대로 내려준다. Gemini 프로그램·그 외 상태는 null. */
+  statementReapplyDeadlineDate?: string | null;
+  /** 정산 대상 회차(programScheduleId) 시작 시각. 회차가 없거나 찾지 못하면 null. 관리자 직접 배정(강사 신청서 없음) 건에도 채워진다. */
+  scheduleStartAt?: string | null;
+  /** 정산 대상 회차 종료 시각. 회차가 없거나 찾지 못하면 null. */
+  scheduleEndAt?: string | null;
 }
