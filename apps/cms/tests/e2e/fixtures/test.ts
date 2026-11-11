@@ -20,6 +20,7 @@ import {
   installApiCallCapture,
 } from '../helpers/attach-e2e-test-logs'
 import { installE2eApiProxy } from '../helpers/e2e-api-proxy'
+import { silenceViteHmr } from '../helpers/silence-vite-hmr'
 
 type ApiErrorCapture = {
   getErrors: () => Promise<CapturedApiError[]>
@@ -33,6 +34,7 @@ export const test = base.extend<{
   // auto: true → 스펙에서 참조하지 않아도 모든 테스트에 적용
   _backendErrorCapture: [
     async ({ page }, use, testInfo) => {
+      await silenceViteHmr(page)
       await installE2eApiProxy(page)
       const group = captureContextPages(page, installApiErrorCapture)
       const capture = group.captures[0]
