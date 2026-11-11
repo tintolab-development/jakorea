@@ -510,7 +510,10 @@ function ProgramDetailFullPageModalContent({
   )
   const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
   const editTab = editingTab
-  const activeLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
+  const parsedLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
+  /** 교육받은 교사에는 강사 신청 목록이 없다 — URL 직접 진입 시 기관 신청 목록으로 본다(URL은 아래 effect가 보정) */
+  const activeLnb: LnbKey =
+    isTrainedTeachersDetail && parsedLnb === 'applicant_instructors' ? 'applicants' : parsedLnb
   const activeChildMenu: TabKey | '' =
     activeLnb === 'applicants'
       ? isOverviewProgramDetail
@@ -617,6 +620,14 @@ function ProgramDetailFullPageModalContent({
 
         if (currentLnb === 'applicant_instructors') {
           const next = new URLSearchParams(prev)
+          if (isTrainedTeachersDetail) {
+            // 교육받은 교사 LNB에는 강사 신청 목록이 없다 — 기관 신청 목록으로 보정
+            next.set(LNB_PARAM, 'applicants')
+            next.set(TAB_PARAM, 'institutions')
+            next.delete(EDIT_PARAM)
+            preserveGeneralProgramDetailProgramId(prev, next)
+            return next
+          }
           next.set(LNB_PARAM, 'applicant_instructors')
           next.set(TAB_PARAM, 'instructors')
           next.delete(EDIT_PARAM)
