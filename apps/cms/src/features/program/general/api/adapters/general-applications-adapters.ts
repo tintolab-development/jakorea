@@ -1019,10 +1019,13 @@ export function mapInstructorApplicationToApplicantInstructorRow(
   }
 }
 
-/** 개인형 강사 신청 캘린더용 — 목록 `availableScheduleIds`·`scheduleDistances`(없으면 필드 생략) */
+/**
+ * 강사 신청 캘린더용 — 목록 `availableScheduleIds`·`scheduleDistances`(없으면 필드 생략)·`activityWithdrawn`.
+ * `availableScheduleIds: []`인 신청도 행은 그대로 남는다(캘린더 날짜 셀에만 안 그려진다).
+ */
 function mapInstructorApplicationListScheduleFields(
   dto: InstructorApplicationListItemResponse
-): Pick<ApplicantInstructorRow, 'availableScheduleIds' | 'scheduleDistances'> {
+): Pick<ApplicantInstructorRow, 'availableScheduleIds' | 'scheduleDistances' | 'activityWithdrawn'> {
   const availableScheduleIds = (dto.availableScheduleIds ?? []).filter(
     (id): id is number => typeof id === 'number' && Number.isFinite(id) && id > 0
   )
@@ -1039,6 +1042,10 @@ function mapInstructorApplicationListScheduleFields(
   return {
     ...(availableScheduleIds.length > 0 ? { availableScheduleIds } : {}),
     ...(scheduleDistances.length > 0 ? { scheduleDistances } : {}),
+    // 구버전 응답(필드 없음)은 생략 → 뱃지 미노출
+    ...(typeof dto.activityWithdrawn === 'boolean'
+      ? { activityWithdrawn: dto.activityWithdrawn }
+      : {}),
   }
 }
 

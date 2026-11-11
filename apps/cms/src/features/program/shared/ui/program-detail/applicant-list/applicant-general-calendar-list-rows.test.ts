@@ -132,3 +132,27 @@ describe('buildGeneralInstitutionCalendarListRows 일정 라벨(교육 구조별
     ).toMatch(/^2회차/)
   })
 })
+
+describe('buildGeneralInstructorCalendarListRows 활동 포기', () => {
+  const withdrawn = { ...instructor, activityWithdrawn: true } as ApplicantInstructorRow
+  function withdrawnEvent(): ApplicantCalendarEvent {
+    const event = eventFor('501', '계남중학교')
+    return {
+      ...event,
+      originalItem: {
+        ...(event.originalItem as object),
+        calendarInstitutionInstructors: [withdrawn],
+      },
+    } as unknown as ApplicantCalendarEvent
+  }
+
+  it('일반 기관형(showActivityWithdrawn)에서만 activityWithdrawn을 카드에 싣는다', () => {
+    const [shown] = buildGeneralInstructorCalendarListRows([withdrawnEvent()], {
+      showActivityWithdrawn: true,
+    })
+    expect(shown?.activityWithdrawn).toBe(true)
+    // 1사1교 등 옵션 생략 — 기존처럼 뱃지 없음
+    const [hidden] = buildGeneralInstructorCalendarListRows([withdrawnEvent()])
+    expect(hidden?.activityWithdrawn).toBeUndefined()
+  })
+})

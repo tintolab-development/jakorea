@@ -207,6 +207,8 @@ export function buildGeneralInstructorCalendarListRows(
   options?: {
     /** 일반 기관형 — 교육 구조별 일정 라벨(회차·차시·세부 일정명·사전교육). 없거나 null이면 기존 표기 */
     formatSessionLabel?: (sessions: ParticipatingSchoolSession[]) => string | null
+    /** 일반 기관형 — 강사 신청 `activityWithdrawn`이면 「활동 포기」 뱃지. 생략 시 미노출(1사1교 유지) */
+    showActivityWithdrawn?: boolean
   }
 ): CalendarGeneralInstructorApplicationListRow[] {
   return flattenInstructorCalendarCards(events).map(card => {
@@ -236,6 +238,9 @@ export function buildGeneralInstructorCalendarListRows(
       isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
       dispatchCount,
       longDistanceCount,
+      ...(options?.showActivityWithdrawn && instructor.activityWithdrawn === true
+        ? { activityWithdrawn: true }
+        : {}),
     }
   })
 }

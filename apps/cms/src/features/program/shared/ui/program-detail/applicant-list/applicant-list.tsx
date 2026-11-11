@@ -2723,6 +2723,7 @@ export function ApplicantList({
                   useSplitCardPageScroll={detailVariant === 'general'}
                   hideInstitutionPreviewApprovalBadge={isGeneralOrganizationInstitutionList}
                   formatInstructorSessionLabel={formatOrganizationInstructorCalendarSessionLabel}
+                  showInstructorActivityWithdrawn={isGeneralOrganizationInstructorList}
                   program={program}
                   events={applicantCalendarEvents}
                   scheduleListEmptyDescription={

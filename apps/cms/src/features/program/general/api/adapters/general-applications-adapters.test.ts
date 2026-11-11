@@ -2431,3 +2431,32 @@ describe('mapOrganizationApplicationListSessionsToConfirmedSessions', () => {
     expect(sessions[0]?.timeRange).toBe('09:00 ~ 09:45')
   })
 })
+
+describe('mapInstructorApplicationToApplicantInstructorRow — 개인형 캘린더 필드', () => {
+  it('availableScheduleIds가 []여도 행은 남고, activityWithdrawn을 그대로 옮긴다', () => {
+    const row = mapInstructorApplicationToApplicantInstructorRow(
+      instructorApplicationListItemFixture({
+        id: 91,
+        instructorName: '김제이',
+        applicationStatus: 'APPROVED',
+        availableScheduleIds: [],
+        activityWithdrawn: true,
+      }),
+      0,
+      '5001'
+    )
+    expect(row.id).toBe('91')
+    expect(row.availableScheduleIds).toBeUndefined()
+    expect(row.activityWithdrawn).toBe(true)
+  })
+
+  it('구버전 응답(activityWithdrawn 없음)은 필드를 만들지 않는다', () => {
+    const row = mapInstructorApplicationToApplicantInstructorRow(
+      instructorApplicationListItemFixture({ id: 92, availableScheduleIds: [11, 12] }),
+      0,
+      '5001'
+    )
+    expect(row.activityWithdrawn).toBeUndefined()
+    expect(row.availableScheduleIds).toEqual([11, 12])
+  })
+})
