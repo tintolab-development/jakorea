@@ -134,6 +134,11 @@ export type EducationScheduleItem = {
   operationalDayView?: boolean
   /** CMS 교육 진행 duration. 슬롯 수 `N차시`. sessionNo(회차)로 만들지 않는다. */
   durationLabel?: string
+  /**
+   * Gemini 정산 인정 차시 `N차시`(recognizedClassCount). 커리큘럼 차시 라벨(sessionLabel)·
+   * 회차(sessionNumber)와 별개 값이다.
+   */
+  recognizedClassCountLabel?: string
   classLabel?: string
   locationName?: string
   organizationName?: string

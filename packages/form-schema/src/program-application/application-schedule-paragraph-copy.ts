@@ -51,7 +51,9 @@ function resolveMultiRoundFixedScheduleDescription(
   const useMatrix = shouldUseCurriculumMultiDateFixedScheduleMatrix(input)
   const meta = useMatrix
     ? readCurriculumMultiDateFixedScheduleMeta(input)
-    : { sessionsPerRound: undefined, educationRoundCount: undefined }
+    : { sessionsPerRound: undefined, educationRoundCount: undefined, sessionsPerRoundVaries: false }
+  // 회차별 진행 차시 수가 다르면 「N차시*N회」(모든 회차 동일 차시) 문구를 만들지 않는다.
+  if (meta.sessionsPerRoundVaries) return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND_SELECT_ALL
   if (unknownCount === 'omit') {
     const sessionsValue = meta.sessionsPerRound
     const roundsValue = meta.educationRoundCount

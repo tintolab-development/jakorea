@@ -58,30 +58,46 @@ describe('curriculum multi date fixed schedule matrix', () => {
     })
   })
 
-  it('curriculumSessions에서 회차·차시 메타를 읽는다', () => {
-    const meta = readCurriculumMultiDateFixedScheduleMeta({
+  it('curriculumSessions에서 회차·차시 메타를 읽는다 — 모든 회차 차시 수가 같을 때만 sessionsPerRound', () => {
+    const uniform = readCurriculumMultiDateFixedScheduleMeta({
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: '2' },
+        { sessionLabel: '2회차', title: '2' },
+      ],
+    })
+    expect(uniform.educationRoundCount).toBe(2)
+    expect(uniform.sessionsPerRound).toBe(2)
+    expect(uniform.sessionsPerRoundVaries).toBeUndefined()
+
+    const varies = readCurriculumMultiDateFixedScheduleMeta({
       curriculumSessions: [
         { sessionLabel: '1회차', title: '2' },
         { sessionLabel: '2회차', title: '3' },
       ],
     })
-    expect(meta.educationRoundCount).toBe(2)
-    expect(meta.sessionsPerRound).toBe(2)
+    expect(varies.educationRoundCount).toBe(2)
+    expect(varies.sessionsPerRound).toBeUndefined()
+    expect(varies.sessionsPerRoundVaries).toBe(true)
   })
 
-  it('1회차 title이 N차시 형태면 sessionsPerRound는 1회차 진행 차시 수', () => {
+  it('회차별 차시 수가 다르면 넘겨받은 1회차 sessionsPerRound도 쓰지 않는다', () => {
     const meta = readCurriculumMultiDateFixedScheduleMeta({
+      sessionsPerRound: 2,
       curriculumSessions: [
         { sessionLabel: '1회차', title: '2차시' },
         { sessionLabel: '2회차', title: '4차시' },
       ],
     })
-    expect(meta.sessionsPerRound).toBe(2)
+    expect(meta.sessionsPerRound).toBeUndefined()
+    expect(meta.sessionsPerRoundVaries).toBe(true)
+  })
+
+  it('회차 title이 모두 같은 N차시면 「N차시*N회」', () => {
     const text = resolveApplicationFixedScheduleParagraphDescription({
       ...MATRIX_VISIBILITY,
       curriculumSessions: [
         { sessionLabel: '1회차', title: '2차시' },
-        { sessionLabel: '2회차', title: '4차시' },
+        { sessionLabel: '2회차', title: '2차시' },
       ],
     })
     expect(text).toBe(
@@ -89,7 +105,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
     )
   })
 
-  it('회차별 차시 수가 다르면 설명 N차시는 1회차 기준', () => {
+  it('회차별 차시 수가 다르면 「N차시*N회」 문구를 만들지 않는다', () => {
     const text = resolveApplicationFixedScheduleParagraphDescription({
       ...MATRIX_VISIBILITY,
       curriculumSessions: [
@@ -97,9 +113,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
         { sessionLabel: '2회차', title: '4' },
       ],
     })
-    expect(text).toBe(
-      '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
-    )
+    expect(text).toBe('진행 가능한 일정을 모두 선택해 주세요.')
   })
 
   it('설명글 N 치환', () => {
@@ -131,7 +145,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
     ).toBe('진행 가능한 일정을 모두 선택해 주세요.')
   })
 
-  it('omit 모드 — 회차별 차시가 달라도 1회차 기준', () => {
+  it('omit 모드 — 회차별 차시가 다르면 앞 문장 생략', () => {
     expect(
       resolveApplicationFixedScheduleParagraphDescription({
         ...MATRIX_VISIBILITY,
@@ -142,7 +156,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
           { sessionLabel: '3회차', title: '3' },
         ],
       })
-    ).toBe('2차시*3회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.')
+    ).toBe('진행 가능한 일정을 모두 선택해 주세요.')
   })
 
   it('omit 모드 — 자유 문구 title에서 차시를 추측하지 않는다', () => {
@@ -254,7 +268,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
     expect(withoutLimit).toContain('수업은 1일, N차시 운영됩니다.')
   })
 
-  it('resolveFixedScheduleLinesToChoiceItems — 커리큘럼 복수 날짜는 라인 + 입력순 회차', () => {
+  it('resolveFixedScheduleLinesToChoiceItems — 커리큘럼 복수 날짜는 라인만 (입력 순서로 회차를 만들지 않음)', () => {
     const single = resolveFixedScheduleLinesToChoiceItems(
       { ...MATRIX_VISIBILITY, sessionRound: 'single' },
       MATRIX_VISIBILITY.educationScheduleLines,
@@ -268,8 +282,8 @@ describe('curriculum multi date fixed schedule matrix', () => {
     )
     expect(matrix).toHaveLength(2)
     expect(matrix).toEqual([
-      { id: 'line:0', label: '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차' },
-      { id: 'line:1', label: '26년 4월 27일(월) 13:00 ~ 15:50 | 2회차' },
+      { id: 'line:0', label: '26년 4월 20일(월) 9:30 ~ 12:20' },
+      { id: 'line:1', label: '26년 4월 27일(월) 13:00 ~ 15:50' },
     ])
   })
 

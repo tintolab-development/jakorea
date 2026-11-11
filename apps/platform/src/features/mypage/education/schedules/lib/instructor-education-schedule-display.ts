@@ -26,6 +26,8 @@ export type InstructorEducationScheduleDisplayInput = {
   sessionNo?: number | null
   scheduleName?: string | null
   curriculumSessionCount?: number | null
+  /** Gemini 정산 인정 차시. 커리큘럼 차시 수(curriculumSessionCount)와 별개 값이다. */
+  recognizedClassCount?: number | null
   startAt?: string | null
   endAt?: string | null
 }
@@ -118,6 +120,7 @@ export function isCanonicalPreEducationSchedule(
  * 본교육 회차+차시 → `N회차 (K차시)`
  * 회차만 → `N회차`
  * 확인된 차시만 → `K차시`
+ * 회차·커리큘럼 차시가 없고 정산 인정 차시만 있으면(Gemini) → `K차시`
  * 일정형 복수 회차 → 일정명
  * 식별 불가면 빈 문자열. 잘못된 명칭을 만들지 않는다.
  */
@@ -136,7 +139,21 @@ export function formatInstructorEducationUnitLabel(
     educationSlotKey: item.educationSlotKey,
   })
   if (roundOrSession) return roundOrSession
+  const recognized = positiveEducationNumber(item.recognizedClassCount)
+  if (recognized != null) return `${recognized}차시`
   return toDisplayEducationScheduleName(item.scheduleName) ?? ''
+}
+
+/**
+ * 강의보고서 「교육 진행 시간(차시)」의 「진행 차시」 칸.
+ * 그 일정에 연결된 커리큘럼 차시 수(curriculumSessionCount) → `K차시`.
+ * 회차(sessionNo)·일정명·사전교육 라벨은 넣지 않는다. 차시 수를 모르면 빈 문자열.
+ */
+export function formatLectureReportProgressSessionLabel(
+  item: Pick<InstructorEducationScheduleDisplayInput, 'curriculumSessionCount'>,
+): string {
+  const count = positiveEducationNumber(item.curriculumSessionCount)
+  return count != null ? `${count}차시` : ''
 }
 
 export function formatAssignmentEducationUnitLabel(

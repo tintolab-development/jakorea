@@ -76,7 +76,7 @@ export function EducationScheduleRow({
     ? sessionSummary || '전 차시'
     : item.operationalDayView === true
       ? item.durationLabel?.trim() || '-'
-      : item.rowLabel?.trim() || '-'
+      : item.recognizedClassCountLabel?.trim() || item.rowLabel?.trim() || '-'
   const showSubtitleText = !(item.operationalDayView === true && subtitle === '-')
   const sessionHeading = subtitle === '-' ? heldLabel : `${heldLabel}, ${subtitle}`
   const absenceReason =

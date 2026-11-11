@@ -39,6 +39,8 @@ export type InstructorAssignmentItem = {
   educationSlotKey?: string | null
   scheduleKind?: string | null
   curriculumSessionCount?: number | null
+  /** Gemini 정산 인정 차시(recognizedClassCount). 커리큘럼 차시 수와 별개. */
+  recognizedClassCount?: number | null
   distanceKm: number | null
   distanceStatus: string | null
 }
@@ -123,6 +125,7 @@ export function mapLectureReportAssignmentToInstructorItem(
 /**
  * gemini-lecture-schedules item → 배정 현황 패널 행.
  * 응답에 있는 값만 쓴다. 단위 라벨은 서버 인정 차시(recognizedClassCount) → `N차시`.
+ * 인정 차시는 커리큘럼 차시 수(curriculumSessionCount)에 넣지 않는다.
  */
 export function mapGeminiLectureScheduleToInstructorItem(
   row: GeminiLectureScheduleItem,
@@ -147,7 +150,8 @@ export function mapGeminiLectureScheduleToInstructorItem(
     scheduleRole: null,
     educationSlotKey: null,
     scheduleKind: null,
-    curriculumSessionCount: asPositiveInt(row.recognizedClassCount),
+    curriculumSessionCount: null,
+    recognizedClassCount: asPositiveInt(row.recognizedClassCount),
     distanceKm,
     distanceStatus: distanceKm != null ? 'CALCULATED' : null,
   }

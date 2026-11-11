@@ -44,6 +44,7 @@ import {
   readSettlementScheduleJoinId,
 } from './settlement-join.ts'
 import {
+  formatEducationRoundSessionLabel,
   isAutoMaterializedScheduleName,
   toDisplayEducationScheduleName,
 } from '../../../../../shared/lib/education-schedule-name.ts'
@@ -58,7 +59,10 @@ export type SettlementLectureReportJoin = {
   grade?: string | null
   startAt?: string | null
   endAt?: string | null
+  /** 본교육 회차 번호(program_schedule.session_no). 차시가 아니다. */
   sessionNo?: number | null
+  /** 이 일정에 연결된 커리큘럼 차시 수. 없으면 null — sessionNo로 대신하지 않는다. */
+  curriculumSessionCount?: number | null
   lectureFeePreview?: LectureFeePreview | null
   instructorTransportPreview?: InstructorTransportPreview | null
 }
@@ -140,8 +144,20 @@ function mapIndividualAttendance(
   }
 }
 
+/** 강의보고서 일정의 회차 라벨. sessionNo는 「N회차」, 연결 차시 수가 있으면 `N회차 (K차시)`. */
+function lectureRoundSessionLabel(
+  sessionNo: number | null | undefined,
+  curriculumSessionCount: number | null | undefined,
+): string {
+  return formatEducationRoundSessionLabel({
+    roundNumber: sessionNo,
+    curriculumSessionCount: sessionNo != null && sessionNo > 0 ? curriculumSessionCount : null,
+  })
+}
+
 function educationItemFromLecture(row: SettlementLectureReportJoin): EducationScheduleItem {
   const sessionNumber = row.sessionNo != null && row.sessionNo > 0 ? row.sessionNo : 0
+  const sessionLabel = lectureRoundSessionLabel(row.sessionNo, row.curriculumSessionCount)
   return {
     id: String(row.scheduleId),
     scheduleId: row.scheduleId,
@@ -149,7 +165,7 @@ function educationItemFromLecture(row: SettlementLectureReportJoin): EducationSc
     heldAt: row.startAt ?? row.endAt ?? '',
     title: '-',
     attendanceStatus: null,
-    sessionLabel: sessionNumber > 0 ? `${sessionNumber}차시` : undefined,
+    sessionLabel: sessionLabel || undefined,
     progressTimeLabel: formatLectureTimeRange(row.startAt, row.endAt) || undefined,
     locationName: row.institutionName?.trim() || undefined,
   }
@@ -212,9 +228,11 @@ function formatSettlementSessionMeta(
   const time =
     (progressTimeLabel && !isScheduleDateLikeText(progressTimeLabel) ? progressTimeLabel : '') ||
     formatLectureTimeRange(lecture?.startAt ?? item.heldAt, lecture?.endAt ?? item.endAt)
+  // sessionNo·sessionNumber는 회차 번호다. 차시로 표기하지 않는다.
   const sessionNumber = lecture?.sessionNo && lecture.sessionNo > 0 ? lecture.sessionNo : item.sessionNumber
   const session =
-    item.sessionLabel?.trim() || (sessionNumber > 0 ? `${sessionNumber}차시` : '')
+    item.sessionLabel?.trim() ||
+    lectureRoundSessionLabel(sessionNumber, lecture?.curriculumSessionCount)
   return [time, session].filter(Boolean).join(' ')
 }
 

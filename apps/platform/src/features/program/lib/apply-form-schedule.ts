@@ -1008,7 +1008,7 @@ function readRuntimeEnumText(runtime: unknown, key: string): string {
 
 /**
  * 커리큘럼·다회차·날짜 고정 일정(③)이면 선택지에 `N회차`를 붙인다. 기간 지정(④)은 회차 없음.
- * N은 교육 진행 예정일 입력 순서(`line:N` → N+1, 아니면 선택지 순서)다. 기본명 번호와 무관.
+ * N은 그 일정의 실제 회차(program_schedule.session_no)다. 선택지·입력 순서로 만들지 않는다.
  */
 export function shouldShowRuntimeScheduleChoiceRound(runtime: unknown): boolean {
   const mode =
@@ -1022,16 +1022,36 @@ export function shouldShowRuntimeScheduleChoiceRound(runtime: unknown): boolean 
   )
 }
 
-const RUNTIME_LINE_CHOICE_ID_RE = /^line:(\d+)$/i
+/** 일정 id → 실제 회차(sessionNo). 공개 상세 `schedules[]`에서 만든다. */
+export type ScheduleChoiceSessionNoLookup = ReadonlyMap<number, number>
 
-function readRuntimeScheduleChoiceRoundNumber(id: unknown, index: number): number {
-  const match = typeof id === 'string' ? RUNTIME_LINE_CHOICE_ID_RE.exec(id.trim()) : null
-  return match ? Number(match[1]) + 1 : index + 1
+export function buildScheduleChoiceSessionNoLookup(
+  rows: readonly { scheduleId: number; sessionNo?: number | null }[] | null | undefined
+): ScheduleChoiceSessionNoLookup {
+  const out = new Map<number, number>()
+  for (const row of rows ?? []) {
+    const sessionNo = row.sessionNo
+    if (typeof sessionNo === 'number' && Number.isInteger(sessionNo) && sessionNo > 0) {
+      out.set(row.scheduleId, sessionNo)
+    }
+  }
+  return out
+}
+
+const SCHEDULE_CHOICE_ID_RE = /^schedule:(\d+)/i
+
+function readScheduleChoiceScheduleId(item: { id?: string; scheduleId?: number }): number | null {
+  if (typeof item.scheduleId === 'number' && Number.isFinite(item.scheduleId)) return item.scheduleId
+  const id = item.id?.trim() ?? ''
+  const match = SCHEDULE_CHOICE_ID_RE.exec(id)
+  if (match) return Number(match[1])
+  return /^\d{4,}$/.test(id) ? Number(id) : null
 }
 
 /**
  * 서버 선택지 라벨에서 자동 기본명(`공통 교육 예정 N`)을 제거한다. id는 그대로 둔다.
- * ③이면 제거 후 `일시 | (입력순)회차`를 붙인다.
+ * ③이면 제거 후 그 일정의 실제 회차(sessionNo)가 있을 때만 `일시 | N회차`를 붙인다.
+ * 회차를 모르면(`line:N` 등) 번호를 만들지 않고 일시만 둔다.
  */
 function isGeneralRequiredPreEducationChoiceLabel(label: string): boolean {
   return label.replace(/\s+/g, '').startsWith('사전교육')
@@ -1044,43 +1064,51 @@ function withoutGeneralRequiredPreEducationChoices<T extends { label: string }>(
   return items.filter(item => !isGeneralRequiredPreEducationChoiceLabel(item.label))
 }
 
-function withDisplayScheduleChoiceLabels<T extends { id?: string; label: string }>(
+function withDisplayScheduleChoiceLabels<
+  T extends { id?: string; label: string; scheduleId?: number },
+>(
   items: ReadonlyArray<T> | null,
-  runtime?: unknown
+  runtime?: unknown,
+  sessionNoLookup?: ScheduleChoiceSessionNoLookup
 ): ReadonlyArray<T> | null {
   if (items == null) return items
   const showRound = shouldShowRuntimeScheduleChoiceRound(runtime)
-  return items.map((item, index) => {
-    const label = showRound
-      ? appendEducationRoundSuffix(
-          stripDefaultEducationSlotNameFromLabel(item.label),
-          readRuntimeScheduleChoiceRoundNumber(item.id, index)
-        )
-      : stripDefaultEducationSlotNameFromLabel(item.label)
+  return items.map(item => {
+    const scheduleId = showRound ? readScheduleChoiceScheduleId(item) : null
+    const sessionNo = scheduleId != null ? sessionNoLookup?.get(scheduleId) : undefined
+    const stripped = stripDefaultEducationSlotNameFromLabel(item.label)
+    const label = sessionNo != null ? appendEducationRoundSuffix(stripped, sessionNo) : stripped
     if (label === item.label) return item
     return { ...item, label: label || DEFAULT_ONLY_SCHEDULE_CHOICE_LABEL }
   })
 }
 
 export function readRuntimeFixedScheduleChoiceItems(
-  ...args: Parameters<typeof readRuntimeFixedScheduleChoiceItemsFromSchema>
+  runtime: Parameters<typeof readRuntimeFixedScheduleChoiceItemsFromSchema>[0],
+  paragraph: Parameters<typeof readRuntimeFixedScheduleChoiceItemsFromSchema>[1],
+  sessionNoLookup?: ScheduleChoiceSessionNoLookup
 ): ReturnType<typeof readRuntimeFixedScheduleChoiceItemsFromSchema> {
   return withDisplayScheduleChoiceLabels(
     withoutGeneralRequiredPreEducationChoices(
-      readRuntimeFixedScheduleChoiceItemsFromSchema(...args)
+      readRuntimeFixedScheduleChoiceItemsFromSchema(runtime, paragraph)
     ),
-    args[0]
+    runtime,
+    sessionNoLookup
   )
 }
 
 export function readInstitutionFixedScheduleChoiceItems(
-  ...args: Parameters<typeof readInstitutionFixedScheduleChoiceItemsFromSchema>
+  runtime: Parameters<typeof readInstitutionFixedScheduleChoiceItemsFromSchema>[0],
+  paragraph: Parameters<typeof readInstitutionFixedScheduleChoiceItemsFromSchema>[1],
+  options?: Parameters<typeof readInstitutionFixedScheduleChoiceItemsFromSchema>[2],
+  sessionNoLookup?: ScheduleChoiceSessionNoLookup
 ): ReturnType<typeof readInstitutionFixedScheduleChoiceItemsFromSchema> {
   return withDisplayScheduleChoiceLabels(
     withoutGeneralRequiredPreEducationChoices(
-      readInstitutionFixedScheduleChoiceItemsFromSchema(...args)
+      readInstitutionFixedScheduleChoiceItemsFromSchema(runtime, paragraph, options)
     ),
-    args[0]
+    runtime,
+    sessionNoLookup
   )
 }
 

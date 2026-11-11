@@ -994,6 +994,8 @@ const trainedTeacher = mapPortalProgramDetail({
 assert.ok(trainedTeacher)
 assert.equal(trainedTeacher.sessions.length, 1)
 assert.equal(trainedTeacher.sessions[0]?.title, '오리엔테이션')
+// 레거시 curricula.sessions[].sessionNo는 커리큘럼 차시 — 「N회차」로 표시하지 않는다
+assert.equal(trainedTeacher.sessions[0]?.sessionLabel, '1차시')
 assert.equal(
   mapPortalProgramDetail({
     programId: 7,

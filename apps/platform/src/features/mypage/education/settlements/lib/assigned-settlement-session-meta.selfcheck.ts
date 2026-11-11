@@ -34,5 +34,7 @@ assert.equal(
 assert.equal(sessionMetaOf({ progressTimeLabel: '10:00~11:20' }), '10:00~11:20 1차시')
 // 라벨이 없으면 heldAt~endAt 시간
 assert.equal(sessionMetaOf({}), '21:20~21:22 1차시')
+// 커리큘럼 라벨이 없으면 회차 번호(sessionNumber)는 「N회차」 — 차시로 바꾸지 않는다
+assert.equal(sessionMetaOf({ sessionLabel: undefined }), '21:20~21:22 1회차')
 
 console.log('assigned-settlement-session-meta selfcheck ok')

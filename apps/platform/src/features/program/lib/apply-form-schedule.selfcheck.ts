@@ -78,10 +78,17 @@ import {
   capFixedScheduleSelectedIds,
   findIncompletePreferredScheduleMessage,
   GENERAL_INSTITUTION_SESSION_COUNT_UNAVAILABLE_MESSAGE,
+  preferredScheduleBlocksFromDraftAnswers,
   selectedFixedScheduleIdsFromDraftAnswer,
   toFixedScheduleOptionAnswerValue,
   toPortalPreferredScheduleBlocks,
 } from './preferred-schedule-blocks.ts'
+import {
+  TRAINED_TEACHERS_PREFERRED_SCHEDULE_INCOMPLETE_MESSAGE,
+  buildTrainedTeachersSessionCountOptions,
+  patchTrainedTeachersSessionTime,
+  resizeTrainedTeachersSessionTimes,
+} from './trained-teachers-preferred-schedule.ts'
 import { normalizeScheduleDisplayLabel } from '../../../shared/lib/format-display-date.ts'
 import type { PortalSaveApplicationRequest } from '../api/application-types.ts'
 
@@ -1185,6 +1192,13 @@ function testEducationScheduleWireContract() {
     { date: '2026-11-20', classPeriod: '', startTime: '', endTime: '' },
   ])
   assert.deepEqual(incomplete, [])
+  // 교육받은교사(옵션 없음) — 화면 입력 라벨 「수업 진행 교시」와 같은 문구
+  assert.equal(
+    findIncompletePreferredScheduleMessage([
+      { date: '2026-11-20', classPeriod: '', startTime: '13:00', endTime: '15:00' },
+    ]),
+    '진행 희망 교육 일정에 날짜·수업 진행 교시·시작/종료 시간을 모두 입력해 주세요.',
+  )
 
   const geminiMapOptions = geminiInstitutionPreferredScheduleMapOptions()
   assert.deepEqual(buildGeminiInstitutionSessionSelectOptions().map(option => option.value), [
@@ -1205,7 +1219,7 @@ function testEducationScheduleWireContract() {
       [{ date: '2026-10-07', classPeriod: '', startTime: '01:00', endTime: '02:00' }],
       geminiMapOptions,
     ),
-    '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.',
+    '진행 희망 교육 일정에 날짜·희망 차시·시작/종료 시간을 모두 입력해 주세요.',
   )
 
   const geminiOneSession = toPortalPreferredScheduleBlocks(
@@ -1286,6 +1300,152 @@ function testEducationScheduleWireContract() {
 }
 
 testEducationScheduleWireContract()
+
+/** 교육받은교사 — 차시 = 그날 수업 개수, 교시 = 각 차시의 학교 시간표 번호 */
+function testTrainedTeachersSessionRows() {
+  const options = { trainedTeachersSessionRows: true as const }
+
+  // 희망 차시 셀렉 — 모집 1일 최대 차시, 없으면 1사1교와 같은 2차시
+  assert.deepEqual(
+    buildTrainedTeachersSessionCountOptions(null).map(option => option.label),
+    ['1차시', '2차시'],
+  )
+  assert.deepEqual(
+    buildTrainedTeachersSessionCountOptions(3).map(option => option.value),
+    ['1', '2', '3'],
+  )
+
+  // 1차시, 2교시 — sessionCount는 1(교시 번호 2가 아님)
+  const oneSession = toPortalPreferredScheduleBlocks(
+    [
+      {
+        date: '2026-04-20',
+        classPeriod: '',
+        startTime: '',
+        endTime: '',
+        sessionCount: '1',
+        sessionTimes: [{ classPeriod: '2', startTime: '9:50', endTime: '10:30' }],
+      },
+    ],
+    options,
+  )
+  assert.deepEqual(oneSession, [
+    {
+      preferenceRank: 1,
+      date: '2026-04-20',
+      sessionCount: 1,
+      startTime: '09:50',
+      endTime: '10:30',
+      sessionTimes: [
+        { sessionIndex: 1, classPeriod: '2', startTime: '09:50', endTime: '10:30', timeRange: '09:50~10:30' },
+      ],
+    },
+  ])
+
+  // 2차시, 1·2교시
+  const twoSessions = toPortalPreferredScheduleBlocks(
+    [
+      {
+        date: '2026-04-27',
+        classPeriod: '',
+        startTime: '',
+        endTime: '',
+        sessionCount: '2',
+        sessionTimes: [
+          { classPeriod: '1', startTime: '09:00', endTime: '09:40' },
+          { classPeriod: '2', startTime: '09:50', endTime: '10:30' },
+        ],
+      },
+    ],
+    options,
+  )
+  assert.equal(twoSessions[0]?.sessionCount, 2)
+  assert.deepEqual(
+    twoSessions[0]?.sessionTimes?.map(row => [row.sessionIndex, row.classPeriod, row.timeRange]),
+    [
+      [1, '1', '09:00~09:40'],
+      [2, '2', '09:50~10:30'],
+    ],
+  )
+  assert.equal(twoSessions[0]?.startTime, '09:00')
+  assert.equal(twoSessions[0]?.endTime, '10:30')
+
+  // 차시 줄이 덜 채워지면 제출하지 않는다
+  const missingSecond = [
+    {
+      date: '2026-04-27',
+      classPeriod: '',
+      startTime: '',
+      endTime: '',
+      sessionCount: '2',
+      sessionTimes: [{ classPeriod: '1', startTime: '09:00', endTime: '09:40' }],
+    },
+  ]
+  assert.deepEqual(toPortalPreferredScheduleBlocks(missingSecond, options), [])
+  assert.equal(
+    findIncompletePreferredScheduleMessage(missingSecond, options),
+    TRAINED_TEACHERS_PREFERRED_SCHEDULE_INCOMPLETE_MESSAGE,
+  )
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [
+        {
+          date: '2026-04-27',
+          classPeriod: '',
+          startTime: '',
+          endTime: '',
+          sessionCount: '1',
+          sessionTimes: [{ classPeriod: '1', startTime: '10:00', endTime: '09:00' }],
+        },
+      ],
+      options,
+    ),
+    '교육 종료 시간은 시작 시간 이후로 입력해 주세요.',
+  )
+  assert.equal(findIncompletePreferredScheduleMessage(twoSessionsInput(), options), null)
+
+  // 다음 차시 교시 자동 입력(앞 차시 + 1) — 직접 고친 교시는 덮지 않는다
+  const resized = resizeTrainedTeachersSessionTimes([{ classPeriod: '3', startTime: '', endTime: '' }], 2)
+  assert.deepEqual(resized.map(row => row.classPeriod), ['3', '4'])
+  const followed = patchTrainedTeachersSessionTime(resized, 0, { classPeriod: '5' })
+  assert.deepEqual(followed.map(row => row.classPeriod), ['5', '6'])
+  const manual = patchTrainedTeachersSessionTime(followed, 1, { classPeriod: '8' })
+  const keptManual = patchTrainedTeachersSessionTime(manual, 0, { classPeriod: '1' })
+  assert.deepEqual(keptManual.map(row => row.classPeriod), ['1', '8'])
+  assert.deepEqual(resizeTrainedTeachersSessionTimes(keptManual, 1).map(row => row.classPeriod), ['1'])
+
+  // 임시저장 복원 — sessionCount·차시 줄을 되살린다
+  const restored = preferredScheduleBlocksFromDraftAnswers(
+    { preferred: twoSessions },
+    'preferred',
+  )
+  assert.equal(restored?.[0]?.sessionCount, '2')
+  assert.deepEqual(
+    restored?.[0]?.sessionTimes?.map(row => [row.classPeriod, row.startTime, row.endTime]),
+    [
+      ['1', '09:00', '09:40'],
+      ['2', '09:50', '10:30'],
+    ],
+  )
+}
+
+function twoSessionsInput() {
+  return [
+    {
+      date: '2026-04-27',
+      classPeriod: '',
+      startTime: '',
+      endTime: '',
+      sessionCount: '2',
+      sessionTimes: [
+        { classPeriod: '1', startTime: '09:00', endTime: '09:40' },
+        { classPeriod: '2', startTime: '09:50', endTime: '10:30' },
+      ],
+    },
+  ]
+}
+
+testTrainedTeachersSessionRows()
 
 function testGeminiPreferredSchedulePad() {
   const padded = padPreferredScheduleBlocks(

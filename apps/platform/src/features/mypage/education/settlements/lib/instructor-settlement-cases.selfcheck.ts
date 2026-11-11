@@ -363,5 +363,25 @@ assert.equal(fromLectureOnly.length, 1)
 assert.equal(fromLectureOnly[0]?.id, '31')
 assert.equal(fromLectureOnly[0]?.institutionLabel, '가천 대학교 · 초등')
 assert.equal(fromLectureOnly[0]?.status, 'pending_submit')
+// sessionNo는 회차다 — 「3차시」로 표시하지 않는다.
+assert.equal(fromLectureOnly[0]?.sessionMeta, '10:00~11:20 3회차')
+assert.equal(fromLectureOnly[0]?.sessionMeta.includes('3차시'), false)
+
+const fromLectureWithCurriculum = build({
+  schedules: [],
+  lectureReports: [
+    {
+      scheduleId: 32,
+      reportStatus: 'SUBMITTED',
+      lectureStatus: 'COMPLETED',
+      startAt: '2026-04-03T10:00:00+09:00',
+      endAt: '2026-04-03T11:20:00+09:00',
+      sessionNo: 3,
+      curriculumSessionCount: 2,
+    },
+  ],
+})
+// 회차 + 연결 커리큘럼 차시 수
+assert.equal(fromLectureWithCurriculum[0]?.sessionMeta, '10:00~11:20 3회차 (2차시)')
 
 console.log('instructor-settlement-cases.selfcheck: ok')
