@@ -563,8 +563,6 @@ export function EducationSettlementWriteForm({
   )
 
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
-  /** 교통비 섹션 하단 안내용(기존 화면 유지). 교통비는 한도가 없어 입력 오류·제출 차단에는 쓰지 않는다 */
-  const transportMaxWon = readPayableMaxLimitWon(transportItem)
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
   const [departAmount, setDepartAmount] = useState(
     formatSettlementAmountInput(hydrated?.departAmount ?? ''),
@@ -1031,11 +1029,6 @@ export function EducationSettlementWriteForm({
               isReceipt
                 ? '편도 30km 이상 이동 시 지원되는 비용입니다. 가는 편과 오는 편을 구분해 실제 사용한 교통비를 신청해 주세요.'
                 : '편도 30km 이상 이동 시 지원되는 비용입니다.'
-            }
-            footer={
-              isReceipt && transportMaxWon != null
-                ? `최대 ${transportMaxWon.toLocaleString('ko-KR')}원까지 지급됩니다.`
-                : undefined
             }
           >
             {isReceipt ? (
