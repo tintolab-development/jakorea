@@ -420,7 +420,7 @@ export function RecruitPostingFormModal({
                       공개
                     </CmsRadio>
                     <CmsRadio size="medium" value="private">
-                      미공개
+                      비공개
                     </CmsRadio>
                   </CmsRadioGroup>
                 </AdminFieldFrame>
