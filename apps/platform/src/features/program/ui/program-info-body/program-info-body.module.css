@@ -247,7 +247,8 @@
 }
 
 .extraSectionRichText {
-  --rt-content-font-size: 16px;
+  /* 에디터 본문 기본 글자 크기 15px — CMS·홈페이지 어드민 에디터와 동일 */
+  --rt-content-font-size: 15px;
   --rt-content-line-height: 1.6;
   --rt-content-paragraph-margin: 0.5em;
 
@@ -474,10 +475,6 @@
   .participate .extraSections {
     gap: var(--spacing-20);
     margin-top: var(--spacing-20);
-  }
-
-  .participate .extraSectionRichText {
-    --rt-content-font-size: 14px;
   }
 
   .participate .contact {
