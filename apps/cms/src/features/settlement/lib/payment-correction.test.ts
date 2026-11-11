@@ -3,7 +3,17 @@ import {
   buildPaymentCorrectionApprovalRequest,
   canProcessPaymentCorrection,
   EMPTY_PAYMENT_CORRECTION_FORM,
+  PAYMENT_CORRECTION_CALCULATION_UNIT_OPTIONS,
 } from './payment-correction'
+
+describe('PAYMENT_CORRECTION_CALCULATION_UNIT_OPTIONS', () => {
+  it('지급 정정 팝업 지급 기준은 「차시당 / 출강 1회당」만 — 차시당은 PER_CLASS로 보낸다', () => {
+    expect(PAYMENT_CORRECTION_CALCULATION_UNIT_OPTIONS).toEqual([
+      { value: 'PER_CLASS', label: '차시당' },
+      { value: 'PER_LECTURE', label: '출강 1회당' },
+    ])
+  })
+})
 
 describe('buildPaymentCorrectionApprovalRequest', () => {
   it('방식 미선택이면 막는다', () => {
@@ -52,7 +62,7 @@ describe('buildPaymentCorrectionApprovalRequest', () => {
     })
   })
 
-  it('기타 인건비는 1차시당 기준으로 보낼 수 있다', () => {
+  it('기타 인건비는 차시당(PER_CLASS) 기준으로 보낼 수 있다', () => {
     const result = buildPaymentCorrectionApprovalRequest({
       ...EMPTY_PAYMENT_CORRECTION_FORM,
       pricingMode: 'OTHER_LABOR',

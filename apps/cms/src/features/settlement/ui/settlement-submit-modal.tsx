@@ -652,7 +652,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                             />
                           </Form.Item>
                           <div className="settlement-help-text">
-                            1~6시간 기준표에 따라 입력해주세요.
+                            1~6차시 기준표에 따라 입력해주세요.
                           </div>
                         </div>
 
