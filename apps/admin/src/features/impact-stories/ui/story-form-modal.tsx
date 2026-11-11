@@ -88,19 +88,6 @@ type Props = {
   onDelete?: () => void
 }
 
-function FieldLabel({ children, required }: { children: string; required?: boolean }) {
-  return (
-    <div className="story-form-modal__label">
-      <span>{children}</span>
-      {required ? (
-        <span className="story-form-modal__required" aria-hidden>
-          *
-        </span>
-      ) : null}
-    </div>
-  )
-}
-
 export function StoryFormModal({
   open,
   mode,
@@ -371,8 +358,9 @@ export function StoryFormModal({
           <div className="story-form-modal__filter-wrap">
             <div className="story-form-modal__filter-inner story-form-modal__filter-inner--with-category">
               <div className="story-form-modal__filter-field story-form-modal__filter-field--datetime">
-                <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
+                  label="게시일시"
+                  required
                   inputSize="medium"
                   width={240}
                   showTime={{
@@ -387,8 +375,9 @@ export function StoryFormModal({
                 />
               </div>
               <div className="story-form-modal__filter-field story-form-modal__filter-field--category">
-                <FieldLabel required>카테고리</FieldLabel>
                 <CmsSelect
+                  label="카테고리"
+                  required
                   inputSize="medium"
                   width={240}
                   value={categoryId || undefined}
@@ -398,41 +387,44 @@ export function StoryFormModal({
                 />
               </div>
               <div className="story-form-modal__filter-field story-form-modal__filter-field--radio">
-                <FieldLabel required>공개 여부</FieldLabel>
-                <CmsRadioGroup
-                  size="medium"
-                  value={isPublic ? 'public' : 'private'}
-                  onChange={e => setIsPublic(e.target.value === 'public')}
-                >
-                  <CmsRadio size="medium" value="public">
-                    공개
-                  </CmsRadio>
-                  <CmsRadio size="medium" value="private">
-                    비공개
-                  </CmsRadio>
-                </CmsRadioGroup>
+                <AdminFieldFrame size="medium" label="공개 여부" required>
+                  <CmsRadioGroup
+                    size="medium"
+                    value={isPublic ? 'public' : 'private'}
+                    onChange={e => setIsPublic(e.target.value === 'public')}
+                  >
+                    <CmsRadio size="medium" value="public">
+                      공개
+                    </CmsRadio>
+                    <CmsRadio size="medium" value="private">
+                      비공개
+                    </CmsRadio>
+                  </CmsRadioGroup>
+                </AdminFieldFrame>
               </div>
               <div className="story-form-modal__filter-field story-form-modal__filter-field--radio">
-                <FieldLabel required>상단 고정</FieldLabel>
-                <CmsRadioGroup
-                  size="medium"
-                  value={isPinned ? 'on' : 'off'}
-                  onChange={e => setIsPinned(e.target.value === 'on')}
-                >
-                  <CmsRadio size="medium" value="off">
-                    고정 안 함
-                  </CmsRadio>
-                  <CmsRadio size="medium" value="on">
-                    고정
-                  </CmsRadio>
-                </CmsRadioGroup>
+                <AdminFieldFrame size="medium" label="상단 고정" required>
+                  <CmsRadioGroup
+                    size="medium"
+                    value={isPinned ? 'on' : 'off'}
+                    onChange={e => setIsPinned(e.target.value === 'on')}
+                  >
+                    <CmsRadio size="medium" value="off">
+                      고정 안 함
+                    </CmsRadio>
+                    <CmsRadio size="medium" value="on">
+                      고정
+                    </CmsRadio>
+                  </CmsRadioGroup>
+                </AdminFieldFrame>
               </div>
             </div>
           </div>
 
           <div className="story-form-modal__section">
-            <FieldLabel required>제목</FieldLabel>
             <CmsInput
+              label="제목"
+              required
               inputSize="medium"
               width="100%"
               value={title}

@@ -108,26 +108,6 @@
   overflow: visible;
 }
 
-/* 라벨 — vertical 14px · 필수 * */
-.story-form-modal__label {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-bottom: 10px;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.story-form-modal__required {
-  color: var(--color-red, #c32f4a);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-}
-
 /* 상단 1행 → 제목 24px */
 .story-form-modal__filter-wrap {
   width: 100%;
@@ -162,10 +142,6 @@
   box-sizing: border-box;
 }
 
-.story-form-modal__filter-field .story-form-modal__label {
-  margin-bottom: 10px;
-}
-
 .story-form-modal__filter-field--radio .app-radio-group {
   min-height: 40px;
 }
@@ -186,6 +162,12 @@
   margin-bottom: 30px;
   display: flex;
   flex-direction: column;
+}
+
+/* 내용 라벨은 공통 필드 틀(AdminFieldFrame) — inline-flex 기본값 대신 행 전체 폭 */
+.story-form-modal__section--editor.cms-field {
+  display: flex;
+  width: 100%;
 }
 
 .story-form-modal__editor-host {
