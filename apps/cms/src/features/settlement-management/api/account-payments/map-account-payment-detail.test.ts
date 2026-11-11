@@ -118,7 +118,7 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
 
     const mapped = applyInstructorMemberPiiToAccountPaymentDetail(emptyDetailBasic(), instructor)
 
-    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994.**.** (만 32세)')
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994.**.**')
     expect(mapped.basic.phoneDisplay).toBe('010-****-5425')
     expect(mapped.basic.emailDisplay).toBe('teacher.instruc***@test.com')
     expect(mapped.basic.addressDisplay).toBe('서울특별시 강서구 마스킹')
@@ -139,7 +139,7 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
       },
     }
     const mapped = applyMaskedInstructorMemberToAccountPaymentDetail(emptyDetailBasic(), instructor)
-    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994.**.** (만 32세)')
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994.**.**')
     expect(mapped.basic.phoneDisplay).toBe('010-****-5425')
     expect(mapped.basic.emailDisplay).toContain('***@')
     expect(mapped.basic.addressDisplay).not.toContain('101호')

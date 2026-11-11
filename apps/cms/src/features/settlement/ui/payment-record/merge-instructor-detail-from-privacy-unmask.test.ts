@@ -83,7 +83,8 @@ describe('mergeInstructorDetailFromMaskedMember', () => {
         email: 'e2e-settle-***@local.demo',
       },
     })
-    expect(merged.genderBirthDisplay).toBe('** | 1985.**.** (만 41세)')
+    // 마스킹 생년월일은 월·일을 모르므로 FE가 만 나이를 계산하지 않는다(Step 6.4 P3).
+    expect(merged.genderBirthDisplay).toBe('** | 1985.**.**')
     expect(merged.phone).toBe('010-****-2201')
   })
 })

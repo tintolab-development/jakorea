@@ -61,8 +61,8 @@ export function formatBirthWithOptionalAge(birthDate?: string | null, age?: numb
 }
 
 /**
- * 마스킹: `2017.**.** (만 N세)` · 원문: `1990. 03. 15 (만 N세)`
- * BE 마스킹 `yyyy-**-**` / 연도만(birthYear) 모두 지원.
+ * 마스킹: `2017.**.**`(서버 age가 있을 때만 `(만 N세)`) · 원문: `1990. 03. 15 (만 N세)`
+ * BE 마스킹 `yyyy-**-**` / 연도만(birthYear) 모두 지원. 마스킹 표시에서는 FE가 나이를 계산하지 않는다.
  */
 export function formatBirthDisplayWithManAge(
   birthDate: string | null | undefined,
@@ -81,7 +81,8 @@ export function formatBirthDisplayWithManAge(
     const api = toApiBirthDate(raw)
     if (api) {
       const [y, m, d] = api.split('-').map(part => Number(part))
-      if (y && m && d) {
+      // 달력에 없는 날짜(예: 2000-13-45)는 dayjs가 넘겨 계산하므로 원문 날짜·나이로 쓰지 않는다.
+      if (y && m && d && dayjs(api).format('YYYY-MM-DD') === api) {
         const formatted = `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}`
         const age = ageOverride ?? manAgeFromParts(y, m, d)
         return appendManAge(formatted, age)
@@ -93,7 +94,9 @@ export function formatBirthDisplayWithManAge(
   if (year == null || !Number.isFinite(year)) return '-'
 
   const maskedFormatted = `${year}.**.**`
-  const age = ageOverride ?? manAgeFromParts(year, 1, 1)
+  // 월·일을 모르면 만 나이를 계산하지 않는다(1월 1일 가정 금지). 서버가 준 age만 붙이며,
+  // 마스킹 생년월일의 age 0은 formatBirthWithOptionalAge와 같이 표시하지 않는다.
+  const age = ageOverride != null && ageOverride > 0 ? ageOverride : null
   return appendManAge(maskedFormatted, age)
 }
 
