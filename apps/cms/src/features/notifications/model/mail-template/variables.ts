@@ -25,6 +25,29 @@ function item(
   }
 }
 
+/**
+ * 회차·차시 변수 설명 (BE N2). 회차 = 교육 일정 단위(session_no), 차시 = 수업 개수 — 서로 다른 값이다.
+ * 카탈로그 API `description`보다 이 설명을 우선한다(BE 설명 갱신 전에도 뜻이 맞게).
+ */
+export const EDUCATION_SESSION_COUNT_VARIABLE = '교육 진행 차시'
+export const EDUCATION_ROUND_VARIABLE = '교육 진행 회차'
+
+export const MAIL_VARIABLE_DESCRIPTION_OVERRIDES: Readonly<Record<string, string>> = {
+  [EDUCATION_SESSION_COUNT_VARIABLE]:
+    '차시 개수(N차시). 교육 안내 = 그 일정의 커리큘럼 차시 수, 정산 알림 = 정산 인정 차시. 회차 번호는 #{교육 진행 회차}',
+  [EDUCATION_ROUND_VARIABLE]: '회차 번호(N회차). 여러 회차면 「1회차, 2회차」',
+}
+
+/** 변수 패널 항목 아래 짧은 안내(문구 최소). 회차를 보여야 하는 템플릿은 #{교육 진행 회차}를 쓴다 */
+export const MAIL_VARIABLE_PANEL_NOTES: Readonly<Record<string, string>> = {
+  [EDUCATION_SESSION_COUNT_VARIABLE]: '차시 개수 · 회차는 #{교육 진행 회차}',
+  [EDUCATION_ROUND_VARIABLE]: '회차 번호(N회차)',
+}
+
+export function getMailVariablePanelNote(label: string): string | undefined {
+  return MAIL_VARIABLE_PANEL_NOTES[label.trim()]
+}
+
 export const MAIL_TEMPLATE_VARIABLE_GROUPS: MailVariableGroup[] = [
   {
     id: 'name',
@@ -120,7 +143,14 @@ export const MAIL_TEMPLATE_VARIABLE_GROUPS: MailVariableGroup[] = [
   {
     id: 'time',
     label: '시간',
-    items: [item('교육 진행 수업 시간'), item('교육 진행 차시')],
+    items: [
+      item('교육 진행 수업 시간'),
+      item(
+        EDUCATION_SESSION_COUNT_VARIABLE,
+        MAIL_VARIABLE_DESCRIPTION_OVERRIDES[EDUCATION_SESSION_COUNT_VARIABLE]
+      ),
+      item(EDUCATION_ROUND_VARIABLE, MAIL_VARIABLE_DESCRIPTION_OVERRIDES[EDUCATION_ROUND_VARIABLE]),
+    ],
   },
   {
     id: 'location',
@@ -213,12 +243,11 @@ export function groupMailTemplateVariablesFromCatalog(
       map.set(id, group)
       order.push(id)
     }
+    const description = MAIL_VARIABLE_DESCRIPTION_OVERRIDES[key] ?? variable.description?.trim()
     group.items.push(
       item(
         key,
-        variable.requiresProgram
-          ? variable.description?.trim() || '프로그램 선택 필요'
-          : variable.description?.trim() || undefined,
+        variable.requiresProgram ? description || '프로그램 선택 필요' : description || undefined,
         variable.requiresProgram === true,
         variable.enabled === true
       )

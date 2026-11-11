@@ -7,6 +7,7 @@ import {
   filterMailVariableGroups,
   formatMailVariableToken,
   getMailVariableLabel,
+  getMailVariablePanelNote,
   type MailVariableGroup,
 } from '@/features/notifications/model/mail-template/variables'
 import './variables-panel.css'
@@ -73,6 +74,8 @@ export const VariablesPanel = memo(function VariablesPanel({
                 variable.enabled !== true
               const itemDisabled = catalogLocked || Boolean(isItemDisabled?.(label))
               const locked = disabled || itemDisabled
+              // 회차·차시 변수만 짧은 안내를 보인다(문구 최소). 전체 설명은 title
+              const note = getMailVariablePanelNote(label)
               return (
                 <li key={label}>
                   <button
@@ -87,10 +90,14 @@ export const VariablesPanel = memo(function VariablesPanel({
                       onInsert(label)
                     }}
                     aria-disabled={locked || undefined}
+                    title={note ? variable.hint : undefined}
                   >
                     <span className="mail-template-variables__item-label">
                       {formatMailVariableToken(label)}
                     </span>
+                    {note ? (
+                      <span className="mail-template-variables__item-hint">&nbsp;{note}</span>
+                    ) : null}
                   </button>
                 </li>
               )

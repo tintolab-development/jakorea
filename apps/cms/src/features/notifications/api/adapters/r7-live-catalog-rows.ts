@@ -1,4 +1,7 @@
-/** 2026-10-28 GET /api/admin/notification-send-batches/template-variables (program 미선택) 평탄화. */
+/**
+ * 2026-10-28 GET /api/admin/notification-send-batches/template-variables (program 미선택) 평탄화.
+ * + BE N2 `교육 진행 회차`(TIME) 추가분 — 104 → 105.
+ */
 export const R7_LIVE_CATALOG_ROWS: ReadonlyArray<{
   key: string
   categoryCode: string
@@ -68,6 +71,8 @@ export const R7_LIVE_CATALOG_ROWS: ReadonlyArray<{
   { key: '학생 초상권 동의서 제출 마감일', categoryCode: 'DATE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '교육 진행 수업 시간', categoryCode: 'TIME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '교육 진행 차시', categoryCode: 'TIME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
+  // BE N2 신규(「N회차」=session_no) — 배포 후 카탈로그 105개 기준
+  { key: '교육 진행 회차', categoryCode: 'TIME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '자택 주소지_상세', categoryCode: 'PLACE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: false },
   { key: '소속 기관 소재지_시군구', categoryCode: 'PLACE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: false },
   { key: '소속 기관 소재지_상세', categoryCode: 'PLACE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: false },

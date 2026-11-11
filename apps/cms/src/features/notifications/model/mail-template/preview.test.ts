@@ -17,6 +17,19 @@ describe('applyMailPreviewTokens', () => {
   })
 })
 
+describe('회차·차시 미리보기 예시값 (BE N2)', () => {
+  it('교육 진행 차시는 「2차시」, 교육 진행 회차는 「3회차」로 구분해 보인다', () => {
+    expect(applyMailPreviewTokens('#{교육 진행 회차} #{교육 진행 차시} #{회원명}')).toBe(
+      '3회차 2차시 #{회원명}'
+    )
+    expect(
+      applyMailPreviewHtml(
+        '<p><span class="mail-template-variable" data-mail-variable="교육 진행 회차">#{교육 진행 회차}</span></p>'
+      )
+    ).toBe('<p>3회차</p>')
+  })
+})
+
 describe('applyMailPreviewHtml', () => {
   it('unwraps mint spans and keeps the 회원명 variable token', () => {
     const html =
