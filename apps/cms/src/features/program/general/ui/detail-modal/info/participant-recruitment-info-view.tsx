@@ -207,7 +207,9 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   // 교육받은 교사 — 공고 게시|학생 명단 1행, 사전 안내·수료증 비노출 (기존 유형 렌더 불변)
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
   const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
-  const recruitmentSectionTitle = isGeneralOrg ? '참여 기관 모집 정보' : '참여자 모집 정보'
+  // 1사1교도 참여 기관 모집 — 시안 4175:101670·102464 섹션 제목
+  const recruitmentSectionTitle =
+    isGeneralOrg || isCompanySchool ? '참여 기관 모집 정보' : '참여자 모집 정보'
   const recruitKeyPrefix = isIndividual ? 'recruit.individual' : 'recruit.institution'
   const recruitHighlightParagraphId = isCompanySchool
     ? ECONOMY_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo

@@ -9,6 +9,7 @@ import {
   GENERAL_SATISFACTION_ACTION_LABELS,
   GENERAL_INDIVIDUAL_SATISFACTION_EMPTY_COPY,
   GENERAL_SATISFACTION_EMPTY_COPY,
+  COMPANY_SCHOOL_SATISFACTION_EMPTY_COPY,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 
@@ -199,6 +200,9 @@ export function getGeneralSatisfactionEmptyCopy(
   _audience: GeneralSatisfactionAudienceKey,
   program: Program
 ): SurveyEmptyCopy {
+  if (isCompanySchoolProgram(program)) {
+    return COMPANY_SCHOOL_SATISFACTION_EMPTY_COPY
+  }
   if (isGeneralIndividualProgram(program)) {
     return GENERAL_INDIVIDUAL_SATISFACTION_EMPTY_COPY
   }

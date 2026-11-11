@@ -199,6 +199,13 @@ function resolveRecruitmentInstitutionLimitsBridge(program: Program) {
   return base
 }
 
+function companySchoolParticipantRecruitmentStatusLabel(
+  status: Parameters<typeof getRecruitmentStatusLabelForStatus>[0]
+): string {
+  const label = getRecruitmentStatusLabelForStatus(status)
+  return label === '-' ? label : `참여 기관 ${label}`
+}
+
 export function resolveGeneralProgramParticipantRecruitmentDisplay(
   program: Program,
   options?: {
@@ -334,7 +341,10 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       audienceOperationPeriodLabelFromRecruitmentRow(program, 'participant'),
       useRow ? undefined : info?.operationPeriodLabel
     ),
-    recruitmentStatusLabel: getRecruitmentStatusLabelForStatus(recruitmentStatus, 'participant'),
+    // 1사1교 참여 기관 모집 — 시안 4175:101670 「참여 기관 모집 중 / 예정」. 그 외 유형은 「참여자 …」 유지
+    recruitmentStatusLabel: isCompanySchoolProgram(program)
+      ? companySchoolParticipantRecruitmentStatusLabel(recruitmentStatus)
+      : getRecruitmentStatusLabelForStatus(recruitmentStatus, 'participant'),
     recruitmentStatusLifecycle: lifecycle,
     targetLabel,
     targetDetailLabel,

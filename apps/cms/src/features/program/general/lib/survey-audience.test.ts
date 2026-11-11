@@ -341,7 +341,8 @@ describe('general survey audience', () => {
     expect(getGeneralSatisfactionEmptyCopy('teacher', companySchool)).toMatchObject({
       title: '아직 등록된 만족도조사가 없습니다.',
       description: '만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
-      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
+      // 시안 16268:600810 — 1사1교는 「모든 참여자에게」
+      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 참여자에게 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     })
     expect(getGeneralSatisfactionEmptyCopy('student', companySchool)).toEqual(

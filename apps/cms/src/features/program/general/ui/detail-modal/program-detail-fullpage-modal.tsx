@@ -74,11 +74,16 @@ import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/
 import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
 import { ParticipantRecruitmentPreviewModal } from './info/participant-recruitment-preview-modal'
 import type { ApplicantDetailMeta } from '../../../shared/ui/program-detail/applicant-list/use-applicants-detail'
-import { generalOrganizationApplicationFilterFields } from '@/features/program/general/lib/application-filter-fields'
+import {
+  generalOrganizationApplicationFilterFields,
+  generalOrganizationInstitutionApplicationFilterFields,
+} from '@/features/program/general/lib/application-filter-fields'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
 import { GeneralProgramApplicationView } from './info/application-view'
 import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
 import {
+  generalApplicationTabItems,
+  getGeneralApplicationInstitutionsTabLabel,
   resolveGeneralApplicationEditorVariant,
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
@@ -173,6 +178,7 @@ import {
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
 import { GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
+import { LnbFigmaInstitutionApplicationIcon } from './lnb-figma-icons'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import './applications/participant-applications.css'
 import './program-detail-fullpage-modal.css'
@@ -1034,7 +1040,14 @@ function ProgramDetailFullPageModalContent({
             ],
           },
           ...(!hideApplicants
-            ? [{ key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> }]
+            ? [
+                {
+                  key: 'applicants',
+                  label: '기관 신청 목록',
+                  // 일반 기관 상세와 같은 기관 신청 아이콘(시안 LNB)
+                  icon: <LnbFigmaInstitutionApplicationIcon />,
+                },
+              ]
             : []),
           ...(!hideInstructorApps
             ? [
@@ -2046,33 +2059,41 @@ function ProgramDetailFullPageModalContent({
       .finally(() => setTrainedTeachersFormEditPreflightLoading(false))
   }, [displayProgram, showAlert, trainedTeachersFormEditPreflightLoading])
 
-  const handleCompanySchoolApplicationEditForm = useCallback(() => {
-    if (displayProgram == null || companySchoolApplicationFormEditPreflightLoading) return
-    const variant = resolveGeneralApplicationEditorVariant(
-      displayProgram,
-      activeCompanySchoolApplicationTab
-    )
-    const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
-    const scopedProgram = programForApplicationFormEditor(displayProgram, variant)
-    setCompanySchoolApplicationFormEditPreflightLoading(true)
-    void assertProgramApplicationFormWritable(scopedProgram, templateCode)
-      .then(() => setCompanySchoolApplicationFormEditOpen(true))
-      .catch(error => {
-        void showAlert({
-          title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
-          content:
-            error instanceof Error && error.message.trim() !== ''
-              ? error.message
-              : '신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.',
+  const openCompanySchoolApplicationFormEdit = useCallback(
+    (tab: GeneralApplicationTabKey) => {
+      if (displayProgram == null || companySchoolApplicationFormEditPreflightLoading) return
+      const variant = resolveGeneralApplicationEditorVariant(displayProgram, tab)
+      const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
+      const scopedProgram = programForApplicationFormEditor(displayProgram, variant)
+      setCompanySchoolApplicationFormEditPreflightLoading(true)
+      void assertProgramApplicationFormWritable(scopedProgram, templateCode)
+        .then(() => setCompanySchoolApplicationFormEditOpen(true))
+        .catch(error => {
+          // 팝업 안 탭 전환 시 새 탭이 수정 불가면 팝업을 닫고 안내한다(일반 기관 상세와 동일).
+          setCompanySchoolApplicationFormEditOpen(false)
+          void showAlert({
+            title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+            content:
+              error instanceof Error && error.message.trim() !== ''
+                ? error.message
+                : '신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.',
+          })
         })
-      })
-      .finally(() => setCompanySchoolApplicationFormEditPreflightLoading(false))
-  }, [
-    activeCompanySchoolApplicationTab,
-    companySchoolApplicationFormEditPreflightLoading,
-    displayProgram,
-    showAlert,
-  ])
+        .finally(() => setCompanySchoolApplicationFormEditPreflightLoading(false))
+    },
+    [companySchoolApplicationFormEditPreflightLoading, displayProgram, showAlert]
+  )
+
+  const handleCompanySchoolApplicationEditForm = useCallback(() => {
+    openCompanySchoolApplicationFormEdit(activeCompanySchoolApplicationTab)
+  }, [activeCompanySchoolApplicationTab, openCompanySchoolApplicationFormEdit])
+
+  /** 신청 양식 수정 팝업 안 탭 전환(시안 4175:104018) — URL 하위 탭을 바꾸고 새 탭 수정 가능 여부를 다시 확인한다. */
+  const handleCompanySchoolApplicationFormEditTabChange = (tab: GeneralApplicationTabKey) => {
+    if (tab === activeCompanySchoolApplicationTab) return
+    handleCompanySchoolApplicationTabChange(tab)
+    openCompanySchoolApplicationFormEdit(tab)
+  }
 
   if (!open) return null
 
@@ -2162,6 +2183,9 @@ function ProgramDetailFullPageModalContent({
               showInstructorTab={!isTrainedTeachersDetail}
               showVolunteerTab={false}
               showParticipantRecruitmentMethod
+              participantDetailVariant={
+                isCompanySchoolDetail && !isTrainedTeachersDetail ? 'company-school' : undefined
+              }
               canWrite
               isEditModeInstitutions={isEditModeInstitutions}
               institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
@@ -2347,7 +2371,12 @@ function ProgramDetailFullPageModalContent({
                   menu={activeChildMenu || 'institutions'}
                   program={displayProgram ?? null}
                   programId={displayProgram.id}
-                  filterFields={generalOrganizationApplicationFilterFields}
+                  filterFields={
+                    // 1사1교 시안 4175:104376 placeholder 「기관명을 입력해 주세요」·「교사명을 입력해 주세요」
+                    isCompanySchoolDetail && !isTrainedTeachersDetail
+                      ? generalOrganizationInstitutionApplicationFilterFields
+                      : generalOrganizationApplicationFilterFields
+                  }
                   institutionColumnPreset="company-school"
                   detailVariant="general"
                   onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
@@ -2483,6 +2512,14 @@ function ProgramDetailFullPageModalContent({
             setCompanySchoolApplicationPreviewReloadKey(key => key + 1)
           }}
           onSaved={() => setCompanySchoolApplicationPreviewReloadKey(key => key + 1)}
+          tabItems={generalApplicationTabItems({
+            showInstructor: true,
+            showVolunteer: false,
+            institutionsLabel: getGeneralApplicationInstitutionsTabLabel(displayProgram),
+          })}
+          onApplicationTabChange={handleCompanySchoolApplicationFormEditTabChange}
+          closeLabel="취소"
+          title="1사1교 프로그램 신청 양식"
         />
       ) : null}
       {displayProgram ? (

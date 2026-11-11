@@ -946,7 +946,8 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
-          {!isFormEdit ? (
+          {/* 1사1교 조회 시안(4175:99060)에는 후원사 홈페이지·로고 행이 없다 — 교육받은 교사는 유지 */}
+          {!isFormEdit && !isEconomyCommonInfo ? (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="후원사 홈페이지"

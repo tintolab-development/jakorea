@@ -128,6 +128,14 @@ export const GENERAL_SATISFACTION_EMPTY_COPY = {
   registerButton: '만족도조사 등록',
 } as const satisfies SurveyEmptyCopy
 
+/** 1사1교 — 교사용 단일 만족도조사 (시안 16268:600810) */
+export const COMPANY_SCHOOL_SATISFACTION_EMPTY_COPY = {
+  title: '아직 등록된 만족도조사가 없습니다.',
+  description: '만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
+  secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 참여자에게 동일하게 노출됩니다.',
+  registerButton: '만족도조사 등록',
+} as const satisfies SurveyEmptyCopy
+
 /** 개인형 프로그램 — 대상 탭과 무관하게 동일 */
 export const GENERAL_INDIVIDUAL_SATISFACTION_EMPTY_COPY = {
   title: '아직 등록된 만족도조사가 없습니다.',
