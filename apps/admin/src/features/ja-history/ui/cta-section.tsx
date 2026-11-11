@@ -132,6 +132,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀"
+            required={editing}
             view={<HistoryCopy value={cta.title} />}
             edit={
               <InlineText
@@ -148,6 +149,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="서브 텍스트"
+            required={editing}
             view={<HistoryCopy value={cta.body} />}
             edit={
               <InlineText
@@ -164,6 +166,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="이미지"
+            required={editing}
             view={<MediaPreview media={cta.image} size="cta" />}
             edit={
               /* Figma 2118:134439 Table / Common / Cell / File — 미리보기 72×72 · 파일명 옆 삭제 X · 파일 추가+안내 */

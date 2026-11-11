@@ -72,8 +72,14 @@
   background: var(--color-bg-base, #fff) !important;
 }
 
+/*
+ * 표 박스가 화면 높이를 채우도록 늘어날 때(Admin·CMS layout.css fill) 남는 높이를 빈 상태 행이 모두 받게 한다.
+ * 퍼센트 높이 행이 먼저 분배받으므로, 열 너비 측정용 행(ant-table-measure-row)이 늘어나 빈 띠가 생기지 않는다.
+ * 표가 늘어나지 않는 화면에서는 auto와 같다.
+ */
 .cms-data-table .ant-table-tbody > tr.ant-table-placeholder {
   cursor: default !important;
+  height: 100%;
 }
 
 /*

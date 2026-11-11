@@ -13,6 +13,7 @@ export { useEditorState } from '@tiptap/react'
 export type { Editor } from '@tiptap/react'
 export type {
   CreateRichTextExtensionsOptions,
+  RichTextDisabledFeature,
   RichTextContentFormat,
   RichTextEditorApi,
   RichTextEditorContentType,

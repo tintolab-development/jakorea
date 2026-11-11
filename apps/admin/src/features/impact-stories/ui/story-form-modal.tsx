@@ -287,10 +287,6 @@ export function StoryFormModal({
       showAlert({ title: '입력 확인', content: bodyError })
       return
     }
-    if (!thumbnail) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
     if (isPinned && pinnedCountExcludingSelf >= IMPACT_STORY_PIN_MAX) {
       showAlert({
         title: '상단 고정 제한',
@@ -377,7 +373,7 @@ export function StoryFormModal({
               <div className="story-form-modal__filter-field story-form-modal__filter-field--datetime">
                 <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
-                  inputSize="large"
+                  inputSize="medium"
                   width={240}
                   showTime={{
                     format: 'HH:mm',
@@ -393,7 +389,7 @@ export function StoryFormModal({
               <div className="story-form-modal__filter-field story-form-modal__filter-field--category">
                 <FieldLabel required>카테고리</FieldLabel>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={240}
                   value={categoryId || undefined}
                   placeholder="카테고리를 선택해 주세요"
@@ -437,7 +433,7 @@ export function StoryFormModal({
           <div className="story-form-modal__section">
             <FieldLabel required>제목</FieldLabel>
             <CmsInput
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -446,7 +442,7 @@ export function StoryFormModal({
           </div>
 
           <AdminFieldFrame
-            size="large"
+            size="medium"
             label="내용"
             required
             className="story-form-modal__section story-form-modal__section--editor"
@@ -474,7 +470,6 @@ export function StoryFormModal({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="대표 썸네일"
-                required
                 view={null}
                 edit={
                   <FileSelectField

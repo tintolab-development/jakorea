@@ -7,6 +7,7 @@ import type {
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
+import { createNoThumbnailFile } from '@/shared/lib/no-thumbnail-placeholder'
 import {
   mapDisclosureResponseToDomain,
   mapReportResponseToDomain,
@@ -44,14 +45,25 @@ async function listRemoteReportsPage(
   )
 }
 
-async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number> {
+/**
+ * 썸네일은 선택 항목 — 새 파일은 업로드, 기존 자산은 그대로.
+ * 썸네일이 없으면 서버가 아직 필수라 「썸네일 없음」 표식을 대신 보낸다
+ * (같은 보고서가 쓰던 표식이 있으면 재사용 — 보고서끼리는 썸네일 자산을 공유할 수 없다).
+ */
+async function resolveThumbnailAssetId(
+  input: ReportCreateInput,
+  placeholderAssetId?: number,
+): Promise<number> {
   if (input.thumbnailFile) {
     return uploadReportThumbnailAsset(input.thumbnailFile)
   }
   if (input.thumbnailAssetId != null) {
     return input.thumbnailAssetId
   }
-  throw new Error('썸네일 이미지를 등록해 주세요.')
+  if (placeholderAssetId != null) {
+    return placeholderAssetId
+  }
+  return uploadReportThumbnailAsset(createNoThumbnailFile())
 }
 
 async function resolveAttachmentAssetId(input: ReportCreateInput): Promise<number> {
@@ -98,10 +110,15 @@ export async function updateReportService(
   if (!current) {
     throw new Error(`Report not found: ${input.id}`)
   }
-  const thumbnailAssetId = await resolveThumbnailAssetId({
-    ...input,
-    thumbnailAssetId: input.thumbnailAssetId ?? current.thumbnailAssetId,
-  })
+  // 수정 화면에서 썸네일을 지우면 `null`이 넘어온다 — 기존 썸네일로 되돌리지 않는다
+  const thumbnailAssetId = await resolveThumbnailAssetId(
+    {
+      ...input,
+      thumbnailAssetId:
+        input.thumbnailAssetId === null ? null : (input.thumbnailAssetId ?? current.thumbnailAssetId),
+    },
+    current.placeholderThumbnailAssetId,
+  )
   const attachmentAssetId = await resolveAttachmentAssetId({
     ...input,
     attachmentAssetId: input.attachmentAssetId ?? current.attachmentAssetId,

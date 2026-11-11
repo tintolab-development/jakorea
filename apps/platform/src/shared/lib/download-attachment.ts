@@ -10,6 +10,7 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
   skipAuth?: boolean
@@ -82,7 +83,7 @@ function saveBlob(fileName: string, blob: Blob) {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName
+  anchor.download = toRuleDownloadFileName(fileName)
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
@@ -135,11 +136,32 @@ export async function fetchBlobOnce(
   return response.blob()
 }
 
+/** 첫 요청이 응답 없이(CORS 차단·연결 실패) 끝났음을 표시 — 브라우저 기본 다운로드로 넘길 수 있다 */
+class FirstHopNetworkError extends Error {
+  constructor(cause: unknown) {
+    super('첨부파일 다운로드 요청이 네트워크 단계에서 막혔습니다.')
+    this.name = 'FirstHopNetworkError'
+    this.cause = cause
+  }
+}
+
+/** 응답 자체를 받지 못한 실패인지 (fetch TypeError · axios 응답 없음) */
+function isNetworkLevelFailure(error: unknown): boolean {
+  if (error instanceof TypeError) return true
+  const e = error as { isAxiosError?: boolean; response?: unknown } | null
+  return Boolean(e?.isAxiosError && !e.response)
+}
+
 async function fetchAttachmentBlob(
   url: string,
   requiredHeaders?: Record<string, string>,
 ): Promise<Blob> {
-  const first = await fetchBlobOnce(url, requiredHeaders)
+  let first: Blob
+  try {
+    first = await fetchBlobOnce(url, requiredHeaders)
+  } catch (error) {
+    throw isNetworkLevelFailure(error) ? new FirstHopNetworkError(error) : error
+  }
   const signedUrl = await readDownloadUrlFromJsonBlob(first)
   if (!signedUrl) return first
   return fetchBlobOnce(signedUrl, requiredHeaders)
@@ -154,9 +176,27 @@ export async function fetchResolvedAttachmentBlob(
 }
 
 /**
+ * 브라우저 기본 다운로드 — 서버가 `Content-Disposition: attachment`로 주면 페이지 이동 없이 저장된다.
+ * 다른 출처로 리다이렉트되면 `download` 이름은 무시되고 서버 파일명으로 저장된다.
+ */
+function triggerBrowserDownload(url: string, fileName: string) {
+  const anchor = document.createElement('a')
+  anchor.href = toProxiedApiPath(url) ?? url
+  anchor.download = toRuleDownloadFileName(fileName)
+  anchor.rel = 'noopener'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+}
+
+/**
  * 첨부 다운로드. 실 URL은 blob으로 받아 파일명으로 저장한다.
  * 없거나 `#`이면 확장자에 맞는 MIME의 빈 Blob을 저장한다.
  * 실패해도 페이지를 이동하거나 새 창을 열지 않는다.
+ *
+ * 첫 요청이 네트워크 단계에서 막히면(예: 다운로드 API가 CORS 헤더 없는 CloudFront 파일로 302 리다이렉트)
+ * 브라우저 기본 다운로드로 넘긴다. 이때 파일명 규칙 대신 서버 파일명이 쓰인다 —
+ * 파일 저장소에 CORS가 붙으면 blob 경로로 돌아가 규칙 파일명이 적용된다.
  */
 export async function downloadAttachment(
   fileName: string,
@@ -178,6 +218,11 @@ export async function downloadAttachment(
     }
     saveBlob(name, blob)
   } catch (error) {
+    if (error instanceof FirstHopNetworkError && url) {
+      console.warn('[attachment] blob download blocked, falling back to browser download', error.cause)
+      triggerBrowserDownload(url.trim(), name)
+      return
+    }
     console.error('[attachment] download failed', error)
     throw error instanceof Error
       ? error

@@ -1,6 +1,7 @@
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import type { Program } from '@/types/domain'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export const ACTIVITY_CERTIFICATE_DOCUMENT_TITLE = '활동인증서'
 
@@ -64,12 +65,15 @@ export function buildActivityCertificateInitialStringValues(
   }
 }
 
-/** 파일명 포맷: [JA Korea] 활동인증서_김서연_260605 (빗금은 쉼표로 치환) */
-export function buildActivityCertificateFileName(participantName: string, date = new Date()): string {
-  const y = String(date.getFullYear()).slice(2)
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `[JA Korea] ${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName.replace(/[/\\]/g, ',')}_${y}${m}${d}`
+/**
+ * 파일명 포맷: [JA Korea] 활동인증서_김서연_260605 (빗금은 쉼표로 치환)
+ * 날짜 = 발급일(서버 issuedAt, Asia/Seoul). 없으면 오늘.
+ */
+export function buildActivityCertificateFileName(
+  participantName: string,
+  date: Date | null = new Date()
+): string {
+  return `[JA Korea] ${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName.replace(/[/\\]/g, ',')}_${formatAsiaSeoulYymmdd(date ?? new Date())}`
 }
 
 export function buildActivityCertificateParticipantInfoForVolunteer(

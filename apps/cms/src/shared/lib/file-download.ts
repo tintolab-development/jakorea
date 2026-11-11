@@ -11,7 +11,7 @@ import {
 } from '@/shared/lib/admin-file-upload/attachments'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { customInstance } from '@/shared/api/orval-mutator'
-import { downloadBlob, sanitizeDownloadFileName } from '@/shared/utils/file-download'
+import { downloadBlob, toRuleDownloadFileName } from '@/shared/utils/file-download'
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 
 type RuntimeAuthUser = {
@@ -47,7 +47,8 @@ async function trackDownload(fileName: string): Promise<void> {
  */
 export async function downloadFile(rawFileName: string, fileUrl?: string): Promise<void> {
   if (!guardAdminDownload()) return
-  const fileName = sanitizeDownloadFileName(rawFileName)
+  // 업로드 원본도 규칙 이름([JA Korea] {원본}_YYMMDD.ext)으로 저장·기록한다.
+  const fileName = toRuleDownloadFileName(rawFileName)
 
   const storedFileId = fileUrl ? fileObjectIdFromAdminFileUrl(fileUrl) : null
   if (storedFileId != null) {

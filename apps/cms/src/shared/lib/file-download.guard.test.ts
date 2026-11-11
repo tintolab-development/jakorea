@@ -110,7 +110,8 @@ describe('downloadBlob / downloadExcel access log', () => {
   it('MASTER는 이력 기록 후 downloadExcel을 실행한다', async () => {
     await downloadExcel(new ArrayBuffer(8), 'test.xlsx')
     expect(listDownloadLogMemory()).toHaveLength(1)
-    expect(listDownloadLogMemory()[0]?.fileName).toBe('test.xlsx')
+    // 모든 다운로드 파일명 규칙: [JA Korea] {원본}_YYMMDD.확장자
+    expect(listDownloadLogMemory()[0]?.fileName).toMatch(/^\[JA Korea\] test_\d{6}\.xlsx$/)
     expect(saveAs).toHaveBeenCalledTimes(1)
   })
 
@@ -150,7 +151,7 @@ describe('downloadBlob / downloadExcel access log', () => {
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
     await downloadBlob(new Blob(['x']), '회원_목록.xlsx')
     expect(postFileAccessLog).toHaveBeenCalledWith(
-      expect.objectContaining({ fileName: '회원_목록.xlsx' })
+      expect.objectContaining({ fileName: expect.stringMatching(/^\[JA Korea\] 회원_목록_\d{6}\.xlsx$/) })
     )
     expect(saveAs).toHaveBeenCalledTimes(1)
   })

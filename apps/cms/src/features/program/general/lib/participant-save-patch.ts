@@ -45,3 +45,36 @@ export function buildParticipantSavedPatch(
     detail: { ...prev.detail, ...withoutPii(updatedRow.detail) },
   }
 }
+
+/** 팀 역할 저장 — 팀 필드만 갱신한다(원문 오버레이가 섞인 detail 전체를 복사하지 않음). */
+export function buildParticipantTeamRolePatch(
+  prev: Partial<ParticipatingIndividualParticipantRow>,
+  team: Pick<GeneralIndividualApplicantDetail, 'teamRole' | 'teamName' | 'teamMemberCount'>
+): Partial<ParticipatingIndividualParticipantRow> {
+  return {
+    ...prev,
+    detail: {
+      ...prev.detail,
+      teamRole: team.teamRole,
+      teamName: team.teamName,
+      teamMemberCount: team.teamMemberCount,
+    },
+  }
+}
+
+/**
+ * 화면 행 = 목록(마스킹) 행 + 로컬 패치 + 원문 오버레이. detail은 필드 단위로 병합해
+ * 패치에 없는 필드(마스킹 연락처 등)는 목록 값이 남게 한다.
+ */
+export function mergeParticipantView<T extends Partial<ParticipatingIndividualParticipantRow>>(
+  base: T,
+  patches: Partial<ParticipatingIndividualParticipantRow>,
+  revealed: Partial<ParticipatingIndividualParticipantRow> | null
+): T {
+  return {
+    ...base,
+    ...patches,
+    ...(revealed ?? {}),
+    detail: { ...base.detail, ...patches.detail, ...revealed?.detail },
+  }
+}

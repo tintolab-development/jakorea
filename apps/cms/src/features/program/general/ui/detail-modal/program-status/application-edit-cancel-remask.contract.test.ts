@@ -79,3 +79,10 @@ describe('신청 상세 저장 성공 재마스킹 배선 (Step 5 잔여 위험)
     }
   )
 })
+
+describe('수정 안내 확인 창은 열려 있을 때만 마운트 (Step 5 P1 취소 첫 클릭 유실)', () => {
+  it.each(['school', 'participant', 'trainedTeacher', 'applicant'] as const)('%s', name => {
+    const s = SCREENS[name]
+    expect(s).toMatch(/editUnmaskConfirmOpen \? \(\s*<ConfirmModal/)
+  })
+})

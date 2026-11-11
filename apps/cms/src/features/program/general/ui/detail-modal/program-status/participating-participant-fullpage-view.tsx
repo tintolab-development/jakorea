@@ -6,7 +6,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
-import { buildParticipantSavedPatch } from '@/features/program/general/lib/participant-save-patch'
+import {
+  buildParticipantSavedPatch,
+  buildParticipantTeamRolePatch,
+  mergeParticipantView,
+} from '@/features/program/general/lib/participant-save-patch'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
@@ -193,7 +197,8 @@ export function ParticipatingParticipantFullpageView({
   const baseParticipant = enrichedParticipant ?? initialParticipant
 
   const mergedParticipant = useMemo(
-    () => ({ ...baseParticipant, ...participantPatches, ...(revealedParticipantPatch ?? {}) }),
+    // detail은 필드 단위로 병합한다 — 패치는 바뀐 필드만 담고 나머지는 목록(마스킹) 값을 쓴다.
+    () => mergeParticipantView(baseParticipant, participantPatches, revealedParticipantPatch),
     [baseParticipant, participantPatches, revealedParticipantPatch]
   )
 
@@ -822,17 +827,15 @@ export function ParticipatingParticipantFullpageView({
           teamRole: teamRole.toUpperCase() as 'LEADER' | 'MEMBER',
         })
         const teamDetail = resolveIndividualApplicationTeamDetail({ team: response.team })
-        setParticipantPatches(prev => ({
-          ...prev,
-          detail: {
-            ...mergedParticipant.detail,
-            ...prev.detail,
+        // 팀 역할 저장은 팀 필드만 갱신한다(원문 오버레이가 섞인 detail 전체를 복사하지 않음).
+        setParticipantPatches(prev =>
+          buildParticipantTeamRolePatch(prev, {
             teamRole: teamDetail.teamRole ?? teamRole,
             teamName: teamDetail.teamName ?? mergedParticipant.detail?.teamName,
             teamMemberCount:
               teamDetail.teamMemberCount ?? mergedParticipant.detail?.teamMemberCount,
-          },
-        }))
+          })
+        )
         await queryClient.invalidateQueries({
           queryKey: generalApplicationsQueryKeys.individualDetail(individualApplicationId),
         })
@@ -1036,17 +1039,20 @@ export function ParticipatingParticipantFullpageView({
         />
       ) : null}
       {personalInfoRevealModal}
-      <ConfirmModal
-        open={editUnmaskConfirmOpen}
-        title="정보 수정 안내"
-        content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
-        confirmText="정보 수정"
-        cancelText="취소"
-        onConfirm={confirmEditUnmaskAndStartEdit}
-        onCancel={closeEditUnmaskConfirm}
-        confirmLoading={editUnmaskConfirmLoading}
-        zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
-      />
+      {/* 열려 있을 때만 마운트 — 닫힘 애니메이션 중 모달 레이어가 헤더 [취소]를 가려 첫 클릭이 유실되던 문제(CMS-29) */}
+      {editUnmaskConfirmOpen ? (
+        <ConfirmModal
+          open={editUnmaskConfirmOpen}
+          title="정보 수정 안내"
+          content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
+          confirmText="정보 수정"
+          cancelText="취소"
+          onConfirm={confirmEditUnmaskAndStartEdit}
+          onCancel={closeEditUnmaskConfirm}
+          confirmLoading={editUnmaskConfirmLoading}
+          zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+        />
+      ) : null}
       <MemberAdminCommentModal
         open={adminCommentModalOpen}
         value={adminCommentDraft}

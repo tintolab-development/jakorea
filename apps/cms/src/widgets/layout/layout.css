@@ -32,6 +32,8 @@
   /* 헤더 높이만큼 상단 마진 추가 */
   overflow-y: auto;
   /* 콘텐츠 영역만 스크롤 가능 */
+  /* 스크롤 유무로 본문 폭이 바뀌지 않게 — 문서(html) 대신 실제 스크롤 영역에 예약 */
+  scrollbar-gutter: stable;
   height: calc(100vh - 64px);
   height: calc(100dvh - 64px);
   /* 헤더 높이를 제외한 전체 높이 */

@@ -7,6 +7,7 @@ import {
   readCrimeConsentErrorCodeFromBody,
   resolveCrimeConsentApiErrorMessage,
 } from './crime-consent-original'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 export class CrimeConsentCatalogDownloadError extends Error {
   readonly code: string | null
@@ -24,7 +25,7 @@ function saveBlobFile(fileName: string, blob: Blob): void {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName
+  anchor.download = toRuleDownloadFileName(fileName)
   anchor.rel = 'noopener'
   document.body.appendChild(anchor)
   anchor.click()

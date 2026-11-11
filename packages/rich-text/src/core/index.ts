@@ -117,6 +117,7 @@ export {
 } from './toolbar-constants'
 export type {
   CreateRichTextExtensionsOptions,
+  RichTextDisabledFeature,
   RichTextContentFormat,
   RichTextEditorApi,
   RichTextEditorContentType,

@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, Input, Space, Upload, Alert, Button } from 'antd'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons'
-import { downloadBlob } from '@/shared/utils/file-download'
+import { downloadBlob, generateFilename } from '@/shared/utils/file-download'
 import { schoolApplicationSchema, type SchoolApplicationFormData } from '@/entities/application/model/schema'
 import type { Program, Application } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -88,7 +88,8 @@ export function SchoolApplicationForm({
     try {
       const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
       const blob = await fileUploadService.createSampleStudentListBlob()
-      const filename = `참여학생명단_샘플_${new Date().toISOString().split('T')[0]}.xlsx`
+      // [JA Korea] CMS 어드민_참여학생명단 샘플_YYMMDD.xlsx (Asia/Seoul 날짜)
+      const filename = generateFilename('참여학생명단 샘플', 'xlsx')
       // 실제 데이터가 없는 업로드용 빈 양식(예시 이름은 더미)
       await downloadBlob(blob, filename, {
         accessLog: { downloadKind: 'STUDENT_LIST_TEMPLATE_EXPORT', containedPiiTypes: [] },

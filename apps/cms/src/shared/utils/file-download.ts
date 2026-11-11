@@ -12,6 +12,21 @@ export function sanitizeDownloadFileName(filename: string): string {
   return filename.replace(/[/\\]/g, ',')
 }
 
+/**
+ * 모든 다운로드 파일명 규칙. 이미 `[JA Korea]`로 시작하면 그대로 둔다(생성 파일).
+ * 그 외(업로드 원본 등)는 `[JA Korea] {원본 이름}_YYMMDD.확장자` (YYMMDD = 내려받은 날짜, Asia/Seoul).
+ * 예) `IMG_2235.PNG` → `[JA Korea] IMG_2235_261110.PNG`
+ */
+export function toRuleDownloadFileName(filename: string, date: Date = new Date()): string {
+  const name = sanitizeDownloadFileName(filename.trim())
+  if (name === '' || name.startsWith('[JA Korea]')) return name
+  const dot = name.lastIndexOf('.')
+  const hasExt = dot > 0 && /^[A-Za-z0-9]{1,10}$/.test(name.slice(dot + 1))
+  const base = hasExt ? name.slice(0, dot) : name
+  const ext = hasExt ? name.slice(dot) : ''
+  return `[JA Korea] ${base}_${formatSeoulYymmdd(date)}${ext}`
+}
+
 type RuntimeAuthUser = {
   id?: string
   name?: string
@@ -58,7 +73,8 @@ export async function downloadBlob(
   options?: DownloadBlobOptions
 ): Promise<void> {
   if (!guardAdminDownload()) return
-  filename = sanitizeDownloadFileName(filename)
+  // 저장 파일명과 이력 파일명을 같은 규칙 이름으로 맞춘다.
+  filename = toRuleDownloadFileName(filename)
   if (!options?.skipAccessLog) {
     if (options?.accessLog) {
       await recordDownloadAccessLog(filename, options.accessLog)
@@ -106,6 +122,18 @@ export function fileNameFromContentDisposition(
   fallback: string
 ): string {
   return sanitizeDownloadFileName(parseContentDispositionFileName(header, fallback))
+}
+
+/**
+ * 서버 헤더 파일명이 `[JA Korea]` 규칙 이름일 때만 쓰고, 아니면(영문 등) `fallback`을 쓴다.
+ * 서버가 규칙을 반영하기 전·후 모두 저장 파일명이 규칙을 따르게 한다.
+ */
+export function ruleFileNameFromContentDisposition(
+  header: string | null | undefined,
+  fallback: string
+): string {
+  const fromHeader = fileNameFromContentDisposition(header, '')
+  return fromHeader.startsWith('[JA Korea]') ? fromHeader : sanitizeDownloadFileName(fallback)
 }
 
 function parseContentDispositionFileName(

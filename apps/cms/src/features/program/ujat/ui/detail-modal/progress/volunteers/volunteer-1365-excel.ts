@@ -33,7 +33,9 @@ export async function exportVolunteer1365Excel(input: {
   programId: string
   half: EducationProgressHalfKey
 }): Promise<void> {
-  const response = await fetchUjat1365SemesterRegistrationForm({ ...input, mode: 'DOWNLOAD' })
+  // 날짜를 한 번만 계산해 서버 이력 파일명과 저장 파일명을 같게 한다(자정 경계 대비).
+  const fileName = `[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_${formatAsiaSeoulYymmdd()}.xlsx`
+  const response = await fetchUjat1365SemesterRegistrationForm({ ...input, mode: 'DOWNLOAD', fileName })
   const model = buildVolunteer1365SheetModel(response)
   const { headerLabels, rows: lines } = model
   const workbook = new ExcelJS.Workbook()
@@ -74,7 +76,7 @@ export async function exportVolunteer1365Excel(input: {
   }))
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, `[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_${formatAsiaSeoulYymmdd()}.xlsx`, {
+  await downloadExcel(buffer, fileName, {
     accessLog: { downloadKind: 'VOLUNTEER_1365_HOURS_EXPORT', containedPiiTypes: ['NAME'] },
   })
 }

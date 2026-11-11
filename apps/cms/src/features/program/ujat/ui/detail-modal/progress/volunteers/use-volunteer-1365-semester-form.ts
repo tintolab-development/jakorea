@@ -24,6 +24,8 @@ export async function fetchUjat1365SemesterRegistrationForm(input: {
   programId: string
   half: EducationProgressHalfKey
   mode: Ujat1365SemesterRegistrationFormRequestMode
+  /** DOWNLOAD일 때 브라우저 저장 파일명. 서버가 다운로드 이력 파일명으로 기록한다. */
+  fileName?: string
 }): Promise<Ujat1365SemesterRegistrationFormResponse> {
   const numericProgramId = Number(input.programId)
   if (!Number.isFinite(numericProgramId)) {
@@ -33,6 +35,7 @@ export async function fetchUjat1365SemesterRegistrationForm(input: {
     await programProgressApi.ujat1365SemesterRegistrationForm(numericProgramId, {
       semesterType: input.half === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF',
       mode: input.mode,
+      ...(input.mode === 'DOWNLOAD' && input.fileName ? { fileName: input.fileName } : {}),
     })
   )
 }

@@ -562,16 +562,35 @@
   align-self: stretch;
 }
 
+/* Figma Table / Vertical / Cell / Small — 라벨 열 220(상위 .ja-history-form의 200 덮어쓰기) */
 .ja-history-cta-nested-form .detail-info-form__field {
   min-height: 44px;
+  --detail-info-label-w: 220px;
+  grid-template-columns: 220px minmax(0, 1fr);
 }
 
 .ja-history-cta-nested-form .detail-info-form__field-label {
+  width: 220px;
+  min-width: 220px;
   min-height: 44px;
   font-size: 14px;
   font-weight: 700;
   line-height: 150%;
   word-break: keep-all;
+}
+
+/* Figma Cell / Small 필수 표시 — 16px / right -11px / top 1px (Cell / Medium 은 14px) */
+.ja-history-cta-nested-form .detail-info-form__field-required {
+  left: auto;
+  right: -11px;
+  top: 1px;
+  bottom: auto;
+  width: 9px;
+  height: 21px;
+  margin-left: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 120%;
 }
 
 .ja-history-cta-nested-form .detail-info-form__field-content {
