@@ -322,9 +322,7 @@ function ProgramDetailTextAreaField({
         labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
         fullRow
         view={
-          <div className="text-area-field-row__content-block program-detail-info-tab__plain-content">
-            {readContent}
-          </div>
+          <div className="text-area-field-row__content-block">{readContent}</div>
         }
         edit={
           isFormEdit && form
