@@ -719,7 +719,7 @@ assert.equal(
 )
 assert.equal(
   resolveSettlementStatusUi('correction_requested', 'payment_statement').markLabel,
-  '정정 요청',
+  '지급 정정 요청',
 )
 assert.deepEqual(
   resolveSettlementStatusUi('correction_completed', 'payment_statement').actions,

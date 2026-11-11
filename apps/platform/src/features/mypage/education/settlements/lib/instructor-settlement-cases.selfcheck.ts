@@ -227,7 +227,7 @@ const case08 = build({
   ],
 })[0]
 assert.equal(case08?.status, 'correction_requested')
-assert.equal(resolveSettlementStatusUi(case08!.status, 'payment_statement').markLabel, '정정 요청')
+assert.equal(resolveSettlementStatusUi(case08!.status, 'payment_statement').markLabel, '지급 정정 요청')
 assert.deepEqual(resolveSettlementStatusUi(case08!.status, 'payment_statement').actions, ['view'])
 
 const case09 = build({
