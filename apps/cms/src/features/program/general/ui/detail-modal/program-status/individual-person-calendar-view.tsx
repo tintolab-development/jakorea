@@ -58,18 +58,6 @@ export type IndividualPersonCalendarAccessors<T> = {
   getPopoverMetaLabels?: (event: IndividualPersonCalendarEvent<T>) => readonly string[]
 }
 
-/**
- * 일정이 하나도 없는 사람의 우측 카드 렌더. 넘기면 선택일과 무관하게 날짜 카드 아래에 항상 노출한다
- * (날짜 셀에는 그리지 않음). 생략하면 일정 없는 사람은 캘린더에 나오지 않는다(기존 동작).
- */
-export type IndividualPersonCalendarUnscheduledListItemRenderer<T> = (args: {
-  person: T
-  personId: string
-  personName: string
-  checked: boolean
-  onToggle: (personId: string, checked: boolean) => void
-}) => ReactNode
-
 /** 우측 목록 카드 커스텀 렌더 — 생략하면 참여자 카드(이름 · 메타 · 시간) */
 export type IndividualPersonCalendarListItemRenderer<T> = (args: {
   event: IndividualPersonCalendarEvent<T>
@@ -138,10 +126,6 @@ function IndividualPersonCalendarRight<T>({
   renderListItem,
   emptyDescription,
   program,
-  unscheduledPeople,
-  renderUnscheduledListItem,
-  getId,
-  getName,
 }: {
   events: readonly IndividualPersonCalendarEvent<T>[]
   getColorForName: (name: string) => ScheduleColorPair
@@ -152,10 +136,6 @@ function IndividualPersonCalendarRight<T>({
   renderListItem?: IndividualPersonCalendarListItemRenderer<T>
   emptyDescription?: string
   program?: Program | null
-  unscheduledPeople: readonly T[]
-  renderUnscheduledListItem?: IndividualPersonCalendarUnscheduledListItemRenderer<T>
-  getId: (person: T) => string
-  getName: (person: T) => string
 }) {
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
@@ -179,8 +159,7 @@ function IndividualPersonCalendarRight<T>({
     [onSelectionChange, selectedIds, selectedSet]
   )
 
-  const unscheduledItems = renderUnscheduledListItem ? unscheduledPeople : []
-  const isEmpty = sortedEvents.length === 0 && unscheduledItems.length === 0
+  const isEmpty = sortedEvents.length === 0
 
   return (
     <div
@@ -192,10 +171,8 @@ function IndividualPersonCalendarRight<T>({
     >
       {isEmpty ? (
         <EmptyState description={emptyDescription ?? '해당 날짜에 일정이 없습니다'} />
-      ) : null}
-      {isEmpty
-        ? null
-        : sortedEvents.map(event => {
+      ) : (
+        sortedEvents.map(event => {
           const { person, personId, personName, session } = event.originalItem
           const colors = getColorForName(personName) ?? SCHEDULE_COLORS[0]
           const checked = selectedSet.has(personId)
@@ -244,47 +221,8 @@ function IndividualPersonCalendarRight<T>({
               </div>
             </div>
           )
-        })}
-      {renderUnscheduledListItem
-        ? unscheduledItems.map(person => {
-            const personId = getId(person)
-            const personName = getName(person)
-            const colors = getColorForName(personName) ?? SCHEDULE_COLORS[0]
-            const checked = selectedSet.has(personId)
-            return (
-              <div
-                key={`unscheduled-${personId}`}
-                role="button"
-                tabIndex={0}
-                className={['calendar-list-item', checked ? 'calendar-list-item--selected' : '']
-                  .filter(Boolean)
-                  .join(' ')}
-                data-has-color="true"
-                style={{
-                  backgroundColor: calendarListItemBackground(colors.bg),
-                  border: `1px solid ${colors.border}`,
-                }}
-                onClick={() => onPersonClick(person)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    onPersonClick(person)
-                  }
-                }}
-              >
-                <div className="calendar-list-item__column">
-                  {renderUnscheduledListItem({
-                    person,
-                    personId,
-                    personName,
-                    checked,
-                    onToggle: handleToggle,
-                  })}
-                </div>
-              </div>
-            )
-          })
-        : null}
+        })
+      )}
     </div>
   )
 }
@@ -308,8 +246,6 @@ export interface IndividualPersonCalendarViewProps<T> {
    * (일정형=세부 일정명, 단일 회차=N차시, 복수 회차=N회차). 생략 시 시간(·신청 차시 수)만
    */
   program?: Program | null
-  /** 일정 없는 사람 우측 카드(선택일 무관, 날짜 카드 아래). 생략 시 기존처럼 미노출 */
-  renderUnscheduledListItem?: IndividualPersonCalendarUnscheduledListItemRenderer<T>
 }
 
 export function IndividualPersonCalendarView<T>({
@@ -324,7 +260,6 @@ export function IndividualPersonCalendarView<T>({
   emptyDescription,
   loading,
   program,
-  renderUnscheduledListItem,
 }: IndividualPersonCalendarViewProps<T>) {
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
@@ -348,15 +283,6 @@ export function IndividualPersonCalendarView<T>({
     () => buildIndividualPersonCalendarEvents(people, { getId, getName, getSessions }),
     [people, getId, getName, getSessions]
   )
-
-  /** 날짜에 그릴 일정이 하나도 없는 사람 — `renderUnscheduledListItem`이 있을 때만 우측에 노출 */
-  const unscheduledPeople = useMemo(() => {
-    if (!renderUnscheduledListItem) return []
-    const scheduledIds = new Set(events.map(event => event.originalItem.personId))
-    return [...people]
-      .filter(person => !scheduledIds.has(getId(person)))
-      .sort((a, b) => getName(a).localeCompare(getName(b), 'ko'))
-  }, [events, getId, getName, people, renderUnscheduledListItem])
 
   useEffect(() => {
     if (didSnapToEventsRef.current || events.length === 0) return
@@ -477,10 +403,6 @@ export function IndividualPersonCalendarView<T>({
           renderListItem={renderListItem}
           emptyDescription={events.length === 0 ? emptyDescription : undefined}
           program={program}
-          unscheduledPeople={unscheduledPeople}
-          renderUnscheduledListItem={renderUnscheduledListItem}
-          getId={getId}
-          getName={getName}
         />
       }
     />
