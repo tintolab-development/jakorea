@@ -503,7 +503,7 @@ export type FillParagraphDateOptions = {
   label?: string
 }
 
-function datePickerDialog(page: Page) {
+export function datePickerDialog(page: Page) {
   return page
     .locator('.date-time-picker-popover[role="dialog"]')
     .filter({ has: page.locator('.calendar-mini') })
@@ -518,7 +518,7 @@ function calendarMiniNextButton(dialog: Locator) {
   return dialog.locator('.calendar-mini-header button.calendar-mini-nav-btn').last()
 }
 
-function enabledCalendarMiniDayButtons(dialog: Locator) {
+export function enabledCalendarMiniDayButtons(dialog: Locator) {
   return dialog.locator(
     'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month):not([aria-disabled="true"])'
   )
@@ -541,7 +541,7 @@ async function clickCalendarMiniNav(dialog: Locator, direction: 'prev' | 'next')
  * 사업 운영 기간 밖 날짜는 전부 disabled다. 열린 달이 비어 있으면 허용일이 있는 달로 이동한다.
  * futureMonthClicks는 허용 구간을 벗어나지 않는 범위에서만 적용한다.
  */
-async function revealEnabledCalendarMiniDays(dialog: Locator, futureMonthClicks: number) {
+export async function revealEnabledCalendarMiniDays(dialog: Locator, futureMonthClicks: number) {
   await expect(dialog.locator('.calendar-mini')).toBeVisible({ timeout: 10_000 })
   const hasEnabledDays = async () => (await enabledCalendarMiniDayButtons(dialog).count()) > 0
 
@@ -696,7 +696,7 @@ async function fillParagraphDateByPlaceholderOnce(
     ? dayTexts.findIndex(text => text === String(activeStartDay))
     : -1
   const futureStartDayIdx = futureStartWindow
-    ? dayCells.evaluateAll(
+    ? await dayCells.evaluateAll(
         (elements, day) =>
           elements.findIndex(element => element.textContent?.trim() === String(day)),
         futureStartDay

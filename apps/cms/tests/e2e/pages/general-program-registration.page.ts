@@ -6,11 +6,14 @@ import {
   clickRegistrationTabIfVisible,
   clickSectionNavIfVisible,
   fillAllByPlaceholder,
+  datePickerDialog,
+  enabledCalendarMiniDayButtons,
   fillAllParagraphDatesByPlaceholder,
   fillByPlaceholder,
   fillByPlaceholderIfVisible,
   fillParagraphDateByPlaceholder,
   fillParagraphTimeIfVisible,
+  revealEnabledCalendarMiniDays,
   fillVisibleFreeTextFields,
   selectByPlaceholder,
   selectByPlaceholderIfVisible,
@@ -442,6 +445,80 @@ export class GeneralProgramRegistrationPage {
       filled += 1
     }
     console.log('[STEP41] 일정형 세부 일정 날짜 트리거 입력 수', filled)
+  }
+
+  /**
+   * 기관·일정형·복수에서 educationScheduleLines는 「교육 진행 (일정형)」 세부 일정의
+   * 진행 일정에서 만든다. 「교육 진행 일정 선택」 추가형 피커는 이 유형에서 숨겨질 수 있다.
+   * DEV 자동입력이 현재 연도에서 고른 날짜는, 사업 운영 기간을 미래로 다시 잡으면
+   * 기간 밖이 되어 등록이 거절될 수 있다. 이미 값이 있는 트리거를 다시 열어
+   * 달력에서 활성화된(운영 기간 안) 날짜 2개를 고른다.
+   */
+  async realignScheduleDetailDatesWithinOpenPeriod() {
+    const heading = this.page.getByText(/교육 진행 \(일정형\)/).first()
+    await heading.scrollIntoViewIfNeeded()
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+
+    const nameInputs = this.page.getByPlaceholder('행사 일정명을 작성하세요')
+    if ((await nameInputs.count()) < 2) {
+      const add = this.page.getByRole('button', { name: /강의 세부 일정 추가|강의 행사 일정 추가/ })
+      await expect(add.first()).toBeVisible({ timeout: 10_000 })
+      await add.first().click()
+      await expect.poll(async () => nameInputs.count(), { timeout: 10_000 }).toBeGreaterThanOrEqual(2)
+    }
+    expect(await nameInputs.count(), '일정형 세부 일정이 2개 이상이어야 한다').toBeGreaterThanOrEqual(2)
+
+    const inputCount = await nameInputs.count()
+    for (let i = 0; i < inputCount; i += 1) {
+      const input = nameInputs.nth(i)
+      if (!(await input.isVisible().catch(() => false))) continue
+      if (!(await input.inputValue()).trim()) {
+        await input.fill(SCHEDULE_DETAIL_NAME)
+      }
+    }
+
+    const groups = this.page.getByRole('group', { name: '교육 진행 (일정형)' })
+    await expect(groups.first()).toBeVisible({ timeout: 10_000 })
+    expect(await groups.count(), '일정형 세부 일정 그룹이 2개 이상이어야 한다').toBeGreaterThanOrEqual(2)
+
+    const usedDayTexts: string[] = []
+    for (let i = 0; i < 2; i += 1) {
+      const group = groups.nth(i)
+      const trigger = group
+        .locator('.paragraph-date-picker__trigger')
+        .or(
+          group.getByRole('button').filter({ hasText: /\d{4}\.\d{2}\.\d{2}|일정을 선택해 주세요/ })
+        )
+        .first()
+      await trigger.scrollIntoViewIfNeeded()
+      await expect(trigger).toBeVisible({ timeout: 10_000 })
+      await trigger.click()
+
+      const dialog = datePickerDialog(this.page)
+      await expect(dialog).toBeVisible({ timeout: 10_000 })
+      await revealEnabledCalendarMiniDays(dialog, 0)
+      const enabledDays = enabledCalendarMiniDayButtons(dialog)
+      await expect(enabledDays.first()).toBeVisible({ timeout: 10_000 })
+      const dayCount = await enabledDays.count()
+      expect(dayCount, '사업 운영 기간 안에 선택 가능한 날짜가 있어야 한다').toBeGreaterThan(0)
+
+      let index = Math.min(i, dayCount - 1)
+      for (let candidate = 0; candidate < dayCount; candidate += 1) {
+        const text = (await enabledDays.nth(candidate).innerText()).trim()
+        if (!usedDayTexts.includes(text)) {
+          index = candidate
+          break
+        }
+      }
+      const chosen = enabledDays.nth(index)
+      const dayText = (await chosen.innerText()).trim()
+      await chosen.click()
+      await dialog.getByRole('button', { name: '설정' }).click()
+      await expect(dialog).toBeHidden({ timeout: 10_000 })
+      await expect(trigger).not.toHaveText('일정을 선택해 주세요')
+      await expect(trigger).toContainText(dayText)
+      usedDayTexts.push(dayText)
+    }
   }
 
   private recruitField(label: string) {
