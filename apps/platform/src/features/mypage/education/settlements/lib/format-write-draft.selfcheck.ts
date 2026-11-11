@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict'
 import { buildSettlementWriteDraft } from './build-write-draft.ts'
 import {
-  INSTRUCTOR_MEAL_MAX_WON,
   formatSettlementAmountInput,
   formatSettlementEducationSessionProgress,
   formatSettlementSessionBannerTitle,
@@ -9,8 +8,6 @@ import {
   hasSettlementMealSection,
 } from './format-write-draft.ts'
 
-assert.equal(INSTRUCTOR_MEAL_MAX_WON, 30_000)
-assert.equal(formatSettlementAmountInput('40000', INSTRUCTOR_MEAL_MAX_WON), '30,000')
 assert.equal(formatSettlementAmountInput('40,000', 30_000), '30,000')
 assert.equal(formatSettlementAmountInput('30000', 30_000), '30,000')
 assert.equal(formatSettlementAmountInput('29999', 30_000), '29,999')

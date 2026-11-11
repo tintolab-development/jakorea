@@ -16,6 +16,7 @@ import {
   EDUCATION_SETTLEMENT_STATUS_UI,
   isSettlementWriteCtaDisabled,
   PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
+  paymentStatementLateSubmitMessage,
   resolveSettlementDocumentKind,
   resolveSettlementStatusUi,
 } from './settlement-status-ui.ts'
@@ -505,7 +506,7 @@ assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.upcoming.writeDisabled, true)
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.pending_submit.message, '기한 내에 영수증을 제출해 주세요')
 assert.equal(
   EDUCATION_SETTLEMENT_STATUS_UI.overdue.message,
-  '미제출 영수증 제출 기한이 지났어요',
+  '영수증 제출기한이 마감되었어요',
 )
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.overdue.markLabel, '영수증 미제출')
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.waiting_confirm.markLabel, '확인 대기')
@@ -516,7 +517,7 @@ assert.equal(
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.reapplied.markLabel, '재신청')
 assert.equal(
   EDUCATION_SETTLEMENT_STATUS_UI.reapplied.message,
-  '영수증 수정 제출이 완료되었어요',
+  '영수증 재신청이 완료되었어요',
 )
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.confirmed.markLabel, '확인 완료')
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.paid.markLabel, '지급 완료')
@@ -538,11 +539,28 @@ assert.equal(
 )
 assert.equal(buildReceiptViewPath({ applicationId: '1', sessionId: '2' }), null)
 
-assert.equal(resolvePaymentStatementProcessLabel(oneUpcoming), '확인진행중')
-assert.equal(resolvePaymentStatementProcessLabel(paid), '지급 완료')
+// 영수증 처리 현황(R17): 한 가지 상태면 그 라벨, 섞이면 "확인 진행 중", 미작성 N건은 쓰지 않는다
+assert.equal(resolvePaymentStatementProcessLabel(oneUpcoming), '확인 진행 중')
+assert.equal(resolvePaymentStatementProcessLabel(paid), '계좌 지급 완료')
+assert.equal(resolvePaymentStatementProcessLabel(fiveNoReceipts), '확인 진행 중')
 assert.equal(
-  resolvePaymentStatementProcessLabel(fiveNoReceipts).startsWith('미작성'),
-  true,
+  resolvePaymentStatementProcessLabel([
+    { ...fiveNoReceipts[0]!, status: 'waiting_confirm' },
+    { ...fiveNoReceipts[1]!, status: 'waiting_confirm' },
+    { ...fiveNoReceipts[2]!, status: 'pending_submit' },
+  ]),
+  '확인 대기',
+)
+assert.equal(
+  resolvePaymentStatementProcessLabel([
+    { ...fiveNoReceipts[0]!, status: 'waiting_confirm' },
+    { ...fiveNoReceipts[1]!, status: 'rejected' },
+  ]),
+  '확인 진행 중',
+)
+assert.equal(
+  resolvePaymentStatementProcessLabel([{ ...fiveNoReceipts[0]!, status: 'reapplied' }]),
+  '영수증 재신청',
 )
 
 const withPayable = buildAssignedSettlementItems({
@@ -783,6 +801,31 @@ assert.equal(
     }),
     { status: 'report_pending' },
   )
+  // 회차 제출 마감(settlementSubmitDeadlineAt, K20)이 있으면 그것을 쓴다 — 운영 기간 종료일이 지나도 마감 전이면 미제출
+  assert.deepEqual(
+    resolveEducationSettlementStatusResult({
+      ...base,
+      receiptDeadlineAt: '2026-05-05T23:59:59+09:00',
+      businessEndAt: '2026-12-31T23:59:59+09:00',
+      lectureReportSubmitted: true,
+    }),
+    { status: 'pending_submit' },
+  )
+  assert.deepEqual(
+    resolveEducationSettlementStatusResult({
+      ...base,
+      receiptDeadlineAt: '2026-04-05T23:59:59+09:00',
+      businessEndAt: '2026-12-31T23:59:59+09:00',
+      lectureReportSubmitted: true,
+    }),
+    { status: 'overdue', deadlineNotice: 'overdue' },
+  )
+  // 지연 제출 안내: 운영 종료일까지 제출 가능
+  assert.equal(
+    paymentStatementLateSubmitMessage('2026-12-31'),
+    '지급조서 제출 기한이 지났어요. 2026.12.31까지 제출할 수 있어요',
+  )
+  assert.equal(paymentStatementLateSubmitMessage(null), '지급조서 제출 기한이 지났어요')
   // 사업 운영 종료 후: 운영 종료
   assert.deepEqual(
     resolveEducationSettlementStatusResult({

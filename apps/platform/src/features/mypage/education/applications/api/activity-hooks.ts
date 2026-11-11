@@ -1158,6 +1158,7 @@ export function useApplicationSettlementsQuery(
                 curriculumSessionCount: row.curriculumSessionCount ?? null,
                 lectureFeePreview: row.lectureFeePreview ?? null,
                 instructorTransportPreview: row.instructorTransportPreview ?? null,
+                settlementSubmitDeadlineAt: row.settlementSubmitDeadlineAt ?? null,
               })),
         programId,
         operationEndAt: options?.operationEndAt,

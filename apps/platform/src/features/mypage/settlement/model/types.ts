@@ -28,6 +28,8 @@ export type SettlementOverviewItem = {
   endsAt: string
   sessionLabel: string
   status: SettlementOverviewStatus
+  /** receipt = 개인·봉사자 영수증 행(라벨이 지급조서와 다르다, R17). 없으면 강사 지급조서 */
+  documentKind?: 'receipt' | 'payment_statement'
   /** 정산 신청 금액. 0과 없음(null)을 구분한다. */
   appliedAmount: number | null
   /**
