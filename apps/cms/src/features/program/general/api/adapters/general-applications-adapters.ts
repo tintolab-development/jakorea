@@ -1053,7 +1053,8 @@ function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
   if (trimmed === 'PER_HOUR') return '1시간 당'
-  if (trimmed === 'PER_SESSION' || trimmed === 'SESSION') return '출강 1회당'
+  // PER_LECTURE가 현재 코드, PER_SESSION·SESSION은 기존 저장 데이터
+  if (trimmed === 'PER_LECTURE' || trimmed === 'PER_SESSION' || trimmed === 'SESSION') return '출강 1회당'
   if (trimmed === 'FIXED') return '해당 없음'
   return trimmed
 }

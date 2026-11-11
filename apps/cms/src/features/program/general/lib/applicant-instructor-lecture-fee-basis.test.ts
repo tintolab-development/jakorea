@@ -3,12 +3,12 @@ import {
   buildGeneralOrganizationLectureFeeBasisViewSegments,
   buildLectureFeeBasisViewSegments,
   parseLectureFeeBasisTypeFromApi,
+  toApiInstructorFeePolicyMeasure,
   toInstructorApplicationFeePolicy,
   buildLectureFeeBasisDisplay,
   lectureFeeMeasureLabel,
   normalizeLectureFeeMeasure,
   resolveLectureFeeBasisFromRow,
-  toApiInstructorFeePolicyMeasure,
   LECTURE_FEE_MEASURE_OPTIONS,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
@@ -38,7 +38,7 @@ describe('toInstructorApplicationFeePolicy', () => {
     })
   })
 
-  it('특강·기타는 RECRUITMENT와 PER_SESSION/PER_HOUR 코드를 보낸다', () => {
+  it('특강·기타는 RECRUITMENT와 PER_LECTURE/PER_HOUR 코드를 보낸다', () => {
     expect(
       toInstructorApplicationFeePolicy({
         basisType: 'special_lecture',
@@ -62,7 +62,7 @@ describe('toInstructorApplicationFeePolicy', () => {
       })
     ).toMatchObject({
       basisType: 'RECRUITMENT',
-      measure: 'PER_SESSION',
+      measure: 'PER_LECTURE',
       amount: 0,
       instructorFeeGrade: 'GRADE_2',
     })
@@ -155,7 +155,7 @@ describe('businessIncomeEarnerStatusPatchField', () => {
 })
 
 describe('강사비 지급 기준 공통 라벨 (기획 11/10 「차시당 / 출강 1회당」)', () => {
-  it('모든 유형 공통 옵션 — 값은 그대로(1시간 당=PER_HOUR, 출강 1회당=PER_SESSION)', () => {
+  it('모든 유형 공통 옵션 — 값은 그대로(1시간 당=PER_HOUR, 출강 1회당=PER_LECTURE)', () => {
     expect(LECTURE_FEE_MEASURE_OPTIONS).toEqual([
       { value: '1시간 당', label: '차시당' },
       { value: '출강 1회당', label: '출강 1회당' },
@@ -171,7 +171,7 @@ describe('강사비 지급 기준 공통 라벨 (기획 11/10 「차시당 / 출
     for (const legacy of ['출강 1회당', '1회당', '1회 기준']) {
       expect(normalizeLectureFeeMeasure(legacy)).toBe('출강 1회당')
       expect(lectureFeeMeasureLabel(legacy)).toBe('출강 1회당')
-      expect(toApiInstructorFeePolicyMeasure(legacy, 'special_lecture')).toBe('PER_SESSION')
+      expect(toApiInstructorFeePolicyMeasure(legacy, 'special_lecture')).toBe('PER_LECTURE')
     }
   })
 
@@ -228,5 +228,15 @@ describe('buildGeneralOrganizationLectureFeeBasisViewSegments — 일반(기관�
         lectureFeeAmount: '50000',
       } as ApplicantInstructorRow)
     ).toEqual(['기타 인건비', '차시당 50,000원'])
+  })
+})
+
+describe('출강 1회당 코드(K13, 2026-11-12)', () => {
+  it('출강 1회당·기존 PER_SESSION·SESSION은 모두 PER_LECTURE로 보낸다', () => {
+    expect(toApiInstructorFeePolicyMeasure('출강 1회당', 'special_lecture')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure('PER_SESSION', 'other_labor')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure(undefined, 'special_lecture')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure(null, 'program', 'SESSION')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure(null, 'program', 'PER_HOUR')).toBe('PER_HOUR')
   })
 })

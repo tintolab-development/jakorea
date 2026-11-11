@@ -24,7 +24,7 @@ export const LECTURE_FEE_BASIS_TYPE_OPTIONS: {
   { value: 'other_labor', label: '기타 인건비' },
 ]
 
-/** 지급 기준 값 — `출강 1회당` = API PER_SESSION (기본값) */
+/** 지급 기준 값 — `출강 1회당` = API PER_LECTURE (기본값). PER_SESSION은 기존 데이터 읽기 전용 */
 export const DEFAULT_LECTURE_FEE_MEASURE = '출강 1회당'
 
 /** 지급 기준 값 — `1시간 당` = API PER_HOUR. BE: 레거시 PER_HOUR는 시급 비례가 아니라 차시당 단가 */
@@ -32,7 +32,7 @@ export const PER_HOUR_LECTURE_FEE_MEASURE = '1시간 당'
 
 /**
  * 특강 강사비·기타 인건비 선택 시 지급 기준 옵션 — 모든 프로그램 유형 공통 「차시당 / 출강 1회당」
- * (기획 11/10, CMS-FUNC-0076·0473·0474). 값은 API 매핑(PER_HOUR·PER_SESSION)에 쓰이므로 그대로 두고 라벨만 정한다.
+ * (기획 11/10, CMS-FUNC-0076·0473·0474). 값은 API 매핑(PER_HOUR·PER_LECTURE)에 쓰이므로 그대로 두고 라벨만 정한다.
  */
 export const LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] = [
   { value: PER_HOUR_LECTURE_FEE_MEASURE, label: '차시당' },
@@ -188,7 +188,8 @@ export type InstructorApplicationFeePolicyContext = {
 }
 
 export type ApiInstructorFeePolicyBasisType = 'PROGRAM' | 'RECRUITMENT'
-export type ApiInstructorFeePolicyMeasure = 'PER_SESSION' | 'PER_HOUR' | 'FIXED'
+/** 출강 1회당은 PER_LECTURE로 보낸다. PER_SESSION은 기존 데이터 읽기 전용(백엔드가 신규 입력을 거절). */
+export type ApiInstructorFeePolicyMeasure = 'PER_LECTURE' | 'PER_HOUR' | 'FIXED'
 
 export function toApiInstructorFeePolicyBasisType(
   basisType: ApplicantInstructorLectureFeeBasisType
@@ -203,19 +204,19 @@ export function toApiInstructorFeePolicyMeasure(
 ): ApiInstructorFeePolicyMeasure {
   if (basisType === 'program') {
     const unit = (programCalculationUnit ?? 'PER_HOUR').trim().toUpperCase()
-    if (unit === 'PER_SESSION' || unit === 'SESSION') return 'PER_SESSION'
+    if (unit === 'PER_SESSION' || unit === 'SESSION' || unit === 'PER_LECTURE') return 'PER_LECTURE'
     if (unit === 'FIXED') return 'FIXED'
     return 'PER_HOUR'
   }
 
   const normalized = normalizeLectureFeeMeasure(uiMeasure ?? undefined, basisType)
   const upper = normalized.trim().toUpperCase()
-  if (upper === 'PER_SESSION' || upper === 'SESSION') return 'PER_SESSION'
+  if (upper === 'PER_SESSION' || upper === 'SESSION' || upper === 'PER_LECTURE') return 'PER_LECTURE'
   if (upper === 'PER_HOUR' || upper === 'HOUR') return 'PER_HOUR'
   if (upper === 'FIXED') return 'FIXED'
-  if (normalized === DEFAULT_LECTURE_FEE_MEASURE) return 'PER_SESSION'
+  if (normalized === DEFAULT_LECTURE_FEE_MEASURE) return 'PER_LECTURE'
   if (normalized === PER_HOUR_LECTURE_FEE_MEASURE) return 'PER_HOUR'
-  return 'PER_SESSION'
+  return 'PER_LECTURE'
 }
 
 export function resolveInstructorFeeGradeCode(
@@ -236,7 +237,7 @@ export function resolveProgramBasisFeePolicyFromWageRows(
   const amount = parseWageGradeAmount(pricing)
   if (amount == null || amount < 0) return null
 
-  const measure = /1시간/.test(pricing ?? '') ? 'PER_HOUR' : 'PER_SESSION'
+  const measure = /1시간/.test(pricing ?? '') ? 'PER_HOUR' : 'PER_LECTURE'
   return { amount, measure }
 }
 
