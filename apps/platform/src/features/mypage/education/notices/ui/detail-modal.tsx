@@ -723,7 +723,9 @@ export function EducationInProgressNoticeDetailModal({
                   <RichTextViewer
                     key={notice.id}
                     content={notice.content}
-                    contentFormat="html"
+                    // CMS 글쓰기는 마크다운, 홈페이지 글쓰기는 HTML로 같은 게시판에 저장된다.
+                    // 마크다운 해석은 HTML 본문도 그대로 읽으므로 두 형식을 모두 맞게 그린다.
+                    contentFormat="markdown"
                     maxHeight="none"
                     className={[
                       styles.richContent,
