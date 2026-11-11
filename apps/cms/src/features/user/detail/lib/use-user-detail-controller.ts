@@ -792,12 +792,11 @@ export function useUserDetailController({
             fileNameFromContentDisposition(contentDisposition, generateFilename('증명서_일괄', 'zip'))
           )
         } catch (downloadError) {
+          // 발급은 이미 성공했다. 서버 ZIP 오류 문구("…발급에 실패했습니다")는 사실과 달라 쓰지 않는다.
+          handleError(downloadError, { context: 'userDetail.certificateBulkZipDownload' })
           showAlert({
             title: '안내',
-            content: getMemberApiErrorMessage(
-              downloadError,
-              `${successCount}건 발급은 완료되었으나 ZIP 다운로드에 실패했습니다.`
-            ),
+            content: `${successCount}건 발급은 완료되었으나 ZIP 다운로드에 실패했습니다.`,
           })
           await refetchApplications()
           return
