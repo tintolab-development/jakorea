@@ -33,10 +33,28 @@ export type LectureEvalPreStartCopy = {
   previewButton: string
 }
 
+/** 종료(FINISHED) 후 내 응답이 없을 때 — 제출·수정 UI 없이 안내만 */
+export type LectureEvalClosedCopy = {
+  title: string
+  description: string
+}
+
 export type LectureEvalSubmittedCopy = {
   title: string
   description: string
   editButton: string
+  /** 본인 답변 삭제 — 진행 중·마감 전 */
+  deleteButton: string
+}
+
+/** 본인 답변 삭제 확인·완료 팝업 */
+export type LectureEvalResponseDeleteCopy = {
+  title: string
+  content: string
+  confirmButton: string
+  cancelButton: string
+  completeTitle: string
+  completeContent: string
 }
 
 export type LectureEvalActionLabels = {
@@ -201,9 +219,25 @@ export const GENERAL_LECTURE_EVAL_PRE_START_COPY = {
 
 export const GENERAL_LECTURE_EVAL_SUBMITTED_COPY = {
   title: '강의평가 제출이 완료되었습니다.',
-  description: '결과는 결과 탭에서 확인해 주세요. 답변은 설문 기간 종료 전까지 수정 가능합니다.',
+  description:
+    '결과는 강의평가 종료 후 결과 탭에서 확인해 주세요. 답변은 설문 기간 종료 전까지 수정 가능합니다.',
   editButton: '답변 수정하기',
+  deleteButton: '답변 삭제',
 } as const satisfies LectureEvalSubmittedCopy
+
+export const GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY = {
+  title: '강의평가 답변 삭제',
+  content: '제출한 강의평가 답변을 삭제하시겠습니까?\n삭제 후에는 작성 기간 안에 다시 제출할 수 있습니다.',
+  confirmButton: '삭제',
+  cancelButton: '취소',
+  completeTitle: '답변 삭제 완료',
+  completeContent: '강의평가 답변이 삭제되었습니다.',
+} as const satisfies LectureEvalResponseDeleteCopy
+
+export const GENERAL_LECTURE_EVAL_CLOSED_COPY = {
+  title: '강의평가 기간이 종료되었습니다.',
+  description: '작성 기간이 지나 제출할 수 없습니다. 결과는 결과 탭에서 확인해 주세요.',
+} as const satisfies LectureEvalClosedCopy
 
 export const GENERAL_LECTURE_EVAL_ACTION_LABELS = {
   submit: '강의평가 제출하기',

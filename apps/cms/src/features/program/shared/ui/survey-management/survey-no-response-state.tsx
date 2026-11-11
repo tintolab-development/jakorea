@@ -1,4 +1,8 @@
 import { CmsButton } from '@/shared/ui/cms-button'
+import {
+  PROGRAM_DETAIL_ACTION_ATTRIBUTE,
+  type ProgramDetailActionKind,
+} from '@/features/program/shared/lib/program-detail-action-guard'
 import { SurveyEmptyIcon } from './survey-empty-icon'
 import './survey-management.css'
 
@@ -12,6 +16,11 @@ export type SurveyNoResponseStateProps = {
   showDeleteButton?: boolean
   /** false면 「설문 양식 보기」 버튼을 숨긴다(상단에 같은 버튼이 있을 때). 기본 true */
   showPreviewButton?: boolean
+  /**
+   * 「설문 양식 보기」를 프로그램 상세 액션 가드에 태운다. 강의평가는 `write` —
+   * 프로그램 담당자 Viewer는 버튼은 보이되 누르면 접근 권한 안내(권한 설정 V1.2).
+   */
+  previewButtonAction?: ProgramDetailActionKind
   embedded?: boolean
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
@@ -25,6 +34,7 @@ export function SurveyNoResponseState({
   canDelete,
   showDeleteButton = true,
   showPreviewButton = true,
+  previewButtonAction,
   embedded = false,
   onDeleteClick,
   onOpenTemplatePreview,
@@ -54,6 +64,9 @@ export function SurveyNoResponseState({
           ) : null}
           {showPreviewButton ? (
             <CmsButton className="survey-management-status-state__preview-button"
+              {...(previewButtonAction != null
+                ? { [PROGRAM_DETAIL_ACTION_ATTRIBUTE]: previewButtonAction }
+                : {})}
               onClick={onOpenTemplatePreview} >
               {previewButtonLabel}
             </CmsButton>

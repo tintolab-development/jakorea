@@ -5,6 +5,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { RegisteredSurvey, SurveyPollRawResponse } from '../../lib/survey-management/survey-management-types'
 import {
+  canDownloadLectureEvalResults,
   canEditLectureEvalResponse,
   isLectureEvalFormPhase,
   isLectureEvalResultsTabAccessible,
@@ -13,11 +14,11 @@ import {
 } from '../../lib/survey-management/lecture-eval-survey'
 import type {
   LectureEvalActionLabels,
+  LectureEvalClosedCopy,
   LectureEvalEmptyCopy,
   LectureEvalPreStartCopy,
   LectureEvalSubmittedCopy,
 } from '../../lib/survey-management/survey-copy'
-import { canDownloadSurveyResults } from './survey-registered-actions'
 import { SurveyEmptyState } from './survey-empty-state'
 import { SurveyNoResponseState } from './survey-no-response-state'
 import { LectureEvalSubmittedIcon } from './lecture-eval-submitted-icon'
@@ -39,6 +40,8 @@ export type LectureEvalSurveyViewProps = {
   resultsExportRef: RefObject<HTMLDivElement | null>
   emptyCopy: LectureEvalEmptyCopy
   preStartCopy: LectureEvalPreStartCopy
+  /** 종료 후 내 응답이 없을 때 */
+  closedCopy: LectureEvalClosedCopy
   submittedCopy: LectureEvalSubmittedCopy
   actionLabels: LectureEvalActionLabels
   onTabChange: (tab: LectureEvalTabKey) => void
@@ -49,9 +52,9 @@ export type LectureEvalSurveyViewProps = {
   onFormDraftChange: (draft: WritingFormDraft) => void
   onSubmitClick: () => void
   onEditResponseClick: () => void
+  /** 본인 답변 삭제 — 진행 중·마감 전 */
+  onDeleteResponseClick: () => void
   onDownloadResultsClick: () => void
-  /** 기본: 설문 상태가 finished. 일반은 제출 후에도 결과 탭을 연다. */
-  resultsAccessible?: boolean
 }
 
 export function LectureEvalSurveyView({
@@ -65,6 +68,7 @@ export function LectureEvalSurveyView({
   resultsExportRef,
   emptyCopy,
   preStartCopy,
+  closedCopy,
   submittedCopy,
   actionLabels,
   onTabChange,
@@ -74,16 +78,16 @@ export function LectureEvalSurveyView({
   onFormDraftChange,
   onSubmitClick,
   onEditResponseClick,
+  onDeleteResponseClick,
   onDownloadResultsClick,
-  resultsAccessible: resultsAccessibleProp,
 }: LectureEvalSurveyViewProps) {
   const showForm =
     survey != null && isLectureEvalFormPhase(survey, submitted) && formDraft != null
   const showSubmitted = survey != null && submitted
   const showPreStart = survey != null && survey.status === 'before_start'
-  const resultsAccessible =
-    resultsAccessibleProp ?? (survey != null && isLectureEvalResultsTabAccessible(survey))
-  const downloadEnabled = survey != null && canDownloadSurveyResults(survey)
+  const showClosed = survey != null && survey.status === 'finished' && !submitted
+  const resultsAccessible = survey != null && isLectureEvalResultsTabAccessible(survey)
+  const downloadEnabled = canDownloadLectureEvalResults(survey)
 
   const trailingActions =
     activeTab === 'eval' && showForm && !submitted ? (
@@ -118,6 +122,7 @@ export function LectureEvalSurveyView({
         deleteButtonLabel={preStartCopy.deleteButton}
         previewButtonLabel={preStartCopy.previewButton}
         canDelete
+        previewButtonAction="write"
         embedded
         onDeleteClick={onDeleteClick}
         onOpenTemplatePreview={onOpenTemplatePreview}
@@ -129,8 +134,25 @@ export function LectureEvalSurveyView({
         title={submittedCopy.title}
         description={submittedCopy.description}
         editButtonLabel={submittedCopy.editButton}
-        canEdit={canEditLectureEvalResponse(survey, formDraft)}
+        canEdit={canEditLectureEvalResponse(survey)}
+        showEditButton={survey.status !== 'finished'}
         onEditClick={onEditResponseClick}
+        deleteButtonLabel={submittedCopy.deleteButton}
+        showDeleteButton={canEditLectureEvalResponse(survey)}
+        onDeleteClick={onDeleteResponseClick}
+      />
+    ) : showClosed ? (
+      <SurveyNoResponseState
+        title={closedCopy.title}
+        description={closedCopy.description}
+        deleteButtonLabel=""
+        previewButtonLabel=""
+        canDelete={false}
+        showDeleteButton={false}
+        showPreviewButton={false}
+        embedded
+        onDeleteClick={onDeleteClick}
+        onOpenTemplatePreview={onOpenTemplatePreview}
       />
     ) : showForm && formDraft != null ? (
       <LectureEvalFormView
