@@ -31,6 +31,8 @@ import {
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
 } from './use-detail'
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { GeneralVolunteerEducationAssignModal } from './education-assign-modal'
 import './volunteer-screening.css'
 
 export function GeneralVolunteerDocScreeningSection({
@@ -47,6 +49,9 @@ export function GeneralVolunteerDocScreeningSection({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const programId = program?.id ?? programIdProp ?? ''
+  /** 개인 프로그램·면접 없음 — 승인 시 교육 배정 안내(시안 9899:149410). 기관형은 기존 승인 */
+  const educationAssignOnApprove =
+    !interviewEnabled && program != null && isGeneralIndividualProgram(program)
   const {
     list,
     pendingFilters,
@@ -94,7 +99,8 @@ export function GeneralVolunteerDocScreeningSection({
     isFetchingNextPage,
     fetchNextPage,
     listQuery,
-  } = useGeneralVolunteerDocScreening({ programId, interviewEnabled })
+    educationAssign,
+  } = useGeneralVolunteerDocScreening({ programId, interviewEnabled, educationAssignOnApprove })
   const filterFields = useMemo(
     () => buildGeneralVolunteerDoc1FilterFields({ interviewEnabled }),
     [interviewEnabled]
@@ -151,9 +157,23 @@ export function GeneralVolunteerDocScreeningSection({
       <GeneralVolunteerApplicationApproveModal
         open={approveModalVolunteer != null}
         volunteerName={approveModalVolunteer?.name ?? ''}
+        showAssignCallout={!educationAssignOnApprove}
         onCancel={closeApproveModal}
         onConfirm={handleApproveModalConfirm}
       />
+      {educationAssignOnApprove && program ? (
+        <GeneralVolunteerEducationAssignModal
+          open={educationAssign.target != null}
+          program={program}
+          applicationId={educationAssign.target?.applicationId ?? ''}
+          volunteerName={educationAssign.target?.volunteerName ?? ''}
+          confirmLoading={educationAssign.submitting}
+          onCancel={educationAssign.cancel}
+          onConfirm={scheduleIds => {
+            void educationAssign.confirm(scheduleIds)
+          }}
+        />
+      ) : null}
       <ProgramApplicationRejectModal
         open={rejectModalVolunteer != null}
         audience="member"
