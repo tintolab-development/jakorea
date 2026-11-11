@@ -98,7 +98,8 @@ export async function downloadUjatClassAssignmentConsentDocuments(
 
   const { data } = await axiosClient.get<unknown>(path, {
     responseType: 'blob',
-    headers: { Accept: 'application/zip' },
+    // 실패(409 등)는 JSON으로 온다. zip만 받으면 서버가 오류 본문을 쓰지 못해 500이 된다.
+    headers: { Accept: 'application/zip, application/json' },
   })
   if (!isBlob(data)) {
     throw new Error('동의서 파일을 받지 못했습니다.')
