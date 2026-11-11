@@ -34,7 +34,6 @@ type BuildSettlementWriteDraftInput = {
   transportItemType?: string
   transportItemName?: string
   transportEvidenceRequired?: boolean
-  transportMaxLimitWon?: number | null
   transportAutoPreview?: InstructorTransportPreview | null
   tripType: SettlementWriteDraft['transport']['tripType']
   departTransit: string
@@ -92,7 +91,6 @@ export function buildSettlementWriteDraft(
       itemType: input.transportItemType,
       itemName: input.transportItemName,
       evidenceRequired: input.transportEvidenceRequired,
-      maxLimitWon: input.transportMaxLimitWon ?? null,
       autoPreview: input.transportAutoPreview ?? null,
       tripType: input.tripType,
       depart: {

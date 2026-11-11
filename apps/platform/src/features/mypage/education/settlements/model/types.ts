@@ -84,6 +84,12 @@ export type EducationSettlementItem = {
   submitBlockedReason?: string
   deadlineNotice?: SettlementDeadlineNotice
   previousAmount?: number
+  /** 정정 승인 후 재신청 가능 여부(서버 statementReapplyAvailable). 기한이 지나면 false */
+  reapplyAvailable?: boolean
+  /** 재신청 마감일(YYYY-MM-DD, Asia/Seoul). 정정 승인 후 DRAFT에만 있다 */
+  reapplyDeadlineDate?: string
+  /** 강사 지급조서: 사업 운영 종료일이 지났으면 true — 작성·재신청을 막는다 */
+  operationEnded?: boolean
 }
 
 export const EDUCATION_SETTLEMENT_PAGE_SIZE = 7

@@ -15,6 +15,7 @@ import {
   canSubmitFromAvailableActions,
   compareAssignedSettlementSchedules,
   isAssignedEducationScheduleForSettlement,
+  isPaymentStatementOperationEnded,
   resolveEducationSettlementStatusResult,
   resolveSettlementEducationProgress,
   type SettlementDeadlinePolicy,
@@ -119,6 +120,8 @@ export type BuildAssignedSettlementItemsInput = {
   programId?: string | null
   now?: Date
   operationEndAt?: string | null
+  /** 강사 지급조서 사업 운영 종료일(YYYY-MM-DD 또는 ISO) */
+  businessEndAt?: string | null
   deadlinePolicy?: SettlementDeadlinePolicy
   /** true이면 일정별 정산 API `schedules`가 카드 목록 SSOT */
   preferIndividualSchedules?: boolean
@@ -381,6 +384,12 @@ export function buildAssignedSettlementItems(
     individualByScheduleId.set(joinedId, row)
   }
   const lectureByScheduleId = lectureByScheduleIdEarly
+  const businessEndAt =
+    input.deadlinePolicy === 'payment_statement'
+      ? (seoulBusinessEndDeadlineAt(input.businessEndAt) ?? input.businessEndAt ?? undefined)
+      : undefined
+  const operationEnded =
+    input.deadlinePolicy === 'payment_statement' && isPaymentStatementOperationEnded(businessEndAt, now)
 
   return assigned.map(schedule => {
     const scheduleId = readAssignedScheduleJoinId(schedule)
@@ -419,6 +428,7 @@ export function buildAssignedSettlementItems(
       statementReapplyAvailable: settlement?.statementReapplyAvailable === true,
       receiptDeadlineAt: deadlineAt,
       operationEndAt: seoulBusinessEndDeadlineAt(input.operationEndAt) ?? input.operationEndAt,
+      businessEndAt: businessEndAt ?? null,
       canSubmit: submitAllowed,
       deadlinePolicy: input.deadlinePolicy,
       isResubmitted: isResubmittedSettlement(settlement) || isResubmittedReceipt(receipt),
@@ -513,6 +523,11 @@ export function buildAssignedSettlementItems(
       ...(individual ? { canResubmitReceipt: individual.canResubmit === true } : {}),
       ...(resolved.deadlineNotice ? { deadlineNotice: resolved.deadlineNotice } : {}),
       ...(previousAmount != null ? { previousAmount } : {}),
+      ...(settlement?.statementReapplyAvailable === true ? { reapplyAvailable: true } : {}),
+      ...(settlement?.statementReapplyDeadlineDate
+        ? { reapplyDeadlineDate: settlement.statementReapplyDeadlineDate }
+        : {}),
+      ...(operationEnded ? { operationEnded: true } : {}),
     }
   })
 }

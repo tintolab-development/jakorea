@@ -460,8 +460,13 @@ export type PortalSettlementApplication = {
   supersededBySettlementId?: number
   /** 이 신청에서 만들어진 최신 정산 revision ID. 지급조서 재신청 등 /api/portal/me/settlements/{settlementId}/** 에 쓴다. 정산 전이면 null */
   settlementId?: number | null
-  /** 정정 승인으로 만들어진 최신 revision의 지급조서가 DRAFT(강사 재신청 대기)이면 true */
+  /** 정정 승인으로 만들어진 최신 revision의 지급조서가 DRAFT(강사 재신청 대기)이고 재신청 기한 안이면 true */
   statementReapplyAvailable?: boolean
+  /** 재신청 마감일(Asia/Seoul, 그날 포함, YYYY-MM-DD). 정정 승인 후 DRAFT에만 있고 기한이 지나도 그대로 온다 */
+  statementReapplyDeadlineDate?: string | null
+  /** programScheduleId 회차의 시작·종료 시각. 회차를 못 찾으면 null */
+  scheduleStartAt?: string | null
+  scheduleEndAt?: string | null
 }
 
 function applicationPath(applicationType: ProgramApplicationType, applicationId: string): string {

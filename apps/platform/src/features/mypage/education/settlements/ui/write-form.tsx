@@ -563,6 +563,7 @@ export function EducationSettlementWriteForm({
   )
 
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
+  /** 교통비 섹션 하단 안내용(기존 화면 유지). 교통비는 한도가 없어 입력 오류·제출 차단에는 쓰지 않는다 */
   const transportMaxWon = readPayableMaxLimitWon(transportItem)
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
   const [departAmount, setDepartAmount] = useState(
@@ -679,7 +680,6 @@ export function EducationSettlementWriteForm({
     homeAddressDetail,
     name,
     payableItems,
-    transportMaxWon,
   ])
 
   const transportTotal = useMemo(() => {
@@ -695,9 +695,7 @@ export function EducationSettlementWriteForm({
   }
 
   const extraItemsForUi = overlayPayableEvidenceRequired(extraItems, payableItems)
-  /** 영수증 한도 초과(서버 PAYMENT_ITEM_LIMIT_EXCEEDED와 같은 기준) — 입력란 오류 + 제출 차단 */
-  const transportLimitError =
-    isReceipt && transportItem ? paymentItemLimitError(transportTotal, transportMaxWon) : null
+  /** 영수증 금액 항목 한도 초과(서버 PAYMENT_ITEM_LIMIT_EXCEEDED와 같은 기준) — 입력란 오류 + 제출 차단. 교통비는 한도 없음 */
   const firstExtraLimitError = isReceipt
     ? (extraItemsForUi
         .map(item =>
@@ -708,7 +706,7 @@ export function EducationSettlementWriteForm({
         )
         .find((message): message is string => Boolean(message)) ?? null)
     : null
-  const receiptLimitError = transportLimitError ?? firstExtraLimitError
+  const receiptLimitError = firstExtraLimitError
   const orderedExtras = sortReceiptPayableItems(extraItemsForUi)
   const wageExtras = orderedExtras.filter(item => isReceiptWageItemType(item.itemType, item.itemName))
   const restExtras = orderedExtras.filter(item => !isReceiptWageItemType(item.itemType, item.itemName))
@@ -807,7 +805,6 @@ export function EducationSettlementWriteForm({
       transportEvidenceRequired: isReceipt
         ? isReceiptEvidenceRequired(transportItem?.evidenceRequired)
         : false,
-      transportMaxLimitWon: isReceipt ? transportMaxWon : null,
       transportAutoPreview: isReceipt ? null : (session?.instructorTransportPreview ?? null),
       tripType,
       departTransit,
@@ -1065,7 +1062,6 @@ export function EducationSettlementWriteForm({
                   attachments={departAttachments}
                   uploadEnabled={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
                   showReceiptUpload={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-                  amountError={Boolean(transportLimitError)}
                   onTransitChange={setDepartTransit}
                   onAmountChange={setDepartAmount}
                   onFileNamesChange={setDepartFiles}
@@ -1083,7 +1079,6 @@ export function EducationSettlementWriteForm({
                     attachments={returnAttachments}
                     uploadEnabled={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
                     showReceiptUpload={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-                    amountError={Boolean(transportLimitError)}
                     onTransitChange={setReturnTransit}
                     onAmountChange={setReturnAmount}
                     onFileNamesChange={setReturnFiles}
@@ -1101,7 +1096,6 @@ export function EducationSettlementWriteForm({
                         value={transportTotal > 0 ? transportTotal.toLocaleString('ko-KR') : ''}
                         onChange={() => undefined}
                         ariaLabel="총 산정 교통비"
-                        errorMessage={transportLimitError}
                       />
                     </PFFormField>
                   </PFFormFieldRow>

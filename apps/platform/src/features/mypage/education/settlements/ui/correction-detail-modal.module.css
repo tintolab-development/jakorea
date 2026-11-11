@@ -1,0 +1,19 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: var(--spacing-8) var(--spacing-12);
+  border-bottom: 1px solid var(--color-neutral-cool-200, #e5e7eb);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+.table thead th {
+  color: var(--color-neutral-cool-600, #6b7280);
+  font-weight: 500;
+}

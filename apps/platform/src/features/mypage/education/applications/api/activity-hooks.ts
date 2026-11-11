@@ -1075,7 +1075,13 @@ export function useApplicationSettlementsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
   programId: string | null | undefined,
-  options?: { operationEndAt?: string | null; programType?: string | null; enabled?: boolean }
+  options?: {
+    operationEndAt?: string | null
+    /** 강사 지급조서 사업 운영 종료일 */
+    businessEndAt?: string | null
+    programType?: string | null
+    enabled?: boolean
+  }
 ) {
   const schedules = useApplicationSchedulesQuery(applicationType, applicationId, {
     programType: options?.programType,
@@ -1155,6 +1161,7 @@ export function useApplicationSettlementsQuery(
               })),
         programId,
         operationEndAt: options?.operationEndAt,
+        businessEndAt: options?.businessEndAt,
         deadlinePolicy: applicationType === 'INSTRUCTOR' ? 'payment_statement' : 'receipt',
         preferIndividualSchedules:
           individualAudience && individual.isSuccess && !individual.isDisabled,
@@ -1171,6 +1178,7 @@ export function useApplicationSettlementsQuery(
       lectureReports.data,
       lectureReports.isError,
       options?.operationEndAt,
+      options?.businessEndAt,
       programId,
       individualAudience,
       receipts.data,

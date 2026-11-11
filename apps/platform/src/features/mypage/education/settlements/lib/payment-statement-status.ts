@@ -55,8 +55,10 @@ export function mapPaymentStatementServerStatus(input: {
   const correction = normalize(input.correctionStatus)
 
   if (PAID.has(payment) || PAID.has(statement)) return 'paid'
+  // DRAFT = 정정 승인 후 강사 재신청 대기. 재신청 기한이 지나 available이 false여도 상태는 '지급 정정 요청'으로 둔다
   if (
     input.statementReapplyAvailable === true ||
+    statement === 'DRAFT' ||
     CORRECTION_COMPLETED.has(correction) ||
     CORRECTION_COMPLETED.has(statement)
   ) {

@@ -28,6 +28,7 @@ export function UserDetailFullpageTabPanels() {
     onBulkDeleteHistory,
     onStudentCertificateBulkIssue,
     onVolunteerCertificateBulkIssue,
+    onInstructorCertificateBulkIssue,
     progressStatusReadOnly,
     basicInfoEditing,
     basicInfoEditScope,
@@ -99,6 +100,7 @@ export function UserDetailFullpageTabPanels() {
             onBulkDeleteHistory={onBulkDeleteHistory}
             onStudentCertificateBulkIssue={onStudentCertificateBulkIssue}
             onVolunteerCertificateBulkIssue={onVolunteerCertificateBulkIssue}
+            onInstructorCertificateBulkIssue={onInstructorCertificateBulkIssue}
             progressStatusReadOnly={progressStatusReadOnly}
           />
         ))}

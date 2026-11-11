@@ -12,6 +12,15 @@ function itemOverlapsMonth(item: SettlementOverviewItem, monthKey: string) {
   return startKey <= monthEnd && endKey >= monthStart
 }
 
+/** 대체된 이전 신청은 원래 결과를 알 수 없어 '전체'에서만 보인다 */
+function matchesSettlementStatus(
+  item: SettlementOverviewItem,
+  status: SettlementOverviewParams['status'],
+) {
+  if (status === 'all') return true
+  return !item.superseded && item.status === status
+}
+
 export function matchesSettlementSearch(item: SettlementOverviewItem, q: string) {
   const query = q.trim().toLowerCase()
   if (!query) return true
@@ -23,7 +32,7 @@ export function filterSettlementListItems(
   params: Pick<SettlementOverviewParams, 'q' | 'status' | 'month'>,
 ) {
   return items.filter(item => {
-    if (params.status !== 'all' && item.status !== params.status) return false
+    if (!matchesSettlementStatus(item, params.status)) return false
     if (!matchesSettlementSearch(item, params.q)) return false
     return itemOverlapsMonth(item, params.month)
   })
@@ -34,7 +43,7 @@ export function filterSettlementCalendarItems(
   params: Pick<SettlementOverviewParams, 'q' | 'status'>,
 ) {
   return items.filter(item => {
-    if (params.status !== 'all' && item.status !== params.status) return false
+    if (!matchesSettlementStatus(item, params.status)) return false
     return matchesSettlementSearch(item, params.q)
   })
 }

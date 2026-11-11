@@ -3,6 +3,7 @@ import type {
   InstructorSettlementCreateRequest,
   InstructorSettlementResubmitRequest,
 } from '../lib/build-instructor-settlement-submit.ts'
+import type { PaymentStatementCorrectionDetail } from '../lib/payment-statement-correction.ts'
 
 export type PortalInstructorSettlementApplication = {
   applicationId?: number
@@ -88,6 +89,18 @@ export type PortalSettlementStatusChange = {
  * POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply (reapplyCorrectedPaymentStatement)
  * 정정 승인으로 만들어진 최신 revision(DRAFT)만 가능. 아니면 409 SETTLEMENT_REAPPLICATION_NOT_AVAILABLE.
  */
+/** GET /api/portal/me/settlements/{settlementId}/payment-statement/correction — 정정 전·후 비교 (getPaymentStatementCorrectionDetail) */
+export async function fetchPaymentStatementCorrectionDetail(
+  settlementId: number,
+  signal?: AbortSignal,
+): Promise<PaymentStatementCorrectionDetail> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/settlements/${settlementId}/payment-statement/correction`,
+    { signal },
+  )
+  return unwrapEnvelope<PaymentStatementCorrectionDetail>(data)
+}
+
 export async function reapplyCorrectedPaymentStatement(
   settlementId: number,
 ): Promise<PortalSettlementStatusChange> {
