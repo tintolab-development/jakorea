@@ -86,6 +86,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  letter-spacing: 0;
   /* Figma Tab / Line status off — Content/disabled */
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   cursor: pointer;
@@ -114,8 +115,26 @@
 
 .cms-text-tabs__tab-label,
 .program-detail-fullpage-modal__tab-label {
-  display: inline-block;
+  display: inline-grid;
+  justify-items: start;
   white-space: nowrap;
+}
+
+.cms-text-tabs__tab-label-text,
+.cms-text-tabs__tab-label-sizer {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+}
+
+/*
+ * 보이는 글자는 500/700을 유지하고, 숨긴 Bold 라벨이 폭을 고정한다.
+ * JA Korea처럼 라틴 글리프가 굵어져도 탭·이웃 글자가 밀리지 않는다.
+ */
+.cms-text-tabs__tab-label-sizer {
+  font-weight: 700;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
 }
 
 .cms-text-tabs__count {
@@ -138,6 +157,7 @@
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
+  letter-spacing: 0;
   border-bottom: 2px solid var(--Brand-500, #00a0af);
 }
 

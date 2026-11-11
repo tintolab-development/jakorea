@@ -7,6 +7,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   min-width: var(--layout-min-width);
+  /* 모달 overflow:hidden 시 스크롤바가 사라져 뒤 화면 폭이 흔들리지 않게 거터를 예약한다 */
+  scrollbar-gutter: stable;
 }
 
 body {

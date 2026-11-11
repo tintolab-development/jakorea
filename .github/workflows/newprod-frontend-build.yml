@@ -1,16 +1,17 @@
 name: NEW PROD Frontend Parallel Build and Deploy
 on:
-  push:
-    branches:
-      - deploy/newprod
-    paths:
-      - 'apps/cms/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
-      - 'package.json'
-      - '.github/workflows/newprod-frontend-build.yml'
   workflow_dispatch:
     inputs:
+      app:
+        description: Frontend app to deploy
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - admin
+          - cms
+          - platform
       homepage_api_base_url:
         description: "NEW PROD JAHOMEADMINBACK HTTPS CloudFront URL"
         required: false
@@ -19,9 +20,6 @@ on:
 permissions:
   contents: read
   id-token: write
-concurrency:
-  group: newprod-frontend-deploy
-  cancel-in-progress: false
 env:
   AWS_REGION: ap-northeast-2
   AWS_ACCOUNT_ID: "264015108093"
@@ -31,26 +29,62 @@ env:
   VITE_JUSO_ADDRESS_API_URL: https://business.juso.go.kr/addrlink/addrLinkApi.do
   NODE_OPTIONS: --max-old-space-size=5120
 jobs:
+  select:
+    name: Select apps to deploy
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        shell: bash
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          import os
+
+          include = [
+              {
+                  "app": "cms",
+                  "output": "apps/cms/dist",
+                  "bucket_name": "ja-newprod-frontend-cms-264015108093",
+                  "distribution_id": "E1BHHBFDIB0SS4",
+              },
+              {
+                  "app": "platform",
+                  "output": "apps/platform/dist",
+                  "bucket_name": "ja-newprod-frontend-platform-264015108093",
+                  "distribution_id": "E1SQOBKZPQT8AO",
+              },
+              {
+                  "app": "admin",
+                  "output": "apps/admin/dist",
+                  "bucket_name": "ja-newprod-frontend-admin-264015108093",
+                  "distribution_id": "E2TXN0KKHC3L8W",
+              },
+          ]
+          app = os.environ["APP"]
+          if app != "all":
+              include = [row for row in include if row["app"] == app]
+          if not include:
+              raise SystemExit(f"unknown app: {app}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"matrix={json.dumps({'include': include})}\n")
+          PY
+
   deploy:
     name: Build and deploy ${{ matrix.app }}
+    needs: select
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    concurrency:
+      group: newprod-frontend-deploy-${{ matrix.app }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - app: cms
-            output: apps/cms/dist
-            bucket_name: ja-newprod-frontend-cms-264015108093
-            distribution_id: E1BHHBFDIB0SS4
-          - app: platform
-            output: apps/platform/dist
-            bucket_name: ja-newprod-frontend-platform-264015108093
-            distribution_id: E1SQOBKZPQT8AO
-          - app: admin
-            output: apps/admin/dist
-            bucket_name: ja-newprod-frontend-admin-264015108093
-            distribution_id: E2TXN0KKHC3L8W
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     steps:
       - name: Guard deployment branch and homepage HTTPS origin
         shell: bash

@@ -7,6 +7,7 @@ import {
   useHomeImpactSubStories,
 } from '@/features/impact-story'
 import defaultThumbnailUrl from '@/features/impact-story/image/illustration/card-default.png'
+import { useRemoteThumbnailUrl } from '@/shared/hooks'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import { useHomeMain } from '../api/use-home-main'
 import { FALLBACK_IMPACT_TITLE } from '../lib/view'
@@ -30,7 +31,9 @@ function TitleLines({ title }: { title: string }) {
 }
 
 function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
-  const remoteSrc = story.featuredImageUrl || story.imageUrl || defaultThumbnailUrl
+  // 어드민 「썸네일 없음」 표식(1×1 투명 PNG)은 이미지 없음으로 보고 기본 썸네일을 쓴다
+  const remoteSrc =
+    useRemoteThumbnailUrl(story.featuredImageUrl || story.imageUrl) || defaultThumbnailUrl
   const [src, setSrc] = useState(remoteSrc)
 
   useEffect(() => {
@@ -43,7 +46,14 @@ function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
       to={impactStoryDetailPath(story.id)}
       aria-label={`${story.title} 상세 보기`}
     >
-      <div className={styles.featuredMedia} aria-hidden="true">
+      <div
+        className={
+          src === defaultThumbnailUrl
+            ? `${styles.featuredMedia} ${styles.mediaDefault}`
+            : styles.featuredMedia
+        }
+        aria-hidden="true"
+      >
         <img
           className={styles.featuredImage}
           src={src}
@@ -80,16 +90,19 @@ function SubStoryCardSkeleton() {
 }
 
 function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
+  const imageUrl = useRemoteThumbnailUrl(story.imageUrl)
   return (
     <Link
       className={styles.subCard}
       to={impactStoryDetailPath(story.id)}
       aria-label={`${story.title} 상세 보기`}
     >
-      <div className={styles.subCardMedia}>
+      <div
+        className={imageUrl ? styles.subCardMedia : `${styles.subCardMedia} ${styles.mediaDefault}`}
+      >
         <img
           className={styles.subCardImage}
-          src={story.imageUrl || defaultThumbnailUrl}
+          src={imageUrl || defaultThumbnailUrl}
           alt=""
         />
         <PFCategoryBadge size="small" variant="primary" className={styles.subCardBadge}>

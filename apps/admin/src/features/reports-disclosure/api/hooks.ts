@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
-import { collectInfiniteCachedRows } from '@/shared/lib/admin-infinite-list'
+import {
+  collectInfiniteCachedRows,
+  patchInfiniteListRow,
+  removeInfiniteListRows,
+} from '@/shared/lib/admin-infinite-list'
 import type {
   NtsDisclosure,
   ReportCreateInput,
@@ -64,18 +68,10 @@ export function useUpdateReport(kind: ReportKind) {
     mutationFn: (input: ReportUpdateInput) =>
       updateReportService(kind, input, collectCachedReports(queryClient, kind)),
     retry: false,
+    // 목록은 무한 스크롤 캐시({ pages }) — 배열로 다루면 onSuccess가 throw해 저장 성공이 실패로 보이고
+    // 캐시 version이 옛값으로 남아 다음 저장이 OPTIMISTIC_LOCK_CONFLICT가 된다
     onSuccess: data => {
-      queryClient.setQueriesData<TransparencyReport[]>(
-        { queryKey: [...reportsDisclosureQueryKeys.reports(), kind] },
-        old => {
-          if (!old) return old
-          const idx = old.findIndex(row => row.id === data.id)
-          if (idx < 0) return old
-          const next = [...old]
-          next[idx] = data
-          return next
-        },
-      )
+      patchInfiniteListRow(queryClient, [...reportsDisclosureQueryKeys.reports(), kind], data)
     },
   })
 }
@@ -87,11 +83,7 @@ export function useRemoveReports(kind: ReportKind) {
       removeReportsService(kind, ids, collectCachedReports(queryClient, kind)),
     retry: false,
     onSuccess: (_data, ids) => {
-      const idSet = new Set(ids)
-      queryClient.setQueriesData<TransparencyReport[]>(
-        { queryKey: [...reportsDisclosureQueryKeys.reports(), kind] },
-        old => (old ?? []).filter(row => !idSet.has(row.id)),
-      )
+      removeInfiniteListRows(queryClient, [...reportsDisclosureQueryKeys.reports(), kind], ids)
     },
   })
 }

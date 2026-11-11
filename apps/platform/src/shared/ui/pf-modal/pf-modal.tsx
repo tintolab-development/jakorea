@@ -2,11 +2,13 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   type CSSProperties,
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { lockBodyScroll } from '@/shared/lib/lock-body-scroll'
 import closeIconUrl from './icons/close.svg'
 import { PFText } from '../pf-text'
 import styles from './pf-modal.module.css'
@@ -65,6 +67,13 @@ function syncBackdropToVisualViewport(element: HTMLElement) {
   const viewport = window.visualViewport
   if (!viewport) return
 
+  /* 키보드·핀치로 visualViewport가 밀릴 때만 좌표를 고정한다. 높이 비교는
+   * 데스크톱에서 딤 폭을 픽셀로 고정해 줄었다 커지게 만든다. */
+  if (viewport.offsetTop === 0 && viewport.offsetLeft === 0) {
+    clearBackdropVisualViewportStyles(element)
+    return
+  }
+
   element.style.top = `${viewport.offsetTop}px`
   element.style.left = `${viewport.offsetLeft}px`
   element.style.width = `${viewport.width}px`
@@ -112,16 +121,13 @@ export function PFModal({
     onClose()
   }, [onClose])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const unlock = lockBodyScroll()
     panelRef.current?.focus()
 
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
+    return unlock
   }, [open])
 
   useEffect(() => {

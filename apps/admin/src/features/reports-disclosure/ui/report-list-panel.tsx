@@ -49,10 +49,12 @@ import {
   showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
+  mapAdminMutationAlert,
 } from '@/shared/ui'
 
 import { downloadFile } from '@/shared/lib/file-download'
 import { toRuleDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
+import noThumbnailLogoUrl from '@/assets/images/no-thumbnail/ja-logo-gray-compact.svg'
 import './report-list.css'
 
 type PendingFilters = {
@@ -209,11 +211,14 @@ export function ReportListPanel({ kind }: Props) {
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
       showDeleteCompletedAlert()
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      // 잠금 충돌(다른 관리자 수정)·권한 거부는 공통 문구, 그 외는 일반 실패 안내
+      showAlert(
+        mapAdminMutationAlert(error) ?? {
+          title: '삭제 실패',
+          content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
+        },
+      )
     }
   }
 
@@ -245,11 +250,14 @@ export function ReportListPanel({ kind }: Props) {
         closeModal()
         showUpdateCompletedAlert()
       }
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '보고서 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      // 잠금 충돌(다른 관리자 수정)·권한 거부·필수 미입력은 공통 문구, 그 외는 일반 실패 안내
+      showAlert(
+        mapAdminMutationAlert(error) ?? {
+          title: '저장 실패',
+          content: '보고서 저장에 실패했습니다. 다시 시도해 주세요.',
+        },
+      )
     }
   }
 
@@ -260,11 +268,14 @@ export function ReportListPanel({ kind }: Props) {
       setSelectedRowKeys(keys => keys.filter(k => k !== editing.id))
       closeModal()
       showDeleteCompletedAlert()
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      // 잠금 충돌(다른 관리자 수정)·권한 거부는 공통 문구, 그 외는 일반 실패 안내
+      showAlert(
+        mapAdminMutationAlert(error) ?? {
+          title: '삭제 실패',
+          content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
+        },
+      )
     }
   }
 
@@ -292,13 +303,20 @@ export function ReportListPanel({ kind }: Props) {
                 : 'rd-list__thumb-cell rd-list__thumb-cell--wide'
             }
           >
-            <div className={`rd-list__thumb-wrap ${thumbMod}`}>
-              <img
-                className="rd-list__thumb"
-                src={record.thumbnailUrl}
-                alt={record.thumbnailFileName || '썸네일'}
-              />
-            </div>
+            {/* 썸네일은 선택 항목 — 없으면 사용자 홈페이지와 같은 기본 썸네일(회색 배경 + 테두리 + 로고) */}
+            {record.thumbnailUrl ? (
+              <div className={`rd-list__thumb-wrap ${thumbMod}`}>
+                <img
+                  className="rd-list__thumb"
+                  src={record.thumbnailUrl}
+                  alt={record.thumbnailFileName || '썸네일'}
+                />
+              </div>
+            ) : (
+              <div className={`rd-list__thumb-wrap ${thumbMod} rd-list__thumb-default`}>
+                <img className="rd-list__thumb-default-logo" src={noThumbnailLogoUrl} alt="썸네일 없음" />
+              </div>
+            )}
           </div>
         ),
       },
