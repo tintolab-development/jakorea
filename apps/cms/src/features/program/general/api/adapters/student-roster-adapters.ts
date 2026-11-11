@@ -147,7 +147,10 @@ export function mapStudentRosterItemToRow(
     name: item.studentName?.trim() || '-',
     gender,
     genderMask,
-    birthDate: mapApiBirthDateToDisplay(item.birthDate),
+    // MASKED 조회는 birthDate를 생략하고 maskedBirthDate(yyyy-**-**)만 준다 → 정책 표기 yyyy.**.**로 보여준다.
+    // 저장 시 마스킹 생년월일은 날짜로 바뀌지 않아 기존 행 payload에서 생략된다(원문 유지).
+    birthDate:
+      mapApiBirthDateToDisplay(item.birthDate) ?? mapApiBirthDateToDisplay(item.maskedBirthDate),
     gradeClass,
     contact:
       (rawPhone && !isLikelyMaskedPii(rawPhone) ? rawPhone : item.maskedPhone?.trim()) || undefined,
