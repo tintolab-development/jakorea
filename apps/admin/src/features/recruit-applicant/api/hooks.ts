@@ -78,7 +78,9 @@ export function useRemoveRecruitApplicants() {
     mutationFn: (ids: string[]) => removeRecruitApplicantsService(ids),
     retry: false,
     onSuccess: () => {
-      invalidateApplicantQueries(queryClient)
+      // 목록만 갱신한다. 열린 상세 쿼리를 invalidate/remove하면 삭제된 id를 다시 조회해 404 →
+      // "찾을 수 없음" 알림이 삭제 완료 안내를 덮는다. 상세 캐시는 모달이 닫히면 gcTime으로 정리된다.
+      void queryClient.invalidateQueries({ queryKey: recruitApplicantQueryKeys.lists() })
     },
   })
 }
