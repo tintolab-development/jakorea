@@ -303,7 +303,7 @@ type TrainedTeachersScheduleFieldsProps = {
 
 /**
  * 교육받은교사 기간형 — 「희망 교육일 및 차시」(날짜 + 희망 차시) + 차시별 「N차시 희망 교육 시간」(교시 + 시작~종료).
- * 1사1교 `ApplyEconomyPreferredSchedule`와 같은 구조. 다음 차시 교시는 앞 차시 + 1로 자동 입력하되 고칠 수 있다.
+ * 차시마다 교시·시간을 따로 입력한다(연강 아님 가능). 1사1교식 다음 교시 자동 입력은 쓰지 않는다.
  */
 function TrainedTeachersScheduleFields({
   block,
