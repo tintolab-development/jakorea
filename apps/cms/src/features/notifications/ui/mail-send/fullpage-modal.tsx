@@ -959,7 +959,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                 groups={variableGroups.length > 0 ? variableGroups : undefined}
                 onDisabledInsert={handleDisabledVariableInsert}
                 isItemDisabled={isCatalogItemDisabled}
-                itemDisabledReason="현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다."
               />
             </div>
           </div>

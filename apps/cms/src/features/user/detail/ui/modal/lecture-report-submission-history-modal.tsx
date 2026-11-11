@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -219,20 +218,16 @@ export function LectureReportSubmissionHistoryModal({
           <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             닫기
           </CmsButton>
-          <Tooltip title={!hasZipTargets ? LECTURE_REPORT_NO_ATTACHMENT_CTA : undefined}>
-              <span>
-                <CmsButton
-                  variant="primary"
-                  size="medium"
-                  icon={<ButtonDownloadIcon />}
-                  loading={bulkDownloading}
-                  disabled={memberId == null || !hasZipTargets}
-                  onClick={() => void handleBulkDownload()}
-                >
-                  강의보고서 일괄 다운로드
-                </CmsButton>
-              </span>
-            </Tooltip>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            icon={<ButtonDownloadIcon />}
+            loading={bulkDownloading}
+            disabled={memberId == null || !hasZipTargets}
+            onClick={() => void handleBulkDownload()}
+          >
+            강의보고서 일괄 다운로드
+          </CmsButton>
         </>
       }
     >
