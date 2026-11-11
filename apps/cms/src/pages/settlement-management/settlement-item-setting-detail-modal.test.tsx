@@ -50,9 +50,24 @@ vi.mock('./settlement-item-setting-detail-source', () => {
     evidenceSubmission: 'required',
   } as const
 
+  // 예전에 1이 아닌 값으로 저장된 1급 강사비(회귀 확인용)
+  const tier1Detail = {
+    layout: 'tier1',
+    basisUnit: '시간',
+    basisHours: 3,
+    compareKind: 'standard',
+    maxLimitWon: 500000,
+    basicFeeWon: null,
+    longDistanceFeeWon: null,
+    qualificationLines: ['1급 강사 자격'],
+    remarkLines: [],
+  } as const
+
   return {
     useSettlementItemSettingDetailSource: (itemId: string) =>
-      itemId === 'meal-unconfigured'
+      itemId === 'tier1-1'
+        ? tier1Detail
+        : itemId === 'meal-unconfigured'
         ? unconfiguredMealDetail
         : itemId === 'meal-1'
           ? mealDetail
@@ -60,7 +75,9 @@ vi.mock('./settlement-item-setting-detail-source', () => {
             ? lodgingDetail
             : withholdingDetail,
     useSettlementItemSettingLayout: (itemId: string) =>
-      itemId === 'meal-unconfigured' || itemId === 'meal-1'
+      itemId === 'tier1-1'
+        ? 'tier1'
+        : itemId === 'meal-unconfigured' || itemId === 'meal-1'
         ? 'meal'
         : itemId === 'p-7' || itemId === 'lodging-random'
           ? 'lodging'
@@ -244,5 +261,30 @@ describe('SettlementItemSettingDetailModal 원천징수 금액 입력', () => {
 
     expect(screen.getByRole('textbox', { name: amountLabel })).toBeInTheDocument()
     expect(screen.getByText('박 기준')).toBeInTheDocument()
+  })
+})
+
+describe('SettlementItemSettingDetailModal 1~3급 강사비 산정 기준 단위', () => {
+  it('「1 시간 기준」으로 고정해 비활성으로 보여 주고 저장 시 1을 보낸다', async () => {
+    const onSaveRemote = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <SettlementItemSettingDetailModal
+        open
+        item={{ id: 'tier1-1', title: '1급 강사비', description: '', iconKey: 'wage_tier1' }}
+        onCancel={vi.fn()}
+        onSaveRemote={onSaveRemote}
+      />
+    )
+
+    const basisInput = screen.getByRole('textbox', { name: '산정 기준 단위' })
+    expect(basisInput).toHaveValue('1')
+    expect(basisInput).toBeDisabled()
+    expect(screen.getByText('시간 기준')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '저장' }))
+
+    await waitFor(() => expect(onSaveRemote).toHaveBeenCalled())
+    expect(onSaveRemote.mock.calls[0]?.[1].basisHours).toBe(1)
   })
 })
