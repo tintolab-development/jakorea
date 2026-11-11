@@ -2037,6 +2037,15 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     documentRejectionReason: screening?.rejectReason?.trim() || base.documentRejectionReason,
+    // 결과 알림 실제 발송 시각 — 필드가 있으면(null 포함) 응답 값만, 없으면(구버전) 기존 값 유지
+    documentResultNotificationSentAt:
+      dto.documentResultNotificationSentAt !== undefined
+        ? formatOrganizationResultNotificationSentAt(dto.documentResultNotificationSentAt)
+        : base.documentResultNotificationSentAt,
+    finalResultNotificationSentAt:
+      dto.finalResultNotificationSentAt !== undefined
+        ? formatOrganizationResultNotificationSentAt(dto.finalResultNotificationSentAt)
+        : base.finalResultNotificationSentAt,
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,
     interviewAssignmentApiStatus:
@@ -2427,5 +2436,9 @@ export function mapParticipantToParticipatingVolunteerRow(
     birthDate: dto.birthDate?.trim() || undefined,
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
+    // 기관형 캘린더 우측 카드 지표 — 구버전 응답(필드 없음)은 null → '-'
+    distanceKm: dto.distanceKm ?? null,
+    programDispatchCount: dto.programDispatchCount ?? null,
+    programLongDistanceDispatchCount: dto.programLongDistanceDispatchCount ?? null,
   }
 }

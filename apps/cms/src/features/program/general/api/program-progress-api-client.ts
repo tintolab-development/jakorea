@@ -16,6 +16,7 @@ import {
 import type { ChangeRequest } from '@/shared/api/generated/dashboard/schemas/changeRequest'
 import type { ChangeResponse } from '@/shared/api/generated/dashboard/schemas/changeResponse'
 import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
+import type { VolunteerAssignmentResponse } from '@/shared/api/generated/dashboard/schemas/volunteerAssignmentResponse'
 import {
   bulkAttendanceScheduleIdsCacheKey,
   ensureAttendancesByScheduleIdKeys,
@@ -380,10 +381,51 @@ export async function createProgramInstructorParticipantRemote(
   return createProgramParticipantRemote(programId, payload)
 }
 
+/** 배정 알림 시점 — `SCHEDULED`는 현재보다 1분 이상 뒤 (400 INVALID_NOTIFICATION_SCHEDULE) */
+export type VolunteerAssignmentNotificationTiming = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt?: string | null
+}
+
 export type VolunteerAssignedOrganizationsRequest = {
   organizationApplicationIds: number[]
   expectedRevision?: number
+  /** 필수 2~500자 */
   reason?: string
+  /**
+   * 빠지는 기관의 배정 알림이 이미 발송(SENT)됐을 때 취소 알림 시점. 생략 시 즉시.
+   * 발송 전이면 BE가 예약 알림만 중단하고 이 값은 무시한다.
+   */
+  notification?: VolunteerAssignmentNotificationTiming
+}
+
+/** 배정 알림 상태 — NONE 없음 / SCHEDULED 예약 대기 / SENT 발송됨 / CANCELLED 발송 전 예약 중단 */
+export type VolunteerAssignmentNotificationStatus = 'NONE' | 'SCHEDULED' | 'SENT' | 'CANCELLED'
+
+/**
+ * GET/POST/DELETE …/volunteer-assignments 의 VolunteerAssignmentResponse(생성 타입).
+ * 알림 3필드(assignmentNotificationStatus / SentAt / ScheduledAt)는 옵셔널 — 구버전 응답에는 없다.
+ */
+export type VolunteerAssignmentRemoteRow = VolunteerAssignmentResponse
+
+/**
+ * GET /api/admin/programs/{programId}/volunteer-assignments
+ * 기관형 봉사자 배정 목록(회차 행). 알림 상태는 「봉사자 + 기관」 단위로 같은 기관 행이 공유한다.
+ */
+export async function fetchVolunteerAssignmentsRemote(
+  programId: string,
+  params: { volunteerParticipantId: string },
+  signal?: AbortSignal
+): Promise<VolunteerAssignmentRemoteRow[]> {
+  const body = unwrapApiBody<VolunteerAssignmentRemoteRow[] | null>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/volunteer-assignments`,
+      method: 'GET',
+      params: { volunteerParticipantId: params.volunteerParticipantId },
+      signal,
+    })
+  )
+  return Array.isArray(body) ? body : []
 }
 
 export type VolunteerAssignedOrganizationsResponse = {

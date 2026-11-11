@@ -13,9 +13,11 @@ import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-c
 import { CmsSelect } from '@/shared/ui'
 import { formatParticipatingSessionPeriodForCalendarDisplay } from './participating-institutions-calendar-day-list'
 import {
+  buildParticipatingVolunteerCalendarMetrics,
   ParticipatingVolunteerCalendarListItem,
   type ParticipatingVolunteerCalendarListRow,
 } from './participating-volunteer-calendar-list-item'
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 
 export type ParticipatingVolunteersCalendarRightProps = {
   events: readonly ParticipatingVolunteerCalendarEvent[]
@@ -51,6 +53,16 @@ function toListRow(
     regionLabel: formatInstitutionRegionForCalendarListDisplay(row.region),
     sessionLabel: session ? formatParticipatingSessionPeriodForCalendarDisplay(session) : '-',
     activityWithdrawn: showActivityWithdrawn && event.originalItem.activityWithdrawn === true,
+    // 기관형 카드만 「거리 : - | 출강 : N회 | 장거리 : -」
+    ...(showActivityWithdrawn
+      ? {
+          metrics: buildParticipatingVolunteerCalendarMetrics({
+            distanceDisplay: formatApiDistanceKmDisplay(event.originalItem.distanceKm),
+            programDispatchCount: event.originalItem.programDispatchCount,
+            programLongDistanceDispatchCount: event.originalItem.programLongDistanceDispatchCount,
+          }),
+        }
+      : {}),
   }
 }
 

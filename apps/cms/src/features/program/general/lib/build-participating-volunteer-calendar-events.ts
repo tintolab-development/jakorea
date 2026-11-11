@@ -14,6 +14,10 @@ export type ParticipatingVolunteerCalendarEventItem = {
   volunteerName: string
   /** 활동 포기 처리된 봉사자 — 캘린더 우측 카드 「활동 포기」 뱃지 */
   activityWithdrawn?: boolean
+  /** 기관형 우측 카드 「거리 · 출강 · 장거리」 — participants 지표(null이면 '-') */
+  distanceKm?: number | null
+  programDispatchCount?: number | null
+  programLongDistanceDispatchCount?: number | null
   sessionsOnDate: ParticipatingSchoolSession[]
   educationGrade: string
   desiredEducationPeriod: string
@@ -81,6 +85,9 @@ export function buildParticipatingVolunteerCalendarEvents(
           volunteerId: volunteer.id,
           volunteerName: volunteer.volunteerName,
           activityWithdrawn: volunteer.activityWithdrawn === true,
+          distanceKm: volunteer.distanceKm ?? null,
+          programDispatchCount: volunteer.programDispatchCount ?? null,
+          programLongDistanceDispatchCount: volunteer.programLongDistanceDispatchCount ?? null,
           sessionsOnDate: [session],
           educationGrade: school.educationGrade,
           desiredEducationPeriod: periodStr,
