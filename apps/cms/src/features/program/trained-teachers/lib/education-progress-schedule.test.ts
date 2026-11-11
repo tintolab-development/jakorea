@@ -21,12 +21,12 @@ function session(
 }
 
 describe('resolveTrainedTeacherEducationProgressBadge', () => {
-  it('COMPLETED / SCHEDULED / IN_PROGRESS 만 시안 뱃지로 매핑한다', () => {
+  it('진행 대기 / 진행 완료 두 가지만 쓴다(진행 중 없음, CMS-FUNC-0147·0180)', () => {
     expect(resolveTrainedTeacherEducationProgressBadge('COMPLETED')).toEqual({
       label: '진행 완료',
       statusClass: 'participating-institution-application-info__session-status--completed',
     })
-    expect(resolveTrainedTeacherEducationProgressBadge('IN_PROGRESS')?.label).toBe('진행 중')
+    expect(resolveTrainedTeacherEducationProgressBadge('IN_PROGRESS')?.label).toBe('진행 대기')
     expect(resolveTrainedTeacherEducationProgressBadge('SCHEDULED')?.label).toBe('진행 대기')
     expect(resolveTrainedTeacherEducationProgressBadge('UNSCHEDULED')).toBeNull()
     expect(resolveTrainedTeacherEducationProgressBadge(null)).toBeNull()
@@ -296,7 +296,76 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
     )
     expect(rows).toHaveLength(1)
     expect(rows[0]?.rowLabel).toBe('')
-    expect(rows[0]?.session.duration).toBe('1차시')
+    // 매칭된 신청 지망이 없으면 차시를 지어내지 않는다
+    expect(rows[0]?.session.duration).toBe('')
+  })
+
+  it('차시 수는 신청 때 그 지망에서 고른 희망 차시(교시·시간 줄 수) — 일정 건수가 아니다 (CMS-FUNC-0277)', () => {
+    const rows = buildTrainedTeacherEducationProgressRows(
+      [
+        session({
+          date: '2026.04.27',
+          dayOfWeek: '월',
+          timeRange: '09:00~12:00',
+          resolvedScheduleId: 501,
+          startAt: '2026-04-27T00:00:00Z',
+          endAt: '2026-04-27T03:00:00Z',
+        }),
+      ],
+      [
+        {
+          preferenceRank: 2,
+          date: '2026-04-27',
+          dayOfWeek: '월',
+          sessionCount: 4,
+          sessionTimes: [
+            { sessionIndex: 1, classPeriod: '1교시', timeRange: '09:00 ~ 09:40' },
+            { sessionIndex: 2, classPeriod: '4교시', timeRange: '11:20 ~ 12:00' },
+          ],
+          scheduleId: 501,
+          scheduleStatus: 'MATCHED',
+        },
+      ],
+      new Date('2026-04-26T00:00:00Z')
+    )
+    expect(rows[0]?.rowLabel).toBe('2지망')
+    expect(rows[0]?.session.duration).toBe('2차시')
+  })
+
+  it('진행 상태는 교육일 단위 — 그날 마지막 차시 종료 전 진행 대기, 지나면 진행 완료', () => {
+    const daySessions = [
+      session({
+        date: '2026.04.20',
+        dayOfWeek: '월',
+        timeRange: '09:00~09:40',
+        resolvedScheduleId: 1,
+        startAt: '2026-04-20T00:00:00Z',
+        endAt: '2026-04-20T00:40:00Z',
+        deliveryScheduleStatus: 'COMPLETED',
+      }),
+      session({
+        date: '2026.04.20',
+        dayOfWeek: '월',
+        timeRange: '11:20~12:00',
+        resolvedScheduleId: 2,
+        startAt: '2026-04-20T02:20:00Z',
+        endAt: '2026-04-20T03:00:00Z',
+        deliveryScheduleStatus: 'SCHEDULED',
+      }),
+    ]
+    const during = buildTrainedTeacherEducationProgressRows(
+      daySessions,
+      [],
+      new Date('2026-04-20T01:00:00Z')
+    )
+    expect(during[0]?.session.deliveryScheduleStatus).toBe('SCHEDULED')
+    expect(resolveTrainedTeacherEducationProgressBadge('SCHEDULED')?.label).toBe('진행 대기')
+    const after = buildTrainedTeacherEducationProgressRows(
+      daySessions,
+      [],
+      new Date('2026-04-20T03:00:00Z')
+    )
+    expect(after[0]?.session.deliveryScheduleStatus).toBe('COMPLETED')
   })
 
   it('session_no(round=7)를 차시로 쓰지 않는다', () => {
