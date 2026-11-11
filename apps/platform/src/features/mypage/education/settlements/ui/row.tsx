@@ -10,6 +10,7 @@ import {
   isSettlementWriteCtaDisabled,
   PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
   PAYMENT_STATEMENT_OVERDUE_MESSAGE,
+  paymentStatementLateSubmitMessage,
   PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE,
   resolveSettlementStatusUi,
   type SettlementDocumentKind,
@@ -163,9 +164,11 @@ export function EducationSettlementRow({
       ? PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE
       : reportPendingClosed
         ? PAYMENT_STATEMENT_OVERDUE_MESSAGE
-        : correctionReapplyExpired
-          ? PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE
-          : config.message)
+        : isPaymentStatement && item.status === 'overdue' && item.deadlineNotice === 'overdue'
+          ? paymentStatementLateSubmitMessage(item.businessEndDate)
+          : correctionReapplyExpired
+            ? PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE
+            : config.message)
   const geminiUnsubmitted =
     hideInstructorWrite &&
     documentKind === 'payment_statement' &&

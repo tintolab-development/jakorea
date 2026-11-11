@@ -218,6 +218,7 @@ function mapIndividualScheduleItem(input: {
     endsAt,
     sessionLabel: readOptionalText(schedule.scheduleName) ?? '',
     status,
+    documentKind: 'receipt',
     appliedAmount: sumSubmittedAmounts(schedule),
   }
 }

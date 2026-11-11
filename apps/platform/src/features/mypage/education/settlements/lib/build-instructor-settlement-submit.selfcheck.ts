@@ -5,6 +5,13 @@ import {
   buildInstructorSettlementPayloadParts,
   buildInstructorSettlementResubmitRequest,
 } from './build-instructor-settlement-submit.ts'
+import {
+  findExceededInstructorExpenseLimit,
+  instructorPaymentItemLimitExceededAlert,
+  instructorPaymentItemLimitMessage,
+  readInstructorExpensePolicies,
+} from './instructor-expense-items.ts'
+import { validateSettlementWriteDraft } from './validate-write-draft.ts'
 
 const base = {
   applicationId: '12',
@@ -183,5 +190,63 @@ const lodgingNotRequested = buildInstructorSettlementPayloadParts(
   buildSettlementWriteDraft({ ...base, extraItems: [], mealAmount: '', mealFiles: [], activityAmount: '', activityFiles: [] })
 )
 assert.equal(lodgingNotRequested.requestedItems.some(item => item.itemType === 'LODGING_1C1S'), false)
+
+// 강사 식사비·활동비 정책 — 미리보기 payableItems (K14)
+{
+  // 받기 전(payableItems 없음): 기존 동작
+  const unknown = readInstructorExpensePolicies({ canSubmit: true })
+  assert.equal(unknown.loaded, false)
+  assert.deepEqual(unknown.meal, { allowed: true, maxLimitWon: null, evidenceRequired: true })
+
+  // MEAL만 켜짐(한도 20,000·영수증 불필요), ACTIVITY 꺼짐, 일반 숙박비 켜짐
+  const policies = readInstructorExpensePolicies({
+    payableItems: [
+      { itemType: 'MEAL', itemName: '식사비', maxLimitWon: 20000, evidenceRequired: false },
+      { itemType: 'LODGING', itemName: '숙박비', maxLimitWon: 150000, evidenceRequired: true },
+    ],
+  })
+  assert.equal(policies.loaded, true)
+  assert.deepEqual(policies.meal, { allowed: true, maxLimitWon: 20000, evidenceRequired: false })
+  assert.equal(policies.activity.allowed, false)
+  assert.equal(policies.lodgingOffered, true)
+  // evidenceRequired 미설정(null)은 필요로 본다
+  assert.equal(
+    readInstructorExpensePolicies({ payableItems: [{ itemType: 'ACTIVITY', evidenceRequired: null }] })
+      .activity.evidenceRequired,
+    true,
+  )
+
+  const draft = buildSettlementWriteDraft({
+    ...base,
+    extraItems: [],
+    mealAmount: '15,000',
+    mealFiles: [],
+    mealAttachments: [],
+    activityAmount: '23,000',
+    activityFiles: [],
+    activityAttachments: [],
+    mealPolicy: policies.meal,
+    activityPolicy: policies.activity,
+  })
+  // 영수증 불필요 식사비·꺼진 활동비는 영수증 없이도 통과
+  assert.equal(validateSettlementWriteDraft(draft), null)
+  const payload = buildInstructorSettlementCreateRequest(draft)
+  // 꺼진 활동비는 보내지 않고, 식사비는 영수증 불필요(증빙 제출 표시 없음)로 보낸다
+  const expenseItems = payload.requestedItems.filter(
+    item => item.itemType === 'MEAL' || item.itemType === 'ACTIVITY',
+  )
+  assert.equal(expenseItems.length, 1)
+  assert.equal(expenseItems[0]?.itemType, 'MEAL')
+  assert.equal(expenseItems[0]?.requestedAmount, 15000)
+  assert.notEqual(expenseItems[0]?.evidenceSubmitted, true)
+
+  // 한도 초과 문구(강사): "신청은 최대 N원까지만 가능합니다."
+  assert.equal(instructorPaymentItemLimitMessage(20000), '신청은 최대 20,000원까지만 가능합니다.')
+  const over = { ...draft, meal: { ...draft.meal, amount: '25,000' } }
+  assert.equal(findExceededInstructorExpenseLimit(over), 20000)
+  assert.equal(findExceededInstructorExpenseLimit(draft), null)
+  // 서버 400이면 한도를 아는 항목 기준으로 같은 문구
+  assert.equal(instructorPaymentItemLimitExceededAlert(draft), '신청은 최대 20,000원까지만 가능합니다.')
+}
 
 console.log('build-instructor-settlement-submit.selfcheck: ok')

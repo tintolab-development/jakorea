@@ -51,6 +51,9 @@ type BuildSettlementWriteDraftInput = {
   activityAmount: string
   activityFiles: string[]
   activityAttachments?: SettlementReceiptAttachment[]
+  /** 강사 실비 정책(미리보기 payableItems). 없으면 기존 동작 */
+  mealPolicy?: Pick<SettlementWriteDraft['meal'], 'allowed' | 'maxLimitWon' | 'evidenceRequired'>
+  activityPolicy?: Pick<SettlementWriteDraft['activity'], 'allowed' | 'maxLimitWon' | 'evidenceRequired'>
   companySchoolLodgingRequested?: boolean
   companySchoolLodgingFiles?: string[]
   companySchoolLodgingAttachments?: SettlementReceiptAttachment[]
@@ -111,11 +114,13 @@ export function buildSettlementWriteDraft(
       amount: input.mealAmount,
       fileNames: input.mealFiles,
       attachments: input.mealAttachments ?? [],
+      ...(input.mealPolicy ?? {}),
     },
     activity: {
       amount: input.activityAmount,
       fileNames: input.activityFiles,
       attachments: input.activityAttachments ?? [],
+      ...(input.activityPolicy ?? {}),
     },
     companySchoolLodging: {
       requested: input.companySchoolLodgingRequested === true,
@@ -132,6 +137,9 @@ export function normalizeSettlementNamedExpense(
     amount: item?.amount ?? '',
     fileNames: item?.fileNames ?? [],
     attachments: item?.attachments ?? [],
+    ...(item?.allowed != null ? { allowed: item.allowed } : {}),
+    ...(item?.maxLimitWon !== undefined ? { maxLimitWon: item.maxLimitWon } : {}),
+    ...(item?.evidenceRequired != null ? { evidenceRequired: item.evidenceRequired } : {}),
   }
 }
 

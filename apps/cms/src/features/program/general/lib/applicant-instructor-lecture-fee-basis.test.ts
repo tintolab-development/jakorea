@@ -19,7 +19,7 @@ const PROGRAM_WAGE_ROWS = [
 ]
 
 describe('toInstructorApplicationFeePolicy', () => {
-  it('프로그램 기준은 PROGRAM·PER_HOUR·GRADE_*·숫자 amount를 보낸다', () => {
+  it('프로그램 기준은 PROGRAM·PER_CLASS(차시당)·GRADE_*·숫자 amount를 보낸다', () => {
     expect(
       toInstructorApplicationFeePolicy(
         {
@@ -32,23 +32,23 @@ describe('toInstructorApplicationFeePolicy', () => {
       )
     ).toEqual({
       basisType: 'PROGRAM',
-      measure: 'PER_HOUR',
+      measure: 'PER_CLASS',
       amount: 1,
       instructorFeeGrade: 'GRADE_1',
     })
   })
 
-  it('특강·기타는 RECRUITMENT와 PER_LECTURE/PER_HOUR 코드를 보낸다', () => {
+  it('특강·기타는 SPECIAL_LECTURE/OTHER_LABOR와 PER_LECTURE/PER_CLASS 코드를 보낸다', () => {
     expect(
       toInstructorApplicationFeePolicy({
         basisType: 'special_lecture',
-        measure: '1시간 당',
+        measure: '차시당',
         amount: '120,000',
         instructorFeeGrade: '2급 강사비',
       })
     ).toMatchObject({
-      basisType: 'RECRUITMENT',
-      measure: 'PER_HOUR',
+      basisType: 'SPECIAL_LECTURE',
+      measure: 'PER_CLASS',
       amount: 120000,
       instructorFeeGrade: 'GRADE_2',
     })
@@ -61,7 +61,7 @@ describe('toInstructorApplicationFeePolicy', () => {
         instructorFeeGrade: 'GRADE_2',
       })
     ).toMatchObject({
-      basisType: 'RECRUITMENT',
+      basisType: 'OTHER_LABOR',
       measure: 'PER_LECTURE',
       amount: 0,
       instructorFeeGrade: 'GRADE_2',
@@ -155,7 +155,7 @@ describe('businessIncomeEarnerStatusPatchField', () => {
 })
 
 describe('강사비 지급 기준 공통 라벨 (기획 11/10 「차시당 / 출강 1회당」)', () => {
-  it('모든 유형 공통 옵션 — 값은 그대로(1시간 당=PER_HOUR, 출강 1회당=PER_LECTURE)', () => {
+  it('모든 유형 공통 옵션 — 값은 그대로(1시간 당=PER_CLASS, 출강 1회당=PER_LECTURE)', () => {
     expect(LECTURE_FEE_MEASURE_OPTIONS).toEqual([
       { value: '1시간 당', label: '차시당' },
       { value: '출강 1회당', label: '출강 1회당' },
@@ -166,7 +166,7 @@ describe('강사비 지급 기준 공통 라벨 (기획 11/10 「차시당 / 출
     for (const legacy of ['1시간 당', '1시간당', '1시간 기준', '차시당']) {
       expect(normalizeLectureFeeMeasure(legacy)).toBe('1시간 당')
       expect(lectureFeeMeasureLabel(legacy)).toBe('차시당')
-      expect(toApiInstructorFeePolicyMeasure(legacy, 'special_lecture')).toBe('PER_HOUR')
+      expect(toApiInstructorFeePolicyMeasure(legacy, 'special_lecture')).toBe('PER_CLASS')
     }
     for (const legacy of ['출강 1회당', '1회당', '1회 기준']) {
       expect(normalizeLectureFeeMeasure(legacy)).toBe('출강 1회당')
@@ -237,6 +237,11 @@ describe('출강 1회당 코드(K13, 2026-11-12)', () => {
     expect(toApiInstructorFeePolicyMeasure('PER_SESSION', 'other_labor')).toBe('PER_LECTURE')
     expect(toApiInstructorFeePolicyMeasure(undefined, 'special_lecture')).toBe('PER_LECTURE')
     expect(toApiInstructorFeePolicyMeasure(null, 'program', 'SESSION')).toBe('PER_LECTURE')
-    expect(toApiInstructorFeePolicyMeasure(null, 'program', 'PER_HOUR')).toBe('PER_HOUR')
+    expect(toApiInstructorFeePolicyMeasure(null, 'program', 'PER_HOUR')).toBe('PER_CLASS')
+  })
+
+  it('차시당(기존 저장값 1시간 당 포함)은 PER_CLASS로 보낸다 (Q2)', () => {
+    expect(toApiInstructorFeePolicyMeasure('차시당', 'special_lecture')).toBe('PER_CLASS')
+    expect(toApiInstructorFeePolicyMeasure('1시간 당', 'other_labor')).toBe('PER_CLASS')
   })
 })

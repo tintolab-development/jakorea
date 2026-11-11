@@ -17,7 +17,6 @@ import {
   hydrateSettlementWriteFormState,
 } from '../lib/build-write-draft'
 import {
-  INSTRUCTOR_MEAL_MAX_WON,
   formatSettlementAmountInput,
   parseSettlementAmount,
 } from '../lib/format-write-draft'
@@ -47,6 +46,8 @@ import {
 } from '../lib/payment-items'
 import { paymentItemLimitError } from '../lib/payment-item-limit'
 import { instructorTransportExclusionNotice } from '../lib/instructor-transport-exclusion'
+import { DEFAULT_INSTRUCTOR_EXPENSE_POLICIES } from '../lib/instructor-expense-items'
+import { SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE } from '../lib/instructor-settlement-contract'
 import { useInstructorSettlementPreviewQuery } from '../api/use-instructor-settlement-preview-query'
 import {
   RECEIPT_UPLOAD_ACCEPT,
@@ -58,7 +59,10 @@ import {
   SETTLEMENT_TRANSIT_OPTIONS,
   SETTLEMENT_TRIP_TYPE_OPTIONS,
 } from '../lib/settlement-options'
-import type { SettlementDocumentKind } from '../lib/settlement-status-ui'
+import {
+  PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
+  type SettlementDocumentKind,
+} from '../lib/settlement-status-ui'
 import {
   SETTLEMENT_WRITE_ALERT_TITLE,
   resolveSettlementWriteValidationAlert,
@@ -596,7 +600,7 @@ export function EducationSettlementWriteForm({
     return amountItems.map(createEmptyAmountItemDraft)
   })
   const [mealAmount, setMealAmount] = useState(
-    formatSettlementAmountInput(hydrated?.mealAmount ?? '', INSTRUCTOR_MEAL_MAX_WON),
+    formatSettlementAmountInput(hydrated?.mealAmount ?? ''),
   )
   const [mealFiles, setMealFiles] = useState<string[]>(hydrated?.mealFiles ?? [])
   const [mealAttachments, setMealAttachments] = useState<SettlementReceiptAttachment[]>(
@@ -718,6 +722,14 @@ export function EducationSettlementWriteForm({
   const transportExclusionNotice = isReceipt
     ? null
     : instructorTransportExclusionNotice(instructorSettlementPreview.transportExclusion)
+  /**
+   * 강사 식사비·활동비 정책(미리보기 payableItems, K14): 한도는 CMS 설정 maxLimitWon(고정 3만원 아님),
+   * 영수증 필요 여부는 evidenceRequired, 프로그램에서 끈 항목은 검증·송신에서 뺀다.
+   * TODO(K14 시안 대기): 끈 항목의 입력 칸 숨김, 식사비 하단 안내의 '최대 3만원' 문구를 한도에 맞추기
+   */
+  const expensePolicies = isReceipt
+    ? DEFAULT_INSTRUCTOR_EXPENSE_POLICIES
+    : instructorSettlementPreview.expensePolicies
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -757,6 +769,11 @@ export function EducationSettlementWriteForm({
     }
     if (lectureFeeBlocked) {
       showAlert(lectureFeeBlockerMessage ?? '지금은 정산을 신청할 수 없습니다.')
+      return
+    }
+    // 사업 운영 종료 후 최초 제출 차단(A1) — 서버 409와 같은 문구
+    if (instructorSettlementPreview.blockerCode === SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE) {
+      showAlert(PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE)
       return
     }
     if (receiptLimitError) {
@@ -822,16 +839,19 @@ export function EducationSettlementWriteForm({
             amount: formatSettlementAmountInput(item.amount),
           }))
         : [],
-      mealAmount: formatSettlementAmountInput(mealAmount, INSTRUCTOR_MEAL_MAX_WON),
+      mealAmount: formatSettlementAmountInput(mealAmount, expensePolicies.meal.maxLimitWon),
       mealFiles:
         mealAttachments.length > 0 ? mealAttachments.map(file => file.fileName) : mealFiles,
       mealAttachments,
-      activityAmount,
+      activityAmount: formatSettlementAmountInput(activityAmount, expensePolicies.activity.maxLimitWon),
       activityFiles:
         activityAttachments.length > 0
           ? activityAttachments.map(file => file.fileName)
           : activityFiles,
       activityAttachments,
+      ...(expensePolicies.loaded
+        ? { mealPolicy: expensePolicies.meal, activityPolicy: expensePolicies.activity }
+        : {}),
       companySchoolLodgingRequested: showCompanySchoolLodging && lodgingRequested,
       companySchoolLodgingFiles: showCompanySchoolLodging
         ? lodgingAttachments.length > 0
@@ -1151,7 +1171,7 @@ export function EducationSettlementWriteForm({
                       value={mealAmount}
                       onChange={setMealAmount}
                       ariaLabel="식사비"
-                      maxWon={INSTRUCTOR_MEAL_MAX_WON}
+                      maxWon={expensePolicies.meal.maxLimitWon}
                     />
                   </PFFormField>
                 </PFFormFieldRow>
@@ -1187,6 +1207,7 @@ export function EducationSettlementWriteForm({
                       value={activityAmount}
                       onChange={setActivityAmount}
                       ariaLabel="활동비"
+                      maxWon={expensePolicies.activity.maxLimitWon}
                     />
                   </PFFormField>
                 </PFFormFieldRow>

@@ -83,10 +83,11 @@ export const RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE =
   '영수증 발급 사전 동의를 완료한 뒤 정산을 신청할 수 있습니다.'
 
 export const TRANSPORTATION_DISTANCE_NOT_ELIGIBLE_CODE = 'TRANSPORTATION_DISTANCE_NOT_ELIGIBLE'
+/** 서버 TRANSPORTATION_DISTANCE_NOT_ELIGIBLE 문구와 같다 (R11) */
 export const TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE =
-  '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.'
+  '편도 30km 이상 이동한 경우에만 교통비를 신청할 수 있어요.'
 export const TRANSPORTATION_ADDRESS_MISSING_MESSAGE =
-  '자택 주소 또는 교육 장소를 확인할 수 없어 교통비를 신청할 수 없습니다.'
+  '자택 주소 또는 교육 장소를 확인할 수 없어 교통비를 신청할 수 없어요. 회원정보의 자택 주소를 확인해 주세요.'
 
 type IndividualTransportPreviewLike = {
   oneWayDistanceKm?: number | null
@@ -112,7 +113,7 @@ export function individualTransportIneligibleNotice(
   if (reason === 'ADDRESS_MISSING') return TRANSPORTATION_ADDRESS_MISSING_MESSAGE
   const km = formatIndividualOneWayDistanceKm(preview.oneWayDistanceKm)
   return km
-    ? `${TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE} (편도 ${km})`
+    ? `${TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE}(편도 ${km})`
     : TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE
 }
 
@@ -131,7 +132,8 @@ export type IndividualIneligibleReason =
 const INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
   ATTENDANCE_NOT_QUALIFIED: '출석이 확인되지 않아 영수증을 제출할 수 없습니다.',
   SCHEDULE_NOT_ENDED: '교육이 종료된 이후에 영수증을 제출할 수 있습니다.',
-  SUBMISSION_DEADLINE_PASSED: '프로그램 운영이 종료되어 영수증을 제출할 수 없습니다.',
+  /** 서버 오류 문구 (R5). 정산 행 안내는 individualIneligibleRowMessage가 따로 쓴다 */
+  SUBMISSION_DEADLINE_PASSED: '프로그램 운영이 종료되어 영수증을 제출할 수 없어요',
   NO_PAYABLE_ITEMS: '이 프로그램에 신청할 수 있는 지급 항목이 없습니다.',
   EVIDENCE_POLICY_UNCONFIGURED: '증빙 정책을 확인할 수 없어 신청할 수 없습니다',
   EVIDENCE_REQUIRED: '증빙이 필요한 항목의 영수증을 제출해 주세요.',
@@ -158,6 +160,9 @@ export function normalizeIndividualIneligibleReason(
   return normalized ? normalized : null
 }
 
+/** 영수증 정산 행 안내 — 운영 종료 후 (R5). 영수증은 지연 제출 구간이 없다 */
+export const RECEIPT_SUBMISSION_CLOSED_ROW_MESSAGE = '영수증 제출기한이 마감되었어요'
+
 /** 봉사자 정산 — 개인(교육)과 문구가 다른 사유만 */
 const VOLUNTEER_INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
   SCHEDULE_NOT_ENDED: '봉사가 종료된 이후에 영수증을 제출할 수 있습니다.',
@@ -173,6 +178,17 @@ export function individualIneligibleMessage(
     return VOLUNTEER_INELIGIBLE_REASON_MESSAGES[normalized]
   }
   return INELIGIBLE_REASON_MESSAGES[normalized]
+}
+
+/** 정산 행 안내용 제출 불가 사유 — 운영 종료(SUBMISSION_DEADLINE_PASSED)만 행 문구가 다르다 (R5) */
+export function individualIneligibleRowMessage(
+  reason: string | null | undefined,
+  audience: ScheduleSettlementAudience = 'individual',
+): string | undefined {
+  if (normalizeIndividualIneligibleReason(reason) === INDIVIDUAL_INELIGIBLE_REASON.SUBMISSION_DEADLINE_PASSED) {
+    return RECEIPT_SUBMISSION_CLOSED_ROW_MESSAGE
+  }
+  return individualIneligibleMessage(reason, audience)
 }
 
 export function isEvidencePolicyUnconfigured(

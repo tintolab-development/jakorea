@@ -1,13 +1,25 @@
 import dayjs from 'dayjs'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
-import { formatDateDot, getSeoulCalendarDate } from '@/shared/utils/date'
+import { formatDateDot, formatDateDotWithWeekday, getSeoulCalendarDate } from '@/shared/utils/date'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { resolveSettlementUiStatus } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import type { ParticipatingIndividualInstructorLectureProgress } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
 
+/** 정산 현황 행 종류 — 서버 rowType, 없으면 ID로 추론 */
+export type ParticipatingInstructorSettlementRowType =
+  | 'SETTLEMENT'
+  | 'SETTLEMENT_APPLICATION'
+  | 'NOT_APPLIED'
+
+export type ParticipatingInstructorLectureProgressLabel = '진행 완료' | '진행 예정' | '활동 포기'
+
 export interface ParticipatingInstructorSettlementApiRow {
+  /** `${rowType}:${settlementId ?? settlementApplicationId ?? instructorAssignmentId}` */
   id: string
+  rowType: ParticipatingInstructorSettlementRowType
+  /** 정산 신청 전인 배정 교육 일정 행 — 처리 현황·금액 없음, 지급조서 보기 불가 */
+  isNotApplied: boolean
   /** 확정 정산 행 ID. 확정 전 신청서 행이면 null */
   settlementId: number | null
   /** 정산 신청서 ID. 확정 전 신청서 행의 승인·반려·보정 요청은 이 값으로 호출한다 */
@@ -20,7 +32,7 @@ export interface ParticipatingInstructorSettlementApiRow {
   institutionName: string
   educationGrade: string
   educationScheduleLabel: string
-  lectureProgressLabel: '진행 완료' | '진행 예정'
+  lectureProgressLabel: ParticipatingInstructorLectureProgressLabel
   lectureProgress: ParticipatingIndividualInstructorLectureProgress
   hasPaymentStatementApplication: boolean
   paymentStatementStatus: InstructorSettlementUiStatus
@@ -58,9 +70,52 @@ export function buildParticipatingInstructorEducationScheduleLabel(
   return datePart || sessionPart || '-'
 }
 
+const LECTURE_PROGRESS_LABELS: Record<
+  ParticipatingIndividualInstructorLectureProgress,
+  ParticipatingInstructorLectureProgressLabel
+> = {
+  completed: '진행 완료',
+  scheduled: '진행 예정',
+  activity_withdrawn: '활동 포기',
+}
+
+export function toParticipatingInstructorLectureProgressLabel(
+  progress: ParticipatingIndividualInstructorLectureProgress
+): ParticipatingInstructorLectureProgressLabel {
+  return LECTURE_PROGRESS_LABELS[progress]
+}
+
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 정산 현황 행 「교육 진행 일정」 — 행 하나가 배정 일정 1건이라 날짜·회차를 먼저 보여 준다.
+ * (진행 회차 요약 `programSessionProgressDisplay`는 행마다 같은 값이라 일정 구분이 안 된다)
+ * 날짜·회차가 모두 없을 때만 기존 라벨 규칙을 쓴다.
+ */
+export function buildParticipatingInstructorSettlementRowScheduleLabel(
+  item: SettlementListItemResponse
+): string {
+  const rawDate = item.lectureDate?.trim() ?? ''
+  const datePart = DATE_ONLY_PATTERN.test(rawDate)
+    ? formatDateDotWithWeekday(rawDate)
+    : formatIsoDateTime(rawDate) || formatLectureDateOnly(rawDate)
+  const normalizedDate = datePart === '-' ? '' : datePart
+  const sessionPart =
+    item.sessionOrdinal != null && item.sessionOrdinal > 0 ? `${item.sessionOrdinal}회차` : ''
+  if (normalizedDate && sessionPart) return `${normalizedDate} | ${sessionPart}`
+  if (normalizedDate || sessionPart) return normalizedDate || sessionPart
+  return buildParticipatingInstructorEducationScheduleLabel(item)
+}
+
+/** 서버 lectureProgressStatus 우선, 값이 없을 때만 일정일로 추론한다 */
 export function inferParticipatingInstructorLectureProgress(
   item: SettlementListItemResponse
 ): ParticipatingIndividualInstructorLectureProgress {
+  const serverStatus = item.lectureProgressStatus?.toUpperCase()
+  if (serverStatus === 'COMPLETED') return 'completed'
+  if (serverStatus === 'SCHEDULED') return 'scheduled'
+  if (serverStatus === 'GAVE_UP') return 'activity_withdrawn'
+
   const lectureDate = item.lectureDate?.slice(0, 10)
   if (lectureDate) {
     const parsed = dayjs(lectureDate)
@@ -84,24 +139,53 @@ function hasPaymentStatementApplication(
   return true
 }
 
+export function resolveParticipatingInstructorSettlementRowType(
+  item: SettlementListItemResponse
+): ParticipatingInstructorSettlementRowType {
+  const rowType = item.rowType?.toUpperCase()
+  if (rowType === 'SETTLEMENT' || rowType === 'SETTLEMENT_APPLICATION' || rowType === 'NOT_APPLIED') {
+    return rowType
+  }
+  if (item.settlementId != null) return 'SETTLEMENT'
+  if (item.settlementApplicationId != null) return 'SETTLEMENT_APPLICATION'
+  return 'NOT_APPLIED'
+}
+
+function buildRowId(
+  rowType: ParticipatingInstructorSettlementRowType,
+  item: SettlementListItemResponse,
+  index: number
+): string {
+  const key =
+    item.settlementId ?? item.settlementApplicationId ?? item.instructorAssignmentId ?? null
+  // 같은 배정에 일정이 여러 건일 수 있어 미신청 행은 scheduleId를 덧붙인다.
+  const scheduleSuffix = rowType === 'NOT_APPLIED' && item.scheduleId != null ? `:${item.scheduleId}` : ''
+  return `${rowType}:${key ?? `index-${index}`}${scheduleSuffix}`
+}
+
 export function mapSettlementToParticipatingInstructorSettlementRow(
   item: SettlementListItemResponse,
   index: number
-): ParticipatingInstructorSettlementApiRow | null {
+): ParticipatingInstructorSettlementApiRow {
   const settlementId = item.settlementId ?? null
   const settlementApplicationId = item.settlementApplicationId ?? null
+  const rowType = resolveParticipatingInstructorSettlementRowType(item)
+  const isNotApplied = rowType === 'NOT_APPLIED'
   const isPendingApplication = settlementId == null && settlementApplicationId != null
-  if (settlementId == null && !isPendingApplication) return null
 
-  const paymentStatementStatus = resolveSettlementUiStatus(item)
+  const paymentStatementStatus = isNotApplied ? 'none' : resolveSettlementUiStatus(item)
   const lectureProgress = inferParticipatingInstructorLectureProgress(item)
-  const lectureProgressLabel = lectureProgress === 'completed' ? '진행 완료' : '진행 예정'
-  const hasApplication = hasPaymentStatementApplication(paymentStatementStatus, item)
-  const scheduledSettlementAmount =
-    item.netPaymentAmount ?? item.grossAmount ?? null
+  const lectureProgressLabel = toParticipatingInstructorLectureProgressLabel(lectureProgress)
+  const hasApplication =
+    !isNotApplied && hasPaymentStatementApplication(paymentStatementStatus, item)
+  const scheduledSettlementAmount = isNotApplied
+    ? null
+    : (item.netPaymentAmount ?? item.grossAmount ?? null)
 
   return {
-    id: settlementId != null ? String(settlementId) : `application:${settlementApplicationId}`,
+    id: buildRowId(rowType, item, index),
+    rowType,
+    isNotApplied,
     settlementId,
     settlementApplicationId,
     isPendingApplication,
@@ -109,7 +193,7 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
     no: index + 1,
     institutionName: item.institutionName?.trim() || '-',
     educationGrade: '-',
-    educationScheduleLabel: buildParticipatingInstructorEducationScheduleLabel(item),
+    educationScheduleLabel: buildParticipatingInstructorSettlementRowScheduleLabel(item),
     lectureProgressLabel,
     lectureProgress,
     hasPaymentStatementApplication: hasApplication,
@@ -144,10 +228,7 @@ export function mapSettlementsToParticipatingInstructorSettlementRows(
       !confirmedApplicationIds.has(item.settlementApplicationId)
   )
 
-  const rows = deduped
-    .map((item, index) => mapSettlementToParticipatingInstructorSettlementRow(item, index))
-    .filter((row): row is ParticipatingInstructorSettlementApiRow => row != null)
-  return rows.map((row, index) => ({ ...row, no: index + 1 }))
+  return deduped.map((item, index) => mapSettlementToParticipatingInstructorSettlementRow(item, index))
 }
 
 /** 요약 카드 — 표시 가능한 지급조서 상태 집계 */

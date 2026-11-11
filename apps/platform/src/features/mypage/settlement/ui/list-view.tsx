@@ -2,7 +2,7 @@ import { PFEmptyState, PFText } from '@/shared/ui'
 import { formatSettlementHeldAt } from '../lib/format-held-at'
 import { withListNumbers } from '../lib/filter-items'
 import { formatMonthHeading } from '../lib/date-keys'
-import { SETTLEMENT_STATUS_LIST_COLOR, SETTLEMENT_STATUS_LIST_LABEL } from '../lib/status-presentation'
+import { SETTLEMENT_STATUS_LIST_COLOR, settlementStatusListLabel } from '../lib/status-presentation'
 import type { SettlementOverviewItem } from '../model/types'
 import styles from './list-view.module.css'
 
@@ -74,7 +74,7 @@ export function SettlementListView({ month, items }: SettlementListViewProps) {
                         : { color: SETTLEMENT_STATUS_LIST_COLOR[item.status] }
                     }
                   >
-                    {item.supersededStatusUnknown ? '-' : SETTLEMENT_STATUS_LIST_LABEL[item.status]}
+                    {item.supersededStatusUnknown ? '-' : settlementStatusListLabel(item)}
                   </td>
                 </tr>
               ))}

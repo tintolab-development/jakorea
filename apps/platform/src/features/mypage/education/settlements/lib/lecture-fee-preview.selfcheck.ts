@@ -8,8 +8,10 @@ import {
   formatTotalLectureFee,
   hasConfirmedLectureFeeTotal,
   isLectureFeeSettlementBlocked,
+  formatLectureFeeBasisSummary,
   lectureFeeSettlementBlockerMessage,
   lectureFeeTypeDisplayLabel,
+  lectureFeeWageTitle,
   parseLectureFeePreview,
 } from './lecture-fee-preview.ts'
 
@@ -41,6 +43,9 @@ assert.deepEqual(
     recognizedSessionCount: 2,
     actualTrainingMinutes: 90,
     settlementBlockerCode: null,
+    feePricingMode: null,
+    wageTitle: null,
+    longDistance: null,
   }
 )
 assert.equal(
@@ -130,7 +135,8 @@ assert.equal(
     educationSessionCount: null,
     ...EMPTY_COUNTS,
   }),
-  '240,000원'
+  // FIXED는 출강 1회당으로 표시 (기획 K8)
+  '출강 1회당 240,000원'
 )
 assert.equal(
   formatInstructorFeeAssignment({
@@ -146,6 +152,60 @@ assert.equal(
   '출강 1회당 180,000원'
 )
 assert.equal(formatInstructorFeeAssignment(null), '-')
+
+// 강사비 책정 방식 (기획 K5·K7): 새 필드 파싱, 책정 기준 칸, 장거리 단가
+{
+  const special = parseLectureFeePreview({
+    feePricingMode: 'SPECIAL_LECTURE',
+    wageTitle: '특강 강사비',
+    instructorFeeCalculationUnit: 'PER_LECTURE',
+    instructorFeeAmount: 200000,
+    totalLectureFee: 200000,
+    longDistance: false,
+    lectureFeeType: null,
+  })
+  assert.equal(special?.feePricingMode, 'SPECIAL_LECTURE')
+  assert.equal(formatLectureFeeBasisSummary(special), '특강 강사비 | 출강 1회당 200,000원')
+  assert.equal(lectureFeeWageTitle(special), '특강 강사비')
+  const otherPerClass = parseLectureFeePreview({
+    feePricingMode: 'OTHER_LABOR',
+    wageTitle: '기타 인건비',
+    instructorFeeCalculationUnit: 'PER_CLASS',
+    instructorFeeAmount: 150000,
+  })
+  assert.equal(formatLectureFeeBasisSummary(otherPerClass), '기타 인건비 | 차시당 150,000원')
+  const program = parseLectureFeePreview({
+    feePricingMode: 'PROGRAM_STANDARD',
+    wageTitle: '1급 강사비',
+    lectureFeeType: 'GRADE_1',
+    instructorFeeCalculationUnit: 'PER_HOUR',
+    instructorFeeAmount: 450000,
+  })
+  assert.equal(formatLectureFeeBasisSummary(program), '1급 강사비')
+  // wageTitle이 없으면 등급 코드 라벨
+  assert.equal(
+    lectureFeeWageTitle(parseLectureFeePreview({ lectureFeeType: 'GRADE_2' })),
+    '2급 강사비',
+  )
+  // 1사1교 장거리: 편도 거리 없이 "장거리 : X원"
+  assert.equal(
+    formatInstructorFeeAssignment(
+      parseLectureFeePreview({
+        lectureFeeType: 'GRADE_1',
+        instructorFeeCalculationUnit: 'PER_HOUR',
+        instructorFeeAmount: 300000,
+        longDistance: true,
+      }),
+    ),
+    '장거리 : 300,000원',
+  )
+  assert.equal(
+    lectureFeeSettlementBlockerMessage(
+      parseLectureFeePreview({ settlementBlockerCode: 'SETTLEMENT_LONG_DISTANCE_FEE_NOT_CONFIGURED' }),
+    ),
+    '장거리 강사비 단가가 설정되지 않아 지급조서를 제출할 수 없어요. 담당자에게 문의해 주세요.',
+  )
+}
 
 const orgProgress = formatLectureFeeSessionProgress({
   sessionNo: 2,
@@ -175,7 +235,7 @@ assert.equal(formatInstructorFeeAssignment(assignment1694890), '차시당 450,00
 assert.equal(isLectureFeeSettlementBlocked(assignment1694890), true)
 assert.equal(
   lectureFeeSettlementBlockerMessage(assignment1694890),
-  '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.'
+  '강의 실적 시간이 없어 지급조서를 제출할 수 없어요. 담당자에게 문의해 주세요.'
 )
 assert.equal(formatRecognizedSessionCountLabel(assignment1694890?.recognizedSessionCount), null)
 
@@ -220,7 +280,7 @@ const wageMissing = parseLectureFeePreview({
 })
 assert.equal(
   lectureFeeSettlementBlockerMessage(wageMissing),
-  '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.'
+  '강사비 단가가 설정되지 않아 지급조서를 제출할 수 없어요. 담당자에게 문의해 주세요.'
 )
 
 const assignedScheduleMissing = parseLectureFeePreview({
@@ -236,11 +296,11 @@ const assignedScheduleMissing = parseLectureFeePreview({
 assert.equal(isLectureFeeSettlementBlocked(assignedScheduleMissing), true)
 assert.equal(
   lectureFeeSettlementBlockerMessage(assignedScheduleMissing),
-  '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.'
+  '배정된 강의 시간이 없어 지급조서를 제출할 수 없어요. 담당자에게 문의해 주세요.'
 )
 assert.notEqual(
   lectureFeeSettlementBlockerMessage(assignedScheduleMissing),
-  '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.'
+  '강의 실적 시간이 없어 지급조서를 제출할 수 없어요. 담당자에게 문의해 주세요.'
 )
 
 const threeRoundOneRecognized = parseLectureFeePreview({

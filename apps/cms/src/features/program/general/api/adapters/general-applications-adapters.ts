@@ -1052,7 +1052,8 @@ function mapInstructorApplicationListScheduleFields(
 function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
-  if (trimmed === 'PER_HOUR') return '1시간 당'
+  // PER_CLASS가 현재 코드, PER_HOUR는 기존 저장 데이터(차시당과 같다)
+  if (trimmed === 'PER_HOUR' || trimmed === 'PER_CLASS') return '차시당'
   // PER_LECTURE가 현재 코드, PER_SESSION·SESSION은 기존 저장 데이터
   if (trimmed === 'PER_LECTURE' || trimmed === 'PER_SESSION' || trimmed === 'SESSION') return '출강 1회당'
   if (trimmed === 'FIXED') return '해당 없음'

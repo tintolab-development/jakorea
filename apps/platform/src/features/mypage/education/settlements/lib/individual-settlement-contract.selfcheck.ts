@@ -4,10 +4,9 @@ import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
   RECEIPT_PRE_CONSENT_REQUIRED_CODE,
   RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
-  TRANSPORTATION_ADDRESS_MISSING_MESSAGE,
-  TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE,
   formatIndividualOneWayDistanceKm,
   individualIneligibleMessage,
+  individualIneligibleRowMessage,
   individualTransportIneligibleNotice,
   individualSettlementApiErrorMessage,
   isEvidencePolicyUnconfigured,
@@ -145,7 +144,8 @@ assert.equal(
     eligible: false,
     ineligibleReason: 'UNDER_MIN_DISTANCE',
   }),
-  `${TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE} (편도 29.9km)`,
+  // R11: "…신청할 수 있어요.(편도 Nkm)"
+  '편도 30km 이상 이동한 경우에만 교통비를 신청할 수 있어요.(편도 29.9km)',
 )
 assert.equal(
   individualTransportIneligibleNotice({
@@ -153,7 +153,13 @@ assert.equal(
     eligible: false,
     ineligibleReason: 'ADDRESS_MISSING',
   }),
-  TRANSPORTATION_ADDRESS_MISSING_MESSAGE,
+  '자택 주소 또는 교육 장소를 확인할 수 없어 교통비를 신청할 수 없어요. 회원정보의 자택 주소를 확인해 주세요.',
+)
+// R5: 정산 행 안내와 서버 오류 문구가 다르다
+assert.equal(individualIneligibleRowMessage('SUBMISSION_DEADLINE_PASSED'), '영수증 제출기한이 마감되었어요')
+assert.equal(
+  individualIneligibleMessage('SUBMISSION_DEADLINE_PASSED'),
+  '프로그램 운영이 종료되어 영수증을 제출할 수 없어요',
 )
 
 const distanceAxios = Object.assign(new Error('bad request'), {
@@ -162,10 +168,10 @@ const distanceAxios = Object.assign(new Error('bad request'), {
     status: 400,
     data: {
       success: false,
-      message: '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.',
+      message: '편도 30km 이상 이동한 경우에만 교통비를 신청할 수 있어요.',
       error: {
         code: 'TRANSPORTATION_DISTANCE_NOT_ELIGIBLE',
-        message: '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.',
+        message: '편도 30km 이상 이동한 경우에만 교통비를 신청할 수 있어요.',
         field: 'items',
       },
     },
@@ -174,7 +180,7 @@ const distanceAxios = Object.assign(new Error('bad request'), {
 assert.equal(readIndividualSettlementErrorCode(distanceAxios), 'TRANSPORTATION_DISTANCE_NOT_ELIGIBLE')
 assert.equal(
   individualSettlementApiErrorMessage(distanceAxios),
-  '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.',
+  '편도 30km 이상 이동한 경우에만 교통비를 신청할 수 있어요.',
 )
 
 // 봉사자 — 일정 미종료 문구만 봉사 기준, 나머지 사유는 공통 문구

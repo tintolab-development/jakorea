@@ -59,7 +59,7 @@ const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
 function lectureProgressAccent(
   label: ParticipatingInstructorSettlementApiRow['lectureProgressLabel']
 ): string {
-  return label === '진행 완료' ? STATUS_ACCENT_DEFAULT : STATUS_ACCENT_SCHEDULED
+  return label === '진행 예정' ? STATUS_ACCENT_SCHEDULED : STATUS_ACCENT_DEFAULT
 }
 
 /** 일반 기관형 Figma 06-2/11 — 확인 처리되지 않은 항목만 있을 때 지급조서 일괄 다운로드 */
@@ -72,12 +72,27 @@ export const PAYMENT_STATEMENT_ISSUE_BLOCKED_ALERT = {
 export const PAYMENT_STATEMENT_NOT_APPLICABLE_LABEL = '해당 없음'
 
 function isPaymentStatementNotApplicable(row: ParticipatingInstructorSettlementApiRow): boolean {
-  return row.lectureProgressLabel === '진행 예정' || !row.hasPaymentStatementApplication
+  return (
+    row.isNotApplied ||
+    row.lectureProgressLabel === '진행 예정' ||
+    !row.hasPaymentStatementApplication
+  )
+}
+
+/** 미신청 행·진행 예정 행은 [지급조서 보기]를 비활성화한다 */
+function isPaymentStatementViewDisabled(row: ParticipatingInstructorSettlementApiRow): boolean {
+  return row.isNotApplied || row.lectureProgressLabel === '진행 예정'
 }
 
 function formatSettlementAmount(amount: number | null): string {
   if (amount == null) return '-'
   return `${formatNumberDisplay(amount)}원`
+}
+
+/** 미신청 행·진행 예정 행은 정산 예정 금액을 '-'로 표시한다 */
+function formatRowSettlementAmount(row: ParticipatingInstructorSettlementApiRow): string {
+  if (isPaymentStatementViewDisabled(row)) return '-'
+  return formatSettlementAmount(row.scheduledSettlementAmount)
 }
 
 function renderPaymentStatementProcessingStatus(
@@ -143,7 +158,7 @@ function buildSettlementExportColumns(
     {
       title: '정산 예정 금액',
       key: 'scheduledSettlementAmount',
-      render: (_: unknown, record) => formatSettlementAmount(record.scheduledSettlementAmount),
+      render: (_: unknown, record) => formatRowSettlementAmount(record),
     },
   ]
 }
@@ -349,7 +364,7 @@ export function ParticipatingInstructorSettlementSection({
         width: 140,
         render: (_: unknown, record) => (
           <span className="participating-instructor-settlement-section__amount-dash">
-            {formatSettlementAmount(record.scheduledSettlementAmount)}
+            {formatRowSettlementAmount(record)}
           </span>
         ),
       },
@@ -366,6 +381,7 @@ export function ParticipatingInstructorSettlementSection({
               size="h32"
               disabled={
                 !remoteEnabled ||
+                isPaymentStatementViewDisabled(record) ||
                 (isInstitutionSurface && isPaymentStatementNotApplicable(record))
               }
               onClick={() => paymentStatementView.handleOpen(record)}

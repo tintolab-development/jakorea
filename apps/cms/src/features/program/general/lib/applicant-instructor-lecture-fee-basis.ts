@@ -27,12 +27,12 @@ export const LECTURE_FEE_BASIS_TYPE_OPTIONS: {
 /** 지급 기준 값 — `출강 1회당` = API PER_LECTURE (기본값). PER_SESSION은 기존 데이터 읽기 전용 */
 export const DEFAULT_LECTURE_FEE_MEASURE = '출강 1회당'
 
-/** 지급 기준 값 — `1시간 당` = API PER_HOUR. BE: 레거시 PER_HOUR는 시급 비례가 아니라 차시당 단가 */
+/** 지급 기준 값 — `1시간 당` = API PER_CLASS. 레거시 PER_HOUR도 같은 차시당 단가 */
 export const PER_HOUR_LECTURE_FEE_MEASURE = '1시간 당'
 
 /**
  * 특강 강사비·기타 인건비 선택 시 지급 기준 옵션 — 모든 프로그램 유형 공통 「차시당 / 출강 1회당」
- * (기획 11/10, CMS-FUNC-0076·0473·0474). 값은 API 매핑(PER_HOUR·PER_LECTURE)에 쓰이므로 그대로 두고 라벨만 정한다.
+ * (기획 11/10, CMS-FUNC-0076·0473·0474). 값은 API 매핑(PER_CLASS·PER_LECTURE)에 쓰이므로 그대로 두고 라벨만 정한다.
  */
 export const LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] = [
   { value: PER_HOUR_LECTURE_FEE_MEASURE, label: '차시당' },
@@ -100,7 +100,10 @@ export function lectureFeeBasisTypeLabel(type: ApplicantInstructorLectureFeeBasi
   return LECTURE_FEE_BASIS_TYPE_LABEL[type]
 }
 
-/** GET `feePolicy.basisType` — `PROGRAM`/`program`은 프로그램 기준. RECRUITMENT만 특강. */
+/**
+ * GET `feePolicy.basisType` — `PROGRAM`/`program`은 프로그램 기준, `SPECIAL_LECTURE`·`OTHER_LABOR`(대소문자 무관).
+ * 옛 값 RECRUITMENT는 특강으로 표시하지만, 서버는 특강·기타를 구분할 수 없어 프로그램 기준으로 계산한다.
+ */
 export function parseLectureFeeBasisTypeFromApi(
   raw?: string | null
 ): ApplicantInstructorLectureFeeBasisType | undefined {
@@ -187,14 +190,17 @@ export type InstructorApplicationFeePolicyContext = {
   programWageGradeRows?: Array<{ grade: string; pricing: string }>
 }
 
-export type ApiInstructorFeePolicyBasisType = 'PROGRAM' | 'RECRUITMENT'
-/** 출강 1회당은 PER_LECTURE로 보낸다. PER_SESSION은 기존 데이터 읽기 전용(백엔드가 신규 입력을 거절). */
-export type ApiInstructorFeePolicyMeasure = 'PER_LECTURE' | 'PER_HOUR' | 'FIXED'
+/** RECRUITMENT는 보내지 않는다 — 서버가 특강·기타를 구분하지 못해 프로그램 기준으로 계산한다 */
+export type ApiInstructorFeePolicyBasisType = 'PROGRAM' | 'SPECIAL_LECTURE' | 'OTHER_LABOR'
+/** 출강 1회당 PER_LECTURE, 차시당 PER_CLASS. PER_SESSION은 서버가 422로 거절한다. */
+export type ApiInstructorFeePolicyMeasure = 'PER_LECTURE' | 'PER_CLASS' | 'FIXED'
 
 export function toApiInstructorFeePolicyBasisType(
   basisType: ApplicantInstructorLectureFeeBasisType
 ): ApiInstructorFeePolicyBasisType {
-  return basisType === 'program' ? 'PROGRAM' : 'RECRUITMENT'
+  if (basisType === 'special_lecture') return 'SPECIAL_LECTURE'
+  if (basisType === 'other_labor') return 'OTHER_LABOR'
+  return 'PROGRAM'
 }
 
 export function toApiInstructorFeePolicyMeasure(
@@ -206,16 +212,16 @@ export function toApiInstructorFeePolicyMeasure(
     const unit = (programCalculationUnit ?? 'PER_HOUR').trim().toUpperCase()
     if (unit === 'PER_SESSION' || unit === 'SESSION' || unit === 'PER_LECTURE') return 'PER_LECTURE'
     if (unit === 'FIXED') return 'FIXED'
-    return 'PER_HOUR'
+    return 'PER_CLASS'
   }
 
   const normalized = normalizeLectureFeeMeasure(uiMeasure ?? undefined, basisType)
   const upper = normalized.trim().toUpperCase()
   if (upper === 'PER_SESSION' || upper === 'SESSION' || upper === 'PER_LECTURE') return 'PER_LECTURE'
-  if (upper === 'PER_HOUR' || upper === 'HOUR') return 'PER_HOUR'
+  if (upper === 'PER_HOUR' || upper === 'HOUR' || upper === 'PER_CLASS') return 'PER_CLASS'
   if (upper === 'FIXED') return 'FIXED'
   if (normalized === DEFAULT_LECTURE_FEE_MEASURE) return 'PER_LECTURE'
-  if (normalized === PER_HOUR_LECTURE_FEE_MEASURE) return 'PER_HOUR'
+  if (normalized === PER_HOUR_LECTURE_FEE_MEASURE) return 'PER_CLASS'
   return 'PER_LECTURE'
 }
 
@@ -237,7 +243,7 @@ export function resolveProgramBasisFeePolicyFromWageRows(
   const amount = parseWageGradeAmount(pricing)
   if (amount == null || amount < 0) return null
 
-  const measure = /1시간/.test(pricing ?? '') ? 'PER_HOUR' : 'PER_LECTURE'
+  const measure = /1시간|차시/.test(pricing ?? '') ? 'PER_CLASS' : 'PER_LECTURE'
   return { amount, measure }
 }
 
