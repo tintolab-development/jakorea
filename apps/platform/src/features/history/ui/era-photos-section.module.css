@@ -39,7 +39,8 @@
 .year {
   grid-area: year;
   z-index: 2;
-  margin: 0 0 -20px;
+  /* 모바일: 연도와 사진을 겹치지 않게 분리한다(QA-0459). PC는 아래 절대 배치로 덮어쓴다. */
+  margin: 0 0 var(--spacing-8);
   color: rgb(255 255 255 / 8%);
   font-family: var(--font-family-number);
   font-size: 80px;
