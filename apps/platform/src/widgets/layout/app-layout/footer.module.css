@@ -94,6 +94,25 @@
   transition: transform 160ms ease;
 }
 
+.relatedSitesChevronMobile {
+  width: 20px;
+  height: 20px;
+}
+
+.relatedSitesChevronDesktop {
+  display: none;
+}
+
+@media (--bp-pc-up) {
+  .relatedSitesChevronMobile {
+    display: none;
+  }
+
+  .relatedSitesChevronDesktop {
+    display: block;
+  }
+}
+
 .relatedSitesChevronOpen {
   transform: rotate(180deg);
 }
