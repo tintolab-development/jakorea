@@ -23,11 +23,14 @@ export type {
 
 export class AdminLoginApiError extends Error {
   readonly code: string
+  /** 서버 `error.field` (입력 검증 실패 시 `email`·`password` 등) */
+  readonly field?: string
 
-  constructor(code: string, message: string) {
+  constructor(code: string, message: string, field?: string) {
     super(message)
     this.name = 'AdminLoginApiError'
     this.code = code
+    this.field = field
   }
 }
 
@@ -40,13 +43,15 @@ function parseLoginError(
   }
   if (payload && typeof payload === 'object') {
     const o = payload as Record<string, unknown>
-    const wrapped = o.error as { code?: string; message?: string } | undefined
+    const wrapped = o.error as { code?: string; message?: string; field?: unknown } | undefined
     const code = wrapped?.code ?? (typeof o.code === 'string' ? o.code : 'UNKNOWN')
     const message =
       wrapped?.message ??
       (typeof o.message === 'string' ? o.message : undefined) ??
       '로그인에 실패했습니다.'
-    return new AdminLoginApiError(String(code), message)
+    const field =
+      typeof wrapped?.field === 'string' && wrapped.field.trim() ? wrapped.field.trim() : undefined
+    return new AdminLoginApiError(String(code), message, field)
   }
   return new AdminLoginApiError('UNKNOWN', '로그인에 실패했습니다.')
 }

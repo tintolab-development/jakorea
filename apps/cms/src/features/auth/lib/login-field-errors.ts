@@ -38,9 +38,8 @@ function extractLoginErrorField(error: unknown): string | undefined {
   }
 
   if (error instanceof AdminLoginApiError) {
-    const apiError = error as AdminLoginApiError & { field?: string }
-    if (typeof apiError.field === 'string' && apiError.field.trim()) {
-      return apiError.field.trim()
+    if (typeof error.field === 'string' && error.field.trim()) {
+      return error.field.trim()
     }
   }
 
@@ -67,7 +66,33 @@ function getLoginErrorPayload(error: unknown): unknown {
   return undefined
 }
 
+/** 입력 검증 실패(400 `VALIDATION_FAILED`) — 서버 `message`를 그대로 쓴다 (QA-0478) */
+function resolveLoginValidationMessage(error: unknown): string | undefined {
+  const code = error ? extractAdminLoginErrorCode(getLoginErrorPayload(error)) : undefined
+  if (code?.toUpperCase() !== 'VALIDATION_FAILED') return undefined
+  if (error instanceof AdminLoginApiError) {
+    return error.message.trim() || undefined
+  }
+  if (isAxiosError(error)) {
+    const payload = error.response?.data as
+      | { message?: unknown; error?: { message?: unknown } }
+      | undefined
+    const message = payload?.error?.message ?? payload?.message
+    return typeof message === 'string' && message.trim() ? message.trim() : undefined
+  }
+  return undefined
+}
+
 export function applyLoginFieldErrors(form: FormInstance, error?: unknown): void {
+  const validationMessage = resolveLoginValidationMessage(error)
+  if (validationMessage) {
+    const field = extractLoginErrorField(error)?.toLowerCase()
+    form.setFields([
+      { name: field === 'email' ? 'email' : 'password', errors: [validationMessage] },
+    ])
+    return
+  }
+
   const target = resolveLoginFieldErrorTarget(error)
   const fields: Array<{ name: LoginFieldName; errors: string[] }> = []
 
