@@ -8,6 +8,7 @@ import {
   buildMealBasisDetail,
   buildTravelBasisDetail,
   buildWithholdingBasisDetail,
+  isGenericLectureFeeCategoryLabel,
   isSupportedBasisDetailLayout,
   mapTransportationSnapshotToBasisDetail,
   DISTANCE_SNAPSHOT_UNLINKED_NOTICE,
@@ -630,5 +631,15 @@ describe('payment-order-calculation-basis-detail', () => {
         { remoteData: true }
       )
     ).toBe(remote)
+  })
+})
+
+describe('isGenericLectureFeeCategoryLabel', () => {
+  it("'강사비'·'강의비'·'-'·빈 값은 generic, 급수 라벨은 아니다", () => {
+    expect(isGenericLectureFeeCategoryLabel('강사비')).toBe(true)
+    expect(isGenericLectureFeeCategoryLabel('강의비')).toBe(true)
+    expect(isGenericLectureFeeCategoryLabel('-')).toBe(true)
+    expect(isGenericLectureFeeCategoryLabel('')).toBe(true)
+    expect(isGenericLectureFeeCategoryLabel('1급 강사비')).toBe(false)
   })
 })

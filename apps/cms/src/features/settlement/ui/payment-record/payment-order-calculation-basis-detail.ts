@@ -730,7 +730,7 @@ export function buildLectureFeeTierBasisDetail(
   }
 }
 
-const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강사비', '—', '-'])
+const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강의비', '—', '-'])
 
 export function isGenericLectureFeeCategoryLabel(title: string | null | undefined): boolean {
   const normalized = title?.trim()
