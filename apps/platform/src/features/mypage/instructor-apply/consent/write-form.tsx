@@ -208,10 +208,10 @@ export function SchemaConsentWriteForm({
     }
   }, [lockedBasic, templateId])
   const paymentStatementProfileValues = useMemo(() => {
-    if (submitContext !== 'instructorApply' || templateId !== 'agreement-third-party') {
+    if (templateId !== 'agreement-third-party') {
       return null
     }
-    const draft = loadInstructorApplyFormDraft()
+    const draft = submitContext === 'instructorApply' ? loadInstructorApplyFormDraft() : null
     const memberType = lockedBasic.memberType || draft?.memberType
     return buildPaymentStatementProfileLinkedValues({
       name: lockedBasic.name || draft?.name,

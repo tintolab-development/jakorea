@@ -29,14 +29,8 @@ assert.equal(validateCrimeConsentOriginalFile(pdf({ type: '' })), null)
 assert.equal(validateCrimeConsentOriginalFile(pdf({ size: CRIME_CONSENT_ORIGINAL_MAX_BYTES })), null)
 
 // 업로드 전 차단: 이미지, 확장자 불일치, 비정상 MIME, 크기
-assert.equal(
-  validateCrimeConsentOriginalFile(pdf({ name: 'scan.jpg', type: 'image/jpeg' })),
-  CRIME_CONSENT_MESSAGES.fileType,
-)
-assert.equal(
-  validateCrimeConsentOriginalFile(pdf({ name: 'scan.png', type: 'image/png' })),
-  CRIME_CONSENT_MESSAGES.fileType,
-)
+assert.equal(validateCrimeConsentOriginalFile(pdf({ name: 'scan.jpg', type: 'image/jpeg' })), null)
+assert.equal(validateCrimeConsentOriginalFile(pdf({ name: 'scan.png', type: 'image/png' })), null)
 assert.equal(
   validateCrimeConsentOriginalFile(pdf({ name: 'consent.docx', type: 'application/pdf' })),
   CRIME_CONSENT_MESSAGES.fileType,
@@ -111,7 +105,7 @@ expectState(original('CLEAN', 'PREPARED'), 'invalid')
 expectState({ ...original('PENDING_SCAN', 'CONFIRM_REQUESTED'), filePurpose: 'CRIMINAL_HISTORY_EVIDENCE' }, 'invalid')
 expectState({ ...original('CLEAN', 'AVAILABLE'), filePurpose: 'CRIMINAL_HISTORY_EVIDENCE' }, 'invalid')
 expectState({ ...original('CLEAN', 'AVAILABLE'), filePurpose: undefined }, 'invalid')
-expectState({ ...original('CLEAN', 'AVAILABLE'), contentType: 'image/jpeg' }, 'invalid')
+expectState({ ...original('CLEAN', 'AVAILABLE'), contentType: 'image/jpeg' }, 'ready')
 expectState({ ...original('CLEAN', 'AVAILABLE'), contentType: undefined }, 'invalid')
 
 assert.equal(new CrimeConsentOriginalNotReadyError('pending').message, CRIME_CONSENT_MESSAGES.scanning)

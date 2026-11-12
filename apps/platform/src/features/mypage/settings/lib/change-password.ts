@@ -1,4 +1,4 @@
-import { isValidPassword } from '@/features/auth/sign-up'
+import { isValidMemberPassword, MEMBER_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
 
 export type SettingsChangePasswordField = 'current' | 'new' | 'confirm'
 
@@ -37,10 +37,10 @@ export function validateSettingsChangePassword(input: {
     }
   }
 
-  if (!isValidPassword(newPassword)) {
+  if (!isValidMemberPassword(newPassword)) {
     return {
       field: 'new',
-      message: '영문, 숫자, 특수문자를 조합해 12자 이상 입력해 주세요.',
+      message: MEMBER_PASSWORD_HELP_TEXT,
     }
   }
 

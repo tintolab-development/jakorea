@@ -178,7 +178,7 @@ export function mapPortalProfileToSettingsView(
         { label: '성별', value: formatSettingsGender(profile.gender) },
         { label: '소속/학교', value: formatSettingsText(affiliation) },
         { label: '재직 현황', value: formatSettingsEmployment(profile.teacherEmploymentStatus) },
-        { label: 'Email', value: formatSettingsText(profile.email) },
+        { label: '이메일 ID', value: formatSettingsText(profile.email) },
       ],
       guardian: null,
     }
@@ -207,7 +207,7 @@ export function mapPortalProfileToSettingsView(
       { label: '재학유무', value: enrollment },
       ...schoolRows,
       { label: '자택 주소', value: address || EMPTY_SETTINGS_VALUE },
-      { label: 'Email', value: formatSettingsText(profile.email) },
+      { label: '이메일 ID', value: formatSettingsText(profile.email) },
       { label: '1365 ID', value: volunteerId, action: '1365-shortcut' },
     ],
     guardian: guardian ?? null,

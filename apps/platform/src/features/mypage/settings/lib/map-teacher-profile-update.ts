@@ -20,7 +20,6 @@ export function mapTeacherSettingsEditToPortalProfileUpdate(
 
   return {
     schoolName,
-    affiliationName: schoolName,
     ...(schoolOrganizationId == null ? {} : { schoolOrganizationId }),
     ...(schoolSelection ? { schoolSelection } : {}),
     teacherEmploymentStatus: form.employmentStatus,
