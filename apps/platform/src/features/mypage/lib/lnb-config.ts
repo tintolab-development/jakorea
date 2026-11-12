@@ -20,6 +20,11 @@ const INSTRUCTOR_LNB_ITEMS: Omit<MypageLnbItem, 'active'>[] = [
   { key: 'inquiries', label: '문의내역', enabled: true },
 ]
 
+/** 교사 회원·교사 겸직 강사 — 봉사자 모집 신청 대상이 아니므로 봉사현황 탭을 두지 않는다 */
+function withoutVolunteer(items: Omit<MypageLnbItem, 'active'>[]): Omit<MypageLnbItem, 'active'>[] {
+  return items.filter(item => item.key !== 'volunteer')
+}
+
 function withActive(
   items: Omit<MypageLnbItem, 'active'>[],
   activeKey: MypageLnbItemKey,
@@ -38,9 +43,10 @@ export function getMypageLnbItems(
     case 'individual':
       return withActive(GENERAL_LNB_ITEMS, activeKey)
     case 'instructor_only':
-    case 'instructor_dual':
       return withActive(INSTRUCTOR_LNB_ITEMS, activeKey)
+    case 'instructor_dual':
+      return withActive(withoutVolunteer(INSTRUCTOR_LNB_ITEMS), activeKey)
     case 'school_teacher':
-      return withActive(GENERAL_LNB_ITEMS, activeKey)
+      return withActive(withoutVolunteer(GENERAL_LNB_ITEMS), activeKey)
   }
 }

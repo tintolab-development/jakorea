@@ -21,9 +21,16 @@ const INSTRUCTOR_KEYS = [
 ] as const
 
 assert.deepEqual(keysOf('individual'), [...GENERAL_KEYS])
-assert.deepEqual(keysOf('school_teacher'), [...GENERAL_KEYS])
 assert.deepEqual(keysOf('instructor_only'), [...INSTRUCTOR_KEYS])
-assert.deepEqual(keysOf('instructor_dual'), [...INSTRUCTOR_KEYS])
+// 교사 회원·교사 겸직 강사 — 봉사현황 비노출
+assert.deepEqual(
+  keysOf('school_teacher'),
+  GENERAL_KEYS.filter(key => key !== 'volunteer'),
+)
+assert.deepEqual(
+  keysOf('instructor_dual'),
+  INSTRUCTOR_KEYS.filter(key => key !== 'volunteer'),
+)
 
 assert.equal(keysOf('individual').includes('lectures'), false)
 assert.equal(keysOf('individual').includes('settlement'), false)
