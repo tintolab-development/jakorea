@@ -16,6 +16,7 @@ import {
   TrainedTeachersRegistrationTypeSettingsParagraph,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers'
 import { TrainedTeachersEducationJournalSettingsRow } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-journal-settings-row'
+import { TEACHER_TRAINING_BLOCK_LABEL } from '@/features/program/trained-teachers/lib/teacher-training-block'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph'
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
@@ -255,8 +256,10 @@ export function renderProgramRegistrationParagraphBody(
               participationScheduleDetail={options.participationScheduleDetail}
               ipsScheduleDetail={options.ipsScheduleDetail}
               scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
-              preEducationBlockLabel="교육 연수"
-              preEducationDisplayMode="replaceFirst"
+              // 시안 9899:221372 — ■ 교사 연수 별도 블록(진행 일정·교육 형태·IPS 고정) + ■1차시…
+              preEducationBlockLabel={TEACHER_TRAINING_BLOCK_LABEL}
+              preEducationDisplayMode="prepend"
+              hidePreEducationScheduleName
               hideAssignmentSettings
             />
           </>

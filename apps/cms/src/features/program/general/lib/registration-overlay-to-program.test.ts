@@ -429,7 +429,7 @@ describe('normalizeRegistrationOverlayForApply', () => {
 })
 
 describe('trained teacher curriculum overlay', () => {
-  it('replaces the first session with 교육 연수 without prepending an extra block', () => {
+  it('교사 연수는 별도 블록 — 차시를 대체하지 않고 ■1차시부터 화면 순서로 남긴다', () => {
     const overlay = normalizeRegistrationOverlayForApply(
       {
         'trainedTeachersRegistration.educationCurriculum.unitNameBySession': {
@@ -454,14 +454,10 @@ describe('trained teacher curriculum overlay', () => {
 
     expect(next.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
     expect(next.generalCommonInfo?.curriculumSessions).toEqual([
-      expect.objectContaining({
-        sessionLabel: '교육 연수',
-        title: '단원1',
-        description: '내용1',
-        ipsTypeSummary: 'Prepare | 해당없음',
-      }),
+      expect.objectContaining({ sessionLabel: '1차시', title: '단원1', description: '내용1' }),
       expect.objectContaining({ sessionLabel: '2차시', title: '단원2', description: '내용2' }),
     ])
+    expect(next.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBeUndefined()
   })
 })
 
