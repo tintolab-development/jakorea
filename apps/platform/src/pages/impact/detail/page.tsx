@@ -169,7 +169,7 @@ export function ImpactStoryDetailPage() {
         <div className={styles.layout}>
           <header className={styles.header}>
             <div className={styles.headerLead}>
-              <PFCategoryBadge size="large" variant="primary">
+              <PFCategoryBadge size="large" variant="primary" className={styles.categoryBadge}>
                 {detail.categoryLabel}
               </PFCategoryBadge>
 

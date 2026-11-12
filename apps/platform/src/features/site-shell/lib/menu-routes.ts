@@ -46,8 +46,10 @@ export type GnbMenuCode = keyof typeof GNB_MENU_ROUTES
 /** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 메뉴 표기. */
 export const GNB_DESIGN_LABEL_OVERRIDES: Partial<Record<GnbMenuCode, string>> = {
   JA_DIRECTIONS: '오시는 길',
+  EDU_CAREER: '진로·취업',
+  EDU_ECONOMY: '경제·금융',
   EDU_ENTREPRENEURSHIP: '기업가정신',
-  EDU_DIGITAL_LITERACY: '디지털리터러시',
+  EDU_DIGITAL_LITERACY: '디지털 리터러시',
   EDU_MATERIAL: '교재',
   IMPACT_STORY: '임팩트 스토리',
 }
@@ -83,6 +85,14 @@ export const GNB_DESIGN_CHILD_ORDER: Partial<Record<GnbGroupCode, readonly strin
     'JA_PEOPLE',
     'JA_DIRECTIONS',
   ],
+  IMPACT_STORY: ['IMPACT_STORY'],
+  EDUCATION: [
+    'EDU_CAREER',
+    'EDU_ECONOMY',
+    'EDU_ENTREPRENEURSHIP',
+    'EDU_DIGITAL_LITERACY',
+    'EDU_MATERIAL',
+  ],
   PARTICIPATION: ['PARTICIPATION_APPLY', 'PARTICIPATION_ONLINE', 'PARTICIPATION_ALUMNI'],
 }
 
@@ -117,8 +127,8 @@ export const gnbFallbackGroups = [
     groupCode: 'EDUCATION',
     label: '교육 소개',
     children: [
-      { menuCode: 'EDU_CAREER', label: '진로취업', href: '/education/career' },
-      { menuCode: 'EDU_ECONOMY', label: '경제금융', href: '/education/finance' },
+      { menuCode: 'EDU_CAREER', label: '진로·취업', href: '/education/career' },
+      { menuCode: 'EDU_ECONOMY', label: '경제·금융', href: '/education/finance' },
       {
         menuCode: 'EDU_ENTREPRENEURSHIP',
         label: '기업가정신',
@@ -126,7 +136,7 @@ export const gnbFallbackGroups = [
       },
       {
         menuCode: 'EDU_DIGITAL_LITERACY',
-        label: '디지털리터러시',
+        label: '디지털 리터러시',
         href: '/education/digital-literacy',
       },
       { menuCode: 'EDU_MATERIAL', label: '교재', href: '/education/textbooks' },
