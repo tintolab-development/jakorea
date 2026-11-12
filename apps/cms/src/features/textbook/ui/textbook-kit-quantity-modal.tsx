@@ -12,12 +12,13 @@ import {
 } from '@/features/textbook/lib/kit-quantity'
 import './textbook-kit-quantity-modal.css'
 
+/** 시안: 라벨 · 필수(*) · 기본값 24/24/24/32/32 (서버 저장값이 없을 때만 기본값) */
 const KIT_LEVELS = [
   { key: 'kindergarten', label: '유아', defaultValue: '24' },
-  { key: 'elementary', label: '초등', defaultValue: '24' },
-  { key: 'middle', label: '중등', defaultValue: '24' },
-  { key: 'high', label: '고등', defaultValue: '32' },
-  { key: 'university', label: '대학', defaultValue: '32' },
+  { key: 'elementary', label: '초등학교', defaultValue: '24' },
+  { key: 'middle', label: '중학교', defaultValue: '24' },
+  { key: 'high', label: '고등학교', defaultValue: '32' },
+  { key: 'university', label: '대학교', defaultValue: '32' },
 ] as const
 
 type KitLevelKey = (typeof KIT_LEVELS)[number]['key']
@@ -36,7 +37,16 @@ export const EMPTY_KIT_QUANTITIES: TextbookKitQuantityValues = {
   university: '',
 }
 
-const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...EMPTY_KIT_QUANTITIES })
+/** 서버 저장값이 있는 칸은 그대로, 빈 칸만 기본값으로 채운다 */
+export function withKitQuantityDefaults(
+  values: TextbookKitQuantityValues | undefined
+): TextbookKitQuantityValues {
+  return KIT_LEVELS.reduce((acc, level) => {
+    const raw = values?.[level.key] ?? ''
+    acc[level.key] = raw.trim() ? raw : level.defaultValue
+    return acc
+  }, {} as TextbookKitQuantityValues)
+}
 
 function isValidKitQuantity(value: string): boolean {
   return isValidKitQuantityInput(value)
@@ -59,9 +69,11 @@ export function TextbookKitQuantityModal({
   onCancel,
   onConfirm,
 }: TextbookKitQuantityModalProps) {
-  const [quantities, setQuantities] = useState<TextbookKitQuantityValues>(
-    () => values ?? createDefaultQuantities()
+  const [quantities, setQuantities] = useState<TextbookKitQuantityValues>(() =>
+    withKitQuantityDefaults(values)
   )
+  /** 열 때는 오류를 보이지 않고 [설정] 클릭 시에만 범위 검증 결과를 보인다 */
+  const [showValidation, setShowValidation] = useState(false)
   /** QA-0111: 거부된 입력(문자·부호·소수점·자릿수 초과) 안내 — 값은 바꾸지 않는다 */
   const [rejectedInput, setRejectedInput] = useState<
     Partial<Record<KitLevelKey, 'invalid-char' | 'too-long'>>
@@ -69,15 +81,23 @@ export function TextbookKitQuantityModal({
 
   useEffect(() => {
     if (open) {
-      setQuantities(values ?? createDefaultQuantities())
+      setQuantities(withKitQuantityDefaults(values))
       setRejectedInput({})
+      setShowValidation(false)
     }
   }, [open, values])
 
-  const hasInvalidQuantity =
-    loading ||
-    Boolean(loadError) ||
-    KIT_LEVELS.some(level => !isValidKitQuantity(quantities[level.key]))
+  const isUnavailable = loading || Boolean(loadError)
+  const hasInvalidQuantity = KIT_LEVELS.some(level => !isValidKitQuantity(quantities[level.key]))
+
+  const handleConfirm = () => {
+    if (isUnavailable) return
+    if (hasInvalidQuantity) {
+      setShowValidation(true)
+      return
+    }
+    onConfirm(quantities)
+  }
 
   return (
     <ContentModal
@@ -98,9 +118,9 @@ export function TextbookKitQuantityModal({
             variant="primary"
             size="large"
             type="button"
-            disabled={hasInvalidQuantity}
-            onClick={() => onConfirm(quantities)} >
-            확인
+            disabled={isUnavailable}
+            onClick={handleConfirm} >
+            설정
           </CmsButton>
         </div>
       }
@@ -114,7 +134,12 @@ export function TextbookKitQuantityModal({
       <div className="textbook-kit-quantity-modal__table">
         {KIT_LEVELS.map(level => (
           <div className="textbook-kit-quantity-modal__row" key={level.key}>
-            <div className="textbook-kit-quantity-modal__th">{level.label}</div>
+            <div className="textbook-kit-quantity-modal__th">
+              {level.label}
+              <span className="textbook-kit-quantity-modal__required" aria-hidden>
+                *
+              </span>
+            </div>
             <div className="textbook-kit-quantity-modal__td">
               <CmsNumericInput
                 className="textbook-kit-quantity-modal__input"
@@ -122,6 +147,7 @@ export function TextbookKitQuantityModal({
                 inputSize="medium"
                 width={'100%'}
                 aria-label={`${level.label} 키트 수량`}
+                aria-required
                 value={quantities[level.key]}
                 min={KIT_QUANTITY_MIN}
                 max={KIT_QUANTITY_MAX}
@@ -129,14 +155,15 @@ export function TextbookKitQuantityModal({
                 rejectInvalidInput
                 normalizeOnBlur={false}
                 error={
-                  Boolean(rejectedInput[level.key]) || !isValidKitQuantity(quantities[level.key])
+                  Boolean(rejectedInput[level.key]) ||
+                  (showValidation && !isValidKitQuantity(quantities[level.key]))
                 }
                 message={
                   rejectedInput[level.key] === 'invalid-char'
                     ? KIT_QUANTITY_INVALID_CHAR_MESSAGE
                     : rejectedInput[level.key] === 'too-long'
                       ? KIT_QUANTITY_TOO_LONG_MESSAGE
-                      : !isValidKitQuantity(quantities[level.key])
+                      : showValidation && !isValidKitQuantity(quantities[level.key])
                         ? KIT_QUANTITY_RANGE_MESSAGE
                         : undefined
                 }

@@ -6,9 +6,11 @@ export type TextbookListFilters = {
   educationTarget: string
   grade: string
   textbookName: string
-  /** 라디오 — 사용 / 미사용만 (전체 없음) */
-  useStatus: 'USED' | 'UNUSED'
+  /** 선택 박스 — 전체(`ALL`, 기본) / 사용 / 미사용 */
+  useStatus: TextbookUseStatusFilter
 }
+
+export type TextbookUseStatusFilter = 'ALL' | 'USED' | 'UNUSED'
 
 export const TEXTBOOK_LIST_PAGE_SIZE = DATA_MANAGEMENT_LIST_PAGE_SIZE
 
@@ -25,8 +27,9 @@ export function textbooksParamsFromFilters(
   const params: TextbooksParams = {
     page,
     size: TEXTBOOK_LIST_PAGE_SIZE,
-    useStatus: filters.useStatus,
   }
+
+  if (filters.useStatus !== 'ALL') params.useStatus = filters.useStatus
 
   if (filters.businessArea !== 'ALL') params.businessArea = filters.businessArea
   if (filters.educationTarget !== 'ALL') params.educationTarget = filters.educationTarget
@@ -38,8 +41,10 @@ export function textbooksParamsFromFilters(
   return params
 }
 
-export function parseTextbookUseStatus(raw: string | null): 'USED' | 'UNUSED' {
-  return raw === 'UNUSED' ? 'UNUSED' : 'USED'
+/** URL `tb_use` → 사용 여부 필터. 없거나 알 수 없는 값이면 전체(`ALL`) */
+export function parseTextbookUseStatus(raw: string | null | undefined): TextbookUseStatusFilter {
+  if (raw === 'USED' || raw === 'UNUSED') return raw
+  return 'ALL'
 }
 
 export function serializeTextbookFilters(filters: TextbookListFilters): string {

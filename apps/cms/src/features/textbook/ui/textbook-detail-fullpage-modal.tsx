@@ -210,9 +210,9 @@ function TextbookDetailFullPageModalInner({
                       role="group"
                       aria-label="등록일 정보"
                     >
-                      <span>{formatDate(textbook.registeredAt)}</span>
+                      <span>{formatDate(textbook.registeredAt || listTextbook?.registeredAt || '')}</span>
                       <DetailInfoForm.InputsSeparator />
-                      <span>{textbook.registrant}</span>
+                      <span>{resolveRegistrantName(textbook.registrant, listTextbook?.registrant)}</span>
                     </div>
                   }
                 />
@@ -451,10 +451,20 @@ function toSubmitPayload(form: TextbookEditForm): TextbookCreateInput | null {
   }
 }
 
+/** 상세 응답에 등록자명이 비어 있으면 목록 행 값으로 보인다(보기·수정 공통) */
+function resolveRegistrantName(detailName: string | undefined, listName: string | undefined): string {
+  const fromDetail = detailName?.trim() ?? ''
+  if (fromDetail && fromDetail !== '-') return fromDetail
+  const fromList = listName?.trim() ?? ''
+  return fromList || '-'
+}
+
+/** 시안: `YYYY.MM.DD(요일) HH:mm` (공백 없음) */
 function formatDate(iso: string): string {
+  if (!iso) return '-'
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return '-'
-  return `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}(${getWeekday(date)}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}(${getWeekday(date)}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 function getWeekday(date: Date): string {

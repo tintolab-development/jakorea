@@ -160,7 +160,7 @@ export function TextbookRegisterModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title={mode === 'edit' ? '교재 정보 수정' : '교재 등록'}
+      title={mode === 'edit' ? '교재 정보 수정' : '교재 신규 등록'}
       width={600}
       className="textbook-register-modal"
       wrapClassName="textbook-register-modal-wrap"
@@ -221,7 +221,7 @@ export function TextbookRegisterModal({
               required
               withAllOption={false}
               inputSize="large"
-              placeholder="사업 분야를 선택해 주세요."
+              placeholder="사업 분야를 선택해 주세요"
               value={form.businessArea || undefined}
               onChange={value =>
                 setForm(prev => ({
@@ -240,7 +240,7 @@ export function TextbookRegisterModal({
               mode="multiple"
               withAllOption={false}
               inputSize="large"
-              placeholder="교육 대상을 선택해 주세요."
+              placeholder="교육 대상을 선택해 주세요"
               value={form.educationTargets}
               onChange={value => {
                 const incoming = Array.isArray(value) ? value.map(String) : []
@@ -269,8 +269,8 @@ export function TextbookRegisterModal({
             inputSize="large"
             placeholder={
               form.educationTargets.length > 0
-                ? '대상 학년을 선택해 주세요.'
-                : '교육 대상을 선택해 주세요.'
+                ? '대상 학년을 선택해 주세요'
+                : '교육 대상을 선택해 주세요'
             }
             value={form.educationTargets.length > 0 ? form.grades ?? [] : []}
             disabled={form.educationTargets.length === 0}
