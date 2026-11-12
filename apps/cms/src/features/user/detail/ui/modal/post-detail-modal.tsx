@@ -4,7 +4,6 @@
  */
 
 import { useState, useMemo, useEffect, useId } from 'react'
-import { flushSync } from 'react-dom'
 import { Dropdown, Popover, type MenuProps } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import {
@@ -14,7 +13,11 @@ import {
   CommentComposer,
   ReactionUserList,
 } from '@/shared/ui'
-import { getReactionEmojiTypeForBarIndex } from '@/shared/ui/posts'
+import {
+  REACTION_EMOJI_ITEMS,
+  getReactionEmojiItemByType,
+  getReactionEmojiTypeForBarIndex,
+} from '@/shared/ui/posts'
 import type { ProgramPost, ProgramFile } from '@/types/domain'
 import { formatDateTimeDot } from '@/shared/utils/date'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
@@ -139,8 +142,8 @@ export function PostDetailModal({
   const [emojiActive, setEmojiActive] = useState(false)
   const [reactionPopoverOpen, setReactionPopoverOpen] = useState(false)
   const [readStatusPopoverOpen, setReadStatusPopoverOpen] = useState(false)
-  /** 피커 선택 이모지(단일). 전송 시 댓글 본문에는 넣지 않고 상단 게시글 반응 집계만 반영 */
-  const [selectedEmojiIndex, setSelectedEmojiIndex] = useState<number | null>(null)
+  /** 반응 저장·취소 요청 중 — 연속 클릭으로 요청이 겹치지 않게 막는다 */
+  const [reactionSubmitting, setReactionSubmitting] = useState(false)
   const [commentsVersion, setCommentsVersion] = useState(0)
   const [reactionsVersion, setReactionsVersion] = useState(0)
 
@@ -201,7 +204,6 @@ export function PostDetailModal({
 
   useEffect(() => {
     if (!open) {
-      setSelectedEmojiIndex(null)
       setEmojiActive(false)
       setReactionPopoverOpen(false)
       setReadStatusPopoverOpen(false)
@@ -209,21 +211,63 @@ export function PostDetailModal({
   }, [open])
 
   useEffect(() => {
-    setSelectedEmojiIndex(null)
     setReactionPopoverOpen(false)
     setReadStatusPopoverOpen(false)
     setReactionsVersion(0)
   }, [post?.id])
 
-  const handleEmojiSelect = (index: number) => {
-    flushSync(() => {
-      setSelectedEmojiIndex(prev => (prev === index ? null : index))
-    })
-    setEmojiActive(false)
-  }
-
   const viewerDisplayName = (commentAuthorName ?? '나').trim()
   const viewerRoleLabel = (commentAuthorRoleLabel ?? '학생').trim()
+
+  /** 저장된 내 반응 — 반응 사용자 목록에서 이름·역할로 찾는다(ReactionUserList 본인 판정과 같은 기준) */
+  const myReactionRow = reactionUsers.find(
+    row =>
+      row.authorName.trim() === viewerDisplayName && row.roleLabel.trim() === viewerRoleLabel
+  )
+  const myReactionItem = myReactionRow ? getReactionEmojiItemByType(myReactionRow.emojiType) : null
+  const myReactionIndex = myReactionItem ? REACTION_EMOJI_ITEMS.indexOf(myReactionItem) : -1
+
+  /**
+   * 반응은 고르는 즉시 저장(기획 회신 261113 #8, 사용자 화면 USER-FUNC-0119·0121과 같은 동작).
+   * 내 반응과 같은 이모지를 다시 고르면 취소, 다른 이모지면 교체. 별도 저장 버튼 없음.
+   */
+  const handleEmojiSelect = (index: number) => {
+    setEmojiActive(false)
+    if (!post || reactionSubmitting) return
+    const emojiType = getReactionEmojiTypeForBarIndex(index)
+    if (!emojiType) return
+    const isSameAsMine = myReactionIndex === index
+    if (useRemote) {
+      setReactionSubmitting(true)
+      void (async () => {
+        try {
+          if (isSameAsMine) await remoteDetail.removeReaction()
+          else await remoteDetail.putReaction(emojiType)
+          onPostStatsChanged?.()
+        } catch (error) {
+          cmsAlertModal.show({
+            title: isSameAsMine ? '반응 취소 실패' : '반응 등록 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              isSameAsMine ? '반응을 취소하지 못했습니다.' : '반응을 등록하지 못했습니다.'
+            ),
+          })
+        } finally {
+          setReactionSubmitting(false)
+        }
+      })()
+      return
+    }
+    if (isSameAsMine && myReactionRow) {
+      removeProgramPostReactionUser(post.id, myReactionRow.id)
+    } else {
+      addProgramPostReaction(post.id, commentAuthorName ?? '나', emojiType, {
+        roleLabel: viewerRoleLabel,
+      })
+    }
+    setReactionsVersion(v => v + 1)
+    onPostStatsChanged?.()
+  }
 
   const handleRemoveOwnReaction = (reactionUserId: string) => {
     if (!post) return
@@ -248,55 +292,22 @@ export function PostDetailModal({
   const handleSubmitComment = () => {
     if (!post) return
     const trimmed = commentInput.trim()
-    const hasEmojiSelection = selectedEmojiIndex != null
-    if (!trimmed && !hasEmojiSelection) {
-      return
-    }
-    const emojiType =
-      selectedEmojiIndex != null ? getReactionEmojiTypeForBarIndex(selectedEmojiIndex) : undefined
+    if (!trimmed) return
 
     if (useRemote) {
       void (async () => {
-        if (emojiType) {
-          try {
-            await remoteDetail.putReaction(emojiType)
-          } catch (error) {
-            setSelectedEmojiIndex(null)
-            cmsAlertModal.show({
-              title: '반응 등록 실패',
-              content: getGeneralProgramApiErrorMessage(error, '반응을 등록하지 못했습니다.'),
-            })
-            return
-          }
-        }
-        if (trimmed) {
-          await remoteDetail.createComment(trimmed)
-        }
+        await remoteDetail.createComment(trimmed)
         setCommentInput('')
-        setSelectedEmojiIndex(null)
         onPostStatsChanged?.()
       })()
       return
     }
 
-    if (!trimmed && emojiType) {
-      addProgramPostReaction(post.id, commentAuthorName ?? '나', emojiType, {
-        roleLabel: viewerRoleLabel,
-      })
-      setReactionsVersion(v => v + 1)
-      setSelectedEmojiIndex(null)
-      onPostStatsChanged?.()
-      return
-    }
-
     createProgramPostComment(post.id, commentAuthorName ?? '나', trimmed, {
-      ...(emojiType ? { emojiType } : {}),
       reactionRoleLabel: viewerRoleLabel,
     })
     setCommentsVersion(v => v + 1)
-    if (emojiType) setReactionsVersion(v => v + 1)
     setCommentInput('')
-    setSelectedEmojiIndex(null)
     onPostStatsChanged?.()
   }
 
@@ -470,8 +481,9 @@ export function PostDetailModal({
             onSubmit={handleSubmitComment}
             emojiPickerOpen={emojiActive}
             onEmojiToggle={() => setEmojiActive(prev => !prev)}
-            selectedEmojiIndex={selectedEmojiIndex}
+            selectedEmojiIndex={myReactionIndex >= 0 ? myReactionIndex : null}
             onEmojiSelect={handleEmojiSelect}
+            sendActive={commentInput.trim().length > 0}
           />
         </div>
 

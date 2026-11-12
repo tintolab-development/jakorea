@@ -1,0 +1,11 @@
+/** 강사·관리자 권한 반려 팝업 — 시안: 라벨 14/Medium #525252 · `*` 14/Bold */
+.instructor-permission-reject-modal .permission-modal__label {
+  color: var(--Content-secondary, #525252);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.instructor-permission-reject-modal .permission-modal__required {
+  font-size: 14px;
+  font-weight: 700;
+}

@@ -99,7 +99,14 @@ export interface MembersPermissionListProps {
   onInstructorApproveRequest?: (
     ctx:
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
+      | {
+          mode: 'bulk'
+          userIds: string[]
+          requestIds?: number[]
+          memberCount: number
+          /** 일괄 시 대표(첫) 회원명 — `[이름] 님 외 N명` */
+          displayName: string
+        }
   ) => void
   /** 강사 탭: 행 선택 후 [승인 반려] — 승인 대기 행만 대상 */
   onInstructorRejectRequest?: (
@@ -370,6 +377,7 @@ export const MembersPermissionList = forwardRef<
         userIds: pendingRows.map(r => r.userId),
         requestIds: pendingRows.map(r => r.requestId).filter((id): id is number => id != null),
         memberCount: pendingRows.length,
+        displayName: (pendingRows[0]?.name ?? '').trim() || '회원',
       })
       return
     }
@@ -599,7 +607,8 @@ export const MembersPermissionList = forwardRef<
     const dateField: FilterFieldConfig = {
       key: 'createdAtRange',
       type: 'dateRange',
-      label: '신청 시기',
+      /** 시안: 강사 권한 승인 목록 「신청일」 (관리자 탭은 기존 라벨 유지) */
+      label: memberType === 'admin' ? '신청 시기' : '신청일',
       width: '40%',
       defaultValue: null,
     }
