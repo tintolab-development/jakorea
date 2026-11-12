@@ -49,6 +49,7 @@ export const GNB_DESIGN_LABEL_OVERRIDES: Partial<Record<GnbMenuCode, string>> = 
   EDU_ENTREPRENEURSHIP: '기업가정신',
   EDU_DIGITAL_LITERACY: '디지털리터러시',
   EDU_MATERIAL: '교재',
+  IMPACT_STORY: '임팩트 스토리',
 }
 
 const KNOWN_GROUP_CODES = [
