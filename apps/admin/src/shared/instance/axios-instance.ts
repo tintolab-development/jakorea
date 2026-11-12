@@ -18,6 +18,7 @@ import {
 } from '@/features/auth/lib/refresh-credential'
 import {
   classifyRefreshFailure,
+  isRefreshAlreadyRotatedError,
   type RefreshSessionResult,
 } from '@/features/auth/lib/refresh-failure'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -297,7 +298,19 @@ async function refreshWithLatestCredential(startedWithRefreshToken: string | nul
   // 쿠키 세션에서 이 탭이 시작 때 쓰던 값을 다시 쓰지 않는다 — 다른 탭이 지운 rotate된 토큰일 수 있다.
   const tokenToUse =
     readRefreshToken() ?? (hasRefreshCredential() ? null : startedWithRefreshToken)
-  return postRefreshAndPersist(tokenToUse)
+  try {
+    return await postRefreshAndPersist(tokenToUse)
+  } catch (err) {
+    // 락 미지원 환경 등에서 동시 refresh에 진 경우(409 REFRESH_TOKEN_ALREADY_ROTATED, 서버 10초 유예 안):
+    // 승자가 rotate한 최신 refresh 수단으로 한 번만 다시 시도한다 (같은 값 재전송 금지 — 10초 뒤면 계정 전체 폐기).
+    if (isRefreshAlreadyRotatedError(err)) {
+      const latest = readRefreshToken()
+      if (latest && latest !== tokenToUse) return postRefreshAndPersist(latest)
+      // 쿠키 세션: 승자 응답의 Set-Cookie로 브라우저 쿠키가 이미 바뀌었을 수 있다. 본문 없이 한 번만.
+      if (!latest && tokenToUse == null && hasRefreshCredential()) return postRefreshAndPersist(null)
+    }
+    throw err
+  }
 }
 
 async function refreshAcrossTabs(startedWithRefreshToken: string | null): Promise<string> {
