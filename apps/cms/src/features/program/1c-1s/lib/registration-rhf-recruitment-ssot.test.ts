@@ -553,8 +553,9 @@ describe('1사1교 등록 기관 모집 RHF SSOT', () => {
         volunteer: false,
       })
     ).toEqual(
+      // RHF 강사 탭 공고 게시 미조작 = 미게시(QA-0121)라 기간 대신 모집 대상으로 확인한다
       expect.arrayContaining([
-        'recruit.instructor.programRangeSeal',
+        'recruit.instructor.recruitTargets',
         'recruit.instructor.inquiryContact',
         'recruit.instructor.notes',
       ])
