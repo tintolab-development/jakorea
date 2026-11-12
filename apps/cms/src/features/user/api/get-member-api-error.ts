@@ -44,7 +44,16 @@ const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
     '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
   [LECTURE_REPORT_NO_DOWNLOADABLE_FILES]: LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE,
+  /**
+   * 회원 등록·수정 생년월일 범위 (QA-0220) — 서버 문구와 같다. 서버 원문이 비었을 때만 쓴다.
+   * `BIRTH_DATE_TOO_OLD`(120세 초과)는 문구 기획 확인 대기라 매핑하지 않고 서버 원문·공통 문구를 그대로 쓴다.
+   */
+  BIRTH_DATE_FUTURE_NOT_ALLOWED: '생년월일은 오늘 이후 날짜로 입력할 수 없습니다.',
+  /** 본인인증 완료 회원의 성별·생년월일 CMS 수정 차단 (409, QA-0220) — 서버 문구와 같다 */
+  CMS_MEMBER_PROFILE_NOT_EDITABLE_AFTER_MEMBER_VERIFICATION:
+    '본인확인을 완료한 회원의 본인 소유 개인정보는 CMS에서 수정할 수 없습니다.',
 }
+
 
 export function isMemberDeleteCurrentPasswordInvalidError(error: unknown): boolean {
   if (error && typeof error === 'object' && 'response' in error) {

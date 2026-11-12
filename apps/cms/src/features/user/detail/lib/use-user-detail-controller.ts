@@ -107,7 +107,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { EDIT_MODE_REVEAL } from '@/shared/lib/privacy-unmask-purpose'
 import { useRevealedMemberOverlay } from '@/features/user/detail/lib/use-revealed-member-overlay'
-import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
+import {
+  MEMBER_DETAIL_SCREEN_CODE,
+  type MemberAdminCommentQueryData,
+} from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import {
   applyPrivacyUnmaskResponseToUser,
@@ -1106,13 +1109,13 @@ export function useUserDetailController({
     const fromCommentsCache =
       !fromUser && membersRemote && commentResource
         ? (
-            queryClient.getQueryData<{ latestComment?: string }>(
+            queryClient.getQueryData<MemberAdminCommentQueryData>(
               memberQueryKeys.comments(
                 commentResource.resourceId,
                 MEMBER_DETAIL_SCREEN_CODE,
                 commentResource.target
               )
-            )?.latestComment ?? ''
+            )?.comment ?? ''
           ).trim()
         : ''
     const existingComment = fromUser || fromCommentsCache || draft.adminComment
@@ -1177,29 +1180,18 @@ export function useUserDetailController({
           MEMBER_DETAIL_SCREEN_CODE,
           commentResource.target
         )
-        const cachedComments = queryClient.getQueryData<{
-          comments?: unknown[]
-          latestComment?: string
-          latestCommentDetail?: { commentId?: number; comment: string }
-        }>(commentsQueryKey)
+        // 대상·화면마다 코멘트 1건 (QA-0044)
+        const cachedComment =
+          queryClient.getQueryData<MemberAdminCommentQueryData>(commentsQueryKey)
         if (saveAction === 'delete') {
           // 내용을 비워 저장 → 기존 코멘트 DELETE (별도 삭제 버튼 없음)
-          const deletedCommentId = cachedComments?.latestCommentDetail?.commentId
           await deleteMemberAdminCommentRemote(commentResource.resourceId, {
-            existingCommentId: deletedCommentId,
+            existingCommentId: cachedComment?.commentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
             target: commentResource.target,
           })
           const cleared = { ...displayUser, adminComment: '' }
-          queryClient.setQueryData(commentsQueryKey, {
-            comments: (cachedComments?.comments ?? []).filter(
-              item =>
-                deletedCommentId == null ||
-                (item as { commentId?: number } | null)?.commentId !== deletedCommentId
-            ),
-            latestComment: undefined,
-            latestCommentDetail: undefined,
-          })
+          queryClient.setQueryData<MemberAdminCommentQueryData>(commentsQueryKey, null)
           void queryClient.invalidateQueries({ queryKey: commentsQueryKey })
           if (displayUser.memberId != null) {
             queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), cleared)
@@ -1215,32 +1207,21 @@ export function useUserDetailController({
           onMemberBasicInfoSaved?.(cleared, { skipListInvalidate: true })
           return
         }
+        // 등록 API 재호출 시 서버가 같은 건을 덮어쓴다 (조회·PATCH 분기 없음)
         const saved = await upsertMemberAdminCommentRemote(
           commentResource.resourceId,
           savedComment,
           {
-            existingCommentId: cachedComments?.latestCommentDetail?.commentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
             target: commentResource.target,
           }
         )
-        const commentId = saved.commentId ?? cachedComments?.latestCommentDetail?.commentId
+        const commentId = saved.commentId ?? cachedComment?.commentId
         const merged = { ...displayUser, adminComment: savedComment }
-        queryClient.setQueryData(
-          memberQueryKeys.comments(
-            commentResource.resourceId,
-            MEMBER_DETAIL_SCREEN_CODE,
-            commentResource.target
-          ),
-          {
-            comments: cachedComments?.comments ?? [],
-            latestComment: savedComment,
-            latestCommentDetail: {
-              comment: savedComment,
-              ...(commentId != null ? { commentId } : {}),
-            },
-          }
-        )
+        queryClient.setQueryData<MemberAdminCommentQueryData>(commentsQueryKey, {
+          comment: savedComment,
+          ...(commentId != null ? { commentId } : {}),
+        })
         if (displayUser.memberId != null) {
           queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
         }
@@ -1346,23 +1327,9 @@ export function useUserDetailController({
               MEMBER_DETAIL_SCREEN_CODE,
               commentResource.target
             ),
-            (
-              prev:
-                | {
-                    comments?: unknown[]
-                    latestComment?: string
-                    latestCommentDetail?: { comment: string; commentId?: number }
-                  }
-                | undefined
-            ) => ({
-              comments: prev?.comments ?? [],
-              latestComment: savedComment,
-              latestCommentDetail: {
-                comment: savedComment,
-                ...(prev?.latestCommentDetail?.commentId != null
-                  ? { commentId: prev.latestCommentDetail.commentId }
-                  : {}),
-              },
+            (prev: MemberAdminCommentQueryData | undefined): MemberAdminCommentQueryData => ({
+              comment: savedComment,
+              ...(prev?.commentId != null ? { commentId: prev.commentId } : {}),
             })
           )
         }
