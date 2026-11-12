@@ -2,7 +2,7 @@
  * 산출 내역서 모달 — 지급 현황 상세(프로그램/강사) 공통 구현
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import {
@@ -253,53 +253,68 @@ export function PaymentOrderCalculationStatementModalImpl({
 
   const rootClass = ['payment-order-calc-statement-modal', entryClassName].filter(Boolean).join(' ')
 
+  /**
+   * 로딩 → 오류/본문 전환 시 모달이 재마운트되면 열림 애니메이션이 다시 재생돼 깜빡인다.
+   * 세 분기 모두 같은 트리(가드 래퍼 → Fragment → 첫 자식 ContentModal)로 감싸 같은 모달 인스턴스를 유지한다.
+   */
+  const withStableRoot = (content: ReactNode) =>
+    programId != null && String(programId).trim() !== '' ? (
+      <ProgramDetailActionGuard programId={programId}>{content}</ProgramDetailActionGuard>
+    ) : (
+      content
+    )
+
   if (!open) {
     return null
   }
 
   if (loading) {
-    return (
-      <ContentModal
-        open={open}
-        onCancel={onCancel}
-        title="산출 내역서"
-        size="large"
-        width={1400}
-        zIndex={zIndex}
-        className={rootClass}
-        footer={
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
-            닫기
-          </CmsButton>
-        }
-      >
-        <div className="detail-fullpage-modal__loading" role="status">
-          <Spin />
-        </div>
-      </ContentModal>
+    return withStableRoot(
+      <>
+        <ContentModal
+          open={open}
+          onCancel={onCancel}
+          title="산출 내역서"
+          size="large"
+          width={1400}
+          zIndex={zIndex}
+          className={rootClass}
+          footer={
+            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+              닫기
+            </CmsButton>
+          }
+        >
+          <div className="detail-fullpage-modal__loading" role="status">
+            <Spin />
+          </div>
+        </ContentModal>
+      </>
     )
   }
 
   if (loadError) {
-    return (
-      <ContentModal
-        open={open}
-        onCancel={onCancel}
-        title="산출 내역서"
-        size="large"
-        width={1400}
-        zIndex={zIndex}
-        className={rootClass}
-        footer={
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
-            닫기
-          </CmsButton>
-        }
-      >
-        <div className="account-payments-page__error" role="alert">
-          {getSettlementApiErrorMessage(loadError, '산출 내역서를 불러오지 못했습니다.')}
-        </div>
-      </ContentModal>
+    return withStableRoot(
+      <>
+        <ContentModal
+          open={open}
+          onCancel={onCancel}
+          title="산출 내역서"
+          size="large"
+          width={1400}
+          zIndex={zIndex}
+          className={rootClass}
+          footer={
+            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+              닫기
+            </CmsButton>
+          }
+        >
+          <div className="account-payments-page__error" role="alert">
+            {getSettlementApiErrorMessage(loadError, '산출 내역서를 불러오지 못했습니다.')}
+          </div>
+        </ContentModal>
+      </>
     )
   }
 
@@ -741,9 +756,5 @@ export function PaymentOrderCalculationStatementModalImpl({
       ) : null}
     </>
   )
-  return programId != null && String(programId).trim() !== '' ? (
-    <ProgramDetailActionGuard programId={programId}>{content}</ProgramDetailActionGuard>
-  ) : (
-    content
-  )
+  return withStableRoot(content)
 }
