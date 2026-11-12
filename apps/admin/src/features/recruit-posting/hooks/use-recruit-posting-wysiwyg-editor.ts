@@ -11,7 +11,7 @@ export type RecruitPostingWysiwygEditorOptions = {
 
 /**
  * 채용공고 WYSIWYG — 공지 모달과 동일 패턴 (Tiptap).
- * 본문 이미지는 채용공고 전용 업로드(CAREERS_POSTING_ATTACHMENT) 후 공개 주소로 넣는다 — 서버는 data: 이미지를 거절한다.
+ * 본문 이미지는 CAREERS_POSTING_INLINE_IMAGE 로 올린 뒤 공개 주소로 넣는다 — 서버는 data: 이미지를 거절한다.
  */
 export function useRecruitPostingWysiwygEditor(
   open: boolean,

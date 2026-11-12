@@ -11,9 +11,9 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
-import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
-import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
+import chevronDownBlackUrl from '../pf-select/icons/chevron-down-completed.svg'
+import chevronDownGrayUrl from '../pf-select/icons/chevron-down-default.svg'
+import clockGrayUrl from './icons/clock.svg'
 import type { PFSelectSize, PFSelectVariant } from '../pf-select/pf-select'
 import selectStyles from '../pf-select/pf-select.module.css'
 import styles from './pf-time-input.module.css'
