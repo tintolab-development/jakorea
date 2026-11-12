@@ -77,10 +77,6 @@ import {
   listIncompleteApplicationFormThirdPartyRecipientFieldKeys,
 } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
-import {
-  buildAnnouncementPublishConfirmContent,
-  listPublishedRecruitAnnouncements,
-} from '@/features/program/general/lib/registration-announcement-publish-confirm'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   hydrateRegistrationProgramDraft,
@@ -833,12 +829,7 @@ export function useGeneralProgramRegistrationFlow(
     void participantVm.handleSave()
   }, [isProgramStep, registrationVm, participantVm])
 
-  /** 「게시」 공고 확인 팝업 본문 — null 이면 닫힘 (QA-0121) */
-  const [announcementPublishConfirmContent, setAnnouncementPublishConfirmContent] = useState<
-    string | null
-  >(null)
-
-  const completeRegistration = useCallback((publishConfirmed: boolean) => {
+  const handleCompleteRegistration = useCallback(() => {
     if (!SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK) {
       const current =
         isParticipantStep && selectedTemplateCode.startsWith('application-')
@@ -952,22 +943,6 @@ export function useGeneralProgramRegistrationFlow(
       }
     }
 
-    // 공고 게시 기본값은 미게시 — 「게시」를 고른 탭이 있으면 노출 대상·시점을 확인받은 뒤 등록한다.
-    if (
-      !publishConfirmed &&
-      (registrationFormVariant === 'general' || registrationFormVariant === 'economy')
-    ) {
-      const published = listPublishedRecruitAnnouncements(
-        registrationVm.buildCurrentProgramSnapshot(
-          registrationPendingSnapshotId(registrationFormVariant)
-        )
-      )
-      if (published.length > 0) {
-        setAnnouncementPublishConfirmContent(buildAnnouncementPublishConfirmContent(published))
-        return
-      }
-    }
-
     const applicationOverrides = () =>
       flushApplicationOperationalOverrides({
         current: isParticipantStep
@@ -1053,23 +1028,6 @@ export function useGeneralProgramRegistrationFlow(
     showAlert,
   ])
 
-  const handleCompleteRegistration = useCallback(() => {
-    completeRegistration(false)
-  }, [completeRegistration])
-
-  const announcementPublishConfirm = useMemo(
-    () => ({
-      open: announcementPublishConfirmContent != null,
-      content: announcementPublishConfirmContent ?? '',
-      onConfirm: () => {
-        setAnnouncementPublishConfirmContent(null)
-        completeRegistration(true)
-      },
-      onCancel: () => setAnnouncementPublishConfirmContent(null),
-    }),
-    [announcementPublishConfirmContent, completeRegistration]
-  )
-
   const selectStepTemplate = useCallback(
     async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
       const result = await applyRegistrationStepTemplateChange({
@@ -1125,7 +1083,6 @@ export function useGeneralProgramRegistrationFlow(
     handleSave,
     persistDraftSilent,
     handleCompleteRegistration,
-    announcementPublishConfirm,
     registrationVm,
     participantVm,
     participantFlags,
