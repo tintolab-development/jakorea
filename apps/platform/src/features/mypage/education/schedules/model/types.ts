@@ -94,7 +94,7 @@ export type EducationScheduleItem = {
   sessionNumber: number
   /** 교육 진행일 (ISO date or datetime). 없으면 빈 문자열 — 날짜 폴백은 Row */
   heldAt: string
-  /** 1사1교 — 카드 날짜 라벨 「YYYY.MM.DD(요일)」. 있으면 공통 날짜 표기 대신 쓴다 */
+  /** 1사1교 — 카드 날짜 라벨 「YYYY년 M월 D일(요일) 시각」. 있으면 공통 날짜 표기 대신 쓴다 */
   dateLabelOverride?: string
   /** 교육 종료 시각 (ISO). 있으면 행 뱃지 완료 판정에 사용 */
   endAt?: string

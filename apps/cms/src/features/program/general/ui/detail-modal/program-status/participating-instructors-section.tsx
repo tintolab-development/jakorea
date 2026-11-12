@@ -248,7 +248,7 @@ export function ParticipatingInstructorsSection({
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [activityCertPreviewInstructor, setActivityCertPreviewInstructor] =
     useState<ParticipatingInstructorRow | null>(null)
-  /** 기관형 — 발급 사유 모달(Figma 06-1/02) → 선택 사유를 발급 문서 「발급목적」에 기입 */
+  /** 발급 사유 모달(Figma 06-1/02, 기능정의서: 개인·기관 공통) → 선택 사유를 발급 문서 「발급목적」에 기입 */
   const isInstitutionSurface = useIsInstitutionProgramSurface(program)
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
@@ -488,13 +488,9 @@ export function ParticipatingInstructorsSection({
     }
 
     setActivityCertPreviewInstructor(selectedRow)
-    if (isInstitutionSurface) {
-      setActivityCertReasonLabel(undefined)
-      setActivityCertReasonOpen(true)
-      return
-    }
-    setActivityCertPreviewOpen(true)
-  }, [filteredInstructors, instructorList.length, isInstitutionSurface, selectedInstructorRowKeys, showAlert])
+    setActivityCertReasonLabel(undefined)
+    setActivityCertReasonOpen(true)
+  }, [filteredInstructors, instructorList.length, selectedInstructorRowKeys, showAlert])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
@@ -1181,18 +1177,16 @@ export function ParticipatingInstructorsSection({
           onClose={() => setActivityCertPreviewOpen(false)}
           instructor={activityCertPreviewInstructor}
           program={program}
-          issuanceReasonLabel={isInstitutionSurface ? activityCertReasonLabel : undefined}
+          issuanceReasonLabel={activityCertReasonLabel}
         />
       ) : null}
-      {isInstitutionSurface ? (
-        <CertificateBulkIssueReasonModal
-          open={activityCertReasonOpen}
-          onCancel={() => setActivityCertReasonOpen(false)}
-          applicationIds={activityCertPreviewInstructor ? [activityCertPreviewInstructor.id] : []}
-          certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
-          onIssue={handleActivityCertReasonIssue}
-        />
-      ) : null}
+      <CertificateBulkIssueReasonModal
+        open={activityCertReasonOpen}
+        onCancel={() => setActivityCertReasonOpen(false)}
+        applicationIds={activityCertPreviewInstructor ? [activityCertPreviewInstructor.id] : []}
+        certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+        onIssue={handleActivityCertReasonIssue}
+      />
     </div>
   )
 }

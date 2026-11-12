@@ -9,7 +9,6 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Pagination } from 'antd'
 import { pickJusoRoadAddressLine } from '@jakorea/location/juso'
 import {
@@ -23,6 +22,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import type { CmsInputProps } from '@/shared/ui/cms-input'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import './address-search.css'
 
 const MODAL_SEARCH_PLACEHOLDER = '예) 마곡중앙로 171, 분당 주공, 백현동'
@@ -269,7 +269,7 @@ export function AddressSearch({
     <>
       <span className="address-search__trigger-wrap" style={{ width: width || '100%' }}>
         <CmsInput
-          icon={<SearchOutlined />}
+          icon={<FieldSearchIcon />}
           value={value}
           readOnly
           onClick={openModal}

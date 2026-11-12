@@ -6,7 +6,6 @@
  */
 
 import { Layout, Space, Typography, Dropdown } from 'antd'
-import { BellOutlined, BellFilled } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -16,6 +15,7 @@ import { useDashboardNotificationCount } from '@/features/dashboard/hooks/use-da
 import { formatDashboardCountLabel } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import { getRoleLabel, AppBreadcrumb, ProfileEditModal } from '@/shared/ui'
+import { GnbAlarmIcon } from '@/shared/ui/icons'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
@@ -283,11 +283,10 @@ export function MainHeader() {
               )}
             >
               <div className="main-header-notification-badge" role="button" tabIndex={0}>
-                {typeof unreadCount === 'number' && unreadCount > 0 ? (
-                  <BellFilled className="main-header-notification-icon" />
-                ) : (
-                  <BellOutlined className="main-header-notification-icon" />
-                )}
+                <GnbAlarmIcon
+                  className="main-header-notification-icon"
+                  active={typeof unreadCount === 'number' && unreadCount > 0}
+                />
                 <Text className="main-header-notification-count">
                   {formatDashboardCountLabel(unreadCount)}
                 </Text>

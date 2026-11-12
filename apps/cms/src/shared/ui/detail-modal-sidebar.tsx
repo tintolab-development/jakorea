@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type ComponentType } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
 import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
 
@@ -26,6 +26,10 @@ export interface DetailModalSidebarProps {
   onSelectChild: (groupKey: string, childKey: string) => void
   /** 메뉴 목록 아래 LNB 하단 고정 영역 */
   footer?: React.ReactNode
+  /** nav에 덧붙일 클래스(화면별 시안 스타일 범위). 생략 시 공용 스타일 */
+  className?: string
+  /** 그룹 펼침 화살표 아이콘. 생략 시 공용 화살표 */
+  ArrowIcon?: ComponentType<{ className?: string }>
 }
 
 export function DetailModalSidebar({
@@ -37,9 +41,14 @@ export function DetailModalSidebar({
   onSelectTop,
   onSelectChild,
   footer,
+  className,
+  ArrowIcon = DetailFullpageModalLnbArrowDown,
 }: DetailModalSidebarProps) {
   return (
-    <nav className="detail-fullpage-modal__lnb" aria-label={navAriaLabel}>
+    <nav
+      className={className ? `detail-fullpage-modal__lnb ${className}` : 'detail-fullpage-modal__lnb'}
+      aria-label={navAriaLabel}
+    >
       <DetailFullpageModalLnbBrand />
       <div className="detail-fullpage-modal__lnb-body">
         <ul className="detail-fullpage-modal__lnb-list">
@@ -73,7 +82,7 @@ export function DetailModalSidebar({
               >
                 <span className="detail-fullpage-modal__lnb-item-icon">{item.icon}</span>
                 <span className="detail-fullpage-modal__lnb-item-label">{item.label}</span>
-                <DetailFullpageModalLnbArrowDown
+                <ArrowIcon
                   className={`detail-fullpage-modal__lnb-item-arrow ${expanded ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                 />
               </button>

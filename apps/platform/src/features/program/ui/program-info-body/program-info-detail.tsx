@@ -106,6 +106,38 @@ function resolveBasicInfoFields(program: ProgramDetail) {
   return fields.filter(field => field.value.trim().length > 0)
 }
 
+function EventScheduleList({ events }: { events: readonly ProgramEventSchedule[] }) {
+  if (events.length === 0) return null
+  return (
+    <div className={styles.curriculumBlock}>
+      <ul className={styles.sessions} aria-label="행사·세부 일정">
+        {events.map(event => (
+          <li
+            key={`${event.scheduleLabel}-${event.name}-${event.dateLabel}`}
+            className={styles.session}
+          >
+            <PFText
+              as="p"
+              typo="bd-md-sb"
+              color="black"
+              className={`${styles.sessionTitle} ${styles.fieldValue}`}
+            >
+              <span className={styles.sessionLabel}>{event.scheduleLabel}</span>
+              {event.name ? <span>{` ${event.name}`}</span> : null}
+            </PFText>
+            {event.dateLabel && event.dateLabel !== '-' ? (
+              <PFText as="p" typo="bd-md-rg" color="black" className={styles.fieldValue}>
+                {event.dateLabel}
+              </PFText>
+            ) : null}
+            <ProgressMeta row={event} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function ProgramInfoDetail({
   program,
   header,
@@ -115,7 +147,11 @@ export function ProgramInfoDetail({
 }: ProgramInfoDetailProps) {
   const isParticipate = variant === 'participate'
   const basicInfoFields = resolveBasicInfoFields(program)
-  const hasCurriculumBlock = program.sessions.length > 0 || program.eventSchedules.length > 0
+  const showUjatTermSchedulesInDetail =
+    program.detailCase === 'ujat-participant' || program.detailCase === 'ujat-volunteer'
+  const hasCurriculumBlock =
+    program.sessions.length > 0 ||
+    (!showUjatTermSchedulesInDetail && program.eventSchedules.length > 0)
   const hasBasicInfoSection = basicInfoFields.length > 0 || hasCurriculumBlock
   const applicationMethodValue = program.applicationMethodValue.trim()
   const geminiTrainingRequestPeriodLabel =
@@ -126,7 +162,8 @@ export function ProgramInfoDetail({
     program.educationSchedules.length > 0 ||
     program.extraSections.length > 0 ||
     Boolean(program.contactValue.trim()) ||
-    Boolean(applicationMethodValue)
+    Boolean(applicationMethodValue) ||
+    (showUjatTermSchedulesInDetail && program.eventSchedules.length > 0)
 
   const contactParts = isParticipate ? splitContactParts(program.contactValue) : []
 
@@ -206,33 +243,8 @@ export function ProgramInfoDetail({
             </div>
           ) : null}
 
-          {program.eventSchedules.length > 0 ? (
-            <div className={styles.curriculumBlock}>
-              <ul className={styles.sessions} aria-label="행사·세부 일정">
-                {program.eventSchedules.map(event => (
-                  <li
-                    key={`${event.scheduleLabel}-${event.name}-${event.dateLabel}`}
-                    className={styles.session}
-                  >
-                    <PFText
-                      as="p"
-                      typo="bd-md-sb"
-                      color="black"
-                      className={`${styles.sessionTitle} ${styles.fieldValue}`}
-                    >
-                      <span className={styles.sessionLabel}>{event.scheduleLabel}</span>
-                      {event.name ? <span>{` ${event.name}`}</span> : null}
-                    </PFText>
-                    {event.dateLabel && event.dateLabel !== '-' ? (
-                      <PFText as="p" typo="bd-md-rg" color="black" className={styles.fieldValue}>
-                        {event.dateLabel}
-                      </PFText>
-                    ) : null}
-                    <ProgressMeta row={event} />
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {!showUjatTermSchedulesInDetail ? (
+            <EventScheduleList events={program.eventSchedules} />
           ) : null}
         </section>
       ) : null}
@@ -274,6 +286,10 @@ export function ProgramInfoDetail({
                   </div>
                 ) : null}
               </div>
+            ) : null}
+
+            {showUjatTermSchedulesInDetail ? (
+              <EventScheduleList events={program.eventSchedules} />
             ) : null}
 
             {program.educationSchedules.length > 0 ? (

@@ -1,4 +1,4 @@
-import { BulbOutlined, WalletOutlined } from '@ant-design/icons'
+import { LnbAdjustmentIcon, LnbInfoIcon } from '@/shared/ui/icons'
 import type {
   DetailModalSidebarNavChild,
   DetailModalSidebarNavItem,
@@ -10,9 +10,10 @@ import { instructorDetailShowsPaymentStatusLnb } from '../../lib/user-detail-ful
 import { UserProgramsHistoryLnbIcon } from '../user-programs-history-lnb-icon'
 
 const LNB_ICONS = {
-  detail: <BulbOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
+  // 시안 Icon / LNB / w24 — 상세 정보 info · 정산 현황 adjustment
+  detail: <LnbInfoIcon className="detail-fullpage-modal__lnb-icon" />,
   programs: <UserProgramsHistoryLnbIcon />,
-  payment: <WalletOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
+  payment: <LnbAdjustmentIcon className="detail-fullpage-modal__lnb-icon" />,
 } as const
 
 type SidebarUser =

@@ -35,6 +35,13 @@ function withActive(
   }))
 }
 
+export function canAccessMypageLnbItem(
+  profile: PlatformMemberProfile,
+  key: MypageLnbItemKey,
+): boolean {
+  return getMypageLnbItems(profile).some(item => item.key === key)
+}
+
 export function getMypageLnbItems(
   profile: PlatformMemberProfile,
   activeKey: MypageLnbItemKey = 'home',

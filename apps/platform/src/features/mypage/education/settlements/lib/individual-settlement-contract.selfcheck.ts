@@ -156,10 +156,10 @@ assert.equal(
   '자택 주소 또는 교육 장소를 확인할 수 없어 교통비를 신청할 수 없어요. 회원정보의 자택 주소를 확인해 주세요.',
 )
 // R5: 정산 행 안내와 서버 오류 문구가 다르다
-assert.equal(individualIneligibleRowMessage('SUBMISSION_DEADLINE_PASSED'), '영수증 제출기한이 마감되었어요')
+assert.equal(individualIneligibleRowMessage('SUBMISSION_DEADLINE_PASSED'), '영수증 제출 기한이 지났어요')
 assert.equal(
   individualIneligibleMessage('SUBMISSION_DEADLINE_PASSED'),
-  '프로그램 운영이 종료되어 영수증을 제출할 수 없어요',
+  '영수증 제출 기한이 지났어요',
 )
 
 const distanceAxios = Object.assign(new Error('bad request'), {

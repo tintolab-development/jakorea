@@ -572,6 +572,13 @@ export type ParticipantEducationScopeScheduleEnrich = {
   longDistance?: boolean | null
   /** 동일 scheduleId VOLUNTEER education-scope 인원. 항상 number, 0 포함 (omit 금지) */
   assignedVolunteerCount: number
+  /**
+   * 배정 대기 상태. GENERAL_INDIVIDUAL 강사 참여자만 채워지고 그 외(봉사자·기관형·구버전 BE)는 null/없음.
+   * UNAVAILABLE = 배정 불가(사유는 unavailableReason).
+   */
+  availabilityStatus?: 'AVAILABLE' | 'UNAVAILABLE' | null
+  /** UNAVAILABLE 사유 코드. 현재 `INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT`(같은 날짜 다른 일정 배정)만 */
+  unavailableReason?: string | null
 }
 
 export type ParticipantEducationScopeResponse = {

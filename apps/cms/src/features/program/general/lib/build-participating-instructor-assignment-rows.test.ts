@@ -334,6 +334,11 @@ describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)',
     assignments: InstructorAssignmentListItemEnriched[]
     maxAssignableInstructors?: number | null
     scheduleDistances?: Array<{ scheduleId: number; distanceKm: number | null; longDistance: boolean | null }>
+    scheduleAvailability?: Array<{
+      scheduleId: number
+      availabilityStatus?: 'AVAILABLE' | 'UNAVAILABLE' | null
+      unavailableReason?: string | null
+    }>
   }) {
     return buildParticipatingInstructorWaitingScheduleRowsFromBoard({
       instructor: instructor(input.memberId),
@@ -343,8 +348,46 @@ describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)',
       instructorMemberId: input.memberId,
       maxAssignableInstructors: input.maxAssignableInstructors,
       scheduleDistances: input.scheduleDistances,
+      scheduleAvailability: input.scheduleAvailability,
     })
   }
+
+  it('서버가 UNAVAILABLE로 준 일정은 배정 불가 — 같은 날짜 다른 일정 배정(사유 코드 무관)', () => {
+    const rows = buildIndividual({
+      memberId: '10',
+      assignments: [],
+      scheduleAvailability: [
+        {
+          scheduleId: 301,
+          availabilityStatus: 'UNAVAILABLE',
+          unavailableReason: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+        },
+        { scheduleId: 302, availabilityStatus: 'UNAVAILABLE', unavailableReason: 'UNKNOWN_FUTURE_REASON' },
+        { scheduleId: 303, availabilityStatus: 'AVAILABLE', unavailableReason: null },
+      ],
+    })
+    expect(rows.map(r => r.assignmentStatus)).toEqual(['unavailable', 'unavailable', 'waiting'])
+  })
+
+  it('availabilityStatus가 없거나 null이면(구버전 BE·봉사자) 기존 판단 그대로 waiting', () => {
+    const rows = buildIndividual({
+      memberId: '10',
+      assignments: [],
+      scheduleAvailability: [{ scheduleId: 301, availabilityStatus: null }, { scheduleId: 302 }],
+    })
+    expect(rows.every(r => r.assignmentStatus === 'waiting')).toBe(true)
+  })
+
+  it('본인 배정 취소 일정은 서버 UNAVAILABLE이어도 배정 취소로 표시한다', () => {
+    const rows = buildIndividual({
+      memberId: '10',
+      assignments: [individualAssignment(1, 10, 301, 'CANCELLED')],
+      scheduleAvailability: [{ scheduleId: 301, availabilityStatus: 'UNAVAILABLE' }],
+    })
+    expect(rows.find(r => r.resolvedScheduleId === 301)?.assignmentStatus).toBe(
+      'assignment_cancelled'
+    )
+  })
 
   it('scheduleId로 서버 km를 매칭한다 (null·미매칭 → -, 0.0km 유지)', () => {
     const rows = buildIndividual({

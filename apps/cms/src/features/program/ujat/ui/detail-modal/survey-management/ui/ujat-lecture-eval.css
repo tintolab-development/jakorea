@@ -152,8 +152,10 @@
 }
 
 .ujat-lecture-eval-submitted-icon {
-  width: 50.762px;
-  height: 50.762px;
+  /* 시안 check_circle 60 프레임(그림 51) */
+  display: block;
+  width: 60px;
+  height: 60px;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
 }

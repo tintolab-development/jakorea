@@ -95,8 +95,8 @@
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-white);
+  border-radius: var(--radius-24);
+  background: #f8fcfe;
 }
 
 .cardContent {
@@ -246,8 +246,8 @@
   .card {
     flex-direction: row;
     align-items: stretch;
-    min-height: 270px;
-    border-radius: var(--radius-16);
+    min-height: 320px;
+    border-radius: var(--radius-24);
   }
 
   .cardContent {

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
 import {
-  createDefaultParticipantRowVisibility,
   DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
   TEMPLATE_FIELD_CERTIFICATE_BACKGROUND,
   TEMPLATE_FIELD_CHAIRMAN_SEAL,
@@ -9,6 +8,11 @@ import {
   TEMPLATE_FIELD_ORG_LOGO_02,
 } from '@/features/template/ui/template-management/template-custom-fields-form'
 import { useObjectUrlFromFile } from '@/shared/hooks/use-object-url-from-file'
+import {
+  DEFAULT_CERTIFICATE_PARTICIPANT_LAYOUT,
+  normalizeParticipantRowVisibility,
+  type CertificateParticipantLayout,
+} from '@/features/template/lib/certificate-participant-layout'
 
 /** 인증서 상세 진입 시 좌측·우측 기본 포커스 */
 const INITIAL_ACTIVE_FIELD_NAME = TEMPLATE_FIELD_CERTIFICATE_BACKGROUND
@@ -21,7 +25,9 @@ export type CertificateModalInitialHydration = {
 export function useFormTemplateCertificateModalState(
   open: boolean,
   initialStringValues?: Record<string, string>,
-  initialHydration?: CertificateModalInitialHydration
+  initialHydration?: CertificateModalInitialHydration,
+  /** 증명서 종류별 참여자 정보 줄 구성(활동인증서 5줄 등). 기본: 6줄 */
+  participantLayout: CertificateParticipantLayout = DEFAULT_CERTIFICATE_PARTICIPANT_LAYOUT
 ) {
   const resolvedInitialStringValues = useMemo(
     () => ({
@@ -52,7 +58,7 @@ export function useFormTemplateCertificateModalState(
     ...resolvedInitialStringValues,
   }))
   const [participantRowVisibility, setParticipantRowVisibility] = useState(() =>
-    createDefaultParticipantRowVisibility()
+    normalizeParticipantRowVisibility(undefined, participantLayout)
   )
 
   const initialsRef = useRef({
@@ -77,7 +83,7 @@ export function useFormTemplateCertificateModalState(
       setChairmanSealFile(null)
       setLogoUploadResults({})
       setStringPreviewValues({ ...stringValues })
-      setParticipantRowVisibility(createDefaultParticipantRowVisibility())
+      setParticipantRowVisibility(normalizeParticipantRowVisibility(undefined, participantLayout))
       return
     }
 
@@ -86,9 +92,10 @@ export function useFormTemplateCertificateModalState(
     setStringPreviewValues({ ...stringValues })
     setLogoUploadResults(hydration?.logoUploadResults ?? {})
     setParticipantRowVisibility(
-      hydration?.participantRowVisibility ?? createDefaultParticipantRowVisibility()
+      normalizeParticipantRowVisibility(hydration?.participantRowVisibility, participantLayout)
     )
-  }, [open, hydrationReady])
+    // participantLayout은 템플릿 코드별 고정 상수라 identity가 바뀌지 않는다
+  }, [open, hydrationReady, participantLayout])
 
   return {
     orgLogoFile,
@@ -111,5 +118,6 @@ export function useFormTemplateCertificateModalState(
     setStringPreviewValues,
     participantRowVisibility,
     setParticipantRowVisibility,
+    participantLayout,
   }
 }

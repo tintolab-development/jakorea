@@ -17,7 +17,7 @@ import styles from './list-item.module.css'
 type EducationApplicationListItemRowProps = {
   item: EducationApplicationListItem
   onClick: () => void
-  /** 교육현황은 `teacher`(승인 대기 세트). 봉사·강의현황은 기본 `general`. */
+  /** 교육현황은 `teacher`(결과 대기 세트). 봉사·강의현황은 기본 `general`. */
   statusAudience?: EducationDisplayStatusAudience
   isTeacher?: boolean
   /** 강의·봉사 현황 목록 — 모집 역할 배지(강사·봉사자 등) */
@@ -26,6 +26,8 @@ type EducationApplicationListItemRowProps = {
   badgeSize?: 'compact' | 'regular'
   /** 강의현황 시안 — 프로그램 유형 텍스트(`기관` 등) 대신 대상·형태·역할 배지만 */
   hideCategoryLabel?: boolean
+  /** 목록 유형 라벨을 API categoryLabel 대신 고정 문구로 쓸 때 */
+  categoryLabelOverride?: string
 }
 
 export function EducationApplicationListItemRow({
@@ -36,6 +38,7 @@ export function EducationApplicationListItemRow({
   recruitmentRoleLabel,
   badgeSize = 'compact',
   hideCategoryLabel = false,
+  categoryLabelOverride,
 }: EducationApplicationListItemRowProps) {
   const statusTone = getEducationDisplayStatusTone(item.displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[statusTone]]
@@ -64,10 +67,10 @@ export function EducationApplicationListItemRow({
         <>
           <div className={styles.info}>
             <div className={styles.metaRow}>
-              {hideCategoryLabel ? null : (
+              {hideCategoryLabel && !categoryLabelOverride ? null : (
                 <>
                   <PFText as="span" typo="bd-lg-sb" color="black" className={styles.categoryLabel}>
-                    {item.categoryLabel}
+                    {categoryLabelOverride ?? item.categoryLabel}
                   </PFText>
                   <span className={styles.metaDivider} aria-hidden="true" />
                 </>

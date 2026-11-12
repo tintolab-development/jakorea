@@ -61,6 +61,7 @@ function UjatSponsorManagerFieldView({
         sponsorRows={selectedSponsors}
         sponsorNameById={program.generalCommonInfo?.sponsorManagementNames}
         contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
+        variant="nameTitle"
       />
     )
   }

@@ -19,7 +19,7 @@ import { getCertificateSerialAllocateErrorMessage } from '@/features/program/sha
 import { unmaskVolunteerForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
-import { mapApiBirthDateToDisplay } from '@/features/program/general/api/adapters/student-roster-adapters'
+import { certificateIssueReasonCodeFromLabel } from '@/features/program/shared/lib/certificate-serial'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -41,6 +41,8 @@ export interface ParticipatingVolunteerActivityCertificatePreviewModalProps {
   onClose: () => void
   volunteer: ParticipatingVolunteerDetailRow
   program?: Program | null
+  /** 발급 사유 모달에서 고른 사유 라벨 — 참여자 정보 「발급목적」 줄·발급 사유 코드 */
+  issuanceReasonLabel?: string
 }
 
 export function ParticipatingVolunteerActivityCertificatePreviewModal({
@@ -48,6 +50,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   onClose,
   volunteer,
   program,
+  issuanceReasonLabel,
 }: ParticipatingVolunteerActivityCertificatePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
@@ -100,19 +103,15 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   const runtimeStringValues = useMemo(
     () =>
       buildActivityCertificateInitialStringValuesForVolunteer(unmaskedVolunteer.volunteerName, {
-        birthDate:
-          unmaskedVolunteer.birthDate && unmaskedVolunteer.birthDate !== '-'
-            ? mapApiBirthDateToDisplay(unmaskedVolunteer.birthDate)
-            : undefined,
-        institutionName: unmaskedVolunteer.assignedInstitutionNames[0],
         program,
+        issuanceReasonLabel,
       }),
-    [
-      program,
-      unmaskedVolunteer.assignedInstitutionNames,
-      unmaskedVolunteer.birthDate,
-      unmaskedVolunteer.volunteerName,
-    ]
+    [issuanceReasonLabel, program, unmaskedVolunteer.volunteerName]
+  )
+
+  const issueReasonCode = useMemo(
+    () => certificateIssueReasonCodeFromLabel(issuanceReasonLabel),
+    [issuanceReasonLabel]
   )
 
   const modalState = useCertificateTemplateModalState({
@@ -154,6 +153,8 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
           programId: program?.id,
           subjectId: unmaskedVolunteer.id,
           certificateType: VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
+          // 발급 사유 모달에서 고른 사유 — 문서 「발급목적」과 같은 값을 코드로 issueReason에 전송
+          issueReason: issueReasonCode,
         },
         applySerial: setPdfSerialNumber,
         applyIssuedAt,
@@ -175,6 +176,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     isAllocatingSerial,
     isPdfDownloading,
     isUnmasking,
+    issueReasonCode,
     program?.id,
     showAlert,
     unmaskedVolunteer.id,

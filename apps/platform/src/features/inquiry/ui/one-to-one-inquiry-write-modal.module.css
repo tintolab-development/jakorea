@@ -55,7 +55,7 @@
   color: var(--color-red);
   text-overflow: ellipsis;
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 500;
   line-height: 160%;
@@ -98,10 +98,10 @@
   margin: 0;
   padding-left: var(--spacing-8);
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 12px;
   font-style: normal;
-  font-weight: 400;
-  line-height: 160%;
+  font-weight: 500;
+  line-height: 140%;
 }
 
 .messageError {

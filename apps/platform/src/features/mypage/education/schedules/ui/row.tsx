@@ -74,7 +74,9 @@ export function EducationScheduleRow({
     : undefined
   // TT 기관 운영일 — Figma 13843:112603: 일시 옆에 `N차시`만. 지망 순위는 카드에 쓰지 않는다.
   const subtitle = showCurriculumSessions
-    ? sessionSummary || '전 차시'
+    ? item.dateLabelOverride?.trim()
+      ? item.recognizedClassCountLabel?.trim() || item.rowLabel?.trim() || sessionSummary || '전 차시'
+      : sessionSummary || '전 차시'
     : item.operationalDayView === true
       ? item.durationLabel?.trim() || '-'
       : item.recognizedClassCountLabel?.trim() || item.rowLabel?.trim() || '-'

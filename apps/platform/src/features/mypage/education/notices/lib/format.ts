@@ -42,9 +42,15 @@ const HTML_ENTITIES: Record<string, string> = {
   '&#39;': "'",
 }
 
+/** 마크다운 백슬래시 이스케이프(`\[`, `\*` 등) — CMS 에디터가 `[E2E]`를 `\[E2E\]`로 저장한다 */
+const MARKDOWN_ESCAPE = /\\([\\`*_{}[\]()#+\-.!|~<>])/g
+const ESCAPED_CHAR_TOKEN = /\uE000(\d+)\uE001/g
+
 /** CMS 본문(마크다운 + 인라인 HTML)을 카드·제목용 텍스트로 — 이미지·태그·마크다운 기호 제거 */
 export function toEducationNoticePlainText(value: string): string {
   return value
+    // 이스케이프된 글자는 아래 마크다운 기호 제거에 걸리지 않게 잠시 토큰으로 바꿔 두고 마지막에 글자로 되돌린다
+    .replace(MARKDOWN_ESCAPE, (_, char: string) => `\uE000${char.codePointAt(0)}\uE001`)
     .replace(/<img\b[^>]*>/gi, '')
     .replace(/!\[[^\]]*]\([^)]*\)/g, '')
     .replace(/<br\s*\/?>/gi, '\n')
@@ -56,6 +62,7 @@ export function toEducationNoticePlainText(value: string): string {
     .replace(/^[ \t]{0,3}(#{1,6}|>|[-*+]|\d+\.)[ \t]+/gm, '')
     .replace(/(\*\*|__|~~|`)/g, '')
     .replace(/&(nbsp|amp|lt|gt|quot|#39);/g, entity => HTML_ENTITIES[entity] ?? entity)
+    .replace(ESCAPED_CHAR_TOKEN, (_, code: string) => String.fromCodePoint(Number(code)))
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()

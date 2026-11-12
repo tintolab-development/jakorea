@@ -14,13 +14,13 @@ import type { SettlementOverviewItem } from '../model/types'
 import styles from './calendar-view.module.css'
 
 const WEEKDAYS = [
-  { key: 'sun', label: 'Sun', className: calendarStyles.weekdaySun },
-  { key: 'mon', label: 'Mon', className: calendarStyles.weekdayDefault },
-  { key: 'tue', label: 'Tue', className: calendarStyles.weekdayDefault },
-  { key: 'wed', label: 'Wed', className: calendarStyles.weekdayDefault },
-  { key: 'thu', label: 'Thu', className: calendarStyles.weekdayDefault },
-  { key: 'fri', label: 'Fri', className: calendarStyles.weekdayDefault },
-  { key: 'sat', label: 'Sat', className: calendarStyles.weekdaySat },
+  { key: 'sun', label: '일요일', className: calendarStyles.weekdaySun },
+  { key: 'mon', label: '월요일', className: calendarStyles.weekdayDefault },
+  { key: 'tue', label: '화요일', className: calendarStyles.weekdayDefault },
+  { key: 'wed', label: '수요일', className: calendarStyles.weekdayDefault },
+  { key: 'thu', label: '목요일', className: calendarStyles.weekdayDefault },
+  { key: 'fri', label: '금요일', className: calendarStyles.weekdayDefault },
+  { key: 'sat', label: '토요일', className: calendarStyles.weekdaySat },
 ] as const
 
 type SettlementCalendarViewProps = {
@@ -104,7 +104,7 @@ export function SettlementCalendarView({
             <div className={calendarStyles.navGroup}>
               <PFPageButton
                 direction="left"
-                size="small"
+                size="large"
                 aria-label="이전 월"
                 onClick={() => handleShiftMonth(-1)}
               />
@@ -113,7 +113,7 @@ export function SettlementCalendarView({
               </PFText>
               <PFPageButton
                 direction="right"
-                size="small"
+                size="large"
                 aria-label="다음 월"
                 onClick={() => handleShiftMonth(1)}
               />
@@ -135,7 +135,7 @@ export function SettlementCalendarView({
                   className={calendarStyles.legendDot}
                   style={{ backgroundColor: SETTLEMENT_CALENDAR_EVENT_COLORS[status].accent }}
                 />
-                <PFText as="span" typo="caption-rg" className={calendarStyles.legendLabel}>
+                <PFText as="span" typo="caption-sb" className={calendarStyles.legendLabel}>
                   {SETTLEMENT_STATUS_CALENDAR_SHORT[status]}
                 </PFText>
               </li>

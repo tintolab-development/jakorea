@@ -44,9 +44,6 @@ const PAGE_DESCRIPTIONS: Partial<Record<InstructorApplyConsentKey, string>> = {
 export function getInstructorApplyConsentPageDescription(
   key: DocumentConsentWriteKey,
 ): string | undefined {
-  if (key === RECEIPT_PRE_CONSENT_WRITE_KEY) {
-    return '본문 수집 목적·제3자 제공·보유기간은 법무 확정 전 초안입니다. 확정된 약관으로 안내하지 않습니다.'
-  }
   return PAGE_DESCRIPTIONS[key as InstructorApplyConsentKey]
 }
 

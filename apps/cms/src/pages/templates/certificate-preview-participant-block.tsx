@@ -10,6 +10,8 @@ const HANDLE_DOT = `${P}__region--has-dot`
 
 export interface CertificatePreviewParticipantBlockProps {
   region: CertificateCanvasRegion | null
+  /** 줄 라벨(증명서 종류별). 미지정 시 기본 6줄 */
+  rowLabels?: readonly string[]
   rowVisibility: boolean[]
   participantValues: string[]
   /** 라벨·값 텍스트 공통 색(흑백 등). 미지정 시 시트 기본(#606060) */
@@ -25,6 +27,7 @@ export interface CertificatePreviewParticipantBlockProps {
 
 export function CertificatePreviewParticipantBlock({
   region,
+  rowLabels = PARTICIPANT_INFO_ROW_LABELS,
   rowVisibility,
   participantValues,
   participantTextColor,
@@ -50,7 +53,7 @@ export function CertificatePreviewParticipantBlock({
     >
       {showLabels ? (
         <div className={`${P}__content-frame-labels`}>
-          {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {
+          {rowLabels.map((label, index) => {
             if (rowVisibility[index] === false) return null
             return (
               <div key={label} className={`${P}__label-row`}>
@@ -67,7 +70,7 @@ export function CertificatePreviewParticipantBlock({
         </div>
       ) : null}
       <div className={`${P}__content-frame-values`}>
-        {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {
+        {rowLabels.map((label, index) => {
           if (rowVisibility[index] === false) return null
           return (
             <div key={label} className={`${P}__value-row`}>

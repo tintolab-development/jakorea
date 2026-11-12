@@ -11,7 +11,8 @@ const endedStats = mapPortalDashboardStats({
   cancelled: 0,
   ended: 3,
 })
-assert.equal(endedStats.applied, 1)
+// approved는 inProgress와 겹치는 승인 원본 상태 건수 — 신청 카드에 더하지 않는다.
+assert.equal(endedStats.applied, 0)
 assert.equal(endedStats.inProgress, 1)
 assert.equal(endedStats.completed, 3)
 
@@ -34,7 +35,7 @@ const sampleApplications = {
   ended: 4,
 }
 const sampleStats = mapPortalDashboardStats(sampleApplications)
-assert.equal(sampleStats.applied, 7)
+assert.equal(sampleStats.applied, 3)
 assert.equal(sampleStats.inProgress, 4)
 assert.equal(sampleStats.completed, 4)
 

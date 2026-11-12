@@ -89,6 +89,7 @@ assert.equal(teacherView.basicRows[5]?.label, '소속/학교')
 assert.equal(teacherView.basicRows[5]?.value, '서울초등학교')
 assert.equal(teacherView.basicRows[6]?.label, '재직 현황')
 assert.equal(teacherView.basicRows[6]?.value, '재직 중')
+assert.equal(teacherView.basicRows[7]?.label, '이메일 ID')
 assert.equal(teacherView.guardian, null)
 
 const mappedGuardian = mapPortalGuardianToSettingsView({

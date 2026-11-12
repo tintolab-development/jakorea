@@ -38,6 +38,7 @@ import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general
 import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
 import {
   HideParagraphSelectionChromeContext,
+  LockParagraphHeadingContext,
   ShowParagraphActiveOutlineContext,
 } from '@/features/template/context/paragraph-selection-chrome-context'
 import { GeneralRegistrationWizardContext } from '@/features/template/context/general-registration-wizard-context'
@@ -65,15 +66,12 @@ import type { GeneralRegistrationDevAutofillCaseId } from '@/features/program/ge
 import { TrainedTeachersDevAutofillToolbar } from '@/features/program/trained-teachers/ui/registration/trained-teachers-dev-autofill-toolbar'
 import type { TrainedTeachersRegistrationDevAutofillCaseId } from '@/features/program/trained-teachers/lib/registration-dev-autofill-cases'
 import { useCmsAlert } from '@/shared/ui'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import {
   buildGeneralRegistrationIncompleteItems,
   countGeneralRegistrationIncompleteByStep,
   type GeneralRegistrationIncompleteItem,
 } from '@/features/program/general/lib/registration-incomplete-summary'
 import { RegistrationIncompleteAlertContent } from '@/features/program/general/ui/registration/registration-incomplete-alert-content'
-import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
-import { ANNOUNCEMENT_PUBLISH_CONFIRM_TITLE } from '@/features/program/general/lib/registration-announcement-publish-confirm'
 import { registrationStepForOperationDateFocus } from '@/features/program/shared/lib/program-date-outside-open-period-alert'
 import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
@@ -675,7 +673,10 @@ function GeneralProgramRegistrationFullpageModalInner({
               value={flow.phase !== 'application'}
             >
               <ShowParagraphActiveOutlineContext.Provider value={isGeneralVariant}>
-                {flow.panels.leftContent}
+                {/* 등록폼은 템플릿 편집이 아닌 작성 — 단락 제목·설명 고정, 빈 설명 숨김 */}
+                <LockParagraphHeadingContext.Provider value={flow.phase === 'program'}>
+                  {flow.panels.leftContent}
+                </LockParagraphHeadingContext.Provider>
               </ShowParagraphActiveOutlineContext.Provider>
             </HideParagraphSelectionChromeContext.Provider>
           </GeneralRegistrationWizardContext.Provider>
@@ -696,15 +697,6 @@ function GeneralProgramRegistrationFullpageModalInner({
           setOverwriteOpen(false)
         }}
         onConfirm={handleOverwriteConfirm}
-      />
-      <ConfirmModal
-        open={flow.announcementPublishConfirm.open}
-        title={ANNOUNCEMENT_PUBLISH_CONFIRM_TITLE}
-        content={flow.announcementPublishConfirm.content}
-        confirmText="등록"
-        zIndex={CMS_ALERT_MODAL_Z_INDEX}
-        onConfirm={flow.announcementPublishConfirm.onConfirm}
-        onCancel={flow.announcementPublishConfirm.onCancel}
       />
       <RegistrationDraftSaveSuccessModal
         open={draftSaveSuccessOpen}

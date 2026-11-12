@@ -127,7 +127,7 @@ const volunteerTabs = buildInProgressDetailTabItems({
 // 봉사자 만족도조사는 UJAT에서만 — 일반 봉사현황은 탭 없음
 assert.deepEqual(
   volunteerTabs.map(item => item.label),
-  ['안내사항', '배정현황', '설문조사', '정산현황'],
+  ['안내사항', '배정 현황', '설문조사', '정산 현황'],
 )
 assert.ok(
   !buildWithdrawnDuringDetailTabItems({

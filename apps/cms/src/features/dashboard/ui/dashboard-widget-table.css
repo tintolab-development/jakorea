@@ -116,8 +116,9 @@
   border-right: 1px solid var(--table-line, #e0e0e0);
 }
 
-.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr,
-.dashboard-widget-table__data .ant-table-tbody > tr {
+/* antd 열 너비 측정 행(높이 0)은 제외 — 포함하면 맨 위에 52px 빈 줄이 생긴다 */
+.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr:not(.ant-table-measure-row),
+.dashboard-widget-table__data .ant-table-tbody > tr:not(.ant-table-measure-row) {
   height: 52px !important;
   min-height: 52px !important;
   max-height: 52px !important;

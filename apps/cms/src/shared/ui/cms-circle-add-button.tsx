@@ -1,9 +1,10 @@
 /**
- * 원형 행추가 버튼 (28×28, mint 10% 배경 + mint +)
+ * 원형 행추가 버튼 (28×28 프레임, 시안 Cell Add on 원본)
  * — UJAT 교육 일정 행추가·학력사항 행추가 등과 동일 스펙
  */
 
 import type { ButtonHTMLAttributes } from 'react'
+import cellAddOnUrl from '@/shared/assets/icons/buttons/cell-add-on.svg'
 import './cms-circle-add-button.css'
 
 export type CmsCircleAddButtonProps = Omit<
@@ -15,33 +16,9 @@ export type CmsCircleAddButtonProps = Omit<
   'aria-label'?: string
 }
 
+/** 시안 `Button / Etc / Cell Add` on — 28 프레임 안 20 원 + 굵은 + */
 function CmsCircleAddIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
-      fill="none"
-      aria-hidden
-    >
-      <rect width="28" height="28" rx="14" fill="white" />
-      <rect width="28" height="28" rx="14" fill="#01A1AF" fillOpacity="0.1" />
-      <rect
-        x="0.5"
-        y="0.5"
-        width="27"
-        height="27"
-        rx="13.5"
-        stroke="#01A1AF"
-        strokeOpacity="0.1"
-      />
-      <path
-        d="M13.5007 19.6654V14.4987H8.33398V13.4987H13.5007V8.33203H14.5007V13.4987H19.6673V14.4987H14.5007V19.6654H13.5007Z"
-        fill="#01A1AF"
-      />
-    </svg>
-  )
+  return <img src={cellAddOnUrl} width={28} height={28} alt="" aria-hidden draggable={false} />
 }
 
 export function CmsCircleAddButton({

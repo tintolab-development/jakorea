@@ -17,7 +17,10 @@ export {
   validateBirthStep,
   formatBirthDateInput,
   isValidEmail,
+  isValidMemberPassword,
   isValidPassword,
+  MEMBER_PASSWORD_HELP_TEXT,
+  ADMIN_REGISTERED_PASSWORD_HELP_TEXT,
 } from './sign-up'
 export type {
   UseSignUpReturn,

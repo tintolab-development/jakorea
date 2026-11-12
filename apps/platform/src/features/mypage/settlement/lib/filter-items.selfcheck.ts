@@ -8,6 +8,7 @@ import {
 import {
   formatMonthExpectedLabel,
   formatMonthHeading,
+  formatMonthHeadingTitle,
   formatMonthPaidLabel,
 } from './date-keys.ts'
 import { formatWonAmount, formatWonNumber } from './format-amount.ts'
@@ -73,6 +74,7 @@ assert.equal(
   formatSettlementHeldAt('2026-01-09T10:00:00+09:00', '2026-01-09T11:20:00+09:00'),
   '2026년 01월 09일(금) 10:00~11:20',
 )
+assert.equal(formatMonthHeadingTitle('2026-01'), '2026년 1월 정산 현황')
 assert.equal(formatMonthHeading('2026-01', 7), '2026년 1월 정산 현황 7건')
 assert.equal(formatMonthPaidLabel('2026-01'), '1월 정산 완료금')
 assert.equal(formatMonthExpectedLabel('2026-10'), '10월 정산 예정금')

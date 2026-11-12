@@ -4,7 +4,7 @@ import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-register
 import {
   buildInProgressDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
-  canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
@@ -21,7 +21,9 @@ import {
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
   lectureApplicationDetailPath,
+  canAccessMypageLnbItem,
   MYPAGE_LECTURE_PATH,
+  MYPAGE_PATH,
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -269,6 +271,13 @@ export function MypageLectureDetailPage() {
   }, [applicationId, location.search, navigate, routeApplicationType])
 
   useEffect(() => {
+    if (!isAuthReady || member.isLoading) return
+    if (!canAccessMypageLnbItem(member.profile, 'lectures')) {
+      navigate(MYPAGE_PATH, { replace: true })
+    }
+  }, [isAuthReady, member.isLoading, member.profile, navigate])
+
+  useEffect(() => {
     if (application && !isInstructorRoleApplication(application)) {
       navigate(`${educationApplicationDetailPath(application.id, application.applicationType)}${location.search}`, {
         replace: true,
@@ -415,8 +424,10 @@ export function MypageLectureDetailPage() {
   }
 
   const showBanner = shouldShowDocumentPassBanner(application)
-  const showCancelCta =
-    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
+  const showCancelCta = shouldShowEducationApplicationCancelCta(
+    application.displayStatus,
+    application.cancellable,
+  )
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection = isActivitySection(section)
     ? isWithdrawnDuring

@@ -2208,14 +2208,14 @@ assert.equal(
   '강사',
 )
 assert.equal(
-  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상')
-    ?.value,
-  '초등학교',
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상'),
+  undefined,
 )
 assert.equal(
-  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상 상세')
-    ?.value,
-  '초등학생 4~6학년',
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(
+    field => field.label === '교육 대상 상세',
+  ),
+  undefined,
 )
 
 // QA-0198: 강사 모집 상세도 봉사자처럼 모집 대상 아래에 모집 대상 상세를 보인다.

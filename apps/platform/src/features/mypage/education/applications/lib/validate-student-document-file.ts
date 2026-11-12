@@ -1,5 +1,5 @@
 import { validateStudentRosterUploadFile } from './student-roster-upload-policy'
-import { PORTRAIT_CONSENT_UPLOAD_EXTENSION } from './student-documents-template-download'
+import { PORTRAIT_CONSENT_UPLOAD_EXTENSIONS } from './student-documents-template-download'
 import { FILE_UPLOAD_MAX_BYTES } from '@/shared/lib/file-upload-policy'
 
 function isWithinSize(file: File): boolean {
@@ -15,8 +15,8 @@ export function validatePortraitConsentUploadFile(file: File): string | null {
     return '초상권 동의서 파일은 20MB 이하만 업로드할 수 있습니다.'
   }
   const extension = file.name.trim().toLowerCase().split('.').pop() ?? ''
-  if (extension !== PORTRAIT_CONSENT_UPLOAD_EXTENSION) {
-    return '초상권 동의서는 다운로드한 ZIP 양식에서 작성한 DOCX 파일만 업로드할 수 있습니다.'
+  if (!(PORTRAIT_CONSENT_UPLOAD_EXTENSIONS as readonly string[]).includes(extension)) {
+    return '초상권 동의서는 PDF, JPG, PNG 파일만 업로드할 수 있습니다.'
   }
   return null
 }

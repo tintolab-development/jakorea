@@ -56,6 +56,9 @@
 
 .status {
   white-space: nowrap;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 140%;
 }
 
 .statusPending {
@@ -63,7 +66,7 @@
 }
 
 .statusProgress {
-  color: var(--color-element-blue);
+  color: var(--color-primary-500);
 }
 
 .statusCompleted {

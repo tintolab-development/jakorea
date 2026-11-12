@@ -48,6 +48,11 @@ import {
 } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { ParticipatingVolunteerApplicationInfo } from './participating-volunteer-application-info'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
+import {
+  CertificateBulkIssueReasonModal,
+  type CertificateIssueReasonValue,
+} from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import { ACTIVITY_CERTIFICATE_DOCUMENT_TITLE } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import { ParticipatingVolunteerAssignmentSection } from './participating-volunteer-assignment-section'
 import { ParticipatingIndividualVolunteerAssignmentSection } from './participating-individual-volunteer-assignment-section'
 import { ParticipatingVolunteerSettlementSection } from './participating-volunteer-settlement-section'
@@ -109,6 +114,9 @@ export function ParticipatingVolunteerFullpageView({
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
+  /** 발급 사유 모달(CMS-FUNC-0161·0265 — 기관·개인 공통) */
+  const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
+  const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
 
   const enrichedVolunteer = useParticipatingVolunteerApplicationDetailEnrichment(initialVolunteer)
   const baseVolunteer = enrichedVolunteer ?? initialVolunteer
@@ -345,8 +353,17 @@ export function ParticipatingVolunteerFullpageView({
   )
 
   const handleActivityCertificateIssueClick = useCallback(() => {
-    setActivityCertPreviewOpen(true)
+    setActivityCertReasonLabel(undefined)
+    setActivityCertReasonOpen(true)
   }, [])
+
+  const handleActivityCertReasonIssue = useCallback(
+    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      setActivityCertReasonLabel(reasonLabel)
+      setActivityCertPreviewOpen(true)
+    },
+    []
+  )
 
   const handleAdminCommentEditEnter = useCallback(() => {
     setAdminCommentDraft(savedAdminComment)
@@ -502,6 +519,14 @@ export function ParticipatingVolunteerFullpageView({
         onClose={() => setActivityCertPreviewOpen(false)}
         volunteer={mergedVolunteer}
         program={program}
+        issuanceReasonLabel={activityCertReasonLabel}
+      />
+      <CertificateBulkIssueReasonModal
+        open={activityCertReasonOpen}
+        onCancel={() => setActivityCertReasonOpen(false)}
+        applicationIds={[mergedVolunteer.id]}
+        certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+        onIssue={handleActivityCertReasonIssue}
       />
       {personalInfoRevealModal}
       <MemberAdminCommentModal

@@ -67,6 +67,13 @@
   line-height: 150%;
 }
 
+/* 시안 Button / Etc / Arrow S: 30 테두리 버튼 안 Icon / Button / w20 */
+.program-schedule-widget__head-nav-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 .program-schedule-widget__head-nav-btn {
   width: 30px;
   height: 30px;

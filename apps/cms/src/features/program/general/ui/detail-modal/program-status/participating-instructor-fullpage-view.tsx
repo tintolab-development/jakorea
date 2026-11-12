@@ -318,7 +318,7 @@ export function ParticipatingInstructorFullpageView({
   const [assignGuideSubmitting, setAssignGuideSubmitting] = useState(false)
   const assignGuideInFlightRef = useRef(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
-  /** 기관형 — 활동인증서 발급 사유(Figma 06-1/02) */
+  /** 활동인증서 발급 사유(Figma 06-1/02, 기능정의서: 개인·기관 공통) */
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
   /**
@@ -1440,13 +1440,9 @@ export function ParticipatingInstructorFullpageView({
   const qualificationCount = mergedInstructor.qualifications?.length ?? 0
 
   const handleActivityCertificateIssueClick = useCallback(() => {
-    if (isInstitutionProgram) {
-      setActivityCertReasonLabel(undefined)
-      setActivityCertReasonOpen(true)
-      return
-    }
-    setActivityCertPreviewOpen(true)
-  }, [isInstitutionProgram])
+    setActivityCertReasonLabel(undefined)
+    setActivityCertReasonOpen(true)
+  }, [])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
@@ -2081,17 +2077,15 @@ export function ParticipatingInstructorFullpageView({
         onClose={() => setActivityCertPreviewOpen(false)}
         instructor={mergedInstructor}
         program={program}
-        issuanceReasonLabel={isInstitutionProgram ? activityCertReasonLabel : undefined}
+        issuanceReasonLabel={activityCertReasonLabel}
       />
-      {isInstitutionProgram ? (
-        <CertificateBulkIssueReasonModal
-          open={activityCertReasonOpen}
-          onCancel={() => setActivityCertReasonOpen(false)}
-          applicationIds={[mergedInstructor.id]}
-          certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
-          onIssue={handleActivityCertReasonIssue}
-        />
-      ) : null}
+      <CertificateBulkIssueReasonModal
+        open={activityCertReasonOpen}
+        onCancel={() => setActivityCertReasonOpen(false)}
+        applicationIds={[mergedInstructor.id]}
+        certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+        onIssue={handleActivityCertReasonIssue}
+      />
       <ParticipatingInstructorActivityWithdrawModal
         open={activityWithdrawModalOpen}
         instructorName={mergedInstructor.instructorName}

@@ -15,7 +15,7 @@ const listed = mapInquiryListItem(
 )
 
 assert(listed)
-assert.equal(listed.createdAt, '2026년 10월 25일(일) 10:30')
+assert.equal(listed.createdAt, '2026년 10월 25일')
 assert.equal(listed.answeredAt, '2026년 10월 26일(월) 02:45')
 assert.equal(listed.status, 'answered')
 

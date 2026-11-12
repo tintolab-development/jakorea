@@ -74,7 +74,7 @@ export function MypageHomeHeader({
           aria-hidden="true"
         />
         <PFText as="span" typo="bd-md-sb" color="black" className={styles.settingsLabel}>
-          회원 정보 설정
+          회원 정보 수정
         </PFText>
       </Link>
     </header>

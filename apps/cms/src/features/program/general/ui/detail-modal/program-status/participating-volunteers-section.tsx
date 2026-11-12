@@ -31,6 +31,11 @@ import {
 } from './participating-volunteer-fullpage-view'
 import { mergeParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
+import {
+  CertificateBulkIssueReasonModal,
+  type CertificateIssueReasonValue,
+} from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import { ACTIVITY_CERTIFICATE_DOCUMENT_TITLE } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { AddParticipatingVolunteerModal } from '@/features/program/general/ui/add-participating-volunteer-modal'
 import { RegisterEmployeeVolunteerModal } from '@/features/program/general/ui/register-employee-volunteer-modal'
@@ -198,6 +203,9 @@ export function ParticipatingVolunteersSection({
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [activityCertPreviewVolunteer, setActivityCertPreviewVolunteer] =
     useState<ParticipatingVolunteerRow | null>(null)
+  /** 발급 사유 모달(CMS-FUNC-0161·0265 — 기관·개인 공통) → 선택 사유를 「발급목적」에 기입 */
+  const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
+  const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -446,8 +454,17 @@ export function ParticipatingVolunteersSection({
       return
     }
     setActivityCertPreviewVolunteer(selectedRow)
-    setActivityCertPreviewOpen(true)
+    setActivityCertReasonLabel(undefined)
+    setActivityCertReasonOpen(true)
   }, [filteredVolunteers, selectedRowKeys, showAlert, volunteerList])
+
+  const handleActivityCertReasonIssue = useCallback(
+    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      setActivityCertReasonLabel(reasonLabel)
+      setActivityCertPreviewOpen(true)
+    },
+    []
+  )
 
   const selectedVolunteerFromUrl = useMemo(() => {
     if (!volunteerIdFromUrl) return null
@@ -833,8 +850,16 @@ export function ParticipatingVolunteersSection({
           }}
           volunteer={mergeParticipatingVolunteerDetailRow(activityCertPreviewVolunteer)}
           program={program}
+          issuanceReasonLabel={activityCertReasonLabel}
         />
       ) : null}
+      <CertificateBulkIssueReasonModal
+        open={activityCertReasonOpen}
+        onCancel={() => setActivityCertReasonOpen(false)}
+        applicationIds={activityCertPreviewVolunteer ? [activityCertPreviewVolunteer.id] : []}
+        certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+        onIssue={handleActivityCertReasonIssue}
+      />
     </div>
   )
 }

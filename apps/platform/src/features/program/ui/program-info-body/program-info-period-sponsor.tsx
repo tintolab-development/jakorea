@@ -43,7 +43,7 @@ export function ProgramInfoPeriodSponsor({
       {hasPeriod ? (
         <div className={styles.periodSponsorItem}>
           <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
-            프로그램 운영 기간
+            {program.detailCase === 'gemini' ? '연수 요청 가능 기간' : '프로그램 운영 기간'}
           </PFText>
           <PFText as="span" typo="hl-sm" color="black">
             {operatingPeriodLabel}

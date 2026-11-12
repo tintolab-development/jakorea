@@ -284,13 +284,9 @@
   background: var(--color-bg-accent-hover);
 }
 
+/* 시안: Icon / Etc / Toggle alarm 원본(20 프레임), 민트 */
 .main-header-notification-icon {
-  font-size: var(--font-size-14);
   color: var(--color-brand-primary);
-  display: flex;
-  align-items: center;
-  /* 시안: 아이콘 박스 20×20 (글리프 크기는 유지) */
-  justify-content: center;
   width: 20px;
   height: 20px;
 }

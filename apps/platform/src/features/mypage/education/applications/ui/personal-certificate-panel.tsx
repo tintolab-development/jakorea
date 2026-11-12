@@ -2,9 +2,12 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { ProgramDetailCase } from '@/features/program'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
-import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFModal, PFText } from '@/shared/ui'
 import { availabilityReasonMessage } from '../api/personal-certificate-client'
-import type { MemberCertificateAvailabilityResponse } from '../api/personal-certificate-types'
+import type {
+  MemberCertificateAvailabilityResponse,
+  PortalCertificateIssueReason,
+} from '../api/personal-certificate-types'
 import {
   useDownloadPersonalCertificateMutation,
   useIssuePersonalCertificateMutation,
@@ -18,6 +21,8 @@ import {
 } from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import {
+  PERSONAL_CERTIFICATE_ISSUE_NOTICE,
+  PERSONAL_CERTIFICATE_ISSUE_REASONS,
   portalCertificateCtaButtonLabel,
   portalCertificateDocumentLabel,
   shouldShowPersonalCertificateAction,
@@ -72,6 +77,8 @@ export function EducationPersonalCertificatePanel({
   const downloadMutation = useDownloadPersonalCertificateMutation()
   const { displayName } = useMypageMember()
   const [alertMessage, setAlertMessage] = useState('')
+  const [issueReasonOpen, setIssueReasonOpen] = useState(false)
+  const [issueReason, setIssueReason] = useState<PortalCertificateIssueReason>('PERSONAL_ARCHIVE')
   const [localIssueIds, setLocalIssueIds] = useState<
     Partial<Record<CertificateKind, number>>
   >({})
@@ -173,6 +180,7 @@ export function EducationPersonalCertificatePanel({
   const handleIssue = async (
     kind: CertificateKind,
     availability: MemberCertificateAvailabilityResponse | null,
+    reason: PortalCertificateIssueReason,
   ) => {
     const documentLabel = portalCertificateDocumentLabel(kind)
     const participantId = resolveParticipantId(availability)
@@ -190,7 +198,7 @@ export function EducationPersonalCertificatePanel({
         programId: programIdNumber,
         participantId,
         certificateType: 'COMPLETION',
-        issueReason: 'PERSONAL_ARCHIVE',
+        issueReason: reason,
       })
       const certificateIssueId = readPortalCertificateIssueId(issuedResponse)
       if (certificateIssueId == null) {
@@ -236,12 +244,66 @@ export function EducationPersonalCertificatePanel({
               void handleDownload(localIssueId, documentLabel)
               return
             }
-            void handleIssue(activeKind, activeAvailability)
+            setIssueReasonOpen(true)
           }}
         >
           {title}
         </CertificateDiplomaButton>
       </div>
+      <PFModal
+        open={issueReasonOpen}
+        size="sm"
+        title={`${documentLabel} 발급하기`}
+        onClose={() => {
+          if (issueMutation.isPending) return
+          setIssueReasonOpen(false)
+        }}
+        closeOnBackdropClick={!issueMutation.isPending}
+        showCloseButton={false}
+      >
+        <div className={styles.issueDialog}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.issueNotice}>
+            {PERSONAL_CERTIFICATE_ISSUE_NOTICE}
+          </PFText>
+          <fieldset className={styles.reasonList}>
+            <legend className={styles.srOnly}>발급 사유</legend>
+            {PERSONAL_CERTIFICATE_ISSUE_REASONS.map(reason => (
+              <label key={reason.value} className={styles.reasonItem}>
+                <input
+                  type="radio"
+                  name="personal-certificate-issue-reason"
+                  checked={issueReason === reason.value}
+                  onChange={() => setIssueReason(reason.value)}
+                />
+                {reason.label}
+              </label>
+            ))}
+          </fieldset>
+          <div className={styles.issueActions}>
+            <PFButton
+              type="button"
+              variant="secondary"
+              size="xlarge"
+              disabled={issueMutation.isPending}
+              onClick={() => setIssueReasonOpen(false)}
+            >
+              닫기
+            </PFButton>
+            <PFButton
+              type="button"
+              variant="primary"
+              size="xlarge"
+              disabled={issueMutation.isPending}
+              onClick={() => {
+                setIssueReasonOpen(false)
+                void handleIssue(activeKind, activeAvailability, issueReason)
+              }}
+            >
+              발급하기
+            </PFButton>
+          </div>
+        </div>
+      </PFModal>
       <PFAlertModal
         open={Boolean(alertMessage)}
         title="안내"

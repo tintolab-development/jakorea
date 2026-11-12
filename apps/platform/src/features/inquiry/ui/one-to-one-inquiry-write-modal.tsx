@@ -131,7 +131,7 @@ export function OneToOneInquiryWriteModal({
           <PFSelect
             size="xlarge"
             label="문의 프로그램명"
-            placeholder="문의할 프로그램을 선택해 주세요."
+            placeholder="문의할 프로그램을 선택해 주세요"
             options={[...programOptions]}
             value={programValue}
             required
@@ -177,7 +177,6 @@ export function OneToOneInquiryWriteModal({
             size="xlarge"
             label="제목"
             placeholder="제목을 입력해 주세요."
-            required
             value={title}
             error={Boolean(errors.title)}
             message={errors.title}
@@ -197,9 +196,6 @@ export function OneToOneInquiryWriteModal({
             <PFText as="span" typo="label-md" color="inherit" className={styles.labelText}>
               문의내용
             </PFText>
-            <span className={styles.requiredMark} aria-hidden="true">
-              *
-            </span>
           </label>
           <textarea
             id={contentFieldId}

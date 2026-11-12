@@ -9,7 +9,7 @@ import {
   buildTeacherInProgressDetailTabItems,
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
-  canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
@@ -697,13 +697,16 @@ export function MypageEducationDetailPage() {
         }
       : {}),
   }
-  const showCancelCta =
-    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
+  const showCancelCta = shouldShowEducationApplicationCancelCta(
+    application.displayStatus,
+    application.cancellable,
+  )
   const showTeacherAssignment = shouldMountTeacherEducationAssignmentAside({
     isTeacher,
     applicationType:
       application.applicationType ?? routeApplicationType ?? resolvedApplicationType,
     hasTeacherAssignment: Boolean(application.teacherAssignment),
+    displayStatus: application.displayStatus,
   })
   const showPersonalCertificatePanel =
     !isProgramApplicationStatus &&
@@ -936,7 +939,8 @@ export function MypageEducationDetailPage() {
             educationTargetLabel={program.educationTargetLabel}
             educationForm={program.educationForm}
             educationFormLabel={program.educationFormLabel}
-            statusAudience="teacher"
+            statusAudience={isTeacher ? 'teacher' : 'general'}
+            participationRoleLabel="수강자"
           />
         }
         aside={

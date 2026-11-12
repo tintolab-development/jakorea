@@ -59,6 +59,13 @@
   outline: none !important;
 }
 
+/* 시안 Calendar / Miniview: Icon / Button / w20 left·right */
+.calendar-mini-nav-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 .calendar-mini-nav-btn:hover {
   color: var(--color-text-label);
 }
