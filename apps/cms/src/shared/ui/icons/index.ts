@@ -48,12 +48,17 @@ export {
   LnbChartIcon,
   LnbDashboardIcon,
   LnbDataIcon,
+  LnbInfoIcon,
   LnbMailIcon,
+  LnbManagerIcon,
   LnbMemberIcon,
+  LnbOrganizationIcon,
   LnbPostIcon,
   LnbProgramIcon,
   LnbSecurityIcon,
+  LnbSurveyIcon,
   LnbTemplateIcon,
+  LnbVolunteerIcon,
 } from './LnbIcons'
 export type { LnbIconProps } from './LnbIcons'
 export { GnbAlarmIcon } from './GnbIcons'

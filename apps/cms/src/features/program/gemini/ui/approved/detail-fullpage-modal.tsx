@@ -26,8 +26,8 @@ import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
+import { GeneralLnbInstructorApplicationIcon } from '@/features/program/general/ui/detail-modal/detail-lnb-icons'
 import {
-  LnbIconApplicants,
   LnbIconManagers,
   LnbIconProjectInfo,
 } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
@@ -49,7 +49,7 @@ import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-d
 
 const SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   { key: 'info', label: '프로그램 정보', icon: <LnbIconProjectInfo /> },
-  { key: 'instructors', label: '강사 신청 목록', icon: <LnbIconApplicants /> },
+  { key: 'instructors', label: '강사 신청 목록', icon: <GeneralLnbInstructorApplicationIcon /> },
   { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
 ]
 

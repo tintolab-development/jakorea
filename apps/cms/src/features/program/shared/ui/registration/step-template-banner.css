@@ -106,10 +106,11 @@
 }
 
 .registration-body-header__template-follow-icon {
+  /* 시안 Sprite ico-info-22 원본(회색 60%) */
+  display: block;
   flex-shrink: 0;
-  font-size: 18px;
-  color: var(--color-mint-01, #01a1af);
-  opacity: 1;
+  width: 22px;
+  height: 22px;
 }
 
 /* 일반 프로그램 등록 — 「템플릿 선택」 제목 + 안내문 한 행 (시안) */

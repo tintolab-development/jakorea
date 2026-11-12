@@ -1,4 +1,4 @@
-import { InfoCircleOutlined } from '@ant-design/icons'
+import infoUrl from '@/shared/assets/icons/inputs/info-22.svg'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import type { TemplateRow } from '@/features/template/model/template.schema'
@@ -77,7 +77,15 @@ export function RegistrationStepTemplateBanner({
 export function RegistrationStepTemplateFollowHint() {
   return (
     <p className="registration-body-header__template-follow">
-      <InfoCircleOutlined className="registration-body-header__template-follow-icon" aria-hidden />
+      <img
+        src={infoUrl}
+        width={22}
+        height={22}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="registration-body-header__template-follow-icon"
+      />
       아래 항목은 선택된 템플릿 기준으로 구성됩니다.
     </p>
   )

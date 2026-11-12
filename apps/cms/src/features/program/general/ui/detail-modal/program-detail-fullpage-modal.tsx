@@ -182,7 +182,7 @@ import {
   LnbIconProgress,
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
-import { GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
+import { GeneralLnbInstructorApplicationIcon, GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
 import { LnbFigmaInstitutionApplicationIcon } from './lnb-figma-icons'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import './applications/participant-applications.css'
@@ -1059,7 +1059,7 @@ function ProgramDetailFullPageModalContent({
                 {
                   key: 'applicant_instructors',
                   label: '강사 신청 목록',
-                  icon: <LnbIconApplicants />,
+                  icon: <GeneralLnbInstructorApplicationIcon />,
                 },
               ]
             : []),
