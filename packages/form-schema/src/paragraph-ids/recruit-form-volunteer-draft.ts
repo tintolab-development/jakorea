@@ -55,7 +55,7 @@ export function createRecruitFormVolunteerDraft(): WritingFormDraft {
     createSeedHorizontalTable(
       RECRUIT_FORM_VOLUNTEER_IDS.detailInfo,
       '상세 정보',
-      '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.',
+      '공란인 경우, 홈페이지 모집 상세에서 항목 미노출됩니다.',
       { required: false }
     ),
     createSeedHorizontalTable(
