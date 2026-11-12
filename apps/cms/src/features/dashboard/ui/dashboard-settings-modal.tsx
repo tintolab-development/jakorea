@@ -451,8 +451,9 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         <section className="dashboard-settings-modal__section">
           <div className="dashboard-settings-modal__section-title">바로가기 아이콘 설정</div>
           <div className="dashboard-settings-modal__shortcuts">
+            {/* 시안: 라벨 16/Medium · 행 간격 37 (large 체크박스 20 + 라벨 130% · gap 16) */}
             <CmsCheckbox
-              checkboxSize="medium"
+              checkboxSize="large"
               checked={shortcutAllEnabled}
               indeterminate={shortcutAllIndeterminate}
               onChange={e => setAllDraftShortcuts(e.target.checked)}
@@ -466,7 +467,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
                 const rowDisabled = item.settingsDisabled || !item.permissionAllowed
                 return (
                   <CmsCheckbox
-                    checkboxSize="medium"
+                    checkboxSize="large"
                     key={item.id}
                     checked={
                       rowDisabled ? false : isShortcutItemEnabled(shortcutEnabled, item.id)

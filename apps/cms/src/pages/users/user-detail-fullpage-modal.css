@@ -187,3 +187,26 @@
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
 }
+
+/**
+ * 시안: 회원 상세(학교·강사·강사 신청·관리자) 섹션 제목 18/Bold
+ * (CMS 공통 DetailInfoForm 제목 20/700 을 회원 상세 풀페이지에서만 덮어쓴다)
+ */
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-info-form__title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/** 시안: 학교 상세 · 소속 교사 목록 「총 N건」 14/Medium */
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .school-affiliated-teachers-section__header
+  .detail-info-form__description {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/** 시안: 관리자 상세 · 프로그램 담당 이력 엑셀 다운로드 140 */
+.detail-fullpage-modal.user-detail-fullpage-modal .admin-managed-program-history .excel-button {
+  width: 140px;
+  min-width: 140px;
+}

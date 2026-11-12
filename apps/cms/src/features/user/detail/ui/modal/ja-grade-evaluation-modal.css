@@ -97,3 +97,24 @@
   font-weight: 500;
   line-height: 150%;
 }
+
+/** 시안: 상단 안내 18 · #3d3d3d */
+.ja-grade-evaluation-modal
+  .paragraph-card--survey-title-with-period
+  .paragraph-input--description
+  .paragraph-input__view-text {
+  font-size: 18px;
+  color: var(--default-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
+  opacity: 1;
+}
+
+/** 시안: 문항별 점수 환산 안내 #3d3d3d */
+.ja-grade-evaluation-modal
+  .paragraph-card--scale-type
+  .paragraph-card__description-block
+  .paragraph-input__view-text {
+  color: var(--default-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
+  opacity: 1;
+}

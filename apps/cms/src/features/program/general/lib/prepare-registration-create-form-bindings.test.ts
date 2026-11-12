@@ -270,6 +270,20 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
       }
     )
 
+    it('COMPANY_SCHOOL 강사 신청 양식은 탭을 열지 않아도 draft null로 포함한다(기관 신청은 기존 동작)', async () => {
+      resolveProgramOperationalBindingKind.mockReturnValue('COMPANY_SCHOOL')
+      listAllRegistrationCreateFormSpecs.mockReturnValue([
+        { templateCode: 'registration-economy', formType: 'REGISTRATION', nameHints: [] },
+        { templateCode: 'recruitment-instructor', formType: 'RECRUITMENT', targetRole: 'INSTRUCTOR', nameHints: [] },
+        { templateCode: 'application-economy', formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: [] },
+        { templateCode: 'application-instructor', formType: 'APPLICATION', targetRole: 'INSTRUCTOR', nameHints: [] },
+      ])
+      const result = await prepareRegistrationCreateFormBindings({ program })
+      expect(result?.forms).toEqual([
+        { templateCode: 'application-instructor', formType: 'APPLICATION', draft: null },
+      ])
+    })
+
     it('TRAINED_TEACHER RHF overlay가 있으면 모집·신청 Form Version 적용 목록에 넣는다', async () => {
       resolveProgramOperationalBindingKind.mockReturnValue('TRAINED_TEACHER')
       listAllRegistrationCreateFormSpecs.mockReturnValue([

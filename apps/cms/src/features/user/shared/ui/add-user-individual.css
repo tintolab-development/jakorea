@@ -5,17 +5,43 @@
 }
 
 .add-user-individual__section--basic .detail-info-form__field {
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
+  height: 59px;
+  min-height: 59px;
+  max-height: 59px;
 }
 
+/** 시안: 행 pitch 60 = 셀 59 + 행 구분선 1 */
 .add-user-individual__section--basic .detail-info-form__field-label,
 .add-user-individual__section--basic .detail-info-form__field-content {
-  height: 60px;
-  min-height: 60px;
-  max-height: 60px;
+  height: 59px;
+  min-height: 59px;
+  max-height: 59px;
   box-sizing: border-box;
+}
+
+/** 시안: 섹션 제목 18/Bold · 텍스트 좌측 8 (팝업 패딩 30 + 8 = 38) */
+.add-user-individual__sections .detail-info-form > .detail-info-form__header .detail-info-form__title {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 0 8px;
+}
+
+/** 시안: 약관 안내 문구 14/Medium 50% */
+.add-user-individual__terms-consent-heading > .detail-info-form__header .detail-info-form__description {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.5;
+}
+
+/** 시안: 자택 주소지 — 주소 검색 240 + 상세 주소 240 가로 배치 */
+.add-user-individual__address-row .address-search__trigger-wrap {
+  flex: 0 0 240px;
+  width: 240px;
+}
+
+/** 시안: 학년 셀렉트 w120 고정 (flex 축소 방지) */
+.add-user-individual__section--basic .detail-info-form-inputs-wrapper > .cms-select {
+  flex: 0 0 120px;
 }
 
 .add-user-individual__section--terms .detail-info-form__field {
@@ -73,6 +99,12 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0 16px;
+}
+
+/** 시안: 동의서 작성 버튼 100×32 */
+.add-user-individual__consent-write-btn {
+  width: 100px;
+  min-width: 100px;
 }
 
 .add-user-individual__consent-status {

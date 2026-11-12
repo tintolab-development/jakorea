@@ -106,8 +106,10 @@ import { resolveInstructorAssignmentScheduleId } from '@/features/program/genera
 import {
   buildCompanySchoolWaitingInstructorRows,
   buildCompanySchoolAssignedInstructorRows,
+  collectCompanySchoolAssignedInstructorSchedulePairs,
   omitCompanySchoolScheduleRoundLabels,
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
+import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import {
   buildCompanySchoolAssignedScheduleLine,
   buildCompanySchoolScheduleUnitByScheduleId,
@@ -1670,10 +1672,17 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           if (a.instructorMemberId != null) assignedMemberIds.add(String(a.instructorMemberId))
         }
       }
+      // 1사1교: 기관 희망 일정(requested-schedules, resolvedScheduleId 포함)이 배정 후보 일정이다.
+      // 참여자 sessions는 확정 전 비어 있을 수 있어 승인 강사가 0건으로 보였다(QA 2026-11-13 1사1교 #12).
+      const companySchoolRequestedSessions = isCompanySchool
+        ? (mapRequestedSchedulesToSessions(requestedHopeSchedulesQuery.data) ?? [])
+        : []
       const waitingHopeSessions =
         isGeneralOrgProgram && hopeEducationSessions.length > 0
           ? hopeEducationSessions
-          : (row.sessions ?? [])
+          : companySchoolRequestedSessions.length > 0
+            ? companySchoolRequestedSessions
+            : (row.sessions ?? [])
       // 일반 기관형(1사1교 제외): 승인 전 강사 신청도 배정 대기에 보여 「승인 및 배정」(시안 09-2·11-2) 대상으로 쓴다
       const includePending = isGeneralOrgProgram && !isCompanySchool
       const pendingApplications = includePending
@@ -1691,6 +1700,15 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           ? [...assignmentBoard.approvedInstructorApplications, ...pendingApplications]
           : assignmentBoard.approvedInstructorApplications,
         assignedInstructorMemberIds: assignedMemberIds,
+        // 1사1교: 배정 완료(강사 × 일정) 건만 숨긴다
+        ...(isCompanySchool
+          ? {
+              assignedInstructorSchedulePairs: collectCompanySchoolAssignedInstructorSchedulePairs(
+                assignmentBoard.assignments,
+                String(row.organizationApplicationId)
+              ),
+            }
+          : {}),
         occupiedLectureDatesByInstructorId,
         // 일반 기관형: 강사 신청의 기관별 거리에서 이 기관을 찾는다(1사1교는 기존 신청 단위 거리)
         organizationApplicationId: isGeneralOrgProgram ? row.organizationApplicationId : null,
@@ -1742,6 +1760,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     assignedInstructorIdSet,
     assignmentBoard,
     waitingHopeSessionLabel,
+    requestedHopeSchedulesQuery.data,
   ])
 
   const assignedInstructorNames = useMemo(

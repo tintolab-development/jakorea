@@ -294,7 +294,10 @@ export function HeaderMobileMenu({
         title="알림"
         mobilePlacement="full"
       >
-        <NotificationInboxPanel variant="embedded" />
+        <NotificationInboxPanel
+          variant="embedded"
+          onNavigate={() => setIsNotificationOpen(false)}
+        />
       </PFModal>
     </div>,
     document.body

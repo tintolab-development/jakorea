@@ -167,6 +167,18 @@
   line-height: 150%;
 }
 
+/* 시안: 수정일 노출 범위 안내(어드민 전용) — 메타 행 아래 */
+.admin-notice-detail-page__meta-guide {
+  margin: 4px 0 0;
+  width: 100%;
+  color: #85969d;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .admin-notice-detail-page__meta-divider {
   flex-shrink: 0;
   width: 1px;

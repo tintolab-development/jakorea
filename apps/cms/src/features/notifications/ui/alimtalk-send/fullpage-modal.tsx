@@ -59,7 +59,10 @@ import {
   listAlimtalkManualSendUnusableKeys,
 } from '@/features/notifications/model/alimtalk-send/manual-send-usable'
 import { alimtalkSendStateAfterProgramChange } from '@/features/notifications/model/alimtalk-send/program-change'
-import { alimtalkSendTemplateContentEmptyTitle } from '@/features/notifications/model/alimtalk-send/content-empty'
+import {
+  ALIMTALK_SEND_EMPTY_SENDER_TITLE,
+  alimtalkSendTemplateContentEmptyTitle,
+} from '@/features/notifications/model/alimtalk-send/content-empty'
 import {
   buildNotificationTemplateVariablesQuery,
   inferUniqueRecipientTypeValue,
@@ -113,10 +116,10 @@ import {
   hasNotificationSendDraftInput,
 } from '@/features/notifications/model/shared/send-draft-input'
 
-const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택해 주세요'
+const EMPTY_HINT = ALIMTALK_SEND_EMPTY_SENDER_TITLE
 const EMPTY_HINT_VIEW = <span className="alimtalk-send-fullpage__empty-hint">{EMPTY_HINT}</span>
 const RECIPIENT_PROFILE_HINT = '발신 프로필을 먼저 선택해 주세요.'
-const EMPTY_SECTION_TITLE = '발신 프로필/템플릿을 먼저 선택해 주세요.'
+const EMPTY_SECTION_TITLE = ALIMTALK_SEND_EMPTY_SENDER_TITLE
 const EMPTY_SECTION_DESCRIPTION = '항목이 선택되면 이곳에 목록이 표시됩니다.'
 const UNSELECTED_CONTENT =
   '알림톡은 미리 승인 받은 템플릿만 사용 가능합니다. 템플릿 제목을 선택하면 내용이 표시됩니다.'

@@ -11,6 +11,7 @@ import {
 } from '@/features/mypage'
 import { SkeletonBlock } from '@/shared/ui/skeleton-block'
 import {
+  GENERAL_CALENDAR_LEGEND_ITEMS,
   INSTRUCTOR_CALENDAR_LEGEND_ITEMS,
   resolveCalendarEventColors,
   PFCalendar,
@@ -113,7 +114,9 @@ export function ScheduleSection({
         value={selectedDate}
         month={viewMonth}
         events={calendarEvents}
-        legendItems={isInstructor ? INSTRUCTOR_CALENDAR_LEGEND_ITEMS : undefined}
+        legendItems={
+          isInstructor ? INSTRUCTOR_CALENDAR_LEGEND_ITEMS : GENERAL_CALENDAR_LEGEND_ITEMS
+        }
         onChange={handleDateChange}
         onMonthChange={handleMonthChange}
       />

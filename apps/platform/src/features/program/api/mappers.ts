@@ -538,6 +538,12 @@ const TERM_LABEL: Record<string, string> = {
   SECOND_HALF: '하반기',
 }
 
+/** UJAT 세부내용 일정 블록 — Figma 14064-40209 「상반기(1학기)/하반기(2학기)」 */
+const UJAT_EVENT_TERM_LABEL: Record<string, string> = {
+  FIRST_HALF: '상반기(1학기)',
+  SECOND_HALF: '하반기(2학기)',
+}
+
 const UJAT_KIND_ORDER: Record<string, number> = {
   SESSION: 0,
   PRE_EDUCATION: 1,
@@ -645,7 +651,7 @@ function mapUjatPublicEventSchedules(schedules: PortalSchedule[] | undefined) {
       const kind = readString(schedule.scheduleKind)?.toUpperCase()
       const term = readString(schedule.term)?.toUpperCase()
       const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
-      const termLabel = term ? TERM_LABEL[term] : undefined
+      const termLabel = term ? UJAT_EVENT_TERM_LABEL[term] : undefined
       const fallbackName = toDisplayEducationScheduleName(schedule.scheduleName) ?? ''
       const scheduleLabel = termLabel ?? kindLabel ?? '일정'
       const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
@@ -1289,10 +1295,10 @@ function buildPortalBasicInfoFields(args: {
         { label: '사업 분야', value: args.businessFieldLabel },
         {
           label: '모집 대상',
-          value: args.recruitmentTargetGroupLabel || '대학(원)생',
+          value: args.recruitmentTargetGroupLabel,
         },
         ...educationTargetBasicInfoFields(args),
-        { label: '교육 지역', value: args.educationVenueLabel },
+        { label: '교육 장소', value: args.educationVenueLabel },
       ])
     case 'ujat-participant':
       return compactBasicInfoFields([
@@ -1301,7 +1307,7 @@ function buildPortalBasicInfoFields(args: {
         { label: '교육 대상', value: args.educationTargetGroupLabel },
         {
           label: '교육 대상 상세',
-          value: args.educationTargetDetailLabel || '초등학교',
+          value: args.educationTargetDetailLabel,
         },
         { label: '교육 장소', value: args.educationVenueLabel },
       ])

@@ -25,6 +25,7 @@ import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
+  hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
 import {
   ADMIN_PERMISSION_SELECT_OPTIONS,
@@ -50,8 +51,9 @@ export interface AdminRegisterModalFormValues {
    * 같은 값 타입을 쓰는 관리자 상세 프로필 수정 폼은 권한 유형을 따로 다루므로 선택 속성으로 둔다.
    */
   permissionType?: AdminPermissionTagVariant
-  consentTermsOfService: ConsentValue
-  consentPersonalInfo: ConsentValue
+  /** 신규 등록은 미선택(undefined)으로 시작 — 필수 동의 항목 */
+  consentTermsOfService: ConsentValue | undefined
+  consentPersonalInfo: ConsentValue | undefined
   consentMarketing: ConsentValue
   consentMfaSetup: ConsentValue
 }
@@ -82,11 +84,17 @@ const INITIAL_VALUES: AdminRegisterModalFormValues = {
   email: '',
   // 권한 유형은 미선택으로 시작 — 기본 권한을 정하지 않는다.
   permissionType: undefined,
-  consentTermsOfService: 'agree',
-  consentPersonalInfo: 'agree',
+  consentTermsOfService: undefined,
+  consentPersonalInfo: undefined,
   consentMarketing: 'disagree',
   consentMfaSetup: 'agree',
 }
+
+/** 필수 동의 — 미선택이면 필수 항목 미입력 안내 */
+const ADMIN_REGISTER_REQUIRED_CONSENT_SELECTION_KEYS = [
+  'consentTermsOfService',
+  'consentPersonalInfo',
+] as const
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -95,7 +103,7 @@ const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
 const ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS = [
   { key: 'consentTermsOfService', label: '서비스 이용약관' },
   { key: 'consentPersonalInfo', label: '개인정보 수집·이용 동의' },
-  { key: 'consentMfaSetup', label: '2단계 인증(MFA) 설정 동의' },
+  { key: 'consentMfaSetup', label: '2단계 인증 설정 동의' },
 ] as const satisfies ReadonlyArray<{
   key: keyof AdminRegisterModalFormValues
   label: string
@@ -188,6 +196,14 @@ export function AdminRegisterModal({
   }
 
   const handleSubmitAttempt = (values: AdminRegisterModalFormValues) => {
+    if (hasUnsetConsentSelections(values, ADMIN_REGISTER_REQUIRED_CONSENT_SELECTION_KEYS)) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+
     const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(values, [
       ...ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS,
     ])
@@ -223,10 +239,11 @@ export function AdminRegisterModal({
       onCancel={handleClose}
       title="관리자 신규 등록"
       width={1200}
+      className="admin-register-modal"
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={handleClose}>
-            닫기
+            취소
           </CmsButton>
           <CmsButton
             variant="primary"
@@ -332,7 +349,7 @@ export function AdminRegisterModal({
                     <CmsSelect
                       inputSize="small"
                       width="100%"
-                      placeholder="관리자 권한을 선택해 주세요"
+                      placeholder="승인 권한을 선택해 주세요"
                       withAllOption={false}
                       options={ADMIN_PERMISSION_SELECT_OPTIONS}
                     />
@@ -351,6 +368,7 @@ export function AdminRegisterModal({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="서비스 이용약관"
+                required
                 labelWidth={220}
                 view="-"
                 edit={
@@ -361,6 +379,7 @@ export function AdminRegisterModal({
               />
               <DetailInfoForm.Field
                 label="개인정보 수집·이용 동의"
+                required
                 labelWidth={220}
                 view="-"
                 edit={
@@ -372,7 +391,7 @@ export function AdminRegisterModal({
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
-                label="마케팅 제공 동의"
+                label="마케팅 정보 수신 동의"
                 labelWidth={220}
                 view="-"
                 edit={
@@ -382,7 +401,7 @@ export function AdminRegisterModal({
                 }
               />
               <DetailInfoForm.Field
-                label="2단계 인증(MFA) 설정 동의"
+                label="2단계 인증 설정 동의"
                 labelWidth={220}
                 view="-"
                 edit={

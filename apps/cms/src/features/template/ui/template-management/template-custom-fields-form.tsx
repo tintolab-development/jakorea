@@ -152,6 +152,8 @@ export interface TemplateCustomFieldsFormProps {
   participantRowLabels?: readonly string[]
   /** 수료증 배경 미업로드 시 썸네일(증명서 종류별 기본 배경). 미지정 시 기본 배경 */
   defaultCertificateBackgroundThumbSrc?: string
+  /** true면 줄 고정(활동인증서) — 체크 항목 없이 줄 이름만 보여 준다 */
+  participantRowsLocked?: boolean
 }
 
 export function TemplateCustomFieldsForm({
@@ -167,6 +169,7 @@ export function TemplateCustomFieldsForm({
   initialLogoPreviewUrls,
   participantRowLabels = PARTICIPANT_INFO_ROW_LABELS,
   defaultCertificateBackgroundThumbSrc,
+  participantRowsLocked = false,
 }: TemplateCustomFieldsFormProps) {
   const [activeField, setActiveField] = useState<TemplateCustomFieldDef | null>(() => {
     if (selectedFieldName === undefined || selectedFieldName === null || selectedFieldName === '')
@@ -388,24 +391,33 @@ export function TemplateCustomFieldsForm({
                 role="group"
                 aria-label="참여자 정보 항목 표시"
               >
-                {participantRowLabels.map((rowLabel, index) => (
-                  <label
-                    key={rowLabel}
-                    className="template-custom-fields-form__participant-check-row"
-                  >
-                    <CmsCheckbox
-                      checkboxSize="medium"
-                      className="template-custom-fields-form__participant-checkbox"
-                      checked={participantVisibilityResolved[index]}
-                      onChange={e => {
-                        onParticipantRowVisibilityChange?.(index, e.target.checked)
-                      }}
-                    />
-                    <span className="template-custom-fields-form__participant-check-label">
-                      {rowLabel}
-                    </span>
-                  </label>
-                ))}
+                {participantRowLabels.map((rowLabel, index) =>
+                  participantRowsLocked ? (
+                    // 줄 고정(활동인증서, CMS-FUNC-0265) — 체크 항목 없이 표시 줄만 안내
+                    <div key={rowLabel} className="template-custom-fields-form__participant-check-row">
+                      <span className="template-custom-fields-form__participant-check-label">
+                        {rowLabel}
+                      </span>
+                    </div>
+                  ) : (
+                    <label
+                      key={rowLabel}
+                      className="template-custom-fields-form__participant-check-row"
+                    >
+                      <CmsCheckbox
+                        checkboxSize="medium"
+                        className="template-custom-fields-form__participant-checkbox"
+                        checked={participantVisibilityResolved[index]}
+                        onChange={e => {
+                          onParticipantRowVisibilityChange?.(index, e.target.checked)
+                        }}
+                      />
+                      <span className="template-custom-fields-form__participant-check-label">
+                        {rowLabel}
+                      </span>
+                    </label>
+                  )
+                )}
               </div>
             </>
           ) : activeField && MULTILINE_TEXT_FIELD_NAMES.has(activeField.name) ? (

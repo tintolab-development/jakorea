@@ -63,9 +63,9 @@ describe('InstructorAssignmentPanel 회차·차시·사전교육', () => {
       />,
     )
     expect(html).toContain('담당 교육 진행 일정')
-    expect(html).toContain('2026년 11월 6일(금) 15:00~15:10 | 사전교육')
-    expect(html).toContain('2026년 11월 6일(금) 15:05~15:10 | 1회차 (2차시)')
-    expect(html).toContain('2026년 11월 6일(금) 15:15~15:20 | 2회차 (2차시)')
+    expect(html).toContain('2026년 11월 6일(금) 15:00 ~ 15:10 사전교육')
+    expect(html).toContain('2026년 11월 6일(금) 15:05 ~ 15:10 1회차 (2차시)')
+    expect(html).toContain('2026년 11월 6일(금) 15:15 ~ 15:20 2회차 (2차시)')
     expect(html).not.toContain('| 1차시')
     expect(html).not.toContain('| 2차시')
     expect(html).toContain('<td>3</td>')
@@ -88,7 +88,7 @@ describe('InstructorAssignmentPanel 회차·차시·사전교육', () => {
         ]}
       />,
     )
-    expect(html).toContain('2026년 11월 6일(금) 15:15~15:20 | 2회차')
+    expect(html).toContain('2026년 11월 6일(금) 15:15 ~ 15:20 2회차')
     expect(html).not.toContain('2회차 (2차시)')
   })
 
@@ -107,7 +107,7 @@ describe('InstructorAssignmentPanel 회차·차시·사전교육', () => {
         ]}
       />,
     )
-    expect(html).toContain('2026년 11월 6일(금) 15:00~15:10 | -')
+    expect(html).toContain('2026년 11월 6일(금) 15:00 ~ 15:10')
     expect(html).not.toContain('사전교육')
   })
 })
@@ -156,9 +156,10 @@ describe('강의보고서 카드 자막 렌더', () => {
         ),
       )
       .join('')
-    expect(html).toContain('15:00~15:10 | 사전교육')
-    expect(html).toContain('15:05~15:10 | 1회차 | 2차시')
-    expect(html).toContain('15:15~15:20 | 2회차 | 2차시')
+    expect(html).toContain('15:00~15:10 사전교육')
+    expect(html).toContain('15:05~15:10 2차시')
+    expect(html).toContain('15:15~15:20 2차시')
+    expect(html).not.toContain('| 1회차')
     expect(html).not.toContain('1차시')
   })
 })

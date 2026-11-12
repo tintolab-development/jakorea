@@ -159,6 +159,8 @@ function TemplatePreviewModalShell({
       onDelete={onDelete}
       deleteLoading={deleteLoading}
       registrationUserMode={registrationUserMode}
+      // 템플릿 관리 편집기: 상단 「닫기」 없이 미리보기·저장, 닫기는 우측 상단 X (QA 261113 #11·#44)
+      showHeaderCloseButton={registrationUserMode}
       footerAction={footerAction}
       leftContent={isDraftLoading ? <FormDraftLoading /> : leftContent}
       rightNavigation={isDraftLoading ? null : rightNavigation}

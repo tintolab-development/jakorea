@@ -1,4 +1,4 @@
-import { SearchOutlined } from '@ant-design/icons'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import { type ReactNode } from 'react'
 import {
   UJAT_PROGRAM_APPLICATION_VOLUNTEER_GRADE_OPTIONS,
@@ -63,7 +63,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
       inputSize="small"
       width={240}
       placeholder="학교명을 입력해 보세요"
-      icon={<SearchOutlined aria-hidden />}
+      icon={<FieldSearchIcon />}
       value={universityName}
       onChange={e => setUniversityName(e.target.value)}
     />

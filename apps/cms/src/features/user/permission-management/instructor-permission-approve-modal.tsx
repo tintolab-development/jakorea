@@ -50,6 +50,8 @@ export type InstructorPermissionApproveModalProps =
   | (InstructorPermissionApproveModalBaseProps & {
       variant: 'bulk'
       memberCount: number
+      /** 강사 일괄 승인 — 대표(첫) 회원명 `[이름] 님 외 N명` */
+      userDisplayName?: string
     })
 
 export function InstructorPermissionApproveModal(
@@ -77,6 +79,8 @@ export function InstructorPermissionApproveModal(
   const displayName =
     variant === 'single' ? (props.userDisplayName.trim() || '회원') : null
   const memberCount = variant === 'bulk' ? props.memberCount : 0
+  const bulkLeadName = variant === 'bulk' ? (props.userDisplayName ?? '').trim() || '회원' : null
+  const bulkOthersCount = Math.max(memberCount - 1, 0)
 
   const handleNotifyTimingChange = (next: InstructorPermissionApproveNotifyTiming) => {
     setNotifyTiming(next)
@@ -122,10 +126,10 @@ export function InstructorPermissionApproveModal(
     variant === 'bulk'
       ? isAdmin
         ? '관리자 권한 일괄 승인 안내'
-        : '강사 권한 일괄 승인'
+        : '강사 권한 일괄 승인 안내'
       : isAdmin
         ? '관리자 권한 승인 안내'
-        : '강사 권한 승인'
+        : '강사 권한 승인 안내'
 
   return (
     <>
@@ -142,7 +146,7 @@ export function InstructorPermissionApproveModal(
             취소
           </CmsButton>
           <CmsButton variant="primary" size="medium" type="button" onClick={handleConfirm}>
-            {isAdmin ? '승인' : '권한 승인'}
+            승인
           </CmsButton>
         </div>
       }
@@ -153,17 +157,23 @@ export function InstructorPermissionApproveModal(
             <>
               <strong>[{displayName}]</strong> 님의 {isAdmin ? '관리자' : '강사'} 권한 요청을 승인하시겠습니까?
             </>
+          ) : isAdmin ? (
+            <>
+              선택한 <strong>{memberCount}명의 회원</strong>의 관리자 권한 요청을 승인하시겠습니까?
+            </>
           ) : (
             <>
-              선택한 <strong>{memberCount}명의 회원</strong>의 {isAdmin ? '관리자' : '강사'} 권한 요청을
-              승인하시겠습니까?
+              <strong>
+                [{bulkLeadName}] 님 외 {bulkOthersCount}명
+              </strong>
+              의 강사 권한 요청을 승인하시겠습니까?
             </>
           )}
         </p>
         <p className="instructor-permission-approve-modal__sub">
           {isAdmin
             ? '해당 회원에게 부여할 권한 유형을 선택해 주세요'
-            : '승인 시 해당 사용자는 강사로 활동이 가능합니다.'}
+            : '승인 시 해당 회원은 강사로 활동이 가능합니다.'}
         </p>
 
         <div className="instructor-permission-approve-modal__field">

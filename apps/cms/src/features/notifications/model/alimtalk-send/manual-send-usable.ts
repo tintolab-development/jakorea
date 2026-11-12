@@ -22,7 +22,6 @@ export {
 export type AlimtalkManualSendUnusableCode =
   | 'EVENT_ONLY'
   | 'UNREGISTERED'
-  | 'PROGRAM_REQUIRED'
   | 'CATALOG_DISABLED'
   | 'SOURCE_MODE_UNKNOWN'
 
@@ -38,14 +37,12 @@ export type AlimtalkManualSendUnusableKeys = {
   eventOnly: string[]
   unknownSourceMode: string[]
   unregistered: string[]
-  programRequired: string[]
   catalogConditionDisabled: string[]
 }
 
 const UNUSABLE_SUMMARY: Record<AlimtalkManualSendUnusableCode, string> = {
   EVENT_ONLY: '시스템 이벤트 전용 변수가 포함되어 수동 발송할 수 없습니다.',
   UNREGISTERED: '자동입력 항목에 등록되지 않은 변수가 포함되어 있습니다.',
-  PROGRAM_REQUIRED: '이 템플릿을 사용하려면 프로그램을 먼저 선택해 주세요.',
   CATALOG_DISABLED: '현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다.',
   SOURCE_MODE_UNKNOWN: '변수 사용 가능 여부를 확인할 수 없습니다.',
 }
@@ -53,7 +50,6 @@ const UNUSABLE_SUMMARY: Record<AlimtalkManualSendUnusableCode, string> = {
 const UNUSABLE_CODE_ORDER: AlimtalkManualSendUnusableCode[] = [
   'EVENT_ONLY',
   'UNREGISTERED',
-  'PROGRAM_REQUIRED',
   'CATALOG_DISABLED',
   'SOURCE_MODE_UNKNOWN',
 ]
@@ -111,7 +107,6 @@ export function listAlimtalkManualSendUnusableKeys(input: {
       eventOnly: [],
       unknownSourceMode: [],
       unregistered: [],
-      programRequired: [],
       catalogConditionDisabled: [],
     }
   }
@@ -129,7 +124,6 @@ export function listAlimtalkManualSendUnusableKeys(input: {
     catalog: input.catalog,
   })
   const unregistered: string[] = []
-  const programRequired: string[] = []
   const catalogConditionDisabled: string[] = []
   const hasProgram = input.programNumericId != null && Number.isFinite(input.programNumericId)
   for (const raw of usedKeys) {
@@ -140,10 +134,8 @@ export function listAlimtalkManualSendUnusableKeys(input: {
       unregistered.push(key)
       continue
     }
-    if (item.requiresProgram === true && !hasProgram) {
-      programRequired.push(key)
-      continue
-    }
+    // 대상 프로그램 미선택: 등록된 변수는 수신자별 직접 입력으로 두고 막지 않는다 (QA 2026-11-13)
+    if (!hasProgram) continue
     if (
       isNotificationCatalogVariableDisabled(item, input.programNumericId) &&
       !isNotificationCatalogVariablePendingRecipientType(
@@ -163,7 +155,6 @@ export function listAlimtalkManualSendUnusableKeys(input: {
       catalogDisabled.includes(key) ||
       eventOnly.includes(key) ||
       unregistered.includes(key) ||
-      programRequired.includes(key) ||
       catalogConditionDisabled.includes(key)
     ) {
       continue
@@ -177,7 +168,6 @@ export function listAlimtalkManualSendUnusableKeys(input: {
     eventOnly,
     unknownSourceMode,
     unregistered,
-    programRequired,
     catalogConditionDisabled,
   }
 }
@@ -194,7 +184,6 @@ export function diagnoseAlimtalkManualSendUnusable(input: {
   const byCode: Array<[AlimtalkManualSendUnusableCode, string[]]> = [
     ['EVENT_ONLY', unusable.eventOnly],
     ['UNREGISTERED', unusable.unregistered],
-    ['PROGRAM_REQUIRED', unusable.programRequired],
     ['CATALOG_DISABLED', unusable.catalogConditionDisabled],
     ['SOURCE_MODE_UNKNOWN', unusable.unknownSourceMode],
   ]
@@ -256,9 +245,6 @@ export function formatAlimtalkManualSendUnusableMessage(
   }
   if (unusable.unregistered.length > 0) {
     reasons.push(reasonFrom('UNREGISTERED', unusable.unregistered))
-  }
-  if (unusable.programRequired.length > 0) {
-    reasons.push(reasonFrom('PROGRAM_REQUIRED', unusable.programRequired))
   }
   if (unusable.catalogConditionDisabled.length > 0) {
     reasons.push(reasonFrom('CATALOG_DISABLED', unusable.catalogConditionDisabled))

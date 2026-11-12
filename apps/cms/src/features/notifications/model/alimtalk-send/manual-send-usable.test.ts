@@ -233,7 +233,7 @@ describe('canUseAlimtalkSendTemplateForManualSend', () => {
     ).toBe(false)
   })
 
-  it('R8 프로그램 필수 변수 사유를 PROGRAM_REQUIRED로 구분한다', () => {
+  it('대상 프로그램 미선택이면 프로그램 필수 변수가 있어도 사용 가능하다 (수신자별 직접 입력)', () => {
     const catalog = [
       {
         key: '프로그램명',
@@ -247,17 +247,14 @@ describe('canUseAlimtalkSendTemplateForManualSend', () => {
       catalog,
       programNumericId: undefined,
     })
-    expect(reasons.map(reason => reason.code)).toEqual(['PROGRAM_REQUIRED'])
-    expect(reasons[0]?.summary).toBe(
-      '이 템플릿을 사용하려면 프로그램을 먼저 선택해 주세요.'
-    )
+    expect(reasons).toEqual([])
     expect(
       canUseAlimtalkSendTemplateForManualSend({
         usedKeys: ['프로그램명'],
         catalog,
         programNumericId: undefined,
       })
-    ).toBe(false)
+    ).toBe(true)
     expect(
       canUseAlimtalkSendTemplateForManualSend({
         usedKeys: ['프로그램명'],

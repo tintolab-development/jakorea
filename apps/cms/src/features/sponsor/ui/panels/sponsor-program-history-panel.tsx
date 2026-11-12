@@ -55,6 +55,7 @@ const EDUCATION_TARGET_OPTIONS = [
   { label: '성인', value: 'adult' },
 ] as const
 
+/** 시안: 필터 6개 — 「총 수혜자 수」 필터 없음(표 열은 유지) */
 const programHistoryFilterFields: FilterFieldConfig[] = [
   {
     key: 'title',
@@ -93,14 +94,6 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     label: '교육 대상',
     placeholder: '전체',
     options: [...EDUCATION_TARGET_OPTIONS],
-    width: '14%',
-  },
-  {
-    key: 'beneficiaryCount',
-    type: 'search',
-    label: '총 수혜자 수',
-    placeholder: '총 수혜자 수를 입력해 주세요',
-    searchNumericOnly: true,
     width: '14%',
   },
   {
@@ -265,7 +258,6 @@ export function SponsorProgramHistoryPanel({
           lifecycleStatus: pendingFilters.lifecycleStatus,
           participantType: pendingFilters.participantType,
           educationTarget: pendingFilters.educationTarget,
-          beneficiaryCount: pendingFilters.beneficiaryCount,
           managerName: pendingFilters.managerName,
         }}
         onFilterChange={handleFilterChange}

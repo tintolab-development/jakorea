@@ -19,8 +19,8 @@ export function MemberSection({ section }: MemberSectionProps) {
       <PFText
         as="h2"
         id={`people-section-${section.id}`}
-        typo="bd-lg-rg"
-        color="primary-700"
+        typo="bd-md-md"
+        color="neutral-cool-500"
         className={styles.title}
       >
         {section.title}

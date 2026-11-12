@@ -75,7 +75,7 @@ export function getFormParagraphDisplayTitle(
   const base =
     paragraph.kind === 'description' && paragraph.variant === 'closing'
       ? writingOutlineLabel(paragraph)
-      : paragraph.paragraphTitle.trim() || writingOutlineLabel(paragraph)
+      : (paragraph.paragraphTitle ?? '').trim() || writingOutlineLabel(paragraph)
 
   if (!paragraph.participatesInTitleNumbering || style === 'none') {
     if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {

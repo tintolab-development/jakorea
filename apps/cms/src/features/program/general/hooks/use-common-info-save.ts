@@ -25,7 +25,7 @@ import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hook
 import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { useProgramWagePaymentItemOptionsState } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
-import { showUpdateCompletedAlert } from '@/shared/ui'
+import { showCommonInfoChangeCompletedAlert } from '@/features/program/general/lib/show-common-info-change-completed-alert'
 import type { GeneralProgramUpdateSerializeOptions } from '@/features/program/general/api/adapters/general-program-adapters'
 import { createGeneralProgramCommonInfoIndependentSave } from '@/features/program/general/lib/overlay-phase1/common-info-independent-save'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
@@ -157,7 +157,7 @@ export function useGeneralProgramCommonInfoSave({
         program,
         independent.serializeOptions
       )
-      showUpdateCompletedAlert()
+      showCommonInfoChangeCompletedAlert()
       return { ok: true }
     } catch (error) {
       const message = getGeneralProgramApiErrorMessage(error, '')

@@ -247,7 +247,7 @@ export class GeneralProgramRegistrationPage {
     // 자동입력 훅은 호출 시점의 참여자 상태로 모집 overlay 대상을 계산한다.
     // 기관·강사·봉사자 모집을 모두 만들 통합 케이스이므로 먼저 상태를 확정한다.
     await checkCheckboxIfVisible(this.page, '학교/기관')
-    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, /^강사$/)
     await checkCheckboxIfVisible(this.page, '봉사자')
     await this.page.waitForTimeout(300)
     await this.page.getByRole('button', { name: '자동입력(개발용)' }).click()
@@ -267,7 +267,7 @@ export class GeneralProgramRegistrationPage {
     // 케이스 preset은 기관을 고정하고 교사·봉사자는 현재 선택값을 유지한다.
     // 통합 신청 플로우에서는 세 모집을 모두 생성해야 하므로 명시적으로 켠다.
     await checkCheckboxIfVisible(this.page, '학교/기관')
-    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, /^강사$/)
     await checkCheckboxIfVisible(this.page, '봉사자')
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', KPI_VALUE)
@@ -858,9 +858,9 @@ export class GeneralProgramRegistrationPage {
     if ((await personal.count()) > 0) {
       await expect(personal).not.toBeChecked()
     }
-    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, /^강사$/)
     await checkCheckboxIfVisible(this.page, '봉사자')
-    await expect(this.page.getByRole('checkbox', { name: '교사/강사' }).first()).toBeChecked({
+    await expect(this.page.getByRole('checkbox', { name: /^강사$/ }).first()).toBeChecked({
       timeout: 5_000,
     })
     await expect(this.page.getByRole('checkbox', { name: '봉사자' }).first()).toBeChecked({
@@ -984,7 +984,7 @@ export class GeneralProgramRegistrationPage {
       await this.ensureOrganizationAudience()
     } else {
       await checkCheckboxIfVisible(this.page, /^개인$/)
-      await checkCheckboxIfVisible(this.page, '교사/강사')
+      await checkCheckboxIfVisible(this.page, /^강사$/)
       await checkCheckboxIfVisible(this.page, '봉사자')
     }
 

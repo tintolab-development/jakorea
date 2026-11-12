@@ -36,7 +36,7 @@ import {
 } from '../lib/consent-withdraw'
 import {
   buildConsentItemsFromSummaries,
-  formatConsentDate,
+  formatConsentAgreedAt,
   SETTINGS_CONSENT_TYPE_BY_ID,
 } from '../lib/map-consents'
 import {
@@ -207,7 +207,9 @@ function formatWithdrawnDate(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  return `${y}.${m}.${d}`
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${y}.${m}.${d} ${hh}:${mm}`
 }
 
 function ConsentRequirementLabel({ required }: { required: boolean }) {
@@ -626,7 +628,7 @@ export function SettingsConsentsView() {
   const showWithdrawComplete = (id: SettingsConsentItemId, changedAt?: string | null) => {
     setWithdrawComplete({
       id,
-      withdrawnAt: formatConsentDate(changedAt) ?? formatWithdrawnDate(new Date()),
+      withdrawnAt: formatConsentAgreedAt(changedAt) ?? formatWithdrawnDate(new Date()),
     })
   }
 
@@ -703,7 +705,7 @@ export function SettingsConsentsView() {
     const result = await saveMarketingConsent(true)
     setMarketingAgreeOpen(false)
     if (result.ok) {
-      setMarketingAgreedAt(formatConsentDate(result.agreedAt) ?? formatWithdrawnDate(new Date()))
+      setMarketingAgreedAt(formatConsentAgreedAt(result.agreedAt) ?? formatWithdrawnDate(new Date()))
     }
   }
 
@@ -853,7 +855,7 @@ export function SettingsConsentsView() {
         title={completeCopy?.completeTitle}
         description={
           completeCopy && withdrawComplete
-            ? `동의 철회 일자: ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
+            ? `동의 철회일시: ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
             : null
         }
         onClose={() => setWithdrawComplete(null)}
@@ -876,7 +878,7 @@ export function SettingsConsentsView() {
         title={MARKETING_AGREE_COPY.completeTitle}
         description={
           marketingAgreedAt
-            ? `동의 일자: ${marketingAgreedAt}\n${MARKETING_AGREE_COPY.completeGuide}`
+            ? `동의일시: ${marketingAgreedAt}\n${MARKETING_AGREE_COPY.completeGuide}`
             : null
         }
         onClose={() => setMarketingAgreedAt(null)}

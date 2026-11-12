@@ -1,4 +1,5 @@
-export const ALIMTALK_SEND_EMPTY_SENDER_TITLE = '발신 프로필/템플릿을 먼저 선택해 주세요.'
+/** 수신자 설정·템플릿 내용·템플릿 정보 공통 선택 전 안내 (QA 2026-11-13) */
+export const ALIMTALK_SEND_EMPTY_SENDER_TITLE = '발신 프로필/템플릿을 먼저 선택하세요.'
 export const ALIMTALK_SEND_EMPTY_TEMPLATE_TITLE = '템플릿을 먼저 선택해 주세요.'
 
 /** 4. 템플릿 내용 빈 상태 제목. 템플릿이 있으면 null. */

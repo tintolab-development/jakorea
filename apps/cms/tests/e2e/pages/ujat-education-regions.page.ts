@@ -100,7 +100,7 @@ export class UjatEducationRegionsPage {
   async createRegion(name: string, active = true): Promise<{ remoteOk: boolean }> {
     await this.page.getByRole('button', { name: '교육 지역 등록' }).click()
 
-    const dialog = this.page.getByRole('dialog').filter({ hasText: 'UJAT 교육 지역 신규 등록' })
+    const dialog = this.page.getByRole('dialog').filter({ hasText: '교육 지역 신규 등록' })
     await expect(dialog).toBeVisible({ timeout: 15_000 })
 
     const activeLabel = active ? '사용' : '미사용'
@@ -142,6 +142,10 @@ export class UjatEducationRegionsPage {
     }
 
     await expect(dialog).toBeHidden({ timeout: 30_000 })
+    const completedAlert = this.page.getByRole('dialog').filter({ hasText: '등록 완료' })
+    await expect(completedAlert).toBeVisible({ timeout: 15_000 })
+    await completedAlert.getByRole('button', { name: '확인' }).click()
+    await expect(completedAlert).toBeHidden({ timeout: 15_000 })
     await this.filterByName(name, active ? '사용' : '미사용')
     await this.expectRowVisible(name)
     return { remoteOk: remoteOk && postRes != null }
@@ -150,7 +154,7 @@ export class UjatEducationRegionsPage {
   /** 동일 이름으로 재등록 → 중복 메시지 */
   async expectDuplicateCreateBlocked(name: string) {
     await this.page.getByRole('button', { name: '교육 지역 등록' }).click()
-    const dialog = this.page.getByRole('dialog').filter({ hasText: 'UJAT 교육 지역 신규 등록' })
+    const dialog = this.page.getByRole('dialog').filter({ hasText: '교육 지역 신규 등록' })
     await expect(dialog).toBeVisible({ timeout: 15_000 })
     await dialog.getByPlaceholder('교육 지역명을 입력해 주세요').fill(name)
     await dialog.getByRole('button', { name: '등록' }).click()
@@ -322,7 +326,7 @@ export class UjatEducationRegionsPage {
       .waitForResponse(res => isEducationRegionsApi(res, 'DELETE'), { timeout: 30_000 })
       .catch(() => null)
 
-    await confirm.getByRole('button', { name: '교육 지역 삭제' }).click()
+    await confirm.getByRole('button', { name: '삭제', exact: true }).click()
 
     const deleteRes = await deleteWait
     let remoteOk = true

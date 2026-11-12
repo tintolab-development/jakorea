@@ -186,9 +186,19 @@ export function EducationScheduleRow({
               const label = session.sessionLabel?.trim()
               const title = session.title?.trim()
               const content = session.content?.trim()
+              const periodSession = Boolean(label && /교시$/u.test(label) && title)
               return (
                 <li key={`${session.sessionNo}-${label ?? title ?? ''}`} className={styles.session}>
-                  {label || title ? (
+                  {periodSession ? (
+                    <>
+                      <PFText as="p" typo="bd-lg-sb" color="black" className={styles.sessionHeading}>
+                        {label}
+                      </PFText>
+                      <PFText as="p" typo="bd-lg-rg" color="black" className={styles.sessionTime}>
+                        {title}
+                      </PFText>
+                    </>
+                  ) : label || title ? (
                     <PFText as="p" typo="bd-lg-sb" color="black" className={styles.sessionHeading}>
                       {[label, title].filter(Boolean).join(' · ')}
                     </PFText>

@@ -9,7 +9,6 @@ import type { PermissionModalPayload } from '@/shared/components/permission-moda
 import { getGeneralProgramApiErrorCode } from '@/features/program/general/api/get-general-program-api-error'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { ApplicantsDetailContents } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
-import type { ApplicantInstructorApplicationInfoData } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-application-info'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -27,6 +26,7 @@ import {
 import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import { resolveGeminiInstructorApprovalAction } from '../../lib/approved/instructor-approval-action'
+import { buildGeminiInstructorApplicationInfo } from '../../lib/approved/instructor-available-schedule'
 import { GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS } from '../../model/approved/instructor-application-filter-fields'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import type {
@@ -534,15 +534,10 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           data={selectedApplicationDetail}
           detailVariant="legacy"
           program={trainingDetail.programId ? ({ id: trainingDetail.programId } as Program) : null}
-          instructorApplicationInfo={
-            {
-              officialDocumentRequired: trainingDetail.officialDocumentRequired,
-              officialDocumentRequiredInfo: trainingDetail.officialDocumentRequiredInfo,
-              institutionName: trainingDetail.institutionName,
-              trainingDate: trainingDetail.trainingDate,
-              trainingTimeText: trainingDetail.trainingTimeText,
-            } satisfies ApplicantInstructorApplicationInfoData
-          }
+          instructorApplicationInfo={buildGeminiInstructorApplicationInfo(
+            trainingDetail,
+            selectedApplicationDetail
+          )}
           instructorResumeLayout="application"
           onBack={onCloseApplicationDetail ?? (() => undefined)}
           onApprove={handleDetailApprove}

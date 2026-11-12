@@ -374,6 +374,22 @@ describe('기관 확정 일정 선택지 (APPLICATION_MATERIALIZED)', () => {
     expect(slot?.detail).toBe('00:30 ~ 01:30')
   })
 
+  it('QA 1사1교 #11: startAt 오프셋이 어긋나도 라벨의 기관 희망 시각을 그대로 표시한다', () => {
+    const slot = readRuntimeInstructorScheduleSlots({
+      runtimeResolved: true,
+      items: [
+        osaItem({
+          timeRange: undefined,
+          // 서울 09:00을 UTC로 잘못 표기한 값 — 그대로 변환하면 18:00 ~ 19:00
+          startAt: '2026-11-09T09:00:00Z',
+          endAt: '2026-11-09T10:00:00Z',
+        }),
+      ],
+    })?.[0]
+    expect(slot?.dateKey).toBe('2026-11-09')
+    expect(slot?.detail).toBe('09:00 ~ 10:00')
+  })
+
   it('구버전 응답: label 끝 `| 기관 확정 YYYY-MM-DD`를 떼고, 내부 일정명을 기관명으로 쓰지 않는다', () => {
     const slots = readRuntimeInstructorScheduleSlots({
       runtimeResolved: true,

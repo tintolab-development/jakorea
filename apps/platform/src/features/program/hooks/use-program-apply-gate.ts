@@ -169,9 +169,10 @@ export function useProgramApplyGate(
    * 필수 동의(초상권, UJAT 는 서약·동의 4종) 미완료 항목. 조회 실패는 막지 않는다(fail-open).
    * 이미 동의했는데 마이페이지에서 방금 작성한 경우를 위해 항상 서버에서 다시 읽는다.
    */
-  const findMissingRequiredConsents = useCallback(async (): Promise<
-    RequiredApplyConsentType[]
-  > => {
+  const findMissingRequiredConsents = useCallback(async (
+    /** 선택한 모집의 신청 유형 — UJAT 교육진행자 서약서는 강사·봉사 신청만 요구한다 */
+    applicationType?: string | null,
+  ): Promise<RequiredApplyConsentType[]> => {
     // 만 14세 미만: 회원 단위 초상권과 무관하게 신청 시도마다 보호자 인증 + 프로그램 초상권 동의서.
     const minor = await checkMinorPortraitPending()
     minorPortraitPendingRef.current = minor.pending
@@ -184,14 +185,19 @@ export function useProgramApplyGate(
       })
       const missing = findMissingApplyConsents(
         summaries,
-        resolveRequiredApplyConsentTypes({ programType: selection?.programType }),
+        resolveRequiredApplyConsentTypes({
+          programType: selection?.programType,
+          applicationType:
+            applicationType ??
+            (selection?.applicationTypes?.length === 1 ? selection.applicationTypes[0] : undefined),
+        }),
       )
       // 미성년은 이번 시도에서 프로그램 초상권을 이미 받았으므로 회원 단위 초상권은 보지 않는다.
       return minor.isMinor ? missing.filter(type => type !== 'PORTRAIT_RIGHTS') : missing
     } catch {
       return []
     }
-  }, [checkMinorPortraitPending, queryClient, selection?.programType])
+  }, [checkMinorPortraitPending, queryClient, selection?.applicationTypes, selection?.programType])
 
   const openRequiredConsentModal = useCallback(
     (missing: RequiredApplyConsentType[]) => {
@@ -251,7 +257,7 @@ export function useProgramApplyGate(
 
         // 모집 전·마감 등 canApply=false 는 신청서 배너에 맡기고, 신청 가능한 경우에만 동의를 확인한다.
         if (option?.canApply !== false) {
-          const missing = await findMissingRequiredConsents()
+          const missing = await findMissingRequiredConsents(option?.applicationType)
           if (missing.length > 0) {
             openRequiredConsentModal(missing)
             return

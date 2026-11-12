@@ -166,7 +166,10 @@ export function FormCertificatePreview({
     activeFieldName: previewActiveFieldName,
     bodyContent,
     participantInfo,
-    participantRowVisibility,
+    // 줄 고정(활동인증서) — 저장된 표시 여부를 쓰지 않고 모두 표시
+    participantRowVisibility: participantLayout.rowVisibilityLocked
+      ? undefined
+      : participantRowVisibility,
     participantRowCount: participantLayout.rowLabels.length,
   })
 

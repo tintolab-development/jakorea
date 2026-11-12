@@ -33,7 +33,7 @@ export function FindPasswordForm({
   return (
     <div className="find-password-step">
       <RegisterStepHeader
-        title="비밀번호를 찾아드릴게요"
+        title="비밀번호 찾기"
         description="가입한 이메일과 본인인증이 필요합니다."
       />
 

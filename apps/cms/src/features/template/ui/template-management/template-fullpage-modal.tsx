@@ -1,4 +1,4 @@
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -44,10 +44,14 @@ interface TemplateFullpageModalProps {
   registrationUserMode?: boolean
   /** 상단바 X 닫기 버튼 노출 (기본: `registrationUserMode`가 아닐 때만) */
   showCloseButton?: boolean
-  /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시저장) */
+  /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시 저장) */
   saveLabel?: string
   /** writing 헤더 왼쪽 닫기 버튼 라벨 (기본: 닫기) */
   closeLabel?: string
+  /**
+   * writing 헤더 왼쪽 닫기 버튼 노출 (기본 true). 템플릿 관리 편집기는 false — 닫기는 우측 상단 X (QA 261113 #11·#44)
+   */
+  showHeaderCloseButton?: boolean
   /** 우측 하단 CTA — 미전달 시 숨김 (단일, `footerActions`와 병용 시 배열 우선) */
   footerAction?: TemplateFullpageModalFooterAction
   /** 우측 하단 CTA 복수 — 등록 단계별 이전/다음 버튼 */
@@ -121,6 +125,7 @@ export function TemplateFullpageModal({
   showCloseButton = !registrationUserMode,
   saveLabel,
   closeLabel = '닫기',
+  showHeaderCloseButton = true,
   footerAction,
   footerActions,
   subHeader,
@@ -154,7 +159,7 @@ export function TemplateFullpageModal({
   const [titleValue, setTitleValue] = useState(editableTitle ?? '')
   const [titleEditing, setTitleEditing] = useState(false)
   const resolvedTitleReadOnly = titleReadOnly || registrationUserMode || detailReadOnly
-  const resolvedSaveLabel = saveLabel ?? (registrationUserMode ? '임시저장' : '저장')
+  const resolvedSaveLabel = saveLabel ?? (registrationUserMode ? '임시 저장' : '저장')
 
   useEffect(() => {
     setTitleValue(editableTitle ?? '')
@@ -180,11 +185,23 @@ export function TemplateFullpageModal({
           <CmsButton variant="delete" onClick={onDelete} loading={deleteLoading} disabled={deleteLoading}>
             삭제
           </CmsButton>
-        ) : (
+        ) : showHeaderCloseButton ? (
           <CmsButton variant="secondary" onClick={onClose}>
             {closeLabel}
           </CmsButton>
-        )}
+        ) : null}
+        {onDownloadDocument != null ? (
+          <CmsButton
+            variant="secondary"
+            icon={<ButtonDownloadIcon />}
+            onClick={onDownloadDocument}
+            className="full-page-modal__download-btn"
+            disabled={downloadDocumentLoading}
+            aria-busy={downloadDocumentLoading}
+          >
+            문서 다운로드
+          </CmsButton>
+        ) : null}
         {showPreview ? (
           <CmsButton variant="secondary" onClick={onPreview}>
             미리보기
@@ -352,10 +369,10 @@ export function TemplateFullpageModal({
                   variant={action.variant === 'secondary' ? 'secondary' : undefined} className="full-page-modal__footer-cta-btn"
                   disabled={action.disabled}
                   onClick={action.onClick} >
-                  {action.variant === 'secondary' ? <LeftOutlined aria-hidden /> : null}
+                  {action.variant === 'secondary' ? <ButtonLeftIcon style={{ display: 'block', width: 20, height: 20 }} /> : null}
                   <span>{action.label}</span>
                   {action.variant !== 'secondary' && action.showArrow === true ? (
-                    <RightOutlined aria-hidden />
+                    <ButtonRightIcon style={{ display: 'block', width: 20, height: 20 }} />
                   ) : null}
                 </CmsButton>
               ))}

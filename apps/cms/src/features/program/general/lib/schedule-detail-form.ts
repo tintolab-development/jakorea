@@ -24,6 +24,9 @@ export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 /** 화면 표시용 사전교육 이름(붙여쓰기). 저장값·기본값은 PRE_EDUCATION_SCHEDULE_LABEL을 그대로 쓴다. */
 export const PRE_EDUCATION_DISPLAY_LABEL = '사전교육'
 
+/** 등록·상세 「사전 교육」 토글 라벨과 「■ 사전 교육」 블록 소제목(띄어쓰기). 일정 라벨 표시는 PRE_EDUCATION_DISPLAY_LABEL. */
+export const PRE_EDUCATION_HEADING_LABEL = '사전 교육'
+
 /** 교육 진행 일정 설정 — 「교육 진행 일정 선택」 날짜 지정 팝오버 시간 입력 */
 export function shouldDisableEducationScheduleSelectionTimeInput(input: {
   educationStructure: 'curriculum' | 'schedule'
@@ -214,6 +217,13 @@ export function isGeneralPreEducationName(value: string | undefined | null): boo
 export function toPreEducationDisplayLabel(label: string): string {
   return compactGeneralPreEducationName(label) === PRE_EDUCATION_DISPLAY_LABEL
     ? PRE_EDUCATION_DISPLAY_LABEL
+    : label
+}
+
+/** 「■ 사전 교육」 블록 소제목 — 사전교육 이름이면 띄어쓴 라벨, 아니면(교육 연수 등) 그대로 */
+export function toPreEducationHeadingLabel(label: string): string {
+  return compactGeneralPreEducationName(label) === PRE_EDUCATION_DISPLAY_LABEL
+    ? PRE_EDUCATION_HEADING_LABEL
     : label
 }
 

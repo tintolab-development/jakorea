@@ -207,7 +207,7 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
             <EducationSessionCardHeader
               badge={<PFStateBadge size="small" tone={lectureStatus.tone}>{lectureStatus.label}</PFStateBadge>}
               date={formatDisplayDate(row.startAt) || '강의 일정'}
-              subtitle={timeLabel ? <PFText as="span" typo="bd-lg-rg" color="black" className={styles.timeLabel}>{timeLabel}</PFText> : undefined}
+              subtitle={timeLabel ? <PFText as="span" typo="bd-lg-rg" className={styles.timeLabel}>{timeLabel}</PFText> : undefined}
               aside={<div className={styles.headerAside}>{institutionMeta}{reportMeta}</div>}
             />
             <div className={[styles.reportGuide, submitted ? styles.reportGuideSubmitted : undefined].filter(Boolean).join(' ')}>

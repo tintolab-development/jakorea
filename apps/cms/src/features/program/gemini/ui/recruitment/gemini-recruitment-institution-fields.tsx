@@ -159,7 +159,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiDeferredCmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="대표 프로그램명(국문)을 입력해 주세요"
+                  placeholder="공고명을 입력해 주세요"
                   value={values.title}
                   onCommit={next => onChange({ title: next })}
                 />
@@ -167,7 +167,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <CmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="대표 프로그램명(국문)을 입력해 주세요"
+                  placeholder="공고명을 입력해 주세요"
                   value={values.title}
                   onChange={e => onChange({ title: e.target.value })}
                 />
@@ -251,7 +251,7 @@ export function GeminiRecruitmentInstitutionFields({
           }
         />
         <DetailInfoForm.Field
-          label="연수 요청 가능기간"
+          label="연수 요청 가능 기간"
           validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.trainingRequestPeriod}
           view={formatRecruitmentPeriodRange(
             values.trainingRequestPeriodStart ?? '',
@@ -263,7 +263,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiRecruitmentPeriodDatePicker
                   value={trainingRequestPeriod}
                   onChange={onTrainingRequestPeriodChange}
-                  placeholder="연수 요청 가능기간을 선택해 주세요"
+                  placeholder="연수 요청 가능 기간을 선택해 주세요"
                 />
               </div>
             ) : undefined
@@ -402,7 +402,7 @@ export function GeminiRecruitmentInstitutionFields({
                     inputSize="small"
                     width="100%"
                     style={{ flex: '1 1 0', minWidth: 0 }}
-                    placeholder="비고란을 작성하세요"
+                    placeholder="비고를 입력해 주세요"
                     value={values.notes}
                     disabled={values.notesNotApplicable}
                     onCommit={next => onChange({ notes: next })}
@@ -412,7 +412,7 @@ export function GeminiRecruitmentInstitutionFields({
                     inputSize="small"
                     width="100%"
                     style={{ flex: '1 1 0', minWidth: 0 }}
-                    placeholder="비고란을 작성하세요"
+                    placeholder="비고를 입력해 주세요"
                     value={values.notes}
                     disabled={values.notesNotApplicable}
                     onChange={e => onChange({ notes: e.target.value })}

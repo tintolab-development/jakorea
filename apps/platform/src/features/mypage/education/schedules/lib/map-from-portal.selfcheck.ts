@@ -544,4 +544,13 @@ const companySchoolUnmatched = mapPortalEducationSchedule(
 )
 assert.notEqual(companySchoolUnmatched.rowLabel, '2~3교시 (2차시)')
 
+const companySchoolDateFromBlocks = mapPortalEducationSchedule(
+  { scheduleId: 501, sessionNo: 1, startAt: '2026-11-08' },
+  0,
+  { applicationType: 'ORGANIZATION', programType: 'COMPANY_SCHOOL', preferredScheduleBlocks: companySchoolBlocks },
+)
+assert.equal(companySchoolDateFromBlocks.dateLabelOverride, '2026년 11월 8일(일) 09:50 ~ 11:20')
+assert.equal(companySchoolDateFromBlocks.curriculumSessions?.[0]?.sessionLabel, '2교시')
+assert.equal(companySchoolDateFromBlocks.curriculumSessions?.[0]?.title, '09:50 ~ 10:30')
+
 console.log('map-from-portal.selfcheck: ok')

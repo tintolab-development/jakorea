@@ -22,6 +22,16 @@ describe('parsePreferredLectureScheduleLine', () => {
     })
   })
 
+  it('normalizes spaced dot dates from server text', () => {
+    expect(
+      parsePreferredLectureScheduleLine('1지망 : 2026. 11. 25(수) 09:00 ~ 10:00 | 1차시')
+    ).toEqual({
+      preference: '1지망',
+      datetime: '2026.11.25(수) 09:00 ~ 10:00',
+      session: '1차시',
+    })
+  })
+
   it('keeps a line without session', () => {
     expect(parsePreferredLectureScheduleLine('1지망 : 2026.01.09(금) 09:00 ~ 11:20')).toEqual({
       preference: '1지망',

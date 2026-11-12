@@ -56,7 +56,7 @@ export function buildDomainEntityDeleteMessageLines(
 }
 
 /** 한국어 명사(마지막 음절) 기준 목적격 조사 을/를 */
-function objectParticleForLastKoreanWord(word: string): '을' | '를' {
+export function objectParticleForLastKoreanWord(word: string): '을' | '를' {
   const trimmed = word.trimEnd()
   if (!trimmed) return '를'
   const ch = trimmed[trimmed.length - 1]

@@ -40,6 +40,8 @@ import {
   getParticipatingInstructorAssignedSchoolNames,
 } from '@/features/program/general/lib/participating-instructors-table-display'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
+import { useActivityCertificateIssuePrecheck } from '@/features/program/general/hooks/use-activity-certificate-issue-precheck'
+import { CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import { renderParticipatingInstructorCalendarMonthEventContent } from './participating-instructor-calendar-month-event'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
@@ -252,6 +254,7 @@ export function ParticipatingInstructorsSection({
   const isInstitutionSurface = useIsInstitutionProgramSurface(program)
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
+  const precheckActivityCertificateIssue = useActivityCertificateIssuePrecheck()
   const [instructorMemberOptions, setInstructorMemberOptions] = useState<
     ParticipatingInstructorMemberCandidate[]
   >([])
@@ -487,10 +490,27 @@ export function ParticipatingInstructorsSection({
       return
     }
 
-    setActivityCertPreviewInstructor(selectedRow)
-    setActivityCertReasonLabel(undefined)
-    setActivityCertReasonOpen(true)
-  }, [filteredInstructors, instructorList.length, selectedInstructorRowKeys, showAlert])
+    void (async () => {
+      // 발급 불가면 '활동인증서 발급 불가 안내' 후 중단(기획 회신 261113 #2-2)
+      if (
+        !(await precheckActivityCertificateIssue(
+          selectedRow.id,
+          CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY
+        ))
+      ) {
+        return
+      }
+      setActivityCertPreviewInstructor(selectedRow)
+      setActivityCertReasonLabel(undefined)
+      setActivityCertReasonOpen(true)
+    })()
+  }, [
+    filteredInstructors,
+    instructorList.length,
+    precheckActivityCertificateIssue,
+    selectedInstructorRowKeys,
+    showAlert,
+  ])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {

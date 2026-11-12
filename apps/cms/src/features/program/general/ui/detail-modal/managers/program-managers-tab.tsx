@@ -83,7 +83,7 @@ interface ProgramManagersTabProps {
   blockLastManagerDelete?: boolean
   /**
    * `general`: 일반 프로그램 시안 — 「선택 삭제」 라벨, 권한 열 180·나머지 균등 폭,
-   * 선택 없이 삭제 시 「항목 선택 안내」, 담당자 추가 팝업 권한 기본 미선택.
+   * 선택 없이 삭제 시 「항목 미선택 안내」, 담당자 추가 팝업 권한 기본 미선택.
    * 생략(`default`) 시 기존 동작 유지 — UJAT·1사1교·Gemini 호출부.
    */
   variant?: 'default' | 'general'

@@ -22,6 +22,8 @@ import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/feature
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { ACTIVITY_CERTIFICATE_DOCUMENT_TITLE } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
+import { useActivityCertificateIssuePrecheck } from '@/features/program/general/hooks/use-activity-certificate-issue-precheck'
+import { CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/detail-modal/program-status/student-certificate-pdf-export-host'
@@ -76,6 +78,7 @@ export function UjatEducationProgressVolunteersSection({
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
+  const precheckActivityCertificateIssue = useActivityCertificateIssuePrecheck()
   const [studentCertificateIssueModalOpen, setStudentCertificateIssueModalOpen] = useState(false)
   const [studentCertificateExportContext, setStudentCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
@@ -248,13 +251,26 @@ export function UjatEducationProgressVolunteersSection({
     void (async () => {
       const bundle = await loadSelectedVolunteerProgressBundle()
       if (bundle == null) return
-      setActivityCertificateVolunteer(
-        buildActivityCertificateVolunteerFromUjatDetail(detail, bundle)
-      )
+      const certificateVolunteer = buildActivityCertificateVolunteerFromUjatDetail(detail, bundle)
+      if (
+        !(await precheckActivityCertificateIssue(
+          certificateVolunteer.id,
+          CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY
+        ))
+      ) {
+        return
+      }
+      setActivityCertificateVolunteer(certificateVolunteer)
       setActivityCertReasonLabel(undefined)
       setActivityCertReasonOpen(true)
     })()
-  }, [loadSelectedVolunteerProgressBundle, selectedRowKeys, selectedVolunteerDetail, showAlert])
+  }, [
+    loadSelectedVolunteerProgressBundle,
+    precheckActivityCertificateIssue,
+    selectedRowKeys,
+    selectedVolunteerDetail,
+    showAlert,
+  ])
 
   const handleStudentCertificateIssueClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {

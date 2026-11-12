@@ -431,7 +431,7 @@ export function InstructorPaymentTab({
         <div className="instructor-payment-tab__toolbar">
           <div className="instructor-payment-tab__month-nav">
             <span className="instructor-payment-tab__month-label">
-              {currentMonth.format('YYYY. MM')}
+              {currentMonth.format('YYYY.MM')}
             </span>
             <div className="calendar-nav">
               <Button
@@ -455,6 +455,7 @@ export function InstructorPaymentTab({
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
+                className="instructor-payment-tab__view-toggle-btn"
                 onClick={() => {
                   const today = dayjs()
                   setCurrentMonth(today.startOf('month'))
@@ -468,6 +469,7 @@ export function InstructorPaymentTab({
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonListIcon />}
+                className="instructor-payment-tab__view-toggle-btn"
                 onClick={() => setViewMode('list')}
               >
                 리스트 뷰로 보기
@@ -476,6 +478,7 @@ export function InstructorPaymentTab({
             <FilterTableToolbarButton
               variant="primary"
               icon={<ButtonDownloadIcon />}
+              className="instructor-payment-tab__statement-btn"
               loading={bulkDownloadLoading}
               onClick={() => void handleBulkDownload()}
             >

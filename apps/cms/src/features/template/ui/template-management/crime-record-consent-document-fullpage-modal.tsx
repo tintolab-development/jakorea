@@ -18,11 +18,15 @@ import { openFilePicker } from '@/shared/lib/open-file-picker'
 import '@/shared/ui/file-upload-picker.css'
 import { CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { CRIME_CONSENT_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import './crime-record-consent-document-fullpage-modal.css'
 
 export const CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE = '성범죄 경력조회 동의서'
 
-const NOTICE_TEXT = '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.'
+/** 템플릿 관리 편집기 제목 (QA 261113 #22) */
+const CRIME_CONSENT_TEMPLATE_EDITOR_TITLE = '성범죄경력 조회 및 아동학대 관련 범죄전력조회 동의서'
+
+const NOTICE_TEXT = CRIME_CONSENT_MODAL_DESCRIPTION
 
 export interface CrimeRecordConsentDocumentFullpageModalProps {
   open: boolean
@@ -70,7 +74,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
     <TealHeaderModal
       open={open}
       onCancel={onClose}
-      title={CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE}
+      title={CRIME_CONSENT_TEMPLATE_EDITOR_TITLE}
       size="full"
       hideHeader
       className="crime-consent-doc-modal"
@@ -79,7 +83,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
         <header className="crime-consent-doc-modal__topbar">
           <div className="crime-consent-doc-modal__title-row">
             <span className="crime-consent-doc-modal__title-text">
-              {CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE}
+              {CRIME_CONSENT_TEMPLATE_EDITOR_TITLE}
             </span>
             <svg
               className="crime-consent-doc-modal__title-icon"
@@ -159,7 +163,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
               src={displaySrc}
               file={uploadedFile}
               fileName={replacementFileName}
-              alt={CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE}
+              alt={CRIME_CONSENT_TEMPLATE_EDITOR_TITLE}
             />
           </div>
         </div>

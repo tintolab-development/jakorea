@@ -37,7 +37,9 @@ describe('Gemini status presentation uses domain registries and the common rende
   it.each(recruitment)('uses the same recruitment label for the filter and Text: %s', status => {
     const spec = getGeminiRecruitmentStatusPresentation(status)
     const options = GEMINI_RECRUITMENT_FILTER_FIELDS.find(f => f.key === 'status')?.options
-    expect(options).toContainEqual({ label: spec.label, value: status })
+    // 미게시(DRAFT)는 상태 필터 옵션에서 제외한다(QA 2026-11-13 Gemini #2). 목록 Text 표시는 유지.
+    if (status === 'DRAFT') expect(options).not.toContainEqual({ label: spec.label, value: status })
+    else expect(options).toContainEqual({ label: spec.label, value: status })
     const html = renderToStaticMarkup(createElement(StatusBadge, { domain: 'custom', variant: 'text', ...spec }))
     expect(html).toContain(spec.label)
     expect(html).toContain(spec.accentColor)
@@ -47,7 +49,7 @@ describe('Gemini status presentation uses domain registries and the common rende
     expect(options).toContainEqual({ label: getGeminiApprovedTrainingStatusPresentation(status).label, value: status })
   })
   it('keeps institution approval and instructor approval as distinct business axes', () => {
-    expect(getGeminiInstitutionApprovalStatusPresentation('APPROVED')).toEqual({ label: '승인', accentColor: 'var(--Brand-500, #00a0af)' })
+    expect(getGeminiInstitutionApprovalStatusPresentation('APPROVED')).toEqual({ label: '승인 완료', accentColor: 'var(--Brand-500, #00a0af)' })
     expect(getGeminiInstructorApprovalStatusPresentation('APPROVED')).toEqual({ label: '승인 완료', accentColor: 'var(--color-blue, #017eaf)' })
     for (const status of ['PENDING', 'APPROVED', 'REJECTED'] as const) {
       expect(renderToStaticMarkup(createElement(GeminiInstitutionApprovalStatusBadge, { status })))

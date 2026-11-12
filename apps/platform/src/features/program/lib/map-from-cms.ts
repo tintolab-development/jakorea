@@ -343,14 +343,15 @@ export function mapBasicInfoFields(
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
         {
-          label: '대상',
-          value: volunteerTarget || '대학(원)생',
+          label: '모집 대상',
+          value: volunteerTarget || args.educationTargetGroupLabel,
         },
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
         {
-          label: '교육 지역',
-          value: args.educationVenueLabel,
+          label: '교육 대상 상세',
+          value: args.educationTargetDetailLabel,
         },
-        ...(affiliation ? [{ label: '모집 소속', value: affiliation }] : []),
+        { label: '교육 장소', value: args.educationVenueLabel },
       ]
     case 'ujat-participant':
       return [
@@ -359,7 +360,7 @@ export function mapBasicInfoFields(
         { label: '교육 대상', value: args.educationTargetGroupLabel },
         {
           label: '교육 대상 상세',
-          value: args.educationTargetDetailLabel || '초등학교',
+          value: args.educationTargetDetailLabel,
         },
         { label: '교육 장소', value: args.educationVenueLabel },
       ]
@@ -537,8 +538,8 @@ const UJAT_SCHEDULE_KIND_LABEL: Record<string, string> = {
 }
 
 const UJAT_TERM_LABEL: Record<string, string> = {
-  FIRST_HALF: '상반기',
-  SECOND_HALF: '하반기',
+  FIRST_HALF: '상반기(1학기)',
+  SECOND_HALF: '하반기(2학기)',
 }
 
 const UJAT_KIND_ORDER: Record<string, number> = {

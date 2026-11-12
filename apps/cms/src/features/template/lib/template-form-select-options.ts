@@ -2,7 +2,7 @@
  * `/templates` 작성 양식·일반·경제 프로그램 등록폼 등에서 쓰는 CmsSelect 옵션 단일 출처.
  * - 세부 프로그램명·후원사·후원사 담당자: 목록은 별도 관리/API mock에서 조합하고, 여기서는 고정 분기값·라벨만 제공.
  * - IPS 2차(채널·Succeed 종류 등) 규칙은 `program-registration-ips-options.ts`에 유지.
- * - 교육 대상·참여자 유형은 `@jakorea/domain`에서 re-export.
+ * - 교육 대상·참여자 유형은 `@jakorea/domain`에서 re-export(참여자 유형 「강사」 라벨만 CMS에서 덮어쓴다).
  */
 
 import type { DomainSelectOption } from '@jakorea/domain/shared/types'
@@ -14,8 +14,19 @@ export type TemplateFormSelectOption = DomainSelectOption
 export const TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS: TemplateFormSelectOption[] =
   EDUCATION_TARGET_OPTIONS
 
+/**
+ * CMS 프로그램 등록·상세 참여자 유형 라벨 — 「교사/강사」 대신 「강사」(개인 / 학교·기관 / 강사 / 봉사자).
+ * 값(`teacher_instructor`)은 도메인 그대로 둔다. Platform이 쓰는 도메인 옵션은 바꾸지 않는다.
+ */
+const CMS_PARTICIPANT_TYPE_LABEL_OVERRIDES: Partial<Record<string, string>> = {
+  teacher_instructor: '강사',
+}
+
 export const TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS: TemplateFormSelectOption[] =
-  PARTICIPANT_TYPE_OPTIONS
+  PARTICIPANT_TYPE_OPTIONS.map(option => ({
+    ...option,
+    label: CMS_PARTICIPANT_TYPE_LABEL_OVERRIDES[option.value] ?? option.label,
+  }))
 
 // ── 세부 프로그램명 (관리 목록 + 고정) ─────────────────────────────
 

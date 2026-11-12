@@ -5,6 +5,7 @@ import {
   formatMailPreviewAttachment,
   formatMailPreviewDateTime,
   formatMailPreviewPerson,
+  formatMailPreviewSender,
   formatMailPreviewRecipient,
   splitMailSenderNameEmail,
 } from './preview'
@@ -59,6 +60,19 @@ describe('formatMailPreviewPerson', () => {
 
   it('falls back to email when the sender name is empty', () => {
     expect(formatMailPreviewPerson('', 'gildong@jakorea.org')).toBe('gildong@jakorea.org')
+  })
+})
+
+describe('formatMailPreviewSender', () => {
+  it('미리보기 보낸 사람은 이름과 메일 사이에 공백을 두지 않는다', () => {
+    expect(formatMailPreviewSender('홍길동', 'gildong@jakorea.org')).toBe(
+      '홍길동<gildong@jakorea.org>'
+    )
+  })
+
+  it('이름이 없으면 메일만 보인다', () => {
+    expect(formatMailPreviewSender('', 'gildong@jakorea.org')).toBe('gildong@jakorea.org')
+    expect(formatMailPreviewSender('', '')).toBe('-')
   })
 })
 

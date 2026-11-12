@@ -11,7 +11,7 @@ export async function openTemplateByName(
   const expectSaveButton = options?.expectSaveButton ?? true
   const row = page.locator('tr').filter({ hasText: templateName })
   await expect(row).toBeVisible()
-  await row.getByRole('button', { name: '양식 상세보기' }).click()
+  await row.getByRole('button', { name: '상세보기' }).click()
   if (expectSaveButton) {
     // 양식 상세보기는 조회 모드(mode=view)로 열린다 — 「수정」을 눌러야 저장 버튼이 나온다
     const editButton = page.getByRole('button', { name: '수정', exact: true })

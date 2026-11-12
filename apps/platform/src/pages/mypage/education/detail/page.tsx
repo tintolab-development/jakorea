@@ -560,6 +560,7 @@ export function MypageEducationDetailPage() {
   useEffect(() => {
     if (isStudentDocumentPolicyPending) return
     if (isWithdrawnDuring) {
+      if (withdrawnDuringKeys.length === 0) return
       const fallback = withdrawnDuringKeys[0] ?? 'schedule'
       if (!isActivitySection(section) || !withdrawnDuringKeys.includes(section)) {
         setSection(fallback)
@@ -570,6 +571,7 @@ export function MypageEducationDetailPage() {
       return
     }
     if (isActivityStatus) {
+      if (inProgressKeys.length === 0) return
       const fallback = inProgressKeys[0] ?? 'notice'
       if (!isActivitySection(section) || !inProgressKeys.includes(section)) {
         setSection(fallback)

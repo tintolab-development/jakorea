@@ -34,8 +34,9 @@
   color: var(--color-red, #ff4d4f);
 }
 
+/** 시안: 라벨 14/Medium #525252 · `*` 14/Bold */
 .instructor-permission-approve-modal__label {
-  color: var(--main-bk, #3d3d3d);
+  color: var(--Content-secondary, #525252);
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
@@ -47,7 +48,7 @@
   color: var(--color-red, #c32f4a);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 120%;

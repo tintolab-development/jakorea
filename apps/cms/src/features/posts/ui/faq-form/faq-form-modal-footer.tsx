@@ -9,7 +9,7 @@ export type FaqFormModalFooterProps = {
   onRequestDelete: () => void
 }
 
-/** FAQ 모달 하단 — 수정 시 좌측 FAQ 삭제, 우측 취소·등록/수정 */
+/** FAQ 모달 하단 — 수정 시 좌측 삭제, 우측 취소·등록/저장 */
 export function FaqFormModalFooter({
   isEdit,
   submitLabel,
@@ -25,7 +25,7 @@ export function FaqFormModalFooter({
           size="large"
           type="button" className="faq-form-modal__faq-delete"
           onClick={onRequestDelete} >
-          FAQ 삭제
+          삭제
         </CmsButton>
       ) : null}
       <div className="faq-form-modal__footer-actions-right">

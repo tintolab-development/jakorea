@@ -70,11 +70,9 @@ export function resolveProgramDetailCategoryTabs(input: {
   focusedTab?: ProgramTab | null
 }): ProgramTab[] {
   if (input.focusedTab) return [input.focusedTab]
+  if (input.detailCase === 'instructor') return ['instructor']
   const hasInstructor = input.tabs.includes('instructor')
   const hasInstitution = input.tabs.includes('institution')
   if (!(hasInstructor && hasInstitution)) return [...input.tabs]
-  if (input.detailCase === 'instructor') {
-    return input.tabs.filter(tab => tab !== 'institution')
-  }
   return input.tabs.filter(tab => tab !== 'instructor')
 }

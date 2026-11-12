@@ -14,12 +14,13 @@ import {
   applyUpdatedToMatchingArrayLists,
   invalidateArrayLists,
 } from '@/shared/lib/query-list-cache'
+import { parseDetailedProgramUsageFilter } from '@/features/detailed-program/api/detailed-program-filter-params'
 
 function rowId(row: DetailedProgramManagementRow): string {
   return row.id
 }
 
-/** list key suffix: `dp_use=active|inactive&dp_name=...` */
+/** list key suffix: `dp_use=active|inactive&dp_name=...` (전체면 `dp_use` 없음) */
 function detailedProgramMatchesListFilter(
   queryKey: readonly unknown[],
   row: DetailedProgramManagementRow
@@ -27,7 +28,7 @@ function detailedProgramMatchesListFilter(
   const raw = queryKey[queryKey.length - 1]
   if (typeof raw !== 'string') return true
   const params = new URLSearchParams(raw)
-  const usage = params.get('dp_use') === 'inactive' ? 'inactive' : 'active'
+  const usage = parseDetailedProgramUsageFilter(params.get('dp_use'))
   if (usage === 'active' && !row.active) return false
   if (usage === 'inactive' && row.active) return false
   const nameQ = (params.get('dp_name') ?? '').trim()

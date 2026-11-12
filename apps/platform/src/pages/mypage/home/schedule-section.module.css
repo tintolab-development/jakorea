@@ -151,6 +151,7 @@
 
 .listTime {
   flex: 0 0 auto;
+  flex-shrink: 0;
   min-width: max-content;
   overflow: visible;
   white-space: nowrap;

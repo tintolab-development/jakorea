@@ -2951,8 +2951,38 @@ function normalizeShortEssayMaxLength(p: WritingFormParagraph): WritingFormParag
   return { ...p, maxLength: SHORT_ESSAY_MAX_LENGTH }
 }
 
+/** 단락 variant별 문자열 필드 — 서버 저장본에서 빠지거나 null이면 `''`로 채운다 */
+const PARAGRAPH_STRING_FIELD_KEYS_BY_VARIANT: Readonly<Record<string, readonly string[]>> = {
+  agreement_explanation_text: ['bodyText', 'bodyPlaceholder'],
+  closing: ['body'],
+  survey_title_with_period: ['surveyTitle', 'surveyDescription'],
+  horizontal_table: ['bottomText'],
+  vertical_table: ['bottomText'],
+}
+
+/**
+ * 서버 schemaJson에 빈 문자열 필드(`paragraphTitle` 등)가 빠지거나 null로 오면
+ * `.trim()` 호출에서 편집기 진입이 깨진다(QA 261113 #29 영수증 사전 동의서). 문자열 필드를 `''`로 보정한다.
+ */
+function ensureWritingFormParagraphStringFields(p: WritingFormParagraph): WritingFormParagraph {
+  const record = p as unknown as Record<string, unknown>
+  const keys = [
+    'paragraphTitle',
+    'paragraphDescription',
+    ...(PARAGRAPH_STRING_FIELD_KEYS_BY_VARIANT[String(record.variant ?? '')] ?? []),
+  ]
+  let patched: Record<string, unknown> | null = null
+  for (const key of keys) {
+    if (typeof record[key] === 'string') continue
+    patched ??= { ...record }
+    patched[key] = ''
+  }
+  return patched == null ? p : (patched as unknown as WritingFormParagraph)
+}
+
 function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
-  let next = migrateLegacySingleItemDateTimeParagraph(p)
+  let next = ensureWritingFormParagraphStringFields(p)
+  next = migrateLegacySingleItemDateTimeParagraph(next)
   next = normalizeUjatJournalEducationInfoParagraph(next)
   next = normalizeLectureReportProgramProgressParagraph(next)
   next = migrateLectureReportSessionPlanItemTitles(next)

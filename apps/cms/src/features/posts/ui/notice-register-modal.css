@@ -37,6 +37,17 @@
   max-height: min(960px, calc(100dvh - 32px));
 }
 
+/*
+ * 시안: 팝업 높이 878 (기존 908) — 고정 높이 대신 여백으로 맞춘다.
+ * 상·하 padding 18/20 (admin-notice-form-modal-spec) + 첨부↔푸터 간격을 다른 블록과 같은 24로.
+ * 공통 셸(.content-modal.teal-header-modal.ant-modal .ant-modal-content)보다 구체성을 높인다.
+ */
+.content-modal.teal-header-modal.ant-modal.notice-register-modal.teal-header-modal--large
+  .ant-modal-content {
+  padding-top: 18px;
+  padding-bottom: 20px;
+}
+
 .content-modal.notice-register-modal.teal-header-modal--large .ant-modal-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -195,7 +206,7 @@
 }
 
 .notice-register-modal__attachment-form {
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .notice-register-modal .file-select-field__actions {

@@ -1,6 +1,8 @@
+/** 시안: 본문 16/Medium · 라벨 14/Medium #525252 · `*` 14/Bold */
 .user-personal-info-reveal-confirm-modal__lead {
   margin: 0 0 30px;
   font-size: 16px;
+  font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
 }
@@ -10,11 +12,13 @@
   margin-bottom: 8px;
   font-size: 14px;
   line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Content-secondary, #525252);
   padding: 0 8px;
   font-weight: 500;
 }
 
 .user-personal-info-reveal-confirm-modal__required {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--color-required-mark, var(--color-error, #ff4d4f));
 }

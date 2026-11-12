@@ -130,7 +130,7 @@ export function PreviewModal({
               </DetailInfoForm.Row>
             </DetailInfoForm>
             <p className="alimtalk-template-preview__hint">
-              템플릿의 수정 및 삭제는{' '}
+              템플릿의 등록 및 수정은{' '}
               <a
                 className="alimtalk-template-preview__link"
                 href={resolveNhnConsoleUrl(resolved)}

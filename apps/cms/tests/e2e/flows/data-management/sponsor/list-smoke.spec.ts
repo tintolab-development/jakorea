@@ -13,7 +13,7 @@ import {
  * 시드가 없으면 목록 셸만 통과하고 annotation.
  */
 test.describe('후원사 관리 목록', () => {
-  test('목록 셸·컬럼·기본 구분(기업) · 갭 컬럼 없음', async ({ page }) => {
+  test('목록 셸·컬럼·기본 구분(전체) · 갭 컬럼 없음', async ({ page }) => {
     test.setTimeout(120_000)
 
     const sponsors = new SponsorManagementPage(page)
@@ -21,7 +21,7 @@ test.describe('후원사 관리 목록', () => {
     await expectAuthenticatedShell(page)
     await sponsors.expectListShell()
     await sponsors.expectListColumns()
-    await sponsors.expectDefaultKindCorporate()
+    await sponsors.expectDefaultKindAll()
     await sponsors.expectDateRangeFilter()
     const statusField = filterField(page, '후원 상태')
     await statusField.locator('.ant-select-selector, [role="combobox"]').first().click()

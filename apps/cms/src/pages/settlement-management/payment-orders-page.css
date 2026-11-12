@@ -217,3 +217,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/*
+ * 지급조서 확인 · 계좌 지급 확인 툴바 — 시안: 「캘린더 뷰로 보기」(리스트 뷰 전환 포함) 폭 160 · 엑셀 140.
+ * 툴바는 우측 정렬이라 우측 끝은 그대로다.
+ */
+.payment-orders-page .filter-table-layout__toolbar-excel .excel-button.cms-button.ant-btn {
+  width: 140px;
+  min-width: 140px;
+}
+
+.payment-orders-page .view-mode-toggle .cms-button.ant-btn,
+.payment-orders-page .payment-orders-page__view-mode-button.cms-button.ant-btn {
+  width: 160px;
+  min-width: 160px;
+}

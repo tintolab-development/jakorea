@@ -34,15 +34,15 @@ test.describe('교재 등록·키트 수량', () => {
     await textbooks.expectListShell()
 
     await textbooks.openKitModal()
-    const original = await textbooks.readKitQuantity('초등')
+    const original = await textbooks.readKitQuantity('초등학교')
     const nextValue = original === '24' ? '25' : '24'
-    await textbooks.setKitQuantity('초등', nextValue)
+    await textbooks.setKitQuantity('초등학교', nextValue)
     await textbooks.confirmKitModal()
     const notice = await textbooks.expectKitChangeNotice()
     await textbooks.saveKitChangeNotice(notice)
 
     await textbooks.openKitModal()
-    const saved = await textbooks.readKitQuantity('초등')
+    const saved = await textbooks.readKitQuantity('초등학교')
     if (saved !== nextValue) {
       test.info().annotations.push({
         type: 'note',
@@ -50,7 +50,7 @@ test.describe('교재 등록·키트 수량', () => {
       })
     }
 
-    await textbooks.setKitQuantity('초등', original)
+    await textbooks.setKitQuantity('초등학교', original)
     await textbooks.confirmKitModal()
     const restoreNotice = await textbooks.expectKitChangeNotice()
     await textbooks.saveKitChangeNotice(restoreNotice)
