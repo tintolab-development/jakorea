@@ -18,19 +18,19 @@ export const GEMINI_RECRUITMENT_FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'select',
     label: '상태',
     placeholder: '전체',
+    /** 상태 필터는 모집 기간 축(예정·진행 중·종료)만 둔다. 미게시(DRAFT)는 옵션에서 제외(QA 2026-11-13). */
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
       { label: GEMINI_RECRUITMENT_STATUS_LABEL.SCHEDULED, value: 'SCHEDULED' },
       { label: GEMINI_RECRUITMENT_STATUS_LABEL.IN_PROGRESS, value: 'IN_PROGRESS' },
       { label: GEMINI_RECRUITMENT_STATUS_LABEL.ENDED, value: 'ENDED' },
-      { label: GEMINI_RECRUITMENT_STATUS_LABEL.DRAFT, value: 'DRAFT' },
     ],
   },
   {
     key: 'trainingRequestPeriodRange',
     type: 'dateRange',
-    label: '연수 요청 가능기간',
+    label: '연수 요청 가능 기간',
     defaultValue: null,
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   },

@@ -1,8 +1,17 @@
 import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import './institution-application-tab.css'
 
+/** 서버 문구 `2026. 11. 25(수)` → 표시 `2026.11.25(수)` (QA 2026-11-13 Gemini #14) */
+function normalizeDotDate(value: string): string {
+  return value.replace(
+    /(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?(?=\s*\(|\s|$)/g,
+    (_, year: string, month: string, day: string) =>
+      `${year}.${month.padStart(2, '0')}.${day.padStart(2, '0')}`
+  )
+}
+
 function normalizeClockRange(value: string): string {
-  return value.replace(/\s*~\s*/g, ' ~ ').trim()
+  return normalizeDotDate(value.replace(/\s*~\s*/g, ' ~ ')).trim()
 }
 
 /** `N지망 : 날짜 시각 | N차시` — 구포맷 `날짜 | 시각(N차시)` 도 허용 */

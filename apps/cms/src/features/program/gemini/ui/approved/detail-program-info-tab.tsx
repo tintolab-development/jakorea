@@ -1,7 +1,7 @@
 import { useCallback, useMemo, type ReactNode } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { formatDateDot, formatDateDotWithWeekday } from '@/shared/utils/date'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { HomeAddressDisplay } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -267,7 +267,13 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
         label: '프로그램 수강 횟수',
         children: formatCountLabel(detail.completedRecruitmentCount, '회'),
       },
-      { key: 'joinedAt', label: '등록일', span: 2, children: dash(detail.joinedAt) },
+      {
+        key: 'joinedAt',
+        label: '등록일',
+        span: 2,
+        // 서버 `YYYY-MM-DD`(또는 일시) → 표시 `YYYY.MM.DD`
+        children: formatDateDot(detail.joinedAt),
+      },
     ],
     [detail]
   )
