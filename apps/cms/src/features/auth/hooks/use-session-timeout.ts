@@ -17,7 +17,10 @@ import {
   postAdminAuthActivity,
 } from '@/features/auth/api/admin-session-fetcher'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { setSessionWarningActivitySuppressed } from '@/features/auth/lib/session-keepalive'
+import {
+  setSessionWarningActivitySuppressed,
+  subscribeServerActivityRecorded,
+} from '@/features/auth/lib/session-keepalive'
 import {
   REFRESH_COOKIE_SESSION_STORAGE_KEY,
   REFRESH_TOKEN_STORAGE_KEY,
@@ -103,6 +106,15 @@ export function useSessionTimeout() {
     }
     void syncSession()
   }, [isAuthenticated, token, syncSession])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    // Activity가 서버 유휴 기한을 늘리면 GET Session을 다시 읽는다. 로그인 시점 기한에 머물면
+    // 사용 중에 경고가 뜨거나, 마지막 사용 후 25분 시점 안내가 어긋난다.
+    return subscribeServerActivityRecorded(() => {
+      void syncSession()
+    })
+  }, [isAuthenticated, syncSession])
 
   useEffect(() => {
     if (!isAuthenticated) return

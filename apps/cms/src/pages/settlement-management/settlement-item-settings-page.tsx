@@ -40,7 +40,7 @@ import './settlement-item-settings-page.css'
 
 const cardOptionMenuItems: MenuProps['items'] = [
   { key: 'delete', label: '삭제', danger: true },
-  { key: 'duplicate', label: '복제' },
+  { key: 'duplicate', label: '복사' },
 ]
 
 export default function SettlementItemSettingsPage() {

@@ -1,6 +1,6 @@
 /**
  * 알림 드롭다운 패널 (스펙: notification-dropdown-spec.md)
- * 최대 406×500, 카테고리 필터 6개(한 줄), 알림 목록
+ * 최대 420×500, 카테고리 필터 6개(한 줄), 알림 목록
  */
 
 import { Typography } from 'antd'
