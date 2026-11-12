@@ -19,16 +19,19 @@ describe('detailed-program-filter-params', () => {
     })
   })
 
-  it('defaults missing dp_use to active (useYn true)', () => {
+  it('defaults missing dp_use to 전체 (useYn omitted)', () => {
     const params = detailedProgramsParamsFromSearchParams(new URLSearchParams('dp_name=워크숍'))
-    expect(params.useYn).toBe(true)
+    expect(params.useYn).toBeUndefined()
     expect(params.keyword).toBe('워크숍')
   })
 
-  it('serialize always includes default dp_use=active', () => {
-    expect(serializeDetailedProgramListFilters(new URLSearchParams())).toBe('dp_use=active')
+  it('serialize omits dp_use when 전체', () => {
+    expect(serializeDetailedProgramListFilters(new URLSearchParams())).toBe('')
     expect(serializeDetailedProgramListFilters(new URLSearchParams('dp_name=워크숍'))).toBe(
-      'dp_use=active&dp_name=%EC%9B%8C%ED%81%AC%EC%88%8D'
+      'dp_name=%EC%9B%8C%ED%81%AC%EC%88%8D'
+    )
+    expect(serializeDetailedProgramListFilters(new URLSearchParams('dp_use=active'))).toBe(
+      'dp_use=active'
     )
   })
 

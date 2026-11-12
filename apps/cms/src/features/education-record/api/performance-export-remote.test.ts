@@ -49,7 +49,7 @@ describe('exportPerformanceRecordsRemote', () => {
     // 서버 영문 이름 대신 규칙 이름으로 저장한다.
     expect(downloadBlob).toHaveBeenCalledWith(
       blob,
-      expect.stringMatching(/^\[JA Korea\] CMS 어드민_실적데이터_\d{6}\.xlsx$/),
+      expect.stringMatching(/^\[JA Korea\] CMS 어드민_실적 데이터_\d{6}\.xlsx$/),
       { skipAccessLog: true }
     )
   })
