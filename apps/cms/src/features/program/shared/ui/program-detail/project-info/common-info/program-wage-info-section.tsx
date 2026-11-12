@@ -63,6 +63,17 @@ function normalizeCompanySchoolPaymentToken(token: string): string {
   return COMPANY_SCHOOL_PAYMENT_LABEL_ALIASES[token] ?? token
 }
 
+/**
+ * 1사1교 상세 표시 — 교통비·숙박비는 1사1교 전용 항목이므로 「강사 교통비」「숙박비(1사1교)」로 보인다.
+ * 서버 표시명(`교통비`, `숙박비`, `교통비(일사일교)` 등)이 그대로 와도 같은 표기로 맞춘다(QA 2026-11-13 1사1교 #2).
+ */
+function toCompanySchoolPaymentDisplayLabel(label: string): string {
+  const compact = label.replace(/\s+/g, '')
+  if (/^교통비(\((일사일교|1사1교)\))?$/.test(compact)) return PAYMENT_LABEL_TRANSPORT_1C1S
+  if (/^숙박비(\((일사일교|1사1교)\))?$/.test(compact)) return PAYMENT_LABEL_LODGING_1C1S
+  return label
+}
+
 const COMPANY_SCHOOL_WAGE_ROWS = [
   {
     gradeLabel: '1급',
@@ -112,10 +123,11 @@ function remapCompanySchoolPaymentItemOptions(
 ): CmsSelectMultipleOption[] {
   return options.map(opt => {
     const label = opt.label.trim()
-    if (label === PAYMENT_LABEL_TRANSPORT_CATALOG) {
+    const compact = label.replace(/\s+/g, '')
+    if (label === PAYMENT_LABEL_TRANSPORT_CATALOG || /^교통비\((일사일교|1사1교)\)$/.test(compact)) {
       return { ...opt, label: PAYMENT_LABEL_TRANSPORT_1C1S }
     }
-    if (label === PAYMENT_LABEL_LODGING_CATALOG) {
+    if (label === PAYMENT_LABEL_LODGING_CATALOG || /^숙박비\((일사일교|1사1교)\)$/.test(compact)) {
       return { ...opt, label: PAYMENT_LABEL_LODGING_1C1S }
     }
     return opt
@@ -195,7 +207,7 @@ function formatCompanySchoolPaymentItemsView(
     if (token === 'STUDENT_TRANSPORTATION') return '학생 교통비'
     if (token === 'TRANSPORTATION') return '강사 교통비'
     return token
-  })
+  }).map(toCompanySchoolPaymentDisplayLabel)
   const resolvedIds = resolveProgramPaymentItemIdsFromLabels(text)
   if (labels.every(label => /^p-\d+$/i.test(label)) && resolvedIds.length > 0) {
     return programPaymentItemLabelsFromIds(resolvedIds) || labels.join(', ')
