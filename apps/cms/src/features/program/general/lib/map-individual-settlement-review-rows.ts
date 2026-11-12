@@ -13,7 +13,9 @@ import type { ParticipatingIndividualInstructorLectureProgress } from '@/feature
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import {
   buildSettlementScheduleDisplayLabel,
+  compareSettlementScheduleLatestFirst,
   mapSettlementLectureProgressStatus,
+  toSettlementScheduleSortTime,
 } from '@/features/program/general/lib/settlement-schedule-display-label'
 
 export type IndividualSettlementReviewListRow = {
@@ -201,12 +203,22 @@ export function mapIndividualSettlementReviewListRows(input: {
 
   const assignedScheduleIds = new Set<number>()
   const rows: IndividualSettlementReviewListRow[] = []
+  /** 행 id → 정렬 키(일정 시작 일시·회차 번호) */
+  const sortKeys = new Map<string, { time: number | null; ordinal: number | null }>()
 
   for (const session of input.assignedSessions) {
     const scheduleId = positiveId(session.resolvedScheduleId)
     if (scheduleId == null) continue
     assignedScheduleIds.add(scheduleId)
     const application = applicationsByScheduleId.get(scheduleId)
+    sortKeys.set(`schedule:${scheduleId}`, {
+      time: toSettlementScheduleSortTime(
+        session.startAt,
+        application?.scheduleStartAt,
+        session.date
+      ),
+      ordinal: session.sessionNo ?? null,
+    })
     rows.push({
       id: `schedule:${scheduleId}`,
       no: rows.length + 1,
@@ -223,11 +235,16 @@ export function mapIndividualSettlementReviewListRows(input: {
     const scheduleId = positiveId(item.programScheduleId)
     if (scheduleId != null && assignedScheduleIds.has(scheduleId)) continue
     const settlementApplicationId = positiveId(item.settlementApplicationId)
+    const orphanId =
+      settlementApplicationId != null
+        ? `application:${settlementApplicationId}`
+        : `orphan:${rows.length + 1}`
+    sortKeys.set(orphanId, {
+      time: toSettlementScheduleSortTime(item.scheduleStartAt),
+      ordinal: null,
+    })
     rows.push({
-      id:
-        settlementApplicationId != null
-          ? `application:${settlementApplicationId}`
-          : `orphan:${rows.length + 1}`,
+      id: orphanId,
       no: rows.length + 1,
       programScheduleId: scheduleId,
       educationScheduleLabel: applicationScheduleLabel(item),
@@ -238,7 +255,30 @@ export function mapIndividualSettlementReviewListRows(input: {
     })
   }
 
+  // 신청 여부와 무관하게 일정 시작 일시 최신순, 같으면 회차 번호 큰 순 (기획 2026-11-12 2차 2번)
+  const noKey = { time: null, ordinal: null }
   return rows
+    .map((row, index) => ({ row, index }))
+    .sort(
+      (a, b) =>
+        compareSettlementScheduleLatestFirst(
+          sortKeys.get(a.row.id) ?? noKey,
+          sortKeys.get(b.row.id) ?? noKey
+        ) || a.index - b.index
+    )
+    .map(({ row }, index) => ({ ...row, no: index + 1 }))
+}
+
+/**
+ * 미신청(신청 없음·NOT_APPLIED)·미진행(진행 예정) 행 — 처리 현황·금액 '-', [상세 보기] 비활성
+ * (기획 2026-11-12, CMS-FUNC-0248·0252)
+ */
+export function isIndividualSettlementRowNotApplicable(
+  row: Pick<IndividualSettlementReviewListRow, 'isNotApplied' | 'settlementApplicationId' | 'lectureProgress'>
+): boolean {
+  return (
+    row.isNotApplied || row.settlementApplicationId == null || row.lectureProgress === 'scheduled'
+  )
 }
 
 export function summarizeIndividualSettlementReviewRows(
@@ -267,6 +307,6 @@ export function resolveIndividualSettlementReviewSummaryLabel(
   if (summary.submitted > 0) return '확인 대기 중'
   if (summary.approved > 0) return getInstructorSettlementStatusLabel('payment_statement_verified')
   if (summary.rejected > 0) return '신청 반려'
-  if (summary.total > 0) return '해당 없음'
+  // 미신청은 상태값이 아니라 집계하지 않는다. 신청 건이 없으면 '-' (기획 2026-11-12 2차 4-2)
   return '-'
 }

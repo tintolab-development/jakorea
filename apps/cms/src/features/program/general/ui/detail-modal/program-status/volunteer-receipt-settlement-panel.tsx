@@ -30,6 +30,7 @@ import {
   resolveIndividualSettlementReviewUiStatus,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import {
+  isIndividualSettlementRowNotApplicable,
   resolveIndividualSettlementReviewSummaryLabel,
   type IndividualSettlementReviewListRow,
 } from '@/features/program/general/lib/map-individual-settlement-review-rows'
@@ -49,16 +50,6 @@ const VOLUNTEER_RECEIPT_BULK_DOWNLOAD_ALERT = {
     '다운로드할 지급조서가 없습니다. 봉사자 정산은 일정별 영수증 정산이며, 지급조서 일괄 다운로드 대상이 아닙니다.',
 } as const
 
-/**
- * 미신청(신청 없음·NOT_APPLIED)·봉사 미진행(진행 예정) 행 — 처리 현황·금액 '-', [상세 보기] 비활성
- * (기획 2026-11-12, CMS-FUNC-0248)
- */
-function isVolunteerSettlementRowNotApplicable(row: IndividualSettlementReviewListRow): boolean {
-  return (
-    row.isNotApplied || row.settlementApplicationId == null || row.lectureProgress === 'scheduled'
-  )
-}
-
 function buildExcelColumns(showProgress: boolean): ColumnsType<IndividualSettlementReviewListRow> {
   return [
     { title: 'No.', dataIndex: 'no', key: 'no' },
@@ -77,7 +68,7 @@ function buildExcelColumns(showProgress: boolean): ColumnsType<IndividualSettlem
       title: '지급조서 처리 현황',
       key: 'status',
       render: (_value: unknown, record: IndividualSettlementReviewListRow) =>
-        isVolunteerSettlementRowNotApplicable(record)
+        isIndividualSettlementRowNotApplicable(record)
           ? '-'
           : individualSettlementTableProcessingLabel(record.status),
     },
@@ -85,7 +76,7 @@ function buildExcelColumns(showProgress: boolean): ColumnsType<IndividualSettlem
       title: '정산 예정 금액',
       key: 'totalAmountLabel',
       render: (_value: unknown, record: IndividualSettlementReviewListRow) =>
-        isVolunteerSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
+        isIndividualSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
     },
   ]
 }
@@ -169,7 +160,7 @@ export function VolunteerReceiptSettlementPanel({
         align: 'center',
         width: 160,
         render: (_value, record) => {
-          if (isVolunteerSettlementRowNotApplicable(record)) return '-'
+          if (isIndividualSettlementRowNotApplicable(record)) return '-'
           const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status)
           if (uiStatus) return <InstructorSettlementStatusText status={uiStatus} />
           return (
@@ -188,7 +179,7 @@ export function VolunteerReceiptSettlementPanel({
         align: 'center',
         width: 140,
         render: (_value, record) =>
-          isVolunteerSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
+          isIndividualSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
       },
       {
         title: '지급조서',
@@ -201,7 +192,7 @@ export function VolunteerReceiptSettlementPanel({
               variant="default"
               size="h32"
               style={{ width: '100%' }}
-              disabled={!remoteEnabled || isVolunteerSettlementRowNotApplicable(record)}
+              disabled={!remoteEnabled || isIndividualSettlementRowNotApplicable(record)}
               onClick={() => {
                 if (!record.canOpenDetail || record.settlementApplicationId == null) {
                   showAlert(PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT)

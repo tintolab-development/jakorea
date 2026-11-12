@@ -103,3 +103,32 @@ export function mapSettlementLectureProgressStatus(
   if (status === 'GAVE_UP') return 'activity_withdrawn'
   return null
 }
+
+/** 정렬용 일정 시각(ms). 앞에서부터 처음 읽히는 값을 쓰고, 모두 없으면 null */
+export function toSettlementScheduleSortTime(
+  ...candidates: Array<string | null | undefined>
+): number | null {
+  for (const value of candidates) {
+    const trimmed = value?.trim()
+    if (!trimmed) continue
+    const time = Date.parse(trimmed)
+    if (Number.isFinite(time)) return time
+  }
+  return null
+}
+
+/**
+ * 정산 현황 행 정렬 — 일정 시작 일시 최신순, 같으면 회차 번호 큰 순(신청 여부와 무관).
+ * 시각이 없는 행은 맨 뒤로 보낸다. (기획 2026-11-12 2차 2번)
+ */
+export function compareSettlementScheduleLatestFirst(
+  a: { time: number | null; ordinal?: number | null },
+  b: { time: number | null; ordinal?: number | null }
+): number {
+  if (a.time !== b.time) {
+    if (a.time == null) return 1
+    if (b.time == null) return -1
+    return b.time - a.time
+  }
+  return (b.ordinal ?? 0) - (a.ordinal ?? 0)
+}

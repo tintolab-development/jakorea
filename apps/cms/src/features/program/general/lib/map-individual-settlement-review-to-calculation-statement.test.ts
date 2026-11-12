@@ -55,10 +55,10 @@ const detail: IndividualSettlementReviewDetail = {
 }
 
 describe('mapIndividualSettlementReviewToCalculationStatement', () => {
-  it('1열은 프로그램명이고 기관명 필드로 채우지 않는다', () => {
+  it('참여 기관명 칸을 프로그램명으로 대신 채우지 않는다', () => {
     const view = mapIndividualSettlementReviewToCalculationStatement(detail)
     expect(view.basic.programName).toBe('JA 경제교육')
-    expect(view.blocks[0]?.institutionName).toBe('JA 경제교육')
+    expect(view.blocks[0]?.institutionName).toBe('')
     expect(view.blocks[0]?.lectureSessionDisplay).toBe('2회차')
   })
 

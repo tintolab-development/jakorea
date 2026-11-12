@@ -140,7 +140,9 @@ export function mapIndividualSettlementReviewToCalculationStatement(
         ? []
         : [
             {
-              institutionName: programName,
+              // 참여 기관명은 프로그램명으로 대신 채우지 않는다. 개인형은 열을 숨기고,
+              // 기관형은 서버 제출 시점 기관명을 받은 뒤 채운다 (기획 2026-11-12 2차 1번)
+              institutionName: '',
               lectureDateDisplay: lectureDateDisplay === '' ? '-' : lectureDateDisplay,
               lectureSessionDisplay,
               lines,

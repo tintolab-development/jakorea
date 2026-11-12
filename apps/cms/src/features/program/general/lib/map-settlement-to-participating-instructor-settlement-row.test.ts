@@ -109,6 +109,22 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
     ).toBe('2026.10.30(금) | 10:00~12:00')
   })
 
+  it('일정 시작 일시 최신순으로 정렬하고, 같으면 회차 번호 큰 순이다', () => {
+    const rows = mapSettlementsToParticipatingInstructorSettlementRows([
+      { instructorAssignmentId: 1, scheduleId: 11, sessionOrdinal: 4, scheduleStartAt: '2026-10-30T00:30:00Z' },
+      { instructorAssignmentId: 2, scheduleId: 12, scheduleKind: 'PRE_EDUCATION', scheduleStartAt: '2026-10-30T03:00:00Z' },
+      { instructorAssignmentId: 3, scheduleId: 13, sessionOrdinal: 5, scheduleStartAt: '2026-10-30T00:30:00Z' },
+      { settlementId: 9, lectureDate: '2026-10-01' },
+    ])
+    expect(rows.map(row => row.id)).toEqual([
+      'NOT_APPLIED:2:12',
+      'NOT_APPLIED:3:13',
+      'NOT_APPLIED:1:11',
+      'SETTLEMENT:9',
+    ])
+    expect(rows.map(row => row.no)).toEqual([1, 2, 3, 4])
+  })
+
   it('builds education schedule label from session display or date', () => {
     expect(
       buildParticipatingInstructorEducationScheduleLabel({

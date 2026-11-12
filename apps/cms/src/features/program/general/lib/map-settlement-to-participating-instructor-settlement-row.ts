@@ -5,9 +5,11 @@ import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor
 import type { ParticipatingIndividualInstructorLectureProgress } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
 import {
   buildSettlementScheduleDisplayLabel,
+  compareSettlementScheduleLatestFirst,
   formatIsoDateTime,
   formatLectureDateOnly,
   mapSettlementLectureProgressStatus,
+  toSettlementScheduleSortTime,
 } from '@/features/program/general/lib/settlement-schedule-display-label'
 
 /** 정산 현황 행 종류 — 서버 rowType, 없으면 ID로 추론 */
@@ -184,12 +186,13 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
 export function mapSettlementsToParticipatingInstructorSettlementRows(
   items: SettlementListItemResponse[]
 ): ParticipatingInstructorSettlementApiRow[] {
-  const sorted = [...items].sort((a, b) => {
-    const dateA = a.lectureDate ?? ''
-    const dateB = b.lectureDate ?? ''
-    if (dateA !== dateB) return dateB.localeCompare(dateA)
-    return (b.sessionOrdinal ?? 0) - (a.sessionOrdinal ?? 0)
+  const sortKey = (item: SettlementListItemResponse) => ({
+    time: toSettlementScheduleSortTime(item.scheduleStartAt, item.lectureDate),
+    ordinal: item.sessionOrdinal,
   })
+  const sorted = [...items].sort((a, b) =>
+    compareSettlementScheduleLatestFirst(sortKey(a), sortKey(b))
+  )
 
   // 승인 직후 같은 신청서가 확정 정산 행과 신청서 행으로 동시에 남지 않도록 확정 행을 우선한다.
   const confirmedApplicationIds = new Set(

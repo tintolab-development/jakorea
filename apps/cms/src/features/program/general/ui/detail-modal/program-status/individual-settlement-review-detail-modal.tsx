@@ -167,7 +167,7 @@ export function IndividualSettlementReviewDetailModal({
         ? statementView.blocks
         : [
             {
-              institutionName: statementView.basic.programName,
+              institutionName: '',
               lectureDateDisplay: '-',
               lectureSessionDisplay: '-',
               lines: [],
