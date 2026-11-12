@@ -88,8 +88,8 @@
 
 .relatedSitesChevron {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   transition: transform 160ms ease;
 }

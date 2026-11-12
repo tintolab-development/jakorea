@@ -25,19 +25,20 @@ import {
 const GRADE_LIKE_AFFILIATION_TAIL = /학년|담임/
 
 /** 개인 회원 — 현재 학교 재학 여부 */
-function formatBirthDateAndManAge(birthDate: DateValue | undefined): string {
+function formatBirthDateAndManAge(birthDate: DateValue | undefined, manAge?: number): string {
   if (birthDate == null || birthDate === '') return '-'
   if (birthDate instanceof Date) {
     const parsed = dayjs(birthDate)
     if (!parsed.isValid()) return '-'
-    return formatBirthDisplayWithManAge(parsed.format('YYYY-MM-DD'))
+    return formatBirthDisplayWithManAge(parsed.format('YYYY-MM-DD'), { age: manAge })
   }
-  return formatBirthDisplayWithManAge(String(birthDate))
+  // 마스킹(yyyy-**-**)이면 서버 age로만 「(만 NN세)」를 붙인다.
+  return formatBirthDisplayWithManAge(String(birthDate), { age: manAge })
 }
 
 export function formatGenderBirthLine(user: Omit<User, 'password'>): string {
   const gender = toDisplayGender(user.gender)
-  return `${gender} | ${formatBirthDateAndManAge(user.birthDate)}`
+  return `${gender} | ${formatBirthDateAndManAge(user.birthDate, user.manAge)}`
 }
 
 export function affiliationLine(user: Omit<User, 'password'>): string {
@@ -61,7 +62,9 @@ export function affiliationView(user: Omit<User, 'password'>): ReactNode {
     return pipeSeparatedInlineView(user.affiliation)
   }
   if (user.schoolInfo) {
-    const { schoolName, position } = user.schoolInfo
+    // 삭제된 학교를 참조하는 레코드는 학교명이 비어 올 수 있다 → '-' (QA-0431)
+    const schoolName = user.schoolInfo.schoolName?.trim() || '-'
+    const position = user.schoolInfo.position?.trim()
     if (position) return inlineSegmentsWithDivider([schoolName, position])
     return schoolName
   }
@@ -109,7 +112,7 @@ export function inlineSegmentsWithDividers(
 /** 성별 및 생년월일 td — 문자 `|` 대신 TdDivider, gap 12px. 시안: `남성 | 1990. 09. 15 (만 35세)` */
 export function genderBirthView(user: Omit<User, 'password'>): ReactNode {
   const gender = toDisplayGender(user.gender)
-  const birthPart = formatBirthDateAndManAge(user.birthDate)
+  const birthPart = formatBirthDateAndManAge(user.birthDate, user.manAge)
   // `-` 세그먼트를 버리지 않음 — 생년월일 없을 때도 `성별 | -` 유지
   return createElement(
     'span',

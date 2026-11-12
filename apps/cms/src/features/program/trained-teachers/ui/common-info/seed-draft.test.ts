@@ -56,4 +56,32 @@ describe('seedDraft', () => {
     expect(draft.scheduleDetails).toEqual([])
     expect(draft.curriculumSessions).toEqual([])
   })
+  it('교사 연수 ON — 연수 행은 블록 draft로, 나머지 행·진행 그룹은 화면 순서로 시드한다', () => {
+    const draft = seedDraft(
+      {
+        educationJournalEnabled: false,
+        teacherTrainingEnabled: true,
+        teacherTrainingScheduleName: '교육 연수',
+        teacherTrainingEducationFormat: 'OFFLINE',
+        scheduleDetails: [
+          {
+            scheduleLabel: '교육 연수',
+            name: '교육 연수',
+            scheduleDateLabel: '2026.04.01(수) 10:00 ~ 12:00',
+          },
+          { scheduleLabel: '세부 일정 02', name: '일정 A', progressTimeSummary: '13:00 ~ 14:00' },
+        ],
+      },
+      undefined,
+      undefined,
+      { educationStructure: 'schedule', sessionRound: 'single' }
+    )
+    expect(draft.teacherTrainingScheduleLine).toBe('2026.04.01(수) 10:00 ~ 12:00')
+    expect(draft.teacherTrainingEducationFormat).toBe('OFFLINE')
+    expect(draft.teacherTrainingScheduleName).toBe('교육 연수')
+    expect(draft.scheduleDetails.map(row => [row.scheduleLabel, row.name])).toEqual([
+      ['세부 일정 01', '일정 A'],
+    ])
+    expect(draft.progressGroupsByDetail).toEqual([['13:00 ~ 14:00']])
+  })
 })

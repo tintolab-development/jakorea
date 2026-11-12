@@ -19,6 +19,8 @@ export interface AdminAccountApprovalDetailResponse {
   gender?: string;
   birthDate?: string;
   birthYear?: number;
+  /** 만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null. CMS 표기 YYYY.**.**(만 NN세) */
+  age?: number | null;
   status?: string;
   roleCode?: string;
   roleName?: string;

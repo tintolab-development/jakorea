@@ -1,4 +1,5 @@
 import type { InstructorDetailResponse } from '@/shared/api/generated/members/schemas'
+import { readServerManAge } from '@/features/user/api/format-gender-birth-display'
 import type { IndividualMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { TeacherMemberDetailResponse } from '@/shared/api/generated/members/schemas'
@@ -314,6 +315,7 @@ export function mapMemberDetailToUser(
       return display === '-' ? undefined : display
     })(),
     birthDate: normalizedBirthDate ?? detail.birthDate ?? undefined,
+    ...(readServerManAge(detail) != null ? { manAge: readServerManAge(detail) } : {}),
     isActive: mapMemberStatusToIsActive(undefined, detail.status),
     createdAt: detail.joinedAt ?? detail.createdAt ?? now,
     updatedAt: detail.updatedAt ?? now,

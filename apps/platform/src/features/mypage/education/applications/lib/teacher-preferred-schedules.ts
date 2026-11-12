@@ -8,6 +8,8 @@ import {
   type PreferredScheduleProgramLookup,
 } from './application-content-from-answers.ts'
 import { formatDisplayClockLabel, formatDisplayDate } from '@/shared/lib/format-display-date'
+import { formatCompanySchoolDottedDate } from './company-school-date-label.ts'
+import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 
 export function programDetailToPreferredScheduleLookup(
   program:
@@ -123,15 +125,66 @@ function formatTrainedTeacherPreferredBlock(
   return { value, sessionLines }
 }
 
+/**
+ * 1사1교 교시 라벨 — 2차시는 1차시 교시 + 1(연강 고정).
+ * `N~(N+1)교시 (2차시)` / `N교시 (1차시)`. 교시를 모르면 `N차시`만.
+ */
+function formatCompanySchoolPeriodUnit(startPeriod: number | null, sessionCount: number | null): string {
+  if (startPeriod == null) return sessionCount != null ? `${sessionCount}차시` : ''
+  const count = sessionCount ?? 1
+  const periods = count > 1 ? `${startPeriod}~${startPeriod + count - 1}교시` : `${startPeriod}교시`
+  return `${periods} (${count}차시)`
+}
+
+/**
+ * 1사1교 희망 일정 블록(USER-FUNC-0205) —
+ * 「YYYY.MM.DD(요일) ㅣ N~(N+1)교시 (N차시)」 + 교시별 「N교시 (시작 ~ 종료) ㅣ N+1교시 (시작 ~ 종료)」.
+ */
+function formatCompanySchoolPreferredBlock(
+  block: Record<string, unknown>,
+): { value: string; sessionLines: string[] } | undefined {
+  const dateRaw = readText(block.date) || readText(block.dateText) || readText(block.requestedDate)
+  // 1사1교 기획 형식 「YYYY.MM.DD(요일)」 — 플랫폼 공통 날짜 표기와 다르다
+  const dateLabel = dateRaw ? formatCompanySchoolDottedDate(dateRaw) || dateRaw : ''
+  if (!dateLabel) return undefined
+  const sessions = (
+    Array.isArray(block.sessionTimes) ? block.sessionTimes : Array.isArray(block.times) ? block.times : []
+  ).filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object')
+  const sessionCount = readPositiveInt(block.sessionCount) ?? (sessions.length > 0 ? sessions.length : null)
+  const first = sessions[0]
+  const firstPeriod = first
+    ? (readPositiveInt(readText(first.classPeriod).replace(/교시\s*$/u, '')) ??
+      readPositiveInt(first.period))
+    : null
+  const startPeriod = readPositiveInt(block.startPeriod) ?? firstPeriod
+  const value = [dateLabel, formatCompanySchoolPeriodUnit(startPeriod, sessionCount)]
+    .filter(Boolean)
+    .join(' | ')
+  const timeParts = sessions.flatMap((row, index) => {
+    const start = readText(row.startTime) || readText(row.start)
+    const end = readText(row.endTime) || readText(row.end)
+    if (!start || !end) return []
+    const range = `${formatDisplayClockLabel(start)} ~ ${formatDisplayClockLabel(end)}`
+    const period = startPeriod != null ? startPeriod + index : null
+    return [period != null ? `${period}교시 (${range})` : range]
+  })
+  return { value, sessionLines: timeParts.length > 0 ? [timeParts.join(' | ')] : [] }
+}
+
+type PreferredBlockDetailMode = 'default' | 'trained-teacher' | 'company-school'
+
 function toPreferredScheduleCardsFromBlocks(
   blocks: readonly unknown[],
-  trainedTeacherSessionDetail = false,
+  detailMode: PreferredBlockDetailMode = 'default',
 ): EducationTeacherPreferredSchedule[] {
   return blocks.map((rawBlock, index) => {
     const block = rawBlock as Record<string, unknown>
-    const trainedTeacher = trainedTeacherSessionDetail
-      ? formatTrainedTeacherPreferredBlock(block)
-      : undefined
+    const trainedTeacher =
+      detailMode === 'trained-teacher'
+        ? formatTrainedTeacherPreferredBlock(block)
+        : detailMode === 'company-school'
+          ? formatCompanySchoolPreferredBlock(block)
+          : undefined
     const scheduleStatus =
       typeof block.scheduleStatus === 'string' ? block.scheduleStatus : undefined
     const scheduleId =
@@ -189,13 +242,29 @@ export function resolveTeacherPreferredSchedules(input: {
   preserveLegacyLineTokens?: boolean
   /** TRAINED_TEACHER — 블록 카드를 「날짜 | N차시」 + 차시별 「K차시: M교시 | 시간」으로 표시 */
   trainedTeacherSessionDetail?: boolean
+  /** 1사1교 — 블록 카드를 「날짜 | N~(N+1)교시 (N차시)」 + 「N교시 (시간) | N+1교시 (시간)」으로 표시 */
+  companySchoolPeriodDetail?: boolean
   program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'>
 }): EducationTeacherPreferredSchedule[] {
+  const detailMode: PreferredBlockDetailMode =
+    input.trainedTeacherSessionDetail === true
+      ? 'trained-teacher'
+      : input.companySchoolPeriodDetail === true
+        ? 'company-school'
+        : 'default'
   if (input.preferredScheduleBlocks?.length) {
-    return toPreferredScheduleCardsFromBlocks(
-      input.preferredScheduleBlocks,
-      input.trainedTeacherSessionDetail === true,
-    )
+    return toPreferredScheduleCardsFromBlocks(input.preferredScheduleBlocks, detailMode)
+  }
+  // 1사1교 — 신청 답변의 희망 일정 블록(객체 배열)도 같은 형식으로
+  if (detailMode === 'company-school') {
+    const answerBlocks = input.answers?.[PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule]
+    if (
+      Array.isArray(answerBlocks) &&
+      answerBlocks.length > 0 &&
+      answerBlocks.every(item => Boolean(item) && typeof item === 'object')
+    ) {
+      return toPreferredScheduleCardsFromBlocks(answerBlocks, detailMode)
+    }
   }
 
   const optionValues = input.preferredScheduleOptionValues ?? []

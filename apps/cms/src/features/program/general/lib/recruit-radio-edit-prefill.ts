@@ -1,5 +1,5 @@
 /**
- * 상세 수정(edit) 모집 라디오 초기값 — 서버 값이 비어 있으면 등록 화면과 같은 기본값을 넣는다.
+ * 상세 수정(edit) 모집 라디오 초기값 — 서버 값이 비어 있으면 기존 등록분 해석값(게시·면접 있음)을 넣는다.
  *
  * - 수정 화면 라디오는 폼 값을 그대로 그린다(값이 없으면 미선택). 여기서 채운 값이 곧 화면 값이고,
  *   저장(`useProgramDetailInfoSave` → `form.getValues()` 전체 → `detailEditValuesToProgramPatch`)에도 그대로 들어간다.
@@ -24,11 +24,6 @@ import {
   isUjatPrimaryCaseUuid,
   isUjatPrimaryProgramId,
 } from '@/features/program/ujat/lib/is-ujat-primary-program'
-import {
-  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
-  RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
-} from '@/features/program/general/lib/recruit-radio-defaults'
-
 /** 상세 수정 「사전 안내 사항 작성 여부」 화면 기본값 — 등록 `need` 와 같은 뜻 */
 export const DETAIL_EDIT_PRE_EDUCATION_REQUIRED_DEFAULT = 'required' as const
 
@@ -89,14 +84,22 @@ export type DetailEditRecruitRadioValues = {
   volunteerRecruitmentInterviewEnabled?: 'yes' | 'no'
 }
 
-/** 수정 폼 라디오 필드 → 등록 단락 기본값 (회귀 가드 테스트가 등록 기본값과 대조한다) */
+/**
+ * 이미 등록된 프로그램에서 서버 값이 비었을 때의 해석(상세 보기와 같은 뜻).
+ * QA-0121 이전 등록 화면은 「게시」·「면접 있음」을 기본으로 그려 저장했으므로, 빈 값을 등록 기본값(미게시·미선택)으로
+ * 바꿔 채우면 수정 저장 한 번에 공개 중인 공고가 내려간다. 그래서 등록 기본값(`recruit-radio-defaults`)과 따로 둔다.
+ */
+export const DETAIL_EDIT_LEGACY_ANNOUNCEMENT_PUBLISHED = 'published' as const
+export const DETAIL_EDIT_LEGACY_INTERVIEW_ENABLED = 'yes' as const
+
+/** 수정 폼 라디오 필드 → 서버 값이 비었을 때 채우는 값 */
 export const DETAIL_EDIT_RECRUIT_RADIO_DEFAULTS = {
-  participantRecruitmentAnnouncementPublished: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
+  participantRecruitmentAnnouncementPublished: DETAIL_EDIT_LEGACY_ANNOUNCEMENT_PUBLISHED,
   participantRecruitmentPreEducationRequired: DETAIL_EDIT_PRE_EDUCATION_REQUIRED_DEFAULT,
-  participantRecruitmentInterviewEnabled: RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
-  instructorRecruitmentAnnouncementPublished: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
-  volunteerRecruitmentAnnouncementPublished: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
-  volunteerRecruitmentInterviewEnabled: RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
+  participantRecruitmentInterviewEnabled: DETAIL_EDIT_LEGACY_INTERVIEW_ENABLED,
+  instructorRecruitmentAnnouncementPublished: DETAIL_EDIT_LEGACY_ANNOUNCEMENT_PUBLISHED,
+  volunteerRecruitmentAnnouncementPublished: DETAIL_EDIT_LEGACY_ANNOUNCEMENT_PUBLISHED,
+  volunteerRecruitmentInterviewEnabled: DETAIL_EDIT_LEGACY_INTERVIEW_ENABLED,
 } as const satisfies Required<DetailEditRecruitRadioValues>
 
 /** 보이는 탭의 라디오 필드 목록 */

@@ -9,6 +9,7 @@ import type { VolunteerParticipantRegisterResponse } from '@/shared/api/generate
 
 import type { PageResponseParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseParticipantListItemResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
+import type { FeePolicy } from '@/shared/api/generated/dashboard/schemas/feePolicy'
 import {
   filterProgramProgressParticipantItems,
   type ProgramProgressParticipantListItem,
@@ -379,6 +380,65 @@ export async function createProgramInstructorParticipantRemote(
   payload: ProgramInstructorParticipantCreateRequest
 ): Promise<ProgramInstructorParticipantCreateResponse> {
   return createProgramParticipantRemote(programId, payload)
+}
+
+/** 참여 강사 강사비 정본 위치 — 신청서(INSTRUCTOR_APPLICATION) 또는 직접 추가 참여 강사(PARTICIPANT) */
+export type ParticipantInstructorFeePolicySource = 'INSTRUCTOR_APPLICATION' | 'PARTICIPANT'
+
+/**
+ * GET·PATCH …/participants/{participantId}/instructor-fee-policy 응답 (BE 회신 A4, 코드 생성 범위 밖이라 수기 정의)
+ * - feePolicy null = 미등록
+ * - updatedAssignmentCount: 이번 저장으로 다시 반영된 정산 전 배정(회차) 수. GET은 0
+ */
+export type ParticipantInstructorFeePolicyResponse = {
+  programId?: number
+  participantId?: number
+  instructorApplicationId?: number | null
+  feePolicySource?: ParticipantInstructorFeePolicySource | null
+  feePolicy?: FeePolicy | null
+  updatedAssignmentCount?: number
+  updatedAt?: string | null
+}
+
+/** PATCH 요청 — 강사 승인 `Approval.feePolicy`와 같은 형태 */
+export type ParticipantInstructorFeePolicyUpdateRequest = {
+  feePolicy: FeePolicy
+}
+
+function participantInstructorFeePolicyUrl(programId: string, participantId: string): string {
+  return `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/instructor-fee-policy`
+}
+
+/** GET /api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy */
+export async function fetchParticipantInstructorFeePolicyRemote(
+  programId: string,
+  participantId: string
+): Promise<ParticipantInstructorFeePolicyResponse> {
+  return unwrapApiBody<ParticipantInstructorFeePolicyResponse>(
+    await customInstance({
+      url: participantInstructorFeePolicyUrl(programId, participantId),
+      method: 'GET',
+    })
+  )
+}
+
+/**
+ * PATCH /api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy
+ * 신청 유무와 관계없이 참여 강사 강사비 저장은 이 API로 통일한다(신청 있는 강사는 신청서 값이 같이 바뀜).
+ * 409 INSTRUCTOR_FEE_POLICY_SETTLEMENT_EXISTS · 422 INVALID_FEE_POLICY · 422 PARTICIPANT_TYPE_UNSUPPORTED
+ */
+export async function patchParticipantInstructorFeePolicyRemote(
+  programId: string,
+  participantId: string,
+  payload: ParticipantInstructorFeePolicyUpdateRequest
+): Promise<ParticipantInstructorFeePolicyResponse> {
+  return unwrapApiBody<ParticipantInstructorFeePolicyResponse>(
+    await customInstance({
+      url: participantInstructorFeePolicyUrl(programId, participantId),
+      method: 'PATCH',
+      data: payload,
+    })
+  )
 }
 
 /** 배정 알림 시점 — `SCHEDULED`는 현재보다 1분 이상 뒤 (400 INVALID_NOTIFICATION_SCHEDULE) */

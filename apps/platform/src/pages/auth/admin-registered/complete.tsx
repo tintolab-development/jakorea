@@ -5,7 +5,7 @@ import {
 } from '@/features/auth/admin-registered'
 import { MYPAGE_PATH } from '@/features/mypage'
 import { isRemoteApiConfigured, setAdminOnboardingRequired } from '@/shared/lib'
-import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
+import illustCheckUrl from '@/shared/assets/illustration/graphic-check-84.png'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'

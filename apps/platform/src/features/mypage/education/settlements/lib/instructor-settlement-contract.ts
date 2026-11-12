@@ -1,4 +1,5 @@
 import { isAxiosError } from 'axios'
+import { LECTURE_FEE_SETTLEMENT_BLOCKER_MESSAGE } from './lecture-fee-preview.ts'
 
 function extractApiErrorCode(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null
@@ -9,6 +10,9 @@ function extractApiErrorCode(data: unknown): string | null {
   return null
 }
 
+/** 사업 운영 종료 후 최초 지급조서 제출 (409, 미리보기 blockerCode) */
+export const SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE = 'SETTLEMENT_BUSINESS_PERIOD_CLOSED'
+
 export const INSTRUCTOR_PAYMENT_STATEMENT_CONSENT_REQUIRED_CODE =
   'PAYMENT_STATEMENT_CONSENT_REQUIRED'
 
@@ -16,12 +20,8 @@ export const PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE =
   '지급조서 작성 동의를 완료한 뒤 정산을 신청할 수 있습니다.'
 
 export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
-  SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED:
-    '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
-  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED:
-    '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
-  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED:
-    '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
+  // 정산 차단 3종·장거리 단가 미설정: 미리보기 차단 문구와 같다 (기획 K10·K11)
+  ...LECTURE_FEE_SETTLEMENT_BLOCKER_MESSAGE,
   LECTURE_REPORT_REQUIRED: '강의보고서/강의평가 제출 이후 정산 신청이 가능합니다.',
   LECTURE_NOT_ENDED: '강의가 종료된 이후에 지급조서를 제출할 수 있습니다.',
   ACTIVE_APPLICATION_EXISTS: '이미 제출된 지급조서가 있습니다. 재제출이 필요하면 기존 신청에서 진행해 주세요.',
@@ -34,6 +34,8 @@ export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
   SETTLEMENT_REAPPLICATION_DEADLINE_UNAVAILABLE: '재제출 기한을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   SETTLEMENT_REAPPLICATION_NOT_AVAILABLE:
     '지금은 지급조서를 재신청할 수 없어요. 화면을 새로고침한 뒤 다시 확인해 주세요.',
+  SETTLEMENT_BUSINESS_PERIOD_CLOSED: '프로그램 운영이 종료되어 지급조서를 제출할 수 없어요',
+  SETTLEMENT_BUSINESS_INCOME_STATUS_REQUIRED: '회원정보에서 사업소득자 여부를 선택해 주세요.',
   SETTLEMENT_CORRECTION_NOT_FOUND: '정정 내역을 찾을 수 없어요.',
 }
 

@@ -6,6 +6,12 @@ import {
 } from './payment-statement-status.ts'
 import { resolveSettlementStatusUi } from './settlement-status-ui.ts'
 import { INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE } from './instructor-settlement-contract.ts'
+import { PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE } from './settlement-status-ui.ts'
+import {
+  correctionGradeOrBasisLabel,
+  correctionPricingModeLabel,
+  formatCorrectionWon,
+} from './payment-statement-correction.ts'
 
 // 정정 승인 후 최신 revision DRAFT + 재신청 가능 → 재신청 대기 화면
 assert.equal(
@@ -44,5 +50,30 @@ assert.equal(
 // 강사 지급조서 배지 (기획 1번)
 assert.equal(resolveSettlementStatusUi('waiting_confirm', 'payment_statement').markLabel, '확인 대기 중')
 assert.equal(resolveSettlementStatusUi('confirmed', 'payment_statement').markLabel, '지급조서 확인 완료')
+
+// 기획 확정(2026-11-11): 재신청 기한 지남 문구, 정정 상태 배지
+assert.equal(PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE, '지급조서 재신청 기한이 지났어요')
+assert.equal(resolveSettlementStatusUi('correction_requested', 'payment_statement').markLabel, '지급 정정 요청')
+assert.equal(resolveSettlementStatusUi('correction_completed', 'payment_statement').markLabel, '지급 정정 요청')
+
+// 정정 내역 팝업 라벨 (QA 정산 1694940: 1급 450,000원 → 2급 350,000원)
+assert.equal(correctionPricingModeLabel('PROGRAM_STANDARD'), '프로그램 기준')
+assert.equal(correctionPricingModeLabel('SPECIAL_LECTURE'), '특강 강사비')
+assert.equal(correctionPricingModeLabel('OTHER_LABOR'), '기타 인건비')
+assert.equal(
+  correctionGradeOrBasisLabel({ pricingMode: 'PROGRAM_STANDARD', wageItemType: 'TIER1', calculationUnit: 'CATALOG_TIER' }),
+  '1급',
+)
+assert.equal(
+  correctionGradeOrBasisLabel({ pricingMode: 'PROGRAM_STANDARD', wageItemType: 'TIER2', calculationUnit: 'CATALOG_TIER' }),
+  '2급',
+)
+assert.equal(correctionGradeOrBasisLabel({ pricingMode: 'SPECIAL_LECTURE', calculationUnit: 'PER_CLASS' }), '차시당')
+assert.equal(correctionGradeOrBasisLabel({ pricingMode: 'SPECIAL_LECTURE', calculationUnit: 'PER_HOUR' }), '차시당')
+assert.equal(correctionGradeOrBasisLabel({ pricingMode: 'OTHER_LABOR', calculationUnit: 'PER_SESSION' }), '출강 1회당')
+assert.equal(correctionGradeOrBasisLabel({ pricingMode: 'OTHER_LABOR', calculationUnit: 'PER_LECTURE' }), '출강 1회당')
+// "등급 카탈로그 기준"은 표시하지 않는다
+assert.equal(correctionGradeOrBasisLabel({ pricingMode: 'SPECIAL_LECTURE', calculationUnit: 'CATALOG_TIER' }), '-')
+assert.equal(formatCorrectionWon(350000), '350,000원')
 
 console.log('payment-statement-reapply.selfcheck: ok')

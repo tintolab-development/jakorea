@@ -55,6 +55,10 @@ export type TrainedTeachersRegistrationCommonCanonical = {
   educationStructure: ProgramRegistrationType
   sessionRound: ProgramRegistrationSessionRoundType
   teacherTrainingEnabled: boolean
+  /** ■ 교사 연수 진행 일정 한 줄(시간 포함). 저장 시 scheduleDetails 연수 행(scheduleDateLabel) */
+  teacherTrainingScheduleLine?: string
+  /** ■ 교사 연수 교육 형태 — 생성 후 `trained-teacher/detail` PATCH teacherTrainingEducationFormat */
+  teacherTrainingEducationFormat?: 'ONLINE' | 'OFFLINE' | 'HYBRID'
   educationJournalEnabled: boolean
   curriculumSessions: GeneralProgramCurriculumSessionRow[]
   scheduleDetails: GeneralProgramScheduleDetailRow[]

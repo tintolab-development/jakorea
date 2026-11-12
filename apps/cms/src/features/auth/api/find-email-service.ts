@@ -6,8 +6,12 @@ import type {
   EmailRecoveryLookupResponse,
 } from '@/shared/api/generated/members/schemas'
 
+/**
+ * 이메일 찾기 결과. 본인인증을 마친 본인 화면이라 이메일 전체를 보여 준다(정책 CMS-02).
+ * 원문은 호출 화면의 컴포넌트 상태에만 두고 Query 캐시·로그·스토리지에 남기지 않는다.
+ */
 export type FindEmailLookupResult =
-  | { kind: 'found'; maskedEmail: string }
+  | { kind: 'found'; email: string }
   | { kind: 'not_found' }
 
 export interface FindEmailLookupInput {
@@ -63,7 +67,11 @@ function parseFindEmailApiError(payload: unknown): FindEmailApiError {
   return new FindEmailApiError('UNKNOWN', '이메일 찾기에 실패했습니다.')
 }
 
-function resolveMaskedEmail(result: EmailRecoveryLookupResponse): string | undefined {
+/** 계정 원문 이메일(`accounts[].email`) 우선. 없으면 서버 `maskedEmail` 값을 그대로 쓴다. */
+export function resolveFoundEmail(result: EmailRecoveryLookupResponse): string | undefined {
+  const accountEmail = result.accounts?.find(account => account.email?.trim())?.email?.trim()
+  if (accountEmail) return accountEmail
+
   if (result.maskedEmail?.trim()) {
     return result.maskedEmail.trim()
   }
@@ -79,7 +87,7 @@ async function lookupFindEmailMock(input: FindEmailLookupInput): Promise<FindEma
     return { kind: 'not_found' }
   }
 
-  return { kind: 'found', maskedEmail: 'Ja****@gmail.com' }
+  return { kind: 'found', email: 'mock-user@example.com' }
 }
 
 async function lookupFindEmailRemote(input: FindEmailLookupInput): Promise<FindEmailLookupResult> {
@@ -94,13 +102,13 @@ async function lookupFindEmailRemote(input: FindEmailLookupInput): Promise<FindE
       body
     )
     const result = unwrapEmailRecoveryLookup(payload)
-    const maskedEmail = resolveMaskedEmail(result)
+    const email = resolveFoundEmail(result)
 
-    if (!result.matched || !maskedEmail) {
+    if (!result.matched || !email) {
       return { kind: 'not_found' }
     }
 
-    return { kind: 'found', maskedEmail }
+    return { kind: 'found', email }
   } catch (error) {
     if (error instanceof FindEmailApiError) {
       throw error

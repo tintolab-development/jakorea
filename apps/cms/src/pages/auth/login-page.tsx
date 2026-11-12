@@ -398,8 +398,7 @@ export function LoginPage() {
                         ))}
                       </Space>
                       <Text type="secondary" className="login-dev-quick__hint">
-                        실 API: Master → MFA 000000. Accounting Manager/Program Manager/Program
-                        Viewer는 BE QA seed 전까지 401일 수 있습니다.
+                        로컬 공통 비밀번호 admin1234! · MFA 000000은 인증 창에 자동 입력됩니다.
                       </Text>
                     </div>
                   ) : null}

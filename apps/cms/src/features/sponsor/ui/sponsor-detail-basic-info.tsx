@@ -30,6 +30,7 @@ import { FileDownloadRowIcon } from '@/shared/ui/icons/FileDownloadRowIcon'
 import { downloadSponsorLogos } from '@/features/sponsor/lib/download-sponsor-logos'
 import { toSponsorDateOnly } from '@/features/sponsor/lib/to-sponsor-date-only'
 import { sponsorLogoFallbackFileName } from '@/features/sponsor/lib/sponsor-logo-files'
+import { SponsorLogoPreview } from '@/features/sponsor/ui/logo-preview'
 import {
   mergeSponsorLogoFiles,
   SPONSOR_LOGO_ACCEPT,
@@ -88,6 +89,7 @@ function SponsorLogoViewList({ files }: { files: SponsorLogoFile[] }) {
         const displayName = file.fileName.trim() || sponsorLogoFallbackFileName(file.id)
         return (
           <li key={file.id} className="sponsor-detail-basic-info__logo-item">
+            <SponsorLogoPreview logoId={file.id} alt={displayName} />
             <button
               type="button"
               className="sponsor-detail-basic-info__logo-download-btn"

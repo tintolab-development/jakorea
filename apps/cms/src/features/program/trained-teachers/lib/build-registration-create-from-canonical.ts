@@ -23,6 +23,8 @@ import {
   type TrainedTeachersRegistrationCanonical,
 } from './registration-canonical-types'
 import { peekTrainedTeachersRegistrationRhf } from './registration-rhf-api'
+import { buildTeacherTrainingScheduleDetail } from './teacher-training-block'
+import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from './is-trained-teachers-primary-program'
 import {
   fillEmptyTrainedTeachersTitlesFromOverlay,
   isTrainedTeachersRegistrationCanonicalSnapshot,
@@ -101,9 +103,24 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
   const curriculumSessions = isSchedule
     ? []
     : common.curriculumSessions.map(row => withoutAssignment(row))
+  // 커리큘럼형 교사 연수 — scheduleDetails 에 연수 행 1개(name = 기본 연수 일정명).
+  // 생성 API는 teacherTrainingScheduleName 을 받지 않으므로 BE 기본값(「교육 연수」)과 같은 이름을 쓴다.
+  const teacherTrainingDetail =
+    !isSchedule && common.teacherTrainingEnabled
+      ? buildTeacherTrainingScheduleDetail({
+          scheduleName: TRAINED_TEACHER_TRAINING_SCHEDULE_NAME,
+          scheduleLine: common.teacherTrainingScheduleLine ?? '',
+        })
+      : undefined
   const scheduleDetails = isSchedule
     ? common.scheduleDetails.map(row => withoutAssignment(row))
-    : []
+    : teacherTrainingDetail
+      ? [teacherTrainingDetail]
+      : []
+  const teacherTrainingEducationFormat =
+    common.teacherTrainingEnabled && common.teacherTrainingEducationFormat
+      ? { teacherTrainingEducationFormat: common.teacherTrainingEducationFormat }
+      : {}
 
   const base: Program = {
     id: args.id,
@@ -163,6 +180,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
       curriculumSessions,
       scheduleDetails,
       teacherTrainingEnabled: common.teacherTrainingEnabled,
+      ...teacherTrainingEducationFormat,
       educationJournalEnabled: common.educationJournalEnabled,
       ...scheduleDetailFieldsFromEditor(editor, common.educationForm),
       participantRecruitmentInfo: {
@@ -208,6 +226,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
         lines: common.educationScheduleLines,
       }),
       teacherTrainingEnabled: editor.teacherTrainingEnabled,
+      ...teacherTrainingEducationFormat,
       educationJournalEnabled: common.educationJournalEnabled,
       ...scheduleDetailFieldsFromEditor(editor, common.educationForm),
       participantRecruitmentInfo: {

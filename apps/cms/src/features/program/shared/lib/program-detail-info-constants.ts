@@ -441,10 +441,14 @@ export function parseInstructorTargetsSelectValue(value: unknown): string[] | un
   return targets.length > 0 ? targets : undefined
 }
 
+/**
+ * 교육 대상 표시 라벨 — 등록 선택지(`EDUCATION_TARGET_OPTIONS`)·목록 필터·Platform 과 같은 「학생」 용어(QA-0332).
+ * 예전 저장 라벨(초등학교 등)은 `parseTargetLevelFromDisplayPart` 정규식이 그대로 읽는다.
+ */
 export const TARGET_LEVEL_LABEL: Record<string, string> = {
-  elementary: '초등학교',
-  middle: '중학교',
-  high: '고등학교',
+  elementary: '초등학생',
+  middle: '중학생',
+  high: '고등학생',
   university: '대학(원)생',
   adult: '성인',
 }

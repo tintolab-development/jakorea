@@ -3,11 +3,9 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
-import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import {
   educationOperationRangeSealKeyFromSchedulePrefix,
   isEducationScheduleSelectionDateDisabled,
@@ -25,15 +23,16 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 const EMPTY_SCHEDULE_LINES: string[] = []
 
 type TrainedTeachersRegistrationEducationScheduleSettingsParagraphProps = {
+  /** 신규 등록 위저드는 항상 `period` (편집기 상태에서 고정). 브리지 동기화에만 쓴다 */
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
-  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
+  /** 날짜/기간 선택 UI를 없앴으므로 호출하지 않는다(호출부 호환용) */
+  onEducationScheduleModeChange?: (value: ProgramRegistrationEducationScheduleMode) => void
   /** Overlay key prefix (default: 'trainedTeachersRegistration.educationScheduleSettings') */
   overlayKeyPrefix?: string
 }
 
 export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
   educationScheduleMode,
-  onEducationScheduleModeChange,
   overlayKeyPrefix = 'trainedTeachersRegistration.educationScheduleSettings',
 }: TrainedTeachersRegistrationEducationScheduleSettingsParagraphProps) {
   const [singleDateIso, setSingleDateIso] = useTrainedTeachersRegistrationField<string | null>(
@@ -61,7 +60,6 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
     )
   const scheduleLinesKey = `${overlayKeyPrefix}.scheduleLines`
 
-  const singleDate = singleDateIso ? dayjs(singleDateIso) : null
   const setSingleDate = (d: Dayjs | null) => setSingleDateIso(d ? d.toISOString() : null)
 
   const periodDate = periodDateIso ? dayjs(periodDateIso) : null
@@ -140,92 +138,54 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
       mode="edit"
       className="program-registration-paragraph"
     >
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="교육 진행 일정 유형"
-          edit={
-            <CmsRadioGroup
-              size="medium"
-              value={educationScheduleMode}
-              onChange={e => {
-                const next = e.target.value as ProgramRegistrationEducationScheduleMode
-                applyEducationScheduleModeLineSwap({
-                  overlayKeyPrefix,
-                  currentMode: educationScheduleMode,
-                  nextMode: next,
-                })
-                onEducationScheduleModeChange(next)
-              }}
-            >
-              <CmsRadio size="medium" value="date">
-                날짜 지정
-              </CmsRadio>
-              <CmsRadio size="medium" value="period">
-                기간 지정
-              </CmsRadio>
-            </CmsRadioGroup>
-          }
-          view="-"
-        />
+      {/*
+       * 신규 등록 — 기간 지정 한 줄만(시안 9899:221372, CMS-FUNC-0591·0277).
+       * 날짜 지정으로 저장된 기존 프로그램은 상세 공통 정보 수정 화면(common-info-view)에서 기존 방식으로 수정한다.
+       */}
+      <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
+          fullRow
           validationKey={[
             'educationScheduleSettings.singleDateIso',
             'educationScheduleSettings.periodDateIso',
           ]}
           edit={
-            educationScheduleMode === 'date' ? (
-              <ParagraphDatePicker
-                inputSize="small"
-                mode="single"
-                presetMode="schedule"
-                customizable={false}
-                showPeriodToggle={false}
-                showTimeToggle={false}
-                lockTimeToggleOn
-                lockPeriodToggleOn
-                suppressAutoTodayWhenEmpty
-                value={singleDate}
-                onChange={setSingleDate}
-                onRangeChange={handleScheduleRangeApply}
-                width={240}
-                placeholder="날짜를 선택해 주세요"
-                disabledDate={disableOutsideOperation}
-              />
-            ) : (
-              <ParagraphDatePicker
-                inputSize="small"
-                mode="single"
-                presetMode="period"
-                customizable={false}
-                showTimeToggle={false}
-                suppressAutoTodayWhenEmpty
-                value={periodDate}
-                onChange={setPeriodDate}
-                onRangeChange={handleScheduleRangeApply}
-                width={360}
-                placeholder="기간을 선택해 주세요"
-                disabledDate={disableOutsideOperation}
-              />
-            )
+            <ParagraphDatePicker
+              inputSize="small"
+              mode="single"
+              presetMode="period"
+              customizable={false}
+              showTimeToggle={false}
+              suppressAutoTodayWhenEmpty
+              value={periodDate}
+              onChange={setPeriodDate}
+              onRangeChange={handleScheduleRangeApply}
+              width={360}
+              placeholder="진행 기간을 선택해 주세요"
+              disabledDate={disableOutsideOperation}
+            />
           }
           view="-"
         />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="교육 진행 예정일"
-          fullRow
-          readOnlyDisplay
-          view={
-            <EducationSchedulePreviewLines
-              lines={scheduleLines}
-              onRemove={removeLine}
-              lockStartedLines={false}
-            />
-          }
-        />
-      </DetailInfoForm.Row>
+      {/* 선택한 기간 확인·삭제용 — 선택 전(시안 빈 상태)에는 행을 그리지 않는다 */}
+      {scheduleLines.length > 0 ? (
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="교육 진행 예정일"
+            fullRow
+            readOnlyDisplay
+            view={
+              <EducationSchedulePreviewLines
+                lines={scheduleLines}
+                onRemove={removeLine}
+                lockStartedLines={false}
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+      ) : null}
     </DetailInfoForm>
   )
 }

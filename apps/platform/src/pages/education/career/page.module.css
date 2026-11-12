@@ -74,13 +74,19 @@
 }
 
 .tabs {
+  /* QA-0465 — 긴 페이지에서도 하위 탭 바가 화면 위에 남아 어디서든 섹션 이동 */
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   width: 100%;
   min-width: 0;
+  padding-block: var(--spacing-8);
   overflow-x: auto;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  background-color: var(--color-neutral-white);
 }
 
 .tabs::-webkit-scrollbar {

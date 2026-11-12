@@ -12,7 +12,7 @@ type TrainedTeachersDevAutofillToolbarProps = {
   onAutofill: (caseId: TrainedTeachersRegistrationDevAutofillCaseId) => void | Promise<void>
 }
 
-/** 교육받은 교사 등록 — DEV 7개 기본 케이스 자동입력. */
+/** 교육받은 교사 등록 — DEV 자동입력(커리큘럼형·기간 지정 단일·복수 회차 2개 케이스). */
 export function TrainedTeachersDevAutofillToolbar({
   caseId,
   onCaseIdChange,

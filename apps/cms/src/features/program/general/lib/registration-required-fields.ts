@@ -9,7 +9,12 @@
  * 교육받은 교사는 `omitKpiAndWage` + `preEducationDisplayMode` 로 이 함수를 재사용한다.
  * UJAT 등록 위저드는 `ujat-program-registration-required-fields`를 사용한다.
  */
+import {
+  isWageFeeOutOfRange,
+  REGISTRATION_WAGE_GRADE_FEE_MAX,
+} from '@/features/program/shared/lib/wage-fee-input-rules'
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
+import { TEMPLATE_FORM_IPS_FIELD_LABELS } from '@/features/template/lib/template-form-select-options'
 import type {
   ProgramRegistrationEducationScheduleMode,
   ProgramRegistrationScheduleDetailKind,
@@ -277,21 +282,15 @@ function findIncompleteWageReasons(
 ): string[] {
   if (ctx.omitKpiAndWage) return []
   const reasons: string[] = []
-  pushReason(
-    reasons,
-    isEmptyNumber(readOverlay(overlay, 'generalRegistration.wageInfo.grade1Fee')),
-    'wage.grade1Fee'
-  )
-  pushReason(
-    reasons,
-    isEmptyNumber(readOverlay(overlay, 'generalRegistration.wageInfo.grade2Fee')),
-    'wage.grade2Fee'
-  )
-  pushReason(
-    reasons,
-    isEmptyNumber(readOverlay(overlay, 'generalRegistration.wageInfo.grade3Fee')),
-    'wage.grade3Fee'
-  )
+  for (const grade of [1, 2, 3] as const) {
+    const fee = readOverlay(overlay, `generalRegistration.wageInfo.grade${grade}Fee`)
+    // 비었거나 허용 범위(0~최대)를 넘으면 막는다 — 입력값을 한도로 바꾸지 않는다(QA-0383-ab40)
+    pushReason(
+      reasons,
+      isEmptyNumber(fee) || isWageFeeOutOfRange(fee, REGISTRATION_WAGE_GRADE_FEE_MAX[grade]),
+      `wage.grade${grade}Fee`
+    )
+  }
   const paymentItems = readOverlay(overlay, 'generalRegistration.wageInfo.paymentItemValues')
   pushReason(
     reasons,
@@ -615,9 +614,9 @@ const REQUIRED_FIELD_LABELS: Record<string, string> = {
   'basicInfo.educationVenueKind': '교육 장소',
   'basicInfo.educationVenueDetail': '교육 장소',
   'basicInfo.educationCourse': '교육 과정',
-  'basicInfo.ipOwned': 'IP Owned',
-  'basicInfo.courseDeliveredBy': 'Course Delivered By',
-  'basicInfo.partnerInvolvement': 'Partner Involvement',
+  'basicInfo.ipOwned': TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned,
+  'basicInfo.courseDeliveredBy': TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy,
+  'basicInfo.partnerInvolvement': TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement,
   'kpi.participantCount': '참여 인원',
   'kpi.instructor': '강사 수',
   'kpi.volunteer': '봉사자 수',

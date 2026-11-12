@@ -16,6 +16,7 @@ import type {
   ApiResponseNotificationEventChannelTemplateMutationResponse,
   ApiResponseNotificationTemplateMutationResponse,
   ApiResponseNotificationTestSendResponse,
+  ApiResponsePrivacyAccessRecordResponse,
   ApiResponseRetryFailedResponse,
   ApiResponseSyncResultResponse,
   ApiResponseTemplateDeleteResponse,
@@ -49,6 +50,7 @@ import type {
   NotificationTemplateVariableCatalogResponse,
   NotificationTestSendRequest,
   PageResponseRecipientCandidateResponse,
+  PrivacyAccessRecordRequest,
   RecipientCandidatesParams,
   SenderProfileListResponse,
   SyncSenderProfilesParams,
@@ -875,6 +877,60 @@ const cancel3 = (
  options?: SecondParameter<typeof customInstance<ApiResponseCancelResponse>>,) => {
       return customInstance<ApiResponseCancelResponse>(
       {url: `/api/admin/notification-send-batches/${batchId}/cancel`, method: 'POST'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - CMS 알림 발송 화면·결과 팝업 개인정보 조회 기록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-send-batches/privacy-access-records`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: ADMIN_PROGRAM_SCOPE 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 2026-11-12 policy CMS-21·22: record-only endpoint; send 화면/result popup re-display already audited raw contacts so FE posts on display; MEMBER·ADMIN subjects only (DIRECT not logged per CMS-25); batchId popup reads batch recipients server-side; audit failure 503 with no partial rows.
+ * @summary CMS 알림 발송 화면·결과 팝업 개인정보 조회 기록
+ */
+const recordPrivacyAccess = (
+    privacyAccessRecordRequest: PrivacyAccessRecordRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponsePrivacyAccessRecordResponse>>,) => {
+      return customInstance<ApiResponsePrivacyAccessRecordResponse>(
+      {url: `/api/admin/notification-send-batches/privacy-access-records`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: privacyAccessRecordRequest
     },
       options);
     }
@@ -1888,7 +1944,7 @@ const unbindEmailAttachment = (
       options);
     }
 
-return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list6,create9,retryFailed,cancel3,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
+return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list6,create9,retryFailed,cancel3,recordPrivacyAccess,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
 export type UpdateNotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationEventCatalog']>>>
 export type UpsertNotificationEventChannelTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['upsertNotificationEventChannelTemplate']>>>
 export type ListNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationTemplates']>>>
@@ -1904,6 +1960,7 @@ export type List6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create9']>>>
 export type RetryFailedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['retryFailed']>>>
 export type Cancel3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancel3']>>>
+export type RecordPrivacyAccessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['recordPrivacyAccess']>>>
 export type ConfirmNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['confirmNotificationDelivery']>>>
 export type CancelNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancelNotificationDelivery']>>>
 export type TestSendNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['testSendNotification']>>>

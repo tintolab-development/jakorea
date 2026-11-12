@@ -42,4 +42,6 @@ export interface CalcInfo {
   tollFeeWon?: number | null;
   /** 총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음. */
   calculatedTransportAmount?: number | null;
+  /** 1사1교 장거리 강사비 단가가 적용됐으면 true, 아니면 false. 제출 당시 스냅샷 기준이며 제출 전 lectureFeePreview.longDistance와 같다. 제미나이, 영수증 경로, 이 값을 저장하기 전에 제출된 스냅샷은 null. */
+  longDistance?: boolean | null;
 }

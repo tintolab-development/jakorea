@@ -1,10 +1,7 @@
 import { ContentModal, DeleteGuideModal } from '@/shared/ui'
 import { ProgramForm } from '@/features/program/general/ui/program-form'
 import { EnrollmentStatusDetailModal } from '@/features/program/general/ui/enrollment-status-detail-modal'
-import {
-  PROGRAM_DELETE_GUIDE_TITLE,
-  buildProgramSingleDeleteGuideLines,
-} from '@/features/program/shared/lib/program-delete-guide'
+import { resolveProgramDeleteGuideModalCopyWithNames } from '@/features/program/shared/lib/program-delete-guide'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import type { Program } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
@@ -28,6 +25,8 @@ interface ProgramListModalsProps {
 
   // Delete Modal
   deleteModalOpen: boolean
+  /** 삭제 안내에 보일 프로그램명 — 없으면 기존 문구 (QA-0296) */
+  deleteProgramName?: string
   onConfirmDelete: () => void
   onCancelDelete: () => void
 
@@ -44,11 +43,16 @@ export function ProgramListModals({
   onFormCancel,
   formLoading,
   deleteModalOpen,
+  deleteProgramName,
   onConfirmDelete,
   onCancelDelete,
   selectedProgramForModal,
   onCancelEnrollmentModal,
 }: ProgramListModalsProps) {
+  const deleteGuide = resolveProgramDeleteGuideModalCopyWithNames(
+    1,
+    deleteProgramName ? [deleteProgramName] : []
+  )
   return (
     <>
       <EnrollmentStatusDetailModal
@@ -74,8 +78,8 @@ export function ProgramListModals({
 
       <DeleteGuideModal
         open={deleteModalOpen}
-        title={PROGRAM_DELETE_GUIDE_TITLE}
-        lines={buildProgramSingleDeleteGuideLines()}
+        title={deleteGuide.title}
+        lines={deleteGuide.lines}
         confirmText="삭제"
         onConfirm={onConfirmDelete}
         onCancel={onCancelDelete}

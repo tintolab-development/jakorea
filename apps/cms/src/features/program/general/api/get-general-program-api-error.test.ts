@@ -3,6 +3,7 @@ import {
   getGeneralProgramApiErrorMessage,
   getParticipationConsentRequiredMessage,
   getProgramFormBindingErrorMessage,
+  isGeneralProgramApplicationFormBindingRequiredError,
 } from './get-general-program-api-error'
 
 /** 기관 승인·배정 공통 안내(organization-application-approve-slots)가 우선한다. */
@@ -52,6 +53,23 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
       '파일 첨부 문항이 있는 설문은 비로그인 공유 링크를 만들 수 없습니다. 파일 문항을 빼고 다시 공유해 주세요.'
     )
+  })
+
+  it('발행된 신청 양식 미연결은 발행·연결 위치를 안내한다(QA-0053)', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          message: '일반 프로그램에는 발행된 신청 양식 연결이 필요합니다',
+          error: { code: 'GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED' },
+        },
+      },
+    }
+    expect(isGeneralProgramApplicationFormBindingRequiredError(error)).toBe(true)
+    const message = getGeneralProgramApiErrorMessage(error, 'fallback')
+    expect(message).toContain('「신청 정보」 단계')
+    expect(message).toContain('[템플릿 관리 > 신청 양식]')
   })
 
   it('sponsor 관련 400을 한글 안내로 변환한다', () => {

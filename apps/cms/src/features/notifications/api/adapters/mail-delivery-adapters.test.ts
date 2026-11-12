@@ -201,6 +201,54 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     expect(ok?.failedReason).toBeUndefined()
   })
 
+  it('QA-0176 발송 성공·수신 실패면 응답에 있는 수신 실패 사유를 따로 둔다', () => {
+    const fromProvider = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 12,
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERY_FAILED',
+      providerResultMessage: 'Mailbox not found',
+    })
+    expect(fromProvider?.sendStatus).toBe('발송 성공')
+    expect(fromProvider?.receiveStatus).toBe('수신 실패')
+    expect(fromProvider?.failedReason).toBeUndefined()
+    expect(fromProvider?.receiveFailedReason).toBe('Mailbox not found')
+
+    const fromFailedReason = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 13,
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERY_FAILED',
+      failedReason: 'Bounced',
+      providerResultMessage: 'ignored when failedReason exists',
+    })
+    expect(fromFailedReason?.receiveFailedReason).toBe('Bounced')
+  })
+
+  it('QA-0176 수신 실패라도 응답에 사유가 없으면 문구를 만들지 않는다', () => {
+    const row = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 14,
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERY_FAILED',
+    })
+    expect(row?.receiveFailedReason).toBeUndefined()
+
+    const delivered = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 15,
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERED',
+      providerResultMessage: 'OK',
+    })
+    expect(delivered?.receiveFailedReason).toBeUndefined()
+
+    const sendFailed = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 16,
+      sendStatus: 'SEND_FAILED',
+      receiptStatus: 'SEND_FAILED',
+      failedReason: 'SMTP timeout',
+    })
+    expect(sendFailed?.failedReason).toBe('SMTP timeout')
+    expect(sendFailed?.receiveFailedReason).toBeUndefined()
+  })
+
   it('uses sentAt/deliveredAt only for send/receive timestamps', () => {
     const row = mapMailDeliveryToSendHistoryRow({
       deliveryId: 9,

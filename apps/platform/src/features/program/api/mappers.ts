@@ -1235,12 +1235,11 @@ function buildPortalBasicInfoFields(args: {
 }): ProgramBasicInfoField[] {
   switch (args.detailCase) {
     case 'instructor':
+      // QA-0198: 봉사자 모집과 같이 모집 대상 아래에 CMS「모집 대상 상세」를 보인다
       return compactBasicInfoFields([
         { label: '사업 분야', value: args.businessFieldLabel },
-        {
-          label: '모집 대상',
-          value: args.recruitmentTargetGroupLabel || args.recruitmentTargetDetailLabel,
-        },
+        { label: '모집 대상', value: args.recruitmentTargetGroupLabel },
+        { label: '모집 대상 상세', value: args.recruitmentTargetDetailLabel },
         ...educationTargetBasicInfoFields(args),
         { label: '모집 지역', value: args.educationVenueLabel },
       ])
@@ -1400,9 +1399,14 @@ export function mapPortalProgramDetail(
       ? remote.educationPlaceScheduleDetail
       : null
   const perScheduleEducationPlace = educationPlaceMode === 'perSchedule'
+  // QA-0516: 프로그램 교육 형태가 온라인이면 오프라인 주소를 숨기고 온라인 안내(교육 형태 라벨)만 보인다.
+  // 온/오프라인(hybrid)·참여자 선택은 오프라인 장소가 있을 수 있어 기존대로 주소를 보인다.
+  const onlineOnlyVenue = !perScheduleEducationForm && educationForm === 'online'
   const educationVenueLabel = perScheduleEducationPlace
     ? ''
-    : optionalText(remote.educationPlaceAddress) ||
+    : onlineOnlyVenue
+      ? educationFormLabel
+      : optionalText(remote.educationPlaceAddress) ||
       formatPortalEducationVenue(remote.venue, remote.venueKind) ||
       venueFromSchedules(remote.schedules) ||
       (perScheduleEducationForm ? '' : educationFormLabel)

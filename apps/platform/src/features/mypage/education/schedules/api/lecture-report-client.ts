@@ -47,6 +47,8 @@ export type LectureReportAssignment = {
   lectureStatus: LectureReportLectureStatus | string
   reportStatus: LectureReportStatus | string | null
   submitDueAt: string | null
+  /** 지급조서 제출 마감 = 강의일(KST) 기준 다음 달 5일 23:59:59(KST). 강의보고서 마감(submitDueAt)과 다르다. 제미나이 null */
+  settlementSubmitDeadlineAt?: string | null
   canSubmit: boolean
   reportId: number | null
   instructorRole?: LectureReportInstructorRole | string | null

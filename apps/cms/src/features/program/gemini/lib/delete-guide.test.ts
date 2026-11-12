@@ -75,7 +75,7 @@ describe('gemini delete-guide', () => {
     ).toBe(false)
   })
 
-  it('임시저장 공고는 신청 카운트가 있어도 삭제할 수 있다', () => {
+  it('미게시(DRAFT) 공고는 신청 카운트가 있어도 삭제할 수 있다', () => {
     expect(
       geminiRecruitmentDeleteBlocked({
         isDraft: true,

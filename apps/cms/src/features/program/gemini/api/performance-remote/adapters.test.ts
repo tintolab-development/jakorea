@@ -107,6 +107,24 @@ describe('gemini performance adapters', () => {
     expect(row.accountPaymentId).toBeUndefined()
   })
 
+  it('maps deleteBlocked from the server as is, without accountPaymentId', () => {
+    const confirmed = mapGeminiTrainingReportItemToRow(
+      { trainingReportId: 1, settlementId: 10, statementStatus: 'CONFIRMED', deleteBlocked: true },
+      0
+    )
+    expect(confirmed.deleteBlocked).toBe(true)
+    expect(confirmed.accountPaymentId).toBeUndefined()
+
+    const waiting = mapGeminiTrainingReportItemToRow(
+      { trainingReportId: 2, settlementId: 11, statementStatus: 'WAITING_CONFIRM', deleteBlocked: false },
+      1
+    )
+    expect(waiting.deleteBlocked).toBe(false)
+
+    const missing = mapGeminiTrainingReportItemToRow({ trainingReportId: 3 }, 2)
+    expect(missing.deleteBlocked).toBe(false)
+  })
+
   it('maps upload+display to import row', () => {
     const display: GeminiPerformanceRow = {
       id: 'tmp',

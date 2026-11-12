@@ -1,3 +1,4 @@
+import { isApplicationFormThirdPartyConsentParagraph } from '@/features/template/model/application-form-third-party-recipient'
 import {
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   normalizeHorizontalTableParagraph,
@@ -497,6 +498,17 @@ export function renderFormParagraphBody(
         paragraphInteractionMode === 'authoring' &&
         !isPreviewReadonly &&
         isParagraphSelected
+      /**
+       * 신청 양식 제3자 동의 「제공받는 곳」 — 단락 카드를 먼저 고르지 않아도 한 번 클릭으로 바로 입력(QA-0300).
+       * 하단 안내 수정은 기존처럼 단락 선택 후에만 연다(`structureLockedPartialTextEdit`).
+       */
+      const thirdPartyRecipientDirectEdit =
+        structureLocked &&
+        isStructureLockedPartialTextParagraph(hp.id) &&
+        isApplicationFormThirdPartyConsentParagraph(hp.id) &&
+        paragraphInteractionMode === 'authoring' &&
+        !isPreviewReadonly
+      const partialBodyCellEdit = structureLockedPartialTextEdit || thirdPartyRecipientDirectEdit
       const isTextTableAuthoringEdit =
         hp.tableFlavor === 'text' &&
         paragraphInteractionMode === 'authoring' &&
@@ -504,7 +516,7 @@ export function renderFormParagraphBody(
         !structureLocked
       const isEditMode =
         isTextTableAuthoringEdit ||
-        structureLockedPartialTextEdit ||
+        partialBodyCellEdit ||
         lockedAuthoringOperationalFill ||
         (!isPreviewReadonly &&
           (!structureLocked ||
@@ -518,7 +530,7 @@ export function renderFormParagraphBody(
         !structureLocked &&
         paragraphInteractionMode === 'authoring' &&
         (hp.tableFlavor === 'field' || hp.tableFlavor === 'text' || isParagraphSelected)
-      const lockedBodyColumnIndexes = structureLockedPartialTextEdit
+      const lockedBodyColumnIndexes = partialBodyCellEdit
         ? getStructureLockedPartialLockedBodyColumnIndexes(hp.id, hp.columnHeaders.length)
         : undefined
       const lockColumnHeaders =

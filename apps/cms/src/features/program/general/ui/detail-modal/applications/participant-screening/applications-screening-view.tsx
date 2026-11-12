@@ -7,6 +7,8 @@ import { GeneralParticipantApplicationsView } from '../participant-applications-
 import { GeneralVolunteerDocPassedSection } from '../volunteer-screening/doc-passed-section'
 import { GeneralVolunteerInterview2Section } from '../volunteer-screening/interview2-section'
 import type { GeneralVolunteerApplicantDetailMeta } from '../volunteer-screening/use-detail'
+import { NotifyAnnouncementProvider } from '@/shared/components/notify-announcement-context'
+import { resolveRecruitmentFinalAnnouncementAt } from '@/features/program/shared/lib/recruitment-final-announcement'
 import '../participant-applications.css'
 
 export type GeneralParticipantApplicationsScreenTab =
@@ -65,6 +67,12 @@ export function GeneralParticipantApplicationsScreeningView({
     [onApplicantDetailMetaChange]
   )
 
+  /** 서류 합격·2차 면접 화면 알림 「발표일에 맞춰서」 — 개인 참여자 모집 최종 발표일 */
+  const notifyAnnouncementAt = useMemo(
+    () => resolveRecruitmentFinalAnnouncementAt(program, 'individual'),
+    [program]
+  )
+
   const doc1ListTitle = useMemo(
     () => listTitle || '1차 서류 심사 대상자',
     [listTitle]
@@ -83,6 +91,7 @@ export function GeneralParticipantApplicationsScreeningView({
 
   if (screenTab === 'part_doc_passed') {
     return (
+      <NotifyAnnouncementProvider announcementAt={notifyAnnouncementAt}>
       <div className="participant-applications">
         <GeneralVolunteerDocPassedSection
           program={program}
@@ -91,11 +100,13 @@ export function GeneralParticipantApplicationsScreeningView({
           onVolunteerApplicantDetailMetaChange={handleVolunteerMetaForParticipant}
         />
       </div>
+      </NotifyAnnouncementProvider>
     )
   }
 
   if (screenTab === 'part_interview2') {
     return (
+      <NotifyAnnouncementProvider announcementAt={notifyAnnouncementAt}>
       <div className="participant-applications">
         <GeneralVolunteerInterview2Section
           program={program}
@@ -105,6 +116,7 @@ export function GeneralParticipantApplicationsScreeningView({
           onVolunteerApplicantDetailMetaChange={handleVolunteerMetaForParticipant}
         />
       </div>
+      </NotifyAnnouncementProvider>
     )
   }
 

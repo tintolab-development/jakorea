@@ -15,20 +15,28 @@ export const SettlementCorrectionCalculationUnit = {
 export type SettlementCorrectionCalculationUnit =
   (typeof SettlementCorrectionCalculationUnit)[keyof typeof SettlementCorrectionCalculationUnit]
 
+/**
+ * 선택지 — 기획(CMS-FUNC-0076·0473·0474): 모든 유형 「차시당 / 출강 1회당」.
+ * 새로 고를 때는 PER_CLASS(차시당)·PER_LECTURE(출강 1회당)만 보낸다.
+ */
 export const SETTLEMENT_CORRECTION_CALCULATION_UNIT_OPTIONS: {
   value: SettlementCorrectionCalculationUnit
   label: string
 }[] = [
+  { value: SettlementCorrectionCalculationUnit.PER_CLASS, label: '차시당' },
   { value: SettlementCorrectionCalculationUnit.PER_LECTURE, label: '출강 1회당' },
-  { value: SettlementCorrectionCalculationUnit.PER_HOUR, label: '차시당(레거시)' },
-  { value: SettlementCorrectionCalculationUnit.PER_CLASS, label: '1차시당' },
 ]
 
+/**
+ * 저장된 단위 → 표시 라벨.
+ * 레거시 PER_HOUR(옛 「1시간 기준」)는 OpenAPI상 차시당 단가(시간 비례 아님)라 PER_CLASS와 같은 「차시당」.
+ */
 export function settlementCorrectionCalculationUnitLabel(
   unit: string | null | undefined
 ): string | null {
   if (unit == null) return null
   const trimmed = unit.trim().toUpperCase()
+  if (trimmed === SettlementCorrectionCalculationUnit.PER_HOUR) return '차시당'
   const found = SETTLEMENT_CORRECTION_CALCULATION_UNIT_OPTIONS.find(o => o.value === trimmed)
   return found?.label ?? null
 }

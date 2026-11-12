@@ -13,10 +13,8 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
-import {
-  resolveParticipatingInstitutionPreferredDisplaySessions,
-  resolveParticipatingProgressAssignedSessions,
-} from '@/features/program/general/lib/organization-education-schedule-sources'
+import { resolveCompanySchoolProgressDisplaySessions } from '@/features/program/1c-1s/lib/progress-schedule-display'
+import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { formatParticipatingSessionClassNumWithTime } from '@/features/program/general/lib/participating-school-session-display'
 import {
   formatInstitutionRegionForCalendarListDisplay,
@@ -304,7 +302,8 @@ function buildEventsFromSchools(
 
     const sessionsByDate = new Map<string, ParticipatingSchoolSession[]>()
 
-    for (const session of resolveParticipatingInstitutionPreferredDisplaySessions(row)) {
+    // 1사1교 — 목록과 같은 기준(확정 일정 우선, 없으면 희망 일정)
+    for (const session of resolveCompanySchoolProgressDisplaySessions(row)) {
       const date = parseSessionDate(session.date)
       if (!date.isValid()) continue
       const dateKey = date.format('YYYY-MM-DD')

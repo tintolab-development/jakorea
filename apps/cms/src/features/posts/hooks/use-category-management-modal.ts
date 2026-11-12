@@ -26,6 +26,7 @@ import {
   CATEGORY_NAME_REQUIRED_MESSAGE,
   hasCategoryManagementDraftChanges,
   validateCategoryName,
+  categoryNameFieldError,
 } from '@/features/posts/model/category-management-draft'
 
 export type UseCategoryManagementModalParams = {
@@ -44,8 +45,12 @@ export type UseCategoryManagementModalResult = {
   editingId: string | null
   editDraft: string
   setEditDraft: (v: string) => void
+  /** 수정 입력칸 에러 (등록 시 검증 실패) */
+  editNameError: string | null
   newDraft: string
   setNewDraft: (v: string) => void
+  /** 새 항목 입력칸 에러 (등록 시 검증 실패) */
+  newNameError: string | null
   composeOpen: boolean
   deleteBlockedOpen: boolean
   duplicateAlertOpen: boolean
@@ -82,8 +87,11 @@ export function useCategoryManagementModal({
   remoteActions,
 }: UseCategoryManagementModalParams): UseCategoryManagementModalResult {
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editDraft, setEditDraft] = useState('')
-  const [newDraft, setNewDraft] = useState('')
+  const [editDraft, setEditDraftState] = useState('')
+  const [newDraft, setNewDraftState] = useState('')
+  /** QA-0272 — 등록 시 이름 검증 실패를 입력칸 에러로도 표시 (입력하면 해제) */
+  const [editNameError, setEditNameError] = useState<string | null>(null)
+  const [newNameError, setNewNameError] = useState<string | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
@@ -98,6 +106,16 @@ export function useCategoryManagementModal({
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
 
+  const setEditDraft = useCallback((value: string) => {
+    setEditDraftState(value)
+    setEditNameError(null)
+  }, [])
+
+  const setNewDraft = useCallback((value: string) => {
+    setNewDraftState(value)
+    setNewNameError(null)
+  }, [])
+
   const resetEphemeralUi = useCallback(() => {
     setEditingId(null)
     setEditDraft('')
@@ -108,7 +126,7 @@ export function useCategoryManagementModal({
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
     setSaveErrorMessage(null)
-  }, [])
+  }, [setEditDraft, setNewDraft])
 
   useEffect(() => {
     if (open && !wasOpenRef.current) {
@@ -133,17 +151,18 @@ export function useCategoryManagementModal({
     setEditingId(row.id)
     setEditDraft(row.name)
     queueMicrotask(() => editInputRef.current?.focus())
-  }, [])
+  }, [setEditDraft, setNewDraft])
 
   const cancelEdit = useCallback(() => {
     setEditingId(null)
     setEditDraft('')
-  }, [])
+  }, [setEditDraft])
 
   const submitEdit = useCallback(() => {
     if (editingId == null) return
     const trimmed = editDraft.trim()
     const validation = validateCategoryName(trimmed)
+    setEditNameError(categoryNameFieldError(trimmed))
     if (validation === 'empty') {
       setSaveErrorMessage(CATEGORY_NAME_REQUIRED_MESSAGE)
       return
@@ -200,11 +219,12 @@ export function useCategoryManagementModal({
   const cancelNew = useCallback(() => {
     setNewDraft('')
     setComposeOpen(false)
-  }, [])
+  }, [setNewDraft])
 
   const submitNew = useCallback(() => {
     const trimmed = newDraft.trim()
     const validation = validateCategoryName(trimmed)
+    setNewNameError(categoryNameFieldError(trimmed))
     if (validation === 'empty') {
       setSaveErrorMessage(CATEGORY_NAME_REQUIRED_MESSAGE)
       return
@@ -221,7 +241,7 @@ export function useCategoryManagementModal({
     setDraftCategories(rows => [...rows, { id, name: trimmed }])
     setNewDraft('')
     setComposeOpen(false)
-  }, [draftCategories, newDraft])
+  }, [draftCategories, newDraft, setNewDraft])
 
   const openCompose = useCallback(() => {
     cancelEdit()
@@ -311,8 +331,10 @@ export function useCategoryManagementModal({
     editingId,
     editDraft,
     setEditDraft,
+    editNameError,
     newDraft,
     setNewDraft,
+    newNameError,
     composeOpen,
     deleteBlockedOpen,
     duplicateAlertOpen,

@@ -267,9 +267,11 @@ describe('economy recruitment — 라디오 화면 기본값(강사 탭 일반 �
     }
   }
 
-  it('강사 탭 공고 게시 라디오 미조작(화면 기본 게시)이면 미입력으로 막지 않는다', () => {
+  it('강사 탭 공고 게시 라디오 미조작(화면 미선택, QA-0121)이면 미입력으로 막는다', () => {
     replaceGeneralRecruitOverlayForScope('recruitment-instructor', filledInstructorWithoutPublished())
-    expect(listIncompleteEconomyProgramRecruitmentRequiredFields(INSTRUCTOR_ONLY)).toEqual([])
+    expect(listIncompleteEconomyProgramRecruitmentRequiredFields(INSTRUCTOR_ONLY)).toEqual([
+      'recruit.instructor.announcementPublished',
+    ])
   })
 
   it('기관 탭 공고 게시 빈 값(1사1교 RHF 기본 \'\' — 화면 미선택)은 그대로 필수다', () => {

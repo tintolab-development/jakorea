@@ -70,4 +70,10 @@ describe('buildBulkTransferSheetRows', () => {
     expect(line?.expectedDepositor).toBe('강**')
     expect(line?.mobile).toBe('010-****-5678')
   })
+
+  it('F(CMS-07): 미리보기 휴대폰은 서버 maskedRecipientPhone을 쓰고, 다운로드 값에는 쓰지 않는다', () => {
+    const fromServer = row('awaiting_confirmation', { maskedRecipientPhone: '010-****-1234' })
+    expect(buildBulkTransferPreviewSheetRows([fromServer])[0]?.mobile).toBe('010-****-1234')
+    expect(buildBulkTransferSheetRows([fromServer])[0]?.mobile).toBe('')
+  })
 })

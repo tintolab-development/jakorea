@@ -130,3 +130,33 @@ describe('프로그램 진행 현황 하위 capability', () => {
     expect(normalizeTrainedTeachersInstitutionDetailTab('journal')).toBe('journal')
   })
 })
+
+describe('1사1교 참여 기관 상세 탭', () => {
+  const companySchool: Pick<
+    Program,
+    'id' | 'backendProgramType' | 'studentListRequired' | 'generalParticipantTypes'
+  > = {
+    id: '186473',
+    backendProgramType: 'COMPANY_SCHOOL',
+    studentListRequired: 'required',
+    generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+  }
+
+  it('모집 설정과 무관하게 학생 명단·출석 관리 탭을 만들지 않는다', () => {
+    expect(getGeneralParticipatingInstitutionDetailTabKeys(companySchool, true)).toEqual([
+      'application',
+      'instructors',
+      'posts',
+    ])
+  })
+
+  it('학생 명단·출석 관리 URL 탭은 신청 정보로 되돌린다', () => {
+    expect(normalizeGeneralParticipatingInstitutionDetailTab('students', companySchool)).toBe('application')
+    expect(normalizeGeneralParticipatingInstitutionDetailTab('attendance', companySchool)).toBe('application')
+  })
+
+  it('일반 기관형은 기존대로 제출 필요면 노출', () => {
+    const general = { ...companySchool, backendProgramType: 'GENERAL_ORGANIZATION', id: '1' }
+    expect(getGeneralParticipatingInstitutionDetailTabKeys(general, true)).toContain('attendance')
+  })
+})

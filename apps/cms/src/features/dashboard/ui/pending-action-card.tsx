@@ -5,8 +5,8 @@
 
 import { Card, Statistic } from 'antd'
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import { LoadingButton } from '@/shared/ui'
+import { Link } from 'react-router-dom'
+import './card-link.css'
 
 export interface PendingActionCardProps {
   title: string
@@ -25,42 +25,26 @@ export function PendingActionCard({
   to,
   loading = false,
 }: PendingActionCardProps) {
-  const navigate = useNavigate()
-
-  const handleClick = () => {
-    navigate(to)
-  }
-
   return (
-    <Card
-      hoverable
-      onClick={handleClick}
-      style={{ cursor: 'pointer', height: '100%' }}
-      loading={loading}
-    >
-      <Statistic
-        title={title}
-        value={value}
-        prefix={prefix}
-        suffix={suffix}
-        valueStyle={{
-          color: value > 0 ? '#faad14' : '#000000',
-          fontWeight: 'bold',
-        }}
-      />
-      {value > 0 && (
-        <LoadingButton
-          type="link"
-          icon={<ArrowRightOutlined />}
-          onClick={(e) => {
-            e.stopPropagation()
-            handleClick()
+    <Link to={to} className="dashboard-card-link">
+      <Card hoverable style={{ height: '100%' }} loading={loading}>
+        <Statistic
+          title={title}
+          value={value}
+          prefix={prefix}
+          suffix={suffix}
+          valueStyle={{
+            color: value > 0 ? '#faad14' : '#000000',
+            fontWeight: 'bold',
           }}
-          style={{ padding: 0, marginTop: 8 }}
-        >
-          처리하기
-        </LoadingButton>
-      )}
-    </Card>
+        />
+        {value > 0 && (
+          <span className="dashboard-card-link__action">
+            <ArrowRightOutlined aria-hidden />
+            처리하기
+          </span>
+        )}
+      </Card>
+    </Link>
   )
 }

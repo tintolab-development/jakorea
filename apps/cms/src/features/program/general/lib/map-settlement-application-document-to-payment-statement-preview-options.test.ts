@@ -72,10 +72,10 @@ describe('buildPaymentStatementPreviewOptionsFromApplicationDocument', () => {
     expect(options.paymentStatementBasicInfoValues?.noAffiliation).toBe(false)
   })
 
-  it('PER_HOUR=1시간당, 인정 차시=recognizedSessionCount (educationSessionCount 미사용)', () => {
+  it('PER_HOUR=차시당(기획 B4), 인정 차시=recognizedSessionCount (educationSessionCount 미사용)', () => {
     expect(options.lectureFeeCalculationValues).toMatchObject({
       lectureFeeType: '1급 강사비',
-      feeBasisLeft: '1시간당',
+      feeBasisLeft: '차시당',
       feeBasisRight: '450,000원',
       businessIncomeLeft: '해당',
       sessionCount: '1',
@@ -146,7 +146,7 @@ describe('applyApplicationDocumentToProgramCalculationStatement', () => {
     if (statement.context !== 'program') throw new Error('program context expected')
     expect(statement.basic).toMatchObject({
       programName: '일반 프로그램',
-      lectureFeeStandardTitle: '1급 강사비 · 1시간당',
+      lectureFeeStandardTitle: '1급 강사비 · 차시당',
       lectureFeeStandardAmount: '450,000원',
       businessIncomeEarnerLabel: '해당',
     })

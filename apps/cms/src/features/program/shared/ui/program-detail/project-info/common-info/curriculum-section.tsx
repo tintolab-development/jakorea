@@ -378,7 +378,8 @@ export function EducationScheduleSettingsSection({
     >
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="교육 진행 일정 선택"
+          // 1사1교 조회 시안(4175:99060) 「교육 진행 예정일」, 수정은 등록 단락과 같은 「교육 진행 일정 선택」
+          label={isFormEdit ? '교육 진행 일정 선택' : '교육 진행 예정일'}
           fullRow
           view={<EducationSchedulePreviewLines lines={lines} />}
           edit={

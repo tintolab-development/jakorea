@@ -86,6 +86,23 @@ describe('alimtalk-delivery-adapters (4-2)', () => {
     expect(formatDeliveryDateTimeSeoul(row?.receivedAt)).toBe('-')
   })
 
+  it('발송 실패 행의 message는 발송사 원문보다 정리된 실패 사유를 먼저 쓴다', () => {
+    const failed = mapDeliveryToSendHistoryRow({
+      deliveryId: 203,
+      sendStatus: 'SEND_FAILED',
+      failedReason: 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:사용자 아이디(이메일)',
+      providerResultMessage: 'provider raw failure',
+    })
+    expect(failed?.message).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 사용자 아이디(이메일)')
+
+    const sent = mapDeliveryToSendHistoryRow({
+      deliveryId: 204,
+      sendStatus: 'SENT',
+      providerResultMessage: 'provider ok',
+    })
+    expect(sent?.message).toBe('provider ok')
+  })
+
   it('UNKNOWN/미지 코드는 REQUESTED로 떨어지지 않는다', () => {
     expect(mapDeliveryToSendHistoryRow({ deliveryId: 1, sendStatus: 'FAILED' })?.sendStatus).toBe(
       '발송 실패'

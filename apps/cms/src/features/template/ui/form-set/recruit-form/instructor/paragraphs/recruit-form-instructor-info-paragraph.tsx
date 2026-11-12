@@ -9,6 +9,7 @@ import {
   RECRUIT_INSTRUCTOR_TARGETS_DEFAULT,
 } from '@/features/program/general/lib/recruit-radio-defaults'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { createFinalAnnounceDisabledDate } from '@/features/template/ui/form-set/recruit-form/shared/recruit-final-announce-date'
 import { useInstructorRecruitField } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -64,7 +65,7 @@ function InquiryContactColumn({
 /** 프로그램 강사 모집 폼 — 강사 모집 정보 */
 export function RecruitFormInstructorInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
-    useInstructorRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
+    useInstructorRecruitField<ParticipantRecruitmentAnnouncementPublishedValue | ''>(
       'recruit.instructor.announcementPublished',
       RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
@@ -289,6 +290,7 @@ export function RecruitFormInstructorInfoParagraph() {
                   mode="single"
                   presetMode="date"
                   value={finalAnnounceDate}
+                  disabledDate={createFinalAnnounceDisabledDate(recruitRange)}
                   placeholder={isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'}
                   suppressAutoTodayWhenEmpty
                   onChange={next => setFinalAnnounceDate(next)}

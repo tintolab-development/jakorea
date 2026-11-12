@@ -31,6 +31,8 @@ import type {
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import type { FinalPassAssignment } from '@/shared/api/generated/dashboard/schemas/finalPassAssignment'
+import { readVolunteerFinalPassAssignmentErrorAlert } from '@/features/program/general/lib/volunteer-final-pass-assignment'
 import {
   formatApplicationEligibilityConflictMessage,
   readVolunteer1365ApprovalBlockedAlert,
@@ -165,6 +167,13 @@ export function useGeneralVolunteerApplicationsRemote({
       queryClient.invalidateQueries({
         queryKey: generalProgramProgressQueryKeys.institutions(programId),
       }),
+      // 면접 합격 시 기관 배정(BE A1) — 봉사자 기관별 배정·배정 후보(배정 인원) 다시 받기
+      queryClient.invalidateQueries({
+        queryKey: [...generalProgramProgressQueryKeys.all, 'volunteer-assignments', programId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.volunteerAssignmentCandidates(programId),
+      }),
     ])
   }, [programId, queryClient, subjectKind])
 
@@ -289,14 +298,19 @@ export function useGeneralVolunteerApplicationsRemote({
         'pass' | 'fail' | 'reserve1' | 'reserve2' | 'reserve3' | 'reserve4'
       >,
       reason?: string,
-      notify?: { notifyTiming?: string; scheduledAt?: string }
+      notify?: { notifyTiming?: string; scheduledAt?: string },
+      /** 기관형 봉사자 단건 합격 시 기관 배정(BE A1) — 봉사자 단건 PASS에만 실린다 */
+      assignments?: FinalPassAssignment[]
     ) => {
       if (!remoteEnabled) return false
+      const sendsAssignments =
+        subjectKind === 'volunteer' && ids.length === 1 && Boolean(assignments?.length)
       try {
         const payload = mapSecondInterviewStatusToFinalResultPayload(
           status,
           reason,
-          toScreeningResultNotifyFields(notify)
+          toScreeningResultNotifyFields(notify),
+          sendsAssignments ? assignments : undefined
         )
         if (subjectKind === 'participant') {
           for (const id of ids) {
@@ -319,7 +333,13 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       } catch (error) {
         await invalidateApplications()
-        notifyRemoteFailure(error)
+        // 합격+배정은 한 트랜잭션 — 배정 오류면 합격도 롤백된다는 안내(서버 message 그대로)
+        const assignmentAlert =
+          sendsAssignments && !shouldSkipLocalApiErrorAlert(error)
+            ? readVolunteerFinalPassAssignmentErrorAlert(error)
+            : null
+        if (assignmentAlert) showAlert(assignmentAlert)
+        else notifyRemoteFailure(error)
         return false
       }
     },

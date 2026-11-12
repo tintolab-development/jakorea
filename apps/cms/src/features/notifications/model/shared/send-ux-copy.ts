@@ -17,3 +17,10 @@ export const NOTIFICATION_DIRECT_MEMBER_VARIABLE_HINT =
 /** 발송 이력/상세 — 실패는 배치 스냅샷 */
 export const NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT =
   '이 오류는 발송 당시 기준입니다. 데이터·템플릿 변경 후 재발송으로 확인하세요.'
+
+/**
+ * 발송 확인창 — 실제 발송 대상(변수 누락·중복 제외 후) 수신자 수 (QA-0114).
+ */
+export function formatNotificationSendRecipientCount(count: number): string {
+  return `발송 대상 수신자: 총 ${count}명`
+}

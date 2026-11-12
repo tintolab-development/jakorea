@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ClientGeneratedDownloadLogRequestFilterConditions } from './clientGeneratedDownloadLogRequestFilterConditions';
 
 export interface ClientGeneratedDownloadLogRequest {
   /**
@@ -30,9 +31,13 @@ export interface ClientGeneratedDownloadLogRequest {
   downloadKind?: string;
   /**
      * @minItems 0
-     * @maxItems 3
+     * @maxItems 9
      * @items.minLength 1
-     * @items.pattern ^(NAME|RESIDENT_REGISTRATION_NUMBER|ACCOUNT_NUMBER)$
+     * @items.pattern ^(NAME|RESIDENT_REGISTRATION_NUMBER|ACCOUNT_NUMBER|BIRTH_DATE|GENDER|PHONE|EMAIL|HOME_ADDRESS|EXTERNAL_1365_ID)$
      */
   containedPiiTypes?: string[];
+  /** 파일에 들어간 대상(행) 수(QA-0146). 모르면 생략. */
+  targetCount?: number | null;
+  /** 내려받을 때 화면의 조회 조건 {키: 값}(QA-0146). 최대 30개, 값은 500자. 서버가 이메일·전화번호·토큰과 자유 입력 검색어(keyword, name, email, phone 등)를 가린 뒤 저장한다. */
+  filterConditions?: ClientGeneratedDownloadLogRequestFilterConditions;
 }

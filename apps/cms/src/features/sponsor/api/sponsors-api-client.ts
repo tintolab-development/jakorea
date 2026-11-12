@@ -40,8 +40,23 @@ export async function fetchSponsorsRemote(
   return unwrapApiBody(await getDataManagementSubsetApi().sponsors(params))
 }
 
-export async function fetchSponsorRemote(id: string): Promise<SponsorDetailResponse> {
-  return unwrapApiBody(await getDataManagementSubsetApi().sponsor(pathId(id)))
+/**
+ * 담당자 개인정보 노출 방식(BE `contactPrivacy`, 정책 CMS-17·32·37).
+ * 생략·RAW: 데이터 관리 > 후원사 담당자 정보 — 원문 + 자동 조회 기록.
+ * MASKED: 프로그램 공통 정보·신규 프로그램 등록 양식 — 전화·이메일 마스킹, 기록 없음.
+ */
+export type SponsorContactPrivacy = 'RAW' | 'MASKED'
+
+export async function fetchSponsorRemote(
+  id: string,
+  contactPrivacy?: SponsorContactPrivacy
+): Promise<SponsorDetailResponse> {
+  return unwrapApiBody(
+    await getDataManagementSubsetApi().sponsor(
+      pathId(id),
+      contactPrivacy ? { contactPrivacy } : undefined
+    )
+  )
 }
 
 export async function createSponsorRemote(body: SponsorWriteRequest): Promise<SponsorResponse> {
@@ -122,15 +137,17 @@ function unwrapSponsorContactList(payload: unknown): SponsorContactResponse[] {
 
 export async function fetchSponsorContactsRemote(
   sponsorId: string,
-  params?: SponsorContactsQueryParams
+  params?: SponsorContactsQueryParams,
+  contactPrivacy?: SponsorContactPrivacy
 ): Promise<SponsorContactResponse[]> {
   const query = params
     ? Object.fromEntries(
         Object.entries(params).filter(([, value]) => value != null && String(value).trim() !== '')
       )
     : undefined
+  const withPrivacy = contactPrivacy ? { ...(query ?? {}), contactPrivacy } : query
   const contactsParams =
-    query && Object.keys(query).length > 0 ? (query as ContactsParams) : undefined
+    withPrivacy && Object.keys(withPrivacy).length > 0 ? (withPrivacy as ContactsParams) : undefined
   const payload = await getDataManagementSubsetApi().contacts(pathId(sponsorId), contactsParams)
   return unwrapSponsorContactList(payload)
 }

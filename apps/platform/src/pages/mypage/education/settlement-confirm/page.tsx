@@ -37,7 +37,13 @@ import {
   isInstructorPaymentStatementSubmit,
   isPaymentStatementConsentRequiredError,
   PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE,
+  readInstructorSettlementErrorCode,
 } from '@/features/mypage/education/settlements/lib/instructor-settlement-contract'
+import {
+  findExceededInstructorExpenseLimit,
+  instructorPaymentItemLimitExceededAlert,
+  instructorPaymentItemLimitMessage,
+} from '@/features/mypage/education/settlements/lib/instructor-expense-items'
 import {
   composeSettlementWriteBasic,
   readSettlementMemberProfileBasic,
@@ -345,6 +351,14 @@ export function MypageEducationSettlementConfirmPage() {
         setAlertOpen(true)
         return
       }
+      const exceededInstructorLimit = isInstructorSubmit
+        ? findExceededInstructorExpenseLimit(draft)
+        : null
+      if (exceededInstructorLimit != null) {
+        setAlertMessage(instructorPaymentItemLimitMessage(exceededInstructorLimit))
+        setAlertOpen(true)
+        return
+      }
       const exceededLimitWon = findExceededReceiptItemLimit(draft)
       if (exceededLimitWon != null) {
         setAlertMessage(paymentItemLimitExceededMessage(exceededLimitWon))
@@ -372,6 +386,15 @@ export function MypageEducationSettlementConfirmPage() {
               setAlertMessage(PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE)
               setAlertOpen(true)
               return
+            }
+            // 강사 식사비·활동비 한도 초과(400) — 강사 문구 "신청은 최대 N원까지만 가능합니다." (K14)
+            if (readInstructorSettlementErrorCode(error) === PAYMENT_ITEM_LIMIT_EXCEEDED_CODE) {
+              const limitMessage = instructorPaymentItemLimitExceededAlert(draft)
+              if (limitMessage) {
+                setAlertMessage(limitMessage)
+                setAlertOpen(true)
+                return
+              }
             }
             setAlertMessage(
               instructorSettlementApiErrorMessage(

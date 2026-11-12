@@ -1,6 +1,6 @@
 import { type ChangeEvent, type InputHTMLAttributes, useId, useState } from 'react'
-import searchMintIconUrl from '@/shared/assets/icons/search-mint.svg'
 import searchWarm24IconUrl from './icons/search-warm-24.svg'
+import searchMintIconUrl from './icons/search-underline.svg'
 import styles from './pf-search-input.module.css'
 
 export type PFSearchInputVariant = 'underline' | 'outlined'

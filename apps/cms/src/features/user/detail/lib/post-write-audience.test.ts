@@ -4,7 +4,9 @@ import {
   buildPostWriteAudienceOptions,
   buildPostWriteVisibilityType,
   defaultPostWriteAudience,
+  isPostWriteAudienceChanged,
   postWriteAudienceFromStored,
+  postWriteAudienceLabel,
   reconcilePostWriteAudienceSelection,
   resolveParticipantAudienceApiKey,
 } from './post-write-audience'
@@ -79,5 +81,24 @@ describe('post-write-audience', () => {
       'instructor',
       'volunteer',
     ])
+  })
+})
+
+describe('isPostWriteAudienceChanged / postWriteAudienceLabel (QA-0093)', () => {
+  it('저장값과 같으면(순서 무관) 변경 아님', () => {
+    expect(isPostWriteAudienceChanged(['INSTRUCTOR', 'TEACHER'], ['teacher', 'instructor'])).toBe(
+      false
+    )
+    expect(isPostWriteAudienceChanged(['ALL'], defaultPostWriteAudience())).toBe(false)
+  })
+
+  it('항목을 빼거나 더하면 변경', () => {
+    expect(isPostWriteAudienceChanged(['ALL'], ['teacher', 'instructor'])).toBe(true)
+    expect(isPostWriteAudienceChanged(['TEACHER'], ['teacher', 'volunteer'])).toBe(true)
+  })
+
+  it('확인창 라벨', () => {
+    expect(postWriteAudienceLabel(defaultPostWriteAudience())).toBe('전체')
+    expect(postWriteAudienceLabel(['volunteer', 'teacher'])).toBe('참여자, 봉사자')
   })
 })

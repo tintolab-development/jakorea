@@ -25,6 +25,19 @@ describe('parseKitQuantityInput', () => {
   })
 
   it('parseInt처럼 소수를 잘라 성공시키지 않는다', () => {
-    expect(() => parseKitQuantityInput('1.5')).toThrow(/1 이상의 정수/)
+    expect(() => parseKitQuantityInput('1.5')).toThrow(/1~999 사이의 정수/)
+  })
+})
+
+describe('QA-0111 키트 수량 자릿수 상한', () => {
+  it('3자리(999)까지만 허용한다', () => {
+    expect(isValidKitQuantityInput('999')).toBe(true)
+    expect(isValidKitQuantityInput('1000')).toBe(false)
+    expect(isValidKitQuantityInput('12345678901')).toBe(false)
+  })
+
+  it('범위를 벗어나면 값을 바꾸지 않고 오류를 낸다', () => {
+    expect(() => parseKitQuantityInput('-15')).toThrow(/1~999/)
+    expect(() => parseKitQuantityInput('1000')).toThrow(/1~999/)
   })
 })

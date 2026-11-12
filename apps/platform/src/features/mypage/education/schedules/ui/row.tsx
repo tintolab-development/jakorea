@@ -48,9 +48,10 @@ export function EducationScheduleRow({
 }: EducationScheduleRowProps) {
   const progress = resolveEducationScheduleRowProgressStatus(item)
   const heldLabel =
-    item.operationalDayView === true
+    item.dateLabelOverride?.trim() ||
+    (item.operationalDayView === true
       ? resolveEducationScheduleDateLabel(item)
-      : resolveEducationScheduleRowDateLabel(item)
+      : resolveEducationScheduleRowDateLabel(item))
   const showAssignment = assignmentAllowed && shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =

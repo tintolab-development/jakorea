@@ -64,6 +64,10 @@ export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE = '발급할 학
 export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
   '수료증/참가인증서는 한 번에 1명만 발급할 수 있습니다.\n학생 1명만 선택한 뒤 다시 시도해 주세요.'
 
+/** 참여 강사 목록 — 활동인증서 발급: 참여 강사가 0명일 때 AlertModal 본문 (QA-0298) */
+export const ACTIVITY_CERTIFICATE_ISSUE_NO_INSTRUCTOR_ALERT_MESSAGE =
+  '활동인증서를 발급할 수 있는 강사가 없습니다.'
+
 /** 참여 강사 목록 — 활동인증서 발급: 미선택 시 AlertModal 본문 */
 export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
   '발급할 강사를 1명 선택해 주세요.'

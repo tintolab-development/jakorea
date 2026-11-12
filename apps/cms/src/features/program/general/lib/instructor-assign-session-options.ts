@@ -131,7 +131,11 @@ export function resolveInstructorAssignSessionDisplayLabels(
 /** 참여 학교 회차 → 배정일 태그 (완료 회차·isSessionDisabled(예: 강사 정원 도달) 회차는 비활성) */
 export function mapParticipatingSessionsToInstructorAssignOptions(
   sessions: ParticipatingSchoolSession[] | undefined | null,
-  options?: { isSessionDisabled?: (session: ParticipatingSchoolSession) => boolean }
+  options?: {
+    isSessionDisabled?: (session: ParticipatingSchoolSession) => boolean
+    /** 칩 순위 라벨. 기본 `N회차`({@link resolveAssignmentRoundSessionLabel}) — 1사1교는 회차 대신 지망 */
+    resolveSessionRoundLabel?: (session: ParticipatingSchoolSession) => string
+  }
 ): InstructorAssignSessionOption[] {
   if (!sessions?.length) return []
   return sessions.map(s => {
@@ -141,7 +145,7 @@ export function mapParticipatingSessionsToInstructorAssignOptions(
       dateLabel: dateLabel || undefined,
       timeLabel,
       scheduleLabel,
-      sessionRoundLabel: resolveAssignmentRoundSessionLabel(s),
+      sessionRoundLabel: (options?.resolveSessionRoundLabel ?? resolveAssignmentRoundSessionLabel)(s),
       capacityLabel: '0명',
       disabled:
         s.status === 'completed' ||

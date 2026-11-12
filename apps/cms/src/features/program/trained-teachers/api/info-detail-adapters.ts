@@ -1,9 +1,12 @@
 import type { Program } from '@/types/domain'
 import type { TrainedTeacherProgramDetailRequest } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailRequest'
 import type { TrainedTeacherProgramDetailResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailResponse'
-import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import { parseCompatibleBoolean } from '@/features/program/trained-teachers/lib/common-info-persist'
 import { clearTeacherTrainingScheduleIfOff } from '@/features/program/trained-teachers/lib/teacher-training-schedule'
+import {
+  normalizeTeacherTrainingEducationFormat,
+  resolveTeacherTrainingScheduleName,
+} from '@/features/program/trained-teachers/lib/teacher-training-block'
 
 export const TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION = 1 as const
 
@@ -69,15 +72,19 @@ function narrowTrainedTeacherInfoConfigCommonInfo(
   commonInfo: NonNullable<Program['generalCommonInfo']>
 ): NonNullable<Program['generalCommonInfo']> {
   const trainingEnabled = commonInfo.teacherTrainingEnabled === true
+  // 연수 일정명은 서버 저장값 유지 — scheduleDetails 연수 행 name 과 일치해야 BE가 연수로 본다
+  const trainingScheduleName = trainingEnabled
+    ? resolveTeacherTrainingScheduleName(commonInfo.teacherTrainingScheduleName)
+    : ''
   const cleared = clearTeacherTrainingScheduleIfOff(commonInfo, {
     teacherTrainingEnabled: trainingEnabled,
-    teacherTrainingScheduleName: trainingEnabled ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME : '',
+    teacherTrainingScheduleName: trainingScheduleName,
   })
   const source = cleared as Record<string, unknown>
   const next: Record<string, unknown> = {
     educationJournalEnabled: parseCompatibleBoolean(cleared.educationJournalEnabled) === true,
     teacherTrainingEnabled: trainingEnabled,
-    teacherTrainingScheduleName: trainingEnabled ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME : '',
+    teacherTrainingScheduleName: trainingScheduleName,
   }
   for (const key of TRAINED_TEACHER_INFO_CONFIG_OVERLAY_KEYS) {
     if (source[key] !== undefined) next[key] = source[key]
@@ -138,6 +145,38 @@ export function parseTrainedTeacherInfoConfigJson(raw?: string | null): {
   }
 }
 
+/**
+ * 교사 연수 typed 필드 (BE T2). 응답에 키가 없으면(구 BE) 넣지 않는다 — undefined 는 「서버 미제공」.
+ */
+function readTeacherTrainingTypedFields(
+  dto: TrainedTeacherProgramDetailResponse
+): Pick<
+  NonNullable<Program['generalCommonInfo']>,
+  'teacherTrainingEducationFormat' | 'teacherTrainingSchedule'
+> {
+  const out: Pick<
+    NonNullable<Program['generalCommonInfo']>,
+    'teacherTrainingEducationFormat' | 'teacherTrainingSchedule'
+  > = {}
+  if (Object.prototype.hasOwnProperty.call(dto, 'teacherTrainingEducationFormat')) {
+    out.teacherTrainingEducationFormat =
+      normalizeTeacherTrainingEducationFormat(dto.teacherTrainingEducationFormat) ?? null
+  }
+  if (Object.prototype.hasOwnProperty.call(dto, 'teacherTrainingSchedule')) {
+    const schedule = dto.teacherTrainingSchedule
+    out.teacherTrainingSchedule =
+      schedule != null
+        ? {
+            scheduleId: schedule.scheduleId,
+            scheduleName: schedule.scheduleName ?? null,
+            startAt: schedule.startAt ?? null,
+            endAt: schedule.endAt ?? null,
+          }
+        : null
+  }
+  return out
+}
+
 /** GET detail 응답 → Program 필드 오버레이 */
 export function mapTrainedTeacherInfoDetailToProgramPatch(
   dto: TrainedTeacherProgramDetailResponse
@@ -149,6 +188,7 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
     generalCommonInfo: clearTeacherTrainingScheduleIfOff(
       {
         ...baseCommon,
+        ...readTeacherTrainingTypedFields(dto),
         educationJournalEnabled:
           parseCompatibleBoolean(dto.educationJournalEnabled) ??
           parseCompatibleBoolean(baseCommon.educationJournalEnabled),
@@ -226,6 +266,15 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
             ? patchCommon.educationScheduleRange
             : programCommon?.educationScheduleRange,
         kpi: programKpi ?? patchKpi,
+        // 교사 연수 교육 형태·일정 투영은 B(detail) 응답만 정본
+        ...(patchCommon != null &&
+        Object.prototype.hasOwnProperty.call(patchCommon, 'teacherTrainingEducationFormat')
+          ? { teacherTrainingEducationFormat: patchCommon.teacherTrainingEducationFormat }
+          : {}),
+        ...(patchCommon != null &&
+        Object.prototype.hasOwnProperty.call(patchCommon, 'teacherTrainingSchedule')
+          ? { teacherTrainingSchedule: patchCommon.teacherTrainingSchedule }
+          : {}),
       },
       {
         teacherTrainingEnabled:
@@ -250,15 +299,21 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
 export function mapTrainedTeacherInfoSaveToRequest(
   payload: TrainedTeachersCommonInfoSavePayload
 ): TrainedTeacherProgramDetailRequest {
+  const trainingEnabled = payload.commonInfo.teacherTrainingEnabled === true
+  const educationFormat = trainingEnabled
+    ? normalizeTeacherTrainingEducationFormat(payload.commonInfo.teacherTrainingEducationFormat)
+    : undefined
   return {
-    teacherTrainingEnabled: payload.commonInfo.teacherTrainingEnabled ?? false,
+    teacherTrainingEnabled: trainingEnabled,
     educationJournalEnabled:
       parseCompatibleBoolean(payload.commonInfo.educationJournalEnabled) === true,
     educationJournalRequired: false,
     journalSubmissionLimitType: 'UNLIMITED',
-    teacherTrainingScheduleName: payload.commonInfo.teacherTrainingEnabled
-      ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
+    teacherTrainingScheduleName: trainingEnabled
+      ? resolveTeacherTrainingScheduleName(payload.commonInfo.teacherTrainingScheduleName)
       : '',
+    // 미선택이면 생략(=기존 유지). OFF 저장은 BE가 함께 지운다.
+    ...(educationFormat ? { teacherTrainingEducationFormat: educationFormat } : {}),
     configJson: serializeTrainedTeacherInfoConfigJson(payload),
   }
 }

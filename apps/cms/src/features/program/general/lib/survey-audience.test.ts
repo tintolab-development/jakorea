@@ -15,6 +15,7 @@ import {
   getGeneralSatisfactionAudienceTabs,
   isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
+  isInstitutionTeacherOnlySatisfactionProgram,
   isTrainedTeachersProgram,
   programHasGeneralSatisfactionSurvey,
   resolveSatisfactionFormBindingTargetRole,
@@ -340,7 +341,8 @@ describe('general survey audience', () => {
     expect(getGeneralSatisfactionEmptyCopy('teacher', companySchool)).toMatchObject({
       title: '아직 등록된 만족도조사가 없습니다.',
       description: '만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
-      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
+      // 시안 16268:600810 — 1사1교는 「모든 참여자에게」
+      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 참여자에게 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     })
     expect(getGeneralSatisfactionEmptyCopy('student', companySchool)).toEqual(
@@ -349,7 +351,7 @@ describe('general survey audience', () => {
     expect(buildGeneralSurveyEmptyState(companySchool).satisfactionSurveysByAudience).toEqual({})
   })
 
-  it('교육받은 교사 공통정보 keys에 맞춰 만족도조사 LNB·교사 탭을 노출한다', () => {
+  it('교육받은 교사 공통정보 keys에 맞춰 만족도조사 LNB를 노출하고 대상은 교사 하나로 고정한다', () => {
     const trainedTeachers = program({
       id: 'trained-teachers-prog-001',
       generalProgramAudience: 'organization',
@@ -357,14 +359,15 @@ describe('general survey audience', () => {
       generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
     })
 
+    // 시안 5416:116711 — 대상 탭 없이 교사 단일 만족도조사
+    expect(isInstitutionTeacherOnlySatisfactionProgram(trainedTeachers)).toBe(true)
     expect(getGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
-      'student',
     ])
     expect(getEnabledGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
-      'student',
     ])
+    expect(getDefaultGeneralSatisfactionAudience(trainedTeachers)).toBe('teacher')
     expect(getGeneralSurveyMenuItems(trainedTeachers).map(item => item.key)).toEqual([
       'survey',
       'satisfaction',
@@ -384,7 +387,6 @@ describe('general survey audience', () => {
 
     expect(getEnabledGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
-      'student',
     ])
     expect(getGeneralSurveyMenuItems(trainedTeachers).map(item => item.key)).toEqual([
       'survey',
@@ -393,13 +395,13 @@ describe('general survey audience', () => {
     ])
   })
 
-  it('교육받은 교사 만족도 바인딩은 교사/학생을 분리한다', () => {
+  it('교육받은 교사 만족도 바인딩 targetRole은 항상 TEACHER이다', () => {
     const trainedTeachers = program({
       id: '186264',
       backendProgramType: 'TRAINED_TEACHER',
     })
     expect(isTrainedTeachersProgram(trainedTeachers)).toBe(true)
-    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'student')).toBe('STUDENT')
+    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'student')).toBe('TEACHER')
     expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'teacher')).toBe('TEACHER')
     expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, null)).toBe('TEACHER')
     const general = program({

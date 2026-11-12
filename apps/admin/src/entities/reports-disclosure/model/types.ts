@@ -14,8 +14,6 @@ export type TransparencyReport = {
   attachmentUrl: string
   /** Homepage asset ids (remote) */
   thumbnailAssetId?: number
-  /** 서버 필수 우회용 「썸네일 없음」 표식 자산 — 화면에는 썸네일 없음으로 보이고, 다시 저장할 때 재사용 */
-  placeholderThumbnailAssetId?: number
   attachmentAssetId?: number
   /** 낙관적 잠금 (remote 필수). mock은 0 */
   version: number

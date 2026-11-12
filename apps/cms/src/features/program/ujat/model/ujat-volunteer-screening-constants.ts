@@ -4,6 +4,7 @@
 
 import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 
+import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
 import { UJAT_DEFAULT_EDUCATION_REGIONS } from '@/features/program/ujat/lib/ujat-default-education-region-rows'
 import {
   getUjatEducationRegionSortOrderMap,
@@ -180,10 +181,16 @@ export function formatUjatVolunteerApplicationRoute(
   return route
 }
 
+/**
+ * 성별 및 생년월일 — 서버 마스킹 `yyyy-**-**`는 정책 표기 `yyyy.**.**`(서버 나이가 있으면 `(만 N세)`),
+ * 원문(`yyyy-MM-dd`·`yyyy.MM.dd`)은 `yyyy. MM. dd (만 N세)`. 나이 0은 모름으로 보고 붙이지 않는다.
+ */
 export function formatUjatVolunteerBirthDateAndAge(birthDate: string, age: number): string {
-  if (!birthDate?.trim()) return '—'
-  if (!age) return birthDate
-  return `${birthDate} (만 ${age}세)`
+  const trimmed = birthDate?.trim() ?? ''
+  if (!trimmed || trimmed === '-' || trimmed === '—') return '—'
+  const formatted = formatBirthDisplayWithManAge(trimmed, { age: age > 0 ? age : null })
+  // 연도를 읽을 수 없는 값(전부 `*` 등)은 날짜를 만들지 않고 서버 값을 그대로 둔다.
+  return formatted === '-' ? trimmed : formatted
 }
 
 /** 대학교명 — 서버 값 그대로 (FE 재마스킹 없음). maskSensitive는 호환용. */

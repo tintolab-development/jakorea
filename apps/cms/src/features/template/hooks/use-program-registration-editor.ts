@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react'
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  startTransition,
+} from 'react'
 import {
   applyGeneralParticipantAudienceSelection,
   shouldResetParticipationScheduleDetailForAudience,
@@ -34,7 +42,11 @@ import {
   resolveProgramRegistrationScheduleCurriculumEditDescription,
 } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
-import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  isGeneralProgramApplicationFormBindingRequiredError,
+} from '@/features/program/general/api/get-general-program-api-error'
+import { ApplicationFormBindingRequiredAlertContent } from '@/features/program/general/ui/registration/application-form-binding-required-alert-content'
 import {
   isProgramDateOutsideOpenPeriodError,
   publishProgramOperationDateFocus,
@@ -81,7 +93,7 @@ import {
 import { serializeCompanySchoolRegistrationForFormVersion } from '@/features/program/1c-1s/lib/serialize-registration-overlay-from-canonical'
 import { resolveRegistrationFormVersionOverlay } from '@/features/program/general/lib/resolve-registration-form-version-overlay'
 import {
-  createDefaultCompanySchoolRegistrationRhfValues,
+  createNewCompanySchoolRegistrationRhfValues,
   isCompanySchoolRegistrationCanonicalSnapshot,
   omitCompanySchoolCommonInfoOverlayKeys,
   rhfValuesFromCompanySchoolCanonical,
@@ -102,7 +114,8 @@ import { companySchoolRecruitEditorState } from '@/features/program/1c-1s/lib/re
 import { companySchoolApplicationEditorState } from '@/features/program/1c-1s/lib/application-form-state'
 import { importLegacyTrainedTeachersApplicationOverlay } from '@/features/program/trained-teachers/lib/registration-rhf-application'
 import {
-  createDefaultTrainedTeachersRegistrationRhfValues,
+  createNewTrainedTeachersRegistrationRhfValues,
+  normalizeTrainedTeachersNewRegistrationRhfValues,
   isTrainedTeachersRegistrationCanonicalSnapshot,
   omitTrainedTeachersCommonInfoOverlayKeys,
   rhfValuesFromTrainedTeachersCanonicalCommon,
@@ -217,7 +230,8 @@ function getDefaultProgramRegistrationParticipant(
 function getDefaultEducationScheduleMode(
   variant: ProgramRegistrationFormVariant
 ): ProgramRegistrationEducationScheduleMode {
-  return variant === 'economy' ? 'period' : 'date'
+  // 교육받은 교사 신규 등록 — 기간 지정 고정(CMS-FUNC-0591·0277, 시안 9899:221372)
+  return variant === 'economy' || variant === 'trainedTeachers' ? 'period' : 'date'
 }
 
 /** 이전 FE 기본값(상세 수정 안내와 동일) — 임시저장본·템플릿에 남아 있으면 등록 시안 문구로 바꾼다 */
@@ -260,6 +274,12 @@ function withRegistrationBasicInfoDescriptionForVariant(
       if (current !== '') return paragraph
       changed = true
       return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_LOCK_NOTICE }
+    }
+    // 교육받은 교사 등록 위저드 — 시안(9899:221372) 기본 정보 설명. 위저드 밖(양식 편집 등)은 기존처럼 비움
+    if (variant === 'trainedTeachers' && registrationWizard) {
+      if (current !== '' && current !== GENERAL_BASIC_INFO_LOCK_NOTICE) return paragraph
+      changed = true
+      return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_REGISTRATION_DESCRIPTION }
     }
     if (
       current !== GENERAL_BASIC_INFO_LOCK_NOTICE &&
@@ -757,7 +777,10 @@ export function useProgramRegistrationEditor(
               }
             : state.participant
       )
-      setProgramType(state.programType)
+      // 교육받은 교사 신규 등록 — 커리큘럼형·기간 지정 고정. 예전 임시저장본의 일정형·날짜 지정은 여기서 정규화한다.
+      setProgramType(
+        programRegistrationFormVariant === 'trainedTeachers' ? 'curriculum' : state.programType
+      )
       setSessionRoundType(state.sessionRoundType)
       setEducationFormScheduleDetail(state.educationFormScheduleDetail)
       setParticipationScheduleDetail(state.participationScheduleDetail)
@@ -772,7 +795,9 @@ export function useProgramRegistrationEditor(
           ? state.trainedTeachersTeacherTrainingEnabled
           : state.scheduleCurriculumPreEducation
       )
-      setEducationScheduleMode(state.educationScheduleMode)
+      setEducationScheduleMode(
+        programRegistrationFormVariant === 'trainedTeachers' ? 'period' : state.educationScheduleMode
+      )
       // editorState에 없고 overlay에만 남은 후원사(이전 이중 저장·number id 등)를 보강
       const resolvedSponsorId =
         (state.sponsorId ?? '').trim() ||
@@ -835,15 +860,16 @@ export function useProgramRegistrationEditor(
         })
       }
       if (programRegistrationFormVariant === 'trainedTeachers') {
+        // 신규 등록 seed 초기화 — 시안 기본 선택값(JA·JA·No·사업 분야 미선택)
         peekTrainedTeachersRegistrationRhf()?.reset(
-          createDefaultTrainedTeachersRegistrationRhfValues(),
+          createNewTrainedTeachersRegistrationRhfValues(),
           { keepDirty: false }
         )
       }
       // C4: 1사1교 RHF도 seed 초기화 시 기본값으로 reset (이전 draft 값 잔류 방지)
       if (programRegistrationFormVariant === 'economy') {
         peekCompanySchoolRegistrationRhf()?.reset(
-          createDefaultCompanySchoolRegistrationRhfValues(),
+          createNewCompanySchoolRegistrationRhfValues(),
           { keepDirty: false }
         )
       }
@@ -992,13 +1018,15 @@ export function useProgramRegistrationEditor(
                 const rhf = peekTrainedTeachersRegistrationRhf()
                 if (rhf != null && isTrainedTeachersRegistrationCanonicalSnapshot(typed)) {
                   rhf.reset(
-                    rhfValuesFromTrainedTeachersCanonicalCommon(
-                      typed.common,
-                      typed.editor,
-                      typed.sidecar,
-                      typed.recruit,
-                      typed.application ??
-                        importLegacyTrainedTeachersApplicationOverlay(saved.overlay ?? {})
+                    normalizeTrainedTeachersNewRegistrationRhfValues(
+                      rhfValuesFromTrainedTeachersCanonicalCommon(
+                        typed.common,
+                        typed.editor,
+                        typed.sidecar,
+                        typed.recruit,
+                        typed.application ??
+                          importLegacyTrainedTeachersApplicationOverlay(saved.overlay ?? {})
+                      )
                     ),
                     { keepDirty: false }
                   )
@@ -1023,15 +1051,17 @@ export function useProgramRegistrationEditor(
                     overlay: saved.overlay ?? {},
                   })
                   rhf.reset(
-                    rhfValuesFromTrainedTeachersCanonicalCommon(
-                      applyLegacyProgramTitleKoFallback(
-                        imported.common,
-                        restored.programTitleKo
-                      ),
-                      imported.editor,
-                      undefined,
-                      imported.recruit,
-                      imported.application
+                    normalizeTrainedTeachersNewRegistrationRhfValues(
+                      rhfValuesFromTrainedTeachersCanonicalCommon(
+                        applyLegacyProgramTitleKoFallback(
+                          imported.common,
+                          restored.programTitleKo
+                        ),
+                        imported.editor,
+                        undefined,
+                        imported.recruit,
+                        imported.application
+                      )
                     ),
                     { keepDirty: false }
                   )
@@ -1490,6 +1520,8 @@ export function useProgramRegistrationEditor(
   const onProgramTypeChange = useCallback(
     (next: ProgramRegistrationType) => {
       if (programRegistrationFormVariant === 'economy' && next !== 'curriculum') return
+      // 교육받은 교사 신규 등록 — 커리큘럼형 고정(「일정형」 비활성)
+      if (programRegistrationFormVariant === 'trainedTeachers' && next !== 'curriculum') return
       setProgramType(next)
       if (programRegistrationFormVariant === 'general' && next === 'schedule') {
         updateProgramRegistrationOverlayKey(
@@ -2518,7 +2550,9 @@ export function useProgramRegistrationEditor(
               content:
                 error instanceof CompanySchoolOperationRangeRequiredError
                   ? error.message
-                  : getGeneralProgramApiErrorMessage(
+                  : isGeneralProgramApplicationFormBindingRequiredError(error)
+                    ? createElement(ApplicationFormBindingRequiredAlertContent)
+                    : getGeneralProgramApiErrorMessage(
                       error,
                       '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
                     ),

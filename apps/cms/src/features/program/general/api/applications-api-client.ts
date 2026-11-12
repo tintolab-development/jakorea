@@ -209,6 +209,14 @@ function sanitizeScreeningResultPayload<T extends ScreeningResultNotifyFields>(p
   } as T
 }
 
+function omitFinalResultAssignments<T extends { assignments?: unknown }>(
+  payload: T
+): Omit<T, 'assignments'> {
+  const { assignments: _omitted, ...rest } = payload
+  void _omitted
+  return rest
+}
+
 function positiveAssignmentId(value: unknown): number | undefined {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return undefined
   return Math.trunc(value)
@@ -1097,7 +1105,8 @@ export async function submitIndividualFinalResultRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
-      data: sanitizeScreeningResultPayload(payload),
+      // 개인 신청은 assignments를 받지 않는다(400 VOLUNTEER_FINAL_RESULT_ASSIGNMENTS_NOT_SUPPORTED) — 항상 뺀다
+      data: sanitizeScreeningResultPayload(omitFinalResultAssignments(payload)),
     })
   )
 }

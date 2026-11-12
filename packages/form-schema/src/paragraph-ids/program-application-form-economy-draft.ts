@@ -8,7 +8,6 @@ import {
 } from '../writing-form/draft-schema.js'
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
-  INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
   isLegacyInstitutionSexOffenseConsentInquiryDescription,
 } from '../lib/institution-sex-offense-consent-field-definitions.js'
 
@@ -43,7 +42,21 @@ const PERSONAL_INFO_RETENTION_CELL =
   '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
 /** 일반 참여기관 신청 폼과 동일 — 보유기간 열 고정 문구 */
 const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
-const THIRD_PARTY_ITEMS_CELL = '이름, 학교명, 학교 소재지, 개인 연락처, 이메일'
+/** 1사1교 시안(9899:216613) — 수집·이용 / 제3자 제공 표 공통 수집 항목 */
+const ECONOMY_COLLECTION_ITEMS_CELL = '이름, 학교명, 학교주소, 개인 연락처, e-mail'
+const THIRD_PARTY_ITEMS_CELL = ECONOMY_COLLECTION_ITEMS_CELL
+
+/**
+ * 1사1교 시안(9899:216613) 성범죄경력 조회 동의서 단락 — 제목 붙여쓰기·온라인 교육 안내.
+ * 일반 기관 신청 폼 공용 정의(`INSTITUTION_SEX_OFFENSE_CONSENT_*_SECTION`)는 바꾸지 않는다.
+ */
+const ECONOMY_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION = {
+  title: '성범죄경력 조회 동의서 제출 요청',
+  description:
+    '강사님들의 성범죄경력 조회 동의서 제출이 필요하신 경우, 동의서 제출을 요청해 주세요. 미요청 또는 교육이 온라인으로 진행되는 경우에는 동의서가 전달 되지 않습니다.',
+} as const
+
+const ECONOMY_SEX_OFFENSE_CONSENT_INQUIRY_TITLE = '성범죄경력 조회 동의서 조회 방식'
 const THIRD_PARTY_PURPOSE_CELL =
   'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내'
 
@@ -56,7 +69,7 @@ function createEconomyPersonalInfoHorizontalTable(): HorizontalTableParagraph {
   const bodyRow = [
     {
       kind: 'text' as const,
-      value: '이름, 기관명, 기관 소재지, 개인 연락처, 이메일',
+      value: ECONOMY_COLLECTION_ITEMS_CELL,
     },
     {
       kind: 'text' as const,
@@ -166,12 +179,12 @@ export function createProgramApplicationFormEconomyDraft(): WritingFormDraft {
     ),
     createEconomyPlaceholderTable(
       PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentSubmissionRequest,
-      INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.title,
-      INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.description
+      ECONOMY_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.title,
+      ECONOMY_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.description
     ),
     createEconomyPlaceholderTable(
       PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod,
-      INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
+      ECONOMY_SEX_OFFENSE_CONSENT_INQUIRY_TITLE,
       INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
     ),
     createEconomyPlaceholderTable(

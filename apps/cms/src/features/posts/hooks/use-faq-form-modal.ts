@@ -14,6 +14,7 @@ import {
 } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
+import { POSTS_NEW_DEFAULT_VISIBILITY } from '@/features/posts/lib/posts-public-save-confirm'
 
 export type UseFaqFormModalResult = {
   form: FormInstance<FaqFormFieldValues>
@@ -63,7 +64,7 @@ export function useFaqFormModal({
         question: '',
         answer: '',
         category: undefined,
-        visibility: 'public',
+        visibility: POSTS_NEW_DEFAULT_VISIBILITY,
       })
     }
   }, [open, isEdit, faq, form])

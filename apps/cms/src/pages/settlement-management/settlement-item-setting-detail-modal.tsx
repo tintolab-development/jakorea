@@ -269,6 +269,14 @@ function buildInitialFormState(d: SettlementItemSettingDetail) {
   }
 }
 
+/**
+ * 1~3급 강사비(장거리 전용 단가 포함) 산정 기준 단위 — 「1 시간 기준」 고정.
+ * 기획(노션 「1-1 임금 항목 1~3급 강사비 팝업」, CMS-FUNC-0470·0473):
+ * 계산은 단가 × 인정 차시(30분 미만 미지급 / 30분 이상~1시간 30분 미만 1차시 …)이므로
+ * 「1 시간 기준」 단가 = 차시당 단가. 저장된 값과 관계없이 항상 1을 보여 주고 1을 보낸다.
+ */
+const TIER_WAGE_BASIS_HOURS = 1
+
 /** tier1(1급 강사비 등): 조건 표 + 산정 기준 표 */
 function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
   const detail = useSettlementItemSettingDetailSource(itemId)
@@ -278,7 +286,6 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
     linesToEditableText(detail.qualificationLines)
   )
   const [remarkText, setRemarkText] = useState(() => linesToEditableText(detail.remarkLines))
-  const [basisHoursStr, setBasisHoursStr] = useState(initial.basisHoursStr)
   const [maxLimitStr, setMaxLimitStr] = useState(initial.maxLimitStr)
 
   useRegisterSettlementDetailSnapshot(
@@ -286,7 +293,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
       ...detail,
       layout: 'tier1',
       basisUnit: '시간',
-      basisHours: Number.parseInt(basisHoursStr, 10) || 0,
+      basisHours: TIER_WAGE_BASIS_HOURS,
       compareKind: 'standard',
       maxLimitWon: parseWonStringToNumber(maxLimitStr),
       basicFeeWon: null,
@@ -294,7 +301,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
       qualificationLines: parseEditableLines(qualificationText),
       remarkLines: parseEditableLines(remarkText),
     }),
-    [itemId, detail, qualificationText, remarkText, basisHoursStr, maxLimitStr]
+    [itemId, detail, qualificationText, remarkText, maxLimitStr]
   )
 
   return (
@@ -344,11 +351,12 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
+                {/* 1 고정·수정 불가 (비활성 사유 툴팁 없음) */}
                 <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
-                  value={basisHoursStr}
-                  onValueChange={setBasisHoursStr}
+                  value={String(TIER_WAGE_BASIS_HOURS)}
+                  disabled
                   aria-label="산정 기준 단위"
                 />
               </div>
@@ -609,106 +617,6 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
               </div>
             </ModalSpecTableRow>
           ))}
-        </ModalSpecTable>
-      </section>
-    </div>
-  )
-}
-
-/** 보조 강사비(w-5): 조건(지급 요건 80px·비고 128px) + 산정 기준(1급과 동일) */
-function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }) {
-  const detail = useSettlementItemSettingDetailSource(itemId)
-  const initial = buildInitialFormState(detail)
-
-  const [qualificationText, setQualificationText] = useState(() =>
-    linesToEditableText(detail.qualificationLines)
-  )
-  const [remarkText, setRemarkText] = useState(() => linesToEditableText(detail.remarkLines))
-  const [basisHoursStr, setBasisHoursStr] = useState(initial.basisHoursStr)
-  const [maxLimitStr, setMaxLimitStr] = useState(initial.maxLimitStr)
-
-  useRegisterSettlementDetailSnapshot(
-    () => ({
-      layout: 'assistantInstructor',
-      basisUnit: '시간',
-      basisHours: Number.parseInt(basisHoursStr, 10) || 0,
-      compareKind: 'standard',
-      maxLimitWon: parseWonStringToNumber(maxLimitStr),
-      basicFeeWon: null,
-      longDistanceFeeWon: null,
-      qualificationLines: parseEditableLines(qualificationText),
-      remarkLines: parseEditableLines(remarkText),
-    }),
-    [qualificationText, remarkText, basisHoursStr, maxLimitStr]
-  )
-
-  return (
-    <div className="settlement-item-setting-detail-modal__section-stack settlement-item-setting-detail-modal__section-stack--tier1">
-      <section aria-labelledby="settlement-detail-condition-label">
-        <h3
-          id="settlement-detail-condition-label"
-          className="settlement-item-setting-detail-modal__section-label"
-        >
-          조건
-        </h3>
-        <ModalSpecTable aria-label="조건" className="modal-spec-table--condition-compact">
-          <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirementShort">
-            <textarea
-              className="modal-spec-table__textarea"
-              rows={3}
-              value={qualificationText}
-              onChange={e => setQualificationText(e.target.value)}
-              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
-              aria-label="지급 요건"
-            />
-          </ModalSpecTableRow>
-          <ModalSpecTableRow label="비고" labelVariant="remark">
-            <textarea
-              className="modal-spec-table__textarea"
-              rows={3}
-              value={remarkText}
-              onChange={e => setRemarkText(e.target.value)}
-              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
-              aria-label="비고"
-            />
-          </ModalSpecTableRow>
-        </ModalSpecTable>
-      </section>
-
-      <section aria-labelledby="settlement-detail-basis-label">
-        <h3
-          id="settlement-detail-basis-label"
-          className="settlement-item-setting-detail-modal__section-label"
-        >
-          산정 기준
-        </h3>
-        <ModalSpecTable aria-label="산정 기준">
-          <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
-            <div className="modal-spec-table__field-row">
-              <div className="modal-spec-table__input-wrap">
-                <SettlementItemBasisNumericInput
-                  mode="integer"
-                  inputSize="medium"
-                  value={basisHoursStr}
-                  onValueChange={setBasisHoursStr}
-                />
-              </div>
-              <span className="modal-spec-table__suffix-text">시간 기준</span>
-            </div>
-          </ModalSpecTableRow>
-          <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
-            <div className="modal-spec-table__field-row">
-              <div className="modal-spec-table__input-wrap">
-                <SettlementItemBasisNumericInput
-                  mode="currency"
-                  inputSize="medium"
-                  suffix="원"
-                  value={maxLimitStr}
-                  onValueChange={setMaxLimitStr}
-                />
-              </div>
-            </div>
-          </ModalSpecTableRow>
         </ModalSpecTable>
       </section>
     </div>
@@ -2000,9 +1908,6 @@ function SettlementItemSettingDetailModalBody({
     return <SettlementItemSettingDetailGeminiBody itemId={itemId} />
   }
 
-  if (detail.layout === 'assistantInstructor') {
-    return <SettlementItemSettingDetailAssistantBody itemId={itemId} />
-  }
 
   if (detail.layout === 'multiInstructor') {
     return <SettlementItemSettingDetailMultiInstructorBody itemId={itemId} />
@@ -2212,7 +2117,6 @@ export function SettlementItemSettingDetailModal({
         [
           'tier1',
           'gemini',
-          'assistantInstructor',
           'simpleLabor',
           'multiInstructor',
           'transport',

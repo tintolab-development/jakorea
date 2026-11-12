@@ -16,8 +16,21 @@ export interface Notification {
   /** 프로그램명 (알림 위젯 두 번째 라인) */
   programName?: string
   link?: string
+  /**
+   * GET /api/admin/notifications 원본 연결 정보 (linkUrl 미제공 → FE가 상세 경로를 매핑).
+   * mock 알림은 비어 있다.
+   */
+  target?: NotificationLinkTarget
   read: boolean
   createdAt: DateValue
+}
+
+export interface NotificationLinkTarget {
+  eventType?: string
+  sourceDomain?: string
+  linkType?: string
+  linkId?: string
+  programId?: string
 }
 
 /**

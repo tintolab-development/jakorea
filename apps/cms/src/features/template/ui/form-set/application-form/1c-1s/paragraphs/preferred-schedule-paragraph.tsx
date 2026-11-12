@@ -206,7 +206,7 @@ function ScheduleBlock({
                 })
               }
               classPeriodDisabled
-              note="*1차시가 진행되는 교시의 다음 수업 시간을 작성해 주세요."
+              note="※ 1차시가 진행되는 교시의 다음 수업 시간을 작성해 주세요."
             />
           ) : null}
         </DetailInfoForm>

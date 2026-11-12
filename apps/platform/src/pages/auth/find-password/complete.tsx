@@ -1,6 +1,6 @@
 import { clearAdminRegisteredPasswordChangeRequired } from '@/features/auth/admin-registered'
 import { clearFindPasswordRecoveryState } from '@/features/auth/find-password'
-import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
+import illustCheckUrl from '@/shared/assets/illustration/graphic-check-84.png'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'

@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Alert, Spin } from 'antd'
 import { CmsButton, CmsNumericInput, ContentModal } from '@/shared/ui'
-import { isValidKitQuantityInput } from '@/features/textbook/lib/kit-quantity'
+import {
+  isValidKitQuantityInput,
+  KIT_QUANTITY_INVALID_CHAR_MESSAGE,
+  KIT_QUANTITY_MAX,
+  KIT_QUANTITY_MAX_DIGITS,
+  KIT_QUANTITY_MIN,
+  KIT_QUANTITY_RANGE_MESSAGE,
+  KIT_QUANTITY_TOO_LONG_MESSAGE,
+} from '@/features/textbook/lib/kit-quantity'
 import './textbook-kit-quantity-modal.css'
 
 const KIT_LEVELS = [
@@ -54,10 +62,15 @@ export function TextbookKitQuantityModal({
   const [quantities, setQuantities] = useState<TextbookKitQuantityValues>(
     () => values ?? createDefaultQuantities()
   )
+  /** QA-0111: 거부된 입력(문자·부호·소수점·자릿수 초과) 안내 — 값은 바꾸지 않는다 */
+  const [rejectedInput, setRejectedInput] = useState<
+    Partial<Record<KitLevelKey, 'invalid-char' | 'too-long'>>
+  >({})
 
   useEffect(() => {
     if (open) {
       setQuantities(values ?? createDefaultQuantities())
+      setRejectedInput({})
     }
   }, [open, values])
 
@@ -110,14 +123,28 @@ export function TextbookKitQuantityModal({
                 width={'100%'}
                 aria-label={`${level.label} 키트 수량`}
                 value={quantities[level.key]}
-                min={1}
-                error={!isValidKitQuantity(quantities[level.key])}
-                message={
-                  !isValidKitQuantity(quantities[level.key])
-                    ? '수량은 1개 이상 입력해 주세요.'
-                    : undefined
+                min={KIT_QUANTITY_MIN}
+                max={KIT_QUANTITY_MAX}
+                maxDigits={KIT_QUANTITY_MAX_DIGITS}
+                rejectInvalidInput
+                normalizeOnBlur={false}
+                error={
+                  Boolean(rejectedInput[level.key]) || !isValidKitQuantity(quantities[level.key])
                 }
+                message={
+                  rejectedInput[level.key] === 'invalid-char'
+                    ? KIT_QUANTITY_INVALID_CHAR_MESSAGE
+                    : rejectedInput[level.key] === 'too-long'
+                      ? KIT_QUANTITY_TOO_LONG_MESSAGE
+                      : !isValidKitQuantity(quantities[level.key])
+                        ? KIT_QUANTITY_RANGE_MESSAGE
+                        : undefined
+                }
+                onInvalidInput={reason => {
+                  setRejectedInput(prev => ({ ...prev, [level.key]: reason }))
+                }}
                 onValueChange={nextValue => {
+                  setRejectedInput(prev => ({ ...prev, [level.key]: undefined }))
                   setQuantities(prev => ({ ...prev, [level.key]: nextValue }))
                 }}
               />

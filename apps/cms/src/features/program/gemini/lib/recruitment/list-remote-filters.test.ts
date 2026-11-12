@@ -13,7 +13,7 @@ describe('toGeminiRecruitmentRemoteFilters', () => {
     })
   })
 
-  it('임시저장 상태는 draftStatus=DRAFT로만 보낸다', () => {
+  it('미게시 상태는 draftStatus=DRAFT로만 보낸다', () => {
     const filters = toGeminiRecruitmentRemoteFilters({ status: 'DRAFT' })
     expect(filters.draftStatus).toBe('DRAFT')
     expect(filters.periodStatus).toBeUndefined()

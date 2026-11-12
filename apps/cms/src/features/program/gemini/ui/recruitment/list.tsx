@@ -330,7 +330,7 @@ export function GeminiRecruitmentList() {
           onRow={record => ({
             onClick: (e: MouseEvent<HTMLElement>) => {
               if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-              // 임시저장도 서버 공고다. 추가 폼은 브라우저 초안만 복원해서 등록값이 비어 보인다.
+              // 목록 행은 모두 등록된 서버 공고(게시·미게시)다. 임시 저장본은 [모집 공고 등록] 안내 팝업에서만 이어서 작성한다.
               openDetail(record.id)
             },
             style: { cursor: 'pointer' },

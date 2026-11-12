@@ -1,4 +1,5 @@
 import type { Program } from '@/types/domain'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import {
   getTrainedTeachersInstitutionDetailTabKeys,
@@ -29,6 +30,8 @@ export type StudentListDependentInstitutionDetailTabKey =
   (typeof STUDENT_LIST_DEPENDENT_INSTITUTION_DETAIL_TAB_KEYS)[number]
 
 type ParticipatingInstitutionDetailTabSource = {
+  id?: Program['id']
+  backendProgramType?: Program['backendProgramType']
   studentListRequired?: Program['studentListRequired']
   generalParticipantTypes?: Program['generalParticipantTypes']
   generalProgramAudience?: Program['generalProgramAudience']
@@ -59,10 +62,19 @@ function resolveParticipatingInstitutionStudentListRequired(
   return undefined
 }
 
-/** 프로그램 모집 정보 「학생 명단 제출 여부」가 제출 필요인 경우만 */
+/**
+ * 프로그램 모집 정보 「학생 명단 제출 여부」가 제출 필요인 경우만.
+ * 1사1교는 학생 명단·출석 관리가 없다(CMS-FUNC-0280·0225·0229) — 모집 설정과 무관하게 false.
+ */
 export function isParticipatingInstitutionStudentListApplicable(
   program?: ParticipatingInstitutionDetailTabSource
 ): boolean {
+  if (
+    program?.id != null &&
+    isCompanySchoolProgram({ id: program.id, backendProgramType: program.backendProgramType })
+  ) {
+    return false
+  }
   return resolveParticipatingInstitutionStudentListRequired(program) === 'required'
 }
 

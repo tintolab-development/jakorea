@@ -853,7 +853,12 @@ export function mapSecondInterviewStatusToFinalResultPayload(
     'pass' | 'fail' | 'reserve1' | 'reserve2' | 'reserve3' | 'reserve4'
   >,
   reason?: string,
-  notify?: ScreeningResultNotifyFields
+  notify?: ScreeningResultNotifyFields,
+  /**
+   * 기관형 봉사자 면접 합격 시 기관 배정(BE A1) — PASS에만 싣는다(RESERVE·FAIL은 서버 400).
+   * 비어 있으면 필드 생략 = 합격만 처리. 개인 신청 final-result에는 보내지 않는다.
+   */
+  assignments?: VolunteerFinalResultRequest['assignments']
 ): VolunteerFinalResultRequest & ScreeningResultNotifyFields {
   const notifyFields: ScreeningResultNotifyFields = {
     ...(notify?.notifyTiming ? { notifyTiming: notify.notifyTiming } : {}),
@@ -865,6 +870,7 @@ export function mapSecondInterviewStatusToFinalResultPayload(
       result: 'PASS',
       ...(trimmedReason ? { reason: trimmedReason } : {}),
       ...notifyFields,
+      ...(assignments && assignments.length > 0 ? { assignments } : {}),
     }
   }
   if (status === 'fail') return { result: 'FAIL', reason, ...notifyFields }

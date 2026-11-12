@@ -438,9 +438,10 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
     const description = useUnit ? unitContent || roundContent : roundContent || unitContent
     const assignment = assignmentByRound[i]
     const ips = ipsBySession[i]
-    const replaceFirstTraining = isTeacherTraining && i === 1
+    // 교육받은 교사 「교사 연수」는 차시를 대체하지 않는 별도 블록 — 차시는 화면 순서 그대로(1차시부터).
+    // 연수 일시·교육 형태는 TT canonical(import-legacy-registration-overlay)이 따로 읽는다.
     sessions.push({
-      sessionLabel: replaceFirstTraining ? '교육 연수' : isMulti ? `${i}회차` : `${i}차시`,
+      sessionLabel: isMulti ? `${i}회차` : `${i}차시`,
       title,
       description,
       assignmentEnabled: hideAssignment ? false : Boolean(assignment?.enabled),
@@ -455,9 +456,8 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
               (participationBySession[i] as 'individual' | 'team' | undefined) ?? 'individual'
             )
           : undefined,
-      ipsTypeSummary: replaceFirstTraining
-        ? buildSessionIpsTypeSummary('prepare', 'none')
-        : ipsDetail === 'perSchedule'
+      ipsTypeSummary:
+        ipsDetail === 'perSchedule'
           ? buildSessionIpsTypeSummary(
               (ips?.category as ProgramRegistrationIpsCategory | '') ?? 'prepare',
               ips?.detail ?? 'none'

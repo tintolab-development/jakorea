@@ -5,6 +5,8 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TrainedTeacherProgramDetailResponseTeacherTrainingEducationFormat } from './trainedTeacherProgramDetailResponseTeacherTrainingEducationFormat';
+import type { TrainedTeacherTrainingSchedule } from './trainedTeacherTrainingSchedule';
 
 export interface TrainedTeacherProgramDetailResponse {
   programId?: number;
@@ -15,4 +17,8 @@ export interface TrainedTeacherProgramDetailResponse {
   journalSubmissionLimitType?: string;
   configJson?: string;
   updatedAt?: string;
+  /** 교사 연수 교육 형태. ONLINE|OFFLINE|HYBRID 또는 null. teacherTrainingEnabled=false이거나 저장된 값이 없으면 null. 커리큘럼 차시의 교육 형태로 채우지 않습니다. IPS 유형은 Prepare 고정이라 저장·반환하지 않습니다. */
+  teacherTrainingEducationFormat?: TrainedTeacherProgramDetailResponseTeacherTrainingEducationFormat;
+  /** 교사 연수 일정(program_schedule) 읽기 전용 투영. teacherTrainingEnabled=true이고 일정명이 teacherTrainingScheduleName과 같은(대소문자·앞뒤 공백 무시) 활성 일정 중 시작 시각이 가장 빠른 1건. 연수 일정은 configJson.generalCommonInfo.scheduleDetails의 같은 이름 행으로 저장합니다. 없으면 null. */
+  teacherTrainingSchedule?: TrainedTeacherTrainingSchedule | null;
 }

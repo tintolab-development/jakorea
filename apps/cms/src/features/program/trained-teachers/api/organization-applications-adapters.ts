@@ -258,6 +258,10 @@ type TrainedTeacherOrganizationApplicationDto = (
   requestedEducationFormat?: string | null
   /** 신청 답 educationFormat (online|offline|hybrid). requestedEducationFormat과 동일 의미 */
   educationFormat?: string | null
+  /** 상세 전용 — 신청 답 기본 정보의 교육 장소 코드 원문(inside|outside|custom). 구버전 응답은 없음 */
+  educationPlace?: string | null
+  /** 상세 전용 — 교육 장소 상세(직접 입력) */
+  educationPlaceDetail?: string | null
   textbookId?: number | string | null
   textbookDeliveryStatus?: string | null
   textbookKits?: number | null
@@ -302,6 +306,32 @@ export function formatTrainedTeacherRequestedEducationFormat(
     default:
       return ''
   }
+}
+
+/** 홈페이지 신청 폼 교육 장소 코드 ↔ 라벨 (apps/platform `EDUCATION_PLACE_OPTIONS`와 같은 코드) */
+const TRAINED_TEACHER_EDUCATION_PLACE_LABELS: Record<string, string> = {
+  inside: '기관 안',
+  outside: '기관 밖',
+  custom: '기타',
+}
+
+/**
+ * TT 신청 교육 장소 표시 — 「라벨」 + (상세 있으면 ` / 상세`). 둘 다 없으면 ''.
+ * 모르는 코드는 원문 그대로 둔다(라벨을 지어내지 않음).
+ */
+export function formatTrainedTeacherEducationPlace(
+  place: string | null | undefined,
+  placeDetail: string | null | undefined
+): string {
+  const normalize = (raw: string | null | undefined): string => {
+    const trimmed = typeof raw === 'string' ? raw.trim() : ''
+    return trimmed === '-' ? '' : trimmed
+  }
+  const code = normalize(place)
+  const detail = normalize(placeDetail)
+  const label = code ? (TRAINED_TEACHER_EDUCATION_PLACE_LABELS[code.toLowerCase()] ?? code) : ''
+  if (label && detail) return `${label} / ${detail}`
+  return label || detail
 }
 
 /** TT 상세/목록 루트 키트·권수. gradeBlocks·프로그램 materials로 채우지 않는다. */
@@ -479,6 +509,8 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     formatTrainedTeacherRequestedEducationFormat(
       dto.requestedEducationFormat ?? dto.educationFormat
     ) || undefined
+  const educationLocation =
+    formatTrainedTeacherEducationPlace(dto.educationPlace, dto.educationPlaceDetail) || undefined
   const lectureRound = dto.lectureRound?.trim() || undefined
   const progressLabel = dto.progressLabel?.trim() || undefined
   const textbookName = dto.textbookName?.trim() || undefined
@@ -503,6 +535,7 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
     ...(educationType ? { educationType } : {}),
+    ...(educationLocation ? { educationLocation } : {}),
     ...(teacherEmailMasked ? { teacherEmail: teacherEmailMasked } : {}),
     ...(textbookId ? { textbookId } : {}),
   }

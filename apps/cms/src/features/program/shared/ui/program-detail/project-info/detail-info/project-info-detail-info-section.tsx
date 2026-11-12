@@ -72,8 +72,10 @@ const ATTACHMENT_GUIDE_LINES = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES
  * 상세 정보 파일·문구 스펙.
  * - `default`: 기존 동작(1사1교·UJAT·교육받은 교사 등)
  * - `general`: 일반 프로그램 모집 정보 수정 시안(02-1·02-2·03-2) — HWP 허용, 최대 10개·총 100MB, 안내 문구
+ * - `company-school`: 1사1교 참여 기관 모집 정보 시안(4175:101670·102464) — `general` + 학습 지원 내용 placeholder
+ * - `trained-teachers`: 교육받은 교사 참여 기관 모집 정보 — 일반 기관 시안과 같은 스펙(`company-school`과 동일 문구)
  */
-export type DetailInfoSectionVariant = 'default' | 'general'
+export type DetailInfoSectionVariant = 'default' | 'general' | 'company-school' | 'trained-teachers'
 
 const GENERAL_DETAIL_SECTION_DESCRIPTION = '공란인 경우, 홈페이지 모집 상세에서 항목 미노출됩니다.'
 const GENERAL_THUMBNAIL_GUIDE_LINES = [
@@ -90,10 +92,16 @@ const GENERAL_ATTACHMENT_MAX_TOTAL_BYTES = 100 * 1024 * 1024
 const GENERAL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE = '첨부 파일은 최대 10개까지 등록할 수 있습니다.'
 const GENERAL_ATTACHMENT_TOTAL_EXCEEDED_MESSAGE = '첨부 파일은 총 100MB까지 업로드 가능합니다.'
 const GENERAL_APPLICATION_METHOD_PLACEHOLDER = '지원 방법을 작성해 주세요'
+const COMPANY_SCHOOL_LEARNING_SUPPORT_PLACEHOLDER = '학습 지원 내용을 작성해 주세요'
 
 function resolveDetailInfoVariantCopy(variant: DetailInfoSectionVariant) {
-  const isGeneral = variant === 'general'
+  const isGeneral =
+    variant === 'general' || variant === 'company-school' || variant === 'trained-teachers'
   return {
+    learningSupportPlaceholder:
+      variant === 'company-school' || variant === 'trained-teachers'
+        ? COMPANY_SCHOOL_LEARNING_SUPPORT_PLACEHOLDER
+        : undefined,
     thumbnailGuideLines: isGeneral ? GENERAL_THUMBNAIL_GUIDE_LINES : THUMBNAIL_GUIDE_LINES,
     attachmentGuideLines: isGeneral ? GENERAL_ATTACHMENT_GUIDE_LINES : ATTACHMENT_GUIDE_LINES,
     attachmentAccept: isGeneral ? GENERAL_ATTACHMENT_ACCEPT : RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
@@ -1135,7 +1143,7 @@ export function DetailInfoSection({
           form={f}
           program={program}
           name="learningSupportContent"
-          placeholder="학습 지원 내용"
+          placeholder={variantCopy.learningSupportPlaceholder ?? '학습 지원 내용'}
           readContent={resolveTextReadContent(
             program.learningSupportContent,
             emptyReadDisplay,

@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -69,6 +77,10 @@ import {
   listIncompleteApplicationFormThirdPartyRecipientFieldKeys,
 } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
+import {
+  buildAnnouncementPublishConfirmContent,
+  listPublishedRecruitAnnouncements,
+} from '@/features/program/general/lib/registration-announcement-publish-confirm'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   hydrateRegistrationProgramDraft,
@@ -134,6 +146,11 @@ export type UseGeneralProgramRegistrationFlowOptions = {
   skipDraftRestore?: boolean
   /** 필수 미입력 검증 실패 시 — 인라인 강조용 진단 키 */
   reportValidationIncomplete?: (keys: readonly string[]) => void
+  /**
+   * 필수 미입력 팝업 본문 — 진단 키로 「탭 > 항목」 목록을 만든다(일반 프로그램만, QA-0042).
+   * 생략 시 공통 안내 문구(1사1교·교육받은 교사 기존 동작).
+   */
+  buildRequiredFieldsAlertContent?: (keys: readonly string[]) => ReactNode
 }
 
 function resolveStepTemplateName(templateId: string): string {
@@ -679,6 +696,12 @@ export function useGeneralProgramRegistrationFlow(
     [coercedActiveStep, options, participantFlags, registrationFormVariant, registrationVm]
   )
 
+  const requiredFieldsAlertContent = useCallback(
+    (keys: readonly string[]): ReactNode =>
+      options?.buildRequiredFieldsAlertContent?.(keys) ?? REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+    [options]
+  )
+
   const goToPhase = useCallback(
     (nextPhase: GeneralProgramRegistrationPhaseKey) => {
       const shouldCheckRequired =
@@ -701,7 +724,7 @@ export function useGeneralProgramRegistrationFlow(
         )
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          content: requiredFieldsAlertContent(incompleteKeys),
         })
         return
       }
@@ -754,7 +777,7 @@ export function useGeneralProgramRegistrationFlow(
           options?.reportValidationIncomplete?.(recruitIncompleteKeys)
           showAlert({
             title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+            content: requiredFieldsAlertContent(recruitIncompleteKeys),
           })
           return
         }
@@ -787,6 +810,7 @@ export function useGeneralProgramRegistrationFlow(
       registrationFormVariant,
       options,
       registrationVm,
+      requiredFieldsAlertContent,
       selectStep,
       showAlert,
       tabVisibility,
@@ -809,7 +833,12 @@ export function useGeneralProgramRegistrationFlow(
     void participantVm.handleSave()
   }, [isProgramStep, registrationVm, participantVm])
 
-  const handleCompleteRegistration = useCallback(() => {
+  /** 「게시」 공고 확인 팝업 본문 — null 이면 닫힘 (QA-0121) */
+  const [announcementPublishConfirmContent, setAnnouncementPublishConfirmContent] = useState<
+    string | null
+  >(null)
+
+  const completeRegistration = useCallback((publishConfirmed: boolean) => {
     if (!SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK) {
       const current =
         isParticipantStep && selectedTemplateCode.startsWith('application-')
@@ -847,7 +876,7 @@ export function useGeneralProgramRegistrationFlow(
         console.debug('[registration] 신청 양식 제공받는 곳 미입력:', recipientReason)
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          content: requiredFieldsAlertContent(applicationIncompleteKeys),
         })
         return
       }
@@ -865,7 +894,7 @@ export function useGeneralProgramRegistrationFlow(
         )
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          content: requiredFieldsAlertContent(incompleteKeys),
         })
         return
       }
@@ -904,7 +933,7 @@ export function useGeneralProgramRegistrationFlow(
           options?.reportValidationIncomplete?.(recruitIncompleteKeys)
           showAlert({
             title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+            content: requiredFieldsAlertContent(recruitIncompleteKeys),
           })
           return
         }
@@ -920,6 +949,22 @@ export function useGeneralProgramRegistrationFlow(
           })
           return
         }
+      }
+    }
+
+    // 공고 게시 기본값은 미게시 — 「게시」를 고른 탭이 있으면 노출 대상·시점을 확인받은 뒤 등록한다.
+    if (
+      !publishConfirmed &&
+      (registrationFormVariant === 'general' || registrationFormVariant === 'economy')
+    ) {
+      const published = listPublishedRecruitAnnouncements(
+        registrationVm.buildCurrentProgramSnapshot(
+          registrationPendingSnapshotId(registrationFormVariant)
+        )
+      )
+      if (published.length > 0) {
+        setAnnouncementPublishConfirmContent(buildAnnouncementPublishConfirmContent(published))
+        return
       }
     }
 
@@ -1004,8 +1049,26 @@ export function useGeneralProgramRegistrationFlow(
     programType,
     registrationFormVariant,
     registrationVm,
+    requiredFieldsAlertContent,
     showAlert,
   ])
+
+  const handleCompleteRegistration = useCallback(() => {
+    completeRegistration(false)
+  }, [completeRegistration])
+
+  const announcementPublishConfirm = useMemo(
+    () => ({
+      open: announcementPublishConfirmContent != null,
+      content: announcementPublishConfirmContent ?? '',
+      onConfirm: () => {
+        setAnnouncementPublishConfirmContent(null)
+        completeRegistration(true)
+      },
+      onCancel: () => setAnnouncementPublishConfirmContent(null),
+    }),
+    [announcementPublishConfirmContent, completeRegistration]
+  )
 
   const selectStepTemplate = useCallback(
     async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
@@ -1062,6 +1125,7 @@ export function useGeneralProgramRegistrationFlow(
     handleSave,
     persistDraftSilent,
     handleCompleteRegistration,
+    announcementPublishConfirm,
     registrationVm,
     participantVm,
     participantFlags,

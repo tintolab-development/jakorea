@@ -30,15 +30,15 @@ afterEach(() => clearOperationalSeedDefaultSuppression())
 describe('withGeneralRecruitRadioDefaults', () => {
   it('선택된 탭의 미기록 라디오를 화면 기본값으로 채운다', () => {
     expect(withGeneralRecruitRadioDefaults({}, ALL, { wizardKv: true })).toEqual({
-      'recruit.announcementPublished': 'published',
+      'recruit.announcementPublished': '',
       'recruit.studentListRequired': 'need',
       'recruit.preguidanceRequired': 'need',
-      'recruit.individual.announcementPublished': 'published',
-      'recruit.individual.interviewRequired': 'yes',
-      'recruit.instructor.announcementPublished': 'published',
+      'recruit.individual.announcementPublished': '',
+      'recruit.individual.interviewRequired': '',
+      'recruit.instructor.announcementPublished': '',
       [RECRUIT_INSTRUCTOR_TARGETS_KEY]: [...RECRUIT_INSTRUCTOR_TARGETS_DEFAULT],
-      'recruit.volunteer.announcementPublished': 'published',
-      'recruit.volunteer.interviewRequired': 'yes',
+      'recruit.volunteer.announcementPublished': '',
+      'recruit.volunteer.interviewRequired': '',
     })
   })
 
@@ -50,13 +50,13 @@ describe('withGeneralRecruitRadioDefaults', () => {
     expect(withGeneralRecruitRadioDefaults(kv, { ...NONE, individual: true })).toEqual(kv)
   })
 
-  it("공고 게시 '' 은 화면 미선택이라 유지, 면접 유무 '' 는 화면이 면접 있음이라 yes", () => {
+  it("공고 게시·면접 유무 '' 은 화면 미선택이라 그대로 둔다(QA-0121)", () => {
     const out = withGeneralRecruitRadioDefaults(
       { 'recruit.volunteer.announcementPublished': '', 'recruit.volunteer.interviewRequired': '' },
       { ...NONE, volunteer: true }
     )
     expect(out['recruit.volunteer.announcementPublished']).toBe('')
-    expect(out['recruit.volunteer.interviewRequired']).toBe('yes')
+    expect(out['recruit.volunteer.interviewRequired']).toBe('')
   })
 
   it('선택하지 않은 탭은 건드리지 않고 같은 객체를 돌려준다', () => {
@@ -79,17 +79,17 @@ describe('withGeneralRecruitRadioDefaults', () => {
     const tab = { ...NONE, teacherInstructor: true }
     expect(withGeneralRecruitRadioDefaults({}, tab)).toEqual({})
     expect(withGeneralRecruitRadioDefaults({}, tab, { wizardKv: true })).toEqual({
-      'recruit.instructor.announcementPublished': 'published',
+      'recruit.instructor.announcementPublished': '',
       [RECRUIT_INSTRUCTOR_TARGETS_KEY]: [...RECRUIT_INSTRUCTOR_TARGETS_DEFAULT],
     })
   })
 
-  it('강사 모집 대상: teacherInstructor이고 키가 없으면 성인으로 채운다', () => {
+  it('강사 모집 대상: teacherInstructor이고 키가 없으면 빈 선택([])으로 채운다(QA-0121 — 성인 기본 선택 제거)', () => {
     expect(
       withGeneralRecruitRadioDefaults({}, { ...NONE, teacherInstructor: true }, { wizardKv: true })[
         RECRUIT_INSTRUCTOR_TARGETS_KEY
       ]
-    ).toEqual(['adult'])
+    ).toEqual([])
   })
 
   it("강사 모집 대상: 사용자 값 ['high']는 유지한다", () => {
@@ -156,9 +156,8 @@ describe('강사 모집 대상 — 필수 검사와 CREATE가 같은 기본값�
     registerGeneralRegistrationWizardRhf(null)
   })
 
-  it('키가 없으면 필수 검사는 미입력으로 보지 않고 CREATE에 성인을 싣는다', () => {
-    const kv: Record<string, unknown> = {}
-    registerWizardKv(kv)
+  it('키가 없으면(미선택) 필수 검사가 막고, 고른 값만 CREATE에 싣는다', () => {
+    registerWizardKv({})
     const missing = listIncompleteGeneralProgramRecruitmentRequiredFields({
       participant: INSTRUCTOR_TAB,
       programType: 'curriculum',
@@ -166,7 +165,9 @@ describe('강사 모집 대상 — 필수 검사와 CREATE가 같은 기본값�
       educationScheduleMode: 'date',
       volunteerExceptionScheduleCount: 0,
     })
-    expect(missing).not.toContain('recruit.instructor.recruitTargets')
+    expect(missing).toContain('recruit.instructor.recruitTargets')
+
+    const kv: Record<string, unknown> = { [RECRUIT_INSTRUCTOR_TARGETS_KEY]: ['adult'] }
 
     const values = createDefaultRegistrationWizardUiValues({
       programType: 'curriculum',
@@ -225,12 +226,12 @@ describe('강사 모집 대상 — 필수 검사와 CREATE가 같은 기본값�
     })
     expect(built.persistOverlay['recruit.targetLevels']).toEqual(['high'])
     expect(built.persistOverlay['recruit.volunteer.volunteerTargets']).toEqual(['university'])
-    expect(built.persistOverlay[RECRUIT_INSTRUCTOR_TARGETS_KEY]).toEqual(['adult'])
+    expect(built.persistOverlay[RECRUIT_INSTRUCTOR_TARGETS_KEY]).toEqual([])
   })
 })
 
 describe('위저드 RHF 생성 — 공고 게시 라디오 미조작', () => {
-  it('개인·강사 공고 게시 미조작 → create 에 게시(true)로 저장', () => {
+  it('개인·강사 공고 게시 미조작 → 게시로 채우지 않는다(미선택, QA-0121)', () => {
     const values = createDefaultRegistrationWizardUiValues({
       programType: 'curriculum',
       sessionRoundType: 'single',
@@ -244,8 +245,8 @@ describe('위저드 RHF 생성 — 공고 게시 라디오 미조작', () => {
     } as typeof values
     const built = buildGeneralProgramCreateFromWizardRhf({ id: 'local-wizard', uiValues: ui })
     const info = built.program.generalCommonInfo
-    expect(info?.participantRecruitmentInfo?.announcementPublished).toBe(true)
-    expect(info?.instructorRecruitmentInfo?.announcementPublished).toBe(true)
+    expect(info?.participantRecruitmentInfo?.announcementPublished).not.toBe(true)
+    expect(info?.instructorRecruitmentInfo?.announcementPublished).not.toBe(true)
   })
 })
 

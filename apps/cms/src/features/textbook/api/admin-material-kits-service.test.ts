@@ -61,12 +61,12 @@ describe('quantitiesToMaterialKitCurrentConfigRequest', () => {
       high: '32',
       university: '32',
     }
-    expect(() => quantitiesToMaterialKitCurrentConfigRequest(invalid)).toThrow(/1 이상의 정수/)
+    expect(() => quantitiesToMaterialKitCurrentConfigRequest(invalid)).toThrow(/1~999 사이의 정수/)
     expect(() =>
       quantitiesToMaterialKitCurrentConfigRequest({ ...invalid, kindergarten: '1.5' })
-    ).toThrow(/1 이상의 정수/)
+    ).toThrow(/1~999 사이의 정수/)
     expect(() =>
       quantitiesToMaterialKitCurrentConfigRequest({ ...invalid, kindergarten: '' })
-    ).toThrow(/1 이상의 정수/)
+    ).toThrow(/1~999 사이의 정수/)
   })
 })
