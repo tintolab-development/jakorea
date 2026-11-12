@@ -242,9 +242,15 @@ function buildScheduleSlotCardDisplay(
     sanitizeScheduleSessionLabel(parsedLabel.sessionLabel ?? '')
   const orgTitle = joinScheduleCardLine([schoolName, region])
   const serverTimeRange = readScheduleMetaString(option, meta, ['timeRange'])
+  // 서버 라벨에 적힌 시각 범위(기관이 신청한 희망 일정 그대로)를 startAt 재계산보다 먼저 쓴다.
+  // startAt 오프셋이 어긋나도(예: 09:00 → 18:00) 기관 희망 일정과 같은 시각을 보여 준다(QA 2026-11-13 1사1교 #11).
+  const labelTimeRange =
+    parsedLabel.timeRange && isTimeRangeLikeText(parsedLabel.timeRange) ? parsedLabel.timeRange : ''
   const timeRange = isTimeRangeLikeText(serverTimeRange)
     ? serverTimeRange.trim()
-    : parsedLabel.timeRange &&
+    : labelTimeRange
+      ? labelTimeRange
+      : parsedLabel.timeRange &&
     start &&
     start.time === '00:00' &&
     (end == null || end.time === '00:00')

@@ -246,6 +246,13 @@ function testDetailCaseSsotMapping() {
   const ujatVol = mapCmsProgramToPlatformDetail(UJAT_VOLUNTEER_FIXTURE)
   assert.equal(ujatVol.detailCase, 'ujat-volunteer')
   assert.equal(ujatVol.category, 'youth')
+  assert.equal(ujatVol.basicInfoFields.some(field => field.label === '교육 지역'), false)
+  assert.ok(ujatVol.basicInfoFields.some(field => field.label === '모집 대상'))
+  assert.ok(ujatVol.basicInfoFields.some(field => field.label === '교육 장소'))
+  assert.equal(
+    ujatVol.basicInfoFields.some(field => field.value === '대학(원)생' && field.label === '대상'),
+    false,
+  )
   assert.ok(ujatVol.recruitmentPhases.some(p => p.label === '봉사자 모집 기간'))
   assert.match(ujatVol.recruitmentPhases[0]?.value ?? '', /2028/)
   assert.equal(ujatVol.recruitmentStatus, RECRUITMENT_STATUS.scheduled)
@@ -293,8 +300,8 @@ function testDetailCaseSsotMapping() {
   assert.ok(ujatOrg.basicInfoFields.some(field => field.label === '교육 장소'))
   assert.equal(ujatOrg.basicInfoFields.some(field => field.label === '대상'), false)
   assert.deepEqual(ujatOrg.educationSchedules, [])
-  assert.ok(ujatOrg.eventSchedules.some(s => s.scheduleLabel === '상반기' && s.name === '교육 진행'))
-  assert.ok(ujatOrg.eventSchedules.some(s => s.scheduleLabel === '하반기' && s.name === '교육 진행'))
+  assert.ok(ujatOrg.eventSchedules.some(s => s.scheduleLabel === '상반기(1학기)' && s.name === '교육 진행'))
+  assert.ok(ujatOrg.eventSchedules.some(s => s.scheduleLabel === '하반기(2학기)' && s.name === '교육 진행'))
   assert.ok(ujatOrg.extraSections.some(s => s.title === '학습 지원 내용'))
   assert.ok(!ujatOrg.extraSections.some(s => s.title === '기타사항'))
   assert.ok(ujatOrg.contactValue.includes('school@jakorea.org'))
