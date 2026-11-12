@@ -1,8 +1,12 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import schoolIconUrl from '@/shared/assets/icons/school-primary-700-20.svg'
 import { PFCategoryBadge, PFStateBadge } from '@/shared/ui'
 import { RECRUITMENT_STATUS_TONE_MAP } from '../lib/badge-config'
 import type { EducationForm } from '../model/types'
+import typeClassIconUrl from '../image/icon/type-class-20.svg'
+import typeOfflineIconUrl from '../image/icon/type-offline-20.svg'
+import typeOnlineIconUrl from '../image/icon/type-online-20.svg'
+import typeOnOfflineIconUrl from '../image/icon/type-onoffline-20.svg'
+import typeTargetIconUrl from '../image/icon/type-target-20.svg'
 import styles from './program-status-badges.module.css'
 
 type ProgramStatusBadgesProps = {
@@ -32,6 +36,14 @@ function platformRecruitmentStatusLabel(status: RecruitmentStatus) {
   return '모집중'
 }
 
+/** 시안 Icon Type / 20 — 교육 형태별 아이콘(참여자 선택은 시안에 없어 수업 아이콘) */
+const EDUCATION_FORM_TYPE_ICON: Record<EducationForm, string> = {
+  online: typeOnlineIconUrl,
+  offline: typeOfflineIconUrl,
+  hybrid: typeOnOfflineIconUrl,
+  participant_choice: typeClassIconUrl,
+}
+
 function shouldShowRoleBadge(roleLabel: string | undefined, showParticipantRole: boolean): boolean {
   if (!roleLabel?.trim()) return false
   if (showParticipantRole) return true
@@ -42,7 +54,7 @@ function shouldShowRoleBadge(roleLabel: string | undefined, showParticipantRole:
 export function ProgramStatusBadges({
   recruitmentStatus,
   educationTargetLabel,
-  educationForm: _educationForm,
+  educationForm,
   educationFormLabel,
   recruitmentRoleLabel,
   showParticipantRole = false,
@@ -62,13 +74,15 @@ export function ProgramStatusBadges({
     .join(' ')
 
   /**
-   * regular(목록 카드): Figma Badge Category icon·large — 학교 아이콘 20px, pl12·pr16, gap 6.
+   * regular(목록 카드): Figma Badge Category icon·large — 20px 아이콘, pl12·pr16, gap 6.
+   * 시안: 교육 대상=수업, 교육 형태=온라인·오프라인·온/오프라인, 모집 역할=대상 아이콘.
    * 아이콘은 PC만 — 모바일은 CSS로 숨기고 기존 24px 배지 그대로.
    */
   const withIcon = size === 'regular'
-  const categoryIcon = withIcon ? (
-    <img className={styles.categoryIcon} src={schoolIconUrl} alt="" aria-hidden="true" width={20} height={20} />
-  ) : undefined
+  const renderIcon = (src: string) =>
+    withIcon ? (
+      <img className={styles.categoryIcon} src={src} alt="" aria-hidden="true" width={20} height={20} />
+    ) : undefined
   const categoryBadgeSize = withIcon ? 'large' : 'small'
 
   return (
@@ -86,7 +100,13 @@ export function ProgramStatusBadges({
       </PFStateBadge>
 
       {showRole ? (
-        <PFCategoryBadge size="small" variant="primary" className={badgeClassName}>
+        <PFCategoryBadge
+          size={withIcon ? 'large' : 'small'}
+          variant="primary"
+          icon={renderIcon(typeTargetIconUrl)}
+          iconVariant="primary"
+          className={badgeClassName}
+        >
           {recruitmentRoleLabel}
         </PFCategoryBadge>
       ) : null}
@@ -95,7 +115,7 @@ export function ProgramStatusBadges({
         <PFCategoryBadge
           size={categoryBadgeSize}
           variant="secondary"
-          icon={categoryIcon}
+          icon={renderIcon(typeClassIconUrl)}
           iconVariant="primary"
           className={badgeClassName}
         >
@@ -107,7 +127,7 @@ export function ProgramStatusBadges({
         <PFCategoryBadge
           size={categoryBadgeSize}
           variant="secondary"
-          icon={categoryIcon}
+          icon={renderIcon(educationForm ? EDUCATION_FORM_TYPE_ICON[educationForm] : typeClassIconUrl)}
           iconVariant="primary"
           className={badgeClassName}
         >
