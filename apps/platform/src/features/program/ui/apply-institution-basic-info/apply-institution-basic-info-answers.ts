@@ -8,6 +8,16 @@ const EDUCATION_FORMAT_VALUES = new Set<PortalEducationFormat>([
   'hybrid',
 ])
 
+/**
+ * 교육 장소 코드 — 기본 정보 문단 답변 `educationPlace`에 이 값을 그대로 보낸다.
+ * CMS 교육받은 교사 기관 신청 상세가 같은 코드로 라벨을 붙인다(inside 기관 안 / outside 기관 밖 / custom 기타).
+ */
+export const PORTAL_EDUCATION_PLACE_OPTIONS = [
+  { value: 'inside', label: '기관 안' },
+  { value: 'outside', label: '기관 밖' },
+  { value: 'custom', label: '기타(직접입력)' },
+] as const
+
 export type ApplyInstitutionBasicInfoValues = {
   schoolName: string
   /** 기관 소재지 표시 (프로필 자동) */
