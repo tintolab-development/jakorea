@@ -2,6 +2,7 @@ import type { EducationForm } from '@/features/program'
 import type { EducationDisplayStatus } from '../model/types'
 import {
   EDUCATION_FORM_ICON_MAP,
+  educationRoleBadgeIconUrl,
   educationTargetBadgeIconUrl,
 } from '@/features/program'
 import {
@@ -11,7 +12,7 @@ import {
   type EducationDisplayStatusAudience,
 } from '../lib/display-status'
 import jaSendMintUrl from '@/shared/assets/icons/ja-send-mint.svg'
-import { PFCategoryBadge, PFText } from '@/shared/ui'
+import { PFText } from '@/shared/ui'
 import styles from './detail-header.module.css'
 
 type EducationDetailHeaderProps = {
@@ -62,8 +63,8 @@ export function EducationDetailHeader({
             className={styles.metaIcon}
             src={educationTargetBadgeIconUrl}
             alt=""
-            width={16}
-            height={14}
+            width={24}
+            height={24}
           />
           <PFText as="span" typo="bd-md-sb" color="primary-700">
             {educationTargetLabel}
@@ -75,18 +76,28 @@ export function EducationDetailHeader({
               className={styles.metaIcon}
               src={EDUCATION_FORM_ICON_MAP[educationForm]}
               alt=""
-              width={14}
-              height={14}
+              width={24}
+              height={24}
             />
             <PFText as="span" typo="bd-md-sb" color="primary-700">
               {educationFormLabel}
             </PFText>
           </span>
         ) : null}
+        {/* 시안: 역할도 대상·형태와 같은 아이콘(대상 아이콘)+글자 항목 */}
         {participationRoleLabel?.trim() ? (
-          <PFCategoryBadge size="small" variant="primary" className={styles.roleBadge}>
-            {participationRoleLabel.trim()}
-          </PFCategoryBadge>
+          <span className={styles.metaItem}>
+            <img
+              className={styles.metaIcon}
+              src={educationRoleBadgeIconUrl}
+              alt=""
+              width={24}
+              height={24}
+            />
+            <PFText as="span" typo="bd-md-sb" color="primary-700">
+              {participationRoleLabel.trim()}
+            </PFText>
+          </span>
         ) : null}
       </div>
     </header>
