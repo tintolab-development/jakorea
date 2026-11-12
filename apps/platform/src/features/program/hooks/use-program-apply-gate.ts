@@ -33,6 +33,9 @@ import { useProgramMinorPortraitGate } from './use-program-minor-portrait-gate'
 /** 필수 동의 하단 시트 문구 — `minor`: 만 14세 미만 회원 프로그램 초상권(보호자 본인인증 흐름) */
 export type ProgramRequiredConsentVariant = 'default' | 'minor'
 
+/** 대상 아님 모달 문구 — `teacher`: 교사 회원 신청 제한(원버튼) */
+export type ProgramNotEligibleVariant = 'default' | 'teacher'
+
 export function useProgramApplyGate(
   programId: string | null | undefined,
   selection?: ProgramApplicationSelection | null,
@@ -43,6 +46,8 @@ export function useProgramApplyGate(
   const [missingConsents, setMissingConsents] = useState<RequiredApplyConsentType[]>([])
   const [requiredConsentVariant, setRequiredConsentVariant] =
     useState<ProgramRequiredConsentVariant>('default')
+  const [notEligibleVariant, setNotEligibleVariant] =
+    useState<ProgramNotEligibleVariant>('default')
   /** 마지막 `findMissingRequiredConsents` 가 미성년 시도 미완료로 막았는지 */
   const minorPortraitPendingRef = useRef(false)
   /** `runApplyGate` 에서 넘긴 신청서 경로 (상세 → 신청서) */
@@ -205,6 +210,12 @@ export function useProgramApplyGate(
     [rememberMinorReturnTo, startMinorPortrait],
   )
 
+  /** 교사 회원 신청 제한 — 대상 아님 모달(원버튼) */
+  const openTeacherRestrictedModal = useCallback(() => {
+    setNotEligibleVariant('teacher')
+    setGateModal('not-eligible')
+  }, [])
+
   const runApplyGate = useCallback(
     async (
       onProceed: () => void,
@@ -223,7 +234,7 @@ export function useProgramApplyGate(
       try {
         const option = await fetchSelectedOption()
         if (await isTeacherRestrictedOption(option)) {
-          setGateModal('not-eligible')
+          openTeacherRestrictedModal()
           return
         }
         const modal = readGateModalForOptions(option?.canApply, option?.blockedReason ?? null)
@@ -257,6 +268,7 @@ export function useProgramApplyGate(
       findMissingRequiredConsents,
       isTeacherRestrictedOption,
       openRequiredConsentModal,
+      openTeacherRestrictedModal,
       preflightSelectedForm,
       programId,
       readGateModalForOptions,
@@ -265,6 +277,7 @@ export function useProgramApplyGate(
 
   const closeGateModal = useCallback(() => {
     setGateModal(null)
+    setNotEligibleVariant('default')
   }, [])
 
   return {
@@ -276,6 +289,9 @@ export function useProgramApplyGate(
     readGateModalForOptions,
     /** 신청서 직접 진입 — 교사 회원 신청 제한 모집인지 */
     isTeacherRestrictedOption,
+    openTeacherRestrictedModal,
+    /** `ProgramApplyGateModals.notEligibleVariant` 로 넘긴다 */
+    notEligibleVariant,
     missingConsents,
     findMissingRequiredConsents,
     openRequiredConsentModal,

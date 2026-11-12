@@ -543,13 +543,13 @@ export function ProgramApplyPage() {
     closeGateModal,
     readGateModalForOptions,
     isTeacherRestrictedOption,
+    openTeacherRestrictedModal,
+    notEligibleVariant,
     missingConsents,
     findMissingRequiredConsents,
     openRequiredConsentModal,
     minorPortraitGateModalProps,
   } = useProgramApplyGate(programId, applicationSelection)
-  /** 교사 회원 신청 제한 모집 — 대상 아님 모달을 닫으면 상세로 돌려보낸다 */
-  const [teacherApplyRestricted, setTeacherApplyRestricted] = useState(false)
   const [completeModalOpen, setCompleteModalOpen] = useState(false)
   const applyGatePromptedRef = useRef(false)
   const consentGatePromptedRef = useRef(false)
@@ -637,8 +637,7 @@ export function ProgramApplyPage() {
     void (async () => {
       // 교사 회원 신청 제한(일반 개인 참여자·봉사자 모집)을 필수 동의보다 먼저 본다.
       if (await isTeacherRestrictedOption(option)) {
-        setTeacherApplyRestricted(true)
-        setGateModal('not-eligible')
+        openTeacherRestrictedModal()
         return
       }
       const missing = await findMissingRequiredConsents()
@@ -653,7 +652,7 @@ export function ProgramApplyPage() {
     isReady,
     isTeacherRestrictedOption,
     openRequiredConsentModal,
-    setGateModal,
+    openTeacherRestrictedModal,
     program,
     programId,
     remoteApplyEnabled,
@@ -4022,7 +4021,8 @@ export function ProgramApplyPage() {
         kind={gateModal}
         onClose={() => {
           const wasRequiredConsent = gateModal === 'required-consent'
-          const wasTeacherRestricted = gateModal === 'not-eligible' && teacherApplyRestricted
+          const wasTeacherRestricted =
+            gateModal === 'not-eligible' && notEligibleVariant === 'teacher'
           closeGateModal()
           // 필수 동의·교사 신청 제한 모달 닫기 → 상세로 복귀 (replace: 뒤로가기로 신청서→모달 재진입 루프 방지)
           if ((wasRequiredConsent || wasTeacherRestricted) && program) {
@@ -4031,6 +4031,7 @@ export function ProgramApplyPage() {
         }}
         missingConsentTypes={missingConsents}
         {...minorPortraitGateModalProps}
+        notEligibleVariant={notEligibleVariant}
         onOpenConsents={() => {
           closeGateModal()
           navigate(programApplyGateConsentsPath)
