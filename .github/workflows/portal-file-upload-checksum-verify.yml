@@ -1,0 +1,65 @@
+name: Member portal upload checksum trusted verification
+
+on:
+  push:
+    branches:
+      - fix/portal-file-upload-checksum-20261111
+    paths:
+      - 'apps/platform/src/shared/lib/create-sha256.ts'
+      - 'apps/platform/src/shared/lib/create-sha256.selfcheck.ts'
+      - 'apps/platform/src/features/mypage/instructor-apply/api/member-file-upload.ts'
+      - 'apps/platform/package.json'
+      - '.github/workflows/portal-file-upload-checksum-verify.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-file-sha256-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+
+jobs:
+  platform-verify:
+    if: github.repository == 'tintolab-development/jakorea' && github.ref == 'refs/heads/fix/portal-file-upload-checksum-20261111'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout pinned commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.20.0'
+          cache: pnpm
+      - name: Install locked dependencies
+        env:
+          HUSKY: '0'
+        run: pnpm install --frozen-lockfile
+      - name: Build platform workspace dependencies
+        run: pnpm --filter platform run build:workspace-deps
+      - name: SHA-256 deterministic selfcheck
+        run: node --experimental-strip-types --experimental-transform-types apps/platform/src/shared/lib/create-sha256.selfcheck.ts
+      - name: Platform typecheck
+        run: pnpm --filter platform typecheck
+      - name: Platform production build (no deploy)
+        run: pnpm --filter platform build
+      - name: Verify build artifact
+        run: test -s apps/platform/dist/index.html

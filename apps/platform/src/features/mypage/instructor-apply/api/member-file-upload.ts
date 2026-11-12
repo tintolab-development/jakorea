@@ -1,5 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
-import { createSha256 } from '@/shared/lib/create-sha256'
+import { resolveMemberPortalUploadSha256 } from '@/shared/lib/create-sha256'
 import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
 import { FILE_UPLOAD_MAX_BYTES } from '@/shared/lib/file-upload-policy'
 import { resolvePortalPresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
@@ -369,12 +369,15 @@ export async function uploadMemberPortalFile(input: {
   const contentType = input.policy
     ? resolvePolicyFileType(input.file, input.policy)
     : resolveMemberPortalUploadContentType(input.file)
-  let checksumSha256 = input.checksumSha256?.trim() || undefined
-  if (!checksumSha256 && isPortalElectronicSignaturePurpose(String(input.filePurpose))) {
-    checksumSha256 = await createSha256(input.file)
-  }
-  return withFileUploadOverlay(() =>
-    uploadPreparedMemberPortalFile({
+  return withFileUploadOverlay(async () => {
+    throwIfAborted(input.signal)
+    notifyStatus('PREPARING')
+    const checksumSha256 = await resolveMemberPortalUploadSha256(
+      input.file,
+      input.checksumSha256,
+    )
+    throwIfAborted(input.signal)
+    return uploadPreparedMemberPortalFile({
       file: input.file,
       filePurpose: input.filePurpose,
       fileSize,
@@ -384,7 +387,7 @@ export async function uploadMemberPortalFile(input: {
       signal: input.signal,
       classify: input.classify,
     })
-  )
+  })
 }
 
 async function uploadPreparedMemberPortalFile(input: {

@@ -9,3 +9,22 @@ export async function createSha256(file: Blob): Promise<string> {
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('')
 }
+
+/**
+ * Member portal uploads always need an actual SHA-256 before issuing a presigned PUT.
+ * Reuse an already-computed value (for example, from an image editor) to avoid
+ * calculating large files twice, but never send missing or malformed digests.
+ */
+export async function resolveMemberPortalUploadSha256(
+  file: Blob,
+  alreadyComputed?: string,
+): Promise<string> {
+  const normalized = alreadyComputed?.trim()
+  if (normalized) {
+    if (!/^[0-9a-fA-F]{64}$/.test(normalized)) {
+      throw new Error('Invalid SHA-256 checksum')
+    }
+    return normalized.toLowerCase()
+  }
+  return createSha256(file)
+}
