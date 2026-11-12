@@ -6,7 +6,7 @@ import defaultTextbookThumbnailUrl from '@/shared/assets/illustration/illust-boo
 import badgeCategoryIconUrl from '../image/icon/badge-category.svg'
 import badgeSkillIconUrl from '../image/icon/badge-skill.svg'
 import badgeTargetIconUrl from '../image/icon/badge-target.svg'
-import searchIconUrl from '../image/icon/search.svg'
+import searchIconUrl from '@/shared/assets/icons/search-white-24.svg'
 import styles from './content-list-item.module.css'
 
 type ContentListItemProps = {
