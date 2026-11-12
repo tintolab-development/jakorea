@@ -13,9 +13,8 @@ import {
 } from '@/features/sponsor/api/admin-sponsors-service'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import {
-  applyCreatedContactToDetail,
   applyDeletedContactsToDetail,
-  applyUpdatedContactToDetail,
+  refetchSponsorContactsAfterSave,
 } from '@/features/sponsor/lib/contact-query-cache'
 import { applySponsorStatusToCachedLists } from '@/features/sponsor/lib/apply-status-to-list'
 import type {
@@ -277,16 +276,16 @@ export function useSponsorMutations() {
       payload: Parameters<typeof addSponsorContact>[1]
       contactType: Parameters<typeof addSponsorContact>[2]
     }) => addSponsorContact(sponsorId, payload, contactType),
-    onSuccess: (created, variables) => {
-      applyCreatedContactToDetail(queryClient, variables.sponsorId, created)
+    onSuccess: async (_created, variables) => {
+      await refetchSponsorContactsAfterSave(queryClient, variables.sponsorId)
     },
   })
 
   const updateContactMutation = useMutation({
     mutationFn: ({ row }: { row: Parameters<typeof updateSponsorContact>[0]; sponsorId: string }) =>
       updateSponsorContact(row),
-    onSuccess: (updated, variables) => {
-      applyUpdatedContactToDetail(queryClient, variables.sponsorId, updated)
+    onSuccess: async (_updated, variables) => {
+      await refetchSponsorContactsAfterSave(queryClient, variables.sponsorId)
     },
   })
 
