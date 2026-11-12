@@ -12,6 +12,7 @@ import {
 } from '@/features/program/general/lib/registration-overlay-to-program'
 import { resolveTrainedTeacherEducationJournalEnabled } from '@/features/program/general/lib/registration-local-save'
 import { collectTrainedTeachersApplicationFormState } from './application-form-state'
+import { normalizeTeacherTrainingEducationFormat } from './teacher-training-block'
 import { collectTrainedTeachersRecruitFormState } from './recruit-form-state'
 import {
   TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
@@ -67,10 +68,60 @@ function createImportBaseline(id: string, editor: TrainedTeachersRegistrationEdi
   }
 }
 
+const TEACHER_TRAINING_LINE_KEYS = [
+  'generalRegistration.educationCurriculum.preEducationScheduleLine',
+  'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine',
+] as const
+const TEACHER_TRAINING_FORM_BY_SESSION_KEYS = [
+  'generalRegistration.educationCurriculum.educationFormBySession',
+  'trainedTeachersRegistration.educationCurriculum.educationFormBySession',
+] as const
+const TEACHER_TRAINING_FORM_KEYS = [
+  'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm',
+  'generalRegistration.educationCurriculum.teacherTrainingEducationForm',
+] as const
+
+/**
+ * ■ 교사 연수 블록(prepend) 값 — 진행 일정 줄 + 교육 형태(블록 라디오 = educationFormBySession[0]).
+ * 커리큘럼형만. 일정형(신규 등록 미노출)은 기존 첫 세부 일정 행이 연수다.
+ */
+function extractTeacherTrainingBlock(
+  overlays: ReadonlyArray<Record<string, unknown>>,
+  editor: TrainedTeachersRegistrationEditorMeta
+): Pick<
+  TrainedTeachersRegistrationCommonCanonical,
+  'teacherTrainingScheduleLine' | 'teacherTrainingEducationFormat'
+> {
+  if (!editor.teacherTrainingEnabled || editor.educationStructure !== 'curriculum') return {}
+  const read = (key: string): unknown => {
+    for (const overlay of overlays) {
+      if (Object.prototype.hasOwnProperty.call(overlay, key)) return overlay[key]
+    }
+    return undefined
+  }
+  const line = TEACHER_TRAINING_LINE_KEYS.map(key => read(key)).find(
+    (value): value is string => typeof value === 'string' && value.trim() !== ''
+  )
+  const fromBlock = TEACHER_TRAINING_FORM_BY_SESSION_KEYS.map(key => read(key))
+    .map(value =>
+      value != null && typeof value === 'object' ? (value as Record<string, unknown>)[0] : undefined
+    )
+    .find(value => typeof value === 'string' && value.trim() !== '')
+  const fromLegacy = TEACHER_TRAINING_FORM_KEYS.map(key => read(key)).find(
+    value => typeof value === 'string' && value.trim() !== ''
+  )
+  const educationFormat = normalizeTeacherTrainingEducationFormat(fromBlock ?? fromLegacy)
+  return {
+    ...(line ? { teacherTrainingScheduleLine: line.trim() } : {}),
+    ...(educationFormat ? { teacherTrainingEducationFormat: educationFormat } : {}),
+  }
+}
+
 function extractCommon(
   program: Program,
   overlay: Record<string, unknown>,
-  editor: TrainedTeachersRegistrationEditorMeta
+  editor: TrainedTeachersRegistrationEditorMeta,
+  normalizedOverlay: Record<string, unknown> = overlay
 ): TrainedTeachersRegistrationCommonCanonical {
   const explicitContacts = stringList(overlay[CONTACT_IDS_TT]) ?? stringList(overlay[CONTACT_IDS_GEN])
   const textbookName =
@@ -98,6 +149,7 @@ function extractCommon(
     educationStructure: editor.educationStructure,
     sessionRound: editor.sessionRound,
     teacherTrainingEnabled: editor.teacherTrainingEnabled,
+    ...extractTeacherTrainingBlock([normalizedOverlay, overlay], editor),
     educationJournalEnabled: resolveTrainedTeacherEducationJournalEnabled(
       overlay[JOURNAL_KEY],
       program.generalCommonInfo?.educationJournalEnabled
@@ -160,7 +212,7 @@ export function importLegacyOverlayToTrainedTeachersCanonical(args: {
   return {
     schemaVersion: TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
     editor: args.editor,
-    common: extractCommon(applied, overlay, args.editor),
+    common: extractCommon(applied, overlay, args.editor, normalized),
     recruit: collectTrainedTeachersRecruitFormState(overlay),
     application: collectTrainedTeachersApplicationFormState(overlay),
   }

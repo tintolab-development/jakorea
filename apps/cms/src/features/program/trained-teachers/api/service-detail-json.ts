@@ -105,6 +105,9 @@ const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
   'applicationPathId',
   'managerName',
   'teacherTrainingScheduleName',
+  // 교사 연수 교육 형태·일정 투영 — `trained-teacher/detail` 최상위 필드(B)만 정본. programs JSON에 넣지 않는다
+  'teacherTrainingEducationFormat',
+  'teacherTrainingSchedule',
   'sponsorManagerContactNames',
   'sponsorManagementNames',
   'sponsorAssignmentDetails',

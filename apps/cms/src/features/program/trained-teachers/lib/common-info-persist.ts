@@ -80,16 +80,24 @@ export function buildTrainedTeachersNestedCommonInfo(args: {
   educationStructure: 'curriculum' | 'schedule'
   curriculumSessions?: GeneralProgramCurriculumSessionRow[]
   scheduleDetails?: GeneralProgramScheduleDetailRow[]
+  /**
+   * 교사 연수 행 (name = teacherTrainingScheduleName). 커리큘럼형도 scheduleDetails 에 이 행만 둔다 —
+   * BE가 같은 이름 행으로 연수 일정을 만든다. 일정형은 나머지 행 앞에 둔다.
+   */
+  teacherTrainingScheduleDetail?: GeneralProgramScheduleDetailRow
 }): TrainedTeachersNestedPersist {
+  const training = args.teacherTrainingScheduleDetail
   if (args.educationStructure === 'curriculum') {
     return {
       curriculumSessions: args.curriculumSessions ?? [],
-      scheduleDetails: [],
+      scheduleDetails: training ? [training] : [],
     }
   }
   return {
     curriculumSessions: [],
-    scheduleDetails: args.scheduleDetails ?? [],
+    scheduleDetails: training
+      ? [training, ...(args.scheduleDetails ?? [])]
+      : (args.scheduleDetails ?? []),
   }
 }
 
@@ -254,6 +262,8 @@ export const TRAINED_TEACHER_INFO_DETAIL_OWNED_COMMON_INFO_KEYS = [
   'teacherTrainingEnabled',
   'educationJournalEnabled',
   'teacherTrainingScheduleName',
+  'teacherTrainingEducationFormat',
+  'teacherTrainingSchedule',
 ] as const
 
 export function omitTrainedTeacherInfoDetailOwnedCommonInfo(
@@ -279,6 +289,11 @@ export type TrainedTeachersCommonInfoSaveSlices = {
 export function buildTrainedTeachersCommonInfoSaveSlices(args: {
   educationStructure: 'curriculum' | 'schedule'
   teacherTrainingEnabled: boolean
+  /** 서버 저장 연수 일정명. 비어 있으면 기본 「교육 연수」 */
+  teacherTrainingScheduleName?: string
+  teacherTrainingEducationFormat?: NonNullable<Program['generalCommonInfo']>['teacherTrainingEducationFormat']
+  /** 교사 연수 행 — 연수 ON일 때만. curriculumSessions/scheduleDetails 에는 연수를 뺀 행만 넘긴다 */
+  teacherTrainingScheduleDetail?: GeneralProgramScheduleDetailRow
   educationJournalEnabled: boolean
   curriculumSessions?: GeneralProgramCurriculumSessionRow[]
   scheduleDetails?: GeneralProgramScheduleDetailRow[]
@@ -286,12 +301,13 @@ export function buildTrainedTeachersCommonInfoSaveSlices(args: {
   educationScheduleMode?: 'date' | 'period'
   educationScheduleRange?: { start: string; end: string } | null
 }): TrainedTeachersCommonInfoSaveSlices {
+  const trainingEnabled = args.teacherTrainingEnabled === true
   const nested = buildTrainedTeachersNestedCommonInfo({
     educationStructure: args.educationStructure,
     curriculumSessions: args.curriculumSessions,
     scheduleDetails: args.scheduleDetails,
+    teacherTrainingScheduleDetail: trainingEnabled ? args.teacherTrainingScheduleDetail : undefined,
   })
-  const trainingEnabled = args.teacherTrainingEnabled === true
   const derivedRange =
     args.educationScheduleMode == null
       ? args.educationScheduleRange
@@ -303,7 +319,12 @@ export function buildTrainedTeachersCommonInfoSaveSlices(args: {
     ...nested,
     teacherTrainingEnabled: trainingEnabled,
     educationJournalEnabled: args.educationJournalEnabled === true,
-    teacherTrainingScheduleName: trainingEnabled ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME : '',
+    teacherTrainingScheduleName: trainingEnabled
+      ? args.teacherTrainingScheduleName?.trim() || TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
+      : '',
+    ...(trainingEnabled && args.teacherTrainingEducationFormat
+      ? { teacherTrainingEducationFormat: args.teacherTrainingEducationFormat }
+      : {}),
     ...(args.educationScheduleLines !== undefined
       ? { educationScheduleLines: args.educationScheduleLines }
       : {}),

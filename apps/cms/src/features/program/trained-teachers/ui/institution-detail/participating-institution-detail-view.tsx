@@ -1108,6 +1108,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                   applicationEducationFormatDisplay
                 )
               }
+              educationPlace={applicationDetailQuery.data?.detail?.educationLocation ?? '-'}
               teacherInfo={
                 isApplicationDetailEditing ? (
                   <InstitutionTeacherEdit
