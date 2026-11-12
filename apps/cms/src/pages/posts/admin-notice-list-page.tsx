@@ -270,10 +270,12 @@ export function AdminNoticeListPage() {
     [totalElements]
   )
 
-  const bulkDeleteCopy = useMemo(
-    () => resolvePostsDeleteConfirmCopy('notice', 'bulk', selectedRowKeys.length),
-    [selectedRowKeys.length]
-  )
+  // 시안: 단건 `[제목] 공지사항을…` / 일괄 `[첫 제목] 외 N개의 공지사항을…` (목록 순서 기준 첫 행)
+  const bulkDeleteCopy = useMemo(() => {
+    const selected = new Set(selectedRowKeys.map(String))
+    const titles = tableData.filter(row => selected.has(String(row.id))).map(row => row.title)
+    return resolvePostsDeleteConfirmCopy('notice', 'bulk', selectedRowKeys.length, titles)
+  }, [selectedRowKeys, tableData])
 
   return (
     <div className="admin-notice-list-page">

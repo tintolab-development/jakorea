@@ -47,8 +47,6 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { POSTS_NEW_DEFAULT_VISIBILITY } from '@/features/posts/lib/posts-public-save-confirm'
-
-const NOTICE_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('notice', 'single')
 import './notice-register-modal.css'
 
 function isRegisterableNoticeCategoryId(value: string): boolean {
@@ -143,10 +141,11 @@ export function NoticeFormModal({
       setExistingAttachments(notice.attachments ?? [])
       setNewFiles([])
     } else {
+      // 시안: 신규 등록은 공개 여부·상단 고정 모두 미선택 — 미선택이면 등록 시 필수 미입력 안내
       form.setFieldsValue({
         categoryId: undefined,
         visibility: POSTS_NEW_DEFAULT_VISIBILITY,
-        pinTop: 'off',
+        pinTop: undefined,
         title: '',
       })
       setExistingAttachments([])
@@ -369,7 +368,7 @@ export function NoticeFormModal({
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         preset="notice"
-        {...NOTICE_SINGLE_DELETE_COPY}
+        {...resolvePostsDeleteConfirmCopy('notice', 'single', 1, notice ? [notice.title] : [])}
       />
       <ContentModal
         open={open}

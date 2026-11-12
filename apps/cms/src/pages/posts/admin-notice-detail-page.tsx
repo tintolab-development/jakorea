@@ -4,7 +4,10 @@
 
 import { Fragment, useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { resolvePostsDetailMetaDates } from '@/features/posts/lib/posts-detail-meta-dates'
+import {
+  NOTICE_DETAIL_UPDATED_AT_GUIDE,
+  resolveNoticeDetailMetaDates,
+} from '@/features/posts/lib/posts-detail-meta-dates'
 import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
@@ -17,8 +20,6 @@ import { useNoticeDetailQuery } from '@/features/posts/hooks/use-notice-detail-q
 import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-
-const NOTICE_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('notice', 'single')
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -110,7 +111,7 @@ export function AdminNoticeDetailPage() {
     )
   }
 
-  const metaDates = resolvePostsDetailMetaDates(notice)
+  const metaDates = resolveNoticeDetailMetaDates(notice)
   const isPublic = notice.status === 'published'
 
   return (
@@ -120,7 +121,7 @@ export function AdminNoticeDetailPage() {
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         preset="notice"
-        {...NOTICE_SINGLE_DELETE_COPY}
+        {...resolvePostsDeleteConfirmCopy('notice', 'single', 1, [notice.title])}
       />
       <NoticeFormModal
         open={editModalOpen}
@@ -186,6 +187,7 @@ export function AdminNoticeDetailPage() {
                 </>
               ) : null}
             </div>
+            <p className="admin-notice-detail-page__meta-guide">{NOTICE_DETAIL_UPDATED_AT_GUIDE}</p>
           </div>
           {attachmentItems.length > 0 ? null : (
             <hr className="admin-notice-detail-page__section-divider" />
