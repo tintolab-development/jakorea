@@ -13,6 +13,8 @@ import {
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
+import { LnbFigmaArrowDown } from '@/features/program/general/ui/detail-modal/lnb-figma-icons'
+import '@/features/program/general/ui/detail-modal/detail-sidebar.css'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import {
   GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE,
@@ -275,6 +277,9 @@ function GeminiApprovedTrainingDetailFullPageModalContent({
       className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
       sidebar={
         <DetailModalSidebar
+          // 일반·1사1교·교육받은 교사 상세와 같은 시안 LNB 스타일(detail-sidebar.css 범위)
+          className="detail-fullpage-modal__lnb--program-detail"
+          ArrowIcon={LnbFigmaArrowDown}
           navAriaLabel="승인 연수 상세 메뉴"
           items={SIDEBAR_ITEMS}
           activeKey={activeLnb}

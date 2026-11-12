@@ -183,7 +183,8 @@ import {
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
 import { GeneralLnbInstructorApplicationIcon, GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
-import { LnbFigmaInstitutionApplicationIcon } from './lnb-figma-icons'
+import { LnbFigmaArrowDown, LnbFigmaInstitutionApplicationIcon } from './lnb-figma-icons'
+import './detail-sidebar.css'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import './applications/participant-applications.css'
 import './program-detail-fullpage-modal.css'
@@ -998,7 +999,7 @@ function ProgramDetailFullPageModalContent({
             ],
           },
           ...(!hideApplicants
-            ? [{ key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> }]
+            ? [{ key: 'applicants', label: '기관 신청 목록', icon: <LnbFigmaInstitutionApplicationIcon /> }]
             : []),
           ...(!hideProgress
             ? [
@@ -2147,6 +2148,10 @@ function ProgramDetailFullPageModalContent({
       sidebar={
         <DetailModalSidebar
           navAriaLabel="프로그램 상세 메뉴"
+          // 1사1교·교육받은 교사 — 일반 프로그램 상세 LNB와 같은 시안 스타일·화살표(detail-sidebar.css)
+          {...(isCompanySchoolDetail || isTrainedTeachersDetail
+            ? { className: 'detail-fullpage-modal__lnb--program-detail', ArrowIcon: LnbFigmaArrowDown }
+            : {})}
           items={programSidebarItems}
           activeKey={activeLnb}
           activeChildKey={sidebarActiveChildKey}
