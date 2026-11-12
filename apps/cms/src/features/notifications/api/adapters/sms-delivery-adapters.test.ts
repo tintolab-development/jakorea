@@ -56,6 +56,31 @@ describe('mapSmsDeliveryToSendHistoryRow', () => {
     expect(row?.receiverPhone).toBe('010-1234-5678')
     expect(row?.receiverInfo).toBe('010-1234-5678')
   })
+
+  it('QA-0178 발송 실패 사유는 서버 displayReason을 먼저 쓰고, 없으면 failedReason 정리값을 쓴다', () => {
+    const withDisplay = mapSmsDeliveryToSendHistoryRow({
+      deliveryId: 92,
+      sendStatus: 'SEND_FAILED',
+      failedReason: 'provider failed raw',
+      providerResultCode: '4001',
+      displayReason: '발송 실패(코드: 4001)',
+    })
+    expect(withDisplay?.failedReason).toBe('발송 실패(코드: 4001)')
+
+    const withoutDisplay = mapSmsDeliveryToSendHistoryRow({
+      deliveryId: 93,
+      sendStatus: 'SEND_FAILED',
+      failedReason: 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:이름',
+    })
+    expect(withoutDisplay?.failedReason).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 이름')
+
+    const sent = mapSmsDeliveryToSendHistoryRow({
+      deliveryId: 94,
+      sendStatus: 'SENT',
+      displayReason: '발송 실패(코드: 4002)',
+    })
+    expect(sent?.failedReason).toBeUndefined()
+  })
 })
 describe('mapBatchBodySnapshotAttachments', () => {
   it('예약 발송 배치 상세의 첨부 스냅샷(fileObjectId·fileName)을 그대로 보여 준다', () => {

@@ -103,6 +103,39 @@ describe('alimtalk-delivery-adapters (4-2)', () => {
     expect(sent?.message).toBe('provider ok')
   })
 
+  it('QA-0178 발송 실패 사유는 서버 displayReason을 먼저 쓰고, 없으면 기존 정리값을 쓴다', () => {
+    const withDisplay = mapDeliveryToSendHistoryRow({
+      deliveryId: 205,
+      sendStatus: 'SEND_FAILED',
+      failedReason: 'provider failed raw',
+      providerResultCode: '3015',
+      providerResultMessage: 'provider raw failure',
+      displayReason: '발송 실패(코드: 3015)',
+    })
+    expect(withDisplay?.failedReason).toBe('발송 실패(코드: 3015)')
+    expect(withDisplay?.message).toBe('발송 실패(코드: 3015)')
+
+    const withoutDisplay = mapDeliveryToSendHistoryRow({
+      deliveryId: 206,
+      sendStatus: 'SEND_FAILED',
+      failedReason: 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:사용자 아이디(이메일)',
+      displayReason: null,
+    })
+    expect(withoutDisplay?.failedReason).toBe(
+      '자동입력 변수값이 없어 발송되지 않았습니다: 사용자 아이디(이메일)'
+    )
+
+    const sentButReceiveFailed = mapDeliveryToSendHistoryRow({
+      deliveryId: 207,
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERY_FAILED',
+      providerResultMessage: 'provider raw failure',
+      displayReason: '발송 실패(코드: 3018)',
+    })
+    expect(sentButReceiveFailed?.failedReason).toBeUndefined()
+    expect(sentButReceiveFailed?.message).toBe('발송 실패(코드: 3018)')
+  })
+
   it('UNKNOWN/미지 코드는 REQUESTED로 떨어지지 않는다', () => {
     expect(mapDeliveryToSendHistoryRow({ deliveryId: 1, sendStatus: 'FAILED' })?.sendStatus).toBe(
       '발송 실패'
