@@ -3,10 +3,8 @@ import type { TextbookContent, TextbookTag } from '../model/types'
 import { FallbackImage } from '@/features/careers'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import defaultTextbookThumbnailUrl from '@/shared/assets/illustration/illust-book.svg'
-import badgeCategoryIconUrl from '../image/icon/badge-category.svg'
-import badgeSkillIconUrl from '../image/icon/badge-skill.svg'
-import badgeTargetIconUrl from '../image/icon/badge-target.svg'
 import searchIconUrl from '@/shared/assets/icons/search-white-24.svg'
+import badgeClassIconUrl from '../image/icon/badge-class-20.svg'
 import styles from './content-list-item.module.css'
 
 type ContentListItemProps = {
@@ -14,11 +12,11 @@ type ContentListItemProps = {
   onClick: () => void
 }
 
-/** Figma Badge_Category Icon — target=school, category=docs, skill=star */
+/** 시안 Badge Category: 대상·분야·역량 모두 수업 유형(class) 아이콘 */
 const TAG_ICON_SRC: Record<NonNullable<TextbookTag['icon']>, string> = {
-  target: badgeTargetIconUrl,
-  category: badgeCategoryIconUrl,
-  skill: badgeSkillIconUrl,
+  target: badgeClassIconUrl,
+  category: badgeClassIconUrl,
+  skill: badgeClassIconUrl,
 }
 
 export function ContentListItem({ content, onClick }: ContentListItemProps) {
