@@ -5,6 +5,7 @@ import {
 } from '@/features/notifications/model/alimtalk-send/recipient-variables'
 import { isNotificationMailContextPlaceholderKey } from '@/features/notifications/model/shared/mail-context-variables'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import { formatNotificationSendRecipientCount } from '@/features/notifications/model/shared/send-ux-copy'
 import { dedupeMailSendRecipients } from './recipients'
 import type { MailSendRecipient } from './types'
 
@@ -42,8 +43,8 @@ export function listMailSendPlaceholderKeys(subject: string, bodyHtml: string): 
     .sort()
 }
 
-function confirmMessage(gaps: number, droppedDupes: number): string {
-  const lines = [MAIL_SEND_CONFIRM_MESSAGE]
+function confirmMessage(validCount: number, gaps: number, droppedDupes: number): string {
+  const lines = [MAIL_SEND_CONFIRM_MESSAGE, formatNotificationSendRecipientCount(validCount)]
   if (gaps > 0) lines.push(MAIL_VARIABLE_EXCLUSION_GUIDE)
   if (droppedDupes > 0) lines.push(MAIL_DUPLICATE_SEND_GUIDE)
   return lines.join('\n')
@@ -75,7 +76,11 @@ export function validateMailSendVariables(
     return {
       ok: true,
       validRecipients: uniqueValid,
-      confirmMessage: confirmMessage(0, input.recipients.length - uniqueValid.length),
+      confirmMessage: confirmMessage(
+        uniqueValid.length,
+        0,
+        input.recipients.length - uniqueValid.length
+      ),
     }
   }
 
@@ -113,6 +118,7 @@ export function validateMailSendVariables(
     ok: true,
     validRecipients: uniqueValid,
     confirmMessage: confirmMessage(
+      uniqueValid.length,
       partitioned.gaps.length,
       partitioned.valid.length - uniqueValid.length
     ),

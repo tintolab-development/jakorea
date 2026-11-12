@@ -1,6 +1,8 @@
-import dayjs from 'dayjs'
 import { MAIL_API_CHANNEL_TYPE } from '@/features/notifications/api/adapters/mail-channel'
-import { readMailSendHistoryFiltersFromParams } from '@/features/notifications/model/mail-send-history/filter-url'
+import {
+  defaultMailSendHistoryDateRange,
+  readMailSendHistoryFiltersFromParams,
+} from '@/features/notifications/model/mail-send-history/filter-url'
 import type {
   DateRangeFilterValue,
   MailSendHistoryPendingFilters,
@@ -51,10 +53,9 @@ export function mailSendHistoryParamsFromFilters(
   applyNotificationStatusFilterParams(params, filters)
 
   if (!params.requestedFrom || !params.requestedTo) {
-    const start = dayjs().startOf('day')
-    params.requestedFrom = params.requestedFrom ?? start.format(DATE_PARAM_FORMAT)
-    params.requestedTo =
-      params.requestedTo ?? start.add(7, 'day').format(DATE_PARAM_FORMAT)
+    const [defaultFrom, defaultTo] = defaultMailSendHistoryDateRange()
+    params.requestedFrom = params.requestedFrom ?? defaultFrom.format(DATE_PARAM_FORMAT)
+    params.requestedTo = params.requestedTo ?? defaultTo.format(DATE_PARAM_FORMAT)
   }
 
   return params

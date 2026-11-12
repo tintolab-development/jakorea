@@ -27,19 +27,22 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 function sendStatusView(row: MailSendHistoryRow) {
-  if (row.sendStatus === '발송 실패' && row.failedReason?.trim()) {
+  const sendFailedReason = row.sendStatus === '발송 실패' ? row.failedReason?.trim() || '' : ''
+  // 발송은 성공했지만 수신에 실패한 경우의 사유 (QA-0176)
+  const receiveFailedReason = sendFailedReason ? '' : row.receiveFailedReason?.trim() || ''
+  const reason = sendFailedReason || (receiveFailedReason ? `수신 실패: ${receiveFailedReason}` : '')
+  if (reason) {
     return (
       <span className="mail-send-history-detail-modal__status-with-reason">
         <NotificationSendStatusText status={row.sendStatus} />
-        <span
-          className="mail-send-history-detail-modal__failed-reason"
-          title={row.failedReason}
-        >
-          {row.failedReason}
+        <span className="mail-send-history-detail-modal__failed-reason" title={reason}>
+          {reason}
         </span>
-        <span className="mail-send-history-detail-modal__snapshot-hint">
-          {NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT}
-        </span>
+        {sendFailedReason ? (
+          <span className="mail-send-history-detail-modal__snapshot-hint">
+            {NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT}
+          </span>
+        ) : null}
       </span>
     )
   }

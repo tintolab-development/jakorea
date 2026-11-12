@@ -206,3 +206,20 @@
   min-height: 220px;
   align-self: stretch;
 }
+
+/* QA-0343·QA-0445 — 목록 상단 NHN Cloud 안내 (미리보기 __hint 와 같은 보조 텍스트 톤) */
+.alimtalk-template-list__guide {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 12px;
+}
+
+.alimtalk-template-list__guide p {
+  margin: 0;
+  color: rgba(61, 61, 61, 0.6);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}

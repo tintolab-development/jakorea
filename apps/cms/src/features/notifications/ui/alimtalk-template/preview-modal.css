@@ -1,11 +1,11 @@
-/* 시안 Popup / Table / w1000 / 알림톡 상세 — 1000×808 · padding 24 30 34 · radius 16 · 타이틀↔본문 24 · 좌우 갭 26 */
+/* 시안 Popup / Table / w1000 / 알림톡 상세 — 1000×808 · padding 24 30 34 · radius 16 · 타이틀↔본문 24 · 좌우 갭 26
+ * 높이는 공통 `.teal-header-modal--bounded`(화면 높이 안 · 본문 스크롤)를 따른다. max-height를 덮어쓰지 않는다. */
 .alimtalk-template-preview-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
   width: 1000px;
   padding: 24px 30px 34px;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
-  max-height: none;
 }
 
 .alimtalk-template-preview-modal.teal-header-modal--bounded .ant-modal-body {
