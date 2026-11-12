@@ -234,7 +234,7 @@ export function resolveBasisDetailModalTitle(detail: PaymentOrderCalculationBasi
     case 'meal':
       return '식사비 산정 기준 상세'
     case 'activity':
-      return '참여자 활동비 산정 기준 상세'
+      return '활동비 산정 기준 상세'
     case 'withholding':
       return '원천징수 산정 기준 상세'
     case 'remote':
@@ -594,10 +594,10 @@ export function buildActivityBasisDetail(): PaymentOrderCalculationBasisDetailAc
   const amountWon = 50000
   return {
     layout: 'activity',
-    categoryLabel: '참여자 활동비',
+    categoryLabel: '활동비',
     activityFee: {
       amountWon,
-      receiptFileName: '참여자 활동비 영수증.pdf',
+      receiptFileName: '활동비 영수증.pdf',
     },
     totalWon: amountWon,
   }
@@ -1072,7 +1072,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return buildMealBasisDetail()
   }
 
-  if (row.kind === 'activity' || row.itemLabel === '활동비' || row.itemLabel === '참여자 활동비') {
+  if (row.kind === 'activity' || row.itemLabel === '활동비') {
     return buildActivityBasisDetail()
   }
 

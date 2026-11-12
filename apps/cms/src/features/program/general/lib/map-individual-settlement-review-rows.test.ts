@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
 import type { IndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewListItem'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import type { IndividualSettlementReviewListItemView } from '@/features/program/general/api/individual-settlement-review-types'
 import {
   assignedSessionsForIndividualSettlementReview,
+  isIndividualSettlementRowNotApplicable,
   mapIndividualSettlementReviewListRows,
   resolveIndividualSettlementReviewRowsForQueryState,
   resolveIndividualSettlementReviewSummaryLabel,
@@ -324,7 +326,191 @@ describe('resolveIndividualSettlementReviewSummaryLabel', () => {
     expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, submitted: 1, approved: 1, total: 2 }, false)).toBe('확인 진행 중')
     expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, submitted: 1, total: 1 }, false)).toBe('확인 대기 중')
     expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, rejected: 1, total: 1 }, false)).toBe('신청 반려')
-    expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, total: 3 }, false)).toBe('해당 없음')
+    // 미신청만 있으면 '-' (기획 2026-11-12 2차 4-2)
+    expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, total: 3 }, false)).toBe('-')
     expect(resolveIndividualSettlementReviewSummaryLabel(empty, false)).toBe('-')
+  })
+})
+
+describe('참여 봉사자 정산 현황 — 서버 행(rowType) 그대로 쓰기', () => {
+  const notApplied: IndividualSettlementReviewListItemView = {
+    settlementApplicationId: null,
+    programId: 186565,
+    participantId: 1695107,
+    programScheduleId: 187747,
+    scheduleName: '기관 확정 2026-11-08',
+    scheduleStartAt: '2026-11-08T14:10:00Z',
+    scheduleEndAt: '2026-11-08T14:59:00Z',
+    scheduleKind: 'EDUCATION',
+    status: null,
+    totalAmount: null,
+    latestRevisionNo: null,
+    applicationType: 'VOLUNTEER',
+    volunteerApplicationId: 1691684,
+    rowType: 'NOT_APPLIED',
+    lectureProgressStatus: 'COMPLETED',
+  }
+  const applied: IndividualSettlementReviewListItemView = {
+    settlementApplicationId: 31,
+    programId: 186565,
+    participantId: 1695107,
+    programScheduleId: 187748,
+    scheduleName: '사전 교육',
+    scheduleStartAt: '2026-11-09T03:00:00Z',
+    scheduleEndAt: '2026-11-09T04:00:00Z',
+    scheduleKind: 'PRE_EDUCATION',
+    status: 'SUBMITTED',
+    totalAmount: 12_000,
+    latestRevisionNo: 1,
+    submittedAt: '2026-11-10T01:00:00Z',
+    applicationType: 'VOLUNTEER',
+    rowType: 'SETTLEMENT_APPLICATION',
+    lectureProgressStatus: 'COMPLETED',
+  }
+
+  it('rowType이 있으면 배정 일정과 합치지 않고 서버 행 순서대로 1행씩 만든다', () => {
+    const rows = resolveIndividualSettlementReviewRowsForQueryState({
+      listReady: true,
+      isError: false,
+      assignedSessions: [{ resolvedScheduleId: 999 } as ParticipatingSchoolSession],
+      applications: [applied, notApplied],
+    })
+
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toMatchObject({
+      id: 'SETTLEMENT_APPLICATION:31',
+      no: 1,
+      educationScheduleLabel: '2026.11.09(월) | 12:00~13:00 | 사전교육',
+      lectureProgress: 'completed',
+      isNotApplied: false,
+      settlementApplicationId: 31,
+      status: 'SUBMITTED',
+      totalAmount: 12_000,
+      canOpenDetail: true,
+    })
+    expect(rows[1]).toMatchObject({
+      id: 'NOT_APPLIED:187747',
+      no: 2,
+      educationScheduleLabel: '2026.11.08(일) | 23:10~23:59 | 기관 확정 2026-11-08',
+      lectureProgress: 'completed',
+      isNotApplied: true,
+      settlementApplicationId: null,
+      status: 'NONE',
+      totalAmount: null,
+      totalAmountLabel: '-',
+      canOpenDetail: false,
+    })
+  })
+
+  it('활동 포기 회차는 활동 포기로 표시한다', () => {
+    const rows = resolveIndividualSettlementReviewRowsForQueryState({
+      listReady: true,
+      isError: false,
+      assignedSessions: [],
+      applications: [{ ...applied, lectureProgressStatus: 'GAVE_UP' }],
+    })
+    expect(rows[0]?.lectureProgress).toBe('activity_withdrawn')
+  })
+
+  it('rowType이 없는 응답(UJAT 등)은 기존처럼 배정 일정과 신청을 합친다', () => {
+    const rows = resolveIndividualSettlementReviewRowsForQueryState({
+      listReady: true,
+      isError: false,
+      assignedSessions: [],
+      applications: [{ ...applied, rowType: null, lectureProgressStatus: null }],
+    })
+    expect(rows[0]).toMatchObject({ id: 'application:31', orphanApplication: true, isNotApplied: false })
+  })
+})
+
+describe('isIndividualSettlementRowNotApplicable', () => {
+  const base = { isNotApplied: false, settlementApplicationId: 31, lectureProgress: 'completed' as const }
+  it('신청이 있고 진행 완료면 처리 현황·금액을 보여 준다', () => {
+    expect(isIndividualSettlementRowNotApplicable(base)).toBe(false)
+  })
+  it('미신청·신청 없음·진행 예정 행은 "-" 대상이다', () => {
+    expect(isIndividualSettlementRowNotApplicable({ ...base, isNotApplied: true })).toBe(true)
+    expect(isIndividualSettlementRowNotApplicable({ ...base, settlementApplicationId: null })).toBe(true)
+    expect(isIndividualSettlementRowNotApplicable({ ...base, lectureProgress: 'scheduled' })).toBe(true)
+  })
+})
+
+describe('개인 정산 현황 행 정렬', () => {
+  it('신청 여부와 무관하게 일정 시작 일시 최신순, 같으면 회차 번호 큰 순이다', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [
+        { resolvedScheduleId: 1, sessionNo: 1, startAt: '2026-10-24T07:00:00Z' },
+        { resolvedScheduleId: 2, sessionNo: 2, startAt: '2026-10-24T07:05:00Z' },
+        { resolvedScheduleId: 3, sessionNo: 3, startAt: '2026-10-24T07:05:00Z' },
+      ] as ParticipatingSchoolSession[],
+      applications: [
+        { settlementApplicationId: 50, programScheduleId: 2, status: 'SUBMITTED' },
+        { settlementApplicationId: 60, programScheduleId: 99, scheduleStartAt: '2026-10-25T00:00:00Z', status: 'APPROVED' },
+      ] as IndividualSettlementReviewListItemView[],
+    })
+    expect(rows.map(row => row.id)).toEqual([
+      'application:60',
+      'schedule:3',
+      'schedule:2',
+      'schedule:1',
+    ])
+    expect(rows.map(row => row.no)).toEqual([1, 2, 3, 4])
+  })
+})
+
+describe('참여자 정산 현황 일정 칸 표기', () => {
+  const sessions = [
+    {
+      resolvedScheduleId: 1,
+      startAt: '2026-10-30T03:00:00Z',
+      endAt: '2026-10-30T04:08:00Z',
+      scheduleName: '사전교육',
+      scheduleRole: 'PRE_EDUCATION',
+      sessionNo: null,
+    },
+    {
+      resolvedScheduleId: 2,
+      startAt: '2026-11-09T01:00:00Z',
+      endAt: '2026-11-09T03:00:00Z',
+      scheduleName: 'QA 정산 교육 11/09',
+      scheduleRole: 'EDUCATION',
+      sessionNo: 12,
+    },
+    {
+      resolvedScheduleId: 3,
+      startAt: '2026-11-10T01:00:00Z',
+      endAt: '2026-11-10T03:00:00Z',
+      scheduleName: '가을 진로 특강',
+      scheduleRole: 'EDUCATION',
+      sessionNo: null,
+    },
+    {
+      resolvedScheduleId: 4,
+      startAt: '2026-11-11T01:00:00Z',
+      endAt: '2026-11-11T03:00:00Z',
+      scheduleName: '',
+      scheduleRole: 'EDUCATION',
+      sessionNo: null,
+    },
+  ] as ParticipatingSchoolSession[]
+
+  it('날짜 | 시간 | 사전교육·N회차·일정명 형식이고 자동 기본명은 날짜·시간만 보여 준다', () => {
+    const rows = mapIndividualSettlementReviewListRows({ assignedSessions: sessions, applications: [] })
+    expect(rows.map(row => [row.id, row.educationScheduleLabel])).toEqual([
+      ['schedule:4', '2026.11.11(수) | 10:00~12:00'],
+      ['schedule:3', '2026.11.10(화) | 10:00~12:00 | 가을 진로 특강'],
+      ['schedule:2', '2026.11.09(월) | 10:00~12:00 | 12회차'],
+      ['schedule:1', '2026.10.30(금) | 12:00~13:08 | 사전교육'],
+    ])
+  })
+
+  it('시작 시각이 없는 일정은 기존 표기를 쓴다', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [
+        { resolvedScheduleId: 9, date: '2026.10.24', timeRange: '16:05 ~ 16:06' },
+      ] as unknown as ParticipatingSchoolSession[],
+      applications: [],
+    })
+    expect(rows[0]?.educationScheduleLabel).toContain('2026.10.24')
   })
 })

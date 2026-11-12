@@ -31,6 +31,11 @@ export type TextbookContent = {
   title: string
   description: string
   thumbnailUrl?: string
+  /**
+   * 목록 카드 썸네일(QA-0495) — 233×320 변형을 `src`, 466×640을 2x `srcSet`로 쓴다.
+   * 변형이 둘 다 없으면 없음 → 카드는 `thumbnailUrl`을 쓴다.
+   */
+  listThumbnail?: { src: string; srcSet?: string }
   theme: TextbookThemeKey
   level: EducationLevelKey
   /** 구성 종류 — 있을 때만 목록에 「구성」행 노출 */

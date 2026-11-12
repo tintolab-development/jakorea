@@ -1,10 +1,13 @@
 import type { AuthTokenResponse } from './types'
 import { parsePortalAgeGroup } from '../lib/portal-age-group'
 
-/** flat 또는 `{ success, data }` 래핑 토큰 응답 파싱 */
+/**
+ * flat 또는 `{ success, data }` 래핑 토큰 응답 파싱.
+ * QA-0137: refreshToken은 전환기에만 본문에 온다. 없으면 undefined(HttpOnly 쿠키 `JA_MEMBER_RT`로만 refresh).
+ */
 export function parseAuthTokenResponse(payload: unknown): AuthTokenResponse & {
   accessToken: string
-  refreshToken: string
+  refreshToken?: string
 } {
   if (!payload || typeof payload !== 'object') {
     throw new Error('로그인 응답을 해석할 수 없습니다.')
@@ -21,13 +24,11 @@ export function parseAuthTokenResponse(payload: unknown): AuthTokenResponse & {
   if (typeof accessToken !== 'string' || !accessToken.trim()) {
     throw new Error('로그인 응답에 accessToken이 없습니다.')
   }
-  if (typeof refreshToken !== 'string' || !refreshToken.trim()) {
-    throw new Error('로그인 응답에 refreshToken이 없습니다.')
-  }
-
   return {
     accessToken: accessToken.trim(),
-    refreshToken: refreshToken.trim(),
+    // TODO(QA-0137 인프라 전환 후 삭제): 본문 refreshToken 파싱.
+    refreshToken:
+      typeof refreshToken === 'string' && refreshToken.trim() ? refreshToken.trim() : undefined,
     tokenType: typeof root.tokenType === 'string' ? root.tokenType : undefined,
     expiresInSeconds:
       typeof root.expiresInSeconds === 'number' ? root.expiresInSeconds : undefined,

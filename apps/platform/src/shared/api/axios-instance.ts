@@ -1,8 +1,11 @@
 /**
  * Platform(Vite)용 Axios 클라이언트.
  * - Base URL: `VITE_API_BASE_URL` (미설정 + DEV 프록시 시 동일 출처 상대 경로)
- * - 인증: `platform_auth_*` localStorage + `withCredentials`
- * - 리프레시: `POST /api/portal/auth/refresh` (body refreshToken only, no Bearer)
+ * - 인증: access token은 메모리(`getAccessToken`, 브라우저 저장소에 쓰지 않음) + `withCredentials`.
+ *   새로고침·새 탭은 첫 렌더 전에 `bootstrapPortalAccessToken`으로 다른 탭에서 받거나 refresh한다 (QA-0137).
+ * - 리프레시: `POST /api/portal/auth/refresh` (no Bearer). QA-0137 전환기: 저장된 refreshToken이 있으면 본문으로 보내고
+ *   HttpOnly 쿠키(`JA_MEMBER_RT`)도 실리도록 인증 호출은 `withCredentials`를 명시한다. 응답 본문에 refreshToken이 없으면
+ *   쿠키 세션으로 전환해 본문 없이 refresh한다 (`setAuthTokens`·`hasRefreshCredential`).
  *
  * 인증 헤더 판정(`skipAuth`/공개 경로)과 401 자동 Refresh 판정(`skipRefresh`/제외 경로)은 분리한다.
  * - Activity: Bearer 부착 + 401 시 Refresh·재POST 0회
@@ -21,10 +24,19 @@ import { portalAuthPaths } from '@/features/auth/sign-in/api/endpoints'
 import { getApiBaseUrl, getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
 import { isAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
 import { readJwtExpiresAtMs } from '@jakorea/domain/session'
+import { requestAccessTokenFromPeers } from '@/shared/lib/access-token-memory'
+import {
+  bootstrapAccessToken,
+  retryAccessTokenRestore,
+  type AuthBootstrapDeps,
+  type AuthBootstrapResult,
+} from '@/shared/lib/auth-bootstrap'
+import { showAuthRestoreNotice } from '@/shared/lib/auth-restore-notice'
 import {
   getAccessToken,
   getAuthGeneration,
   getRefreshToken,
+  hasRefreshCredential,
   setAuthTokens,
 } from '@/shared/lib/auth-token'
 
@@ -71,6 +83,10 @@ const CROSS_TAB_REFRESH_LOCK = 'platform:portal-auth-refresh'
 const ROTATED_TOKEN_WAIT_MS = 3_000
 /** JWT exp 판정 여유 (클라이언트 시계 오차 흡수) */
 const ACCESS_EXPIRY_HINT_SKEW_MS = 5_000
+/** 새 탭 시작 시 열려 있는 다른 탭의 access token 응답을 기다리는 시간 */
+const PEER_ACCESS_TOKEN_WAIT_MS = 200
+/** 시작 시 복원이 네트워크·5xx로 실패했을 때 조용한 재시도 전 대기 */
+const AUTH_RESTORE_RETRY_DELAY_MS = 500
 
 export { getApiBaseUrl, isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
@@ -83,6 +99,9 @@ function getRefreshPath(): string {
 function getLogoutPath(): string {
   return portalAuthPaths.logout()
 }
+
+/** QA-0137: 토큰 발급·갱신·폐기 호출은 HttpOnly refresh 쿠키가 오가도록 credentials를 명시한다 */
+const AUTH_COOKIE_CREDENTIALS = { withCredentials: true } as const
 
 function getErrorCode(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined
@@ -221,12 +240,17 @@ axiosClient.defaults.headers = {
     : {}),
 } as TAxiosHeaders & AxiosRequestHeaders & HeadersDefaults & { 'X-Client': 'web' }
 
-export async function postAuthenticationRefreshToken(refreshToken: string) {
+/**
+ * POST refresh. refreshToken이 있으면 본문(전환기), null이면 본문 없이 HttpOnly 쿠키로 갱신한다.
+ * TODO(QA-0137 인프라 전환 후 삭제): 본문 분기를 지우고 항상 본문 없이 보낸다.
+ */
+export async function postAuthenticationRefreshToken(refreshToken: string | null) {
   const path = getRefreshPath()
   return axiosClient.post<unknown>(
     path,
-    { refreshToken },
+    refreshToken ? { refreshToken } : undefined,
     {
+      ...AUTH_COOKIE_CREDENTIALS,
       skipRefresh: true,
       skipAuth: true,
     } as RetryableRequest,
@@ -239,11 +263,29 @@ export async function postPortalAuthLogout(refreshToken: string): Promise<void> 
     getLogoutPath(),
     { refreshToken },
     {
+      ...AUTH_COOKIE_CREDENTIALS,
       skipRefresh: true,
       skipAuth: true,
       validateStatus: (status: number) => status === 204 || status === 200,
     } as unknown as RetryableRequest,
   )
+}
+
+/**
+ * POST /api/portal/auth/refresh/logout — HttpOnly refresh 쿠키의 토큰 폐기·쿠키 삭제 (QA-0137). 본문 없음.
+ * best effort: 쿠키가 없거나(전환 전·로컬) 실패해도 던지지 않는다 — 로컬 로그아웃을 막지 않는다.
+ */
+export async function postPortalAuthRefreshCookieLogout(): Promise<void> {
+  try {
+    await axiosClient.post(portalAuthPaths.refreshLogout(), undefined, {
+      ...AUTH_COOKIE_CREDENTIALS,
+      skipRefresh: true,
+      skipAuth: true,
+      validateStatus: (status: number) => status === 204 || status === 200,
+    } as unknown as RetryableRequest)
+  } catch {
+    // 쿠키 폐기 실패는 무시한다.
+  }
 }
 
 /** @deprecated `postPortalAuthLogout` 사용 */
@@ -335,7 +377,7 @@ function isStaleAuthFailure(ctx: AuthFailureContext): boolean {
   return false
 }
 
-async function handleAuthFailure(ctx: AuthFailureContext) {
+async function handleAuthFailure(ctx: AuthFailureContext, options: { redirect?: boolean } = {}) {
   const onAdminRegisteredOnboarding =
     isAdminOnboardingRequired() &&
     typeof window !== 'undefined' &&
@@ -352,17 +394,32 @@ async function handleAuthFailure(ctx: AuthFailureContext) {
   await logoutPortalSession({
     serverLogout: ctx.serverLogout,
     refreshToken: ctx.refreshToken,
-    redirectTo: `/auth/sign-in?redirect=${encodeURIComponent(path)}`,
+    // 시작 시 복원 실패는 이동하지 않는다 — 로그인이 필요한 화면은 각 가드가 비로그인으로 처리한다.
+    redirectTo:
+      options.redirect === false ? null : `/auth/sign-in?redirect=${encodeURIComponent(path)}`,
   })
 }
 
-function waitForStoredRefreshTokenChange(previous: string, timeoutMs: number): Promise<boolean> {
+/**
+ * 409 경쟁에서 승자 탭의 저장을 기다린다. 전환기는 refreshToken 변경, 쿠키 세션(previous=null)은 access 변경으로 판정.
+ * access token은 메모리에 있으므로 다른 탭의 교체는 BroadcastChannel로 이 탭 메모리에 반영된 값으로 본다.
+ */
+function waitForStoredRefreshTokenChange(
+  previous: string | null,
+  previousAccessToken: string | null,
+  timeoutMs: number,
+): Promise<boolean> {
   if (typeof window === 'undefined') return Promise.resolve(false)
   return new Promise(resolve => {
     const startedAt = Date.now()
     const check = () => {
       const current = getRefreshToken()
       if (current && current !== previous) {
+        resolve(true)
+        return
+      }
+      const currentAccess = getAccessToken()
+      if (previous == null && currentAccess && currentAccess !== previousAccessToken) {
         resolve(true)
         return
       }
@@ -389,8 +446,12 @@ function withCrossTabRefreshLock<T>(task: () => Promise<T>): Promise<T> {
  * Refresh 1회. 탭 간 lock 안에서 저장소를 다시 읽어, 다른 탭이 이미 회전했으면 POST 없이 최신 Access를 쓴다.
  * 409 REFRESH_TOKEN_ALREADY_ROTATED는 같은 토큰으로 재POST하지 않고 최신 저장 토큰만 확인한다.
  */
-async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise<string> {
+async function refreshAccessTokenOnce(
+  failedAccessToken: string | null,
+  options: RefreshOptions = {},
+): Promise<string> {
   return withCrossTabRefreshLock(async () => {
+    // lock을 잡은 뒤 다시 읽는다 — 앞선 탭이 회전한 refreshToken·쿠키·access token을 이어받는다.
     const storedAccessToken = getAccessToken()
     const storedRefreshToken = getRefreshToken()
 
@@ -398,7 +459,12 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
       // 다른 탭(또는 이 탭의 앞선 Refresh)이 이미 교체했다. 회전된 토큰을 다시 쓰지 않는다.
       return storedAccessToken
     }
-    if (!storedRefreshToken) {
+    if (storedAccessToken && options.reuseCurrentAccessToken) {
+      // 시작 시 복원: lock 대기 중 다른 탭이 받은 토큰을 이 탭에 알려 줬다.
+      return storedAccessToken
+    }
+    // QA-0137: 저장된 refreshToken이 없어도 쿠키 세션 표시가 있으면 본문 없이 쿠키로 refresh한다.
+    if (!storedRefreshToken && !hasRefreshCredential()) {
       throw new PortalRefreshError({
         message: 'No refresh token',
         definitive: true,
@@ -419,6 +485,7 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
         // 동시 회전 경쟁: 승자가 저장할 최신 토큰을 확인한다. 같은 토큰 재POST 금지.
         const rotated = await waitForStoredRefreshTokenChange(
           storedRefreshToken,
+          storedAccessToken,
           ROTATED_TOKEN_WAIT_MS,
         )
         const latestAccessToken = getAccessToken()
@@ -447,9 +514,10 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
     const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
     const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
 
-    if (!newAccessToken || !newRefreshToken) {
+    // QA-0137: refreshToken은 전환기에만 본문에 온다. 없으면 setAuthTokens가 쿠키 세션으로 전환한다.
+    if (!newAccessToken) {
       throw new PortalRefreshError({
-        message: 'Invalid refresh response: missing access or refresh token',
+        message: 'Invalid refresh response: missing access token',
         definitive: false,
         allowServerLogout: false,
         refreshTokenUsed: storedRefreshToken,
@@ -457,7 +525,11 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
     }
 
     // 회전 직후 다른 경로(로그아웃·새 로그인)가 저장소를 바꿨다면 덮어쓰지 않는다.
-    if (getRefreshToken() !== storedRefreshToken) {
+    // 쿠키 세션은 refreshToken 저장값이 없으므로 access 저장값으로도 비교한다.
+    if (
+      getRefreshToken() !== storedRefreshToken ||
+      (!storedRefreshToken && getAccessToken() !== storedAccessToken)
+    ) {
       const latestAccessToken = getAccessToken()
       if (latestAccessToken) return latestAccessToken
       throw new PortalRefreshError({
@@ -483,13 +555,71 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
   })
 }
 
+type RefreshOptions = {
+  /** 시작 시 복원 — 메모리에 이미 토큰이 있으면 POST하지 않는다 */
+  reuseCurrentAccessToken?: boolean
+}
+
 /** 탭 내 single-flight. 동시 401 요청은 같은 Refresh 결과를 공유한다. */
-function runSingleFlightRefresh(failedAccessToken: string | null): Promise<string> {
+function runSingleFlightRefresh(
+  failedAccessToken: string | null,
+  options?: RefreshOptions,
+): Promise<string> {
   if (refreshPromise) return refreshPromise
-  refreshPromise = refreshAccessTokenOnce(failedAccessToken).finally(() => {
+  refreshPromise = refreshAccessTokenOnce(failedAccessToken, options).finally(() => {
     refreshPromise = null
   })
   return refreshPromise
+}
+
+let bootstrapPromise: Promise<AuthBootstrapResult> | null = null
+
+function createAuthRestoreDeps(): AuthBootstrapDeps {
+  const generation = getAuthGeneration()
+  return {
+    getAccessToken,
+    hasRefreshCredential,
+    requestPeerAccessToken: () => requestAccessTokenFromPeers(PEER_ACCESS_TOKEN_WAIT_MS),
+    // 탭 내 single-flight + 탭 간 lock. lock 대기 중 다른 탭이 알려 준 토큰이 있으면 POST하지 않는다.
+    refresh: () => runSingleFlightRefresh(null, { reuseCurrentAccessToken: true }),
+    classifyFailure: error =>
+      error instanceof PortalRefreshError && error.definitive ? 'session-invalid' : 'unavailable',
+    onSessionInvalid: error => {
+      const refreshError = error as PortalRefreshError
+      return handleAuthFailure(
+        {
+          generation,
+          refreshToken: refreshError.refreshTokenUsed,
+          serverLogout: refreshError.allowServerLogout,
+        },
+        { redirect: false },
+      )
+    },
+    retryDelayMs: AUTH_RESTORE_RETRY_DELAY_MS,
+  }
+}
+
+function applyAuthRestoreResult(result: AuthBootstrapResult): AuthBootstrapResult {
+  if (result.notice) showAuthRestoreNotice(result.notice)
+  return result
+}
+
+/**
+ * 새로고침·새 탭 시작 시 메모리 access token 복원 (QA-0137). 앱 첫 렌더 전에 한 번 호출한다.
+ * refresh 수단이 있으면 다른 탭에서 받거나 refresh한다.
+ * - 서버가 세션 무효를 확정하면 기존 로그아웃 경로로 로컬 세션을 정리하고(이동 없음) '로그인 종료' 안내를 띄운다.
+ * - 네트워크·5xx·timeout이면 로그아웃하지 않고 조용히 1회 재시도, 그래도 실패하면 '확인 못 함' 안내를 띄운다.
+ * 렌더 대기 시간을 넘겨 늦게 끝나도 같은 규칙으로 처리한다(늦게 성공하면 조용히 복원).
+ */
+export function bootstrapPortalAccessToken(): Promise<AuthBootstrapResult> {
+  if (bootstrapPromise) return bootstrapPromise
+  bootstrapPromise = bootstrapAccessToken(createAuthRestoreDeps()).then(applyAuthRestoreResult)
+  return bootstrapPromise
+}
+
+/** 안내 모달 [다시 시도] — 탭 간 lock 안에서 refresh 1회. 성공하면 setAuthTokens가 안내를 닫는다 */
+export function retryPortalAccessTokenRestore(): Promise<AuthBootstrapResult> {
+  return retryAccessTokenRestore(createAuthRestoreDeps()).then(applyAuthRestoreResult)
 }
 
 axiosClient.interceptors.request.use(

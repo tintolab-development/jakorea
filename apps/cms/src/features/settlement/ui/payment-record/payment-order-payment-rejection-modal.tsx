@@ -2,7 +2,7 @@
  * 산출 내역서 — 「신청 반려」 시 노출되는 지급 반려 모달 (프로그램·강사 상세 공통)
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
@@ -16,6 +16,10 @@ import {
 } from '@/shared/lib/notification-schedule'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
+import {
+  getPaymentApplicationCopy,
+  type PaymentApplicationKind,
+} from '@/features/settlement/lib/payment-application-copy'
 import type {
   PaymentOrderRejectNotificationType,
   PaymentOrderRejectSubmitPayload,
@@ -34,6 +38,8 @@ export interface PaymentOrderPaymentRejectionModalProps {
   onReject: (payload: PaymentOrderRejectSubmitPayload) => void
   data: PaymentOrderProgramCalculationStatement | null
   confirmLoading?: boolean
+  /** 신청 유형별 문구 — 기본 강사 지급조서, 참여자·봉사자 영수증은 receipt */
+  applicationKind?: PaymentApplicationKind
 }
 
 function getMemberName(statement: PaymentOrderProgramCalculationStatement): string {
@@ -41,18 +47,15 @@ function getMemberName(statement: PaymentOrderProgramCalculationStatement): stri
   return statement.basic.instructorNameKo
 }
 
-function getContextLine(statement: PaymentOrderProgramCalculationStatement): {
-  first: string
-  lectureDateDisplay: string
-  lectureSessionDisplay: string
-} {
+/**
+ * 대상 줄 — 기관명·교육 진행 일자·회차 중 값이 있는 칸만 보여 준다.
+ * 기관명이 없으면 프로그램명으로 대신 채우지 않고 그 칸을 뺀다(확인 처리 팝업과 같음, 기획 2026-11-12 3차 2번).
+ */
+function getContextParts(statement: PaymentOrderProgramCalculationStatement): string[] {
   const block0 = statement.blocks[0]
-  const programName = statement.basic.programName?.trim() || ''
-  return {
-    first: block0?.institutionName?.trim() || programName || '-',
-    lectureDateDisplay: block0?.lectureDateDisplay?.trim() || '-',
-    lectureSessionDisplay: block0?.lectureSessionDisplay?.trim() || '-',
-  }
+  return [block0?.institutionName, block0?.lectureDateDisplay, block0?.lectureSessionDisplay]
+    .map(part => part?.trim() ?? '')
+    .filter(part => part !== '' && part !== '-' && part !== '—')
 }
 
 export function PaymentOrderPaymentRejectionModal({
@@ -61,9 +64,11 @@ export function PaymentOrderPaymentRejectionModal({
   onReject,
   data,
   confirmLoading = false,
+  applicationKind,
 }: PaymentOrderPaymentRejectionModalProps) {
+  const copy = getPaymentApplicationCopy(applicationKind)
   const memberName = data ? getMemberName(data) : ''
-  const contextLine = data ? getContextLine(data) : null
+  const contextLine = data ? getContextParts(data) : null
   const modalContentRef = useRef<HTMLDivElement>(null)
   const manualRadioAnchorRef = useRef<HTMLSpanElement>(null)
 
@@ -147,23 +152,28 @@ export function PaymentOrderPaymentRejectionModal({
             <div className="payment-order-payment-reject__desc">
               <p className="payment-order-payment-reject__line">
                 <strong className="payment-order-payment-reject__name">[{memberName}]</strong>{' '}
-                님의 지급조서 신청을 반려하시겠습니까?
+                님의 {copy.rejectSubject} 신청을 반려하시겠습니까?
               </p>
               <p className="payment-order-payment-reject__line">
                 반려 시 입력하신 사유가 회원에게 반려 사유로 안내되며, 알림이 발송됩니다.
               </p>
             </div>
 
-            <div
-              className="payment-order-payment-reject__detail-line"
-              aria-label="대상·진행 일자·회차 또는 차시"
-            >
-              <span>{contextLine.first}</span>
-              <span className="payment-order-payment-reject__sep" aria-hidden />
-              <span>{contextLine.lectureDateDisplay}</span>
-              <span className="payment-order-payment-reject__sep" aria-hidden />
-              <span>{contextLine.lectureSessionDisplay}</span>
-            </div>
+            {contextLine.length > 0 ? (
+              <div
+                className="payment-order-payment-reject__detail-line"
+                aria-label="대상·진행 일자·회차 또는 차시"
+              >
+                {contextLine.map((part, index) => (
+                  <Fragment key={`${index}-${part}`}>
+                    {index > 0 ? (
+                      <span className="payment-order-payment-reject__sep" aria-hidden />
+                    ) : null}
+                    <span>{part}</span>
+                  </Fragment>
+                ))}
+              </div>
+            ) : null}
             <div className="payment-order-payment-reject__reason-block">
               <span className="payment-order-payment-reject__reason-label">
                 반려 사유

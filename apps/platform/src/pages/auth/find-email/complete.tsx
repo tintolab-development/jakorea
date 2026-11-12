@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clearFoundEmail, peekFoundEmail } from '@/features/auth/find-email'
-import illustSearchUrl from '@/shared/assets/illustration/illust-search.png'
+import illustSearchUrl from '@/shared/assets/illustration/graphic-84-08.png'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'

@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getDashboardScheduleEvents } from '@/features/dashboard/api/admin-dashboard-service'
 import {
-  normalizeDashboardProgramIds,
-  toDashboardQueryParams,
-} from '@/features/dashboard/api/dashboard-api-client'
+  buildDashboardScheduleEventsParams,
+  getDashboardScheduleEvents,
+} from '@/features/dashboard/api/admin-dashboard-service'
+import { normalizeDashboardProgramIds } from '@/features/dashboard/api/dashboard-api-client'
 import { dashboardQueryKeys } from '@/features/dashboard/api/dashboard-query-keys'
 import { useDashboardRemoteQueryEnabled } from '@/features/dashboard/hooks/use-dashboard-query-scope'
 
@@ -24,16 +24,18 @@ export function useDashboardProgramSchedules(options: UseDashboardProgramSchedul
     [programIds]
   )
 
-  const queryParams = useMemo(() => {
-    const extra: Record<string, string> = {}
-    if (dateFrom) extra.dateFrom = dateFrom
-    if (dateTo) extra.dateTo = dateTo
-    if (programType) extra.programType = programType
-    return toDashboardQueryParams({
-      programIds: normalizedIds,
-      extra,
-    })
-  }, [normalizedIds, dateFrom, dateTo, programType])
+  // QA-0382: 프로그램 목록 캘린더와 같은 기준 — 교육 회차에 운영 기간·모집 기간 일정을 함께 받는다
+  const queryParams = useMemo(
+    () =>
+      buildDashboardScheduleEventsParams({
+        programIds: normalizedIds,
+        dateFrom,
+        dateTo,
+        programType,
+        includeOperationalEvents: true,
+      }),
+    [normalizedIds, dateFrom, dateTo, programType]
+  )
 
   return useQuery({
     queryKey: dashboardQueryKeys.programSchedules('remote', queryParams),
@@ -43,6 +45,7 @@ export function useDashboardProgramSchedules(options: UseDashboardProgramSchedul
         dateFrom,
         dateTo,
         programType,
+        includeOperationalEvents: true,
       }),
     enabled: remoteEnabled,
     staleTime: 60_000,

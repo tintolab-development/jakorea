@@ -1,10 +1,7 @@
 import type { InstructorRoleRequestProfile } from '@/features/mypage/instructor-apply/api/types'
 import type { InstructorRoleRequestSettlement } from '@/features/mypage/instructor-apply/api/types'
-import {
-  mapInstructorFeeGradeLabel,
-  mapInstructorJaGradeLabel,
-} from '@/features/mypage/instructor-apply/api/response-codes'
 import { EMPTY_SETTINGS_VALUE } from './constants'
+import { formatInstructorApplyBankDisplay } from '@/features/mypage/instructor-apply/lib/format-instructor-apply-display'
 import {
   formatSettingsDateDot,
   formatSettingsEmployment,
@@ -90,28 +87,13 @@ function formatInstructorCareerSummary(cms: InstructorRoleRequestProfile | undef
   return summary || EMPTY_SETTINGS_VALUE
 }
 
-function formatFeeGradeLabel(
-  cms: InstructorRoleRequestProfile | undefined,
-  profile: SettingsProfileInput,
-): string {
-  const fromMetrics = mapInstructorFeeGradeLabel(profile.listMetrics?.instructorFeeGradeLabel)
-  if (fromMetrics) return fromMetrics
-  const fromProfile = mapInstructorFeeGradeLabel(cms?.defaultFeeGrade)
-  return fromProfile || EMPTY_SETTINGS_VALUE
-}
-
-function formatJaGradeLabel(
-  cms: InstructorRoleRequestProfile | undefined,
-  profile: SettingsProfileInput,
-): string {
-  const fromMetrics = mapInstructorJaGradeLabel(profile.listMetrics?.jaEvaluationGrade)
-  if (fromMetrics) return fromMetrics
-  const fromProfile = mapInstructorJaGradeLabel(cms?.defaultJaGrade)
-  return fromProfile || EMPTY_SETTINGS_VALUE
-}
-
-function formatSettlementStatusLabel(profile: SettingsProfileInput): string {
-  return formatSettingsText(profile.listMetrics?.settlementStatusLabel)
+function formatSettlementAccountDisplay(settlement: InstructorRoleRequestSettlement | undefined): string {
+  const current = settlement?.bankAccounts?.find(account => account.current === true)
+  const bank = current?.bankName?.trim() || settlement?.bankName?.trim() || ''
+  const number = current?.accountNumber?.trim() || settlement?.accountNumber?.trim() || ''
+  const holder = current?.accountHolder?.trim() || settlement?.accountHolder?.trim() || ''
+  const formatted = formatInstructorApplyBankDisplay(bank, number, holder)
+  return formatted || EMPTY_SETTINGS_VALUE
 }
 
 export type MapInstructorBasicSettingsOptions = {
@@ -127,8 +109,6 @@ export function mapInstructorBasicSettingsRows(
 ): SettingsInfoRow[] {
   const cms = profile.instructorProfile?.profile
   const settlement = profile.instructorProfile?.settlement
-  const social =
-    options?.linkedSocialAccounts ?? profile.socialAccounts ?? []
   const isDual = options?.isDual === true
   const affiliationRows: SettingsInfoRow[] = isDual
     ? [
@@ -138,22 +118,16 @@ export function mapInstructorBasicSettingsRows(
     : [{ label: '소속', value: formatInstructorAffiliation(cms, profile) }]
 
   return [
-    { label: '정산 현황', value: formatSettlementStatusLabel(profile) },
-    { label: 'JA 평가 등급', value: formatJaGradeLabel(cms, profile) },
     { label: '가입일', value: formatSettingsJoinedAtDot(profile.joinedAt) },
-    {
-      label: '연동된 소셜 계정',
-      value: formatSettingsLinkedSocialAccounts(social),
-    },
+    { label: '이메일 ID', value: formatSettingsText(profile.email) },
     { label: '이름', value: formatSettingsText(profile.name), dividerBefore: true },
     { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },
     { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
     ...(isDual ? [{ label: '성별', value: formatSettingsGender(profile.gender) }] : []),
-    { label: '이메일', value: formatSettingsText(profile.email) },
     ...affiliationRows,
     { label: '강사 경력', value: formatInstructorCareerSummary(cms) },
     { label: '자택 주소', value: formatInstructorHomeAddress(cms, profile) },
-    { label: '강사비 등급', value: formatFeeGradeLabel(cms, profile) },
+    { label: '정산 계좌 정보', value: formatSettlementAccountDisplay(settlement) },
     { label: '사업소득자 여부', value: formatBusinessIncomeDisplay(settlement) },
     {
       label: '한 줄 소개',

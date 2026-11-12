@@ -1,8 +1,16 @@
 import { readJwtSidClaim } from '@jakorea/domain/session'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered/model/wizard-state'
 import { clearInstructorApplySessionCache } from '@/features/mypage/instructor-apply/lib/instructor-apply-session-cache'
-import { postPortalAuthLogout } from '@/shared/api/axios-instance'
-import { clearAuthTokens, getAccessToken, getRefreshToken } from '@/shared/lib/auth-token'
+import {
+  postPortalAuthLogout,
+  postPortalAuthRefreshCookieLogout,
+} from '@/shared/api/axios-instance'
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  hasRefreshCredential,
+} from '@/shared/lib/auth-token'
 import { setDevAuthLoggedIn } from '@/shared/lib/dev-auth'
 
 export type LogoutPortalSessionOptions = {
@@ -37,12 +45,22 @@ async function runLogout(options: LogoutPortalSessionOptions): Promise<void> {
     options.refreshToken !== undefined ? options.refreshToken : getRefreshToken()
   const sidAtStart = readJwtSidClaim(getAccessToken())
 
-  if (options.serverLogout !== false && refreshToken) {
-    try {
-      await postPortalAuthLogout(refreshToken)
-    } catch {
-      // 서버 폐기 실패여도 로컬 세션은 정리한다.
+  if (options.serverLogout !== false) {
+    const remoteLogouts: Promise<void>[] = []
+    // TODO(QA-0137 인프라 전환 후 삭제): 저장된 refreshToken이 사라지면 본문 logout 분기를 지운다.
+    if (refreshToken) {
+      remoteLogouts.push(
+        postPortalAuthLogout(refreshToken).catch(() => {
+          // 서버 폐기 실패여도 로컬 세션은 정리한다.
+        }),
+      )
     }
+    // QA-0137: HttpOnly refresh 쿠키 폐기·삭제. best effort(내부에서 실패를 삼킴) — 로컬 정리를 막지 않는다.
+    // serverLogout=false(409 회전 경쟁)면 쿠키에는 다른 탭의 최신 토큰이 있으므로 호출하지 않는다.
+    if (refreshToken || hasRefreshCredential() || getAccessToken()) {
+      remoteLogouts.push(postPortalAuthRefreshCookieLogout())
+    }
+    await Promise.all(remoteLogouts)
   }
 
   const currentRefreshToken = getRefreshToken()

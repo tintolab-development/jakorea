@@ -1,6 +1,9 @@
 import { useCallback, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import { getPortalMe, getPortalProfile } from '@/features/auth/sign-in/api/client'
+import { mapPortalMemberToPlatformProfile } from '@/features/mypage/lib/map-portal-member-profile'
+import { hasTeacherMypageProfile } from '@/features/mypage/lib/member-profile'
 import { fetchPortalConsents } from '@/features/mypage/settings/api/consents'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -23,11 +26,15 @@ import {
   resolveRequiredApplyConsentTypes,
   type RequiredApplyConsentType,
 } from '../lib/application-consent-guard'
+import { isTeacherRestrictedApplication } from '../lib/teacher-apply-restriction'
 import { parsePortalProgramId } from '../api/mappers'
 import { useProgramMinorPortraitGate } from './use-program-minor-portrait-gate'
 
 /** 필수 동의 하단 시트 문구 — `minor`: 만 14세 미만 회원 프로그램 초상권(보호자 본인인증 흐름) */
 export type ProgramRequiredConsentVariant = 'default' | 'minor'
+
+/** 대상 아님 모달 문구 — `teacher`: 교사 회원 신청 제한(원버튼) */
+export type ProgramNotEligibleVariant = 'default' | 'teacher'
 
 export function useProgramApplyGate(
   programId: string | null | undefined,
@@ -39,6 +46,8 @@ export function useProgramApplyGate(
   const [missingConsents, setMissingConsents] = useState<RequiredApplyConsentType[]>([])
   const [requiredConsentVariant, setRequiredConsentVariant] =
     useState<ProgramRequiredConsentVariant>('default')
+  const [notEligibleVariant, setNotEligibleVariant] =
+    useState<ProgramNotEligibleVariant>('default')
   /** 마지막 `findMissingRequiredConsents` 가 미성년 시도 미완료로 막았는지 */
   const minorPortraitPendingRef = useRef(false)
   /** `runApplyGate` 에서 넘긴 신청서 경로 (상세 → 신청서) */
@@ -67,6 +76,45 @@ export function useProgramApplyGate(
     })
     return pickApplicationOption(options, selection)
   }, [programId, queryClient, selection])
+
+  /**
+   * 교사 회원(교사 겸직 강사 포함) — 일반(개인) 참여자·전 프로그램 봉사자 모집 신청 제한.
+   * 회원 조회가 모두 실패하면 막지 않는다(fail-open, 서버 게이트에 맡김).
+   */
+  const isTeacherRestrictedOption = useCallback(
+    async (option: PortalApplicationOption | null) => {
+      const applicationType =
+        option?.applicationType ??
+        (selection?.applicationTypes?.length === 1 ? selection.applicationTypes[0] : undefined)
+      const programType = selection?.programType
+      // 교사 여부와 무관하게 제한 대상 모집이 아니면 회원 조회를 생략한다.
+      if (!isTeacherRestrictedApplication({ isTeacher: true, programType, applicationType })) {
+        return false
+      }
+      const [me, profile] = await Promise.allSettled([
+        queryClient.fetchQuery({
+          queryKey: platformQueryKeys.auth.me(),
+          queryFn: ({ signal }) => getPortalMe(signal),
+          staleTime: 5 * 60_000,
+        }),
+        queryClient.fetchQuery({
+          queryKey: platformQueryKeys.auth.memberProfile(),
+          queryFn: ({ signal }) => getPortalProfile(signal),
+          staleTime: 5 * 60_000,
+        }),
+      ])
+      const memberProfile = mapPortalMemberToPlatformProfile({
+        me: me.status === 'fulfilled' ? me.value : null,
+        profile: profile.status === 'fulfilled' ? profile.value : null,
+      })
+      return isTeacherRestrictedApplication({
+        isTeacher: hasTeacherMypageProfile(memberProfile),
+        programType,
+        applicationType,
+      })
+    },
+    [queryClient, selection?.applicationTypes, selection?.programType],
+  )
 
   /**
    * 일부 대상 불일치 응답은 application-options에서 canApply/blockedReason가
@@ -162,6 +210,12 @@ export function useProgramApplyGate(
     [rememberMinorReturnTo, startMinorPortrait],
   )
 
+  /** 교사 회원 신청 제한 — 대상 아님 모달(원버튼) */
+  const openTeacherRestrictedModal = useCallback(() => {
+    setNotEligibleVariant('teacher')
+    setGateModal('not-eligible')
+  }, [])
+
   const runApplyGate = useCallback(
     async (
       onProceed: () => void,
@@ -179,6 +233,10 @@ export function useProgramApplyGate(
       setIsChecking(true)
       try {
         const option = await fetchSelectedOption()
+        if (await isTeacherRestrictedOption(option)) {
+          openTeacherRestrictedModal()
+          return
+        }
         const modal = readGateModalForOptions(option?.canApply, option?.blockedReason ?? null)
         if (modal) {
           setGateModal(modal)
@@ -208,7 +266,9 @@ export function useProgramApplyGate(
     [
       fetchSelectedOption,
       findMissingRequiredConsents,
+      isTeacherRestrictedOption,
       openRequiredConsentModal,
+      openTeacherRestrictedModal,
       preflightSelectedForm,
       programId,
       readGateModalForOptions,
@@ -217,6 +277,7 @@ export function useProgramApplyGate(
 
   const closeGateModal = useCallback(() => {
     setGateModal(null)
+    setNotEligibleVariant('default')
   }, [])
 
   return {
@@ -226,6 +287,11 @@ export function useProgramApplyGate(
     isChecking,
     runApplyGate,
     readGateModalForOptions,
+    /** 신청서 직접 진입 — 교사 회원 신청 제한 모집인지 */
+    isTeacherRestrictedOption,
+    openTeacherRestrictedModal,
+    /** `ProgramApplyGateModals.notEligibleVariant` 로 넘긴다 */
+    notEligibleVariant,
     missingConsents,
     findMissingRequiredConsents,
     openRequiredConsentModal,

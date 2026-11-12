@@ -7,12 +7,12 @@ import {
   useMyNotificationUnreadCountQuery,
 } from '@/features/notification'
 import { PFModal } from '@/shared/ui'
-import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
-import chevronUpBlackUrl from '@/shared/assets/icons/chevron-up-black-32.svg'
-import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
 import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
-import notificationsActiveIconUrl from '../image/icon/notifications-active.svg'
-import notificationsIconUrl from '../image/icon/notifications.svg'
+import backIconUrl from './image/icon/back.svg'
+import chevronDownIconUrl from './image/icon/chevron-down.svg'
+import chevronUpIconUrl from './image/icon/chevron-up.svg'
+import notificationsActiveIconUrl from './image/icon/notifications-mobile-active.svg'
+import notificationsIconUrl from './image/icon/notifications-mobile.svg'
 import {
   getLoggedInActionRoute,
   guestUserActionRoutes,
@@ -163,7 +163,7 @@ export function HeaderMobileMenu({
           aria-label="메뉴 닫기"
           onClick={onClose}
         >
-          <img className={styles.backIcon} src={chevronLeftGrayUrl} alt="" aria-hidden="true" />
+          <img className={styles.backIcon} src={backIconUrl} alt="" aria-hidden="true" />
         </button>
         {isLoggedIn ? (
           <button
@@ -265,7 +265,7 @@ export function HeaderMobileMenu({
                   <span className={styles.menuTriggerLabel}>{group.label}</span>
                   <img
                     className={styles.menuChevron}
-                    src={isExpanded ? chevronUpBlackUrl : chevronDownBlackUrl}
+                    src={isExpanded ? chevronUpIconUrl : chevronDownIconUrl}
                     alt=""
                     aria-hidden="true"
                   />

@@ -100,6 +100,8 @@ assert.deepEqual(
   ['JA_ORGANIZATION', 'JA_HISTORY', 'JA_NOTICE'],
 )
 assert.equal(mobileMenuDesignOverlay?.groups[1]?.label, '임팩트 스토리')
+const impactGroup = mobileMenuDesignOverlay?.groups.find(g => g.groupCode === 'IMPACT_STORY')
+assert.equal(impactGroup?.children[0]?.label, '임팩트 스토리')
 
 const empty = mapPublicGnb([])
 assert.ok(empty)

@@ -100,6 +100,7 @@ export function ProgramDetailPage() {
     runApplyGate,
     missingConsents,
     minorPortraitGateModalProps,
+    notEligibleVariant,
   } = useProgramApplyGate(programId, applySelection)
   const applyOptionQuery = usePortalApplicationOption(programId, applySelection)
 
@@ -172,6 +173,7 @@ export function ProgramDetailPage() {
         onClose={closeGateModal}
         missingConsentTypes={missingConsents}
         {...minorPortraitGateModalProps}
+        notEligibleVariant={notEligibleVariant}
         onOpenConsents={() => {
           closeGateModal()
           navigate(programApplyGateConsentsPath)

@@ -13,6 +13,7 @@ import {
 import { DEV_AUTH_CHANGE_EVENT } from '@/shared/lib/auth-session-event'
 import {
   getAccessToken,
+  PLATFORM_AUTH_REFRESH_COOKIE_SESSION_KEY,
   PLATFORM_AUTH_REFRESH_TOKEN_KEY,
   PLATFORM_AUTH_TOKEN_KEY,
 } from '@/shared/lib/auth-token'
@@ -149,14 +150,16 @@ export function usePortalSessionTimeout() {
     })
   }, [syncSession])
 
-  // 같은 탭(setAuthTokens/clearAuthTokens → platform:dev-auth-change)·다른 탭(storage) 토큰 변경 구독
+  // 같은 탭(setAuthTokens/clearAuthTokens)·다른 탭(BroadcastChannel → auth-token이 platform:dev-auth-change로 전달,
+  // storage: refresh 수단 제거) 토큰 변경 구독. access token은 메모리에만 있다 (QA-0137).
   useEffect(() => {
     const readToken = () => setAccessToken(getAccessToken())
     const onStorage = (event: StorageEvent) => {
       if (
         event.key === null ||
         event.key === PLATFORM_AUTH_TOKEN_KEY ||
-        event.key === PLATFORM_AUTH_REFRESH_TOKEN_KEY
+        event.key === PLATFORM_AUTH_REFRESH_TOKEN_KEY ||
+        event.key === PLATFORM_AUTH_REFRESH_COOKIE_SESSION_KEY
       ) {
         readToken()
       }

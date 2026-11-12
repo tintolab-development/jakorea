@@ -21,7 +21,7 @@ const testSections: SettlementItemSettingSection[] = [
       },
       {
         id: 'pay-participant-activity',
-        title: '참여자 활동비',
+        title: '활동비',
         description: '',
         iconKey: 'pay_activity',
         paymentItemType: 'ACTIVITY',
@@ -70,7 +70,7 @@ describe('filterProgramWagePaymentItemOptionsForPayees — 지급 실행 자격 
     const labels = filtered.map(o => o.label)
     expect(labels).toContain('학생 교통비')
     expect(labels).toContain('학생 교통비(정책)')
-    expect(labels).toContain('참여자 활동비')
+    expect(labels).toContain('활동비')
     expect(labels).not.toContain('숙박비')
     expect(labels).not.toContain('강사 교통비')
   })

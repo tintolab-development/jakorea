@@ -34,6 +34,19 @@ export function maskSponsorManagerEmail(email: string | null | undefined): strin
   return trimmed ? MASKING_POLICY.email(trimmed) : ''
 }
 
+/**
+ * 조회 화면 대표 담당자 연락처 — GET `/programs/{id}/sponsors` 배정 응답(sponsorManagerContactDetails)만 쓴다.
+ * `program.contactPhone` 은 문의처라 담당자 연락처로 쓰지 않는다(기획: 담당자 → 문의처 자동 채움 없음).
+ */
+export function resolveAssignedSponsorManagerPhone(program: Program): string | undefined {
+  const info = program.generalCommonInfo
+  const details = info?.sponsorManagerContactDetails
+  if (!details) return undefined
+  const primaryRef = info?.sponsorManagerContactIds?.[0] ?? info?.sponsorManagerContactId
+  if (!primaryRef) return undefined
+  return details[primaryRef]?.phone?.trim() || undefined
+}
+
 function looksLikePhoneSegment(value: string): boolean {
   const trimmed = value.trim()
   if (!trimmed) return false
@@ -245,13 +258,14 @@ export function SponsorManagerContactsView({
   if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
     return <>{sponsorCount > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
   }
+  const assignedManagerPhone = resolveAssignedSponsorManagerPhone(program)
   return (
     <>
       {managerName}
-      {program.contactPhone ? (
+      {assignedManagerPhone ? (
         <>
           {'\u00A0'}
-          <span>{maskSponsorManagerPhone(program.contactPhone)}</span>
+          <span>{maskSponsorManagerPhone(assignedManagerPhone)}</span>
         </>
       ) : null}
     </>

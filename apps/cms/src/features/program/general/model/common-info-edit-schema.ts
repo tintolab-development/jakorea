@@ -2550,9 +2550,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
     generalProgramSessionRound: values.sessionRound,
     /** 후원사 관리 id = Program.sponsorId (목록/상세 API 탑레벨) */
     sponsorId: values.sponsorManagementIds[0] ?? existing.sponsorId,
-    // 담당자 평문만 — GET 마스킹값(existing)으로 폴백하지 않음
+    // 담당자 평문만 — GET 마스킹값(existing)으로 폴백하지 않음.
+    // 담당자 전화는 문의처(contactPhone)로 복사하지 않는다(기획: 자동 채움 없음) — 저장된 문의처 유지.
     ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
-    ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
     generalCommonInfo,
     ...(educationPlaceOverlay ? { registrationOverlay: educationPlaceOverlay } : {}),
   }

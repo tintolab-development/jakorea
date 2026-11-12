@@ -19,17 +19,40 @@ type VolunteerSettlementReviewFields = {
   individualApplicationId?: number | null
 }
 
+/**
+ * 참여 봉사자 정산 현황(programId + participantId + applicationType=VOLUNTEER)에서만 채우는 필드.
+ * 배정 봉사 일정 1건 = 1행이며, 미신청 행(NOT_APPLIED)은 신청 ID·상태·금액·Revision이 null이다.
+ */
+type VolunteerSettlementStatusFields = {
+  rowType?: 'SETTLEMENT_APPLICATION' | 'NOT_APPLIED' | string | null
+  /** SCHEDULED(진행 예정) | COMPLETED(진행 완료) | GAVE_UP(활동 포기) */
+  lectureProgressStatus?: 'SCHEDULED' | 'COMPLETED' | 'GAVE_UP' | string | null
+  /** PRE_EDUCATION | EDUCATION | CLOSING | SESSION — 모든 조회에서 채운다 */
+  scheduleKind?: string | null
+  settlementApplicationId?: number | null
+  status?: string | null
+  totalAmount?: number | null
+  latestRevisionNo?: number | null
+}
+
 export type IndividualSettlementReviewListItemView = Omit<
   IndividualSettlementReviewListItem,
-  'individualApplicationId'
+  'individualApplicationId' | 'settlementApplicationId' | 'status' | 'totalAmount' | 'latestRevisionNo'
 > &
-  VolunteerSettlementReviewFields
+  VolunteerSettlementReviewFields &
+  VolunteerSettlementStatusFields
 
 export type IndividualSettlementReviewDetailView = Omit<
   IndividualSettlementReviewDetail,
   'individualApplicationId'
 > &
-  VolunteerSettlementReviewFields
+  VolunteerSettlementReviewFields & {
+    /**
+     * 최신 Revision 제출 시점의 참여 기관명. 개인형 프로그램은 항상 null(열 숨김),
+     * 기관형에서 저장된 값이 없으면 null(화면 '-'). 프로그램명·주소로 대신 채우지 않는다.
+     */
+    institutionName?: string | null
+  }
 
 export function resolveIndividualSettlementReviewApplicationType(
   value: string | null | undefined

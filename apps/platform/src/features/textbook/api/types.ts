@@ -26,6 +26,10 @@ export type PublicTextbookListItem = {
   unitCount?: number
   sessionDescription?: string
   createdAt?: string
+  /** 목록 카드용 233×320 썸네일(QA-0495). 아직 변형이 없으면 `null` → `thumbnailUrl` */
+  thumbnailUrlW233?: string | null
+  /** 목록 카드용 2배(466×640) 썸네일(QA-0495). 아직 변형이 없으면 `null` → `thumbnailUrl` */
+  thumbnailUrlW466?: string | null
 }
 
 export type PublicTextbookListPage = {

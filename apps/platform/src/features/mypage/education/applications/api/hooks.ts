@@ -7,6 +7,7 @@ import type { EducationApplicationListItem, EducationApplicationTab } from '../m
 import { EDUCATION_APPLICATION_PAGE_SIZE } from '../model/types'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
 import { getApplicationApiErrorCode } from '@/features/program/lib/application-api-error'
+import { invalidateMypageApplicationSurfaces } from './invalidate-mypage-application-surfaces'
 import {
   cancelMyProgramApplication,
   fetchMyProgramApplicationDetail,
@@ -17,6 +18,7 @@ import {
   mapPortalProgramApplicationDetail,
   mapPortalProgramApplicationListItem,
 } from './mappers'
+import { listEducationApplications } from '../lib/list'
 import { resolveStatusGroupForTab } from './status-group'
 import type { ProgramApplicationType } from './types'
 
@@ -24,6 +26,8 @@ const APPLICATIONS_STALE_MS = 30_000
 const APPLICATIONS_GC_MS = 10 * 60_000
 /** statusGroup 없이 전체 조회할 때(레거시·탭 미전달) 상한 */
 const APPLICATIONS_FETCH_SIZE = 20
+/** 탭별 displayStatus 분류용 — BE statusGroup과 어긋날 때 목록 SSOT를 맞춘다. */
+const TAB_CLIENT_FILTER_FETCH_SIZE = 100
 
 export type MypageApplicationScope = 'education' | 'lecture' | 'volunteer'
 
@@ -100,12 +104,26 @@ export function useMyProgramApplications(
   const tab = options?.tab
   const pageSize = options?.pageSize ?? EDUCATION_APPLICATION_PAGE_SIZE
   const uiPage = Math.max(1, options?.page ?? 1)
-  const statusGroup = tab != null ? resolveStatusGroupForTab(tab) : undefined
-  const serverPaged = tab != null
-  const statusGroupKey =
-    tab === 'all' ? 'ALL' : statusGroup == null ? '' : statusGroup
-  const apiPage = serverPaged ? uiPage - 1 : 0
-  const apiSize = serverPaged ? pageSize : APPLICATIONS_FETCH_SIZE
+  const useClientTabFilter = tab != null && tab !== 'all'
+  const statusGroup = useClientTabFilter
+    ? undefined
+    : tab != null
+      ? resolveStatusGroupForTab(tab)
+      : undefined
+  const serverPaged = tab != null && !useClientTabFilter
+  const statusGroupKey = useClientTabFilter
+    ? `TAB:${tab}`
+    : tab === 'all'
+      ? 'ALL'
+      : statusGroup == null
+        ? ''
+        : statusGroup
+  const apiPage = useClientTabFilter ? 0 : serverPaged ? uiPage - 1 : 0
+  const apiSize = useClientTabFilter
+    ? TAB_CLIENT_FILTER_FETCH_SIZE
+    : serverPaged
+      ? pageSize
+      : APPLICATIONS_FETCH_SIZE
 
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.list({
@@ -129,14 +147,34 @@ export function useMyProgramApplications(
           ),
         ),
       )
-      const items = pages.flatMap(page => mapListItems(page.items))
+      const mergedItems = pages.flatMap(page => mapListItems(page.items))
+      if (useClientTabFilter && tab != null) {
+        const paged = listEducationApplications(mergedItems, {
+          tab,
+          page: uiPage,
+          pageSize,
+        })
+        return {
+          items: paged.items,
+          totalElements: paged.totalElements,
+          totalPages: paged.totalPages,
+          currentPage: paged.currentPage,
+          serverPaged: false,
+        }
+      }
       const totalElements = pages.reduce((sum, page) => sum + (page.totalElements ?? 0), 0)
       const totalPages = Math.max(
         1,
         pages.reduce((max, page) => Math.max(max, page.totalPages ?? 0), 0),
         Math.ceil(totalElements / apiSize) || 1,
       )
-      return { items, totalElements, totalPages, currentPage: uiPage, serverPaged }
+      return {
+        items: mergedItems,
+        totalElements,
+        totalPages,
+        currentPage: uiPage,
+        serverPaged,
+      }
     },
     enabled: remote,
     staleTime: APPLICATIONS_STALE_MS,
@@ -373,11 +411,7 @@ export function useCancelMyProgramApplicationMutation() {
     }) =>
       cancelMyProgramApplication(args.applicationType, args.applicationId),
     onSuccess: async (_data, args) => {
-      const invalidationTasks = [
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.all(),
-        }),
-      ]
+      const invalidationTasks = [invalidateMypageApplicationSurfaces(queryClient)]
       if (args.programId != null && String(args.programId).trim()) {
         const programId = String(args.programId)
         invalidationTasks.push(

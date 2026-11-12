@@ -4,6 +4,7 @@
 
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { buildLoginPathWithRedirect } from '@/shared/lib/login-redirect'
 import { PageContentLoading } from '@/shared/ui/page-content-loading'
 
 interface ProtectedRouteProps {
@@ -32,13 +33,15 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
     )
   }
 
+  // 로그인 후 원래 화면으로 돌아오도록 현재 경로를 redirect로 넘긴다.
+  const loginPath = buildLoginPathWithRedirect(`${location.pathname}${location.search}`)
+
   if (requireAuth && !isAuthenticated) {
-    const redirect = encodeURIComponent(`${location.pathname}${location.search}`)
-    return <Navigate to={`/login?redirect=${redirect}`} replace />
+    return <Navigate to={loginPath} replace />
   }
 
   if (requireAuth && user?.role === 'ADMIN' && requiresMfa && !mfaState?.isVerified) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={loginPath} replace />
   }
 
   return <>{children}</>

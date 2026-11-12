@@ -1,6 +1,7 @@
 /**
  * Orval DTO → 대시보드 UI 타입 어댑터
  */
+import dayjs from 'dayjs'
 import type { ProgramLifecycleStatus } from '@/types/domain'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type {
@@ -16,7 +17,10 @@ import type { DashboardRecruitmentResponse } from '@/shared/api/generated/dashbo
 import type { DashboardProgramInquirySummaryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquirySummaryResponse'
 import type { DashboardProgramInquiryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquiryResponse'
 import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
-import { buildScheduleEventDetailLabel } from '@/features/dashboard/lib/schedule-event-detail-label'
+import {
+  buildScheduleEventDetailLabel,
+  type DashboardScheduleEventType,
+} from '@/features/dashboard/lib/schedule-event-detail-label'
 import type { KpiMetric, KpiMetricKey, ProgramKpiItem } from '../admin-dashboard-service'
 
 export interface DashboardHomeSummary {
@@ -55,13 +59,18 @@ export interface DashboardRecruitmentListView {
 
 export interface DashboardScheduleEventDto {
   id: string
-  type: 'education' | 'recruitment_deadline' | 'recruitment_start'
+  type: DashboardScheduleEventType
   title: string
   time: string
+  /** 위젯 날짜 칸 키(YYYY-MM-DD). 종일 일정은 BE eventDate(Asia/Seoul), 그 밖은 startAt 기준 */
+  dateKey: string
+  /** BE eventLabel(목록 캘린더와 같은 유형 문구). 운영 시작·종료 표시에 쓴다 */
+  eventLabel?: string
   programId: string
   programTitle: string
   lifecycleStatus: ProgramLifecycleStatus
-  startAt: string
+  /** 운영 시작·종료처럼 날짜 전용 일정은 없을 수 있다 */
+  startAt?: string
   endAt?: string
   sessionNo?: number | null
   scheduleName?: string | null
@@ -543,9 +552,31 @@ export function mapProgramInquiryListResponse(
   }))
 }
 
+function mapScheduleTypeFromEventType(
+  eventType: string | undefined
+): DashboardScheduleEventDto['type'] | null {
+  switch (eventType?.trim()) {
+    case 'RECRUITMENT_START':
+      return 'recruitment_start'
+    case 'RECRUITMENT_END':
+      return 'recruitment_deadline'
+    case 'BUSINESS_START':
+    case 'BUSINESS_END':
+      return 'operation'
+    case 'EDUCATION':
+    case 'EDUCATION_PERIOD':
+    case 'EVENT':
+      return 'education'
+    default:
+      return null
+  }
+}
+
 function mapScheduleType(
   item: DashboardProgramScheduleResponse
 ): DashboardScheduleEventDto['type'] {
+  const fromEventType = mapScheduleTypeFromEventType(item.eventType)
+  if (fromEventType) return fromEventType
   const name = `${item.scheduleName ?? ''} ${item.scheduleStatus ?? ''}`.toLowerCase()
   if (name.includes('모집') && name.includes('마감')) return 'recruitment_deadline'
   if (name.includes('모집') && (name.includes('시작') || name.includes('start'))) {
@@ -555,23 +586,46 @@ function mapScheduleType(
 }
 
 function formatScheduleTime(startAt: string | undefined, allDay?: boolean): string {
-  if (!startAt) return ''
   if (allDay) return '종일'
+  if (!startAt) return ''
   const date = new Date(startAt)
   if (Number.isNaN(date.getTime())) return startAt
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
+function trimmedOrEmpty(value: string | null | undefined): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+/** 종일(운영 시작·종료, 종일 교육)은 eventDate(Asia/Seoul)로, 시각 있는 일정은 startAt으로 날짜 칸을 정한다 */
+function resolveScheduleDateKey(item: DashboardProgramScheduleResponse): string {
+  const eventDate = trimmedOrEmpty(item.eventDate).slice(0, 10)
+  if (eventDate && (item.allDay === true || !item.startAt)) return eventDate
+  if (item.startAt) return dayjs(item.startAt).format('YYYY-MM-DD')
+  return eventDate
+}
+
+/**
+ * 교육 회차는 scheduleId, 운영·모집 일정(includeOperationalEvents=true, QA-0382)은 scheduleId 없이 eventKey로 구분한다.
+ */
 export function mapScheduleItem(
   item: DashboardProgramScheduleResponseWithOrganization
 ): DashboardScheduleEventDto | null {
-  if (item.scheduleId == null || item.programId == null || !item.startAt) return null
+  if (item.programId == null) return null
+  const eventKey = trimmedOrEmpty(item.eventKey)
+  const id = eventKey || (item.scheduleId != null ? String(item.scheduleId) : '')
+  if (!id) return null
+  const dateKey = resolveScheduleDateKey(item)
+  if (!dateKey) return null
   const type = mapScheduleType(item)
+  const eventLabel = trimmedOrEmpty(item.eventLabel)
   return {
-    id: String(item.scheduleId),
+    id,
     type,
     title: toDisplayEducationScheduleName(item.scheduleName) ?? item.programNameKo ?? '일정',
     time: formatScheduleTime(item.startAt, item.allDay),
+    dateKey,
+    ...(eventLabel ? { eventLabel } : {}),
     programId: String(item.programId),
     programTitle: item.programNameKo ?? item.programCode ?? String(item.programId),
     lifecycleStatus: 'education_after_textbook',

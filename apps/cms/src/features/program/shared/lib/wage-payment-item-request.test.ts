@@ -69,13 +69,13 @@ describe('지급 항목 설정 — 프로그램 유형별 필터 없음', () => 
       { id: 'p-166202', title: '학생 교통비', paymentItemType: 'TRANSPORT_STUDENT' },
       { id: 'p-166206', title: '장거리 교통비', paymentItemType: 'LONG_DISTANCE_TRANSPORTATION' },
       { id: 'p-166203', title: '숙박비', paymentItemType: 'LODGING_GENERAL' },
-      { id: 'p-166204', title: '참여자 활동비', paymentItemType: 'ACTIVITY' },
+      { id: 'p-166204', title: '활동비', paymentItemType: 'ACTIVITY' },
       { id: 'p-166205', title: '식사비', paymentItemType: 'MEAL' },
       { id: 'p-166209', title: '숙박비 (비활성)', paymentItemType: 'LODGING_GENERAL', useYn: false },
     ])
     const labels = getProgramWagePaymentItemOptions().map(option => option.label)
     expect(labels).toEqual(
-      expect.arrayContaining(['강사 교통비', '학생 교통비', '장거리 교통비', '숙박비', '참여자 활동비', '식사비'])
+      expect.arrayContaining(['강사 교통비', '학생 교통비', '장거리 교통비', '숙박비', '활동비', '식사비'])
     )
     expect(labels).not.toContain('숙박비 (비활성)')
     expect(labels).not.toContain('p-1')

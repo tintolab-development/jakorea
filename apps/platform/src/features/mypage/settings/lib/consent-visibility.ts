@@ -1,6 +1,12 @@
 import { isUnder14FromAgeGroup, parsePortalAgeGroup } from '@/features/auth/sign-in/lib/portal-age-group'
 import type { PlatformMemberProfile } from '../../model/types.ts'
-import type { BasicConsentAudience, SettingsConsentItem } from './consent-catalog.ts'
+import {
+  DOCUMENT_CONSENT_ITEMS,
+  type BasicConsentAudience,
+  type SettingsConsentItem,
+  type SettingsConsentItemId,
+} from './consent-catalog.ts'
+import { ensurePinnedPaymentStatementConsentItem } from './payment-statement-consent-status.ts'
 
 /** 교사(비겸직) · 교사 겸직 강사 — 교사 전용 약관 노출 */
 export function isTeacherSettingsProfile(profile: PlatformMemberProfile): boolean {
@@ -57,12 +63,44 @@ export function filterBasicConsentItemsByAudience(
  * - 지급조서 사전 동의서: 강사 회원(`instructor_only`·`instructor_dual`)만
  * 정산·신청 게이트 판정용 `documentItems`에는 적용하지 않는다 (화면 노출 전용).
  */
+const INSTRUCTOR_EDUCATOR_DOCUMENT_IDS: ReadonlySet<SettingsConsentItemId> = new Set([
+  'educatorPledge',
+  'administrativeJoint',
+  'sexOffenseCheck',
+])
+
+/** 강사 회원 — 이용 가이드 4종 동의서·서약서가 목록에 빠지지 않도록 카탈로그 행을 보강한다. */
+export function ensureInstructorDocumentConsentItems(
+  documentItems: readonly SettingsConsentItem[],
+  isInstructor: boolean,
+): SettingsConsentItem[] {
+  const withPayment = ensurePinnedPaymentStatementConsentItem(documentItems)
+  if (!isInstructor) return withPayment
+
+  const merged = [...withPayment]
+  const seen = new Set(merged.map(item => item.id))
+  for (const id of INSTRUCTOR_EDUCATOR_DOCUMENT_IDS) {
+    if (seen.has(id)) continue
+    const catalog = DOCUMENT_CONSENT_ITEMS.find(item => item.id === id)
+    if (!catalog) continue
+    merged.push({ ...catalog, listed: true })
+    seen.add(id)
+  }
+  return merged
+}
+
 export function filterListedDocumentConsentItems(
   items: SettingsConsentItem[],
   options: { isRemoteSession: boolean; isInstructor: boolean },
 ): SettingsConsentItem[] {
   return items.filter(item => {
     if (item.id === 'paymentStatement' && !options.isInstructor) return false
+    if (
+      options.isInstructor &&
+      INSTRUCTOR_EDUCATOR_DOCUMENT_IDS.has(item.id as SettingsConsentItemId)
+    ) {
+      return true
+    }
     return !options.isRemoteSession || item.listed === true
   })
 }

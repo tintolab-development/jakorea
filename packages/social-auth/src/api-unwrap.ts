@@ -20,7 +20,8 @@ export function readSocialLoginMfaChallenge(payload: unknown): SocialLoginMfaCha
   const data = unwrapApiData<unknown>(payload)
   if (!data || typeof data !== 'object') return null
   const o = data as Record<string, unknown>
-  if (typeof o.accessToken === 'string' && typeof o.refreshToken === 'string') {
+  // 토큰 응답이면 MFA challenge가 아니다 (QA-0137: refreshToken은 본문에 없을 수 있어 access만 본다)
+  if (typeof o.accessToken === 'string' && o.accessToken.length > 0) {
     return null
   }
   const challengeUuid = readOptionalString(o.challengeUuid) ?? readOptionalString(o.mfaChallengeUuid)
@@ -49,13 +50,15 @@ export function unwrapAuthTokenResult(payload: unknown): AuthTokenResult {
     const o = data as Record<string, unknown>
     const accessToken = o.accessToken
     const refreshToken = o.refreshToken
-    if (typeof accessToken === 'string' && typeof refreshToken === 'string') {
+    // QA-0137: access만 필수. refreshToken은 전환기에만 본문에 온다(쿠키 전용 운영이면 없음).
+    if (typeof accessToken === 'string' && accessToken.length > 0) {
       const ageGroupRaw = typeof o.ageGroup === 'string' ? o.ageGroup.trim().toUpperCase() : ''
       const ageGroup =
         ageGroupRaw === 'UNDER_14' || ageGroupRaw === 'OVER_14' ? ageGroupRaw : undefined
       return {
         accessToken,
-        refreshToken,
+        refreshToken:
+          typeof refreshToken === 'string' && refreshToken.length > 0 ? refreshToken : undefined,
         tokenType: typeof o.tokenType === 'string' ? o.tokenType : undefined,
         expiresInSeconds:
           typeof o.expiresInSeconds === 'number' ? o.expiresInSeconds : undefined,

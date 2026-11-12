@@ -15,7 +15,7 @@ function v2Config(): SettlementConfigResponse {
       {
         id: 166207,
         paymentItemType: PaymentItemResponsePaymentItemType.ACTIVITY,
-        itemName: '참여자 활동비',
+        itemName: '활동비',
         layout: 'meal',
         maxLimitWon: 50_000,
         useYn: true,

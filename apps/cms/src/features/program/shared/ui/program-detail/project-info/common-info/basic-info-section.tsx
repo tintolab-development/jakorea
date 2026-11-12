@@ -23,6 +23,7 @@ import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/prog
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   maskSponsorManagerPhone,
+  resolveAssignedSponsorManagerPhone,
   SponsorManagerContactsView,
 } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import {
@@ -34,7 +35,6 @@ import {
   useGeneralProgramSponsorEditContext,
   useProgramSponsorContactsMaskedQuery,
 } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import {
   decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
@@ -284,18 +284,9 @@ export function BasicInfoSection({
     Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
   )
   const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
-  // 수정 모드 담당자 선택지 — contactPrivacy=MASKED(데이터 관리 RAW 캐시와 분리, 정책 32·37).
-  // 예외: 1사1교는 대표 담당자 휴대폰을 프로그램 연락처(contactPhone)에 복사해 저장하므로,
-  // 마스킹 번호가 저장되지 않게 기획 결정 전까지 기존 원문 조회(RAW)를 유지한다.
-  const maskedContactsQuery = useProgramSponsorContactsMaskedQuery(
-    watchedSponsorId,
-    Boolean(isFormEdit) && !isEconomyCommonInfo
-  )
-  const rawEconomyContactsQuery = useSponsorContactsQuery(
-    watchedSponsorId,
-    Boolean(isFormEdit) && isEconomyCommonInfo
-  )
-  const contactsQuery = isEconomyCommonInfo ? rawEconomyContactsQuery : maskedContactsQuery
+  // 수정 모드 담당자 선택지 — 모든 유형 contactPrivacy=MASKED(데이터 관리 RAW 캐시와 분리, 정책 32·37).
+  // 담당자 전화는 문의처(contactPhone)로 복사하지 않는다(기획: 자동 채움 없음).
+  const contactsQuery = useProgramSponsorContactsMaskedQuery(watchedSponsorId, Boolean(isFormEdit))
   const managers = contactsQuery.data ?? []
   const sponsorManagementIds = isFormEdit
     ? (form?.watch('sponsorManagementIds') ?? [])
@@ -946,14 +937,6 @@ export function BasicInfoSection({
                                 ? SPONSOR_CONTACT_UNSELECTED_LABEL
                                 : (primary?.name ?? '')
                             )
-                            // 1사1교(economy)만 담당자 전화를 contactPhone 에 동기화.
-                            // TT 등 forceCompanySchoolLayout 은 contactPhone=문의처 와 공유한다.
-                            if (isEconomyCommonInfo) {
-                              commonInfoForm.setValue(
-                                'contactPhone',
-                                unselectedOnly ? undefined : primary?.phone
-                              )
-                            }
                           }}
                         />
                       </div>
@@ -1266,6 +1249,14 @@ export function BasicInfoSection({
     )
   }
 
+  // 조회: 배정 응답의 대표 담당자 연락처. 수정: 선택한 담당자(MASKED 선택지)의 연락처. 문의처(contactPhone)와 무관.
+  const assignedManagerPhone = resolveAssignedSponsorManagerPhone(program)
+  const editSelectedManagerName = commonInfoForm.watch('managerName')
+  const editSelectedManagerPhone =
+    editSelectedManagerName && editSelectedManagerName !== SPONSOR_CONTACT_UNSELECTED_LABEL
+      ? managers.find(m => m.name === editSelectedManagerName)?.phone
+      : undefined
+
   return (
     <DetailInfoForm title="기본 정보" mode={commonInfoFormEdit ? 'edit' : 'view'}>
       <DetailInfoForm.Row type="double">
@@ -1496,10 +1487,10 @@ export function BasicInfoSection({
             ) : program.managerName?.trim() ? (
               <>
                 {program.managerName}
-                {program.contactPhone ? (
+                {assignedManagerPhone ? (
                   <>
                     {'\u00A0'}
-                    <span>{maskSponsorManagerPhone(program.contactPhone)}</span>
+                    <span>{maskSponsorManagerPhone(assignedManagerPhone)}</span>
                   </>
                 ) : null}
               </>
@@ -1518,14 +1509,11 @@ export function BasicInfoSection({
                         control={commonInfoForm.control}
                         render={({ field }) => {
                           const currentName = field.value ?? ''
-                          const currentPhone = commonInfoForm.watch('contactPhone') ?? ''
                           const selectedIndex =
                             currentName === SPONSOR_CONTACT_UNSELECTED_LABEL
                               ? -1
                               : managers.length > 0
-                                ? managers.findIndex(
-                                    m => m.name === currentName || m.phone === currentPhone
-                                  )
+                                ? managers.findIndex(m => m.name === currentName)
                                 : -1
                           const contactOptions =
                             contactsQuery.isSuccess || contactsQuery.isError
@@ -1567,12 +1555,10 @@ export function BasicInfoSection({
                                       ? SPONSOR_CONTACT_UNSELECTED_LABEL
                                       : ''
                                   )
-                                  commonInfoForm.setValue('contactPhone', undefined)
                                   return
                                 }
                                 if (typeof idx === 'number' && idx >= 0 && managers[idx]) {
                                   commonInfoForm.setValue('managerName', managers[idx].name)
-                                  commonInfoForm.setValue('contactPhone', managers[idx].phone)
                                 }
                               }}
                               width={'50%'}
@@ -1585,10 +1571,8 @@ export function BasicInfoSection({
                       />
                       <div>
                         <span>{'\u00A0'}</span>
-                        {/* 선택지는 후원사 담당자 원문 API 값이라 화면에는 마스킹해서 보인다(정책 32·37) */}
-                        <span>
-                          {maskSponsorManagerPhone(commonInfoForm.watch('contactPhone')) || '-'}
-                        </span>
+                        {/* 선택한 담당자 연락처(MASKED 선택지) — 서버 반영 전 원문이 와도 화면은 마스킹(정책 32·37) */}
+                        <span>{maskSponsorManagerPhone(editSelectedManagerPhone) || '-'}</span>
                       </div>
                     </div>
                   </>

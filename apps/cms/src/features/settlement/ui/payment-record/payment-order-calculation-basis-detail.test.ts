@@ -228,15 +228,15 @@ describe('payment-order-calculation-basis-detail', () => {
     const activity = buildActivityBasisDetail()
     expect(activity).toEqual({
       layout: 'activity',
-      categoryLabel: '참여자 활동비',
+      categoryLabel: '활동비',
       activityFee: {
         amountWon: 50000,
-        receiptFileName: '참여자 활동비 영수증.pdf',
+        receiptFileName: '활동비 영수증.pdf',
       },
       totalWon: 50000,
     })
     expect(resolveActivityBasisDetailTotalWon(activity)).toBe(50000)
-    expect(resolveBasisDetailModalTitle(activity)).toBe('참여자 활동비 산정 기준 상세')
+    expect(resolveBasisDetailModalTitle(activity)).toBe('활동비 산정 기준 상세')
   })
 
   it('buildWithholdingBasisDetail returns withholding breakdown for daily salary total', () => {
@@ -600,5 +600,35 @@ describe('payment-order-calculation-basis-detail', () => {
 
   it('DISTANCE_SNAPSHOT_UNLINKED_NOTICE is the F3-2 copy', () => {
     expect(DISTANCE_SNAPSHOT_UNLINKED_NOTICE).toBe('거리 스냅샷 미연결 — 산출 금액만 표시')
+  })
+
+  it('기타(other) 행은 강사비 모달을 만들지 않고 서버 calculationDetail만 쓴다', () => {
+    const base = {
+      kind: 'other',
+      itemLabel: '기타',
+      amount: 10000,
+      lineId: 'other-1',
+      lectureSessionDisplay: '—',
+    }
+    expect(
+      resolvePaymentOrderCalculationBasisDetailForRow(base, { remoteData: true })
+    ).toBeUndefined()
+    expect(
+      resolvePaymentOrderCalculationBasisDetailForRow(
+        { ...base, basisDetail: buildLectureFeeTierBasisDetail('1급 강사비', 10000, '1차시') },
+        { remoteData: true, lectureFeeStandardTitle: '1급 강사비' }
+      )
+    ).toBeUndefined()
+    const remote = {
+      layout: 'remote' as const,
+      title: '기타 산정 기준 상세',
+      resultAmount: 10000,
+    }
+    expect(
+      resolvePaymentOrderCalculationBasisDetailForRow(
+        { ...base, basisDetail: remote as never },
+        { remoteData: true }
+      )
+    ).toBe(remote)
   })
 })
