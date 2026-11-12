@@ -99,7 +99,8 @@ export function SignInPage() {
 
   const completeLoginSession = (input: {
     accessToken: string
-    refreshToken: string
+    /** QA-0137: 없으면 HttpOnly 쿠키 세션 */
+    refreshToken?: string
     expiresInSeconds?: number
     ageGroup?: string | null
   }) => {
