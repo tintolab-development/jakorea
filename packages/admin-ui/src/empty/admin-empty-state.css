@@ -18,7 +18,7 @@
 }
 
 /* 원본 80 프레임에 원 배경이 포함되어 있다 */
-.cms-table-empty-state__icon img {
+.cms-table-empty-state__icon svg {
   display: block;
   width: 80px;
   height: 80px;
