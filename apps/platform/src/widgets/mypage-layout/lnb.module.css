@@ -43,6 +43,7 @@
 .divider {
   width: 100%;
   height: 1px;
+  margin-bottom: 15px;
   background: var(--color-neutral-cool-100, #e8ecee);
   flex-shrink: 0;
 }

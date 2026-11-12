@@ -51,6 +51,7 @@ import {
   summarizePortalApplicationSubmit,
 } from '@/features/program/lib/summarize-portal-application-submit'
 import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
+import { invalidateMypageApplicationSurfaces } from '@/features/mypage/education/applications/api/invalidate-mypage-application-surfaces'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   buildApplicationAnswersFromDraft,
@@ -541,6 +542,9 @@ export function ProgramApplyPage() {
     setGateModal,
     closeGateModal,
     readGateModalForOptions,
+    isTeacherRestrictedOption,
+    openTeacherRestrictedModal,
+    notEligibleVariant,
     missingConsents,
     findMissingRequiredConsents,
     openRequiredConsentModal,
@@ -558,11 +562,7 @@ export function ProgramApplyPage() {
   const handleViewApplications = () => {
     closeGateModal()
     setCompleteModalOpen(false)
-    void queryClient
-      .invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.all(),
-      })
-      .finally(() => {
+    void invalidateMypageApplicationSurfaces(queryClient).finally(() => {
         navigate(programApplyGateApplicationsPathForType(applicationTypeForMyPage))
       })
   }
@@ -633,16 +633,26 @@ export function ProgramApplyPage() {
       return
     }
     consentGatePromptedRef.current = true
-    void findMissingRequiredConsents().then(missing => {
+    const option = applicationFormQuery.bundle?.option ?? null
+    void (async () => {
+      // 교사 회원 신청 제한(일반 개인 참여자·봉사자 모집)을 필수 동의보다 먼저 본다.
+      if (await isTeacherRestrictedOption(option)) {
+        openTeacherRestrictedModal()
+        return
+      }
+      const missing = await findMissingRequiredConsents()
       if (missing.length > 0) openRequiredConsentModal(missing)
-    })
+    })()
   }, [
+    applicationFormQuery.bundle?.option,
     applicationFormQuery.bundle?.option.canApply,
     applicationFormQuery.status,
     findMissingRequiredConsents,
     isPreview,
     isReady,
+    isTeacherRestrictedOption,
     openRequiredConsentModal,
+    openTeacherRestrictedModal,
     program,
     programId,
     remoteApplyEnabled,
@@ -4011,14 +4021,17 @@ export function ProgramApplyPage() {
         kind={gateModal}
         onClose={() => {
           const wasRequiredConsent = gateModal === 'required-consent'
+          const wasTeacherRestricted =
+            gateModal === 'not-eligible' && notEligibleVariant === 'teacher'
           closeGateModal()
-          // 필수 동의 모달 취소/닫기 → 상세로 복귀 (replace: 뒤로가기로 신청서→모달 재진입 루프 방지)
-          if (wasRequiredConsent && program) {
+          // 필수 동의·교사 신청 제한 모달 닫기 → 상세로 복귀 (replace: 뒤로가기로 신청서→모달 재진입 루프 방지)
+          if ((wasRequiredConsent || wasTeacherRestricted) && program) {
             navigate(programDetailPath(program.id, fromPath, focus), { replace: true })
           }
         }}
         missingConsentTypes={missingConsents}
         {...minorPortraitGateModalProps}
+        notEligibleVariant={notEligibleVariant}
         onOpenConsents={() => {
           closeGateModal()
           navigate(programApplyGateConsentsPath)

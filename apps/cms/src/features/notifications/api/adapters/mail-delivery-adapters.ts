@@ -8,7 +8,7 @@ import {
 } from '@/features/notifications/model/mail-template/preview'
 import { parseMailSenderDisplay } from '@/features/notifications/api/adapters/mail-template-adapters'
 import { mailBodyToDisplayHtml } from '@/features/notifications/model/shared/mail-body-display-html'
-import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
+import { resolveNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   MailBroadcastTiming,
   MailSendHistoryAttachment,
@@ -134,19 +134,20 @@ export function mapMailDeliveryToSendHistoryRow(
     scheduled: broadcastTiming === '예약',
   })
   const failedReasonRaw = item.failedReason?.trim() || ''
+  // QA-0178: 서버 displayReason 우선, 없으면 failedReason 정리값
   const failedReason =
     sendStatus === '발송 실패'
-      ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw
+      ? resolveNotificationFailedReason(item.displayReason, failedReasonRaw)
       : ''
   const receiveStatus = mapNotificationReceiveStatus(item.receiptStatus)
   // 발송 성공·수신 실패: 발송 실패 사유와 별도로 응답에 있는 사유만 보여 준다 (QA-0176)
-  const receiveFailedReasonRaw =
+  const receiveFailedReason =
     sendStatus !== '발송 실패' && receiveStatus === '수신 실패'
-      ? failedReasonRaw || item.providerResultMessage?.trim() || ''
+      ? resolveNotificationFailedReason(
+          item.displayReason,
+          failedReasonRaw || item.providerResultMessage?.trim() || ''
+        )
       : ''
-  const receiveFailedReason = receiveFailedReasonRaw
-    ? formatNotificationFailedReason(receiveFailedReasonRaw) || receiveFailedReasonRaw
-    : ''
 
   const readStatus: MailSendHistoryRow['readStatus'] = item.openedAt
     ? '읽음'

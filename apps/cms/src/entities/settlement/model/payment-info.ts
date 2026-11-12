@@ -21,26 +21,3 @@ export interface InstructorPaymentInfo {
   createdAt: string
   updatedAt: string
 }
-
-/**
- * 지급정보 마스킹 유틸리티
- */
-export function maskBankAccount(account: string): string {
-  if (!account || account.length < 4) return account
-  return `${account.slice(0, 2)}****${account.slice(-4)}`
-}
-
-export function maskResidentRegistrationNumber(rrn: string): string {
-  if (!rrn || rrn.length < 7) return rrn
-  return `${rrn.slice(0, 6)}-*******`
-}
-
-export function maskPhone(phone: string): string {
-  if (!phone) return phone
-  // 010-1234-5678 -> 010-****-5678
-  const parts = phone.split('-')
-  if (parts.length === 3) {
-    return `${parts[0]}-****-${parts[2]}`
-  }
-  return phone
-}

@@ -1,8 +1,8 @@
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { TRANSPARENCY_PATH } from '@/features/transparency'
-import arrowDiagonalBlackUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
-import arrowDiagonalMintUrl from '@/shared/assets/icons/arrow-diagonal-mint.svg'
+import arrowDiagonalBlackUrl from '@/shared/assets/icons/arrow-outlink-black-24.svg'
+import arrowDiagonalMintUrl from '@/shared/assets/icons/arrow-outlink-mint-24.svg'
 import { PFCategoryBadge, PFText, remoteCopyClassName } from '@/shared/ui'
 import { usePublicPersonalSponsorshipView } from '../api/hooks'
 import {

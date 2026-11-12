@@ -2699,11 +2699,7 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
 
         <div className={styles.guideNote}>
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-            로그인 상태: Portal access token (
-            <PFText as="span" typo="bd-sm-sb" color="black">
-              platform_auth_token
-            </PFText>
-            ). 마이페이지 프로필:{' '}
+            마이페이지 프로필:{' '}
             <PFText as="span" typo="bd-sm-sb" color="black">
               platform:dev:member-profile
             </PFText>

@@ -5,7 +5,7 @@ import { platformMediaQueries } from '@/shared/lib'
 import { PFButton } from '@/shared/ui/pf-button'
 import { PFPageButton } from '@/shared/ui/pf-page-button'
 import { PFText } from '@/shared/ui/pf-text'
-import { CALENDAR_EVENT_COLORS } from './calendar-event-colors'
+import { resolveCalendarEventColors } from './calendar-event-colors'
 import {
   buildCalendarWeekLayouts,
   getCalendarEventsOnDate,
@@ -23,16 +23,16 @@ import closeIconUrl from './icons/close.svg'
 import styles from './pf-calendar.module.css'
 
 const WEEKDAYS = [
-  { key: 'sun', label: 'Sun', className: styles.weekdaySun },
-  { key: 'mon', label: 'Mon', className: styles.weekdayDefault },
-  { key: 'tue', label: 'Tue', className: styles.weekdayDefault },
-  { key: 'wed', label: 'Wed', className: styles.weekdayDefault },
-  { key: 'thu', label: 'Thu', className: styles.weekdayDefault },
-  { key: 'fri', label: 'Fri', className: styles.weekdayDefault },
-  { key: 'sat', label: 'Sat', className: styles.weekdaySat },
+  { key: 'sun', label: '일요일', className: styles.weekdaySun },
+  { key: 'mon', label: '월요일', className: styles.weekdayDefault },
+  { key: 'tue', label: '화요일', className: styles.weekdayDefault },
+  { key: 'wed', label: '수요일', className: styles.weekdayDefault },
+  { key: 'thu', label: '목요일', className: styles.weekdayDefault },
+  { key: 'fri', label: '금요일', className: styles.weekdayDefault },
+  { key: 'sat', label: '토요일', className: styles.weekdaySat },
 ] as const
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+const WEEKDAY_KO_SHORT = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 export type { PFCalendarEvent }
 
@@ -61,7 +61,7 @@ function formatPopoverDate(date: Date): { monthDay: string; weekday: string } {
   const day = String(date.getDate()).padStart(2, '0')
   return {
     monthDay: `${month}.${day}`,
-    weekday: WEEKDAY_KO[date.getDay()],
+    weekday: WEEKDAY_KO_SHORT[date.getDay()],
   }
 }
 
@@ -352,7 +352,7 @@ export function PFCalendar({
                                 key={event.id}
                                 className={styles.eventDot}
                                 style={{
-                                  backgroundColor: (CALENDAR_EVENT_COLORS[event.type] ?? CALENDAR_EVENT_COLORS.education).accent,
+                                  backgroundColor: resolveCalendarEventColors(event.type).accent,
                                 }}
                               />
                             ))}
@@ -376,7 +376,7 @@ export function PFCalendar({
               {week.segments.length > 0 ? (
                 <div className={styles.eventLayer} aria-hidden="true">
                   {week.segments.map(segment => {
-                    const colors = CALENDAR_EVENT_COLORS[segment.type] ?? CALENDAR_EVENT_COLORS.education
+                    const colors = resolveCalendarEventColors(segment.type)
                     return (
                       <div
                         key={`${segment.eventId}-${segment.startCol}-${segment.lane}`}
@@ -385,7 +385,7 @@ export function PFCalendar({
                           gridColumn: `${segment.startCol + 1} / ${segment.endCol + 2}`,
                           gridRow: segment.lane + 1,
                           backgroundColor: colors.background,
-                          borderLeftColor: segment.isRangeStart ? colors.accent : 'transparent',
+                          borderColor: colors.accent,
                         }}
                       >
                         <span className={styles.eventBarProgram}>{segment.programName}</span>

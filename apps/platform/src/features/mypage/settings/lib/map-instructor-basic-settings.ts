@@ -141,6 +141,7 @@ export function mapInstructorBasicSettingsRows(
     { label: '정산 현황', value: formatSettlementStatusLabel(profile) },
     { label: 'JA 평가 등급', value: formatJaGradeLabel(cms, profile) },
     { label: '가입일', value: formatSettingsJoinedAtDot(profile.joinedAt) },
+    { label: '이메일 ID', value: formatSettingsText(profile.email) },
     {
       label: '연동된 소셜 계정',
       value: formatSettingsLinkedSocialAccounts(social),
@@ -149,7 +150,6 @@ export function mapInstructorBasicSettingsRows(
     { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },
     { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
     ...(isDual ? [{ label: '성별', value: formatSettingsGender(profile.gender) }] : []),
-    { label: '이메일', value: formatSettingsText(profile.email) },
     ...affiliationRows,
     { label: '강사 경력', value: formatInstructorCareerSummary(cms) },
     { label: '자택 주소', value: formatInstructorHomeAddress(cms, profile) },

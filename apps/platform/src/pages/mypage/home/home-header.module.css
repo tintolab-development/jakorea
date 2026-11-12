@@ -92,22 +92,56 @@
 
 .settingsButton {
   display: flex;
-  height: 40px;
-  padding: var(--spacing-8) 0;
+  box-sizing: border-box;
+  width: 180px;
+  height: 53px;
+  padding: 0 var(--spacing-16);
   justify-content: center;
   align-items: center;
-  gap: var(--spacing-4);
-  border: 0;
-  background: transparent;
+  gap: var(--spacing-8);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-white);
   cursor: pointer;
   text-decoration: none;
   color: inherit;
 }
 
 .settingsIcon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: block;
+  flex-shrink: 0;
+}
+
+.settingsLabel {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+  white-space: nowrap;
+}
+
+@media (--bp-below-pc) {
+  .settingsButton {
+    width: auto;
+    height: 40px;
+    padding: var(--spacing-8) 0;
+    gap: var(--spacing-4);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .settingsIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .settingsLabel {
+    font-size: 16px;
+    font-weight: 600;
+  }
 }
 
 .settingsButton:focus-visible {

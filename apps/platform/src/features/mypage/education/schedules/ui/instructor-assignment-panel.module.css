@@ -19,13 +19,13 @@
   color: var(--color-neutral-black);
   font-family: var(--font-family-base);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 140%;
   letter-spacing: -0.2px;
 }
 
 .sectionTitle span {
-  color: var(--color-neutral-cool-600);
+  color: var(--color-neutral-black);
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.16px;

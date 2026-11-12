@@ -258,7 +258,7 @@ LNB 3화면은 **mock fallback 없음**.
 
 ### 프로그램 폼·링크 연동 (LNB 밖)
 
-- 프로그램 등록/기본정보 폼 후원사·담당자 셀렉트: `useSponsorOptionsQuery` / `useSponsorContactsQuery`
+- 프로그램 등록/기본정보 폼 후원사·담당자 셀렉트: `useSponsorOptionsQuery` / `useProgramSponsorContactsMaskedQuery`(contactPrivacy=MASKED, 모든 유형 공통 — 담당자 전화를 문의처로 복사하지 않음)
 - 프로그램 상세 → 후원사 링크: `resolveSponsorManagementRowById`
 - API 비활성 시 빈 옵션 + 안내 (mock 대체 없음)
 - B-5: 폼이 mock `sponsors.ts` / `dp-*` 대신 options·matches API만 쓰도록 전환(별 PR)

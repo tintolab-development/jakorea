@@ -478,7 +478,6 @@ export type PatchUserBasicInfoOptions = {
   knownRole?: UserRole
   memberId?: number
   organizationId?: number
-  existingCommentId?: number
   /** 코멘트·권한 유형만 저장 후 이 객체를 기준으로 반환 (추가 상세 GET 생략) */
   baseUser?: Omit<User, 'password'>
 }
@@ -538,7 +537,6 @@ async function patchAdminUserBasicInfoRemote(
     const comment = patch.adminComment?.trim()
     if (comment) {
       await upsertMemberAdminCommentRemote(commentResource.resourceId, comment, {
-        existingCommentId: options?.existingCommentId,
         screenCode: MEMBER_DETAIL_SCREEN_CODE,
         target: commentResource.target,
       })
@@ -642,7 +640,6 @@ async function patchUserBasicInfoRemote(
         const comment = patch.adminComment?.trim()
         if (comment) {
           await upsertMemberAdminCommentRemote(organizationId, comment, {
-            existingCommentId: options?.existingCommentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
             target: 'schoolOrganization',
           })
@@ -667,7 +664,6 @@ async function patchUserBasicInfoRemote(
       const comment = patch.adminComment?.trim()
       if (comment) {
         await upsertMemberAdminCommentRemote(memberId, comment, {
-          existingCommentId: options?.existingCommentId,
           screenCode: MEMBER_DETAIL_SCREEN_CODE,
           target: 'member',
         })

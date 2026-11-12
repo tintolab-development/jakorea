@@ -87,7 +87,7 @@ export function recruitmentPeriodPhaseLabel(detailCase: ProgramDetailCase): stri
     case 'ujat-participant':
       return '기관 모집 기간'
     case 'gemini':
-      return '기관 모집 기간'
+      return '참여 기관 모집 기간'
     default:
       return '참여자 모집 기간'
   }

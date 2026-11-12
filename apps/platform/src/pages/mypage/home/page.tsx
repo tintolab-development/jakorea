@@ -12,7 +12,7 @@ import {
   useMypagePageAuthReady,
   type MypageLnbItemKey,
 } from '@/features/mypage'
-import { usePortalCalendarQuery, usePortalDashboardQuery } from '@/features/mypage/home/api/hooks'
+import { useMypageHomeProgramStats, usePortalCalendarQuery } from '@/features/mypage/home/api/hooks'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import { MypageHomeContent } from './home-content'
 
@@ -28,11 +28,13 @@ export function MypageHomePage() {
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile)
   const isAuthReady = useMypagePageAuthReady(MYPAGE_PATH)
-  const dashboard = usePortalDashboardQuery(member.isRemoteSession)
+  const programStatsQuery = useMypageHomeProgramStats(member.isRemoteSession)
   const calendar = usePortalCalendarQuery(calendarMonth, member.isRemoteSession)
-  const programStatsLoading = member.isRemoteSession && dashboard.isLoading
+  const programStatsLoading = member.isRemoteSession && programStatsQuery.isLoading
   const programStats =
-    member.isRemoteSession && dashboard.stats ? dashboard.stats : EMPTY_PROGRAM_STATS
+    member.isRemoteSession && programStatsQuery.stats
+      ? programStatsQuery.stats
+      : EMPTY_PROGRAM_STATS
   const scheduleEvents = member.isRemoteSession ? calendar.events : []
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {

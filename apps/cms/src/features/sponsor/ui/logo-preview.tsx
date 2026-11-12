@@ -1,20 +1,6 @@
 import { useEffect, useState } from 'react'
 import { parseSponsorLogoFileObjectId } from '@/features/sponsor/lib/sponsor-logo-files'
-import { loadAdminFileBlob } from '@/shared/lib/admin-file-upload'
-
-/** 같은 세션에서 상세를 다시 열 때 로고를 다시 받지 않도록 기억한다 */
-const logoBlobByFileObjectId = new Map<number, Promise<Blob>>()
-
-function loadLogoBlob(fileObjectId: number): Promise<Blob> {
-  const cached = logoBlobByFileObjectId.get(fileObjectId)
-  if (cached) return cached
-  const pending = loadAdminFileBlob(fileObjectId, { skipGlobalErrorAlert: true })
-  logoBlobByFileObjectId.set(fileObjectId, pending)
-  pending.catch(() => {
-    logoBlobByFileObjectId.delete(fileObjectId)
-  })
-  return pending
-}
+import { loadLogoBlob } from '@/features/sponsor/lib/logo-preview-blob'
 
 function isPreviewableImageBlob(blob: Blob): boolean {
   return blob.size > 0 && blob.type !== 'application/json'
@@ -22,7 +8,8 @@ function isPreviewableImageBlob(blob: Blob): boolean {
 
 /**
  * 후원사 상세(조회) — 로고 이미지 미리보기 (QA-0110).
- * 서버 파일(`fileObjectId`)만 불러오며, 불러오지 못하면 미리보기 없이 파일명 다운로드만 남긴다.
+ * 서버 파일(`fileObjectId`)만 인라인 경로로 불러오며, 불러오지 못하면(ai·eps 등 image/* 아님 → 404 포함)
+ * 미리보기 없이 파일명 다운로드만 남긴다.
  */
 export function SponsorLogoPreview({ logoId, alt }: { logoId: string; alt: string }) {
   const fileObjectId = parseSponsorLogoFileObjectId(logoId)

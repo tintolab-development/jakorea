@@ -190,7 +190,7 @@ export function shouldShowSettlementTab(options: ActivityTabOptions): boolean {
 
 function appendSettlementTab(items: EducationDetailTabItem[], options: ActivityTabOptions): void {
   if (!shouldShowSettlementTab(options)) return
-  items.push({ key: 'settlement', label: '정산현황' })
+  items.push({ key: 'settlement', label: '정산 현황' })
 }
 
 /**

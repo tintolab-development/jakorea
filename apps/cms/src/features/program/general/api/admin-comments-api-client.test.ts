@@ -36,10 +36,8 @@ describe('upsertAdminCommentByTargetRemote', () => {
     mockedInstance.mockReset()
   })
 
-  it('POSTs when no existing comment', async () => {
-    mockedInstance
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce({ commentId: 10, comment: 'hello' })
+  it('본문이 있으면 기존 코멘트 조회 없이 POST한다 (서버 upsert)', async () => {
+    mockedInstance.mockResolvedValueOnce({ commentId: 10, comment: 'hello' })
 
     const result = await upsertAdminCommentByTargetRemote({
       targetType: 'ORGANIZATION_APPLICATION',
@@ -49,8 +47,9 @@ describe('upsertAdminCommentByTargetRemote', () => {
     })
 
     expect(result.commentText).toBe('hello')
+    expect(mockedInstance).toHaveBeenCalledTimes(1)
     expect(mockedInstance).toHaveBeenNthCalledWith(
-      2,
+      1,
       expect.objectContaining({
         url: '/api/admin/comments',
         method: 'POST',
@@ -60,9 +59,7 @@ describe('upsertAdminCommentByTargetRemote', () => {
   })
 
   it('강사 신청 대상에 관리자 코멘트를 POST한다', async () => {
-    mockedInstance
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce({ commentId: 11, comment: '강사 메모' })
+    mockedInstance.mockResolvedValueOnce({ commentId: 11, comment: '강사 메모' })
 
     await upsertAdminCommentByTargetRemote({
       targetType: 'INSTRUCTOR_APPLICATION',
@@ -72,7 +69,7 @@ describe('upsertAdminCommentByTargetRemote', () => {
     })
 
     expect(mockedInstance).toHaveBeenNthCalledWith(
-      2,
+      1,
       expect.objectContaining({
         url: '/api/admin/comments',
         method: 'POST',
@@ -86,12 +83,8 @@ describe('upsertAdminCommentByTargetRemote', () => {
     )
   })
 
-  it('PATCHes when latest commentId exists', async () => {
-    mockedInstance
-      .mockResolvedValueOnce([
-        { commentId: 7, comment: 'prev', updatedAt: '2026-09-01T00:00:00Z' },
-      ])
-      .mockResolvedValueOnce({ commentId: 7, comment: 'updated' })
+  it('이미 코멘트가 있어도 PATCH 없이 POST로 덮어쓴다', async () => {
+    mockedInstance.mockResolvedValueOnce({ commentId: 7, comment: 'updated' })
 
     const result = await upsertAdminCommentByTargetRemote({
       targetType: 'ORGANIZATION_APPLICATION',
@@ -101,13 +94,13 @@ describe('upsertAdminCommentByTargetRemote', () => {
     })
 
     expect(result.commentText).toBe('updated')
-    expect(mockedInstance).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        url: '/api/admin/comments/7',
-        method: 'PATCH',
-        data: { comment: 'updated' },
-      })
+    expect(result.comment?.commentId).toBe(7)
+    expect(mockedInstance).toHaveBeenCalledTimes(1)
+    expect(mockedInstance).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/api/admin/comments', method: 'POST' })
+    )
+    expect(mockedInstance).not.toHaveBeenCalledWith(
+      expect.objectContaining({ method: 'PATCH' })
     )
   })
 

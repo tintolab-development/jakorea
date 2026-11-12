@@ -502,7 +502,7 @@ function recruitmentTypeLabel(value: string | undefined): string {
     case 'VOLUNTEER':
       return '봉사자 모집 기간'
     case 'ORGANIZATION':
-      return '기관 모집 기간'
+      return '참여 기관 모집 기간'
     default:
       return '참여자 모집 기간'
   }
@@ -880,6 +880,31 @@ function resolveEducationFormCode(
 ): EducationForm {
   const code = optionalText(educationForm) ?? optionalText(operationMethod)
   return mapEducationForm(code)
+}
+
+/**
+ * 프로그램 상세 헤더 배지의 교육대상·교육형태 라벨.
+ * 마이페이지 신청 카드도 같은 필드(BE-14)를 받아 이 함수로 상세와 같은 값을 보인다 (QA-0210).
+ * 교육형태 '일정 별 상이'(perSchedule)는 모집공고 공통 표기인 온/오프라인으로 보인다.
+ */
+export function mapPortalProgramEducationBadgeLabels(remote: {
+  educationTarget?: string | null
+  educationTargets?: readonly string[] | null
+  educationForm?: string | null
+  operationMethod?: string | null
+  educationFormLabel?: string | null
+  educationFormScheduleDetail?: string | null
+}): { educationTargetLabel: string; educationForm: EducationForm; educationFormLabel: string } {
+  const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
+  const targets = mapEducationTargets({
+    educationTarget: remote.educationTarget ?? undefined,
+    educationTargets: remote.educationTargets ? [...remote.educationTargets] : undefined,
+  })
+  const educationFormLabel =
+    remote.educationFormScheduleDetail === 'perSchedule'
+      ? EDUCATION_FORM_LABEL.hybrid
+      : (optionalText(remote.educationFormLabel) ?? EDUCATION_FORM_LABEL[educationForm])
+  return { educationTargetLabel: targets.educationTargetLabel, educationForm, educationFormLabel }
 }
 
 function resolveOperatingRange(args: {
@@ -1506,10 +1531,8 @@ export function mapPortalProgramDetail(
       : ''
   const geminiMinStudentCountLabel =
     detailCase === 'gemini' ? formatGeminiMinStudentCountLabel(remote) : ''
-  // 교육 형태 '일정 별 상이'(perSchedule) — 모집공고 공통 표기는 온/오프라인
-  const educationFormLabelForDetail = perScheduleEducationForm
-    ? EDUCATION_FORM_LABEL.hybrid
-    : educationFormLabel
+  // 헤더 배지 교육대상·교육형태 — 마이페이지 신청 카드와 같은 함수 (QA-0210)
+  const educationBadgeLabels = mapPortalProgramEducationBadgeLabels(remote)
 
   const programDescription = visibleCopy(
     readString(independentRow ? independentRow.programDescription : remote.description) ?? ''
@@ -1578,9 +1601,9 @@ export function mapPortalProgramDetail(
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,
-    educationTargetLabel: targets.educationTargetLabel,
+    educationTargetLabel: educationBadgeLabels.educationTargetLabel,
     educationForm,
-    educationFormLabel: educationFormLabelForDetail,
+    educationFormLabel: educationBadgeLabels.educationFormLabel,
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
     sponsor: mapPortalSponsorDisplay(remote.sponsorNames),
@@ -1657,7 +1680,7 @@ export function mapPortalProgramDetail(
           : remote.recruitments,
     ).map(phase =>
       detailCase === 'gemini' && phase.label === '참여자 모집 기간'
-        ? { ...phase, label: '기관 모집 기간' }
+        ? { ...phase, label: '참여 기관 모집 기간' }
         : phase,
     ),
     educationSchedules:

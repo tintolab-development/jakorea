@@ -99,6 +99,10 @@
   text-align: left;
 }
 
+.actionIconPicture {
+  display: contents;
+}
+
 .actionIcon {
   display: block;
   width: 28px;

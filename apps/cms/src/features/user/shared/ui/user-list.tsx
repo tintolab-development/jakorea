@@ -191,7 +191,7 @@ function columnsForKind(
   }
 ): ColumnsType<Row> {
   const noCol = createNoColumn(options?.totalCount)
-  /** `GET /api/admin/members/all` — BE가 원문 반환(UNMASKED_VIEW 감사). FE 이중 마스킹 금지 */
+  /** 목록 개인정보는 서버가 마스킹해 준다(`members/all` 포함). 전체 목록은 서버 값을 그대로 쓰고, 그 외는 원문이 섞여 와도 가리는 안전장치 */
   const maskListPii = kind !== 'all'
 
   if (kind === 'institutions') {

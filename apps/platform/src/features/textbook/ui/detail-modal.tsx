@@ -5,10 +5,8 @@ import { FallbackImage } from '@/features/careers'
 import { RichTextViewer } from '@/shared/rich-text'
 import { PFCategoryBadge, PFModal, PFText, SkeletonBlock } from '@/shared/ui'
 import defaultTextbookThumbnailUrl from '@/shared/assets/illustration/illust-book.svg'
-import badgeCategoryIconUrl from '../image/icon/badge-category.svg'
-import badgeSkillIconUrl from '../image/icon/badge-skill.svg'
-import badgeTargetIconUrl from '../image/icon/badge-target.svg'
 import { hasTextbookUnitIntroduction, visibleTextbookUnits } from '../lib/detail-display'
+import badgeClassIconUrl from '../image/icon/badge-class-18.svg'
 import styles from './detail-modal.module.css'
 
 type DetailModalProps = {
@@ -20,9 +18,9 @@ type DetailModalProps = {
 }
 
 const TAG_ICON_SRC: Record<NonNullable<TextbookTag['icon']>, string> = {
-  target: badgeTargetIconUrl,
-  category: badgeCategoryIconUrl,
-  skill: badgeSkillIconUrl,
+  target: badgeClassIconUrl,
+  category: badgeClassIconUrl,
+  skill: badgeClassIconUrl,
 }
 
 /**
@@ -394,8 +392,8 @@ export function DetailModal({ open, content, loading = false, onClose }: DetailM
                             <img
                               src={TAG_ICON_SRC[tag.icon]}
                               alt=""
-                              width={16}
-                              height={14}
+                              width={18}
+                              height={18}
                               aria-hidden="true"
                             />
                           ) : undefined

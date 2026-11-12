@@ -12,6 +12,7 @@ import {
 } from '@/features/impact-story'
 import { useDebouncedValue } from '@/shared/hooks'
 import {
+  PFEmptyState,
   PFPagination,
   PFLoadingSpinner,
   PFSearchInput,
@@ -119,12 +120,14 @@ export function ImpactStoriesPage() {
           <PublicContentPageStatus layout="list">
             <PFLoadingSpinner label="임팩트 스토리를 불러오는 중" />
           </PublicContentPageStatus>
-        ) : list.items.length === 0 ? (
+        ) : list.items.length === 0 && params.q ? (
           <PublicContentPageStatus layout="list">
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
               검색 결과가 없습니다.
             </PFText>
           </PublicContentPageStatus>
+        ) : list.items.length === 0 ? (
+          <PFEmptyState className={styles.emptyState} title="아직 등록된 이야기가 없어요." />
         ) : (
           <div className={styles.grid}>
             {list.items.map(story => (

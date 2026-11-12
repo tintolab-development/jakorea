@@ -5,9 +5,8 @@
 
 import { Component } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
 
-// ErrorFallback을 별도 컴포넌트로 분리하여 hooks 사용 가능하게 함
+// ErrorFallback 분리 — 이 boundary는 RouterProvider 바깥에 있어 라우터 훅을 쓰지 않는다
 function ErrorFallbackWrapper({ error, errorInfo }: { error: Error | null; errorInfo: ErrorInfo | null }) {
   return <ErrorFallback error={error} errorInfo={errorInfo} />
 }
@@ -63,8 +62,8 @@ interface ErrorFallbackProps {
 }
 
 function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
-  const navigate = useNavigate()
-  const location = useLocation()
+  // RouterProvider 바깥이라 useNavigate/useLocation을 쓰면 오류 화면 자체가 다시 오류를 낸다 → 브라우저 API 사용
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
 
   // 에러 타입 및 코드 분석
   const getErrorCode = (): { code: string; title: string; description: string } => {
@@ -134,12 +133,11 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
   const errorDetails = getErrorCode()
 
   const handleGoHome = () => {
-    navigate('/')
-    window.location.reload()
+    window.location.assign('/')
   }
 
   const handleGoBack = () => {
-    navigate(-1)
+    window.history.back()
   }
 
   const handleReload = () => {
@@ -218,7 +216,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
                 )}
                 {'\n\n'}
                 <strong>경로:</strong>
-                {location.pathname}
+                {pathname}
               </pre>
             </details>
           </div>
@@ -265,7 +263,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
   )
 }
 
-// HOC로 ErrorBoundary를 래핑하여 useNavigate 사용 가능하게 함
+// 전역 ErrorBoundary (라우터 바깥에서도 동작)
 export function ErrorBoundary({ children }: { children: ReactNode }) {
   return <ErrorBoundaryClass>{children}</ErrorBoundaryClass>
 }

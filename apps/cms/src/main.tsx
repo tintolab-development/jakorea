@@ -13,6 +13,10 @@ import { BlockingOverlay } from '@/shared/ui/blocking-overlay'
 import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { router } from './app/router'
 import { reloadOnceAfterDeployChunkMismatch } from './app/router/lazy-load'
+import {
+  installCmsWindowErrorReporting,
+  onCmsCaughtRenderError,
+} from './app/providers/client-error-reporting'
 import './index.css'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 
@@ -27,7 +31,12 @@ console.info(
   `[CMS] 배포 빌드 ${import.meta.env.VITE_APP_BUILD_AT ?? 'unknown'} (${import.meta.env.VITE_APP_GIT_SHA || 'local'} / ${import.meta.env.MODE})`
 )
 
-createRoot(document.getElementById('root')!).render(
+// QA-0183 화면 오류 수집 — 관리자 로그인 상태에서만, 실패는 조용히 버린다
+installCmsWindowErrorReporting()
+
+createRoot(document.getElementById('root')!, {
+  onCaughtError: onCmsCaughtRenderError,
+}).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>

@@ -473,6 +473,20 @@
   gap: 8px;
 }
 
+/* 시안: 파일 종류 아이콘(24) + 파일명, 간격 없음 */
+.fileAttachFile {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.fileAttachIcon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
 .fileAttachName {
   margin: 0;
   min-width: 0;

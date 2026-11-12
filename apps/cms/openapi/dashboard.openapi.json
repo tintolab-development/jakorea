@@ -309,6 +309,10 @@
       "description": "로그인 사용자 기준 CMS 대시보드 개인화 설정 API"
     },
     {
+      "name": "로그 관리",
+      "description": "Logging 관련 API"
+    },
+    {
       "name": "기타 API",
       "description": "CMS 학교 organization 조회 및 소속 교사 관리 API"
     },
@@ -18987,10 +18991,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -45421,7 +45425,7 @@
           },
           "rowType": {
             "type": "string",
-            "description": "프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null.",
+            "description": "프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null.",
             "enum": [
               "SETTLEMENT",
               "SETTLEMENT_APPLICATION",
@@ -45436,6 +45440,34 @@
               "SCHEDULED",
               "COMPLETED",
               "GAVE_UP"
+            ],
+            "nullable": true
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정 시작 시각(program_schedule.start_at, ISO-8601 UTC). 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null.",
+            "nullable": true
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정 종료 시각(program_schedule.end_at, ISO-8601 UTC). 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null.",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정명(program_schedule.schedule_name). 일정형·복수 등 회차 번호가 없는 일정(sessionOrdinal=null)은 이 값이 일정 이름이다. 일정이 없는 행과 다른 정산 목록에서는 null.",
+            "nullable": true
+          },
+          "scheduleKind": {
+            "type": "string",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정 종류(program_schedule.schedule_kind). 값이 비어 있는 일정과 일정이 없는 행, 다른 정산 목록에서는 null.",
+            "enum": [
+              "PRE_EDUCATION",
+              "EDUCATION",
+              "CLOSING",
+              "SESSION"
             ],
             "nullable": true
           }
