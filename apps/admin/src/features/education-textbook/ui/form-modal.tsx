@@ -20,6 +20,7 @@ import {
 } from '@/features/education-textbook/lib/defaults'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
+import { uploadEducationTextbookInlineImage } from '@/features/education-textbook/api/upload-textbook-inline-image'
 import {
   getRemoteRichTextBodyError,
   isEmptyAdminHtml,
@@ -274,6 +275,7 @@ function TextbookFormBody({
     contentFormat: editorContentFormat,
     allowInlineMedia: true,
     placeholder: '단원 소개 내용을 입력해 주세요',
+    uploadInlineImage: uploadEducationTextbookInlineImage,
   })
 
   const resetFromInitial = useCallback(() => {
