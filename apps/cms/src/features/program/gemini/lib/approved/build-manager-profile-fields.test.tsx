@@ -1,3 +1,4 @@
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import { buildGeminiApprovedManagerTableItems } from './build-manager-profile-fields'
@@ -69,4 +70,17 @@ describe('buildGeminiApprovedManagerTableItems', () => {
       expect(valueFor(detail, 'subject')).toBe(expectedSubject)
     }
   )
+
+  it('E: 담당 교사 마스킹 생년월일에 서버 teacherAge를 「(만 N세)」로 붙인다', () => {
+    const html = (detail: GeminiApprovedTrainingDetail) =>
+      renderToStaticMarkup(
+        <>{buildGeminiApprovedManagerTableItems(detail).find(item => item.key === 'genderBirth')?.children}</>
+      )
+
+    const masked = html({ ...baseDetail, managerGender: '**', managerBirthDate: '1985-**-**', managerAge: 41 })
+    expect(masked).toContain('1985.**.** (만 41세)')
+    const withoutAge = html({ ...baseDetail, managerGender: '**', managerBirthDate: '1985-**-**', managerAge: null })
+    expect(withoutAge).toContain('1985.**.**')
+    expect(withoutAge).not.toContain('만 ')
+  })
 })

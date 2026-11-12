@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
@@ -49,7 +50,13 @@ export function buildGeminiApprovedManagerTableItems(
       label: '성별 및 생년월일',
       children: (
         <ProgramDetailTdSegmentWrap>
-          {withProgramDetailTdDivider([detail.managerGender, detail.managerBirthDate])}
+          {withProgramDetailTdDivider([
+            detail.managerGender,
+            // 마스킹 GET은 「YYYY.**.** (만 N세)」, 원문 해제는 날짜 + 같은 만 나이(teacherAge).
+            detail.managerBirthDate
+              ? formatBirthDisplayWithManAge(detail.managerBirthDate, { age: detail.managerAge })
+              : detail.managerBirthDate,
+          ])}
         </ProgramDetailTdSegmentWrap>
       ),
     },

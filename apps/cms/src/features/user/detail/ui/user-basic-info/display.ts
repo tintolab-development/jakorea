@@ -25,19 +25,20 @@ import {
 const GRADE_LIKE_AFFILIATION_TAIL = /학년|담임/
 
 /** 개인 회원 — 현재 학교 재학 여부 */
-function formatBirthDateAndManAge(birthDate: DateValue | undefined): string {
+function formatBirthDateAndManAge(birthDate: DateValue | undefined, manAge?: number): string {
   if (birthDate == null || birthDate === '') return '-'
   if (birthDate instanceof Date) {
     const parsed = dayjs(birthDate)
     if (!parsed.isValid()) return '-'
-    return formatBirthDisplayWithManAge(parsed.format('YYYY-MM-DD'))
+    return formatBirthDisplayWithManAge(parsed.format('YYYY-MM-DD'), { age: manAge })
   }
-  return formatBirthDisplayWithManAge(String(birthDate))
+  // 마스킹(yyyy-**-**)이면 서버 age로만 「(만 NN세)」를 붙인다.
+  return formatBirthDisplayWithManAge(String(birthDate), { age: manAge })
 }
 
 export function formatGenderBirthLine(user: Omit<User, 'password'>): string {
   const gender = toDisplayGender(user.gender)
-  return `${gender} | ${formatBirthDateAndManAge(user.birthDate)}`
+  return `${gender} | ${formatBirthDateAndManAge(user.birthDate, user.manAge)}`
 }
 
 export function affiliationLine(user: Omit<User, 'password'>): string {
@@ -109,7 +110,7 @@ export function inlineSegmentsWithDividers(
 /** 성별 및 생년월일 td — 문자 `|` 대신 TdDivider, gap 12px. 시안: `남성 | 1990. 09. 15 (만 35세)` */
 export function genderBirthView(user: Omit<User, 'password'>): ReactNode {
   const gender = toDisplayGender(user.gender)
-  const birthPart = formatBirthDateAndManAge(user.birthDate)
+  const birthPart = formatBirthDateAndManAge(user.birthDate, user.manAge)
   // `-` 세그먼트를 버리지 않음 — 생년월일 없을 때도 `성별 | -` 유지
   return createElement(
     'span',
