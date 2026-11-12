@@ -10,11 +10,8 @@ import {
 } from '@/features/auth/api/admin-session-fetcher'
 import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  AUTH_EXPIRY_KEY,
-  AUTH_REFRESH_TOKEN_KEY,
-  AUTH_TOKEN_KEY,
-} from '@/features/auth/model/auth-storage'
+import { AUTH_EXPIRY_KEY, AUTH_TOKEN_KEY } from '@/features/auth/model/auth-storage'
+import { hasRefreshCredential } from '@/features/auth/lib/refresh-credential'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
 
 interface AuthProviderProps {
@@ -42,7 +39,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } catch (error) {
             console.error('Auth check failed in AuthProvider:', error)
           }
-        } else if (localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)) {
+        } else if (hasRefreshCredential()) {
+          // QA-0137: 저장된 refreshToken(전환기) 또는 HttpOnly 쿠키 세션 표시
           try {
             await checkAuth()
           } catch (error) {

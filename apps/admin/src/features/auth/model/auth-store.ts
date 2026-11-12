@@ -5,9 +5,17 @@
 import { create } from 'zustand'
 import { readJwtSidClaim } from '@jakorea/domain/session'
 import type { AuthUser, LoginRequest, MfaState } from '@/entities/auth/model/types'
-import { login as loginApi } from '@/entities/auth/api/auth-service'
+import { hasRemoteAdminJwt, login as loginApi } from '@/entities/auth/api/auth-service'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
-import { fetchAdminAuthLogout } from '@/features/auth/api/admin-auth-fetcher'
+import {
+  fetchAdminAuthLogout,
+  fetchAdminAuthRefreshCookieLogout,
+} from '@/features/auth/api/admin-auth-fetcher'
+import {
+  clearRefreshCredential,
+  hasRefreshCredential,
+  storeRefreshTokenFromResponse,
+} from '@/features/auth/lib/refresh-credential'
 import {
   AUTH_EXPIRY_KEY,
   AUTH_REFRESH_TOKEN_KEY,
@@ -136,8 +144,9 @@ function persistAuthTokens(
     localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
     localStorage.setItem(AUTH_EXPIRY_KEY, expiresAt)
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
-    localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, tokens.refreshToken)
   }
+  // QA-0137: 본문에 refreshToken이 없으면 undefined로 덮지 않고 HttpOnly 쿠키 세션으로 표시
+  storeRefreshTokenFromResponse(tokens.refreshToken)
   recordTokenIssuedAt()
 
   return { token: accessToken, expiresAt }
@@ -158,7 +167,8 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
   const userStr = localStorage.getItem(AUTH_USER_KEY)
 
   if (token && expiresAt && userStr) {
-    const hasRefreshToken = !!localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
+    // refresh 수단 = 저장된 refreshToken(전환기) 또는 HttpOnly 쿠키 세션 표시(QA-0137)
+    const hasRefreshToken = hasRefreshCredential()
     if (new Date(expiresAt) > new Date() || hasRefreshToken) {
       try {
         const user = JSON.parse(userStr) as AuthUser
@@ -236,8 +246,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           localStorage.setItem(AUTH_TOKEN_KEY, response.token)
           localStorage.setItem(AUTH_EXPIRY_KEY, response.expiresAt)
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(normalizedUser))
-          localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
         }
+        clearRefreshCredential()
         recordTokenIssuedAt()
 
         clearSessionScopedQueryCaches()
@@ -315,9 +325,17 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
           : null
 
+      // QA-0137: 저장 refreshToken·쿠키 세션 표시·실 JWT 중 하나라도 있으면 실 세션 (mock·MFA pending 제외)
+      const hadRemoteSession = Boolean(refreshToken) || hasRefreshCredential() || hasRemoteAdminJwt()
+
+      // TODO(QA-0137 인프라 전환 후 삭제): 저장된 refreshToken이 사라지면 본문 logout 분기를 지운다.
       let remoteLogout: Promise<void> | undefined
       if (refreshToken) {
         remoteLogout = fetchAdminAuthLogout({ refreshToken })
+      }
+      // QA-0137: HttpOnly refresh 쿠키 폐기·삭제. best effort — 실패해도 로컬 로그아웃은 그대로 진행한다.
+      if (hadRemoteSession) {
+        void fetchAdminAuthRefreshCookieLogout()
       }
 
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -326,6 +344,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(AUTH_USER_KEY)
         localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
       }
+      clearRefreshCredential()
       clearTokenIssuedAt()
 
       clearSessionScopedQueryCaches()
@@ -464,7 +483,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
 
       const refreshToken = hasStorage ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY) : null
-      if (!refreshToken) {
+      // QA-0137: 저장된 refreshToken이 없어도 HttpOnly 쿠키 세션이면 refresh를 시도한다
+      if (!refreshToken && !hasRefreshCredential()) {
         if (nearExpiry) {
           get().logout()
           return true
