@@ -124,6 +124,9 @@ const noScaleRectSwappingStrategy: SortingStrategy = args => {
   return { ...result, scaleX: 1, scaleY: 1 }
 }
 
+/** GET /dashboard/home programCount = 삭제 제외 전체 프로그램 수(상태 무관). 진행 중 건수 API 없음 */
+const ADMIN_PROGRAMS_COUNT_LABEL = '전체 프로그램'
+
 export function Dashboard() {
   const { user } = useAuthStore()
   const mockActiveProgramCount = useActiveProgramCount()
@@ -240,6 +243,7 @@ export function Dashboard() {
       <DashboardToolbar
         userName={user?.name}
         activeProgramsCount={activeProgramsCount}
+        programsCountLabel={isAdmin ? ADMIN_PROGRAMS_COUNT_LABEL : undefined}
         onOpenSettings={() => setSettingsModalOpen(true)}
       />
 

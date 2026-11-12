@@ -4,7 +4,7 @@
  * 각 항목의 미확인 내역 뱃지를 렌더링한다.
  */
 
-import { Card } from 'antd'
+import { Card, Tooltip } from 'antd'
 import {
   AccountBookOutlined,
   BankOutlined,
@@ -48,6 +48,10 @@ import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import { useDashboardShortcutBadges } from '../hooks/use-dashboard-shortcut-badges'
 import { resolveDashboardShortcutItems } from '../lib/resolve-dashboard-shortcut-items'
+import {
+  resolveShortcutNavigationPath,
+  shortcutBadgeScopeLabel,
+} from '../lib/shortcut-navigation'
 import {
   countsAfterShortcutReadOptimistic,
   readCountMapValue,
@@ -149,11 +153,16 @@ export function MenuShortcutWidget() {
         <div className="menu-shortcut-widget__grid">
           {visibleItems.map(item => {
             const count = readCountMapValue(liveBadgeCounts, item.id)
+            const badgeCount = shouldShowShortcutBadge(liveBadgeCounts, item.id) ? count : undefined
+            const hasBadge = badgeCount != null
+            const badgeScopeLabel =
+              badgeCount != null ? shortcutBadgeScopeLabel(item.id, badgeCount) : undefined
             return (
               <button
                 key={item.id}
                 type="button"
                 className="menu-shortcut-widget__item"
+                aria-label={badgeScopeLabel ? `${item.label}, ${badgeScopeLabel}` : undefined}
                 onClick={() => {
                   if (
                     useRemoteShortcuts &&
@@ -161,9 +170,10 @@ export function MenuShortcutWidget() {
                   ) {
                     markShortcutRead(item.id)
                   }
-                  navigate(item.path)
+                  const targetPath = resolveShortcutNavigationPath(item.id, item.path, hasBadge)
+                  navigate(targetPath)
                   queueMicrotask(() => {
-                    invalidateQueriesForMemberManagementNavigation(queryClient, item.path)
+                    invalidateQueriesForMemberManagementNavigation(queryClient, targetPath)
                   })
                 }}
               >
@@ -174,8 +184,12 @@ export function MenuShortcutWidget() {
                     </span>
                     <span className="menu-shortcut-widget__label">{item.label}</span>
                   </span>
-                  {shouldShowShortcutBadge(liveBadgeCounts, item.id) && count != null && (
-                    <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
+                  {badgeCount != null && (
+                    <Tooltip title={badgeScopeLabel}>
+                      <span className="menu-shortcut-widget__badge" aria-hidden>
+                        {formatBadgeCount(badgeCount)}
+                      </span>
+                    </Tooltip>
                   )}
                 </span>
               </button>

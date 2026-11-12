@@ -4,6 +4,7 @@ import {
   isShortcutItemEnabled,
 } from '@/features/dashboard/model/dashboard-shortcut-contract'
 import type { DashboardShortcutItem } from '@/features/dashboard/api/admin-dashboard-service'
+import { resolveShortcutRoutePath } from '@/features/dashboard/lib/shortcut-navigation'
 import {
   SHORTCUT_ITEMS,
   isShortcutSettingsDisabled,
@@ -34,7 +35,7 @@ export function resolveDashboardShortcutItems(
       .map(item => ({
         id: item.id,
         label: item.label,
-        path: item.path || DASHBOARD_HOME_PATH,
+        path: resolveShortcutRoutePath(item.id, item.path || DASHBOARD_HOME_PATH),
       }))
   }
 
@@ -43,7 +44,7 @@ export function resolveDashboardShortcutItems(
   ).map(item => ({
     id: item.id,
     label: item.label,
-    path: item.path || DASHBOARD_HOME_PATH,
+    path: resolveShortcutRoutePath(item.id, item.path || DASHBOARD_HOME_PATH),
   }))
 }
 
@@ -62,7 +63,7 @@ export function mapDashboardShortcutSettingsCatalogItems(
       .map(item => ({
         id: item.id,
         label: item.label,
-        path: item.path || DASHBOARD_HOME_PATH,
+        path: resolveShortcutRoutePath(item.id, item.path || DASHBOARD_HOME_PATH),
         settingsDisabled: isDashboardShortcutSettingsDisabled(item.id),
         permissionAllowed: item.permissionAllowed !== false,
       }))
@@ -71,7 +72,7 @@ export function mapDashboardShortcutSettingsCatalogItems(
   return SHORTCUT_ITEMS.map(item => ({
     id: item.id,
     label: item.label,
-    path: item.path,
+    path: resolveShortcutRoutePath(item.id, item.path),
     settingsDisabled: isShortcutSettingsDisabled(item.id),
     permissionAllowed: true,
   }))

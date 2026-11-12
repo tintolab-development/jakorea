@@ -1,7 +1,11 @@
 /**
  * GET /api/admin/notifications → UI Notification 타입
  */
-import type { Notification, NotificationType } from '../notification-service'
+import type {
+  Notification,
+  NotificationLinkTarget,
+  NotificationType,
+} from '../notification-service'
 import { resolveNotificationInboxTitle } from '../../model/notification-event-type-labels'
 
 interface NotificationInboxItemDto {
@@ -25,6 +29,30 @@ interface NotificationInboxItemDto {
   category?: string
   programName?: string
   programTitle?: string
+  sourceDomain?: string
+  linkType?: string
+  linkId?: number | string
+  programId?: number | string
+}
+
+function idString(value: number | string | undefined | null): string | undefined {
+  if (value == null) return undefined
+  const text = String(value).trim()
+  return text ? text : undefined
+}
+
+function mapNotificationLinkTarget(
+  dto: NotificationInboxItemDto,
+  eventType: string | undefined
+): NotificationLinkTarget | undefined {
+  const target: NotificationLinkTarget = {
+    ...(eventType ? { eventType } : {}),
+    ...(pickString(dto.sourceDomain) ? { sourceDomain: pickString(dto.sourceDomain) } : {}),
+    ...(pickString(dto.linkType) ? { linkType: pickString(dto.linkType).toUpperCase() } : {}),
+    ...(idString(dto.linkId) ? { linkId: idString(dto.linkId) } : {}),
+    ...(idString(dto.programId) ? { programId: idString(dto.programId) } : {}),
+  }
+  return Object.keys(target).length > 0 ? target : undefined
 }
 
 function mapEventTypeToNotificationType(eventType?: string): NotificationType {
@@ -70,6 +98,7 @@ export function mapNotificationInboxItem(item: unknown): Notification | null {
     body,
     programName,
     link,
+    target: mapNotificationLinkTarget(dto, eventType),
     read: isReadItem(dto),
     createdAt,
   }
