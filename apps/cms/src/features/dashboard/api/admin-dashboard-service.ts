@@ -356,21 +356,35 @@ function getProgramInquiryStatusListFromMock(): ProgramInquiryRow[] {
 }
 
 /** Swagger: GET /api/admin/dashboard/program-schedules */
-export async function getDashboardScheduleEvents(options?: {
+export interface DashboardScheduleEventsQuery {
   programIds?: string[]
   dateFrom?: string
   dateTo?: string
   programType?: string
-}): Promise<DashboardScheduleEventDto[]> {
+  /** true면 운영 기간·모집 기간 일정도 함께 받는다(QA-0382, 목록 캘린더와 같은 기준) */
+  includeOperationalEvents?: boolean
+}
+
+/** GET /dashboard/program-schedules query — 쿼리 키와 요청이 같은 값을 쓴다 */
+export function buildDashboardScheduleEventsParams(
+  options?: DashboardScheduleEventsQuery
+): Record<string, string> {
+  const extra: Record<string, string> = {}
+  if (options?.dateFrom) extra.dateFrom = options.dateFrom
+  if (options?.dateTo) extra.dateTo = options.dateTo
+  if (options?.programType) extra.programType = options.programType
+  if (options?.includeOperationalEvents) extra.includeOperationalEvents = 'true'
+  return toDashboardQueryParams({
+    programIds: normalizeDashboardProgramIds(options?.programIds),
+    extra,
+  })
+}
+
+export async function getDashboardScheduleEvents(
+  options?: DashboardScheduleEventsQuery
+): Promise<DashboardScheduleEventDto[]> {
   if (shouldUseDashboardRemoteApi()) {
-    const extra: Record<string, string> = {}
-    if (options?.dateFrom) extra.dateFrom = options.dateFrom
-    if (options?.dateTo) extra.dateTo = options.dateTo
-    if (options?.programType) extra.programType = options.programType
-    const queryParams = toDashboardQueryParams({
-      programIds: normalizeDashboardProgramIds(options?.programIds),
-      extra,
-    })
+    const queryParams = buildDashboardScheduleEventsParams(options)
     const dto = await fetchDashboardProgramSchedulesRemote(queryParams)
     return mapProgramScheduleListResponse(dto)
   }
