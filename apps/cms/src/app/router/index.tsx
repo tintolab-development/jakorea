@@ -63,7 +63,6 @@ import { GeneralProgramListRouteShell } from '@/pages/programs/general/general-p
 import { RedirectLegacyTemplatesProgramForms } from '@/features/template/template-route-redirects'
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
-const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
 const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
@@ -118,7 +117,6 @@ const PermissionRequestListPage = lazyLoad(
 const KakaoAlimtalkPage = lazyLoad(() => import('@/pages/notifications/kakao-alimtalk-page'))
 const MailPage = lazyLoad(() => import('@/pages/notifications/mail-page'))
 const SmsPage = lazyLoad(() => import('@/pages/notifications/sms-page'))
-const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const MemberLoginHistoryPage = lazyLoad(() => import('@/pages/logs/member-login-history-page'))
 const FileDownloadHistoryPage = lazyLoad(() => import('@/pages/logs/file-download-history-page'))
 const PersonalInfoAccessHistoryPage = lazyLoad(
@@ -334,10 +332,6 @@ export const router = createBrowserRouter([
         element: <IndexPage />,
       },
       {
-        path: 'my-learning',
-        element: <MyLearningPage />,
-      },
-      {
         path: 'instructors',
         children: [
           { index: true, element: <Navigate to="/users/list?kind=instructors" replace /> },
@@ -444,12 +438,6 @@ export const router = createBrowserRouter([
         ],
       },
       {
-        path: 'school',
-        children: [
-          { path: 'my-learning', element: <SchoolMyLearningPage /> },
-        ],
-      },
-      {
         path: 'education-records',
         children: [{ index: true, element: <EducationRecordListPage /> }],
       },
@@ -517,70 +505,6 @@ export const router = createBrowserRouter([
           {
             path: 'instructors',
             element: <Navigate to="/users/list?kind=instructors" replace />,
-          },
-        ],
-      },
-      {
-        path: 'mypage',
-        children: [
-          { index: true, element: <Navigate to="/" replace /> },
-          // 학교(교사) 인증 / 교사 정보 (인증 상태에 따라 동적 처리)
-          {
-            path: 'school-auth',
-            element: (
-              <ComingSoonPage
-                title="학교(교사) 인증"
-                description="학교(교사) 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          {
-            path: 'school-info',
-            element: (
-              <ComingSoonPage
-                title="교사 정보"
-                description="교사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          // 강사 인증 / 강사 정보 (인증 상태에 따라 동적 처리)
-          {
-            path: 'instructor-auth',
-            element: (
-              <ComingSoonPage
-                title="강사 인증"
-                description="강사 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          {
-            path: 'instructor-info',
-            element: (
-              <ComingSoonPage
-                title="강사 정보"
-                description="강사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          // 내 프로그램 일정 (2뎁스)
-          {
-            path: 'program-schedule',
-            element: (
-              <ComingSoonPage
-                title="내 프로그램 일정"
-                description="내 프로그램 일정 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          // 서류 발급 이력 (2뎁스)
-          {
-            path: 'documents',
-            element: (
-              <ComingSoonPage
-                title="서류 발급 이력"
-                description="서류 발급 이력 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
           },
         ],
       },

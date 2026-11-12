@@ -32,19 +32,15 @@ describe('resolveLoginRedirectTarget', () => {
     expect(resolveLoginRedirectTarget('/login', makeUser('ADMIN'))).toBe('/')
   })
 
-  it('역할상 접근할 수 없는 경로면 역할별 기본 경로로 보낸다', () => {
-    expect(resolveLoginRedirectTarget('/logs/security', makeUser('INSTRUCTOR'))).toBe(
-      '/instructor/schedule'
-    )
-    expect(resolveLoginRedirectTarget('/data-management', makeUser('SCHOOL'))).toBe(
-      '/school/my-learning'
-    )
+  it('역할상 접근할 수 없는 경로면 홈으로 보낸다', () => {
+    expect(resolveLoginRedirectTarget('/logs/security', makeUser('INSTRUCTOR'))).toBe('/')
+    expect(resolveLoginRedirectTarget('/data-management', makeUser('SCHOOL'))).toBe('/')
   })
 
-  it('역할에 맞는 경로는 그대로 돌아간다', () => {
-    expect(
-      resolveLoginRedirectTarget('/instructor/schedule?month=2026-11', makeUser('INSTRUCTOR'))
-    ).toBe('/instructor/schedule?month=2026-11')
+  it('관리자 외 역할의 기본 경로는 홈이다', () => {
+    expect(getRedirectPathByRole(makeUser('INSTRUCTOR'))).toBe('/')
+    expect(getRedirectPathByRole(makeUser('INDIVIDUAL'))).toBe('/')
+    expect(getRedirectPathByRole(makeUser('SCHOOL'))).toBe('/')
   })
 
   it('사용자 정보가 없으면 로그인 경로(기존 기본값)를 반환한다', () => {

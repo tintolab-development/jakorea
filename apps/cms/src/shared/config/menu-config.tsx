@@ -132,22 +132,20 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
 
-  // Non-admin LNB: 기획 확정 후 `allMenuItems`에 항목을 추가하고 `allowedRoles`에
-  // 'INSTRUCTOR' | 'INDIVIDUAL' | 'SCHOOL' 을 지정하면 된다. (과거 스펙은 Git 히스토리 참고)
+  // CMS는 관리자 전용 — 관리자 외 역할용 LNB는 두지 않는다. (과거 스펙은 Git 히스토리 참고)
 
   // legacy support paths (호환/리다이렉트 용도 - 메뉴에는 노출하지 않음)
-  { key: '/posts', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
+  { key: '/posts', enabled: false, allowedRoles: ['ADMIN'] },
   {
     key: '/posts/faq',
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+    allowedRoles: ['ADMIN'],
   },
   {
     key: '/posts/inquiries',
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+    allowedRoles: ['ADMIN'],
   },
-  { key: '/posts/categories', enabled: false, allowedRoles: ['ADMIN'] },
   { key: '/posts/notices', enabled: false, allowedRoles: ['ADMIN'] },
   { key: 'divider-admin', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
@@ -634,24 +632,6 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
     }
   }
 
-  // 역할별 내 학습 관리 경로는 항상 허용 (index 라우팅용)
-  if (
-    (userRole === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
-    (userRole === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
-    (userRole === 'SCHOOL' && normalizedPath === '/school/my-learning')
-  ) {
-    return true
-  }
-
-  // Phase 0.1.5: 개인(참여자) 및 학교는 정산 관련 경로 접근 불가
-  if (
-    (userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') &&
-    normalizedPath.startsWith('/settlements') &&
-    !normalizedPath.startsWith('/settlements/my')
-  ) {
-    return false
-  }
-
   if (isAccountPaymentsPath(normalizedPath)) {
     return canAccessAccountPayments(user)
   }
@@ -748,27 +728,6 @@ export function getCategoryNameByPath(
 ): string | null {
   // 경로 정규화
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
-
-  // 내 학습 관리 리다이렉트 경로 특수 처리 (권한별 렌더링 확실히)
-  // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, 헤더 타이틀은 "내 학습 관리"로 통일
-  // 모든 depth에서 우선적으로 처리하여 권한별 렌더링 확실히 보장
-  if (userRole && userRole !== 'ADMIN') {
-    if (
-      (userRole === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
-      (userRole === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
-      (userRole === 'SCHOOL' && normalizedPath === '/school/my-learning')
-    ) {
-      // depth가 1뎁스로 요청된 경우 또는 depth가 없는 경우 "내 학습 관리" 반환
-      // depth가 2뎁스 이상인 경우도 "내 학습 관리"를 반환하여 일관성 유지
-      if (depth === 1 || depth === undefined) {
-        return '내 학습 관리'
-      }
-      // depth가 2뎁스 이상인 경우도 "내 학습 관리" 반환 (권한별 렌더링 확실히)
-      if (depth === 2 || depth === 3) {
-        return '내 학습 관리'
-      }
-    }
-  }
 
   // 사용자 권한이 제공된 경우, 권한별로 필터링된 메뉴에서 찾기
   const itemsToSearch = userRole
@@ -990,20 +949,6 @@ export function getBreadcrumbByPath(
   if (n === '/') {
     const label = userRole === 'ADMIN' ? '대시보드 홈' : '메인 홈'
     return [{ label }]
-  }
-
-  // 내 학습 관리 리다이렉트 경로 특수 처리
-  // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, breadcrumb은 "내 학습 관리"로 통일
-  if (userRole && userRole !== 'ADMIN') {
-    if (
-      (userRole === 'INSTRUCTOR' && n.startsWith('/instructor/schedule')) ||
-      (userRole === 'INDIVIDUAL' && n.startsWith('/schedules/my')) ||
-      (userRole === 'SCHOOL' && n === '/school/my-learning')
-    ) {
-      // 1뎁스 메뉴이므로 breadcrumb은 표시하지 않음 (AppBreadcrumb에서 length <= 1이면 null 반환)
-      // 하지만 명시적으로 "내 학습 관리"만 반환하여 일관성 유지
-      return [{ label: '내 학습 관리' }]
-    }
   }
 
   // 권한별로 필터링된 메뉴에서 검색 (권한에 맞는 메뉴 구조 반영)

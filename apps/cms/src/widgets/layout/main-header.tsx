@@ -142,19 +142,6 @@ export function MainHeader() {
       }
     }
 
-    // 내 학습 관리 리다이렉트 경로 우선 확인 (권한별 렌더링 확실히)
-    // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, 헤더 타이틀은 "내 학습 관리"로 통일
-    if (user?.role && user.role !== 'ADMIN') {
-      const normalizedPath = location.pathname === '/' ? '/' : location.pathname.replace(/\/$/, '')
-      if (
-        (user.role === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
-        (user.role === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
-        (user.role === 'SCHOOL' && normalizedPath === '/school/my-learning')
-      ) {
-        return '내 학습 관리'
-      }
-    }
-
     // 메뉴 설정에서 카테고리명 자동 감지 (사용자 권한별 필터링된 메뉴에서 검색)
     // 3뎁스부터 우선 확인 (가장 구체적인 경로)
     const depth3Name = getCategoryNameByPath(location.pathname, 3, user?.role, user)
