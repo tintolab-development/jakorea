@@ -44,7 +44,7 @@ export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase):
     case 'instructor':
       return '강의 일정'
     default:
-      return '교육일정'
+      return '교육 일정'
   }
 }
 

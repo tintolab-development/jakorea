@@ -112,6 +112,7 @@ const MARKETING_ITEM: SettingsConsentItem = {
   agreed: true,
   agreedAt: MOCK_AGREED_AT,
   termsViewType: 'marketing',
+  hint: '광고·홍보성 정보를 수신하시려면 동의해 주세요.',
 }
 
 const PORTRAIT_ITEM: SettingsConsentItem = {

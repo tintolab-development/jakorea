@@ -28,7 +28,7 @@ export function resolveEducationScheduleEmptyMessage(
   const isAssignmentList = listTitle === '배정 현황' || listTitle === '배정현황'
   const defaultMessage = isAssignmentList
     ? '등록된 배정 일정이 없어요'
-    : '등록된 교육일정이 없어요'
+    : '등록된 교육 일정이 없어요'
 
   switch (scopeStatus) {
     case 'NO_SCOPE_EVIDENCE':

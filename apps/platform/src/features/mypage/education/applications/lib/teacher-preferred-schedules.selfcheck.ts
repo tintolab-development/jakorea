@@ -103,9 +103,9 @@ const trainedTeacherCards = resolveTeacherPreferredSchedules({
     },
   ],
 })
-assert.equal(trainedTeacherCards[0]!.value, '1지망 | 2026년 4월 20일(월) | 1차시')
+assert.equal(trainedTeacherCards[0]!.value, '2026년 4월 20일(월) | 1차시')
 assert.deepEqual(trainedTeacherCards[0]!.sessionLines, ['1차시: 1교시 | 09:00 ~ 09:40'])
-assert.equal(trainedTeacherCards[1]!.value, '2지망 | 2026년 4월 27일(월) | 2차시')
+assert.equal(trainedTeacherCards[1]!.value, '2026년 4월 27일(월) | 2차시')
 assert.deepEqual(trainedTeacherCards[1]!.sessionLines, [
   '1차시: 1교시 | 09:00 ~ 09:40',
   '2차시: 2교시 | 09:50 ~ 10:30',

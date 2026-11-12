@@ -237,7 +237,7 @@ export function VolunteerAssignmentPanel({
     if (remoteQuery.isError || !remoteQuery.bundle) {
       return (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          배정현황을 불러오지 못했습니다.
+          배정 현황을 불러오지 못했습니다.
         </PFText>
       )
     }

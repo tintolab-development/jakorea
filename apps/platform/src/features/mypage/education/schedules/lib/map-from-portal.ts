@@ -322,6 +322,25 @@ function formatSessionClockRange(slot: PortalPreferredScheduleSessionTime): stri
   return slot.timeRange?.trim() || start || end
 }
 
+/** 1사1교 희망 블록 시각 범위. 슬롯이 없으면 undefined — 지어내지 않는다. */
+function resolveCompanySchoolClockRange(
+  scheduleId: number | null | undefined,
+  preferredScheduleBlocks: readonly PortalPreferredScheduleBlock[] | null | undefined,
+): string | undefined {
+  if (scheduleId == null) return undefined
+  const block = (preferredScheduleBlocks ?? []).find(row => row.scheduleId === scheduleId)
+  if (!block) return undefined
+  const times = block.sessionTimes ?? block.times ?? []
+  if (times.length === 0) return undefined
+  const first = times[0]
+  const last = times[times.length - 1]
+  if (!first || !last) return undefined
+  const start = first.startTime?.trim() || first.start?.trim() || ''
+  const end = last.endTime?.trim() || last.end?.trim() || ''
+  if (start && end) return `${start} ~ ${end}`
+  return formatSessionClockRange(first) || undefined
+}
+
 /**
  * 1사1교 카드 본문 — 희망 블록 sessionTimes가 있으면 교시·시각 행.
  * 없으면 undefined (curriculumSessions GET만 사용). 슬롯을 지어내지 않는다.
@@ -408,15 +427,25 @@ export function mapPortalEducationSchedule(
         : preferenceLabel ?? mappedRowLabel)
   const heldAt = optionalText(item.startAt ?? undefined) ?? ''
   const endAt = optionalText(item.endAt ?? undefined)
-  const progressTimeLabel =
+  let progressTimeLabel =
     (optionalText(item.progressTimeLabel)
       ? normalizeScheduleDisplayLabel(item.progressTimeLabel!)
       : undefined) ??
     formatGroupTimes(item.groupTimes) ??
     formatPeriodLabel(item.startAt, item.endAt)
+  if (companySchoolSchedule && !/\d{1,2}:\d{2}/.test(progressTimeLabel ?? '')) {
+    const fromBlocks = resolveCompanySchoolClockRange(
+      item.scheduleId,
+      meta?.preferredScheduleBlocks,
+    )
+    if (fromBlocks) progressTimeLabel = fromBlocks
+  }
   // 1사1교 카드 날짜 — 「2026년 4월 3일(금) 9:00 ~ 9:40」. 시각은 progressTimeLabel SSOT.
   const companySchoolDateLabel = companySchoolSchedule
-    ? joinEducationScheduleDateAndTime(formatDisplayDate(heldAt) || heldAt, progressTimeLabel)
+    ? joinEducationScheduleDateAndTime(
+        formatDisplayDate(heldAt) || heldAt,
+        progressTimeLabel,
+      ).trim()
     : ''
   const id =
     item.scheduleId != null ? String(item.scheduleId) : `schedule-${sessionNumber}-${index}`

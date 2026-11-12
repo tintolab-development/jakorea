@@ -65,6 +65,16 @@ export function EducationApplicationListItemRow({
       asideClassName={styles.asideDesktop}
       content={
         <>
+          <ProgramStatusBadges
+            recruitmentStatus={item.recruitmentStatus}
+            educationTargetLabel={item.educationTargetLabel}
+            educationForm={item.educationForm}
+            educationFormLabel={item.educationFormLabel}
+            recruitmentRoleLabel={recruitmentRoleLabel}
+            showRecruitmentStatus={false}
+            size={badgeSize}
+            className={styles.topBadges}
+          />
           <div className={styles.info}>
             <div className={styles.metaRow}>
               {hideCategoryLabel && !categoryLabelOverride ? null : (
@@ -104,15 +114,6 @@ export function EducationApplicationListItemRow({
               </PFText>
             ) : null}
           </div>
-
-          <ProgramStatusBadges
-            recruitmentStatus={item.recruitmentStatus}
-            educationTargetLabel={item.educationTargetLabel}
-            educationForm={item.educationForm}
-            educationFormLabel={item.educationFormLabel}
-            recruitmentRoleLabel={recruitmentRoleLabel}
-            size={badgeSize}
-          />
         </>
       }
       aside={

@@ -41,6 +41,10 @@
   margin: 0;
 }
 
+.sessionTime {
+  margin: 0;
+}
+
 .aside {
   display: flex;
   flex-wrap: wrap;

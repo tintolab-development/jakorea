@@ -29,6 +29,8 @@ const sampleProfile: InstructorRoleRequestProfile = {
 
 const partial = mapInstructorCmsProfileToFormPartial(sampleProfile)
 assert.equal(partial.eduSchoolType, 'college4')
+assert.equal(partial.college4Rows?.[0]?.admitYear, '2020')
+assert.equal(partial.college4Rows?.[0]?.gradYear, '2024')
 assert.equal(partial.freeWrite1, 'hello')
 
 const merged = { ...INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES, ...partial }

@@ -95,6 +95,13 @@ const invented = sanitizeUjatParticipantBasicInfoFields(
 assert.equal(invented[0]?.value, '-')
 assert.equal(invented[1]?.value, '오프라인')
 
+const inventedDetail = sanitizeUjatParticipantBasicInfoFields(
+  'ujat-participant',
+  '',
+  [{ label: '교육 대상 상세', value: '초등학교' }],
+)
+assert.equal(inventedDetail[0]?.value, '-')
+
 const canonicalElementary = sanitizeUjatParticipantBasicInfoFields(
   'ujat-participant',
   '초등학교',

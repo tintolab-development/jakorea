@@ -192,7 +192,7 @@ function AssignedScheduleTable({ rows }: { rows: readonly AssignmentTableRow[] }
     <div className={styles.tableWrap}>
       <table
         className={`${styles.table} ${styles.assignedTable}`}
-        aria-label="배정된 교육 일정"
+        aria-label="배정된 일정 목록"
       >
         <colgroup>
           <col className={styles.numberColumn} />
