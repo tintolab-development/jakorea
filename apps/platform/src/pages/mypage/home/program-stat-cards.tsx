@@ -1,7 +1,7 @@
 import type { MypageProgramStats } from '@/features/mypage'
 import illustBookUrl from '@/shared/assets/illustration/illust-book.svg'
-import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
+import illustCompletedUrl from '@/shared/assets/illustration/graphic-92x81-03.png'
 import { PFText } from '@/shared/ui'
 import { SkeletonBlock } from '@/shared/ui/skeleton-block'
 import styles from './program-stat-cards.module.css'
@@ -18,7 +18,7 @@ const STAT_ITEMS: {
 }[] = [
   { key: 'applied', label: '신청한 프로그램', illustrationUrl: illustBookUrl },
   { key: 'inProgress', label: '진행중인 프로그램', illustrationUrl: illustFlagUrl },
-  { key: 'completed', label: '종료된 프로그램', illustrationUrl: illustDiplomaUrl },
+  { key: 'completed', label: '종료된 프로그램', illustrationUrl: illustCompletedUrl },
 ]
 
 export function ProgramStatCards({ stats, isLoading = false }: ProgramStatCardsProps) {
