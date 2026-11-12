@@ -1,7 +1,7 @@
 /** Gemini 찾아가는 연수 — 모집 공고 신청기간 기준 상태(오늘 날짜로 파생) */
 export type GeminiRecruitmentPeriodStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'ENDED'
 
-/** 목록·필터 표시 상태 (임시저장 포함) */
+/** 목록·필터 표시 상태 (DRAFT = 미게시 공고) */
 export type GeminiRecruitmentDisplayStatus = GeminiRecruitmentPeriodStatus | 'DRAFT'
 
 /** @deprecated `GeminiRecruitmentPeriodStatus` 사용 권장 */
@@ -18,7 +18,7 @@ export type GeminiRecruitmentRow = {
   applicationPeriodEnd: string
   trainingRequestPeriodStart: string
   trainingRequestPeriodEnd: string
-  /** 임시저장 공고 — 신청기간과 무관하게 [임시저장] 표시 */
+  /** 서버 draftStatus=DRAFT — 게시 여부 '미게시'로 등록한 공고. 신청기간과 무관하게 [미게시] 표시 (QA-0101) */
   isDraft?: boolean
   /** 신청 기관 수. 1 이상이면 공고 삭제 불가 */
   organizationApplicationCount?: number

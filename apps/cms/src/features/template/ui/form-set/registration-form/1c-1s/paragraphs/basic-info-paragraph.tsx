@@ -7,8 +7,12 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
+import {
+  COMPANY_SCHOOL_DEFAULT_REP_EN,
+  COMPANY_SCHOOL_DEFAULT_REP_KO,
+} from '@/features/program/1c-1s/lib/registration-rhf-values'
 import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
+import { useProgramSponsorContactsMaskedQuery } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
@@ -26,6 +30,7 @@ import type { ProgramRegistrationParticipantState } from '@/features/template/ui
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import {
+  TEMPLATE_FORM_IPS_FIELD_LABELS,
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
@@ -50,7 +55,7 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 const REP_KO = ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT
-const REP_EN = '1 Company 1 School Economics and Finance Education'
+const REP_EN = ''
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
@@ -222,7 +227,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
   const selectedSponsorId = asUnselectedSelectValue(sponsorId)
-  const contactsQuery = useSponsorContactsQuery(
+  // 등록 양식 담당자 선택지 — contactPrivacy=MASKED(후원사 선택 후에만 조회, 데이터 관리 RAW 캐시와 분리, 정책 32·37)
+  const contactsQuery = useProgramSponsorContactsMaskedQuery(
     selectedSponsorId || null,
     Boolean(selectedSponsorId)
   )
@@ -323,14 +329,14 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="대표 프로그램명 (국문)"
             validationKey="basicInfo.repKo"
             overlayKey={ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY}
-            placeholder="대표 프로그램명을 입력해 주세요"
+            placeholder={`예) ${COMPANY_SCHOOL_DEFAULT_REP_KO}`}
             defaultValue={REP_KO}
           />
           <EconomyOverlayTextField
             label="대표 프로그램명 (영문)"
             validationKey="basicInfo.repEn"
             overlayKey="economyRegistration.basicInfo.repEn"
-            placeholder="대표 프로그램명을 입력해 주세요"
+            placeholder={`예) ${COMPANY_SCHOOL_DEFAULT_REP_EN}`}
             defaultValue={REP_EN}
           />
         </DetailInfoForm.Row>
@@ -526,8 +532,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  // 시안(9899:215345): 미선택 시 플레이스홀더「전체」(회색)
-                  placeholder="전체"
+                  // 등록 양식에는 「전체」를 두지 않는다(QA-0389-8556) — 미선택 안내만
+                  placeholder="교육 과정을 선택해 주세요"
                   width={240}
                   options={educationCourseSelectOptions}
                   value={educationCourse}
@@ -538,7 +544,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             view="-"
           />
           <DetailInfoForm.Field
-            label="IP Owned"
+            label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
             validationKey="basicInfo.ipOwned"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -558,7 +564,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="Course Delivered By"
+            label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
             validationKey="basicInfo.courseDeliveredBy"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -576,7 +582,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             view="-"
           />
           <DetailInfoForm.Field
-            label="Partner Involvement"
+            label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
             validationKey="basicInfo.partnerInvolvement"
             edit={
               <CmsRadioGroup

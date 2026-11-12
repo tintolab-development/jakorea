@@ -144,11 +144,36 @@
   opacity: 1;
 }
 
-/* 읽은 카드 — 그림자 대신 alpha-10 보더 · 투명도 50% */
+/*
+ * 읽은 카드 — 그림자 대신 alpha-10 보더 · 회색 배경 · 제목 Medium.
+ * 카드 전체 opacity는 본문 대비를 떨어뜨려(QA-0293) 쓰지 않는다. 구분은 배경·굵기·배지·점으로 한다.
+ */
 .notification-dropdown-item--read {
   border-color: rgba(61, 61, 61, 0.1);
+  background: #f7f8f9;
   box-shadow: none;
-  opacity: 0.5;
+}
+
+.notification-dropdown-item--read .notification-dropdown-item-tag {
+  color: #5c6b70;
+}
+
+.notification-dropdown-item--read .notification-dropdown-item-message {
+  font-weight: 500;
+}
+
+/* 안읽음 점 — 카드 좌상단, 배지와 함께 상태를 색 외 형태로도 구분 */
+.notification-dropdown-item-unread-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00a0af;
+}
+
+.notification-dropdown-item:focus-visible {
+  outline: 2px solid rgba(0, 160, 175, 0.6);
+  outline-offset: 2px;
 }
 
 .notification-dropdown-sentinel {
@@ -246,16 +271,16 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
+/* 날짜 — 흰/회색 배경 모두에서 읽히도록 투명도 대신 고정 회색(#6b6b6b) */
 .notification-dropdown-item-date {
   display: block;
-  color: var(--default-BK, #3d3d3d);
+  color: #6b6b6b;
   text-align: left;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.3;
 }

@@ -1,26 +1,24 @@
-import { useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { clearFoundEmail, peekFoundEmail } from '@/features/auth/find-email'
 import illustSearchUrl from '@/shared/assets/illustration/illust-search.png'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
-type FindEmailCompleteLocationState = {
-  maskedEmail?: string
-}
-
 export function FindEmailCompletePage() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const maskedEmail = (location.state as FindEmailCompleteLocationState | null)?.maskedEmail?.trim()
+  // 본인인증 후 찾은 이메일 원문 — 화면 상태에만 두고, 메모리 전달값은 마운트 직후 비운다.
+  const [email] = useState(() => peekFoundEmail())
 
   useEffect(() => {
-    if (!maskedEmail) {
+    clearFoundEmail()
+    if (!email) {
       navigate('/auth/find-email', { replace: true })
     }
-  }, [maskedEmail, navigate])
+  }, [email, navigate])
 
-  if (!maskedEmail) {
+  if (!email) {
     return null
   }
 
@@ -38,7 +36,7 @@ export function FindEmailCompletePage() {
 
       <div className={styles.emailBox} aria-label="찾은 이메일">
         <PFText typo="bd-lg-sb" color="black">
-          {maskedEmail}
+          {email}
         </PFText>
       </div>
 

@@ -84,7 +84,7 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
     )
 
     const display = resolveGeneralProgramParticipantRecruitmentDisplay(merged)
-    expect(display.targetLabel).toBe('고등학교')
+    expect(display.targetLabel).toBe('고등학생')
     expect(display.targetDetailLabel).toBe('모집 양식 상세')
     expect(display.recruitmentPeriodLabel).toContain('2025')
     expect(display.contactOrganizationName).toBe('모집 문의처')

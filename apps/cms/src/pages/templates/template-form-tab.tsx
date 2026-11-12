@@ -33,6 +33,13 @@ import NewAgreementForm from '@/features/template/ui/form-set/editors/new-agreem
 import NewHorizontalTableForm from '@/features/template/ui/form-set/editors/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/editors/new-survey-form'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import {
+  isTemplateDetailUrlMode,
+  isTemplateDetailViewUrlMode,
+  TEMPLATE_DETAIL_EDIT_MODE,
+  TEMPLATE_DETAIL_VIEW_MODE,
+} from '@/features/template/lib/detail-url-mode'
+import { TemplateDetailViewModeProvider } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './template-form-tab.css'
 
 type TemplateFormTabQuery = {
@@ -44,7 +51,23 @@ type TemplateFormTabQuery = {
   userTemplate?: string
 }
 
+/** 「양식 상세보기」(mode=view)는 조회 모드, 「수정」을 누르면 mode=edit로 바꿔 편집한다 */
 export default function TemplateFormTab() {
+  const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
+  const handleRequestEdit = useCallback(() => {
+    setParams({ mode: TEMPLATE_DETAIL_EDIT_MODE }, { replace: true })
+  }, [setParams])
+  return (
+    <TemplateDetailViewModeProvider
+      readOnly={isTemplateDetailViewUrlMode(params.mode)}
+      onRequestEdit={handleRequestEdit}
+    >
+      <TemplateFormTabContent />
+    </TemplateDetailViewModeProvider>
+  )
+}
+
+function TemplateFormTabContent() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
   const {
     sections: writingSections,
@@ -52,7 +75,7 @@ export default function TemplateFormTab() {
     isFormsApiUnavailable,
     isError: isWritingSectionsError,
   } = useWritingFormSections()
-  const isPreviewOpen = params.mode === 'edit'
+  const isPreviewOpen = isTemplateDetailUrlMode(params.mode)
   const { closeWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
 
   const buildBaseLeftContentConfig = useCallback(
@@ -90,7 +113,7 @@ export default function TemplateFormTab() {
       const userEditable = isUserCreatedWritingFormTemplateRow(row)
       setParams(
         {
-          mode: 'edit',
+          mode: TEMPLATE_DETAIL_VIEW_MODE,
           id: row.id,
           type: undefined,
           userPreview: undefined,
@@ -113,7 +136,7 @@ export default function TemplateFormTab() {
   }, [setParams])
 
   useEffect(() => {
-    if (params.mode !== 'edit' || params.id == null || params.id === '') {
+    if (!isTemplateDetailUrlMode(params.mode) || params.id == null || params.id === '') {
       closeTemplatePreview()
       return
     }
@@ -217,7 +240,7 @@ export default function TemplateFormTab() {
   }, [params.userTemplate, params.id, selectedTemplate, writingSections])
 
   const agreementWritingFormConfig = useMemo(() => {
-    if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return null
+    if (!isTemplateDetailUrlMode(params.mode) || params.id == null || params.id.trim() === '') return null
     const templateCode = params.id.trim()
     // 성범죄 동의서는 정적 문서 모달 전용 — 동의 셸/직접등록 fallback 금지
     if (
@@ -249,7 +272,7 @@ export default function TemplateFormTab() {
   }, [params.id, params.mode, params.type, selectedTemplate, writingSections])
 
   const suppressInactiveUserPreviewStrip = useMemo(() => {
-    if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
+    if (!isTemplateDetailUrlMode(params.mode) || params.id == null || params.id.trim() === '') return false
     const entry = lookupWritingTemplateRegistry(params.id.trim(), {
       baseTemplateCode: selectedTemplate?.baseTemplateCode,
     })

@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { DashboardProgramScheduleResponseEventType } from './dashboardProgramScheduleResponseEventType';
 import type { DashboardProgramScheduleResponseScheduleRole } from './dashboardProgramScheduleResponseScheduleRole';
 import type { DashboardProgramScheduleResponseScheduleStatus } from './dashboardProgramScheduleResponseScheduleStatus';
 
@@ -27,4 +28,14 @@ export interface DashboardProgramScheduleResponse {
   scheduleRole?: DashboardProgramScheduleResponseScheduleRole;
   /** program_schedule.education_slot_key */
   educationSlotKey?: string | null;
+  /** 일정 유형(QA-0382). 목록 캘린더(includeOperationalEvents=true)와 같은 값. 교육 회차: EDUCATION(시각 있는 회차)·EDUCATION_PERIOD(여러 날 종일 기간)·EVENT(행사). 운영 기간: BUSINESS_START·BUSINESS_END. 모집 기간: RECRUITMENT_START·RECRUITMENT_END (운영·모집은 includeOperationalEvents=true일 때만 내려감). */
+  eventType?: DashboardProgramScheduleResponseEventType;
+  /** 이벤트 고유 키. 교육 회차는 {eventType}:{scheduleId}, 운영은 BUSINESS_START:{programId}, 모집은 RECRUITMENT_START:{recruitmentId} 형식. */
+  eventKey?: string;
+  /** 유형별 표시 라벨(예: 교육, 운영 시작, 모집 마감). 목록 캘린더와 같은 문구. */
+  eventLabel?: string;
+  /** Asia/Seoul 달력 날짜. 운영 시작/종료와 종일 교육은 이 값으로 표시. 시각 있는 교육 회차와 모집 시작/종료(startAt 사용)는 null. */
+  eventDate?: string | null;
+  /** 모집 유형(PARTICIPANT·INSTRUCTOR·VOLUNTEER 등). 모집 일정만 채우고 나머지는 null. */
+  recruitmentType?: string | null;
 }

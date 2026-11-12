@@ -1,5 +1,5 @@
 /**
- * 대시보드 상단 툴바 (인사말, 진행 프로그램 수, 설정 버튼)
+ * 대시보드 상단 툴바 (인사말, 프로그램 수, 설정 버튼)
  */
 
 import { CmsButton } from '@/shared/ui'
@@ -18,12 +18,18 @@ function IconDashboardEdit() {
 interface DashboardToolbarProps {
   userName?: string
   activeProgramsCount: number | null
+  /**
+   * 건수 앞 라벨 — 집계 범위와 일치시킨다 (QA-0381).
+   * 관리자 home.programCount는 상태 무관 전체(삭제 제외) 건수라 '전체 프로그램'.
+   */
+  programsCountLabel?: string
   onOpenSettings: () => void
 }
 
 export function DashboardToolbar({
   userName,
   activeProgramsCount,
+  programsCountLabel = '진행 프로그램',
   onOpenSettings,
 }: DashboardToolbarProps) {
   return (
@@ -31,7 +37,7 @@ export function DashboardToolbar({
       <div className="dashboard-toolbar-left">
         <span className="dashboard-toolbar-title">{userName} 관리자님, 반갑습니다!</span>
         <span className="dashboard-toolbar-description">
-          진행 프로그램 {activeProgramsCount == null ? '-' : activeProgramsCount}건
+          {programsCountLabel} {activeProgramsCount == null ? '-' : activeProgramsCount}건
         </span>
       </div>
       <div className="dashboard-toolbar-right">

@@ -11,7 +11,6 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { formatGenderBirthDisplayLine } from '@/features/user/api/format-gender-birth-display'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type {
   AccountPaymentDetailResponse,
@@ -59,18 +58,17 @@ function formatPaidAtDisplay(iso: string | undefined): string {
   return formatTransferDateDisplay(`${year}-${month}-${day}`)
 }
 
-/** `[E2E-SETTLE] 김정산`처럼 대괄호 접두어가 있으면 벗긴 뒤 예금주 마스킹 */
-export function maskAccountHolderForDisplay(value: string | null | undefined): string {
+/**
+ * 예금주 표시 — 서버 값을 그대로 쓴다(FE 재마스킹 없음, 기획 2026-11-12 Q3: 계좌 지급 상세는 원문).
+ * `[E2E-SETTLE] 김정산`처럼 대괄호 접두어만 벗긴다. `[**산`처럼 서버 마스킹이 접두어와 섞여 깨진 값은 `***`.
+ */
+export function formatAccountHolderForDisplay(value: string | null | undefined): string {
   const raw = value?.trim()
   if (!raw) return '-'
   const stripped = raw.replace(/^\[[^\]]*]\s*/, '').trim()
   const source = stripped || raw
-  // 이미 정상 마스킹(김*산)이면 유지. `[**산`처럼 깨진 값은 복구 불가면 ***
-  if (source.includes('*')) {
-    if (!source.startsWith('[') && !/^\*/.test(source)) return source
-    return '***'
-  }
-  return MASKING_POLICY.accountHolderName(source)
+  if (source.includes('*') && (source.startsWith('[') || /^\*/.test(source))) return '***'
+  return source
 }
 
 function formatLectureDateDisplay(iso: string | null | undefined): string {
@@ -283,7 +281,7 @@ function buildAccountPaymentStatusDetail(
 ): AccountPaymentStatusDetail {
   const bankAndNumber = [row.bankName, row.maskedAccountNo].filter(Boolean).join(' ') || '-'
   const accountPaymentStatus = extras?.accountPaymentStatus ?? row.accountPaymentStatus
-  const holderDisplay = maskAccountHolderForDisplay(row.accountHolder)
+  const holderDisplay = formatAccountHolderForDisplay(row.accountHolder)
 
   return {
     basic: {
@@ -374,6 +372,23 @@ export function mapAccountPaymentDetailRemote(
   }
 }
 
+/**
+ * 계좌 지급 현황 상세의 payee가 RAW(정책 CMS-09)이면 정산 계좌 원문. `*`가 섞인 값은 원문으로 보지 않는다.
+ * sensitiveAccount가 우선이고, 없을 때만 쓴다.
+ */
+function readPayeeRawAccount(
+  payee: SettlementFrontendResponse['payee']
+): { bankAndNumber: string; holder?: string } | undefined {
+  if (payee?.privacyMaskingLevel !== 'RAW') return undefined
+  const accountNumber = payee.accountNumber?.trim()
+  if (!accountNumber || accountNumber.includes('*')) return undefined
+  const holder = payee.accountHolder?.trim()
+  return {
+    bankAndNumber: [payee.bankName?.trim(), accountNumber].filter(Boolean).join(' '),
+    ...(holder && !holder.includes('*') ? { holder } : {}),
+  }
+}
+
 /** `[E2E-SETTLE] 김정산`처럼 대괄호 접두어가 있으면 벗긴 원문 예금주 */
 function stripAccountHolderPrefix(value: string): string {
   const raw = value.trim()
@@ -383,8 +398,10 @@ function stripAccountHolderPrefix(value: string): string {
 /**
  * `GET /api/admin/account-payments/{id}`만 사용한다.
  * 권한 설정 V1.1 [고객사 확인]: 계좌 지급 현황 상세는 계좌번호를 기본 노출한다(목록은 미포함, 상세 진입 시 조회 이력 자동 기록).
- * 표시 계좌 = 원문 sensitiveAccount(Master·Accounting Manager에게만 내려옴). 원문 계좌번호가 없으면 payment.maskedAccountNo.
- * 성별·연락처 등 = settlement.payee(MASKED)가 있으면 매핑, 없으면 `-`.
+ * 기획 2026-11-12 Q3: 성별·생년월일·연락처·이메일·자택 주소·정산 계좌(계좌번호·예금주)는 모두 원문이다.
+ * FE는 다시 가리지 않고 서버 값을 그대로 표시한다(진입 자동 기록 「정산금의 계좌 지급 처리를 위함」은 서버).
+ * 표시 계좌 = sensitiveAccount 원문 → 없으면 payee RAW 계좌 → 그래도 없으면 payment.maskedAccountNo(서버 마스킹).
+ * 성별·연락처 등 = settlement.payee(계좌 지급 상세는 RAW)를 그대로 매핑, 없으면 `-`. 주민번호는 이 화면에 넣지 않는다.
  */
 export function mapAccountPaymentDetailFromGetApi(
   row: AccountPaymentRow,
@@ -403,14 +420,20 @@ export function mapAccountPaymentDetailFromGetApi(
     payment?.maskedAccountNo?.trim() ||
     payeeFields?.settlementAccountBankNumberPart.split(' ').slice(1).join(' ') ||
     row.maskedAccountNo
-  const plainBankAndNumber = sensitiveAccount
+  const payeeRawAccount = readPayeeRawAccount(settlement?.payee)
+  const sensitiveBankAndNumber = sensitiveAccount
     ? [sensitiveAccount.bankName, sensitiveAccount.accountNo].filter(Boolean).join(' ') || undefined
     : undefined
-  const plainHolder = sensitiveAccount?.accountHolder?.trim() || undefined
-  /** 상세 표시용 원문 — 계좌번호가 있을 때만(은행명만 있으면 마스킹 표시를 유지) */
-  const displayPlainBankAndNumber = sensitiveAccount?.accountNo?.trim() ? plainBankAndNumber : undefined
+  const plainBankAndNumber = sensitiveAccount?.accountNo?.trim()
+    ? sensitiveBankAndNumber
+    : (payeeRawAccount?.bankAndNumber ?? sensitiveBankAndNumber)
+  const plainHolder =
+    sensitiveAccount?.accountHolder?.trim() || payeeRawAccount?.holder || undefined
+  /** 상세 표시용 원문 — 계좌번호가 있을 때만(은행명만 있으면 서버 마스킹 표시를 유지) */
+  const displayPlainBankAndNumber =
+    sensitiveAccount?.accountNo?.trim() || payeeRawAccount ? plainBankAndNumber : undefined
 
-  // 표시 예금주: 원문(sensitive)이 있으면 접두어 제거 후 재마스킹. 없으면 목록 마스킹값.
+  // 표시 예금주: 원문(sensitive·payee RAW)이 있으면 접두어만 제거. 없으면 서버 값을 그대로.
   const displayHolder =
     plainHolder ||
     payment?.accountHolder?.trim() ||
@@ -495,7 +518,7 @@ export function mapAccountPaymentDetailFromGetApi(
         base.basic.settlementAccountBankNumberPart,
       settlementAccountHolderPart: plainHolder
         ? stripAccountHolderPrefix(plainHolder)
-        : maskAccountHolderForDisplay(mergedRow.accountHolder),
+        : formatAccountHolderForDisplay(mergedRow.accountHolder),
     },
     plainAccountForPaymentConfirm: {
       bankAndNumber:

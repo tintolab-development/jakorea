@@ -78,11 +78,9 @@ function ParticipatingVolunteerAddRegistrationModalBody({
     setParagraphs(
       initialDraft.paragraphs.map(paragraph => {
         if (paragraph.variant === 'horizontal_table' && CONSENT_PARAGRAPH_IDS.has(paragraph.id)) {
-          // generalInstitution: 동의/미동의 미선택으로 시작 (약관·동의 정책)
-          return {
-            ...paragraph,
-            bottomConsent: isGeneralInstitution ? undefined : ('agree' as const),
-          }
+          // 모든 프리셋(일반 기관형·UJAT 등 기본)이 동의/미동의 미선택으로 시작 (약관·동의 정책, QA-0116)
+          // 미선택·미동의 제출은 등록 요청 빌더가 막는다(`resolveConsentAgreed`).
+          return { ...paragraph, bottomConsent: undefined }
         }
         if (
           paragraph.variant === 'multiple_choice' &&
@@ -93,7 +91,7 @@ function ParticipatingVolunteerAddRegistrationModalBody({
         return paragraph
       })
     )
-  }, [open, initialDraft.paragraphs, isGeneralInstitution, resetPluginValues])
+  }, [open, initialDraft.paragraphs, resetPluginValues])
 
   const updateParagraph = (id: string, next: WritingFormParagraph) => {
     setParagraphs(prev => prev.map(paragraph => (paragraph.id === id ? next : paragraph)))

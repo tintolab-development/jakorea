@@ -7,9 +7,9 @@
  */
 
 export interface Ujat1365SemesterRegistrationFormColumn {
-  scheduleId: number;
+  scheduleId?: number;
   /** 일정 시작일(Asia/Seoul) */
-  date?: string | null;
+  date?: string;
   /** 일정 종료 시각이 지났으면 true */
-  completed: boolean;
+  completed?: boolean;
 }

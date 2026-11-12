@@ -29,7 +29,7 @@ describe('후원사 상세·담당자 contactPrivacy (정책 CMS-17·32·37)', (
     await fetchSponsorRemote('7', 'MASKED')
     await fetchSponsorContactsRemote('7', { name: '담당' } as never, 'MASKED')
     await fetchSponsorContactsRemote('7', undefined, 'MASKED')
-    expect(sponsor).toHaveBeenCalledWith(7, { params: { contactPrivacy: 'MASKED' } })
+    expect(sponsor).toHaveBeenCalledWith(7, { contactPrivacy: 'MASKED' })
     expect(contacts).toHaveBeenNthCalledWith(1, 7, { name: '담당', contactPrivacy: 'MASKED' })
     expect(contacts).toHaveBeenNthCalledWith(2, 7, { contactPrivacy: 'MASKED' })
   })

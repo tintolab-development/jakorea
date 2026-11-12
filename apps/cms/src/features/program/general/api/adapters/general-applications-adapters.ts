@@ -1050,6 +1050,39 @@ function mapInstructorApplicationListScheduleFields(
   }
 }
 
+/** 강사비 책정 기준(Approval.feePolicy 형태) → 행 표시 필드. feePolicy가 없으면 빈 객체(덮어쓰지 않음) */
+export type LectureFeeRowFields = {
+  instructorFeeGradeLabel?: string
+  lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
+  lectureFeeMeasure?: string
+  lectureFeeAmount?: string
+  lectureFeeBasisDisplay?: string
+}
+
+/**
+ * 강사 신청 상세 feePolicy 표시 로직과 같은 규칙 — participants `instructorFeePolicy`,
+ * 참여 강사 강사비 API 응답(서버 정규화 값 `special_lecture`·`차시당` 등)에 공통으로 쓴다.
+ */
+export function mapFeePolicyToLectureFeeRowFields(
+  feePolicy:
+    | { basisType?: string | null; measure?: string | null; amount?: number | null; instructorFeeGrade?: string | null }
+    | null
+    | undefined
+): LectureFeeRowFields {
+  if (!feePolicy) return {}
+  const basisType = mapInstructorFeeBasisType(feePolicy.basisType)
+  const measure = mapInstructorFeeMeasureFromApi(feePolicy.measure)
+  const amount = feePolicy.amount != null ? String(feePolicy.amount) : undefined
+  const gradeLabel = formatInstructorFeeGradeLabel(feePolicy.instructorFeeGrade) || undefined
+  return {
+    ...(gradeLabel ? { instructorFeeGradeLabel: gradeLabel } : {}),
+    ...(basisType ? { lectureFeeBasisType: basisType } : {}),
+    ...(measure ? { lectureFeeMeasure: measure } : {}),
+    ...(amount != null ? { lectureFeeAmount: amount } : {}),
+    lectureFeeBasisDisplay: buildLectureFeeBasisDisplay(basisType ?? 'program', measure ?? '', amount ?? ''),
+  }
+}
+
 function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
@@ -2380,6 +2413,11 @@ export function mapParticipantToParticipatingInstructorRow(
     educationSchedules: mapParticipantSessionsToEducationSchedules(dto.sessions),
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
+    // 강사비 정본(A4) — 신청 있는 강사는 신청서 값, 직접 추가 강사는 참여 강사 값. null이면 미등록(필드 생략)
+    ...mapFeePolicyToLectureFeeRowFields(dto.instructorFeePolicy),
+    ...(dto.instructorFeePolicySource
+      ? { instructorFeePolicySource: dto.instructorFeePolicySource }
+      : {}),
   }
 }
 

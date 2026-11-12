@@ -1,6 +1,6 @@
 import type { GeminiRecruitmentRow } from './types'
 
-/** displayNo를 최신순(내림차순)으로 재부여한다. 임시저장 행은 항상 최상단. */
+/** 최신순으로 정렬하고 displayNo를 위에서부터 1, 2, 3…(오름차순)으로 재부여한다. 미게시(DRAFT) 행은 항상 최상단. */
 export function assignRecruitmentDisplayNumbers(
   rows: GeminiRecruitmentRow[]
 ): GeminiRecruitmentRow[] {
@@ -10,9 +10,8 @@ export function assignRecruitmentDisplayNumbers(
     return b.id.localeCompare(a.id)
   })
 
-  const total = sorted.length
   return sorted.map((row, index) => ({
     ...row,
-    displayNo: total - index,
+    displayNo: index + 1,
   }))
 }

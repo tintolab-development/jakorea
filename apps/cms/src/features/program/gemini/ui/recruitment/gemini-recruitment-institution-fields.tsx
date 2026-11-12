@@ -18,6 +18,7 @@ import {
 } from '../../lib/recruitment/format-recruitment-fields'
 import { formatRecruitmentPeriodRange } from '../../lib/recruitment/format-period'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { GEMINI_RECRUITMENT_VALIDATION_KEYS } from '../../lib/recruitment/validation-keys'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -131,6 +132,7 @@ export function GeminiRecruitmentInstitutionFields({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="공고 게시 여부"
+            validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.announcementPublished}
             fullRow
             view="-"
             edit={
@@ -148,6 +150,7 @@ export function GeminiRecruitmentInstitutionFields({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="공고명"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.title}
           fullRow
           view={formatOptionalText(values.title)}
           edit={
@@ -177,6 +180,7 @@ export function GeminiRecruitmentInstitutionFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="교육 대상"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.educationTargetLevels}
           view={formatEducationTargetLevels(values.educationTargetLevels)}
           edit={
             isEdit ? (
@@ -199,6 +203,7 @@ export function GeminiRecruitmentInstitutionFields({
         />
         <DetailInfoForm.Field
           label="교육 대상 상세"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.educationTargetDetail}
           view={formatOptionalText(values.educationTargetDetail)}
           edit={
             isEdit ? (
@@ -227,6 +232,7 @@ export function GeminiRecruitmentInstitutionFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="기관 모집 기간"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.applicationPeriod}
           view={formatRecruitmentPeriodRange(
             values.applicationPeriodStart ?? '',
             values.applicationPeriodEnd ?? ''
@@ -246,6 +252,7 @@ export function GeminiRecruitmentInstitutionFields({
         />
         <DetailInfoForm.Field
           label="연수 요청 가능기간"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.trainingRequestPeriod}
           view={formatRecruitmentPeriodRange(
             values.trainingRequestPeriodStart ?? '',
             values.trainingRequestPeriodEnd ?? ''
@@ -267,6 +274,7 @@ export function GeminiRecruitmentInstitutionFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최소 수강 인원"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.minStudentCount}
           view={formatMinStudentCount(values.minStudentCount)}
           edit={
             isEdit && onMinStudentCountChange ? (
@@ -304,6 +312,7 @@ export function GeminiRecruitmentInstitutionFields({
         />
         <DetailInfoForm.Field
           label="교육 형태"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.educationForm}
           view={formatEducationForm(values.educationForm)}
           edit={
             isEdit ? (
@@ -329,6 +338,7 @@ export function GeminiRecruitmentInstitutionFields({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="문의처"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.inquiry}
           fullRow
           view={renderDetailInfoPipeSeparated(formatInquiryContact(values))}
           edit={
@@ -367,6 +377,7 @@ export function GeminiRecruitmentInstitutionFields({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="비고"
+          validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.notes}
           fullRow
           view={formatNotes(values.notesNotApplicable, values.notes)}
           edit={

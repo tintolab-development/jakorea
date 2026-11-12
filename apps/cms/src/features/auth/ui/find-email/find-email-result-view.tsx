@@ -2,13 +2,14 @@ import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { CmsButton } from '@/shared/ui'
 
 interface FindEmailResultViewProps {
-  maskedEmail: string
+  /** 본인인증 후 찾은 이메일 전체(정책 CMS-02, 마스킹하지 않음) */
+  email: string
   onGoLogin: () => void
   onResetPassword: () => void
 }
 
 export function FindEmailResultView({
-  maskedEmail,
+  email,
   onGoLogin,
   onResetPassword,
 }: FindEmailResultViewProps) {
@@ -26,7 +27,7 @@ export function FindEmailResultView({
         <p className="find-email-result__description">아래 이메일로 로그인할 수 있습니다.</p>
 
         <div className="find-email-result__email-box" aria-label="찾은 이메일">
-          {maskedEmail}
+          {email}
         </div>
 
         <div className="auth-actions find-email-result__actions">

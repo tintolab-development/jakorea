@@ -185,6 +185,19 @@ const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_SURVEY_MESSAGE =
 const PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION_MESSAGE =
   '새로 연결하거나 교체할 양식은 현재 발행된 버전만 선택할 수 있습니다.'
 
+/** BE `GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED` — 어디서 발행·연결하는지 안내 (QA-0053) */
+export const GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED_CODE =
+  'GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED'
+export const GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED_MESSAGE = [
+  '발행된 신청 양식이 연결되지 않아 프로그램을 등록할 수 없습니다.',
+  '등록 화면 「신청 정보」 단계의 각 신청 탭에서 「템플릿 변경」을 눌러 발행된 신청 양식을 선택해 주세요.',
+  '원하는 양식이 목록에 없으면 [템플릿 관리 > 신청 양식]에서 양식을 발행한 뒤 다시 선택해 주세요.',
+].join('\n')
+
+export function isGeneralProgramApplicationFormBindingRequiredError(error: unknown): boolean {
+  return extractApiErrorCode(error) === GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED_CODE
+}
+
 const FORM_BINDING_TEMPLATE_LOCKED_MESSAGE =
   '이미 응답이 있는 양식은 연결된 템플릿 버전을 변경할 수 없습니다.'
 
@@ -259,6 +272,9 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (organizationAssignmentMessage) return organizationAssignmentMessage
 
   const code = extractApiErrorCode(error)
+  if (code === GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED_CODE) {
+    return GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED_MESSAGE
+  }
   if (code === LECTURE_REPORT_NO_DOWNLOADABLE_FILES) {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw

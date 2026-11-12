@@ -54,7 +54,7 @@ export async function fetchSponsorRemote(
   return unwrapApiBody(
     await getDataManagementSubsetApi().sponsor(
       pathId(id),
-      contactPrivacy ? { params: { contactPrivacy } } : undefined
+      contactPrivacy ? { contactPrivacy } : undefined
     )
   )
 }

@@ -4,6 +4,7 @@ import {
   lookupTemplateRegistry,
   type TemplateRegistryDefinition,
 } from '@/features/template/model/template-registry/template-registry'
+import { isTemplateDetailUrlMode } from '@/features/template/lib/detail-url-mode'
 
 export type TemplatePreviewControllerParams = {
   params: {
@@ -45,7 +46,7 @@ export function useTemplatePreviewController({
 
   useEffect(() => {
     const tid =
-      params.mode === 'edit' && params.id != null && params.id.trim() !== ''
+      isTemplateDetailUrlMode(params.mode) && params.id != null && params.id.trim() !== ''
         ? params.id.trim()
         : undefined
     const latch = templateUserPreviewUrlLatchRef.current
@@ -58,7 +59,7 @@ export function useTemplatePreviewController({
       L.blockAutoReopen = false
       return
     }
-    if (params.mode !== 'edit') return
+    if (!isTemplateDetailUrlMode(params.mode)) return
     if (entry?.usesCrimeConsentModal === true) return
     if (!selectedTemplate) return
     if (isWritingUserPreviewOpen) {

@@ -547,6 +547,8 @@ function patchRecruitDatePlan(
     ...instructorInquiry,
     ...volunteerInquiry,
     'recruit.individual.announcementPublished': 'published',
+    // 면접 유무는 기본값 없음(QA-0121) — 아래 면접 일정과 맞춰 「면접 있음」을 명시한다
+    'recruit.individual.interviewRequired': 'yes',
     'recruit.individual.programRangeSeal': programSeal,
     'recruit.individual.programAnchorIso': programSeal.start,
     'recruit.individual.recruitRangeSeal': recruitSeal,

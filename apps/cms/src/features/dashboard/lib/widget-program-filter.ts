@@ -132,3 +132,20 @@ export function setWidgetProgramGroupSelected(
   }
   return remaining
 }
+
+/** 그룹을 끄면 위젯에 남는 프로그램이 0개가 되는지 (끄기 차단 대상) */
+export function wouldLeaveWidgetWithoutPrograms(
+  currentIds: string[] | undefined,
+  groupIds: string[],
+  allProgramIds: string[]
+): boolean {
+  if (groupIds.length === 0) return false
+  return remainingIdsAfterUnselectingGroup(currentIds, groupIds, allProgramIds).length === 0
+}
+
+/** QA-0020 — 마지막 항목 해제가 막힐 때 보여 줄 사유 */
+export function widgetProgramMinSelectionMessage(widgetLabels: readonly string[]): string {
+  const labels = [...new Set(widgetLabels.filter(Boolean))]
+  if (labels.length === 0) return '위젯마다 프로그램을 최소 1개 이상 선택해야 합니다.'
+  return `${labels.map(label => `'${label}'`).join(', ')} 위젯은 프로그램을 최소 1개 이상 선택해야 합니다.`
+}

@@ -3,7 +3,9 @@
  * Phase 0.5.3: 다운로드 보호 UX (NFR-DATA-01, NFR-DATA-02)
  */
 
-/** 한국어 2글자 복성(예금주명 `accountHolderName` 마스킹 시 성 길이) */
+import { isMaskedHomeAddressLine, maskHomeAddressLine } from '@jakorea/ui/privacy'
+
+/** 한국어 2글자 복성. 예금주 4글자 이상에서만 성을 2글자로 본다(기획 2026-11-12 Q4). */
 const COMPOUND_SURNAMES_TWO = new Set([
   '남궁',
   '황보',
@@ -36,34 +38,32 @@ export const DOWNLOAD_LIMITS = {
   rateLimitWindowMs: 60 * 1000, // 레이트 리밋 윈도우 (1분)
 } as const
 
+/** 판단할 수 없는 전화번호를 원문 대신 표시하는 고정 마스킹 */
+const PHONE_UNDISCLOSED = '****'
+
 /**
  * 마스킹 정책 함수
  */
 export const MASKING_POLICY = {
   /**
-   * 전화번호 마스킹: 가운데 국 번호·일련번호 구간을 `*` 처리
-   * - 휴대폰 010-****-1234
-   * - 유선 02-****-5678, 02-***-4567, 지역 031-***-4567 등
+   * 전화번호 마스킹: 가운데 국번 구간을 `*` 처리하고 `지역-가운데-끝4자리`로 맞춘다.
+   * - 휴대폰 010-****-5678 (하이픈·공백 없이 와도 같은 형식)
+   * - 유선 02-****-5678, 02-***-4567, 지역 031-***-4567
+   * 이미 `*`가 있으면 다시 가리지 않는다. 판단할 수 없는 형식(국외 번호, 자릿수 오류 등)은
+   * 원문 대신 `****`를 돌려준다. Golden Vector PHONE 케이스와 같다.
    */
   phone: (value: string): string => {
     if (!value) return value
-    if (value.includes('*')) return value
     const v = value.trim()
-
-    const hyphenRules: Array<[RegExp, string]> = [
-      [/^(\d{3})-(\d{4})-(\d{4})$/, '$1-****-$3'],
-      [/^(\d{2})-(\d{4})-(\d{4})$/, '$1-****-$3'],
-      [/^(\d{2})-(\d{3})-(\d{4})$/, '$1-***-$3'],
-      [/^(\d{3})-(\d{3})-(\d{4})$/, '$1-***-$3'],
-    ]
-    for (const [re, repl] of hyphenRules) {
-      if (re.test(v)) return v.replace(re, repl)
-    }
-
-    const looseMobile = v.replace(/^(\d{3})-?(\d{4})-?(\d{4})$/, '$1-****-$3')
-    if (looseMobile !== v) return looseMobile
-
-    return v.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3')
+    if (!v) return value
+    if (v.includes('*')) return v
+    if (v === '-' || v === '—') return v
+    if (!/^[\d\s-]+$/.test(v)) return PHONE_UNDISCLOSED
+    const digits = v.replace(/\D/g, '')
+    const areaLength = digits.startsWith('02') ? 2 : 3
+    const middleLength = digits.length - areaLength - 4
+    if (!digits.startsWith('0') || middleLength < 3 || middleLength > 4) return PHONE_UNDISCLOSED
+    return `${digits.slice(0, areaLength)}-${'*'.repeat(middleLength)}-${digits.slice(-4)}`
   },
 
   /**
@@ -129,23 +129,16 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 주소: 지번은 동·읍·면·리까지, 도로명은 도로명까지. 이후는 블러.
-   * 구분할 수 없으면 원문을 남기지 않는다.
+   * 자택 주소: 지번은 동·읍·면·리까지, 도로명은 도로명까지 보이고 나머지는 ` *****`.
+   * BE와 같은 알고리즘(`maskHomeAddressLine`)을 쓴다. 판단할 수 없으면 `비공개`.
+   * 이미 마스킹된 값(`*` 포함·`비공개`)은 다시 가리지 않는다.
    */
   address: (value: string): string => {
     if (!value) return value
     const trimmed = value.trim()
-    if (!trimmed || trimmed.includes('*')) return value
-    const tokens = trimmed.split(/\s+/).filter(Boolean)
-    const roadIdx = tokens.findIndex(token => /(로|길|대로)$/.test(token))
-    if (roadIdx >= 0) {
-      return `${tokens.slice(0, roadIdx + 1).join(' ')} ***`
-    }
-    const lotIdx = tokens.findIndex(token => /(동|읍|면|리)$/.test(token))
-    if (lotIdx >= 0) {
-      return `${tokens.slice(0, lotIdx + 1).join(' ')} ***`
-    }
-    return '***'
+    if (!trimmed) return value
+    if (isMaskedHomeAddressLine(trimmed)) return trimmed
+    return maskHomeAddressLine(trimmed)
   },
 } as const
 

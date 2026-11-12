@@ -32,6 +32,7 @@ import { ExcelButton } from '@/shared/ui/excel-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { getProgramTablePageConfig, type ProgramTableContext } from './program-table.config'
+import { keyboardActivatableRowProps } from '@/shared/lib/keyboard-activatable-row'
 
 const TRAINED_TEACHERS_SELECTION_COL_WIDTH = 60
 
@@ -358,7 +359,10 @@ export function ProgramList({
               loading={loading}
               tableLayout={isOverviewTable ? 'fixed' : undefined}
               onRow={record => ({
-                onClick: () => onView(record),
+                // QA-0256: 클릭 동작은 유지하고 Tab·Enter·Space·포커스 표시만 더한다 (전 유형 동일)
+                ...keyboardActivatableRowProps(() => onView(record), {
+                  ariaLabel: record.title ? `${record.title} 상세 보기` : undefined,
+                }),
                 style: { cursor: 'pointer' },
               })}
               pagination={false}

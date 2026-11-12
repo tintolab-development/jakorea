@@ -6,10 +6,10 @@
 
 import { Card, Typography, Space, Tag } from 'antd'
 import { EmptyState } from '@/shared/ui'
-import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { type Notification, type NotificationType } from '../api/notification-service'
 import { useNotifications } from '../hooks/use-notifications'
+import { useAdminNotificationNavigate } from '../hooks/use-admin-notification-navigate'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { LoadingButton } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
@@ -53,7 +53,7 @@ const formatTimestamp = (dateValue: string | Date): string => {
 }
 
 export function NotificationWidget() {
-  const navigate = useNavigate()
+  const navigateToNotificationTarget = useAdminNotificationNavigate()
   const { notifications, loading, unreadCount, markAsRead } = useNotifications()
 
   const handleNotificationClick = async (notification: Notification) => {
@@ -65,9 +65,7 @@ export function NotificationWidget() {
       }
     }
 
-    if (notification.link) {
-      navigate(notification.link)
-    }
+    navigateToNotificationTarget(notification)
   }
 
   const displayNotifications = notifications.filter(n => !n.read).slice(0, 10) // 읽지 않은 알림만 최대 10개 표시

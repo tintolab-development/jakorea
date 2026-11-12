@@ -7,7 +7,10 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
-import { TEMPLATE_FORM_BUSINESS_AREA_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
+  TEMPLATE_FORM_IPS_FIELD_LABELS,
+} from '@/features/template/lib/template-form-select-options'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -344,7 +347,7 @@ export const ProgramRegistrationBasicInfoIpOwnedField = memo(
   }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
-        label="IP Owned"
+        label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
         validationKey="basicInfo.ipOwned"
         overlayKey={`${overlayPrefix}.ipOwned`}
         placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
@@ -362,7 +365,7 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
   }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
-        label="Course Delivered By"
+        label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
         validationKey="basicInfo.courseDeliveredBy"
         overlayKey={`${overlayPrefix}.courseDeliveredBy`}
         placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
@@ -394,7 +397,7 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
 
     return (
       <DetailInfoForm.Field
-        label="Partner Involvement"
+        label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
         validationKey={trainedTeachersDefaults ? undefined : 'basicInfo.partnerInvolvement'}
         edit={
           <div className="detail-info-form-inputs-wrapper">

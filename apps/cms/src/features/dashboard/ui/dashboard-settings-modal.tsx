@@ -42,6 +42,8 @@ import {
   isWidgetProgramGroupIndeterminate,
   isWidgetProgramGroupSelected,
   setWidgetProgramGroupSelected,
+  widgetProgramMinSelectionMessage,
+  wouldLeaveWidgetWithoutPrograms,
   type ProgramSettingRow,
 } from '../lib/widget-program-filter'
 import './dashboard-settings-modal.css'
@@ -190,12 +192,15 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     string,
     string[]
   > | null>(null)
+  /** QA-0020 — 마지막 프로그램 해제가 막혔을 때 사유 */
+  const [programMinSelectionNotice, setProgramMinSelectionNotice] = useState<string | null>(null)
 
   useLayoutEffect(() => {
     if (!open) {
       setDraftShortcutEnabled(null)
       setDraftWidgetProgramIds(null)
       setProgramCollapseActiveKey([])
+      setProgramMinSelectionNotice(null)
       didInitProgramCollapseRef.current = false
       setIsSavingLocal(false)
       return
@@ -281,6 +286,20 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   const handleTitleGroupToggle = useCallback(
     (widgetKey: string, groupIds: string[], selected: boolean) => {
       if (!programCatalog) return
+      if (
+        !selected &&
+        wouldLeaveWidgetWithoutPrograms(
+          widgetProgramIds[widgetKey],
+          groupIds,
+          getAllProgramIdsForWidget(programCatalog, widgetKey)
+        )
+      ) {
+        setProgramMinSelectionNotice(
+          widgetProgramMinSelectionMessage([widgetLabelByKey[widgetKey] ?? widgetKey])
+        )
+        return
+      }
+      setProgramMinSelectionNotice(null)
       setDraftWidgetProgramIds(prev => {
         const base =
           prev ?? cloneWidgetProgramIds(useDashboardSettingsStore.getState().widgetProgramIds)
@@ -295,7 +314,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         }
       })
     },
-    [programCatalog]
+    [programCatalog, widgetLabelByKey, widgetProgramIds]
   )
 
   const isMasterRowSelected = useCallback(
@@ -320,6 +339,21 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   const handleMasterRowToggle = useCallback(
     (row: ProgramSettingRow, turnOn: boolean) => {
       if (!programCatalog) return
+      // 끄기: 그 행이 위젯의 마지막 선택이면 해당 위젯은 유지되고(setWidgetProgramGroupSelected) 사유를 보인다
+      const blockedLabels = turnOn
+        ? []
+        : widgetKeysForProgramRow(row, visibleWidgetKeys)
+            .filter(wk =>
+              wouldLeaveWidgetWithoutPrograms(
+                widgetProgramIds[wk],
+                row.idsByWidget[wk]!,
+                getAllProgramIdsForWidget(programCatalog, wk)
+              )
+            )
+            .map(wk => widgetLabelByKey[wk] ?? wk)
+      setProgramMinSelectionNotice(
+        blockedLabels.length > 0 ? widgetProgramMinSelectionMessage(blockedLabels) : null
+      )
       setDraftWidgetProgramIds(prev => {
         const base =
           prev ?? cloneWidgetProgramIds(useDashboardSettingsStore.getState().widgetProgramIds)
@@ -332,7 +366,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         return next
       })
     },
-    [visibleWidgetKeys, programCatalog]
+    [visibleWidgetKeys, programCatalog, widgetLabelByKey, widgetProgramIds]
   )
 
   const handleProgramCollapseChange = useCallback((keys: string[] | string) => {
@@ -450,6 +484,11 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
         <section className="dashboard-settings-modal__section">
           <div className="dashboard-settings-modal__section-title">위젯 별 프로그램 설정</div>
+          {programMinSelectionNotice ? (
+            <div className="dashboard-settings-modal__program-notice" role="alert">
+              {programMinSelectionNotice}
+            </div>
+          ) : null}
           {programsCatalogLoading ? (
             <div className="dashboard-settings-modal__program-loading">
               <Spin />

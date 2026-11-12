@@ -16,7 +16,7 @@ const PERIOD_RANK: Record<string, number> = {
 
 /**
  * 연수보고서 import는 `programId`가 필수다.
- * 진행 중·최신 사업연도 공고를 고른다. 임시저장만 있으면 그중에서 고른다.
+ * 진행 중·최신 사업연도 공고를 고른다. 미게시 공고만 있으면 그중에서 고른다.
  */
 export function pickGeminiImportProgramId(
   items: GeminiImportProgramCandidate[]

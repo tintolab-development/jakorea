@@ -91,7 +91,14 @@ function ProgramCard({ program }: { program: HomeProgramCard }) {
           {homeRecruitmentStatusLabel(program.recruitmentStatus)}
         </PFStateBadge>
 
-        <PFText as="h3" typo="hd-sm" color="black" className={styles.cardTitle}>
+        {/* 3줄(모바일 2줄) 말줄임 — 마우스를 올리면 전체 제목(QA-0483) */}
+        <PFText
+          as="h3"
+          typo="hd-sm"
+          color="black"
+          className={styles.cardTitle}
+          title={program.title}
+        >
           {program.title}
         </PFText>
 

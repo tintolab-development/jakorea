@@ -9,11 +9,17 @@ export type GeminiRecruitmentProgramProgressLabel =
   | '프로그램 미진행'
   | '참여자 모집 중'
 
-/** 조회 전용 — 신청 시작 전 게시 예정, 이후 게시 */
+/**
+ * 조회 전용 — 공고 게시 여부.
+ * QA-0101: 선택한 게시 여부(상세 응답 draftStatus)가 미게시(DRAFT)면 날짜와 상관없이 `미게시`.
+ * 게시를 선택한 공고만 신청 시작 전 `게시 예정`, 이후 `게시`.
+ */
 export function resolveRecruitmentAnnouncementDisplayLabel(
   applicationPeriodStart: string,
-  referenceDate: Dayjs | string = dayjs()
-): '게시' | '게시 예정' {
+  referenceDate: Dayjs | string = dayjs(),
+  announcementPublished?: 'published' | 'unpublished' | ''
+): '게시' | '게시 예정' | '미게시' {
+  if (announcementPublished === 'unpublished') return '미게시'
   const today = (typeof referenceDate === 'string' ? dayjs(referenceDate) : referenceDate).startOf(
     'day'
   )

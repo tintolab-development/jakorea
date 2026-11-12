@@ -2,8 +2,21 @@ import type { InstructorMemberProfile, User } from '@/types/user'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { inferInstructorMemberProfileFromRoles } from '@/features/user/api/map-member-role'
 
-/** 교사/겸직 강사 상세 — 새로고침 시 학교명·프로필 복원용 */
+/**
+ * 교사/겸직 강사 상세 — 새로고침 시 소속 학교·프로필 복원용.
+ * 값은 소속 학교의 **내부 식별번호**(`affiliatedSchoolUserId`)만 쓴다. 학교명은 주소창에 넣지 않는다 (QA-0106).
+ */
 export const USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY = 'affiliatedSchool' as const
+
+/**
+ * 내부 식별번호 형식(영문·숫자·`-`·`_`)만 소속 학교 힌트로 읽는다.
+ * 이전 링크에 남은 학교명 값은 무시한다 — 상세는 `id`·`memberId`로 그대로 열리고 학교명은 상세 GET 값을 쓴다.
+ */
+export function parseAffiliatedSchoolIdQuery(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed) return undefined
+  return /^[A-Za-z0-9_-]+$/.test(trimmed) ? trimmed : undefined
+}
 export const USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY = 'instructorProfile' as const
 /** 새로고침 시 상세 GET — registry 없을 때 memberId·role 힌트 */
 export const USER_DETAIL_MEMBER_ID_QUERY_KEY = 'memberId' as const
@@ -37,6 +50,9 @@ export function parseMemberRoleQuery(value: string | null | undefined): User['ro
 }
 
 export type TeacherDetailUrlContext = {
+  /** 소속 학교 내부 식별번호 (URL `affiliatedSchool`) */
+  affiliatedSchoolUserId?: string
+  /** 학교명 힌트 — 메모리(목록 행·드릴다운)에서만 넘긴다. URL에서는 읽지 않는다 */
   affiliatedSchoolName?: string
   instructorMemberProfile?: InstructorMemberProfile
 }
@@ -49,12 +65,14 @@ export type MemberDetailUrlContext = TeacherDetailUrlContext & {
 export function readTeacherDetailUrlContext(
   searchParams: URLSearchParams
 ): TeacherDetailUrlContext {
-  const school = searchParams.get(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)?.trim()
+  const schoolId = parseAffiliatedSchoolIdQuery(
+    searchParams.get(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)
+  )
   const profile = parseInstructorMemberProfileQuery(
     searchParams.get(USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY)
   )
   return {
-    ...(school ? { affiliatedSchoolName: school } : {}),
+    ...(schoolId ? { affiliatedSchoolUserId: schoolId } : {}),
     ...(profile ? { instructorMemberProfile: profile } : {}),
   }
 }
@@ -106,11 +124,12 @@ export function teacherDetailUrlParamsFromUser(
       [USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY]: undefined,
     }
   }
-  const school =
-    user.affiliatedSchoolName?.trim() || user.schoolInfo?.schoolName?.trim() || undefined
+  const schoolId = parseAffiliatedSchoolIdQuery(
+    user.affiliatedSchoolUserId != null ? String(user.affiliatedSchoolUserId) : undefined
+  )
   const profile = resolveInstructorMemberProfile(user) ?? undefined
   return {
-    [USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY]: school,
+    [USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY]: schoolId,
     [USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY]: profile,
   }
 }
@@ -151,7 +170,12 @@ export function applyTeacherDetailUrlContext(
   user: Omit<User, 'password'>,
   ctx: TeacherDetailUrlContext
 ): Omit<User, 'password'> {
-  if (user.role !== 'INSTRUCTOR' && !ctx.instructorMemberProfile && !ctx.affiliatedSchoolName) {
+  if (
+    user.role !== 'INSTRUCTOR' &&
+    !ctx.instructorMemberProfile &&
+    !ctx.affiliatedSchoolName &&
+    !ctx.affiliatedSchoolUserId
+  ) {
     return user
   }
 
@@ -167,15 +191,19 @@ export function applyTeacherDetailUrlContext(
     next = { ...next, instructorMemberProfile: fromRoles ?? ctx.instructorMemberProfile }
   }
 
-  const school = ctx.affiliatedSchoolName?.trim()
-  // 순수 강사는 학교명 힌트로 겸직 제목(교사 상세)을 만들지 않음
-  if (
-    school &&
-    !next.affiliatedSchoolName?.trim() &&
+  // 순수 강사는 학교 힌트로 겸직 제목(교사 상세)을 만들지 않음
+  const acceptsSchoolHint =
     ctx.instructorMemberProfile !== 'instructor_only' &&
     next.instructorMemberProfile !== 'instructor_only'
-  ) {
+
+  const school = ctx.affiliatedSchoolName?.trim()
+  if (school && acceptsSchoolHint && !next.affiliatedSchoolName?.trim()) {
     next = { ...next, affiliatedSchoolName: school }
+  }
+
+  const schoolId = ctx.affiliatedSchoolUserId?.trim()
+  if (schoolId && acceptsSchoolHint && next.affiliatedSchoolUserId == null) {
+    next = { ...next, affiliatedSchoolUserId: schoolId }
   }
 
   return next

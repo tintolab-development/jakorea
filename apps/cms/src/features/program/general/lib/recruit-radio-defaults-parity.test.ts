@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 /**
- * 모집 라디오 기본값 회귀 가드 — 「게시」가 선택돼 보이는데 미입력으로 막히거나 저장에서 빠지는 버그가 여러 번 재발해서,
+ * 모집 라디오 기본값 회귀 가드 — 화면에 보이는 기본값과 검사·저장 값이 어긋나는 버그가 여러 번 재발해서,
+ * (QA-0121·B-14 이후 등록 기본값: 공고 게시·면접 유무·강사 모집 대상 미선택. 상세 수정은 기존 등록분 해석값 유지)
  * 모든 라디오 키 × 프로그램 유형을 한 표(RADIO_MATRIX)로 묶어 단락 화면 기본값·등록 필수 검사·등록 생성 payload·
  * 로컬 저장·상세 수정 초기값·상세 수정 저장 payload 가 서로 같은지 검사한다.
  * 새 라디오를 추가하면 표에 행을 넣지 않는 한 「표가 모든 키를 덮는다」 테스트가 실패한다.
@@ -99,8 +100,10 @@ type RadioRow = {
   /** 등록 필수 검사 진단 키 */
   validationKey: string
   defaultValue: string
-  /** `''` 도 화면에서 기본값으로 그리는가(면접 유무) */
+  /** `''` 도 화면에서 기본값으로 그리는가 — QA-0121 이후 모든 라디오 false(`''` = 미선택) */
   blankMeansDefault: boolean
+  /** 미조작(키 없음)도 필수 검사에서 막는가 — 기본값이 미선택(`''`)인 공고 게시·면접 유무 */
+  requiredUntilChosen?: boolean
   /** 단락 소스에서 기본값 인자(식별자)를 잡는 패턴 — 리터럴이면 잡히지 않아 실패한다 */
   paragraph: { file: string; pattern: RegExp }[]
   /** 상세 수정 폼 필드 (없으면 수정 화면에 해당 라디오 없음) */
@@ -116,6 +119,7 @@ const RADIO_MATRIX: RadioRow[] = [
     validationKey: 'recruit.institution.announcementPublished',
     defaultValue: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
     blankMeansDefault: false,
+    requiredUntilChosen: true,
     paragraph: [
       {
         file: P.institution,
@@ -164,6 +168,7 @@ const RADIO_MATRIX: RadioRow[] = [
     validationKey: 'recruit.individual.announcementPublished',
     defaultValue: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
     blankMeansDefault: false,
+    requiredUntilChosen: true,
     paragraph: [
       {
         file: P.individual,
@@ -178,7 +183,8 @@ const RADIO_MATRIX: RadioRow[] = [
     overlayKey: IK.individual.interviewRequired,
     validationKey: 'recruit.individual.interviewRequired',
     defaultValue: RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
-    blankMeansDefault: true,
+    blankMeansDefault: false,
+    requiredUntilChosen: true,
     paragraph: [
       {
         file: P.individual,
@@ -194,6 +200,7 @@ const RADIO_MATRIX: RadioRow[] = [
     validationKey: 'recruit.instructor.announcementPublished',
     defaultValue: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
     blankMeansDefault: false,
+    requiredUntilChosen: true,
     paragraph: [
       {
         file: P.instructor,
@@ -209,6 +216,7 @@ const RADIO_MATRIX: RadioRow[] = [
     validationKey: 'recruit.volunteer.announcementPublished',
     defaultValue: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
     blankMeansDefault: false,
+    requiredUntilChosen: true,
     paragraph: [
       {
         file: P.volunteer,
@@ -223,7 +231,8 @@ const RADIO_MATRIX: RadioRow[] = [
     overlayKey: IK.volunteer.interviewRequired,
     validationKey: 'recruit.volunteer.interviewRequired',
     defaultValue: RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
-    blankMeansDefault: true,
+    blankMeansDefault: false,
+    requiredUntilChosen: true,
     paragraph: [
       {
         file: P.volunteer,
@@ -310,17 +319,19 @@ describe('(a) 단락 화면 기본값 = 중앙 상수', () => {
     for (const row of RADIO_MATRIX) expect(filled[row.overlayKey]).toBe(row.defaultValue)
   })
 
-  it('상세 수정 기본값이 등록 기본값과 같은 뜻이다', () => {
-    const editMeaning: Record<string, string> = {
-      published: RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
-      yes: RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
-      required: RECRUIT_NEED_OR_NOT_DEFAULT,
-    }
+  it('등록 기본값: 공고 게시·면접 유무·강사 모집 대상 모두 미선택 (QA-0121, 기획 B-14)', () => {
+    expect(RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT).toBe('')
+    expect(RECRUIT_INTERVIEW_REQUIRED_DEFAULT).toBe('')
+    expect(RadioDefaults.RECRUIT_INSTRUCTOR_TARGETS_DEFAULT).toEqual([])
+  })
+
+  it('상세 수정은 기존 등록분 해석값(게시·면접 있음·사전 안내 필요)을 등록 기본값과 따로 쓴다', () => {
     for (const row of RADIO_MATRIX) {
       if (!row.editField) continue
       expect(DETAIL_EDIT_RECRUIT_RADIO_DEFAULTS[row.editField]).toBe(row.editDefault)
-      expect(editMeaning[row.editDefault!]).toBe(row.defaultValue)
     }
+    // 사전 안내 사항은 등록 기본값(need)과 같은 뜻을 유지한다
+    expect(RECRUIT_NEED_OR_NOT_DEFAULT).toBe('need')
   })
 })
 
@@ -400,12 +411,15 @@ const VALIDATOR_CASES: ValidatorCase[] = [
   },
 ]
 
-describe('(b) 등록 필수 검사 — 라디오 미조작은 미입력이 아니다 (유형 × 탭 × 키)', () => {
+describe('(b) 등록 필수 검사 — 미조작은 화면 기본값대로 (유형 × 탭 × 키)', () => {
   for (const vc of VALIDATOR_CASES) {
     describe(vc.label, () => {
-      it.each(vc.tabs)('%s 탭: 라디오 키가 전혀 없으면(미조작) 라디오 미입력 없음', tab => {
+      it.each(vc.tabs)('%s 탭: 라디오 키가 전혀 없으면(미조작) 미선택 기본값(공고 게시·면접 유무)만 미입력', tab => {
         const missing = vc.run(tab, {})
-        for (const row of rowsForTab(tab)) expect(missing).not.toContain(row.validationKey)
+        for (const row of rowsForTab(tab)) {
+          if (row.requiredUntilChosen) expect(missing).toContain(row.validationKey)
+          else expect(missing).not.toContain(row.validationKey)
+        }
       })
 
       it.each(vc.tabs)('%s 탭: 명시적 빈 값(화면 미선택)은 미입력 — 검사가 실제로 동작한다', tab => {
@@ -429,18 +443,20 @@ function overlayOf(program: Program): Record<string, unknown> {
 
 function expectDomainDefaults(program: Program, tab: Tab) {
   const info = program.generalCommonInfo
+  // 공고 게시·면접 유무는 미선택 — 「게시」·「면접 있음」으로 채우지 않는다(등록은 필수 검사가 막는다)
   if (tab === 'institution' || tab === 'individual') {
-    expect(info?.participantRecruitmentInfo?.announcementPublished).toBe(true)
+    expect(info?.participantRecruitmentInfo?.announcementPublished).not.toBe(true)
   }
-  if (tab === 'instructor') expect(info?.instructorRecruitmentInfo?.announcementPublished).toBe(true)
+  if (tab === 'instructor') expect(info?.instructorRecruitmentInfo?.announcementPublished).not.toBe(true)
   if (tab === 'volunteer') {
-    expect(info?.volunteerRecruitmentInfo?.announcementPublished).toBe(true)
-    expect(program.generalVolunteerInterviewEnabled).toBe(true)
+    expect(info?.volunteerRecruitmentInfo?.announcementPublished).not.toBe(true)
+    // 면접 유무는 기본값이 없다(미선택) — 「면접 있음」으로 채우지 않는다
+    expect(program.generalVolunteerInterviewEnabled).not.toBe(true)
   }
-  if (tab === 'individual') expect(program.generalParticipantInterviewEnabled).toBe(true)
+  if (tab === 'individual') expect(program.generalParticipantInterviewEnabled).not.toBe(true)
 }
 
-describe('(b′) 등록 생성 payload — 라디오 미조작이면 화면 기본값으로 저장', () => {
+describe('(b′) 등록 생성 payload — 라디오 미조작이면 화면 기본값(미선택)으로 저장', () => {
   it.each(ALL_TABS)('일반 위저드 create · %s 탭', tab => {
     const values = createDefaultRegistrationWizardUiValues({
       programType: 'curriculum',
@@ -475,13 +491,13 @@ describe('(b′) 등록 생성 payload — 라디오 미조작이면 화면 기�
     expectDomainDefaults(program, tab)
   })
 
-  it('1사1교 create · 강사 탭 기본값 저장, 기관 탭은 그대로(미선택)', () => {
+  it('1사1교 create · 강사 탭 기본값(미선택) 유지, 기관 탭도 그대로(미선택)', () => {
     const program = buildCompanySchoolProgramFromRhf({
       id: 'cs-parity',
       values: createDefaultCompanySchoolRegistrationRhfValues(),
     })
-    expect(overlayOf(program)[IK.instructor.announcementPublished]).toBe('published')
-    expect(program.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).toBe(true)
+    expect(overlayOf(program)[IK.instructor.announcementPublished] ?? '').toBe('')
+    expect(program.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).not.toBe(true)
     expect(overlayOf(program)[IK.institution.announcementPublished]).toBe('')
   })
 
@@ -493,7 +509,7 @@ describe('(b′) 등록 생성 payload — 라디오 미조작이면 화면 기�
       variant: 'economy',
       sessionRoundType: 'single',
     })
-    expect(program.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).toBe(true)
+    expect(program.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).not.toBe(true)
     expect(overlayOf(program)[IK.institution.announcementPublished]).not.toBe('published')
   })
 })

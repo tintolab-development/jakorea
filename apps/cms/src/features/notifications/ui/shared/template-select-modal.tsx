@@ -4,9 +4,11 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_EMPTY_COPY } from '@/shared/ui/cms-table-empty-copy'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { formatTemplateVariableUsage } from '@/features/notifications/model/shared/template-variable-usage'
 import './template-select-modal.css'
 
-export const TEMPLATE_SELECT_MODAL_PAGE_SIZE = 5
+/** QA-0370: 한 페이지 5건 → 10건 */
+export const TEMPLATE_SELECT_MODAL_PAGE_SIZE = 10
 
 export type SendTemplatePickerItem = {
   id: string
@@ -30,6 +32,22 @@ export type TemplateSelectModalProps<T extends SendTemplatePickerItem> = {
   /** 알림톡만. 메일·문자 피커는 기본 false — 비활성 사유를 행에 상시 표시 */
   showUnusableReasonInline?: boolean
   getTemplateUnusableReason?: (template: T) => { summary: string; detail: string } | null
+}
+
+/**
+ * 「변수」 열 (QA-0370). `getKeys`가 null이면 본문을 몰라 `-`로 둔다.
+ * `extraColumns`로 넘긴다.
+ */
+export function buildTemplateVariableUsageColumn<T extends SendTemplatePickerItem>(
+  getKeys: (template: T) => Iterable<string> | null
+): ColumnsType<T>[number] {
+  return {
+    title: '변수',
+    key: 'variableUsage',
+    width: 110,
+    align: 'center',
+    render: (_, record) => formatTemplateVariableUsage(getKeys(record)),
+  }
 }
 
 function matchesTemplateName(template: SendTemplatePickerItem, keyword: string): boolean {

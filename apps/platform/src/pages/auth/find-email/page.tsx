@@ -4,7 +4,7 @@ import {
   IDENTITY_MODULE_IDLE_DESCRIPTION,
   IDENTITY_MODULE_IDLE_TITLE,
 } from '@jakorea/domain/shared/identity-module-copy'
-import { lookupFindEmail } from '@/features/auth/find-email'
+import { lookupFindEmail, stashFoundEmail } from '@/features/auth/find-email'
 import {
   getIdentityApiErrorMessage,
   useFindEmailIdentityVerification,
@@ -48,10 +48,9 @@ export function FindEmailPage() {
         })
 
         if (result.kind === 'found') {
-          navigate('/auth/find-email/complete', {
-            replace: true,
-            state: { maskedEmail: result.maskedEmail },
-          })
+          // 원문 이메일은 history.state에 싣지 않고 메모리로만 넘긴다.
+          stashFoundEmail(result.email)
+          navigate('/auth/find-email/complete', { replace: true })
           return
         }
 

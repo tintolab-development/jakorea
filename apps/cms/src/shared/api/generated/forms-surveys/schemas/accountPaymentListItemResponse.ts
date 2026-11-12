@@ -53,4 +53,6 @@ export interface AccountPaymentListItemResponse {
   availableActions?: string[];
   /** 지급 대상 유형. INSTRUCTOR(강사 지급조서·Gemini) | PARTICIPANT(참여자 영수증) | VOLUNTEER(봉사자 영수증). 영수증은 sourceType=INDIVIDUAL_SETTLEMENT, sourceId=영수증 정산 신청 id, settlementId=null이며 원천징수 0원입니다. */
   payeeType?: AccountPaymentListItemResponsePayeeType;
+  /** 받는 분 휴대폰 마스킹값. 대량이체 양식 미리보기용. 원문은 서버 XLSX 다운로드에만 있음. 출처는 서버 XLSX와 같은 회원 휴대폰(정산 건 강사, 직접 지급 건 지급 대상 회원). 없으면 null. */
+  maskedRecipientPhone?: string | null;
 }

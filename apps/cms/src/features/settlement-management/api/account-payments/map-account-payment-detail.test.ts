@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   applyInstructorMemberPiiToAccountPaymentDetail,
+  formatAccountHolderForDisplay,
   mapAccountPaymentDetailFromGetApi,
   resolveAccountPaymentMemberId,
 } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
@@ -495,6 +496,58 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.programSessionProgressDisplay).toBe('-')
     // 일정 칸에는 차시 라벨 원문 유지
     expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('2차시')
+  })
+
+  it('계좌 지급 상세 payee RAW는 성별·생년월일·연락처·이메일·주소·계좌를 다시 가리지 않는다(Q3)', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 185957,
+        instructorName: '가나다',
+        bankName: '가상은행',
+        maskedAccountNo: '***-***-****',
+        accountHolder: '가*다',
+        paymentStatus: 'WAITING_PAYMENT',
+      },
+      settlement: {
+        id: '185957',
+        items: [],
+        totalAmount: 0,
+        payee: {
+          privacyMaskingLevel: 'RAW',
+          gender: 'FEMALE',
+          birthDate: '1990-07-21',
+          phone: '010-0000-0000',
+          email: 'raw-user@example.com',
+          addressRoad: '서울특별시 가상구 가상로 1',
+          addressDetail: '101호',
+          bankName: '가상은행',
+          accountNumber: '000-000-0000',
+          accountHolder: '가나다',
+          residentRegistrationNumber: '900721-2******',
+        },
+      },
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
+    expect(mapped.basic.genderBirthDisplay).toBe('여성 | 1990. 07. 21 (만 36세)')
+    expect(mapped.basic.phoneDisplay).toBe('010-0000-0000')
+    expect(mapped.basic.emailDisplay).toBe('raw-user@example.com')
+    expect(mapped.basic.addressDisplay).toBe('서울특별시 가상구 가상로 1 101호')
+    expect(mapped.basic.settlementAccountBankNumberPart).toBe('가상은행 000-000-0000')
+    expect(mapped.basic.settlementAccountHolderPart).toBe('가나다')
+    expect(mapped.plainAccountForPaymentConfirm).toEqual({
+      bankAndNumber: '가상은행 000-000-0000',
+      holder: '가나다',
+    })
+    expect(JSON.stringify(mapped.basic)).not.toContain('900721')
+  })
+
+  it('원문이 없으면 서버 예금주 값을 그대로 두고 FE에서 다시 가리지 않는다', () => {
+    expect(formatAccountHolderForDisplay('가나다')).toBe('가나다')
+    expect(formatAccountHolderForDisplay('가*다')).toBe('가*다')
+    expect(formatAccountHolderForDisplay('[E2E-SETTLE] 가나다')).toBe('가나다')
+    expect(formatAccountHolderForDisplay('[**다')).toBe('***')
+    expect(formatAccountHolderForDisplay('')).toBe('-')
   })
 
   it('sensitiveAccount.accountNo가 없으면 강사 계좌 원문으로 보완하지 않는다', () => {

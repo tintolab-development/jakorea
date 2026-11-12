@@ -11,6 +11,7 @@ import {
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
 import { validateNotificationScheduledAt } from '@/features/notifications/model/send-scheduled-at'
+import { formatNotificationSendRecipientCount } from '@/features/notifications/model/shared/send-ux-copy'
 
 export const ALIMTALK_SEND_CONFIRM_MESSAGE = '해당 내용으로 알림톡을 발송하시겠습니까?'
 
@@ -45,6 +46,11 @@ export type AlimtalkSendValidationResult =
       confirmMessage: string
       fingerprint: string
     }
+
+/** 변수 누락 안내(formatAlimtalkPartialSendConfirm)는 이미 인원을 적으므로 그 외 경로에만 붙인다. */
+function withRecipientCount(message: string, validCount: number): string {
+  return `${message}\n${formatNotificationSendRecipientCount(validCount)}`
+}
 
 function recipientFingerprint(recipient: AlimtalkSendRecipient) {
   return {
@@ -134,10 +140,12 @@ export function validateAlimtalkSendRequest(
     return {
       ok: true,
       validRecipients: uniqueValid,
-      confirmMessage:
+      confirmMessage: withRecipientCount(
         dropped > 0
           ? `같은 휴대폰 번호로 이미 포함된 수신자 ${dropped}명은 이번 발송에서 제외됩니다.\n제외하고 발송할까요?`
           : ALIMTALK_SEND_CONFIRM_MESSAGE,
+        uniqueValid.length
+      ),
       fingerprint: sendFingerprint(input, uniqueValid, excludedIds),
     }
   }
@@ -183,7 +191,12 @@ export function validateAlimtalkSendRequest(
       confirmMessage += `\n같은 휴대폰 번호로 이미 포함된 수신자 ${dropped}명은 이번 발송에서 제외됩니다.`
     }
   } else if (dropped > 0) {
-    confirmMessage = `같은 휴대폰 번호로 이미 포함된 수신자 ${dropped}명은 이번 발송에서 제외됩니다.\n제외하고 발송할까요?`
+    confirmMessage = withRecipientCount(
+      `같은 휴대폰 번호로 이미 포함된 수신자 ${dropped}명은 이번 발송에서 제외됩니다.\n제외하고 발송할까요?`,
+      uniqueValid.length
+    )
+  } else {
+    confirmMessage = withRecipientCount(ALIMTALK_SEND_CONFIRM_MESSAGE, uniqueValid.length)
   }
 
   return {

@@ -5,7 +5,8 @@ import type { AccountPaymentRow } from '@/features/settlement-management/model/a
 export const ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT = 'WAITING_PAYMENT' as const
 export const ACCOUNT_PAYMENT_EXPORT_STATUS_PAID = 'PAID' as const
 
-const BULK_TRANSFER_EXPORT_REASON = '계좌 지급 확인 — 양식 발급 (대량이체 양식 발급)'
+/** 정책 CMS-07 자동 기록 사유. 서버는 자유 문자열(2~500자)로 감사 로그에 저장한다. */
+const BULK_TRANSFER_EXPORT_REASON = '대량이체 양식 발급'
 const BULK_TRANSFER_EXPORT_BUSINESS_PURPOSE = '정산 관리 대량이체·세금신고 양식'
 const TAX_REPORT_EXPORT_REASON = '세금신고 양식 발급'
 const TAX_REPORT_EXPORT_BUSINESS_PURPOSE = '정산 관리 세금신고 양식'

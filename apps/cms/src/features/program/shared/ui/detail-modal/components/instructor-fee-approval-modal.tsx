@@ -85,6 +85,11 @@ export type InstructorFeeApprovalModalProps = {
   notifyTimingCapability?: NotifyTimingCapability
   /** 강사 모집 최종 합격 발표일(ISO). 지났거나 null(미설정)이면 「발표일에 맞춰서」 비활성. 생략 시 Provider 값 */
   announcementAt?: string | null
+  /**
+   * 「알림 발송」 항목 숨김. 참여 강사 추가 등록(강사비 책정 및 등록 안내)은 알림 시점을 보낼 API가 없다
+   * (BE 회신 A4 — 기획 확정 후 별도). 기본 false — 기존 승인·배정 흐름은 그대로.
+   */
+  hideNotifyTiming?: boolean
 }
 
 /** 일반(기관형) 시안 05-2(1141:247368) — 「[이름] 님의 … 선택해 주세요」(띄어쓰기, 첫 줄 마침표 없음) */
@@ -113,6 +118,7 @@ export function InstructorFeeApprovalModal({
   description,
   notifyTimingCapability = NOTIFY_TIMING_CAPABILITY.scheduledOnly,
   announcementAt,
+  hideNotifyTiming = false,
 }: InstructorFeeApprovalModalProps) {
   const { showAlert } = useCmsAlert()
   const announcementDisabled = useNotifyAnnouncementDisabled(announcementAt)
@@ -195,7 +201,8 @@ export function InstructorFeeApprovalModal({
               size="large"
               type="button"
               disabled={!canConfirm || submitting}
-              onClick={handleConfirm} >
+              onClick={handleConfirm}
+            >
               {submitting ? `${confirmLabel} 중...` : confirmLabel}
             </CmsButton>
           </div>
@@ -272,43 +279,45 @@ export function InstructorFeeApprovalModal({
               ) : null}
             </div>
 
-            <CmsRadio.Group
-              label="알림 발송"
-              required
-              size="medium"
-              value={notifyTiming}
-              onChange={e => handleNotifyTimingChange(e.target.value)}
-            >
-              <CmsRadio value="immediate">즉시</CmsRadio>
-              {notifyTimingCapability.onAnnouncement ? (
-                <CmsRadio value="on_announcement" disabled={announcementDisabled}>
-                  발표일에 맞춰서
-                </CmsRadio>
-              ) : null}
-              <span
-                ref={manualRadioAnchorRef}
-                className="instructor-fee-approval-modal__manual-anchor"
+            {hideNotifyTiming ? null : (
+              <CmsRadio.Group
+                label="알림 발송"
+                required
+                size="medium"
+                value={notifyTiming}
+                onChange={e => handleNotifyTimingChange(e.target.value)}
               >
-                <CmsRadio
-                  value="manual"
-                  onClick={() => {
-                    if (notifyTiming === 'manual') {
-                      setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
-                      setDateTimePickerOpen(true)
-                    }
-                  }}
+                <CmsRadio value="immediate">즉시</CmsRadio>
+                {notifyTimingCapability.onAnnouncement ? (
+                  <CmsRadio value="on_announcement" disabled={announcementDisabled}>
+                    발표일에 맞춰서
+                  </CmsRadio>
+                ) : null}
+                <span
+                  ref={manualRadioAnchorRef}
+                  className="instructor-fee-approval-modal__manual-anchor"
                 >
-                  직접 설정
-                  {notifyTiming === 'manual' && manualNotifyAt != null ? (
-                    <span className="instructor-fee-approval-modal__manual-summary">
-                      {' '}
-                      ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
-                    </span>
-                  ) : null}
-                </CmsRadio>
-              </span>
-            </CmsRadio.Group>
-            {notifyError ? (
+                  <CmsRadio
+                    value="manual"
+                    onClick={() => {
+                      if (notifyTiming === 'manual') {
+                        setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
+                        setDateTimePickerOpen(true)
+                      }
+                    }}
+                  >
+                    직접 설정
+                    {notifyTiming === 'manual' && manualNotifyAt != null ? (
+                      <span className="instructor-fee-approval-modal__manual-summary">
+                        {' '}
+                        ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
+                      </span>
+                    ) : null}
+                  </CmsRadio>
+                </span>
+              </CmsRadio.Group>
+            )}
+            {!hideNotifyTiming && notifyError ? (
               <span className="instructor-fee-approval-modal__field-error" role="alert">
                 {notifyError}
               </span>
@@ -318,7 +327,7 @@ export function InstructorFeeApprovalModal({
       </ContentModal>
 
       <DateTimePickerPopover
-        open={open && notifyTiming === 'manual' && dateTimePickerOpen}
+        open={open && !hideNotifyTiming && notifyTiming === 'manual' && dateTimePickerOpen}
         onClose={() => setDateTimePickerOpen(false)}
         anchorRef={manualRadioAnchorRef}
         dismissExcludeRef={modalContentRef}

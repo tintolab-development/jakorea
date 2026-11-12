@@ -1,14 +1,13 @@
 /** @vitest-environment node */
 import { describe, expect, it } from 'vitest'
-import { withVolunteerInterviewRequiredCreateDefault } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { Program } from '@/types/domain'
 import { buildGeneralProgramCreateFromWizardRhf } from './build-registration-create-from-rhf'
 import { createDefaultRegistrationWizardUiValues } from './registration-wizard-ui-values'
 
 /**
- * 회귀 — 봉사 모집 「봉사자 면접 유무」 기본 '면접 있음'을 건드리지 않고 등록하면
- * 봉사 행 interviewEnabled 가 false 로 저장되던 문제(화면은 면접 있음).
+ * 봉사 모집 「봉사자 면접 유무」 — QA-0121 이후 기본값 없음(미선택, 등록 필수 검사로 막음).
+ * 고른 값만 봉사 행 interviewEnabled 로 싣는다.
  */
 
 const KEY = 'recruit.volunteer.interviewRequired'
@@ -37,22 +36,9 @@ function build(volunteer: boolean, recruitmentKv: Record<string, unknown> = {}) 
   return rows.find(r => String(r.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
 }
 
-describe('withVolunteerInterviewRequiredCreateDefault', () => {
-  it('봉사 선택 + 키 없음 → yes', () => {
-    expect(withVolunteerInterviewRequiredCreateDefault({}, true)).toEqual({ [KEY]: 'yes' })
-  })
-  it('사용자가 고른 값은 유지', () => {
-    expect(withVolunteerInterviewRequiredCreateDefault({ [KEY]: 'no' }, true)).toEqual({ [KEY]: 'no' })
-  })
-  it('봉사 미선택은 그대로', () => {
-    const overlay = { 'recruit.recruitRangeSeal': RANGE }
-    expect(withVolunteerInterviewRequiredCreateDefault(overlay, false)).toBe(overlay)
-  })
-})
-
 describe('위저드 RHF 생성 — 봉사자 면접 유무 기본값', () => {
-  it('봉사: 라디오 미조작(기본 면접 있음) → 봉사 행 interviewEnabled=true', () => {
-    expect(build(true)?.interviewEnabled).toBe(true)
+  it('봉사: 라디오 미조작(미선택) → 면접 있음으로 채우지 않는다', () => {
+    expect(build(true)?.interviewEnabled).not.toBe(true)
   })
   it('봉사: 면접 없음 선택 → false', () => {
     expect(build(true, { [KEY]: 'no' })?.interviewEnabled).toBe(false)

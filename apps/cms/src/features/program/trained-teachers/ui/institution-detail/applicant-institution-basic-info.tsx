@@ -376,6 +376,11 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
                     value={classAndCount}
                   />
                 )}
+                {/* 신청 답 기본 정보 교육 장소 — 상세 응답 educationPlace(+Detail), 없으면 「-」 */}
+                <InstitutionApplicationTableRowFullWidth
+                  label="교육 장소"
+                  value={detail?.educationLocation ?? '-'}
+                />
                 <InstitutionApplicationTableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
                 <InstitutionApplicationTableRowFullWidth
                   label="신청 사유"

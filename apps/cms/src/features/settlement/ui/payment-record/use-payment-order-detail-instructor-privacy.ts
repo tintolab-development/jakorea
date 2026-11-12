@@ -1,9 +1,12 @@
 /**
- * 지급 현황 상세(강사) — instructor member privacy/unmask + 캐시 SSOT
+ * 지급 현황 상세(강사) — instructor member privacy/unmask
+ *
+ * 원문(unmask) 응답은 Query 캐시에 두지 않고 이 훅의 상태에만 둔다. 다시 가리기·닫기·대상 전환
+ * (usePersonalInfoReveal onRemask)에서 바로 버린다 — 다시 열람하면 사유 입력과 조회 이력을 새로 남긴다.
  */
 
-import { useCallback, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type {
   PaymentOrderAdminInstructorDetail,
   PaymentOrderAdminProgramDetail,
@@ -30,7 +33,6 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
   detail: DetailForPrivacy | null
 }) {
   const { isOpen, kind, instructorRowKey, instructorMemberId, detail } = options
-  const queryClient = useQueryClient()
   const memberId =
     kind === 'instructor' &&
     instructorMemberId != null &&
@@ -39,13 +41,11 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
       ? instructorMemberId
       : null
 
-  const privacyQueryKey = useMemo(
-    () =>
-      memberId != null
-        ? settlementQueryKeys.paymentOrders.instructorPrivacyUnmask(memberId)
-        : (['cms', 'settlement', 'paymentOrders', 'instructorPrivacyUnmask', 'none'] as const),
-    [memberId]
-  )
+  /** 원문 응답과 요청 당시 회원 ID. 다른 회원으로 바뀌면 쓰지 않는다. */
+  const [revealedPrivacy, setRevealedPrivacy] = useState<{
+    memberId: number
+    dto: InstructorMemberDetailResponse
+  } | null>(null)
 
   const maskedQueryKey = useMemo(
     () =>
@@ -70,15 +70,23 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
         )
       }
       const dto = await unmaskInstructorMemberPrivacyRemote(memberId, { reason })
-      queryClient.setQueryData(privacyQueryKey, dto)
-      return dto
+      return { memberId, dto }
     },
-    [memberId, privacyQueryKey, queryClient]
+    [memberId]
   )
+
+  const handlePrivacyUnmasked = useCallback((payload: unknown) => {
+    const next = payload as { memberId: number; dto: InstructorMemberDetailResponse } | undefined
+    if (next?.dto) setRevealedPrivacy(next)
+  }, [])
+
+  const clearRevealedPrivacy = useCallback(() => setRevealedPrivacy(null), [])
 
   const reveal = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
     revealPersonalInfo: kind === 'instructor' ? revealPersonalInfo : undefined,
+    onPrivacyUnmasked: handlePrivacyUnmasked,
+    onRemask: clearRevealedPrivacy,
     resetDeps: [isOpen, kind, instructorRowKey, memberId],
     controlMode: 'toggleRemask',
   })
@@ -96,17 +104,10 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
     retry: false,
   })
 
-  const { data: unmaskDto } = useQuery({
-    queryKey: privacyQueryKey,
-    enabled: kind === 'instructor' && memberId != null && reveal.personalInfoRevealed,
-    staleTime: Infinity,
-    queryFn: async (): Promise<InstructorMemberDetailResponse> => {
-      const cached = queryClient.getQueryData<InstructorMemberDetailResponse>(privacyQueryKey)
-      if (cached) return cached
-      throw new Error('개인정보 원문 캐시를 찾을 수 없습니다.')
-    },
-    retry: false,
-  })
+  const unmaskDto =
+    reveal.personalInfoRevealed && revealedPrivacy != null && revealedPrivacy.memberId === memberId
+      ? revealedPrivacy.dto
+      : undefined
 
   let instructorDetailWithPrivacy: PaymentOrderAdminInstructorDetail | null = null
   if (kind === 'instructor' && detail && 'nameKo' in detail) {

@@ -919,7 +919,7 @@ describe('trained teachers recruitment edit round-trip', () => {
     expect(display.maxSessionsPerDayLabel).toBe('4차시')
     expect(display.recruitmentPeriodLabel).toContain('2026.10.01')
     expect(display.operationPeriodLabel).toContain('2026.11.01')
-    expect(display.targetLabel).toBe('중학교')
+    expect(display.targetLabel).toBe('중학생')
     expect(display.targetDetailLabel).toBe('중학교 2학년')
     expect(display.finalAnnouncementLabel).toContain('이메일 안내')
     expect(display.contactPhone).toBe('010-1111-2222')

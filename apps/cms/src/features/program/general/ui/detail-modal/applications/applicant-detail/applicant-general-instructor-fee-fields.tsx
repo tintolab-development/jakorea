@@ -29,8 +29,11 @@ function FieldError({ message }: { message?: string }) {
 export function LectureFeeBasisView({
   instructor,
   copyVariant = 'default',
+  emptyLabel = '-',
 }: {
   instructor: ApplicantInstructorRow
+  /** 강사비가 없을 때 문구. 기본 `-` — 참여 강사 상세는 「미등록」(BE 회신 A4: feePolicy null) */
+  emptyLabel?: string
   /**
    * 기본 `default`: 「유형 | 지급 기준 | 금액」(1사1교·일반 개인형·참여 강사 상세).
    * `general-organization`: 일반(기관형) 강사 신청 시안 06-1·06-2 표기.
@@ -41,7 +44,7 @@ export function LectureFeeBasisView({
     copyVariant === 'general-organization'
       ? buildGeneralOrganizationLectureFeeBasisViewSegments(instructor)
       : buildLectureFeeBasisViewSegments(instructor)
-  if (segments.length === 0) return <span>-</span>
+  if (segments.length === 0) return <span>{emptyLabel}</span>
   if (segments.length === 1) return <span>{segments[0]}</span>
 
   return (

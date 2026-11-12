@@ -69,10 +69,13 @@ function mapPeriods(
       id: asText(period.id, ''),
       label: asText(period.label, ''),
       title: asText(period.title, ''),
-      events: events.map(event => ({
-        year: asYear(event?.year, ''),
-        text: asText(event?.text, ''),
-      })),
+      // 내용(text)이 빈 이벤트는 연도만 보이므로 표시하지 않는다(QA-0485). 빈 기간 자체는 유지한다.
+      events: events
+        .map(event => ({
+          year: asYear(event?.year, ''),
+          text: asText(event?.text, ''),
+        }))
+        .filter(event => event.text.trim() !== ''),
     }
   })
 }

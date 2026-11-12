@@ -1,6 +1,7 @@
 import { ProgramBackButton } from '@/features/program'
 import {
   canNavigateBackInApp,
+  CAREERS_SCROLL_TO_JOBS_STATE,
   CareerPostingAdjacentNav,
   careerJobBadgeVariant,
   CAREERS_PATH,
@@ -52,7 +53,8 @@ export function CareerPostingDetailPage() {
   }
 
   const handleGoToList = () => {
-    navigate(listReturnPath || CAREERS_PATH)
+    // 보던 목록 주소(검색·페이지)로 가되, 채용공고 목록 영역이 바로 보이게 한다(QA-0486)
+    navigate(listReturnPath || CAREERS_PATH, { state: CAREERS_SCROLL_TO_JOBS_STATE })
   }
 
   if (status !== 'ready' || !detail) {

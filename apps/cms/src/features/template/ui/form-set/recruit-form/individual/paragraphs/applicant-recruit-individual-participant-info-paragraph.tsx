@@ -18,8 +18,8 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
 import {
-  isRecruitInterviewRequiredOff,
   isRecruitInterviewRequiredOn,
+  recruitInterviewRequiredRadioValue,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-required'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -41,7 +41,7 @@ type RangeSeal = { start: string; end: string } | null
 /** 프로그램 참여자 모집 폼 (개인) — 참여자 모집 정보 */
 export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
-    useIndividualRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
+    useIndividualRecruitField<ParticipantRecruitmentAnnouncementPublishedValue | ''>(
       'recruit.individual.announcementPublished',
       RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
@@ -182,7 +182,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   )
   const [notes, setNotes] = useIndividualRecruitField<string>('recruit.individual.notes', '')
   const interviewEnabled = isRecruitInterviewRequiredOn(interviewRequired)
-  const interviewRadioValue = isRecruitInterviewRequiredOff(interviewRequired) ? 'no' : 'yes'
+  const interviewRadioValue = recruitInterviewRequiredRadioValue(interviewRequired)
 
   return (
     <div className="applicant-recruit-individual-participant-info-paragraph__forms">

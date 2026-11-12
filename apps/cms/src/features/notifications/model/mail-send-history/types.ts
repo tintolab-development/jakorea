@@ -46,6 +46,11 @@ export type MailSendHistoryRow = {
   bodyHtml: string
   /** sendStatus=발송 실패일 때 failedReason 보조 문구 */
   failedReason?: string
+  /**
+   * 발송은 됐지만 수신 실패(receiptStatus=DELIVERY_FAILED 등)일 때 사유 (QA-0176).
+   * 응답 failedReason → providerResultMessage 순. 둘 다 없으면 비움(임의 문구 생성 금지).
+   */
+  receiveFailedReason?: string
   attachmentFileNames: string[]
   attachments?: MailSendHistoryAttachment[]
 }

@@ -1,5 +1,10 @@
-import { useRef, type ChangeEvent, type CSSProperties } from 'react'
+import { Fragment, useRef, type ChangeEvent, type CSSProperties } from 'react'
 import { openFilePicker } from '@/shared/lib/open-file-picker'
+import {
+  buildRejectedFileTypeMessageLines,
+  partitionFilesByAccept,
+} from '@/shared/lib/file-accept-filter'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
   FileAttachmentEmpty,
@@ -73,8 +78,24 @@ export function ParagraphFileUpload({
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
-    if (files?.length) {
-      const incoming = Array.from(files)
+    // QA-0376: accept는 파일 창 필터일 뿐 — 선택 결과를 다시 검사해 허용 형식만 목록에 넣는다
+    const { accepted: incoming, rejected } = partitionFilesByAccept(
+      Array.from(files ?? []),
+      accept
+    )
+    if (rejected.length > 0) {
+      const lines = buildRejectedFileTypeMessageLines(rejected, accept)
+      cmsAlertModal.show({
+        title: '안내',
+        content: lines.map((line, index) => (
+          <Fragment key={index}>
+            {index > 0 ? <br /> : null}
+            {line}
+          </Fragment>
+        )),
+      })
+    }
+    if (incoming.length) {
       const tooLargeFile =
         maxFileBytes != null &&
         maxFileBytes > 0 &&

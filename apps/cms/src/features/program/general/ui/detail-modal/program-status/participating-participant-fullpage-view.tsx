@@ -134,7 +134,7 @@ import './participating-participant-fullpage-view.css'
 const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '신청 정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
@@ -477,14 +477,6 @@ export function ParticipatingParticipantFullpageView({
     remaskPersonalInfo()
   }, [cancelApplicationInfoEdit, remaskPersonalInfo])
 
-  const requestStartApplicationInfoEdit = useCallback(() => {
-    if (personalInfoRevealed) {
-      enterApplicationInfoEdit()
-      return
-    }
-    setEditUnmaskConfirmOpen(true)
-  }, [enterApplicationInfoEdit, personalInfoRevealed])
-
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmOpen(false)
@@ -503,6 +495,18 @@ export function ParticipatingParticipantFullpageView({
         setEditUnmaskConfirmLoading(false)
       })
   }, [editUnmaskConfirmLoading, enterApplicationInfoEdit, revealWithReason])
+
+  /**
+   * CMS-29: [개인정보 상세보기]로 이미 해제했어도 수정 진입은 EDIT_MODE 원문 조회로 「신청 정보 수정」을 기록한다.
+   * 해제 전이면 안내 팝업을 거친다.
+   */
+  const requestStartApplicationInfoEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      confirmEditUnmaskAndStartEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [confirmEditUnmaskAndStartEdit, personalInfoRevealed])
 
   useEffect(() => {
     setParticipantPatches({})

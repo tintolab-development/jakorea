@@ -62,9 +62,10 @@ import './program-list-page.css'
 import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
-  resolveProgramDeleteGuideModalCopy,
+  resolveProgramDeleteGuideModalCopyWithNames,
   resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
+import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { resolveProgramListDetailEntry } from '@/features/program/general/lib/resolve-program-list-detail-entry'
@@ -171,8 +172,13 @@ function ProgramListPageContent() {
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
   const programBulkDeleteGuide = useMemo(
-    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
-    [programsPendingBulkDelete.length]
+    // 일반 프로그램 목록과 같은 안내 — 단건 `[이름]` / 일괄 `[첫 이름] 외 N개` (QA-0296)
+    () =>
+      resolveProgramDeleteGuideModalCopyWithNames(
+        programsPendingBulkDelete.length,
+        programsPendingBulkDelete.map(resolveGeneralProgramListTitle)
+      ),
+    [programsPendingBulkDelete]
   )
   const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
   const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
@@ -814,6 +820,7 @@ function ProgramListPageContent() {
         onFormCancel={closeFormModal}
         formLoading={formLoading}
         deleteModalOpen={deleteModalOpen}
+        deleteProgramName={programToDelete ? resolveGeneralProgramListTitle(programToDelete) : undefined}
         onConfirmDelete={() =>
           handleConfirmDelete(programToDelete, () => {
             setDeleteModalOpen(false)

@@ -32,6 +32,7 @@ import {
   mapOrganizationApplicationToApplicantSchoolRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
+  mapFeePolicyToLectureFeeRowFields,
   mapParticipantRequestedSchedulesToHopeSessions,
   mapParticipantToParticipatingSchoolRow,
   mapStoredPeriodRequestedSchedulesToHopeSessions,
@@ -2458,5 +2459,57 @@ describe('mapInstructorApplicationToApplicantInstructorRow — 개인형 캘린�
     )
     expect(row.activityWithdrawn).toBeUndefined()
     expect(row.availableScheduleIds).toEqual([11, 12])
+  })
+})
+
+describe('참여 강사 강사비 정본 매핑 (A4)', () => {
+  it('participants instructorFeePolicy를 강사 행의 강사비 필드로 옮긴다', () => {
+    const row = mapParticipantToParticipatingInstructorRow(
+      participantListItemFixture({
+        participantId: 1695024,
+        participantType: 'INSTRUCTOR',
+        instructorFeePolicy: {
+          basisType: 'special_lecture',
+          measure: '차시당',
+          amount: 150000,
+          instructorFeeGrade: 'GRADE_2',
+        },
+        instructorFeePolicySource: 'PARTICIPANT',
+      }),
+      0,
+      '186469'
+    )
+    expect(row.lectureFeeBasisType).toBe('special_lecture')
+    expect(row.lectureFeeMeasure).toBe('차시당')
+    expect(row.lectureFeeAmount).toBe('150000')
+    expect(row.instructorFeePolicySource).toBe('PARTICIPANT')
+    expect(row.lectureFeeBasisDisplay).toBeTruthy()
+  })
+
+  it('instructorFeePolicy가 null이면 강사비 필드를 비운다(미등록)', () => {
+    const row = mapParticipantToParticipatingInstructorRow(
+      participantListItemFixture({
+        participantId: 1695025,
+        participantType: 'INSTRUCTOR',
+        instructorFeePolicy: null,
+        instructorFeePolicySource: 'PARTICIPANT',
+      }),
+      0,
+      '186469'
+    )
+    expect(row.lectureFeeBasisType).toBeUndefined()
+    expect(row.lectureFeeAmount).toBeUndefined()
+  })
+
+  it('서버 정규화 코드(PER_CLASS)도 차시당으로 읽는다', () => {
+    expect(
+      mapFeePolicyToLectureFeeRowFields({
+        basisType: 'SPECIAL_LECTURE',
+        measure: 'PER_CLASS',
+        amount: 100000,
+        instructorFeeGrade: 'GRADE_1',
+      }).lectureFeeMeasure
+    ).toBe('차시당')
+    expect(mapFeePolicyToLectureFeeRowFields(null)).toEqual({})
   })
 })

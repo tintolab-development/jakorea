@@ -13,6 +13,8 @@ import {
   fetchScheduleAttendancesRemote,
   giveUpProgramParticipantRemote,
   createProgramInstructorParticipantRemote,
+  fetchParticipantInstructorFeePolicyRemote,
+  patchParticipantInstructorFeePolicyRemote,
   createProgramParticipantRemote,
   patchParticipantTextbookDeliveryRemote,
   putParticipantAssignedOrganizationsRemote,
@@ -407,6 +409,28 @@ export async function createGeneralProgramInstructorParticipant(
     participantType: 'INSTRUCTOR',
     memberId,
   })
+}
+
+/** 참여 강사 강사비 조회 — `GET …/participants/{participantId}/instructor-fee-policy` (feePolicy null = 미등록) */
+export async function fetchGeneralParticipantInstructorFeePolicy(
+  programId: string,
+  participantId: string
+) {
+  assertProgramProgressRemoteReady()
+  return fetchParticipantInstructorFeePolicyRemote(programId, participantId)
+}
+
+/**
+ * 참여 강사 강사비 저장 — 신청 유무와 관계없이 `PATCH …/instructor-fee-policy` 로 통일(BE 회신 A4).
+ * 신청 있는 강사는 신청서 feePolicy가 같이 바뀐다. 정산 전 배정(회차)에 바로 반영된다.
+ */
+export async function saveGeneralParticipantInstructorFeePolicy(
+  programId: string,
+  participantId: string,
+  feePolicy: import('@/shared/api/generated/dashboard/schemas/feePolicy').FeePolicy
+) {
+  assertProgramProgressRemoteReady()
+  return patchParticipantInstructorFeePolicyRemote(programId, participantId, { feePolicy })
 }
 
 /** @deprecated 진행 현황 봉사자 추가 등록 — `registerGeneralVolunteerParticipant` 사용 */

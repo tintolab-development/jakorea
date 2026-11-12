@@ -1,6 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
+import {
+  formatKoreanPhoneNumber,
+  isValidKoreanPhoneNumber,
+  KOREAN_MOBILE_PREFIX,
+  normalizeKoreanPhoneDigits,
+} from '@jakorea/domain/shared/korean-phone'
 import { PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
 import { useCreatePublicCorporateConsultation } from '../api/hooks'
 import { CORPORATE_DONATION_PATH } from '../lib/constants'
@@ -35,9 +41,23 @@ function messageFromError(error: unknown): string {
   return '문의 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
+/** QA-0475 — 문의 모달(inquiry-modal.tsx)과 같은 휴대폰 번호 검사·문구 */
+function validateContactPhone(value: string): string | null {
+  if (!value.trim()) return '휴대폰 번호를 입력해 주세요.'
+
+  const digits = normalizeKoreanPhoneDigits(value)
+  const isMobile =
+    digits.startsWith(KOREAN_MOBILE_PREFIX) &&
+    digits.length === 11 &&
+    isValidKoreanPhoneNumber(value)
+
+  return isMobile ? null : '휴대폰 번호 형식(010-0000-0000)으로 입력해 주세요.'
+}
+
 export function CorporateDonationInquiryForm() {
   const [values, setValues] = useState<InquiryValues>(EMPTY_VALUES)
   const [formError, setFormError] = useState<string | null>(null)
+  const [contactPhoneError, setContactPhoneError] = useState<string | null>(null)
   const mutation = useCreatePublicCorporateConsultation()
 
   const update = (key: keyof Omit<InquiryValues, 'privacyConsent'>) => (value: string) => {
@@ -52,8 +72,15 @@ export function CorporateDonationInquiryForm() {
     const contactPhone = values.contactPhone.trim()
     const consultationContent = values.consultationContent.trim()
 
+    const phoneError = validateContactPhone(contactPhone)
+    setContactPhoneError(phoneError)
+
     if (!companyName || !contactName || !departmentTitle || !contactPhone || !consultationContent) {
       setFormError('필수 항목을 입력해 주세요.')
+      return
+    }
+    if (phoneError) {
+      setFormError(null)
       return
     }
     if (!values.privacyConsent) {
@@ -67,7 +94,7 @@ export function CorporateDonationInquiryForm() {
         companyName,
         contactName,
         departmentTitle,
-        contactPhone,
+        contactPhone: formatKoreanPhoneNumber(contactPhone),
         consultationContent,
         privacyConsent: true,
       },
@@ -120,12 +147,22 @@ export function CorporateDonationInquiryForm() {
         required
       />
       <PFTextInput
-        label="연락처"
+        label="휴대폰 번호"
+        placeholder="휴대폰 번호를 입력해 주세요"
         size="large"
         width="100%"
         value={values.contactPhone}
-        maxLength={40}
-        onValueChange={update('contactPhone')}
+        maxLength={13}
+        type="tel"
+        inputMode="numeric"
+        autoComplete="tel"
+        error={Boolean(contactPhoneError)}
+        message={contactPhoneError ?? undefined}
+        messageStatus="error"
+        onValueChange={value => {
+          update('contactPhone')(formatKoreanPhoneNumber(value))
+          setContactPhoneError(null)
+        }}
         required
       />
       <PFTextarea

@@ -127,6 +127,7 @@ import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/ins
 import {
   upsertMember1365ExternalIdentifierRemote,
   upsertMemberAdminCommentRemote,
+  deleteMemberAdminCommentRemote,
   deleteMemberApplicationHistoryRemote,
   bulkDeleteProgramHistoryRemote,
   bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote,
@@ -138,6 +139,7 @@ import {
   parseOrganizationIdFromUserId,
 } from '@/features/user/api/map-school-organization-to-user'
 import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
+import { resolveAdminCommentSaveAction } from '@/features/user/detail/lib/admin-comment-save-action'
 import {
   bulkIssueCertificatesRemote,
   bulkDownloadCertificatesRemote,
@@ -472,6 +474,8 @@ export function useUserDetailController({
     (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
   >(null)
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
+  /** 코멘트 편집을 열 때 저장된 코멘트 — 있으면 비워 저장 = 삭제 (QA-0044) */
+  const [adminCommentEditExisting, setAdminCommentEditExisting] = useState('')
   const [adminPermissionVariantPatching, setAdminPermissionVariantPatching] = useState(false)
   const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
   const [jaGradeEvaluationOpen, setJaGradeEvaluationOpen] = useState(false)
@@ -1111,9 +1115,11 @@ export function useUserDetailController({
             )?.latestComment ?? ''
           ).trim()
         : ''
+    const existingComment = fromUser || fromCommentsCache || draft.adminComment
+    setAdminCommentEditExisting((existingComment ?? '').trim())
     setBasicInfoDraft({
       ...draft,
-      adminComment: fromUser || fromCommentsCache || draft.adminComment,
+      adminComment: existingComment,
     })
     setBasicInfoEditScope('comment')
     setBasicInfoEditing(true)
@@ -1156,23 +1162,59 @@ export function useUserDetailController({
       const commentResource = resolveAdminCommentResource(displayUser)
       if (basicInfoEditScope === 'comment' && membersRemote && commentResource) {
         const savedComment = (draft.adminComment ?? '').trim()
-        if (!savedComment) {
+        const saveAction = resolveAdminCommentSaveAction({
+          nextComment: savedComment,
+          existingComment: adminCommentEditExisting,
+        })
+        if (saveAction === 'close') {
           setBasicInfoEditing(false)
           setBasicInfoEditScope('none')
           setBasicInfoDraft(null)
           return
         }
+        const commentsQueryKey = memberQueryKeys.comments(
+          commentResource.resourceId,
+          MEMBER_DETAIL_SCREEN_CODE,
+          commentResource.target
+        )
         const cachedComments = queryClient.getQueryData<{
           comments?: unknown[]
           latestComment?: string
           latestCommentDetail?: { commentId?: number; comment: string }
-        }>(
-          memberQueryKeys.comments(
-            commentResource.resourceId,
-            MEMBER_DETAIL_SCREEN_CODE,
-            commentResource.target
+        }>(commentsQueryKey)
+        if (saveAction === 'delete') {
+          // 내용을 비워 저장 → 기존 코멘트 DELETE (별도 삭제 버튼 없음)
+          const deletedCommentId = cachedComments?.latestCommentDetail?.commentId
+          await deleteMemberAdminCommentRemote(commentResource.resourceId, {
+            existingCommentId: deletedCommentId,
+            screenCode: MEMBER_DETAIL_SCREEN_CODE,
+            target: commentResource.target,
+          })
+          const cleared = { ...displayUser, adminComment: '' }
+          queryClient.setQueryData(commentsQueryKey, {
+            comments: (cachedComments?.comments ?? []).filter(
+              item =>
+                deletedCommentId == null ||
+                (item as { commentId?: number } | null)?.commentId !== deletedCommentId
+            ),
+            latestComment: undefined,
+            latestCommentDetail: undefined,
+          })
+          void queryClient.invalidateQueries({ queryKey: commentsQueryKey })
+          if (displayUser.memberId != null) {
+            queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), cleared)
+          }
+          queryClient.setQueryData(
+            [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+            cleared
           )
-        )
+          setBasicInfoEditing(false)
+          setBasicInfoEditScope('none')
+          setBasicInfoDraft(null)
+          endPersonalInfoReveal()
+          onMemberBasicInfoSaved?.(cleared, { skipListInvalidate: true })
+          return
+        }
         const saved = await upsertMemberAdminCommentRemote(
           commentResource.resourceId,
           savedComment,
@@ -1398,6 +1440,7 @@ export function useUserDetailController({
     membersRemote,
     queryClient,
     endPersonalInfoReveal,
+    adminCommentEditExisting,
   ])
 
   const updateBasicInfoDraft = useCallback(
@@ -1803,6 +1846,8 @@ export function useUserDetailController({
       basicInfoEditScope,
       basicInfoDraft,
       basicInfoSaveLoading,
+      /** 코멘트 모달 — 저장된 코멘트가 있으면 비워 저장(삭제) 허용 */
+      adminCommentAllowEmpty: adminCommentEditExisting.length > 0,
       adminPermissionVariantPatching,
       instructorPermissionRevokeOpen,
       jaGradeEvaluationOpen,

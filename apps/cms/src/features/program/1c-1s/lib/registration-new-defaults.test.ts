@@ -6,10 +6,10 @@ import {
 } from './registration-rhf-values'
 
 describe('1사1교 신규 등록 기본값 (시안 9899:215345)', () => {
-  it('신규 작성은 시안 기본 선택값으로 시작한다', () => {
+  it('신규 작성은 시안 기본 선택값으로 시작하되 대표 프로그램명은 비운다(QA-0389-8556)', () => {
     expect(createNewCompanySchoolRegistrationRhfValues()).toMatchObject({
-      repKo: '1사1교 경제금융교육',
-      repEn: '1 Company 1 School Economics and Finance Education',
+      repKo: '',
+      repEn: '',
       businessField: 'economy_finance',
       ipOwned: 'ja',
       courseDeliveredBy: 'ja',

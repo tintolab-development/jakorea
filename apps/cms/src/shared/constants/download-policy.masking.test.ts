@@ -23,13 +23,14 @@ describe('MASKING_POLICY N-16', () => {
 
   it('masks jibun through dong and road through the road name', () => {
     expect(MASKING_POLICY.address('서울특별시 강남구 역삼동 123-4')).toBe(
-      '서울특별시 강남구 역삼동 ***'
+      '서울특별시 강남구 역삼동 *****'
     )
     expect(MASKING_POLICY.address('서울특별시 강남구 테헤란로 123')).toBe(
-      '서울특별시 강남구 테헤란로 ***'
+      '서울특별시 강남구 테헤란로 *****'
     )
-    expect(MASKING_POLICY.address('상세주소없음')).toBe('***')
+    expect(MASKING_POLICY.address('상세주소없음')).toBe('비공개')
     expect(MASKING_POLICY.address('서울시 강남구 ***')).toBe('서울시 강남구 ***')
+    expect(MASKING_POLICY.address('비공개')).toBe('비공개')
   })
 
   it('does not re-mask phone, account number, or resident number', () => {

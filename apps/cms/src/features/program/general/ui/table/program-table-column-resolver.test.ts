@@ -74,7 +74,7 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
       targetLevels: ['university', 'middle', 'high'],
     } as Program
 
-    expect(column?.render?.(undefined, record, 0)).toBe('대학(원)생, 중학교, 고등학교')
+    expect(column?.render?.(undefined, record, 0)).toBe('대학(원)생, 중학생, 고등학생')
   })
 
   it('교육 대상 컬럼은 다중 대상 표시를 위한 최소 폭과 말줄임을 사용한다', () => {

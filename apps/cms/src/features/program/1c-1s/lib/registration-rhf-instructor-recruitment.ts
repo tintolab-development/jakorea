@@ -247,7 +247,7 @@ export function importLegacyCompanySchoolInstructorRecruitmentOverlay(
 }
 
 /**
- * 강사 탭 미조작(undefined)만 화면 기본 게시. 명시적 '' 는 미선택으로 둔다.
+ * 강사 탭 미조작(undefined)은 화면 기본값(일반 강사 단락과 같은 상수 — QA-0121 이후 미선택 `''`)으로 맞춘다.
  */
 export function withCompanySchoolInstructorRecruitCreateDefaults(
   state: CompanySchoolInstructorRecruitFormState

@@ -488,7 +488,7 @@ const LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_CONTENT =
 const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '신청 정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
@@ -1330,17 +1330,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     endTeacherPrivacyReveal()
   }, [cancelApplicationInfoEdit, endTeacherPrivacyReveal])
 
-  const privacyMasked = !personalInfoRevealed
   const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
   const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
-
-  const requestStartApplicationInfoEdit = useCallback(() => {
-    if (personalInfoRevealed) {
-      enterApplicationInfoEdit()
-      return
-    }
-    setEditUnmaskConfirmOpen(true)
-  }, [enterApplicationInfoEdit, personalInfoRevealed])
 
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
@@ -1375,6 +1366,18 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         setEditUnmaskConfirmLoading(false)
       })
   }, [editUnmaskConfirmLoading, enterApplicationInfoEdit, mergedDetail, revealWithReason])
+
+  /**
+   * CMS-29: [개인정보 상세보기]로 이미 해제했어도 수정 진입은 EDIT_MODE 원문 조회로 「신청 정보 수정」을 기록한다.
+   * 해제 전이면 안내 팝업을 거친다.
+   */
+  const requestStartApplicationInfoEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      confirmEditUnmaskAndStartEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [confirmEditUnmaskAndStartEdit, personalInfoRevealed])
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
@@ -2807,7 +2810,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         width: TABLE_COLUMN_WIDTHS.address,
         ellipsis: true,
         render: (v: string | undefined) => (
-          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+          // 목록은 항상 목록 마스킹(정책 35·기획 Q6) — 상세의 [개인정보 상세보기] 해제와 연동하지 않는다.
+          <PrivacyHomeAddressDisplay address={v} revealed={false} />
         ),
       },
       {
@@ -2854,7 +2858,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         ),
       },
     ],
-    [openRoleDropdownId, handleRoleChange, privacyMasked]
+    [openRoleDropdownId, handleRoleChange]
   )
 
   const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(
@@ -2874,7 +2878,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         width: TABLE_COLUMN_WIDTHS.address,
         ellipsis: true,
         render: (v: string | undefined) => (
-          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+          // 목록은 항상 목록 마스킹(정책 35·기획 Q6) — 상세의 [개인정보 상세보기] 해제와 연동하지 않는다.
+          <PrivacyHomeAddressDisplay address={v} revealed={false} />
         ),
       },
       {
@@ -2925,7 +2930,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         ),
       },
     ],
-    [privacyMasked]
+    []
   )
 
   const assignedInstructorExportColumns: ColumnsType<{

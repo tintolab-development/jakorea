@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict'
+import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
+import { resolveApplicationAnswerKey } from '../../lib/application-answer-key.ts'
 import {
+  PORTAL_EDUCATION_PLACE_OPTIONS,
   basicInfoAnswerFromValues,
   basicInfoValuesFromDraftAnswer,
   emptyInstitutionBasicInfo,
@@ -74,6 +77,29 @@ const placeHiddenAnswer = basicInfoAnswerFromValues(
 )
 assert.equal('educationPlace' in (placeHiddenAnswer ?? {}), false)
 assert.equal('educationPlaceDetail' in (placeHiddenAnswer ?? {}), false)
+
+// 교육받은 교사 — BE는 answers["program-application-trained-teachers-seed-basic-info"].educationPlace(Detail)만 읽는다.
+// 제출부(page.tsx)는 overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer 로 문단 객체 안에 넣는다.
+assert.deepEqual(
+  PORTAL_EDUCATION_PLACE_OPTIONS.map(option => option.value),
+  ['inside', 'outside', 'custom'],
+)
+const ttBasicKey = resolveApplicationAnswerKey({
+  id: PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo,
+})
+assert.equal(ttBasicKey, 'program-application-trained-teachers-seed-basic-info')
+const ttAnswers: Record<string, unknown> = {
+  [ttBasicKey]: basicInfoAnswerFromValues(
+    { ...base, educationFormat: '', educationPlace: 'custom', educationPlaceDetail: '시청 회의실' },
+    { includePreferredEducationFields: false, includeEducationPlaceFields: true },
+  ),
+}
+const ttBasicAnswer = ttAnswers['program-application-trained-teachers-seed-basic-info'] as
+  | Record<string, unknown>
+  | undefined
+assert.equal(ttBasicAnswer?.educationPlace, 'custom')
+assert.equal(ttBasicAnswer?.educationPlaceDetail, '시청 회의실')
+assert.equal('educationPlace' in ttAnswers, false)
 
 const draftValues = basicInfoValuesFromDraftAnswer({
   ...base,

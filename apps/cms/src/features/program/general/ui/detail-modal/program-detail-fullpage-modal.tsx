@@ -128,6 +128,11 @@ import { useUpdateTrainedTeacherProgramInfoDetail } from '@/features/program/tra
 import { getTrainedTeacherProgram } from '@/features/program/trained-teachers/api/service'
 import { reflectTrainedTeacherProgramSave } from '@/features/program/trained-teachers/api/detail-cache'
 import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teachers/ui/common-info/common-info-view'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
+import {
+  TEACHER_TRAINING_INVALID_EDUCATION_FORMAT_ALERT,
+  TEACHER_TRAINING_INVALID_EDUCATION_FORMAT_ERROR_CODE,
+} from '@/features/program/trained-teachers/lib/teacher-training-block'
 import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import {
@@ -2295,9 +2300,17 @@ function ProgramDetailFullPageModalContent({
                         })
                         showUpdateCompletedAlert()
                       } catch (error) {
-                        handleError(error, {
-                          context: 'programDetailFullpageModal.trainedTeacherInfoSave',
-                        })
+                        if (
+                          getApiErrorCode(error) ===
+                          TEACHER_TRAINING_INVALID_EDUCATION_FORMAT_ERROR_CODE
+                        ) {
+                          // 교사 연수 교육 형태 400 — 어떤 값을 고쳐야 하는지 안내
+                          void showAlert(TEACHER_TRAINING_INVALID_EDUCATION_FORMAT_ALERT)
+                        } else {
+                          handleError(error, {
+                            context: 'programDetailFullpageModal.trainedTeacherInfoSave',
+                          })
+                        }
                         try {
                           const latest = await getTrainedTeacherProgram(displayProgram.id)
                           await reflectTrainedTeacherProgramSave(queryClient, {

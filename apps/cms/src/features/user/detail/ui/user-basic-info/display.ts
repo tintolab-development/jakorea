@@ -62,7 +62,9 @@ export function affiliationView(user: Omit<User, 'password'>): ReactNode {
     return pipeSeparatedInlineView(user.affiliation)
   }
   if (user.schoolInfo) {
-    const { schoolName, position } = user.schoolInfo
+    // 삭제된 학교를 참조하는 레코드는 학교명이 비어 올 수 있다 → '-' (QA-0431)
+    const schoolName = user.schoolInfo.schoolName?.trim() || '-'
+    const position = user.schoolInfo.position?.trim()
     if (position) return inlineSegmentsWithDivider([schoolName, position])
     return schoolName
   }

@@ -129,3 +129,13 @@
   font-size: 14px;
   line-height: 150%;
 }
+
+/* QA-0364 — 교재명: 공통 td nowrap 대신 줄바꿈으로 전체 노출 (행 높이 52는 최소값으로 유지) */
+.textbook-page__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.textbook-page__col-name {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}

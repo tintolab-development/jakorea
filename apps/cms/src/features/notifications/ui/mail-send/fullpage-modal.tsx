@@ -110,9 +110,16 @@ import {
   SEND_RECIPIENT_PICKER_EMPTY_PROGRAM,
 } from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
+import { buildTemplateVariableUsageColumn } from '@/features/notifications/ui/shared/template-select-modal'
+import { extractPlaceholderKeysFromTexts } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
+import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './fullpage-modal.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import {
+  NOTIFICATION_SEND_DISCARD_CONFIRM,
+  hasNotificationSendDraftInput,
+} from '@/features/notifications/model/shared/send-draft-input'
 
 type SenderNameFieldProps = {
   seed: string
@@ -152,6 +159,15 @@ type SendFullpageModalProps = {
   onClose: () => void
 }
 
+/** 템플릿 선택 팝업 「변수」 열 — 제목·본문이 모두 비면 목록 응답에 내용이 없는 것으로 보고 `-` */
+const MAIL_TEMPLATE_VARIABLE_COLUMNS = [
+  buildTemplateVariableUsageColumn<MailTemplateItem>(template =>
+    template.subject.trim() || template.bodyHtml.trim()
+      ? extractPlaceholderKeysFromTexts(template.subject, template.bodyHtml)
+      : null
+  ),
+]
+
 export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
   const invalidateHistory = useInvalidateMailSendHistory()
@@ -174,6 +190,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
   const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [contextVariableValues, setContextVariableValues] = useState<
@@ -563,7 +580,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     form.editor?.getHTML() ?? ''
   )
 
-  const handleClose = () => {
+  const closeSendScreen = () => {
     setPreviewOpen(false)
     setRecipientSelectOpen(false)
     setRecipientManualOpen(false)
@@ -571,7 +588,29 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
     setContextVariableValues({})
     setSendConfirmOpen(false)
+    setDiscardConfirmOpen(false)
     onClose()
+  }
+
+  /** 취소·닫기(X)·ESC — 작성 중인 입력이 있으면 확인 후 닫는다 (QA-0369) */
+  const handleRequestClose = () => {
+    if (sending) return
+    const draft = form.getDraft()
+    const dirty = hasNotificationSendDraftInput({
+      programSelected: Boolean(form.programId),
+      templateSelected: Boolean(form.templateId),
+      sendTimingSelected: form.sendTiming != null,
+      recipientCount: form.recipients.length,
+      subject: draft.subject,
+      bodyHtml: draft.bodyHtml,
+      attachmentCount: form.attachmentFileNames.length,
+      extraValues: Object.values(contextVariableValues),
+    })
+    if (dirty) {
+      setDiscardConfirmOpen(true)
+      return
+    }
+    closeSendScreen()
   }
 
   const handleAttachmentAdd = useCallback(
@@ -684,7 +723,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     <>
       <TealHeaderModal
         open={open}
-        onCancel={handleClose}
+        onCancel={handleRequestClose}
         title="메일 발송"
         size="full"
         hideHeader
@@ -696,7 +735,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
             <button
               type="button"
               className="notification-fullpage-modal__title-close"
-              onClick={handleClose}
+              onClick={handleRequestClose}
               aria-label="닫기"
             >
               <ModalCloseIcon tone="white" />
@@ -706,7 +745,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
           <div className="notification-fullpage-modal__body">
             <div className="notification-fullpage-modal__notice">
               <div className="notification-fullpage-modal__notice-actions">
-                <CmsButton variant="cancel" size="large" type="button" onClick={handleClose}>
+                <CmsButton variant="cancel" size="large" type="button" onClick={handleRequestClose}>
                   취소
                 </CmsButton>
                 <CmsButton variant="secondary" size="large" type="button" onClick={handlePreview}>
@@ -765,6 +804,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                             disabled={!canPickTemplate}
                             isTemplateUsable={isTemplateUsable}
                             getTemplateUnusableMessage={getTemplateUnusableMessage}
+                            extraColumns={MAIL_TEMPLATE_VARIABLE_COLUMNS}
                             onSelect={handleSelectTemplate}
                             renderPreview={({ template, open, onClose, onUse, zIndex }) => (
                               <PreviewModal
@@ -1097,8 +1137,18 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         channel="mail"
         onDismissSendScreen={() => {
           setSendRequestCompletedOpen(false)
-          handleClose()
+          closeSendScreen()
         }}
+      />
+      <ConfirmModal
+        open={open && discardConfirmOpen}
+        title={NOTIFICATION_SEND_DISCARD_CONFIRM.title}
+        content={NOTIFICATION_SEND_DISCARD_CONFIRM.content}
+        confirmText={NOTIFICATION_SEND_DISCARD_CONFIRM.confirmText}
+        cancelText={NOTIFICATION_SEND_DISCARD_CONFIRM.cancelText}
+        danger
+        onConfirm={closeSendScreen}
+        onCancel={() => setDiscardConfirmOpen(false)}
       />
     </>
   )

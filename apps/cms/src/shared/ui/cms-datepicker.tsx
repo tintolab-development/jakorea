@@ -15,6 +15,7 @@ import {
   formatAppDatepickerDisplay,
   formatAppDatepickerRangePlain,
 } from './app-datepicker'
+import { CMS_DATE_PICKER_LOCALE } from './cms-datepicker-locale'
 
 export type CmsDatePickerRef = AdminDatePickerRef
 export type CmsDatePickerProps = AdminDatePickerProps
@@ -35,7 +36,14 @@ export const CmsDatePicker = forwardRef<CmsDatePickerRef, CmsDatePickerProps>((p
   const format =
     props.format ??
     (props.showTime ? formatAppDatepickerDateTimeDisplay : formatAppDatepickerDisplay)
-  return <AdminDatePicker {...props} ref={ref as never} format={format} />
+  return (
+    <AdminDatePicker
+      {...props}
+      ref={ref as never}
+      format={format}
+      locale={props.locale ?? CMS_DATE_PICKER_LOCALE}
+    />
+  )
 })
 CmsDatePicker.displayName = 'CmsDatePicker'
 
@@ -46,6 +54,7 @@ export const CmsDateRangePicker = forwardRef<CmsDatePickerRef, CmsDateRangePicke
         {...props}
         ref={ref as never}
         format={props.format ?? formatAppDatepickerRangePlain}
+        locale={props.locale ?? CMS_DATE_PICKER_LOCALE}
       />
     )
   }
