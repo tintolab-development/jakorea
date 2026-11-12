@@ -42,6 +42,7 @@
   display: flex;
   flex: 1 0 0;
   align-self: stretch;
+  box-sizing: border-box;
   min-height: 129px;
   padding: var(--spacing-24) var(--spacing-16) var(--spacing-24) var(--spacing-24);
   justify-content: space-between;
@@ -86,6 +87,24 @@
   height: 91px;
   display: block;
   object-fit: contain;
+}
+
+@media (--bp-pc-up) {
+  .card {
+    height: 129px;
+    min-height: 129px;
+    max-height: 129px;
+    padding-block: var(--spacing-20);
+  }
+
+  .value {
+    min-height: 0;
+  }
+
+  .illustration {
+    width: 92px;
+    height: 92px;
+  }
 }
 
 @media (max-width: 1199px) {
