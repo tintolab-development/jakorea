@@ -93,11 +93,12 @@
   display: flex;
   box-sizing: border-box;
   width: 100%;
+  min-height: 73px;
   flex-direction: column;
   align-items: flex-start;
   padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) var(--spacing-20);
-  border: 0;
-  border-left: 6px solid transparent;
+  border: 1px solid transparent;
+  border-left-width: 6px;
   background: var(--color-neutral-white);
   box-shadow: var(--shadow-card-sm);
   min-width: 0;
