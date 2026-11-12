@@ -53,7 +53,21 @@ function sessionLectureProgress(
   )
 }
 
+/**
+ * 참여자 정산 현황 일정 칸 — 강사·봉사자와 같은 `날짜 | 시간 | 사전교육·N회차·일정명` (기획 2026-11-12 3차 1번).
+ * 자동 기본명은 숨기고 날짜·시간만 보여 준다. 시작 시각이 없는 일정은 기존 표기로 되돌린다.
+ */
 function sessionScheduleLabel(session: ParticipatingSchoolSession): string {
+  const unified = session.startAt
+    ? buildSettlementScheduleDisplayLabel({
+        scheduleStartAt: session.startAt,
+        scheduleEndAt: session.endAt,
+        scheduleName: session.scheduleName,
+        scheduleKind: session.scheduleRole,
+        sessionOrdinal: session.sessionNo,
+      })
+    : ''
+  if (unified) return unified
   const raw =
     session.scheduleLabel?.trim() ||
     session.educationScheduleLabel?.trim() ||
@@ -247,7 +261,7 @@ export function mapIndividualSettlementReviewListRows(input: {
       id: orphanId,
       no: rows.length + 1,
       programScheduleId: scheduleId,
-      educationScheduleLabel: applicationScheduleLabel(item),
+      educationScheduleLabel: buildSettlementScheduleDisplayLabel(item) || applicationScheduleLabel(item),
       lectureProgress: 'scheduled',
       orphanApplication: true,
       isNotApplied: false,

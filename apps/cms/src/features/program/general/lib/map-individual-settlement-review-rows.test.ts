@@ -457,3 +457,60 @@ describe('개인 정산 현황 행 정렬', () => {
     expect(rows.map(row => row.no)).toEqual([1, 2, 3, 4])
   })
 })
+
+describe('참여자 정산 현황 일정 칸 표기', () => {
+  const sessions = [
+    {
+      resolvedScheduleId: 1,
+      startAt: '2026-10-30T03:00:00Z',
+      endAt: '2026-10-30T04:08:00Z',
+      scheduleName: '사전교육',
+      scheduleRole: 'PRE_EDUCATION',
+      sessionNo: null,
+    },
+    {
+      resolvedScheduleId: 2,
+      startAt: '2026-11-09T01:00:00Z',
+      endAt: '2026-11-09T03:00:00Z',
+      scheduleName: 'QA 정산 교육 11/09',
+      scheduleRole: 'EDUCATION',
+      sessionNo: 12,
+    },
+    {
+      resolvedScheduleId: 3,
+      startAt: '2026-11-10T01:00:00Z',
+      endAt: '2026-11-10T03:00:00Z',
+      scheduleName: '가을 진로 특강',
+      scheduleRole: 'EDUCATION',
+      sessionNo: null,
+    },
+    {
+      resolvedScheduleId: 4,
+      startAt: '2026-11-11T01:00:00Z',
+      endAt: '2026-11-11T03:00:00Z',
+      scheduleName: '',
+      scheduleRole: 'EDUCATION',
+      sessionNo: null,
+    },
+  ] as ParticipatingSchoolSession[]
+
+  it('날짜 | 시간 | 사전교육·N회차·일정명 형식이고 자동 기본명은 날짜·시간만 보여 준다', () => {
+    const rows = mapIndividualSettlementReviewListRows({ assignedSessions: sessions, applications: [] })
+    expect(rows.map(row => [row.id, row.educationScheduleLabel])).toEqual([
+      ['schedule:4', '2026.11.11(수) | 10:00~12:00'],
+      ['schedule:3', '2026.11.10(화) | 10:00~12:00 | 가을 진로 특강'],
+      ['schedule:2', '2026.11.09(월) | 10:00~12:00 | 12회차'],
+      ['schedule:1', '2026.10.30(금) | 12:00~13:08 | 사전교육'],
+    ])
+  })
+
+  it('시작 시각이 없는 일정은 기존 표기를 쓴다', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [
+        { resolvedScheduleId: 9, date: '2026.10.24', timeRange: '16:05 ~ 16:06' },
+      ] as unknown as ParticipatingSchoolSession[],
+      applications: [],
+    })
+    expect(rows[0]?.educationScheduleLabel).toContain('2026.10.24')
+  })
+})
