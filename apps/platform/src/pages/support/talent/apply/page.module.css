@@ -14,7 +14,7 @@
 .inner {
   display: flex;
   width: 100%;
-  max-width: 560px;
+  max-width: 480px;
   min-width: 0;
   flex-direction: column;
   gap: var(--spacing-40);
