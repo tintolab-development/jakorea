@@ -14,15 +14,32 @@ export const RECEIPT_UPLOAD_HINTS = [
 export const RECEIPT_UPLOAD_POLICY: MemberFileUploadPolicy = {
   maxBytes: RECEIPT_UPLOAD_MAX_BYTES,
   allowedFileTypes: [
-    { extensions: ['jpg', 'jpeg'], contentType: 'image/jpeg' },
-    { extensions: ['png'], contentType: 'image/png' },
-    { extensions: ['pdf'], contentType: 'application/pdf' },
-    { extensions: ['doc'], contentType: 'application/msword' },
+    {
+      extensions: ['jpg', 'jpeg'],
+      contentType: 'image/jpeg',
+      contentTypeAliases: ['image/jpg', 'image/pjpeg'],
+    },
+    { extensions: ['png'], contentType: 'image/png', contentTypeAliases: ['image/x-png'] },
+    { extensions: ['pdf'], contentType: 'application/pdf', contentTypeAliases: ['application/x-pdf'] },
+    {
+      extensions: ['doc'],
+      contentType: 'application/msword',
+      contentTypeAliases: ['application/vnd.ms-word', 'application/x-msword'],
+    },
     {
       extensions: ['docx'],
       contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     },
-    { extensions: ['xls'], contentType: 'application/vnd.ms-excel' },
+    {
+      extensions: ['xls'],
+      contentType: 'application/vnd.ms-excel',
+      contentTypeAliases: [
+        'application/x-msexcel',
+        'application/x-excel',
+        'application/excel',
+        'application/x-ms-excel',
+      ],
+    },
     {
       extensions: ['xlsx'],
       contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

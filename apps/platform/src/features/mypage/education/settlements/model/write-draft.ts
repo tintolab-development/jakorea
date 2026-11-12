@@ -6,6 +6,8 @@ export type SettlementTripType = 'one_way' | 'round_trip'
 export type SettlementReceiptAttachment = {
   fileObjectId: number
   fileName: string
+  /** 이번 화면에서 올린 파일의 바이트 크기. 항목별 총 100MB 검사에 쓴다(불러온 기존 첨부는 없을 수 있다). */
+  fileSize?: number
 }
 
 export type SettlementTripLegDraft = {

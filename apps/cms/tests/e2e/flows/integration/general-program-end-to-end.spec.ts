@@ -6,6 +6,7 @@
  * Vite HMR로 로그인/등록 페이지가 반복 reload 되면
  * E2E_STABLE_VITE_NAV=1 을 함께 켠다(공유 fixture·로그인 헬퍼 옵트인).
  */
+import { requireCmsAccessToken } from '../../helpers/browser-access-token'
 import { type Page } from '@playwright/test'
 import { expect, test } from '../../fixtures/test'
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
@@ -105,8 +106,7 @@ async function readJson(response: { ok(): boolean; status(): number; text(): Pro
 
 async function adminGet(page: Page, apiPath: string) {
   if (page.url() === 'about:blank') await page.goto('/')
-  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
-  if (!token) throw new Error('CMS 관리자 auth_token이 없습니다.')
+  const token = await requireCmsAccessToken(page, 'CMS 관리자')
   const response = await page.request.get(apiPath, {
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -203,8 +203,7 @@ async function ensureAtLeastTwoEducationSchedules(page: Page, program: CmsProgra
   ).length
   if (alignedCount >= 2) return current
 
-  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
-  if (!token) throw new Error('CMS 일정 보정에 필요한 auth_token이 없습니다.')
+  const token = await requireCmsAccessToken(page, 'CMS 일정 보정')
   const response = await page.request.patch(`/api/admin/programs/${program.programId}`, {
     headers: { Authorization: `Bearer ${token}` },
     data: {

@@ -111,10 +111,10 @@ function EssaySection({
 }) {
   const display = displayOrDash(body)
   return (
-    <section className={styles.block}>
+    <div className={styles.block}>
       <div className={`${styles.header} ${styles.headerNoStroke}`}>
         <div className={styles.titleRow}>
-          <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
+          <PFText as="h3" typo="hl-sm" color="black" className={styles.title}>
             {title}
           </PFText>
         </div>
@@ -123,7 +123,7 @@ function EssaySection({
       <PFText as="div" typo="bd-sm-md" color="black" className={styles.essayBox}>
         {display}
       </PFText>
-    </section>
+    </div>
   )
 }
 
@@ -177,14 +177,29 @@ export function SettingsInstructorProfileSectionsView({
         sectionId="award"
         onEdit={() => onEditSection('award')}
       />
-      {INSTRUCTOR_SETTINGS_ESSAY_SECTIONS.map(section => (
-        <EssaySection
-          key={section.id}
-          title={section.title}
-          body={values[section.id]}
-          onEdit={() => onEditSection(section.id)}
-        />
-      ))}
+      <section className={`${styles.block} ${styles.essayGroup}`} aria-labelledby="instructor-free-write-heading">
+        <div className={`${styles.header} ${styles.headerNoStroke}`}>
+          <div className={styles.titleRow}>
+            <PFText
+              as="h2"
+              id="instructor-free-write-heading"
+              typo="hl-lg"
+              color="black"
+              className={styles.title}
+            >
+              자유 작성 항목
+            </PFText>
+          </div>
+        </div>
+        {INSTRUCTOR_SETTINGS_ESSAY_SECTIONS.map(section => (
+          <EssaySection
+            key={section.id}
+            title={section.title}
+            body={values[section.id]}
+            onEdit={() => onEditSection(section.id)}
+          />
+        ))}
+      </section>
     </>
   )
 }

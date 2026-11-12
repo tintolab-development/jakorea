@@ -236,7 +236,7 @@ function mapCategoryLabel(
 }
 
 function formatDateRange(start: string | null | undefined, end: string | null | undefined): string {
-  return formatDisplayDateRange(start, end, { empty: '-' })
+  return formatDisplayDateRange(start, end, { empty: '-', weekday: false })
 }
 
 function parseRecruitmentDate(value: string | null | undefined): Date | null {

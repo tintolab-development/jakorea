@@ -126,6 +126,23 @@ export function applyDeletedContactsToDetail(
   patchContactCaches(queryClient, sponsorId, contacts => removeContactsById(contacts, ids))
 }
 
+/**
+ * 담당자 등록·수정 응답은 연락처가 마스킹이고 조회 이력 대상이 아니다(서버 CMS-17, 프로그램 담당자 추가·수정과 같은 규칙).
+ * 응답을 캐시에 넣지 않고 GET /contacts(기본 RAW + 조회 이력)를 다시 받는다. 상세는 stale 표시만 해 다음 진입 때 다시 조회한다.
+ */
+export async function refetchSponsorContactsAfterSave(
+  queryClient: QueryClient,
+  sponsorId: string
+): Promise<void> {
+  void queryClient.invalidateQueries({
+    queryKey: dataManagementQueryKeys.sponsors.detail(sponsorId),
+    refetchType: 'none',
+  })
+  await queryClient.invalidateQueries({
+    queryKey: dataManagementQueryKeys.sponsors.contactsAll(sponsorId),
+  })
+}
+
 export function invalidateSponsorLists(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({
     queryKey: dataManagementQueryKeys.sponsors.listAll(),

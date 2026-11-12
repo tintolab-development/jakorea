@@ -161,6 +161,12 @@ describe('mapSettlementFrontendItemTypeToLineKind', () => {
     expect(mapSettlementFrontendItemTypeToLineKind('meal', 15000)).toBe('meal')
     expect(mapSettlementFrontendItemTypeToLineKind('activity', 20000)).toBe('activity')
   })
+
+  it('기타(other) 양수는 강사비가 아닌 other, 음수는 기존처럼 공제(withholding)', () => {
+    expect(mapSettlementFrontendItemTypeToLineKind('other', 10000)).toBe('other')
+    expect(mapSettlementFrontendItemTypeToLineKind('other', -10000)).toBe('withholding')
+    expect(mapSettlementFrontendItemTypeToLineKind(undefined, 10000)).toBe('lecture_fee')
+  })
 })
 
 describe('mapCalculationDetailToBasisDetail', () => {

@@ -37,7 +37,12 @@ export function SessionWarningModal() {
       footer={
         isIdle ? (
           <>
-            <CmsButton variant="secondary" size="medium" type="button" onClick={() => logout()}>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={() => logout({ preserveReturnPath: false })}
+            >
               {SESSION_POLICY_DISPLAY.idleLogoutLabel}
             </CmsButton>
             <CmsButton

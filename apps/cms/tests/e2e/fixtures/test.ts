@@ -20,6 +20,8 @@ import {
   installApiCallCapture,
 } from '../helpers/attach-e2e-test-logs'
 import { installE2eApiProxy } from '../helpers/e2e-api-proxy'
+import { installAccessTokenRecorder } from '../helpers/browser-access-token'
+import { installIsolatedAuthRefreshRoutes, mockAdminAccessToken } from '../helpers/isolated-auth-session'
 import { isE2eStableViteNavEnabled, silenceViteHmr } from '../helpers/silence-vite-hmr'
 
 type ApiErrorCapture = {
@@ -30,7 +32,20 @@ type ApiErrorCapture = {
 export const test = base.extend<{
   _backendErrorCapture: ApiErrorCapture
   _testProgressCapture: void
+  _accessTokenRecorder: void
 }>({
+  // QA-0137: access token은 화면 메모리에만 있다. API 직접 호출용으로 화면이 보낸 Bearer 값을 처음부터 기록한다.
+  _accessTokenRecorder: [
+    async ({ context, page }, use) => {
+      installAccessTokenRecorder(context)
+      // E2E_MOCK_AUTH 세션(storageState의 mock refresh token)은 새로고침 복원 refresh도 mock이 답한다
+      if (process.env.E2E_MOCK_AUTH === '1') {
+        await installIsolatedAuthRefreshRoutes(page, { accessToken: mockAdminAccessToken() })
+      }
+      await use()
+    },
+    { auto: true },
+  ],
   // auto: true → 스펙에서 참조하지 않아도 모든 테스트에 적용
   _backendErrorCapture: [
     async ({ page }, use, testInfo) => {

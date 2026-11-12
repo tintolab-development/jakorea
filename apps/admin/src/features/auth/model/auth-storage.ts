@@ -3,7 +3,10 @@
  * CMS(`auth_*`)와 동일 오리진에서도 세션이 섞이지 않도록 prefix 분리
  */
 
-export const AUTH_TOKEN_KEY = 'hp_admin_auth_token'
+/**
+ * QA-0137: access token은 메모리(`useAuthStore`)에만 둔다. 이 키는 이전 버전이 남긴 값을 지울 때만 쓴다.
+ */
+export const LEGACY_AUTH_TOKEN_KEY = 'hp_admin_auth_token'
 export const AUTH_EXPIRY_KEY = 'hp_admin_auth_expires_at'
 export const AUTH_USER_KEY = 'hp_admin_auth_user'
 export const AUTH_REFRESH_TOKEN_KEY = 'hp_admin_auth_refresh_token'
@@ -16,3 +19,9 @@ export const AUTH_REFRESH_COOKIE_SESSION_KEY = 'hp_admin_auth_refresh_cookie_ses
 export const AUTH_ISSUED_AT_KEY = 'hp_admin_auth_issued_at'
 export const LOGIN_FAILED_ATTEMPTS_KEY = 'hp_admin_login_failed_attempts'
 export const LOGIN_LOCK_UNTIL_KEY = 'hp_admin_login_lock_until'
+
+/** 이전 버전이 localStorage에 남긴 access token을 지운다 (부트·로그아웃 시). */
+export function removeLegacyStoredAccessToken(): void {
+  if (typeof window === 'undefined' || !window.localStorage) return
+  window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY)
+}

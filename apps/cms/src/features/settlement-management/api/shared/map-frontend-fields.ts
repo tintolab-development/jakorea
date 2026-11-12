@@ -208,6 +208,8 @@ export function mapSettlementFrontendItemTypeToLineKind(
   if (normalized === 'accommodation') return 'lodging'
   if (normalized === 'meal') return 'meal'
   if (normalized === 'activity') return 'activity'
+  // 기타는 강사비 모달·강사비 「구분」 로직을 타지 않게 따로 둔다(음수는 위에서 공제로 처리).
+  if (normalized === 'other') return 'other'
   return 'lecture_fee'
 }
 

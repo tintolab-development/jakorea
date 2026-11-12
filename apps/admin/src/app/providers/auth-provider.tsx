@@ -10,9 +10,8 @@ import {
 } from '@/features/auth/api/admin-session-fetcher'
 import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { AUTH_EXPIRY_KEY, AUTH_TOKEN_KEY } from '@/features/auth/model/auth-storage'
-import { hasRefreshCredential } from '@/features/auth/lib/refresh-credential'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
+import { BootstrapSessionNotice } from '@/features/auth/ui/bootstrap-session-notice'
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -22,37 +21,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { checkAuth, isAuthenticated } = useAuthStore()
 
   useEffect(() => {
-    const initAuth = async () => {
-      if (typeof window === 'undefined' || !window.localStorage) return
-
-      const storedToken = localStorage.getItem(AUTH_TOKEN_KEY)
-      const expiresAt = localStorage.getItem(AUTH_EXPIRY_KEY)
-
-      if (storedToken && expiresAt) {
-        const expiryTime = new Date(expiresAt).getTime()
-        const now = Date.now()
-        const bufferTime = 30 * 1000
-
-        if (expiryTime > now + bufferTime) {
-          try {
-            await checkAuth()
-          } catch (error) {
-            console.error('Auth check failed in AuthProvider:', error)
-          }
-        } else if (hasRefreshCredential()) {
-          // QA-0137: 저장된 refreshToken(전환기) 또는 HttpOnly 쿠키 세션 표시
-          try {
-            await checkAuth()
-          } catch (error) {
-            console.error('Auth check failed in AuthProvider:', error)
-          }
-        } else {
-          useAuthStore.getState().logout()
-        }
-      }
-    }
-
-    void initAuth()
+    // QA-0137: access token은 메모리에만 있으므로 새로고침하면 저장된 사용자 + refresh 수단으로 다시 받는다.
+    // 저장된 사용자가 없으면 checkAuth가 비로그인으로 정리하고, refresh 실패는 로그아웃으로 이어진다.
+    void checkAuth().catch(error => {
+      console.error('Auth check failed in AuthProvider:', error)
+    })
     // 초기 마운트 1회
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -91,6 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     <>
       {children}
       <SessionWarningModal />
+      <BootstrapSessionNotice />
     </>
   )
 }

@@ -17,11 +17,11 @@ export function PaymentOrderCalculationBasisDetailActivityView({
   detail: PaymentOrderCalculationBasisDetailActivity
 }) {
   return (
-    <BasisDetailInfoForm title="참여자 활동비 산정 기준">
+    <BasisDetailInfoForm title="활동비 산정 기준">
       <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{detail.categoryLabel}</BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
-      <BasisDetailInfoFormRow label="참여자 활동비">
+      <BasisDetailInfoFormRow label="활동비">
         <BasisDetailLodgingFeeValue fee={detail.activityFee} />
       </BasisDetailInfoFormRow>
       <BasisDetailInfoFormRow label="합계">

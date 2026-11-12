@@ -27,22 +27,22 @@ function conflict(config: InternalAxiosRequestConfig) {
   })
 }
 
-/** 다른 탭이 refresh에 성공해 localStorage를 갱신한 상황 */
+/** 다른 탭이 refresh에 성공해 rotate된 refresh token만 저장소에 남긴 상황 (access token은 그 탭 메모리에만 있다) */
 function simulateOtherTabRotation() {
-  localStorage.setItem('auth_token', 'access-from-other-tab')
-  localStorage.setItem('auth_expires_at', new Date(Date.now() + 60 * 60 * 1000).toISOString())
   localStorage.setItem('auth_refresh_token', 'refresh-rotated-by-other-tab')
 }
 
-describe('refreshAccessTokenSession — 탭 간 락 / 409 채택', () => {
+function refreshBodyOf(config: InternalAxiosRequestConfig): unknown {
+  return typeof config.data === 'string' ? JSON.parse(config.data) : (config.data ?? null)
+}
+
+describe('refreshAccessTokenSession — 탭 간 락 / 409 재시도 (access token 메모리 전용)', () => {
   const originalAdapter = axiosClient.defaults.adapter
   const locksDescriptor = Object.getOwnPropertyDescriptor(navigator, 'locks')
 
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    localStorage.setItem('auth_token', 'access-old')
-    localStorage.setItem('auth_expires_at', new Date(Date.now() + 10_000).toISOString())
     localStorage.setItem('auth_refresh_token', 'refresh-old')
     useAuthStore.setState({ token: 'access-old', expiresAt: null, logout: logoutMock })
     axiosClient.defaults.adapter = adapterMock as unknown as AxiosAdapter
@@ -63,7 +63,7 @@ describe('refreshAccessTokenSession — 탭 간 락 / 409 채택', () => {
     return request
   }
 
-  it('락이 있으면 jakorea-admin-refresh 락 안에서 refresh한다', async () => {
+  it('락이 있으면 jakorea-admin-refresh 락 안에서 refresh하고 access token은 메모리에만 둔다', async () => {
     const request = stubLocks()
     adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) =>
       ok(config, { accessToken: 'access-new', refreshToken: 'refresh-new', expiresInSeconds: 3600 }),
@@ -74,44 +74,60 @@ describe('refreshAccessTokenSession — 탭 간 락 / 409 채택', () => {
     expect(request).toHaveBeenCalledTimes(1)
     expect(request.mock.calls[0][0]).toBe('jakorea-admin-refresh')
     expect(adapterMock).toHaveBeenCalledTimes(1)
-    expect(localStorage.getItem('auth_token')).toBe('access-new')
+    expect(useAuthStore.getState().token).toBe('access-new')
+    expect(localStorage.getItem('auth_token')).toBeNull()
     expect(localStorage.getItem('auth_refresh_token')).toBe('refresh-new')
     expect(localStorage.getItem('auth_issued_at')).not.toBeNull()
   })
 
-  it('락 대기 중 다른 탭이 rotate했으면 /refresh를 호출하지 않고 그 토큰을 채택한다', async () => {
+  it('락 대기 중 다른 탭이 rotate했으면 저장소의 최신 refresh token으로 직접 refresh한다', async () => {
     stubLocks(simulateOtherTabRotation)
-
-    await expect(refreshAccessTokenSession()).resolves.toBe(true)
-
-    expect(adapterMock).not.toHaveBeenCalled()
-    expect(useAuthStore.getState().token).toBe('access-from-other-tab')
-    expect(localStorage.getItem('auth_refresh_token')).toBe('refresh-rotated-by-other-tab')
-    expect(logoutMock).not.toHaveBeenCalled()
-  })
-
-  it('락 미지원 환경: 409(REFRESH_TOKEN_ALREADY_ROTATED)면 저장소의 새 토큰을 채택하고 실패 처리하지 않는다', async () => {
-    delete (navigator as unknown as { locks?: unknown }).locks
-    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
-      simulateOtherTabRotation() // 승자 탭이 먼저 저장
-      throw conflict(config)
-    })
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) =>
+      ok(config, { accessToken: 'access-mine', refreshToken: 'refresh-after', expiresInSeconds: 3600 }),
+    )
 
     await expect(refreshAccessTokenSession()).resolves.toBe(true)
 
     expect(adapterMock).toHaveBeenCalledTimes(1)
-    expect(useAuthStore.getState().token).toBe('access-from-other-tab')
-    expect(localStorage.getItem('auth_refresh_token')).toBe('refresh-rotated-by-other-tab')
+    expect(refreshBodyOf(adapterMock.mock.calls[0][0])).toEqual({
+      refreshToken: 'refresh-rotated-by-other-tab',
+    })
+    expect(useAuthStore.getState().token).toBe('access-mine')
+    expect(localStorage.getItem('auth_token')).toBeNull()
     expect(logoutMock).not.toHaveBeenCalled()
   })
 
-  it('409인데 저장소가 그대로면(채택할 토큰 없음) 실패(false)로 처리한다', async () => {
+  it('락 미지원 환경: 409(REFRESH_TOKEN_ALREADY_ROTATED)면 승자가 rotate한 refresh token으로 한 번만 다시 시도한다', async () => {
+    delete (navigator as unknown as { locks?: unknown }).locks
+    adapterMock
+      .mockImplementationOnce(async (config: InternalAxiosRequestConfig) => {
+        simulateOtherTabRotation() // 승자 탭이 먼저 저장
+        throw conflict(config)
+      })
+      .mockImplementationOnce(async (config: InternalAxiosRequestConfig) =>
+        ok(config, { accessToken: 'access-retry', refreshToken: 'refresh-retry', expiresInSeconds: 3600 }),
+      )
+
+    await expect(refreshAccessTokenSession()).resolves.toBe(true)
+
+    expect(adapterMock).toHaveBeenCalledTimes(2)
+    expect(refreshBodyOf(adapterMock.mock.calls[0][0])).toEqual({ refreshToken: 'refresh-old' })
+    expect(refreshBodyOf(adapterMock.mock.calls[1][0])).toEqual({
+      refreshToken: 'refresh-rotated-by-other-tab',
+    })
+    expect(useAuthStore.getState().token).toBe('access-retry')
+    expect(localStorage.getItem('auth_refresh_token')).toBe('refresh-retry')
+    expect(logoutMock).not.toHaveBeenCalled()
+  })
+
+  it('409인데 저장소가 그대로면(다시 보낼 새 값 없음) 같은 값을 재전송하지 않고 실패(false)로 처리한다', async () => {
     delete (navigator as unknown as { locks?: unknown }).locks
     adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
       throw conflict(config)
     })
 
     await expect(refreshAccessTokenSession()).resolves.toBe(false)
+    expect(adapterMock).toHaveBeenCalledTimes(1)
     expect(localStorage.getItem('auth_refresh_token')).toBe('refresh-old')
   })
 })

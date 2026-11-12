@@ -20,6 +20,7 @@ vi.mock('@/shared/utils/post-auth-redirect', async importOriginal => {
 
 import { axiosClient } from '@/shared/instance/axios-instance'
 import { fetchAdminAuthRefreshCookieLogout } from '@/features/auth/api/admin-auth-fetcher'
+import { readAccessTokenFromMemory } from '@/features/auth/lib/access-token-memory'
 import { useAuthStore } from './auth-store'
 
 const adapterMock = vi.fn()
@@ -89,6 +90,9 @@ describe('QA-0137 admin logout — refresh 쿠키 폐기', () => {
     expect(useAuthStore.getState().token).toBeNull()
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(localStorage.getItem('auth_token')).toBeNull()
+    // QA-0137: 메모리 access token도 지우고, 다른 탭은 auth_user 삭제로 로그아웃을 알아챈다
+    expect(readAccessTokenFromMemory()).toBeNull()
+    expect(localStorage.getItem('auth_user')).toBeNull()
     expect(localStorage.getItem('auth_refresh_token')).toBeNull()
     expect(localStorage.getItem('auth_refresh_cookie_session')).toBeNull()
     warn.mockRestore()

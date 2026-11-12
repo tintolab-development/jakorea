@@ -1,3 +1,4 @@
+import { readBrowserAccessToken } from '../../../../helpers/browser-access-token'
 import { test, expect } from '../../../../fixtures/test'
 import { UjatProgramDetailPage } from '../../../../pages/ujat-program-detail.page'
 import { UJAT_DETAIL_SEED_CANDIDATES } from '../../../../pages/ujat-program-seed-titles'
@@ -60,8 +61,8 @@ test.describe('UJAT 프로그램 상세 API 정합성', () => {
     test.setTimeout(120_000)
     await page.goto('/programs/ujat')
     await expectAuthenticatedShell(page)
-    const token = await page.evaluate(() => localStorage.getItem('auth_token'))
-    expect(token, '브라우저 세션에 관리자 auth_token이 없습니다').toBeTruthy()
+    const token = await readBrowserAccessToken(page, 'cms')
+    expect(token, '화면 요청에서 관리자 access token을 찾지 못했습니다').toBeTruthy()
     const apiOrigin = process.env.E2E_API_PROXY_TARGET?.replace(/\/$/, '') ?? ''
     const response = await page.request.get(
       `${apiOrigin}/api/admin/programs/${encodeURIComponent(programId)}`,

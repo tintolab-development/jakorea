@@ -21,8 +21,17 @@ import { useSessionTimeout } from './use-session-timeout'
 
 const logout = vi.fn()
 const checkAuth = vi.fn()
-const AUTH_TOKEN_KEY = 'auth_token'
+const AUTH_USER_KEY = 'auth_user'
 const REFRESH_TOKEN_KEY = 'auth_refresh_token'
+const SESSION_USER = {
+  id: 'admin-uuid',
+  email: 'admin@example.com',
+  name: '관리자',
+  role: 'ADMIN',
+  isActive: true,
+  createdAt: null,
+  updatedAt: null,
+} as const
 
 function jwt(id: string, sid: string = 'test-session'): string {
   return 'head.' + btoa(JSON.stringify({ accountType: 'ADMIN', sid, jti: id })).replace(/=+$/, '') + '.sig'
@@ -54,12 +63,13 @@ describe('CMS: Session GET and Activity race protections', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    localStorage.setItem(AUTH_TOKEN_KEY, TOKEN_OLD)
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(SESSION_USER))
     localStorage.setItem(REFRESH_TOKEN_KEY, 'not-used-refresh')
     sessionRequest.mockResolvedValue(currentStatus())
     activityRequest.mockResolvedValue({ lastUserActivityAt: new Date().toISOString(), updated: true })
     useAuthStore.setState({
       token: TOKEN_OLD, isAuthenticated: true,
+      user: { ...SESSION_USER },
       expiresAt: new Date(Date.now() + 3600_000).toISOString(),
       logout, checkAuth,
     })
@@ -123,16 +133,55 @@ describe('CMS: Session GET and Activity race protections', () => {
     expect(logout).not.toHaveBeenCalled()
   })
 
-  it('another tab rotating the same sid adopts its latest access token', async () => {
+  it('access tokens are memory-only: a storage write from another tab never replaces this tab token', async () => {
     renderHook(() => useSessionTimeout())
     await flush()
-    localStorage.setItem(AUTH_TOKEN_KEY, TOKEN_NEW)
     await act(async () => {
-      window.dispatchEvent(new StorageEvent('storage', { key: AUTH_TOKEN_KEY, newValue: TOKEN_NEW }))
+      window.dispatchEvent(new StorageEvent('storage', { key: 'auth_token', newValue: TOKEN_NEW }))
     })
     await flush()
-    expect(useAuthStore.getState().token).toBe(TOKEN_NEW)
+    expect(useAuthStore.getState().token).toBe(TOKEN_OLD)
     expect(checkAuth).not.toHaveBeenCalled()
+    expect(logout).not.toHaveBeenCalled()
+  })
+
+  it('another tab logging out (auth_user removed) logs this tab out', async () => {
+    renderHook(() => useSessionTimeout())
+    await flush()
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent('storage', { key: AUTH_USER_KEY, newValue: null }))
+    })
+    await flush()
+    expect(logout).toHaveBeenCalledTimes(1)
+  })
+
+  it('same account auth_user updates in another tab keep this tab session', async () => {
+    renderHook(() => useSessionTimeout())
+    await flush()
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: AUTH_USER_KEY,
+        newValue: JSON.stringify({ ...SESSION_USER, name: '이름 변경' }),
+      }))
+    })
+    await flush()
+    expect(useAuthStore.getState().token).toBe(TOKEN_OLD)
+    expect(checkAuth).not.toHaveBeenCalled()
+    expect(logout).not.toHaveBeenCalled()
+  })
+
+  it('a different account login in another tab drops this tab token and restores via checkAuth', async () => {
+    renderHook(() => useSessionTimeout())
+    await flush()
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: AUTH_USER_KEY,
+        newValue: JSON.stringify({ ...SESSION_USER, id: 'other-admin' }),
+      }))
+    })
+    await flush()
+    expect(useAuthStore.getState().token).toBeNull()
+    expect(checkAuth).toHaveBeenCalledTimes(1)
     expect(logout).not.toHaveBeenCalled()
   })
 

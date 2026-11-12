@@ -4,7 +4,6 @@ import {
   correctedNowMs,
   createSessionWarningDismissState,
   isSessionIdleStillValid,
-  readJwtSidClaim,
   parseInstantMs,
   resolveSessionWarningView,
   type AdminAuthSessionResponse,
@@ -18,6 +17,11 @@ import {
   postAdminAuthActivity,
 } from '@/features/auth/api/admin-session-fetcher'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  AUTH_REFRESH_COOKIE_SESSION_KEY,
+  AUTH_REFRESH_TOKEN_KEY,
+  AUTH_USER_KEY,
+} from '@/features/auth/model/auth-storage'
 import { setSessionWarningActivitySuppressed } from '@/features/auth/lib/session-keepalive'
 
 export function useSessionTimeout() {
@@ -91,32 +95,27 @@ export function useSessionTimeout() {
     const onVisibility = () => {
       if (document.visibilityState === 'visible') void syncSession()
     }
+    // QA-0137: access token은 탭마다 메모리에만 있다. 다른 탭의 로그인·로그아웃은 저장된 사용자 정보 변경으로 감지한다.
     const onStorage = (event: StorageEvent) => {
-      if (event.key !== 'hp_admin_auth_token' && event.key !== 'hp_admin_auth_refresh_token') return
-      const storedToken = window.localStorage.getItem('hp_admin_auth_token')
-      const activeToken = useAuthStore.getState().token
-      if (!storedToken) {
-        // Another tab logged out. Do not attempt a Session GET with a stale in-memory JWT.
-        if (event.key === 'hp_admin_auth_token') useAuthStore.getState().logout()
-        return
-      }
-      if (storedToken !== activeToken) {
-        const oldSid = readJwtSidClaim(activeToken)
-        const newSid = readJwtSidClaim(storedToken)
-        if (oldSid && oldSid === newSid) {
-          // A sibling tab rotated the access token of the same login session.
-          useAuthStore.setState({
-            token: storedToken,
-            expiresAt: window.localStorage.getItem('hp_admin_auth_expires_at'),
-          })
-        } else {
-          // Different login identity: restore account data via the app auth store,
-          // never blindly attach the new token to the previous account's UI state.
+      if (event.key === AUTH_USER_KEY) {
+        if (event.newValue == null) {
+          // Another tab logged out (and already revoked the server session). Clear this tab locally;
+          // do not attempt a Session GET with a stale in-memory JWT.
+          useAuthStore.getState().logout({ skipRemote: true })
+          return
+        }
+        if (event.newValue !== event.oldValue) {
+          // Another tab completed a new login: never attach this tab's old JWT to that account.
+          // Drop it and restore the new session through the shared refresh credential.
+          useAuthStore.setState({ token: null, expiresAt: null, isBootstrapping: true })
           void useAuthStore.getState().checkAuth()
         }
         return
       }
-      void syncSession()
+      if (event.key === AUTH_REFRESH_TOKEN_KEY || event.key === AUTH_REFRESH_COOKIE_SESSION_KEY) {
+        // A sibling tab rotated the refresh credential. This tab keeps its own access token.
+        void syncSession()
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('storage', onStorage)

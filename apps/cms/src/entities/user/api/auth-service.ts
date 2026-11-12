@@ -8,6 +8,7 @@ import type { MfaState } from '@/types/mfa'
 import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
 import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-login-api.types'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { readAccessTokenFromMemory } from '@/features/auth/lib/access-token-memory'
 
 export type LoginMode = 'api'
 
@@ -22,7 +23,7 @@ export const CMS_REMOTE_SESSION_PREFIX = 'cms-remote-'
 /** MFA 완료 후 저장된 실 JWT(accessToken) 여부 — mock·pending 세션 제외 */
 export function hasRemoteAdminJwt(): boolean {
   if (typeof window === 'undefined') return false
-  const token = localStorage.getItem('auth_token')
+  const token = readAccessTokenFromMemory()
   if (!token || token.startsWith('mock-jwt-token-') || token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
     return false
   }
@@ -32,7 +33,7 @@ export function hasRemoteAdminJwt(): boolean {
 /** 실 API 관리자 세션 — 쿠키/Bearer·opaque·cms-remote 플레이스홀더 포함. mock JWT만 제외 */
 export function hasRemoteAdminSession(): boolean {
   if (typeof window === 'undefined') return false
-  const token = localStorage.getItem('auth_token')
+  const token = readAccessTokenFromMemory()
   if (!token || token.startsWith('mock-jwt-token-')) {
     return false
   }
@@ -42,7 +43,7 @@ export function hasRemoteAdminSession(): boolean {
 /** DEV 우회·mock credential 로그인 세션 (`mock-jwt-token-…`) */
 export function isMockAdminSession(): boolean {
   if (typeof window === 'undefined') return false
-  const token = localStorage.getItem('auth_token')
+  const token = readAccessTokenFromMemory()
   return Boolean(token?.startsWith('mock-jwt-token-'))
 }
 
@@ -151,12 +152,12 @@ export async function validateToken(token: string): Promise<Omit<User, 'password
  * 현재 사용자 정보 조회
  */
 export async function getCurrentUser(): Promise<Omit<User, 'password'> | null> {
-  // Mock: localStorage에서 토큰 가져오기
+  // access token은 메모리에만 있다 (QA-0137)
   if (typeof window === 'undefined') {
     return null
   }
 
-  const token = localStorage.getItem('auth_token')
+  const token = readAccessTokenFromMemory()
   if (!token) {
     return null
   }

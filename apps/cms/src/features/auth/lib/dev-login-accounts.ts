@@ -18,7 +18,7 @@ export type DevLoginQaAccount = {
 /** 권한별 로그인 버튼이 공통으로 폼에 입력하는 QA 비밀번호 */
 export const DEV_LOGIN_QA_PASSWORD = 'admin1234!'
 
-/** 로컬 BE(`ja.local-demo.mfa-bypass-enabled`)가 받는 MFA 코드 — 개발 모드에서만 MFA 모달에 자동 입력 */
+/** 로컬 BE(`ja.local-demo.mfa-bypass-enabled`)가 받는 MFA 코드 */
 export const DEV_LOGIN_MFA_CODE = '000000'
 
 export function canShowDevRoleLogin(): boolean {

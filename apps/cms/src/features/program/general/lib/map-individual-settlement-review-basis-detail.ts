@@ -77,8 +77,7 @@ function participantTravelCategoryLabel(itemName: string): string {
 
 function activityCategoryLabel(itemName: string): string {
   const name = itemName.trim() || '활동비'
-  if (name.includes('참여자')) return name
-  if (name.includes('활동')) return '참여자 활동비'
+  if (name.includes('활동')) return '활동비'
   return name
 }
 

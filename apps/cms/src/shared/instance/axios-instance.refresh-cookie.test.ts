@@ -37,7 +37,6 @@ describe('QA-0137 admin refresh 쿠키 전환기', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    localStorage.setItem('auth_token', 'access-old')
     localStorage.setItem('auth_expires_at', new Date(Date.now() + 10_000).toISOString())
     localStorage.setItem('auth_refresh_token', 'refresh-old')
     useAuthStore.setState({ token: 'access-old', expiresAt: null, logout: logoutMock })
@@ -73,7 +72,8 @@ describe('QA-0137 admin refresh 쿠키 전환기', () => {
 
     await expect(refreshAccessTokenSession()).resolves.toBe(true)
 
-    expect(localStorage.getItem('auth_token')).toBe('access-new')
+    // QA-0137: access token은 메모리(스토어)에만 둔다
+    expect(localStorage.getItem('auth_token')).toBeNull()
     expect(useAuthStore.getState().token).toBe('access-new')
     const storedRefresh = localStorage.getItem('auth_refresh_token')
     expect(storedRefresh).not.toBe('undefined')
@@ -92,7 +92,8 @@ describe('QA-0137 admin refresh 쿠키 전환기', () => {
     expect(config.url).toBe('/api/admin/auth/refresh')
     expect(config.data == null || bodyOf(config) == null).toBe(true)
     expect(config.withCredentials).toBe(true)
-    expect(localStorage.getItem('auth_token')).toBe('access-newer')
+    expect(useAuthStore.getState().token).toBe('access-newer')
+    expect(localStorage.getItem('auth_token')).toBeNull()
     expect(localStorage.getItem(REFRESH_COOKIE_SESSION_STORAGE_KEY)).toBe('1')
   })
 

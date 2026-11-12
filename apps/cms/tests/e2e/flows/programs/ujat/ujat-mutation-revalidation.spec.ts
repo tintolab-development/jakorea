@@ -1,3 +1,4 @@
+import { readBrowserAccessToken } from '../../../helpers/browser-access-token'
 import { test, expect } from '../../../fixtures/test'
 import { expectAuthenticatedShell } from '../../../helpers/authenticated-shell'
 
@@ -39,8 +40,8 @@ function unwrap(body: Json): unknown {
 async function apiJson(page: import('@playwright/test').Page, path: string, init?: RequestInit) {
   const targetOrigin = process.env.E2E_API_PROXY_TARGET?.replace(/\/$/, '')
   expect(targetOrigin, '전용 E2E API target이 필요합니다').toBeTruthy()
-  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
-  expect(token, '브라우저 세션에 관리자 auth_token이 없습니다').toBeTruthy()
+  const token = await readBrowserAccessToken(page, 'cms')
+  expect(token, '화면 요청에서 관리자 access token을 찾지 못했습니다').toBeTruthy()
 
   const response = await page.request.fetch(`${targetOrigin}${path}`, {
     ...init,
