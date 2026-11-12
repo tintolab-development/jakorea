@@ -115,6 +115,18 @@ describe('classifyRefreshFailure — 400·401·403만 세션 종료', () => {
     expect(classifyRefreshFailure(axiosFailure(status))).toBe('transient')
   })
 
+  it('409 REFRESH_TOKEN_ALREADY_ROTATED는 같은 값을 다시 보내지 않도록 세션 종료(invalid)', () => {
+    const config = { headers: {} } as InternalAxiosRequestConfig
+    const error = new AxiosError('conflict', 'ERR_BAD_REQUEST', config, null, {
+      data: { error: { code: 'REFRESH_TOKEN_ALREADY_ROTATED' } },
+      status: 409,
+      statusText: 'Conflict',
+      headers: {},
+      config,
+    })
+    expect(classifyRefreshFailure(error)).toBe('invalid')
+  })
+
   it('응답 없음(네트워크)·타임아웃·응답 본문 이상은 일시 오류', () => {
     expect(classifyRefreshFailure(axiosFailure(undefined, 'ERR_NETWORK'))).toBe('transient')
     expect(classifyRefreshFailure(axiosFailure(undefined, 'ECONNABORTED'))).toBe('transient')
