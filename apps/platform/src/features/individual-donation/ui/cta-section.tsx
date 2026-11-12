@@ -1,12 +1,11 @@
 import { Fragment } from 'react'
 import { ANALYTICS_CLICK_METRICS, recordMetric } from '@/features/analytics'
 import jaArrowCtaMintUrl from '@/features/home/image/icon/ja-arrow-cta-mint.svg'
+import jaArrowCtaLightUrl from '@/shared/assets/icons/ja-arrow-cta-light.svg'
+import { platformMediaQueries } from '@/shared/lib'
 import { PFText, remoteCopyClassName } from '@/shared/ui'
 import { usePublicPersonalDonationCta } from '../api/hooks'
-import {
-  CTA_SECTION_EYEBROW,
-  CTA_SECTION_TITLE_LINES,
-} from '../lib/constants'
+import { CTA_SECTION_EYEBROW, CTA_SECTION_TITLE_LINES } from '../lib/constants'
 import { CTA_PHOTO_IMAGE_URL } from '../lib/cta-images'
 import styles from './cta-section.module.css'
 
@@ -18,14 +17,18 @@ export function CtaSection() {
       <PFText as="span" typo="hl-lg" color="white" className={styles.actionLabel}>
         {donation.label}
       </PFText>
-      <img
-        className={styles.actionIcon}
-        src={jaArrowCtaMintUrl}
-        alt=""
-        aria-hidden="true"
-        width={32}
-        height={32}
-      />
+      {/* 시안: PC는 연한 민트 화살표, 모바일은 민트 화살표 */}
+      <picture className={styles.actionIconPicture}>
+        <source media={platformMediaQueries.pcUp} srcSet={jaArrowCtaLightUrl} />
+        <img
+          className={styles.actionIcon}
+          src={jaArrowCtaMintUrl}
+          alt=""
+          aria-hidden="true"
+          width={32}
+          height={32}
+        />
+      </picture>
     </>
   )
 

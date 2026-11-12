@@ -31,6 +31,7 @@ import { useDashboardProgramSchedules } from '../hooks/use-dashboard-program-sch
 import { useDashboardProgramOptions } from '../hooks/use-dashboard-program-options'
 import type { ProgramScheduleKind } from '@/features/dashboard/model/program-schedule-keys'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import type { DashboardScheduleEventType } from '../lib/schedule-event-detail-label'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { useCompanySchoolPrograms } from '@/features/program/1c-1s/api/hooks'
 
@@ -46,7 +47,9 @@ function selectedDateAfterMonthNavigation(visibleMonth: Dayjs): Dayjs {
 
 interface ScheduleEvent {
   id: string
-  type: 'education' | 'recruitment_deadline' | 'recruitment_start'
+  type: DashboardScheduleEventType
+  /** BE eventLabel — 운영 시작·종료 유형 문구(목록 캘린더와 같은 문구) */
+  eventLabel?: string
   title: string
   time: string
   programId: string
@@ -57,8 +60,10 @@ interface ScheduleEvent {
   detailLabel?: string
 }
 
-function getEventTypeLabel(type: ScheduleEvent['type']) {
-  switch (type) {
+function getEventTypeLabel(event: Pick<ScheduleEvent, 'type' | 'eventLabel'>) {
+  switch (event.type) {
+    case 'operation':
+      return event.eventLabel ?? ''
     case 'education':
       return '교육 예정'
     case 'recruitment_deadline':
@@ -226,7 +231,7 @@ function ScheduleWidgetWeekCellPreview({
               [{ev.programTitle}]
             </span>
             <span className="program-calendar-cell-preview__desc">
-              {getEventTypeLabel(ev.type)} | {ev.time}
+              {getEventTypeLabel(ev)} | {ev.time}
             </span>
           </div>
         )
@@ -466,11 +471,12 @@ export function ProgramScheduleWidget({
         out[d.format('YYYY-MM-DD')] = []
       }
       for (const ev of remoteScheduleEvents) {
-        const dateKey = dayjs(ev.startAt).format('YYYY-MM-DD')
+        const dateKey = ev.dateKey
         if (!out[dateKey]) out[dateKey] = []
         out[dateKey].push({
           id: ev.id,
           type: ev.type,
+          eventLabel: ev.eventLabel,
           title: ev.title,
           time: ev.time,
           programId: ev.programId,
@@ -814,7 +820,7 @@ export function ProgramScheduleWidget({
                                 <div className="program-schedule-widget__week-event-time">{ev.time}</div>
                               </div>
                               <div className="program-schedule-widget__week-event-desc">
-                                {ev.detailLabel ?? getEventTypeLabel(ev.type)}
+                                {ev.detailLabel ?? getEventTypeLabel(ev)}
                               </div>
                             </div>
                           </div>
@@ -910,7 +916,7 @@ export function ProgramScheduleWidget({
                 <div className="program-schedule-widget__event-column">
                   <div className="program-schedule-widget__event-title">{event.title}</div>
                   <div className="program-schedule-widget__event-desc">
-                    <span>{getEventTypeLabel(event.type)}</span>
+                    <span>{getEventTypeLabel(event)}</span>
                     <span> | {event.time}</span>
                   </div>
                 </div>

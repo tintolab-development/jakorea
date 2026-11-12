@@ -11,10 +11,7 @@ import {
   isAdminAuthUnauthorizedError,
   isAdminAuthForbiddenError,
 } from '@/features/auth/api/admin-session-fetcher'
-import {
-  REFRESH_TOKEN_STORAGE_KEY,
-  startUserActivityTracking,
-} from '@/features/auth/lib/session-keepalive'
+import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
 import { AuthContextProvider } from '@/shared/lib/auth/auth-context'
@@ -52,38 +49,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   )
 
   useEffect(() => {
-    // 앱 시작 시 인증 상태 확인
-    // localStorage에 토큰이 있으면 검증
+    // 앱 시작 시 인증 상태 확인.
+    // access token은 메모리에만 있어 새로고침하면 사라진다 (QA-0137). 저장된 사용자와 refresh 수단으로
+    // 복원한 세션이면 checkAuth가 refresh로 토큰을 다시 받고, 실패했을 때만 logout한다.
+    // 복원할 수 없으면(refresh 수단 없음) 스토어가 이미 비로그인 상태로 시작한다.
     const initAuth = async () => {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const storedToken = localStorage.getItem('auth_token')
-        const expiresAt = localStorage.getItem('auth_expires_at')
-
-        if (storedToken && expiresAt) {
-          // 만료 시간 확인 (30초 버퍼 추가)
-          const expiryTime = new Date(expiresAt).getTime()
-          const now = Date.now()
-          const bufferTime = 30 * 1000 // 30초 버퍼
-
-          if (expiryTime > now + bufferTime) {
-            try {
-              await checkAuth()
-            } catch (error) {
-              console.error('Auth check failed in AuthProvider:', error)
-            }
-          } else if (localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)) {
-            // access가 만료됐어도 refresh token이 있으면 refresh-first.
-            // checkAuth가 refresh하고, 실패했을 때만 logout한다.
-            try {
-              await checkAuth()
-            } catch (error) {
-              console.error('Auth check failed in AuthProvider:', error)
-            }
-          } else {
-            // 만료됐고 refresh 수단도 없으면 로그아웃
-            useAuthStore.getState().logout()
-          }
-        }
+      if (!useAuthStore.getState().isAuthenticated) return
+      try {
+        await checkAuth()
+      } catch (error) {
+        console.error('Auth check failed in AuthProvider:', error)
       }
     }
 

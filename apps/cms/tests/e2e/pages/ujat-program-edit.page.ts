@@ -1,4 +1,5 @@
 import { type Page, expect } from '@playwright/test'
+import { readBrowserAccessToken } from '../helpers/browser-access-token'
 import {
   checkRadioIfVisible,
   clickRegistrationTabIfVisible,
@@ -95,8 +96,8 @@ export class UjatProgramEditPage {
   }
 
   async readCanonicalDetail(programId: string): Promise<Record<string, unknown>> {
-    const result = await this.page.evaluate(async id => {
-      const token = localStorage.getItem('auth_token')
+    const token = await readBrowserAccessToken(this.page, 'cms')
+    const result = await this.page.evaluate(async ({ id, token }) => {
       const response = await fetch(`/api/admin/programs/${encodeURIComponent(id)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
@@ -106,7 +107,7 @@ export class UjatProgramEditPage {
           ? (body as { data?: unknown }).data
           : body
       return { status: response.status, payload }
-    }, programId)
+    }, { id: programId, token })
     expect(result.status, `상세 GET HTTP ${result.status}`).toBe(200)
     expect(result.payload && typeof result.payload === 'object').toBe(true)
     return result.payload as Record<string, unknown>
@@ -140,8 +141,8 @@ export class UjatProgramEditPage {
     } catch {
       // 신규 등록 E2E가 만든 전용 프로그램을 canonical 목록 API에서 찾는다.
       // 목록 테이블의 표시 컬럼이 대표명을 생략해도 다른 프로그램을 선택하지 않는다.
-      const candidate = await this.page.evaluate(async () => {
-        const token = localStorage.getItem('auth_token')
+      const token = await readBrowserAccessToken(this.page, 'cms')
+      const candidate = await this.page.evaluate(async token => {
         const response = await fetch('/api/admin/programs?page=0&size=100&programType=UJAT', {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
@@ -184,7 +185,7 @@ export class UjatProgramEditPage {
         return match?.id != null
           ? { id: String(match.id), mainTitle: String(match.mainTitle) }
           : null
-      })
+      }, token)
       if (!candidate) return null
       await this.page.goto(`/programs/ujat?programId=${candidate.id}&lnb=info&tab=info`)
       await this.expectDetailShellReady()
@@ -200,8 +201,8 @@ export class UjatProgramEditPage {
       throw new Error('상세 URL에 programId 가 없습니다.')
     }
 
-    const detail = await this.page.evaluate(async id => {
-      const token = localStorage.getItem('auth_token')
+    const token = await readBrowserAccessToken(this.page, 'cms')
+    const detail = await this.page.evaluate(async ({ id, token }) => {
       const response = await fetch(`/api/admin/programs/${encodeURIComponent(id)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
@@ -213,7 +214,7 @@ export class UjatProgramEditPage {
         status: response.status,
         mainTitle: body?.data?.mainTitle ?? body?.mainTitle ?? '',
       }
-    }, programId)
+    }, { id: programId, token })
     expect(detail.status).toBe(200)
     expect(detail.mainTitle).toBeTruthy()
     return { programId, programTitle: detail.mainTitle }

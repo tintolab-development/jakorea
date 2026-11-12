@@ -59,7 +59,7 @@ assert.deepEqual(
 )
 assert.deepEqual(
   individualInstructorTabs.map(item => item.label),
-  ['배정 현황', '안내사항', '강의보고서', '정산현황'],
+  ['배정 현황', '안내사항', '강의보고서', '정산 현황'],
 )
 assert.ok(!individualInstructorTabs.some(item => item.label === '강의 일정'))
 assert.ok(!individualInstructorTabs.some(item => item.key === 'survey'))

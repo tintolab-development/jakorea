@@ -1,3 +1,4 @@
+import { installIsolatedAuthRefreshRoutes } from '../e2e/helpers/isolated-auth-session'
 import { readFileSync } from 'node:fs'
 import { expect, type Page, type Request, type Route } from '@playwright/test'
 
@@ -199,7 +200,8 @@ export async function installUjatTemplateAuthoringNetwork(
   }
 
   await page.addInitScript(() => {
-    localStorage.setItem('auth_token', 'e2e.mock.header.payload')
+    // QA-0137: access token은 메모리 전용 — refresh token만 넣고 복원 refresh는 mock이 답한다
+    localStorage.setItem('auth_refresh_token', 'e2e.mock.refresh')
     localStorage.setItem('auth_expires_at', new Date(Date.now() + 60 * 60 * 1000).toISOString())
     localStorage.setItem(
       'auth_user',
@@ -394,6 +396,7 @@ export async function installUjatTemplateAuthoringNetwork(
     await route.continue()
   })
 
+  await installIsolatedAuthRefreshRoutes(page)
   return log
 }
 

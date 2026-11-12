@@ -25,7 +25,7 @@ export function EducationDetailBack({
         className={[styles.button, styles.pcOnly].join(' ')}
         onClick={onClick}
       >
-        <img className={styles.icon} src={chevronLeftGray7AUrl} alt="" width={8} height={12} />
+        <img className={styles.icon} src={chevronLeftGray7AUrl} alt="" width={8} height={14} />
         <PFText as="span" typo="hl-sm" color="black">
           {label}
         </PFText>

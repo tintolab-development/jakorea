@@ -3,6 +3,7 @@ import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
+import { fetchMypageProgramStatsFromApplications } from '../../education/applications/api/program-application-stats'
 import { fetchPortalCalendar, fetchPortalDashboard } from './client'
 import type { MypageProgramStats } from '../../model/types'
 import type { MypageScheduleEvent } from '../model/schedule-types'
@@ -16,7 +17,7 @@ function remoteSessionEnabled(enabled: boolean): boolean {
   return enabled && isRemoteApiConfigured() && Boolean(getAccessToken())
 }
 
-/** 홈 통계 카드 — GET /api/portal/me/dashboard 의 applications만. 일정은 calendar 훅. */
+/** GET /api/portal/me/dashboard.applications (보조·로깅용) */
 export function usePortalDashboardQuery(enabled: boolean): {
   stats: MypageProgramStats | undefined
   isLoading: boolean
@@ -27,6 +28,7 @@ export function usePortalDashboardQuery(enabled: boolean): {
     enabled: remoteSessionEnabled(enabled),
     staleTime: DASHBOARD_STALE_MS,
     gcTime: GC_MS,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: shouldRetryQuery,
@@ -36,6 +38,34 @@ export function usePortalDashboardQuery(enabled: boolean): {
   return {
     stats: query.data ? mapPortalDashboardStats(query.data.applications) : undefined,
     isLoading: remoteSessionEnabled(enabled) && query.isPending,
+  }
+}
+
+/**
+ * 나의 홈 프로그램 통계 카드 — USER-FUNC-0237.
+ * 신청 목록 displayStatus 집계가 현황 탭·강의현황 탭과 일치하도록 목록 API를 정본으로 쓴다.
+ */
+export function useMypageHomeProgramStats(enabled: boolean): {
+  stats: MypageProgramStats | undefined
+  isLoading: boolean
+} {
+  const remote = remoteSessionEnabled(enabled)
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplicationStats(),
+    queryFn: ({ signal }) => fetchMypageProgramStatsFromApplications(signal),
+    enabled: remote,
+    staleTime: DASHBOARD_STALE_MS,
+    gcTime: GC_MS,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+
+  return {
+    stats: query.data,
+    isLoading: remote && query.isPending && !query.data,
   }
 }
 

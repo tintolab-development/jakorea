@@ -15,7 +15,7 @@ import {
   type EducationApplicationTab,
   type MypageLnbItemKey,
 } from '@/features/mypage'
-import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
+import illustLectureUrl from '@/shared/assets/illustration/graphic-90-04.png'
 import { PFTabs, PFText } from '@/shared/ui'
 import statusListTabsStyles from '@/features/mypage/shared/ui/mypage-status-list-tabs.module.css'
 import { MypageLayout } from '@/widgets/mypage-layout'
@@ -68,7 +68,7 @@ export function MypageLecturePage() {
     <MypageLayout variant="subpage" lnbItems={lnbItems} onLnbItemSelect={handleLnbItemSelect}>
       <header className={styles.pageTitleRow}>
         <span className={styles.pageIconFlagWrap} aria-hidden="true">
-          <img className={styles.pageIconFlag} src={illustFlagUrl} alt="" />
+          <img className={styles.pageIconFlag} src={illustLectureUrl} alt="" />
         </span>
         <PFText as="h1" typo="page-title" color="black" className={styles.pageTitle}>
           강의현황

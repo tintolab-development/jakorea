@@ -1,4 +1,3 @@
-import type { CalendarLegendItem } from './calendar-legend'
 import type { CalendarDay } from './calendar-month'
 import { startOfDay } from './calendar-month'
 
@@ -10,7 +9,7 @@ export type PFCalendarEvent = {
   title: string
   /** 팝오버·목록용 시간 문구 (예: 종일, 09:00~15:00) */
   time?: string
-  type: CalendarLegendItem['key']
+  type: string
   startDate: Date | string
   endDate: Date | string
 }
@@ -19,7 +18,7 @@ export type CalendarEventSegment = {
   eventId: string
   programName: string
   title: string
-  type: CalendarLegendItem['key']
+  type: string
   lane: number
   /** 0–6 inclusive */
   startCol: number

@@ -5,7 +5,11 @@
 
 export type ParsedAuthTokenResponse = {
   accessToken: string
-  refreshToken: string
+  /**
+   * QA-0137 전환기에만 본문에 온다. 운영 `JA_REFRESH_COOKIE_BODY_TOKEN_ENABLED=false`면 없고 HttpOnly 쿠키로만 받는다.
+   * TODO(QA-0137 인프라 전환 후 삭제): 필드 제거.
+   */
+  refreshToken?: string
   tokenType?: string
   expiresInSeconds?: number
   passwordChangeRequired?: boolean
@@ -28,7 +32,7 @@ function unwrapData(payload: unknown): unknown {
   return payload
 }
 
-/** access/refresh 필수. 없으면 null */
+/** access 필수(없으면 null). refreshToken은 본문에 있을 때만 채운다 (QA-0137 쿠키 전환) */
 export function parseAuthTokenResponse(payload: unknown): ParsedAuthTokenResponse | null {
   const body = asRecord(unwrapData(payload))
   if (!body) return null
@@ -36,11 +40,11 @@ export function parseAuthTokenResponse(payload: unknown): ParsedAuthTokenRespons
   const accessToken = body.accessToken
   const refreshToken = body.refreshToken
   if (typeof accessToken !== 'string' || accessToken.length === 0) return null
-  if (typeof refreshToken !== 'string' || refreshToken.length === 0) return null
 
   return {
     accessToken,
-    refreshToken,
+    refreshToken:
+      typeof refreshToken === 'string' && refreshToken.length > 0 ? refreshToken : undefined,
     tokenType: typeof body.tokenType === 'string' ? body.tokenType : undefined,
     expiresInSeconds:
       typeof body.expiresInSeconds === 'number' ? body.expiresInSeconds : undefined,

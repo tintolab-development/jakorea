@@ -1,6 +1,7 @@
 import { isEducationLevelKey, type EducationLevelKey } from '@/shared/lib'
 import type { TextbookContent, TextbookThemeKey, TextbookThemeSection } from '../model/types'
 import { TEXTBOOK_THEME_ITEMS } from '../lib/constants'
+import { mapPublicTextbookListThumbnail } from '../lib/list-thumbnail'
 import type { PublicTextbookDetail, PublicTextbookListItem } from './types'
 
 const FIELD_CODE_TO_THEME: Record<string, TextbookThemeKey> = {
@@ -72,6 +73,7 @@ export function mapPublicTextbookListItem(row: PublicTextbookListItem): Textbook
     title,
     description: row.description?.trim() || '',
     thumbnailUrl: row.thumbnailUrl?.trim() || undefined,
+    listThumbnail: mapPublicTextbookListThumbnail(row),
     theme,
     level: levelFromTargets(row.targets),
     tags,

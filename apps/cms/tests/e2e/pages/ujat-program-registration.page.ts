@@ -5,6 +5,7 @@
  */
 
 import { type Page, expect } from '@playwright/test'
+import { readBrowserAccessToken } from '../helpers/browser-access-token'
 import {
   checkCheckboxIfVisible,
   checkRadioIfVisible,
@@ -506,8 +507,8 @@ export class UjatProgramRegistrationPage {
 
     expect(programId.length).toBeGreaterThan(0)
 
-    const detail = await this.page.evaluate(async id => {
-      const token = localStorage.getItem('auth_token')
+    const token = await readBrowserAccessToken(this.page, 'cms')
+    const detail = await this.page.evaluate(async ({ id, token }) => {
       const response = await fetch(`/api/admin/programs/${encodeURIComponent(id)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
@@ -524,7 +525,7 @@ export class UjatProgramRegistrationPage {
         mainTitle: program?.mainTitle ?? '',
         title: program?.title ?? '',
       }
-    }, programId)
+    }, { id: programId, token })
     expect(detail.status, '생성된 UJAT 프로그램 상세 GET이 성공해야 합니다').toBe(200)
     expect(detail.id, '상세 GET의 programId가 생성 응답과 일치해야 합니다').toBe(programId)
     expect(
@@ -532,8 +533,7 @@ export class UjatProgramRegistrationPage {
       `상세 GET 대표명이 고유 테스트명과 일치해야 합니다 (actual: ${detail.mainTitle})`
     ).toBe(this.programTitle)
 
-    const bindings = await this.page.evaluate(async id => {
-      const token = localStorage.getItem('auth_token')
+    const bindings = await this.page.evaluate(async ({ id, token }) => {
       const response = await fetch(`/api/admin/programs/${encodeURIComponent(id)}/form-bindings`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
@@ -551,7 +551,7 @@ export class UjatProgramRegistrationPage {
           .filter(row => (row as { formType?: string } | null)?.formType === 'APPLICATION')
           .map(row => String((row as { templateName?: string } | null)?.templateName ?? '')),
       }
-    }, programId)
+    }, { id: programId, token })
     expect(bindings.status, '신청 Form binding GET이 성공해야 합니다').toBe(200)
     expect(bindings.applicationTemplates).toEqual(
       expect.arrayContaining([

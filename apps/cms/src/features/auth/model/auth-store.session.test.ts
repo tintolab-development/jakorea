@@ -6,6 +6,8 @@ import {
   shouldRefreshAccessToken,
   ACCESS_TOKEN_EXPIRY_BUFFER_MS,
 } from './auth-store'
+import { readAccessTokenFromMemory } from '@/features/auth/lib/access-token-memory'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 
 const fetchAdminMeMock = vi.fn()
 const refreshAccessTokenSessionMock = vi.hoisted(() => vi.fn())
@@ -53,8 +55,8 @@ describe('auth-store remote session hydration', () => {
   it('남은 수명이 충분하면 checkAuth가 refresh하지 않는다', async () => {
     const token = masterJwt()
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
-    localStorage.setItem('auth_token', token)
-    localStorage.setItem('auth_expires_at', expiresAt)
+    useAuthStore.setState({ token: token })
+    useAuthStore.setState({ expiresAt: expiresAt })
     localStorage.setItem(
       'auth_user',
       JSON.stringify({
@@ -86,8 +88,8 @@ describe('auth-store remote session hydration', () => {
   it('만료 임박(30초 버퍼 이내)이면 checkAuth가 refresh 1회 한다', async () => {
     const token = masterJwt()
     const expiresAt = new Date(Date.now() + ACCESS_TOKEN_EXPIRY_BUFFER_MS - 5_000).toISOString()
-    localStorage.setItem('auth_token', token)
-    localStorage.setItem('auth_expires_at', expiresAt)
+    useAuthStore.setState({ token: token })
+    useAuthStore.setState({ expiresAt: expiresAt })
     localStorage.setItem(
       'auth_user',
       JSON.stringify({
@@ -117,8 +119,8 @@ describe('auth-store remote session hydration', () => {
       },
     })
     refreshAccessTokenSessionMock.mockImplementation(async () => {
-      localStorage.setItem('auth_token', token)
-      localStorage.setItem('auth_expires_at', new Date(Date.now() + 60 * 60 * 1000).toISOString())
+      useAuthStore.setState({ token: token })
+      useAuthStore.setState({ expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() })
       return true
     })
     fetchAdminMeMock.mockResolvedValue({
@@ -160,8 +162,8 @@ describe('auth-store remote session hydration', () => {
       },
     })
     localStorage.setItem('auth_refresh_token', 'refresh')
-    localStorage.setItem('auth_token', masterJwt())
-    localStorage.setItem('auth_expires_at', new Date(Date.now() + 10_000).toISOString())
+    useAuthStore.setState({ token: masterJwt() })
+    useAuthStore.setState({ expiresAt: new Date(Date.now() + 10_000).toISOString() })
     localStorage.setItem(
       'auth_user',
       JSON.stringify({
@@ -227,14 +229,16 @@ describe('auth-store remote session hydration', () => {
       roleCode?: string
     }
     expect(stored.roleCode).toBe('MASTER')
-    expect(localStorage.getItem('auth_token')).toBe(masterJwt())
+    // QA-0137: access token은 메모리(스토어)에만 둔다
+    expect(useAuthStore.getState().token).toBe(masterJwt())
+    expect(localStorage.getItem('auth_token')).toBeNull()
   })
 
   it('checkAuth는 토큰이 있으면 /api/admin/me를 다시 호출한다', async () => {
     const token = masterJwt()
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
-    localStorage.setItem('auth_token', token)
-    localStorage.setItem('auth_expires_at', expiresAt)
+    useAuthStore.setState({ token: token })
+    useAuthStore.setState({ expiresAt: expiresAt })
     localStorage.setItem(
       'auth_user',
       JSON.stringify({
@@ -265,6 +269,23 @@ describe('auth-store remote session hydration', () => {
     expect(useAuthStore.getState().user?.roleCode).toBe('MASTER')
   })
 
+  it('소셜 로그인 토큰도 메모리에만 두고 auth-service·소셜 클라이언트가 같은 메모리 값을 읽는다 (QA-0137)', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    useAuthStore.getState().applySocialAuthTokens({
+      accessToken: masterJwt(),
+      refreshToken: 'refresh-token',
+      expiresInSeconds: 3600,
+    })
+
+    expect(useAuthStore.getState().token).toBe(masterJwt())
+    expect(readAccessTokenFromMemory()).toBe(masterJwt())
+    expect(hasRemoteAdminJwt()).toBe(true)
+    expect(localStorage.getItem('auth_token')).toBeNull()
+    expect(setItem.mock.calls.some(([key]) => key === 'auth_token')).toBe(false)
+    expect(setItem.mock.calls.some(([, value]) => value === masterJwt())).toBe(false)
+    setItem.mockRestore()
+  })
+
   it('beginAdminMfaChallenge는 auth_user를 localStorage에 저장하지 않는다', () => {
     useAuthStore.getState().beginAdminMfaChallenge({
       challengeUuid: 'challenge-2',
@@ -274,7 +295,7 @@ describe('auth-store remote session hydration', () => {
   })
 
   it('refreshAdminSessionFromMe는 동기화 중 adminSessionSyncPending을 켠다', async () => {
-    localStorage.setItem('auth_token', masterJwt())
+    useAuthStore.setState({ token: masterJwt() })
     fetchAdminMeMock.mockImplementation(
       () =>
         new Promise(resolve => {

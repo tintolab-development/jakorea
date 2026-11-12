@@ -3,6 +3,7 @@ import { formatDisplayDateRange } from '@/shared/lib/format-display-date'
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import { mapPortalCategoryLabel } from '@/features/program/lib/portal-category'
 import { mapApplicationWindowToRecruitmentStatus } from '@/features/program/lib/map-from-cms'
+import { mapPortalProgramEducationBadgeLabels } from '@/features/program/api/mappers'
 import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
@@ -235,7 +236,7 @@ function mapCategoryLabel(
 }
 
 function formatDateRange(start: string | null | undefined, end: string | null | undefined): string {
-  return formatDisplayDateRange(start, end, { empty: '-' })
+  return formatDisplayDateRange(start, end, { empty: '-', weekday: false })
 }
 
 function parseRecruitmentDate(value: string | null | undefined): Date | null {
@@ -276,6 +277,15 @@ export function mapPortalProgramApplicationListItem(
   const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
   const ujatRevisionReason = readUjatRevisionReason(row.supplement)
   const ujatAssignmentRevision = row.supplement?.ujat?.assignmentRevision
+  // BE-14 이전 응답(필드 자체가 없음)은 배지를 숨긴다. 필드가 오면 상세와 같은 규칙으로 채운다.
+  const hasEducationAudienceFields =
+    row.educationTargets !== undefined ||
+    row.educationForm !== undefined ||
+    row.educationFormLabel !== undefined ||
+    row.educationFormScheduleDetail !== undefined
+  const educationBadgeLabels = hasEducationAudienceFields
+    ? mapPortalProgramEducationBadgeLabels(row)
+    : null
 
   return {
     id: String(row.applicationId),
@@ -296,9 +306,10 @@ export function mapPortalProgramApplicationListItem(
       recruitmentEndAt: row.recruitmentEndAt,
       displayStatus,
     }),
-    // TODO(BE): 목록 응답에 교육대상·교육형태 필드가 추가되면 여기서 매핑 (상세와 같은 라벨 함수 사용)
-    educationTargetLabel: '',
-    educationFormLabel: '',
+    // QA-0210: 목록 교육대상·교육형태(BE-14)는 프로그램 상세 헤더 배지와 같은 함수로 만든다.
+    educationTargetLabel: educationBadgeLabels?.educationTargetLabel ?? '',
+    ...(educationBadgeLabels ? { educationForm: educationBadgeLabels.educationForm } : {}),
+    educationFormLabel: educationBadgeLabels?.educationFormLabel ?? '',
     thumbnailUrl,
     displayStatus,
     ...(withdrawalPhase ? { withdrawalPhase } : {}),

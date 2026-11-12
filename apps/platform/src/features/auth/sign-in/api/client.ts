@@ -34,7 +34,7 @@ export async function postPortalLogout(refreshToken: string): Promise<void> {
 /** POST /api/portal/auth/login — PUBLIC */
 export async function postPortalLogin(
   body: MemberLoginRequest,
-): Promise<AuthTokenResponse & { accessToken: string; refreshToken: string }> {
+): Promise<AuthTokenResponse & { accessToken: string; refreshToken?: string }> {
   const { data } = await axiosClient.post<unknown>(portalAuthPaths.login(), body, {
     skipAuth: true,
     skipRefresh: true,
@@ -72,7 +72,8 @@ export async function postPortalPhoneIdentityConfirm(
 
 export type PortalPasswordChangeTokens = AuthTokenResponse & {
   accessToken: string
-  refreshToken: string
+  /** QA-0137: 전환기에만 본문에 온다 */
+  refreshToken?: string
 }
 
 /**

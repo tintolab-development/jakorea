@@ -1,6 +1,8 @@
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import jaArrowCtaMintUrl from '@/features/home/image/icon/ja-arrow-cta-mint.svg'
+import jaArrowCtaLightUrl from '@/shared/assets/icons/ja-arrow-cta-light.svg'
+import { platformMediaQueries } from '@/shared/lib'
 import { PFText } from '@/shared/ui'
 import {
   CTA_SECTION_BUTTON_LABEL,
@@ -41,23 +43,23 @@ export function CtaSection() {
               <PFText as="span" typo="hl-lg" color="white" className={styles.actionLabel}>
                 {CTA_SECTION_BUTTON_LABEL}
               </PFText>
-              <img
-                className={styles.actionIcon}
-                src={jaArrowCtaMintUrl}
-                alt=""
-                aria-hidden="true"
-              />
+              {/* 시안: PC는 연한 민트 화살표, 모바일은 민트 화살표 */}
+              <picture className={styles.actionIconPicture}>
+                <source media={platformMediaQueries.pcUp} srcSet={jaArrowCtaLightUrl} />
+                <img
+                  className={styles.actionIcon}
+                  src={jaArrowCtaMintUrl}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </picture>
             </Link>
           </div>
         </div>
 
         <div className={styles.media}>
           <div className={styles.imageFrame}>
-            <img
-              className={styles.image}
-              src={CTA_PHOTO_IMAGE_URL}
-              alt=""
-            />
+            <img className={styles.image} src={CTA_PHOTO_IMAGE_URL} alt="" />
           </div>
         </div>
       </div>

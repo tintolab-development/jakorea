@@ -53,6 +53,17 @@ export type PortalProgramApplicationListItem = {
   educationEndAt?: string | null
   recruitmentStartAt?: string | null
   recruitmentEndAt?: string | null
+  /**
+   * 교육대상 코드 배열(BE-14·QA-0210). 공개 프로그램 상세 `educationTargets`와 같은 값·순서. 없으면 `[]`.
+   * `elementary` | `middle` | `high` | `university` | `adult`
+   */
+  educationTargets?: string[] | null
+  /** 교육형태 코드. 프로그램 상세 `educationForm`과 같은 값. `online` | `offline` | `hybrid` | `participant_selection` */
+  educationForm?: string | null
+  /** 교육형태 한글 라벨. 프로그램 상세와 같은 값. `perSchedule`이면 `null`. */
+  educationFormLabel?: string | null
+  /** 교육형태 일정 공통/일정 별 상이. 프로그램 상세 `educationFormScheduleDetail`과 같은 값. */
+  educationFormScheduleDetail?: 'common' | 'perSchedule' | string | null
   nextScheduleAt?: string | null
   progressPercent?: number | null
   unreadNoticeCount?: number

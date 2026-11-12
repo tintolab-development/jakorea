@@ -37,7 +37,11 @@ export function readPortalDashboard(payload: unknown): PortalDashboardResponse {
   return {}
 }
 
-/** 목록 탭과 같은 묶음. 신청=제출·승인, 종료=`applications.ended`(완료·포기·반려·취소 합산 금지). */
+/**
+ * dashboard.applications 집계. 나의 홈 카드는 USER-FUNC-0237에 맞춰
+ * `fetchMypageProgramStatsFromApplications`가 정본이다.
+ * 신청=submitted+approved(승인 전 구간), 종료=ended.
+ */
 export function mapPortalDashboardStats(
   summary: PortalApplicationSummary | undefined,
 ): MypageProgramStats {

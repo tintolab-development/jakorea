@@ -21,6 +21,21 @@
   gap: var(--spacing-12);
 }
 
+/* 시안: 파일 종류 아이콘(24) + 파일명, 간격 없음 */
+.file {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+}
+
+.fileIcon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
 .name {
   display: block;
   min-width: 0;

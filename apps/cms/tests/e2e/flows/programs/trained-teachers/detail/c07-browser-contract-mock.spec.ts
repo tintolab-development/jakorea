@@ -1,3 +1,4 @@
+import { installIsolatedAuthRefreshRoutes } from '../../../../helpers/isolated-auth-session'
 import { test, expect } from '../../../../fixtures/test'
 import type { Page } from '@playwright/test'
 
@@ -47,7 +48,8 @@ async function installC07NetworkMock(page: Page, scenario: GiveUpScenario) {
   // TT remote API capability는 mock-jwt-token을 실제 JWT로 간주하지 않는다.
   // 테스트 API는 전부 route mock이므로 서버로 전송되지 않는 JWT-shaped 토큰만 주입한다.
   await page.addInitScript(() => {
-    localStorage.setItem('auth_token', 'e2e.mock.header.payload')
+    // QA-0137: access token은 메모리 전용 — refresh token만 넣고 복원 refresh는 mock이 답한다
+    localStorage.setItem('auth_refresh_token', 'e2e.mock.refresh')
     localStorage.setItem('auth_expires_at', new Date(Date.now() + 60 * 60 * 1000).toISOString())
     localStorage.setItem(
       'auth_user',
@@ -245,6 +247,7 @@ async function installC07NetworkMock(page: Page, scenario: GiveUpScenario) {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
   })
 
+  await installIsolatedAuthRefreshRoutes(page)
   return state
 }
 

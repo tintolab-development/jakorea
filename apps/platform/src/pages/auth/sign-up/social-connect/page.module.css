@@ -53,6 +53,20 @@
   margin-right: var(--spacing-16);
 }
 
+/* 시안: 모바일 42 · PC 48 */
+.socialConnectIcon svg {
+  display: block;
+  width: 42px;
+  height: 42px;
+}
+
+@media (--bp-pc-up) {
+  .socialConnectIcon svg {
+    width: 48px;
+    height: 48px;
+  }
+}
+
 .socialConnectName {
   display: inline-flex;
   align-items: center;

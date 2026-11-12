@@ -100,6 +100,9 @@ function unwrapMfaSetupResponse(payload: unknown): AdminMfaSetupResult {
   throw parseAuthError(payload, 'MFA 설정 응답 형식이 올바르지 않습니다.')
 }
 
+/** QA-0137: 토큰 발급·갱신·폐기 호출은 HttpOnly refresh 쿠키(`JA_ADMIN_RT`)가 오가도록 credentials를 명시한다. */
+const AUTH_COOKIE_CREDENTIALS = { withCredentials: true } as const
+
 function anonymousAuthConfig(): InternalAxiosRequestConfig & {
   skipRefresh?: boolean
   skipAuth?: boolean
@@ -138,7 +141,8 @@ export async function fetchAdminMfaVerify(
   try {
     const { data: payload } = await axiosClient.post<unknown>(
       `${adminAuthPaths.mfaVerify()}`,
-      body
+      body,
+      AUTH_COOKIE_CREDENTIALS
     )
     return unwrapTokenResponse(payload)
   } catch (err) {
@@ -152,8 +156,9 @@ export async function fetchAdminAuthRefresh(
   try {
     const { data: payload } = await axiosClient.post<unknown>(
       adminAuthPaths.refresh(),
-      body,
+      body.refreshToken ? body : undefined,
       {
+        ...AUTH_COOKIE_CREDENTIALS,
         skipRefresh: true,
         skipAuth: true,
         skipGlobalErrorAlert: true,
@@ -176,6 +181,7 @@ export async function fetchAdminAuthLogout(body: RefreshTokenRequestBody): Promi
       adminAuthPaths.logout(),
       body,
       {
+        ...AUTH_COOKIE_CREDENTIALS,
         skipRefresh: true,
         skipAuth: true,
         skipGlobalErrorAlert: true,
@@ -188,6 +194,24 @@ export async function fetchAdminAuthLogout(body: RefreshTokenRequestBody): Promi
     )
   } catch (err) {
     throwAuthRequestError(err, '로그아웃에 실패했습니다.')
+  }
+}
+
+/**
+ * POST /api/admin/auth/refresh/logout — HttpOnly refresh 쿠키의 토큰을 폐기하고 쿠키를 지운다 (QA-0137).
+ * 본문 없음. 쿠키가 없거나(전환 전·로컬) 실패해도 로컬 로그아웃을 막지 않도록 best effort — 오류를 던지지 않는다.
+ */
+export async function fetchAdminAuthRefreshCookieLogout(): Promise<void> {
+  try {
+    await axiosClient.post<unknown>(adminAuthPaths.refreshLogout(), undefined, {
+      ...AUTH_COOKIE_CREDENTIALS,
+      skipRefresh: true,
+      skipAuth: true,
+      skipGlobalErrorAlert: true,
+      validateStatus: (status: number) => status === 204 || status === 200,
+    } as unknown as InternalAxiosRequestConfig)
+  } catch {
+    // best effort: 쿠키 폐기 실패는 무시 (본문 logout·로컬 정리는 별도 진행)
   }
 }
 

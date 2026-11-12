@@ -1493,6 +1493,7 @@ export * from './settlementListItemResponse';
 export * from './settlementListItemResponseLectureProgressStatus';
 export * from './settlementListItemResponsePaymentStatementPreConsentStatus';
 export * from './settlementListItemResponseRowType';
+export * from './settlementListItemResponseScheduleKind';
 export * from './settlementListResponse';
 export * from './settlementNotificationResendRequest';
 export * from './settlementNotificationResendResponse';

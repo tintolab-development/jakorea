@@ -223,6 +223,38 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     expect(fromFailedReason?.receiveFailedReason).toBe('Bounced')
   })
 
+  it('QA-0178 발송·수신 실패 사유는 서버 displayReason을 먼저 쓴다', () => {
+    const sendFailed = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 17,
+      sendStatus: 'SEND_FAILED',
+      failedReason: 'SMTP timeout',
+      providerResultCode: '550',
+      displayReason: '발송 실패(코드: 550)',
+    })
+    expect(sendFailed?.failedReason).toBe('발송 실패(코드: 550)')
+    expect(sendFailed?.receiveFailedReason).toBeUndefined()
+
+    const receiveFailed = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 18,
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERY_FAILED',
+      failedReason: 'Bounced',
+      providerResultMessage: 'Mailbox not found',
+      displayReason: '발송 실패(코드: 551)',
+    })
+    expect(receiveFailed?.failedReason).toBeUndefined()
+    expect(receiveFailed?.receiveFailedReason).toBe('발송 실패(코드: 551)')
+
+    const blankDisplay = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 19,
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERY_FAILED',
+      providerResultMessage: 'Mailbox not found',
+      displayReason: '  ',
+    })
+    expect(blankDisplay?.receiveFailedReason).toBe('Mailbox not found')
+  })
+
   it('QA-0176 수신 실패라도 응답에 사유가 없으면 문구를 만들지 않는다', () => {
     const row = mapMailDeliveryToSendHistoryRow({
       deliveryId: 14,

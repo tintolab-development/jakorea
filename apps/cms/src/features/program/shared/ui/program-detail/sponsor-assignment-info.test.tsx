@@ -2,7 +2,10 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import {
+  resolveAssignedSponsorManagerPhone,
+  SponsorManagerContactsView,
+} from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { ProgramSponsorHomepageView, ProgramSponsorLogoView } from './sponsor-assignment-info'
 
 const DETAILS = {
@@ -128,5 +131,31 @@ describe('프로그램 상세 후원사 — 배정 응답 표시', () => {
     expect(container.textContent).toContain('모바일담당 팀장')
     expect(container.textContent).not.toContain('010-9999-9999')
     expect(container.textContent?.match(/-/g)?.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('담당자 ref 가 없어 이름만 남으면 문의처(contactPhone)를 담당자 연락처로 붙이지 않는다', () => {
+    const program = {
+      id: '99300',
+      sponsorId: '99301',
+      managerName: '모바일담당',
+      contactPhone: '02-1234-5678',
+      generalCommonInfo: {
+        sponsorManagementIds: ['99301'],
+        sponsorManagerContactIds: [],
+      },
+    } as unknown as Program
+    const { container } = render(
+      <SponsorManagerContactsView program={program} sponsorRows={[]} contactsBySponsorId={{}} />
+    )
+    expect(container.textContent).toBe('모바일담당')
+    expect(resolveAssignedSponsorManagerPhone(program)).toBeUndefined()
+  })
+
+  it('대표 담당자 연락처는 배정 응답(sponsorManagerContactDetails)에서만 찾는다', () => {
+    const program = {
+      ...programWithContact('010-1111-2222', null),
+      contactPhone: '02-1234-5678',
+    } as Program
+    expect(resolveAssignedSponsorManagerPhone(program)).toBe('010-1111-2222')
   })
 })

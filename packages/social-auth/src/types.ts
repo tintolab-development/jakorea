@@ -49,7 +49,12 @@ export interface SocialAuthHttpClient {
 
 export interface AuthTokenResult {
   accessToken: string
-  refreshToken: string
+  /**
+   * QA-0137 전환기에만 본문에 온다. 운영 `JA_REFRESH_COOKIE_BODY_TOKEN_ENABLED=false`면 없고
+   * HttpOnly 쿠키(`JA_ADMIN_RT` / `JA_MEMBER_RT`)로만 받는다. 없으면 앱이 쿠키 세션으로 전환한다.
+   * TODO(QA-0137 인프라 전환 후 삭제): 필드 제거.
+   */
+  refreshToken?: string
   tokenType?: string
   expiresInSeconds?: number
   /** 회원 포털 토큰만. `UNDER_14` | `OVER_14`. 관리자 SSO는 없음. */

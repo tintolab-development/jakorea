@@ -73,8 +73,8 @@ export function MypageHomeHeader({
           alt=""
           aria-hidden="true"
         />
-        <PFText as="span" typo="bd-md-sb" color="black">
-          회원정보 설정
+        <PFText as="span" typo="bd-md-sb" color="black" className={styles.settingsLabel}>
+          회원 정보 설정
         </PFText>
       </Link>
     </header>

@@ -9,7 +9,7 @@ import {
 } from '@/features/mypage'
 import { SkeletonBlock } from '@/shared/ui/skeleton-block'
 import {
-  CALENDAR_EVENT_COLORS,
+  resolveCalendarEventColors,
   PFCalendar,
   PFEmptyState,
   PFText,
@@ -130,7 +130,7 @@ export function ScheduleSection({
             </div>
             <ul className={styles.listItems}>
               {selectedEvents.map(event => {
-                const colors = CALENDAR_EVENT_COLORS[event.type] ?? CALENDAR_EVENT_COLORS.education
+                const colors = resolveCalendarEventColors(event.type)
                 const detailPath = resolveMypageScheduleEventDetailPath(queryClient, event)
                 const isNavigable = detailPath != null
                 return (
@@ -138,7 +138,11 @@ export function ScheduleSection({
                     <button
                       type="button"
                       className={styles.listItemButton}
-                      style={{ borderLeftColor: colors.accent }}
+                      style={{
+                        borderColor: colors.accent,
+                        borderLeftWidth: 6,
+                        backgroundColor: colors.background,
+                      }}
                       disabled={!isNavigable}
                       aria-label={`${event.programName} ${event.title} 일정 상세`}
                       onClick={() => handleScheduleClick(event)}
