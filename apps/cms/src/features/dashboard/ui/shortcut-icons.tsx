@@ -7,7 +7,6 @@
 import accountCheckUrl from '@/shared/assets/icons/shortcut/account-check.svg'
 import authAdminUrl from '@/shared/assets/icons/shortcut/auth-admin.svg'
 import authApprovalUrl from '@/shared/assets/icons/shortcut/auth-approval.svg'
-import authProgramUrl from '@/shared/assets/icons/shortcut/auth-program.svg'
 import faqUrl from '@/shared/assets/icons/shortcut/faq.svg'
 import inquiryUrl from '@/shared/assets/icons/shortcut/inquiry.svg'
 import logBugUrl from '@/shared/assets/icons/shortcut/log-bug.svg'
@@ -41,7 +40,8 @@ const SHORTCUT_ICON_URL: Record<string, string> = {
   'users-admin': memberAdminUrl,
   'permission-requests': authApprovalUrl,
   'admin-permission-settings': authAdminUrl,
-  'program-permission-settings': authProgramUrl,
+  // 시안 대시보드 화면: 프로그램 권한 설정도 관리자 권한 아이콘
+  'program-permission-settings': authAdminUrl,
   'settlement-payment-orders': paymentStatementUrl,
   'settlement-account-payments': accountCheckUrl,
   'settlement-item-settings': settlementItemUrl,
