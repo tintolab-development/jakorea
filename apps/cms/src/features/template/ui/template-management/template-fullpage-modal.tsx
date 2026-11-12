@@ -1,4 +1,4 @@
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -352,10 +352,10 @@ export function TemplateFullpageModal({
                   variant={action.variant === 'secondary' ? 'secondary' : undefined} className="full-page-modal__footer-cta-btn"
                   disabled={action.disabled}
                   onClick={action.onClick} >
-                  {action.variant === 'secondary' ? <LeftOutlined aria-hidden /> : null}
+                  {action.variant === 'secondary' ? <ButtonLeftIcon style={{ display: 'block', width: 20, height: 20 }} /> : null}
                   <span>{action.label}</span>
                   {action.variant !== 'secondary' && action.showArrow === true ? (
-                    <RightOutlined aria-hidden />
+                    <ButtonRightIcon style={{ display: 'block', width: 20, height: 20 }} />
                   ) : null}
                 </CmsButton>
               ))}

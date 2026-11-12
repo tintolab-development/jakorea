@@ -1,5 +1,5 @@
 import { DatePicker, Input, TimePicker } from 'antd'
-import { CalendarOutlined } from '@ant-design/icons'
+import time18Url from '@/shared/assets/icons/inputs/time-18-default.svg'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
@@ -283,7 +283,7 @@ export function LectureReportProgramProgress({
                       format="HH:mm"
                       placeholder="교육 진행 시간"
                       disabled={autofillLocked}
-                      suffixIcon={<CalendarOutlined aria-hidden />}
+                      suffixIcon={<img src={time18Url} width={18} height={18} alt="" aria-hidden draggable={false} />}
                     />
                   </div>
                   <span className="lecture-report-prog-info__divider" role="presentation" />
