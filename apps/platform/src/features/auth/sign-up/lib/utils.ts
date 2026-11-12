@@ -6,7 +6,6 @@ import type {
   SchoolStatus,
 } from '../model/sign-up.types'
 import { isDateWithinInputBounds } from '@/shared/ui/pf-date-input/date-utils'
-import { maskSignupPhoneForDisplay } from './helpers/mask-phone'
 import { toApiSignupPhone } from './helpers/to-api-phone'
 
 /** 숫자만 입력해도 YYYY.MM.DD 형식으로 `.`을 자동 삽입한다. */
@@ -205,8 +204,9 @@ export function buildUnderAgeConfirmationRows(input: {
     { label: '1365 ID', value: input.volunteerId.trim() || '-' },
     { label: '보호자 이름', value: input.guardianName?.trim() || '-' },
     {
+      // 가입정보 확인은 본인(보호자 포함) 입력값이라 원문 표시(개인정보 마스킹 정책 10/26, 사용자 플랫폼 2)
       label: '보호자 휴대폰',
-      value: maskSignupPhoneForDisplay(input.guardianPhone),
+      value: toApiSignupPhone(input.guardianPhone) || input.guardianPhone?.trim() || '-',
     },
     { label: '가입자와의 관계', value: input.guardianRelationship?.trim() || '-' },
   )
