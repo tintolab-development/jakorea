@@ -145,13 +145,15 @@
 }
 
 .listTitle {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .listTime {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  min-width: max-content;
+  overflow: visible;
+  white-space: nowrap;
 }
 
 .empty {

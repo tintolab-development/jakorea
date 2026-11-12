@@ -11,7 +11,7 @@ import {
   getCalendarEventsOnDate,
   type PFCalendarEvent,
 } from './calendar-events'
-import { CALENDAR_LEGEND_ITEMS } from './calendar-legend'
+import { CALENDAR_LEGEND_ITEMS, type CalendarLegendItem } from './calendar-legend'
 import {
   addMonths,
   formatYearMonth,
@@ -46,6 +46,7 @@ export type PFCalendarProps = {
   events?: PFCalendarEvent[]
   className?: string
   showLegend?: boolean
+  legendItems?: readonly CalendarLegendItem[]
 }
 
 function toMonthStart(date: Date): Date {
@@ -75,6 +76,7 @@ export function PFCalendar({
   events = [],
   className,
   showLegend = true,
+  legendItems = CALENDAR_LEGEND_ITEMS,
 }: PFCalendarProps) {
   const today = startOfDay(new Date())
   const isPc = useMediaQuery(platformMediaQueries.pcUp)
@@ -247,7 +249,7 @@ export function PFCalendar({
 
         {showLegend ? (
           <div className={styles.legend} aria-label="일정 범례">
-            {CALENDAR_LEGEND_ITEMS.map(item => (
+            {legendItems.map(item => (
               <div key={item.key} className={styles.legendItem}>
                 <span
                   className={styles.legendDot}
@@ -347,7 +349,7 @@ export function PFCalendar({
                         </span>
                         {hasEvents ? (
                           <span className={styles.eventDots} aria-hidden="true">
-                            {dayEvents.map(event => (
+                            {dayEvents.slice(0, 4).map(event => (
                               <span
                                 key={event.id}
                                 className={styles.eventDot}
