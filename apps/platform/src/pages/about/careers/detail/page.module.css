@@ -135,6 +135,14 @@
   word-break: break-word;
 }
 
+.content :global(.rich-text-content) {
+  color: #3d3d3d;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 160%;
+  letter-spacing: -0.2px;
+}
+
 .content :global(.rich-text-content > *) {
   max-width: 100%;
 }

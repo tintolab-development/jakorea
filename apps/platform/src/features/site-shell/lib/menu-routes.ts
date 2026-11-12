@@ -64,7 +64,26 @@ export type GnbGroupCode = (typeof KNOWN_GROUP_CODES)[number]
 
 /** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 상위 메뉴 표기. */
 export const GNB_DESIGN_GROUP_LABEL_OVERRIDES: Partial<Record<GnbGroupCode, string>> = {
-  IMPACT_STORY: '임팩트 스토리',
+  IMPACT_STORY: '임팩트',
+}
+
+/** 메가메뉴에서 시안 미포함 항목 — 공지·채용·결과 확인은 단독 라우트로만 연다. */
+export const GNB_MEGA_HIDDEN_MENU_CODES = new Set<string>([
+  'JA_NOTICE',
+  'JA_RECRUIT',
+  'PARTICIPATION_RESULT',
+])
+
+/** 메가메뉴 하위 항목 시안 순서. 없는 코드는 숨긴다. */
+export const GNB_DESIGN_CHILD_ORDER: Partial<Record<GnbGroupCode, readonly string[]>> = {
+  JA_KOREA: [
+    'JA_ORGANIZATION',
+    'JA_TRANSPARENCY',
+    'JA_HISTORY',
+    'JA_PEOPLE',
+    'JA_DIRECTIONS',
+  ],
+  PARTICIPATION: ['PARTICIPATION_APPLY', 'PARTICIPATION_ONLINE', 'PARTICIPATION_ALUMNI'],
 }
 
 export function isKnownGnbGroupCode(code: string): code is GnbGroupCode {
@@ -82,17 +101,15 @@ export const gnbFallbackGroups = [
     label: 'JA Korea',
     children: [
       { menuCode: 'JA_ORGANIZATION', label: '기관소개', href: '/about/introduction' },
-      { menuCode: 'JA_HISTORY', label: 'JA History', href: '/about/history' },
       { menuCode: 'JA_TRANSPARENCY', label: '투명경영', href: '/about/transparency' },
+      { menuCode: 'JA_HISTORY', label: 'JA History', href: '/about/history' },
       { menuCode: 'JA_PEOPLE', label: '함께하는 사람들', href: '/about/people' },
       { menuCode: 'JA_DIRECTIONS', label: '오시는 길', href: '/about/directions' },
-      { menuCode: 'JA_NOTICE', label: '공지사항', href: '/notices' },
-      { menuCode: 'JA_RECRUIT', label: '채용', href: '/about/careers' },
     ],
   },
   {
     groupCode: 'IMPACT_STORY',
-    label: '임팩트 스토리',
+    label: '임팩트',
     href: '/impact',
     children: [{ menuCode: 'IMPACT_STORY', label: '임팩트 스토리', href: '/impact' }],
   },
@@ -120,7 +137,6 @@ export const gnbFallbackGroups = [
     label: '참여하기',
     children: [
       { menuCode: 'PARTICIPATION_APPLY', label: '프로그램 신청', href: '/programs' },
-      { menuCode: 'PARTICIPATION_RESULT', label: '결과 확인', href: '/results' },
       { menuCode: 'PARTICIPATION_ONLINE', label: '온라인 학습', external: true },
       { menuCode: 'PARTICIPATION_ALUMNI', label: 'Alumni', external: true },
     ],

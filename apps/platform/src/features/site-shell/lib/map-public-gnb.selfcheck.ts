@@ -97,9 +97,9 @@ const mobileMenuDesignOverlay = mapPublicGnb([
 assert.equal(mobileMenuDesignOverlay?.groups[0]?.label, 'JA Korea')
 assert.deepEqual(
   mobileMenuDesignOverlay?.groups[0]?.children.map(item => item.menuCode),
-  ['JA_ORGANIZATION', 'JA_HISTORY', 'JA_NOTICE'],
+  ['JA_ORGANIZATION', 'JA_HISTORY'],
 )
-assert.equal(mobileMenuDesignOverlay?.groups[1]?.label, '임팩트 스토리')
+assert.equal(mobileMenuDesignOverlay?.groups[1]?.label, '임팩트')
 const impactGroup = mobileMenuDesignOverlay?.groups.find(g => g.groupCode === 'IMPACT_STORY')
 assert.equal(impactGroup?.children[0]?.label, '임팩트 스토리')
 
