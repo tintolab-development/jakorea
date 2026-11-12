@@ -547,6 +547,8 @@ function patchRecruitDatePlan(
     ...instructorInquiry,
     ...volunteerInquiry,
     'recruit.individual.announcementPublished': 'published',
+    // 면접 유무는 기본값 없음(QA-0121) — 아래 면접 일정과 맞춰 「면접 있음」을 명시한다
+    'recruit.individual.interviewRequired': 'yes',
     'recruit.individual.programRangeSeal': programSeal,
     'recruit.individual.programAnchorIso': programSeal.start,
     'recruit.individual.recruitRangeSeal': recruitSeal,
@@ -924,7 +926,8 @@ async function resolveSponsorAndContact(allowAllSentinel: boolean): Promise<{
     for (const sponsor of ordered) {
       if (!sponsor?.id) continue
       const sponsorId = String(sponsor.id).trim()
-      const contacts = await getSponsorContacts(sponsorId)
+      // 개발용 자동 입력도 담당자 id만 필요하다 — 원문·조회 기록을 남기지 않게 MASKED로 받는다.
+      const contacts = await getSponsorContacts(sponsorId, { contactPrivacy: 'MASKED' })
       if (contacts.length === 0) continue
       const contact = pick(contacts)
       if (!contact?.id) continue

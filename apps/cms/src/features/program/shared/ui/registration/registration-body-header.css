@@ -68,3 +68,25 @@
   z-index: -1;
   pointer-events: none;
 }
+
+/* 탭 제목 미입력 개수 (일반 프로그램 등록, QA-0042) */
+.registration-body-header__tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.registration-body-header__tab-incomplete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-red, #e5484d);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}

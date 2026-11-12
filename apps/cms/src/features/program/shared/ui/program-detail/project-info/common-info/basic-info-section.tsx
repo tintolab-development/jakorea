@@ -15,20 +15,25 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import { Controller } from 'react-hook-form'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
-import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import {
+  maskSponsorManagerPhone,
+  SponsorManagerContactsView,
+} from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import {
   ProgramSponsorHomepageView,
   ProgramSponsorLogoView,
 } from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
-import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import {
+  useGeneralProgramSponsorEditContext,
+  useProgramSponsorContactsMaskedQuery,
+} from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
@@ -278,7 +283,8 @@ export function BasicInfoSection({
     Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
   )
   const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
-  const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
+  // 수정 모드 담당자 선택지 — contactPrivacy=MASKED(데이터 관리 RAW 캐시와 분리, 정책 32·37)
+  const contactsQuery = useProgramSponsorContactsMaskedQuery(watchedSponsorId, Boolean(isFormEdit))
   const managers = contactsQuery.data ?? []
   const sponsorManagementIds = isFormEdit
     ? (form?.watch('sponsorManagementIds') ?? [])
@@ -1482,7 +1488,7 @@ export function BasicInfoSection({
                 {program.contactPhone ? (
                   <>
                     {'\u00A0'}
-                    <span>{program.contactPhone}</span>
+                    <span>{maskSponsorManagerPhone(program.contactPhone)}</span>
                   </>
                 ) : null}
               </>
@@ -1568,7 +1574,10 @@ export function BasicInfoSection({
                       />
                       <div>
                         <span>{'\u00A0'}</span>
-                        <span>{commonInfoForm.watch('contactPhone') || '-'}</span>
+                        {/* 선택지는 후원사 담당자 원문 API 값이라 화면에는 마스킹해서 보인다(정책 32·37) */}
+                        <span>
+                          {maskSponsorManagerPhone(commonInfoForm.watch('contactPhone')) || '-'}
+                        </span>
                       </div>
                     </div>
                   </>
