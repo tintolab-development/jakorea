@@ -9,7 +9,7 @@ export type PortalStudentRosterItem = {
   grade?: string | null
   className?: string | null
   studentNo?: number | null
-  /** 소유 기관 Portal 조회에서만 원문. 화면 표시는 maskedPhone/maskedEmail 기준 */
+  /** 소유 기관 Portal 조회에서만 원문. 교사 화면 명단·수료증 팝업은 이 원문을 표시한다(정책 10/26 사용자 플랫폼 7). maskedPhone/maskedEmail은 원문이 없을 때 대체값 */
   phone?: string | null
   email?: string | null
   maskedPhone?: string | null

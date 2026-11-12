@@ -3,8 +3,10 @@ import type { PortalStudentRosterItem } from '../api/student-documents-types'
 import { useDownloadOrganizationStudentCertificatesMutation } from '../api/student-documents-hooks'
 import {
   formatPortalStudentBirthDate,
+  formatPortalStudentEmail,
   formatPortalStudentGender,
   formatPortalStudentGradeClass,
+  formatPortalStudentPhone,
 } from '../lib/student-documents-display'
 import {
   type CertificateSelection,
@@ -216,12 +218,12 @@ export function StudentsPanelCertificateModal({
                     </td>
                     <td>
                       <PFText as="span" typo="bd-md-md" color="black">
-                        {row.maskedPhone?.trim() || '-'}
+                        {formatPortalStudentPhone(row)}
                       </PFText>
                     </td>
                     <td className={styles.left}>
                       <PFText as="span" typo="bd-md-md" color="black">
-                        {row.maskedEmail?.trim() || '-'}
+                        {formatPortalStudentEmail(row)}
                       </PFText>
                     </td>
                   </tr>

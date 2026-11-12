@@ -2,8 +2,10 @@ import { useMemo } from 'react'
 import type { PortalStudentRosterItem } from '../api/student-documents-types'
 import {
   formatPortalStudentBirthDate,
+  formatPortalStudentEmail,
   formatPortalStudentGender,
   formatPortalStudentGradeClass,
+  formatPortalStudentPhone,
   resolvePortalStudentRosterRowNo,
 } from '../lib/student-documents-display'
 import { PFDataTable, type PFDataTableColumn } from '@/shared/ui'
@@ -60,13 +62,13 @@ export function StudentsPanelRosterTable({ rows }: StudentsPanelRosterTableProps
         key: 'contact',
         label: '연락처',
         width: '140px',
-        render: row => row.maskedPhone?.trim() || '-',
+        render: row => formatPortalStudentPhone(row),
       },
       {
         key: 'email',
         label: '이메일',
         align: 'left',
-        render: row => row.maskedEmail?.trim() || '-',
+        render: row => formatPortalStudentEmail(row),
       },
     ]
   }, [rows])
