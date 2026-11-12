@@ -13,7 +13,7 @@ export const SETTLEMENT_ITEM_TYPE_LABELS: Record<SettlementItemType, string> = {
   transportation: '교통비',
   accommodation: '숙박비',
   meal: '식사비',
-  activity: '참여자 활동비',
+  activity: '활동비',
   withholding: '원천징수',
   other: '기타',
 }

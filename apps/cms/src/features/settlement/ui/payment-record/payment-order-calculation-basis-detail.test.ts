@@ -228,15 +228,15 @@ describe('payment-order-calculation-basis-detail', () => {
     const activity = buildActivityBasisDetail()
     expect(activity).toEqual({
       layout: 'activity',
-      categoryLabel: '참여자 활동비',
+      categoryLabel: '활동비',
       activityFee: {
         amountWon: 50000,
-        receiptFileName: '참여자 활동비 영수증.pdf',
+        receiptFileName: '활동비 영수증.pdf',
       },
       totalWon: 50000,
     })
     expect(resolveActivityBasisDetailTotalWon(activity)).toBe(50000)
-    expect(resolveBasisDetailModalTitle(activity)).toBe('참여자 활동비 산정 기준 상세')
+    expect(resolveBasisDetailModalTitle(activity)).toBe('활동비 산정 기준 상세')
   })
 
   it('buildWithholdingBasisDetail returns withholding breakdown for daily salary total', () => {

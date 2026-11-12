@@ -36,7 +36,7 @@ assert.equal(isSupportedIndividualExpenseType('ACTIVITY'), true)
 assert.equal(isSupportedIndividualExpenseType('MEAL'), true)
 
 assert.equal(receiptPaymentItemLabel({ itemType: 'MEAL' }), '식사비')
-assert.equal(receiptPaymentItemLabel({ itemType: 'ACTIVITY', itemName: '참여자 활동비' }), '참여자 활동비')
+assert.equal(receiptPaymentItemLabel({ itemType: 'ACTIVITY', itemName: '활동비' }), '활동비')
 assert.equal(
   receiptPaymentItemLabel({ itemType: 'TRANSPORTATION', itemName: '교통비' }),
   '교통비',
