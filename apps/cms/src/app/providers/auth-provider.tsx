@@ -11,10 +11,8 @@ import {
   isAdminAuthUnauthorizedError,
   isAdminAuthForbiddenError,
 } from '@/features/auth/api/admin-session-fetcher'
-import {
-  REFRESH_TOKEN_STORAGE_KEY,
-  startUserActivityTracking,
-} from '@/features/auth/lib/session-keepalive'
+import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
+import { hasRefreshCredential } from '@/features/auth/lib/refresh-credential'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
 import { AuthContextProvider } from '@/shared/lib/auth/auth-context'
@@ -71,8 +69,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             } catch (error) {
               console.error('Auth check failed in AuthProvider:', error)
             }
-          } else if (localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)) {
-            // access가 만료됐어도 refresh token이 있으면 refresh-first.
+          } else if (hasRefreshCredential()) {
+            // access가 만료됐어도 refresh 수단(refresh token 또는 QA-0137 HttpOnly 쿠키 세션)이 있으면 refresh-first.
             // checkAuth가 refresh하고, 실패했을 때만 logout한다.
             try {
               await checkAuth()

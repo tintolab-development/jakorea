@@ -66,6 +66,8 @@ const httpClient = {
             skipRefresh: true,
             skipAuth: true,
             skipGlobalErrorAlert: true,
+            // QA-0137: SSO login session consume 응답의 HttpOnly refresh 쿠키(`JA_ADMIN_RT`)가 저장되도록 명시
+            withCredentials: true,
           } as PublicSsoRequestConfig)
         : undefined
     ),
