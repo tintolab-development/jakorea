@@ -15,6 +15,8 @@ export interface MemberDetailResponse {
   phone?: string;
   birthDate?: string;
   birthYear?: number;
+  /** 만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null(연도만 있어도 null). 마스킹·원문 응답 모두 같은 값. CMS 표기 YYYY.**.**(만 NN세) */
+  age?: number | null;
   gender?: string;
   status?: string;
   loginEnabled?: boolean;

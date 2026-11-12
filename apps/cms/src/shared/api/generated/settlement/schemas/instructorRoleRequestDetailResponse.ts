@@ -29,6 +29,8 @@ export interface InstructorRoleRequestDetailResponse {
   gender?: string;
   birthDate?: string;
   birthYear?: number;
+  /** 만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null. 마스킹·원문 응답 모두 같은 값 */
+  age?: number | null;
   phone?: string;
   email?: string;
   /** MASKED=기본 GET 상세, UNMASKED=POST …/privacy/unmask 원문 응답. FE는 unmask 성공 시 이 플래그와 phone/email로 화면을 교체해야 한다. */

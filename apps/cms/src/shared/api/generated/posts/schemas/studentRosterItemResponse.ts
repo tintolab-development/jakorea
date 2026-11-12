@@ -10,7 +10,8 @@ export interface StudentRosterItemResponse {
   rosterId?: number;
   memberId?: number;
   studentName?: string;
-  gender?: string;
+  /** 성별. AUTO_RAW_ACCESS·RAW_POLICY_EXCEPTION: 저장 원문 코드(예: M, F, MALE, FEMALE), MASKED: **. FE는 원문 코드를 남·여로 표시한다. */
+  gender?: string | null;
   /** Portal owner 조회 또는 CMS 개인정보 원문 조회에서만 원문 날짜를 반환하며, CMS 기본 조회에서는 null입니다. */
   birthDate?: string | null;
   /** 학생명단 저장 생년월일의 연도만 사용합니다. 승인된 회원 연결 정책이 확인될 때까지 회원 정본 연도 fallback은 차단됩니다. */

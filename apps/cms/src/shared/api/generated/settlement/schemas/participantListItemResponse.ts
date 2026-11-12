@@ -65,10 +65,14 @@ export interface ParticipantListItemResponse {
   satisfactionSurveyCompleted?: boolean;
   surveyResponse?: FormResponseRef;
   satisfactionResponse?: FormResponseRef;
-  /** 참여자 생년월일 (개인 신청 스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null */
+  /** 참여자 생년월일 마스킹값(yyyy-**-**). 원문은 제공하지 않는다(정책 CMS-39, 목록 마스킹). 개인 신청 스냅샷 우선, 없으면 회원 정보. 회원 없는 행·기관 행은 null. 2026-10-07 인증서 발급용 원문 계약은 폐기 — 인증서·활동증명서 발급은 발급 직전 원문 해제 API를 쓴다. */
   birthDate?: string | null;
-  /** 참여자 성별 원시 코드 (스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null */
+  /** 성별 마스킹값 **. 원시 코드는 제공하지 않는다. 값이 없으면 null */
   gender?: string | null;
+  /** 원문 생년월일의 연도. 없으면 null */
+  birthYear?: number | null;
+  /** 만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null. CMS 표기 YYYY.**.**(만 NN세) */
+  age?: number | null;
   /** 기관(ORGANIZATION) 행의 신청 희망 일정. GET /api/admin/organization-applications/{organizationApplicationId}/requested-schedules 응답과 같은 항목·순서·필드입니다. organizationApplicationId가 없거나 희망 일정이 없으면 []. 기관이 아닌 행은 항상 []. null은 반환하지 않는다. */
   requestedSchedules?: RequestedScheduleResponse[];
   /** 봉사자 행 거리(km). 강사 신청 목록 distanceKm과 같은 이름이나, 봉사자 거리는 아직 산출·저장하지 않아 항상 null. */

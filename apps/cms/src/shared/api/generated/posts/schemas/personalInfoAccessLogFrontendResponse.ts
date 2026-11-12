@@ -17,4 +17,8 @@ export interface PersonalInfoAccessLogFrontendResponse {
   ipAddress?: string;
   result?: string;
   traceId?: string;
+  /** 조회 대상 유형(QA-0153). 예: MEMBER, ADMIN_ACCOUNT, INSTRUCTOR_PROFILE, NOTIFICATION_DELIVERY, ACCOUNT_PAYMENT. */
+  targetType?: string;
+  /** 조회 대상 식별번호(target_id, QA-0153). 대상이 없으면 null. */
+  targetId?: string | null;
 }

@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { BugIssueLogFrontendResponseSource } from './bugIssueLogFrontendResponseSource';
 
 export interface BugIssueLogFrontendResponse {
   id?: number;
@@ -14,4 +15,6 @@ export interface BugIssueLogFrontendResponse {
   occurredAt?: string;
   issueStatus?: string;
   severity?: string;
+  /** 오류 출처. SERVER=서버 실패, CLIENT=CMS 화면 오류(QA-0183). 목록 검색 파라미터 source로도 거를 수 있습니다. */
+  source?: BugIssueLogFrontendResponseSource;
 }

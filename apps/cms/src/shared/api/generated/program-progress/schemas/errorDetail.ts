@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ErrorDetailDetails } from './errorDetailDetails';
+import type { FieldErrorItem } from './fieldErrorItem';
 
 /**
  * 프론트 분기와 운영 추적을 위한 구조화 오류 정보
@@ -21,6 +22,8 @@ export interface ErrorDetail {
   traceId?: string | null;
   /** 전이 충돌 등 부가 컨텍스트. 없으면 null입니다. */
   details?: ErrorDetailDetails;
+  /** 충돌한 항목 목록. 관리자(/api/admin/**) API의 DB 중복·참조 충돌(HTTP 409)에서만 채우며, 그 밖의 응답에서는 필드를 내려주지 않습니다. */
+  fieldErrors?: FieldErrorItem[] | null;
   /** RFC7807 detail. message와 동일합니다. */
   detail?: string;
 }

@@ -75,6 +75,8 @@ export interface GeminiApprovedTrainingDetailResponse {
   teacherGender?: string | null;
   /** 상세 GET은 yyyy-**-**. POST .../privacy/unmask 시 yyyy-MM-dd 원문. 없으면 null */
   teacherBirthDate?: string | null;
+  /** 담당 교사 만 나이(서울 기준 오늘). 상세 GET·unmask 모두 같은 값. 생년월일 원문이 없으면 null. CMS 표기 YYYY.**.** (만 N세) */
+  teacherAge?: number | null;
   teacherPhone?: string | null;
   teacherEmail?: string | null;
   teacherSchoolName?: string | null;

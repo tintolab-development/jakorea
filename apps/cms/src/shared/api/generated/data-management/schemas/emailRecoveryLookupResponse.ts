@@ -9,6 +9,7 @@ import type { EmailRecoveryAccountResponse } from './emailRecoveryAccountRespons
 
 export interface EmailRecoveryLookupResponse {
   matched?: boolean;
-  maskedEmail?: string;
+  /** 첫 계정의 하위 호환용 마스킹값. 표시는 accounts[].email(원문)을 쓴다. */
+  maskedEmail?: string | null;
   accounts?: EmailRecoveryAccountResponse[];
 }
