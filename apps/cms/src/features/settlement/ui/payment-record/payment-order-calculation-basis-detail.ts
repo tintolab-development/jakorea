@@ -31,9 +31,14 @@ export interface PaymentOrderCalculationBasisDetailLectureFeeSpecial {
 }
 
 export const SPECIAL_LECTURE_FEE_TITLE = '특강 강사비'
-export const GEMINI_LECTURE_FEE_TITLE = '제미나이 강사비'
+export const GEMINI_LECTURE_FEE_TITLE = 'Gemini 강사비'
+/** BE 64b156b33 이전 명칭(오타 포함) — 과거 지급조서 스냅샷 호환용으로만 판별에 쓴다 */
+const LEGACY_GEMINI_LECTURE_FEE_TITLES: ReadonlySet<string> = new Set([
+  '제미나이 강사비',
+  '세미나이 강사비',
+])
 
-/** 제미나이 강사비 — 구분 · 강의 시간 · 강사비 책정 (합계 없음) */
+/** Gemini 강사비 — 구분 · 강의 시간 · 강사비 책정 (합계 없음) */
 export interface PaymentOrderCalculationBasisDetailLectureFeeGemini {
   layout: 'lectureFeeGemini'
   categoryLabel: string
@@ -737,7 +742,9 @@ export function isSpecialLectureFeeTitle(title: string | undefined): boolean {
 }
 
 export function isGeminiLectureFeeTitle(title: string | undefined): boolean {
-  return title?.trim() === GEMINI_LECTURE_FEE_TITLE
+  const normalized = title?.trim()
+  if (!normalized) return false
+  return normalized === GEMINI_LECTURE_FEE_TITLE || LEGACY_GEMINI_LECTURE_FEE_TITLES.has(normalized)
 }
 
 export function buildLectureFeeGeminiBasisDetail(
