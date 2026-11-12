@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapDetailedProgramListPage,
   mapDetailedProgramListResponse,
   mapDetailedProgramResponse,
   toDetailedProgramPatchRequest,
@@ -70,5 +71,32 @@ describe('detailed-program-adapters', () => {
     expect(rows).toEqual([
       expect.objectContaining({ id: '1', name: 'A', active: true }),
     ])
+  })
+
+  it('QA-0363 서버 1페이지를 공통 페이지 형태로 바꾸고 다음 페이지 여부를 계산한다', () => {
+    const first = mapDetailedProgramListPage({
+      items: [{ id: 1, nameKo: 'A' }, { id: 2, nameKo: 'B' }],
+      page: 0,
+      size: 2,
+      totalElements: 5,
+      totalPages: 3,
+    })
+    expect(first.items.map(row => row.id)).toEqual(['1', '2'])
+    expect(first.totalElements).toBe(5)
+    expect(first.hasNext).toBe(true)
+
+    const last = mapDetailedProgramListPage({
+      items: [{ id: 5, nameKo: 'E' }],
+      page: 2,
+      size: 2,
+      totalElements: 5,
+      totalPages: 3,
+    })
+    expect(last.hasNext).toBe(false)
+  })
+
+  it('QA-0363 페이지 정보가 없으면 받은 행 수로 한 페이지로 본다', () => {
+    const page = mapDetailedProgramListPage({ items: [{ id: 1, nameKo: 'A' }] })
+    expect(page).toMatchObject({ page: 0, size: 20, totalElements: 1, totalPages: 1, hasNext: false })
   })
 })
