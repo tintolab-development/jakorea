@@ -109,6 +109,37 @@ describe('student roster upload MIME policy', () => {
     )
   })
 
+
+  it('includes SHA-256 in prepare and confirm for criminal consent original PDF', async () => {
+    const file = new File(['%PDF-1.4\ncontent'], 'crime-consent.pdf', {
+      type: 'application/pdf',
+    })
+    const { createSha256 } = await import('../src/shared/lib/create-sha256')
+    const expectedChecksum = await createSha256(file)
+
+    const fileObjectId = await uploadMemberPortalFile({
+      file,
+      filePurpose: 'CRIMINAL_HISTORY_CONSENT_ORIGINAL',
+    })
+
+    expect(fileObjectId).toBe(101)
+    expect(postMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/portal/me/files/upload-requests',
+      expect.objectContaining({
+        filePurpose: 'CRIMINAL_HISTORY_CONSENT_ORIGINAL',
+        checksumSha256: expectedChecksum,
+      }),
+      expect.anything()
+    )
+    expect(postMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/portal/me/files/101/confirm',
+      expect.objectContaining({ checksumSha256: expectedChecksum }),
+      expect.anything()
+    )
+  })
+
   it('keeps CSV canonical and rejects unsupported, oversized, and empty files', () => {
     expect(resolveMemberPortalUploadContentType(createFile('students.csv', 'text/csv'))).toBe(
       'text/csv'
