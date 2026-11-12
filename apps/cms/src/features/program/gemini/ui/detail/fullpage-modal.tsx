@@ -18,6 +18,8 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
+import { LnbFigmaArrowDown } from '@/features/program/general/ui/detail-modal/lnb-figma-icons'
+import '@/features/program/general/ui/detail-modal/detail-sidebar.css'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import {
   LnbIconManagers,
@@ -298,6 +300,9 @@ function GeminiRecruitmentDetailFullPageModalContent({
         className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
         sidebar={
           <DetailModalSidebar
+            // 일반·1사1교·교육받은 교사 상세와 같은 시안 LNB 스타일(detail-sidebar.css 범위)
+            className="detail-fullpage-modal__lnb--program-detail"
+            ArrowIcon={LnbFigmaArrowDown}
             navAriaLabel="찾아가는 연수 상세 메뉴"
             items={SIDEBAR_ITEMS}
             activeKey={activeLnb}

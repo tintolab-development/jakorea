@@ -4,7 +4,8 @@
 
 import { useCallback, useState, type ReactNode } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
-import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
+import { LnbFigmaArrowDown } from '@/features/program/general/ui/detail-modal/lnb-figma-icons'
+import '@/features/program/general/ui/detail-modal/detail-sidebar.css'
 import type { UjatSurveyMenuItem } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import type { UjatDetailLnbKey } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { LnbIconManagers, LnbIconProjectInfo } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
@@ -164,7 +165,11 @@ export function UjatProgramDetailSidebar({
   }
 
   return (
-    <nav className="detail-fullpage-modal__lnb" aria-label="UJAT 프로그램 상세 메뉴">
+    <nav
+      // 일반·1사1교·교육받은 교사 상세와 같은 시안 LNB 스타일(detail-sidebar.css 범위)
+      className="detail-fullpage-modal__lnb detail-fullpage-modal__lnb--program-detail"
+      aria-label="UJAT 프로그램 상세 메뉴"
+    >
       <DetailFullpageModalLnbBrand />
       <div className="detail-fullpage-modal__lnb-body">
         <ul className="detail-fullpage-modal__lnb-list">
@@ -179,7 +184,7 @@ export function UjatProgramDetailSidebar({
               <LnbIconProjectInfo />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">프로그램 정보</span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('info') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -229,7 +234,7 @@ export function UjatProgramDetailSidebar({
             <span className="detail-fullpage-modal__lnb-item-label">
               {UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL}
             </span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('institution_applications') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -314,7 +319,7 @@ export function UjatProgramDetailSidebar({
                   <LnbVolunteerHandshakeIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
-                <DetailFullpageModalLnbArrowDown
+                <LnbFigmaArrowDown
                   className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen(top) ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                 />
               </button>
@@ -339,7 +344,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbEducationBookIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">상반기 교육 진행 현황</span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('education_progress_h1') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -363,7 +368,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbEducationBookIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">하반기 교육 진행 현황</span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('education_progress_h2') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -401,7 +406,7 @@ export function UjatProgramDetailSidebar({
                 <UjatLnbSurveyManagementIcon />
               </span>
               <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
-              <DetailFullpageModalLnbArrowDown
+              <LnbFigmaArrowDown
                 className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
               />
             </button>
