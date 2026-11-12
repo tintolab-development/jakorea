@@ -34,6 +34,7 @@ export {
   formatBirthDateInput,
   formatHomeAddress,
   formatTeacherAffiliation,
+  getBirthDateRangeMessage,
   getEmploymentStatusLabel,
   getGenderLabel,
   getMemberTypeLabel,

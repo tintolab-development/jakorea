@@ -70,10 +70,10 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
                   </PFText>
                   <div className={styles.memberTypeDescription}>
                     <PFText as="p" typo="bd-md-md" color="black">
-                      {renderMultilineText(option.primaryDescription)}
+                      {renderMultilineText(option.primaryDescription, styles.memberTypeLineBreak)}
                     </PFText>
                     <PFText as="p" typo="label-md" color="neutral-cool-500">
-                      {renderMultilineText(option.secondaryDescription)}
+                      {renderMultilineText(option.secondaryDescription, styles.memberTypeLineBreak)}
                     </PFText>
                   </div>
                 </div>

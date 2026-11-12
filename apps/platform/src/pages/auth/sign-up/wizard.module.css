@@ -45,6 +45,16 @@
 
 .memberTypeDescription p {
   margin: 0;
+  /* 단어 중간에서 끊기지 않게 단어 단위 줄바꿈(QA-0477) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 모바일: 카드 폭이 좁아 PC 기준 강제 줄바꿈을 끄고 자연 줄바꿈으로 둔다(QA-0477) */
+@media (--bp-below-pc) {
+  .memberTypeLineBreak {
+    display: none;
+  }
 }
 
 .memberTypeDescription p:first-child {

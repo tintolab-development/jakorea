@@ -52,6 +52,9 @@ export function BirthStep({ signUp }: BirthStepProps) {
               autoComplete="bday"
               value={birth.birthDate}
               onValueChange={birth.setBirthDate}
+              error={Boolean(birth.birthDateError)}
+              message={birth.birthDateError || undefined}
+              messageStatus={birth.birthDateError ? 'error' : undefined}
             />
 
             <div className={styles.genderField}>
