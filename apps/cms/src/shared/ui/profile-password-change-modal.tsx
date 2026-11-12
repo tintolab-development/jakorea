@@ -38,9 +38,15 @@ const NEW_PASSWORD_CONFIRM_MISMATCH_ALERT = {
     '새 비밀번호 확인이 새 비밀번호와 일치하지 않습니다.\n비밀번호를 확인 후 다시 시도해 주세요.',
 }
 
+const NEW_PASSWORD_CONDITION_ALERT_TITLE = '비밀번호 조건 안내'
+
+function buildPasswordConditionAlertContent(conditionMessage: string): string {
+  return `${conditionMessage}\n비밀번호를 확인 후 다시 시도해 주세요.`
+}
+
 const NEW_PASSWORD_CONDITION_ALERT = {
-  title: '비밀번호 조건 안내',
-  content: `${REGISTER_PASSWORD_CONDITION_MESSAGE}\n비밀번호를 확인 후 다시 시도해 주세요.`,
+  title: NEW_PASSWORD_CONDITION_ALERT_TITLE,
+  content: buildPasswordConditionAlertContent(REGISTER_PASSWORD_CONDITION_MESSAGE),
 }
 
 const CURRENT_PASSWORD_MISMATCH_ALERT = {
@@ -56,14 +62,21 @@ const PASSWORD_CHANGE_CURRENT_MISMATCH_CODES = new Set([
   'WRONG_PASSWORD',
 ])
 
-function resolvePasswordChangeFailureAlert(error: unknown): {
+export function resolvePasswordChangeFailureAlert(error: unknown): {
   title: string
   content: string
 } {
   if (error instanceof AdminMfaApiError) {
     const code = error.code.trim().toUpperCase()
     if (code === 'VALIDATION_FAILED') {
-      return NEW_PASSWORD_CONDITION_ALERT
+      // 서버 검증 문구를 그대로 쓴다 (QA-0478). 비어 있을 때만 FE 조건 문구.
+      const serverMessage = error.message.trim()
+      return {
+        title: NEW_PASSWORD_CONDITION_ALERT_TITLE,
+        content: buildPasswordConditionAlertContent(
+          serverMessage || REGISTER_PASSWORD_CONDITION_MESSAGE
+        ),
+      }
     }
     if (PASSWORD_CHANGE_CURRENT_MISMATCH_CODES.has(code) || code.includes('CURRENT_PASSWORD')) {
       return CURRENT_PASSWORD_MISMATCH_ALERT

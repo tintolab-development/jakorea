@@ -5,21 +5,18 @@ import {
   type IsolatedNetworkLog,
 } from './install-tt-isolated-network'
 
-export type TtP4bVariantId =
-  | 'TCH-01'
-  | 'TCH-02'
-  | 'TCH-03'
-  | 'TCH-04'
-  | 'TCH-05'
-  | 'TCH-06'
-  | 'TCH-07'
-  | 'TCH-08'
+/**
+ * 신규 등록 브라우저 조합 — 커리큘럼형 + 기간 지정만 등록할 수 있다(CMS-FUNC-0591·0277).
+ * 일정형(구 TCH-05~08)·날짜 지정 조합은 신규 등록에서 만들 수 없어 제외했다.
+ * 일정형 TT 표시는 Primary seed(186005~186008)로 확인한다.
+ */
+export type TtP4bVariantId = 'TCH-01' | 'TCH-02' | 'TCH-03' | 'TCH-04'
 
 export type TtP4bVariant = {
   id: TtP4bVariantId
-  /** DEV 자동입력 7케이스 — date/period 축. 교육연수 ON/OFF와 별개다. */
-  autofillCase: 1 | 3 | 5 | 7
-  educationStructure: 'curriculum' | 'schedule'
+  /** DEV 자동입력 케이스 — 1: 커리큘럼·단일·기간, 2: 커리큘럼·복수·기간. 교육연수 ON/OFF와 별개다. */
+  autofillCase: 1 | 2
+  educationStructure: 'curriculum'
   sessionRound: 'single' | 'multi'
   teacherTrainingEnabled: boolean
   emptySurvey: boolean
@@ -44,7 +41,7 @@ export const TT_P4B_VARIANTS: readonly TtP4bVariant[] = [
   },
   {
     id: 'TCH-03',
-    autofillCase: 3,
+    autofillCase: 2,
     educationStructure: 'curriculum',
     sessionRound: 'multi',
     teacherTrainingEnabled: false,
@@ -52,40 +49,8 @@ export const TT_P4B_VARIANTS: readonly TtP4bVariant[] = [
   },
   {
     id: 'TCH-04',
-    autofillCase: 3,
+    autofillCase: 2,
     educationStructure: 'curriculum',
-    sessionRound: 'multi',
-    teacherTrainingEnabled: true,
-    emptySurvey: false,
-  },
-  {
-    id: 'TCH-05',
-    autofillCase: 5,
-    educationStructure: 'schedule',
-    sessionRound: 'single',
-    teacherTrainingEnabled: false,
-    emptySurvey: false,
-  },
-  {
-    id: 'TCH-06',
-    autofillCase: 5,
-    educationStructure: 'schedule',
-    sessionRound: 'single',
-    teacherTrainingEnabled: true,
-    emptySurvey: false,
-  },
-  {
-    id: 'TCH-07',
-    autofillCase: 7,
-    educationStructure: 'schedule',
-    sessionRound: 'multi',
-    teacherTrainingEnabled: false,
-    emptySurvey: false,
-  },
-  {
-    id: 'TCH-08',
-    autofillCase: 7,
-    educationStructure: 'schedule',
     sessionRound: 'multi',
     teacherTrainingEnabled: true,
     emptySurvey: false,
@@ -93,10 +58,8 @@ export const TT_P4B_VARIANTS: readonly TtP4bVariant[] = [
 ]
 
 const AUTOFILL_CASE_LABEL: Record<TtP4bVariant['autofillCase'], string> = {
-  1: 'TCH-01 · 커리큘럼 · 단일 · 날짜',
-  3: 'TCH-03 · 커리큘럼 · 복수 · 날짜',
-  5: 'TCH-05 · 일정 · 단일 · 날짜',
-  7: 'TCH-07 · 일정 · 복수 · 행사별 일시',
+  1: '커리큘럼 · 단일 회차 · 기간 지정',
+  2: '커리큘럼 · 복수 회차 · 기간 지정',
 }
 
 export function uniqueVariantTitles(id: TtP4bVariantId) {

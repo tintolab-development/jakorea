@@ -61,16 +61,12 @@ function typeSettings(
 }
 
 describe('previewTrainedTeachersRegistrationDevAutofill', () => {
-  it('TCH-01~07 preset이 유형·회차·일정 모드·행 수를 독립적으로 정의한다', () => {
+  it('신규 등록 preset은 커리큘럼형·기간 지정(단일·복수 회차)만 정의한다 (CMS-FUNC-0591)', () => {
     const expected = [
-      ['curriculum', 'single', 'date', 2, 1],
       ['curriculum', 'single', 'period', 2, 1],
-      ['curriculum', 'multi', 'date', 2, 1],
       ['curriculum', 'multi', 'period', 2, 1],
-      ['schedule', 'single', 'date', 1, 1],
-      ['schedule', 'single', 'period', 1, 1],
-      ['schedule', 'multi', 'date', 1, 2],
     ] as const
+    expect(TRAINED_TEACHERS_REGISTRATION_DEV_AUTOFILL_CASE_IDS).toHaveLength(expected.length)
 
     for (const [index, caseId] of TRAINED_TEACHERS_REGISTRATION_DEV_AUTOFILL_CASE_IDS.entries()) {
       const preset = resolveTrainedTeachersRegistrationDevAutofillPreset(caseId)
@@ -85,29 +81,14 @@ describe('previewTrainedTeachersRegistrationDevAutofill', () => {
     }
   })
 
-  it('7개 preset은 기본 교육일지와 TCH-07 직접 일정 데이터를 생성한다', () => {
+  it('preset은 기본 교육일지를 켜고 기간 지정 예정일을 만든다', () => {
     for (const caseId of TRAINED_TEACHERS_REGISTRATION_DEV_AUTOFILL_CASE_IDS) {
       const built = previewTrainedTeachersRegistrationDevAutofillForCase(caseId, resolved)
       expect(
         built.overlay['trainedTeachersRegistration.educationCurriculum.educationJournalEnabled']
       ).toBe('yes')
+      expect(built.typeSettings.educationScheduleMode).toBe('period')
     }
-
-    const tch07 = previewTrainedTeachersRegistrationDevAutofillForCase(7, resolved)
-    expect(
-      tch07.overlay['trainedTeachersRegistration.educationScheduleSettings.scheduleLines']
-    ).toBeUndefined()
-    expect(
-      tch07.overlay['generalRegistration.educationScheduleCurriculum.eventNameByDetail']
-    ).toEqual(expect.objectContaining({ 1: expect.any(String), 2: expect.any(String) }))
-    expect(
-      tch07.overlay['generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso']
-    ).toEqual(
-      expect.objectContaining({
-        1: expect.stringMatching(/\d{1,2}:\d{2}/),
-        2: expect.stringMatching(/\d{1,2}:\d{2}/),
-      })
-    )
   })
 
   it('교육일지 없음과 교육 연수 ON/OFF를 preset preview에 주입할 수 있다', () => {
@@ -120,7 +101,7 @@ describe('previewTrainedTeachersRegistrationDevAutofill', () => {
       ]
     ).toBe('no')
 
-    const withTraining = previewTrainedTeachersRegistrationDevAutofillForCase(3, resolved, {
+    const withTraining = previewTrainedTeachersRegistrationDevAutofillForCase(2, resolved, {
       teacherTrainingEnabled: true,
     })
     expect(withTraining.layout.teacherTrainingEnabled).toBe(true)
@@ -147,7 +128,7 @@ describe('previewTrainedTeachersRegistrationDevAutofill', () => {
       )
     )
   )(
-    'TCH-%02d x 교육 연수 %s x 교육일지 %s 조합이 화면·overlay 필수값을 채운다',
+    '케이스 $caseId x 교육 연수 $teacherTrainingEnabled x 교육일지 $educationJournalEnabled 조합이 화면·overlay 필수값을 채운다',
     ({ caseId, teacherTrainingEnabled, educationJournalEnabled }) => {
       const built = previewTrainedTeachersRegistrationDevAutofillForCase(caseId, resolved, {
         teacherTrainingEnabled,
@@ -191,12 +172,6 @@ describe('previewTrainedTeachersRegistrationDevAutofill', () => {
         }
       )
       expect(labels).toEqual([])
-
-      if (caseId === 7) {
-        expect(
-          built.overlay['trainedTeachersRegistration.educationScheduleSettings.scheduleLines']
-        ).toBeUndefined()
-      }
     }
   )
 

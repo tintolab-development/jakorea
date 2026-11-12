@@ -18,6 +18,7 @@ import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/g
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { organizationScheduleAssignmentsQueryKey } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { AUTO_RAW_ACCESS_QUERY_OPTIONS } from '@/features/program/general/api/auto-raw-access-query'
 import { isParticipatingInstitutionStudentListApplicable } from '@/features/program/general/lib/participating-institution-detail-tabs'
 import {
   evaluateOrganizationAttendanceScopeReadiness,
@@ -198,7 +199,8 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
         organizationApplicationId,
         sessions: assignedSessions,
       }),
-    staleTime: 15_000,
+    // 학생명단 GET(원문 + 자동 기록)을 함께 부른다 — 진입마다 조회·이탈 시 캐시 제거
+    ...AUTO_RAW_ACCESS_QUERY_OPTIONS,
     retry: false,
   })
 

@@ -2,6 +2,7 @@ import { forwardRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { InputRef } from 'antd'
 import {
+  acceptStrictIntegerInput,
   formatCurrencyInput,
   formatDecimalInputDisplay,
   formatGroupedDigits,
@@ -27,6 +28,20 @@ export interface CmsNumericInputProps
   max?: number
   precision?: number
   onValueChange?: (value: string) => void
+  /**
+   * opt-in(integer 전용): 숫자 외 문자·부호·소수점이 들어오면 값을 고치지 않고 입력을 거부한다.
+   * 기본 false — 기존 정제(문자 제거) 동작 유지.
+   */
+  rejectInvalidInput?: boolean
+  /** opt-in: 정수 자릿수 상한. `rejectInvalidInput`과 함께 쓰면 초과 입력을 거부한다. */
+  maxDigits?: number
+  /** 거부된 입력 알림 — 화면에서 오류 문구를 띄울 때 쓴다. */
+  onInvalidInput?: (reason: 'invalid-char' | 'too-long') => void
+  /**
+   * blur 시 부호 제거·min/max 보정을 할지. 기본 true(기존 동작).
+   * false면 값을 바꾸지 않고 화면 검증 문구로 안내한다.
+   */
+  normalizeOnBlur?: boolean
 }
 
 function formatNumericInputDisplay(
@@ -64,6 +79,10 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
       max,
       precision,
       onValueChange,
+      rejectInvalidInput = false,
+      maxDigits,
+      onInvalidInput,
+      normalizeOnBlur = true,
       onBlur,
       ...rest
     },
@@ -92,6 +111,13 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
       const input = event.currentTarget
+      if (rejectInvalidInput && mode === 'integer') {
+        const accepted = acceptStrictIntegerInput(input.value, maxDigits)
+        if (!accepted.ok) {
+          onInvalidInput?.(accepted.reason)
+          return
+        }
+      }
       const selectionStart = input.selectionStart
       const rawBeforeCaret =
         selectionStart == null
@@ -111,8 +137,10 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
     }
 
     const handleBlur: CmsInputProps['onBlur'] = event => {
-      const normalized = normalizeNumericInputOnBlur(rawValue, options)
-      if (normalized !== rawValue) updateValue(normalized)
+      if (normalizeOnBlur) {
+        const normalized = normalizeNumericInputOnBlur(rawValue, options)
+        if (normalized !== rawValue) updateValue(normalized)
+      }
       onBlur?.(event)
     }
 

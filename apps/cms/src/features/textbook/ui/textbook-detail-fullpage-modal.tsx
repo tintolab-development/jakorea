@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { BookOutlined } from '@ant-design/icons'
-import { CmsButton, CmsCheckbox, CmsInput, CmsRadio, CmsSelect } from '@/shared/ui'
+import { CmsButton, CmsCheckbox, CmsInput, CmsRadio, CmsSelect, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import {
+  hasTextbookEducationStageSelection,
+  isTextbookEditRequiredFilled,
+} from '@/features/textbook/lib/textbook-edit-required'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -82,6 +90,7 @@ function TextbookDetailFullPageModalInner({
 }: TextbookDetailFullPageModalInnerProps) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
+  const { showAlert } = useCmsAlert()
   const remoteEnabled = useDataManagementRemoteEnabled('textbooks', open)
   const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions(open)
   const detailQuery = useTextbookDetailQuery(textbookId, open)
@@ -115,6 +124,14 @@ function TextbookDetailFullPageModalInner({
 
   const handleSave = () => {
     if (!editForm) return
+    // QA-0443: 등록 팝업과 같은 필수 항목 미입력 안내
+    if (!isTextbookEditRequiredFilled(editForm)) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     const payload = toSubmitPayload(editForm)
     if (!payload) {
       return
@@ -418,10 +435,7 @@ function toEditForm(textbook: TextbookRow): TextbookEditForm {
 
 function toSubmitPayload(form: TextbookEditForm): TextbookCreateInput | null {
   const summary = summarizeEducationStages(form.educationStages)
-  const hasSelection = form.educationStages.some(
-    stage => stage.selected || (stage.grades ?? []).some(grade => grade.selected)
-  )
-  if (!hasSelection) return null
+  if (!hasTextbookEducationStageSelection(form.educationStages)) return null
 
   return {
     textbookName: form.textbookName.trim(),

@@ -6,6 +6,11 @@ import {
   readInstructorTransportExclusion,
   type InstructorTransportExclusion,
 } from '../lib/instructor-transport-exclusion.ts'
+import {
+  DEFAULT_INSTRUCTOR_EXPENSE_POLICIES,
+  readInstructorExpensePolicies,
+  type InstructorExpensePolicies,
+} from '../lib/instructor-expense-items.ts'
 import { previewInstructorSettlementApplication } from './instructor-settlement-client.ts'
 
 /**
@@ -29,5 +34,14 @@ export function useInstructorSettlementPreviewQuery(assignmentId: number | null 
   const transportExclusion: InstructorTransportExclusion | null = query.isSuccess
     ? readInstructorTransportExclusion(query.data)
     : null
-  return { enabled, transportExclusion }
+  /** 식사비·활동비 신청 가능·한도·영수증 필요 여부 (K14). 받기 전에는 기존 동작 */
+  const expensePolicies: InstructorExpensePolicies = query.isSuccess
+    ? readInstructorExpensePolicies(query.data)
+    : DEFAULT_INSTRUCTOR_EXPENSE_POLICIES
+  /** 미리보기 차단 사유. 사업 운영 종료 후면 SETTLEMENT_BUSINESS_PERIOD_CLOSED (A1) */
+  const blockerCode =
+    query.isSuccess && typeof query.data?.blockerCode === 'string' && query.data.blockerCode.trim()
+      ? query.data.blockerCode.trim().toUpperCase()
+      : null
+  return { enabled, transportExclusion, expensePolicies, blockerCode }
 }

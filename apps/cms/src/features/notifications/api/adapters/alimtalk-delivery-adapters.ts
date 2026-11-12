@@ -9,7 +9,7 @@ import {
   mapAlimtalkMetadataFields,
   mapNotificationTemplatePreviewToItem,
 } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
-import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
+import { resolveNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   AlimtalkBroadcastTiming,
   AlimtalkSendHistoryRow,
@@ -176,8 +176,10 @@ export function mapDeliveryToSendHistoryRow(
     scheduled: broadcastTiming === '예약',
   })
   const failedReasonRaw = item.failedReason?.trim() || ''
+  const displayReason = item.displayReason?.trim() || ''
+  // QA-0178: 서버 displayReason 우선, 없으면 failedReason 정리값
   const failedReason =
-    sendStatus === '발송 실패' ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw : ''
+    sendStatus === '발송 실패' ? resolveNotificationFailedReason(displayReason, failedReasonRaw) : ''
 
   return {
     id: String(item.deliveryId),
@@ -198,7 +200,8 @@ export function mapDeliveryToSendHistoryRow(
     receivedAt: item.deliveredAt?.trim() || '',
     sendCount: '1건',
     sendNumber: item.providerMessageId || item.providerRequestId || String(item.deliveryId),
-    message: item.providerResultMessage || failedReason || failedReasonRaw || '',
+    // 발송 실패 행은 정리된 실패 사유를 발송사 원문 메시지보다 먼저 보여 준다.
+    message: failedReason || displayReason || item.providerResultMessage || failedReasonRaw || '',
     failedReason: failedReason || undefined,
     phoneTemplate: phoneTemplate ?? emptyPhoneTemplate(),
   }

@@ -74,8 +74,11 @@ export function createDefaultParticipantRowVisibility(): boolean[] {
 /** 미리보기 기본값 — 배열 참조 고정 */
 export const DEFAULT_PARTICIPANT_ROW_VISIBILITY: boolean[] = createDefaultParticipantRowVisibility()
 
-/** 타이틀명(titleName) — 한글 기준 최대 글자 수(유니코드 스칼라 단위) */
-export const TEMPLATE_FIELD_TITLE_NAME_MAX_LENGTH = 9
+/**
+ * 타이틀명(titleName) — 최대 글자 수(유니코드 스칼라 단위).
+ * 긴 제목은 미리보기·PDF에서 글자 크기 축소 후 두 줄로 줄바꿈한다(`resolveCertificateTitleLayout`).
+ */
+export const TEMPLATE_FIELD_TITLE_NAME_MAX_LENGTH = 20
 
 function sliceTitleNameToMax(value: string): string {
   return [...value].slice(0, TEMPLATE_FIELD_TITLE_NAME_MAX_LENGTH).join('')

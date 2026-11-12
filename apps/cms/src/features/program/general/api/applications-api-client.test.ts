@@ -648,7 +648,7 @@ describe('updateInstructorApplication', () => {
       managerComment: '배정 후 강사비 재확인',
       feePolicy: {
         basisType: 'RECRUITMENT',
-        measure: 'PER_SESSION',
+        measure: 'PER_LECTURE',
         amount: 150000,
         instructorFeeGrade: 'GRADE_3',
       },
@@ -662,7 +662,7 @@ describe('updateInstructorApplication', () => {
         managerComment: '배정 후 강사비 재확인',
         feePolicy: {
           basisType: 'RECRUITMENT',
-          measure: 'PER_SESSION',
+          measure: 'PER_LECTURE',
           amount: 150000,
           instructorFeeGrade: 'GRADE_3',
         },

@@ -8,7 +8,7 @@ import {
   type SmsMessageType,
   type SmsSenderNumberType,
 } from '@/features/notifications/api/adapters/sms-channel'
-import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
+import { resolveNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   SmsBroadcastTiming,
   SmsSendHistoryAttachment,
@@ -173,10 +173,10 @@ export function mapSmsDeliveryToSendHistoryRow(
   const sendStatus = mapNotificationSendStatus(item.sendStatus, {
     scheduled: broadcastTiming === '예약',
   })
-  const failedReasonRaw = item.failedReason?.trim() || ''
+  // QA-0178: 서버 displayReason 우선, 없으면 failedReason 정리값
   const failedReason =
     sendStatus === '발송 실패'
-      ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw
+      ? resolveNotificationFailedReason(item.displayReason, item.failedReason)
       : ''
   const attachments = previewAttachmentItems(previewRecord)
   // 목록 SSOT: renderedContentPreview (templateDisplayName fallback 금지)

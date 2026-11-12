@@ -17,6 +17,8 @@ export type InstitutionCancelApprovalModalProps = {
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
+  /** 기본 three(즉시·발표일에 맞춰서·직접 설정). 1사1교는 발표일이 없어 two */
+  notifyTimingOptions?: 'two' | 'three'
 }
 
 export function resolveInstitutionCancelApprovalNotifyVariantFromRow(
@@ -32,6 +34,7 @@ export function InstitutionCancelApprovalModal({
   onCancel,
   onConfirm,
   zIndex,
+  notifyTimingOptions,
 }: InstitutionCancelApprovalModalProps) {
   const variant = resolveInstitutionCancelApprovalNotifyVariantFromRow(institution)
   const schoolName = institution?.schoolName ?? ''
@@ -52,6 +55,7 @@ export function InstitutionCancelApprovalModal({
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
+      notifyTimingOptions={notifyTimingOptions}
     />
   )
 }

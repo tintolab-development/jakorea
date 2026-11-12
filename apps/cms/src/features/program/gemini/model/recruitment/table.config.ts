@@ -71,7 +71,13 @@ const searchSyncRules: readonly TableSearchParamRule<GeminiRecruitmentPendingFil
   },
 ]
 
-const [defaultFrom, defaultTo] = getDefaultTrainingRequestPeriodRange()
+/**
+ * QA-0103: 기본 조회는 전체 기간(연수 요청 가능기간 비움).
+ * 연초~오늘을 기본으로 채우면 조회 시 그 밖의 진행 중 공고가 빠진다.
+ * `getDefaultTrainingRequestPeriodRange`는 dev 자동 입력 기준일 계산용으로만 남긴다.
+ */
+const DEFAULT_TRAINING_REQUEST_PERIOD_RANGE: GeminiRecruitmentPendingFilters['trainingRequestPeriodRange'] =
+  null
 
 export const geminiRecruitmentTablePageConfig: TablePageConfig<
   GeminiRecruitmentRow,
@@ -88,7 +94,7 @@ export const geminiRecruitmentTablePageConfig: TablePageConfig<
     initialPending: {
       title: '',
       status: 'ALL',
-      trainingRequestPeriodRange: [defaultFrom, defaultTo],
+      trainingRequestPeriodRange: DEFAULT_TRAINING_REQUEST_PERIOD_RANGE,
     },
 
     syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
@@ -96,10 +102,8 @@ export const geminiRecruitmentTablePageConfig: TablePageConfig<
       const status = parseStatus(searchParams.get(`${URL_PREFIX}_status`))
       const fromStr = searchParams.get(`${URL_PREFIX}_from`)
       const toStr = searchParams.get(`${URL_PREFIX}_to`)
-      let trainingRequestPeriodRange: [Dayjs | null, Dayjs | null] | null = [
-        defaultFrom,
-        defaultTo,
-      ]
+      let trainingRequestPeriodRange: [Dayjs | null, Dayjs | null] | null =
+        DEFAULT_TRAINING_REQUEST_PERIOD_RANGE
       if (fromStr || toStr) {
         const a = fromStr ? dayjs(fromStr) : null
         const b = toStr ? dayjs(toStr) : null

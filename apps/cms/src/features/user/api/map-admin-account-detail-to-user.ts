@@ -1,4 +1,5 @@
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
+import { readServerManAge } from '@/features/user/api/format-gender-birth-display'
 import type { AdminTermsAgreementResponse } from '@/shared/api/generated/members/schemas/adminTermsAgreementResponse'
 import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
@@ -100,6 +101,7 @@ export function mapAdminAccountDetailToUser(
       return display === '-' ? undefined : display
     })(),
     birthDate: normalizedBirthDate ?? detail.birthDate ?? undefined,
+    ...(readServerManAge(detail) != null ? { manAge: readServerManAge(detail) } : {}),
     isActive: mapMemberStatusToIsActive(undefined, detail.status),
     createdAt: detail.createdAt ?? now,
     updatedAt: detail.updatedAt ?? now,

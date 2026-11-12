@@ -111,8 +111,19 @@ describe('teacher-detail-url-context', () => {
       affiliatedSchoolUserId: 'school-1',
       affiliatedSchoolName: '진월초등학교',
     })
-    expect(params.affiliatedSchool).toBe('진월초등학교')
+    expect(params.affiliatedSchool).toBe('school-1')
     expect(params.instructorProfile).toBe('school_teacher')
+  })
+
+  it('teacherDetailUrlParamsFromUser는 학교명을 주소창에 넣지 않는다 (QA-0106)', () => {
+    const params = teacherDetailUrlParamsFromUser({
+      role: 'INSTRUCTOR',
+      roles: ['SCHOOL_TEACHER'],
+      affiliatedSchoolName: '진월초등학교',
+      schoolInfo: { schoolName: '진월초등학교' } as User['schoolInfo'],
+    })
+    expect(params.affiliatedSchool).toBeUndefined()
+    expect(Object.values(params)).not.toContain('진월초등학교')
   })
 
   it('SCHOOL_TEACHER 단독 roles는 URL dual 힌트로 덮지 않는다', () => {
@@ -151,14 +162,41 @@ describe('teacher-detail-url-context', () => {
     expect(next.instructorMemberProfile).toBe('instructor_only')
   })
 
-  it('readTeacherDetailUrlContext는 쿼리를 파싱한다', () => {
+  it('readTeacherDetailUrlContext는 소속 학교 내부 식별번호를 파싱한다', () => {
+    const sp = new URLSearchParams('affiliatedSchool=1024&instructorProfile=school_teacher')
+    expect(readTeacherDetailUrlContext(sp)).toEqual({
+      affiliatedSchoolUserId: '1024',
+      instructorMemberProfile: 'school_teacher',
+    })
+  })
+
+  it('이전 링크의 학교명 값은 무시하고 나머지 힌트는 그대로 읽는다', () => {
     const sp = new URLSearchParams(
       'affiliatedSchool=%EC%A7%84%EC%9B%94%EC%B4%88%EB%93%B1%ED%95%99%EA%B5%90&instructorProfile=school_teacher'
     )
     expect(readTeacherDetailUrlContext(sp)).toEqual({
-      affiliatedSchoolName: '진월초등학교',
       instructorMemberProfile: 'school_teacher',
     })
+  })
+
+  it('URL 학교 식별번호 힌트는 비어 있을 때만 채우고 학교명은 만들지 않는다', () => {
+    const base = {
+      id: 'u1',
+      email: 't@example.com',
+      name: '김교사',
+      role: 'INSTRUCTOR',
+      roles: ['SCHOOL_TEACHER'],
+    } as unknown as Omit<User, 'password'>
+
+    const next = applyTeacherDetailUrlContext(base, { affiliatedSchoolUserId: '1024' })
+    expect(next.affiliatedSchoolUserId).toBe('1024')
+    expect(next.affiliatedSchoolName).toBeUndefined()
+
+    const kept = applyTeacherDetailUrlContext(
+      { ...base, affiliatedSchoolUserId: '7' },
+      { affiliatedSchoolUserId: '1024' }
+    )
+    expect(kept.affiliatedSchoolUserId).toBe('7')
   })
 
   it('memberDetailUrlParamsFromUser는 memberId·role 힌트를 넣는다', () => {

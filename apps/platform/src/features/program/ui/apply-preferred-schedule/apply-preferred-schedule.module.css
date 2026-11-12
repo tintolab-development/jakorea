@@ -215,12 +215,13 @@
 }
 
 /* CMS ButtonAddIcon(13×13) 대응 — secondary 글자색(currentColor) */
+/* 시안 Icon / Common 20 add — 그림 영역(10.833)만 마스크로 사용, 색은 currentColor */
 .addButtonIcon {
-  width: 13px;
-  height: 13px;
+  width: 11px;
+  height: 11px;
   flex-shrink: 0;
   background: currentColor;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13'%3E%3Cpath fill='black' d='M6 0h1v13H6V0zm-6 6h13v1H0V6z'/%3E%3C/svg%3E");
+  mask-image: url('../../image/icon/add-glyph.svg');
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: contain;

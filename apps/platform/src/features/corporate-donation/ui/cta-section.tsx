@@ -1,5 +1,7 @@
 import { Fragment } from 'react'
 import jaArrowCtaMintUrl from '@/features/home/image/icon/ja-arrow-cta-mint.svg'
+import jaArrowCtaLightUrl from '@/shared/assets/icons/ja-arrow-cta-light.svg'
+import { platformMediaQueries } from '@/shared/lib'
 import { PFText } from '@/shared/ui'
 import {
   CTA_SECTION_BUTTON_LABEL,
@@ -39,14 +41,18 @@ export function CtaSection({ onInquiryClick }: { onInquiryClick: () => void }) {
               <PFText as="span" typo="hl-lg" color="white" className={styles.actionLabel}>
                 {CTA_SECTION_BUTTON_LABEL}
               </PFText>
-              <img
-                className={styles.actionIcon}
-                src={jaArrowCtaMintUrl}
-                alt=""
-                aria-hidden="true"
-                width={32}
-                height={32}
-              />
+              {/* 시안: PC는 연한 민트 화살표, 모바일은 민트 화살표 */}
+              <picture className={styles.actionIconPicture}>
+                <source media={platformMediaQueries.pcUp} srcSet={jaArrowCtaLightUrl} />
+                <img
+                  className={styles.actionIcon}
+                  src={jaArrowCtaMintUrl}
+                  alt=""
+                  aria-hidden="true"
+                  width={32}
+                  height={32}
+                />
+              </picture>
             </button>
           </div>
         </div>

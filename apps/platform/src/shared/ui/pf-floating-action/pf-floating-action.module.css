@@ -1,0 +1,38 @@
+.wrap {
+  position: fixed;
+  right: var(--spacing-16);
+  bottom: calc(var(--spacing-16) + env(safe-area-inset-bottom, 0px));
+  left: var(--spacing-16);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.button {
+  width: 100%;
+  pointer-events: auto;
+  box-shadow: var(--shadow-card-lg);
+}
+
+/* 고정 버튼 높이만큼 페이지 끝 여백 — 마지막 내용이 버튼에 가리지 않게 한다 */
+.spacer {
+  height: calc(var(--spacing-40) + var(--spacing-40) + var(--spacing-16));
+}
+
+@media (--bp-pc-up) {
+  .wrap {
+    right: var(--spacing-40);
+    bottom: var(--spacing-40);
+    left: auto;
+  }
+
+  .button {
+    width: auto;
+    min-width: 200px;
+  }
+
+  .spacer {
+    display: none;
+  }
+}

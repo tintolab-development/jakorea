@@ -12,6 +12,8 @@ import {
 } from '@/features/program/trained-teachers/api/list-params'
 import { resolveTrainedTeachersListFilterFields } from '@/features/program/trained-teachers/lib/list-filter-fields'
 
+const TRAINED_TEACHERS_LIST_HEADER_NOTICE = '진행 중이거나 완료된 프로그램은 삭제할 수 없습니다.'
+
 export type TrainedTeachersOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
 export interface TrainedTeachersListQueryParams extends Record<string, string | undefined> {
@@ -142,6 +144,8 @@ export function useTrainedTeachersProgramListFilters() {
       filterFields: resolveTrainedTeachersListFilterFields(listView),
       serverSideOverviewFilters: remoteEnabled,
       calendarProgramType: 'TRAINED_TEACHER',
+      // 시안 5416:108555·108765: 안내 문구는 전체 프로그램 탭(리스트·캘린더)에만
+      ...(listView === 'ALL' ? { headerNotice: TRAINED_TEACHERS_LIST_HEADER_NOTICE } : {}),
     }
   }, [remoteEnabled, statusFilter])
 

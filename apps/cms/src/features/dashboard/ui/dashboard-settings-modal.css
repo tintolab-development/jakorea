@@ -270,3 +270,12 @@
   transition: none !important;
   animation: none !important;
 }
+
+/* QA-0020 — 위젯 마지막 프로그램 해제 차단 사유 */
+.dashboard-settings-modal__program-notice {
+  margin-bottom: 12px;
+  color: var(--color-red, #c32f4a);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}

@@ -1,4 +1,5 @@
 import { formatBusinessIncomeDisplay } from '@jakorea/domain/instructor/business-income'
+import { readServerManAge } from '@/features/user/api/format-gender-birth-display'
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import type { GeminiAssignedInstructor } from '@/shared/api/generated/dashboard/schemas/geminiAssignedInstructor'
 import type { GeminiInstructorApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiInstructorApplicationItem'
@@ -126,6 +127,7 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     managerScheduleChangeCount: dto.teacherScheduleChangeCount ?? 0,
     managerGender: toGenderLabelOrRaw(dto.teacherGender) ?? '',
     managerBirthDate: trimmed(dto.teacherBirthDate),
+    managerAge: readServerManAge(dto, 'teacherAge') ?? null,
     managerEmploymentStatus: mapEmploymentStatus(dto.teacherEmploymentStatus),
     managerContact: trimmed(dto.teacherPhone),
     managerEmail: trimmed(dto.teacherEmail),

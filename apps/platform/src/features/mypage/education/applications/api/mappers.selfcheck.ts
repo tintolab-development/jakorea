@@ -21,6 +21,51 @@ assert.equal(generalOrganization.educationTargetLabel, '')
 assert.equal(generalOrganization.educationFormLabel, '')
 assert.equal(generalOrganization.educationForm, undefined)
 
+// BE-14·QA-0210: 목록 교육대상·교육형태는 프로그램 상세 헤더 배지와 같은 값
+const audienceBase = {
+  applicationId: 2,
+  applicationType: 'INDIVIDUAL',
+  programId: 200,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '교육대상 복수 프로그램',
+  displayStatus: '진행 중',
+} as const
+const multiTargetOnline = mapPortalProgramApplicationListItem({
+  ...audienceBase,
+  educationTargets: ['elementary', 'university'],
+  educationForm: 'online',
+  educationFormLabel: '온라인',
+  educationFormScheduleDetail: 'common',
+})
+assert.ok(multiTargetOnline)
+assert.equal(multiTargetOnline.educationTargetLabel, '초등학교, 대학(원)생')
+assert.equal(multiTargetOnline.educationForm, 'online')
+assert.equal(multiTargetOnline.educationFormLabel, '온라인')
+
+const singleTargetNoLabel = mapPortalProgramApplicationListItem({
+  ...audienceBase,
+  educationTargets: ['middle'],
+  educationForm: 'participant_selection',
+  educationFormLabel: null,
+  educationFormScheduleDetail: 'common',
+})
+assert.ok(singleTargetNoLabel)
+assert.equal(singleTargetNoLabel.educationTargetLabel, '중학생')
+assert.equal(singleTargetNoLabel.educationForm, 'participant_choice')
+assert.equal(singleTargetNoLabel.educationFormLabel, '참여자 선택')
+
+const perScheduleForm = mapPortalProgramApplicationListItem({
+  ...audienceBase,
+  educationTargets: [],
+  educationForm: 'offline',
+  educationFormLabel: null,
+  educationFormScheduleDetail: 'perSchedule',
+})
+assert.ok(perScheduleForm)
+assert.equal(perScheduleForm.educationTargetLabel, '전체')
+assert.equal(perScheduleForm.educationFormLabel, '온/오프라인')
+
 const instructorReportsPending = mapPortalProgramApplicationListItem({
   applicationId: 9001,
   applicationType: 'INSTRUCTOR',

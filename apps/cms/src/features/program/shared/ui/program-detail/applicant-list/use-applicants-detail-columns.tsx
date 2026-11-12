@@ -12,6 +12,10 @@ import type { ApplicantSchoolRow } from '@/features/program/shared/model/applica
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import type { ApplicantSessionLineInput } from './applicants-detail-session-format'
 import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import type { InstitutionColumnPreset } from './applicant-list-menu'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { shouldShowInstitutionApplicationSessionsColumn } from '@/features/program/general/lib/institution-application-session-display'
@@ -41,6 +45,7 @@ const COMPANY_SCHOOL_CLASS_COUNT_COL_WIDTH = 148
 const COMPANY_SCHOOL_STUDENT_COUNT_COL_WIDTH = 136
 const COMPANY_SCHOOL_TEACHER_COL_WIDTH = 136
 
+/** `company-school` preset 공유 행(교육받은 교사 등 1사1교 외) — 기존 「N지망 날짜 시간」 표기 */
 function formatCompanySchoolPreferredScheduleLine(
   session: NonNullable<ApplicantSchoolRow['sessions']>[number]
 ): string {
@@ -61,6 +66,28 @@ function formatCompanySchoolPreferredScheduleLine(
   return formatCmsScheduleDisplayLabel([rank, dateLabel, timeLabel].filter(Boolean).join(' '))
 }
 
+/**
+ * 1사1교 기관 신청 목록 「진행 희망 교육 일정」 한 줄 (시안 4175:104376)
+ * `2026.01.09(금) 09:20 ~ 11:20` ㅣ `2차시` — 지망 접두어 없이 지망 순서대로 한 줄씩.
+ * 차시 수는 requested-schedules `sessionCount`(`requestedSessionCount`)가 행에 있을 때만 붙인다.
+ * 목록 API `preferredEducationSchedules`에는 차시 수가 없어 지어내지 않는다.
+ */
+function formatCompanySchoolPreferredScheduleSegments(
+  session: NonNullable<ApplicantSchoolRow['sessions']>[number]
+): string[] {
+  const dateLabel = [session.date, session.dayOfWeek ? `(${session.dayOfWeek})` : '']
+    .filter(Boolean)
+    .join('')
+  const timeLabel = session.timeRange && session.timeRange !== '-' ? session.timeRange : ''
+  const dateTime = formatCmsScheduleDisplayLabel([dateLabel, timeLabel].filter(Boolean).join(' '))
+  const sessionCount = session.requestedSessionCount
+  const countLabel =
+    typeof sessionCount === 'number' && Number.isInteger(sessionCount) && sessionCount > 0
+      ? `${sessionCount}차시`
+      : ''
+  return [dateTime, countLabel].filter(Boolean)
+}
+
 export function useInstitutionApplicantColumns(params: {
   setSelectedItem: (record: ApplicantSchoolRow) => void
   approvalStatusKeys: ApprovalStatusKey[]
@@ -77,6 +104,11 @@ export function useInstitutionApplicantColumns(params: {
   detailScheduleTimeSpan?: string | null
   curriculumSessionLabels?: readonly string[] | null
   educationScheduleLines?: readonly string[] | null
+  /**
+   * `company-school` preset을 쓰는 화면 중 실제 1사1교 프로그램인지(교육받은 교사와 구분).
+   * true면 시안 4175:104376대로 신청 기관명 일반 텍스트(행 클릭으로 상세)·희망 일정 「날짜 시간 ㅣ N차시」.
+   */
+  companySchoolProgram?: boolean
 }): ColumnsType<ApplicantSchoolRow> {
   const {
     setSelectedItem,
@@ -90,6 +122,7 @@ export function useInstitutionApplicantColumns(params: {
     detailScheduleTimeSpan = null,
     curriculumSessionLabels = null,
     educationScheduleLines = null,
+    companySchoolProgram = false,
   } = params
   const isGeneralDetail = preset === 'general-detail'
   const isCompanySchool = preset === 'company-school'
@@ -119,14 +152,17 @@ export function useInstitutionApplicantColumns(params: {
             width: 150,
             align: 'center',
             ellipsis: true,
-            render: (text: string, record) => (
-              <a
-                onClick={() => setSelectedItem(record)}
-                style={{ color: 'var(--color-primary)', fontWeight: 500 }}
-              >
-                {text}
-              </a>
-            ),
+            render: (text: string, record) =>
+              companySchoolProgram ? (
+                text
+              ) : (
+                <a
+                  onClick={() => setSelectedItem(record)}
+                  style={{ color: 'var(--color-primary)', fontWeight: 500 }}
+                >
+                  {text}
+                </a>
+              ),
           },
           {
             title: '기관 소재지',
@@ -203,7 +239,15 @@ export function useInstitutionApplicantColumns(params: {
                       key={`${record.id}-${session.round}-${index}`}
                       className="applicant-details__session-line applicant-details__session-line--nowrap"
                     >
-                      {formatCompanySchoolPreferredScheduleLine(session)}
+                      {companySchoolProgram ? (
+                        <ProgramDetailTdSegmentWrap>
+                          {withProgramDetailTdDivider(
+                            formatCompanySchoolPreferredScheduleSegments(session)
+                          )}
+                        </ProgramDetailTdSegmentWrap>
+                      ) : (
+                        formatCompanySchoolPreferredScheduleLine(session)
+                      )}
                     </div>
                   ))}
                 </div>
@@ -483,6 +527,7 @@ export function useInstitutionApplicantColumns(params: {
       detailScheduleTimeSpan,
       isGeneralDetail,
       openApprovalDropdownId,
+      companySchoolProgram,
       programBridge,
       scheduleLines,
       setSelectedItem,

@@ -6,7 +6,7 @@ import {
   useAgeTransitionStatusQuery,
 } from '@/features/auth/age-transition'
 import { MYPAGE_PATH, MYPAGE_SETTINGS_PATH } from '@/features/mypage'
-import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
+import illustCheckUrl from '@/shared/assets/illustration/graphic-check-84.png'
 import { getAccessToken, isRemoteApiConfigured } from '@/shared/lib'
 import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'

@@ -39,7 +39,13 @@ const storagePrefix = 'platform_member_oauth'
 const socialAuthState = createSocialAuthState({ storagePrefix })
 
 const httpClient = {
-  post: (url: string, body?: unknown) => axiosClient.post(url, body),
+  post: (url: string, body?: unknown) =>
+    axiosClient.post(
+      url,
+      body,
+      // QA-0137: SSO login session consume 응답의 HttpOnly refresh 쿠키(`JA_MEMBER_RT`)가 저장되도록 명시
+      url === portalSocialAuthPaths.loginSessionConsume() ? { withCredentials: true } : undefined
+    ),
   get: (url: string) => axiosClient.get(url),
   delete: (url: string) => axiosClient.delete(url),
 }

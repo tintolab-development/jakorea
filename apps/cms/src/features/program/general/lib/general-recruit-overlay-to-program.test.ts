@@ -55,7 +55,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(participantInfo?.contactOrganizationName).toBe('JA Korea')
     expect(participantInfo?.inquiryTel).toBe('02-6085-6028')
     expect(participantInfo?.inquiryEmail).toBe('cc@jakorea.org')
-    expect(participantInfo?.educationTarget).toBe('고등학교, 대학(원)생')
+    expect(participantInfo?.educationTarget).toBe('고등학생, 대학(원)생')
     expect(participantInfo?.educationTargetDetail).toBe('특성화고 3학년')
     expect(participantInfo?.recruitmentPeriodLabel).toContain('2025')
     expect(participantInfo?.programDescription).toBe('모집 양식 프로그램 설명')

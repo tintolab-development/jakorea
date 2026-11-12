@@ -167,7 +167,10 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
                 onChange={e => onProgramTypeChange(e.target.value as ProgramRegistrationType)}
               >
                 <CmsRadio size="medium" value="curriculum">커리큘럼형</CmsRadio>
-                <CmsRadio size="medium" value="schedule">일정형</CmsRadio>
+                {/* 신규 등록은 커리큘럼형 고정 — 시안 9899:221372 「일정형」 비활성 (CMS-FUNC-0591) */}
+                <CmsRadio size="medium" value="schedule" disabled>
+                  일정형
+                </CmsRadio>
               </CmsRadioGroup>
             }
             view="-"

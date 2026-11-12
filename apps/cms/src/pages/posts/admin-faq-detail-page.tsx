@@ -2,9 +2,9 @@
  * 게시글 관리 — FAQ 상세 (관리자)
  */
 
-import { useCallback, useState } from 'react'
+import { Fragment, useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { formatDateTimeSecondsDot } from '@/shared/utils/date'
+import { resolvePostsDetailMetaDates } from '@/features/posts/lib/posts-detail-meta-dates'
 import { Spin } from 'antd'
 import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
@@ -99,7 +99,7 @@ export function AdminFaqDetailPage() {
     )
   }
 
-  const dateStr = formatDateTimeSecondsDot(faq.createdAt)
+  const metaDates = resolvePostsDetailMetaDates(faq)
   const isPublic = faq.status === 'published'
 
   return (
@@ -156,7 +156,14 @@ export function AdminFaqDetailPage() {
             </div>
             <h1 className="admin-faq-detail-page__title">{faq.question}</h1>
             <div className="admin-faq-detail-page__meta">
-              <span className="admin-faq-detail-page__meta-text">{dateStr}</span>
+              {metaDates.map((item, index) => (
+                <Fragment key={item.key}>
+                  {index > 0 ? (
+                    <span className="admin-faq-detail-page__meta-divider" aria-hidden />
+                  ) : null}
+                  <span className="admin-faq-detail-page__meta-text">{item.text}</span>
+                </Fragment>
+              ))}
               {faq.author ? (
                 <>
                   <span className="admin-faq-detail-page__meta-divider" aria-hidden />

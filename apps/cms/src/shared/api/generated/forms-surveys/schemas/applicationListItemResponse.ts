@@ -6,6 +6,8 @@
  * OpenAPI spec version: v9
  */
 import type { ApplicationListItemResponseDisplayStatus } from './applicationListItemResponseDisplayStatus';
+import type { ApplicationListItemResponseEducationForm } from './applicationListItemResponseEducationForm';
+import type { ApplicationListItemResponseEducationFormScheduleDetail } from './applicationListItemResponseEducationFormScheduleDetail';
 import type { ApplicationListItemResponseRecruitTerm } from './applicationListItemResponseRecruitTerm';
 import type { ProgramApplicationSupplement } from './programApplicationSupplement';
 
@@ -43,4 +45,12 @@ export interface ApplicationListItemResponse {
   recruitmentStartAt?: string | null;
   /** 모집 종료 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다. */
   recruitmentEndAt?: string | null;
+  /** 교육대상 코드 배열(QA-0210). 공개 프로그램 상세 GET /api/portal/programs/{programId}의 educationTargets와 같은 값·같은 순서이며 신청한 모집 행과 무관합니다. 없으면 빈 배열. */
+  educationTargets?: string[];
+  /** 교육형태 코드(QA-0210). 프로그램 상세 educationForm과 같은 값. 없으면 null. */
+  educationForm?: ApplicationListItemResponseEducationForm;
+  /** 교육형태 한글 라벨. 프로그램 상세 educationFormLabel과 같은 값. educationFormScheduleDetail=perSchedule(일정별 상이)이면 상세와 같이 null. */
+  educationFormLabel?: string | null;
+  /** 교육형태 일정 공통/일정 별 상이. 프로그램 상세 educationFormScheduleDetail과 같은 값. */
+  educationFormScheduleDetail?: ApplicationListItemResponseEducationFormScheduleDetail;
 }

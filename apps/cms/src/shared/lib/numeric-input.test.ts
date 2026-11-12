@@ -4,6 +4,7 @@ import {
   formatNumberDisplay,
   normalizeNumericInputOnBlur,
   sanitizeNumericInput,
+  acceptStrictIntegerInput,
 } from './numeric-input'
 
 describe('sanitizeNumericInput', () => {
@@ -73,5 +74,24 @@ describe('formatNumberDisplay', () => {
     expect(formatNumberDisplay(1000)).toBe('1,000')
     expect(formatNumberDisplay(1.0)).toBe('1')
     expect(formatNumberDisplay('1234.50')).toBe('1,234.5')
+  })
+})
+
+describe('acceptStrictIntegerInput', () => {
+  it('숫자·쉼표·전각 숫자만 받는다', () => {
+    expect(acceptStrictIntegerInput('1,234')).toEqual({ ok: true, value: '1234' })
+    expect(acceptStrictIntegerInput('１２')).toEqual({ ok: true, value: '12' })
+    expect(acceptStrictIntegerInput('')).toEqual({ ok: true, value: '' })
+  })
+
+  it('부호·소수점·문자는 고치지 않고 거부한다', () => {
+    expect(acceptStrictIntegerInput('-1.5abc')).toEqual({ ok: false, reason: 'invalid-char' })
+    expect(acceptStrictIntegerInput('-1')).toEqual({ ok: false, reason: 'invalid-char' })
+    expect(acceptStrictIntegerInput('1.5')).toEqual({ ok: false, reason: 'invalid-char' })
+  })
+
+  it('자릿수 상한을 넘으면 거부한다', () => {
+    expect(acceptStrictIntegerInput('12345678901', 3)).toEqual({ ok: false, reason: 'too-long' })
+    expect(acceptStrictIntegerInput('999', 3)).toEqual({ ok: true, value: '999' })
   })
 })

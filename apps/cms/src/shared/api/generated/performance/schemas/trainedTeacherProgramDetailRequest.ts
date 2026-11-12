@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TrainedTeacherProgramDetailRequestTeacherTrainingEducationFormat } from './trainedTeacherProgramDetailRequestTeacherTrainingEducationFormat';
 
 export interface TrainedTeacherProgramDetailRequest {
   teacherTrainingEnabled?: boolean;
@@ -15,4 +16,6 @@ export interface TrainedTeacherProgramDetailRequest {
   journalSubmissionLimitType?: string;
   /** TT detail 전용 opaque JSON. programs serviceDetailJson 통짜 복사가 아님. */
   configJson?: string;
+  /** 교사 연수 교육 형태. 생략(null)이면 기존 값 유지, 빈 문자열이면 삭제. ONLINE|OFFLINE|HYBRID(대소문자 무관, online/offline/hybrid·온라인/오프라인/온오프라인 허용)만 받으며 그 외 값은 400 INVALID_REQUESTED_EDUCATION_FORMAT. teacherTrainingEnabled=false로 저장하면 함께 삭제됩니다. */
+  teacherTrainingEducationFormat?: TrainedTeacherProgramDetailRequestTeacherTrainingEducationFormat;
 }

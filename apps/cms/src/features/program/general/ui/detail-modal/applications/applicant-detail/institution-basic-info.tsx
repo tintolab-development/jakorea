@@ -319,6 +319,11 @@ export function ApplicantGeneralInstitutionBasicInfo({
     program,
     institution.approvalStatus
   )
+  /**
+   * 1사1교 교재명 — 승인 완료(시안 4175:109534)에서만 승인 현황 옆에 둔다.
+   * 승인 대기(시안 4175:106433)는 「프로그램 승인 현황」 한 줄 전체.
+   */
+  const showCompanySchoolTextbook = isCompanySchool && institution.approvalStatus === 'approved'
   /** 일반 프로그램(기관형) 기관 신청 상세 시안 02-2 — 1사1교는 기존 동작 유지 */
   const isGeneralOrganization = !isCompanySchool && isGeneralOrganizationProgram(program)
   const classAndCount: ReactNode =
@@ -587,10 +592,10 @@ export function ApplicantGeneralInstitutionBasicInfo({
       ) : null}
       <section className="applicant-institution-basic-info__section applicant-instructor-basic-info">
         <DetailInfoForm title="기본 정보" mode={basicInfoFormMode}>
-          <DetailInfoForm.Row type={isCompanySchool ? 'double' : 'single'}>
+          <DetailInfoForm.Row type={showCompanySchoolTextbook ? 'double' : 'single'}>
             <DetailInfoForm.Field
               label="프로그램 승인 현황"
-              fullRow={!isCompanySchool}
+              fullRow={!showCompanySchoolTextbook}
               readOnlyDisplay
               view={
                 <ProgramApprovalStatusValue
@@ -600,7 +605,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
                 />
               }
             />
-            {isCompanySchool ? (
+            {showCompanySchoolTextbook ? (
               <DetailInfoForm.Field
                 label="교재명"
                 readOnlyDisplay={!isEditMode}

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ANALYTICS_CLICK_METRICS, recordMetric } from '@/features/analytics'
 import { PFButton } from '@/shared/ui'
-import arrowDiagonalBlack24Url from '../image/icon/arrow-diagonal-black-24.svg'
+import arrowDiagonalBlack24Url from '@/shared/assets/icons/arrow-outlink-black-24.svg'
 import {
   TRANSPARENCY_ANNUAL_REPORTS_PATH,
   TRANSPARENCY_AUDIT_REPORTS_PATH,

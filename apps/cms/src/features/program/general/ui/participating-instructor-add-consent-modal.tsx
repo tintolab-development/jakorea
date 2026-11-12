@@ -107,13 +107,9 @@ export function ParticipatingInstructorAddConsentModal({
 
   useEffect(() => {
     if (!open) return
-    // generalInstitution: 동의/미동의 미선택으로 시작 (약관·동의 정책)
-    setParagraphs(
-      isGeneralInstitution
-        ? initialParagraphs.map(paragraph => ({ ...paragraph, bottomConsent: undefined }))
-        : initialParagraphs.map(paragraph => ({ ...paragraph, bottomConsent: 'agree' as const }))
-    )
-  }, [open, initialParagraphs, isGeneralInstitution])
+    // 모든 프리셋이 동의/미동의 미선택으로 시작 (약관·동의 정책, QA-0116). 기본 프리셋은 「모두 동의」 검사가 막는다.
+    setParagraphs(initialParagraphs.map(paragraph => ({ ...paragraph, bottomConsent: undefined })))
+  }, [open, initialParagraphs])
 
   const updateParagraph = (id: string, next: HorizontalTableParagraph) => {
     setParagraphs(prev => prev.map(paragraph => (paragraph.id === id ? next : paragraph)))

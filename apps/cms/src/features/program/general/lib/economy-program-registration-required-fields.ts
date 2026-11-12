@@ -3,6 +3,10 @@
  * 노출되는 입력 항목은 모두 필수(읽기전용·disabled 제외). 기본값 미기록은 기본값으로 간주.
  */
 
+import {
+  isWageFeeOutOfRange,
+  REGISTRATION_WAGE_GRADE_FEE_MAX,
+} from '@/features/program/shared/lib/wage-fee-input-rules'
 import { INSTITUTION_GUIDANCE_FIELDS } from '@/features/template/lib/institution-guidance-field-definitions'
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
 import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
@@ -92,7 +96,7 @@ function listIncompleteEconomyBasicInfoReasons(
   const p = 'economyRegistration.basicInfo'
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, `${p}.repKo`, '1사1교 경제금융교육')),
+    isEmptyText(readText(overlay, `${p}.repKo`)),
     'basicInfo.repKo'
   )
   pushReason(
@@ -173,10 +177,14 @@ function listIncompleteEconomyWageReasons(overlay: Record<string, unknown>): str
   const reasons: string[] = []
   const p = 'economyRegistration.wageInfo'
   for (const n of [1, 2, 3] as const) {
-    pushReason(reasons, isEmptyNumber(read(overlay, `${p}.grade${n}Fee`)), `wage.grade${n}Fee`)
+    // 비었거나 허용 범위(0~최대)를 넘으면 막는다 — 입력값을 한도로 바꾸지 않는다(QA-0383-ab40)
+    const max = REGISTRATION_WAGE_GRADE_FEE_MAX[n]
+    const fee = read(overlay, `${p}.grade${n}Fee`)
+    pushReason(reasons, isEmptyNumber(fee) || isWageFeeOutOfRange(fee, max), `wage.grade${n}Fee`)
+    const distanceFee = read(overlay, `${p}.grade${n}DistanceFee`)
     pushReason(
       reasons,
-      isEmptyNumber(read(overlay, `${p}.grade${n}DistanceFee`)),
+      isEmptyNumber(distanceFee) || isWageFeeOutOfRange(distanceFee, max),
       `wage.grade${n}DistanceFee`
     )
   }

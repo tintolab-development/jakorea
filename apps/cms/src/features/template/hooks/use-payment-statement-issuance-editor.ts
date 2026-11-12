@@ -25,7 +25,10 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
-import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
+import {
+  maskPaymentStatementIssuanceClosingDateForAuthoring,
+  PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
+} from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 
 export function usePaymentStatementIssuanceEditor(
   active: boolean,
@@ -47,7 +50,10 @@ export function usePaymentStatementIssuanceEditor(
   const [isDraftLoading, setIsDraftLoading] = useState(() => active)
 
   const applyDraftSnapshot = useCallback((next: WritingFormDraft) => {
-    const normalized = normalizeWritingFormDraft(next)
+    // 양식 관리 견본 — 고정 발급일 대신 자리 표시(실발급은 발급 시점 날짜로 새 draft 사용)
+    const normalized = maskPaymentStatementIssuanceClosingDateForAuthoring(
+      normalizeWritingFormDraft(next)
+    )
     setDraft(normalized)
     setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)

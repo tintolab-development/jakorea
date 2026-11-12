@@ -1,0 +1,30 @@
+/*
+ * 대시보드 통계·대기 카드 링크 (QA-0256)
+ * 카드 전체를 <a>로 감싸 Tab 포커스 · Enter · 새 탭 열기(Ctrl/⌘·가운데 클릭)를 지원한다.
+ */
+.dashboard-card-link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.dashboard-card-link:hover,
+.dashboard-card-link:focus {
+  color: inherit;
+}
+
+.dashboard-card-link:focus-visible {
+  outline: 2px solid rgba(0, 160, 175, 0.6);
+  outline-offset: 2px;
+}
+
+/* 카드 안 「처리하기」 — 링크 안 중첩 버튼 대신 표시 전용 */
+.dashboard-card-link__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  color: var(--color-primary, #00a0af);
+}

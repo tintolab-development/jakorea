@@ -1,6 +1,5 @@
 import { formatDisplayDateTime } from '../../../../../shared/lib/format-display-date.ts'
 import {
-  formatEducationScheduleLabelTokens,
   formatEducationScheduleUnitLabel,
   isEducationSchedulePreEducation,
   positiveEducationNumber,
@@ -166,13 +165,15 @@ export function formatAssignmentEducationUnitLabel(
 export function formatLectureReportCardTimeSubtitle(
   item: InstructorEducationScheduleDisplayInput & { timeRange: string },
 ): string {
-  const tokens = formatEducationScheduleLabelTokens({
-    sessionNo: item.sessionNo,
-    curriculumSessionCount: item.curriculumSessionCount,
-    scheduleRole: item.scheduleRole ?? item.scheduleKind,
-    educationSlotKey: item.educationSlotKey,
-  })
-  return [item.timeRange, ...tokens].filter(Boolean).join(' | ')
+  if (isCanonicalPreEducationSchedule(item)) {
+    if (!item.timeRange) return '사전교육'
+    return `${item.timeRange} 사전교육`
+  }
+  const session = formatLectureReportProgressSessionLabel(item)
+  if (!item.timeRange && !session) return ''
+  if (!session) return item.timeRange
+  if (!item.timeRange) return session
+  return `${item.timeRange} ${session}`
 }
 
 function parseDisplayDateTime(value: string | null | undefined): { date: string; time: string } | null {
@@ -192,8 +193,12 @@ export function formatInstructorEducationScheduleLine(
   const start = parseDisplayDateTime(item.startAt)
   const end = parseDisplayDateTime(item.endAt)
   const date = start?.date || end?.date || '-'
-  const time = start?.time && end?.time ? `${start.time}~${end.time}` : start?.time || end?.time || '-'
+  const time =
+    start?.time && end?.time
+      ? `${start.time} ~ ${end.time}`
+      : start?.time || end?.time || '-'
   const session = formatAssignmentEducationUnitLabel(item, useScheduleName)
   if (!start && !end && session === '-') return '-'
-  return `${date} ${time} | ${session}`
+  if (session === '-') return `${date} ${time}`
+  return `${date} ${time} ${session}`
 }

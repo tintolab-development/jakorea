@@ -1,5 +1,5 @@
 import { isAdminOnboardingRequired } from './admin-onboarding-session'
-import { PLATFORM_AUTH_TOKEN_KEY } from './auth-token'
+import { getAccessToken } from './auth-token'
 import { DEV_AUTH_CHANGE_EVENT, emitDevAuthChange } from './auth-session-event'
 
 /** @deprecated mock 로그인 제거 — 로그아웃 시 레거시 키만 정리 */
@@ -9,7 +9,7 @@ export { DEV_AUTH_CHANGE_EVENT }
 export function getDevAuthLoggedIn() {
   if (typeof window === 'undefined') return false
   if (isAdminOnboardingRequired()) return false
-  return Boolean(window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY))
+  return Boolean(getAccessToken())
 }
 
 /** 항상 false — mock 데이터 경로 제거 */

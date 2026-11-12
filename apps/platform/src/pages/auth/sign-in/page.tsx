@@ -46,7 +46,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
+import illustPeopleUrl from '@/shared/assets/illustration/graphic-84-01.png'
 import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import styles from './page.module.css'
 
@@ -72,6 +72,7 @@ export function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(() => {
     const socialError = searchParams.get('socialError')
     if (!socialError) return null
@@ -99,7 +100,8 @@ export function SignInPage() {
 
   const completeLoginSession = (input: {
     accessToken: string
-    refreshToken: string
+    /** QA-0137: 없으면 HttpOnly 쿠키 세션 */
+    refreshToken?: string
     expiresInSeconds?: number
     ageGroup?: string | null
   }) => {
@@ -128,7 +130,7 @@ export function SignInPage() {
     }
 
     if (!password.trim()) {
-      setFormError('비밀번호를 입력해 주세요.')
+      setPasswordError('비밀번호를 입력해 주세요.')
       return
     }
 
@@ -262,8 +264,12 @@ export function SignInPage() {
             value={password}
             onValueChange={next => {
               setPassword(next)
+              if (passwordError) setPasswordError(null)
               if (formError) setFormError(null)
             }}
+            error={Boolean(passwordError)}
+            message={passwordError ?? undefined}
+            messageStatus="error"
             disabled={isSubmitting}
           />
         </div>

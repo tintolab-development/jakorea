@@ -37,6 +37,7 @@ import { resolveCompanySchoolWageDefaultPaymentItemIds } from './company-school-
 
 export const COMPANY_SCHOOL_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 export const COMPANY_SCHOOL_UNSELECTED = '__all__' as const
+/** 대표 프로그램명(국문) 입력 예시 — 값으로 채우지 않고 placeholder 로만 쓴다(QA-0389-8556) */
 export const COMPANY_SCHOOL_DEFAULT_REP_KO = '1사1교 경제금융교육'
 export const COMPANY_SCHOOL_DEFAULT_REP_EN =
   '1 Company 1 School Economics and Finance Education'
@@ -288,6 +289,24 @@ export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchool
     instructorRecruit: emptyCompanySchoolInstructorRecruitFormState(),
     application: emptyCompanySchoolApplicationFormState(),
     sidecar: {},
+  }
+}
+
+/**
+ * 신규 등록 시작값 — 시안(9899:215345) 기본 선택값.
+ * 임시저장 복원·재조회 hydrate·레거시 import 는 `createDefaultCompanySchoolRegistrationRhfValues` 를
+ * 그대로 써서 저장값(빈 값 포함)을 덮지 않는다.
+ * 세부 프로그램명은 카탈로그 숫자 id가 필요해 기본값을 두지 않는다.
+ * 대표 프로그램명(국문·영문)은 빈 값으로 시작하고 예시는 placeholder 로만 보여 준다(QA-0389-8556).
+ */
+export function createNewCompanySchoolRegistrationRhfValues(): CompanySchoolRegistrationRhfValues {
+  return {
+    ...createDefaultCompanySchoolRegistrationRhfValues(),
+    businessField: 'economy_finance',
+    ipOwned: 'ja',
+    courseDeliveredBy: 'ja',
+    partnerInvolvement: 'no',
+    ipsCategory: 'prepare',
   }
 }
 

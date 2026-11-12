@@ -81,10 +81,12 @@ function unwrapTokenResponse(payload: unknown): AuthTokenResponse {
     }
     const accessToken = o.accessToken
     const refreshToken = o.refreshToken
-    if (typeof accessToken === 'string' && typeof refreshToken === 'string') {
+    // QA-0137: refreshToken은 전환기에만 본문에 온다. access만 필수(쿠키 전용 운영이면 본문에 refreshToken 없음).
+    if (typeof accessToken === 'string' && accessToken.length > 0) {
       return {
         accessToken,
-        refreshToken,
+        refreshToken:
+          typeof refreshToken === 'string' && refreshToken.length > 0 ? refreshToken : undefined,
         tokenType: typeof o.tokenType === 'string' ? o.tokenType : undefined,
         expiresInSeconds: typeof o.expiresInSeconds === 'number' ? o.expiresInSeconds : undefined,
       }
@@ -92,6 +94,9 @@ function unwrapTokenResponse(payload: unknown): AuthTokenResponse {
   }
   throw parseAuthError(payload, '인증 토큰 응답 형식이 올바르지 않습니다.')
 }
+
+/** QA-0137: 토큰 발급·갱신·폐기 호출은 HttpOnly refresh 쿠키(`JA_ADMIN_RT`)가 오가도록 credentials를 명시한다. */
+const AUTH_COOKIE_CREDENTIALS = { withCredentials: true } as const
 
 function readOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
@@ -154,7 +159,11 @@ export async function fetchAdminMfaVerify(
   body: AdminMfaVerifyRequestBody
 ): Promise<AuthTokenResponse> {
   try {
-    const { data: payload } = await axiosInstance.post<unknown>(adminAuthPaths.mfaVerify(), body)
+    const { data: payload } = await axiosInstance.post<unknown>(
+      adminAuthPaths.mfaVerify(),
+      body,
+      AUTH_COOKIE_CREDENTIALS
+    )
     return unwrapTokenResponse(payload)
   } catch (err) {
     if (err instanceof AdminMfaApiError) throw err
@@ -166,11 +175,17 @@ export async function fetchAdminMfaVerify(
   }
 }
 
+/**
+ * POST refresh. 본문 refreshToken이 있으면 전환기 본문, 없으면 본문 없이 HttpOnly 쿠키로 갱신한다 (QA-0137).
+ * TODO(QA-0137 인프라 전환 후 삭제): body 인자를 지우고 항상 본문 없이 쿠키로만 요청한다.
+ */
 export async function fetchAdminAuthRefresh(
-  body: RefreshTokenRequestBody
+  body?: Partial<RefreshTokenRequestBody>
 ): Promise<AuthTokenResponse> {
   try {
-    const { data: payload } = await axiosInstance.post<unknown>(adminAuthPaths.refresh(), body, {
+    const requestBody = body?.refreshToken ? { refreshToken: body.refreshToken } : undefined
+    const { data: payload } = await axiosInstance.post<unknown>(adminAuthPaths.refresh(), requestBody, {
+      ...AUTH_COOKIE_CREDENTIALS,
       skipRefresh: true,
       skipAuth: true,
     } as InternalAxiosRequestConfig & { skipRefresh?: boolean; skipAuth?: boolean })
@@ -188,6 +203,7 @@ export async function fetchAdminAuthRefresh(
 export async function fetchAdminAuthLogout(body: RefreshTokenRequestBody): Promise<void> {
   try {
     await axiosInstance.post<unknown>(adminAuthPaths.logout(), body, {
+      ...AUTH_COOKIE_CREDENTIALS,
       skipRefresh: true,
       skipAuth: true,
       validateStatus: (status: number) => status === 204 || status === 200,
@@ -202,6 +218,26 @@ export async function fetchAdminAuthLogout(body: RefreshTokenRequestBody): Promi
       throw parseAuthError(axiosErr.response?.data, '로그아웃에 실패했습니다.')
     }
     throw new AdminMfaApiError('NETWORK', '로그아웃 요청에 실패했습니다.')
+  }
+}
+
+/**
+ * POST /api/admin/auth/refresh/logout — HttpOnly refresh 쿠키의 토큰을 폐기하고 쿠키를 지운다 (QA-0137).
+ * 본문 없음. 쿠키가 없거나(전환 전·로컬) 실패해도 로컬 로그아웃을 막지 않도록 best effort — 오류를 던지지 않는다.
+ */
+export async function fetchAdminAuthRefreshCookieLogout(): Promise<void> {
+  try {
+    await axiosInstance.post<unknown>(adminAuthPaths.refreshLogout(), undefined, {
+      ...AUTH_COOKIE_CREDENTIALS,
+      skipRefresh: true,
+      skipAuth: true,
+      validateStatus: (status: number) => status === 204 || status === 200,
+    } as unknown as InternalAxiosRequestConfig & {
+      skipRefresh?: boolean
+      skipAuth?: boolean
+    })
+  } catch {
+    // best effort: 쿠키 폐기 실패는 무시 (본문 logout·로컬 정리는 별도 진행)
   }
 }
 

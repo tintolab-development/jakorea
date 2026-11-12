@@ -64,6 +64,30 @@ describe('validateAlimtalkSendRequest', () => {
     expect(recipients[9]?.variables).toEqual({ '방문 안내': '  ' })
   })
 
+  it('QA-0114 발송 확인 문구에 실제 발송 대상 수신자 수를 적는다', () => {
+    const result = validateAlimtalkSendRequest(
+      input({
+        recipients: [
+          recipient('1', { '방문 안내': '오전' }),
+          recipient('2', { '방문 안내': '오후' }),
+          recipient('3', { '방문 안내': '저녁' }),
+        ],
+      })
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.confirmMessage).toBe(
+      '해당 내용으로 알림톡을 발송하시겠습니까?\n발송 대상 수신자: 총 3명'
+    )
+
+    const noVariables = validateAlimtalkSendRequest(
+      input({ placeholderKeys: [], recipients: [recipient('1'), recipient('2')] })
+    )
+    expect(noVariables.ok).toBe(true)
+    if (!noVariables.ok) return
+    expect(noVariables.confirmMessage).toContain('발송 대상 수신자: 총 2명')
+  })
+
   it('AT-07 유효 수신자가 없으면 발송 확인으로 넘어가지 않는다', () => {
     const result = validateAlimtalkSendRequest(
       input({ recipients: [recipient('1'), recipient('2', { '방문 안내': '   ' })] })

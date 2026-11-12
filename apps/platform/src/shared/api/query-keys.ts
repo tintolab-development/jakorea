@@ -321,6 +321,12 @@ export const platformQueryKeys = {
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current', 'detail'] as const,
     /** 마이페이지 홈 신청/진행/종료 카운트 — GET /api/portal/me/dashboard.applications (Class E) */
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
+    /**
+     * 홈 통계 카드 — 신청 목록 displayStatus 집계(USER-FUNC-0237).
+     * dashboard.applications와 불일치할 때 현황 탭·목록과 맞춘다.
+     */
+    programApplicationStats: () =>
+      [...platformQueryKeys.mypage.all(), 'program-application-stats'] as const,
     /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */
     consents: () => [...platformQueryKeys.mypage.all(), 'consents'] as const,
     /** 내 동의 유형 상세 — GET /api/portal/me/consents/{consentType} */

@@ -34,7 +34,6 @@ import {
 } from './instructor-basic-info-detail-form'
 import './applicant-general-instructor-basic-info.css'
 import { InstructorJaGradeField } from '../../instructor-ja-grade-field'
-import { GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 
 export interface ApplicantGeneralInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
@@ -145,16 +144,18 @@ export function ApplicantGeneralInstructorBasicInfo({
 
   const emailDisplay = displayServerPiiAsIs(instructor.email)
 
-  const lectureFeeView = <LectureFeeBasisView instructor={instructor} copyVariant={copyVariant} />
+  const lectureFeeView = (
+    <LectureFeeBasisView
+      instructor={instructor}
+      copyVariant={copyVariant}
+    />
+  )
   const lectureFeeEdit =
     isEditMode && draft && onDraftChange ? (
       <LectureFeeBasisEditField
         draft={draft}
         onDraftChange={onDraftChange}
         validationError={validationErrors?.lectureFeeAmount}
-        measureOptions={
-          isGeneralOrganization ? GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS : undefined
-        }
       />
     ) : undefined
 

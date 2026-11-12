@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildParticipatingInstructorAssignedSchoolRowsFromBoard,
   buildParticipatingInstructorAssignedScheduleRowsFromBoard,
   buildParticipatingInstructorWaitingScheduleRowsFromBoard,
   buildParticipatingInstructorWaitingSchoolRowsFromBoard,
@@ -141,10 +142,10 @@ describe('buildParticipatingInstructorWaitingSchoolRowsFromBoard', () => {
     }
   })
 
-  it('program 186416: 최대 배정 수 1이면 공하은 배정 일정은 배정 불가 (기관형 unavailable, 1사1교 기존 라벨)', () => {
+  it('program 186416: 최대 배정 수 1이면 공하은 배정 일정은 배정 불가 (기관형·1사1교 모두 unavailable)', () => {
     for (const [isCompanySchool, expected] of [
       [false, 'unavailable'],
-      [true, 'no_assignable_schedule'],
+      [true, 'unavailable'],
     ] as const) {
       const rows = build({ memberId: '190102', isCompanySchool, maxAssignableInstructors: 1 })
       expect(rows.map(r => r.schoolId).sort()).toEqual(['1695004', '1695006'])
@@ -242,7 +243,9 @@ describe('buildParticipatingInstructorWaitingSchoolRowsFromBoard', () => {
       assignments: [assignment(1, 190076, 1691529, 187447)],
     })
     const statusById = Object.fromEntries(rows.map(r => [r.resolvedScheduleId, r.assignmentStatus]))
-    expect(statusById).toEqual({ 187447: 'no_assignable_schedule', 187448: 'waiting' })
+    expect(statusById).toEqual({ 187447: 'unavailable', 187448: 'waiting' })
+    // 시안 「배정 강사 수」 — 기관 신청 단위 배정 강사 수
+    expect(rows.map(r => r.assignedInstructorCountLabel)).toEqual(['1명', '1명'])
   })
 
   it('취소된 배정은 최대 배정 수에 포함하지 않는다', () => {
@@ -556,5 +559,38 @@ describe('buildParticipatingInstructorAssignedScheduleRowsFromBoard (개인형)'
       ],
     })
     expect(rows[0]?.lectureLocation).toBe('교육 진행 장소')
+  })
+})
+
+describe('buildParticipatingInstructorAssignedSchoolRowsFromBoard — 1사1교 배정 일정 표기', () => {
+  const labels = new Map([
+    ['187447', { date: '2026.11.05(목)', time: '09:00 ~ 10:30', session: '1회차' }],
+    ['187448', { date: '2026.11.06(금)', time: '10:00 ~ 10:40', session: '2회차' }],
+  ])
+  const rowsFor = (unitMap?: Map<string, { sessionCount?: number; startPeriod?: number }>) =>
+    buildParticipatingInstructorAssignedSchoolRowsFromBoard({
+      assignments: [
+        { ...assignment(1, 190102, 1691529, 187447), lectureDate: '2026-11-05' },
+        { ...assignment(2, 190102, 1691529, 187448), lectureDate: '2026-11-06' },
+      ],
+      instructorMemberId: '190102',
+      schoolRows: [school('1695004', '1691529', 'QA 제휴학교', [])],
+      scheduleLabelById: labels,
+      ...(unitMap ? { companySchoolScheduleUnitByScheduleId: unitMap } : {}),
+    })
+
+  it('희망 일정 연결이 있는 일정만 「날짜 | N~(N+1)교시 (N차시) | 시간」, 회차는 쓰지 않는다', () => {
+    const rows = rowsFor(new Map([['187447', { sessionCount: 2, startPeriod: 1 }]]))
+    expect(rows[0]?.educationScheduleLines).toEqual([
+      '2026-11-05 | 1~2교시 (2차시) | 09:00 ~ 10:30',
+      '2026-11-06 | 10:00 ~ 10:40',
+    ])
+  })
+
+  it('맵을 넘기지 않으면(일반 기관형) 기존 표기 유지', () => {
+    expect(rowsFor()[0]?.educationScheduleLines).toEqual([
+      '2026-11-05 | 09:00 ~ 10:30 | 1회차',
+      '2026-11-06 | 10:00 ~ 10:40 | 2회차',
+    ])
   })
 })

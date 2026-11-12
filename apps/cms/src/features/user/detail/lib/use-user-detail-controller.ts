@@ -107,7 +107,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { EDIT_MODE_REVEAL } from '@/shared/lib/privacy-unmask-purpose'
 import { useRevealedMemberOverlay } from '@/features/user/detail/lib/use-revealed-member-overlay'
-import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
+import {
+  MEMBER_DETAIL_SCREEN_CODE,
+  type MemberAdminCommentQueryData,
+} from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import {
   applyPrivacyUnmaskResponseToUser,
@@ -127,6 +130,7 @@ import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/ins
 import {
   upsertMember1365ExternalIdentifierRemote,
   upsertMemberAdminCommentRemote,
+  deleteMemberAdminCommentRemote,
   deleteMemberApplicationHistoryRemote,
   bulkDeleteProgramHistoryRemote,
   bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote,
@@ -138,6 +142,7 @@ import {
   parseOrganizationIdFromUserId,
 } from '@/features/user/api/map-school-organization-to-user'
 import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
+import { resolveAdminCommentSaveAction } from '@/features/user/detail/lib/admin-comment-save-action'
 import {
   bulkIssueCertificatesRemote,
   bulkDownloadCertificatesRemote,
@@ -472,6 +477,8 @@ export function useUserDetailController({
     (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
   >(null)
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
+  /** 코멘트 편집을 열 때 저장된 코멘트 — 있으면 비워 저장 = 삭제 (QA-0044) */
+  const [adminCommentEditExisting, setAdminCommentEditExisting] = useState('')
   const [adminPermissionVariantPatching, setAdminPermissionVariantPatching] = useState(false)
   const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
   const [jaGradeEvaluationOpen, setJaGradeEvaluationOpen] = useState(false)
@@ -1102,18 +1109,20 @@ export function useUserDetailController({
     const fromCommentsCache =
       !fromUser && membersRemote && commentResource
         ? (
-            queryClient.getQueryData<{ latestComment?: string }>(
+            queryClient.getQueryData<MemberAdminCommentQueryData>(
               memberQueryKeys.comments(
                 commentResource.resourceId,
                 MEMBER_DETAIL_SCREEN_CODE,
                 commentResource.target
               )
-            )?.latestComment ?? ''
+            )?.comment ?? ''
           ).trim()
         : ''
+    const existingComment = fromUser || fromCommentsCache || draft.adminComment
+    setAdminCommentEditExisting((existingComment ?? '').trim())
     setBasicInfoDraft({
       ...draft,
-      adminComment: fromUser || fromCommentsCache || draft.adminComment,
+      adminComment: existingComment,
     })
     setBasicInfoEditScope('comment')
     setBasicInfoEditing(true)
@@ -1156,49 +1165,63 @@ export function useUserDetailController({
       const commentResource = resolveAdminCommentResource(displayUser)
       if (basicInfoEditScope === 'comment' && membersRemote && commentResource) {
         const savedComment = (draft.adminComment ?? '').trim()
-        if (!savedComment) {
+        const saveAction = resolveAdminCommentSaveAction({
+          nextComment: savedComment,
+          existingComment: adminCommentEditExisting,
+        })
+        if (saveAction === 'close') {
           setBasicInfoEditing(false)
           setBasicInfoEditScope('none')
           setBasicInfoDraft(null)
           return
         }
-        const cachedComments = queryClient.getQueryData<{
-          comments?: unknown[]
-          latestComment?: string
-          latestCommentDetail?: { commentId?: number; comment: string }
-        }>(
-          memberQueryKeys.comments(
-            commentResource.resourceId,
-            MEMBER_DETAIL_SCREEN_CODE,
-            commentResource.target
-          )
+        const commentsQueryKey = memberQueryKeys.comments(
+          commentResource.resourceId,
+          MEMBER_DETAIL_SCREEN_CODE,
+          commentResource.target
         )
+        // 대상·화면마다 코멘트 1건 (QA-0044)
+        const cachedComment =
+          queryClient.getQueryData<MemberAdminCommentQueryData>(commentsQueryKey)
+        if (saveAction === 'delete') {
+          // 내용을 비워 저장 → 기존 코멘트 DELETE (별도 삭제 버튼 없음)
+          await deleteMemberAdminCommentRemote(commentResource.resourceId, {
+            existingCommentId: cachedComment?.commentId,
+            screenCode: MEMBER_DETAIL_SCREEN_CODE,
+            target: commentResource.target,
+          })
+          const cleared = { ...displayUser, adminComment: '' }
+          queryClient.setQueryData<MemberAdminCommentQueryData>(commentsQueryKey, null)
+          void queryClient.invalidateQueries({ queryKey: commentsQueryKey })
+          if (displayUser.memberId != null) {
+            queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), cleared)
+          }
+          queryClient.setQueryData(
+            [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+            cleared
+          )
+          setBasicInfoEditing(false)
+          setBasicInfoEditScope('none')
+          setBasicInfoDraft(null)
+          endPersonalInfoReveal()
+          onMemberBasicInfoSaved?.(cleared, { skipListInvalidate: true })
+          return
+        }
+        // 등록 API 재호출 시 서버가 같은 건을 덮어쓴다 (조회·PATCH 분기 없음)
         const saved = await upsertMemberAdminCommentRemote(
           commentResource.resourceId,
           savedComment,
           {
-            existingCommentId: cachedComments?.latestCommentDetail?.commentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
             target: commentResource.target,
           }
         )
-        const commentId = saved.commentId ?? cachedComments?.latestCommentDetail?.commentId
+        const commentId = saved.commentId ?? cachedComment?.commentId
         const merged = { ...displayUser, adminComment: savedComment }
-        queryClient.setQueryData(
-          memberQueryKeys.comments(
-            commentResource.resourceId,
-            MEMBER_DETAIL_SCREEN_CODE,
-            commentResource.target
-          ),
-          {
-            comments: cachedComments?.comments ?? [],
-            latestComment: savedComment,
-            latestCommentDetail: {
-              comment: savedComment,
-              ...(commentId != null ? { commentId } : {}),
-            },
-          }
-        )
+        queryClient.setQueryData<MemberAdminCommentQueryData>(commentsQueryKey, {
+          comment: savedComment,
+          ...(commentId != null ? { commentId } : {}),
+        })
         if (displayUser.memberId != null) {
           queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
         }
@@ -1304,23 +1327,9 @@ export function useUserDetailController({
               MEMBER_DETAIL_SCREEN_CODE,
               commentResource.target
             ),
-            (
-              prev:
-                | {
-                    comments?: unknown[]
-                    latestComment?: string
-                    latestCommentDetail?: { comment: string; commentId?: number }
-                  }
-                | undefined
-            ) => ({
-              comments: prev?.comments ?? [],
-              latestComment: savedComment,
-              latestCommentDetail: {
-                comment: savedComment,
-                ...(prev?.latestCommentDetail?.commentId != null
-                  ? { commentId: prev.latestCommentDetail.commentId }
-                  : {}),
-              },
+            (prev: MemberAdminCommentQueryData | undefined): MemberAdminCommentQueryData => ({
+              comment: savedComment,
+              ...(prev?.commentId != null ? { commentId: prev.commentId } : {}),
             })
           )
         }
@@ -1398,6 +1407,7 @@ export function useUserDetailController({
     membersRemote,
     queryClient,
     endPersonalInfoReveal,
+    adminCommentEditExisting,
   ])
 
   const updateBasicInfoDraft = useCallback(
@@ -1803,6 +1813,8 @@ export function useUserDetailController({
       basicInfoEditScope,
       basicInfoDraft,
       basicInfoSaveLoading,
+      /** 코멘트 모달 — 저장된 코멘트가 있으면 비워 저장(삭제) 허용 */
+      adminCommentAllowEmpty: adminCommentEditExisting.length > 0,
       adminPermissionVariantPatching,
       instructorPermissionRevokeOpen,
       jaGradeEvaluationOpen,

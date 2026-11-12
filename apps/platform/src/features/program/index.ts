@@ -150,6 +150,7 @@ export {
   EDUCATION_FORM_LABEL_MAP,
   RECRUITMENT_STATUS_TONE_MAP,
   canApplyToProgram,
+  educationRoleBadgeIconUrl,
   educationTargetBadgeIconUrl,
 } from './lib/badge-config'
 export { ProgramBackButton } from './ui/back-button'

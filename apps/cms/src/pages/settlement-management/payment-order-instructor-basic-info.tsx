@@ -23,33 +23,21 @@ export interface PaymentOrderInstructorBasicInfoProps {
   onPersonalInfoButtonClick: () => void
 }
 
-/** 읍·면·동 단위까지 노출, 이후는 블러 (신청 강사 기본정보와 동일 규칙) */
-function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const dong = m[1]
-  const i = address.indexOf(dong)
-  if (i === -1) return null
-  const end = i + dong.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
+/**
+ * 자택 주소 마스킹 표시. 원문이 와도 공통 규칙(`MASKING_POLICY.address`)으로 먼저 가려
+ * 블러 구간에 원문 글자가 DOM으로 남지 않게 한다. 보이는 구간 뒤 `*` 구간만 블러 처리한다.
+ */
 function AddressBlurDisplay({ address }: { address: string }) {
-  if (!address) return <>-</>
-  const split = splitAddressAfterDong(address)
-  if (!split) {
-    return <>{MASKING_POLICY.address(address)}</>
-  }
-  const { head, tail } = split
-  if (!tail.trim()) {
-    return <>{head}</>
-  }
+  const trimmed = address?.trim()
+  if (!trimmed) return <>-</>
+  const masked = MASKING_POLICY.address(trimmed)
+  const tailStart = masked.indexOf(' *')
+  if (tailStart < 0) return <>{masked}</>
   return (
     <>
-      {head}
+      {masked.slice(0, tailStart)}
       <span className="applicant-instructor-basic-info__address-blur" aria-hidden="true">
-        {tail}
+        {masked.slice(tailStart)}
       </span>
     </>
   )

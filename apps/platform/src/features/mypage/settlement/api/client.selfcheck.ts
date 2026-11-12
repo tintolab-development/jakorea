@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import {
   findSupersededInstructorApplicationIds,
   mapSettlementOverviewStatus,
+  mapSupersededResultStatus,
+  resolveInstructorSettlementAmount,
   resolveInstructorSettlementPeriod,
 } from './client.ts'
 
@@ -32,27 +34,33 @@ import {
   )
 }
 
-// 재신청 이력은 한 줄씩 남기고, 같은 배정에서 최신이 아닌 신청만 대체된 이전 신청으로 본다 (QA 배정 1694905: 신청 16·17·20)
+// 이전 이력 판단은 서버 superseded만 쓴다 (QA 배정 1694905: 신청 16·17 superseded, 20 최신)
 {
   const superseded = findSupersededInstructorApplicationIds([
-    { applicationId: 16, assignmentId: 1694905, status: 'RESUBMITTED', createdAt: '2026-11-09T18:42:00Z' },
-    { applicationId: 20, assignmentId: 1694905, status: 'CONFIRMED', createdAt: '2026-11-09T18:45:00Z' },
-    { applicationId: 17, assignmentId: 1694905, status: 'RESUBMITTED', createdAt: '2026-11-09T18:43:00Z' },
-    { applicationId: 14, assignmentId: 1694899, status: 'CONFIRMED', createdAt: '2026-11-07T17:01:00Z' },
-    { applicationId: 30, status: 'SUBMITTED' },
+    { applicationId: 16, assignmentId: 1694905, status: 'RESUBMITTED', superseded: true, supersededReason: 'REJECTED' },
+    { applicationId: 17, assignmentId: 1694905, status: 'RESUBMITTED', superseded: true, supersededReason: 'CORRECTION_REQUESTED' },
+    { applicationId: 20, assignmentId: 1694905, status: 'CONFIRMED', superseded: false },
+    // superseded가 없으면 status·신청 순서로 추측하지 않는다
+    { applicationId: 30, assignmentId: 1, status: 'RESUBMITTED' },
+    { applicationId: 31, assignmentId: 1, status: 'CONFIRMED' },
   ])
   assert.deepEqual([...superseded].sort((a, b) => a - b), [16, 17])
 }
-// 생성 시각이 같거나 없으면 applicationId가 큰 쪽이 최신
-{
-  const superseded = findSupersededInstructorApplicationIds([
-    { applicationId: 40, assignmentId: 1, createdAt: '2026-11-01T00:00:00Z' },
-    { applicationId: 41, assignmentId: 1, createdAt: '2026-11-01T00:00:00Z' },
-    { applicationId: 51, assignmentId: 2 },
-    { applicationId: 50, assignmentId: 2 },
-  ])
-  assert.deepEqual([...superseded].sort((a, b) => a - b), [40, 50])
-}
+// 원래 결과 → 신청 반려 / 지급 정정 요청
+assert.equal(mapSupersededResultStatus('REJECTED'), 'rejected')
+assert.equal(mapSupersededResultStatus('CORRECTION_REQUESTED'), 'correction_requested')
+assert.equal(mapSupersededResultStatus(null), null)
+
+// 금액: 최신 revision 금액 우선, 없으면 제출 당시 금액 (QA 신청 14: 488,150 → 294,750)
+assert.equal(
+  resolveInstructorSettlementAmount({ applicationId: 14, netPaymentAmount: 488150, latestNetPaymentAmount: 294750 }),
+  294750,
+)
+assert.equal(
+  resolveInstructorSettlementAmount({ applicationId: 16, netPaymentAmount: 483500, latestNetPaymentAmount: null }),
+  483500,
+)
+assert.equal(resolveInstructorSettlementAmount({ applicationId: 1, grossAmount: 1000 }), 1000)
 
 assert.equal(
   mapSettlementOverviewStatus({ status: 'SUBMITTED' }),

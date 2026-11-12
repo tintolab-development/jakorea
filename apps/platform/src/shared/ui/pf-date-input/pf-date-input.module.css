@@ -153,8 +153,8 @@
 }
 
 .clearIcon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .message {
@@ -210,6 +210,34 @@
   justify-content: space-between;
   align-self: stretch;
   gap: var(--spacing-12);
+}
+
+.monthNavButton {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.monthNavButton:disabled {
+  cursor: not-allowed;
+}
+
+.monthNavButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.monthNavIcon {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .yearMonth {

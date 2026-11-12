@@ -24,7 +24,7 @@ function toDraftStatusWire(
   const normalized = uiStatus?.trim().toUpperCase()
   if (!normalized || normalized === 'ALL') return undefined
   if (normalized === 'DRAFT') return 'DRAFT'
-  // 예정·모집중·종료는 게시된 공고만 대상이다(임시저장 제외).
+  // 예정·모집중·종료는 게시된 공고만 대상이다(미게시 제외).
   if (normalized === 'SCHEDULED' || normalized === 'IN_PROGRESS' || normalized === 'ENDED') {
     return 'PUBLISHED'
   }

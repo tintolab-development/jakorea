@@ -102,4 +102,37 @@ describe('mapAccountPaymentListItemToRow', () => {
     expect(row.sessionLabel).toBe('-')
     expect(row.accountPaymentStatus).toBe('awaiting_confirmation')
   })
+
+  it('영수증 지급 건: payeeType·sourceType을 담고 강의 진행 차시 null은 -', () => {
+    const row = mapAccountPaymentListItemToRow(
+      {
+        accountPaymentId: 501,
+        settlementId: null as unknown as undefined,
+        instructorName: '김참여',
+        netPaymentAmount: 30000,
+        paymentStatus: 'WAITING_PAYMENT',
+        sourceType: 'INDIVIDUAL_SETTLEMENT',
+        payeeType: 'PARTICIPANT',
+        sessionLabel: null as unknown as undefined,
+      },
+      0
+    )
+    expect(row.payeeType).toBe('PARTICIPANT')
+    expect(row.sourceType).toBe('INDIVIDUAL_SETTLEMENT')
+    expect(row.sessionLabel).toBe('-')
+    expect(row.instructorName).toBe('김참여')
+    expect(row.settlementId).toBeUndefined()
+  })
+
+  it('F(CMS-07): maskedRecipientPhone 마스킹값을 미리보기용으로만 싣고 빈 값은 생략한다', () => {
+    const base = { accountPaymentId: 1, paymentStatus: 'WAITING_PAYMENT' } as AccountPaymentListItemResponse
+    expect(
+      mapAccountPaymentListItemToRow({ ...base, maskedRecipientPhone: '010-****-5678' } as never, 0)
+        .maskedRecipientPhone
+    ).toBe('010-****-5678')
+    expect(mapAccountPaymentListItemToRow({ ...base, maskedRecipientPhone: null } as never, 0)).not.toHaveProperty(
+      'maskedRecipientPhone'
+    )
+    expect(mapAccountPaymentListItemToRow(base, 0).recipientMobile).toBeUndefined()
+  })
 })

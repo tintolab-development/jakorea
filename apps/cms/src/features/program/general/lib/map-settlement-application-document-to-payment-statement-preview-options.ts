@@ -26,15 +26,16 @@ import type { PaymentOrderProgramCalculationStatement } from '@/features/settlem
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 
-/** 관리자 지급조서 화면 강사비 책정 단위 라벨 */
+/** 관리자 지급조서 화면 강사비 책정 단위 라벨 (기획 B4: 차시당·출강 1회당 두 가지) */
 export const INSTRUCTOR_FEE_CALCULATION_UNIT_LABELS: Record<
-  NonNullable<CalcInfoInstructorFeeCalculationUnit>,
+  NonNullable<CalcInfoInstructorFeeCalculationUnit> | 'FIXED',
   string
 > = {
-  PER_HOUR: '1시간당',
-  PER_CLASS: '출강 1회당',
-  PER_SESSION: '차시당',
-  PER_LECTURE: '강의 1회당',
+  PER_HOUR: '차시당',
+  PER_CLASS: '차시당',
+  PER_SESSION: '출강 1회당',
+  PER_LECTURE: '출강 1회당',
+  FIXED: '출강 1회당',
 }
 
 /** 템플릿 autofill 값은 문자열 계약이라 값 없음은 '' (화면 placeholder는 템플릿 공통 규칙) */
@@ -54,7 +55,7 @@ export function formatInstructorFeeCalculationUnitLabel(
   unit: CalcInfo['instructorFeeCalculationUnit']
 ): string {
   if (!unit) return ''
-  return INSTRUCTOR_FEE_CALCULATION_UNIT_LABELS[unit] ?? ''
+  return INSTRUCTOR_FEE_CALCULATION_UNIT_LABELS[unit as keyof typeof INSTRUCTOR_FEE_CALCULATION_UNIT_LABELS] ?? ''
 }
 
 /** educationStartAt/EndAt(ISO instant) → `YYYY.MM.DD(요일) HH:mm ~ HH:mm`. 둘 중 하나라도 없으면 값 없음 */

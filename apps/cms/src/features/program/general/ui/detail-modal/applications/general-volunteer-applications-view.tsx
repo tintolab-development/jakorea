@@ -4,6 +4,8 @@ import { GeneralVolunteerDocScreeningSection } from './volunteer-screening/doc-s
 import { GeneralVolunteerDocPassedSection } from './volunteer-screening/doc-passed-section'
 import { GeneralVolunteerInterview2Section } from './volunteer-screening/interview2-section'
 import type { GeneralVolunteerApplicantDetailMeta } from './volunteer-screening/use-detail'
+import { NotifyAnnouncementProvider } from '@/shared/components/notify-announcement-context'
+import { resolveRecruitmentFinalAnnouncementAt } from '@/features/program/shared/lib/recruitment-final-announcement'
 import './participant-applications.css'
 
 export type GeneralVolunteerApplicationsTab =
@@ -66,7 +68,11 @@ export function GeneralVolunteerApplicationsView({
     onVolunteerApplicantDetailMetaChange: handleVolunteerApplicantDetailMetaChange,
   }
 
+  /** 봉사자 심사 팝업 알림 「발표일에 맞춰서」 — 봉사자 모집 최종 발표일 */
+  const notifyAnnouncementAt = resolveRecruitmentFinalAnnouncementAt(program, 'volunteer')
+
   return (
+    <NotifyAnnouncementProvider announcementAt={notifyAnnouncementAt}>
     <div className="participant-applications">
       {screenTab === 'vol_doc_passed' ? (
         <GeneralVolunteerDocPassedSection
@@ -83,5 +89,6 @@ export function GeneralVolunteerApplicationsView({
         />
       )}
     </div>
+    </NotifyAnnouncementProvider>
   )
 }

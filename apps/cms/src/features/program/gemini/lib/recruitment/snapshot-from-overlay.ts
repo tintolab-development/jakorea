@@ -2,6 +2,7 @@ import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_IDS } from '@/features/template/m
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import { isAnnouncementUnpublished } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { GEMINI_RECRUITMENT_VALIDATION_KEYS } from './validation-keys'
 import {
   GEMINI_RECRUIT_FIELD_KEYS,
   getGeminiRecruitFormRecord,
@@ -172,6 +173,56 @@ export function seedGeminiRecruitmentOverlaysFromSnapshot(
     DETAIL_PREFIX,
     templateCode
   )
+}
+
+export type GeminiRecruitmentMissingField = { key: string; label: string }
+
+/**
+ * QA-0390: 등록에 빠진 필수 항목 — `isGeminiRecruitmentInstitutionComplete`와 같은 조건.
+ * 비고는 내용을 쓰거나 「해당 없음」을 골라야 한다.
+ */
+export function listGeminiRecruitmentInstitutionMissingFields(
+  snapshot: GeminiRecruitmentAddFormSnapshot
+): GeminiRecruitmentMissingField[] {
+  const keys = GEMINI_RECRUITMENT_VALIDATION_KEYS
+  const missing: GeminiRecruitmentMissingField[] = []
+  const skipPeriods = isAnnouncementUnpublished(snapshot.announcementPublished)
+  if (
+    snapshot.announcementPublished !== 'published' &&
+    snapshot.announcementPublished !== 'unpublished'
+  ) {
+    missing.push({ key: keys.announcementPublished, label: '공고 게시 여부' })
+  }
+  if (!snapshot.title.trim()) missing.push({ key: keys.title, label: '공고명' })
+  if (snapshot.educationTargetLevels.length === 0) {
+    missing.push({ key: keys.educationTargetLevels, label: '교육 대상' })
+  }
+  if (!snapshot.educationTargetDetail.trim()) {
+    missing.push({ key: keys.educationTargetDetail, label: '교육 대상 상세' })
+  }
+  if (!skipPeriods && !(snapshot.applicationPeriodStart && snapshot.applicationPeriodEnd)) {
+    missing.push({ key: keys.applicationPeriod, label: '기관 모집 기간' })
+  }
+  if (!skipPeriods && !(snapshot.trainingRequestPeriodStart && snapshot.trainingRequestPeriodEnd)) {
+    missing.push({ key: keys.trainingRequestPeriod, label: '연수 요청 가능기간' })
+  }
+  if ((snapshot.minStudentCount ?? 0) < 1) {
+    missing.push({ key: keys.minStudentCount, label: '최소 수강 인원' })
+  }
+  if (snapshot.educationForm !== 'online' && snapshot.educationForm !== 'offline') {
+    missing.push({ key: keys.educationForm, label: '교육 형태' })
+  }
+  if (
+    !snapshot.inquiryContactName.trim() ||
+    !snapshot.inquiryTel.trim() ||
+    !snapshot.inquiryEmail.trim()
+  ) {
+    missing.push({ key: keys.inquiry, label: '문의처(담당자·Tel·E-mail)' })
+  }
+  if (!snapshot.notesNotApplicable && !snapshot.notes.trim()) {
+    missing.push({ key: keys.notes, label: '비고(내용 입력 또는 해당 없음 선택)' })
+  }
+  return missing
 }
 
 export function isGeminiRecruitmentInstitutionComplete(

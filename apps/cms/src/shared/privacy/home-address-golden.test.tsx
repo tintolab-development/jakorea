@@ -7,9 +7,10 @@ import { createElement } from 'react'
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { maskHomeAddressLine, PrivacyHomeAddressDisplay } from '@jakorea/ui/privacy'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 
 /** JABACK·JAHOMEADMINBACK PrivacyMaskingGoldenVectorTest 와 같은 fixture SHA-256 */
-const FIXTURE_SHA256 = '427edd79fcf4f16bcc9c41ebe8e29a121fd205c536836b52ab3658c62e9ec7b5'
+const FIXTURE_SHA256 = 'cc22ec9917772235d59a5ba73e10658f39bc6991efc2a481d16739ae1651616c'
 const fixturePath = join(dirname(fileURLToPath(import.meta.url)), '__fixtures__', 'masking-golden-vectors.json')
 const fixtureBytes = readFileSync(fixturePath)
 const fixture = JSON.parse(fixtureBytes.toString('utf8')) as {
@@ -26,6 +27,16 @@ describe('FE 자택 주소 마스킹 — BE Golden Vector 일치 (Step 6.1)', ()
   const homeAddressCases = fixture.cases.filter(c => c.type === 'HOME_ADDRESS')
   it.each(homeAddressCases.map(c => [c.id, c.input, c.expected]))('%s', (_id, input, expected) => {
     expect(maskHomeAddressLine(input)).toBe(expected)
+  })
+})
+
+describe('FE 예금주 마스킹 — BE Golden Vector 일치 (기획 결정 2026-11-12)', () => {
+  const holderCases = fixture.cases.filter(c => c.type === 'ACCOUNT_HOLDER')
+  it('예금주 케이스가 있다', () => {
+    expect(holderCases.length).toBeGreaterThanOrEqual(11)
+  })
+  it.each(holderCases.map(c => [c.id, c.input, c.expected]))('%s', (_id, input, expected) => {
+    expect(MASKING_POLICY.accountHolderName(input)).toBe(expected)
   })
 })
 

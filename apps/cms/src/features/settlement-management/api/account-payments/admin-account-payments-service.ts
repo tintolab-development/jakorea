@@ -11,8 +11,7 @@ import type { AccountPaymentRow, AccountPaymentStatusDetail } from '@/features/s
 
 /**
  * 계좌 지급 상세는 GET /api/admin/account-payments/{id}?reason=… 로 조회한다.
- * 표시용 계좌는 payment.maskedAccountNo. sensitiveAccount는 지급 확인용 원문만.
- * 성별·연락처 등은 settlement.payee(MASKED)가 있으면 매핑한다.
+ * 상세는 원문 화면이다(기획 2026-11-12 Q3): sensitiveAccount 계좌 원문과 settlement.payee(RAW)를 그대로 표시한다.
  */
 
 export async function getAccountPaymentsListRemote(

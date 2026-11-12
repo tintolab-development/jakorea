@@ -39,7 +39,8 @@ function isRequestAborted(error: unknown): boolean {
 export function FindEmailPage() {
   const navigate = useNavigate()
   const [view, setView] = useState<FindEmailView>('form')
-  const [maskedEmail, setMaskedEmail] = useState('')
+  /** 본인 이메일 원문 — 이 화면 상태에만 둔다(캐시·스토리지 금지) */
+  const [foundEmail, setFoundEmail] = useState('')
   const [isLookupLoading, setIsLookupLoading] = useState(false)
 
   const handleAccountNotFoundRef = useRef<() => void>(() => {})
@@ -62,7 +63,7 @@ export function FindEmailPage() {
         })
 
         if (result.kind === 'found') {
-          setMaskedEmail(result.maskedEmail)
+          setFoundEmail(result.email)
           resetErrorRef.current()
           setView('success')
           return
@@ -130,7 +131,7 @@ export function FindEmailPage() {
           />
         ) : view === 'success' ? (
           <FindEmailResultView
-            maskedEmail={maskedEmail}
+            email={foundEmail}
             onGoLogin={() => navigate('/login', { replace: true })}
             onResetPassword={() => navigate('/find-password', { replace: true })}
           />

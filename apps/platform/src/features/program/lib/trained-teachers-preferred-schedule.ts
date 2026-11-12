@@ -9,6 +9,10 @@
  *   교시 번호를 sessionCount로 보내지 않는다.
  */
 
+import {
+  buildTrainedTeachersPreferredSessionCountOptions,
+  TRAINED_TEACHERS_PREFERRED_SESSION_COUNT_FALLBACK_MAX,
+} from '@jakorea/form-schema/program-application'
 import type {
   ApplyPreferredScheduleBlock,
   ApplyPreferredScheduleSessionTime,
@@ -16,13 +20,10 @@ import type {
 import type { PortalPreferredScheduleSessionTime } from '../api/application-types'
 
 /**
- * 모집 1일 최대 차시(maxSessionsPerDay)를 받지 못했을 때의 희망 차시 상한.
- * 1사1교 희망 차시 셀렉(1·2차시)·OpenAPI `RequestedScheduleRequest.sessionCount` max 2와 같다.
+ * 희망 차시 상한 규칙(값 있으면 그 값·상한 16, 없으면 2차시)은 CMS 신청 양식 미리보기와 공유한다
+ * (`@jakorea/form-schema/program-application` trained-teachers-preferred-session-count).
  */
-export const TRAINED_TEACHERS_PREFERRED_SESSION_COUNT_FALLBACK_MAX = 2
-
-/** OpenAPI `PreferredScheduleBlockRequest.sessionTimes` maxItems */
-const TRAINED_TEACHERS_PREFERRED_SESSION_COUNT_HARD_MAX = 16
+export { TRAINED_TEACHERS_PREFERRED_SESSION_COUNT_FALLBACK_MAX }
 
 export const TRAINED_TEACHERS_PREFERRED_SCHEDULE_INCOMPLETE_MESSAGE =
   '진행 희망 교육 일정에 날짜·희망 차시·차시별 수업 진행 교시·시작/종료 시간을 모두 입력해 주세요.'
@@ -35,16 +36,7 @@ export const TRAINED_TEACHERS_PREFERRED_SCHEDULE_INCOMPLETE_MESSAGE =
 export function buildTrainedTeachersSessionCountOptions(
   maxSessionsPerDay?: number | null,
 ): { value: string; label: string }[] {
-  const max =
-    typeof maxSessionsPerDay === 'number' &&
-    Number.isInteger(maxSessionsPerDay) &&
-    maxSessionsPerDay > 0
-      ? Math.min(maxSessionsPerDay, TRAINED_TEACHERS_PREFERRED_SESSION_COUNT_HARD_MAX)
-      : TRAINED_TEACHERS_PREFERRED_SESSION_COUNT_FALLBACK_MAX
-  return Array.from({ length: max }, (_, index) => ({
-    value: String(index + 1),
-    label: `${index + 1}차시`,
-  }))
+  return buildTrainedTeachersPreferredSessionCountOptions(maxSessionsPerDay)
 }
 
 export function readTrainedTeachersSessionCount(

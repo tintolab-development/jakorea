@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   affiliationAndGradeView,
+  affiliationView,
   resolveInstructorAffiliationParts,
   resolveSchoolTeacherAffiliationDisplay,
 } from '@/features/user/detail/ui/user-basic-info/display'
@@ -189,5 +190,37 @@ describe('resolveInstructorAffiliationParts', () => {
     )
     expect(parts.schoolName).toBe('진월초등학교')
     expect(parts.others).toEqual(['제미나이 강사단'])
+  })
+})
+
+describe('affiliationView — 학교명이 비어 오는 레코드 (QA-0431)', () => {
+  it('학교 정보는 있는데 학교명이 비면 -로 표시한다', () => {
+    expect(
+      affiliationView(
+        instructor({
+          role: 'INDIVIDUAL',
+          schoolInfo: { schoolName: '', address: '' },
+        })
+      )
+    ).toBe('-')
+    expect(
+      affiliationView(
+        instructor({
+          role: 'INDIVIDUAL',
+          schoolInfo: { schoolName: '  ', address: '' },
+        })
+      )
+    ).toBe('-')
+  })
+
+  it('학교명이 있으면 그대로 표시한다', () => {
+    expect(
+      affiliationView(
+        instructor({
+          role: 'INDIVIDUAL',
+          schoolInfo: { schoolName: '진월초등학교', address: '' },
+        })
+      )
+    ).toBe('진월초등학교')
   })
 })

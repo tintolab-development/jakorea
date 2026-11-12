@@ -8,7 +8,7 @@ import {
 } from '@/features/notifications/model/mail-template/preview'
 import { parseMailSenderDisplay } from '@/features/notifications/api/adapters/mail-template-adapters'
 import { mailBodyToDisplayHtml } from '@/features/notifications/model/shared/mail-body-display-html'
-import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
+import { resolveNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   MailBroadcastTiming,
   MailSendHistoryAttachment,
@@ -134,9 +134,19 @@ export function mapMailDeliveryToSendHistoryRow(
     scheduled: broadcastTiming === '예약',
   })
   const failedReasonRaw = item.failedReason?.trim() || ''
+  // QA-0178: 서버 displayReason 우선, 없으면 failedReason 정리값
   const failedReason =
     sendStatus === '발송 실패'
-      ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw
+      ? resolveNotificationFailedReason(item.displayReason, failedReasonRaw)
+      : ''
+  const receiveStatus = mapNotificationReceiveStatus(item.receiptStatus)
+  // 발송 성공·수신 실패: 발송 실패 사유와 별도로 응답에 있는 사유만 보여 준다 (QA-0176)
+  const receiveFailedReason =
+    sendStatus !== '발송 실패' && receiveStatus === '수신 실패'
+      ? resolveNotificationFailedReason(
+          item.displayReason,
+          failedReasonRaw || item.providerResultMessage?.trim() || ''
+        )
       : ''
 
   const readStatus: MailSendHistoryRow['readStatus'] = item.openedAt
@@ -160,7 +170,7 @@ export function mapMailDeliveryToSendHistoryRow(
     receiverInfo: formatMailPreviewPerson(receiverName, receiverEmail),
     broadcastTiming,
     sendStatus,
-    receiveStatus: mapNotificationReceiveStatus(item.receiptStatus),
+    receiveStatus,
     // 발송/수신일시: sentAt / deliveredAt만 (requestedAt·openedAt 대체 금지)
     sentAt: item.sentAt?.trim() || '',
     receivedAt: item.deliveredAt?.trim() || '',
@@ -168,6 +178,7 @@ export function mapMailDeliveryToSendHistoryRow(
     templateName,
     bodyHtml,
     failedReason: failedReason || undefined,
+    receiveFailedReason: receiveFailedReason || undefined,
     attachmentFileNames: attachments.map(item => item.fileName),
     attachments,
   }

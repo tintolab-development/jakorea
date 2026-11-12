@@ -90,6 +90,8 @@ export type EducationSettlementItem = {
   reapplyDeadlineDate?: string
   /** 강사 지급조서: 사업 운영 종료일이 지났으면 true — 작성·재신청을 막는다 */
   operationEnded?: boolean
+  /** 강사 지급조서: 사업 운영 종료일(YYYY-MM-DD). 마감 후 지연 제출 안내에 쓴다 */
+  businessEndDate?: string
 }
 
 export const EDUCATION_SETTLEMENT_PAGE_SIZE = 7

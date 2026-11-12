@@ -39,7 +39,7 @@ export function resolveRecruitmentStatus(
   return 'IN_PROGRESS'
 }
 
-/** 목록·필터용 — 임시저장 행은 기간과 무관하게 DRAFT */
+/** 목록·필터용 — 미게시 행은 기간과 무관하게 DRAFT */
 export function resolveRecruitmentDisplayStatus(
   row: Pick<GeminiRecruitmentRow, 'isDraft' | 'applicationPeriodStart' | 'applicationPeriodEnd'>,
   referenceDate: Dayjs | string = dayjs()

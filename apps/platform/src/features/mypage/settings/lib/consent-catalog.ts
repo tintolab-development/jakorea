@@ -116,7 +116,7 @@ const MARKETING_ITEM: SettingsConsentItem = {
 
 const PORTRAIT_ITEM: SettingsConsentItem = {
   id: 'portrait',
-  title: '초상권 수집·이용 동의',
+  title: '초상권 수집·이용 동의서',
   required: false,
   kind: 'document',
   agreed: true,
@@ -193,7 +193,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
   },
   {
     id: 'sexOffenseCheck',
-    title: '성범죄 경력 조회 동의서',
+    title: '성범죄경력 조회 동의서',
     required: false,
     kind: 'document',
     agreed: true,

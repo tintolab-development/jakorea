@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { useSiteFooter, type SiteFooterPartner } from '@/features/site-shell'
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
-import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
+import chevronDownGrayUrl from './image/icon/toggle-down-gray-16.svg'
+import chevronDownGrayMobileUrl from './image/icon/toggle-down-gray-20-mobile.svg'
 import ministryLogoUrl from './image/logo/footer-logo-1.svg'
 import taxLogoUrl from './image/logo/footer-logo-2.png'
 import rightsLogoUrl from './image/logo/footer-logo-3.svg'
@@ -226,9 +227,23 @@ export function Footer() {
               onClick={() => setIsRelatedSitesOpen(open => !open)}
             >
               <span className={styles.relatedSitesLabel}>관련 사이트 보기</span>
+              {/* 시안: 모바일은 입력칸 화살표 20, PC는 토글 화살표 16 */}
               <img
                 className={[
                   styles.relatedSitesChevron,
+                  styles.relatedSitesChevronMobile,
+                  isRelatedSitesOpen ? styles.relatedSitesChevronOpen : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                src={chevronDownGrayMobileUrl}
+                alt=""
+                aria-hidden="true"
+              />
+              <img
+                className={[
+                  styles.relatedSitesChevron,
+                  styles.relatedSitesChevronDesktop,
                   isRelatedSitesOpen ? styles.relatedSitesChevronOpen : '',
                 ]
                   .filter(Boolean)

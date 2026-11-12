@@ -10,6 +10,25 @@ export const SETTLEMENT_STATUS_LIST_LABEL: Record<SettlementOverviewStatus, stri
   reapplied: PAYMENT_STATEMENT_AGGREGATE_LABEL.payment_statement_reapplication,
 }
 
+/** 개인·봉사자 영수증 행 목록 라벨 (R17, USER-FUNC-0163) — "지급조서 확인 완료" 금지 */
+export const RECEIPT_STATUS_LIST_LABEL: Record<SettlementOverviewStatus, string> = {
+  waiting_confirm: '확인 대기',
+  confirmed: '확인 완료',
+  paid: '계좌 지급 완료',
+  rejected: '신청 반려',
+  correction_requested: PAYMENT_STATEMENT_AGGREGATE_LABEL.payment_correction_requested,
+  reapplied: '영수증 재신청',
+}
+
+export function settlementStatusListLabel(item: {
+  status: SettlementOverviewStatus
+  documentKind?: 'receipt' | 'payment_statement'
+}): string {
+  return item.documentKind === 'receipt'
+    ? RECEIPT_STATUS_LIST_LABEL[item.status]
+    : SETTLEMENT_STATUS_LIST_LABEL[item.status]
+}
+
 export const SETTLEMENT_STATUS_CALENDAR_SHORT: Record<SettlementOverviewStatus, string> = {
   waiting_confirm: '신청 완료',
   confirmed: '확인 완료',

@@ -6,7 +6,10 @@ import {
 } from '@/features/mypage/lib/constants'
 import { PortraitGuardianInfoModal } from '@/features/mypage/settings/ui/portrait-guardian-info-modal'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
-import type { ProgramRequiredConsentVariant } from '../../hooks/use-program-apply-gate'
+import type {
+  ProgramNotEligibleVariant,
+  ProgramRequiredConsentVariant,
+} from '../../hooks/use-program-apply-gate'
 import type { ProgramMinorPortraitFlowProps } from '../../hooks/use-program-minor-portrait-gate'
 import type { ProgramApplyGateModalKind } from '../../lib/application-apply-gate'
 import {
@@ -31,6 +34,8 @@ type ProgramApplyGateModalsProps = {
   /** `minor` — 만 14세 미만 회원: 문구 변형 + `동의서 작성하기` 가 보호자 본인인증 흐름을 연다 */
   requiredConsentVariant?: ProgramRequiredConsentVariant
   minorPortrait?: ProgramMinorPortraitFlowProps
+  /** `not-eligible` — `teacher`: 교사 회원 신청 제한. 회원 정보 수정 안내·버튼 없이 [닫기]만 */
+  notEligibleVariant?: ProgramNotEligibleVariant
 }
 
 /** application-options `blockedReason` 기반 (대상 불일치·이미 신청) + 필수 동의 가드 */
@@ -43,7 +48,9 @@ export function ProgramApplyGateModals({
   onOpenConsents,
   requiredConsentVariant = 'default',
   minorPortrait,
+  notEligibleVariant = 'default',
 }: ProgramApplyGateModalsProps) {
+  const isTeacherNotEligible = notEligibleVariant === 'teacher'
   const isMinorPortrait = requiredConsentVariant === 'minor' && minorPortrait != null
   const minorStep = isMinorPortrait && kind === 'required-consent' ? minorPortrait.step : null
   const cancelMinorPortrait = () => {
@@ -99,17 +106,28 @@ export function ProgramApplyGateModals({
             </PFText>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
               프로그램의 모집 대상을 확인해 주세요.
-              <br />
-              회원 정보가 정확하지 않다면 정보를 수정해 주세요.
+              {isTeacherNotEligible ? null : (
+                <>
+                  <br />
+                  회원 정보가 정확하지 않다면 정보를 수정해 주세요.
+                </>
+              )}
             </PFText>
           </div>
           <div className={styles.actions}>
-            <PFButton type="button" variant="secondary" size="xlarge" onClick={onClose}>
+            <PFButton
+              type="button"
+              variant={isTeacherNotEligible ? 'tertiary' : 'secondary'}
+              size="xlarge"
+              onClick={onClose}
+            >
               닫기
             </PFButton>
-            <PFButton type="button" variant="primary" size="xlarge" onClick={onEditMemberInfo}>
-              회원 정보 수정하기
-            </PFButton>
+            {isTeacherNotEligible ? null : (
+              <PFButton type="button" variant="primary" size="xlarge" onClick={onEditMemberInfo}>
+                회원 정보 수정하기
+              </PFButton>
+            )}
           </div>
         </div>
       </PFModal>

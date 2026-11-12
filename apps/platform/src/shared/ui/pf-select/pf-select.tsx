@@ -10,11 +10,11 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
-import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
 import { PFOptionList, type PFOptionListOption } from '../pf-option-list'
 import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
+import chevronDownBlackUrl from './icons/chevron-down-completed.svg'
+import chevronDownGrayUrl from './icons/chevron-down-default.svg'
 import styles from './pf-select.module.css'
 
 export type PFSelectSize = 'medium' | 'large' | 'xlarge' | 'mobile'

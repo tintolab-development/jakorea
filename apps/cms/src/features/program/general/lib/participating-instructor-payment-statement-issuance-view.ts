@@ -51,14 +51,14 @@ export function buildPaymentStatementIssuancePreviewFileName(
   return `[JA Korea] ${PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE}_${instructorName}_${formatAsiaSeoulYymmdd(now)}`
 }
 
-/** 지급조서 일괄 다운로드 대상 — 지급조서 확인 완료·계좌 지급 완료 */
+/** 지급조서 일괄 다운로드 대상 — 지급조서 확인 완료·계좌 지급 완료 (활동 포기 회차도 제출된 지급조서는 포함) */
 export function isParticipatingInstructorSettlementEligibleForPaymentStatementDownload(row: {
-  lectureProgressLabel: '진행 완료' | '진행 예정'
+  lectureProgressLabel: '진행 완료' | '진행 예정' | '활동 포기'
   hasPaymentStatementApplication: boolean
   paymentStatementStatus: InstructorSettlementUiStatus
 }): boolean {
   return (
-    row.lectureProgressLabel === '진행 완료' &&
+    row.lectureProgressLabel !== '진행 예정' &&
     row.hasPaymentStatementApplication &&
     isInstructorSettlementEligibleForPaymentStatementIssue(row.paymentStatementStatus)
   )

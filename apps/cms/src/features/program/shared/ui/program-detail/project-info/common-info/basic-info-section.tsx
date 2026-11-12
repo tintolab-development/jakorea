@@ -15,20 +15,26 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import { Controller } from 'react-hook-form'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
-import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import {
+  maskSponsorManagerPhone,
+  resolveAssignedSponsorManagerPhone,
+  SponsorManagerContactsView,
+} from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import {
   ProgramSponsorHomepageView,
   ProgramSponsorLogoView,
 } from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
-import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import {
+  useGeneralProgramSponsorEditContext,
+  useProgramSponsorContactsMaskedQuery,
+} from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
@@ -36,6 +42,7 @@ import {
   normalizeSponsorManagerContactIds,
   retainSponsorManagerContactIdsForSponsors,
   resolveVenueKind,
+  type GeneralProgramVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
@@ -134,6 +141,7 @@ function CompanySchoolFixedParticipantTypes() {
   return <LockedParticipantTypeCheckboxes organization teacherInstructor />
 }
 
+/** 교육받은 교사 수정 — 시안 5416:111869 「개인 / 학교/기관 / 강사 / 봉사자」 비활성 체크박스 */
 function TrainedTeachersParticipantTypes({ program }: { program: Program }) {
   return (
     <LockedParticipantTypeCheckboxes
@@ -142,11 +150,18 @@ function TrainedTeachersParticipantTypes({ program }: { program: Program }) {
         program.generalParticipantTypes,
         'teacher_instructor'
       )}
-      teacherInstructorLabel="교사/강사"
       individual={participantTypeChecked(program.generalParticipantTypes, 'individual')}
       volunteer={participantTypeChecked(program.generalParticipantTypes, 'volunteer')}
     />
   )
+}
+
+/** 교육받은 교사 조회 — 시안 5416:111561 텍스트(「학교/기관」). 저장값이 없으면 고정 라벨 */
+function formatTrainedTeachersParticipantTypes(program: Program, fallbackLabel: string): string {
+  const labels = (program.generalParticipantTypes ?? [])
+    .map(type => GENERAL_PARTICIPANT_TYPE_LABELS[type] ?? type)
+    .filter(Boolean)
+  return labels.length > 0 ? labels.join(', ') : fallbackLabel
 }
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
@@ -172,7 +187,10 @@ export interface BasicInfoSectionProps {
    * 1사1교·일반 기본정보 IPS 행은 유지.
    */
   hideIpsTypeField?: boolean
-  /** 교육받은 교사 — 참여자 유형을 고정 라벨로 표시 (수정 UI 없음) */
+  /**
+   * 교육받은 교사 — 참여자 유형 고정(수정 불가). 조회는 텍스트, 수정은 비활성 체크박스.
+   * 값은 저장된 참여자 유형이 없을 때 조회에 쓰는 라벨이다.
+   */
   fixedParticipantTypeLabel?: string
   /** 교육받은 교사 — 대표 프로그램명(영문) Input 편집 */
   enableTitleEnEdit?: boolean
@@ -183,7 +201,7 @@ export interface BasicInfoSectionProps {
    * 교육받은 교사 상세 수정 전용 — 1사1교·일반 조회 타이틀은 유지.
    */
   hideFormTitles?: boolean
-  /** 교육받은 교사 — 등록 위저드와 같이 교육 장소 행 비노출 */
+  /** 교육 장소 행 비노출 opt-in. 교육받은 교사 상세는 시안(5416:111561·111869)대로 노출한다 */
   hideEducationPlace?: boolean
   /** 교육받은 교사 — 공고용 프로그램명 placeholder (위저드 카피) */
   announcementTitlePlaceholder?: string
@@ -220,9 +238,10 @@ function formatCompanySchoolVenue(program: Program): string {
   const kind = resolveVenueKind(program)
   const kindLabel = kind === 'outside' ? '기관 밖' : kind === 'other' ? '기타(직접입력)' : '기관 안'
   if (isTrainedTeachersProgram(program)) {
-    const venueName = program.venue?.trim() || '-'
-    const venueDetail = program.generalCommonInfo?.venueDetail?.trim() || '-'
-    return `${kindLabel} | ${venueName} | ${venueDetail}`
+    // 시안 5416:111561 「기관 안 | -」 — 상세 장소 1칸. 등록 위저드와 같이 venueDetail 정본, 없을 때만 top-level venue
+    const detail =
+      program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
+    return `${kindLabel} | ${detail}`
   }
   const detail = program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
   return `${kindLabel} | ${detail}`
@@ -265,7 +284,9 @@ export function BasicInfoSection({
     Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
   )
   const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
-  const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
+  // 수정 모드 담당자 선택지 — 모든 유형 contactPrivacy=MASKED(데이터 관리 RAW 캐시와 분리, 정책 32·37).
+  // 담당자 전화는 문의처(contactPhone)로 복사하지 않는다(기획: 자동 채움 없음).
+  const contactsQuery = useProgramSponsorContactsMaskedQuery(watchedSponsorId, Boolean(isFormEdit))
   const managers = contactsQuery.data ?? []
   const sponsorManagementIds = isFormEdit
     ? (form?.watch('sponsorManagementIds') ?? [])
@@ -729,7 +750,7 @@ export function BasicInfoSection({
                 isEconomyCommonInfo ? (
                   <CompanySchoolFixedParticipantTypes />
                 ) : fixedParticipantTypeLabel != null ? (
-                  <TrainedTeachersParticipantTypes program={program} />
+                  formatTrainedTeachersParticipantTypes(program, fixedParticipantTypeLabel)
                 ) : (
                   formatCompanySchoolParticipantTypes(program)
                 )
@@ -916,14 +937,6 @@ export function BasicInfoSection({
                                 ? SPONSOR_CONTACT_UNSELECTED_LABEL
                                 : (primary?.name ?? '')
                             )
-                            // 1사1교(economy)만 담당자 전화를 contactPhone 에 동기화.
-                            // TT 등 forceCompanySchoolLayout 은 contactPhone=문의처 와 공유한다.
-                            if (isEconomyCommonInfo) {
-                              commonInfoForm.setValue(
-                                'contactPhone',
-                                unselectedOnly ? undefined : primary?.phone
-                              )
-                            }
                           }}
                         />
                       </div>
@@ -933,7 +946,8 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
-          {!isFormEdit ? (
+          {/* 1사1교 조회 시안(4175:99060)에는 후원사 홈페이지·로고 행이 없다 — 교육받은 교사는 유지 */}
+          {!isFormEdit && !isEconomyCommonInfo ? (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="후원사 홈페이지"
@@ -971,8 +985,21 @@ export function BasicInfoSection({
                       render={({ field }) => (
                         <CmsRadio.Group
                           size="medium"
-                          value={field.value ?? 'inside'}
-                          onChange={event => field.onChange(event.target.value)}
+                          value={
+                            field.value ??
+                            (trainedTeacherCommonInfo ? resolveVenueKind(program) : 'inside')
+                          }
+                          onChange={event => {
+                            const nextKind = event.target.value as GeneralProgramVenueKind
+                            field.onChange(nextKind)
+                            if (trainedTeacherCommonInfo && nextKind === 'other') {
+                              // TT 기타 — 등록 위저드와 같이 top-level venue = 상세 장소 문구
+                              const detail = commonInfoForm.getValues('venueDetail')?.trim()
+                              if (detail) {
+                                commonInfoForm.setValue('venue', detail, { shouldDirty: true })
+                              }
+                            }
+                          }}
                         >
                           <CmsRadio size="medium" value="inside">
                             기관 안
@@ -987,38 +1014,34 @@ export function BasicInfoSection({
                       )}
                     />
                     <DetailInfoForm.InputsSeparator />
-                    {isTrainedTeachersProgram(program) ? (
-                      <>
-                        <Controller
-                          name="venue"
-                          control={commonInfoForm.control}
-                          render={({ field }) => (
-                            <CmsInput
-                              inputSize="small"
-                              placeholder="장소명"
-                              width="100%"
-                              style={{ flex: '1 1 0', minWidth: 0 }}
-                              value={field.value ?? ''}
-                              onChange={field.onChange}
-                            />
-                          )}
-                        />
-                        <DetailInfoForm.InputsSeparator />
-                        <Controller
-                          name="venueDetail"
-                          control={commonInfoForm.control}
-                          render={({ field }) => (
-                            <CmsInput
-                              inputSize="small"
-                              placeholder="상세 장소"
-                              width="100%"
-                              style={{ flex: '1 1 0', minWidth: 0 }}
-                              value={field.value ?? ''}
-                              onChange={field.onChange}
-                            />
-                          )}
-                        />
-                      </>
+                    {trainedTeacherCommonInfo ? (
+                      // 시안 5416:111869 — 라디오 | 상세 장소 1칸 (등록 위저드 venueDetail과 같은 값)
+                      <Controller
+                        name="venueDetail"
+                        control={commonInfoForm.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            inputSize="small"
+                            placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                            width="100%"
+                            style={{ flex: '1 1 0', minWidth: 0 }}
+                            value={field.value ?? ''}
+                            onChange={event => {
+                              field.onChange(event)
+                              const text = event.target.value
+                              const currentKind = commonInfoForm.getValues('venueKind')
+                              // 라디오를 건드리지 않은 채 입력하면 화면에 보이던 종류를 함께 저장한다
+                              const kind = currentKind ?? resolveVenueKind(program)
+                              if (!currentKind) {
+                                commonInfoForm.setValue('venueKind', kind, { shouldDirty: true })
+                              }
+                              if (kind === 'other') {
+                                commonInfoForm.setValue('venue', text, { shouldDirty: true })
+                              }
+                            }}
+                          />
+                        )}
+                      />
                     ) : (
                       <Controller
                         name="venueDetail"
@@ -1225,6 +1248,14 @@ export function BasicInfoSection({
       </div>
     )
   }
+
+  // 조회: 배정 응답의 대표 담당자 연락처. 수정: 선택한 담당자(MASKED 선택지)의 연락처. 문의처(contactPhone)와 무관.
+  const assignedManagerPhone = resolveAssignedSponsorManagerPhone(program)
+  const editSelectedManagerName = commonInfoForm.watch('managerName')
+  const editSelectedManagerPhone =
+    editSelectedManagerName && editSelectedManagerName !== SPONSOR_CONTACT_UNSELECTED_LABEL
+      ? managers.find(m => m.name === editSelectedManagerName)?.phone
+      : undefined
 
   return (
     <DetailInfoForm title="기본 정보" mode={commonInfoFormEdit ? 'edit' : 'view'}>
@@ -1456,10 +1487,10 @@ export function BasicInfoSection({
             ) : program.managerName?.trim() ? (
               <>
                 {program.managerName}
-                {program.contactPhone ? (
+                {assignedManagerPhone ? (
                   <>
                     {'\u00A0'}
-                    <span>{program.contactPhone}</span>
+                    <span>{maskSponsorManagerPhone(assignedManagerPhone)}</span>
                   </>
                 ) : null}
               </>
@@ -1478,14 +1509,11 @@ export function BasicInfoSection({
                         control={commonInfoForm.control}
                         render={({ field }) => {
                           const currentName = field.value ?? ''
-                          const currentPhone = commonInfoForm.watch('contactPhone') ?? ''
                           const selectedIndex =
                             currentName === SPONSOR_CONTACT_UNSELECTED_LABEL
                               ? -1
                               : managers.length > 0
-                                ? managers.findIndex(
-                                    m => m.name === currentName || m.phone === currentPhone
-                                  )
+                                ? managers.findIndex(m => m.name === currentName)
                                 : -1
                           const contactOptions =
                             contactsQuery.isSuccess || contactsQuery.isError
@@ -1527,12 +1555,10 @@ export function BasicInfoSection({
                                       ? SPONSOR_CONTACT_UNSELECTED_LABEL
                                       : ''
                                   )
-                                  commonInfoForm.setValue('contactPhone', undefined)
                                   return
                                 }
                                 if (typeof idx === 'number' && idx >= 0 && managers[idx]) {
                                   commonInfoForm.setValue('managerName', managers[idx].name)
-                                  commonInfoForm.setValue('contactPhone', managers[idx].phone)
                                 }
                               }}
                               width={'50%'}
@@ -1545,7 +1571,8 @@ export function BasicInfoSection({
                       />
                       <div>
                         <span>{'\u00A0'}</span>
-                        <span>{commonInfoForm.watch('contactPhone') || '-'}</span>
+                        {/* 선택한 담당자 연락처(MASKED 선택지) — 서버 반영 전 원문이 와도 화면은 마스킹(정책 32·37) */}
+                        <span>{maskSponsorManagerPhone(editSelectedManagerPhone) || '-'}</span>
                       </div>
                     </div>
                   </>

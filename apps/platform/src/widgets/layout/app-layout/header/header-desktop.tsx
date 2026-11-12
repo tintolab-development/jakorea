@@ -7,8 +7,8 @@ import {
 } from '@/features/notification'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
-import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
 import notificationsActiveIconUrl from '../image/icon/notifications-active.svg'
+import externalLinkIconUrl from './image/icon/outlink.svg'
 import {
   getActiveNavigationGroupCode,
   getLoggedInActionRoute,

@@ -113,8 +113,8 @@ import {
 } from '@/features/user/api/partition-users-for-bulk-delete'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
 import {
-  ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE,
   adminPermissionFeeGradeToRoleCode,
+  roleCodeToAdminPermissionVariant,
 } from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
@@ -478,7 +478,6 @@ export type PatchUserBasicInfoOptions = {
   knownRole?: UserRole
   memberId?: number
   organizationId?: number
-  existingCommentId?: number
   /** 코멘트·권한 유형만 저장 후 이 객체를 기준으로 반환 (추가 상세 GET 생략) */
   baseUser?: Omit<User, 'password'>
 }
@@ -538,7 +537,6 @@ async function patchAdminUserBasicInfoRemote(
     const comment = patch.adminComment?.trim()
     if (comment) {
       await upsertMemberAdminCommentRemote(commentResource.resourceId, comment, {
-        existingCommentId: options?.existingCommentId,
         screenCode: MEMBER_DETAIL_SCREEN_CODE,
         target: commentResource.target,
       })
@@ -642,7 +640,6 @@ async function patchUserBasicInfoRemote(
         const comment = patch.adminComment?.trim()
         if (comment) {
           await upsertMemberAdminCommentRemote(organizationId, comment, {
-            existingCommentId: options?.existingCommentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
             target: 'schoolOrganization',
           })
@@ -667,7 +664,6 @@ async function patchUserBasicInfoRemote(
       const comment = patch.adminComment?.trim()
       if (comment) {
         await upsertMemberAdminCommentRemote(memberId, comment, {
-          existingCommentId: options?.existingCommentId,
           screenCode: MEMBER_DETAIL_SCREEN_CODE,
           target: 'member',
         })
@@ -1180,6 +1176,8 @@ export interface CreateUserRequest {
   birthDate?: string
   role: UserRole
   adminLevel?: AdminLevel
+  /** 관리자 직접 등록 — 권한 유형 roleCode (필수·기본값 없음, QA-0394) */
+  adminRoleCode?: string
   programRole?: ProgramRole
   schoolInfo?: {
     schoolName: string
@@ -1313,6 +1311,10 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         if (!termsAgreements || termsAgreements.length !== 4) {
           throw new Error('관리자 등록에는 약관 동의 4종(서비스·개인정보·MFA·마케팅)이 필요합니다.')
         }
+        const adminRoleCode = resolvedRequest.adminRoleCode?.trim()
+        if (!adminRoleCode) {
+          throw new Error('관리자 등록에는 권한 유형이 필요합니다.')
+        }
         const created = await createAdminAccountRemote({
           email: adminEmail,
           rawPassword,
@@ -1320,7 +1322,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           phone: resolvedRequest.phone?.trim(),
           gender: toApiGender(resolvedRequest.gender),
           birthDate: toApiBirthDate(resolvedRequest.birthDate),
-          roleCode: ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE,
+          roleCode: adminRoleCode,
           reason: 'CMS 관리자 회원 신규 등록',
           termsAgreements,
         })
@@ -1343,7 +1345,9 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           registeredByAdmin: true,
-          listMetrics: { adminPermissionVariant: 'viewer' },
+          listMetrics: {
+            adminPermissionVariant: roleCodeToAdminPermissionVariant(adminRoleCode) ?? undefined,
+          },
         }
       }
 

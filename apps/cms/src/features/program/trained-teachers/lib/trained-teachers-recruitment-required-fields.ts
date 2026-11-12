@@ -5,7 +5,7 @@
 import {
   buildInstitutionApplicationRecruitLimitVisibilityBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
-  shouldShowInstitutionApplicationMaxSessionsPerDayField,
+  shouldShowTrainedTeachersInstitutionApplicationMaxSessionsPerDayField,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import type { TrainedTeachersRecruitFormState } from './registration-canonical-types'
 import { serializeTrainedTeachersRecruitmentForFormVersion } from './registration-rhf-recruitment'
@@ -49,8 +49,9 @@ export function listIncompleteTrainedTeachersRecruitmentRequiredFields(
   if (shouldShowInstitutionApplicationMaxScheduleFields(bridge) && isEmptyNumber(recruit.maxScheduleCount)) {
     reasons.push(`${p}.maxScheduleCount`)
   }
+  // TT: 커리큘럼형(단일·복수) + 기간 지정 — Platform 「희망 차시」 셀렉 조건과 동일
   if (
-    shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge) &&
+    shouldShowTrainedTeachersInstitutionApplicationMaxSessionsPerDayField(bridge) &&
     isEmptyNumber(recruit.maxSessionsPerDay)
   ) {
     reasons.push(`${p}.maxSessionsPerDay`)

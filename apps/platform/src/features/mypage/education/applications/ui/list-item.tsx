@@ -20,6 +20,10 @@ type EducationApplicationListItemRowProps = {
   /** 교육현황은 `teacher`(승인 대기 세트). 봉사·강의현황은 기본 `general`. */
   statusAudience?: EducationDisplayStatusAudience
   isTeacher?: boolean
+  /** 강의·봉사 현황 목록 — 모집 역할 배지(강사·봉사자 등) */
+  recruitmentRoleLabel?: string
+  /** Figma 목록 카드 배지 크기 */
+  badgeSize?: 'compact' | 'regular'
 }
 
 export function EducationApplicationListItemRow({
@@ -27,6 +31,8 @@ export function EducationApplicationListItemRow({
   onClick,
   statusAudience = 'general',
   isTeacher = false,
+  recruitmentRoleLabel,
+  badgeSize = 'compact',
 }: EducationApplicationListItemRowProps) {
   const statusTone = getEducationDisplayStatusTone(item.displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[statusTone]]
@@ -68,7 +74,7 @@ export function EducationApplicationListItemRow({
             </PFText>
             <div className={styles.periodBlock}>
               <PFText as="span" typo="bd-md-md" color="primary-700" className={styles.periodLabel}>
-                모집기간
+                모집 기간
               </PFText>
               <PFText as="span" typo="bd-md-md" color="primary-500" className={styles.periodValue}>
                 {item.recruitmentPeriodLabel}
@@ -76,7 +82,7 @@ export function EducationApplicationListItemRow({
             </div>
             <div className={styles.periodBlock}>
               <PFText as="span" typo="bd-md-md" color="primary-700" className={styles.periodLabel}>
-                진행기간
+                진행 기간
               </PFText>
               <PFText as="span" typo="bd-md-md" color="primary-500" className={styles.periodValue}>
                 {item.operatingPeriodLabel}
@@ -94,11 +100,13 @@ export function EducationApplicationListItemRow({
             educationTargetLabel={item.educationTargetLabel}
             educationForm={item.educationForm}
             educationFormLabel={item.educationFormLabel}
+            recruitmentRoleLabel={recruitmentRoleLabel}
+            size={badgeSize}
           />
         </>
       }
       aside={
-        <PFText as="span" typo="bd-lg-sb" className={statusClassName}>
+        <PFText as="span" typo="hl-sm" className={statusClassName}>
           {statusLabel}
         </PFText>
       }

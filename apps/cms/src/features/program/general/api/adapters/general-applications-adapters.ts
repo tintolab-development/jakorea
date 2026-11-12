@@ -2,6 +2,7 @@ import type {
   ApplicantApprovalStatusKey,
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
+import { readParticipantManAge } from '@/features/program/general/api/adapters/participant-man-age'
 import {
   positiveEducationNumber,
   stripDefaultEducationSlotNameFromLabel,
@@ -1049,11 +1050,46 @@ function mapInstructorApplicationListScheduleFields(
   }
 }
 
+/** 강사비 책정 기준(Approval.feePolicy 형태) → 행 표시 필드. feePolicy가 없으면 빈 객체(덮어쓰지 않음) */
+export type LectureFeeRowFields = {
+  instructorFeeGradeLabel?: string
+  lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
+  lectureFeeMeasure?: string
+  lectureFeeAmount?: string
+  lectureFeeBasisDisplay?: string
+}
+
+/**
+ * 강사 신청 상세 feePolicy 표시 로직과 같은 규칙 — participants `instructorFeePolicy`,
+ * 참여 강사 강사비 API 응답(서버 정규화 값 `special_lecture`·`차시당` 등)에 공통으로 쓴다.
+ */
+export function mapFeePolicyToLectureFeeRowFields(
+  feePolicy:
+    | { basisType?: string | null; measure?: string | null; amount?: number | null; instructorFeeGrade?: string | null }
+    | null
+    | undefined
+): LectureFeeRowFields {
+  if (!feePolicy) return {}
+  const basisType = mapInstructorFeeBasisType(feePolicy.basisType)
+  const measure = mapInstructorFeeMeasureFromApi(feePolicy.measure)
+  const amount = feePolicy.amount != null ? String(feePolicy.amount) : undefined
+  const gradeLabel = formatInstructorFeeGradeLabel(feePolicy.instructorFeeGrade) || undefined
+  return {
+    ...(gradeLabel ? { instructorFeeGradeLabel: gradeLabel } : {}),
+    ...(basisType ? { lectureFeeBasisType: basisType } : {}),
+    ...(measure ? { lectureFeeMeasure: measure } : {}),
+    ...(amount != null ? { lectureFeeAmount: amount } : {}),
+    lectureFeeBasisDisplay: buildLectureFeeBasisDisplay(basisType ?? 'program', measure ?? '', amount ?? ''),
+  }
+}
+
 function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
-  if (trimmed === 'PER_HOUR') return '1시간 당'
-  if (trimmed === 'PER_SESSION' || trimmed === 'SESSION') return '출강 1회당'
+  // PER_CLASS가 현재 코드, PER_HOUR는 기존 저장 데이터(차시당과 같다)
+  if (trimmed === 'PER_HOUR' || trimmed === 'PER_CLASS') return '차시당'
+  // PER_LECTURE가 현재 코드, PER_SESSION·SESSION은 기존 저장 데이터
+  if (trimmed === 'PER_LECTURE' || trimmed === 'PER_SESSION' || trimmed === 'SESSION') return '출강 1회당'
   if (trimmed === 'FIXED') return '해당 없음'
   return trimmed
 }
@@ -1786,7 +1822,9 @@ export function mapParticipantToParticipatingIndividualRow(
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
     detail: {
       gender: toGenderLabelOrRaw(dto.gender),
+      // 정책 CMS-39: 참여자 목록 birthDate는 마스킹(yyyy-**-**), 만 나이는 서버 age만 쓴다(FE 계산 금지).
       birthDate: dto.birthDate?.trim() || undefined,
+      age: readParticipantManAge(dto),
       contact: contact || undefined,
       email: email || undefined,
       homeAddressFull: homeAddress || undefined,
@@ -2375,6 +2413,11 @@ export function mapParticipantToParticipatingInstructorRow(
     educationSchedules: mapParticipantSessionsToEducationSchedules(dto.sessions),
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
+    // 강사비 정본(A4) — 신청 있는 강사는 신청서 값, 직접 추가 강사는 참여 강사 값. null이면 미등록(필드 생략)
+    ...mapFeePolicyToLectureFeeRowFields(dto.instructorFeePolicy),
+    ...(dto.instructorFeePolicySource
+      ? { instructorFeePolicySource: dto.instructorFeePolicySource }
+      : {}),
   }
 }
 
@@ -2441,6 +2484,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     contactRaw: contact || undefined,
     emailRaw: email || undefined,
     birthDate: dto.birthDate?.trim() || undefined,
+    age: readParticipantManAge(dto),
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
     // 기관형 캘린더 우측 카드 지표 — 구버전 응답(필드 없음)은 null → '-'

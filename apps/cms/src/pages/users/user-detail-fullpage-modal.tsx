@@ -295,6 +295,7 @@ export function UserDetailFullPageModal({
       basicInfoEditScope: state.basicInfoEditScope,
       basicInfoDraft: state.basicInfoDraft,
       basicInfoSaveLoading: state.basicInfoSaveLoading,
+      adminCommentAllowEmpty: state.adminCommentAllowEmpty,
       adminPermissionVariantPatching: state.adminPermissionVariantPatching,
       instructorPermissionRevokeOpen: state.instructorPermissionRevokeOpen,
       jaGradeEvaluationOpen: state.jaGradeEvaluationOpen,
@@ -337,6 +338,7 @@ export function UserDetailFullPageModal({
     state.basicInfoEditScope,
     state.basicInfoDraft,
     state.basicInfoSaveLoading,
+    state.adminCommentAllowEmpty,
     state.adminPermissionVariantPatching,
     state.instructorPermissionRevokeOpen,
     state.jaGradeEvaluationOpen,
@@ -419,10 +421,8 @@ export function UserDetailFullPageModal({
     const kind = normalizeMemberListKind(searchParams.get('kind'))
     items.push(makeBreadcrumbItem(MEMBER_LIST_KIND_LABELS[kind], location.pathname, listParams))
     // 시안: 학교(교사) 회원 › {학교명} › {교사명} — 소속 학교가 있는 교사·겸직 강사 상세
-    const schoolName =
-      displayUser.affiliatedSchoolName?.trim() ||
-      searchParams.get(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)?.trim() ||
-      ''
+    // URL `affiliatedSchool`은 학교 내부 식별번호라 라벨로 쓰지 않는다 (QA-0106)
+    const schoolName = displayUser.affiliatedSchoolName?.trim() || ''
     const schoolUserId = displayUser.affiliatedSchoolUserId
     if (kind === 'institutions' && schoolName && schoolUserId !== displayUser.id) {
       items.push(

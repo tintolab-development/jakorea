@@ -1,3 +1,4 @@
+import { getNoticeSubjectBirthRangeMessage } from './notice-subject-birth-range'
 import {
   applyAgreementNoticeSubjectMemberName,
   buildPlatformConsentFillOptions,
@@ -421,6 +422,12 @@ export function SchemaConsentWriteForm({
     const contactFormatMessage = getMemberConsentInvalidNoticeSubjectContactAlertMessage(state.draft)
     if (contactFormatMessage != null) {
       openAlert(contactFormatMessage)
+      return
+    }
+    // 생년월일 범위(오늘 이후 · 만 120세 초과) — 입력란 아래 실시간 안내와 같은 기준으로 제출을 막는다
+    const birthRangeMessage = getNoticeSubjectBirthRangeMessage(state.draft)
+    if (birthRangeMessage != null) {
+      openAlert(birthRangeMessage)
       return
     }
     if (

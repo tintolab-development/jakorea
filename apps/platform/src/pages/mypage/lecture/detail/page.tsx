@@ -596,6 +596,7 @@ export function MypageLectureDetailPage() {
         educationTargetLabel={program.educationTargetLabel}
         educationForm={program.educationForm}
         educationFormLabel={program.educationFormLabel}
+        participationRoleLabel="강사"
       />
       {isGeminiProgram && isActivityStatus ? (
         <div className={styles.headerActions}>

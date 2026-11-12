@@ -85,7 +85,7 @@ export function ParticipatingInstructorApplicationInfo({
 
   const lectureFeeView = (
     <ProgramDetailTdSegmentWrap>
-      <LectureFeeBasisView instructor={feeViewRow} />
+      <LectureFeeBasisView instructor={feeViewRow} emptyLabel="미등록" />
     </ProgramDetailTdSegmentWrap>
   )
   const lectureFeeEdit =

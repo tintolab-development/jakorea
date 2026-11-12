@@ -24,8 +24,8 @@ import {
 } from '@/features/user/api/map-member-program-history'
 import {
   MEMBER_DETAIL_SCREEN_CODE,
-  resolveLatestMemberAdminComment,
-  resolveLatestMemberAdminCommentDetail,
+  resolveMemberAdminComment,
+  type MemberAdminCommentQueryData,
 } from '@/features/user/api/map-member-comments'
 import type { AdminCommentResourceTarget } from '@/features/user/api/resolve-admin-comment-resource'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
@@ -165,13 +165,10 @@ export function memberCommentsQueryOptions(
   return queryOptions({
     queryKey: memberQueryKeys.comments(resourceId, screenCode, target),
     staleTime: 30_000,
-    queryFn: async () => {
+    // 대상·화면마다 코멘트 1건 (QA-0044) — 목록 응답에서 그 1건만 캐시한다
+    queryFn: async (): Promise<MemberAdminCommentQueryData> => {
       const comments = await fetchAdminCommentsRemote(resourceId, target, { screenCode })
-      return {
-        comments,
-        latestComment: resolveLatestMemberAdminComment(comments, screenCode),
-        latestCommentDetail: resolveLatestMemberAdminCommentDetail(comments, screenCode),
-      }
+      return resolveMemberAdminComment(comments, screenCode) ?? null
     },
     meta: {
       errorMessage: (error: unknown) =>

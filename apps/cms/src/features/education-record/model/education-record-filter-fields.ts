@@ -37,8 +37,9 @@ function getSigunguOptionsBySido(
   if (sido && sido.trim().length > 0) {
     const selected = MOCK_SIDO_SIGUNGU.find(s => s.name === sido)
     if (!selected) return []
+    // QA-0371: 시/도를 고른 뒤에는 '강릉시'처럼 시/군/구명만 보인다
     return selected.sigungu.map(sg => ({
-      label: `${selected.name} ${sg.name}`,
+      label: sg.name,
       value: sg.name,
     }))
   }

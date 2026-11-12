@@ -488,31 +488,6 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     endTeacherPrivacyReveal()
   }, [cancelApplicationInfoEdit, endTeacherPrivacyReveal])
 
-  const handleEnterApplicationInfoEdit = useCallback(() => {
-    if (!canEditApplicationInfo) {
-      void showAlert({
-        title: '안내',
-        content: getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage({
-          program,
-          enrollmentStatus: programProgressStatus,
-        }),
-      })
-      return
-    }
-    if (personalInfoRevealed) {
-      enterApplicationInfoEdit()
-      return
-    }
-    setEditUnmaskConfirmOpen(true)
-  }, [
-    canEditApplicationInfo,
-    enterApplicationInfoEdit,
-    personalInfoRevealed,
-    program,
-    programProgressStatus,
-    showAlert,
-  ])
-
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmOpen(false)
@@ -546,6 +521,32 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         setEditUnmaskConfirmLoading(false)
       })
   }, [editUnmaskConfirmLoading, enterApplicationInfoEdit, mergedDetail, revealWithReason])
+
+  const handleEnterApplicationInfoEdit = useCallback(() => {
+    if (!canEditApplicationInfo) {
+      void showAlert({
+        title: '안내',
+        content: getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage({
+          program,
+          enrollmentStatus: programProgressStatus,
+        }),
+      })
+      return
+    }
+    // CMS-29: 이미 해제했어도 수정 진입은 EDIT_MODE 원문 조회로 「신청 정보 수정」을 기록한다.
+    if (personalInfoRevealed) {
+      confirmEditUnmaskAndStartEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [
+    canEditApplicationInfo,
+    confirmEditUnmaskAndStartEdit,
+    personalInfoRevealed,
+    program,
+    programProgressStatus,
+    showAlert,
+  ])
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
@@ -1108,6 +1109,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                   applicationEducationFormatDisplay
                 )
               }
+              educationPlace={applicationDetailQuery.data?.detail?.educationLocation ?? '-'}
               teacherInfo={
                 isApplicationDetailEditing ? (
                   <InstitutionTeacherEdit
@@ -1183,7 +1185,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           open={editUnmaskConfirmOpen}
           title="정보 수정 안내"
           content={
-            "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+            "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '신청 정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
           }
           confirmText="정보 수정"
           cancelText="취소"

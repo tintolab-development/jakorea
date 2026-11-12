@@ -92,6 +92,20 @@
   height: 12px;
 }
 
+.iconDesktop {
+  display: none;
+}
+
+@media (--bp-pc-up) {
+  .iconMobile {
+    display: none;
+  }
+
+  .iconDesktop {
+    display: block;
+  }
+}
+
 .compactStatus {
   display: inline-flex;
   align-items: center;

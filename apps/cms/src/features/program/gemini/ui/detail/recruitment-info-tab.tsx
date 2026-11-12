@@ -88,7 +88,8 @@ export function GeminiRecruitmentInfoTab({
 
   const announcementDisplayLabel = resolveRecruitmentAnnouncementDisplayLabel(
     resolvedDetail.applicationPeriodStart,
-    dayjs(todayKey)
+    dayjs(todayKey),
+    resolvedDetail.announcementPublished
   )
   const programProgressLabel = resolveRecruitmentProgramProgressLabel(
     detail.id,

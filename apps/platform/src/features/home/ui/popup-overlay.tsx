@@ -4,6 +4,9 @@ import { PFCheckbox, PFText } from '@/shared/ui'
 import { useHomeMain } from '../api/use-home-main'
 import closeIconUrl from '../image/icon/close.svg'
 import { hidePopupForOneDay, isPopupHiddenForOneDay } from '../lib/popup-hide'
+import { selectRenderedHomePopups } from '../lib/popup-queue'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { MAX_HOME_POPUPS, type HomePopup } from '../lib/view'
 import styles from './popup-overlay.module.css'
 
@@ -67,6 +70,7 @@ export function HomePopupOverlay() {
   const [dismissedIds, setDismissedIds] = useState<ReadonlySet<string>>(() => new Set())
   const [hideTodayById, setHideTodayById] = useState<Readonly<Record<string, boolean>>>({})
   const panelRef = useRef<HTMLDivElement>(null)
+  const isMobile = useMediaQuery(platformMediaQueries.belowPc)
 
   useEffect(() => {
     setStorageReady(true)
@@ -79,7 +83,13 @@ export function HomePopupOverlay() {
       .slice(0, MAX_HOME_POPUPS)
   }, [dismissedIds, popups, source, storageReady])
 
-  const open = visiblePopups.length > 0
+  // 모바일은 하나씩 순서대로(닫으면 다음), PC는 기존처럼 함께 (QA-0482)
+  const renderedPopups = useMemo(
+    () => selectRenderedHomePopups(visiblePopups, isMobile),
+    [isMobile, visiblePopups]
+  )
+
+  const open = renderedPopups.length > 0
 
   useEffect(() => {
     if (!open) return
@@ -116,7 +126,7 @@ export function HomePopupOverlay() {
         aria-label="홈 팝업"
         tabIndex={-1}
       >
-        {visiblePopups.map(popup => (
+        {renderedPopups.map(popup => (
           <PopupCard
             key={popup.id}
             popup={popup}

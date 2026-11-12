@@ -8,13 +8,22 @@ import { QueryProvider } from './app/providers/query-provider'
 import { AuthProvider } from './app/providers/auth-provider'
 import { CmsAlertModalProvider } from '@/shared/ui/cms-alert-modal-provider'
 import { router } from './app/router'
+import {
+  installAdminWindowErrorReporting,
+  onAdminCaughtRenderError,
+} from './app/providers/client-error-reporting'
 import './index.css'
 
 console.info(
   `[Admin] 배포 빌드 ${import.meta.env.VITE_APP_BUILD_AT ?? 'unknown'} (${import.meta.env.VITE_APP_GIT_SHA || 'local'} / ${import.meta.env.MODE})`
 )
 
-createRoot(document.getElementById('root')!).render(
+// QA-0183 화면 오류 수집 — 관리자 로그인 상태에서만, 실패는 조용히 버린다
+installAdminWindowErrorReporting()
+
+createRoot(document.getElementById('root')!, {
+  onCaughtError: onAdminCaughtRenderError,
+}).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>

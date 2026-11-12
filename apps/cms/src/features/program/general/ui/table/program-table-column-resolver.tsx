@@ -30,8 +30,9 @@ export type ProgramListTableView = ProgramListView | 'FALLBACK'
  * - `default`: 1사1교 등 기존 overview 목록
  * - `general`: 일반 프로그램 목록 — 예정 탭 사업 운영 기간에 요일 표기(시안)
  * - `trainedTeachers`: 교육 받은 교사 목록
+ * - `companySchool`: 1사1교 목록 — 봉사자·참여자 유형 열 제외, 전 탭 강사 모집 인원, 예정 탭 기간 요일 표기(시안)
  */
-export type ProgramListColumnPreset = 'default' | 'general' | 'trainedTeachers'
+export type ProgramListColumnPreset = 'default' | 'general' | 'trainedTeachers' | 'companySchool'
 
 export interface ResolveEducationColumnsParams {
   studentRecruitmentTable?: boolean
@@ -50,6 +51,25 @@ const TRAINED_TEACHERS_OMITTED_COLUMN_KEYS = new Set([
 
 function omitTrainedTeachersColumns(columns: ColumnsType<Program>): ColumnsType<Program> {
   return columns.filter(column => !TRAINED_TEACHERS_OMITTED_COLUMN_KEYS.has(String(column.key)))
+}
+
+/** 1사1교 시안(4175:65554 외)에 없는 열 — 봉사자 없음·참여자 유형 고정 */
+const COMPANY_SCHOOL_OMITTED_COLUMN_KEYS = new Set(['participantType', 'volunteerRecruitment'])
+
+/**
+ * 1사1교 목록 열 — 시안 4개 탭 모두「참여자 모집 인원」다음에「강사 모집 인원」.
+ * 진행 중·완료 탭은 이미 있으므로 전체·예정 탭에만 끼운다.
+ */
+function withCompanySchoolColumns(columns: ColumnsType<Program>): ColumnsType<Program> {
+  const kept = columns.filter(column => !COMPANY_SCHOOL_OMITTED_COLUMN_KEYS.has(String(column.key)))
+  if (kept.some(column => column.key === 'instructorRecruitment')) return kept
+  const participantIndex = kept.findIndex(column => column.key === 'participantCapacity')
+  if (participantIndex < 0) return kept
+  return [
+    ...kept.slice(0, participantIndex + 1),
+    createInstructorRecruitmentColumn(),
+    ...kept.slice(participantIndex + 1),
+  ]
 }
 
 /** 사업 운영 기간 요일 표기 — `2026.12.08(월) ~ 2026.12.30(수)` (교육 받은 교사·일반 프로그램 피그마) */
@@ -92,6 +112,17 @@ function volunteerRecruitRender(_: unknown, record: Program) {
   if (cap == null && current === 0 && !hasVolunteerParticipantType(record)) return '-'
   if (cap !== undefined) return `${current} / ${cap}`
   return `${current}`
+}
+
+function createInstructorRecruitmentColumn() {
+  return {
+    title: '강사 모집 인원',
+    key: 'instructorRecruitment',
+    minWidth: WIDTH_RECRUITMENT_COUNT,
+    align: 'center' as const,
+    className: 'program-list-table__col-instructor-recruit',
+    render: instructorRecruitRender,
+  }
 }
 
 function hasInstructorParticipantType(record: Program): boolean {
@@ -289,14 +320,7 @@ function createProgramListInProgressColumns() {
       className: 'program-list-table__col-recruitment',
       render: participantCountRender,
     },
-    {
-      title: '강사 모집 인원',
-      key: 'instructorRecruitment',
-      minWidth: WIDTH_RECRUITMENT_COUNT,
-      align: 'center' as const,
-      className: 'program-list-table__col-instructor-recruit',
-      render: instructorRecruitRender,
-    },
+    createInstructorRecruitmentColumn(),
     {
       title: '봉사자 모집 인원',
       key: 'volunteerRecruitment',
@@ -479,6 +503,10 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
     const columns = resolveColumns() as ColumnsType<Program>
     if (columnPreset === 'trainedTeachers') {
       return withOperationPeriodWeekday(omitTrainedTeachersColumns(columns))
+    }
+    if (columnPreset === 'companySchool') {
+      // 1사1교 예정 탭 사업 운영 기간 — `2026.12.08(화) ~ 2026.12.30(수)` (시안 4175:65963)
+      return withOperationPeriodWeekday(withCompanySchoolColumns(columns))
     }
     if (columnPreset === 'general') {
       // 일반 프로그램 예정 탭 사업 운영 기간 — `2026.12.08(월) ~ 2026.12.30(수)` (시안)

@@ -140,7 +140,7 @@ export async function createAlimtalkSendBatch(input: {
   placeholderKeys?: Iterable<string>
   variableCatalog?: AlimtalkVariableCatalogEntry[] | null
   idempotencyKey: string
-}): Promise<void> {
+}): Promise<number | null> {
   assertAlimtalkSendRemoteReady()
   const templateId = Number(input.templateId)
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
@@ -163,5 +163,7 @@ export async function createAlimtalkSendBatch(input: {
     variableCatalog: input.variableCatalog,
   })
 
-  await createSendBatchRemote(body, input.idempotencyKey)
+  const created = await createSendBatchRemote(body, input.idempotencyKey)
+  // 발송 요청 완료 팝업 개인정보 조회 기록(CMS-22)에 쓴다.
+  return created.batchId ?? null
 }

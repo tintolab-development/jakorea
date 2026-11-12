@@ -3,6 +3,8 @@
 export const portalAuthPaths = {
   login: () => '/api/portal/auth/login',
   refresh: () => '/api/portal/auth/refresh',
+  /** POST — HttpOnly refresh 쿠키(`JA_MEMBER_RT`) 폐기·삭제 (QA-0137). 쿠키 Path가 refresh라 그 하위, 본문 없음 */
+  refreshLogout: () => '/api/portal/auth/refresh/logout',
   logout: () => '/api/portal/auth/logout',
   me: () => '/api/portal/auth/me',
   /** POST — MEMBER Bearer, 본문 없음. 실제 사용자 활동 기록 (BE 60초 기록 억제) */

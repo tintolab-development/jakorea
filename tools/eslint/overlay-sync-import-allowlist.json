@@ -3,7 +3,6 @@
   "files": [
     "apps/cms/src/features/program/1c-1s/api/service-detail-json.ts",
     "apps/cms/src/features/program/1c-1s/lib/registration-overlay-sync.ts",
-    "apps/cms/src/features/program/1c-1s/ui/common-info-registration-edit.tsx",
     "apps/cms/src/features/program/general/hooks/use-common-info-save.ts",
     "apps/cms/src/features/program/general/hooks/use-registration-flow.ts",
     "apps/cms/src/features/program/general/lib/common-info-edit-payload-log.ts",

@@ -26,6 +26,11 @@ export function toCertificateStudentGender(gender: string | null | undefined): S
   return undefined
 }
 
+function certificateBirthDate(value: string | null | undefined): string | undefined {
+  if (!value?.trim() || value.includes('*')) return undefined
+  return mapApiBirthDateToDisplay(value)
+}
+
 export function toParticipatingParticipantCertificateStudent(
   participant: ParticipatingIndividualParticipantRow
 ): SchoolDetailStudentRow {
@@ -34,7 +39,8 @@ export function toParticipatingParticipantCertificateStudent(
     no: participant.no,
     name: participant.applicantName,
     gender: toCertificateStudentGender(participant.detail?.gender),
-    birthDate: mapApiBirthDateToDisplay(participant.detail?.birthDate),
+    // 마스킹 생년월일(yyyy-**-**)은 증명서에 쓰지 않는다 — 발급 직전 원문 해제 값만 사용(날짜를 지어내지 않음).
+    birthDate: certificateBirthDate(participant.detail?.birthDate),
     gradeClass: participant.detail?.affiliationGrade ?? '',
     lectureAttendance: '',
   }

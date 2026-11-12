@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
+import { serializeDetailedProgramListFilters } from '@/features/detailed-program/api/detailed-program-filter-params'
 import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
 import { useUnsavedLeaveGuard } from '@/features/detailed-program/hooks/use-unsaved-leave-guard'
 import {
@@ -38,6 +39,7 @@ import type {
 import { DetailedProgramAddItemModal } from '@/features/detailed-program/ui/detailed-program-add-item-modal'
 import type { DetailedProgramAddItemValues } from '@/features/detailed-program/ui/detailed-program-add-item-modal'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
@@ -131,11 +133,15 @@ export default function DetailedProgramPage() {
   }, [dpUseParam, setSearchParams])
 
   const listQuery = useDetailedProgramListQuery(searchParams, true)
-  const isInitialListLoading = isDataManagementListLoading(listQuery)
+  const isInitialListLoading = isDataManagementListLoading({
+    data: listQuery.isLoading ? undefined : listQuery.rows,
+    isError: listQuery.isError,
+    isPending: listQuery.isLoading,
+  })
   const isListFetching = listQuery.isFetching
   const { createMutation, bulkUpdateMutation, bulkChangesMutation, deleteMutation } =
     useDetailedProgramMutations()
-  const rows = listQuery.data ?? []
+  const rows = listQuery.rows
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [isEditMode, setIsEditMode] = useState(false)
   /** 저장 전까지 목록에서만 숨김(편집 모드 삭제 스테이징) */
@@ -184,7 +190,7 @@ export default function DetailedProgramPage() {
     [deleteBlockedSelectedCount]
   )
 
-  const { pendingFilters, applySearch, handleFilterChange, displayedCount, tableData } =
+  const { pendingFilters, applySearch, handleFilterChange, tableData } =
     useTablePage(detailedProgramManagementTablePageConfig, {
       data: rows,
       searchParams,
@@ -198,6 +204,14 @@ export default function DetailedProgramPage() {
     }
     applySearch()
   }, [applySearch, isEditMode])
+
+  // 수정 모드에서는 draft가 없는 행이 섞이지 않도록 다음 페이지를 불러오지 않는다.
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage && !isEditMode,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: serializeDetailedProgramListFilters(searchParams),
+  })
 
   const enterEditMode = useCallback(() => {
     setStagedDeleteIds([])
@@ -390,6 +404,12 @@ export default function DetailedProgramPage() {
     return tableData.filter(row => !stagedDeleteSet.has(row.id))
   }, [isEditMode, stagedDeleteSet, tableData])
 
+  /** 서버 총 건수 기준(교재·후원사와 동일). 수정 모드는 스테이징 삭제만큼 뺀다. */
+  const serverTotalCount = Math.max(listQuery.totalElements, tableData.length)
+  const listTotalCount = isEditMode
+    ? Math.max(0, serverTotalCount - stagedDeleteIds.length)
+    : serverTotalCount
+
   const savePending =
     isSaving ||
     bulkUpdateMutation.isPending ||
@@ -405,7 +425,7 @@ export default function DetailedProgramPage() {
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_: unknown, __: DetailedProgramManagementRow, index: number) =>
-          tableDisplayData.length - index,
+          listTotalCount - index,
       },
       {
         title: '사용 여부',
@@ -485,7 +505,7 @@ export default function DetailedProgramPage() {
           ),
       },
     ],
-    [isEditMode, nameErrorById, tableDisplayData.length, updateDraft]
+    [isEditMode, listTotalCount, nameErrorById, updateDraft]
   )
 
   return (
@@ -500,7 +520,7 @@ export default function DetailedProgramPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="세부 프로그램 목록"
-        description={`총 ${(isEditMode ? tableDisplayData.length : displayedCount).toLocaleString()}건`}
+        description={`총 ${listTotalCount.toLocaleString()}건`}
         contentLoading={isInitialListLoading}
         actions={
           <>
@@ -564,6 +584,7 @@ export default function DetailedProgramPage() {
               : undefined
           }
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <DetailedProgramAddItemModal

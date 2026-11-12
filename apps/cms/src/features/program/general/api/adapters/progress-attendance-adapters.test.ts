@@ -256,6 +256,31 @@ describe('progress-attendance-adapters', () => {
     expect(row?.attendanceStatus).toBe('present')
   })
 
+  it('CMS-39: 마스킹 생년월일에 서버 만 나이만 붙인다(FE 계산 없음)', () => {
+    const build = (age: number | null) =>
+      buildProgressAttendanceSessionsFromRemote({
+        schedules: [
+          { scheduleId: 9001, sessionNo: 1, scheduleStatus: 'IN_PROGRESS', startAt: '2026-10-01T10:00:00+09:00' },
+        ],
+        participants: [
+          {
+            participantId: 1694747,
+            memberName: '마스킹 나이',
+            participantType: 'INDIVIDUAL',
+            gender: '**',
+            birthDate: '2010-**-**',
+            ...(age != null ? { age } : {}),
+          } as never,
+        ],
+        attendancesByScheduleId: { '9001': [{ participantId: 1694747, status: 'PRESENT' }] },
+      })[0]?.participants[0]?.genderBirthLabel
+
+    expect(build(15)).toContain('2010.**.** (만 15세)')
+    const withoutAge = build(null)
+    expect(withoutAge).toContain('2010.**.**')
+    expect(withoutAge).not.toContain('만 ')
+  })
+
   it('keeps a masked participant gender as returned', () => {
     const sessions = buildProgressAttendanceSessionsFromRemote({
       schedules: [

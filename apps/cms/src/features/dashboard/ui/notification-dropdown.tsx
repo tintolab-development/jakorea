@@ -6,7 +6,8 @@
 import { Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
-import type { DateValue } from '@/types'
+import { hasAdminNotificationNavigation } from '../lib/admin-notification-navigation'
+import { formatNotificationDateTime } from '../lib/notification-inbox-display'
 import { EmptyState } from '@/shared/ui'
 import './notification-dropdown.css'
 
@@ -43,11 +44,6 @@ function getCategoryLabel(type: NotificationType): string {
   return CATEGORIES.find(c => c.key === key)?.label ?? '알림'
 }
 
-function formatNotificationDate(createdAt: DateValue): string {
-  const d = new Date(createdAt)
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-}
-
 function byNewest(a: Notification, b: Notification): number {
   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 }
@@ -55,7 +51,7 @@ function byNewest(a: Notification, b: Notification): number {
 export interface NotificationDropdownProps {
   notifications: Notification[]
   unreadCount: number | null
-  onNotificationClick: (notification: Notification) => void
+  onNotificationClick: (notification: Notification) => void | Promise<void>
   onConfirm?: (notification: Notification) => void
   onClose?: () => void
   hasNextPage?: boolean
@@ -82,11 +78,11 @@ function NotificationRow({
   notification: Notification
   onActivate: (notification: Notification) => void
 }) {
+  const read = notification.read
+  const message = notification.body || notification.title
   return (
     <div
-      className={`notification-dropdown-item${
-        notification.read ? ' notification-dropdown-item--read' : ''
-      }`}
+      className={`notification-dropdown-item${read ? ' notification-dropdown-item--read' : ''}`}
       role="button"
       tabIndex={0}
       onClick={() => onActivate(notification)}
@@ -99,23 +95,21 @@ function NotificationRow({
     >
       <div className="notification-dropdown-item-main">
         <div className="notification-dropdown-item-title-row">
+          {read ? null : <span className="notification-dropdown-item-unread-dot" aria-hidden />}
           <Text className="notification-dropdown-item-tag">
             [{getCategoryLabel(notification.type)}]
           </Text>
-          <Text
-            className="notification-dropdown-item-message"
-            title={notification.body || notification.title}
-          >
-            {notification.body || notification.title}
+          <Text className="notification-dropdown-item-message" title={message}>
+            {message}
           </Text>
-          <NotificationReadBadge read={notification.read} />
+          <NotificationReadBadge read={read} />
         </div>
         {notification.programName ? (
           <Text className="notification-dropdown-item-sub">{notification.programName}</Text>
         ) : null}
       </div>
       <Text className="notification-dropdown-item-date">
-        {formatNotificationDate(notification.createdAt)}
+        {formatNotificationDateTime(notification.createdAt)}
       </Text>
     </div>
   )
@@ -173,7 +167,7 @@ export function NotificationDropdown({
 
   const handleItemClick = async (notification: Notification) => {
     await onNotificationClick(notification)
-    if (notification.link) onClose?.()
+    if (hasAdminNotificationNavigation(notification)) onClose?.()
   }
 
   const isEmpty = filtered.length === 0 && !hasNextPage && !isFetchingNextPage

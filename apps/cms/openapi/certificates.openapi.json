@@ -309,6 +309,10 @@
       "description": "로그인 사용자 기준 CMS 대시보드 개인화 설정 API"
     },
     {
+      "name": "로그 관리",
+      "description": "Logging 관련 API"
+    },
+    {
       "name": "기타 API",
       "description": "CMS 학교 organization 조회 및 소속 교사 관리 API"
     },
@@ -331,6 +335,10 @@
     {
       "name": "공개 콘텐츠",
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
+    },
+    {
+      "name": "신청/프로그램 워크플로우",
+      "description": "참여 강사 강사비 책정 기준"
     },
     {
       "name": "파일 관리",
