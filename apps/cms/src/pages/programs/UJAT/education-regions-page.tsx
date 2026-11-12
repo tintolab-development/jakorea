@@ -11,6 +11,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   FilterTableToolbarButton,
+  showSaveCompletedAlert,
 } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
@@ -192,6 +193,8 @@ export default function UjatEducationRegionsPage() {
           },
         })
         cancelEdit()
+        // 저장 성공 안내(목록 필터는 그대로 유지, QA-0326)
+        showSaveCompletedAlert()
       } catch (error) {
         if (isUjatEducationRegionDuplicateNameError(error)) {
           showAlert({

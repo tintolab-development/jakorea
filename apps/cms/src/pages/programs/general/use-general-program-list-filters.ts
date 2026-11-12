@@ -132,9 +132,9 @@ export function useGeneralProgramListFilters() {
       lifecycleStatus: undefined,
       calendarProgramType: 'GENERAL',
       serverSideOverviewFilters: remoteEnabled,
-      // 일반 프로그램 시안: 예정 탭 기간 요일 표기 · No. 내림차순 · 헤더 삭제 불가 안내
+      // 일반 프로그램 시안: 예정 탭 기간 요일 표기 · 헤더 삭제 불가 안내.
+      // No.는 모든 프로그램 목록 공통 오름차순(보이는 순서대로 1부터, QA-0385·0423) — rowNumberOrder 기본값 asc
       columnPreset: 'general',
-      rowNumberOrder: 'desc',
       headerNotice: GENERAL_PROGRAM_LIST_HEADER_NOTICE,
     }
   }, [remoteEnabled, statusFilter])

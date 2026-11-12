@@ -81,6 +81,13 @@ import { SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_PARAGRAPH_BODY_OPTIONS } from '
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
+  isTemplateDetailUrlMode,
+  isTemplateDetailViewUrlMode,
+  TEMPLATE_DETAIL_EDIT_MODE,
+  TEMPLATE_DETAIL_VIEW_MODE,
+} from '@/features/template/lib/detail-url-mode'
+import { TemplateDetailViewModeProvider } from '@/features/template/ui/template-management/detail-view-mode-context'
+import {
   TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import {
@@ -152,7 +159,23 @@ type IssuanceFormTabQuery = {
   userPreview?: string
 }
 
+/** 「양식 상세보기」(mode=view)는 조회 모드, 「수정」을 누르면 mode=edit로 바꿔 편집한다 */
 export function IssuanceFormTab() {
+  const { params, setParams } = useQueryParams<IssuanceFormTabQuery>()
+  const handleRequestEdit = useCallback(() => {
+    setParams({ mode: TEMPLATE_DETAIL_EDIT_MODE }, { replace: true })
+  }, [setParams])
+  return (
+    <TemplateDetailViewModeProvider
+      readOnly={isTemplateDetailViewUrlMode(params.mode)}
+      onRequestEdit={handleRequestEdit}
+    >
+      <IssuanceFormTabContent />
+    </TemplateDetailViewModeProvider>
+  )
+}
+
+function IssuanceFormTabContent() {
   const {
     sections: issuanceSections,
     isLoading: isIssuanceSectionsLoading,
@@ -172,7 +195,7 @@ export function IssuanceFormTab() {
     isWritingUserPreviewOpen,
     closeWritingUserPreview
   )
-  const isPreviewOpen = params.mode === 'edit'
+  const isPreviewOpen = isTemplateDetailUrlMode(params.mode)
   const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
   const { displayName: issuanceModalTitle, commitTitle: commitIssuanceModalTitle } =
     useFormTemplateModalTitle({
@@ -433,7 +456,7 @@ export function IssuanceFormTab() {
       // 일반 TemplateFullpageModal이 먼저 열려 mask가 쌓이는 것을 방지
       setSelectedTemplate(row)
       setParams(
-        { mode: 'edit', id: row.id, userPreview: undefined },
+        { mode: TEMPLATE_DETAIL_VIEW_MODE, id: row.id, userPreview: undefined },
         { replace: false }
       )
     },
@@ -441,7 +464,7 @@ export function IssuanceFormTab() {
   )
 
   useEffect(() => {
-    if (params.mode !== 'edit' || params.id == null || params.id === '') {
+    if (!isTemplateDetailUrlMode(params.mode) || params.id == null || params.id === '') {
       setSelectedTemplate(null)
       return
     }
@@ -590,7 +613,7 @@ export function IssuanceFormTab() {
 
   useEffect(() => {
     if (params.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) return
-    if (params.mode !== 'edit') return
+    if (!isTemplateDetailUrlMode(params.mode)) return
     if (selectedTemplate == null) return
     if (isWritingUserPreviewOpen) return
     if (isCertificateIssuance) return

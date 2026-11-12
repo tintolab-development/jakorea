@@ -63,6 +63,11 @@ export interface UseGeneralProgramCommonInfoSaveOptions {
     baseline: Program,
     serializeOptions?: GeneralProgramUpdateSerializeOptions
   ) => Promise<void>
+  /**
+   * 공통 정보 수정 모드일 때만 후원사 담당자 선택지(GET …/sponsors/{id}/contacts)를 받는다.
+   * 그 API는 원문 + 「후원사 담당자 정보를 확인하기 위함」 자동 기록(CMS-17)이라 조회 모드·상세 진입에서 부르면 안 된다.
+   */
+  isEditMode?: boolean
 }
 
 function collectDirtyFormKeys(dirtyFields: unknown): ReadonlySet<string> | undefined {
@@ -78,12 +83,14 @@ export function useGeneralProgramCommonInfoSave({
   form,
   program,
   onSaveEdit,
+  isEditMode = false,
 }: UseGeneralProgramCommonInfoSaveOptions) {
   const savingRef = useRef(false)
   const watchedSponsorIds = form.watch('sponsorManagementIds') ?? []
   // 조회만 한다. 수정 모드에서 edit form 이 같은 키로 받아 둔 캐시를 쓴다.
   const sponsorsQuery = useSponsorOptionsQuery(false)
-  const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds, true, {
+  // 저장 시 담당자 표시 줄을 만들 때만 쓴다 — 수정 모드에서만 조회(공통 정보 보기는 배정 응답만 사용)
+  const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds, isEditMode, {
     sponsorRows: sponsorsQuery.data ?? EMPTY_SPONSOR_ROWS,
   })
   // 조회만 한다. 수정 모드 진입 시 handleInfoEdit·edit form 이 같은 키로 받아 둔 캐시를 쓴다.

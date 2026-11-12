@@ -19,4 +19,10 @@ export interface RecipientResponse {
   providerChannelType?: string;
   sentAt?: string;
   deliveredAt?: string;
+  /** NHN이 돌려준 수신 결과 코드. 결과가 없으면 null. */
+  providerResultCode?: string | null;
+  /** NHN이 돌려준 결과 원문 메시지. 결과가 없으면 null. */
+  providerResultMessage?: string | null;
+  /** 수신 실패(SEND_FAILED·DELIVERY_FAILED) 사유 한국어 표시값(QA-0178). 서버 매핑에 없는 코드는 '발송 실패(코드: NNNN)'. 실패가 아니거나 코드가 없으면 null. */
+  displayReason?: string | null;
 }

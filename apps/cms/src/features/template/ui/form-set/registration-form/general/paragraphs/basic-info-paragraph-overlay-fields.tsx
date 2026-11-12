@@ -7,7 +7,10 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
-import { TEMPLATE_FORM_BUSINESS_AREA_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
+  TEMPLATE_FORM_IPS_FIELD_LABELS,
+} from '@/features/template/lib/template-form-select-options'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -198,8 +201,7 @@ export const ProgramRegistrationBasicInfoParticipantTypesField = memo(
 export const ProgramRegistrationBasicInfoBusinessFieldField = memo(
   function ProgramRegistrationBasicInfoBusinessFieldField({
     overlayPrefix,
-    trainedTeachersDefaults,
-  }: OverlayPrefixProps) {
+  }: Pick<OverlayPrefixProps, 'overlayPrefix'> & Partial<OverlayPrefixProps>) {
     return (
       <ProgramRegistrationOverlaySelectField
         label="사업 분야"
@@ -207,7 +209,8 @@ export const ProgramRegistrationBasicInfoBusinessFieldField = memo(
         overlayKey={`${overlayPrefix}.businessField`}
         placeholder="사업 분야를 선택해 주세요"
         options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
-        defaultValue={trainedTeachersDefaults ? 'economy_finance' : ''}
+        // 교육받은 교사 시안(9899:221372): 사업 분야 미선택(placeholder)
+        defaultValue=""
       />
     )
   }
@@ -344,7 +347,7 @@ export const ProgramRegistrationBasicInfoIpOwnedField = memo(
   }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
-        label="IP Owned"
+        label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
         validationKey="basicInfo.ipOwned"
         overlayKey={`${overlayPrefix}.ipOwned`}
         placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
@@ -362,7 +365,7 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
   }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
-        label="Course Delivered By"
+        label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
         validationKey="basicInfo.courseDeliveredBy"
         overlayKey={`${overlayPrefix}.courseDeliveredBy`}
         placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
@@ -383,18 +386,18 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
     >(`${overlayPrefix}.partnerInvolvement`, '')
 
     // 일반: 시안대로 미선택('')은 미선택 표시 — 등록 시 필수 선택(`basicInfo.partnerInvolvement`).
-    // 교육받은 교사: 미선택('')·키 없음은 저장 빌더와 동일하게 Yes(true)로 표시 — 'no'만 No
+    // 교육받은 교사: 미선택('')·키 없음은 저장 빌더(`partnerInvolvementFromOverlay`)와 동일하게 No — 'yes'만 Yes
     const radioValue = trainedTeachersDefaults
-      ? partnerInvolvement === 'no'
-        ? 'no'
-        : 'yes'
+      ? partnerInvolvement === 'yes'
+        ? 'yes'
+        : 'no'
       : partnerInvolvement === 'yes' || partnerInvolvement === 'no'
         ? partnerInvolvement
         : ''
 
     return (
       <DetailInfoForm.Field
-        label="Partner Involvement"
+        label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
         validationKey={trainedTeachersDefaults ? undefined : 'basicInfo.partnerInvolvement'}
         edit={
           <div className="detail-info-form-inputs-wrapper">

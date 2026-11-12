@@ -7,7 +7,7 @@ import {
   buildTimeFrom24Hour,
   parseNum,
 } from '@/shared/components/date-time-picker-modal'
-import { toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
+import { snapMinuteToStep, toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import { FieldClockIcon } from '@/shared/ui/icons'
 import '@jakorea/admin-ui/date/styles'
@@ -43,6 +43,12 @@ export interface ParagraphTimePickerProps {
   showEndTimeToggle?: boolean
   /** 마운트 시 트리거에 표시할 시간 범위(프로그램 상세 수정 mock 시드 등) */
   initialTimeRange?: [Dayjs, Dayjs] | null
+  /** opt-in: 값이 없을 때 팝업 시작 시각(기본은 현재 시각). 예: { hour: 9, minute: 0 } */
+  defaultStartTime?: { hour: number; minute: number }
+  /** opt-in: 분 선택 스텝(예: 30 → 00/30). 기존 값의 분은 스텝에 맞춰 내림한다 */
+  minuteStep?: number
+  /** opt-in: 활성 행의 분 셀렉트도 강조 */
+  emphasizeActiveMinute?: boolean
 }
 
 type FocusPhase = 'single' | 'start' | 'end'
@@ -62,6 +68,9 @@ export function ParagraphTimePicker({
   zIndex,
   showEndTimeToggle = true,
   initialTimeRange = null,
+  defaultStartTime,
+  minuteStep,
+  emphasizeActiveMinute = false,
 }: ParagraphTimePickerProps) {
   const rootRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -131,20 +140,37 @@ export function ParagraphTimePicker({
     })
   }, [initialEndMs, initialStartMs, valueMs])
 
-  const populateDraftFromInstant = useCallback((d: Dayjs) => {
-    setSHour(String(d.hour()))
-    setSMin(String(d.minute()))
-    const dEnd = d.add(1, 'hour')
-    setEHour(String(dEnd.hour()))
-    setEMin(String(dEnd.minute()))
-  }, [])
+  const minuteForStep = useCallback(
+    (minute: number) => snapMinuteToStep(minute, minuteStep),
+    [minuteStep]
+  )
 
-  const populateDraftFromRange = useCallback((start: Dayjs, end: Dayjs) => {
-    setSHour(String(start.hour()))
-    setSMin(String(start.minute()))
-    setEHour(String(end.hour()))
-    setEMin(String(end.minute()))
-  }, [])
+  const populateDraftFromInstant = useCallback(
+    (d: Dayjs) => {
+      setSHour(String(d.hour()))
+      setSMin(String(minuteForStep(d.minute())))
+      const dEnd = d.add(1, 'hour')
+      setEHour(String(dEnd.hour()))
+      setEMin(String(minuteForStep(dEnd.minute())))
+    },
+    [minuteForStep]
+  )
+
+  const populateDraftFromRange = useCallback(
+    (start: Dayjs, end: Dayjs) => {
+      setSHour(String(start.hour()))
+      setSMin(String(minuteForStep(start.minute())))
+      setEHour(String(end.hour()))
+      setEMin(String(minuteForStep(end.minute())))
+    },
+    [minuteForStep]
+  )
+
+  /** 값이 없을 때 팝업 기준 시각 — opt-in 기본 시각, 없으면 현재 시각(기존 동작) */
+  const resolveEmptyBase = (): Dayjs =>
+    defaultStartTime != null
+      ? dayjs().hour(defaultStartTime.hour).minute(defaultStartTime.minute).second(0).millisecond(0)
+      : dayjs()
 
   const locked = Boolean(disabled || readOnly)
 
@@ -155,7 +181,7 @@ export function ParagraphTimePicker({
       setEndTimeOn(true)
       setFocusPhase('start')
     } else {
-      populateDraftFromInstant(resolvedValue ?? dayjs())
+      populateDraftFromInstant(resolvedValue ?? resolveEmptyBase())
       setEndTimeOn(endTimeAlwaysOn)
       setFocusPhase(endTimeAlwaysOn ? 'start' : 'single')
     }
@@ -188,12 +214,7 @@ export function ParagraphTimePicker({
   }
 
   const handleEndTimeToggleOn = () => {
-    const base = resolvedValue ?? dayjs()
-    setSHour(String(base.hour()))
-    setSMin(String(base.minute()))
-    const dEnd = base.add(1, 'hour')
-    setEHour(String(dEnd.hour()))
-    setEMin(String(dEnd.minute()))
+    populateDraftFromInstant(resolvedValue ?? resolveEmptyBase())
   }
 
   return (
@@ -270,6 +291,8 @@ export function ParagraphTimePicker({
         onEndTimeToggleOn={handleEndTimeToggleOn}
         onApply={handleApply}
         inputSize={inputSize}
+        minuteStep={minuteStep}
+        emphasizeActiveMinute={emphasizeActiveMinute}
       />
     </>
   )

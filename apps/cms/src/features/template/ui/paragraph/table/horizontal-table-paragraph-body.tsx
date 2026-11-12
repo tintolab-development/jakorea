@@ -1260,7 +1260,8 @@ export function HorizontalTableParagraphBody({
                           onBlur={deactivateTextCellOnBlur}
                         />
                       ) : (
-                        <div className="form-editor-horizontal-table__cell-text-hit">
+                        // 편집 가능한 셀은 입력칸처럼 테두리를 보인다(QA-0300) — 클릭 한 번으로 TextCellInput 활성
+                        <div className="form-editor-horizontal-table__cell-text-hit form-editor-horizontal-table__cell-text-hit--input-like">
                           <HorizontalTableCellText
                             value={fieldPlainText}
                             placeholder={ph}

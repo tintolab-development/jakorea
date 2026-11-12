@@ -41,6 +41,7 @@ export interface TextbookUpdateRequest {
      */
   sessionDescription: string;
   /**
+     * 교재 단원 소개(선택, null 이면 없음). 공지사항 본문과 같은 rich-text 정책을 따릅니다. 일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다.
      * @minLength 0
      * @maxLength 2000000
      */

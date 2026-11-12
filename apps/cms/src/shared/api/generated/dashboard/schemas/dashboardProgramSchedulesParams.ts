@@ -23,4 +23,8 @@ dateFrom?: string;
  * 일정 종료일(포함) YYYY-MM-DD, Asia/Seoul
  */
 dateTo?: string;
+/**
+ * true면 운영 기간·모집 기간 일정도 함께 반환. 기본 false
+ */
+includeOperationalEvents?: boolean;
 };

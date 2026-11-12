@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CAREERS_LIST_RETURN_STATE_KEY,
   CAREERS_TAB_ITEMS,
@@ -12,6 +12,7 @@ import {
   careerPostingDetailPath,
   readCareersListParams,
   rememberCareersListReturnPath,
+  shouldScrollToCareersJobs,
   usePublicCareerGuide,
   usePublicCareerPostings,
   type CareersListParams,
@@ -71,6 +72,23 @@ export function CareersPage() {
       return merged
     })
   }, [debouncedQ])
+
+  /*
+   * 상세 「목록으로」로 돌아오면 채용공고 목록(함께하기) 영역을 바로 보여 준다(QA-0486).
+   * 안내 로딩 화면 뒤에 섹션이 그려지므로 그때 한 번만 스크롤한다(이동마다 location.key로 구분).
+   */
+  const location = useLocation()
+  const joinSectionRef = useRef<HTMLElement>(null)
+  const scrolledLocationKeyRef = useRef<string | null>(null)
+  const scrollToJobs = shouldScrollToCareersJobs(location.state)
+  useEffect(() => {
+    if (!scrollToJobs || isGuidePending) return
+    if (scrolledLocationKeyRef.current === location.key) return
+    const section = joinSectionRef.current
+    if (!section) return
+    scrolledLocationKeyRef.current = location.key
+    section.scrollIntoView({ block: 'start' })
+  }, [isGuidePending, location.key, scrollToJobs])
 
   if (isGuidePending) {
     return <PublicContentPageLoading label="채용 안내 정보를 불러오는 중" />
@@ -146,7 +164,11 @@ export function CareersPage() {
       </div>
 
       <div className={styles.content}>
-        <section className={styles.join} aria-labelledby="careers-join-title">
+        <section
+          ref={joinSectionRef}
+          className={styles.join}
+          aria-labelledby="careers-join-title"
+        >
           <PFText
             as="h2"
             id="careers-join-title"

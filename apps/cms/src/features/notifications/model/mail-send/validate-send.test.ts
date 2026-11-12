@@ -52,6 +52,7 @@ describe('validateMailSendVariables', () => {
     if (!result.ok) return
     expect(result.validRecipients.map(item => item.id)).toEqual(['1'])
     expect(result.confirmMessage).toContain(MAIL_SEND_CONFIRM_MESSAGE)
+    expect(result.confirmMessage).toContain('발송 대상 수신자: 총 1명')
     expect(result.confirmMessage).toContain(MAIL_VARIABLE_EXCLUSION_GUIDE)
   })
 
@@ -85,7 +86,7 @@ describe('validateMailSendVariables', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.validRecipients).toEqual([member])
-    expect(result.confirmMessage).toBe(MAIL_SEND_CONFIRM_MESSAGE)
+    expect(result.confirmMessage).toBe(`${MAIL_SEND_CONFIRM_MESSAGE}\n발송 대상 수신자: 총 1명`)
   })
 
   it('발송 직전에 같은 이메일을 다시 걸러 먼저 추가된 수신자를 남긴다', () => {
@@ -96,6 +97,7 @@ describe('validateMailSendVariables', () => {
     if (!result.ok) return
     expect(result.validRecipients).toEqual([first])
     expect(result.confirmMessage).toContain('같은 이메일 주소는 1건만 발송합니다.')
+    expect(result.confirmMessage).toContain('발송 대상 수신자: 총 1명')
   })
 
   it('문맥 변수는 수신자 변수 누락으로 보지 않는다', () => {
@@ -112,6 +114,6 @@ describe('validateMailSendVariables', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.validRecipients).toHaveLength(1)
-    expect(result.confirmMessage).toBe(MAIL_SEND_CONFIRM_MESSAGE)
+    expect(result.confirmMessage).toBe(`${MAIL_SEND_CONFIRM_MESSAGE}\n발송 대상 수신자: 총 1명`)
   })
 })

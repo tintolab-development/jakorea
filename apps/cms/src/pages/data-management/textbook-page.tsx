@@ -435,7 +435,8 @@ export default function TextbookPage() {
         key: 'textbookName',
         width: TEXTBOOK_COL_WIDTH.textbookName,
         align: 'center',
-        ellipsis: { showTitle: true },
+        // QA-0364: 말줄임 대신 줄바꿈으로 교재명 전체를 보인다
+        className: 'textbook-page__col-name',
       },
       {
         title: '사업 분야',

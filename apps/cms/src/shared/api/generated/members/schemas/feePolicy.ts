@@ -7,9 +7,15 @@
  */
 
 export interface FeePolicy {
-  /** @minLength 1 */
+  /**
+     * 강사비 책정 방식. PROGRAM(프로그램 기준 적용) | SPECIAL_LECTURE(특강 강사비) | OTHER_LABOR(기타 인건비). 특강·기타 인건비는 이 신청의 모든 배정에 지급 기준·지급금액이 복사된다. 옛 값 RECRUITMENT는 특강·기타를 구분할 수 없어 프로그램 기준으로 계산한다.
+     * @minLength 1
+     */
   basisType: string;
-  /** @minLength 1 */
+  /**
+     * 지급 기준. 출강 1회당 | 차시당 | 해당 없음, 또는 코드 PER_LECTURE(출강 1회당) | PER_CLASS(차시당) | FIXED. 1시간 당·PER_HOUR는 차시당과 같은 기준으로 읽는다. PER_SESSION은 신규 입력 불가(422 INVALID_FEE_POLICY), 기존 저장값은 출강 1회당으로 읽는다.
+     * @minLength 1
+     */
   measure: string;
   /**
      * 승인 스냅샷 금액(원). 승인 팝업과 상세의 단일 기준. 프로그램 임금 카탈로그 단가가 아닙니다.

@@ -9,7 +9,7 @@ import {
 import {
   applyCompanySchoolRhfOverlayRecord,
   cloneCompanySchoolRegistrationRhfValues,
-  createDefaultCompanySchoolRegistrationRhfValues,
+  createNewCompanySchoolRegistrationRhfValues,
   type CompanySchoolRegistrationRhfValues,
 } from '@/features/program/1c-1s/lib/registration-rhf-values'
 import { getNestedValue } from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
@@ -21,7 +21,8 @@ type CompanySchoolRegistrationWizardFormProviderProps = {
 export function CompanySchoolRegistrationWizardFormProvider({
   children,
 }: CompanySchoolRegistrationWizardFormProviderProps) {
-  const defaultValues = useMemo(() => createDefaultCompanySchoolRegistrationRhfValues(), [])
+  // 신규 작성 시작값(시안 기본 선택). 임시저장 복원은 reset/applyOverlayRecord 로 저장값을 그대로 싣는다.
+  const defaultValues = useMemo(() => createNewCompanySchoolRegistrationRhfValues(), [])
   const form = useForm<CompanySchoolRegistrationRhfValues>({
     defaultValues,
     shouldUnregister: false,

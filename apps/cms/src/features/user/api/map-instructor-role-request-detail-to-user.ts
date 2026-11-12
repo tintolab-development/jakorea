@@ -1,4 +1,5 @@
 import type { InstructorRoleRequestDetailResponse } from '@/shared/api/generated/members/schemas/instructorRoleRequestDetailResponse'
+import { readServerManAge } from '@/features/user/api/format-gender-birth-display'
 import type { TermsAgreement } from '@/shared/api/generated/members/schemas/termsAgreement'
 import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
@@ -90,6 +91,7 @@ export function mapInstructorRoleRequestDetailToUser(
     role: 'INSTRUCTOR',
     gender: genderDisplay === '-' ? undefined : genderDisplay,
     birthDate: birthDate ?? detail.birthDate ?? undefined,
+    ...(readServerManAge(detail) != null ? { manAge: readServerManAge(detail) } : {}),
     isActive: true,
     permissionApprovalStatus,
     permissionApprovalHandledAt,

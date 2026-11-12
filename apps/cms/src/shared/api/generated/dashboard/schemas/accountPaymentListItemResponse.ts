@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { AccountPaymentListItemResponsePayeeType } from './accountPaymentListItemResponsePayeeType';
 
 /**
  * 계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.
@@ -28,7 +29,8 @@ export interface AccountPaymentListItemResponse {
   /** 이체 예정일. 목록 필터와 캘린더 배치 기준입니다. */
   scheduledPaymentDate?: string | null;
   paidAt?: string;
-  sourceType?: string;
+  /** 계좌 지급 출처. SETTLEMENT(강사 지급조서) | GEMINI_TRAINING_REPORT(옛 Gemini 직접 지급) | INDIVIDUAL_SETTLEMENT(참여자·봉사자 영수증). */
+  sourceType?: string | null;
   sourceId?: number;
   programId?: number;
   memberId?: number;
@@ -49,4 +51,8 @@ export interface AccountPaymentListItemResponse {
   /** taxIncomeType 표시명. 사업소득 | 기타소득 | 일용근로소득. 그 외 코드나 snapshot 없음은 null. */
   taxIncomeTypeDisplay?: string | null;
   availableActions?: string[];
+  /** 지급 대상 유형. INSTRUCTOR(강사 지급조서·Gemini) | PARTICIPANT(참여자 영수증) | VOLUNTEER(봉사자 영수증). 영수증은 sourceType=INDIVIDUAL_SETTLEMENT, sourceId=영수증 정산 신청 id, settlementId=null이며 원천징수 0원입니다. */
+  payeeType?: AccountPaymentListItemResponsePayeeType;
+  /** 받는 분 휴대폰 마스킹값. 대량이체 양식 미리보기용. 원문은 서버 XLSX 다운로드에만 있음. 출처는 서버 XLSX와 같은 회원 휴대폰(정산 건 강사, 직접 지급 건 지급 대상 회원). 없으면 null. */
+  maskedRecipientPhone?: string | null;
 }

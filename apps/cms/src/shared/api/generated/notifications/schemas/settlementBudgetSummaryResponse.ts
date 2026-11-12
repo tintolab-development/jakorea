@@ -16,7 +16,7 @@ export interface SettlementBudgetSummaryResponse {
   /** 집계 범위. 현재 서버는 fromDate/toDate 지정 여부와 관계없이 항상 YEAR를 반환한다. 기간 필터는 expectedSettlementAmount에만 적용되고, completed*\/settlementCount/paidCount는 year 기준이다. PERIOD는 예약값이며 현재 반환하지 않는다. */
   aggregationScope?: SettlementBudgetSummaryResponseAggregationScope;
   annualBudgetAmount?: number;
-  /** 미지급/예정 정산 금액(세후 net). expected_transfer_date 범위. */
+  /** 미지급/예정 정산 금액(세후 net). expected_transfer_date 범위. 영수증 계좌 지급(원천징수 0원)도 포함. */
   expectedSettlementAmount?: number;
   /** 예산 집행액(세전 gross). completedGrossTotal과 동일. paid_at Asia/Seoul 연도. */
   completedPaymentAmount?: number;
@@ -26,7 +26,7 @@ export interface SettlementBudgetSummaryResponse {
   completedNetTotal?: number;
   /** 잔여 예산(참고값). annualBudgetAmount - expectedSettlementAmount(세후, 기간 필터 적용) - completedGrossTotal(세전)으로 계산하므로 세전·세후 기준이 섞여 있다. 화면 표시 기준은 아직 정의되지 않았다. */
   remainingBudgetAmount?: number;
-  /** 정산 건수(해당 연도 최신 정산 행 전체). paidCount와 분리. */
+  /** 정산 건수(해당 연도 최신 정산 행 전체 + 그해 영수증 지급 건). 연도 기준은 강사와 같이 이체 예정일 → 교육일 → 생성일. paidCount와 분리. */
   settlementCount?: number;
   /** 지급완료 건수. account_payment.paid_at Asia/Seoul 연도 기준. */
   paidCount?: number;

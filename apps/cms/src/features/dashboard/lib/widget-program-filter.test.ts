@@ -8,6 +8,8 @@ import {
   isWidgetProgramGroupSelected,
   remainingIdsAfterUnselectingGroup,
   setWidgetProgramGroupSelected,
+  widgetProgramMinSelectionMessage,
+  wouldLeaveWidgetWithoutPrograms,
 } from './widget-program-filter'
 
 const ALL = ['a', 'b', 'c']
@@ -140,5 +142,23 @@ describe('buildUnifiedProgramRows', () => {
       setWidgetProgramGroupSelected([], rows[0]!.idsByWidget.w!, ['1', '2'], false)
     ).toEqual(['2'])
     expect(allIds).toEqual(['1', '2'])
+  })
+})
+
+describe('wouldLeaveWidgetWithoutPrograms / widgetProgramMinSelectionMessage (QA-0020)', () => {
+  it('마지막으로 남은 그룹을 끄면 true, 다른 그룹이 남으면 false', () => {
+    expect(wouldLeaveWidgetWithoutPrograms(['a'], ['a'], ['a', 'b'])).toBe(true)
+    expect(wouldLeaveWidgetWithoutPrograms(undefined, ['a', 'b'], ['a', 'b'])).toBe(true)
+    expect(wouldLeaveWidgetWithoutPrograms(undefined, ['a'], ['a', 'b'])).toBe(false)
+    expect(wouldLeaveWidgetWithoutPrograms(['a', 'b'], [], ['a', 'b'])).toBe(false)
+  })
+
+  it('위젯명을 넣어 사유 문구를 만든다', () => {
+    expect(widgetProgramMinSelectionMessage(['모집 신청 현황'])).toBe(
+      "'모집 신청 현황' 위젯은 프로그램을 최소 1개 이상 선택해야 합니다."
+    )
+    expect(widgetProgramMinSelectionMessage([])).toBe(
+      '위젯마다 프로그램을 최소 1개 이상 선택해야 합니다.'
+    )
   })
 })

@@ -32,6 +32,7 @@ import {
   type TrainedTeacherListFilters,
 } from './list-params'
 import { TRAINED_TEACHER_PROGRAM_API_TYPE } from './adapters'
+import { normalizeTeacherTrainingEducationFormat } from '@/features/program/trained-teachers/lib/teacher-training-block'
 
 /** remote list 스냅샷 — 상세 분기(isTrainedTeachersDetailProgram)용 */
 let remoteIdSnapshot: Set<string> | null = null
@@ -168,6 +169,25 @@ export async function updateTrainedTeacherProgramInfoDetail(
   )
   // PATCH echo로 폼을 유지하지 않는다. programs · sponsors · detail GET이 정본.
   return getTrainedTeacherProgram(programId)
+}
+
+/**
+ * 신규 등록 직후 — ■ 교사 연수 교육 형태는 생성 API(programs)에 필드가 없어 `trained-teacher/detail` PATCH로 저장한다.
+ * 연수 OFF이거나 형태가 없으면 호출하지 않는다. configJson·일정명·교육일지는 보내지 않는다(생략 = 서버 값 유지).
+ */
+export async function applyTrainedTeacherTrainingEducationFormatAfterCreate(
+  programId: string,
+  program: Program
+): Promise<void> {
+  const common = program.generalCommonInfo
+  if (common?.teacherTrainingEnabled !== true) return
+  const format = normalizeTeacherTrainingEducationFormat(common.teacherTrainingEducationFormat)
+  if (!format) return
+  assertRemoteReady()
+  await patchTrainedTeacherInfoDetailRemote(programId, {
+    teacherTrainingEnabled: true,
+    teacherTrainingEducationFormat: format,
+  })
 }
 
 export async function deleteTrainedTeacherProgram(programId: string): Promise<void> {

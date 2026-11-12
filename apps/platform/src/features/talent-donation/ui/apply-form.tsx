@@ -47,8 +47,10 @@ import {
   TALENT_APPLY_PRIVACY_CONSENT_SECTIONS,
 } from '../lib/privacy-consent'
 import {
+  checkTalentApplyPeriodLive,
   collectTalentApplyFieldErrors,
   hasTalentApplyFieldErrors,
+  talentApplyBirthDateMessage,
   type TalentApplyFieldErrors,
 } from '../lib/validate-apply-form'
 import styles from './apply-form.module.css'
@@ -235,6 +237,11 @@ export function TalentDonationApplyForm() {
     ])
   }
 
+  /** QA-0503·QA-0504: 작성 중 실시간으로 입력란 아래 안내(제출 버튼을 누르지 않아도 보인다) */
+  const birthDateErrorMessage = talentApplyBirthDateMessage(values.birthDate)
+  const periodLive = checkTalentApplyPeriodLive(values.periodStart, values.periodEnd)
+  const periodErrorMessage = periodLive.message
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -340,10 +347,15 @@ export function TalentDonationApplyForm() {
                 maxLength={10}
                 autoComplete="bday"
                 value={values.birthDate}
-                error={Boolean(errors.birthDate)}
+                error={Boolean(errors.birthDate) || Boolean(birthDateErrorMessage)}
                 onValueChange={value => patch('birthDate', formatBirthDateInput(value))}
                 aria-label="생년월일"
               />
+              {birthDateErrorMessage ? (
+                <PFText as="p" typo="bd-sm-rg" color="error" className={styles.fieldErrorText}>
+                  {birthDateErrorMessage}
+                </PFText>
+              ) : null}
             </div>
 
             <div className={styles.field}>
@@ -458,7 +470,7 @@ export function TalentDonationApplyForm() {
                   picker="date"
                   placeholder={PH.periodStart}
                   value={values.periodStart}
-                  error={Boolean(errors.periodStart)}
+                  error={Boolean(errors.periodStart) || periodLive.startInvalid}
                   onValueChange={value =>
                     patch('periodStart', value, ['periodStart', 'periodEnd'])
                   }
@@ -471,13 +483,18 @@ export function TalentDonationApplyForm() {
                   picker="date"
                   placeholder={PH.periodEnd}
                   value={values.periodEnd}
-                  error={Boolean(errors.periodEnd)}
+                  error={Boolean(errors.periodEnd) || periodLive.endInvalid}
                   onValueChange={value =>
                     patch('periodEnd', value, ['periodStart', 'periodEnd'])
                   }
                   aria-label="재능기부 가능 종료일"
                 />
               </PFFormPeriodPair>
+              {periodErrorMessage ? (
+                <PFText as="p" typo="bd-sm-rg" color="error" className={styles.fieldErrorText}>
+                  {periodErrorMessage}
+                </PFText>
+              ) : null}
             </div>
           </div>
         </section>

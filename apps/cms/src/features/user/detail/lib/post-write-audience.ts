@@ -101,3 +101,31 @@ export function reconcilePostWriteAudienceSelection(
 
   return unique
 }
+
+function normalizedVisibilityType(audience: PostWriteAudienceApiKey[]): string {
+  return buildPostWriteVisibilityType(audience).split(',').sort().join(',')
+}
+
+/** QA-0093 — 수정 시 저장된 공개 범위와 지금 선택이 다른지 (선택 순서는 무시) */
+export function isPostWriteAudienceChanged(
+  stored: string[] | undefined,
+  next: PostWriteAudienceApiKey[],
+  program?: Program
+): boolean {
+  return (
+    normalizedVisibilityType(postWriteAudienceFromStored(stored, program)) !==
+    normalizedVisibilityType(next)
+  )
+}
+
+/** 확인창용 공개 범위 라벨 — 전체면 「전체」, 아니면 UI 라벨을 옵션 순서로 나열 */
+export function postWriteAudienceLabel(
+  audience: PostWriteAudienceApiKey[],
+  program?: Program
+): string {
+  if (audience.includes('all') || audience.length === 0) return '전체'
+  return buildPostWriteAudienceOptions(program)
+    .filter(option => option.value !== 'all' && audience.includes(option.value))
+    .map(option => option.label)
+    .join(', ')
+}

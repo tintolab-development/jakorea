@@ -5,7 +5,8 @@ export const GEMINI_RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplaySta
   SCHEDULED: '예정',
   IN_PROGRESS: '진행 중',
   ENDED: '종료',
-  DRAFT: '임시저장',
+  /** 서버 draftStatus=DRAFT = 게시 여부 '미게시' (QA-0101). 임시 저장은 브라우저에만 있어 목록에 나오지 않는다. */
+  DRAFT: '미게시',
 }
 
 const RECRUITMENT_STATUS_ACCENT: Record<GeminiRecruitmentDisplayStatus, string> = {

@@ -12,6 +12,8 @@ type ProgramStatusBadgesProps = {
   educationFormLabel: string
   /** 케이스 역할 배지 (강사·봉사자·기관·교육생). 없거나 참여자면 비노출 */
   recruitmentRoleLabel?: string
+  /** 참여자 역할 배지도 보여 줄지 — 참여하기 목록 카드만 true (QA-0518, 모집별 카드 구분) */
+  showParticipantRole?: boolean
   className?: string
   /** 상태 배지에만 덧붙일 클래스 (예: 프로그램 목록 모집 완료 시안 색) */
   stateBadgeClassName?: string
@@ -30,8 +32,9 @@ function platformRecruitmentStatusLabel(status: RecruitmentStatus) {
   return '모집중'
 }
 
-function shouldShowRoleBadge(roleLabel: string | undefined): boolean {
+function shouldShowRoleBadge(roleLabel: string | undefined, showParticipantRole: boolean): boolean {
   if (!roleLabel?.trim()) return false
+  if (showParticipantRole) return true
   // 일반 참여자는 교육대상 배지와 중복되어 숨김
   return roleLabel !== '참여자'
 }
@@ -42,6 +45,7 @@ export function ProgramStatusBadges({
   educationForm: _educationForm,
   educationFormLabel,
   recruitmentRoleLabel,
+  showParticipantRole = false,
   className,
   stateBadgeClassName: stateBadgeExtraClassName,
   size = 'compact',
@@ -49,7 +53,7 @@ export function ProgramStatusBadges({
   const rootClassName = [styles.root, size === 'regular' ? styles.regular : null, className]
     .filter(Boolean)
     .join(' ')
-  const showRole = shouldShowRoleBadge(recruitmentRoleLabel)
+  const showRole = shouldShowRoleBadge(recruitmentRoleLabel, showParticipantRole)
 
   const badgeTypographyClass = 'typo-caption-sb'
   const badgeClassName = [styles.badge, badgeTypographyClass].join(' ')

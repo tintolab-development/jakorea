@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   formatBirthDateInput,
+  getBirthDateRangeMessage,
   isBirthStepValid,
   validateBirthStep,
   type GenderType,
@@ -35,6 +36,8 @@ export function AdminRegisteredBirthPage() {
   }
 
   const isValid = isBirthStepValid(birthDate, gender)
+  /** QA-0220: 작성 중 실시간 — 생년월일 범위 오류(오늘 이후 · 만 120세 초과)는 입력란 아래 */
+  const birthDateRangeError = getBirthDateRangeMessage(birthDate) ?? ''
   const isSubmitting = profileMutation.isPending
 
   const handleNext = () => {
@@ -42,7 +45,8 @@ export function AdminRegisteredBirthPage() {
       const result = validateBirthStep(birthDate)
 
       if (result.status === 'invalid-format') {
-        setMessage(result.message)
+        // 범위 오류는 입력란 아래에 이미 보이므로 하단에 다시 띄우지 않는다
+        setMessage(result.reason === 'format' ? result.message : '')
         return
       }
 
@@ -135,6 +139,9 @@ export function AdminRegisteredBirthPage() {
             value={birthDate}
             onValueChange={handleBirthDateChange}
             disabled={isSubmitting}
+            error={Boolean(birthDateRangeError)}
+            message={birthDateRangeError || undefined}
+            messageStatus={birthDateRangeError ? 'error' : undefined}
           />
 
           <div className={styles.genderField}>

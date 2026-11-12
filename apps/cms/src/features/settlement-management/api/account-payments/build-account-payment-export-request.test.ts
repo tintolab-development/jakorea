@@ -23,6 +23,7 @@ describe('buildAccountPaymentExportRequest', () => {
       },
     })
     expect(body.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT)
+    expect(body.reason).toBe('대량이체 양식 발급')
     expect(body.settlementIds).toEqual([101])
     expect(body.accountPaymentIds).toEqual([2001])
   })

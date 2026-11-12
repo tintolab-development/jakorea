@@ -35,14 +35,15 @@ type SettlementCopy = {
 
 const RECEIPT_COPY: SettlementCopy = {
   submitMessage: '기한 내에 영수증을 제출해 주세요',
-  overdueMessage: '미제출 영수증 제출 기한이 지났어요',
+  // 영수증은 지연 제출 구간이 없다 — 기한 후는 운영 종료 (R5)
+  overdueMessage: '영수증 제출기한이 마감되었어요',
   overdueMark: '영수증 미제출',
   upcomingHint: '교육 진행 완료 이후에 영수증 작성이 가능합니다',
   reportHint: '강의보고서 작성 이후에 영수증 작성이 가능합니다',
   writeLabel: '영수증 작성하기',
   viewLabel: '영수증 확인하기',
   waitingMessage: '영수증 신청이 완료되었어요',
-  reappliedMessage: '영수증 수정 제출이 완료되었어요',
+  reappliedMessage: '영수증 재신청이 완료되었어요',
 }
 
 const PAYMENT_STATEMENT_COPY: SettlementCopy = {
@@ -63,9 +64,18 @@ export const PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE =
 /** 강사 지급조서 제출 기한이 지났을 때 (강의보고서 미작성 행에도 함께 쓴다) */
 export const PAYMENT_STATEMENT_OVERDUE_MESSAGE = PAYMENT_STATEMENT_COPY.overdueMessage
 
-/** 정정 승인 후 재신청 기한이 지났을 때 — 임시 문구(기획 확정 문구 없음, 기획 확인 필요) */
-export const PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE =
-  '재신청 기한이 지나 지급조서를 재신청할 수 없어요'
+/**
+ * 제출 기한 후 ~ 사업 운영 종료 전(지연 제출 가능, K20).
+ * "지급조서 제출 기한이 지났어요. 2026.12.31까지 제출할 수 있어요"
+ */
+export function paymentStatementLateSubmitMessage(businessEndDate: string | null | undefined): string {
+  const date = businessEndDate?.trim().slice(0, 10)
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return PAYMENT_STATEMENT_OVERDUE_MESSAGE
+  return `${PAYMENT_STATEMENT_OVERDUE_MESSAGE}. ${date.replace(/-/g, '.')}까지 제출할 수 있어요`
+}
+
+/** 정정 승인 후 재신청 기한이 지났을 때 (기획 확정 2026-11-11). 운영 종료 문구와 겹치면 운영 종료가 우선 */
+export const PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE = '지급조서 재신청 기한이 지났어요'
 
 export function resolveSettlementDocumentKind(
   applicationType: string | null | undefined,
@@ -144,7 +154,7 @@ export function resolveSettlementStatusUi(
     },
     correction_requested: {
       message: '지급조서 정정 요청이 완료되었어요',
-      markLabel: kind === 'payment_statement' ? '정정 요청' : '지급 정정 요청',
+      markLabel: '지급 정정 요청',
       markTone: 'alert',
       statusLabel: kind === 'payment_statement' ? '제출 완료' : undefined,
       statusTone: kind === 'payment_statement' ? 'submitted' : undefined,
@@ -156,7 +166,7 @@ export function resolveSettlementStatusUi(
     },
     correction_completed: {
       message: '정정된 내역으로 재신청이 가능해요',
-      markLabel: kind === 'payment_statement' ? '정정 요청' : '지급 정정 요청',
+      markLabel: '지급 정정 요청',
       markTone: 'neutral',
       statusLabel: kind === 'payment_statement' ? '정정 완료' : undefined,
       amountKind: 'expected',
@@ -171,7 +181,7 @@ export function resolveSettlementStatusUi(
       amountKind: 'expected',
       cardTone: kind === 'receipt' ? undefined : 'danger',
       guideVariant: kind === 'receipt' ? 'feedback' : undefined,
-      writeLabel: kind === 'payment_statement' ? '지급조서 재신청' : '영수증 재신청',
+      writeLabel: kind === 'payment_statement' ? '지급조서 재신청' : '영수증 다시 제출하기',
       viewLabel: copy.viewLabel,
       actions: ['reject-reason', 'reapply'],
     },

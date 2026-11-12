@@ -70,8 +70,9 @@ export async function resolveSponsorNameById(
 
   try {
     const detail = await queryClient.fetchQuery({
-      queryKey: dataManagementQueryKeys.sponsors.detail(sponsorId),
-      queryFn: () => getSponsorDetail(sponsorId),
+      // 프로그램 화면의 후원사 이름·행 조회 — 담당자 연락처 원문이 필요 없으므로 MASKED(조회 기록 없음, CMS-32·37).
+      queryKey: [...dataManagementQueryKeys.sponsors.detail(sponsorId), 'masked'],
+      queryFn: () => getSponsorDetail(sponsorId, { contactPrivacy: 'MASKED' }),
       staleTime: 30_000,
     })
     return detail.nameDisplayKo?.trim() || detail.name?.trim() || undefined
@@ -120,8 +121,9 @@ export async function resolveSponsorRowById(
 
   try {
     const detail = await queryClient.fetchQuery({
-      queryKey: dataManagementQueryKeys.sponsors.detail(sponsorId),
-      queryFn: () => getSponsorDetail(sponsorId),
+      // 프로그램 화면의 후원사 이름·행 조회 — 담당자 연락처 원문이 필요 없으므로 MASKED(조회 기록 없음, CMS-32·37).
+      queryKey: [...dataManagementQueryKeys.sponsors.detail(sponsorId), 'masked'],
+      queryFn: () => getSponsorDetail(sponsorId, { contactPrivacy: 'MASKED' }),
       staleTime: 30_000,
     })
     return detail

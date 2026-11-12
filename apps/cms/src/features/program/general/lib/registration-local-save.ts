@@ -755,12 +755,14 @@ export async function persistGeneralProgramRegistration(args: {
   }
 
   if (variant === 'trainedTeachers' && shouldUseTrainedTeacherProgramsRemoteApi()) {
-    const { createTrainedTeacherProgram } =
+    const { applyTrainedTeacherTrainingEducationFormatAfterCreate, createTrainedTeacherProgram } =
       await import('@/features/program/trained-teachers/api/service')
     const created = await createTrainedTeacherProgram(programForCreate, args.preparedFormBindings)
-    return bindCreatedProgramMediaOrRollback(created, () =>
-      bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)
-    )
+    return bindCreatedProgramMediaOrRollback(created, async () => {
+      await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)
+      // ■ 교사 연수 교육 형태 — 생성 API에 없는 필드라 생성 직후 detail PATCH (실패 시 생성 롤백)
+      await applyTrainedTeacherTrainingEducationFormatAfterCreate(created.id, programForCreate)
+    })
   }
 
   if (

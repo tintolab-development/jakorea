@@ -71,15 +71,20 @@ function canonical(
       educationStructure,
       sessionRound,
       teacherTrainingEnabled,
+      ...(teacherTrainingEnabled && educationStructure === 'curriculum'
+        ? {
+            teacherTrainingScheduleLine: '2026.03.20(금) 10:00 ~ 17:00',
+            teacherTrainingEducationFormat: 'OFFLINE' as const,
+          }
+        : {}),
       educationJournalEnabled: false,
       curriculumSessions:
         educationStructure === 'curriculum'
           ? [
               {
                 sessionLabel: sessionRound === 'multi' ? '1회차' : '1차시',
-                title: teacherTrainingEnabled ? '교육 연수' : '단원1',
+                title: '단원1',
                 description: '내용1',
-                ipsTypeSummary: teacherTrainingEnabled ? 'Prepare' : undefined,
               },
               {
                 sessionLabel: sessionRound === 'multi' ? '2회차' : '2차시',
@@ -377,10 +382,22 @@ describe('교육 구조 8조합 CREATE', () => {
       expect(program.generalProgramSessionRound).toBe(combo.sessionRound)
       expect(program.generalCommonInfo?.teacherTrainingEnabled).toBe(combo.teacherTrainingEnabled)
       if (combo.educationStructure === 'curriculum') {
+        // ■1차시는 실제 첫 교육 행 — 교사 연수가 차시를 차지하지 않는다
         expect(program.generalCommonInfo?.curriculumSessions).toHaveLength(2)
-        expect(program.generalCommonInfo?.scheduleDetails).toEqual([])
+        expect(program.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('단원1')
         if (combo.teacherTrainingEnabled) {
-          expect(program.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('교육 연수')
+          // 연수 일시 = scheduleDetails 의 name = 연수 일정명 행 (scheduleRole 없음)
+          expect(program.generalCommonInfo?.scheduleDetails).toEqual([
+            {
+              scheduleLabel: '교사 연수',
+              name: '교육 연수',
+              scheduleDateLabel: '2026.03.20(금) 10:00 ~ 17:00',
+            },
+          ])
+          expect(program.generalCommonInfo?.teacherTrainingEducationFormat).toBe('OFFLINE')
+        } else {
+          expect(program.generalCommonInfo?.scheduleDetails).toEqual([])
+          expect(program.generalCommonInfo?.teacherTrainingEducationFormat).toBeUndefined()
         }
       } else {
         expect(program.generalCommonInfo?.scheduleDetails).toHaveLength(2)
@@ -391,13 +408,25 @@ describe('교육 구조 8조합 CREATE', () => {
       }
       const request = mapTrainedTeacherToCreateRequest(program)
       const json = JSON.parse(String(request.serviceDetailJson)) as {
-        program?: { generalCommonInfo?: { teacherTrainingEnabled?: boolean } }
+        program?: {
+          generalCommonInfo?: {
+            teacherTrainingEnabled?: boolean
+            teacherTrainingEducationFormat?: unknown
+            scheduleDetails?: Array<{ name?: string; scheduleRole?: unknown }>
+          }
+        }
         registration?: unknown
       }
       expect(json.registration).toBeUndefined()
       expect(json.program?.generalCommonInfo?.teacherTrainingEnabled).toBe(
         combo.teacherTrainingEnabled
       )
+      // 교육 형태는 detail PATCH(B) 전용 — programs JSON에 넣지 않는다
+      expect(json.program?.generalCommonInfo?.teacherTrainingEducationFormat).toBeUndefined()
+      if (combo.educationStructure === 'curriculum' && combo.teacherTrainingEnabled) {
+        expect(json.program?.generalCommonInfo?.scheduleDetails?.[0]?.name).toBe('교육 연수')
+        expect(json.program?.generalCommonInfo?.scheduleDetails?.[0]?.scheduleRole).toBeUndefined()
+      }
     }
   )
 })

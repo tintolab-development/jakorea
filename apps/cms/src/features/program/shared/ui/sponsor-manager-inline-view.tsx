@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from 'react'
 import type { Program } from '@/types/domain'
 import { DetailInfoForm, DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { splitPipeSeparatedText } from '@/features/program/shared/ui/program-detail-td-divider'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
   decodeSponsorManagerContactRef,
   formatSponsorManagerNameTitleLabel,
@@ -18,11 +19,27 @@ import {
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 
+/**
+ * 프로그램 공통 정보의 후원사 담당자 연락처는 항상 마스킹한다(정책 32·37, 기획 답변 Q8).
+ * 원문 + 자동 기록은 데이터 관리 > 후원사 담당자 정보(17번)에만 있다. 이미 마스킹된 서버 값은 그대로 둔다.
+ */
+export function maskSponsorManagerPhone(phone: string | null | undefined): string {
+  const trimmed = phone?.trim() ?? ''
+  return trimmed ? MASKING_POLICY.phone(trimmed) : ''
+}
+
+/** 후원사 담당자 이메일 — 연락처와 같은 이유로 항상 마스킹(@ 앞 3자리). 이미 마스킹된 값은 그대로. */
+export function maskSponsorManagerEmail(email: string | null | undefined): string {
+  const trimmed = email?.trim() ?? ''
+  return trimmed ? MASKING_POLICY.email(trimmed) : ''
+}
+
 function looksLikePhoneSegment(value: string): boolean {
   const trimmed = value.trim()
   if (!trimmed) return false
-  const digits = trimmed.replace(/\D/g, '')
-  return digits.length >= 9 && /^[\d\s\-+()]+$/.test(trimmed)
+  // 마스킹 연락처(010-****-5678)도 연락처로 본다 — `*`를 숫자 자리로 센다.
+  const digits = trimmed.replace(/[^\d*]/g, '')
+  return digits.length >= 9 && /\d/.test(trimmed) && /^[\d*\s\-+()]+$/.test(trimmed)
 }
 
 /** `소속 | 이름 | 연락처` — 마지막이 전화번호면 head / phone 으로 분리 */
@@ -201,8 +218,12 @@ export function SponsorManagerContactsView({
     ]
     const parts = (
       assignedDetail
-        ? [...head, assignedDetail.phone?.trim() || '-', assignedDetail.email?.trim() || '-']
-        : [...head, contact?.phone?.trim()]
+        ? [
+            ...head,
+            maskSponsorManagerPhone(assignedDetail.phone) || '-',
+            maskSponsorManagerEmail(assignedDetail.email) || '-',
+          ]
+        : [...head, maskSponsorManagerPhone(contact?.phone)]
     ).filter((part): part is string => Boolean(part))
     if (parts.length > 0) lines.push(parts)
   }
@@ -230,7 +251,7 @@ export function SponsorManagerContactsView({
       {program.contactPhone ? (
         <>
           {'\u00A0'}
-          <span>{program.contactPhone}</span>
+          <span>{maskSponsorManagerPhone(program.contactPhone)}</span>
         </>
       ) : null}
     </>

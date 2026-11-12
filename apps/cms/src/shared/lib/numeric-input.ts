@@ -175,3 +175,18 @@ export function formatNumberDisplay(value: number | string | null | undefined): 
   if (!Number.isFinite(numeric)) return '-'
   return numeric.toLocaleString('ko-KR', { maximumFractionDigits: 20 })
 }
+
+/**
+ * 엄격 정수 입력(opt-in) — 숫자(전각 포함)와 천단위 쉼표만 받는다.
+ * 부호·소수점·문자가 섞이면 값을 고치지 않고 거부한다(QA-0111: '-1.5abc'가 '15'로 바뀌던 문제).
+ * 자릿수 상한을 넘겨도 거부한다. 통과하면 쉼표를 뺀 숫자 문자열을 돌려준다.
+ */
+export function acceptStrictIntegerInput(
+  value: string,
+  maxDigits?: number
+): { ok: true; value: string } | { ok: false; reason: 'invalid-char' | 'too-long' } {
+  const digits = normalizeFullWidthDigits(value).replace(/,/g, '')
+  if (!/^\d*$/.test(digits)) return { ok: false, reason: 'invalid-char' }
+  if (maxDigits != null && digits.length > maxDigits) return { ok: false, reason: 'too-long' }
+  return { ok: true, value: digits }
+}

@@ -42,7 +42,6 @@ import {
   applyRecruitmentRowCopy,
   resolveRecruitmentOtherMatters,
 } from '@/features/program/shared/lib/recruitment-row-copy'
-import { RECRUIT_INTERVIEW_REQUIRED_DEFAULT } from '@/features/program/general/lib/recruit-radio-defaults'
 import { participantFlagsFromGeneralProgram } from '@/features/program/general/lib/participant-audience-selection'
 import { coalesceResultAnnouncementDate } from '@/features/program/shared/lib/resolve-result-announcement-date'
 
@@ -133,39 +132,6 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     volunteerOtherNotes: 'recruitVolunteer.detailInfo.otherNotes',
   },
 } as const
-
-/** 개인 모집 「참여자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
-export const INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
-
-/**
- * 개인 모집 면접 키만 채우는 하위 헬퍼. 화면 기본값 정본은 `withGeneralRecruitRadioDefaults`.
- * 개인 미선택·키가 이미 있으면 그대로 반환.
- */
-export function withIndividualInterviewRequiredCreateDefault(
-  overlay: Record<string, unknown>,
-  individualSelected: boolean
-): Record<string, unknown> {
-  const key = GENERAL_RECRUIT_OVERLAY_KEYS.individual.interviewRequired
-  if (!individualSelected) return overlay
-  if (overlay[key] !== undefined && overlay[key] !== null && overlay[key] !== '') return overlay
-  return { ...overlay, [key]: INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT }
-}
-
-/** 봉사 모집 「봉사자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
-export const VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
-
-/**
- * 봉사 모집 면접 키만 채우는 하위 헬퍼. 화면 기본값 정본은 `withGeneralRecruitRadioDefaults`.
- */
-export function withVolunteerInterviewRequiredCreateDefault(
-  overlay: Record<string, unknown>,
-  volunteerSelected: boolean
-): Record<string, unknown> {
-  const key = GENERAL_RECRUIT_OVERLAY_KEYS.volunteer.interviewRequired
-  if (!volunteerSelected) return overlay
-  if (overlay[key] !== undefined && overlay[key] !== null && overlay[key] !== '') return overlay
-  return { ...overlay, [key]: VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT }
-}
 
 /** 1사1교·교육받은교사·Gemini·UJAT 등록 폼 — participant detailInfo prefix 별칭 */
 const PARTICIPANT_DETAIL_INFO_PREFIX_ALIASES = [

@@ -59,6 +59,7 @@ import {
   useProgramProgressRemoteEnabledForSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { resolveCompanySchoolAssignSessionRoundLabel } from '@/features/program/1c-1s/lib/assigned-schedule-line'
 import { useParticipatingInstructorApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import {
   buildProgramApiUnavailableSaveContent,
@@ -1372,6 +1373,10 @@ export function ParticipatingInstructorFullpageView({
           !isCompanySchool &&
           waitingSessionOptionIdsBySchool.get(assignGuideSchool.id)?.has(sessionOptionId(session)) !==
             true,
+        // 1사1교는 회차가 없다 — 배정일 칩에 「N회차」 대신 지망 순위(없으면 생략)
+        ...(isCompanySchool
+          ? { resolveSessionRoundLabel: resolveCompanySchoolAssignSessionRoundLabel }
+          : {}),
       }),
     [assignGuideSchool, isCompanySchool, waitingSessionOptionIdsBySchool]
   )
@@ -1825,7 +1830,7 @@ export function ParticipatingInstructorFullpageView({
                   <div className="table-header-title--wrapper">
                     <span className="table-title">배정된 기관 목록</span>
                     <span className="table-description">
-                      {isInstitutionProgram ? '총 ' : ''}
+                      총{' '}
                       {assignedSchools.length}건
                     </span>
                   </div>
@@ -1898,7 +1903,7 @@ export function ParticipatingInstructorFullpageView({
                   <div className="table-header-title--wrapper">
                     <span className="table-title">배정 대기 기관 목록</span>
                     <span className="table-description">
-                      {isInstitutionProgram ? '총 ' : ''}
+                      총{' '}
                       {waitingSchools.length}건
                     </span>
                   </div>

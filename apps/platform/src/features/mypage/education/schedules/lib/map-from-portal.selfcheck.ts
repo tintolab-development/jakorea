@@ -513,4 +513,32 @@ const ttOrgGroupTimesWin = mapPortalEducationSchedule(
 )
 assert.equal(ttOrgGroupTimesWin.durationLabel, '1차시')
 
+// 1사1교 배정 교육 일정(USER-FUNC-0207) — 같은 scheduleId 희망 블록 교시로 「N~(N+1)교시 (N차시)」
+const companySchoolBlocks = [
+  {
+    scheduleId: 501,
+    sessionCount: 2,
+    sessionTimes: [
+      { sessionIndex: 1, classPeriod: '2', startTime: '09:50', endTime: '10:30' },
+      { sessionIndex: 2, classPeriod: '3', startTime: '10:40', endTime: '11:20' },
+    ],
+  },
+]
+const companySchoolRow = mapPortalEducationSchedule(
+  { scheduleId: 501, sessionNo: 1, startAt: '2026-11-12T09:50:00+09:00', endAt: '2026-11-12T11:20:00+09:00' },
+  0,
+  { applicationType: 'ORGANIZATION', programType: 'COMPANY_SCHOOL', preferredScheduleBlocks: companySchoolBlocks },
+)
+assert.equal(companySchoolRow.rowLabel, '2~3교시 (2차시)')
+// 1사1교 카드 날짜 — 기획 형식 「YYYY.MM.DD(요일)」
+assert.equal(companySchoolRow.dateLabelOverride, '2026.11.12(목)')
+// 다른 유형은 날짜 override 없음(플랫폼 공통 날짜 표기)
+assert.equal(withId.dateLabelOverride, undefined)
+const companySchoolUnmatched = mapPortalEducationSchedule(
+  { scheduleId: 999, sessionNo: 1, startAt: '2026-11-12T09:50:00+09:00' },
+  0,
+  { applicationType: 'ORGANIZATION', programType: 'COMPANY_SCHOOL', preferredScheduleBlocks: companySchoolBlocks },
+)
+assert.notEqual(companySchoolUnmatched.rowLabel, '2~3교시 (2차시)')
+
 console.log('map-from-portal.selfcheck: ok')

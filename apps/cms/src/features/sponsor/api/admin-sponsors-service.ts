@@ -11,6 +11,7 @@ import {
   toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
 } from '@/features/sponsor/api/adapters/sponsor-adapters'
+import type { SponsorContactPrivacy } from '@/features/sponsor/api/sponsors-api-client'
 import {
   programHistoriesParamsFromFilters,
   SPONSOR_PROGRAM_HISTORY_PAGE_SIZE,
@@ -100,9 +101,12 @@ async function withEnrichedLogosIfNeeded(
   return logos === detail.logos ? detail : { ...detail, logos }
 }
 
-export async function getSponsorDetail(id: string): Promise<SponsorManagementDetailView> {
+export async function getSponsorDetail(
+  id: string,
+  options?: { contactPrivacy?: SponsorContactPrivacy }
+): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
-  const dto = await fetchSponsorRemote(id)
+  const dto = await fetchSponsorRemote(id, options?.contactPrivacy)
   const detail = mapSponsorDetailResponse(dto)
   return withEnrichedLogosIfNeeded(detail)
 }
@@ -205,10 +209,11 @@ export async function endSponsorship(id: string): Promise<void> {
 
 export async function getSponsorContacts(
   sponsorId: string,
-  filters?: SponsorContactsQueryParams
+  filters?: SponsorContactsQueryParams,
+  options?: { contactPrivacy?: SponsorContactPrivacy }
 ): Promise<SponsorContactRow[]> {
   assertSponsorsRemoteReady()
-  const dtos = await fetchSponsorContactsRemote(sponsorId, filters)
+  const dtos = await fetchSponsorContactsRemote(sponsorId, filters, options?.contactPrivacy)
   return dtos.map(mapSponsorContactResponse).filter(row => row.id.length > 0)
 }
 

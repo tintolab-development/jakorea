@@ -50,6 +50,12 @@
   padding: 0;
 }
 
+/* JA 등급 정책 없음 — 평가 입력 비활성 (QA-0105) */
+.ja-grade-evaluation-modal__form-panel--disabled {
+  opacity: 0.5;
+  user-select: none;
+}
+
 .ja-grade-evaluation-modal__footer {
   flex: 0 0 auto;
   display: flex;

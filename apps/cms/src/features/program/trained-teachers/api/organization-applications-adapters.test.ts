@@ -7,6 +7,7 @@ import {
   mapProgramSchedulesToPreferredScheduleBlocks,
   mapTrainedTeacherOrganizationApplicationToRow,
   formatTrainedTeacherRequestedEducationFormat,
+  formatTrainedTeacherEducationPlace,
 } from './organization-applications-adapters'
 
 describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
@@ -885,5 +886,40 @@ describe('mapPreferredScheduleBlocks normalize', () => {
       },
     ])
     expect(mapped[0].sessionTimes[0].timeRange).toBe('10:00 ~ 11:00')
+  })
+})
+
+describe('TT 기관 신청 상세 교육 장소', () => {
+  it('홈페이지 폼 코드를 라벨로, 상세가 있으면 「 / 상세」를 붙인다', () => {
+    expect(formatTrainedTeacherEducationPlace('inside', null)).toBe('기관 안')
+    expect(formatTrainedTeacherEducationPlace('outside', '강당')).toBe('기관 밖 / 강당')
+    expect(formatTrainedTeacherEducationPlace('custom', '시청 회의실')).toBe('기타 / 시청 회의실')
+    expect(formatTrainedTeacherEducationPlace(' INSIDE ', ' 3층 교실 ')).toBe('기관 안 / 3층 교실')
+    expect(formatTrainedTeacherEducationPlace(null, '교실')).toBe('교실')
+    expect(formatTrainedTeacherEducationPlace(null, null)).toBe('')
+    expect(formatTrainedTeacherEducationPlace('-', '')).toBe('')
+  })
+
+  it('상세 응답 educationPlace(+Detail)를 detail.educationLocation으로 매핑하고, 필드 없는 구버전 응답은 비운다', () => {
+    const withPlace = mapTrainedTeacherOrganizationApplicationToRow(
+      { applicationId: 1691592, educationPlace: 'outside', educationPlaceDetail: '강당' },
+      0,
+      '186551'
+    )
+    expect(withPlace.detail?.educationLocation).toBe('기관 밖 / 강당')
+
+    const legacy = mapTrainedTeacherOrganizationApplicationToRow(
+      { applicationId: 1691630, addressDetail: '교무실' },
+      0,
+      '186551'
+    )
+    expect(legacy.detail?.educationLocation).toBeUndefined()
+
+    const nulls = mapTrainedTeacherOrganizationApplicationToRow(
+      { applicationId: 1691630, educationPlace: null, educationPlaceDetail: null },
+      0,
+      '186551'
+    )
+    expect(nulls.detail?.educationLocation).toBeUndefined()
   })
 })

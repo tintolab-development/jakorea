@@ -32,6 +32,7 @@ import { ExcelButton } from '@/shared/ui/excel-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { getProgramTablePageConfig, type ProgramTableContext } from './program-table.config'
+import { keyboardActivatableRowProps } from '@/shared/lib/keyboard-activatable-row'
 
 const TRAINED_TEACHERS_SELECTION_COL_WIDTH = 60
 
@@ -245,14 +246,18 @@ export function ProgramList({
   const filterFieldsForLayout = useMemo(() => {
     if (filterFieldsOverride) return filterFieldsOverride
     if (tableContext.mode === 'overview') {
-      return resolveProgramListFilterFields({
+      const overviewFields = resolveProgramListFilterFields({
         scheduledViewActive: listView === 'SCHEDULED',
         inProgressViewActive: listView === 'IN_PROGRESS',
         completedViewActive: listView === 'COMPLETED',
       })
+      // 1사1교 시안: 참여자 유형(학교/기관·강사 고정, 봉사자 없음) 필터 없음
+      return columnPreset === 'companySchool'
+        ? overviewFields.filter(field => field.key !== 'participantType')
+        : overviewFields
     }
     return programListFilterFields
-  }, [filterFieldsOverride, tableContext.mode, listView])
+  }, [filterFieldsOverride, tableContext.mode, listView, columnPreset])
 
   /**
    * useTablePage.tableData를 사용한다.
@@ -354,7 +359,10 @@ export function ProgramList({
               loading={loading}
               tableLayout={isOverviewTable ? 'fixed' : undefined}
               onRow={record => ({
-                onClick: () => onView(record),
+                // QA-0256: 클릭 동작은 유지하고 Tab·Enter·Space·포커스 표시만 더한다 (전 유형 동일)
+                ...keyboardActivatableRowProps(() => onView(record), {
+                  ariaLabel: record.title ? `${record.title} 상세 보기` : undefined,
+                }),
                 style: { cursor: 'pointer' },
               })}
               pagination={false}

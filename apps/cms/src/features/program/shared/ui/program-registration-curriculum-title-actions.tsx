@@ -15,6 +15,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 
 import { ButtonAddIcon, ButtonClockIcon } from '@/shared/ui/icons/ButtonIcons'
+import { TEACHER_TRAINING_BLOCK_LABEL } from '@/features/program/trained-teachers/lib/teacher-training-block'
 
 export type ProgramRegistrationCurriculumTitleActionsProps = {
   variant?: 'general' | 'trainedTeachers'
@@ -88,8 +89,9 @@ export function ProgramRegistrationCurriculumTitleActions({
   })
   const isTrainedTeachers = variant === 'trainedTeachers'
   const extraToggle = isTrainedTeachers ? (
+    // 시안 9899:221372 · 5416:111869 토글 라벨 「교사 연수」 (교육받은 교사 전용 분기)
     <CmsToggle
-      label="교육 연수"
+      label={TEACHER_TRAINING_BLOCK_LABEL}
       checked={trainedTeachersTeacherTrainingEnabled}
       onChange={onTrainedTeachersTeacherTrainingEnabledChange}
     />

@@ -116,6 +116,7 @@ import type { InstructorLectureAssignItem } from '@/features/program/general/lib
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import {
   readCurriculumSessionLabels,
   readProgramEducationScheduleLines,
@@ -1303,7 +1304,12 @@ export function useApplicantsDetail({
       if (instructorCalendarFilterPreset === 'list-parity') {
         return generalOrganizationInstructorFilterFields
       }
-      if (viewMode !== 'calendar') return generalInstructorApplicationFilterFields
+      if (viewMode !== 'calendar') {
+        // 1사1교 리스트 — 시안 Info 14716:4(일반 기관형 1141:241761과 동일) 「자택 주소지」
+        return isCompanySchoolProgram(program)
+          ? generalOrganizationInstructorFilterFields
+          : generalInstructorApplicationFilterFields
+      }
       return generalInstructorCalendarFilterFields
     }
     if (filterFieldsOverride?.length) return filterFieldsOverride
@@ -1338,6 +1344,7 @@ export function useApplicantsDetail({
     instructorColumnPreset,
     instructorCalendarFilterPreset,
     viewMode,
+    program,
   ])
 
   const approvalStatusKeys = useMemo<ApprovalStatusKey[]>(
@@ -1405,6 +1412,8 @@ export function useApplicantsDetail({
     detailScheduleTimeSpan,
     curriculumSessionLabels,
     educationScheduleLines,
+    // 1사1교 시안 4175:104376 — 기관명 일반 텍스트·희망 일정 표기. 같은 preset의 교육받은 교사는 기존 유지
+    companySchoolProgram: isCompanySchoolProgram(program),
   })
 
   const instructorColumnsLegacy = useInstructorApplicantColumns({
@@ -1417,7 +1426,9 @@ export function useApplicantsDetail({
 
   const instructorColumnsGeneral = useGeneralInstructorApplicantColumns({
     setSelectedItem: record => setSelectedItem(record as ApplicantInstructorRow),
-    plainInstructorName: detailVariant === 'general' && isGeneralOrganizationProgram(program),
+    plainInstructorName:
+      detailVariant === 'general' &&
+      (isGeneralOrganizationProgram(program) || isCompanySchoolProgram(program)),
   })
 
   const instructorColumns =

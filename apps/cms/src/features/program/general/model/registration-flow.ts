@@ -30,7 +30,7 @@ export const GENERAL_PROGRAM_REGISTRATION_PHASE_HINT: Record<
   application: '',
 }
 
-/** 일반 프로그램 등록(`registrationFormVariant === 'general'`) 공통 정보 안내 — 시안 문구. 1사1교·교육받은 교사는 위 기본값 유지 */
+/** 일반·1사1교 프로그램 등록 공통 정보 안내 — 시안 문구. 교육받은 교사는 위 기본값 유지 */
 export const GENERAL_PROGRAM_REGISTRATION_PROGRAM_PHASE_HINT_GENERAL = '※ 프로그램 공통 정보를 작성해 주세요.'
 
 export const GENERAL_PROGRAM_RECRUIT_TAB_KEYS = [

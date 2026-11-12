@@ -15,7 +15,7 @@ export interface GeminiTrainingReportImportResult {
   /** FAILED는 안정 코드+안전한 한국어(예: GEMINI_INSTRUCTOR_NOT_MATCHED: …). SUCCESS 지급 제외는 안내 문구. */
   message?: string | null;
   trainingReportId?: number;
-  /** 지급 완료(PAID)이거나 import가 account_payment를 생성한 경우에만. 지급 제외(IDENTITY_BLANK/EXTERNAL_PAYEE 등)와 preview 미생성 건은 null. */
+  /** 지급조서 확인완료·지급완료로 보호된 기존 중복 행(preview FAILED)의 계좌 지급 ID. import는 지급조서(확인 대기 중)만 만들고 계좌 지급은 지급조서 확인 때 생기므로 그 외에는 null. */
   accountPaymentId?: number | null;
   trainingMinutes?: number;
   classCount?: number;

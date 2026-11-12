@@ -8,9 +8,13 @@ import {
   readCurriculumMultiDateFixedScheduleMeta,
   readInstitutionFixedScheduleChoiceItems,
   resolveFixedScheduleLinesToChoiceItems,
+  shouldShowApplicationMaxSessionsPerDayField,
   shouldShowApplicationScheduleParagraph,
   shouldShowApplicationScheduleParagraphResolved,
+  shouldShowTrainedTeachersApplicationMaxSessionsPerDayField,
   syncApplicationScheduleChoiceParagraphsInDraft,
+  buildTrainedTeachersPreferredSessionCountOptions,
+  resolveTrainedTeachersPreferredSessionCountMax,
 } from '../../dist/program-application/index.js'
 import type { MultipleChoiceParagraph, WritingFormDraft } from '../../dist/writing-form/index.js'
 
@@ -558,5 +562,43 @@ for (const defaultText of [
   assert.equal(isApplicationScheduleDefaultParagraphDescription(defaultText), true, defaultText)
 }
 assert.equal(isApplicationScheduleDefaultParagraphDescription(CUSTOM_SCHEDULE_DESCRIPTION), false)
+
+// 「신청 가능 1일 최대 차시」 — 일반·1사1교는 커리큘럼·복수·기간만, 교육받은 교사는 커리큘럼(단일·복수)·기간
+type MaxSessionsCase = {
+  educationStructure: 'curriculum' | 'schedule'
+  sessionRound: 'single' | 'multi'
+  educationScheduleMode: 'date' | 'period'
+  general: boolean
+  trainedTeachers: boolean
+}
+const maxSessionsCases: MaxSessionsCase[] = [
+  { educationStructure: 'curriculum', sessionRound: 'single', educationScheduleMode: 'period', general: false, trainedTeachers: true },
+  { educationStructure: 'curriculum', sessionRound: 'multi', educationScheduleMode: 'period', general: true, trainedTeachers: true },
+  { educationStructure: 'schedule', sessionRound: 'single', educationScheduleMode: 'period', general: false, trainedTeachers: false },
+  { educationStructure: 'schedule', sessionRound: 'multi', educationScheduleMode: 'period', general: false, trainedTeachers: false },
+  { educationStructure: 'curriculum', sessionRound: 'single', educationScheduleMode: 'date', general: false, trainedTeachers: false },
+  { educationStructure: 'curriculum', sessionRound: 'multi', educationScheduleMode: 'date', general: false, trainedTeachers: false },
+  { educationStructure: 'schedule', sessionRound: 'single', educationScheduleMode: 'date', general: false, trainedTeachers: false },
+]
+for (const { general, trainedTeachers, ...input } of maxSessionsCases) {
+  const label = `${input.educationStructure}/${input.sessionRound}/${input.educationScheduleMode}`
+  assert.equal(shouldShowApplicationMaxSessionsPerDayField(input), general, `general ${label}`)
+  assert.equal(
+    shouldShowTrainedTeachersApplicationMaxSessionsPerDayField(input),
+    trainedTeachers,
+    `trainedTeachers ${label}`
+  )
+}
+
+// TT 희망 차시 상한 — 값 없으면 2차시, 있으면 그 값(상한 16). CMS 미리보기·Platform 공통
+assert.equal(resolveTrainedTeachersPreferredSessionCountMax(undefined), 2)
+assert.equal(resolveTrainedTeachersPreferredSessionCountMax(null), 2)
+assert.equal(resolveTrainedTeachersPreferredSessionCountMax(0), 2)
+assert.equal(resolveTrainedTeachersPreferredSessionCountMax(8), 8)
+assert.equal(resolveTrainedTeachersPreferredSessionCountMax(30), 16)
+assert.deepEqual(
+  buildTrainedTeachersPreferredSessionCountOptions(3).map(option => option.label),
+  ['1차시', '2차시', '3차시']
+)
 
 console.log('program-application-parity.test: ok')

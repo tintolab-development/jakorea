@@ -188,6 +188,40 @@ assert.equal(labels.world.periods[0]?.events[0]?.year, '1980 ~ 1990')
 assert.equal(labels.world.periods[1]?.events[0]?.year, 'Now')
 assert.equal(labels.korea.periods.length, 0)
 
+/** 내용이 빈 이벤트(연도만 있는 행)는 세계·한국 연혁 모두에서 숨긴다(QA-0485). 기간은 유지한다. */
+const emptyEvents = mapPublicJaHistoryPage(
+  {
+    worldTimeline: {
+      periods: [
+        {
+          id: '1919-1954',
+          label: '1919-1954',
+          title: '',
+          events: [
+            { year: '1919', text: 'JA 설립' },
+            { year: '1925', text: '' },
+            { year: '1930', text: '   ' },
+            { year: '1940' },
+          ],
+        },
+      ],
+    },
+    koreaTimeline: {
+      periods: [
+        { id: '2002-2010', label: '2002-2010', title: '', events: [{ year: '2002', text: '' }] },
+      ],
+    },
+  } as unknown as PublicJaHistoryPageResponse,
+  resolveMedia,
+  fallback,
+)
+assert.deepEqual(
+  emptyEvents.world.periods[0]?.events.map(event => event.year),
+  ['1919'],
+)
+assert.equal(emptyEvents.korea.periods.length, 1)
+assert.equal(emptyEvents.korea.periods[0]?.events.length, 0)
+
 const philosophyRemote = mapPublicJaHistoryPage(
   {
     philosophy: {

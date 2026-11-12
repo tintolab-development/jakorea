@@ -55,6 +55,7 @@ import {
 } from '../../../lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { resolveCompanySchoolProgressDisplaySessions } from '@/features/program/1c-1s/lib/progress-schedule-display'
 import {
   useIsTrainedTeachersProgramsSurface,
   useProgramProgressRemoteEnabledForSurface,
@@ -301,17 +302,17 @@ export function ParticipatingInstitutionsSection({
     const base = showTextbookStatusColumn
       ? participatingInstitutionsFilterFields
       : participatingInstitutionsFilterFields.filter(field => field.key !== 'textbookStatus')
-    // 일반 기관형 시안 — 참여 기관명 placeholder 「기관명을 입력해 주세요」 (1사1교 기존 문구 유지)
-    if (isCompanySchool) return base
+    // 일반 기관형·1사1교 시안 — 참여 기관명 placeholder 「기관명을 입력해 주세요」
     return base.map(field =>
       field.key === 'schoolName'
         ? { ...field, placeholder: GENERAL_INSTITUTION_NAME_FILTER_PLACEHOLDER }
         : field
     )
-  }, [isCompanySchool, showTextbookStatusColumn])
+  }, [showTextbookStatusColumn])
 
   const showAssignedEducationSchedule = !isCompanySchool && !isTrainedTeachersSurface
-  const educationScheduleColumnTitle = showAssignedEducationSchedule
+  // 1사1교 시안(05-1 01-1) — 열 제목 「교육 진행 일정」(내용: 확정 일정 우선, 없으면 희망 일정)
+  const educationScheduleColumnTitle = showAssignedEducationSchedule || isCompanySchool
     ? '교육 진행 일정'
     : programBridge.educationStructure === 'schedule' && programBridge.sessionRound === 'multi'
       ? '교육 진행 일정'
@@ -359,7 +360,9 @@ export function ParticipatingInstitutionsSection({
             )
           }
           const sessionLines = buildParticipatingSchoolPreferredScheduleLines(
-            resolveParticipatingInstitutionPreferredDisplaySessions(record),
+            isCompanySchool
+              ? resolveCompanySchoolProgressDisplaySessions(record)
+              : resolveParticipatingInstitutionPreferredDisplaySessions(record),
             // 1사1교만 — 일정 건수를 차시 수로 쓰지 않는다. 교육받은 교사는 기존 표기 유지
             isCompanySchool ? { sessionCountSource: 'known-only' } : undefined
           )
@@ -574,7 +577,7 @@ export function ParticipatingInstitutionsSection({
         onFilterChange={handleFilterChange}
         onSearch={handleFilterSearch}
         title="교육 참여 기관 목록"
-        description={isCompanySchool ? `${filteredSchools.length}건` : `총 ${filteredSchools.length}건`}
+        description={`총 ${filteredSchools.length}건`}
         actions={
           <div className="program-application-list-toolbar">
             {viewMode === 'list' ? (
@@ -650,7 +653,8 @@ export function ParticipatingInstitutionsSection({
               calendarGranularity={progressCalendarGranularity}
               onCalendarGranularityChange={setProgressCalendarGranularity}
               usePreferredScheduleFormat={isCompanySchool}
-              dayListVariant={isCompanySchool ? 'default' : 'general-institution'}
+              // 1사1교 시안(05-1 01-2)도 카드 체크박스·「활동 포기」 뱃지 — 일반 기관형과 같은 우측 목록
+              dayListVariant="general-institution"
               program={program}
             />
           </div>

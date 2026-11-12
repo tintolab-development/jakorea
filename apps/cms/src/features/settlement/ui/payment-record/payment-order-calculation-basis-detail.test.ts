@@ -47,11 +47,11 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(isSupportedBasisDetailLayout(detail)).toBe(true)
   })
 
-  it('buildLectureFeeGeminiBasisDetail returns 제미나이 payload', () => {
+  it('buildLectureFeeGeminiBasisDetail returns Gemini payload', () => {
     const detail = buildLectureFeeGeminiBasisDetail(170000, '2차시')
     expect(detail).toEqual({
       layout: 'lectureFeeGemini',
-      categoryLabel: '제미나이 강사비',
+      categoryLabel: 'Gemini 강사비',
       lectureTimeDisplay: '2차시',
       feeAssessmentWon: 170000,
     })
@@ -59,19 +59,22 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(isSupportedBasisDetailLayout(detail)).toBe(true)
   })
 
-  it('resolvePaymentOrderCalculationBasisDetailForRow uses 제미나이 layout', () => {
-    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
-      {
-        kind: 'lecture_fee',
-        itemLabel: '강사비',
-        amount: 170000,
-        lineId: 'lecture-gemini-1',
-        lectureSessionDisplay: '2차시',
-      },
-      { lectureFeeStandardTitle: '제미나이 강사비' }
-    )
-    expect(detail?.layout).toBe('lectureFeeGemini')
-  })
+  it.each(['Gemini 강사비', '제미나이 강사비', '세미나이 강사비'])(
+    'resolvePaymentOrderCalculationBasisDetailForRow uses Gemini layout for %s',
+    lectureFeeStandardTitle => {
+      const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+        {
+          kind: 'lecture_fee',
+          itemLabel: '강사비',
+          amount: 170000,
+          lineId: 'lecture-gemini-1',
+          lectureSessionDisplay: '2차시',
+        },
+        { lectureFeeStandardTitle }
+      )
+      expect(detail?.layout).toBe('lectureFeeGemini')
+    }
+  )
 
   it('구분에 항목 타입 라벨 강사비 대신 강사비 책정 기준을 쓴다', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
@@ -483,16 +486,16 @@ describe('payment-order-calculation-basis-detail', () => {
         lectureSessionDisplay: '14:30 ~ 16:30',
         basisDetail: {
           layout: 'lectureFeeGemini',
-          categoryLabel: '제미나이 강사비',
+          categoryLabel: 'Gemini 강사비',
           lectureTimeDisplay: '2차시',
           feeAssessmentWon: 170000,
         },
       },
-      { lectureFeeStandardTitle: '제미나이 강사비', remoteData: true }
+      { lectureFeeStandardTitle: 'Gemini 강사비', remoteData: true }
     )
     expect(detail?.layout).toBe('lectureFeeGemini')
     if (detail?.layout !== 'lectureFeeGemini') return
-    expect(detail.categoryLabel).toBe('제미나이 강사비')
+    expect(detail.categoryLabel).toBe('Gemini 강사비')
     expect(detail.feeAssessmentWon).toBe(170000)
     expect(detail.lectureTimeDisplay).toBe('2차시')
   })

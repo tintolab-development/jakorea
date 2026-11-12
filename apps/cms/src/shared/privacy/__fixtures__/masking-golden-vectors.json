@@ -71,8 +71,12 @@
     {"id": "HOLDER-003", "type": "ACCOUNT_HOLDER", "input": "홍", "expected": "*", "policy": "1글자는 전부 마스킹", "kind": "edge"},
     {"id": "HOLDER-004", "type": "ACCOUNT_HOLDER", "input": "김수한무", "expected": "김**무", "policy": "4글자", "kind": "normal"},
     {"id": "HOLDER-005", "type": "ACCOUNT_HOLDER", "input": "남궁민수", "expected": "남궁*수", "policy": "복성은 성 2글자 유지", "kind": "edge"},
-    {"id": "HOLDER-006", "type": "ACCOUNT_HOLDER", "input": "김수한무거", "expected": "김**거", "policy": "5글자 이상: 현행 고정 2개(정책 결정 대기 D4)", "kind": "policy-pending"},
+    {"id": "HOLDER-006", "type": "ACCOUNT_HOLDER", "input": "김수한무거", "expected": "김***거", "policy": "5글자 이상: 가운데 글자 수만큼 *(기획 결정 2026-11-12)", "kind": "normal"},
     {"id": "HOLDER-007", "type": "ACCOUNT_HOLDER", "input": "김*수", "expected": "김*수", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+    {"id": "HOLDER-008", "type": "ACCOUNT_HOLDER", "input": "김민철수", "expected": "김**수", "policy": "복성 아닌 4글자: 가운데 글자 수만큼 *", "kind": "normal"},
+    {"id": "HOLDER-009", "type": "ACCOUNT_HOLDER", "input": "남궁민철수", "expected": "남궁**수", "policy": "복성 5글자: 성 2글자 + 가운데 글자 수만큼 *", "kind": "edge"},
+    {"id": "HOLDER-010", "type": "ACCOUNT_HOLDER", "input": "김민이", "expected": "김*이", "policy": "3글자: 성·끝 글자 제외", "kind": "normal"},
+    {"id": "HOLDER-011", "type": "ACCOUNT_HOLDER", "input": "김***거", "expected": "김***거", "policy": "이미 마스킹된 값 유지(5글자)", "kind": "already-masked"},
 
     {"id": "ID1365-001", "type": "ID_1365", "input": "volunteer99", "expected": "volunteer**", "policy": "뒤 2자리 마스킹", "kind": "normal"},
     {"id": "ID1365-002", "type": "ID_1365", "input": "ab", "expected": "**", "policy": "2자리", "kind": "edge"},

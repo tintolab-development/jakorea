@@ -367,6 +367,45 @@ export async function deleteMemberCommentRemote(memberId: number, commentId: num
   await membersApi.deleteMemberComment(memberId, commentId)
 }
 
+export async function deleteAdminAccountCommentRemote(
+  adminAccountId: number,
+  commentId: number
+): Promise<void> {
+  await membersApi.deleteComment(adminAccountId, commentId)
+}
+
+/**
+ * 회원/학교 organization/관리자 계정 관리자 코멘트 삭제 (내용을 비워 저장 — QA-0044).
+ * - `adminAccount`: `DELETE /api/admin/admin-accounts/{adminAccountId}/comments/{commentId}`
+ * - `member`·`schoolOrganization`: `DELETE /api/admin/users/{id}/comments/{commentId}`
+ * 삭제할 코멘트를 찾지 못하면 아무것도 호출하지 않고 `false`.
+ */
+export async function deleteMemberAdminCommentRemote(
+  resourceId: number,
+  options?: {
+    existingCommentId?: number
+    screenCode?: string
+    target?: 'member' | 'schoolOrganization' | 'adminAccount'
+  }
+): Promise<boolean> {
+  const screenCode = options?.screenCode ?? MEMBER_DETAIL_SCREEN_CODE
+  const target = options?.target ?? 'member'
+
+  let commentId = options?.existingCommentId
+  if (commentId == null) {
+    const existingComments = await fetchAdminCommentsRemote(resourceId, target, { screenCode })
+    commentId = resolveLatestMemberAdminCommentDetail(existingComments, screenCode)?.commentId
+  }
+  if (commentId == null) return false
+
+  if (target === 'adminAccount') {
+    await deleteAdminAccountCommentRemote(resourceId, commentId)
+  } else {
+    await deleteMemberCommentRemote(resourceId, commentId)
+  }
+  return true
+}
+
 export async function updateAffiliatedTeacherEmploymentStatusRemote(
   memberId: number,
   teacherMemberId: number,

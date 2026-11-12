@@ -84,6 +84,8 @@ export interface SchoolDetailAddInstructorAssignModalProps {
   ) => void
   /** 하위 안내 모달 문구 — 일반 기관형 시안은 `general-institution` (기본 기존 문구) */
   copyVariant?: 'default' | 'general-institution'
+  /** 교육 배정일 칩 순위 라벨. 생략 시 기존 `N회차` — 1사1교는 회차 대신 지망 */
+  resolveSessionRoundLabel?: (session: ParticipatingSchoolSession) => string
 }
 
 const DEFAULT_ROLE: InstructorRoleKey = 'assistant'
@@ -107,6 +109,7 @@ export function SchoolDetailAddInstructorAssignModal({
   overflowAlreadyConfirmed = false,
   onAdd,
   copyVariant = 'default',
+  resolveSessionRoundLabel,
 }: SchoolDetailAddInstructorAssignModalProps) {
   const [form] = Form.useForm<AddInstructorAssignFormValues>()
   const selectedInstructorId = Form.useWatch('instructorId', form)
@@ -134,6 +137,7 @@ export function SchoolDetailAddInstructorAssignModal({
       applicantInstructors: instructorApplications.rows,
       participatingInstructorList,
       participatingSchoolList,
+      resolveSessionRoundLabel,
     })
   }, [
     assignmentSessionOptionsProp,
@@ -145,6 +149,7 @@ export function SchoolDetailAddInstructorAssignModal({
     instructorApplications.rows,
     participatingInstructorList,
     participatingSchoolList,
+    resolveSessionRoundLabel,
   ])
 
   useEffect(() => {

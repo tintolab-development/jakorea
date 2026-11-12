@@ -5,6 +5,9 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementListItemResponseLectureProgressStatus } from './settlementListItemResponseLectureProgressStatus';
+import type { SettlementListItemResponsePaymentStatementPreConsentStatus } from './settlementListItemResponsePaymentStatementPreConsentStatus';
+import type { SettlementListItemResponseRowType } from './settlementListItemResponseRowType';
 
 export interface SettlementListItemResponse {
   settlementId?: number;
@@ -20,13 +23,16 @@ export interface SettlementListItemResponse {
   /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
   instructorName?: string;
   statementId?: number;
-  /** 참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null */
+  /** 참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null. Gemini 실적 지급조서는 실적의 학교·기관명(계좌 지급 목록과 같은 값) */
   institutionName?: string | null;
   businessPeriodStart?: string;
   businessPeriodEnd?: string;
-  sessionCompleted?: number;
-  sessionTotal?: number;
-  programSessionProgressDisplay?: string;
+  /** 프로그램 일정 기준 완료 회차 수. Gemini 실적 지급조서는 회차 개념이 없어 null */
+  sessionCompleted?: number | null;
+  /** 프로그램 일정 기준 전체 회차 수. Gemini 실적 지급조서는 null */
+  sessionTotal?: number | null;
+  /** 프로그램 커리큘럼/스케줄 기준 진행 회차 (예: 4 / 16). Gemini 실적 지급조서는 null */
+  programSessionProgressDisplay?: string | null;
   calculationStatus?: string;
   /** 지급조서 상태. WAITING_CONFIRM | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED */
   statementStatus?: string;
@@ -45,4 +51,10 @@ export interface SettlementListItemResponse {
   supersededBySettlementId?: number;
   taxIncomeType?: string;
   availableActions?: string[];
+  /** Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null. */
+  paymentStatementPreConsentStatus?: SettlementListItemResponsePaymentStatementPreConsentStatus;
+  /** 프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null. */
+  rowType?: SettlementListItemResponseRowType;
+  /** 프로그램 참여 강사 정산 현황에서만 채우는 강의 진행 여부. SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 회차. 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null. */
+  lectureProgressStatus?: SettlementListItemResponseLectureProgressStatus;
 }

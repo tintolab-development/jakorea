@@ -347,6 +347,26 @@ assert.equal(
 // PER_HOUR(레거시)·PER_LECTURE 라벨 — lecture-fee-preview instructorFeeUnitDisplayLabel 재사용
 assert.deepEqual(formatSettlementDocumentInstructorFeeParts({ instructorFeeCalculationUnit: 'PER_HOUR', instructorFeeAmount: null }), ['차시당'])
 assert.deepEqual(formatSettlementDocumentInstructorFeeParts({ instructorFeeCalculationUnit: 'PER_LECTURE', instructorFeeAmount: null }), ['출강 1회당'])
+// K11: longDistance === true만 "장거리", false·null·누락은 "기본" (거리로 다시 판정하지 않는다)
+assert.deepEqual(
+  formatSettlementDocumentInstructorFeeParts({ instructorFeeCalculationUnit: 'PER_CLASS', instructorFeeAmount: 300000, longDistance: true }),
+  ['차시당', '장거리 : 300,000원']
+)
+assert.deepEqual(
+  formatSettlementDocumentInstructorFeeParts({ instructorFeeCalculationUnit: 'PER_CLASS', instructorFeeAmount: 240000, longDistance: false }),
+  ['차시당', '기본 : 240,000원']
+)
+assert.deepEqual(
+  formatSettlementDocumentInstructorFeeParts({ instructorFeeCalculationUnit: 'PER_CLASS', instructorFeeAmount: 240000, longDistance: null }),
+  ['차시당', '기본 : 240,000원']
+)
+const farButNotLongDistance: SettlementApplicationDocumentCalcInfo = {
+  instructorFeeCalculationUnit: 'PER_CLASS',
+  instructorFeeAmount: 240000,
+  oneWayDistanceKm: 300,
+  longDistance: null,
+}
+assert.deepEqual(formatSettlementDocumentInstructorFeeParts(farButNotLongDistance), ['차시당', '기본 : 240,000원'])
 
 // 2) 모두 null — 빈 문자열·`-`·기본값 없이 value = null (빈 칸)
 const allNullCalc: SettlementApplicationDocumentCalcInfo = {

@@ -442,4 +442,53 @@ describe('useOrganizationStudentRosterRemote integration', () => {
     await waitFor(() => expect(hookA.result.current.revisionNo).toBe(5))
     await waitFor(() => expect(hookB.result.current.revisionNo).toBe(2))
   })
+
+  it('TC-15: AUTO_RAW_ACCESS 명단은 재진입마다 GET(서버 자동 기록)하고 이탈 시 캐시를 남기지 않는다', async () => {
+    fetchOrganizationStudentRosterRemote.mockResolvedValue({
+      revisionNo: 1,
+      rows: [],
+      privacyAccessMode: 'AUTO_RAW_ACCESS',
+    })
+    // 전역 기본(staleTime 30s·gcTime 10m)이 있어도 명단 쿼리 옵션이 우선한다.
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: 30_000, gcTime: 600_000 } },
+    })
+    const wrapper = createWrapper(queryClient)
+
+    const first = renderHook(
+      () => useOrganizationStudentRosterRemote({ organizationApplicationId: appA }),
+      { wrapper }
+    )
+    await waitFor(() => expect(first.result.current.rawAccess).toBe(true))
+    expect(fetchOrganizationStudentRosterRemote).toHaveBeenCalledTimes(1)
+    first.unmount()
+
+    await waitFor(() =>
+      expect(
+        queryClient.getQueryData(generalProgramProgressQueryKeys.studentRoster(appA))
+      ).toBeUndefined()
+    )
+
+    const second = renderHook(
+      () => useOrganizationStudentRosterRemote({ organizationApplicationId: appA }),
+      { wrapper }
+    )
+    await waitFor(() => expect(fetchOrganizationStudentRosterRemote).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(second.result.current.rawAccess).toBe(true))
+  })
+
+  it('TC-16: MASKED 명단은 rawAccess가 false', async () => {
+    fetchOrganizationStudentRosterRemote.mockResolvedValue({
+      revisionNo: 1,
+      rows: [],
+      privacyAccessMode: 'MASKED',
+    })
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const hook = renderHook(
+      () => useOrganizationStudentRosterRemote({ organizationApplicationId: appA }),
+      { wrapper: createWrapper(queryClient) }
+    )
+    await waitFor(() => expect(hook.result.current.revisionNo).toBe(1))
+    expect(hook.result.current.rawAccess).toBe(false)
+  })
 })

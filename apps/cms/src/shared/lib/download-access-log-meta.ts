@@ -2,7 +2,7 @@
  * client 다운로드 감사 로그(`POST /api/admin/logs/file-access/client`)에 함께 보내는 파일 종류·포함 개인정보.
  *
  * - 코드·라벨 목록 정본: apps/cms/docs/api/client-download-kind-catalog.md
- * - 서버 필드 규칙: downloadKind `^[A-Z][A-Z0-9_]*$` 80자 이하, containedPiiTypes 최대 3개(허용 값 외 400 VALIDATION_FAILED)
+ * - 서버 필드 규칙: downloadKind `^[A-Z][A-Z0-9_]*$` 80자 이하, containedPiiTypes 최대 9개(허용 값 외 400 VALIDATION_FAILED, 2026-11-12 BE 확장)
  * - 백엔드 배포 전에는 보내지 않는다. `VITE_FILE_ACCESS_CLIENT_LOG_META_ENABLED=true` 일 때만 body에 싣는다.
  */
 
@@ -14,11 +14,17 @@ export function isFileAccessClientLogMetaEnabled(): boolean {
   )
 }
 
-/** 서버 허용 값과 같은 순서 */
+/** 서버 허용 값(SensitiveDownloadPiiPolicy.ALLOWED_CONTAINED_PII_TYPES, 9종)과 같은 순서 */
 export const DOWNLOAD_LOG_PII_TYPES = [
   'NAME',
   'RESIDENT_REGISTRATION_NUMBER',
   'ACCOUNT_NUMBER',
+  'BIRTH_DATE',
+  'GENDER',
+  'PHONE',
+  'EMAIL',
+  'HOME_ADDRESS',
+  'EXTERNAL_1365_ID',
 ] as const
 
 export type DownloadLogPiiType = (typeof DOWNLOAD_LOG_PII_TYPES)[number]
@@ -105,11 +111,11 @@ export type FileAccessLogMetaBody = {
   containedPiiTypes?: DownloadLogPiiType[]
 }
 
-const MAX_CONTAINED_PII_TYPES = 3
+const MAX_CONTAINED_PII_TYPES = 9
 
 /**
  * client 로그 body에 붙일 필드. 플래그가 꺼져 있거나 값이 없으면 빈 객체(기존 body 그대로).
- * PII는 서버 허용 순서로 중복 없이 최대 3개.
+ * PII는 서버 허용 순서로 중복 없이 최대 9개.
  */
 export function buildFileAccessLogMetaBody(
   meta: DownloadAccessLogMeta | undefined

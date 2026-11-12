@@ -692,6 +692,7 @@ const resendSettlementNotification = (
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
  * - 검토 메모: Auto-synced from implemented controller route
+ * Gemini 실적 지급조서는 지급 정정 불가: 409 GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED.
  * @summary POST /api/admin/settlements/{settlementId}/correction-requests
  */
 const requestCorrection = (
@@ -768,6 +769,7 @@ const resendSettlementStatementNotification = (
  * 409 PAYMENT_STATEMENT_STATUS_CONFLICT (details.statementId),
  * 404 PAYMENT_STATEMENT_NOT_FOUND,
  * 400 SCHEDULED_PAYMENT_DATE_REQUIRED | SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER.
+ * Gemini 실적 지급조서 중 사전 동의 미완료 건이 있으면 409 GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED(전체 롤백).
  * @summary 지급조서 일괄 확인 처리
  */
 const bulkConfirmPaymentStatements = (
@@ -1272,6 +1274,7 @@ const rejectPaymentStatement = (
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
  * - 검토 메모: Auto-synced from implemented controller route 이체 예정일은 KST 기준 오늘 또는 이후 날짜만 허용하며, 위반 시 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER를 반환합니다.
+ * Gemini 실적 지급조서는 강사의 유효한 지급조서 사전 동의서가 없으면 409 GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED.
  * @summary 정산/계좌지급 부분 수정
  */
 const confirmPaymentStatement = (

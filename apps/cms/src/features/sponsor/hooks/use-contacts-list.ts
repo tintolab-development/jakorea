@@ -12,6 +12,7 @@ import {
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
+import { SPONSOR_CONTACT_PII_QUERY_CACHE } from '@/features/sponsor/lib/contact-query-cache'
 
 export type UseContactsListReturn = {
   pendingFilters: ContactListFilters
@@ -42,16 +43,14 @@ export function useContactsList(
     queryKey: dataManagementQueryKeys.sponsors.contacts(sponsorId, EMPTY_CONTACTS_PARAMS_KEY),
     queryFn: () => getSponsorContacts(sponsorId),
     enabled: remoteEnabled && Boolean(sponsorId),
-    staleTime: 30_000,
-    retry: false,
+    ...SPONSOR_CONTACT_PII_QUERY_CACHE,
   })
 
   const filteredQuery = useQuery({
     queryKey: dataManagementQueryKeys.sponsors.contacts(sponsorId, paramsKey),
     queryFn: () => getSponsorContacts(sponsorId, params),
     enabled: remoteEnabled && Boolean(sponsorId) && !isUnfiltered,
-    staleTime: 30_000,
-    retry: false,
+    ...SPONSOR_CONTACT_PII_QUERY_CACHE,
   })
 
   const allContacts = useMemo((): SponsorContactRow[] => {

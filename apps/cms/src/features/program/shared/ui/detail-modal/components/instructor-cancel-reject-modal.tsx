@@ -29,7 +29,7 @@ export type InstructorCancelRejectModalProps = {
   onConfirm: (payload: InstructorCancelRejectionConfirmPayload) => void
   zIndex?: number
   /**
-   * 기본 `default`(1사1교·일반 개인형).
+   * 기본 `default`(기존 문구). 일반 기관형·개인형·1사1교 강사 신청은 `general-organization`.
    * `general-organization`: 시안 04-2(1141:245791) — 「해당 회원은」, 사유→알림 순서, 알림 3옵션.
    */
   copyVariant?: 'default' | 'general-organization'

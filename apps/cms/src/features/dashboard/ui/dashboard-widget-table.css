@@ -244,3 +244,13 @@
   height: 0;
   display: none;
 }
+
+/* QA-0256 — 이동 가능한 행: 포인터 · 키보드 포커스 표시 */
+.dashboard-widget-table__data .ant-table-tbody > tr[data-row-activatable='true'] {
+  cursor: pointer;
+}
+
+.dashboard-widget-table__data .ant-table-tbody > tr[data-row-activatable='true']:focus-visible {
+  outline: 2px solid rgba(0, 160, 175, 0.6);
+  outline-offset: -2px;
+}

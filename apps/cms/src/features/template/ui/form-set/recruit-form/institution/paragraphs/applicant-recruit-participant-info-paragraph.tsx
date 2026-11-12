@@ -3,6 +3,7 @@ import {
   resolveInstitutionApplicationRecruitLimitsVisibilityBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
+  shouldShowTrainedTeachersInstitutionApplicationMaxSessionsPerDayField,
   useInstitutionApplicationProgramBridge,
   type InstitutionApplicationRecruitLimitVisibilityInput,
 } from '@/features/program/general/lib/institution-application-program-bridge'
@@ -79,10 +80,15 @@ export function ApplicantRecruitParticipantInfoParagraph({
     showInstitutionApplicationLimits &&
     (templateAuthoringLimitsPreview ||
       shouldShowInstitutionApplicationMaxScheduleFields(recruitLimitsVisibilityBridge))
+  /** 교육받은 교사는 커리큘럼 단일 회차도 노출 — Platform TT 「희망 차시」 셀렉 조건과 동일 */
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
     (templateAuthoringLimitsPreview ||
-      shouldShowInstitutionApplicationMaxSessionsPerDayField(recruitLimitsVisibilityBridge))
+      (isTrainedTeachers
+        ? shouldShowTrainedTeachersInstitutionApplicationMaxSessionsPerDayField(
+            recruitLimitsVisibilityBridge
+          )
+        : shouldShowInstitutionApplicationMaxSessionsPerDayField(recruitLimitsVisibilityBridge)))
 
   const limitDefaults = defaults
 

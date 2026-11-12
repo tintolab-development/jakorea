@@ -155,7 +155,7 @@ describe('getSponsorDetail', () => {
     const detail = await getSponsorDetail('sp-1')
 
     expect(fetchSponsorRemoteMock).toHaveBeenCalledOnce()
-    expect(fetchSponsorRemoteMock).toHaveBeenCalledWith('sp-1')
+    expect(fetchSponsorRemoteMock).toHaveBeenCalledWith('sp-1', undefined)
     expect(fetchYearlyBusinessesRemoteMock).not.toHaveBeenCalled()
     expect(detail.id).toBe('sp-1')
     expect(detail.yearlyBusinesses.every(row => row.id === '')).toBe(true)
@@ -290,7 +290,7 @@ describe('getSponsorContacts', () => {
 
     const rows = await getSponsorContacts('sp-1', { department: '기획' })
 
-    expect(fetchSponsorContactsRemoteMock).toHaveBeenCalledWith('sp-1', { department: '기획' })
+    expect(fetchSponsorContactsRemoteMock).toHaveBeenCalledWith('sp-1', { department: '기획' }, undefined)
     expect(rows).toEqual([
       expect.objectContaining({
         id: 'c-1',

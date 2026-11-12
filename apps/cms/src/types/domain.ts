@@ -223,10 +223,28 @@ export interface GeneralProgramCommonInfoExtension {
   educationScheduleRange?: { start: string; end: string } | null
   /** 교육받은 교사 — 교육일지 설정 (있음/없음) */
   educationJournalEnabled?: boolean
-  /** 교육받은 교사 — 교육 연수 토글. ON이면 첫 진행 항목 타이틀·일정명이 교육 연수로 치환(IPS Prepare 고정) */
+  /**
+   * 교육받은 교사 — 교사 연수 토글. ON이면 차시·일정과 별도인 「교사 연수」 블록
+   * (`scheduleDetails`의 name = teacherTrainingScheduleName 행 + 교육 형태, IPS Prepare 고정)
+   */
   teacherTrainingEnabled?: boolean
   /** 교육받은 교사 — GET teacherTrainingScheduleName. OFF면 빈 문자열 */
   teacherTrainingScheduleName?: string
+  /**
+   * 교육받은 교사 — 교사 연수 교육 형태. `trained-teacher/detail` PATCH 최상위 필드(B 전용).
+   * undefined = 서버가 내려주지 않음(필드 미배포), null = 미입력.
+   */
+  teacherTrainingEducationFormat?: 'ONLINE' | 'OFFLINE' | 'HYBRID' | null
+  /**
+   * 교육받은 교사 — GET `trained-teacher/detail` teacherTrainingSchedule (program_schedule 읽기 전용 투영).
+   * undefined = 서버가 내려주지 않음, null = 연수 일정 없음.
+   */
+  teacherTrainingSchedule?: {
+    scheduleId?: number
+    scheduleName?: string | null
+    startAt?: string | null
+    endAt?: string | null
+  } | null
   /**
    * 교육 과정 · IP Owned · Course Delivered By · Partner Involvement.
    * TRAINED_TEACHER programs PATCH 는 올린 serviceDetailJson 으로 config 를 교체하고,

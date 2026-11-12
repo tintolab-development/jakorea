@@ -120,6 +120,35 @@ describe('programTrainedTeachersRecruitmentSaveSchema', () => {
     }
   })
 
+  it('커리큘럼 단일 회차 + 기간형도 1일 최대 차시를 요구한다 (Platform TT 희망 차시 셀렉 조건)', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+      participantRecruitmentMaxScheduleCount: 2,
+      participantRecruitmentMaxSessionsPerDay: undefined,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(issue => issue.path.join('.'))).toContain(
+        'participantRecruitmentMaxSessionsPerDay'
+      )
+    }
+  })
+
+  it('일정형 단일 + 기간형은 희망 교육일만 받으므로 1일 최대 차시를 요구하지 않는다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      educationStructure: 'schedule',
+      sessionRound: 'single',
+      educationScheduleMode: 'period',
+      participantRecruitmentMaxScheduleCount: 2,
+      participantRecruitmentMaxSessionsPerDay: undefined,
+    })
+    expect(result.success).toBe(true)
+  })
+
   it('해당 없음이면 비고가 비어도 학생 명단 제출만 수정해 저장할 수 있다', () => {
     const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
       ...complete,

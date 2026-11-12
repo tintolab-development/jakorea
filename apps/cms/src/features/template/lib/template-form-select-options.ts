@@ -61,7 +61,19 @@ export const TEMPLATE_FORM_ECONOMY_BUSINESS_FIELD_OPTIONS: readonly TemplateForm
   { value: 'economy_education', label: '경제교육' },
 ] as const
 
-// ── 교육 과정 / IP / Course / Partner (영문 라벨 고정) ─────────────
+// ── 교육 과정 / IP / Course / Partner (옵션 값·라벨은 영문 고정) ─────────────
+
+/**
+ * 프로그램 등록 기본 정보 — IP·운영 주체·파트너 항목의 화면 라벨(한글).
+ * 옵션 값·라벨(JA/Partner/Jointly, Yes/No)은 영문 그대로 둔다.
+ * 용어는 임시안(QA-0439) — 기획 확정 시 여기만 바꾼다.
+ */
+export const TEMPLATE_FORM_IPS_FIELD_LABELS = {
+  ipOwned: 'IP 소유 기관',
+  courseDeliveredBy: '교육 운영 주체',
+  partnerInvolvement: '파트너 참여 여부',
+} as const
+
 
 export const TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS = [
   { value: 'traditional_paper', label: 'Traditional (Paper)' },

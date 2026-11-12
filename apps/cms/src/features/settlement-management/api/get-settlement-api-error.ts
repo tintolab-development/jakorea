@@ -60,9 +60,9 @@ export const TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE =
 export const SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED_MESSAGE =
   '기타 인건비·특강 수동 책정 단가를 입력해 주세요. 0원 이하 금액은 사용할 수 없습니다.'
 export const SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE =
-  '지급 기준 단위가 올바르지 않습니다. 출강 1회당·차시당(레거시)·1차시당 중 하나를 선택해 주세요.'
+  '지급 기준 단위가 올바르지 않습니다. 차시당·출강 1회당 중 하나를 선택해 주세요.'
 export const SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED_MESSAGE =
-  '1차시당 책정에 필요한 차시 수가 없어 정산을 확정할 수 없습니다. 교육 시간을 확인해 주세요.'
+  '차시당 책정에 필요한 차시 수가 없어 정산을 확정할 수 없습니다. 교육 시간을 확인해 주세요.'
 
 /**
  * Gemini 연수 실적(시작·종료 시각) 누락으로 차시 산출 불가.
@@ -72,8 +72,25 @@ export const GEMINI_TRAINING_REPORT_MISSING = 'GEMINI_TRAINING_REPORT_MISSING'
 export const GEMINI_TRAINING_REPORT_MISSING_MESSAGE =
   'Gemini 연수 실적(시작·종료 시각)이 없어 차시를 산출할 수 없습니다.'
 
+/** BE 2026-11-11 Gemini 지급조서 409 — 서버 message를 우선 표시하고, 비었을 때만 아래 문구를 쓴다 */
+export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED =
+  'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED'
+export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE =
+  '강사의 지급조서 사전 동의가 완료되지 않아 지급조서를 확인할 수 없습니다. 강사에게 사전 동의를 안내해 주세요.'
+export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED = 'GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED'
+export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE =
+  '제미나이 지급조서는 지급 정정을 할 수 없습니다. 지급조서를 반려한 뒤 실적을 다시 등록해 주세요.'
+
+/** 영수증 지급 건에 계좌가 없어 지급 완료 불가(E2) — 단건·일괄. details.accountPaymentIds = 해당 건 id(쉼표 구분) */
+export const ACCOUNT_PAYMENT_ACCOUNT_MISSING = 'ACCOUNT_PAYMENT_ACCOUNT_MISSING'
+/** 고른 건이 모두 영수증이라 세금신고 대상이 없음(E1) — 발급·미리보기 */
+export const TAX_REPORT_NO_ELIGIBLE_SELECTION = 'TAX_REPORT_NO_ELIGIBLE_SELECTION'
+
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
+  [ACCOUNT_PAYMENT_ACCOUNT_MISSING]:
+    '지급 계좌 정보가 없어 지급 완료 처리할 수 없어요. 회원의 사전 동의서 계좌 정보를 확인해 주세요.',
+  [TAX_REPORT_NO_ELIGIBLE_SELECTION]: '선택한 건 중 세금신고 대상이 없어요.',
   SCHEDULED_PAYMENT_DATE_REQUIRED: '계좌 지급 예정일을 입력해 주세요.',
   PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
   PAYMENT_STATEMENT_NOT_FOUND:
@@ -103,6 +120,9 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   [LEGACY_GEMINI_TAX_SNAPSHOT_MISSING]: LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
   [TAX_REPORT_REQUIRED_IDENTITY_MISSING]: TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE,
   [GEMINI_TRAINING_REPORT_MISSING]: GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
+  [GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED]:
+    GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE,
+  [GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED]: GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE,
   SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED:
     '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
@@ -291,6 +311,25 @@ export function getSettlementApiErrorCode(error: unknown): string | undefined {
     ?.stableCode
 }
 
+/** 409 ACCOUNT_PAYMENT_ACCOUNT_MISSING의 details.accountPaymentIds(쉼표 구분 또는 배열) → id 목록 */
+export function readAccountPaymentMissingAccountIds(error: unknown): number[] {
+  const data = readAxiosResponse(error)?.data
+  if (!data || typeof data !== 'object') return []
+  const envelope = data as { error?: { details?: unknown }; details?: unknown }
+  const details = (envelope.error?.details ?? envelope.details) as
+    | { accountPaymentIds?: unknown }
+    | undefined
+  const raw = details?.accountPaymentIds
+  const tokens = Array.isArray(raw)
+    ? raw.map(String)
+    : typeof raw === 'string' || typeof raw === 'number'
+      ? String(raw).split(',')
+      : []
+  return tokens
+    .map(token => parsePositiveIntToken(token))
+    .filter((id): id is number => id != null)
+}
+
 /** 원본 코드 + count/ids 파싱. UI·진단용 */
 export function getNormalizedSettlementApiError(
   error: unknown
@@ -338,6 +377,13 @@ export function isPaymentStatementStatusConflictError(error: unknown): boolean {
   const response = readAxiosResponse(error)
   if (response?.status !== 409) return false
   return getSettlementApiErrorCode(error) === PAYMENT_STATEMENT_STATUS_CONFLICT
+}
+
+/** 409 Gemini 지급조서 사전 동의 미완료 — 목록을 다시 불러와 확인 가능 여부(availableActions)를 갱신한다 */
+export function isGeminiPaymentStatementPreConsentRequiredError(error: unknown): boolean {
+  const response = readAxiosResponse(error)
+  if (response?.status !== 409) return false
+  return getSettlementApiErrorCode(error) === GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED
 }
 
 export function isTaxReportIdentityOrSnapshotMissingError(error: unknown): boolean {

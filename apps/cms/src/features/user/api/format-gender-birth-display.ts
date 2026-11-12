@@ -114,3 +114,12 @@ export function formatGenderBirthDisplayLine(
   if (genderPart === '-' && birthPart === '-') return '-'
   return `${genderPart} | ${birthPart}`
 }
+
+/**
+ * 서버가 준 만 나이(age·teacherAge 등, 2026-11-12 BE 추가)를 좁게 읽는다. 생성 타입에 아직 없을 수 있다.
+ * 숫자가 아니면 undefined — FE가 마스킹 생년월일로 나이를 계산하지 않는다.
+ */
+export function readServerManAge(dto: unknown, key = 'age'): number | undefined {
+  const value = (dto as Record<string, unknown> | null | undefined)?.[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}

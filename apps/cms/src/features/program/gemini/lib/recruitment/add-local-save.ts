@@ -1,6 +1,6 @@
 /**
  * Gemini 찾아가는 연수 — 모집 공고 추가 폼 스냅샷·브라우저 잔여 초안.
- * 「임시 저장」은 서버 DRAFT API를 호출한다. localStorage는 이전 초안 복원용으로만 남긴다.
+ * 「임시 저장」은 이 localStorage에만 저장한다 — 프로그램 유형 공통, 서버 API 호출 없음.
  * @see apps/cms/docs/implementation/template-form-draft-local-save.md
  */
 

@@ -151,8 +151,9 @@ import {
 
 import { ButtonCheckIcon, ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
+/** 마스킹 명단(privacyAccessMode가 AUTO_RAW_ACCESS가 아닐 때)에서만 띄운다. 사유는 privacy-detail 서버 고정값. */
 const STUDENT_ROSTER_EDIT_UNMASK_CONFIRM_CONTENT =
-  '정보 수정 시 개인정보 마스킹이 해제됩니다.\n감사 사유는 서버가 기록합니다.\n해당 학생명단의 개인정보 열람 및 정보를 수정하시겠습니까?'
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '참여 학생 명단을 확인하고 교육을 운영하기 위함'으로 로그 이력에 기록됩니다.\n해당 학생명단의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 const STUDENT_ROSTER_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
@@ -1051,6 +1052,11 @@ export function SchoolDetailStudentListSection({
         if (!privacyRolePending) showAdminAccessDeniedAlert()
         return
       }
+      if (rosterRemote.rawAccess) {
+        // AUTO_RAW_ACCESS: 진입 GET이 이미 원문 + 조회 기록이다. 안내 팝업·privacy-detail 재조회(기록 2건) 없이 수정한다.
+        enterStudentListEditMode()
+        return
+      }
       const entryCheck = validateStudentRosterEditEntry({
         remoteEnabled: true,
         isLoading: rosterRemote.isLoading,
@@ -1076,6 +1082,7 @@ export function SchoolDetailStudentListSection({
     enterStudentListEditMode,
     rosterRemote.isError,
     rosterRemote.isLoading,
+    rosterRemote.rawAccess,
     rosterRemote.remoteEnabled,
     rosterRemote.revisionNo,
     rosterRemote.totalCount,

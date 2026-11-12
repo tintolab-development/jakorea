@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildCategoryManagementDraftChanges,
+  CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE,
+  CATEGORY_NAME_REQUIRED_MESSAGE,
+  categoryNameFieldError,
   hasCategoryManagementDraftChanges,
   validateCategoryName,
 } from './category-management-draft'
@@ -68,5 +71,17 @@ describe('category-management-draft', () => {
       [{ id: '1', name: '공지' }]
     )
     expect(hasCategoryManagementDraftChanges(changes)).toBe(false)
+  })
+})
+
+describe('categoryNameFieldError (QA-0272)', () => {
+  it('빈 이름·공백만 있으면 필수 입력 문구', () => {
+    expect(categoryNameFieldError('')).toBe(CATEGORY_NAME_REQUIRED_MESSAGE)
+    expect(categoryNameFieldError('   ')).toBe(CATEGORY_NAME_REQUIRED_MESSAGE)
+  })
+
+  it('허용하지 않는 문자는 문자 안내, 유효하면 null', () => {
+    expect(categoryNameFieldError('공지!')).toBe(CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE)
+    expect(categoryNameFieldError('일반_공지-1')).toBeNull()
   })
 })

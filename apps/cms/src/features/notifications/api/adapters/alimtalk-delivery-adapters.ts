@@ -198,7 +198,8 @@ export function mapDeliveryToSendHistoryRow(
     receivedAt: item.deliveredAt?.trim() || '',
     sendCount: '1건',
     sendNumber: item.providerMessageId || item.providerRequestId || String(item.deliveryId),
-    message: item.providerResultMessage || failedReason || failedReasonRaw || '',
+    // 발송 실패 행은 정리된 실패 사유를 발송사 원문 메시지보다 먼저 보여 준다.
+    message: failedReason || item.providerResultMessage || failedReasonRaw || '',
     failedReason: failedReason || undefined,
     phoneTemplate: phoneTemplate ?? emptyPhoneTemplate(),
   }

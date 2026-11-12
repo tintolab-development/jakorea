@@ -16,6 +16,7 @@ import {
   mapStudentRosterResponseToRows,
   mapStudentRowsToRosterCommitRequest,
 } from '@/features/program/general/api/adapters/student-roster-adapters'
+import { AUTO_RAW_ACCESS_QUERY_OPTIONS } from '@/features/program/general/api/auto-raw-access-query'
 import type { OrganizationStudentRosterCommitInput } from '@/features/program/general/api/student-roster-commit-types'
 import {
   isStudentRosterMemberIdConflictError,
@@ -59,6 +60,8 @@ export function useOrganizationStudentRosterRemote(input: {
     queryKey: generalProgramProgressQueryKeys.studentRoster(applicationId || '__none__'),
     enabled,
     queryFn: () => fetchOrganizationStudentRosterRemote(applicationId),
+    // 학생 명단 GET은 원문 + 고정 사유 자동 기록(AUTO_RAW_ACCESS) — 진입마다 조회·이탈 시 캐시 제거
+    ...AUTO_RAW_ACCESS_QUERY_OPTIONS,
   })
 
   const students = useMemo(
@@ -113,10 +116,18 @@ export function useOrganizationStudentRosterRemote(input: {
     [commitMutation]
   )
 
+  /**
+   * AUTO_RAW_ACCESS: 서버가 진입 GET에서 고정 사유로 조회를 기록하고 연락처·이메일·생년월일 원문을 준다
+   * (Program Owner·Assistant). MASKED(Program Viewer 등)는 masked* 값만 온다.
+   */
+  const rawAccess =
+    enabled && query.data?.privacyAccessMode?.trim().toUpperCase() === 'AUTO_RAW_ACCESS'
+
   return {
     remoteEnabled: enabled,
     students,
     revisionNo,
+    rawAccess,
     totalCount: query.data?.totalCount ?? students.length,
     isLoading: enabled && query.isLoading,
     isFetching: enabled && query.isFetching,

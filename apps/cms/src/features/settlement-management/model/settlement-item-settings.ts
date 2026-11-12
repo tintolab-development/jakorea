@@ -12,7 +12,6 @@ export type SettlementItemSettingIconKey =
   | 'wage_special_lecture'
   | 'wage_other_labor'
   | 'wage_gemini'
-  | 'wage_assistant'
   | 'wage_multi_instructor'
   | 'wage_simple_labor'
   | 'pay_transport'

@@ -27,15 +27,16 @@ function item(
 
 /**
  * 회차·차시 변수 설명 (BE N2). 회차 = 교육 일정 단위(session_no), 차시 = 수업 개수 — 서로 다른 값이다.
- * 카탈로그 API `description`보다 이 설명을 우선한다(BE 설명 갱신 전에도 뜻이 맞게).
+ * 정본은 카탈로그 API(`GET …/template-variables`)의 `description` — BE가 같은 뜻으로 정정해 내려준다(2026-11-12 회신).
+ * 이 문구는 카탈로그가 없을 때의 정적 목록과, 카탈로그 설명이 비었을 때만 쓴다(BE 회신 문구와 동일하게 유지).
  */
 export const EDUCATION_SESSION_COUNT_VARIABLE = '교육 진행 차시'
 export const EDUCATION_ROUND_VARIABLE = '교육 진행 회차'
 
 export const MAIL_VARIABLE_DESCRIPTION_OVERRIDES: Readonly<Record<string, string>> = {
   [EDUCATION_SESSION_COUNT_VARIABLE]:
-    '차시 개수(N차시). 교육 안내 = 그 일정의 커리큘럼 차시 수, 정산 알림 = 정산 인정 차시. 회차 번호는 #{교육 진행 회차}',
-  [EDUCATION_ROUND_VARIABLE]: '회차 번호(N회차). 여러 회차면 「1회차, 2회차」',
+    '차시 개수(N차시). 정산 알림은 정산 인정 차시, 교육 안내는 그 일정의 커리큘럼 차시 수. 회차 번호는 #{교육 진행 회차}를 사용합니다.',
+  [EDUCATION_ROUND_VARIABLE]: '일정 회차 번호(N회차)',
 }
 
 /** 변수 패널 항목 아래 짧은 안내(문구 최소). 회차를 보여야 하는 템플릿은 #{교육 진행 회차}를 쓴다 */
@@ -243,7 +244,8 @@ export function groupMailTemplateVariablesFromCatalog(
       map.set(id, group)
       order.push(id)
     }
-    const description = MAIL_VARIABLE_DESCRIPTION_OVERRIDES[key] ?? variable.description?.trim()
+    // 카탈로그 description이 정본. 비었을 때만 FE 회차·차시 문구로 채운다
+    const description = variable.description?.trim() || MAIL_VARIABLE_DESCRIPTION_OVERRIDES[key]
     group.items.push(
       item(
         key,

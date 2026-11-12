@@ -150,6 +150,9 @@ export const generalProgramProgressQueryKeys = {
   educationScopes: () => [...generalProgramProgressQueryKeys.all, 'education-scope'] as const,
   educationScope: (programId: string, participantId: string) =>
     [...generalProgramProgressQueryKeys.educationScopes(), programId, participantId] as const,
+  /** GET …/volunteer-assignments/candidates — 기관형 봉사자 면접 합격 시 기관 배정 후보(프로그램 단위) */
+  volunteerAssignmentCandidates: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'volunteer-assignment-candidates', programId] as const,
   /** GET …/volunteer-assignments?volunteerParticipantId — 기관형 봉사자 기관별 배정 알림 상태 */
   volunteerAssignments: (programId: string, volunteerParticipantId: string) =>
     [

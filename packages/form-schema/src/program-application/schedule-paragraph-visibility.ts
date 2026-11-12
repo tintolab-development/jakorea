@@ -152,6 +152,22 @@ export function shouldShowApplicationMaxSessionsPerDayField(
   )
 }
 
+/**
+ * 교육받은 교사(TRAINED_TEACHER) 기관 신청 — 「신청 가능 1일 최대 차시」 모집 필드 노출.
+ * Platform TT 신청이 지망마다 「희망 차시」 셀렉을 보여 주는 조건과 같다:
+ * 1·2지망 희망 일정 UI(기간 지정) 이면서 희망 교육일만 받는 일정형·단일이 아닐 때
+ * → 커리큘럼형(단일·복수 회차) + 기간 지정.
+ * 일반·1사1교 기관은 `shouldShowApplicationMaxSessionsPerDayField`(커리큘럼·복수·기간)를 그대로 쓴다.
+ */
+export function shouldShowTrainedTeachersApplicationMaxSessionsPerDayField(
+  input: ApplicationScheduleVisibilityInput
+): boolean {
+  return (
+    shouldShowApplicationPreferredScheduleParagraph(input) &&
+    !shouldShowApplicationSchedulePeriodDateOnlyPreferred(input)
+  )
+}
+
 /** 일정형 + 단일 + 기간 지정 지망 — 희망 교육일만 (차시·시간 없음) */
 export function shouldShowApplicationSchedulePeriodDateOnlyPreferred(
   input: ApplicationScheduleVisibilityInput

@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { DEV_LOGIN_MFA_CODE, canShowDevRoleLogin } from '@/features/auth/lib/dev-login-accounts'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning, verifyTotp } from '@/entities/user/api/mfa-service'
 import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
@@ -356,6 +357,22 @@ export function useMfaVerification({
     displayIsLocked && displayLockUntil
       ? `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`
       : null
+
+  // 로컬 개발 모드: 모달이 열릴 때 로컬 BE MFA 코드(000000)를 한 번 입력하고 6자리 자동 검증을 태운다.
+  const devMfaAutoFilledRef = useRef(false)
+  useEffect(() => {
+    if (!open) {
+      devMfaAutoFilledRef.current = false
+      return
+    }
+    if (devMfaAutoFilledRef.current || !canShowDevRoleLogin() || showQrSetup || !user?.email) return
+    const frameId = requestAnimationFrame(() => {
+      devMfaAutoFilledRef.current = true
+      runOnForm(formInstance => formInstance.setFieldsValue({ otpCode: DEV_LOGIN_MFA_CODE }))
+      onOtpCodeChange(DEV_LOGIN_MFA_CODE)
+    })
+    return () => cancelAnimationFrame(frameId)
+  }, [open, showQrSetup, user?.email, runOnForm, onOtpCodeChange])
 
   return {
     form,

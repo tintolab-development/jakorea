@@ -66,6 +66,8 @@ export interface UserDetailFullpageShellValue {
   basicInfoEditScope: BasicInfoEditScope
   basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null
   basicInfoSaveLoading: boolean
+  /** 코멘트 모달 — 저장된 코멘트가 있으면 비워 저장(삭제) 허용 */
+  adminCommentAllowEmpty: boolean
   /** 관리자 상세 — 뷰 모드에서 권한 유형만 즉시 저장 중 */
   adminPermissionVariantPatching: boolean
   instructorPermissionRevokeOpen: boolean

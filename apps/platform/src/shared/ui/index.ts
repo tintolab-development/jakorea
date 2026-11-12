@@ -33,6 +33,7 @@ export type { PFStateBadgeProps, PFStateBadgeSize, PFStateBadgeTone } from './pf
 export { SchoolTeacherEmploymentStatusBadge } from './school-teacher-employment-status-badge'
 export type { SchoolTeacherEmploymentStatusBadgeProps } from './school-teacher-employment-status-badge'
 export { PFButton } from './pf-button'
+export { PFFloatingAction } from './pf-floating-action'
 export { PFDescriptionList } from './pf-description-list'
 export type { PFDescriptionListProps } from './pf-description-list'
 export { PFCheckbox } from './pf-checkbox'
