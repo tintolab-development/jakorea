@@ -46,6 +46,22 @@ function formatIsoToKoreanWeekday(iso: string): string {
   return label === '-' ? iso : label
 }
 
+/**
+ * 산출 내역서 「산정 항목」 라벨. 숙박비는 시안대로 산정 기준 상세 layout에 따라
+ * 「숙박비(1사1교)」/「숙박비(일반)」으로 나누고, 상세가 없으면 「숙박비」 그대로 둔다.
+ */
+function resolveItemLabel(
+  itemType: SettlementFrontendItemResponse['type'],
+  amount: number,
+  basisLayout: string | undefined
+): string {
+  if (itemType === 'accommodation') {
+    if (basisLayout === 'lodging1s1g') return '숙박비(1사1교)'
+    if (basisLayout === 'lodgingGeneral') return '숙박비(일반)'
+  }
+  return formatPaymentOrderCalculationItemLabel(itemType, amount)
+}
+
 function mapItemToLine(
   item: SettlementFrontendItemResponse,
   index: number,
@@ -71,8 +87,8 @@ function mapItemToLine(
 
   return {
     id: `calc-line-remote-${index}`,
-    itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
-    description: item.description?.trim() || '—',
+    itemLabel: resolveItemLabel(item.type, amount, mappedBasisDetail?.layout),
+    description: item.description?.trim() || '-',
     amount,
     kind,
     basisDetail,
