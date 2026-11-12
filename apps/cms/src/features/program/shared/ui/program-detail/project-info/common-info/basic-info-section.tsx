@@ -34,6 +34,7 @@ import {
   useGeneralProgramSponsorEditContext,
   useProgramSponsorContactsMaskedQuery,
 } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import {
   decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
@@ -283,8 +284,18 @@ export function BasicInfoSection({
     Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
   )
   const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
-  // 수정 모드 담당자 선택지 — contactPrivacy=MASKED(데이터 관리 RAW 캐시와 분리, 정책 32·37)
-  const contactsQuery = useProgramSponsorContactsMaskedQuery(watchedSponsorId, Boolean(isFormEdit))
+  // 수정 모드 담당자 선택지 — contactPrivacy=MASKED(데이터 관리 RAW 캐시와 분리, 정책 32·37).
+  // 예외: 1사1교는 대표 담당자 휴대폰을 프로그램 연락처(contactPhone)에 복사해 저장하므로,
+  // 마스킹 번호가 저장되지 않게 기획 결정 전까지 기존 원문 조회(RAW)를 유지한다.
+  const maskedContactsQuery = useProgramSponsorContactsMaskedQuery(
+    watchedSponsorId,
+    Boolean(isFormEdit) && !isEconomyCommonInfo
+  )
+  const rawEconomyContactsQuery = useSponsorContactsQuery(
+    watchedSponsorId,
+    Boolean(isFormEdit) && isEconomyCommonInfo
+  )
+  const contactsQuery = isEconomyCommonInfo ? rawEconomyContactsQuery : maskedContactsQuery
   const managers = contactsQuery.data ?? []
   const sponsorManagementIds = isFormEdit
     ? (form?.watch('sponsorManagementIds') ?? [])
