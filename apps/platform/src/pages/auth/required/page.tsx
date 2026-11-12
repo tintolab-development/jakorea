@@ -3,14 +3,13 @@ import illustLoginRequiredUrl from '@/shared/assets/illustration/graphic-84-02.p
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import { useNavigate } from 'react-router-dom'
+import { buildSignInPathWithRedirect } from '@/shared/lib/login-redirect'
 
 export function RequiredPage() {
   const navigate = useNavigate()
   const searchParams = new URLSearchParams(window.location.search)
-  const redirectPath = searchParams.get('redirect')
-  const signInPath = redirectPath
-    ? `/auth/sign-in?redirect=${encodeURIComponent(redirectPath)}`
-    : '/auth/sign-in'
+  // 안전하지 않은 redirect는 버리고 로그인 화면만 연다
+  const signInPath = buildSignInPathWithRedirect(searchParams.get('redirect'))
 
   const handleSignIn = () => {
     navigate(signInPath)

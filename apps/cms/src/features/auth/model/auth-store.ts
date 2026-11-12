@@ -111,7 +111,8 @@ interface AuthState {
     request: LoginRequest,
     options?: LoginOptions
   ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
-  logout: () => void
+  /** `preserveReturnPath: false` — 사용자가 직접 로그아웃 (로그인 후 원래 화면 복귀 안 함) */
+  logout: (options?: { preserveReturnPath?: boolean }) => void
   /** silentRetry: 새로고침 복원 refresh가 네트워크·서버 오류면 한 번 조용히 다시 시도 (기본 true) */
   checkAuth: (options?: { silentRetry?: boolean }) => Promise<void>
   /** 새로고침 복원 안내의 [다시 시도] — 진행 중 refresh가 있으면 합류하고, 없으면 탭 간 잠금 아래 1회 시작 */
@@ -468,7 +469,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       void refreshAdminSessionFromMe()
     },
 
-    logout: () => {
+    logout: options => {
       const refreshToken =
         typeof window !== 'undefined' && window.localStorage
           ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
@@ -534,7 +535,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // 새로고침 복원 ① 안내는 로그인 화면의 기존 `redirect` 파라미터로 원래 화면을 넘긴다 (한 번만)
       const returnParam = nextLogoutReturnParam
       nextLogoutReturnParam = undefined
-      assignLoginAfterSessionEnd(returnParam ? { returnParam } : undefined)
+      if (options?.preserveReturnPath === false) {
+        assignLoginAfterSessionEnd({ preserveReturnPath: false })
+      } else {
+        assignLoginAfterSessionEnd(returnParam ? { returnParam } : undefined)
+      }
     },
 
     checkAuth: async (options?: { silentRetry?: boolean }) => {

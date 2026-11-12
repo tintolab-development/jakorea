@@ -16,11 +16,8 @@ import {
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import type { SponsorContactsRemoteActions } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import {
-  applyCreatedContactToDetail,
   applyDeletedContactsToDetail,
-  applyUpdatedContactToDetail,
-  mergeCreatedContact,
-  mergeUpdatedContact,
+  refetchSponsorContactsAfterSave,
   removeContactsById,
 } from '@/features/sponsor/lib/contact-query-cache'
 import { downloadSponsorLogos } from '@/features/sponsor/lib/download-sponsor-logos'
@@ -156,9 +153,8 @@ function SponsorDetailFullPageModalInner({
     return {
       onRegister: async (payload, contactType) => {
         try {
-          const created = await addSponsorContact(sponsor.id, payload, contactType)
-          applyCreatedContactToDetail(queryClient, sponsor.id, created)
-          setContacts(prev => mergeCreatedContact(prev, created))
+          await addSponsorContact(sponsor.id, payload, contactType)
+          await refetchSponsorContactsAfterSave(queryClient, sponsor.id)
         } catch (error) {
           console.debug(
             'sponsorContact register failed',
@@ -182,9 +178,8 @@ function SponsorDetailFullPageModalInner({
       },
       onTypeChange: async (row, nextType) => {
         try {
-          const updated = await updateSponsorContact({ ...row, contactType: nextType })
-          applyUpdatedContactToDetail(queryClient, sponsor.id, updated)
-          setContacts(prev => mergeUpdatedContact(prev, updated))
+          await updateSponsorContact({ ...row, contactType: nextType })
+          await refetchSponsorContactsAfterSave(queryClient, sponsor.id)
         } catch (error) {
           console.debug(
             'sponsorContact type change failed',
@@ -195,9 +190,8 @@ function SponsorDetailFullPageModalInner({
       },
       onUpdate: async row => {
         try {
-          const updated = await updateSponsorContact(row)
-          applyUpdatedContactToDetail(queryClient, sponsor.id, updated)
-          setContacts(prev => mergeUpdatedContact(prev, updated))
+          await updateSponsorContact(row)
+          await refetchSponsorContactsAfterSave(queryClient, sponsor.id)
         } catch (error) {
           console.debug(
             'sponsorContact update failed',

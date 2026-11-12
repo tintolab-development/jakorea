@@ -25,6 +25,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { AUTH_EXPIRY_KEY, AUTH_REFRESH_TOKEN_KEY } from '@/features/auth/model/auth-storage'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { getApiBaseUrl, getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
+import { buildLoginPathWithRedirect } from '@/shared/lib/login-redirect'
 import axios, {
   type AxiosError,
   type AxiosRequestHeaders,
@@ -245,9 +246,9 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
 function handleAuthFailure() {
   useAuthStore.getState().logout()
   if (typeof window !== 'undefined') {
-    const path = `${window.location.pathname}${window.location.search}`
-    const next = encodeURIComponent(path)
-    window.location.assign(`/login?redirect=${next}`)
+    window.location.assign(
+      buildLoginPathWithRedirect(`${window.location.pathname}${window.location.search}`)
+    )
   }
 }
 
@@ -459,6 +460,10 @@ axiosInstance.interceptors.response.use(
       const rotatedInAnotherTab = Boolean(storedRefresh && storedRefresh !== refreshToken)
       if (newerAccessToken || rotatedInAnotherTab) {
         // A stale failed Refresh must not logout/revoke a newer access/refresh session.
+        return Promise.reject(err)
+      }
+      if (classifyRefreshFailure(err) === 'transient') {
+        // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 로그아웃하지 않고 원 요청 실패로 돌려준다.
         return Promise.reject(err)
       }
       handleAuthFailure()

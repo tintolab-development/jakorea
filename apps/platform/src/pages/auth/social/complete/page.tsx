@@ -20,6 +20,10 @@ import {
   setDevMemberProfile,
 } from '@/shared/lib'
 import { PFLoadingSpinner } from '@/shared/ui'
+import {
+  resolveSocialLoginReturnPath,
+  sanitizeLoginRedirectPath,
+} from '@/shared/lib/login-redirect'
 
 export function SocialLoginCompletePage() {
   const navigate = useNavigate()
@@ -32,7 +36,23 @@ export function SocialLoginCompletePage() {
     }
     startedRef.current = true
 
-    const redirectAfterLogin = () => searchParams.get('redirect') ?? '/'
+    // 완료 URL의 redirect 우선, 없으면 소셜 로그인 시작 시 보관한 returnUrl(login intent)
+    const oauthState = platformSocialAuthClient.state
+    const redirectAfterLogin = () =>
+      resolveSocialLoginReturnPath({
+        queryRedirect: searchParams.get('redirect'),
+        oauthIntent: oauthState.getOAuthIntent(),
+        storedReturnUrl: oauthState.getReturnUrl(),
+      })
+    /** 실패·취소로 로그인 화면에 돌아갈 때도 원래 화면을 redirect로 유지 */
+    const signInPath = (socialError?: string) => {
+      const query = new URLSearchParams()
+      if (socialError) query.set('socialError', socialError)
+      const redirect = redirectAfterLogin()
+      if (sanitizeLoginRedirectPath(redirect)) query.set('redirect', redirect)
+      const qs = query.toString()
+      return qs ? `/auth/sign-in?${qs}` : '/auth/sign-in'
+    }
 
     const execute = async () => {
       if (!isPortalSocialAuthLoginRemoteEnabled()) {
@@ -45,14 +65,11 @@ export function SocialLoginCompletePage() {
 
       switch (outcome.kind) {
         case 'cancelled':
-          navigate('/auth/sign-in', { replace: true })
+          navigate(signInPath(), { replace: true })
           return
 
         case 'failed':
-          navigate(
-            `/auth/sign-in?socialError=${encodeURIComponent(outcome.message)}`,
-            { replace: true }
-          )
+          navigate(signInPath(outcome.message), { replace: true })
           return
 
         case 'not_linked':
@@ -64,7 +81,7 @@ export function SocialLoginCompletePage() {
           return
 
         case 'mfa_required':
-          navigate('/auth/sign-in?socialError=mfa', { replace: true })
+          navigate(signInPath('mfa'), { replace: true })
           return
 
         case 'authenticated': {
@@ -81,19 +98,21 @@ export function SocialLoginCompletePage() {
           setDevMemberProfile('individual')
           setDevAuthLoggedIn(false)
           const nextPath = await resolvePostLoginPath(redirectAfterLogin())
+          // 로그인 완료 — 보관한 intent·returnUrl 정리 (다음 소셜 로그인에 남지 않도록)
+          oauthState.clearOAuthIntent()
           navigate(nextPath, { replace: true })
           return
         }
 
         default:
-          navigate('/auth/sign-in', { replace: true })
+          navigate(signInPath(), { replace: true })
       }
     }
 
     void execute().catch(() => {
       clearAuthTokens()
       setDevAuthLoggedIn(false)
-      navigate('/auth/sign-in?socialError=unexpected', { replace: true })
+      navigate(signInPath('unexpected'), { replace: true })
     })
   }, [navigate, searchParams])
 

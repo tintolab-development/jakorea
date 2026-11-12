@@ -211,7 +211,7 @@ describe('mapIndividualSettlementItemToBasisDetail', () => {
       })
     ).toMatchObject({
       layout: 'activity',
-      categoryLabel: '참여자 활동비',
+      categoryLabel: '활동비',
       totalWon: 50000,
     })
   })

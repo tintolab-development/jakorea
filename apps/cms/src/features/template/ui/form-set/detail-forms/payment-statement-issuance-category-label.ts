@@ -85,7 +85,7 @@ function categoryFromBasisDetail(line: PaymentOrderCalculationStatementLine): st
     return presentText(detail.categoryLabel) || '식사비'
   }
   if (detail.layout === 'activity') {
-    return presentText(detail.categoryLabel) || '참여자 활동비'
+    return presentText(detail.categoryLabel) || '활동비'
   }
   if (detail.layout === 'withholding') {
     return undefined
@@ -105,6 +105,7 @@ const KIND_FALLBACK_WHEN_NO_API: Partial<Record<PaymentOrderCalculationLineKind,
   lodging: '숙박비',
   meal: '식사비',
   activity: '활동비',
+  other: '기타',
 }
 
 /**
