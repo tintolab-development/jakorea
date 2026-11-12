@@ -4,6 +4,15 @@ import { useSearchParams } from 'react-router-dom'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
+import {
+  buildRequiredFieldsIncompleteAlertContent,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  useRegistrationWizardValidationHighlight,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
+import { listGeminiRecruitmentInstitutionMissingFields } from '../../lib/recruitment/snapshot-from-overlay'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
@@ -38,14 +47,26 @@ const GEMINI_DRAFT_SAVE_SUCCESS_BODY = [
   '모집 공고 목록에서 이어서 확인하고 수정할 수 있습니다.',
 ].join('\n')
 
-export function GeminiRecruitmentAddFullpageModal({
-  open,
-  onClose,
-}: {
+type GeminiRecruitmentAddFullpageModalProps = {
   open: boolean
   onClose: () => void
-}) {
+}
+
+/** QA-0390: 등록 시 누락 항목 입력란 강조(일반 프로그램 등록과 같은 Provider) */
+export function GeminiRecruitmentAddFullpageModal(props: GeminiRecruitmentAddFullpageModalProps) {
+  return (
+    <RegistrationWizardValidationHighlightProvider variant="general">
+      <GeminiRecruitmentAddFullpageModalInner {...props} />
+    </RegistrationWizardValidationHighlightProvider>
+  )
+}
+
+function GeminiRecruitmentAddFullpageModalInner({
+  open,
+  onClose,
+}: GeminiRecruitmentAddFullpageModalProps) {
   const { showAlert } = useCmsAlert()
+  const { reportIncomplete, clearHighlight } = useRegistrationWizardValidationHighlight()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -99,8 +120,19 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [form, queryClient, showAlert])
 
   const handleRegister = useCallback(async () => {
-    if (form.isDraftLoading || !form.isRegisterReady) return
+    if (form.isDraftLoading) return
     const snapshot = form.buildSaveSnapshot()
+    // QA-0390: 버튼을 막아 두지 않고, 누르면 빠진 항목을 알리고 입력란을 강조한다
+    const missing = listGeminiRecruitmentInstitutionMissingFields(snapshot)
+    if (missing.length > 0 || !form.isRegisterReady) {
+      reportIncomplete(missing.map(field => field.key))
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: buildRequiredFieldsIncompleteAlertContent(missing.map(field => field.label)),
+      })
+      return
+    }
+    clearHighlight()
     const endOverlay = beginBlockingOverlay()
     try {
       const existingId = createdDraftIdRef.current
@@ -133,7 +165,7 @@ export function GeminiRecruitmentAddFullpageModal({
     } finally {
       endOverlay()
     }
-  }, [form, queryClient, showAlert])
+  }, [clearHighlight, form, queryClient, reportIncomplete, showAlert])
 
   const handleCompleteSuccessConfirm = useCallback(() => {
     const createdId = pendingDetailIdRef.current
@@ -213,7 +245,7 @@ export function GeminiRecruitmentAddFullpageModal({
         rightNavigation={null}
         footerAction={{
           label: '프로그램 등록 완료',
-          disabled: !form.isRegisterReady,
+          disabled: form.isDraftLoading,
           onClick: handleRegister,
         }}
       />
