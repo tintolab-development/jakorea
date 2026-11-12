@@ -154,9 +154,9 @@ async function goRecruitStepFromApplication(page: Page) {
 
 async function goApplicationStepFromRecruit(page: Page) {
   await page.getByRole('button', { name: '신청 정보 작성하기' }).click()
-  const required = page.getByRole('dialog').filter({ hasText: '필수 항목 입력 안내' })
+  const required = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력 안내' })
   if (await required.isVisible().catch(() => false)) {
-    throw new Error('신청 단계 이동이 필수 항목 입력 안내로 차단됨')
+    throw new Error('신청 단계 이동이 필수 항목 미입력 안내로 차단됨')
   }
   await expect(page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
     timeout: 30_000,
@@ -765,7 +765,7 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     await goRecruitStepFromApplication(page)
     await fillInstitutionRecruitMedia(page)
     await goApplicationStepFromRecruit(page)
-    const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 입력 안내' })
+    const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력 안내' })
     await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
     await page.waitForTimeout(500)
     const requiredBlocked = await requiredDialog.isVisible().catch(() => false)
