@@ -52,23 +52,33 @@ export function buildActivityCertificateParticipantInfoLines(
   ].join('\n')
 }
 
+/** 서버 계산값(eligibility)을 표시 문구로 바꾼 참여기간·활동시수 */
+export type ActivityCertificatePeriodHoursText = {
+  participationPeriod?: string | null
+  activityHours?: string | null
+}
+
 export function buildActivityCertificateParticipantInfo(
   instructor: ParticipatingInstructorRow,
   program?: Program | null,
   /** 발급 사유 모달에서 고른 사유 라벨 — 발급 문서 「발급목적」 줄에 기입 */
-  issuanceReasonLabel?: string
+  issuanceReasonLabel?: string,
+  periodHours?: ActivityCertificatePeriodHoursText
 ): string {
   return buildActivityCertificateParticipantInfoLines({
     name: instructor.instructorName,
     program,
     issuanceReasonLabel,
+    participationPeriod: periodHours?.participationPeriod,
+    activityHours: periodHours?.activityHours,
   })
 }
 
 export function buildActivityCertificateInitialStringValues(
   instructor: ParticipatingInstructorRow,
   program?: Program | null,
-  issuanceReasonLabel?: string
+  issuanceReasonLabel?: string,
+  periodHours?: ActivityCertificatePeriodHoursText
 ): Record<string, string> {
   return {
     ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
@@ -77,7 +87,8 @@ export function buildActivityCertificateInitialStringValues(
     participantInfo: buildActivityCertificateParticipantInfo(
       instructor,
       program,
-      issuanceReasonLabel
+      issuanceReasonLabel,
+      periodHours
     ),
   }
 }
@@ -93,7 +104,7 @@ export function buildActivityCertificateFileName(
   return `[JA Korea] ${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName.replace(/[/\\]/g, ',')}_${formatAsiaSeoulYymmdd(date ?? new Date())}`
 }
 
-export type ActivityCertificateVolunteerOptions = {
+export type ActivityCertificateVolunteerOptions = ActivityCertificatePeriodHoursText & {
   program?: Program | null
   /** 발급 사유 모달에서 고른 사유 라벨 — 「발급목적」 줄 */
   issuanceReasonLabel?: string
@@ -107,6 +118,8 @@ export function buildActivityCertificateParticipantInfoForVolunteer(
     name: volunteerName,
     program: options?.program,
     issuanceReasonLabel: options?.issuanceReasonLabel,
+    participationPeriod: options?.participationPeriod,
+    activityHours: options?.activityHours,
   })
 }
 

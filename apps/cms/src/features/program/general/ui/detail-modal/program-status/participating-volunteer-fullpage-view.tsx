@@ -48,6 +48,8 @@ import {
 } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { ParticipatingVolunteerApplicationInfo } from './participating-volunteer-application-info'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
+import { useActivityCertificateIssuePrecheck } from '@/features/program/general/hooks/use-activity-certificate-issue-precheck'
+import { CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import {
   CertificateBulkIssueReasonModal,
   type CertificateIssueReasonValue,
@@ -117,6 +119,7 @@ export function ParticipatingVolunteerFullpageView({
   /** 발급 사유 모달(CMS-FUNC-0161·0265 — 기관·개인 공통) */
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
+  const precheckActivityCertificateIssue = useActivityCertificateIssuePrecheck()
 
   const enrichedVolunteer = useParticipatingVolunteerApplicationDetailEnrichment(initialVolunteer)
   const baseVolunteer = enrichedVolunteer ?? initialVolunteer
@@ -353,9 +356,19 @@ export function ParticipatingVolunteerFullpageView({
   )
 
   const handleActivityCertificateIssueClick = useCallback(() => {
-    setActivityCertReasonLabel(undefined)
-    setActivityCertReasonOpen(true)
-  }, [])
+    void (async () => {
+      if (
+        !(await precheckActivityCertificateIssue(
+          mergedVolunteer.id,
+          CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY
+        ))
+      ) {
+        return
+      }
+      setActivityCertReasonLabel(undefined)
+      setActivityCertReasonOpen(true)
+    })()
+  }, [mergedVolunteer.id, precheckActivityCertificateIssue])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {

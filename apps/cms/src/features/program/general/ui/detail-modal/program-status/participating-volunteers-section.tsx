@@ -31,6 +31,8 @@ import {
 } from './participating-volunteer-fullpage-view'
 import { mergeParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
+import { useActivityCertificateIssuePrecheck } from '@/features/program/general/hooks/use-activity-certificate-issue-precheck'
+import { CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import {
   CertificateBulkIssueReasonModal,
   type CertificateIssueReasonValue,
@@ -206,6 +208,7 @@ export function ParticipatingVolunteersSection({
   /** 발급 사유 모달(CMS-FUNC-0161·0265 — 기관·개인 공통) → 선택 사유를 「발급목적」에 기입 */
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
+  const precheckActivityCertificateIssue = useActivityCertificateIssuePrecheck()
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -453,10 +456,20 @@ export function ParticipatingVolunteersSection({
       })
       return
     }
-    setActivityCertPreviewVolunteer(selectedRow)
-    setActivityCertReasonLabel(undefined)
-    setActivityCertReasonOpen(true)
-  }, [filteredVolunteers, selectedRowKeys, showAlert, volunteerList])
+    void (async () => {
+      if (
+        !(await precheckActivityCertificateIssue(
+          selectedRow.id,
+          CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY
+        ))
+      ) {
+        return
+      }
+      setActivityCertPreviewVolunteer(selectedRow)
+      setActivityCertReasonLabel(undefined)
+      setActivityCertReasonOpen(true)
+    })()
+  }, [filteredVolunteers, precheckActivityCertificateIssue, selectedRowKeys, showAlert, volunteerList])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
@@ -649,7 +662,8 @@ export function ParticipatingVolunteersSection({
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
-              {isInstitutionSurface ? '활동인증서 발급' : '활동확인서 발급'}
+              {/* CMS-FUNC-0161·0167 — 기관·개인 공통 명칭 */}
+              활동인증서 발급
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
               <FilterTableToolbarButton

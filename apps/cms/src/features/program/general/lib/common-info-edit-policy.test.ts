@@ -67,7 +67,7 @@ describe('getGeneralProgramCommonInfoEditBlockedAlertMessage', () => {
 })
 
 describe('canGeneralProgramRecruitmentInfoEdit', () => {
-  it('모집 시작이 지나면 운영 시작일이 미래여도 그 모집 일반 정보는 닫는다', () => {
+  it('모집이 시작돼도 운영 시작일 전이면 그 모집 정보를 수정할 수 있다', () => {
     const program = baseProgram({
       lifecycleStatus: 'education_in_progress',
       programRecruitments: [
@@ -79,23 +79,18 @@ describe('canGeneralProgramRecruitmentInfoEdit', () => {
         },
       ],
     })
-    expect(canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)).toBe(false)
+    expect(canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)).toBe(true)
     expect(
       canGeneralProgramApplicationFormEdit(program, 'PARTICIPANT', { applicationCount: 0 })
     ).toBe(true)
   })
 
-  it('시작하지 않은 모집행은 다른 유형이 시작해도 수정할 수 있다', () => {
+  it('운영 시작일 당일부터 그 모집 유형만 닫는다', () => {
     const program = baseProgram({
       programRecruitments: [
-        {
-          id: 11,
-          recruitmentType: 'PARTICIPANT',
-          startAt: '2020-01-01T00:00:00+09:00',
-        },
-        { id: 12, recruitmentType: 'INSTRUCTOR', startAt: '2099-01-01T00:00:00+09:00' },
-        { id: 13, recruitmentType: 'VOLUNTEER', startAt: '2020-01-01T00:00:00+09:00' },
-        { id: 14, recruitmentType: 'VOLUNTEER', startAt: '2099-06-01T00:00:00+09:00' },
+        { id: 11, recruitmentType: 'PARTICIPANT', operationStartDate: '2026-06-01' },
+        { id: 12, recruitmentType: 'INSTRUCTOR', operationStartDate: '2099-01-01' },
+        { id: 13, recruitmentType: 'VOLUNTEER', operationStartDate: '2026-06-02' },
       ],
     })
     expect(canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)).toBe(false)
@@ -149,7 +144,7 @@ describe('canGeneralProgramRecruitmentInfoEdit', () => {
     ).toBe(true)
   })
 
-  it('저장된 행이 없으면 모집 일반 정보를 닫지 않는다', () => {
+  it('운영 시작일이 없으면 모집 일반 정보를 닫지 않는다', () => {
     const program = baseProgram({
       programRecruitments: [
         { recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
@@ -160,10 +155,10 @@ describe('canGeneralProgramRecruitmentInfoEdit', () => {
 })
 
 describe('getGeneralProgramRecruitmentInfoEditBlockedAlertMessage', () => {
-  it('모집 시작 이후 안내를 반환한다', () => {
-    expect(getGeneralProgramRecruitmentInfoEditBlockedAlertTitle()).toBe('모집 정보 수정 불가 안내')
+  it('운영 시작 이후 안내를 반환한다', () => {
+    expect(getGeneralProgramRecruitmentInfoEditBlockedAlertTitle()).toBe('정보 수정 불가 안내')
     expect(getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(baseProgram())).toBe(
-      '모집 시작 이후에는 모집 정보를 수정할 수 없습니다.'
+      '해당 모집 유형의 프로그램 운영이 시작된 이후에는 모집 정보를 수정할 수 없습니다.'
     )
   })
 })

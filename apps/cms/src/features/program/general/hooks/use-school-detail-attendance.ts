@@ -33,7 +33,10 @@ import {
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
-import { isAttendanceRecordingNotOpenError } from '@/features/program/general/lib/attendance-recording-not-open'
+import {
+  ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
+  isAttendanceRecordingNotOpenError,
+} from '@/features/program/general/lib/attendance-recording-not-open'
 import { buildSchoolDetailAttendanceFilterFields } from '../lib/school-detail-attendance-filter-fields'
 import { buildStudentClassFilterOptionsFromRows } from '../lib/student-list-filter-fields'
 import {
@@ -391,7 +394,11 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       }
     },
     onError: error => {
-      if (isAttendanceRecordingNotOpenError(error)) return
+      // 진행 예정 차시 — 서버 409(ATTENDANCE_RECORDING_NOT_OPEN)는 전역 알럿을 건너뛰므로 여기서 안내한다.
+      if (isAttendanceRecordingNotOpenError(error)) {
+        showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+        return
+      }
       const scopeMessage = resolveOrganizationAttendanceScopeErrorMessage(error)
       if (scopeMessage) {
         showAlert({

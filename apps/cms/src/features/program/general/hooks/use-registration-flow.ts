@@ -47,6 +47,7 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+import { withRegistrationWizardTitleNumberingOff } from '@/features/program/shared/lib/registration-wizard-title-numbering'
 import {
   collectOperationalOverlayForCatalogId,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
@@ -588,6 +589,12 @@ export function useGeneralProgramRegistrationFlow(
     [selectedTemplateCode, writingFormSections]
   )
 
+  /** 등록 위저드 공통 정보 — 섹션 제목 번호 미표시(표시용 vm만) */
+  const registrationWizardDisplayVm = useMemo(
+    () => withRegistrationWizardTitleNumberingOff(registrationVm),
+    [registrationVm]
+  )
+
   const editorVm = useMemo((): TemplateEditorVm => {
     const isDraftLoading = isProgramStep
       ? registrationVm.isDraftLoading
@@ -601,14 +608,21 @@ export function useGeneralProgramRegistrationFlow(
       isParticipantApplication: isParticipantStep,
       isWritingSurveyList: false,
       isDraftLoading,
-      programRegistrationVm: registrationVm,
-      ujatProgramRegistrationVm: registrationVm,
+      programRegistrationVm: registrationWizardDisplayVm,
+      ujatProgramRegistrationVm: registrationWizardDisplayVm,
       programParticipantApplicationVm: participantVm,
       surveyListEditor: registrationVm,
       surveyTableRowSelection: participantVm,
       handleSave: isProgramStep ? registrationVm.handleSave : participantVm.handleSave,
     } as unknown as TemplateEditorVm
-  }, [registryEntry, isProgramStep, isParticipantStep, registrationVm, participantVm])
+  }, [
+    registryEntry,
+    isProgramStep,
+    isParticipantStep,
+    registrationVm,
+    registrationWizardDisplayVm,
+    participantVm,
+  ])
 
   const isDraftLoading = editorVm.isDraftLoading === true
 

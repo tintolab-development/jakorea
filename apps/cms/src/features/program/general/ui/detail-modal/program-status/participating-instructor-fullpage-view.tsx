@@ -144,6 +144,8 @@ import { ParticipatingIndividualInstructorSettlementSection } from './participat
 import { ParticipatingIndividualInstructorAssignmentSection } from './participating-individual-instructor-assignment-section'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
+import { useActivityCertificateIssuePrecheck } from '@/features/program/general/hooks/use-activity-certificate-issue-precheck'
+import { CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './school-detail-fullpage-view.css'
@@ -321,6 +323,7 @@ export function ParticipatingInstructorFullpageView({
   /** 활동인증서 발급 사유(Figma 06-1/02, 기능정의서: 개인·기관 공통) */
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
+  const precheckActivityCertificateIssue = useActivityCertificateIssuePrecheck()
   /**
    * 기관형 [선택 배정] — Figma 04-1/05-1 확인 → 선택 기관 전부 배정 → 04-2/05-2 완료.
    * 1사1교는 기존 `AssignGuideModal(select)` 흐름 유지.
@@ -1440,9 +1443,19 @@ export function ParticipatingInstructorFullpageView({
   const qualificationCount = mergedInstructor.qualifications?.length ?? 0
 
   const handleActivityCertificateIssueClick = useCallback(() => {
-    setActivityCertReasonLabel(undefined)
-    setActivityCertReasonOpen(true)
-  }, [])
+    void (async () => {
+      if (
+        !(await precheckActivityCertificateIssue(
+          mergedInstructor.id,
+          CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY
+        ))
+      ) {
+        return
+      }
+      setActivityCertReasonLabel(undefined)
+      setActivityCertReasonOpen(true)
+    })()
+  }, [mergedInstructor.id, precheckActivityCertificateIssue])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {

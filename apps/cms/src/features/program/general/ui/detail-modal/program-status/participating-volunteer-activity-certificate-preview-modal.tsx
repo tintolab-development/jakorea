@@ -20,6 +20,12 @@ import { unmaskVolunteerForCertificateIssue } from '@/features/program/shared/li
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { certificateIssueReasonCodeFromLabel } from '@/features/program/shared/lib/certificate-serial'
+import { useActivityCertificatePeriodHours } from '@/features/program/general/hooks/use-activity-certificate-period-hours'
+import {
+  ACTIVITY_CERTIFICATE_BLOCKED_TITLE,
+  activityCertificateBlockMessageFromError,
+} from '@/features/program/general/lib/activity-certificate-issue-block'
+import { CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -100,13 +106,27 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     volunteer.volunteerApplicationId,
   ])
 
+  const periodHours = useActivityCertificatePeriodHours({
+    open,
+    participantId: volunteer.id,
+    certificateType: CERTIFICATE_ELIGIBILITY_TYPE_VOLUNTEER_ACTIVITY,
+  })
+
   const runtimeStringValues = useMemo(
     () =>
       buildActivityCertificateInitialStringValuesForVolunteer(unmaskedVolunteer.volunteerName, {
         program,
         issuanceReasonLabel,
+        participationPeriod: periodHours.participationPeriod,
+        activityHours: periodHours.activityHours,
       }),
-    [issuanceReasonLabel, program, unmaskedVolunteer.volunteerName]
+    [
+      issuanceReasonLabel,
+      periodHours.activityHours,
+      periodHours.participationPeriod,
+      program,
+      unmaskedVolunteer.volunteerName,
+    ]
   )
 
   const issueReasonCode = useMemo(
@@ -163,10 +183,12 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
         downloadPdf,
       })
     } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getCertificateSerialAllocateErrorMessage(error),
-      })
+      const blockMessage = activityCertificateBlockMessageFromError(error)
+      showAlert(
+        blockMessage
+          ? { title: ACTIVITY_CERTIFICATE_BLOCKED_TITLE, content: blockMessage }
+          : { title: '안내', content: getCertificateSerialAllocateErrorMessage(error) }
+      )
     } finally {
       setIsAllocatingSerial(false)
     }
