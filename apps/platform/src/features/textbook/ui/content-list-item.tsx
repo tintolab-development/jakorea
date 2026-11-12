@@ -22,7 +22,10 @@ const TAG_ICON_SRC: Record<NonNullable<TextbookTag['icon']>, string> = {
 }
 
 export function ContentListItem({ content, onClick }: ContentListItemProps) {
-  const hasThumbnailImage = Boolean(content.thumbnailUrl?.trim())
+  // QA-0495: 목록은 233·466 변형(1x·2x) 우선, 둘 다 없으면 원본 썸네일
+  const listThumbnail = content.listThumbnail
+  const thumbnailSrc = listThumbnail?.src || content.thumbnailUrl?.trim() || ''
+  const hasThumbnailImage = Boolean(thumbnailSrc)
   const compositions = content.compositions?.filter(item => item.trim()) ?? []
   const hasComposition = compositions.length > 0
   const listTags: TextbookTag[] =
@@ -51,7 +54,8 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
       >
         <FallbackImage
           className={styles.thumbnail}
-          src={content.thumbnailUrl?.trim() || defaultTextbookThumbnailUrl}
+          src={thumbnailSrc || defaultTextbookThumbnailUrl}
+          srcSet={listThumbnail?.srcSet}
           fallbackSrc={defaultTextbookThumbnailUrl}
           alt=""
         />
