@@ -9,6 +9,7 @@ import {
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { type ChangeEvent, useEffect } from 'react'
 import { PFTextInput, PFTextarea } from '@/shared/ui'
+import { getBirthDateRangeMessage } from '@/features/auth/sign-up/lib/utils'
 import styles from './consent-form.module.css'
 
 type ConsentShortEssayParagraph = ShortEssayParagraph | SessionPlanShortEssayParagraph
@@ -120,6 +121,11 @@ export function ConsentShortEssayFillFields({
             : baseLabel
         const isPhone = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
         const isBirth = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
+        /** 작성 중 실시간 — 생년월일 범위 오류(오늘 이후 · 만 120세 초과)는 입력란 아래 */
+        const birthRangeError =
+          isBirth && paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject
+            ? getBirthDateRangeMessage(item.bodyText)
+            : null
         const placeholder =
           isBirth && paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject
             ? PLATFORM_NOTICE_SUBJECT_BIRTH_PLACEHOLDER
@@ -175,6 +181,9 @@ export function ConsentShortEssayFillFields({
               inputMode={isBirth || isPhone ? 'numeric' : undefined}
               autoComplete={isPhone ? 'tel' : undefined}
               width="100%"
+              error={Boolean(birthRangeError)}
+              message={birthRangeError ?? undefined}
+              messageStatus={birthRangeError ? 'error' : undefined}
               onValueChange={
                 isPhone
                   ? value => {
@@ -200,6 +209,9 @@ export function ConsentShortEssayFillFields({
             maxLength={isBirth ? 10 : isPhone ? 13 : maxLength}
             inputMode={isBirth || isPhone ? 'numeric' : undefined}
             autoComplete={isPhone ? 'tel' : undefined}
+            error={Boolean(birthRangeError)}
+            message={birthRangeError ?? undefined}
+            messageStatus={birthRangeError ? 'error' : undefined}
             onValueChange={isPhone ? undefined : handleValueChange}
             onChange={handlePhoneChange}
           />
