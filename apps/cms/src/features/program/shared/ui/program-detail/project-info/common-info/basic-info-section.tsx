@@ -23,7 +23,6 @@ import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/prog
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   maskSponsorManagerPhone,
-  resolveAssignedSponsorManagerPhone,
   SponsorManagerContactsView,
 } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import {
@@ -893,6 +892,7 @@ export function BasicInfoSection({
                   sponsorRows={selectedSponsorManagementRows}
                   sponsorNameById={assignedSponsorNames}
                   contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
+                  variant="nameTitle"
                 />
               }
               edit={
@@ -1249,8 +1249,7 @@ export function BasicInfoSection({
     )
   }
 
-  // 조회: 배정 응답의 대표 담당자 연락처. 수정: 선택한 담당자(MASKED 선택지)의 연락처. 문의처(contactPhone)와 무관.
-  const assignedManagerPhone = resolveAssignedSponsorManagerPhone(program)
+  // 수정: 선택한 담당자(MASKED 선택지)의 연락처. 문의처(contactPhone)와 무관.
   const editSelectedManagerName = commonInfoForm.watch('managerName')
   const editSelectedManagerPhone =
     editSelectedManagerName && editSelectedManagerName !== SPONSOR_CONTACT_UNSELECTED_LABEL
@@ -1485,15 +1484,8 @@ export function BasicInfoSection({
             }) ? (
               SPONSOR_CONTACT_UNSELECTED_LABEL
             ) : program.managerName?.trim() ? (
-              <>
-                {program.managerName}
-                {assignedManagerPhone ? (
-                  <>
-                    {'\u00A0'}
-                    <span>{maskSponsorManagerPhone(assignedManagerPhone)}</span>
-                  </>
-                ) : null}
-              </>
+              // 조회는 담당자명+직책만(연락처·이메일 미노출)
+              <>{program.managerName}</>
             ) : (
               '-'
             )
