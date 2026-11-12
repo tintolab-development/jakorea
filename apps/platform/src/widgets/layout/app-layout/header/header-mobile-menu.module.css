@@ -42,12 +42,14 @@
 
 .backIcon {
   display: block;
-  width: 12px;
+  width: 32px;
+  height: 32px;
 }
 
 .notificationIcon {
   display: block;
-  width: 23px;
+  width: 44px;
+  height: 44px;
 }
 
 .topBarSpacer {
@@ -141,8 +143,8 @@
 
 .menuChevron {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 
