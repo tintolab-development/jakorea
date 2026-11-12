@@ -26,7 +26,9 @@ export {
   ButtonCopyIcon,
   ButtonDeleteIcon,
   ButtonDownloadIcon,
+  ButtonLeftIcon,
   ButtonListIcon,
+  ButtonRightIcon,
 } from './ButtonIcons'
 export type { ButtonIconProps } from './ButtonIcons'
 export { FileTypeIcon, resolveFileTypeIconType } from './FileTypeIcon'
@@ -56,5 +58,6 @@ export {
 export type { LnbIconProps } from './LnbIcons'
 export { GnbAlarmIcon } from './GnbIcons'
 export type { GnbAlarmIconProps } from './GnbIcons'
+export { TableSortIcon } from './TableSortIcon'
 export { ModalCloseIcon } from './ModalCloseIcon'
 export type { ModalCloseIconProps } from './ModalCloseIcon'

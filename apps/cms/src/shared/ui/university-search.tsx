@@ -8,7 +8,6 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -29,6 +28,7 @@ import { CmsCompactPagination } from '@/shared/ui/cms-compact-pagination'
 import { CmsInput } from '@/shared/ui/cms-input'
 import type { CmsInputProps } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import '@/shared/ui/school-search.css'
 
 const PAGE_SIZE = 5
@@ -256,7 +256,7 @@ export function UniversitySearch({
         }}
       >
         <CmsInput
-          icon={<SearchOutlined />}
+          icon={<FieldSearchIcon />}
           value={value}
           readOnly
           placeholder={placeholder}
@@ -313,7 +313,7 @@ export function UniversitySearch({
             />
             <span className="school-search__keyword-wrap">
               <CmsInput
-                icon={<SearchOutlined />}
+                icon={<FieldSearchIcon />}
                 value={keyword}
                 onChange={event => {
                   const next = event.target.value

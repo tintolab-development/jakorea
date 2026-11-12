@@ -19,6 +19,7 @@ import { useProgramService } from '@/features/program/general/hooks/use-program-
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
+import { TableSortIcon } from '@/shared/ui/icons'
 
 type ViewMode = 'list' | 'calendar'
 
@@ -152,6 +153,7 @@ export function MyMonthlySettlementPage() {
       width: 150,
       render: (amount: number) => `${amount.toLocaleString()}원`,
       sorter: (a, b) => a.totalAmount - b.totalAmount,
+      sortIcon: TableSortIcon,
     },
     {
       title: '생성일',
@@ -164,6 +166,7 @@ export function MyMonthlySettlementPage() {
         const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt
         return dateA.getTime() - dateB.getTime()
       },
+      sortIcon: TableSortIcon,
     },
   ]
 

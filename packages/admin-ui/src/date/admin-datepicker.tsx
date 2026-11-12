@@ -25,6 +25,7 @@ import {
   type AdminFieldProps,
 } from '../field/index.js'
 import { FieldCalendarIcon } from '../icons/field-icons.js'
+import { NavNextIcon, NavPrevIcon } from '../icons/nav-icons.js'
 import {
   DEFAULT_ADMIN_DATE_PLACEHOLDER,
   formatAdminDatePlain,
@@ -35,6 +36,10 @@ import {
   applySplitDateRangeStartChange,
 } from './split-date-range.js'
 import './admin-datepicker.css'
+
+/** 날짜 선택 패널 이전/다음 달 — 시안 `Icon / Button / w20` left·right (연도 «» 버튼은 시안 없음 → antd 기본 유지) */
+const PANEL_PREV_ICON = <NavPrevIcon className="cms-datepicker__panel-nav-icon" />
+const PANEL_NEXT_ICON = <NavNextIcon className="cms-datepicker__panel-nav-icon" />
 
 export type AdminDatePickerRef = {
   nativeElement: HTMLElement
@@ -154,6 +159,8 @@ const AdminDatePickerRender: ForwardRefRenderFunction<AdminDatePickerRef, AdminD
           )
         }
         suffixIcon={suffixIcon ?? null}
+        prevIcon={PANEL_PREV_ICON}
+        nextIcon={PANEL_NEXT_ICON}
         inputReadOnly={inputReadOnly ?? true}
         showNow={false}
         placeholder={placeholder ?? DEFAULT_ADMIN_DATE_PLACEHOLDER}
@@ -351,6 +358,8 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           format={fmt}
           prefix={renderPrefix()}
           suffixIcon={suffixIcon ?? null}
+          prevIcon={PANEL_PREV_ICON}
+          nextIcon={PANEL_NEXT_ICON}
           inputReadOnly={inputReadOnly ?? true}
           showNow={false}
           value={start}
@@ -374,6 +383,8 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           format={fmt}
           prefix={renderPrefix()}
           suffixIcon={suffixIcon ?? null}
+          prevIcon={PANEL_PREV_ICON}
+          nextIcon={PANEL_NEXT_ICON}
           inputReadOnly={inputReadOnly ?? true}
           showNow={false}
           value={end}
