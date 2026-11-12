@@ -147,7 +147,6 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
       'hdr.' + btoa(JSON.stringify({ accountType: 'ADMIN', sid: 'same-session', jti })).replace(/=+$/, '') + '.sig'
     const oldAccess = jwt('old')
     const newAccess = jwt('refreshed')
-    localStorage.setItem('hp_admin_auth_token', oldAccess)
     localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-before')
     useAuthStore.setState({ token: oldAccess })
 
@@ -193,7 +192,6 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
       'hdr.' + btoa(JSON.stringify({ accountType: 'ADMIN', sid: 'same-session', jti })).replace(/=+$/, '') + '.sig'
     const oldAccess = jwt('old')
     const newAccess = jwt('new')
-    localStorage.setItem('hp_admin_auth_token', oldAccess)
     localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-old')
     useAuthStore.setState({ token: oldAccess })
 
@@ -202,7 +200,6 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
       if (url.endsWith('/session')) throw unauthorized(config)
       if (url.endsWith('/refresh')) {
         // A sibling tab has already rotated to a new credential set.
-        localStorage.setItem('hp_admin_auth_token', newAccess)
         localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-rotated-by-other-tab')
         useAuthStore.setState({ token: newAccess })
         throw unauthorized(config)

@@ -44,6 +44,7 @@ describe('QA-0137 Homepage Admin logout — refresh 쿠키 폐기', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
+    // 이전 버전이 남긴 access token 값 — 로그아웃 때 함께 지워져야 한다
     localStorage.setItem('hp_admin_auth_token', REMOTE_JWT)
     localStorage.setItem('hp_admin_auth_expires_at', new Date(Date.now() + 60_000).toISOString())
     localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-old')
@@ -106,7 +107,6 @@ describe('QA-0137 Homepage Admin logout — refresh 쿠키 폐기', () => {
 
   it('mock 세션(실 JWT·refresh 수단 없음)은 서버 로그아웃을 호출하지 않는다', async () => {
     localStorage.removeItem('hp_admin_auth_refresh_token')
-    localStorage.setItem('hp_admin_auth_token', 'mock-jwt-token-1')
     useAuthStore.setState({ token: 'mock-jwt-token-1' })
 
     useAuthStore.getState().logout()
@@ -166,6 +166,8 @@ describe('QA-0137 Homepage Admin 토큰 응답 — refreshToken 선택', () => {
     useAuthStore.setState({ user: { id: '1', isActive: true } as never })
 
     useAuthStore.getState().completeAdminAuth({ accessToken: REMOTE_JWT })
+    expect(useAuthStore.getState().token).toBe(REMOTE_JWT)
+    expect(localStorage.getItem('hp_admin_auth_token')).toBeNull()
     expect(localStorage.getItem('hp_admin_auth_refresh_token')).toBeNull()
     expect(localStorage.getItem('hp_admin_auth_refresh_cookie_session')).toBe('1')
 

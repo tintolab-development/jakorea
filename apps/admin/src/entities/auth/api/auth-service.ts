@@ -6,26 +6,17 @@
 import type { LoginRequest, LoginResponse, AuthUser, MfaState } from '@/entities/auth/model/types'
 import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
 import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-login-api.types'
-import { AUTH_TOKEN_KEY } from '@/features/auth/model/auth-storage'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
 /** MFA 진행 중 pending 세션 접두사 (실 JWT와 구분) */
 export const HP_REMOTE_SESSION_PREFIX = 'hp-remote-'
 
-/** MFA 완료 후 저장된 실 JWT 여부 — mock·pending 제외 */
-export function hasRemoteAdminJwt(): boolean {
-  if (typeof window === 'undefined') return false
-  const token = localStorage.getItem(AUTH_TOKEN_KEY)
+/** MFA 완료 후 받은 실 JWT 여부 — mock·pending 제외. access token은 메모리에만 있으므로 값을 받아 판단한다. */
+export function hasRemoteAdminJwt(token: string | null | undefined): boolean {
   if (!token || token.startsWith('mock-jwt-token-') || token.startsWith(HP_REMOTE_SESSION_PREFIX)) {
     return false
   }
   return token.split('.').length >= 3
-}
-
-export function isMockAdminSession(): boolean {
-  if (typeof window === 'undefined') return false
-  const token = localStorage.getItem(AUTH_TOKEN_KEY)
-  return Boolean(token?.startsWith('mock-jwt-token-'))
 }
 
 function buildPendingAdminUser(email: string): AuthUser {

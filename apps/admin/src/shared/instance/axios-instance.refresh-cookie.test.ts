@@ -33,7 +33,6 @@ describe('QA-0137 Homepage Admin refresh 쿠키 전환기', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    localStorage.setItem('hp_admin_auth_token', 'access-old')
     localStorage.setItem('hp_admin_auth_expires_at', new Date(Date.now() + 10_000).toISOString())
     localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-old')
     useAuthStore.setState({ token: 'access-old', expiresAt: null, logout: logoutMock })
@@ -71,8 +70,8 @@ describe('QA-0137 Homepage Admin refresh 쿠키 전환기', () => {
 
     await expect(refreshAccessTokenSession()).resolves.toBe(true)
 
-    expect(localStorage.getItem('hp_admin_auth_token')).toBe('access-new')
     expect(useAuthStore.getState().token).toBe('access-new')
+    expect(localStorage.getItem('hp_admin_auth_token')).toBeNull()
     expect(localStorage.getItem('hp_admin_auth_refresh_token')).toBeNull()
     expect(localStorage.getItem(AUTH_REFRESH_COOKIE_SESSION_KEY)).toBe('1')
 
@@ -86,7 +85,8 @@ describe('QA-0137 Homepage Admin refresh 쿠키 전환기', () => {
     expect(config.url).toBe('/api/admin/auth/refresh')
     expect(config.data == null || bodyOf(config) == null).toBe(true)
     expect(config.withCredentials).toBe(true)
-    expect(localStorage.getItem('hp_admin_auth_token')).toBe('access-newer')
+    expect(useAuthStore.getState().token).toBe('access-newer')
+    expect(localStorage.getItem('hp_admin_auth_token')).toBeNull()
     expect(localStorage.getItem('hp_admin_auth_refresh_token')).toBeNull()
     expect(localStorage.getItem(AUTH_REFRESH_COOKIE_SESSION_KEY)).toBe('1')
   })
