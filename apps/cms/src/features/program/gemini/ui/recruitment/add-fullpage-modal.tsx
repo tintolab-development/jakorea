@@ -16,16 +16,22 @@ import { listGeminiRecruitmentInstitutionMissingFields } from '../../lib/recruit
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
+  shouldRemoveRegistrationDraftAfterCompletion,
   shouldSkipRegistrationDraftRestore,
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
+import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { invalidateGeminiRecruitmentListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentAddTemplateFlow } from '../../hooks/use-recruitment-add-template-flow'
-import { formatGeminiRecruitmentDraftError, formatGeminiRecruitmentRegisterError } from '../../lib/recruitment/mutation-error'
-import { removeGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
+import { formatGeminiRecruitmentRegisterError } from '../../lib/recruitment/mutation-error'
+import {
+  peekGeminiRecruitmentAddDraftOverwrite,
+  persistGeminiRecruitmentAddDraft,
+  removeGeminiRecruitmentAddDraft,
+} from '../../lib/recruitment/add-local-save'
 import { GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE } from '../../lib/recruitment/add-template'
 import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
 import {
@@ -42,10 +48,9 @@ import './add-fullpage-modal.css'
 
 const ADD_MODAL_TITLE = '찾아가는 연수 모집 공고 추가'
 
-const GEMINI_DRAFT_SAVE_SUCCESS_BODY = [
-  '작성 내용이 임시저장(DRAFT) 상태로 서버에 저장되었습니다.',
-  '모집 공고 목록에서 이어서 확인하고 수정할 수 있습니다.',
-].join('\n')
+/** 임시 저장은 브라우저 localStorage에만 둔다 — 프로그램 유형 공통 (서버 API 호출 없음) */
+const GEMINI_DRAFT_SAVE_FAILURE_MESSAGE =
+  '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
 
 type GeminiRecruitmentAddFullpageModalProps = {
   open: boolean
@@ -70,9 +75,10 @@ function GeminiRecruitmentAddFullpageModalInner({
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const skipDraftRestore = shouldSkipRegistrationDraftRestore(
-    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-  )
+  const draftMode = searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+  const skipDraftRestore = shouldSkipRegistrationDraftRestore(draftMode)
+  const shouldRemoveSavedDraftAfterCompletion =
+    shouldRemoveRegistrationDraftAfterCompletion(draftMode)
 
   const form = useGeminiRecruitmentAddTemplateFlow(open, { skipDraftRestore })
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
@@ -81,9 +87,10 @@ function GeminiRecruitmentAddFullpageModalInner({
   const [previewSnapshot, setPreviewSnapshot] = useState<ReturnType<
     typeof form.buildSaveSnapshot
   > | null>(null)
-  const createdDraftIdRef = useRef<string | null>(null)
   const pendingDetailIdRef = useRef<string | null>(null)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
+  const [overwriteOpen, setOverwriteOpen] = useState(false)
+  const [overwriteTitle, setOverwriteTitle] = useState('')
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
 
   useEffect(() => {
@@ -91,33 +98,36 @@ function GeminiRecruitmentAddFullpageModalInner({
     setTemplatePickerOpen(false)
     setDraftSaveSuccessOpen(false)
     setCompleteSuccessOpen(false)
-    createdDraftIdRef.current = null
+    setOverwriteOpen(false)
     pendingDetailIdRef.current = null
   }, [open])
 
-  const handleDraftSave = useCallback(async () => {
-    if (form.isDraftLoading) return
-    const snapshot = form.buildSaveSnapshot()
-    const endOverlay = beginBlockingOverlay()
-    try {
-      const saved = await geminiRecruitmentService.saveDraft(
-        snapshot,
-        createdDraftIdRef.current
-      )
-      if (saved.id) createdDraftIdRef.current = saved.id
-      removeGeminiRecruitmentAddDraft()
-      invalidateGeminiRecruitmentListCaches(queryClient)
-      form.markSavedBaseline()
-      setDraftSaveSuccessOpen(true)
-    } catch (error) {
-      showAlert({
-        title: '임시 저장 실패',
-        content: formatGeminiRecruitmentDraftError(error),
-      })
-    } finally {
-      endOverlay()
+  const runDraftSave = useCallback((): boolean => {
+    if (form.isDraftLoading) return false
+    const saved = persistGeminiRecruitmentAddDraft(form.buildSaveSnapshot())
+    if (!saved) {
+      showAlert({ title: '임시 저장 실패', content: GEMINI_DRAFT_SAVE_FAILURE_MESSAGE })
+      return false
     }
-  }, [form, queryClient, showAlert])
+    form.markSavedBaseline()
+    setDraftSaveSuccessOpen(true)
+    return true
+  }, [form, showAlert])
+
+  const handleDraftSave = useCallback(() => {
+    if (form.isDraftLoading) return
+    const existing = peekGeminiRecruitmentAddDraftOverwrite()
+    if (existing != null) {
+      setOverwriteTitle(existing.title)
+      setOverwriteOpen(true)
+      return
+    }
+    runDraftSave()
+  }, [form.isDraftLoading, runDraftSave])
+
+  const handleOverwriteConfirm = useCallback(() => {
+    if (runDraftSave()) setOverwriteOpen(false)
+  }, [runDraftSave])
 
   const handleRegister = useCallback(async () => {
     if (form.isDraftLoading) return
@@ -135,26 +145,16 @@ function GeminiRecruitmentAddFullpageModalInner({
     clearHighlight()
     const endOverlay = beginBlockingOverlay()
     try {
-      const existingId = createdDraftIdRef.current
-      let createdId = existingId
-      if (existingId) {
-        await geminiRecruitmentService.publishExisting(existingId, snapshot)
-        await queryClient.invalidateQueries({
-          queryKey: geminiVisitingTrainingQueryKeys.recruitmentDetail(existingId),
-        })
-      } else {
-        const created = await geminiRecruitmentService.register(snapshot)
-        createdId = created.id ?? null
-        if (created.id && created.detail) {
-          queryClient.setQueryData(
-            geminiVisitingTrainingQueryKeys.recruitmentDetail(created.id),
-            created.detail
-          )
-        }
+      const created = await geminiRecruitmentService.register(snapshot)
+      if (created.id && created.detail) {
+        queryClient.setQueryData(
+          geminiVisitingTrainingQueryKeys.recruitmentDetail(created.id),
+          created.detail
+        )
       }
-      pendingDetailIdRef.current = createdId?.trim() || null
-      removeGeminiRecruitmentAddDraft()
-      createdDraftIdRef.current = null
+      pendingDetailIdRef.current = created.id?.trim() || null
+      // 이어서 작성한 저장본만 등록 성공 후 지운다 (일반·UJAT와 같은 규칙)
+      if (shouldRemoveSavedDraftAfterCompletion) removeGeminiRecruitmentAddDraft()
       invalidateGeminiRecruitmentListCaches(queryClient)
       setCompleteSuccessOpen(true)
     } catch (error) {
@@ -165,7 +165,14 @@ function GeminiRecruitmentAddFullpageModalInner({
     } finally {
       endOverlay()
     }
-  }, [clearHighlight, form, queryClient, reportIncomplete, showAlert])
+  }, [
+    clearHighlight,
+    form,
+    queryClient,
+    reportIncomplete,
+    shouldRemoveSavedDraftAfterCompletion,
+    showAlert,
+  ])
 
   const handleCompleteSuccessConfirm = useCallback(() => {
     const createdId = pendingDetailIdRef.current
@@ -212,9 +219,7 @@ function GeminiRecruitmentAddFullpageModalInner({
         templateTabType="writing"
         registrationUserMode
         onPreview={handlePreview}
-        onSave={() => {
-          void handleDraftSave()
-        }}
+        onSave={handleDraftSave}
         bodyLoading={form.isDraftLoading}
         bodyHeaderBelow={
           <RegistrationStepTemplateChrome
@@ -251,8 +256,13 @@ function GeminiRecruitmentAddFullpageModalInner({
       />
       <RegistrationDraftSaveSuccessModal
         open={draftSaveSuccessOpen}
-        body={GEMINI_DRAFT_SAVE_SUCCESS_BODY}
         onConfirm={() => setDraftSaveSuccessOpen(false)}
+      />
+      <RegistrationDraftOverwriteConfirmModal
+        open={overwriteOpen}
+        draftTitle={overwriteTitle}
+        onCancel={() => setOverwriteOpen(false)}
+        onConfirm={handleOverwriteConfirm}
       />
       <RegistrationCompleteSuccessModal
         open={completeSuccessOpen}

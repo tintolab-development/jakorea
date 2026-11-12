@@ -11,7 +11,7 @@ export type GeminiRecruitmentProgramProgressLabel =
 
 /**
  * 조회 전용 — 공고 게시 여부.
- * QA-0101: 선택한 게시 여부(상세 응답 draftStatus)가 미게시(임시저장)면 날짜와 상관없이 `미게시`.
+ * QA-0101: 선택한 게시 여부(상세 응답 draftStatus)가 미게시(DRAFT)면 날짜와 상관없이 `미게시`.
  * 게시를 선택한 공고만 신청 시작 전 `게시 예정`, 이후 `게시`.
  */
 export function resolveRecruitmentAnnouncementDisplayLabel(

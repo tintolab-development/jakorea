@@ -7,7 +7,7 @@ function row(id: string, isDraft = false): GeminiRecruitmentRow {
 }
 
 describe('assignRecruitmentDisplayNumbers (QA-0385·0423)', () => {
-  it('정렬(임시저장 최상단 → 최신순)은 그대로 두고 No.를 위에서부터 1, 2, 3…으로 매긴다', () => {
+  it('정렬(미게시 최상단 → 최신순)은 그대로 두고 No.를 위에서부터 1, 2, 3…으로 매긴다', () => {
     const out = assignRecruitmentDisplayNumbers([row('10'), row('30'), row('draft', true), row('20')])
     expect(out.map(r => [r.id, r.displayNo])).toEqual([
       ['draft', 1],

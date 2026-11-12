@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { resolveRecruitmentAnnouncementDisplayLabel } from './resolve-recruitment-display'
 
 describe('resolveRecruitmentAnnouncementDisplayLabel (QA-0101)', () => {
-  it('미게시(임시저장)를 선택한 공고는 날짜와 상관없이 미게시', () => {
+  it('미게시를 선택한 공고는 날짜와 상관없이 미게시', () => {
     expect(resolveRecruitmentAnnouncementDisplayLabel('2026-01-01', '2026-11-12', 'unpublished')).toBe(
       '미게시'
     )
