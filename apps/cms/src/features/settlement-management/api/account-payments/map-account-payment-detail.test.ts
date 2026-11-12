@@ -198,6 +198,44 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.blocks[0]?.lines[0]?.basisDetail).toBeUndefined()
   })
 
+  it('H(기획 결정 2026-11-12): settlement.payee RAW 원문을 다시 가리지 않고, 주민번호·영문명·소속은 표시 칸에 넣지 않는다', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 185957,
+        instructorName: '가상강사',
+        bankName: '국민',
+        maskedAccountNo: '**************',
+        accountHolder: '가*사',
+        paymentStatus: 'WAITING_PAYMENT',
+      },
+      settlement: {
+        id: '185957',
+        items: [],
+        totalAmount: 0,
+        payee: {
+          privacyMaskingLevel: 'RAW',
+          gender: 'FEMALE',
+          birthDate: '1990-07-21',
+          phone: '010-1234-5678',
+          email: 'synthetic.payee@example.test',
+          addressRoad: '서울특별시 강서구 화곡로 12',
+          addressDetail: '101동 1001호',
+          residentRegistrationNumber: '900721-2******',
+          nameEn: 'G**a',
+          affiliation: '**학교',
+        } as never,
+      },
+      sensitiveAccount: { bankName: '국민', accountNo: '11048200123456', accountHolder: '가상강사' },
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
+    expect(mapped.basic.phoneDisplay).toBe('010-1234-5678')
+    expect(mapped.basic.emailDisplay).toBe('synthetic.payee@example.test')
+    expect(mapped.basic.addressDisplay).toBe('서울특별시 강서구 화곡로 12 101동 1001호')
+    expect(mapped.basic.genderBirthDisplay).toMatch(/^여성 \| 1990\. 07\. 21/)
+    expect(JSON.stringify(mapped.basic)).not.toContain('900721')
+  })
+
   it('settlement.payee MASKED를 성별·연락처 칸에 매핑한다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {

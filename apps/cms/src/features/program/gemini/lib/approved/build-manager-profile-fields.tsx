@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
@@ -10,7 +11,6 @@ import {
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SchoolTeacherEmploymentStatusBadge } from '@/features/user/detail/lib/school-teacher-employment-status'
-import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import { mapGeminiApprovedEmploymentToSchoolStatus } from './employment-status'
 import type { VerticalInfoTableItem } from './vertical-info-table'
@@ -64,7 +64,10 @@ export function buildGeminiApprovedManagerTableItems(
         <ProgramDetailTdSegmentWrap>
           {withProgramDetailTdDivider([
             detail.managerGender,
-            formatGeminiManagerBirthDisplay(detail.managerBirthDate),
+            // 마스킹 GET은 「YYYY.**.** (만 N세)」, 원문 해제는 날짜 + 같은 만 나이(teacherAge).
+            detail.managerBirthDate
+              ? formatBirthDisplayWithManAge(detail.managerBirthDate, { age: detail.managerAge })
+              : detail.managerBirthDate,
           ])}
         </ProgramDetailTdSegmentWrap>
       ),

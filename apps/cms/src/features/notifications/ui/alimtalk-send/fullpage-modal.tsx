@@ -1,4 +1,5 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
+import { useSendPrivacyAccessRecord } from '@/features/notifications/hooks/use-send-privacy-access-record'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -355,6 +356,14 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     programKey: String(programNumericId ?? ''),
     onFailure: onRecipientPrivacyFailure,
   })
+  // 정책 CMS-21·22: 발송 화면·결과 팝업 개인정보 조회 기록. 503이면 기존 게이트가 원문 수신자를 비운다.
+  const sendPrivacyRecord = useSendPrivacyAccessRecord({
+    open,
+    remote,
+    programId: programNumericId,
+    recipients: recipients,
+    onRecordError: recipientPrivacy.report,
+  })
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(
     {
       programId: programNumericId,
@@ -654,7 +663,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setSendConfirmOpen(false)
     setSending(true)
     try {
-      await createAlimtalkSendBatch({
+      const batchId = await createAlimtalkSendBatch({
         batchName: draft.templateName || '알림톡 발송',
         templateId: draft.templateId,
         programId: draft.programId,
@@ -673,10 +682,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       idempotencyKeyRef.current = createIdempotencyKey()
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
+      sendPrivacyRecord.recordResultPopup(batchId)
     } catch (error) {
       showNotificationSendErrorAlert(showAlert, error, {
         template: '.send-template-select-field__trigger',
       })
+      sendPrivacyRecord.recordFailedPopup()
     } finally {
       sendingRef.current = false
       setSending(false)

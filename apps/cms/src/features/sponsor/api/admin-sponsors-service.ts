@@ -11,6 +11,7 @@ import {
   toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
 } from '@/features/sponsor/api/adapters/sponsor-adapters'
+import type { SponsorContactPrivacy } from '@/features/sponsor/api/sponsors-api-client'
 import {
   programHistoriesParamsFromFilters,
   SPONSOR_PROGRAM_HISTORY_PAGE_SIZE,
@@ -37,7 +38,6 @@ import {
   fetchSponsorRemote,
   fetchSponsorsRemote,
   fetchYearlyBusinessesRemote,
-  type SponsorContactPrivacyMode,
   type SponsorContactsQueryParams,
   updateSponsorContactRemote,
   updateSponsorRemote,
@@ -103,11 +103,10 @@ async function withEnrichedLogosIfNeeded(
 
 export async function getSponsorDetail(
   id: string,
-  options?: { contactPrivacy?: SponsorContactPrivacyMode }
+  options?: { contactPrivacy?: SponsorContactPrivacy }
 ): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
-  // 옵션이 없으면 기존 호출 그대로(데이터 관리 RAW). 프로그램 공통 정보 수정만 MASKED를 넘긴다.
-  const dto = await (options ? fetchSponsorRemote(id, options) : fetchSponsorRemote(id))
+  const dto = await fetchSponsorRemote(id, options?.contactPrivacy)
   const detail = mapSponsorDetailResponse(dto)
   return withEnrichedLogosIfNeeded(detail)
 }
@@ -210,10 +209,11 @@ export async function endSponsorship(id: string): Promise<void> {
 
 export async function getSponsorContacts(
   sponsorId: string,
-  filters?: SponsorContactsQueryParams
+  filters?: SponsorContactsQueryParams,
+  options?: { contactPrivacy?: SponsorContactPrivacy }
 ): Promise<SponsorContactRow[]> {
   assertSponsorsRemoteReady()
-  const dtos = await fetchSponsorContactsRemote(sponsorId, filters)
+  const dtos = await fetchSponsorContactsRemote(sponsorId, filters, options?.contactPrivacy)
   return dtos.map(mapSponsorContactResponse).filter(row => row.id.length > 0)
 }
 

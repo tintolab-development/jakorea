@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 
 /** home-address-golden.test.tsx · JABACK·JAHOMEADMINBACK PrivacyMaskingGoldenVectorTest 와 같은 fixture */
-const FIXTURE_SHA256 = '427edd79fcf4f16bcc9c41ebe8e29a121fd205c536836b52ab3658c62e9ec7b5'
+const FIXTURE_SHA256 = 'cc22ec9917772235d59a5ba73e10658f39bc6991efc2a481d16739ae1651616c'
 const fixturePath = join(dirname(fileURLToPath(import.meta.url)), '__fixtures__', 'masking-golden-vectors.json')
 const fixtureBytes = readFileSync(fixturePath)
 const fixture = JSON.parse(fixtureBytes.toString('utf8')) as {

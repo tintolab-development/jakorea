@@ -199,7 +199,8 @@ function formatHomeAddressDisplay(
 
 /**
  * 이미 마스킹된 강사 회원 스냅샷을 표시 칸에 합친다.
- * 계좌 지급 화면의 조회 경로는 `applyMaskedInstructorMemberToAccountPaymentDetail`을 쓴다.
+ * 계좌 지급 현황 상세 화면은 이 함수를 쓰지 않는다 — `mapAccountPaymentDetailFromGetApi`가
+ * settlement.payee(Master·Accounting Manager, privacyMaskingLevel=RAW)를 그대로 표시한다(기획 결정 2026-11-12, FE 재마스킹 없음).
  */
 export function applyInstructorMemberPiiToAccountPaymentDetail(
   detail: AccountPaymentStatusDetail,

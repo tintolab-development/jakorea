@@ -24,6 +24,7 @@ import type { StoryCreateRequest } from '@/shared/api/generated/impact-story/sch
 import type { StoryListItem } from '@/shared/api/generated/impact-story/schemas/storyListItem'
 import type { StoryResponse } from '@/shared/api/generated/impact-story/schemas/storyResponse'
 import type { StoryUpdateRequest } from '@/shared/api/generated/impact-story/schemas/storyUpdateRequest'
+import { isNoThumbnailPlaceholder } from '@/shared/lib/no-thumbnail-placeholder'
 import { generalAttachmentMimeFromContentType } from '@/shared/lib/attachment-policy'
 
 /** BE default / list-page-size.mdc */
@@ -79,10 +80,10 @@ export function isPersistedCategoryId(id: string): boolean {
 export const STORY_ATTACHMENT_MAX_COUNT = 10
 
 export function assertThumbnailNotInAttachments(
-  thumbnailAssetId: number | null,
+  thumbnailAssetId: number,
   attachmentAssetIds: readonly number[]
 ): void {
-  if (thumbnailAssetId != null && attachmentAssetIds.includes(thumbnailAssetId)) {
+  if (attachmentAssetIds.includes(thumbnailAssetId)) {
     throw new Error('썸네일과 첨부 파일은 서로 다른 파일이어야 합니다.')
   }
 }
@@ -111,8 +112,13 @@ function mapAttachmentFromResponse(row: StoryResponse): ImpactStoryAttachment[] 
     .slice(0, STORY_ATTACHMENT_MAX_COUNT)
 }
 
-/** 썸네일은 선택 항목 — 서버가 `thumbnail: null`로 내려주면 썸네일 없음 */
+function isPlaceholderThumbnail(row: StoryResponse): boolean {
+  return isNoThumbnailPlaceholder(row.thumbnailOriginalName ?? row.thumbnail?.originalName)
+}
+
+/** 서버 필수 우회로 올린 「썸네일 없음」 표식은 화면에서 썸네일 없음으로 보인다 */
 function mapThumbnailFromResponse(row: StoryResponse): ImpactStoryAttachment | null {
+  if (isPlaceholderThumbnail(row)) return null
   return mapAssetAttachment(row.thumbnail, row.thumbnailOriginalName)
 }
 
@@ -151,6 +157,9 @@ export function mapStoryResponseToDomain(row: StoryResponse): ImpactStory {
     updatedAt: row.updatedAt ?? '',
     viewCount: row.viewCount ?? 0,
     thumbnail: mapThumbnailFromResponse(row),
+    placeholderThumbnailAssetId: isPlaceholderThumbnail(row)
+      ? (row.thumbnail?.assetId ?? undefined)
+      : undefined,
     attachments: mapAttachmentFromResponse(row),
     version: row.version ?? 0,
   }
@@ -192,7 +201,7 @@ export function toStoryListParams(filter?: ImpactStoryListFilter): List6Params {
 export function toStoryCreateRequest(
   input: ImpactStoryCreateInput,
   attachmentAssetIds: number[],
-  thumbnailAssetId: number | null
+  thumbnailAssetId: number
 ): StoryCreateRequest {
   const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
   assertThumbnailNotInAttachments(thumbnailAssetId, ids)
@@ -213,7 +222,7 @@ export function toStoryUpdateRequest(
   input: ImpactStoryUpdateInput,
   version: number,
   attachmentAssetIds: number[],
-  thumbnailAssetId: number | null
+  thumbnailAssetId: number
 ): StoryUpdateRequest {
   const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
   assertThumbnailNotInAttachments(thumbnailAssetId, ids)

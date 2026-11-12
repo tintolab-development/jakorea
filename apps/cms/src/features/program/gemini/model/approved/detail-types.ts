@@ -36,6 +36,8 @@ export type GeminiApprovedTrainingDetail = {
   managerScheduleChangeCount: number
   managerGender: string
   managerBirthDate: string
+  /** 서버 담당 교사 만 나이(teacherAge). 상세 GET·unmask 같은 값, 생년월일 원문이 없으면 null */
+  managerAge?: number | null
   /** null이면 재직 배지/ ACTIVE 강제 금지 */
   managerEmploymentStatus: GeminiApprovedTrainingEmploymentStatus | null
   managerContact: string

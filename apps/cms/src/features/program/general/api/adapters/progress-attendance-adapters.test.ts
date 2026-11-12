@@ -247,15 +247,38 @@ describe('progress-attendance-adapters', () => {
     })
 
     const row = sessions[0]?.participants[0]
-    // 개인형 출석 관리 마스킹(2026-11-12 기획): 성별 `**`, 생년월일 연도만 — 원문(여·05.12) 미노출
-    expect(row?.genderBirthLabel).toBe('** | 2010.**.**')
-    expect(row?.genderBirthLabel).not.toContain('여')
-    expect(row?.genderBirthLabel).not.toContain('05.12')
+    expect(row?.genderBirthLabel).toContain('여')
+    expect(row?.genderBirthLabel).toContain('2010.05.12')
     expect(row?.affiliationGradeLabel).toContain('○○초등학교')
     expect(row?.affiliationGradeLabel).toContain('5학년')
     expect(row?.contact).toBe('010-1234-5678')
     expect(row?.email).toBe('member2@example.com')
     expect(row?.attendanceStatus).toBe('present')
+  })
+
+  it('CMS-39: 마스킹 생년월일에 서버 만 나이만 붙인다(FE 계산 없음)', () => {
+    const build = (age: number | null) =>
+      buildProgressAttendanceSessionsFromRemote({
+        schedules: [
+          { scheduleId: 9001, sessionNo: 1, scheduleStatus: 'IN_PROGRESS', startAt: '2026-10-01T10:00:00+09:00' },
+        ],
+        participants: [
+          {
+            participantId: 1694747,
+            memberName: '마스킹 나이',
+            participantType: 'INDIVIDUAL',
+            gender: '**',
+            birthDate: '2010-**-**',
+            ...(age != null ? { age } : {}),
+          } as never,
+        ],
+        attendancesByScheduleId: { '9001': [{ participantId: 1694747, status: 'PRESENT' }] },
+      })[0]?.participants[0]?.genderBirthLabel
+
+    expect(build(15)).toContain('2010.**.** (만 15세)')
+    const withoutAge = build(null)
+    expect(withoutAge).toContain('2010.**.**')
+    expect(withoutAge).not.toContain('만 ')
   })
 
   it('keeps a masked participant gender as returned', () => {
@@ -282,39 +305,7 @@ describe('progress-attendance-adapters', () => {
       },
     })
 
-    expect(sessions[0]?.participants[0]?.genderBirthLabel).toBe('** | -')
-  })
-
-  it('masks gender/birth for every participant row (BE 마스킹 yyyy-**-** 포함, 값 없으면 -)', () => {
-    const sessions = buildProgressAttendanceSessionsFromRemote({
-      schedules: [
-        {
-          scheduleId: 9001,
-          sessionNo: 1,
-          scheduleStatus: 'IN_PROGRESS',
-          startAt: '2026-10-01T10:00:00+09:00',
-        },
-      ],
-      participants: [
-        { participantId: 1, memberName: '원문', participantType: 'INDIVIDUAL', gender: 'MALE', birthDate: '2000-03-15' },
-        { participantId: 2, memberName: '서버마스킹', participantType: 'INDIVIDUAL', gender: '**', birthDate: '1999-**-**' },
-        { participantId: 3, memberName: '값없음', participantType: 'INDIVIDUAL', gender: null, birthDate: null },
-      ],
-      attendancesByScheduleId: {
-        '9001': [
-          { participantId: 1, status: 'PRESENT' },
-          { participantId: 2, status: 'PRESENT' },
-          { participantId: 3, status: 'PRESENT' },
-        ],
-      },
-    })
-    const rows = sessions[0]?.participants ?? []
-    expect(rows.map(row => [row.name, row.genderBirthLabel])).toEqual([
-      // 이름은 마스킹하지 않는다
-      ['원문', '** | 2000.**.**'],
-      ['서버마스킹', '** | 1999.**.**'],
-      ['값없음', '- | -'],
-    ])
+    expect(sessions[0]?.participants[0]?.genderBirthLabel.startsWith('*')).toBe(true)
   })
 
   it('hides attendance before the session starts even when API returns PRESENT', () => {

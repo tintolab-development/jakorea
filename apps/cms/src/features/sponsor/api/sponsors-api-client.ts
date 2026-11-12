@@ -41,21 +41,20 @@ export async function fetchSponsorsRemote(
 }
 
 /**
- * 후원사 담당자 연락처 노출 모드 — `contactPrivacy` 쿼리(기본 RAW).
- * RAW: 데이터 관리 > 후원사 담당자 정보(원문 + 고정 사유 자동 기록, CMS-17).
- * MASKED: 프로그램 공통 정보 수정의 담당자 선택지(마스킹, 기록 없음, 정책 32·37). 서버 반영 전에는 무시된다.
+ * 담당자 개인정보 노출 방식(BE `contactPrivacy`, 정책 CMS-17·32·37).
+ * 생략·RAW: 데이터 관리 > 후원사 담당자 정보 — 원문 + 자동 조회 기록.
+ * MASKED: 프로그램 공통 정보·신규 프로그램 등록 양식 — 전화·이메일 마스킹, 기록 없음.
  */
-export type SponsorContactPrivacyMode = 'RAW' | 'MASKED'
+export type SponsorContactPrivacy = 'RAW' | 'MASKED'
 
 export async function fetchSponsorRemote(
   id: string,
-  options?: { contactPrivacy?: SponsorContactPrivacyMode }
+  contactPrivacy?: SponsorContactPrivacy
 ): Promise<SponsorDetailResponse> {
-  const contactPrivacy = options?.contactPrivacy
   return unwrapApiBody(
     await getDataManagementSubsetApi().sponsor(
       pathId(id),
-      contactPrivacy ? { params: { contactPrivacy } } : undefined
+      contactPrivacy ? { contactPrivacy } : undefined
     )
   )
 }
@@ -122,8 +121,6 @@ export type SponsorContactsQueryParams = {
   department?: string
   position?: string
   name?: string
-  /** 생략하면 서버 기본(RAW). 프로그램 공통 정보 수정 선택지는 MASKED */
-  contactPrivacy?: SponsorContactPrivacyMode
 }
 
 function unwrapSponsorContactList(payload: unknown): SponsorContactResponse[] {
@@ -140,15 +137,17 @@ function unwrapSponsorContactList(payload: unknown): SponsorContactResponse[] {
 
 export async function fetchSponsorContactsRemote(
   sponsorId: string,
-  params?: SponsorContactsQueryParams
+  params?: SponsorContactsQueryParams,
+  contactPrivacy?: SponsorContactPrivacy
 ): Promise<SponsorContactResponse[]> {
   const query = params
     ? Object.fromEntries(
         Object.entries(params).filter(([, value]) => value != null && String(value).trim() !== '')
       )
     : undefined
+  const withPrivacy = contactPrivacy ? { ...(query ?? {}), contactPrivacy } : query
   const contactsParams =
-    query && Object.keys(query).length > 0 ? (query as ContactsParams) : undefined
+    withPrivacy && Object.keys(withPrivacy).length > 0 ? (withPrivacy as ContactsParams) : undefined
   const payload = await getDataManagementSubsetApi().contacts(pathId(sponsorId), contactsParams)
   return unwrapSponsorContactList(payload)
 }

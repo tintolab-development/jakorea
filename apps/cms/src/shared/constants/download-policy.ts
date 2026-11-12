@@ -17,6 +17,17 @@ const COMPOUND_SURNAMES_TWO = new Set([
   '서문',
 ])
 
+/** BE maskAccountHolderValue와 같은 규칙(코드포인트 기준). */
+function maskAccountHolderCanonical(trimmed: string): string {
+  const points = Array.from(trimmed)
+  const n = points.length
+  if (n <= 1) return '*'
+  if (n === 2) return `${points[0]}*`
+  if (n === 3) return `${points[0]}*${points[2]}`
+  const surnameLen = COMPOUND_SURNAMES_TWO.has(points[0] + points[1]) ? 2 : 1
+  return points.slice(0, surnameLen).join('') + '*'.repeat(n - surnameLen - 1) + points[n - 1]
+}
+
 /**
  * 다운로드 제한 정책
  */
@@ -82,23 +93,17 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 예금주: 성과 끝 글자를 빼고 가운데 글자 수만큼 `*` (고정 `**` 아님, 기획 2026-11-12 Q4).
-   * - 김민이→김*이, 김민→김*, 김민철수→김**수, 남궁민수→남궁*수, 남궁민철수→남궁**수
-   * - 4글자 이상이고 앞 두 글자가 복성(남궁·황보·제갈·선우·독고·사공·서문·동방)이면 성 2글자, 그 외 1글자.
-   * 이미 `*`면 다시 가리지 않는다.
+   * 예금주(기획 결정 2026-11-12, BE PrivacyMaskingSupport.maskAccountHolder·골든 벡터 ACCOUNT_HOLDER와 같은 출력):
+   * 1글자 `*`, 2글자 성 + `*`, 3글자 이상 성 + 가운데 글자 수만큼 `*` + 끝 글자.
+   * 복성(4글자 이상이고 앞 두 글자가 남궁·황보·제갈·선우·독고·사공·서문·동방)은 성 2글자.
+   * 이미 정규 형태로 마스킹된 값은 그대로, 일부만 가려진 값(`김*철수`)은 다시 정규 형태로 가린다.
    */
   accountHolderName: (value: string): string => {
     if (!value) return value
     const trimmed = value.trim()
-    if (!trimmed || trimmed.includes('*')) return value
-    const surnameLen =
-      trimmed.length >= 4 && COMPOUND_SURNAMES_TWO.has(trimmed.slice(0, 2)) ? 2 : 1
-    if (trimmed.length <= surnameLen) return '*'.repeat(trimmed.length)
-    if (trimmed.length === surnameLen + 1) {
-      return trimmed.slice(0, surnameLen) + '*'
-    }
-    const middleLen = trimmed.length - surnameLen - 1
-    return trimmed.slice(0, surnameLen) + '*'.repeat(middleLen) + trimmed.slice(-1)
+    if (!trimmed) return value
+    const canonical = maskAccountHolderCanonical(trimmed)
+    return trimmed.includes('*') && canonical === trimmed ? trimmed : canonical
   },
 
   /**

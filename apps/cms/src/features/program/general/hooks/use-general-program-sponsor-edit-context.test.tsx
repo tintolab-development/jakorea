@@ -54,7 +54,7 @@ describe('useGeneralProgramSponsorEditContext', () => {
       { wrapper: wrapperFor(queryClient) }
     )
     await waitFor(() => expect(result.current.contactsBySponsorId['11']).toHaveLength(1))
-    expect(getSponsorContacts).toHaveBeenCalledWith('11', { contactPrivacy: 'MASKED' })
+    expect(getSponsorContacts).toHaveBeenCalledWith('11', undefined, { contactPrivacy: 'MASKED' })
     expect(getSponsorDetail).not.toHaveBeenCalled()
     expect(
       queryClient.getQueryState(programSponsorMaskedQueryKeys.contacts('11'))
@@ -98,6 +98,6 @@ describe('useProgramSponsorContactsMaskedQuery', () => {
       wrapper: wrapperFor(queryClient),
     })
     await waitFor(() => expect(result.current.data).toHaveLength(1))
-    expect(getSponsorContacts).toHaveBeenCalledWith('22', { contactPrivacy: 'MASKED' })
+    expect(getSponsorContacts).toHaveBeenCalledWith('22', undefined, { contactPrivacy: 'MASKED' })
   })
 })

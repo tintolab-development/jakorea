@@ -926,8 +926,7 @@ async function resolveSponsorAndContact(allowAllSentinel: boolean): Promise<{
     for (const sponsor of ordered) {
       if (!sponsor?.id) continue
       const sponsorId = String(sponsor.id).trim()
-      // 개발용 자동 입력도 담당자 id만 필요하다 — 원문·조회 기록을 남기지 않게 MASKED로 받는다.
-      const contacts = await getSponsorContacts(sponsorId, { contactPrivacy: 'MASKED' })
+      const contacts = await getSponsorContacts(sponsorId, undefined, { contactPrivacy: 'MASKED' })
       if (contacts.length === 0) continue
       const contact = pick(contacts)
       if (!contact?.id) continue

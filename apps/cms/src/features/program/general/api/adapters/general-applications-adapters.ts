@@ -2,6 +2,7 @@ import type {
   ApplicantApprovalStatusKey,
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
+import { readParticipantManAge } from '@/features/program/general/api/adapters/participant-man-age'
 import {
   positiveEducationNumber,
   stripDefaultEducationSlotNameFromLabel,
@@ -1821,7 +1822,9 @@ export function mapParticipantToParticipatingIndividualRow(
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
     detail: {
       gender: toGenderLabelOrRaw(dto.gender),
+      // 정책 CMS-39: 참여자 목록 birthDate는 마스킹(yyyy-**-**), 만 나이는 서버 age만 쓴다(FE 계산 금지).
       birthDate: dto.birthDate?.trim() || undefined,
+      age: readParticipantManAge(dto),
       contact: contact || undefined,
       email: email || undefined,
       homeAddressFull: homeAddress || undefined,
@@ -2481,6 +2484,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     contactRaw: contact || undefined,
     emailRaw: email || undefined,
     birthDate: dto.birthDate?.trim() || undefined,
+    age: readParticipantManAge(dto),
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
     // 기관형 캘린더 우측 카드 지표 — 구버전 응답(필드 없음)은 null → '-'

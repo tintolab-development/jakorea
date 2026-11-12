@@ -8,7 +8,6 @@ import {
 } from '@/features/sponsor/api/admin-sponsors-service'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
-import { SPONSOR_CONTACT_PII_QUERY_CACHE } from '@/features/sponsor/lib/contact-query-cache'
 
 function readSponsorRowsFromQueryCache(data: unknown): SponsorManagementRow[] {
   if (Array.isArray(data)) return data
@@ -71,10 +70,10 @@ export async function resolveSponsorNameById(
 
   try {
     const detail = await queryClient.fetchQuery({
-      queryKey: dataManagementQueryKeys.sponsors.detail(sponsorId),
-      queryFn: () => getSponsorDetail(sponsorId),
-      // 상세 응답에 담당자 원문이 있어 캐시에 남기지 않는다(CMS-17).
-      ...SPONSOR_CONTACT_PII_QUERY_CACHE,
+      // 프로그램 화면의 후원사 이름·행 조회 — 담당자 연락처 원문이 필요 없으므로 MASKED(조회 기록 없음, CMS-32·37).
+      queryKey: [...dataManagementQueryKeys.sponsors.detail(sponsorId), 'masked'],
+      queryFn: () => getSponsorDetail(sponsorId, { contactPrivacy: 'MASKED' }),
+      staleTime: 30_000,
     })
     return detail.nameDisplayKo?.trim() || detail.name?.trim() || undefined
   } catch {
@@ -122,10 +121,10 @@ export async function resolveSponsorRowById(
 
   try {
     const detail = await queryClient.fetchQuery({
-      queryKey: dataManagementQueryKeys.sponsors.detail(sponsorId),
-      queryFn: () => getSponsorDetail(sponsorId),
-      // 상세 응답에 담당자 원문이 있어 캐시에 남기지 않는다(CMS-17).
-      ...SPONSOR_CONTACT_PII_QUERY_CACHE,
+      // 프로그램 화면의 후원사 이름·행 조회 — 담당자 연락처 원문이 필요 없으므로 MASKED(조회 기록 없음, CMS-32·37).
+      queryKey: [...dataManagementQueryKeys.sponsors.detail(sponsorId), 'masked'],
+      queryFn: () => getSponsorDetail(sponsorId, { contactPrivacy: 'MASKED' }),
+      staleTime: 30_000,
     })
     return detail
   } catch {

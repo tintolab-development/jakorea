@@ -15,7 +15,7 @@ export type PublicStoryListItem = {
   categoryName?: string
   title?: string
   summary?: string
-  imageUrl?: string | null
+  imageUrl?: string
   authorName?: string
   viewCount?: number
 }

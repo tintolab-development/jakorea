@@ -111,9 +111,26 @@ const DOWNLOAD_LOG_KIND_LABEL: Record<string, string> = {
 const DOWNLOAD_LOG_PII_LABEL: Record<string, string> = {
   ...CONTAINED_PII_LABEL,
   NAME: '이름',
+  // 2026-11-12 BE 확장(containedPiiTypes 9종)
+  BIRTH_DATE: '생년월일',
+  GENDER: '성별',
+  PHONE: '전화번호',
+  EMAIL: '이메일',
+  HOME_ADDRESS: '자택 주소',
+  EXTERNAL_1365_ID: '1365 ID',
 }
 
-const DOWNLOAD_LOG_PII_ORDER = ['RESIDENT_REGISTRATION_NUMBER', 'ACCOUNT_NUMBER', 'NAME']
+const DOWNLOAD_LOG_PII_ORDER = [
+  'RESIDENT_REGISTRATION_NUMBER',
+  'ACCOUNT_NUMBER',
+  'NAME',
+  'BIRTH_DATE',
+  'GENDER',
+  'PHONE',
+  'EMAIL',
+  'HOME_ADDRESS',
+  'EXTERNAL_1365_ID',
+]
 
 export function formatDownloadLogKind(kind: string): string {
   return DOWNLOAD_LOG_KIND_LABEL[kind] ?? kind

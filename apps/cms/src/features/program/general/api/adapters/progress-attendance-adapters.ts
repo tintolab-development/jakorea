@@ -1,4 +1,9 @@
-import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
+import {
+  formatBirthDisplayWithManAge,
+  toPolicyMaskedBirthDisplay,
+} from '@/features/user/api/format-gender-birth-display'
+import { readParticipantManAge } from '@/features/program/general/api/adapters/participant-man-age'
+import dayjs from 'dayjs'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { Program } from '@/types/domain'
 import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
@@ -22,6 +27,9 @@ import {
   formatIndividualProgressAttendanceAffiliationGradeLabel,
   formatIndividualProgressAttendanceGenderBirthLabel,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
+import { mapApiGenderToStudentGenderKey } from '@/features/program/general/api/adapters/student-roster-adapters'
+import { STUDENT_GENDER_LABELS } from '@/features/program/general/model/school-detail-types'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { isGeneralProgressAttendanceSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
 import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
@@ -99,21 +107,26 @@ export function mapUiAttendanceStatusToApi(
   return UI_TO_API_STATUS[status]
 }
 
-/**
- * 개인형 출석 관리 — 성별·생년월일 마스킹 (기획 답변 2026-11-12, 개인정보·법률 운영 정책 11/10 4·4-1·4-2·4-3,
- * CMS-FUNC-0748~0751). 과제 관리 표(assignment-submissions)와 같은 표기:
- * - 성별: `**` (값이 없으면 `-`)
- * - 생년월일: 연도만 `YYYY.**.**` (값이 없으면 `-`)
- * participants 목록 API(`ParticipantListItemResponse.gender`·`birthDate`)는 원시 코드·원문 날짜를 준다.
- * 개인형 참여자 출석용 마스킹 응답·원문 조회(해제) API가 없어 FE에서 표시·엑셀만 마스킹한다 —
- * 서버 마스킹 응답과 해제 API는 백엔드 요청 항목. 해제 기능은 그 API가 생기기 전까지 두지 않는다.
- */
-export function maskIndividualAttendanceGenderLabel(gender?: string | null): string {
-  return gender?.trim() ? '**' : '-'
+function formatDateLabel(value: string | null | undefined, pattern: string): string {
+  if (!value?.trim()) return ''
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed.format(pattern) : value.trim()
 }
 
-export function maskIndividualAttendanceBirthLabel(birthDate?: string | null): string {
-  return formatBirthDisplayWithManAge(birthDate, { forceMaskedDate: true })
+function mapGenderLabel(gender?: string | null): string {
+  const key = mapApiGenderToStudentGenderKey(gender)
+  if (key) return STUDENT_GENDER_LABELS[key]
+  return toDisplayGender(gender)
+}
+
+function mapBirthLabel(birthDate?: string | null, age?: number | null): string {
+  // BE 마스킹(yyyy-**-**)은 정책 표기(yyyy.**.**) — 날짜 파서에 넣지 않는다.
+  // 만 나이는 서버 age가 있을 때만 붙인다(CMS 표기 YYYY.**.** (만 NN세)).
+  const masked = toPolicyMaskedBirthDisplay(birthDate)
+  if (masked && masked !== (birthDate?.trim() ?? '')) {
+    return formatBirthDisplayWithManAge(birthDate, { age })
+  }
+  return formatDateLabel(birthDate, 'YYYY.MM.DD') || '-'
 }
 
 function formatScheduleHeader(
@@ -227,8 +240,8 @@ function mapParticipantRow(
     participantId,
     name: participant.memberName?.trim() || `참여자 ${participantId}`,
     genderBirthLabel: formatIndividualProgressAttendanceGenderBirthLabel(
-      maskIndividualAttendanceGenderLabel(participant.gender),
-      maskIndividualAttendanceBirthLabel(participant.birthDate)
+      mapGenderLabel(participant.gender),
+      mapBirthLabel(participant.birthDate, readParticipantManAge(participant))
     ),
     affiliationGradeLabel: formatIndividualProgressAttendanceAffiliationGradeLabel(
       affiliation,

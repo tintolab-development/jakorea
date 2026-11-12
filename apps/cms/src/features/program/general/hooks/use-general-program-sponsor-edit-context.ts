@@ -37,7 +37,7 @@ export const programSponsorMaskedQueryKeys = {
 }
 
 function fetchProgramSponsorContactsMasked(sponsorId: string) {
-  return getSponsorContacts(sponsorId, { contactPrivacy: PROGRAM_SPONSOR_CONTACT_PRIVACY })
+  return getSponsorContacts(sponsorId, undefined, { contactPrivacy: PROGRAM_SPONSOR_CONTACT_PRIVACY })
 }
 
 /** 단일 후원사 담당자 선택지(MASKED) — 프로그램 공통 정보 수정 화면 전용 */

@@ -14,6 +14,11 @@ describe('MASKING_POLICY N-16', () => {
     expect(MASKING_POLICY.accountHolderName('김민이')).toBe('김*이')
     expect(MASKING_POLICY.accountHolderName('남궁민지수')).toBe('남궁**수')
     expect(MASKING_POLICY.accountHolderName('김*이')).toBe('김*이')
+    // 기획 결정 2026-11-12: 복성은 4글자 이상에서만, 일부만 가려진 값은 정규 형태로 다시 가린다.
+    expect(MASKING_POLICY.accountHolderName('김민철수')).toBe('김**수')
+    expect(MASKING_POLICY.accountHolderName('김수한무거')).toBe('김***거')
+    expect(MASKING_POLICY.accountHolderName('남궁민')).toBe('남*민')
+    expect(MASKING_POLICY.accountHolderName('김*철수')).toBe('김**수')
   })
 
   it('masks jibun through dong and road through the road name', () => {

@@ -63,7 +63,8 @@ function payoutMetaFromRow(
       bank: row.bankName ?? '',
       acctNum: MASKING_POLICY.accountNumber(row.maskedAccountNo ?? ''),
       holder: MASKING_POLICY.accountHolderName(row.accountHolder ?? ''),
-      mobile: MASKING_POLICY.phone(row.recipientMobile ?? ''),
+      // 미리보기는 서버 마스킹값(maskedRecipientPhone)을 쓴다. 원문 휴대폰은 목록에 없다(CMS-07).
+      mobile: row.maskedRecipientPhone ?? MASKING_POLICY.phone(row.recipientMobile ?? ''),
     }
   }
   return {

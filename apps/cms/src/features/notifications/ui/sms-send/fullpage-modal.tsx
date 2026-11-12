@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSendPrivacyAccessRecord } from '@/features/notifications/hooks/use-send-privacy-access-record'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -208,6 +209,14 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     screenOpen: open,
     programKey: String(programNumericId ?? ''),
     onFailure: onRecipientPrivacyFailure,
+  })
+  // 정책 CMS-21·22: 발송 화면·결과 팝업 개인정보 조회 기록. 503이면 기존 게이트가 원문 수신자를 비운다.
+  const sendPrivacyRecord = useSendPrivacyAccessRecord({
+    open,
+    remote,
+    programId: programNumericId,
+    recipients: form.recipients,
+    onRecordError: recipientPrivacy.report,
   })
   const isWithoutProgram = isNotificationSendWithoutProgram(form.programId)
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
@@ -495,7 +504,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setSending(true)
     try {
       const draft = form.getDraft()
-      await submitSmsSend({
+      const batchId = await submitSmsSend({
         draft: { ...draft, recipients: variableResult.validRecipients },
         placeholderKeys: listSmsSendPlaceholderKeys(draft),
         variableCatalog: variablesCatalog ?? null,
@@ -514,9 +523,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       setSendConfirmOpen(false)
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
+      sendPrivacyRecord.recordResultPopup(batchId)
     } catch (error) {
       setSendConfirmOpen(false)
       showNotificationSendErrorAlert(showAlert, error, SMS_SEND_ERROR_FOCUS_SELECTORS)
+      sendPrivacyRecord.recordFailedPopup()
     } finally {
       setSending(false)
     }

@@ -225,6 +225,39 @@ export async function createSendBatchRemote(
   )
 }
 
+export type NotificationSendPrivacyAccessEvent = 'SEND_SCREEN' | 'SEND_RESULT_POPUP'
+
+export type NotificationSendPrivacyAccessRecipient = {
+  actorType: 'MEMBER' | 'ADMIN'
+  actorId: number
+}
+
+export type NotificationSendPrivacyAccessRecordRequest = {
+  event: NotificationSendPrivacyAccessEvent
+  programId?: number
+  batchId?: number
+  recipients?: NotificationSendPrivacyAccessRecipient[]
+}
+
+/**
+ * 정책 CMS-21·22: 발송 화면·발송 결과 팝업 개인정보 조회 기록(데이터 반환 없음).
+ * 503 AUDIT_LOG_UNAVAILABLE이면 호출자가 원문 연락처를 숨긴다.
+ */
+export async function recordNotificationSendPrivacyAccessRemote(
+  body: NotificationSendPrivacyAccessRecordRequest
+): Promise<{ recordedCount: number }> {
+  return unwrapApiBody(
+    await customInstance<unknown>(
+      {
+        url: '/api/admin/notification-send-batches/privacy-access-records',
+        method: 'POST',
+        data: body,
+      },
+      { skipGlobalErrorAlert: true }
+    )
+  )
+}
+
 export async function fetchNotificationDeliveriesRemote(
   params: Record<string, string>
 ): Promise<NotificationDeliveryListResponse> {
