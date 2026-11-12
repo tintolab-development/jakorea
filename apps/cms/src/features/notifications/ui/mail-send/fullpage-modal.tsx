@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSendPrivacyAccessRecord } from '@/features/notifications/hooks/use-send-privacy-access-record'
 import { useSearchParams } from 'react-router-dom'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -321,6 +322,14 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     programKey: String(programNumericId ?? ''),
     onFailure: onRecipientPrivacyFailure,
   })
+  // 정책 CMS-21·22: 발송 화면·결과 팝업 개인정보 조회 기록. 503이면 기존 게이트가 원문 수신자를 비운다.
+  const sendPrivacyRecord = useSendPrivacyAccessRecord({
+    open,
+    remote,
+    programId: programNumericId,
+    recipients: form.recipients,
+    onRecordError: recipientPrivacy.report,
+  })
   const candidatesQuery = useMailRecipientCandidatesQuery(
     {
       programId: programNumericId,
@@ -642,7 +651,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       const selected = draft.templateId
         ? templates.find(item => item.id === draft.templateId)
         : undefined
-      await submitMailSend({
+      const batchId = await submitMailSend({
         draft: { ...draft, recipients: variableResult.validRecipients },
         placeholderKeys: listMailSendPlaceholderKeys(draft.subject, draft.bodyHtml),
         variableCatalog: variablesCatalog ?? null,
@@ -658,12 +667,14 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       setSendConfirmOpen(false)
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
+      sendPrivacyRecord.recordResultPopup(batchId)
     } catch (error) {
       setSendConfirmOpen(false)
       showNotificationSendErrorAlert(showAlert, error, {
         senderDisplayName:
           '.mail-send-fullpage__sender-name input, input.mail-send-fullpage__sender-name',
       })
+      sendPrivacyRecord.recordFailedPopup()
     } finally {
       setSending(false)
     }
