@@ -4,8 +4,12 @@ import type {
   ProgramRegistrationDevAutofillTypeSettings,
 } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 
-/** 교육받은 교사 등록 DEV 자동입력 — 기획 기본 7개 케이스. */
-export type TrainedTeachersRegistrationDevAutofillCaseId = 1 | 2 | 3 | 4 | 5 | 6 | 7
+/**
+ * 교육받은 교사 등록 DEV 자동입력 케이스.
+ * 신규 등록은 커리큘럼형 + 기간 지정만 가능하므로(CMS-FUNC-0591·0277) 단일·복수 회차 2개만 둔다.
+ * 일정형·날짜 지정 TT는 기존 데이터 확인용 Primary seed(186005~186008 등)로만 본다.
+ */
+export type TrainedTeachersRegistrationDevAutofillCaseId = 1 | 2
 
 export type TrainedTeachersRegistrationDevAutofillPreset = {
   id: TrainedTeachersRegistrationDevAutofillCaseId
@@ -22,17 +26,12 @@ export const TRAINED_TEACHERS_REGISTRATION_DEV_AUTOFILL_CASE_LABELS: Record<
   TrainedTeachersRegistrationDevAutofillCaseId,
   string
 > = {
-  1: 'TCH-01 · 커리큘럼 · 단일 · 날짜',
-  2: 'TCH-02 · 커리큘럼 · 단일 · 기간',
-  3: 'TCH-03 · 커리큘럼 · 복수 · 날짜',
-  4: 'TCH-04 · 커리큘럼 · 복수 · 기간',
-  5: 'TCH-05 · 일정 · 단일 · 날짜',
-  6: 'TCH-06 · 일정 · 단일 · 기간',
-  7: 'TCH-07 · 일정 · 복수 · 행사별 일시',
+  1: '커리큘럼 · 단일 회차 · 기간 지정',
+  2: '커리큘럼 · 복수 회차 · 기간 지정',
 }
 
 export const TRAINED_TEACHERS_REGISTRATION_DEV_AUTOFILL_CASE_IDS: readonly TrainedTeachersRegistrationDevAutofillCaseId[] =
-  [1, 2, 3, 4, 5, 6, 7]
+  [1, 2]
 
 const PARTICIPANT: GeneralProgramRegistrationParticipantFlags = {
   individual: false,
@@ -81,9 +80,10 @@ function typeSettings(
 function preset(
   id: TrainedTeachersRegistrationDevAutofillCaseId,
   input: {
-    programType: 'curriculum' | 'schedule'
+    /** 신규 등록 정책 — 커리큘럼형 + 기간 지정만 */
+    programType: 'curriculum'
     sessionRoundType: 'single' | 'multi'
-    educationScheduleMode: 'date' | 'period'
+    educationScheduleMode: 'period'
     curriculumSessionCount: number
     curriculumChartSessionCount: number
     scheduleCurriculumDetailCount: number
@@ -115,7 +115,7 @@ export function resolveTrainedTeachersRegistrationDevAutofillPreset(
       return preset(1, {
         programType: 'curriculum',
         sessionRoundType: 'single',
-        educationScheduleMode: 'date',
+        educationScheduleMode: 'period',
         curriculumSessionCount: 1,
         curriculumChartSessionCount: 2,
         scheduleCurriculumDetailCount: 1,
@@ -124,61 +124,11 @@ export function resolveTrainedTeachersRegistrationDevAutofillPreset(
     case 2:
       return preset(2, {
         programType: 'curriculum',
-        sessionRoundType: 'single',
-        educationScheduleMode: 'period',
-        curriculumSessionCount: 1,
-        curriculumChartSessionCount: 2,
-        scheduleCurriculumDetailCount: 1,
-        scheduleCurriculumGroupCount: 1,
-      })
-    case 3:
-      return preset(3, {
-        programType: 'curriculum',
-        sessionRoundType: 'multi',
-        educationScheduleMode: 'date',
-        curriculumSessionCount: 2,
-        curriculumChartSessionCount: 2,
-        scheduleCurriculumDetailCount: 1,
-        scheduleCurriculumGroupCount: 1,
-      })
-    case 4:
-      return preset(4, {
-        programType: 'curriculum',
         sessionRoundType: 'multi',
         educationScheduleMode: 'period',
         curriculumSessionCount: 2,
         curriculumChartSessionCount: 2,
         scheduleCurriculumDetailCount: 1,
-        scheduleCurriculumGroupCount: 1,
-      })
-    case 5:
-      return preset(5, {
-        programType: 'schedule',
-        sessionRoundType: 'single',
-        educationScheduleMode: 'date',
-        curriculumSessionCount: 1,
-        curriculumChartSessionCount: 1,
-        scheduleCurriculumDetailCount: 1,
-        scheduleCurriculumGroupCount: 2,
-      })
-    case 6:
-      return preset(6, {
-        programType: 'schedule',
-        sessionRoundType: 'single',
-        educationScheduleMode: 'period',
-        curriculumSessionCount: 1,
-        curriculumChartSessionCount: 1,
-        scheduleCurriculumDetailCount: 1,
-        scheduleCurriculumGroupCount: 1,
-      })
-    case 7:
-      return preset(7, {
-        programType: 'schedule',
-        sessionRoundType: 'multi',
-        educationScheduleMode: 'date',
-        curriculumSessionCount: 1,
-        curriculumChartSessionCount: 1,
-        scheduleCurriculumDetailCount: 2,
         scheduleCurriculumGroupCount: 1,
       })
   }

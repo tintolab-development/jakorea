@@ -6,6 +6,7 @@ export type { SearchFilterBinding, UseSearchFiltersOptions } from './use-search-
 export { useIntersectionObserver } from './use-intersection-observer'
 export { usePrefersReducedMotion } from './use-prefers-reduced-motion'
 export { useMediaQuery } from './use-media-query'
+export { useRemoteThumbnailUrl } from './use-remote-thumbnail-url'
 export { useJusoAddressSearch } from '@jakorea/location/juso/react'
 export { useAddressSearch } from './use-address-search'
 export { usePlatformAddressSearch } from './use-platform-address-search'

@@ -127,7 +127,8 @@ export async function listGeminiRecruitmentsPage(
   const baseNo = page.page * page.size
   return {
     rows: page.items.map((item, index) =>
-      mapGeminiRecruitmentItemToRow(item, Math.max(page.totalElements - baseNo - index - 1, 0))
+      // No. 오름차순 — 정렬 순서대로 1부터, 페이지가 넘어가도 이어진다(QA-0385·0423)
+      mapGeminiRecruitmentItemToRow(item, baseNo + index)
     ),
     page: page.page,
     size: page.size,

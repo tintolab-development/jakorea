@@ -256,7 +256,8 @@
 
 .unitIntro :global(p) {
   color: var(--color-neutral-black);
-  font-size: 16px;
+  /* 에디터 본문 기본 글자 크기 15px — 홈페이지 어드민 단원 소개 에디터와 동일 */
+  font-size: 15px;
   font-weight: 400;
   line-height: 150%;
   word-break: keep-all;

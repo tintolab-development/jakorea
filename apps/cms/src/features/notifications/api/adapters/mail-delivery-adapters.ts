@@ -138,6 +138,15 @@ export function mapMailDeliveryToSendHistoryRow(
     sendStatus === '발송 실패'
       ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw
       : ''
+  const receiveStatus = mapNotificationReceiveStatus(item.receiptStatus)
+  // 발송 성공·수신 실패: 발송 실패 사유와 별도로 응답에 있는 사유만 보여 준다 (QA-0176)
+  const receiveFailedReasonRaw =
+    sendStatus !== '발송 실패' && receiveStatus === '수신 실패'
+      ? failedReasonRaw || item.providerResultMessage?.trim() || ''
+      : ''
+  const receiveFailedReason = receiveFailedReasonRaw
+    ? formatNotificationFailedReason(receiveFailedReasonRaw) || receiveFailedReasonRaw
+    : ''
 
   const readStatus: MailSendHistoryRow['readStatus'] = item.openedAt
     ? '읽음'
@@ -160,7 +169,7 @@ export function mapMailDeliveryToSendHistoryRow(
     receiverInfo: formatMailPreviewPerson(receiverName, receiverEmail),
     broadcastTiming,
     sendStatus,
-    receiveStatus: mapNotificationReceiveStatus(item.receiptStatus),
+    receiveStatus,
     // 발송/수신일시: sentAt / deliveredAt만 (requestedAt·openedAt 대체 금지)
     sentAt: item.sentAt?.trim() || '',
     receivedAt: item.deliveredAt?.trim() || '',
@@ -168,6 +177,7 @@ export function mapMailDeliveryToSendHistoryRow(
     templateName,
     bodyHtml,
     failedReason: failedReason || undefined,
+    receiveFailedReason: receiveFailedReason || undefined,
     attachmentFileNames: attachments.map(item => item.fileName),
     attachments,
   }

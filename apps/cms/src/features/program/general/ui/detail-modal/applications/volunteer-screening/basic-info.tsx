@@ -110,10 +110,17 @@ function resolveStatusField(
   }
 
   if (statusRow === 'program_approval') {
+    // 면접 없는 모집 — 승인 결과는 최종 결과 알림으로 발송된다
     return {
       label: '프로그램 승인 현황',
       value: (
-        <ApprovalStatusText status={mapVolunteerProgramApprovalStatus(applicant)} />
+        <div className="applicant-institution-basic-info__approval-status-row">
+          <ApprovalStatusText status={mapVolunteerProgramApprovalStatus(applicant)} />
+          <ResultNotificationSentAt
+            sentAt={applicant.finalResultNotificationSentAt}
+            afterResendButton={false}
+          />
+        </div>
       ),
     }
   }

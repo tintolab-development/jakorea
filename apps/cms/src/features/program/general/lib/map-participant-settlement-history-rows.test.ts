@@ -82,6 +82,8 @@ describe('mapParticipantSettlementHistoryRows', () => {
     const rows = participantSettlementHistoryFromInstructorRows([
       {
         id: '9',
+        rowType: 'SETTLEMENT',
+        isNotApplied: false,
         settlementId: 9,
         settlementApplicationId: null,
         isPendingApplication: false,

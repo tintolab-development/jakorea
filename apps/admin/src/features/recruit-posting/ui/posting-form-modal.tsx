@@ -3,6 +3,7 @@
  * 공지사항 NoticeFormModal 규격 미러 — ContentModal large · Cms* · RichText · FileSelect
  */
 
+import { AdminFieldFrame } from '@jakorea/admin-ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import type {
@@ -68,19 +69,6 @@ type Props = {
   onDelete?: () => void
 }
 
-function FieldLabel({ children, required }: { children: string; required?: boolean }) {
-  return (
-    <div className="posting-form-modal__label">
-      <span>{children}</span>
-      {required ? (
-        <span className="posting-form-modal__required" aria-hidden>
-          *
-        </span>
-      ) : null}
-    </div>
-  )
-}
-
 function toFormStatus(status: RecruitPosting['status']): RecruitPostingFormStatus {
   return status === 'recruiting' ? 'recruiting' : 'result'
 }
@@ -103,6 +91,9 @@ function parseDayjs(value: string | undefined | null): Dayjs | null {
   const d = dayjs(value)
   return d.isValid() ? d : null
 }
+
+/** 시안 2432:39720 내용 에디터 높이 */
+const EDITOR_MIN_HEIGHT_PX = 200
 
 export function RecruitPostingFormModal({
   open,
@@ -145,11 +136,18 @@ export function RecruitPostingFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, getHTML, editorMode, htmlSource, onEditorModeChange, onHtmlSourceChange } =
-    useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
-      contentFormat: editorContentFormat,
-      allowInlineMedia: true,
-    })
+  const {
+    editor,
+    getHTML,
+    editorMode,
+    htmlSource,
+    onEditorModeChange,
+    onHtmlSourceChange,
+    resolveImageSrc,
+  } = useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
+    contentFormat: editorContentFormat,
+    allowInlineMedia: true,
+  })
 
   const resetFromInitial = useCallback(() => {
     if (mode === 'edit' && initial) {
@@ -406,27 +404,32 @@ export function RecruitPostingFormModal({
         }
       >
         <div className="posting-form-modal__form">
+          <div className="posting-form-modal__group-title">
+            <span className="posting-form-modal__group-title-text">공고 정보</span>
+          </div>
           <div className="posting-form-modal__filter-wrap">
             <div className="posting-form-modal__filter-inner">
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--radio">
-                <FieldLabel required>공개 여부</FieldLabel>
-                <CmsRadioGroup
-                  size="large"
-                  value={isPublic ? 'public' : 'private'}
-                  onChange={e => setIsPublic(e.target.value === 'public')}
-                >
-                  <CmsRadio size="large" value="public">
-                    공개
-                  </CmsRadio>
-                  <CmsRadio size="large" value="private">
-                    미공개
-                  </CmsRadio>
-                </CmsRadioGroup>
+                <AdminFieldFrame size="medium" label="공개 여부" required>
+                  <CmsRadioGroup
+                    size="medium"
+                    value={isPublic ? 'public' : 'private'}
+                    onChange={e => setIsPublic(e.target.value === 'public')}
+                  >
+                    <CmsRadio size="medium" value="public">
+                      공개
+                    </CmsRadio>
+                    <CmsRadio size="medium" value="private">
+                      비공개
+                    </CmsRadio>
+                  </CmsRadioGroup>
+                </AdminFieldFrame>
               </div>
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--datetime">
-                <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
-                  inputSize="large"
+                  label="게시일시"
+                  required
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   showTime={{
                     format: 'HH:mm',
@@ -439,26 +442,28 @@ export function RecruitPostingFormModal({
                 />
               </div>
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--radio">
-                <FieldLabel required>게시글 유형</FieldLabel>
-                <CmsRadioGroup
-                  size="large"
-                  value={status}
-                  onChange={e => setStatus(e.target.value as RecruitPostingFormStatus)}
-                >
-                  <CmsRadio size="large" value="recruiting">
-                    모집
-                  </CmsRadio>
-                  <CmsRadio size="large" value="result">
-                    발표
-                  </CmsRadio>
-                </CmsRadioGroup>
+                <AdminFieldFrame size="medium" label="게시글 유형" required>
+                  <CmsRadioGroup
+                    size="medium"
+                    value={status}
+                    onChange={e => setStatus(e.target.value as RecruitPostingFormStatus)}
+                  >
+                    <CmsRadio size="medium" value="recruiting">
+                      모집
+                    </CmsRadio>
+                    <CmsRadio size="medium" value="result">
+                      발표
+                    </CmsRadio>
+                  </CmsRadioGroup>
+                </AdminFieldFrame>
               </div>
               {/* 발표(RESULT)는 모집기간을 저장하지 않으므로 필드를 숨긴다. 입력값은 state에 남아 모집 전환 시 복원된다. */}
               {recruitPeriodRequired ? (
                 <div className="posting-form-modal__filter-field posting-form-modal__filter-field--range">
-                  <FieldLabel required>모집 기간</FieldLabel>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    label="모집 기간"
+                    required
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     showTime={{
                       format: 'HH:mm',
@@ -482,9 +487,10 @@ export function RecruitPostingFormModal({
           </div>
 
           <div className="posting-form-modal__section">
-            <FieldLabel required>제목</FieldLabel>
             <CmsInput
-              inputSize="large"
+              label="제목"
+              required
+              inputSize="medium"
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -492,12 +498,18 @@ export function RecruitPostingFormModal({
             />
           </div>
 
-          <div className="posting-form-modal__section posting-form-modal__section--editor">
-            <FieldLabel required>내용</FieldLabel>
+          <AdminFieldFrame
+            size="medium"
+            label="내용"
+            required
+            className="posting-form-modal__section posting-form-modal__section--editor"
+          >
             <div className="posting-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
+                minHeight={EDITOR_MIN_HEIGHT_PX}
                 allowInlineMedia
+                resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock
                 editorMode={editorMode}
                 htmlSource={htmlSource}
@@ -505,7 +517,7 @@ export function RecruitPostingFormModal({
                 onHtmlSourceChange={onHtmlSourceChange}
               />
             </div>
-          </div>
+          </AdminFieldFrame>
 
           <div className="posting-form-modal__attachment">
             <div className="posting-form-modal__attachment-label">첨부 파일</div>
@@ -528,19 +540,17 @@ export function RecruitPostingFormModal({
           </div>
 
           <div className="posting-form-modal__section posting-form-modal__section--link">
-            <div className="posting-form-modal__link-heading">
-              <span className="posting-form-modal__link-heading-title">연결 버튼</span>
-              <span className="posting-form-modal__link-heading-note">
-                링크 입력 시 공고 상세에 버튼이 노출됩니다.
+            <div className="posting-form-modal__group-title">
+              <span className="posting-form-modal__group-title-text">연결 버튼</span>
+              <span className="posting-form-modal__group-title-note">
+                ※ 버튼명 입력 시에만 공고 상세에 버튼이 노출됩니다.
               </span>
             </div>
             <div className="posting-form-modal__link-row">
               <div className="posting-form-modal__link-field">
-                <FieldLabel>
-                  {`채용 공고 바로가기 버튼명 (최대 ${CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}자)`}
-                </FieldLabel>
                 <CmsInput
-                  inputSize="large"
+                  label={`채용 공고 바로가기 버튼명 (최대 ${CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}자)`}
+                  inputSize="medium"
                   width="100%"
                   maxLength={CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}
                   value={buttonLabel}
@@ -549,9 +559,9 @@ export function RecruitPostingFormModal({
                 />
               </div>
               <div className="posting-form-modal__link-field">
-                <FieldLabel>채용 공고 바로가기 링크</FieldLabel>
                 <CmsInput
-                  inputSize="large"
+                  label="채용 공고 바로가기 링크"
+                  inputSize="medium"
                   width="100%"
                   value={linkUrl}
                   onChange={e => setLinkUrl(e.target.value)}

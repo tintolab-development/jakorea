@@ -467,6 +467,14 @@ export type PortalSettlementApplication = {
   /** programScheduleId 회차의 시작·종료 시각. 회차를 못 찾으면 null */
   scheduleStartAt?: string | null
   scheduleEndAt?: string | null
+  /** 다음 revision으로 대체된 이전 신청이면 true (status=RESUBMITTED와 같다) */
+  superseded?: boolean
+  /** 대체된 이전 신청의 원래 결과. superseded=false이면 null */
+  supersededReason?: 'REJECTED' | 'CORRECTION_REQUESTED' | null
+  /** 최신 정산 revision 지급 총액. 정정 승인 후에는 정정된 금액. 정산이 없으면 null (grossAmount는 제출 당시 금액) */
+  latestGrossAmount?: number | null
+  /** 최신 정산 revision 실지급액. 정정 승인 후에는 정정된 금액. 정산이 없으면 null (netPaymentAmount는 제출 당시 금액) */
+  latestNetPaymentAmount?: number | null
 }
 
 function applicationPath(applicationType: ProgramApplicationType, applicationId: string): string {

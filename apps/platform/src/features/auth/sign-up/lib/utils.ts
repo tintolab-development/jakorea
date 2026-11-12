@@ -5,8 +5,11 @@ import type {
   MemberType,
   SchoolStatus,
 } from '../model/sign-up.types'
-import { isDateWithinInputBounds } from '@/shared/ui/pf-date-input/date-utils'
-import { maskSignupPhoneForDisplay } from './helpers/mask-phone'
+import {
+  birthDateRangeMessage,
+  checkBirthDateRange,
+  type BirthDateRangeStatus,
+} from './birth-date-bounds'
 import { toApiSignupPhone } from './helpers/to-api-phone'
 
 /** 숫자만 입력해도 YYYY.MM.DD 형식으로 `.`을 자동 삽입한다. */
@@ -24,11 +27,20 @@ export function formatBirthDateInput(value: string) {
   return `${digits.slice(0, 4)}.${digits.slice(4, 6)}.${digits.slice(6)}`
 }
 
-export function parseBirthDate(value: string) {
+export type BirthDateInputCheck =
+  | { status: 'valid'; date: Date }
+  | { status: 'invalid-format' }
+  | { status: Exclude<BirthDateRangeStatus, 'valid'> }
+
+/**
+ * `YYYY.MM.DD` 생년월일 입력 확인.
+ * 형식·실재 날짜를 본 뒤 생년월일 전용 범위(오늘(KST)까지 · 최대 만 120세)를 적용한다 (QA-0220·QA-0503).
+ */
+export function checkBirthDateInput(value: string, now: Date = new Date()): BirthDateInputCheck {
   const matched = value.trim().match(/^(\d{4})\.(\d{2})\.(\d{2})$/)
 
   if (!matched) {
-    return null
+    return { status: 'invalid-format' }
   }
 
   const [, yearValue, monthValue, dayValue] = matched
@@ -38,14 +50,32 @@ export function parseBirthDate(value: string) {
   const date = new Date(year, month - 1, day)
 
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return null
+    return { status: 'invalid-format' }
   }
 
-  if (!isDateWithinInputBounds(date)) {
-    return null
+  const range = checkBirthDateRange(date, now)
+  if (range !== 'valid') {
+    return { status: range }
   }
 
-  return date
+  return { status: 'valid', date }
+}
+
+/**
+ * 작성 중 실시간 안내용 — `YYYY.MM.DD`를 다 입력했고 실재하는 날짜인데 범위를 벗어났을 때만 문구.
+ * 입력 중(미완성)·형식 오류·정상은 null.
+ */
+export function getBirthDateRangeMessage(value: string, now: Date = new Date()): string | null {
+  const checked = checkBirthDateInput(value, now)
+  if (checked.status === 'future' || checked.status === 'too-old') {
+    return birthDateRangeMessage(checked.status)
+  }
+  return null
+}
+
+export function parseBirthDate(value: string, now: Date = new Date()) {
+  const result = checkBirthDateInput(value, now)
+  return result.status === 'valid' ? result.date : null
 }
 
 export function calculateInternationalAge(birthDateValue: string) {
@@ -205,8 +235,9 @@ export function buildUnderAgeConfirmationRows(input: {
     { label: '1365 ID', value: input.volunteerId.trim() || '-' },
     { label: '보호자 이름', value: input.guardianName?.trim() || '-' },
     {
+      // 가입정보 확인은 본인(보호자 포함) 입력값이라 원문 표시(개인정보 마스킹 정책 10/26, 사용자 플랫폼 2)
       label: '보호자 휴대폰',
-      value: maskSignupPhoneForDisplay(input.guardianPhone),
+      value: toApiSignupPhone(input.guardianPhone) || input.guardianPhone?.trim() || '-',
     },
     { label: '가입자와의 관계', value: input.guardianRelationship?.trim() || '-' },
   )

@@ -62,9 +62,10 @@ import './program-list-page.css'
 import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
-  resolveProgramDeleteGuideModalCopy,
+  resolveProgramDeleteGuideModalCopyWithNames,
   resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
+import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { resolveProgramListDetailEntry } from '@/features/program/general/lib/resolve-program-list-detail-entry'
@@ -80,12 +81,15 @@ import {
   companySchoolListParamsFromOverviewStatus,
   readCompanySchoolTableFilters,
 } from '@/features/program/1c-1s/api/list-params'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import type { OverviewStatusFilter } from './use-program-list-filters'
 
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
+/** 1사1교 목록 헤더 — 일반 프로그램 목록과 같은 시안 문구 */
+const COMPANY_SCHOOL_LIST_HEADER_NOTICE = '진행 중이거나 완료된 프로그램은 삭제할 수 없습니다.'
 
 function ProgramListPageContent() {
   const { showAlert } = useCmsAlert()
@@ -168,8 +172,13 @@ function ProgramListPageContent() {
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
   const programBulkDeleteGuide = useMemo(
-    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
-    [programsPendingBulkDelete.length]
+    // 일반 프로그램 목록과 같은 안내 — 단건 `[이름]` / 일괄 `[첫 이름] 외 N개` (QA-0296)
+    () =>
+      resolveProgramDeleteGuideModalCopyWithNames(
+        programsPendingBulkDelete.length,
+        programsPendingBulkDelete.map(resolveGeneralProgramListTitle)
+      ),
+    [programsPendingBulkDelete]
   )
   const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
   const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
@@ -452,6 +461,16 @@ function ProgramListPageContent() {
           : statusFilter === 'matching_completed'
             ? ('education_before_textbook' as const)
             : (statusFilter as ProgramLifecycleStatus | null),
+      // 1사1교 시안(4175:65554 외): 봉사자·참여자 유형 열 제외·강사 모집 인원·예정 탭 기간 요일·삭제 불가 안내
+      ...(programType === 'company_school'
+        ? {
+            columnPreset: 'companySchool' as const,
+            // 진행 현황·교육 대상·운영 기간은 서버 필터(`companySchoolListParamsFromOverviewStatus`) — 클라 재필터 안 함
+            serverSideOverviewFilters: shouldUseCompanySchoolRemoteApi(),
+            // 시안: 안내 문구는 전체 프로그램 탭(리스트·캘린더)에만
+            ...(listView === 'ALL' ? { headerNotice: COMPANY_SCHOOL_LIST_HEADER_NOTICE } : {}),
+          }
+        : {}),
     }
   }, [programType, statusFilter])
 
@@ -687,7 +706,12 @@ function ProgramListPageContent() {
         tableVariant={programType === 'company_school' ? 'overview' : 'general'}
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
-        toolbarActionsAfterExcel={programListToolbarActionsAfterExcel}
+        // 1사1교 캘린더뷰 시안(4175:65767 외)에는「신규 등록」이 없다
+        toolbarActionsAfterExcel={
+          programType === 'company_school' && viewMode === 'calendar'
+            ? undefined
+            : programListToolbarActionsAfterExcel
+        }
         disableUrlSync={
           isCompanySchoolPath &&
           (Boolean(companySchoolProgramIdFromUrl) || !!selectedProgramForFullPageModal)
@@ -796,6 +820,7 @@ function ProgramListPageContent() {
         onFormCancel={closeFormModal}
         formLoading={formLoading}
         deleteModalOpen={deleteModalOpen}
+        deleteProgramName={programToDelete ? resolveGeneralProgramListTitle(programToDelete) : undefined}
         onConfirmDelete={() =>
           handleConfirmDelete(programToDelete, () => {
             setDeleteModalOpen(false)

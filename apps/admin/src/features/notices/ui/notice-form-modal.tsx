@@ -5,6 +5,7 @@
  * @see apps/cms/src/features/posts/ui/notice-register-modal.css
  */
 
+import { AdminFieldFrame } from '@jakorea/admin-ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Notice, NoticeAttachment, NoticeCreateInput } from '@/entities/notices/model/types'
@@ -62,19 +63,6 @@ type Props = {
   onCancel: () => void
   onSubmit: (values: NoticeFormValues) => void
   onDelete?: () => void
-}
-
-function FieldLabel({ children, required }: { children: string; required?: boolean }) {
-  return (
-    <div className="notice-form-modal__label">
-      <span>{children}</span>
-      {required ? (
-        <span className="notice-form-modal__required" aria-hidden>
-          *
-        </span>
-      ) : null}
-    </div>
-  )
 }
 
 export function NoticeFormModal({
@@ -291,8 +279,9 @@ export function NoticeFormModal({
           <div className="notice-form-modal__filter-wrap">
             <div className="notice-form-modal__filter-inner">
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--datetime">
-                <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
+                  label="게시일시"
+                  required
                   inputSize="medium"
                   width={240}
                   showTime={{
@@ -307,41 +296,44 @@ export function NoticeFormModal({
                 />
               </div>
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--radio">
-                <FieldLabel required>공개 여부</FieldLabel>
-                <CmsRadioGroup
-                  size="medium"
-                  value={isPublic ? 'public' : 'private'}
-                  onChange={e => setIsPublic(e.target.value === 'public')}
-                >
-                  <CmsRadio size="medium" value="public">
-                    공개
-                  </CmsRadio>
-                  <CmsRadio size="medium" value="private">
-                    비공개
-                  </CmsRadio>
-                </CmsRadioGroup>
+                <AdminFieldFrame size="medium" label="공개 여부" required>
+                  <CmsRadioGroup
+                    size="medium"
+                    value={isPublic ? 'public' : 'private'}
+                    onChange={e => setIsPublic(e.target.value === 'public')}
+                  >
+                    <CmsRadio size="medium" value="public">
+                      공개
+                    </CmsRadio>
+                    <CmsRadio size="medium" value="private">
+                      비공개
+                    </CmsRadio>
+                  </CmsRadioGroup>
+                </AdminFieldFrame>
               </div>
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--radio">
-                <FieldLabel required>상단 고정</FieldLabel>
-                <CmsRadioGroup
-                  size="medium"
-                  value={isPinned ? 'on' : 'off'}
-                  onChange={e => setIsPinned(e.target.value === 'on')}
-                >
-                  <CmsRadio size="medium" value="off">
-                    고정 안 함
-                  </CmsRadio>
-                  <CmsRadio size="medium" value="on">
-                    고정
-                  </CmsRadio>
-                </CmsRadioGroup>
+                <AdminFieldFrame size="medium" label="상단 고정" required>
+                  <CmsRadioGroup
+                    size="medium"
+                    value={isPinned ? 'on' : 'off'}
+                    onChange={e => setIsPinned(e.target.value === 'on')}
+                  >
+                    <CmsRadio size="medium" value="off">
+                      고정 안 함
+                    </CmsRadio>
+                    <CmsRadio size="medium" value="on">
+                      고정
+                    </CmsRadio>
+                  </CmsRadioGroup>
+                </AdminFieldFrame>
               </div>
             </div>
           </div>
 
           <div className="notice-form-modal__section">
-            <FieldLabel required>제목</FieldLabel>
             <CmsInput
+              label="제목"
+              required
               inputSize="medium"
               width="100%"
               value={title}
@@ -350,8 +342,12 @@ export function NoticeFormModal({
             />
           </div>
 
-          <div className="notice-form-modal__section notice-form-modal__section--editor">
-            <FieldLabel required>내용</FieldLabel>
+          <AdminFieldFrame
+            size="medium"
+            label="내용"
+            required
+            className="notice-form-modal__section notice-form-modal__section--editor"
+          >
             <div className="notice-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
@@ -364,7 +360,7 @@ export function NoticeFormModal({
                 onHtmlSourceChange={onHtmlSourceChange}
               />
             </div>
-          </div>
+          </AdminFieldFrame>
 
           {/* 첨부만 th/td 테이블 — CMS notice-register-modal__attachment */}
           <div className="notice-form-modal__attachment">

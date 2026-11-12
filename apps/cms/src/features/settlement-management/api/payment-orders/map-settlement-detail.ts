@@ -139,8 +139,8 @@ export function buildProgramDetailFromSettlements(
     aggregateProcessingStatus: row.processingStatus,
     businessPeriodStart: period.businessPeriodStart,
     businessPeriodEnd: period.businessPeriodEnd,
-    sessionCompleted: progress?.sessionCompleted ?? 0,
-    sessionTotal: progress?.sessionTotal ?? 0,
+    sessionCompleted: progress?.sessionCompleted ?? null,
+    sessionTotal: progress?.sessionTotal ?? null,
     instructorRows,
   }
 }

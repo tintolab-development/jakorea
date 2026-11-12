@@ -67,7 +67,7 @@ const actualTimeAxios = Object.assign(new Error('bad request'), {
 })
 assert.equal(
   instructorSettlementApiErrorMessage(actualTimeAxios),
-  '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  '강의 실적 시간이 없어 지급조서를 제출할 수 없어요. 담당자에게 문의해 주세요.',
 )
 
 const assignedScheduleAxios = Object.assign(new Error('bad request'), {
@@ -79,7 +79,7 @@ const assignedScheduleAxios = Object.assign(new Error('bad request'), {
 })
 assert.equal(
   instructorSettlementApiErrorMessage(assignedScheduleAxios),
-  '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  '배정된 강의 시간이 없어 지급조서를 제출할 수 없어요. 담당자에게 문의해 주세요.',
 )
 
 // 409 SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED — 서버 message 그대로 + addressSide별 보조 안내

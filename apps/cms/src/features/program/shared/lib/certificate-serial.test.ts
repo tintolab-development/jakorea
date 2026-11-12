@@ -20,6 +20,17 @@ describe('isCertificateSerialPlaceholder', () => {
     expect(isCertificateSerialPlaceholder(CERTIFICATE_SERIAL_PLACEHOLDER)).toBe(true)
     expect(isCertificateSerialPlaceholder('26-JA-00017')).toBe(false)
   })
+
+  it('uses a placeholder that cannot be mistaken for an issued YY-JA number', () => {
+    expect(CERTIFICATE_SERIAL_PLACEHOLDER).not.toMatch(/^\d{2}-JA-/)
+    expect(CERTIFICATE_SERIAL_PLACEHOLDER).toContain('SAMPLE')
+    expect(isIssuedCertificateSerial(CERTIFICATE_SERIAL_PLACEHOLDER)).toBe(false)
+  })
+
+  it('still treats the legacy 26-JA-00000 placeholder as not issued', () => {
+    expect(isCertificateSerialPlaceholder('26-JA-00000')).toBe(true)
+    expect(isCertificateSerialPlaceholder('27-JA-00000')).toBe(true)
+  })
 })
 
 describe('parseIssuedCertificateSerial', () => {

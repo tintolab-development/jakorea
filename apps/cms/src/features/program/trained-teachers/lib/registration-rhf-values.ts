@@ -146,6 +146,58 @@ export function createDefaultTrainedTeachersRegistrationRhfValues(
   }
 }
 
+/**
+ * 신규 등록 시작값 — 시안(9899:221372) 기본 선택값.
+ * IP Owned·Course Delivered By = JA(셀렉 option value `ja`), Partner Involvement = No, 사업 분야는 미선택.
+ * 임시저장 복원·레거시 import 는 `createDefaultTrainedTeachersRegistrationRhfValues` 를 그대로 써서
+ * 저장값을 덮지 않는다. 프로그램 상세 조회·수정은 이 함수를 쓰지 않는다(서버 값 그대로).
+ */
+export function createNewTrainedTeachersRegistrationRhfValues(): TrainedTeachersRegistrationRhfValues {
+  return {
+    ...createDefaultTrainedTeachersRegistrationRhfValues(),
+    businessArea: '',
+    // 등록 셀렉(`TEMPLATE_FORM_*_OPTIONS`)이 쓰는 값. 사용자가 JA를 고를 때와 같은 값으로 저장된다.
+    ipOwned: 'ja',
+    courseDeliveredBy: 'ja' as TrainedTeachersRegistrationRhfValues['courseDeliveredBy'],
+    partnerInvolvement: false,
+  }
+}
+
+const TT_SCHEDULE_SETTINGS_PREFIX = 'trainedTeachersRegistration.educationScheduleSettings'
+
+/**
+ * 신규 등록 임시저장 복원 — 교육 진행 구조는 커리큘럼형, 교육 진행 일정은 기간 지정으로 맞춘다
+ * (CMS-FUNC-0591·0277). 예전 draft의 일정형·날짜 지정 값은 신규 등록 화면에서 고를 수 없으므로
+ * 라디오를 기간 지정으로 바꿀 때와 같이 날짜 지정 예정일은 버리고, 보관된 기간 지정 예정일이 있으면 그것만 되살린다.
+ * 일정형 세부 일정(scheduleDetails)은 커리큘럼형에서 쓰지 않으므로 비운다.
+ * 이미 저장된 프로그램(상세 조회·수정)에는 쓰지 않는다 — 서버 값 그대로.
+ */
+export function normalizeTrainedTeachersNewRegistrationRhfValues(
+  values: TrainedTeachersRegistrationRhfValues
+): TrainedTeachersRegistrationRhfValues {
+  const structureOk = values.educationStructure === 'curriculum'
+  const modeOk = values.educationScheduleMode === 'period'
+  if (structureOk && modeOk) return values
+  const next = cloneTrainedTeachersRegistrationRhfValues(values)
+  next.educationStructure = 'curriculum'
+  if (!structureOk) next.scheduleDetails = []
+  if (!modeOk) {
+    const stashedPeriodLines = next.sidecar[`${TT_SCHEDULE_SETTINGS_PREFIX}.scheduleLinesByPeriod`]
+    const periodLines = Array.isArray(stashedPeriodLines)
+      ? stashedPeriodLines.filter((line): line is string => typeof line === 'string')
+      : []
+    delete next.sidecar[`${TT_SCHEDULE_SETTINGS_PREFIX}.scheduleLinesByDate`]
+    delete next.sidecar[`${TT_SCHEDULE_SETTINGS_PREFIX}.singleDateIso`]
+    next.educationScheduleMode = 'period'
+    next.educationScheduleLines = periodLines
+    next.educationScheduleRange = educationScheduleRangeFromPeriodLines({
+      mode: 'period',
+      lines: periodLines,
+    })
+  }
+  return next
+}
+
 export function cloneTrainedTeachersRegistrationRhfValues(
   values: TrainedTeachersRegistrationRhfValues
 ): TrainedTeachersRegistrationRhfValues {
@@ -179,9 +231,9 @@ function asStringList(value: unknown): string[] {
   return [...new Set(value.map(item => String(item).trim()).filter(Boolean))]
 }
 
+/** 등록 overlay → RHF. 명시적으로 Yes를 고른 경우만 true — 값 없음은 No(시안 기본값)로 저장한다. */
 function partnerInvolvementFromOverlay(value: unknown): boolean {
-  if (value === false || value === 'no') return false
-  return true
+  return value === true || value === 'yes'
 }
 
 function partnerInvolvementToOverlay(value: boolean): string {

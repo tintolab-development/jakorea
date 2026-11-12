@@ -25,8 +25,6 @@ const UNWRITTEN_STATUSES: readonly EducationSettlementStatus[] = [
   'overdue',
 ]
 
-const IN_REVIEW_STATUSES: readonly EducationSettlementStatus[] = ['waiting_confirm', 'reapplied']
-
 const CANCELLED_ASSIGNMENT = new Set(['CANCELLED', 'CANCELED', 'UNASSIGNED'])
 const CANCELLED_SCHEDULE = new Set(['CANCELLED', 'CANCELED'])
 const COMPLETED_SCHEDULE = new Set(['COMPLETED', 'DONE', 'HELD', 'FINISHED'])
@@ -61,22 +59,38 @@ export function resolvePaymentStatementProcessLabel(
   if (options?.variant === 'payment_statement') {
     return resolveInstructorPaymentStatementAggregateLabel(items)
   }
-  if (items.some(item => IN_REVIEW_STATUSES.includes(item.status))) {
-    return '확인진행중'
-  }
-  const unwritten = countUnwrittenSettlements(items)
-  if (unwritten > 0) return `미작성 ${unwritten}건`
-  if (items.some(item => item.status === 'rejected')) return '신청 반려'
-  const actionable = items.filter(
-    item => item.status !== 'upcoming' && item.status !== 'unresolved',
-  )
-  if (actionable.length > 0 && actionable.every(item => item.status === 'paid')) {
-    return '지급 완료'
-  }
-  if (items.some(item => item.status === 'confirmed' || item.status === 'paid')) {
-    return '확인 완료'
-  }
-  return '확인진행중'
+  return resolveReceiptProcessLabel(items)
+}
+
+/** 개인·봉사자 영수증 처리 현황 라벨 (R17) */
+export const RECEIPT_PROCESS_LABEL = {
+  reapplied: '영수증 재신청',
+  waiting_confirm: '확인 대기',
+  confirmed: '확인 완료',
+  paid: '계좌 지급 완료',
+  rejected: '신청 반려',
+  mixed: '확인 진행 중',
+} as const
+
+/**
+ * 영수증 처리 현황 — 강사식 집계 (R17): 제출된 회차의 상태가 한 가지면 그 라벨, 여러 가지면 "확인 진행 중".
+ * "미작성 N건"은 쓰지 않는다. 제출된 회차가 없을 때도 "확인 진행 중"(기존 기본값 유지).
+ */
+export function resolveReceiptProcessLabel(items: readonly EducationSettlementItem[]): string {
+  const labels = items
+    .map((item): string | null =>
+      item.status === 'reapplied' ||
+      item.status === 'waiting_confirm' ||
+      item.status === 'confirmed' ||
+      item.status === 'paid' ||
+      item.status === 'rejected'
+        ? RECEIPT_PROCESS_LABEL[item.status]
+        : null,
+    )
+    .filter((label): label is string => label != null)
+  const unique = new Set(labels)
+  if (unique.size === 1) return labels[0]!
+  return RECEIPT_PROCESS_LABEL.mixed
 }
 
 export function isAssignedEducationScheduleForSettlement(
@@ -206,9 +220,13 @@ export function resolveEducationSettlementStatusResult(
     const operationEnded = hasBusinessEnd
       ? isTimestampPassed(input.businessEndAt, now)
       : isTimestampPassed(input.operationEndAt, now)
-    const deadlinePassed =
-      isTimestampPassed(input.receiptDeadlineAt, now) ||
-      (hasBusinessEnd && isTimestampPassed(input.operationEndAt, now))
+    // 제출 마감 = 회차 settlementSubmitDeadlineAt(K20). 없을 때만 운영 기간 종료일로 대체
+    const submitDeadline = input.receiptDeadlineAt?.trim()
+      ? input.receiptDeadlineAt
+      : hasBusinessEnd
+        ? input.operationEndAt
+        : null
+    const deadlinePassed = isTimestampPassed(submitDeadline, now)
     // 운영 종료가 가장 우선, 그다음 강의보고서 미작성(마감 후면 마감 안내를 함께), 그다음 마감
     if (operationEnded) {
       return {

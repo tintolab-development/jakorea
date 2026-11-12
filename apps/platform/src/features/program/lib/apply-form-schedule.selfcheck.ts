@@ -1404,15 +1404,19 @@ function testTrainedTeachersSessionRows() {
   )
   assert.equal(findIncompletePreferredScheduleMessage(twoSessionsInput(), options), null)
 
-  // 다음 차시 교시 자동 입력(앞 차시 + 1) — 직접 고친 교시는 덮지 않는다
-  const resized = resizeTrainedTeachersSessionTimes([{ classPeriod: '3', startTime: '', endTime: '' }], 2)
-  assert.deepEqual(resized.map(row => row.classPeriod), ['3', '4'])
-  const followed = patchTrainedTeachersSessionTime(resized, 0, { classPeriod: '5' })
-  assert.deepEqual(followed.map(row => row.classPeriod), ['5', '6'])
-  const manual = patchTrainedTeachersSessionTime(followed, 1, { classPeriod: '8' })
-  const keptManual = patchTrainedTeachersSessionTime(manual, 0, { classPeriod: '1' })
-  assert.deepEqual(keptManual.map(row => row.classPeriod), ['1', '8'])
-  assert.deepEqual(resizeTrainedTeachersSessionTimes(keptManual, 1).map(row => row.classPeriod), ['1'])
+  // 차시마다 교시를 따로 입력 — 1사1교식 다음 교시 자동 입력(앞 차시 + 1) 없음
+  const resized = resizeTrainedTeachersSessionTimes([{ classPeriod: '1', startTime: '', endTime: '' }], 2)
+  assert.deepEqual(resized.map(row => row.classPeriod), ['1', ''])
+  const changedFirst = patchTrainedTeachersSessionTime(resized, 0, { classPeriod: '3' })
+  assert.deepEqual(changedFirst.map(row => row.classPeriod), ['3', ''])
+  // 연강이 아니어도 된다 (1교시·4교시)
+  const nonConsecutive = patchTrainedTeachersSessionTime(
+    patchTrainedTeachersSessionTime(resized, 1, { classPeriod: '4' }),
+    0,
+    { classPeriod: '1' },
+  )
+  assert.deepEqual(nonConsecutive.map(row => row.classPeriod), ['1', '4'])
+  assert.deepEqual(resizeTrainedTeachersSessionTimes(nonConsecutive, 1).map(row => row.classPeriod), ['1'])
 
   // 임시저장 복원 — sessionCount·차시 줄을 되살린다
   const restored = preferredScheduleBlocksFromDraftAnswers(

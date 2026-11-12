@@ -8,6 +8,10 @@ import { VolunteerInterviewApplicantScheduleParagraph } from '@/features/templat
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
+import {
+  INTERVIEW_TIME_DEFAULT_START,
+  interviewTimeMinuteStep,
+} from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-time-picker-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
@@ -462,6 +466,9 @@ function VolunteerInterviewScheduleBlock({
                   width={240}
                   placeholder="시간을 선택해 주세요"
                   endTimeAlwaysOn
+                  defaultStartTime={INTERVIEW_TIME_DEFAULT_START}
+                  minuteStep={interviewTimeMinuteStep(timeUnit)}
+                  emphasizeActiveMinute
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsRadioGroup

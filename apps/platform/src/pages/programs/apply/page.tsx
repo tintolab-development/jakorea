@@ -3133,6 +3133,7 @@ export function ProgramApplyPage() {
       const basicAnswer = basicParagraph
         ? basicInfoAnswerFromValues(basicInfoForSubmit, {
             includePreferredEducationFields: showPreferredEducationForm,
+            includeEducationPlaceFields: shouldShowEducationPlaceOnBasicInfo(basicParagraph.id),
             existingAnswer: existingBasicAnswer,
           })
         : null

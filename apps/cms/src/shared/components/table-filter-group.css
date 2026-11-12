@@ -859,6 +859,9 @@
  */
 .table-filter-group__field--address-region-filter
   .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__field--compact-select-pair
+  .table-filter-group__address-region-selects
   > .cms-select {
   --cms-control-pl: 12px;
   --cms-control-pr: 8px;
@@ -867,8 +870,12 @@
 
 /* 선택 시 X까지 예약하면 114.75px 안에서 텍스트가 다시 과도하게 줄어든다.
  * X는 화살표 영역 위에 표시되는 보조 동작이므로 주소 필터에서는 화살표 폭만
- * 텍스트 레이아웃에 예약하고, 긴 선택값은 ellipsis + native title로 보완한다. */
+ * 텍스트 레이아웃에 예약하고, 긴 선택값은 ellipsis + native title로 보완한다.
+ * 같은 114.75px 칸을 쓰는 compact `selectPair`(실적 관리 년도/분기 등)도 동일하게 적용한다. */
 .table-filter-group__field--address-region-filter
+  .table-filter-group__address-region-selects
+  > .cms-select.cms-select--clearable,
+.table-filter-group__field--compact-select-pair
   .table-filter-group__address-region-selects
   > .cms-select.cms-select--clearable {
   --cms-select-suffix-w: var(--cms-icon-size, 20px);

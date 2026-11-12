@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { IndividualSettlementReviewListItemApplicationType } from './individualSettlementReviewListItemApplicationType';
 
 export interface IndividualSettlementReviewListItem {
   settlementApplicationId?: number;
@@ -24,4 +25,8 @@ export interface IndividualSettlementReviewListItem {
   reviewedAt?: string | null;
   rejected?: boolean;
   rejectionReason?: string | null;
+  /** 참여자(INDIVIDUAL) 또는 봉사자(VOLUNTEER) 영수증 정산 */
+  applicationType?: IndividualSettlementReviewListItemApplicationType;
+  /** VOLUNTEER 신청의 program_volunteer_application.id. INDIVIDUAL 신청은 null. */
+  volunteerApplicationId?: number | null;
 }

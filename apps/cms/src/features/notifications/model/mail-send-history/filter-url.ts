@@ -21,10 +21,14 @@ export const MAIL_SEND_HISTORY_FILTER_URL = {
   reserveTo: 'mail_reserve_to',
 } as const
 
-/** 기획: 기본 조회 기간 금일 ~ 일주일 뒤 */
-export function defaultMailSendHistoryDateRange(): [Dayjs, Dayjs] {
-  const start = dayjs().startOf('day')
-  return [start, start.add(7, 'day')]
+/**
+ * 기본 조회 기간(요청일): 최근 7일 ~ 금일 (QA-0342).
+ * 지난 발송 이력이 기본 조회에서 빠지지 않게 과거 쪽으로 잡는다.
+ * 예약 발송은 사용자가 켜는 예약일 필터(reserveDateRange)로 따로 조회한다.
+ */
+export function defaultMailSendHistoryDateRange(now: Dayjs = dayjs()): [Dayjs, Dayjs] {
+  const today = now.startOf('day')
+  return [today.subtract(7, 'day'), today]
 }
 
 function parseDate(raw: string | null): Dayjs | null {

@@ -1,6 +1,7 @@
 import { ProgramBackButton } from '@/features/program'
 import {
   canNavigateBackInApp,
+  CAREERS_SCROLL_TO_JOBS_STATE,
   CareerPostingAdjacentNav,
   careerJobBadgeVariant,
   CAREERS_PATH,
@@ -12,7 +13,6 @@ import {
 import {
   careerPostingLinkCtaVisible,
   careerPostingLinkHref,
-  resolveCareerPostingLinkCtaLabel,
 } from '@/features/careers/lib/link-cta'
 import ctaArrowUrl from '@/features/careers/image/icon/cta-arrow.svg'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -53,28 +53,31 @@ export function CareerPostingDetailPage() {
   }
 
   const handleGoToList = () => {
-    navigate(listReturnPath || CAREERS_PATH)
+    // 보던 목록 주소(검색·페이지)로 가되, 채용공고 목록 영역이 바로 보이게 한다(QA-0486)
+    navigate(listReturnPath || CAREERS_PATH, { state: CAREERS_SCROLL_TO_JOBS_STATE })
   }
 
   if (status !== 'ready' || !detail) {
     return (
       <section className={styles.page}>
-        <div className={styles.back}>
-          <ProgramBackButton label="이전으로" onClick={handleBack} />
-        </div>
-        <div className={styles.status}>
-          {status === 'loading' ? (
-            <PFLoadingSpinner centered label="채용공고를 불러오는 중" />
-          ) : (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-              {statusMessage(status)}
-            </PFText>
-          )}
-          {status === 'error' ? (
-            <PFButton variant="tertiary" size="large" onClick={refetch}>
-              다시 시도
-            </PFButton>
-          ) : null}
+        <div className={styles.main}>
+          <div className={styles.back}>
+            <ProgramBackButton label="이전으로" onClick={handleBack} />
+          </div>
+          <div className={styles.status}>
+            {status === 'loading' ? (
+              <PFLoadingSpinner centered label="채용공고를 불러오는 중" />
+            ) : (
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                {statusMessage(status)}
+              </PFText>
+            )}
+            {status === 'error' ? (
+              <PFButton variant="tertiary" size="large" onClick={refetch}>
+                다시 시도
+              </PFButton>
+            ) : null}
+          </div>
         </div>
       </section>
     )
@@ -85,119 +88,122 @@ export function CareerPostingDetailPage() {
     fileName: file.name,
     href: file.fileUrl,
   }))
-  const showLinkButton = careerPostingLinkCtaVisible(detail.linkUrl)
+  const showLinkButton = careerPostingLinkCtaVisible(detail)
   const linkHref = careerPostingLinkHref(detail.linkUrl)
-  const linkButtonLabel = resolveCareerPostingLinkCtaLabel(detail.buttonLabel)
+  const linkButtonLabel = detail.buttonLabel.trim()
   const showRecruitPeriod = showLinkButton && Boolean(detail.recruitPeriodLabel)
 
   return (
     <section className={styles.page}>
-      <div className={styles.back}>
-        <ProgramBackButton label="이전으로" onClick={handleBack} />
-      </div>
-
-      <div className={styles.layout}>
-        <header className={styles.header}>
-          <div className={styles.headerLead}>
-            <div className={styles.statusRow}>
-              <PFCategoryBadge
-                size="small"
-                variant={careerJobBadgeVariant(detail.status)}
-                className={styles.badge}
-              >
-                {detail.statusLabel}
-              </PFCategoryBadge>
-            </div>
-
-            <PFText as="h1" typo="page-title-md" color="black" className={styles.title}>
-              {detail.title}
-            </PFText>
-
-            <div className={styles.meta}>
-              {detail.publishedAtDetailLabel ? (
-                <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
-                  {detail.publishedAtDetailLabel}
-                </PFText>
-              ) : null}
-              {detail.viewCount != null ? (
-                <span className={styles.viewCount}>
-                  <PFText as="span" typo="bd-lg-rg" color="black">
-                    조회
-                  </PFText>
-                  <PFText as="span" typo="bd-lg-rg" color="black">
-                    {formatViewCount(detail.viewCount)}
-                  </PFText>
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          {attachmentFiles.length > 0 ? (
-            <PFAttachmentDropdown
-              files={attachmentFiles}
-              triggerLabel={`${attachmentFiles.length}개의 첨부파일`}
-              className={styles.attachmentDropdown}
-            />
-          ) : null}
-        </header>
-
-        <PFDivider variant="focus" />
-
-        <div className={styles.body}>
-          <RichTextViewer
-            key={detail.id}
-            content={detail.content}
-            contentFormat={detail.contentFormat}
-            maxHeight="none"
-            className={styles.content}
-          />
+      <div className={styles.main}>
+        <div className={styles.back}>
+          <ProgramBackButton label="이전으로" onClick={handleBack} />
         </div>
 
-        <div className={styles.footerNav}>
-          {showLinkButton ? (
-            <div className={styles.linkAction}>
-              <a
-                className={styles.linkCta}
-                href={linkHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <span className={styles.linkCtaCopy}>
-                  <PFText as="span" typo="bd-lg-sb" color="white">
-                    {linkButtonLabel}
+        <div className={styles.layout}>
+          <header className={styles.header}>
+            <div className={styles.headerLead}>
+              <div className={styles.statusRow}>
+                <PFCategoryBadge
+                  size="small"
+                  variant={careerJobBadgeVariant(detail.status)}
+                  className={styles.badge}
+                >
+                  {detail.statusLabel}
+                </PFCategoryBadge>
+              </div>
+
+              <PFText as="h1" typo="page-title-md" color="black" className={styles.title}>
+                {detail.title}
+              </PFText>
+
+              <div className={styles.meta}>
+                {detail.publishedAtDetailLabel ? (
+                  <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
+                    {detail.publishedAtDetailLabel}
                   </PFText>
-                  {showRecruitPeriod ? (
-                    <PFText as="span" typo="bd-sm-rg" color="white">
-                      {`모집 기간 : ${detail.recruitPeriodLabel}`}
+                ) : null}
+                {detail.viewCount != null ? (
+                  <span className={styles.viewCount}>
+                    <PFText as="span" typo="bd-lg-rg" color="black">
+                      조회
                     </PFText>
-                  ) : null}
-                </span>
-                <img
-                  className={styles.linkCtaArrow}
-                  src={ctaArrowUrl}
-                  alt=""
-                  width={16}
-                  height={16}
-                />
-              </a>
+                    <PFText as="span" typo="bd-lg-rg" color="black">
+                      {formatViewCount(detail.viewCount)}
+                    </PFText>
+                  </span>
+                ) : null}
+              </div>
             </div>
-          ) : null}
 
-          <CareerPostingAdjacentNav
-            previous={adjacent.previous}
-            next={adjacent.next}
-            listReturnPath={listReturnPath}
-          />
+            {attachmentFiles.length > 0 ? (
+              <PFAttachmentDropdown
+                files={attachmentFiles}
+                triggerLabel={`${attachmentFiles.length}개의 첨부파일`}
+                className={styles.attachmentDropdown}
+              />
+            ) : null}
+          </header>
 
-          <div className={styles.listAction}>
-            <PFButton
-              variant="tertiary"
-              size="xlarge"
-              className={styles.listButton}
-              onClick={handleGoToList}
-            >
-              목록으로
-            </PFButton>
+          <PFDivider variant="focus" />
+
+          <div className={styles.body}>
+            <RichTextViewer
+              key={detail.id}
+              content={detail.content}
+              contentFormat={detail.contentFormat}
+              maxHeight="none"
+              className={styles.content}
+            />
+          </div>
+
+          <div className={styles.footerNav}>
+            {showLinkButton ? (
+              <div className={styles.linkAction}>
+                <a
+                  className={styles.linkCta}
+                  href={linkHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className={styles.linkCtaCopy}>
+                    <PFText as="span" typo="bd-lg-sb" color="white">
+                      {linkButtonLabel}
+                    </PFText>
+                    {showRecruitPeriod ? (
+                      <PFText as="span" typo="bd-sm-rg" color="white">
+                        {`모집 기간 : ${detail.recruitPeriodLabel}`}
+                      </PFText>
+                    ) : null}
+                  </span>
+                  <img
+                    className={styles.linkCtaArrow}
+                    src={ctaArrowUrl}
+                    alt=""
+                    width={16}
+                    height={16}
+                  />
+                </a>
+              </div>
+            ) : null}
+
+            <CareerPostingAdjacentNav
+              previous={adjacent.previous}
+              next={adjacent.next}
+              listReturnPath={listReturnPath}
+            />
+
+            <div className={styles.listAction}>
+              <PFButton
+                variant="tertiary"
+                size="xlarge"
+                width={240}
+                className={styles.listButton}
+                onClick={handleGoToList}
+              >
+                목록으로
+              </PFButton>
+            </div>
           </div>
         </div>
       </div>

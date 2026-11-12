@@ -39,6 +39,7 @@ import {
   buildConfirmationRows,
   buildUnderAgeConfirmationRows,
   formatBirthDateInput,
+  getBirthDateRangeMessage,
 } from '../lib/utils'
 import {
   createInitialAgreementState,
@@ -575,7 +576,8 @@ export function useSignUp() {
 
     if (result.status === 'invalid-format') {
       setRequiresGuardianConsent(false)
-      setStepTwoMessage(result.message)
+      // 범위 오류(future·too-old)는 입력 중 생년월일 입력란 아래에 이미 보인다
+      setStepTwoMessage(result.reason === 'format' ? result.message : '')
       return
     }
 
@@ -1441,6 +1443,8 @@ export function useSignUp() {
       gender,
       setGender,
       message: stepTwoMessage,
+      /** QA-0220: 작성 중 실시간 — 생년월일 범위 오류(입력란 아래) */
+      birthDateError: getBirthDateRangeMessage(birthDate) ?? '',
       isValid: isStepTwoValid,
       requiresGuardianConsent,
       startGuardianConsent: handleStartGuardianConsent,

@@ -1,4 +1,6 @@
 import { useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { invalidateFaqLists } from '@/features/posts/lib/faq-query-cache'
 import {
   saveFaqCategoriesBulk,
 } from '@/features/posts/api/faqs/admin-faqs-service'
@@ -22,6 +24,7 @@ export type UseAdminFaqCategoriesResult = {
 const EMPTY_CATEGORY_ROWS: FaqCategoryRow[] = []
 
 export function useAdminFaqCategories(): UseAdminFaqCategoriesResult {
+  const queryClient = useQueryClient()
   const categoriesQuery = useFaqCategoriesQuery()
   const { createMutation, updateMutation, deleteMutation } = useFaqCategoryMutations()
   const createCategory = createMutation.mutateAsync
@@ -65,9 +68,10 @@ export function useAdminFaqCategories(): UseAdminFaqCategoriesResult {
   const onSave = useCallback(
     async (changes: CategoryManagementDraftChanges) => {
       await saveFaqCategoriesBulk(changes)
-      await refetchCategories()
+      // QA-0286: 선택지만이 아니라 목록 행의 카테고리명도 새 이름으로 다시 조회
+      await Promise.all([refetchCategories(), invalidateFaqLists(queryClient)])
     },
-    [refetchCategories]
+    [queryClient, refetchCategories]
   )
 
   const remoteActions = useMemo(

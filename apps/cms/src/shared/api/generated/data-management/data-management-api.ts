@@ -56,6 +56,7 @@ import type {
   SponsorContactResponse,
   SponsorDetailResponse,
   SponsorLogoBulkDownloadRequest,
+  SponsorParams,
   SponsorRequest,
   SponsorYearlyBusinessRequest,
   SponsorYearlyBusinessResponse,
@@ -1813,9 +1814,11 @@ const update2 = (
  */
 const sponsor = (
     sponsorId: number,
+    params?: SponsorParams,
  options?: SecondParameter<typeof customInstance<SponsorDetailResponse>>,) => {
       return customInstance<SponsorDetailResponse>(
-      {url: `/api/admin/sponsors/${sponsorId}`, method: 'GET'
+      {url: `/api/admin/sponsors/${sponsorId}`, method: 'GET',
+        params
     },
       options);
     }

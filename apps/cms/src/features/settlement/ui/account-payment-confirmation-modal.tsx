@@ -168,6 +168,22 @@ export function buildAccountPaymentConfirmationPayloadForSelection(
   }
 }
 
+/**
+ * 목록 단건 팝업 — 금액·프로그램은 목록 행 값을 유지하고, 계좌만 상세 GET 원문
+ * (`plainAccountForPaymentConfirm`, 조회 이력 「정산금의 계좌 지급 처리를 위함」)으로 바꾼다. 다건은 그대로.
+ */
+export function withAccountPaymentPlainAccount(
+  payload: AccountPaymentConfirmationModalPayload | null,
+  detail: Pick<AccountPaymentStatusDetail, 'plainAccountForPaymentConfirm'>
+): AccountPaymentConfirmationModalPayload | null {
+  if (payload?.kind !== 'single') return payload
+  return {
+    ...payload,
+    accountBankAndNumber: detail.plainAccountForPaymentConfirm.bankAndNumber,
+    accountHolder: detail.plainAccountForPaymentConfirm.holder,
+  }
+}
+
 /** 상세 풀페이지「지급 완료 처리」— 산출 합계·정산 계좌 표시 */
 export function buildAccountPaymentSingleConfirmationPayload(
   detail: AccountPaymentStatusDetail

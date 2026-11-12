@@ -39,15 +39,15 @@
 }
 
 /*
- * 셸 패딩 시안: top 26 · sides 30 · bottom 34
+ * 셸 시안(Figma 2432:39720): padding top 24 · sides 30 · bottom 34 · radius 16
  * 880 상한 제거 — 뷰포트까지 키워 에디터(369) 축소 없이 수용
  */
 .content-modal.posting-form-modal.teal-header-modal--large .ant-modal-content,
 .posting-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
   display: flex;
   flex-direction: column;
-  padding: 26px 30px 34px !important;
-  border-radius: 12px;
+  padding: 24px 30px 34px !important;
+  border-radius: 16px;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   max-height: calc(100vh - 32px);
   max-height: calc(100dvh - 32px);
@@ -94,23 +94,31 @@
   overflow: hidden;
 }
 
-.posting-form-modal__label {
+/* 묶음 제목(공고 정보 · 연결 버튼) — 18 Bold · 좌우 8 · 아래 블록과 24 */
+.posting-form-modal__group-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
-  margin-bottom: 10px;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
+  gap: 8px;
+  padding: 0 8px;
+  margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
-.posting-form-modal__required {
-  color: var(--color-red, #c32f4a);
+.posting-form-modal__group-title-text {
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.posting-form-modal__group-title-note {
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-weight: 500;
-  line-height: 1;
+  line-height: 150%;
 }
 
 /* 상단 필터 → 제목 24px */
@@ -120,13 +128,13 @@
   flex-shrink: 0;
 }
 
-/* 공고 정보 1행 — 시안 필드 간 gap 16 */
+/* 공고 정보 1행 — 필드 간 24px (공지사항·임팩트 스토리 등록 모달과 동일) */
 .posting-form-modal__filter-inner {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 16px;
+  gap: 24px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -140,26 +148,22 @@
   box-sizing: border-box;
 }
 
-/* 라벨 ↔ 컨트롤 10px */
-.posting-form-modal__filter-field .posting-form-modal__label {
-  margin-bottom: 10px;
-}
-
 /* 단일 일시 — 필터 SSOT 240 */
 .posting-form-modal__filter-field--datetime {
   width: 240px;
   max-width: 240px;
 }
 
-/* 라디오 — content 폭 (공개/미공개, 모집/발표) */
+/* 라디오 — content 폭 (공개/비공개, 모집/발표) */
 .posting-form-modal__filter-field--radio {
   width: fit-content;
   max-width: none;
   flex: 0 0 auto;
 }
 
+/* 라디오 medium — 컨트롤 높이 40 (공지사항·임팩트 스토리와 동일) */
 .posting-form-modal__filter-field--radio .app-radio-group {
-  min-height: 44px;
+  min-height: 40px;
   width: fit-content;
   flex-wrap: nowrap;
 }
@@ -180,14 +184,25 @@
   flex-shrink: 0;
 }
 
-/* 내용 → 첨부 30px */
+/* 내용 → 첨부 24px (시안 블록 간격 동일) */
 .posting-form-modal__section--editor {
   flex-shrink: 0;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+}
+
+/* 내용 라벨은 공통 필드 틀(AdminFieldFrame) — inline-flex 기본값 대신 행 전체 폭 */
+.posting-form-modal__section--editor.cms-field {
+  display: flex;
+  width: 100%;
 }
 
 .posting-form-modal__editor-host {
   width: 100%;
+}
+
+/* 시안 내용 에디터 h200 — 셸은 minHeight 200(prop), 본문 최소는 패딩 16×2 + 70 */
+.posting-form-modal__editor-host .rich-text-editor {
+  --rt-body-min-height: 102px;
 }
 
 .posting-form-modal__form:has(.rich-text-editor[data-resized='true']) {
@@ -221,47 +236,46 @@
   display: flex;
   width: 100%;
   align-items: stretch;
-  border-top: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-  border-left: 1px solid #ddd;
+  border: 1px solid var(--Border-default, #e0e0e0);
   border-radius: 8px;
   overflow: hidden;
   background: #fff;
   flex-shrink: 0;
 }
 
+/* 첨부 th — 시안 Table / Vertical / Cell / Small: min 140 · 헤더 배경 · 14 Bold */
 .posting-form-modal__attachment-label {
   display: flex;
   box-sizing: border-box;
   flex-shrink: 0;
   align-self: stretch;
-  width: 180px;
-  min-width: 180px;
-  padding: 10px;
+  width: 140px;
+  min-width: 140px;
+  min-height: 44px;
+  padding: 4px 12px;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 2px;
-  border-right: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
-  background: #edf0f2;
-  color: var(--default-BK, #3d3d3d);
+  gap: 8px;
+  border-right: 1px solid var(--Border-default, #e0e0e0);
+  background: var(--BG-header, linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff);
+  color: var(--Netural-black, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%;
+  line-height: 150%;
 }
 
 .posting-form-modal__attachment-body {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 54px;
   padding: 12px 16px;
   align-self: stretch;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #ddd;
   box-sizing: border-box;
 }
 
@@ -278,34 +292,10 @@
   min-width: 0;
 }
 
+/* 공고 정보 묶음 → 연결 버튼 묶음 30px (시안 popup gap 30) */
 .posting-form-modal__section--link {
-  margin-top: 24px;
+  margin-top: 30px;
   margin-bottom: 0;
-}
-
-.posting-form-modal__link-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.posting-form-modal__link-heading-title {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.posting-form-modal__link-heading-note {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
 }
 
 .posting-form-modal__link-row {
@@ -321,10 +311,6 @@
   min-width: 0;
   flex: 1 1 0;
   flex-direction: column;
-}
-
-.posting-form-modal__link-field .posting-form-modal__label {
-  margin-bottom: 10px;
 }
 
 @media (max-width: 1100px) {
@@ -353,6 +339,7 @@
     width: 100%;
     min-width: 0;
     border-right: none;
+    border-bottom: 1px solid var(--Border-default, #e0e0e0);
   }
 
   .posting-form-modal__link-row {

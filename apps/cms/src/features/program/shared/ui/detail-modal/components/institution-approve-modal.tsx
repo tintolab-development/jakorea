@@ -37,6 +37,10 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './instructor-bulk-approve-modal.css'
 import './institution-approve-modal.css'
+import {
+  formatTrainedTeacherClassPeriod,
+  resolveTrainedTeacherBlockSessionCount,
+} from '@/features/program/trained-teachers/lib/preferred-schedule-display'
 
 export type InstitutionApproveScheduleConfig = {
   preferredEducationSchedules?: PreferredEducationSchedule[]
@@ -164,7 +168,10 @@ function resolveTrainedTeacherScheduleDateTimes(block: ApplicantPreferredSchedul
 type TrainedTeacherPreferredScheduleProjection = PreferredEducationSchedule & {
   preferenceOrder?: number
   sessionCount?: number
-  /** 신청 sessionTimes[].classPeriod — round/session_no를 차시로 바꾸지 않는다. */
+  /**
+   * 신청 sessionTimes[].classPeriod — 차시마다 따로 입력한 교시(연강 아님, 예: 1교시·4교시)를 모두 잇는다.
+   * round/session_no를 차시로 바꾸지 않는다.
+   */
   classPeriod?: string | null
 }
 
@@ -174,7 +181,11 @@ function mapTrainedTeacherPreferredScheduleBlock(
   const derivedDateTimes = resolveTrainedTeacherScheduleDateTimes(block)
   const startAt = block.startAt?.trim() || derivedDateTimes.startAt
   const endAt = block.endAt?.trim() || derivedDateTimes.endAt || startAt
-  const classPeriod = block.sessionTimes[0]?.classPeriod?.trim() || null
+  // 교육받은 교사는 차시마다 교시를 따로 고른다 — 첫 차시 교시만 보이거나 다음 교시를 이어 붙이지 않는다
+  const classPeriods = block.sessionTimes
+    .map(time => formatTrainedTeacherClassPeriod(time.classPeriod))
+    .filter(Boolean)
+  const classPeriod = classPeriods.length > 0 ? classPeriods.join(', ') : null
   const strippedLabel = stripDefaultEducationSlotNameFromLabel(block.label?.trim() || '')
   return {
     scheduleId: block.scheduleId ?? null,
@@ -183,7 +194,8 @@ function mapTrainedTeacherPreferredScheduleBlock(
     endAt,
     label: strippedLabel || undefined,
     preferenceOrder: block.preferenceRank,
-    sessionCount: block.sessionCount,
+    // 차시 수 = 신청 시간 줄 수(기존 데이터 sessionCount에 교시 번호가 들어간 경우 대비)
+    sessionCount: resolveTrainedTeacherBlockSessionCount(block) ?? undefined,
     scheduleStatus: block.scheduleStatus?.trim().toUpperCase() || null,
     classPeriod,
   }

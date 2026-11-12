@@ -17,6 +17,7 @@ import {
   shouldShowApplicationPreferredScheduleSessionSelect,
   shouldShowApplicationScheduleParagraph,
   shouldShowApplicationSchedulePeriodDateOnlyPreferred,
+  shouldShowTrainedTeachersApplicationMaxSessionsPerDayField,
 } from '@jakorea/form-schema/program-application'
 import { resolveInstitutionApplicationScheduleMetaFromProgram } from '@/features/program/general/lib/institution-application-schedule-meta'
 import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
@@ -338,6 +339,16 @@ export function shouldShowInstitutionApplicationMaxSessionsPerDayField(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
   return shouldShowApplicationMaxSessionsPerDayField(bridge)
+}
+
+/**
+ * 교육받은 교사 — 「신청 가능 1일 최대 차시」 (커리큘럼형 단일·복수 + 기간 지정).
+ * Platform TT 신청 「희망 차시」 셀렉 노출 조건과 같다. 일반·1사1교는 위 함수를 쓴다.
+ */
+export function shouldShowTrainedTeachersInstitutionApplicationMaxSessionsPerDayField(
+  bridge: InstitutionApplicationProgramBridge
+): boolean {
+  return shouldShowTrainedTeachersApplicationMaxSessionsPerDayField(bridge)
 }
 
 export function shouldShowInstitutionApplicationPreferredScheduleSessionSelect(

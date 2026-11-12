@@ -159,7 +159,7 @@ export function ProgramInfoDetail({
                   <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
                     {field.label}
                   </PFText>
-                  <PFText as="span" typo="bd-md-md" color="black">
+                  <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
                     {field.value}
                   </PFText>
                 </div>
@@ -174,7 +174,12 @@ export function ProgramInfoDetail({
                   const sessionTitle = curriculumSessionTitle(program, session)
                   return (
                     <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
-                      <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
+                      <PFText
+                        as="p"
+                        typo="bd-md-sb"
+                        color="black"
+                        className={`${styles.sessionTitle} ${styles.fieldValue}`}
+                      >
                         <span className={styles.sessionLabel}>{session.sessionLabel}</span>
                         {sessionTitle ? <span>{` ${sessionTitle}`}</span> : null}
                       </PFText>
@@ -184,7 +189,12 @@ export function ProgramInfoDetail({
                         </PFText>
                       ) : null}
                       {session.description.trim() ? (
-                        <PFText as="p" typo={isParticipate ? 'bd-md-md' : 'bd-md-rg'} color="black">
+                        <PFText
+                          as="p"
+                          typo={isParticipate ? 'bd-md-md' : 'bd-md-rg'}
+                          color="black"
+                          className={styles.fieldValue}
+                        >
                           {session.description}
                         </PFText>
                       ) : null}
@@ -204,12 +214,17 @@ export function ProgramInfoDetail({
                     key={`${event.scheduleLabel}-${event.name}-${event.dateLabel}`}
                     className={styles.session}
                   >
-                    <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
+                    <PFText
+                      as="p"
+                      typo="bd-md-sb"
+                      color="black"
+                      className={`${styles.sessionTitle} ${styles.fieldValue}`}
+                    >
                       <span className={styles.sessionLabel}>{event.scheduleLabel}</span>
                       {event.name ? <span>{` ${event.name}`}</span> : null}
                     </PFText>
                     {event.dateLabel && event.dateLabel !== '-' ? (
-                      <PFText as="p" typo="bd-md-rg" color="black">
+                      <PFText as="p" typo="bd-md-rg" color="black" className={styles.fieldValue}>
                         {event.dateLabel}
                       </PFText>
                     ) : null}
@@ -238,10 +253,10 @@ export function ProgramInfoDetail({
                   <div className={styles.recruitmentList}>
                     {program.recruitmentPhases.map((phase, index) => (
                       <div key={`${phase.label}-${index}`} className={styles.infoBlock}>
-                        <PFText as="span" typo="bd-md-sb" color="black">
+                        <PFText as="span" typo="bd-md-sb" color="black" className={styles.fieldValue}>
                           {phase.label}
                         </PFText>
-                        <PFText as="span" typo="bd-md-md" color="black">
+                        <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
                           {phase.value}
                         </PFText>
                       </div>
@@ -250,10 +265,10 @@ export function ProgramInfoDetail({
                 ) : null}
                 {geminiTrainingRequestPeriodLabel ? (
                   <div className={styles.infoBlock}>
-                    <PFText as="span" typo="bd-md-sb" color="black">
+                    <PFText as="span" typo="bd-md-sb" color="black" className={styles.fieldValue}>
                       연수 요청 가능 기간
                     </PFText>
-                    <PFText as="span" typo="bd-md-md" color="black">
+                    <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
                       {geminiTrainingRequestPeriodLabel}
                     </PFText>
                   </div>
@@ -265,10 +280,10 @@ export function ProgramInfoDetail({
               <div className={styles.schedules}>
                 {program.educationSchedules.map(schedule => (
                   <div key={schedule.label} className={styles.scheduleCard}>
-                    <PFText as="span" typo="bd-md-sb" color="black">
+                    <PFText as="span" typo="bd-md-sb" color="black" className={styles.fieldValue}>
                       {schedule.label}
                     </PFText>
-                    <PFText as="span" typo="bd-md-md" color="black">
+                    <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
                       {schedule.value}
                     </PFText>
                   </div>
@@ -295,7 +310,7 @@ export function ProgramInfoDetail({
                         as="p"
                         typo="bd-md-md"
                         color="black"
-                        className={styles.extraSectionBody}
+                        className={`${styles.extraSectionBody} ${styles.fieldValue}`}
                       >
                         {section.body}
                       </PFText>
@@ -311,7 +326,12 @@ export function ProgramInfoDetail({
                   문의처
                 </PFText>
                 {contactParts.length > 1 ? (
-                  <PFText as="span" typo="bd-md-md" color="black" className={styles.contactParts}>
+                  <PFText
+                    as="span"
+                    typo="bd-md-md"
+                    color="black"
+                    className={`${styles.contactParts} ${styles.fieldValue}`}
+                  >
                     {contactParts.map((part, index) => (
                       <Fragment key={`${index}-${part}`}>
                         {index > 0 ? <span className={styles.contactDivider}>, </span> : null}
@@ -320,7 +340,7 @@ export function ProgramInfoDetail({
                     ))}
                   </PFText>
                 ) : (
-                  <PFText as="span" typo="bd-md-md" color="black">
+                  <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
                     {program.contactValue}
                   </PFText>
                 )}
@@ -349,7 +369,7 @@ export function ProgramInfoDetail({
                     as="span"
                     typo="bd-lg-sb"
                     color="black"
-                    className={styles.applicationMethodValue}
+                    className={`${styles.applicationMethodValue} ${styles.fieldValue}`}
                   >
                     {applicationMethodValue}
                   </PFText>

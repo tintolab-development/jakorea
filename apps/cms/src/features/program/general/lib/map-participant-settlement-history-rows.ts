@@ -2,6 +2,7 @@ import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/or
 import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import {
   mapSettlementToParticipatingInstructorSettlementRow,
+  type ParticipatingInstructorLectureProgressLabel,
   type ParticipatingInstructorSettlementApiRow,
 } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
@@ -14,7 +15,7 @@ export type ParticipatingParticipantSettlementHistoryRow = {
   no: number
   educationScheduleLabel: string
   lectureProgress: ParticipatingIndividualInstructorLectureProgress
-  lectureProgressLabel: '진행 완료' | '진행 예정'
+  lectureProgressLabel: ParticipatingInstructorLectureProgressLabel
   hasPaymentStatementApplication: boolean
   paymentStatementStatus: InstructorSettlementUiStatus
   scheduledSettlementAmount: number | null

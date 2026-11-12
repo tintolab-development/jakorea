@@ -1,16 +1,14 @@
 import assert from 'node:assert/strict'
 import { buildSettlementWriteDraft } from './build-write-draft.ts'
 import {
-  INSTRUCTOR_MEAL_MAX_WON,
   formatSettlementAmountInput,
   formatSettlementEducationSessionProgress,
+  formatSettlementResidentNumber,
   formatSettlementSessionBannerTitle,
   hasSettlementActivitySection,
   hasSettlementMealSection,
 } from './format-write-draft.ts'
 
-assert.equal(INSTRUCTOR_MEAL_MAX_WON, 30_000)
-assert.equal(formatSettlementAmountInput('40000', INSTRUCTOR_MEAL_MAX_WON), '30,000')
 assert.equal(formatSettlementAmountInput('40,000', 30_000), '30,000')
 assert.equal(formatSettlementAmountInput('30000', 30_000), '30,000')
 assert.equal(formatSettlementAmountInput('29999', 30_000), '29,999')
@@ -79,5 +77,30 @@ assert.equal(
   '3회차, 10:00 ~ 11:20',
 )
 assert.equal(formatSettlementEducationSessionProgress({ sessionNumber: 0, sessionMeta: '10:00~11:20' }), '10:00 ~ 11:20')
+
+// 제출 전 확인 — 서버가 가린 뒷자리 그대로, 정책 표기 000915-1****** (하이픈 앞뒤 공백 없음)
+const residentDraft = buildSettlementWriteDraft({
+  applicationId: '1',
+  sessionId: '2',
+  isInstructor: true,
+  name: '홍길동',
+  residentFront: '000915',
+  residentBack: '1******',
+  homeAddress: '서울',
+  homeAddressDetail: '',
+  bank: '국민',
+  accountNumber: '1',
+  accountHolder: '홍길동',
+  tripType: 'one_way',
+  departTransit: '',
+  departAmount: '',
+  returnTransit: '',
+  returnAmount: '',
+  mealAmount: '',
+  mealFiles: [],
+  activityAmount: '',
+  activityFiles: [],
+})
+assert.equal(formatSettlementResidentNumber(residentDraft), '000915-1******')
 
 console.log('format-write-draft.selfcheck: ok')

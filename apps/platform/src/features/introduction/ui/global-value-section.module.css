@@ -316,7 +316,9 @@
     justify-content: flex-end;
     height: auto;
     align-items: flex-start;
-    transition: gap var(--value-motion);
+    transition:
+      gap var(--value-motion),
+      padding-top var(--value-motion);
   }
 
   .number {
@@ -332,6 +334,19 @@
     justify-content: flex-end;
     height: auto;
     gap: 0;
+  }
+
+  /*
+   * 펼침: 아이콘(absolute 84×84) 아래로만 국문 제목이 흐르게 상단 여백을 확보한다(QA-0448).
+   * 05처럼 남은 높이로 줄어든 항목에서도 제목이 아이콘 뒤로 올라가 가려지지 않는다. 접힘은 아이콘이 사라지므로 0.
+   */
+  .isAccordion .isExpanded .contentRight {
+    box-sizing: border-box;
+    padding-top: calc(84px + var(--spacing-16));
+  }
+
+  .isAccordion .isCollapsed .contentRight {
+    padding-top: 0;
   }
 
   /*

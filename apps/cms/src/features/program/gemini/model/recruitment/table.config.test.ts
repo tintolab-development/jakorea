@@ -40,3 +40,31 @@ describe('geminiRecruitmentTablePageConfig.filterFn', () => {
     expect(result.filteredData).toHaveLength(2)
   })
 })
+
+describe('geminiRecruitmentTablePageConfig 기본 조회 조건 (QA-0103)', () => {
+  it('기본 연수 요청 가능기간은 비어 있다(전체 기간)', () => {
+    expect(geminiRecruitmentTablePageConfig.filters.initialPending.trainingRequestPeriodRange).toBeNull()
+  })
+
+  it('URL에 기간이 없으면 기간을 채우지 않고, 조회해도 기간 쿼리를 쓰지 않는다', () => {
+    let pending = geminiRecruitmentTablePageConfig.filters.initialPending
+    geminiRecruitmentTablePageConfig.filters.syncPendingFromUrl({
+      context: { todayKey: '2026-11-12' },
+      searchParams: new URLSearchParams('gvt_title=공고'),
+      setPendingFilters: next => {
+        pending = typeof next === 'function' ? next(pending) : next
+      },
+    } as Parameters<typeof geminiRecruitmentTablePageConfig.filters.syncPendingFromUrl>[0])
+    expect(pending.title).toBe('공고')
+    expect(pending.trainingRequestPeriodRange).toBeNull()
+
+    const rules = geminiRecruitmentTablePageConfig.getSearchSync({ todayKey: '2026-11-12' })
+      .paramConfig
+    const next = new URLSearchParams()
+    for (const rule of rules) {
+      if (rule.kind === 'apply') rule.apply(next, pending)
+    }
+    expect(next.has('gvt_from')).toBe(false)
+    expect(next.has('gvt_to')).toBe(false)
+  })
+})

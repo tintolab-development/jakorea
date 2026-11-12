@@ -27,6 +27,11 @@ import { createUjatProgramRegistrationDraft } from '@/features/template/model/uj
 import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
+import {
+  ACTIVITY_CERTIFICATE_BODY_CONTENT,
+  COMPLETION_CERTIFICATE_BODY_CONTENT,
+  PARTICIPATION_CERTIFICATE_BODY_CONTENT,
+} from '@/features/template/lib/certificate-body-content'
 import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { createReceiptPreConsentDraft } from '@/features/template/model/receipt-pre-consent-draft'
@@ -47,11 +52,7 @@ const EXCLUDED_TEMPLATE_CODES = new Set(['registration-general'])
 
 type PayloadKind = 'A' | 'B' | 'C' | 'D' | 'E'
 
-const EMPTY_CERTIFICATE_BODY =
-  '귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.'
-
 const DEFAULT_CERTIFICATE_STRING_FIELDS = {
-  bodyContent: EMPTY_CERTIFICATE_BODY,
   chairmanName: '이은형',
   orgAddress: '서울특별시 강서구 마곡중앙로 171 714호',
   orgPhone: 'Tel.02-783-2367',
@@ -61,13 +62,21 @@ const DEFAULT_CERTIFICATE_STRING_FIELDS = {
   participantInfo: '',
 } as const
 
-function createCertificateSettingsJson(titleName: string): Record<string, unknown> {
+/**
+ * 인증서 시드 settingsJson. 본문은 양식별로 다르다(기획 확정 2026-11-12) —
+ * 강사·봉사 활동인증서·참가인증서는 활동 문구, 수료증(휴가 인증서 포함 기존값)은 수료 문구.
+ */
+function createCertificateSettingsJson(
+  titleName: string,
+  bodyContent: string = COMPLETION_CERTIFICATE_BODY_CONTENT
+): Record<string, unknown> {
   return {
     orgLogo: null,
     orgLogo02: null,
     certificateBackground: null,
     chairmanSeal: null,
     titleName,
+    bodyContent,
     ...DEFAULT_CERTIFICATE_STRING_FIELDS,
     participantRowVisibility: [true, true, true, true, true, true],
   }
@@ -616,7 +625,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-participation-certificate',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('참가인증서'),
+    settingsJson: createCertificateSettingsJson('참가인증서', PARTICIPATION_CERTIFICATE_BODY_CONTENT),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },
@@ -624,7 +633,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-4',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('강사 활동인증서'),
+    settingsJson: createCertificateSettingsJson('강사 활동인증서', ACTIVITY_CERTIFICATE_BODY_CONTENT),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },
@@ -632,7 +641,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-5',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('봉사 활동인증서'),
+    settingsJson: createCertificateSettingsJson('봉사 활동인증서', ACTIVITY_CERTIFICATE_BODY_CONTENT),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },

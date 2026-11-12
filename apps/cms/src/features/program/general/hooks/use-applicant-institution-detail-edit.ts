@@ -43,7 +43,6 @@ import {
 import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import {
   fetchOrganizationApplicationDetailRemote,
-  unmaskOrganizationApplicationPrivacyRemote,
   updateOrganizationApplicationRemote,
 } from '@/features/program/general/api/applications-api-client'
 import { buildOrganizationApplicationTeacherContactPatch } from '@/features/program/general/lib/organization-application-teacher-contact-patch'
@@ -59,10 +58,6 @@ import {
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
-import {
-  APPLICATION_EDIT_MODE_UNMASK_REASON,
-  EDIT_MODE_REVEAL,
-} from '@/shared/lib/privacy-unmask-purpose'
 
 /**
  * 기관 신청자 상세 편집 — 합반은 organization-merge-groups, 그 외는 PATCH organization-applications.
@@ -374,34 +369,11 @@ export function useApplicantInstitutionDetailEdit({
             : undefined,
           parkingInfo: normalizedDraft.parkingInfo.trim() || undefined,
         })
-        // PATCH 응답은 마스킹되므로 전화 입력칸을 응답값으로 덮지 않고 GET + 원문 unmask를 쓴다.
+        // 저장 후에는 마스킹 GET만 다시 읽는다. 원문 재조회(EDIT_MODE unmask)를 또 부르면 「신청 정보 수정」
+        // 기록이 중복되고, 원문 연락처가 목록 상태(onSaved rows)에 남는다. 화면은 저장 뒤 다시 마스킹된다.
         const response = await fetchOrganizationApplicationDetailRemote(institution.id)
-        const programIdNumber = program?.id != null ? Number(program.id) : NaN
-        let unmaskedContact: {
-          teacherTel?: string | null
-          teacherPhone?: string | null
-          teacherEmail?: string | null
-        } | null = null
-        try {
-          // 수정 흐름 안의 원문 재조회 — EDIT_MODE를 명시한다(사유 문자열로 추론하지 않음).
-          unmaskedContact = await unmaskOrganizationApplicationPrivacyRemote(
-            institution.id,
-            APPLICATION_EDIT_MODE_UNMASK_REASON,
-            Number.isFinite(programIdNumber) ? programIdNumber : undefined,
-            EDIT_MODE_REVEAL
-          )
-        } catch {
-          unmaskedContact = null
-        }
         const remotelyUpdatedInstitution = mapOrganizationApplicationDetailToApplicantSchoolRow(
-          unmaskedContact
-            ? {
-                ...response,
-                teacherTel: unmaskedContact.teacherTel ?? undefined,
-                teacherPhone: unmaskedContact.teacherPhone ?? undefined,
-                teacherEmail: unmaskedContact.teacherEmail ?? undefined,
-              }
-            : response,
+          response,
           institution
         )
         for (const queryKey of organizationApplicationDetailCacheKeys(

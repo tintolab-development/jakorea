@@ -49,8 +49,19 @@ const WAGE_COMPARE_RADIO_OPTIONS = [
 
 const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
 const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
-const PAYMENT_LABEL_TRANSPORT_1C1S = '교통비(일사일교)'
-const PAYMENT_LABEL_LODGING_1C1S = '숙박비(일사일교)'
+/** 1사1교 표시 라벨 — 등록 폼(`registration-form/1c-1s/paragraphs/wage-info-paragraph.tsx`)과 동일. 옵션 value(정산 키)는 그대로 */
+const PAYMENT_LABEL_TRANSPORT_1C1S = '강사 교통비'
+const PAYMENT_LABEL_LODGING_1C1S = '숙박비(1사1교)'
+/** 저장된 라벨 토큰(예전 표시 라벨·카탈로그 라벨) → 현재 1사1교 표시 라벨. 매칭·표시에만 쓴다 */
+const COMPANY_SCHOOL_PAYMENT_LABEL_ALIASES: Record<string, string> = {
+  '교통비(일사일교)': PAYMENT_LABEL_TRANSPORT_1C1S,
+  '숙박비(일사일교)': PAYMENT_LABEL_LODGING_1C1S,
+  [PAYMENT_LABEL_LODGING_CATALOG]: PAYMENT_LABEL_LODGING_1C1S,
+}
+
+function normalizeCompanySchoolPaymentToken(token: string): string {
+  return COMPANY_SCHOOL_PAYMENT_LABEL_ALIASES[token] ?? token
+}
 
 const COMPANY_SCHOOL_WAGE_ROWS = [
   {
@@ -176,7 +187,8 @@ function formatCompanySchoolPaymentItemsView(
     .map(part => part.trim())
     .filter(Boolean)
   if (tokens.length === 0) return '-'
-  const labels = tokens.map(token => {
+  const labels = tokens.map(rawToken => {
+    const token = normalizeCompanySchoolPaymentToken(rawToken)
     const matched = options.find(option => option.value === token || option.label === token)
     if (matched?.label) return matched.label
     if (token === 'LONG_DISTANCE_TRANSPORTATION') return '장거리 교통비'
@@ -342,11 +354,12 @@ export function ProgramWageInfoSection({
       .map(part => part.trim())
       .filter(Boolean)
     const matchedIds = (savedTokens ?? [])
-      .map(
-        token =>
-          companySchoolPaymentItemOptions.find(opt => opt.value === token || opt.label === token)
-            ?.value
-      )
+      .map(rawToken => {
+        const token = normalizeCompanySchoolPaymentToken(rawToken)
+        return companySchoolPaymentItemOptions.find(
+          opt => opt.value === token || opt.label === token
+        )?.value
+      })
       .filter((id): id is string => Boolean(id))
     if (matchedIds.length > 0) {
       form.setValue('wagePaymentItemIds', matchedIds)

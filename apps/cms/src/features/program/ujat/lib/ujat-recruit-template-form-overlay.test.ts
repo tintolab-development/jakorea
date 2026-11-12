@@ -446,10 +446,11 @@ describe('UJAT recruit form overlay', () => {
       'institution'
     )
     expect(displayed.targetLevels).toEqual(['high'])
-    expect(displayed.district).toBe('고등학교 1~2학년')
+    // a2f69b3aa: 교육 대상 상세(overlay district 키)는 district가 아니라 educationTargetDetail로 분리
+    expect(displayed.educationTargetDetail).toBe('고등학교 1~2학년')
     const values = programToUjatRecruitTemplateFormValues(displayed, 'institution')
     expect(values.targetLevels).toEqual(['high'])
-    expect(values.district).toBe('고등학교 1~2학년')
+    expect(values.educationTargetDetail).toBe('고등학교 1~2학년')
   })
 
   it('프로그램 상세는 등록 overlay의 활동 기수를 회차에 올린다', () => {

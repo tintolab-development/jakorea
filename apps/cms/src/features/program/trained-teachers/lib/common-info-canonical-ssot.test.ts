@@ -238,7 +238,7 @@ describe('TRAINED_TEACHER canonical SSOT', () => {
     expect(parseTrainedTeacherInfoConfigJson('{not-json}')).toEqual({})
   })
 
-  it('교육 연수 replaceFirst 계약을 유지한다', () => {
+  it('커리큘럼형 교사 연수는 별도 블록(prepend) — 진행 일정(시간 포함)이 필수, 일정형은 첫 일정 치환 유지', () => {
     const requiredCtx = (
       patch: Partial<TrainedTeachersRegistrationRequiredFieldContext>
     ): TrainedTeachersRegistrationRequiredFieldContext => ({
@@ -290,9 +290,20 @@ describe('TRAINED_TEACHER canonical SSOT', () => {
       ],
     }
 
+    // 커리큘럼형: 연수 진행 일정이 없으면 미완료 (차시를 대체하지 않는 별도 블록)
+    expect(
+      describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay,
+        requiredCtx({ teacherTrainingEnabled: true })
+      )
+    ).toBe('curriculum.preEducationScheduleLine')
     expect(
       hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(
-        filledOverlay,
+        {
+          ...filledOverlay,
+          'generalRegistration.educationCurriculum.preEducationScheduleLine':
+            '2026.04.01(수) 10:00 ~ 12:00',
+        },
         requiredCtx({ teacherTrainingEnabled: true })
       )
     ).toBe(false)
@@ -314,12 +325,17 @@ describe('TRAINED_TEACHER canonical SSOT', () => {
       )
     ).toBe(false)
 
+    // 일정명 행이 없는 블록 — 일정명은 필수 사유가 되지 않는다
     const prependReasons = describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
-      filledOverlay,
+      {
+        ...filledOverlay,
+        'generalRegistration.educationCurriculum.preEducationScheduleLine':
+          '2026.04.01(수) 10:00 ~ 12:00',
+      },
       requiredCtx({ teacherTrainingEnabled: true })
     )
     expect(prependReasons).not.toBe('curriculum.preEducationScheduleName')
-    expect(prependReasons).not.toBe('curriculum.preEducationScheduleLine')
+    expect(prependReasons).toBeNull()
   })
 })
 

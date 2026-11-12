@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useEffect } from 'react'
+import { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
@@ -122,11 +122,11 @@ export type ApplicantDetailVariant = 'legacy' | 'general'
 const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '신청 정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 /** 일반 프로그램(기관형) 기관 신청 상세 — 대상이 기관이므로 「해당 기관의」 */
 const GENERAL_ORGANIZATION_INSTITUTION_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '신청 정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
@@ -877,12 +877,16 @@ export function ApplicantsDetailContents({
     }
   }, [institutionData, institutionList, mergeGroupsQuery.data])
 
+  /** 저장 완료 후 원문 열람을 끝내는 함수(아래 usePersonalInfoReveal)를 저장 콜백에서 호출하기 위한 참조 */
+  const remaskAfterInstitutionSaveRef = useRef<() => void>(() => {})
   const institutionDetailEdit = useApplicantInstitutionDetailEdit({
     institution: isGeneralDetail && isInstitution ? institutionWithMerge : null,
     program,
     institutionList,
     onSaved: rows => {
       onInstitutionDetailSaved?.(rows)
+      // CMS-29: 저장 뒤에는 수정 진입 때 받은 원문 교사 연락처를 버리고 마스킹 화면으로 돌아간다.
+      remaskAfterInstitutionSaveRef.current()
     },
     combinedClassReadOnly: isCombinedClassNonLeadMember(institutionMergeView),
   })
@@ -1518,42 +1522,18 @@ export function ApplicantsDetailContents({
     controlMode: 'headerStickyNoop',
   })
 
-  const requestStartIndividualEdit = useCallback(() => {
-    if (personalInfoRevealed) {
-      individualDetailEdit.enterEdit()
-      return
-    }
-    setEditUnmaskConfirmOpen(true)
-  }, [individualDetailEdit.enterEdit, personalInfoRevealed])
-
   /** CMS-29: 수정 취소 즉시 원문 교사 정보를 버리고 마스킹으로 돌아간다(원문 캐시는 훅이 초기화). */
   const cancelInstitutionEditAndRemask = useCallback(() => {
     institutionDetailEdit.cancelEdit()
     setInstitutionTeacherPrivacy(null)
     remaskPersonalInfo()
   }, [institutionDetailEdit, remaskPersonalInfo])
-
-  const requestStartInstitutionEdit = useCallback(() => {
-    if (personalInfoRevealed && displayedInstitutionData) {
-      institutionDetailEdit.enterEdit({
-        ...displayedInstitutionData,
-        detail: applyCombinedClassMergeToApplicantDetail(
-          displayedInstitutionData.detail,
-          mergeGroupsQuery.data,
-          displayedInstitutionData,
-          institutionList
-        ),
-      })
-      return
+  useEffect(() => {
+    remaskAfterInstitutionSaveRef.current = () => {
+      setInstitutionTeacherPrivacy(null)
+      remaskPersonalInfo()
     }
-    setEditUnmaskConfirmOpen(true)
-  }, [
-    displayedInstitutionData,
-    institutionDetailEdit,
-    institutionList,
-    mergeGroupsQuery.data,
-    personalInfoRevealed,
-  ])
+  }, [remaskPersonalInfo])
 
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
@@ -1592,6 +1572,26 @@ export function ApplicantsDetailContents({
     isInstitution,
     revealWithReason,
   ])
+
+  /**
+   * CMS-29: [개인정보 상세보기]로 이미 해제했어도 수정 진입은 EDIT_MODE 원문 조회로 「신청 정보 수정」을 기록한다
+   * (원문은 응답으로 다시 채운다). 해제 전이면 안내 팝업을 거친다.
+   */
+  const requestStartIndividualEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      confirmEditUnmaskAndStartEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [confirmEditUnmaskAndStartEdit, personalInfoRevealed])
+
+  const requestStartInstitutionEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      confirmEditUnmaskAndStartEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [confirmEditUnmaskAndStartEdit, personalInfoRevealed])
 
   const headerExtraContent = useMemo(() => {
     const items = resolveApplicantHeaderItems({
@@ -1895,6 +1895,7 @@ export function ApplicantsDetailContents({
     instructorApplicationInfo,
     instructorResumeLayout,
     isGeneralOrganizationInstructorDetail,
+    program,
   ])
 
   const tabPanel = useMemo(() => {

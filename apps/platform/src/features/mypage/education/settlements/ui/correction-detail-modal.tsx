@@ -7,9 +7,8 @@ import {
   PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE,
 } from '../lib/instructor-settlement-contract'
 import {
+  correctionGradeOrBasisLabel,
   correctionPricingModeLabel,
-  correctionUnitText,
-  correctionWageTitle,
   formatCorrectionWon,
 } from '../lib/payment-statement-correction'
 import rowStyles from './row.module.css'
@@ -51,14 +50,23 @@ export function CorrectionDetailModal({
   const reason = detail?.requestReason?.trim()
   const showReapply = detail?.reapplyAvailable === true && !operationEnded && settlementId != null
 
+  // 행 순서·라벨은 기획 확정(2026-11-11)
   const rows: { label: string; before: string; after: string }[] = [
-    { label: '강사비 유형·등급', before: correctionWageTitle(before), after: correctionWageTitle(after) },
     {
-      label: '책정 방식',
+      label: '강사비 책정 방식',
       before: correctionPricingModeLabel(before?.pricingMode),
       after: correctionPricingModeLabel(after?.pricingMode),
     },
-    { label: '단가 기준·단가', before: correctionUnitText(before), after: correctionUnitText(after) },
+    {
+      label: '적용 등급 또는 지급 기준',
+      before: correctionGradeOrBasisLabel(before),
+      after: correctionGradeOrBasisLabel(after),
+    },
+    {
+      label: '단가',
+      before: formatCorrectionWon(before?.unitAmount),
+      after: formatCorrectionWon(after?.unitAmount),
+    },
     {
       label: '총 강사비',
       before: formatCorrectionWon(before?.lectureFee),
@@ -104,7 +112,7 @@ export function CorrectionDetailModal({
             {reason ? (
               <>
                 <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-                  정정 사유
+                  정정 요청 사유
                 </PFText>
                 <PFText as="p" typo="bd-md-md" color="black">
                   {reason}

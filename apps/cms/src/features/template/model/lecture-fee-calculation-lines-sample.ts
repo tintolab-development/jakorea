@@ -1,6 +1,7 @@
 /**
- * 지급조서(발급용) — 「강사비 산출 내역」 미리보기용 목 데이터.
- * 스크린샷 예시(기관명·일자·차시·항목 라벨)에 맞추고, 금액 합계는 라인 amount 합과 일치한다.
+ * 지급조서(발급용) — 「강사비 산출 내역」 양식 관리 미리보기용 견본 데이터.
+ * 기관명·일자는 실제 값처럼 보이지 않도록 자리 표시를 쓰고(QA-0171),
+ * 금액은 모두 표시하며 합계는 라인 amount 합(지급 항목 − 공제 항목)과 일치한다(QA-0290).
  */
 
 import type { PaymentOrderCalculationStatementSessionBlock } from '@/features/settlement-management/model/payment-order-admin-list'
@@ -20,11 +21,15 @@ const lodgingFee = 80_000
 const subtotalBeforeTax = lectureFee + transportFee + lodgingFee
 const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
 
+/** 견본 자리 표시 — 실제 기관명·일자로 오인하지 않게 한다 */
+export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_INSTITUTION_PLACEHOLDER = '참여 기관명'
+export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_DATE_PLACEHOLDER = 'YYYY. MM. DD(요일)'
+
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculationStatementSessionBlock[] =
   [
     {
-      institutionName: '강서초등학교',
-      lectureDateDisplay: '2026. 01. 28(수)',
+      institutionName: LECTURE_FEE_CALCULATION_LINES_SAMPLE_INSTITUTION_PLACEHOLDER,
+      lectureDateDisplay: LECTURE_FEE_CALCULATION_LINES_SAMPLE_DATE_PLACEHOLDER,
       lectureSessionDisplay: '2회차',
       lines: [
         {
@@ -54,7 +59,6 @@ export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculatio
           description: '원천징수 8.8%',
           amount: withholdingAmount,
           kind: 'withholding',
-          amountDisplayOverride: 'NN,NNN원',
         },
       ],
     },
@@ -63,9 +67,9 @@ export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculatio
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_FORMULA_LABEL =
   '강사비 + 교통비 + 숙박비 - 원천징수'
 
-/** 템플릿 미리보기: 원천징수는 NN,NNN 마스킹 → 합계는 지급 항목 합(시안 415,000원) */
+/** 합계 = 총 지급액(강사비+교통비+숙박비 415,000원) − 원천징수 8.8%(36,520원) = 378,480원 */
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_TOTAL_AMOUNT =
-  lectureFee + transportFee + lodgingFee
+  subtotalBeforeTax + withholdingAmount
 
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE: PaymentStatementCalculationLinesViewModel = {
   blocks: LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS,

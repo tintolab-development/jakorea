@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FinalPassAssignment } from './finalPassAssignment';
 import type { VolunteerFinalResultRequestResult } from './volunteerFinalResultRequestResult';
 
 /**
@@ -29,4 +30,17 @@ export interface VolunteerFinalResultRequest {
   notifyTiming?: string;
   /** notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;
+  /**
+     * 봉사자 최종 결과 API 전용. 기관형(GENERAL_ORGANIZATION) 봉사자를 합격 처리하면서 기관·회차를 함께 배정한다.
+     * 생략·null·[] 이면 기존과 같이 합격만 처리한다. result=PASS일 때만 허용하고 RESERVE·FAIL에 값이 오면 400
+     * VOLUNTEER_FINAL_RESULT_ASSIGNMENTS_PASS_ONLY. 같은 scheduleId가 두 번 오면 400
+     * VOLUNTEER_FINAL_RESULT_ASSIGNMENT_SCHEDULE_DUPLICATED. 개인 신청 최종 결과 API에 값이 오면 400
+     * VOLUNTEER_FINAL_RESULT_ASSIGNMENTS_NOT_SUPPORTED.
+     * 합격과 배정은 한 트랜잭션이며 배정 하나라도 실패하면 합격도 롤백된다.
+     * 배정 검증·에러 코드·저장 데이터·배정 알림은 POST /api/admin/programs/{programId}/volunteer-assignments 와 같다.
+     * 배정 알림 발송 시각은 합격 알림 발송 시각(notifyTiming/scheduledAt)에 맞춘다.
+     * @minItems 0
+     * @maxItems 100
+     */
+  assignments?: FinalPassAssignment[] | null;
 }

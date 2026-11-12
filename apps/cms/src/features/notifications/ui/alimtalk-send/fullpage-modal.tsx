@@ -1,4 +1,5 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
+import { useSendPrivacyAccessRecord } from '@/features/notifications/hooks/use-send-privacy-access-record'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -106,6 +107,11 @@ import { RecipientTable } from './recipient-table'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './fullpage-modal.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import { buildTemplateVariableUsageColumn } from '@/features/notifications/ui/shared/template-select-modal'
+import {
+  NOTIFICATION_SEND_DISCARD_CONFIRM,
+  hasNotificationSendDraftInput,
+} from '@/features/notifications/model/shared/send-draft-input'
 
 const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택해 주세요'
 const EMPTY_HINT_VIEW = <span className="alimtalk-send-fullpage__empty-hint">{EMPTY_HINT}</span>
@@ -169,6 +175,13 @@ type SendFullpageModalProps = {
   initialTemplateId?: string
 }
 
+/** 템플릿 선택 팝업 「변수」 열 — 상세(메타데이터) 미조회 템플릿은 본문을 몰라 `-` */
+const ALIMTALK_TEMPLATE_VARIABLE_COLUMNS = [
+  buildTemplateVariableUsageColumn<AlimtalkTemplateItem>(template =>
+    template.hasAlimtalkMetadata === true ? collectTemplatePlaceholderKeys(template) : null
+  ),
+]
+
 export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
   const invalidateHistory = useInvalidateAlimtalkSendHistory()
@@ -185,6 +198,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
   const [sendConfirmMessage, setSendConfirmMessage] = useState(ALIMTALK_SEND_CONFIRM_MESSAGE)
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
   const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const sendingRef = useRef(false)
@@ -342,6 +356,14 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     programKey: String(programNumericId ?? ''),
     onFailure: onRecipientPrivacyFailure,
   })
+  // 정책 CMS-21·22: 발송 화면·결과 팝업 개인정보 조회 기록. 503이면 기존 게이트가 원문 수신자를 비운다.
+  const sendPrivacyRecord = useSendPrivacyAccessRecord({
+    open,
+    remote,
+    programId: programNumericId,
+    recipients: recipients,
+    onRecordError: recipientPrivacy.report,
+  })
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(
     {
       programId: programNumericId,
@@ -403,6 +425,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setRecipientSelectOpen(false)
     setRecipientManualOpen(false)
     setSendConfirmOpen(false)
+    setDiscardConfirmOpen(false)
     setSending(false)
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
   }, [open, initialTemplateId])
@@ -640,7 +663,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setSendConfirmOpen(false)
     setSending(true)
     try {
-      await createAlimtalkSendBatch({
+      const batchId = await createAlimtalkSendBatch({
         batchName: draft.templateName || '알림톡 발송',
         templateId: draft.templateId,
         programId: draft.programId,
@@ -659,14 +682,33 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       idempotencyKeyRef.current = createIdempotencyKey()
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
+      sendPrivacyRecord.recordResultPopup(batchId)
     } catch (error) {
       showNotificationSendErrorAlert(showAlert, error, {
         template: '.send-template-select-field__trigger',
       })
+      sendPrivacyRecord.recordFailedPopup()
     } finally {
       sendingRef.current = false
       setSending(false)
     }
+  }
+
+  /** 취소·닫기(X)·ESC — 작성 중인 입력이 있으면 확인 후 닫는다 (QA-0369) */
+  const handleRequestClose = () => {
+    if (sendingRef.current) return
+    const dirty = hasNotificationSendDraftInput({
+      programSelected: Boolean(programId),
+      // 템플릿 목록 「사용」으로 미리 지정된 템플릿은 사용자 입력으로 보지 않는다
+      templateSelected: Boolean(templateId) && templateId !== initialTemplateId,
+      sendTimingSelected: sendTiming != null,
+      recipientCount: recipients.length,
+    })
+    if (dirty) {
+      setDiscardConfirmOpen(true)
+      return
+    }
+    onClose()
   }
 
   const phoneButtons = useMemo(() => {
@@ -681,7 +723,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     <>
       <TealHeaderModal
         open={open}
-        onCancel={onClose}
+        onCancel={handleRequestClose}
         title="알림톡 발송"
         size="full"
         hideHeader
@@ -693,7 +735,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             <button
               type="button"
               className="notification-fullpage-modal__title-close"
-              onClick={onClose}
+              onClick={handleRequestClose}
               aria-label="닫기"
             >
               <ModalCloseIcon tone="white" />
@@ -713,7 +755,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 </p>
               ) : null}
               <div className="notification-fullpage-modal__notice-actions">
-                <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
+                <CmsButton variant="cancel" size="large" type="button" onClick={handleRequestClose}>
                   취소
                 </CmsButton>
                 <CmsButton
@@ -790,6 +832,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                             getTemplateUnusableMessage={getTemplateUnusableMessage}
                             getTemplateUnusableReason={getTemplateUnusableReason}
                             showUnusableReasonInline
+                            extraColumns={ALIMTALK_TEMPLATE_VARIABLE_COLUMNS}
                             isUseEnabled={isAlimtalkTemplateApproved}
                             useButtonLabel="사용하기"
                             onBeforeUse={template => {
@@ -1126,6 +1169,19 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           setSendRequestCompletedOpen(false)
           onClose()
         }}
+      />
+      <ConfirmModal
+        open={open && discardConfirmOpen}
+        title={NOTIFICATION_SEND_DISCARD_CONFIRM.title}
+        content={NOTIFICATION_SEND_DISCARD_CONFIRM.content}
+        confirmText={NOTIFICATION_SEND_DISCARD_CONFIRM.confirmText}
+        cancelText={NOTIFICATION_SEND_DISCARD_CONFIRM.cancelText}
+        danger
+        onConfirm={() => {
+          setDiscardConfirmOpen(false)
+          onClose()
+        }}
+        onCancel={() => setDiscardConfirmOpen(false)}
       />
     </>
   )

@@ -14,7 +14,8 @@ import {
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { RegistrationWageFeeInput } from '@/features/program/shared/ui/registration/wage-fee-input'
+import { REGISTRATION_WAGE_GRADE_FEE_MAX } from '@/features/program/shared/lib/wage-fee-input-rules'
 import {
   getProgramRegistrationOverlayRecord,
   useProgramRegistrationOverlayKv,
@@ -24,8 +25,9 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 /** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 */
 const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
 const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
-const PAYMENT_LABEL_TRANSPORT_1C1S = '교통비(일사일교)'
-const PAYMENT_LABEL_LODGING_1C1S = '숙박비(일사일교)'
+/** 시안(9899:215345) 표시 라벨 —「강사 교통비, 숙박비(1사1교)」. 카탈로그 id·정산 키는 그대로 */
+const PAYMENT_LABEL_TRANSPORT_1C1S = '강사 교통비'
+const PAYMENT_LABEL_LODGING_1C1S = '숙박비(1사1교)'
 
 const WAGE_FEE_ROWS = [
   {
@@ -34,7 +36,7 @@ const WAGE_FEE_ROWS = [
     feeKey: 'economyRegistration.wageInfo.grade1Fee',
     distanceKey: 'economyRegistration.wageInfo.grade1DistanceFee',
     maxText: '최대 500,000원',
-    max: 500_000,
+    max: REGISTRATION_WAGE_GRADE_FEE_MAX[1],
     validationFeeKey: 'wage.grade1Fee',
     validationDistanceKey: 'wage.grade1DistanceFee',
   },
@@ -44,7 +46,7 @@ const WAGE_FEE_ROWS = [
     feeKey: 'economyRegistration.wageInfo.grade2Fee',
     distanceKey: 'economyRegistration.wageInfo.grade2DistanceFee',
     maxText: '최대 400,000원',
-    max: 400_000,
+    max: REGISTRATION_WAGE_GRADE_FEE_MAX[2],
     validationFeeKey: 'wage.grade2Fee',
     validationDistanceKey: 'wage.grade2DistanceFee',
   },
@@ -54,7 +56,7 @@ const WAGE_FEE_ROWS = [
     feeKey: 'economyRegistration.wageInfo.grade3Fee',
     distanceKey: 'economyRegistration.wageInfo.grade3DistanceFee',
     maxText: '최대 300,000원',
-    max: 300_000,
+    max: REGISTRATION_WAGE_GRADE_FEE_MAX[3],
     validationFeeKey: 'wage.grade3Fee',
     validationDistanceKey: 'wage.grade3DistanceFee',
   },
@@ -73,25 +75,7 @@ function HourlyFeeInput({
   return (
     <div className="detail-info-form-inputs-wrapper">
       <span className="detail-info-form--text">1시간 당</span>
-      <CmsNumericInput
-        mode="currency"
-        min={0}
-        max={max}
-        allowNegative={false}
-        inputSize="small"
-        placeholder="직접 입력"
-        width={120}
-        value={value == null ? '' : String(value)}
-        onValueChange={raw => {
-          const trimmed = raw.trim()
-          if (!trimmed) {
-            setValue(null)
-            return
-          }
-          const n = Number(trimmed.replace(/,/g, ''))
-          setValue(Number.isFinite(n) ? n : null)
-        }}
-      />
+      <RegistrationWageFeeInput value={value} onChange={setValue} max={max} />
       <span className="detail-info-form--text">원 ({maxText})</span>
     </div>
   )

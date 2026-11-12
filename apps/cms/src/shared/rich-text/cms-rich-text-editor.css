@@ -4,8 +4,7 @@
  */
 .cms-rich-text-editor,
 .cms-rich-text-viewer {
-  /* CMS 본문 기본 14px. 패키지 fallback 16px·화면별 host(메일 등)가 덮어쓴다. */
-  --rt-content-font-size: 14px;
+  /* 본문 기본 글자 크기는 패키지 기본값 15px(홈페이지 어드민·홈페이지와 동일). 메일 등 화면별 host만 덮어쓴다. */
 }
 
 .cms-rich-text-editor {

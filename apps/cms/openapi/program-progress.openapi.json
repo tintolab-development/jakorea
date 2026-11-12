@@ -333,6 +333,10 @@
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
     },
     {
+      "name": "신청/프로그램 워크플로우",
+      "description": "참여 강사 강사비 책정 기준"
+    },
+    {
       "name": "파일 관리",
       "description": "파일 메타데이터, 스캔 상태, 다운로드 claim, 삭제/파기 API"
     },
@@ -1218,10 +1222,43 @@
             "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다.",
             "nullable": true
           },
+          "fieldErrors": {
+            "type": "array",
+            "description": "충돌한 항목 목록. 관리자(/api/admin/**) API의 DB 중복·참조 충돌(HTTP 409)에서만 채우며, 그 밖의 응답에서는 필드를 내려주지 않습니다.",
+            "items": {
+              "$ref": "#/components/schemas/FieldErrorItem"
+            },
+            "nullable": true
+          },
           "detail": {
             "type": "string",
             "description": "RFC7807 detail. message와 동일합니다.",
             "example": "면접이 아직 종료되지 않았습니다."
+          }
+        }
+      },
+      "FieldErrorItem": {
+        "type": "object",
+        "description": "충돌한 항목 하나. 입력값 원문은 담지 않습니다.",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "충돌한 항목 키(camelCase). DUPLICATE는 입력 필드 키, IN_USE는 이 데이터를 참조하는 데이터 종류 키입니다.",
+            "example": "email"
+          },
+          "label": {
+            "type": "string",
+            "description": "화면 표시용 한글 항목명. 기획에서 항목명이 확정될 때까지 null입니다.",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "description": "충돌 원인. DUPLICATE=이미 등록된 값과 중복, IN_USE=다른 데이터에서 사용 중이라 삭제·변경 불가",
+            "enum": [
+              "DUPLICATE",
+              "IN_USE"
+            ],
+            "example": "DUPLICATE"
           }
         }
       },

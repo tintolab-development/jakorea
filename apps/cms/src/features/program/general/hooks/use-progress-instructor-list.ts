@@ -13,6 +13,7 @@ import type {
 import type { ProgressFilters } from './use-program-progress-params'
 import {
   createGeneralProgramInstructorParticipant,
+  saveGeneralParticipantInstructorFeePolicy,
   fetchGeneralParticipatingInstructorsPage,
 } from '@/features/program/general/api/admin-program-progress-service'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
@@ -30,6 +31,11 @@ import {
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildAssignedOrganizationNamesByMemberId } from '@/features/program/general/lib/participating-instructor-assigned-institutions'
 import type { Program } from '@/types/domain'
+import type { FeePolicy } from '@/shared/api/generated/dashboard/schemas/feePolicy'
+import {
+  registerParticipatingInstructorWithFeePolicy,
+  type ParticipatingInstructorRegisterResult,
+} from '@/features/program/general/lib/participating-instructor-register'
 
 function mergeInstructorRowsWithAssignments(
   rows: ParticipatingInstructorRow[],
@@ -164,21 +170,32 @@ export function useProgressInstructorList({
     )
   }, [])
 
-  const handleAddInstructorByMemberId = useCallback(async (memberId: string): Promise<boolean> => {
-    if (!remoteEnabled || !programId) {
-      notifyInstructorRegisterUnavailable()
-      return false
-    }
-    const numericMemberId = Number(memberId)
-    if (!Number.isFinite(numericMemberId) || numericMemberId <= 0) {
-      throw new Error('강사 회원 ID가 올바르지 않습니다.')
-    }
-    await createGeneralProgramInstructorParticipant(programId, numericMemberId)
-    await queryClient.invalidateQueries({
-      queryKey: generalProgramProgressQueryKeys.instructors(programId),
-    })
-    return true
-  }, [notifyInstructorRegisterUnavailable, programId, queryClient, remoteEnabled])
+  /**
+   * 참여 강사 추가 등록 — 등록(POST participants) 후 강사비 저장(PATCH instructor-fee-policy).
+   * 등록 실패는 throw, 강사비만 실패하면 `fee-failed`(등록은 완료). 목록은 두 경우 모두 다시 조회한다.
+   */
+  const handleAddInstructorByMemberId = useCallback(
+    async (memberId: string, feePolicy: FeePolicy): Promise<ParticipatingInstructorRegisterResult | false> => {
+      if (!remoteEnabled || !programId) {
+        notifyInstructorRegisterUnavailable()
+        return false
+      }
+      const numericMemberId = Number(memberId)
+      if (!Number.isFinite(numericMemberId) || numericMemberId <= 0) {
+        throw new Error('강사 회원 ID가 올바르지 않습니다.')
+      }
+      const result = await registerParticipatingInstructorWithFeePolicy({
+        createParticipant: () => createGeneralProgramInstructorParticipant(programId, numericMemberId),
+        saveFeePolicy: participantId =>
+          saveGeneralParticipantInstructorFeePolicy(programId, participantId, feePolicy),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.instructors(programId),
+      })
+      return result
+    },
+    [notifyInstructorRegisterUnavailable, programId, queryClient, remoteEnabled]
+  )
 
   const handleAddInstructor = useCallback((_values: unknown) => {
     void _values

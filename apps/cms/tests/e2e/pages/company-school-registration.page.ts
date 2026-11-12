@@ -150,8 +150,8 @@ export class CompanySchoolRegistrationPage {
     await checkCheckboxIfVisible(this.page, '강의평가')
 
     await selectNearLabelIfVisible(this.page, '교육 과정', 'Traditional (Paper)')
-    await selectNearLabelIfVisible(this.page, 'IP Owned', 'JA')
-    await selectNearLabelIfVisible(this.page, 'Course Delivered By', 'JA')
+    await selectNearLabelIfVisible(this.page, 'IP 소유 기관', 'JA')
+    await selectNearLabelIfVisible(this.page, '교육 운영 주체', 'JA')
     await checkRadioIfVisible(this.page, 'Yes')
 
     // 유형 설정 UI가 있으면 커리큘럼·단일만 (고정값 — 없으면 skip)

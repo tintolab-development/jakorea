@@ -803,7 +803,9 @@ it('참여자 모집 상한 숫자를 null로 비워도 existing 값으로 복�
   expect(info?.maxSessionsPerDay).toBeUndefined()
 })
 
-it('강사 모집 저장 시 모집 인원·면접 일정을 비우면 existing으로 복원하지 않는다', () => {
+// 11f8b9267: 면접 일정·서류 발표는 참여자·봉사자 모집 필드다. 강사 모집 탭 저장은 강사 모집 인원만 비우고
+// 다른 모집 유형의 면접 일정은 건드리지 않는다(existing 유지). 봉사자 탭에서 비우면 복원하지 않는다.
+it('강사 모집 저장 시 모집 인원을 비우면 existing으로 복원하지 않고, 면접 일정은 다른 모집 유형 값으로 유지한다', () => {
   const withInstructor = {
     ...program,
     instructorCapacity: 12,
@@ -820,8 +822,14 @@ it('강사 모집 저장 시 모집 인원·면접 일정을 비우면 existing�
     recruitmentAudience: 'instructor',
   })
   expect(patch.instructorCapacity).toBeUndefined()
-  expect(patch.interviewStartDate).toBeUndefined()
-  expect(patch.interviewEndDate).toBeUndefined()
+  expect(patch.interviewStartDate).toBe('2026-09-10T00:00:00.000Z')
+  expect(patch.interviewEndDate).toBe('2026-09-12T00:00:00.000Z')
+
+  const volunteerPatch = detailEditValuesToProgramPatch(values, withInstructor, {
+    recruitmentAudience: 'volunteer',
+  })
+  expect(volunteerPatch.interviewStartDate).toBeUndefined()
+  expect(volunteerPatch.interviewEndDate).toBeUndefined()
 })
 
 describe('trained teachers recruitment edit round-trip', () => {
@@ -911,7 +919,7 @@ describe('trained teachers recruitment edit round-trip', () => {
     expect(display.maxSessionsPerDayLabel).toBe('4차시')
     expect(display.recruitmentPeriodLabel).toContain('2026.10.01')
     expect(display.operationPeriodLabel).toContain('2026.11.01')
-    expect(display.targetLabel).toBe('중학교')
+    expect(display.targetLabel).toBe('중학생')
     expect(display.targetDetailLabel).toBe('중학교 2학년')
     expect(display.finalAnnouncementLabel).toContain('이메일 안내')
     expect(display.contactPhone).toBe('010-1111-2222')

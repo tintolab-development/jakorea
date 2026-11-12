@@ -54,7 +54,7 @@ describe('프로그램 상세 후원사 — 배정 응답 표시', () => {
     expect(logo.container.textContent).toBe('-')
   })
 
-  it('담당자 전화·이메일을 배정 응답에서 보여 준다', () => {
+  it('담당자 전화·이메일을 배정 응답에서 마스킹해 보여 준다(정책 32·37 — 원문 표시 금지)', () => {
     const { container } = render(
       <SponsorManagerContactsView
         program={programWithContact('010-1111-2222', 'mobile@example.test')}
@@ -63,8 +63,10 @@ describe('프로그램 상세 후원사 — 배정 응답 표시', () => {
       />
     )
     expect(container.textContent).toContain('모바일담당 팀장')
-    expect(container.textContent).toContain('010-1111-2222')
-    expect(container.textContent).toContain('mobile@example.test')
+    expect(container.textContent).toContain('010-****-2222')
+    expect(container.textContent).not.toContain('010-1111-2222')
+    expect(container.textContent).toContain('mob***@example.test')
+    expect(container.textContent).not.toContain('mobile@example.test')
   })
 
   it('nameTitle 조회는 이름 직책만 쉼표로 이어 붙이고 연락처는 숨긴다', () => {

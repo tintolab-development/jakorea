@@ -1,5 +1,6 @@
 import type { ProgramCategory, ProgramListItem } from '../model/types'
 import { PROGRAM_TAB_LABEL } from '../lib/constants'
+import { programListRecruitmentRoleLabel } from '../lib/list-recruitment-role'
 import { MediaListRow } from '@/shared/ui/media-list-row'
 import { PFArrowButton, PFDivider, PFText } from '@/shared/ui'
 import { ProgramStatusBadges } from './program-status-badges'
@@ -87,6 +88,8 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
               educationTargetLabel={program.educationTargetLabel}
               educationForm={program.educationForm}
               educationFormLabel={program.educationFormLabel}
+              recruitmentRoleLabel={programListRecruitmentRoleLabel(program.recruitmentType)}
+              showParticipantRole
               stateBadgeClassName={isClosed ? styles.closedStateBadge : undefined}
               size="regular"
             />

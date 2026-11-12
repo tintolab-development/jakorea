@@ -5,6 +5,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   individualSettlementReviewDetailQueryOptions,
   isIndividualSettlementReviewRemoteEnabled,
@@ -203,9 +204,13 @@ export function IndividualSettlementReviewDetailModal({
       setApproveOpen(false)
       setApproveDoneOpen(true)
     } catch (error) {
-      showMutationError(error)
+      // 지급 예정일 400(SCHEDULED_PAYMENT_DATE_*)은 강사 지급조서 확인과 같은 문구로 안내한다
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '개인 정산 심사를 처리하지 못했습니다.'),
+      })
     }
-  }, [approveMutation, expectedRevisionNo, settlementApplicationId, showMutationError])
+  }, [approveMutation, expectedRevisionNo, settlementApplicationId, showAlert])
 
   const handleReject = useCallback(
     async (payload: PaymentOrderRejectSubmitPayload) => {

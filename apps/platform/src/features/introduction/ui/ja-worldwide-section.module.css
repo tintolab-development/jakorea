@@ -284,11 +284,21 @@
     word-break: keep-all;
   }
 
+  /*
+   * 수상 배지 묶음(67×2 + gap 20). 넓은 화면은 기존 위치(.inner 오른쪽 끝 - 64px),
+   * .inner가 화면 폭과 같아지는 노트북 폭에서는 화면 오른쪽 여백 안으로 당겨 잘리지 않게 한다(QA-0449).
+   * 50% + 50vw = .inner 왼쪽에서 본 화면 오른쪽 끝(.inner는 가운데 정렬).
+   */
   .awardsWrap {
+    --awards-wrap-width: calc(67px * 2 + var(--spacing-20));
+
     gap: var(--spacing-20);
     position: absolute;
     bottom: 44px;
-    left: calc(100% - 64px);
+    left: min(
+      calc(100% - 64px),
+      calc(50% + 50vw - var(--awards-wrap-width) - var(--page-padding-x))
+    );
   }
 
   .awardsItem {

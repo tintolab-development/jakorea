@@ -3,8 +3,14 @@ import {
 } from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateRequestCertificateType'
 import { CertificateSerialAllocateRequestIssuanceSource } from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateRequestIssuanceSource'
 
-/** 양식 관리 미리보기 전용. 실제 발급 번호가 아님. API에 보내거나 성공 응답으로 쓰지 않는다. */
-export const CERTIFICATE_SERIAL_PLACEHOLDER = '26-JA-00000'
+/**
+ * 양식 관리 미리보기 전용 가상 번호. 실제 발급 번호가 아님. API에 보내거나 성공 응답으로 쓰지 않는다.
+ * 실제 문서번호 형식과 헷갈리지 않도록 숫자 연도·JA 접두를 쓰지 않는다.
+ */
+export const CERTIFICATE_SERIAL_PLACEHOLDER = 'SAMPLE-0000'
+
+/** 이전 플레이스홀더(`YY-JA-00000`) — 저장·캐시된 값이 남아 있어도 미발급으로 본다 */
+const LEGACY_CERTIFICATE_SERIAL_PLACEHOLDER_PATTERN = /^\d{2}-JA-0{5}$/
 
 export const CERTIFICATE_SERIAL_PATTERN = /^\d{2}-JA-\d{5}$/
 
@@ -15,7 +21,13 @@ export const CERTIFICATE_SERIAL_TYPES = Object.values(
 export type CertificateSerialType = CertificateSerialAllocateRequestCertificateType
 
 export function isCertificateSerialPlaceholder(value: string | null | undefined): boolean {
-  return value == null || value.trim() === '' || value.trim() === CERTIFICATE_SERIAL_PLACEHOLDER
+  if (value == null) return true
+  const trimmed = value.trim()
+  return (
+    trimmed === '' ||
+    trimmed === CERTIFICATE_SERIAL_PLACEHOLDER ||
+    LEGACY_CERTIFICATE_SERIAL_PLACEHOLDER_PATTERN.test(trimmed)
+  )
 }
 
 export function isIssuedCertificateSerial(value: string): boolean {

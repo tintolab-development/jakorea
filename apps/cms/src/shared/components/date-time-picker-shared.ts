@@ -124,3 +124,10 @@ export function useDateTimePickerPopoverLayer({
 
   return { popoverRef, popoverStyle }
 }
+
+/** 분을 스텝에 맞춰 내림한다(스텝 없음·1분이면 그대로). 예: (45, 30) → 30 */
+export function snapMinuteToStep(minute: number, minuteStep?: number): number {
+  const step = minuteStep != null && minuteStep > 1 ? Math.floor(minuteStep) : 1
+  if (step <= 1) return minute
+  return Math.floor(minute / step) * step
+}

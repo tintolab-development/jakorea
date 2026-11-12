@@ -39,6 +39,7 @@ import {
   resolveEnrollmentProgramPostsList,
 } from '@/features/user/detail/lib/enrollment-program-posts-source'
 import { isOwnProgramPost } from '@/features/user/detail/lib/is-own-program-post'
+import { toProgramPostPlainText } from '@/features/user/detail/lib/post-content-plain-text'
 import { deleteGeneralProgramPost } from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { PostReadStatusPopoverContent } from './post-read-status-popover'
@@ -88,7 +89,6 @@ function formatFileDate(date: string | Date): string {
 import { PostWriteModal } from './modal/post-write-modal'
 import { PostDetailModal } from './modal/post-detail-modal'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
-import { RichTextViewer } from '@/shared/rich-text'
 import './modal/enrollment-program-detail-modal.css'
 
 /** 세로 점 세 개 메뉴 아이콘 — 30×30 (게시글·파일 공통) */
@@ -167,8 +167,12 @@ function PostMetaEmoticonIcon() {
   )
 }
 
-/** 게시글 본문 — 3줄 초과 시 말줄임 + "... 더보기" (markdown WYSIWYG 저장본 표시) */
+/**
+ * 게시글 본문 — 3줄 초과 시 말줄임 + "... 더보기".
+ * 목록에서는 텍스트 서식을 적용하지 않는다(일반 텍스트). 서식은 상세에서만 보인다.
+ */
 function PostContentWithMore({ content }: { content: string }) {
+  const plainText = useMemo(() => toProgramPostPlainText(content), [content])
   const ref = useRef<HTMLDivElement>(null)
   const [isTruncated, setIsTruncated] = useState(false)
   useEffect(() => {
@@ -182,8 +186,8 @@ function PostContentWithMore({ content }: { content: string }) {
   }, [content])
   return (
     <div className="enrollment-program-detail-modal__post-content-wrap">
-      <div ref={ref} className="enrollment-program-detail-modal__post-content" title={content}>
-        <RichTextViewer content={content} contentFormat="markdown" />
+      <div ref={ref} className="enrollment-program-detail-modal__post-content" title={plainText}>
+        {plainText}
       </div>
       {isTruncated && (
         <button type="button" className="enrollment-program-detail-modal__post-more">

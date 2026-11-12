@@ -146,6 +146,12 @@ type ProgramRegistrationEducationCurriculumParagraphProps = {
   hideAssignmentSettings?: boolean
   /** 일반 등록·참여자 <개인> — 교육 진행 장소(일정 별 상이 시 블록 최하단) */
   educationPlaceEnabled?: boolean
+  /**
+   * 교육받은 교사 「교사 연수」(시안 9899:221372) — prepend 블록에 일정명 행을 두지 않고
+   * 진행 일정 · 교육 형태 | IPS(Prepare 고정)만. 일정명은 서버 teacherTrainingScheduleName.
+   * 생략 시 기존(일반 사전 교육) 동작 그대로.
+   */
+  hidePreEducationScheduleName?: boolean
 }
 
 type ProgramRegistrationCurriculumMultiSessionRowPlan =
@@ -342,6 +348,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   preEducationDisplayMode = 'prepend',
   hideAssignmentSettings = false,
   educationPlaceEnabled = false,
+  hidePreEducationScheduleName = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
   const [educationPlaceScheduleDetail] = useProgramRegistrationOverlayKv<string>(
     REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
@@ -394,11 +401,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   const preEducationHeadingLabel = toPreEducationDisplayLabel(preEducationBlockLabel)
 
   useEffect(() => {
-    if (!prependTraining) return
+    // 일정명 행이 없는 교사 연수는 일정명을 기록하지 않는다 (서버 연수 일정명이 정본)
+    if (!prependTraining || hidePreEducationScheduleName) return
     updateProgramRegistrationOverlayKey<string>(CURRICULUM_PRE_EDUCATION_NAME_KEY, prev =>
       typeof prev === 'string' && prev.trim() ? prev : PRE_EDUCATION_SCHEDULE_LABEL
     )
-  }, [prependTraining])
+  }, [prependTraining, hidePreEducationScheduleName])
 
   // 사전 교육 교육 형태 — 라디오 표시 기본값(online)을 overlay에 기록. 미터치·자동채우기 후 0번 누락 방지
   const preEducationEducationFormMissing = !educationFormBySession?.[PRE_EDUCATION_SESSION_INDEX]
@@ -606,16 +614,19 @@ export function ProgramRegistrationEducationCurriculumParagraph({
               mode="edit"
               className="program-registration-paragraph"
             >
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="일정명"
-                  validationKey="curriculum.preEducationScheduleName"
-                  edit={<PreEducationScheduleNameInput />}
-                  view="-"
-                />
+              <DetailInfoForm.Row type={hidePreEducationScheduleName ? 'single' : 'double'}>
+                {hidePreEducationScheduleName ? null : (
+                  <DetailInfoForm.Field
+                    label="일정명"
+                    validationKey="curriculum.preEducationScheduleName"
+                    edit={<PreEducationScheduleNameInput />}
+                    view="-"
+                  />
+                )}
                 <DetailInfoForm.Field
                   label="진행 일정"
                   validationKey="curriculum.preEducationScheduleLine"
+                  fullRow={hidePreEducationScheduleName}
                   edit={
                     <div className="detail-info-form-inputs-wrapper-no-gap">
                       <EducationProgressScheduleDatePicker

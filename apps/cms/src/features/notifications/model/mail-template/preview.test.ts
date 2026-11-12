@@ -63,8 +63,15 @@ describe('formatMailPreviewPerson', () => {
 })
 
 describe('formatMailPreviewRecipient', () => {
-  it('includes the sample extra recipient count', () => {
-    expect(formatMailPreviewRecipient()).toBe('홍길동 <gildong@jakorea.org> 외 914명')
+  it('does not fall back to a sample recipient when none is given', () => {
+    expect(formatMailPreviewRecipient()).toBe('-')
+    expect(formatMailPreviewRecipient({ name: '', email: '', extraCount: 0 })).toBe('-')
+  })
+
+  it('shows the real extra recipient count', () => {
+    expect(
+      formatMailPreviewRecipient({ name: '홍길동', email: 'rkdtk@naver.com', extraCount: 2 })
+    ).toBe('홍길동 <rkdtk@naver.com> 외 2명')
   })
 
   it('omits the extra count when there is a single recipient', () => {

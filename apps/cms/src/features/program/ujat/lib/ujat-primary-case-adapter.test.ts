@@ -20,12 +20,12 @@ const PRIMARY_182103_FLAT = {
 }
 
 describe('UJAT Primary Case adapter', () => {
-  it('maps Primary list ids and progress fallback for 182101–182105', () => {
+  it('maps Primary list ids; list progress uses server ujatProgressStatus only (no id fallback)', () => {
     expect(resolveUjatPrimaryProgressById('182101')).toBe('EDUCATION_SCHEDULED')
     expect(resolveUjatPrimaryProgressById('182103')).toBe('VOLUNTEER_RECRUITING')
     expect(resolveUjatPrimaryProgressById('182105')).toBe('PROGRAM_ENDED')
 
-    const row = fromListItem({
+    const base = {
       id: 182103,
       nameKo: '2026년 JA Korea 초등 경제교육',
       periodStatus: 'RECRUITING',
@@ -33,12 +33,16 @@ describe('UJAT Primary Case adapter', () => {
       businessEndDate: '2026-12-31',
       organizationApplicationCount: 0,
       instructorApplicantCount: 0,
-    })
+    }
+    const row = fromListItem({ ...base, ujatProgressStatus: 'VOLUNTEER_RECRUITING' })
 
     expect(row.id).toBe('182103')
     expect(row.ujatProgressStatus).toBe('VOLUNTEER_RECRUITING')
     expect(row.instructors).toBe(0)
     expect(row.title).toContain('JA Korea')
+
+    // 40248bc10: 목록 진행 현황은 서버 canonical 필드만 사용 — Primary id 로컬 fallback 없음.
+    expect(fromListItem(base).ujatProgressStatus).toBeUndefined()
   })
 
   it('parses flat Primary serviceDetailJson (not only {version,program} envelope)', () => {

@@ -158,6 +158,40 @@
   overflow: visible;
 }
 
+/* 양식 관리 견본 표시 — 실발급 PDF 캡처 DOM에는 렌더하지 않는다 */
+.form-certificate-preview__sample-mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  color: rgba(220, 38, 38, 0.18);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 240px;
+  font-weight: 900;
+  letter-spacing: 24px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 이중 안전장치 — 화면 밖 PDF 캡처 루트에는 견본 표시가 보이지 않게 한다 */
+.form-certificate-preview__pdf-export-root [data-certificate-sample] {
+  display: none !important;
+}
+
+/* 긴 제목 — 글자 크기·자간·줄높이는 인라인(resolveCertificateTitleLayout), 최대 두 줄 */
+.form-certificate-preview__title[data-title-wrap='true'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 80px);
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 /* 본문 영역 — 내부: 좌 111px · 갭 56px · 우측 나머지 */
 .form-certificate-preview__content-frame {
   position: absolute;

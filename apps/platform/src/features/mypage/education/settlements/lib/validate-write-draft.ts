@@ -77,13 +77,20 @@ export function validateSettlementWriteDraft(
   }
 
   if (meta.isInstructor && meta.documentKind !== 'receipt') {
-    if (isAmountMissingReceipt(meal.amount, namedExpenseAttachmentCount(meal))) {
-      return 'receipt_required'
+    // 프로그램에서 끈 실비는 검증하지 않고, 영수증 불필요 항목은 영수증 없이 통과 (K14)
+    for (const item of [meal, activity]) {
+      if (item.allowed === false) continue
+      if (
+        item.evidenceRequired !== false &&
+        isAmountMissingReceipt(item.amount, namedExpenseAttachmentCount(item))
+      ) {
+        return 'receipt_required'
+      }
     }
-    if (isAmountMissingReceipt(activity.amount, namedExpenseAttachmentCount(activity))) {
-      return 'receipt_required'
-    }
-    if (isNamedExpenseUploadIncomplete(meal) || isNamedExpenseUploadIncomplete(activity)) {
+    if (
+      (meal.allowed !== false && isNamedExpenseUploadIncomplete(meal)) ||
+      (activity.allowed !== false && isNamedExpenseUploadIncomplete(activity))
+    ) {
       return 'upload_incomplete'
     }
     const lodging = draft.companySchoolLodging

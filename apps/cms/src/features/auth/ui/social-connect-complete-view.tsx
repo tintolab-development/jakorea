@@ -3,13 +3,14 @@ import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { CmsButton } from '@/shared/ui'
 
 interface SocialConnectCompleteViewProps {
-  maskedEmail: string
+  /** 로그인한 본인 계정 이메일 전체(정책 CMS-02 동일 적용, 마스킹하지 않음) */
+  email: string
   onGoLogin: () => void
   onConnectMore: () => void
 }
 
 export function SocialConnectCompleteView({
-  maskedEmail,
+  email,
   onGoLogin,
   onConnectMore,
 }: SocialConnectCompleteViewProps) {
@@ -28,7 +29,7 @@ export function SocialConnectCompleteView({
         </p>
 
         <div className="register-complete__email-box" aria-label="연결된 계정 이메일">
-          {maskedEmail}
+          {email}
         </div>
 
         <div className="auth-actions register-complete__actions">

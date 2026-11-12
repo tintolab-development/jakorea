@@ -24,6 +24,10 @@ export function useMarkAccountPaymentPaidMutation() {
     onSuccess: async () => {
       await invalidateSettlementLedgerCaches(queryClient)
     },
+    // 409 ACCOUNT_PAYMENT_ACCOUNT_MISSING 등 실패 후에도 목록을 다시 조회한다(E2) — 서버가 동의서 계좌로 채웠을 수 있다
+    onError: async () => {
+      await invalidateSettlementLedgerCaches(queryClient)
+    },
   })
 }
 

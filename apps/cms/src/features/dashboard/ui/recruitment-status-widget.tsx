@@ -28,6 +28,7 @@ import {
   RECRUITMENT_STATUS_MORE_PATH,
   recruitmentProgramDetailPath,
 } from '../lib/dashboard-widget-links'
+import { keyboardActivatableRowProps } from '@/shared/lib/keyboard-activatable-row'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
 
@@ -145,11 +146,12 @@ export function RecruitmentStatusWidget({ isHalfColumn = false }: { isHalfColumn
           loading={loading}
           className="dashboard-widget-table__data cms-data-table--skip-auto-no-col"
           emptyText={<DashboardWidgetEmpty inTable />}
-          onRow={record => ({
-            onClick: () => {
-              navigate(recruitmentProgramDetailPath(record.id, record.programType))
-            },
-          })}
+          onRow={record =>
+            keyboardActivatableRowProps(
+              () => navigate(recruitmentProgramDetailPath(record.id, record.programType)),
+              { ariaLabel: `${record.title} 상세 보기` }
+            )
+          }
         />
       )}
     </Card>

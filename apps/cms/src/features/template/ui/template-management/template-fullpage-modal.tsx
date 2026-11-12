@@ -6,6 +6,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
 import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import { RegistrationFullpageEntryLoading } from '@/shared/ui/registration-fullpage-entry-loading'
+import { useTemplateDetailViewMode } from './detail-view-mode-context'
 import './template-fullpage-modal.css'
 import '../paragraph/shared/paragraph-card.css'
 
@@ -131,6 +132,10 @@ export function TemplateFullpageModal({
   scrollResetKey,
 }: TemplateFullpageModalProps) {
   const bodyRef = useRef<HTMLDivElement>(null)
+  // 양식 관리 「양식 상세보기」 조회 모드 — 본문 잠금, 저장·삭제 대신 「수정」
+  const { readOnly: detailReadOnly, onRequestEdit } = useTemplateDetailViewMode()
+  const resolvedShowSave = showSave && !detailReadOnly
+  const resolvedShowDeleteButton = showDeleteButton && !detailReadOnly
   const resolvedFooterActions = bodyLoading
     ? undefined
     : footerActions ?? (footerAction != null ? [footerAction] : undefined)
@@ -139,6 +144,7 @@ export function TemplateFullpageModal({
     registrationUserMode ? 'full-page-modal--registration-user-mode' : '',
     rightNavigation == null ? 'full-page-modal--no-right-nav' : '',
     bodyLoading ? 'full-page-modal--body-loading' : '',
+    detailReadOnly ? 'full-page-modal--detail-read-only' : '',
     className,
   ]
     .filter(Boolean)
@@ -147,7 +153,7 @@ export function TemplateFullpageModal({
   const editableTitle = typeof title === 'string' ? title : null
   const [titleValue, setTitleValue] = useState(editableTitle ?? '')
   const [titleEditing, setTitleEditing] = useState(false)
-  const resolvedTitleReadOnly = titleReadOnly || registrationUserMode
+  const resolvedTitleReadOnly = titleReadOnly || registrationUserMode || detailReadOnly
   const resolvedSaveLabel = saveLabel ?? (registrationUserMode ? '임시저장' : '저장')
 
   useEffect(() => {
@@ -161,11 +167,16 @@ export function TemplateFullpageModal({
     bodyRef.current.scrollLeft = 0
   }, [open, scrollResetKey])
 
+  const requestEditButton =
+    detailReadOnly && onRequestEdit != null ? (
+      <CmsButton onClick={onRequestEdit}>수정</CmsButton>
+    ) : null
+
   const headerActions =
     templateTabType === 'writing' ? (
       <>
         {headerActionsLeading}
-        {showDeleteButton ? (
+        {resolvedShowDeleteButton ? (
           <CmsButton variant="delete" onClick={onDelete} loading={deleteLoading} disabled={deleteLoading}>
             삭제
           </CmsButton>
@@ -179,11 +190,12 @@ export function TemplateFullpageModal({
             미리보기
           </CmsButton>
         ) : null}
-        {showSave ? (
+        {resolvedShowSave ? (
           <CmsButton onClick={() => onSave?.()} disabled={deleteLoading}>
             {resolvedSaveLabel}
           </CmsButton>
         ) : null}
+        {requestEditButton}
       </>
     ) : (
       <>
@@ -201,9 +213,10 @@ export function TemplateFullpageModal({
             미리보기
           </CmsButton>
         ) : null}
-        {showSave ? (
+        {resolvedShowSave ? (
           <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
         ) : null}
+        {requestEditButton}
       </>
     )
 
@@ -311,9 +324,11 @@ export function TemplateFullpageModal({
               <RegistrationFullpageEntryLoading variant="modal-body" />
             ) : (
               <>
-                <div className="full-page-modal__left">{leftContent}</div>
+                <div className="full-page-modal__left" inert={detailReadOnly}>
+                  {leftContent}
+                </div>
                 {rightNavigation != null ? (
-                  <aside className="full-page-modal__right-wrap">
+                  <aside className="full-page-modal__right-wrap" inert={detailReadOnly}>
                     <div className="full-page-modal__right">{rightNavigation}</div>
                   </aside>
                 ) : null}

@@ -1,4 +1,6 @@
+import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
 import {
+  mapDetailedProgramListPage,
   mapDetailedProgramListResponse,
   mapDetailedProgramResponse,
   toDetailedProgramRequest,
@@ -56,6 +58,19 @@ async function fetchAllDetailedProgramRows(
   return rows
 }
 
+/** 목록 화면 — 서버 1페이지 (QA-0363: 전체 페이지 수집 대신 스크롤 추가 로드) */
+export async function getDetailedProgramListPage(
+  searchParams: URLSearchParams,
+  page: number
+): Promise<DataManagementListPage<DetailedProgramManagementRow>> {
+  assertDetailedProgramsRemoteReady()
+  const dto = await fetchDetailedProgramsRemote(
+    detailedProgramsParamsFromSearchParams(searchParams, page)
+  )
+  return mapDetailedProgramListPage(dto)
+}
+
+/** 등록·공통정보 셀렉트 등 전체 목록이 필요한 곳에서만 쓴다. */
 export async function getDetailedProgramList(
   searchParams: URLSearchParams
 ): Promise<DetailedProgramManagementRow[]> {

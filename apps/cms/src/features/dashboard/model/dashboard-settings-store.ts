@@ -100,7 +100,12 @@ export const SHORTCUT_ITEMS: ShortcutItemDef[] = [
   { id: 'inquiries', label: '문의내역', path: '/admin/posts/inquiries' },
   { id: 'sponsors', label: '후원사 관리', path: '/sponsors' },
   { id: 'textbooks', label: '교재 관리', path: '/textbook', defaultEnabled: false },
-  { id: 'programs-detail', label: '세부 프로그램 관리', path: '/programs', defaultEnabled: false },
+  {
+    id: 'programs-detail',
+    label: '세부 프로그램 관리',
+    path: '/detailed-program',
+    defaultEnabled: false,
+  },
   {
     id: 'notification-messages',
     label: '알림 메시지 관리',

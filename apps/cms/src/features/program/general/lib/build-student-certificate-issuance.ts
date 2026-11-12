@@ -3,6 +3,10 @@ import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 import { resolveStudentCertificateTemplateName } from './student-certificate-template'
 import type { StudentCertificateKind } from './resolve-student-certificate-kind'
 import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
+import {
+  COMPLETION_CERTIFICATE_BODY_CONTENT,
+  PARTICIPATION_CERTIFICATE_BODY_CONTENT,
+} from '@/features/template/lib/certificate-body-content'
 
 export function certificateKindFromEligibilityApiType(
   apiType: 'COMPLETION' | 'PARTICIPATION'
@@ -12,12 +16,6 @@ export function certificateKindFromEligibilityApiType(
 
 export const COMPLETION_CERTIFICATE_DOCUMENT_TITLE = '수료증'
 export const PARTICIPATION_CERTIFICATE_DOCUMENT_TITLE = '참가인증서'
-
-const COMPLETION_CERTIFICATE_BODY_CONTENT =
-  '귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.'
-
-const PARTICIPATION_CERTIFICATE_BODY_CONTENT =
-  '귀하는 위 프로그램에 참여하였음을 확인합니다.'
 
 export interface StudentCertificateDownloadContext {
   student: Pick<SchoolDetailStudentRow, 'id' | 'name' | 'birthDate' | 'gradeClass'>

@@ -95,6 +95,8 @@ export function CategoryManagementModal({
             onChange={e => setEditDraft(e.target.value)}
             onPressEnter={submitEdit}
             aria-label="카테고리명 편집"
+            error={Boolean(ctrl.editNameError)}
+            message={ctrl.editNameError ?? undefined}
           />
         ) : (
           <span className="notice-category-management-modal__name-text">{row.name}</span>
@@ -210,6 +212,8 @@ export function CategoryManagementModal({
                                 onChange={e => ctrl.setNewDraft(e.target.value)}
                                 onPressEnter={ctrl.submitNew}
                                 aria-label="새 카테고리명"
+                                error={Boolean(ctrl.newNameError)}
+                                message={ctrl.newNameError ?? undefined}
                               />
                             </div>
                           </CmsDataTable.Summary.Cell>

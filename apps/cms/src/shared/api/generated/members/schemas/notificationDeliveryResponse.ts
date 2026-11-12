@@ -62,4 +62,6 @@ export interface NotificationDeliveryResponse {
   contentTemplate?: string;
   /** SMS|LMS|MMS. SMS 목록 메시지 유형. preview/스냅샷 또는 템플릿 sms_message_type. */
   smsMessageType?: string;
+  /** 수신 실패(SEND_FAILED·DELIVERY_FAILED) 사유 한국어 표시값(QA-0178). providerResultCode 기준이며 서버 매핑에 없는 코드는 '발송 실패(코드: NNNN)'. 실패가 아니거나 코드가 없으면 null. */
+  displayReason?: string | null;
 }

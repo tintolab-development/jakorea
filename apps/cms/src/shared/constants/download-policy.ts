@@ -3,7 +3,9 @@
  * Phase 0.5.3: 다운로드 보호 UX (NFR-DATA-01, NFR-DATA-02)
  */
 
-/** 한국어 2글자 복성(예금주명 `accountHolderName` 마스킹 시 성 길이) */
+import { isMaskedHomeAddressLine, maskHomeAddressLine } from '@jakorea/ui/privacy'
+
+/** 한국어 2글자 복성. 예금주 4글자 이상에서만 성을 2글자로 본다(기획 2026-11-12 Q4). */
 const COMPOUND_SURNAMES_TWO = new Set([
   '남궁',
   '황보',
@@ -15,6 +17,17 @@ const COMPOUND_SURNAMES_TWO = new Set([
   '서문',
 ])
 
+/** BE maskAccountHolderValue와 같은 규칙(코드포인트 기준). */
+function maskAccountHolderCanonical(trimmed: string): string {
+  const points = Array.from(trimmed)
+  const n = points.length
+  if (n <= 1) return '*'
+  if (n === 2) return `${points[0]}*`
+  if (n === 3) return `${points[0]}*${points[2]}`
+  const surnameLen = COMPOUND_SURNAMES_TWO.has(points[0] + points[1]) ? 2 : 1
+  return points.slice(0, surnameLen).join('') + '*'.repeat(n - surnameLen - 1) + points[n - 1]
+}
+
 /**
  * 다운로드 제한 정책
  */
@@ -25,34 +38,32 @@ export const DOWNLOAD_LIMITS = {
   rateLimitWindowMs: 60 * 1000, // 레이트 리밋 윈도우 (1분)
 } as const
 
+/** 판단할 수 없는 전화번호를 원문 대신 표시하는 고정 마스킹 */
+const PHONE_UNDISCLOSED = '****'
+
 /**
  * 마스킹 정책 함수
  */
 export const MASKING_POLICY = {
   /**
-   * 전화번호 마스킹: 가운데 국 번호·일련번호 구간을 `*` 처리
-   * - 휴대폰 010-****-1234
-   * - 유선 02-****-5678, 02-***-4567, 지역 031-***-4567 등
+   * 전화번호 마스킹: 가운데 국번 구간을 `*` 처리하고 `지역-가운데-끝4자리`로 맞춘다.
+   * - 휴대폰 010-****-5678 (하이픈·공백 없이 와도 같은 형식)
+   * - 유선 02-****-5678, 02-***-4567, 지역 031-***-4567
+   * 이미 `*`가 있으면 다시 가리지 않는다. 판단할 수 없는 형식(국외 번호, 자릿수 오류 등)은
+   * 원문 대신 `****`를 돌려준다. Golden Vector PHONE 케이스와 같다.
    */
   phone: (value: string): string => {
     if (!value) return value
-    if (value.includes('*')) return value
     const v = value.trim()
-
-    const hyphenRules: Array<[RegExp, string]> = [
-      [/^(\d{3})-(\d{4})-(\d{4})$/, '$1-****-$3'],
-      [/^(\d{2})-(\d{4})-(\d{4})$/, '$1-****-$3'],
-      [/^(\d{2})-(\d{3})-(\d{4})$/, '$1-***-$3'],
-      [/^(\d{3})-(\d{3})-(\d{4})$/, '$1-***-$3'],
-    ]
-    for (const [re, repl] of hyphenRules) {
-      if (re.test(v)) return v.replace(re, repl)
-    }
-
-    const looseMobile = v.replace(/^(\d{3})-?(\d{4})-?(\d{4})$/, '$1-****-$3')
-    if (looseMobile !== v) return looseMobile
-
-    return v.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3')
+    if (!v) return value
+    if (v.includes('*')) return v
+    if (v === '-' || v === '—') return v
+    if (!/^[\d\s-]+$/.test(v)) return PHONE_UNDISCLOSED
+    const digits = v.replace(/\D/g, '')
+    const areaLength = digits.startsWith('02') ? 2 : 3
+    const middleLength = digits.length - areaLength - 4
+    if (!digits.startsWith('0') || middleLength < 3 || middleLength > 4) return PHONE_UNDISCLOSED
+    return `${digits.slice(0, areaLength)}-${'*'.repeat(middleLength)}-${digits.slice(-4)}`
   },
 
   /**
@@ -82,24 +93,17 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 예금주: 성 + 마지막 글자. 중간만 `*`.
-   * 성 다음이 한 글자면 그 글자를 마스킹 (`김이` → `김*`).
-   * 복성 2글자. 이미 `*`면 재마스킹하지 않음.
+   * 예금주(기획 결정 2026-11-12, BE PrivacyMaskingSupport.maskAccountHolder·골든 벡터 ACCOUNT_HOLDER와 같은 출력):
+   * 1글자 `*`, 2글자 성 + `*`, 3글자 이상 성 + 가운데 글자 수만큼 `*` + 끝 글자.
+   * 복성(4글자 이상이고 앞 두 글자가 남궁·황보·제갈·선우·독고·사공·서문·동방)은 성 2글자.
+   * 이미 정규 형태로 마스킹된 값은 그대로, 일부만 가려진 값(`김*철수`)은 다시 정규 형태로 가린다.
    */
   accountHolderName: (value: string): string => {
     if (!value) return value
     const trimmed = value.trim()
-    if (!trimmed || trimmed.includes('*')) return value
-    let surnameLen = 1
-    if (trimmed.length >= 2 && COMPOUND_SURNAMES_TWO.has(trimmed.slice(0, 2))) {
-      surnameLen = 2
-    }
-    if (trimmed.length <= surnameLen) return '*'.repeat(trimmed.length)
-    if (trimmed.length === surnameLen + 1) {
-      return trimmed.slice(0, surnameLen) + '*'
-    }
-    const middleLen = trimmed.length - surnameLen - 1
-    return trimmed.slice(0, surnameLen) + '*'.repeat(middleLen) + trimmed.slice(-1)
+    if (!trimmed) return value
+    const canonical = maskAccountHolderCanonical(trimmed)
+    return trimmed.includes('*') && canonical === trimmed ? trimmed : canonical
   },
 
   /**
@@ -125,23 +129,16 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 주소: 지번은 동·읍·면·리까지, 도로명은 도로명까지. 이후는 블러.
-   * 구분할 수 없으면 원문을 남기지 않는다.
+   * 자택 주소: 지번은 동·읍·면·리까지, 도로명은 도로명까지 보이고 나머지는 ` *****`.
+   * BE와 같은 알고리즘(`maskHomeAddressLine`)을 쓴다. 판단할 수 없으면 `비공개`.
+   * 이미 마스킹된 값(`*` 포함·`비공개`)은 다시 가리지 않는다.
    */
   address: (value: string): string => {
     if (!value) return value
     const trimmed = value.trim()
-    if (!trimmed || trimmed.includes('*')) return value
-    const tokens = trimmed.split(/\s+/).filter(Boolean)
-    const roadIdx = tokens.findIndex(token => /(로|길|대로)$/.test(token))
-    if (roadIdx >= 0) {
-      return `${tokens.slice(0, roadIdx + 1).join(' ')} ***`
-    }
-    const lotIdx = tokens.findIndex(token => /(동|읍|면|리)$/.test(token))
-    if (lotIdx >= 0) {
-      return `${tokens.slice(0, lotIdx + 1).join(' ')} ***`
-    }
-    return '***'
+    if (!trimmed) return value
+    if (isMaskedHomeAddressLine(trimmed)) return trimmed
+    return maskHomeAddressLine(trimmed)
   },
 } as const
 

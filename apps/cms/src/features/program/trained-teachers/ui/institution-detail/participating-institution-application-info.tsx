@@ -91,6 +91,8 @@ export interface TrainedTeachersParticipatingInstitutionApplicationInfoProps {
   addressDetail: ReactNode
   classAndCount: ReactNode
   educationFormat: ReactNode
+  /** 신청 답 교육 장소 표시값(상세 응답 educationPlace/Detail). 없으면 「-」 */
+  educationPlace?: ReactNode
   teacherInfo: ReactNode
   applicationReason: ReactNode
   otherRequests: ReactNode
@@ -118,6 +120,7 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
   addressDetail,
   classAndCount,
   educationFormat,
+  educationPlace,
   teacherInfo,
   applicationReason,
   otherRequests,
@@ -190,6 +193,10 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
                   value1={classAndCount}
                   label2="교육 형태"
                   value2={educationFormat}
+                />
+                <InstitutionApplicationTableRowFullWidth
+                  label="교육 장소"
+                  value={educationPlace ?? '-'}
                 />
                 <InstitutionApplicationTableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
                 <InstitutionApplicationTableRowFullWidth

@@ -1,3 +1,4 @@
+import { createFinalAnnounceDisabledDate } from '@/features/template/ui/form-set/recruit-form/shared/recruit-final-announce-date'
 import type { Dayjs } from 'dayjs'
 import { INTERVIEW_METHOD_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
@@ -44,6 +45,7 @@ export function RecruitInterviewConditionalRows({
   const isGeneralWizard = useIsGeneralRegistrationWizard()
   const docAnnouncePlaceholder = isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '발표일'
   const finalAnnouncePlaceholder = isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'
+  const finalAnnounceDisabledDate = createFinalAnnounceDisabledDate(state.recruitRange)
   if (interviewEnabled) {
     return (
       <>
@@ -160,6 +162,7 @@ export function RecruitInterviewConditionalRows({
                   mode="single"
                   presetMode="date"
                   value={state.finalAnnounceDate}
+                  disabledDate={finalAnnounceDisabledDate}
                   placeholder={finalAnnouncePlaceholder}
                   suppressAutoTodayWhenEmpty
                   onChange={next => state.setFinalAnnounceDate(next)}
@@ -224,6 +227,7 @@ export function RecruitInterviewConditionalRows({
               mode="single"
               presetMode="date"
               value={state.finalAnnounceDate}
+              disabledDate={finalAnnounceDisabledDate}
               placeholder={finalAnnouncePlaceholder}
               suppressAutoTodayWhenEmpty
               onChange={next => state.setFinalAnnounceDate(next)}

@@ -32,7 +32,8 @@ describe('UJAT 봉사자 최종 결과 알림 필드', () => {
       result: 'FAIL',
       reason: '서류 미비',
       notifyTiming: 'MANUAL',
-      scheduledAt: at.toISOString(),
+      // 예약 시각은 Asia/Seoul offset ISO-8601 (a66fdced0 — UTC `Z` 금지)
+      scheduledAt: '2026-11-01T10:00:00+09:00',
     })
   })
 })

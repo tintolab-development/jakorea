@@ -158,7 +158,7 @@ export function ParticipatingInstitutionsCalendarDayList({
   onSchoolClick: (row: ParticipatingSchoolRow) => void
   usePreferredScheduleFormat?: boolean
   /**
-   * `general-institution` — 일반 기관형 시안(01-2): 카드 우측 체크박스, 기관명 옆 「활동 포기」 뱃지.
+   * `general-institution` — 일반 기관형 시안(01-2)·1사1교 시안(05-1 01-2): 카드 우측 체크박스, 기관명 옆 「활동 포기」 뱃지.
    * 체크박스는 화면 내 선택 표시만 한다(선택 대상 일괄 액션은 시안에 정의되지 않음).
    */
   variant?: ParticipatingInstitutionsCalendarDayListVariant
