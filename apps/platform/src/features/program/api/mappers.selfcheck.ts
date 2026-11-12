@@ -9,6 +9,7 @@ import type { PortalProgramDetail } from './types.ts'
 import {
   withRecruitmentMethod,
   mapPortalProgramDetail,
+  mapPortalProgramEducationBadgeLabels,
   mapPortalProgramListItem,
   parsePortalProgramId,
   portalPublicFileContentUrl,
@@ -2638,6 +2639,37 @@ assert.equal(
   assert.equal(phaseValue(participantNoInterview, '1차 서류 합격자 발표'), undefined)
   assert.equal(phaseValue(participantNoInterview, '2차 면접 기간'), undefined)
   assert.ok(phaseValue(participantNoInterview, '최종 합격자 발표'))
+}
+
+// QA-0210: 마이페이지 신청 카드가 쓰는 배지 라벨 함수는 상세 헤더 배지와 같은 값을 낸다.
+{
+  const audienceCases: Array<
+    Pick<
+      PortalProgramDetail,
+      'educationTargets' | 'educationForm' | 'educationFormLabel' | 'educationFormScheduleDetail'
+    >
+  > = [
+    { educationTargets: ['elementary', 'university'], educationForm: 'online', educationFormLabel: '온라인', educationFormScheduleDetail: 'common' },
+    { educationTargets: ['adult'], educationForm: 'hybrid', educationFormLabel: null, educationFormScheduleDetail: 'common' },
+    { educationTargets: [], educationForm: 'offline', educationFormLabel: null, educationFormScheduleDetail: 'perSchedule' },
+  ]
+  for (const audience of audienceCases) {
+    const detail = mapPortalProgramDetail({
+      programId: 186900,
+      programType: 'GENERAL_INDIVIDUAL',
+      title: '교육대상·형태 일치',
+      ...audience,
+    } as PortalProgramDetail)
+    assert.ok(detail)
+    const badge = mapPortalProgramEducationBadgeLabels(audience)
+    assert.equal(badge.educationTargetLabel, detail.educationTargetLabel)
+    assert.equal(badge.educationForm, detail.educationForm)
+    assert.equal(badge.educationFormLabel, detail.educationFormLabel)
+  }
+  assert.equal(
+    mapPortalProgramEducationBadgeLabels({ educationTargets: ['elementary', 'university'] }).educationTargetLabel,
+    '초등학교, 대학(원)생',
+  )
 }
 
 console.log('program portal mappers.selfcheck: ok')
