@@ -382,7 +382,10 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   }
   if (raw?.trim()) {
     // CONFLICT: prefix 제거
-    return raw.replace(/^CONFLICT:\s*/i, '').trim() || fallback
+    const stripped = raw.replace(/^CONFLICT:\s*/i, '').trim()
+    // 문구 매핑이 없는 코드(예: INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT — 기획 문구 미확정)는 코드 문자열을 노출하지 않는다
+    if (code && stripped === code) return fallback
+    return stripped || fallback
   }
   return fallback
 }

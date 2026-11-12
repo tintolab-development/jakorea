@@ -30,6 +30,25 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toContain('사업 시작일')
   })
 
+  it('문구 매핑이 없는 코드만 message로 오면 코드 대신 fallback을 노출한다 (같은 날짜 배정 409)', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: 'CONFLICT: INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+          error: {
+            code: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+            message: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+          },
+        },
+      },
+    }
+    expect(getGeneralProgramApiErrorMessage(error, '배정에 실패했습니다.')).toBe(
+      '배정에 실패했습니다.'
+    )
+  })
+
   it('일반 message를 그대로 노출한다', () => {
     const error = {
       response: {
