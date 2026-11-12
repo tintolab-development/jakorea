@@ -31,7 +31,7 @@ export function wageFeeRejectMessage(reason: WageFeeRejectReason, max: number): 
   if (reason === 'too-long') {
     return `최대 ${wageFeeMaxDigits(max)}자리(${formatWageFeeAmount(max)}원)까지 입력할 수 있습니다.`
   }
-  return '숫자만 입력해 주세요. 음수는 입력할 수 없습니다.'
+  return '숫자만 입력해 주세요.'
 }
 
 /** 입력칸 아래 안내 문구 — 거부된 입력이 우선, 그다음 범위 초과 */

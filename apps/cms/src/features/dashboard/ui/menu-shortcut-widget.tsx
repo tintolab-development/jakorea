@@ -156,7 +156,7 @@ export function MenuShortcutWidget() {
             const badgeCount = shouldShowShortcutBadge(liveBadgeCounts, item.id) ? count : undefined
             const hasBadge = badgeCount != null
             const badgeScopeLabel =
-              badgeCount != null ? shortcutBadgeScopeLabel(item.id, badgeCount) : undefined
+              badgeCount != null ? shortcutBadgeScopeLabel(item.id, badgeCount, item.label) : undefined
             return (
               <button
                 key={item.id}

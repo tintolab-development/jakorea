@@ -44,13 +44,27 @@ export function resolveShortcutNavigationPath(
   return `${pathname}?${params.toString()}`
 }
 
-/** 배지 툴팁·aria — 집계 범위 안내 */
-export function shortcutBadgeScopeLabel(shortcutId: string, count: number): string {
+/** 메뉴명 → 툴팁 대상명: 끝의 '관리'·'확인'을 뗀다 (예: 강사 회원 관리 → 강사 회원) */
+function shortcutBadgeSubjectFromMenuLabel(menuLabel: string): string {
+  return menuLabel.trim().replace(/\s+(관리|확인)$/, '')
+}
+
+/**
+ * 배지 툴팁·aria — 집계 범위 안내 (QA-0141, 기획 확정 2026-11-12).
+ * 신규: "마지막 확인 이후 신규 {대상} N건" / 대기: "처리 대기 N건 (현재 기준)"
+ */
+export function shortcutBadgeScopeLabel(
+  shortcutId: string,
+  count: number,
+  menuLabel?: string
+): string {
   if (isDashboardPendingWaitShortcut(shortcutId)) {
     return `처리 대기 ${count}건 (현재 기준)`
   }
-  const subject = NEW_BADGE_SCOPE_SUBJECT[shortcutId]
+  const subject =
+    NEW_BADGE_SCOPE_SUBJECT[shortcutId] ??
+    (menuLabel ? shortcutBadgeSubjectFromMenuLabel(menuLabel) : '')
   return subject
-    ? `마지막 확인 이후 신규 등록 ${subject} ${count}건`
-    : `마지막 확인 이후 신규 등록 ${count}건`
+    ? `마지막 확인 이후 신규 ${subject} ${count}건`
+    : `마지막 확인 이후 신규 ${count}건`
 }

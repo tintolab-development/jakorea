@@ -25,7 +25,7 @@ describe('강사비 입력 규칙 (QA-0383-ab40)', () => {
 
   it('안내 문구 — 거부 사유가 우선, 그다음 범위 초과', () => {
     expect(resolveWageFeeInputMessage(100, 400_000, 'invalid-char')).toBe(
-      '숫자만 입력해 주세요. 음수는 입력할 수 없습니다.'
+      '숫자만 입력해 주세요.'
     )
     expect(resolveWageFeeInputMessage(100, 400_000, 'too-long')).toBe(
       '최대 6자리(400,000원)까지 입력할 수 있습니다.'

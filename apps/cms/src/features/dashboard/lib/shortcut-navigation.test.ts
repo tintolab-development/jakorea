@@ -41,9 +41,13 @@ describe('resolveShortcutNavigationPath', () => {
 describe('shortcutBadgeScopeLabel', () => {
   it('대기 키와 신규 키의 집계 범위를 구분한다', () => {
     expect(shortcutBadgeScopeLabel('inquiries', 3)).toBe('처리 대기 3건 (현재 기준)')
-    expect(shortcutBadgeScopeLabel('notices', 2)).toBe('마지막 확인 이후 신규 등록 2건')
-    expect(shortcutBadgeScopeLabel('programs-detail', 5)).toBe(
-      '마지막 확인 이후 신규 등록 프로그램(전체 유형) 5건'
+    expect(shortcutBadgeScopeLabel('notices', 2, '공지사항')).toBe('마지막 확인 이후 신규 공지사항 2건')
+    expect(shortcutBadgeScopeLabel('users-instructor', 5, '강사 회원 관리')).toBe(
+      '마지막 확인 이후 신규 강사 회원 5건'
     )
+    expect(shortcutBadgeScopeLabel('programs-detail', 5, '세부 프로그램 관리')).toBe(
+      '마지막 확인 이후 신규 프로그램(전체 유형) 5건'
+    )
+    expect(shortcutBadgeScopeLabel('notices', 1)).toBe('마지막 확인 이후 신규 1건')
   })
 })
