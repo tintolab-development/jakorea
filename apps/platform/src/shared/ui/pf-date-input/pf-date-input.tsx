@@ -10,7 +10,11 @@ import {
 import { createPortal } from 'react-dom'
 import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
+import calendarCompleted20Url from './icons/calendar-completed-20.svg'
+import calendarCompleted24Url from './icons/calendar-completed-24.svg'
 import calendarBlackUrl from './icons/calendar-completed.svg'
+import calendarDefault20Url from './icons/calendar-default-20.svg'
+import calendarDefault24Url from './icons/calendar-default-24.svg'
 import calendarGrayUrl from './icons/calendar-default.svg'
 import {
   formatDateInputDisplay,
@@ -85,6 +89,14 @@ const POPOVER_FALLBACK_SIZE: Record<
   date: { width: 384, height: 320 },
   month: { width: 280, height: 280 },
   year: { width: 280, height: 280 },
+}
+
+/** 시안 Input 크기별 달력 아이콘(medium 20 · large 22 · xlarge/mobile 24) — [기본, 값 있음] */
+const CALENDAR_ICON_BY_SIZE: Record<PFDateInputSize, readonly [string, string]> = {
+  medium: [calendarDefault20Url, calendarCompleted20Url],
+  large: [calendarGrayUrl, calendarBlackUrl],
+  xlarge: [calendarDefault24Url, calendarCompleted24Url],
+  mobile: [calendarDefault24Url, calendarCompleted24Url],
 }
 
 const sizeTypographyClassMap: Record<PFDateInputSize, string> = {
@@ -217,7 +229,7 @@ export function PFDateInput({
   const isFormPage = variant === 'formPage'
   const rootStyle = { ...toWidthStyle(width), ...style }
   const shouldShowClearButton = !disabled && (hasValue || error)
-  const calendarIconUrl = hasValue ? calendarBlackUrl : calendarGrayUrl
+  const calendarIconUrl = CALENDAR_ICON_BY_SIZE[size][hasValue ? 1 : 0]
 
   const fieldClassName = [
     'pf-date-input__field',
