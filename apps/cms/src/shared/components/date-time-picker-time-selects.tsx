@@ -70,6 +70,8 @@ export interface DateTimePickerTimeInlineSelectsProps {
   rowPhase?: 'single' | 'start' | 'end'
   /** 분 선택 스텝(예: 30 → 00/30만). 기본 1분 */
   minuteStep?: number
+  /** opt-in: 활성 행이면 분 셀렉트도 시와 같이 강조한다(기본 false — 분은 항상 muted) */
+  emphasizeActiveMinute?: boolean
   /** 현재 선택 날짜. 최소 일시와 같은 날짜일 때 시간 선택지를 제한한다. */
   date?: Dayjs
   /** 예약 가능한 최소 일시 */
@@ -89,6 +91,7 @@ export function DateTimePickerTimeInlineSelects({
   invalid = false,
   rowPhase = 'single',
   minuteStep,
+  emphasizeActiveMinute = false,
   date,
   minDateTime,
   inputSize = 'medium',
@@ -122,11 +125,13 @@ export function DateTimePickerTimeInlineSelects({
     !invalid && !hourActive && 'date-time-picker-time-selects__wrap--muted'
   )
 
-  const wrapMuted = cn(
-    'date-time-picker-time-selects__wrap',
-    invalid && 'date-time-picker-time-selects__wrap--invalid',
-    !invalid && 'date-time-picker-time-selects__wrap--muted'
-  )
+  const wrapMuted = emphasizeActiveMinute
+    ? wrapHour
+    : cn(
+        'date-time-picker-time-selects__wrap',
+        invalid && 'date-time-picker-time-selects__wrap--invalid',
+        !invalid && 'date-time-picker-time-selects__wrap--muted'
+      )
 
   const endPhase = rowPhase === 'end'
 
