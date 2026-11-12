@@ -6,7 +6,7 @@ const SPONSOR_LOGO_ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'ai', 'ep
 export const SPONSOR_LOGO_ACCEPT = '.jpg,.jpeg,.png,.ai,.eps,.svg'
 
 export const SPONSOR_LOGO_GUIDE_LINES = [
-  '- 파일당 최대 20MB, JPG/PNG/AI/EPS/SVG 형식, 최대 20개까지 등록 가능합니다.',
+  '- 파일은 JPG, PNG, AI, EPS, SVG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 

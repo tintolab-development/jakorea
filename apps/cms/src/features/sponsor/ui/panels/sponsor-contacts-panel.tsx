@@ -11,6 +11,7 @@ import {
   SPONSOR_CONTACT_DELETE_IN_USE_MESSAGE,
 } from '@/features/sponsor/lib/sponsor-contact-delete-copy'
 import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
+import { getSponsorContactTypeTag } from '@/shared/lib/status-tag-specs'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import { SponsorContactTypeChangeBlockedModal } from '@/features/sponsor/ui/modal/sponsor-contact-type-change-blocked-modal'
@@ -171,6 +172,7 @@ export function SponsorContactsPanel({
   }, [canWrite, draftRows, filteredRows, isEditing, isSavingEdits, saveEdits, showAlert, startEdit])
 
   const tableRows = isEditing ? draftRows : filteredRows
+  /** 엑셀: 담당자 유형은 드롭다운 셀 대신 화면 표기(「주 담당자」/「담당자」)로 내보낸다 */
   const excelColumns = useMemo(
     () =>
       buildContactColumns({
@@ -180,7 +182,15 @@ export function SponsorContactsPanel({
         openDropdownId: null,
         onTypeChange: () => undefined,
         onDropdownOpenChange: () => undefined,
-      }),
+      }).map(column =>
+        column.key === 'contactType'
+          ? {
+              ...column,
+              render: (_: unknown, row: SponsorContactRow) =>
+                getSponsorContactTypeTag(row.contactType).label,
+            }
+          : column
+      ),
     [tableRows]
   )
 
