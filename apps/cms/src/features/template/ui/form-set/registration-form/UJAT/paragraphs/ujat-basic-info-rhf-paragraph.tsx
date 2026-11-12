@@ -11,8 +11,9 @@ import dayjs from 'dayjs'
 import { useWatch, type UseFormReturn } from 'react-hook-form'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
+import { useProgramSponsorContactsMaskedQuery } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { UJAT_SPONSOR_ALL_VALUE } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -28,6 +29,7 @@ import {
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
+  TEMPLATE_FORM_IPS_FIELD_LABELS,
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -41,6 +43,8 @@ import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-fo
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
+  UJAT_BASIC_INFO_REP_EN_DEFAULT,
+  UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
   UJAT_SURVEY_ITEMS_DEFAULT,
@@ -88,9 +92,10 @@ export function UjatBasicInfoRHFParagraph({
   const formValues = useWatch({ control: infoForm.control }) as ProgramDetailEditFormValues
   const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady()
   const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
-  const contactsQuery = useSponsorContactsQuery(
+  // 등록 양식 담당자 선택지 — contactPrivacy=MASKED(후원사 선택 후에만 조회, 데이터 관리 RAW 캐시와 분리, 정책 32·37)
+  const contactsQuery = useProgramSponsorContactsMaskedQuery(
     String(formValues.sponsorId ?? ''),
-    Boolean(formValues.sponsorId)
+    Boolean(formValues.sponsorId) && String(formValues.sponsorId) !== UJAT_SPONSOR_ALL_VALUE
   )
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(catalogReady)
 
@@ -294,7 +299,7 @@ export function UjatBasicInfoRHFParagraph({
               inputSize="small"
               value={String(formValues.mainTitle ?? '')}
               onChange={event => setField(infoForm, 'mainTitle', event.target.value)}
-              placeholder="대표 프로그램명을 입력해 주세요"
+              placeholder={`예) ${UJAT_BASIC_INFO_REP_KO_DEFAULT}`}
               width="100%"
             />
           }
@@ -308,7 +313,7 @@ export function UjatBasicInfoRHFParagraph({
               inputSize="small"
               value={String(formValues.titleEn ?? '')}
               onChange={event => setField(infoForm, 'titleEn', event.target.value)}
-              placeholder="대표 프로그램명을 입력해 주세요"
+              placeholder={`예) ${UJAT_BASIC_INFO_REP_EN_DEFAULT}`}
               width="100%"
             />
           }
@@ -565,7 +570,7 @@ export function UjatBasicInfoRHFParagraph({
           view="-"
         />
         <DetailInfoForm.Field
-          label="IP Owned"
+          label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
           validationKey="basicInfo.ipOwned"
           edit={
             <CmsSelect
@@ -583,7 +588,7 @@ export function UjatBasicInfoRHFParagraph({
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          label="Course Delivered By"
+          label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
           validationKey="basicInfo.courseDeliveredBy"
           edit={
             <CmsSelect
@@ -599,7 +604,7 @@ export function UjatBasicInfoRHFParagraph({
           view="-"
         />
         <DetailInfoForm.Field
-          label="Partner Involvement"
+          label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
           validationKey="basicInfo.partnerInvolvement"
           edit={
             <CmsRadioGroup

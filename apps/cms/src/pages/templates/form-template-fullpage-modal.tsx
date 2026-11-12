@@ -283,7 +283,11 @@ export function FormTemplateFullpageModal({
               <div className="template-preview-modal__a4-stack">
                 <div className="template-preview-modal__a4-frame">
                   <div className="template-preview-modal__a4-scale-inner">
-                    <FormCertificatePreview {...certificatePdfExportProps} serialNumber={undefined} />
+                    <FormCertificatePreview
+                      {...certificatePdfExportProps}
+                      serialNumber={undefined}
+                      showSampleWatermark
+                    />
                   </div>
                 </div>
               </div>
@@ -310,7 +314,7 @@ export function FormTemplateFullpageModal({
       leftContent={
         <>
           <FormCertificateEditScaleViewport>
-            <FormCertificatePreview {...certificatePreviewProps} />
+            <FormCertificatePreview {...certificatePreviewProps} showSampleWatermark />
           </FormCertificateEditScaleViewport>
           <div className={FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS} aria-hidden>
             <FormCertificatePreview {...certificatePdfExportProps} canvasRef={pdfExportCanvasRef} />

@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react'
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  startTransition,
+} from 'react'
 import {
   applyGeneralParticipantAudienceSelection,
   shouldResetParticipationScheduleDetailForAudience,
@@ -34,7 +42,11 @@ import {
   resolveProgramRegistrationScheduleCurriculumEditDescription,
 } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
-import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  isGeneralProgramApplicationFormBindingRequiredError,
+} from '@/features/program/general/api/get-general-program-api-error'
+import { ApplicationFormBindingRequiredAlertContent } from '@/features/program/general/ui/registration/application-form-binding-required-alert-content'
 import {
   isProgramDateOutsideOpenPeriodError,
   publishProgramOperationDateFocus,
@@ -2538,7 +2550,9 @@ export function useProgramRegistrationEditor(
               content:
                 error instanceof CompanySchoolOperationRangeRequiredError
                   ? error.message
-                  : getGeneralProgramApiErrorMessage(
+                  : isGeneralProgramApplicationFormBindingRequiredError(error)
+                    ? createElement(ApplicationFormBindingRequiredAlertContent)
+                    : getGeneralProgramApiErrorMessage(
                       error,
                       '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
                     ),

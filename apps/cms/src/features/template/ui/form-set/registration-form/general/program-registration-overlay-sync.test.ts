@@ -135,8 +135,8 @@ describe('readRegistrationOverlayProgramTitleKo', () => {
     expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('디지털 리터러시 교실')
   })
 
-  it('1사1교에서 제목을 아직 안 바꿨으면 화면 기본 대표명을 쓴다', () => {
-    expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('1사1교 경제금융교육')
+  it('1사1교에서 제목을 아직 입력하지 않았으면 빈 값이다(예시는 placeholder 전용, QA-0389-8556)', () => {
+    expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('')
   })
 
   it('키가 있으면 빈 국문명도 React state fallback보다 우선한다', () => {

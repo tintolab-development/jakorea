@@ -14,7 +14,8 @@ import {
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { RegistrationWageFeeInput } from '@/features/program/shared/ui/registration/wage-fee-input'
+import { REGISTRATION_WAGE_GRADE_FEE_MAX } from '@/features/program/shared/lib/wage-fee-input-rules'
 import {
   getProgramRegistrationOverlayRecord,
   useProgramRegistrationOverlayKv,
@@ -35,7 +36,7 @@ const WAGE_FEE_ROWS = [
     feeKey: 'economyRegistration.wageInfo.grade1Fee',
     distanceKey: 'economyRegistration.wageInfo.grade1DistanceFee',
     maxText: '최대 500,000원',
-    max: 500_000,
+    max: REGISTRATION_WAGE_GRADE_FEE_MAX[1],
     validationFeeKey: 'wage.grade1Fee',
     validationDistanceKey: 'wage.grade1DistanceFee',
   },
@@ -45,7 +46,7 @@ const WAGE_FEE_ROWS = [
     feeKey: 'economyRegistration.wageInfo.grade2Fee',
     distanceKey: 'economyRegistration.wageInfo.grade2DistanceFee',
     maxText: '최대 400,000원',
-    max: 400_000,
+    max: REGISTRATION_WAGE_GRADE_FEE_MAX[2],
     validationFeeKey: 'wage.grade2Fee',
     validationDistanceKey: 'wage.grade2DistanceFee',
   },
@@ -55,7 +56,7 @@ const WAGE_FEE_ROWS = [
     feeKey: 'economyRegistration.wageInfo.grade3Fee',
     distanceKey: 'economyRegistration.wageInfo.grade3DistanceFee',
     maxText: '최대 300,000원',
-    max: 300_000,
+    max: REGISTRATION_WAGE_GRADE_FEE_MAX[3],
     validationFeeKey: 'wage.grade3Fee',
     validationDistanceKey: 'wage.grade3DistanceFee',
   },
@@ -74,25 +75,7 @@ function HourlyFeeInput({
   return (
     <div className="detail-info-form-inputs-wrapper">
       <span className="detail-info-form--text">1시간 당</span>
-      <CmsNumericInput
-        mode="currency"
-        min={0}
-        max={max}
-        allowNegative={false}
-        inputSize="small"
-        placeholder="직접 입력"
-        width={120}
-        value={value == null ? '' : String(value)}
-        onValueChange={raw => {
-          const trimmed = raw.trim()
-          if (!trimmed) {
-            setValue(null)
-            return
-          }
-          const n = Number(trimmed.replace(/,/g, ''))
-          setValue(Number.isFinite(n) ? n : null)
-        }}
-      />
+      <RegistrationWageFeeInput value={value} onChange={setValue} max={max} />
       <span className="detail-info-form--text">원 ({maxText})</span>
     </div>
   )

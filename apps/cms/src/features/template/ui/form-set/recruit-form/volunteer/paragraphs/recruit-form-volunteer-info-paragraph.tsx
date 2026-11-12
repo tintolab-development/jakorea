@@ -22,8 +22,8 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
 import {
-  isRecruitInterviewRequiredOff,
   isRecruitInterviewRequiredOn,
+  recruitInterviewRequiredRadioValue,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-required'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -45,7 +45,7 @@ type RangeSeal = { start: string; end: string } | null
 /** 프로그램 봉사자 모집 폼 — 봉사자 모집 정보 */
 export function RecruitFormVolunteerInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
-    useVolunteerRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
+    useVolunteerRecruitField<ParticipantRecruitmentAnnouncementPublishedValue | ''>(
       'recruit.volunteer.announcementPublished',
       RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
@@ -187,7 +187,7 @@ export function RecruitFormVolunteerInfoParagraph() {
   const [notes, setNotes] = useVolunteerRecruitField<string>('recruit.volunteer.notes', '')
 
   const interviewEnabled = isRecruitInterviewRequiredOn(interviewRequired)
-  const interviewRadioValue = isRecruitInterviewRequiredOff(interviewRequired) ? 'no' : 'yes'
+  const interviewRadioValue = recruitInterviewRequiredRadioValue(interviewRequired)
 
   return (
     <div className="recruit-form-volunteer-info-paragraph__forms">

@@ -21,6 +21,7 @@ import {
   certificateIssueDateIso,
   getRegionActivationHandlers,
   labelToGraphemes,
+  resolveCertificateTitleLayout,
 } from './form-certificate-preview-utils'
 import { useCertificatePreviewModel } from './use-certificate-preview-model'
 import { useScrollActiveFieldIntoView } from './use-scroll-active-field-into-view'
@@ -85,6 +86,11 @@ export interface FormCertificatePreviewProps {
    * PDF 캡처(다운로드)만 백엔드가 준 `{YY}-JA-{NNNNN}` 를 넣는다.
    */
   serialNumber?: string
+  /**
+   * 양식 관리 견본 미리보기 — 캔버스에 SAMPLE 표시.
+   * 실발급 번호(`serialNumber`)가 들어간 PDF 캡처에는 붙지 않는다.
+   */
+  showSampleWatermark?: boolean
 }
 
 /** PDF 캡처 시 편집용 닷·프레임을 숨길 때 루트에 붙이는 클래스 */
@@ -122,15 +128,15 @@ export function FormCertificatePreview({
   className,
   canvasRef,
   serialNumber = CERTIFICATE_SERIAL_PLACEHOLDER,
+  showSampleWatermark = false,
 }: FormCertificatePreviewProps) {
   const logoSrc = orgLogoPreviewSrc ?? templateLogo
   const educationSrc = orgLogo02PreviewSrc ?? templateEducation
   const certificateBgSrc = certificateBackgroundPreviewSrc ?? templateCertificateBg
   const stampSrc = chairmanSealPreviewSrc ?? templateStamp
-  const displaySerialNumber =
-    serialNumber != null && isIssuedCertificateSerial(serialNumber)
-      ? serialNumber
-      : CERTIFICATE_SERIAL_PLACEHOLDER
+  const hasIssuedSerial = serialNumber != null && isIssuedCertificateSerial(serialNumber)
+  const displaySerialNumber = hasIssuedSerial ? serialNumber : CERTIFICATE_SERIAL_PLACEHOLDER
+  const showSampleMark = showSampleWatermark && !hasIssuedSerial
 
   /** 기본 합성 배경 사용 중(커스텀 배경 업로드 없음) */
   const usesCompositeDefaultBackground = !certificateBackgroundPreviewSrc
@@ -178,6 +184,14 @@ export function FormCertificatePreview({
   useScrollActiveFieldIntoView(previewRootRef, previewActiveFieldName)
 
   const titleTextColor = fieldTextColors?.titleName
+  /** 길이에 따라 축소·줄바꿈 — 미리보기와 PDF 캡처가 같은 계산을 쓴다 */
+  const titleLayout = resolveCertificateTitleLayout(titleText)
+  const titleStyle: CSSProperties = {
+    fontSize: titleLayout.fontSize,
+    letterSpacing: titleLayout.letterSpacing,
+    lineHeight: `${titleLayout.lineHeight}px`,
+    ...(titleTextColor ? { color: titleTextColor } : {}),
+  }
   const bodyTextColor = fieldTextColors?.bodyContent
   const chairmanTextColor = fieldTextColors?.chairmanName
   const participantTextColor = fieldTextColors?.participantInfo
@@ -229,6 +243,11 @@ export function FormCertificatePreview({
           >
             {displaySerialNumber}
           </span>
+          {showSampleMark ? (
+            <span className={`${P}__sample-mark`} data-certificate-sample="mark" aria-label="견본">
+              SAMPLE
+            </span>
+          ) : null}
           {showLogoLayer ? (
             <span
               role={showLogoEditChrome ? 'button' : undefined}
@@ -287,7 +306,8 @@ export function FormCertificatePreview({
               shouldDim(region, 'title') && FRAME_DIMMED
             )}
             data-template-field="titleName"
-            style={titleTextColor ? { color: titleTextColor } : undefined}
+            data-title-wrap={titleLayout.wrap ? 'true' : undefined}
+            style={titleStyle}
             {...(showTitleEditChrome
               ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.title, onRegionClick)
               : {})}

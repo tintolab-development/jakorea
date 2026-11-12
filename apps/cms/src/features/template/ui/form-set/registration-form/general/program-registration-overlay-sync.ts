@@ -256,8 +256,8 @@ const ECONOMY_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'economyRegistration.basicInfo.sponsorId' as const
 export const ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
   'economyRegistration.basicInfo.repKo' as const
-/** 1사1교 기본정보 국문 대표명 — 입력 전 overlay에 키가 없어도 화면에 보이는 기본값 */
-export const ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT: string = '1사1교 경제금융교육'
+/** 1사1교 기본정보 국문 대표명 — 입력 전 화면 값. 빈 값으로 시작한다(예시는 placeholder, QA-0389-8556) */
+export const ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT: string = ''
 const ECONOMY_REGISTRATION_ALL_VALUE = '__all__'
 
 export function readEconomyRegistrationOverlaySponsorId(): string {
