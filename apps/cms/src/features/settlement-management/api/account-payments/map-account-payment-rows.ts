@@ -8,6 +8,12 @@ function resolveSessionLabel(item: AccountPaymentListItemResponse): string {
   return '-'
 }
 
+/** 2026-11-12 BE 추가 필드 — 생성 타입에 아직 없어 좁게 읽는다. 빈 값은 undefined. */
+function readMaskedRecipientPhone(item: AccountPaymentListItemResponse): string | undefined {
+  const value = (item as { maskedRecipientPhone?: unknown }).maskedRecipientPhone
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
 export function mapAccountPaymentListItemToRow(
   item: AccountPaymentListItemResponse,
   index: number
@@ -32,6 +38,7 @@ export function mapAccountPaymentListItemToRow(
     bankName: item.bankName ?? undefined,
     maskedAccountNo: item.maskedAccountNo ?? undefined,
     accountHolder: item.accountHolder ?? undefined,
+    ...(readMaskedRecipientPhone(item) ? { maskedRecipientPhone: readMaskedRecipientPhone(item) } : {}),
     /** 계좌 지급 memberId — 지급조서 instructorMemberId와 다를 수 있음(시안 카탈로그 분리). 이름 merge 금지 */
     instructorMemberId: item.memberId ?? undefined,
     // 목록 API는 지급조서 CONFIRMED 건만 반환

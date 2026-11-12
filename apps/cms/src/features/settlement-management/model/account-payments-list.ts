@@ -41,6 +41,11 @@ export interface AccountPaymentRow {
   accountHolder?: string
   depositAccountNumber?: string
   recipientMobile?: string
+  /**
+   * 받는 분 휴대폰 마스킹값(BE 목록 `maskedRecipientPhone`, 정책 CMS-07). 대량이체 양식 **미리보기 전용**.
+   * 원문은 서버 XLSX 다운로드에만 있으므로 다운로드 값으로 쓰지 않는다.
+   */
+  maskedRecipientPhone?: string
   /** 정산 상세 withholding 항목 합(원). 목록에 없으면 미리보기에서 세액 행을 만들지 않는다 */
   withholdingTaxAmount?: number
   /** 정산 상세 payee 마스킹 주민등록번호. 원문 금지 */

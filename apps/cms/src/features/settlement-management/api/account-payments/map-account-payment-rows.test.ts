@@ -123,4 +123,16 @@ describe('mapAccountPaymentListItemToRow', () => {
     expect(row.instructorName).toBe('김참여')
     expect(row.settlementId).toBeUndefined()
   })
+
+  it('F(CMS-07): maskedRecipientPhone 마스킹값을 미리보기용으로만 싣고 빈 값은 생략한다', () => {
+    const base = { accountPaymentId: 1, paymentStatus: 'WAITING_PAYMENT' } as AccountPaymentListItemResponse
+    expect(
+      mapAccountPaymentListItemToRow({ ...base, maskedRecipientPhone: '010-****-5678' } as never, 0)
+        .maskedRecipientPhone
+    ).toBe('010-****-5678')
+    expect(mapAccountPaymentListItemToRow({ ...base, maskedRecipientPhone: null } as never, 0)).not.toHaveProperty(
+      'maskedRecipientPhone'
+    )
+    expect(mapAccountPaymentListItemToRow(base, 0).recipientMobile).toBeUndefined()
+  })
 })
