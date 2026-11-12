@@ -167,7 +167,12 @@ async function resolveSponsor(): Promise<ResolvedUjatDevDependencies['sponsor']>
     .sort(byId)
   for (const sponsor of sponsors) {
     const sponsorId = String(sponsor.id).trim()
-    const contacts = [...(await getSponsorContacts(sponsorId))].filter(row => row?.id).sort(byId)
+    // 개발용 자동 입력도 담당자 id만 필요하다 — 원문·조회 기록을 남기지 않게 MASKED로 받는다.
+    const contacts = [
+      ...(await getSponsorContacts(sponsorId, { contactPrivacy: 'MASKED' })),
+    ]
+      .filter(row => row?.id)
+      .sort(byId)
     const contact = contacts[0]
     if (contact) return { sponsorId, contactId: String(contact.id).trim() }
   }
