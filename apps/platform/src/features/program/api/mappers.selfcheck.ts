@@ -1227,7 +1227,7 @@ assert.equal(
 )
 assert.equal(geminiTraining.geminiTrainingRequestStartDate, '2026-09-01')
 assert.equal(geminiTraining.geminiTrainingRequestEndDate, '2026-09-30')
-assert.equal(geminiTraining.recruitmentPhases[0]?.label, '기관 모집 기간')
+assert.equal(geminiTraining.recruitmentPhases[0]?.label, '참여 기관 모집 기간')
 
 const geminiWithoutTrainingRequestPeriod = mapPortalProgramDetail({
   programId: 185004,

@@ -502,7 +502,7 @@ function recruitmentTypeLabel(value: string | undefined): string {
     case 'VOLUNTEER':
       return '봉사자 모집 기간'
     case 'ORGANIZATION':
-      return '기관 모집 기간'
+      return '참여 기관 모집 기간'
     default:
       return '참여자 모집 기간'
   }
@@ -1680,7 +1680,7 @@ export function mapPortalProgramDetail(
           : remote.recruitments,
     ).map(phase =>
       detailCase === 'gemini' && phase.label === '참여자 모집 기간'
-        ? { ...phase, label: '기관 모집 기간' }
+        ? { ...phase, label: '참여 기관 모집 기간' }
         : phase,
     ),
     educationSchedules:
