@@ -22,7 +22,7 @@ export function EducationSessionCardHeader({
     <div className={[styles.top, mobileStack ? styles.mobileStack : undefined].filter(Boolean).join(' ')}>
       <div className={styles.meta}>
         {badge}
-        <PFText as="span" typo="hd-sm" className={styles.date}>
+        <PFText as="span" typo="hd-sm" color="black" className={styles.date}>
           {date}
         </PFText>
         {subtitle}
