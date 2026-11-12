@@ -49,6 +49,7 @@ export type { PFAttachedFileListItem, PFAttachedFileListProps } from './pf-attac
 export {
   PFCalendar,
   CALENDAR_LEGEND_ITEMS,
+  GENERAL_CALENDAR_LEGEND_ITEMS,
   INSTRUCTOR_CALENDAR_LEGEND_ITEMS,
   CALENDAR_EVENT_COLORS,
   resolveCalendarEventColors,

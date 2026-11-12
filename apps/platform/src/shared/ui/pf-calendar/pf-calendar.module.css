@@ -465,7 +465,10 @@
 
 .popoverEventTime {
   flex: 0 0 auto;
-  max-width: 40%;
+  flex-shrink: 0;
+  min-width: max-content;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 @media (--bp-below-pc) {
@@ -642,4 +645,6 @@
 
 .popoverMobile .popoverEventTime {
   max-width: none;
+  min-width: max-content;
+  overflow: visible;
 }

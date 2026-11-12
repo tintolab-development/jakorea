@@ -343,7 +343,7 @@ export function HeaderDesktop({
                   </button>
                   {notificationOpen ? (
                     <div className={styles.notificationPopover} role="dialog" aria-label="알림">
-                      <NotificationInboxPanel />
+                      <NotificationInboxPanel onNavigate={() => setIsNotificationOpen(false)} />
                     </div>
                   ) : null}
                 </div>
