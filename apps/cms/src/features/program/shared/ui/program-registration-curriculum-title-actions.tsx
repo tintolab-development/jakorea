@@ -1,6 +1,6 @@
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
-  PRE_EDUCATION_DISPLAY_LABEL,
+  PRE_EDUCATION_HEADING_LABEL,
   shouldAllowScheduleProgressGroupAdd,
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -97,7 +97,7 @@ export function ProgramRegistrationCurriculumTitleActions({
     />
   ) : (
     <CmsToggle
-      label={PRE_EDUCATION_DISPLAY_LABEL}
+      label={PRE_EDUCATION_HEADING_LABEL}
       checked={scheduleCurriculumPreEducation}
       onChange={onScheduleCurriculumPreEducationChange}
     />
