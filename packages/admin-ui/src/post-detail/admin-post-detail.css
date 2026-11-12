@@ -44,11 +44,12 @@
 }
 
 .admin-detail-more-menu__trigger {
+  /* 시안 Sprite ico-more-vert-30 */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: none;
   border-radius: 4px;
