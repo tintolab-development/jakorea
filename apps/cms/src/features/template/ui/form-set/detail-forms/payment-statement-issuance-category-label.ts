@@ -105,6 +105,7 @@ const KIND_FALLBACK_WHEN_NO_API: Partial<Record<PaymentOrderCalculationLineKind,
   lodging: '숙박비',
   meal: '식사비',
   activity: '활동비',
+  other: '기타',
 }
 
 /**
