@@ -107,6 +107,11 @@ export type PermissionModalProps = {
   confirmLoading?: boolean
   /** 상위 모달의 도메인 필수 조건이 충족되기 전 확인 버튼 비활성화 */
   confirmDisabled?: boolean
+  /**
+   * true면 사유 미입력이어도 확인 버튼을 활성으로 두고, 클릭 시 필수 항목 미입력 안내를 띄운다.
+   * 기본 false — 기존 화면은 사유 입력 전 비활성 유지.
+   */
+  confirmEnabledWithoutReason?: boolean
   width?: number
   requireReason?: boolean
   reasonLabel?: string
@@ -182,6 +187,7 @@ export function PermissionModal({
   confirmVariant: confirmVariantProp,
   confirmLoading = false,
   confirmDisabled = false,
+  confirmEnabledWithoutReason = false,
   width = 600,
   requireReason: requireReasonProp,
   reasonLabel: reasonLabelProp,
@@ -379,7 +385,7 @@ export function PermissionModal({
               disabled={
                 confirmLoading ||
                 confirmDisabled ||
-                (requireReason && !reason.trim()) ||
+                (requireReason && !confirmEnabledWithoutReason && !reason.trim()) ||
                 Boolean(unsupportedNotifyMessage) ||
                 notifyScheduleNotReady
               }
