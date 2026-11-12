@@ -118,4 +118,15 @@ describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
     expect(merged.resultNotificationSentAt).toEqual(expect.stringMatching(/2026\.\d{2}\.\d{2} /))
     expect(merged.participationRejectionReason).toBeUndefined()
   })
+
+  it('승인 후에도 신청서 안내사항(식사 안내·성범죄경력 조회서 요청) 입력값을 그대로 옮긴다', () => {
+    const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
+      mealProvided: false,
+      mealNotice: '가능 | 급식실 이용',
+      sexOffenseCheckRequest: '온라인 제출 | ID : ja01 | 검증번호 : 1234',
+    } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse)
+
+    expect(merged.mealNotice).toBe('가능 | 급식실 이용')
+    expect(merged.criminalCheckRequest).toBe('온라인 제출 | ID : ja01 | 검증번호 : 1234')
+  })
 })
