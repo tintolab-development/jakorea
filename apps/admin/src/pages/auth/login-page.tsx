@@ -212,6 +212,7 @@ export function LoginPage() {
             <Form.Item className="login-submit-actions">
               <CmsButton
                 variant="primary"
+                type="submit"
                 size="h52" className="login-submit-btn"
                 loading={loading && loginSubmitting}
                 disabled={isLocked || !apiLoginAvailable}
@@ -246,7 +247,7 @@ export function LoginPage() {
               ))}
             </Space>
             <Text type="secondary" className="login-dev-quick__hint">
-              로컬 공통 비밀번호 admin1234! · MFA 000000은 인증 창에 자동 입력됩니다.
+              로컬 공통 비밀번호 admin1234! · MFA 000000
             </Text>
           </div>
           ) : null}
