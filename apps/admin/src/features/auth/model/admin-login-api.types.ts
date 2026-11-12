@@ -45,7 +45,11 @@ export interface AdminMfaVerifyRequestBody {
 /** POST /api/admin/auth/mfa/verify · refresh 200 */
 export interface AuthTokenResponse {
   accessToken: string
-  refreshToken: string
+  /**
+   * QA-0137 전환기에만 본문에 온다. 운영 `JA_REFRESH_COOKIE_BODY_TOKEN_ENABLED=false`면 없고 HttpOnly 쿠키로만 받는다.
+   * TODO(QA-0137 인프라 전환 후 삭제): 필드 제거.
+   */
+  refreshToken?: string
   tokenType?: string
   expiresInSeconds?: number
   /** 관리자 발급 임시 비밀번호 변경 필요 */

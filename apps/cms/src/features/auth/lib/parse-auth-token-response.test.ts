@@ -37,8 +37,15 @@ describe('parseAuthTokenResponse', () => {
     expect(parsed?.expiresInSeconds).toBe(120)
   })
 
-  it('refreshToken 없으면 null', () => {
-    expect(parseAuthTokenResponse({ accessToken: 'a' })).toBeNull()
+  it('QA-0137: refreshToken이 본문에 없어도 access만으로 파싱하고 refreshToken은 undefined', () => {
+    const parsed = parseAuthTokenResponse({ accessToken: 'a', refreshToken: null, expiresInSeconds: 60 })
+    expect(parsed?.accessToken).toBe('a')
+    expect(parsed?.refreshToken).toBeUndefined()
+    expect(parseAuthTokenResponse({ accessToken: 'a' })?.refreshToken).toBeUndefined()
+  })
+
+  it('accessToken 없으면 null', () => {
+    expect(parseAuthTokenResponse({ refreshToken: 'r' })).toBeNull()
   })
 })
 

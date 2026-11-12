@@ -17,6 +17,8 @@ export const adminAuthPaths = {
   activity: () => `${adminAuthPaths.prefix}/activity`,
   session: () => `${adminAuthPaths.prefix}/session`,
   refresh: () => `${adminAuthPaths.prefix}/refresh`,
+  /** POST — HttpOnly refresh 쿠키 폐기·삭제 (QA-0137). 쿠키 Path가 refresh라 그 하위 경로, 본문 없음 */
+  refreshLogout: () => `${adminAuthPaths.prefix}/refresh/logout`,
   mfaVerify: () => `${adminAuthPaths.prefix}/mfa/verify`,
   mfaEnrollment: () => `${adminAuthPaths.prefix}/mfa/enrollment`,
   mfaResetStepUp: (adminAccountId: number) =>

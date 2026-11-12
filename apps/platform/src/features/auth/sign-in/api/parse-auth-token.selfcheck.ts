@@ -37,4 +37,12 @@ const empty = parseAuthTokenResponse({
 })
 assert.equal(empty.ageGroup, undefined)
 
+// QA-0137: 운영 JA_REFRESH_COOKIE_BODY_TOKEN_ENABLED=false면 본문에 refreshToken이 없다 — 로그인은 깨지면 안 된다.
+const cookieOnly = parseAuthTokenResponse({ accessToken: 'a', refreshToken: null, ageGroup: 'OVER_14' })
+assert.equal(cookieOnly.accessToken, 'a')
+assert.equal(cookieOnly.refreshToken, undefined)
+assert.equal(parseAuthTokenResponse({ accessToken: 'a' }).refreshToken, undefined)
+assert.equal(parseAuthTokenResponse({ accessToken: 'a', refreshToken: '  ' }).refreshToken, undefined)
+assert.throws(() => parseAuthTokenResponse({ refreshToken: 'r' }))
+
 console.log('parse-auth-token.selfcheck: ok')

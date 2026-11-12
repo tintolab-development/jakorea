@@ -15,8 +15,16 @@ import {
 } from '@/entities/user/api/auth-service'
 import { updateMockUserById } from '@/entities/user/api/user-service'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
-import { fetchAdminAuthLogout } from '@/features/auth/api/admin-auth-fetcher'
+import {
+  fetchAdminAuthLogout,
+  fetchAdminAuthRefreshCookieLogout,
+} from '@/features/auth/api/admin-auth-fetcher'
 import { AUTH_REFRESH_TOKEN_KEY, refreshAccessTokenSession } from '@/shared/instance/axios-instance'
+import {
+  clearRefreshCredential,
+  hasRefreshCredential,
+  storeRefreshTokenFromResponse,
+} from '@/features/auth/lib/refresh-credential'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { clearDashboardQueryCache } from '@/features/dashboard/api/clear-dashboard-query-cache'
 import { clearDataManagementQueryCache } from '@/features/data-management/api/clear-data-management-query-cache'
@@ -34,7 +42,6 @@ import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pendi
 import { fetchAdminMe } from '@/features/auth/api/fetch-admin-me'
 import { registerAdminSessionSyncPendingReader } from '@/features/auth/lib/admin-session-sync-state'
 import {
-  REFRESH_TOKEN_STORAGE_KEY,
   clearTokenIssuedAt,
   getLastUserActivityAt,
   readTokenIssuedAt,
@@ -123,8 +130,9 @@ function persistAuthTokens(
     localStorage.setItem(TOKEN_STORAGE_KEY, accessToken)
     localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt)
     localStorage.setItem('auth_user', JSON.stringify(user))
-    localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, tokens.refreshToken)
   }
+  // QA-0137: 본문에 refreshToken이 없으면 undefined로 덮지 않고 HttpOnly 쿠키 세션으로 표시
+  storeRefreshTokenFromResponse(tokens.refreshToken)
   recordTokenIssuedAt()
 
   return { token: accessToken, expiresAt }
@@ -149,8 +157,9 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
   if (token && expiresAt && userStr) {
     // 만료 확인. access가 만료됐어도 refresh token이 있으면 세션을 복원하고,
     // AuthProvider 초기화(checkAuth)가 refresh를 시도한다 (실패하면 그때 logout).
-    // 순환 import(TDZ)를 피하려고 axios-instance의 상수 대신 session-keepalive의 키를 쓴다.
-    const hasRefreshToken = !!localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)
+    // 순환 import(TDZ)를 피하려고 axios-instance 대신 import 없는 refresh-credential 헬퍼를 쓴다.
+    // refresh 수단 = 저장된 refreshToken(전환기) 또는 HttpOnly 쿠키 세션 표시(QA-0137).
+    const hasRefreshToken = hasRefreshCredential()
     if (new Date(expiresAt) > new Date() || hasRefreshToken) {
       try {
         const user = JSON.parse(userStr)
@@ -420,10 +429,25 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
           : null
 
+      const hadSession =
+        Boolean(refreshToken) ||
+        hasRefreshCredential() ||
+        Boolean(
+          get().token ??
+            (typeof window !== 'undefined' && window.localStorage
+              ? localStorage.getItem(TOKEN_STORAGE_KEY)
+              : null),
+        )
+
       // Authorization 없이 refreshToken body만으로 서버 세션 무효화 (로컬 clear 전에 요청 시작)
+      // TODO(QA-0137 인프라 전환 후 삭제): 저장된 refreshToken이 사라지면 본문 logout 분기를 지운다.
       let remoteLogout: Promise<void> | undefined
       if (isRealApiModuleEnabled('adminAuth') && refreshToken) {
         remoteLogout = fetchAdminAuthLogout({ refreshToken })
+      }
+      // QA-0137: HttpOnly refresh 쿠키 폐기·삭제. best effort — 실패해도 로컬 로그아웃은 그대로 진행한다.
+      if (isRealApiModuleEnabled('adminAuth') && hadSession) {
+        void fetchAdminAuthRefreshCookieLogout()
       }
 
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -433,6 +457,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
         localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
       }
+      clearRefreshCredential()
       clearTokenIssuedAt()
       set({
         passwordChangeRequired: false,
@@ -721,7 +746,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
 
       const refreshToken = hasStorage ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY) : null
-      if (!refreshToken) {
+      // QA-0137: 저장된 refreshToken이 없어도 HttpOnly 쿠키 세션이면 refresh를 시도한다
+      if (!refreshToken && !hasRefreshCredential()) {
         if (nearExpiry) {
           get().logout()
           return true

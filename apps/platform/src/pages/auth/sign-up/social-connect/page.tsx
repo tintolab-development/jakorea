@@ -32,17 +32,17 @@ const socialConnectItems: SocialConnectItem[] = [
   {
     provider: 'google',
     name: 'Google',
-    icon: <GoogleSocialLoginIcon width={40} height={40} />,
+    icon: <GoogleSocialLoginIcon />,
   },
   {
     provider: 'naver',
     name: '네이버',
-    icon: <NaverSocialLoginIcon width={40} height={40} />,
+    icon: <NaverSocialLoginIcon />,
   },
   {
     provider: 'kakao',
     name: '카카오',
-    icon: <KakaoSocialLoginIcon width={40} height={40} />,
+    icon: <KakaoSocialLoginIcon />,
   },
 ]
 

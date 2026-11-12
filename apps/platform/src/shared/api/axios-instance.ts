@@ -2,7 +2,9 @@
  * Platform(Vite)용 Axios 클라이언트.
  * - Base URL: `VITE_API_BASE_URL` (미설정 + DEV 프록시 시 동일 출처 상대 경로)
  * - 인증: `platform_auth_*` localStorage + `withCredentials`
- * - 리프레시: `POST /api/portal/auth/refresh` (body refreshToken only, no Bearer)
+ * - 리프레시: `POST /api/portal/auth/refresh` (no Bearer). QA-0137 전환기: 저장된 refreshToken이 있으면 본문으로 보내고
+ *   HttpOnly 쿠키(`JA_MEMBER_RT`)도 실리도록 인증 호출은 `withCredentials`를 명시한다. 응답 본문에 refreshToken이 없으면
+ *   쿠키 세션으로 전환해 본문 없이 refresh한다 (`setAuthTokens`·`hasRefreshCredential`).
  *
  * 인증 헤더 판정(`skipAuth`/공개 경로)과 401 자동 Refresh 판정(`skipRefresh`/제외 경로)은 분리한다.
  * - Activity: Bearer 부착 + 401 시 Refresh·재POST 0회
@@ -25,6 +27,7 @@ import {
   getAccessToken,
   getAuthGeneration,
   getRefreshToken,
+  hasRefreshCredential,
   setAuthTokens,
 } from '@/shared/lib/auth-token'
 
@@ -83,6 +86,9 @@ function getRefreshPath(): string {
 function getLogoutPath(): string {
   return portalAuthPaths.logout()
 }
+
+/** QA-0137: 토큰 발급·갱신·폐기 호출은 HttpOnly refresh 쿠키가 오가도록 credentials를 명시한다 */
+const AUTH_COOKIE_CREDENTIALS = { withCredentials: true } as const
 
 function getErrorCode(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined
@@ -221,12 +227,17 @@ axiosClient.defaults.headers = {
     : {}),
 } as TAxiosHeaders & AxiosRequestHeaders & HeadersDefaults & { 'X-Client': 'web' }
 
-export async function postAuthenticationRefreshToken(refreshToken: string) {
+/**
+ * POST refresh. refreshToken이 있으면 본문(전환기), null이면 본문 없이 HttpOnly 쿠키로 갱신한다.
+ * TODO(QA-0137 인프라 전환 후 삭제): 본문 분기를 지우고 항상 본문 없이 보낸다.
+ */
+export async function postAuthenticationRefreshToken(refreshToken: string | null) {
   const path = getRefreshPath()
   return axiosClient.post<unknown>(
     path,
-    { refreshToken },
+    refreshToken ? { refreshToken } : undefined,
     {
+      ...AUTH_COOKIE_CREDENTIALS,
       skipRefresh: true,
       skipAuth: true,
     } as RetryableRequest,
@@ -239,11 +250,29 @@ export async function postPortalAuthLogout(refreshToken: string): Promise<void> 
     getLogoutPath(),
     { refreshToken },
     {
+      ...AUTH_COOKIE_CREDENTIALS,
       skipRefresh: true,
       skipAuth: true,
       validateStatus: (status: number) => status === 204 || status === 200,
     } as unknown as RetryableRequest,
   )
+}
+
+/**
+ * POST /api/portal/auth/refresh/logout — HttpOnly refresh 쿠키의 토큰 폐기·쿠키 삭제 (QA-0137). 본문 없음.
+ * best effort: 쿠키가 없거나(전환 전·로컬) 실패해도 던지지 않는다 — 로컬 로그아웃을 막지 않는다.
+ */
+export async function postPortalAuthRefreshCookieLogout(): Promise<void> {
+  try {
+    await axiosClient.post(portalAuthPaths.refreshLogout(), undefined, {
+      ...AUTH_COOKIE_CREDENTIALS,
+      skipRefresh: true,
+      skipAuth: true,
+      validateStatus: (status: number) => status === 204 || status === 200,
+    } as unknown as RetryableRequest)
+  } catch {
+    // 쿠키 폐기 실패는 무시한다.
+  }
 }
 
 /** @deprecated `postPortalAuthLogout` 사용 */
@@ -356,13 +385,25 @@ async function handleAuthFailure(ctx: AuthFailureContext) {
   })
 }
 
-function waitForStoredRefreshTokenChange(previous: string, timeoutMs: number): Promise<boolean> {
+/**
+ * 409 경쟁에서 승자 탭의 저장을 기다린다. 전환기는 refreshToken 변경, 쿠키 세션(previous=null)은 access 변경으로 판정.
+ */
+function waitForStoredRefreshTokenChange(
+  previous: string | null,
+  previousAccessToken: string | null,
+  timeoutMs: number,
+): Promise<boolean> {
   if (typeof window === 'undefined') return Promise.resolve(false)
   return new Promise(resolve => {
     const startedAt = Date.now()
     const check = () => {
       const current = getRefreshToken()
       if (current && current !== previous) {
+        resolve(true)
+        return
+      }
+      const currentAccess = getAccessToken()
+      if (previous == null && currentAccess && currentAccess !== previousAccessToken) {
         resolve(true)
         return
       }
@@ -398,7 +439,8 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
       // 다른 탭(또는 이 탭의 앞선 Refresh)이 이미 교체했다. 회전된 토큰을 다시 쓰지 않는다.
       return storedAccessToken
     }
-    if (!storedRefreshToken) {
+    // QA-0137: 저장된 refreshToken이 없어도 쿠키 세션 표시가 있으면 본문 없이 쿠키로 refresh한다.
+    if (!storedRefreshToken && !hasRefreshCredential()) {
       throw new PortalRefreshError({
         message: 'No refresh token',
         definitive: true,
@@ -419,6 +461,7 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
         // 동시 회전 경쟁: 승자가 저장할 최신 토큰을 확인한다. 같은 토큰 재POST 금지.
         const rotated = await waitForStoredRefreshTokenChange(
           storedRefreshToken,
+          storedAccessToken,
           ROTATED_TOKEN_WAIT_MS,
         )
         const latestAccessToken = getAccessToken()
@@ -447,9 +490,10 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
     const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
     const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
 
-    if (!newAccessToken || !newRefreshToken) {
+    // QA-0137: refreshToken은 전환기에만 본문에 온다. 없으면 setAuthTokens가 쿠키 세션으로 전환한다.
+    if (!newAccessToken) {
       throw new PortalRefreshError({
-        message: 'Invalid refresh response: missing access or refresh token',
+        message: 'Invalid refresh response: missing access token',
         definitive: false,
         allowServerLogout: false,
         refreshTokenUsed: storedRefreshToken,
@@ -457,7 +501,11 @@ async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise
     }
 
     // 회전 직후 다른 경로(로그아웃·새 로그인)가 저장소를 바꿨다면 덮어쓰지 않는다.
-    if (getRefreshToken() !== storedRefreshToken) {
+    // 쿠키 세션은 refreshToken 저장값이 없으므로 access 저장값으로도 비교한다.
+    if (
+      getRefreshToken() !== storedRefreshToken ||
+      (!storedRefreshToken && getAccessToken() !== storedAccessToken)
+    ) {
       const latestAccessToken = getAccessToken()
       if (latestAccessToken) return latestAccessToken
       throw new PortalRefreshError({
