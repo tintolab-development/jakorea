@@ -44,6 +44,7 @@ export function UserDetailFullpageModalsStack() {
     basicInfoEditScope,
     basicInfoDraft,
     basicInfoSaveLoading,
+    adminCommentAllowEmpty,
     onCancelBasicInfoEdit,
     onSaveBasicInfoEdit,
     onBasicInfoDraftChange,
@@ -180,6 +181,7 @@ export function UserDetailFullpageModalsStack() {
         open={basicInfoEditing && basicInfoEditScope === 'comment'}
         value={basicInfoDraft?.adminComment ?? ''}
         loading={basicInfoSaveLoading}
+        allowEmpty={adminCommentAllowEmpty}
         onChange={value => onBasicInfoDraftChange({ adminComment: value })}
         onCancel={onCancelBasicInfoEdit}
         onConfirm={() => {

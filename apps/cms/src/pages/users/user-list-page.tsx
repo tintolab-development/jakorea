@@ -97,6 +97,7 @@ import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
 import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
+import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import { resolveSelectedListUsers } from '@/features/user/api/resolve-selected-list-users'
 import {
   mergeListUserWithFetchedDetail,
@@ -991,6 +992,10 @@ export function UserListPage() {
         birthDate: values.birthDate.trim(),
         role: 'ADMIN',
         adminLevel: 'ADMIN',
+        // 모달 필수 검사를 통과한 권한 유형만 온다 (기본값 없음)
+        adminRoleCode: values.permissionType
+          ? adminPermissionFeeGradeToRoleCode(values.permissionType)
+          : undefined,
         isActive: true,
         adminTermsAgreements: buildAdminAccountCreateTermsAgreements({
           consentTermsOfService: values.consentTermsOfService,
