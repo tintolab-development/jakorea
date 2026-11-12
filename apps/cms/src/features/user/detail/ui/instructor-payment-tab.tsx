@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
 import dayjs from 'dayjs'
 import { Button } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
@@ -437,14 +437,14 @@ export function InstructorPaymentTab({
               <Button
                 type="text"
                 size="small"
-                icon={<LeftOutlined />}
+                icon={<ButtonLeftIcon style={{ display: 'block', width: 20, height: 20 }} />}
                 className="calendar-nav-btn"
                 onClick={() => setCurrentMonth(prev => prev.subtract(1, 'month'))}
               />
               <Button
                 type="text"
                 size="small"
-                icon={<RightOutlined />}
+                icon={<ButtonRightIcon style={{ display: 'block', width: 20, height: 20 }} />}
                 className="calendar-nav-btn"
                 onClick={() => setCurrentMonth(prev => prev.add(1, 'month'))}
               />
