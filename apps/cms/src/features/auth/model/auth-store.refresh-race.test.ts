@@ -30,12 +30,14 @@ describe('CMS: periodic Refresh race', () => {
     useAuthStore.setState({
       token: initialAccess, isAuthenticated: true, expiresAt: expiry,
       logout, refreshToken: vi.fn(() => refreshPromise),
+      refreshSession: vi.fn(() => refreshPromise.then(ok => (ok ? 'ok' as const : 'invalid' as const))),
     })
   })
   afterEach(() => {
     useAuthStore.setState({
       token: null, isAuthenticated: false, logout: original.logout,
       refreshToken: original.refreshToken,
+      refreshSession: original.refreshSession,
     })
     localStorage.clear()
   })
@@ -61,6 +63,14 @@ describe('CMS: periodic Refresh race', () => {
     expect(useAuthStore.getState().checkSessionExpiry()).toBe(false)
     await complete(false)
     expect(logout).toHaveBeenCalledTimes(1)
+  })
+
+  it('a near-expiry Refresh that fails with 5xx/network (transient) does not logout', async () => {
+    useAuthStore.setState({ refreshSession: vi.fn(async () => 'transient' as const) })
+    expect(useAuthStore.getState().checkSessionExpiry()).toBe(false)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(logout).not.toHaveBeenCalled()
   })
 
   it('a successful near-expiry Refresh never logs out', async () => {

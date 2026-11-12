@@ -133,6 +133,8 @@ interface AuthState {
   completeAdminAuth: (tokens: AuthTokenResponse) => void
   setAuth: (authData: { user: AuthUser; token: string; expiresAt: string }) => void
   refreshToken: () => Promise<boolean>
+  /** refresh 결과 종류까지 돌려준다 — transient(5xx·네트워크)는 로그아웃 근거가 아니다 */
+  refreshSession: () => Promise<'ok' | 'invalid' | 'transient'>
   checkSessionExpiry: () => boolean
   /** unreachable 안내 [다시 시도] — 같은 잠금으로 refresh를 다시 시도한다 */
   retryBootstrapRestore: () => Promise<void>
@@ -553,6 +555,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     refreshToken: async () => refreshAccessTokenSession(),
 
+    refreshSession: async () => {
+      // 실패 종류(session-invalid/transient)를 보존해, 일시 오류로 로그아웃하지 않게 한다
+      const result = await refreshAccessTokenSessionWithResult()
+      if (result.ok) return 'ok'
+      return result.kind === 'transient' ? 'transient' : 'invalid'
+    },
+
     retryBootstrapRestore: async () => {
       const state = get()
       if (state.bootstrapNotice !== 'unreachable' || state.bootstrapRetrying) return
@@ -619,9 +628,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const accessAtRefreshStart = state.token
       const refreshAtRefreshStart = refreshToken
       void get()
-        .refreshToken()
-        .then(ok => {
-          if (ok || !nearExpiry) return
+        .refreshSession()
+        .then(outcome => {
+          if (outcome === 'ok' || !nearExpiry) return
+          // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 다음 점검이나 요청의 401 처리에 맡긴다.
+          if (outcome === 'transient') return
           const current = get()
           // Another tab or login may have rotated the session while this refresh
           // was in flight. Never revoke that replacement because of an old failure.

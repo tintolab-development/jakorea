@@ -134,6 +134,8 @@ interface AuthState {
   clearPasswordChangeRequired: () => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
   refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
+  /** refresh 결과 종류까지 돌려준다 — transient(5xx·네트워크)는 로그아웃 근거가 아니다 */
+  refreshSession: () => Promise<RefreshSessionOutcome>
   checkSessionExpiry: () => boolean // Phase 0.5: 세션 만료 확인
 }
 
@@ -820,6 +822,15 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
     },
 
+    refreshSession: async (): Promise<RefreshSessionOutcome> => {
+      if (!get().user) return 'no-credential'
+      if (isRealApiModuleEnabled('adminAuth')) {
+        // 실패 종류(invalid/transient)를 보존해, 일시 오류로 로그아웃하지 않게 한다
+        return refreshAccessTokenSessionOutcome()
+      }
+      return (await get().refreshToken()) ? 'ok' : 'invalid'
+    },
+
     /**
      * 세션 keep-alive 점검 (AuthProvider가 60초마다 호출). 만료만 보고 바로 logout하지 않는다.
      * 1) access 만료 임박(30초 버퍼): refresh를 먼저 시도하고, 실패할 때만 logout.
@@ -863,9 +874,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const accessAtRefreshStart = state.token
       const refreshAtRefreshStart = refreshToken
       void get()
-        .refreshToken()
-        .then(ok => {
-          if (ok || !nearExpiry) return
+        .refreshSession()
+        .then(outcome => {
+          if (outcome === 'ok' || !nearExpiry) return
+          // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 다음 점검이나 요청의 401 처리에 맡긴다.
+          if (outcome === 'transient') return
           const current = get()
           // Another tab or login may have rotated the session while this refresh
           // was in flight. Never revoke that replacement because of an old failure.
