@@ -10,11 +10,7 @@ import type {
   PaymentOrderCalculationStatementLine,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
-import { toApiBirthDate } from '@/features/user/api/map-member-gender-birth'
-import {
-  formatBirthDisplayWithManAge,
-  formatGenderBirthDisplayLine,
-} from '@/features/user/api/format-gender-birth-display'
+import { formatGenderBirthDisplayLine } from '@/features/user/api/format-gender-birth-display'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type {
@@ -205,7 +201,8 @@ function formatHomeAddressDisplay(
 
 /**
  * 이미 마스킹된 강사 회원 스냅샷을 표시 칸에 합친다.
- * 계좌 지급 화면의 조회 경로는 `applyMaskedInstructorMemberToAccountPaymentDetail`을 쓴다.
+ * 계좌 지급 현황 상세 화면은 이 함수를 쓰지 않는다 — `mapAccountPaymentDetailFromGetApi`가
+ * settlement.payee(Master·Accounting Manager, privacyMaskingLevel=RAW)를 그대로 표시한다(기획 결정 2026-11-12, FE 재마스킹 없음).
  */
 export function applyInstructorMemberPiiToAccountPaymentDetail(
   detail: AccountPaymentStatusDetail,
@@ -232,56 +229,6 @@ export function applyInstructorMemberPiiToAccountPaymentDetail(
         : detail.basic.addressDisplay,
       scheduleChangeCancelCount:
         member?.scheduleChangeCancelCount ?? detail.basic.scheduleChangeCancelCount,
-    },
-  }
-}
-
-function maskPlainOrKeep(value: string | null | undefined, mask: (input: string) => string): string {
-  const raw = value?.trim()
-  if (!raw) return '-'
-  const masked = mask(raw)
-  if (masked.includes('*')) return masked
-  return '***'
-}
-
-/**
- * 강사 회원 마스킹 GET 값만 계좌 지급 상세의 일반 개인정보 칸에 넣는다.
- * 응답이 원문이면 다시 마스킹한다. 계좌번호는 여기서 채우지 않는다.
- */
-export function applyMaskedInstructorMemberToAccountPaymentDetail(
-  detail: AccountPaymentStatusDetail,
-  instructor: InstructorMemberDetailResponse | null | undefined
-): AccountPaymentStatusDetail {
-  if (!instructor) return detail
-  const member = instructor.member
-  const address = formatHomeAddressDisplay(instructor.profile?.homeAddress)
-  const birthYear =
-    member?.birthYear ??
-    (member?.birthDate ? Number(toApiBirthDate(member.birthDate)?.slice(0, 4)) : undefined)
-  const genderPart = member?.gender?.trim() ? '**' : '-'
-  const birthPart = formatBirthDisplayWithManAge(member?.birthDate, {
-    birthYear,
-    forceMaskedDate: true,
-  })
-  const genderBirthDisplay =
-    member != null
-      ? genderPart === '-' && birthPart === '-'
-        ? '-'
-        : `${genderPart} | ${birthPart}`
-      : detail.basic.genderBirthDisplay
-
-  return {
-    ...detail,
-    basic: {
-      ...detail.basic,
-      genderBirthDisplay:
-        member != null ? genderBirthDisplay : detail.basic.genderBirthDisplay,
-      phoneDisplay: member ? maskPlainOrKeep(member.phone, MASKING_POLICY.phone) : detail.basic.phoneDisplay,
-      emailDisplay: member ? maskPlainOrKeep(member.email, MASKING_POLICY.email) : detail.basic.emailDisplay,
-      addressDisplay:
-        instructor.profile?.homeAddress != null
-          ? maskPlainOrKeep(address === '-' ? undefined : address, MASKING_POLICY.address)
-          : detail.basic.addressDisplay,
     },
   }
 }

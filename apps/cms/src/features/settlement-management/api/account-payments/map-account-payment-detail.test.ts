@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   applyInstructorMemberPiiToAccountPaymentDetail,
-  applyMaskedInstructorMemberToAccountPaymentDetail,
   mapAccountPaymentDetailFromGetApi,
   resolveAccountPaymentMemberId,
 } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
@@ -128,28 +127,6 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
     expect(mapped.basic.addressDisplay).toBe('서울특별시 강서구 마스킹')
   })
 
-  it('회원 상세 원문은 마스킹하고 계좌 칸은 유지한다', () => {
-    const instructor: InstructorMemberDetailResponse = {
-      member: {
-        memberId: 190001,
-        name: '이건희',
-        gender: 'M',
-        birthDate: '1994-03-02',
-        phone: '010-1234-5425',
-        email: 'teacher.instruct@test.com',
-      },
-      profile: {
-        homeAddress: { line: '서울특별시 강서구 화곡동 12', detail: '101호' },
-      },
-    }
-    const mapped = applyMaskedInstructorMemberToAccountPaymentDetail(emptyDetailBasic(), instructor)
-    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994.**.**')
-    expect(mapped.basic.phoneDisplay).toBe('010-****-5425')
-    expect(mapped.basic.emailDisplay).toContain('***@')
-    expect(mapped.basic.addressDisplay).not.toContain('101호')
-    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행 ****')
-  })
-
   it('instructor 없으면 PII를 -로 유지한다', () => {
     const mapped = applyInstructorMemberPiiToAccountPaymentDetail(emptyDetailBasic(), null)
     expect(mapped.basic.genderBirthDisplay).toBe('-')
@@ -218,6 +195,44 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.businessPeriodDisplay).toContain('2026.12.31')
     expect(mapped.basic.businessPeriodDisplay).not.toBe('2026-11')
     expect(mapped.blocks[0]?.lines[0]?.basisDetail).toBeUndefined()
+  })
+
+  it('H(기획 결정 2026-11-12): settlement.payee RAW 원문을 다시 가리지 않고, 주민번호·영문명·소속은 표시 칸에 넣지 않는다', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 185957,
+        instructorName: '가상강사',
+        bankName: '국민',
+        maskedAccountNo: '**************',
+        accountHolder: '가*사',
+        paymentStatus: 'WAITING_PAYMENT',
+      },
+      settlement: {
+        id: '185957',
+        items: [],
+        totalAmount: 0,
+        payee: {
+          privacyMaskingLevel: 'RAW',
+          gender: 'FEMALE',
+          birthDate: '1990-07-21',
+          phone: '010-1234-5678',
+          email: 'synthetic.payee@example.test',
+          addressRoad: '서울특별시 강서구 화곡로 12',
+          addressDetail: '101동 1001호',
+          residentRegistrationNumber: '900721-2******',
+          nameEn: 'G**a',
+          affiliation: '**학교',
+        } as never,
+      },
+      sensitiveAccount: { bankName: '국민', accountNo: '11048200123456', accountHolder: '가상강사' },
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
+    expect(mapped.basic.phoneDisplay).toBe('010-1234-5678')
+    expect(mapped.basic.emailDisplay).toBe('synthetic.payee@example.test')
+    expect(mapped.basic.addressDisplay).toBe('서울특별시 강서구 화곡로 12 101동 1001호')
+    expect(mapped.basic.genderBirthDisplay).toMatch(/^여성 \| 1990\. 07\. 21/)
+    expect(JSON.stringify(mapped.basic)).not.toContain('900721')
   })
 
   it('settlement.payee MASKED를 성별·연락처 칸에 매핑한다', () => {
