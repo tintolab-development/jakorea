@@ -205,7 +205,7 @@ function AssignedScheduleTable({ rows }: { rows: readonly AssignmentTableRow[] }
           <tr>
             <th scope="col">No.</th>
             <th scope="col">역할</th>
-            <th scope="col">출강지</th>
+            <th scope="col">기관 소재지</th>
             <th scope="col">자택과의 거리</th>
             <th scope="col">담당 교육 진행 일정</th>
           </tr>
@@ -355,8 +355,8 @@ export function InstructorAssignmentPanel({
 }: InstructorAssignmentPanelProps) {
   const rows = buildRows(assignedItems, individual, useScheduleName)
   const waitingRows = buildWaitingRows(waitingItems, individual, useScheduleName)
-  const assignedTitle = individual ? '배정된 교육 일정' : '배정된 기관 목록'
-  const assignedEmptyText = individual ? '배정된 교육 일정이 없습니다.' : '배정된 기관이 없습니다.'
+  const assignedTitle = individual ? '배정된 일정 목록' : '배정된 기관 목록'
+  const assignedEmptyText = individual ? '배정된 일정이 없습니다.' : '배정된 기관이 없습니다.'
   const waitingTitle = individual ? '배정 대기 교육 일정' : '배정된 대기 기관 목록'
 
   return (
