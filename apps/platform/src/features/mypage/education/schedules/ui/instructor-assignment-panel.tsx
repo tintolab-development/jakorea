@@ -357,7 +357,7 @@ export function InstructorAssignmentPanel({
   const waitingRows = buildWaitingRows(waitingItems, individual, useScheduleName)
   const assignedTitle = individual ? '배정된 일정 목록' : '배정된 기관 목록'
   const assignedEmptyText = individual ? '배정된 일정이 없습니다.' : '배정된 기관이 없습니다.'
-  const waitingTitle = individual ? '배정 대기 교육 일정' : '배정된 대기 기관 목록'
+  const waitingTitle = individual ? '배정된 대기 일정 목록' : '배정된 대기 기관 목록'
 
   return (
     <section className={styles.root} aria-labelledby="instructor-assignment-title">

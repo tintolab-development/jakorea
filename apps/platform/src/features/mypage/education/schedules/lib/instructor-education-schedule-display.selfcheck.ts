@@ -37,7 +37,7 @@ assert.equal(
     scheduleRole: 'PRE_EDUCATION',
     sessionNo: null,
   }),
-  '15:00~15:10 | 사전교육',
+  '15:00~15:10 사전교육',
 )
 assert.equal(
   formatLectureReportCardTimeSubtitle({
@@ -45,7 +45,7 @@ assert.equal(
     sessionNo: 1,
     curriculumSessionCount: 2,
   }),
-  '15:05~15:10 | 1회차 | 2차시',
+  '15:05~15:10 2차시',
 )
 assert.equal(
   formatLectureReportCardTimeSubtitle({
@@ -53,7 +53,7 @@ assert.equal(
     sessionNo: 2,
     curriculumSessionCount: 2,
   }),
-  '15:15~15:20 | 2회차 | 2차시',
+  '15:15~15:20 2차시',
 )
 
 // CASE 2. 사전교육 없음 — 본교육 회차 원천 유지
@@ -130,7 +130,7 @@ assert.equal(
     },
     false,
   ),
-  '2026년 11월 6일(금) 15:05~15:10 | 1회차',
+  '2026년 11월 6일(금) 15:05 ~ 15:10 1회차',
 )
 assert.equal(
   formatInstructorEducationScheduleLine(
@@ -142,7 +142,7 @@ assert.equal(
     },
     false,
   ),
-  '2026년 11월 6일(금) 15:00~15:10 | 사전교육',
+  '2026년 11월 6일(금) 15:00 ~ 15:10 사전교육',
 )
 
 // 일정형 복수 회차: 일정명 우선. 사전교육 canonical은 일정명보다 우선.
