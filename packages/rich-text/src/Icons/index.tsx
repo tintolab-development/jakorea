@@ -1,11 +1,11 @@
 import type { ImgHTMLAttributes } from 'react'
 import addReactionUrl from './add_reaction.svg?url'
-import alignHorizontalLeftUrl from './align_horizontal_left.svg?url'
 import boldUrl from './Icon-6.svg?url'
 import chevronDownUrl from './field.svg?url'
-import densityMediumUrl from './density_medium.svg?url'
 import gridOnUrl from './grid_on.svg?url'
-import horizontalRuleUrl from './Icon.svg?url'
+import alignLeftUrl from './Icon.svg?url'
+import horizontalRuleUrl from './density_medium.svg?url'
+import lineHeightUrl from './align_self_stretch.svg?url'
 import indentUrl from './Icon-7.svg?url'
 import italicUrl from './Icon-5.svg?url'
 import listUrl from './Icon-2.svg?url'
@@ -53,10 +53,7 @@ export function RtChevronDownIcon({
 
 export function RtFontFamilyIcon({ className }: { className?: string }) {
   return (
-    <span
-      className={['rt-toolbar-font-icon', className].filter(Boolean).join(' ')}
-      aria-hidden
-    >
+    <span className={['rt-toolbar-font-icon', className].filter(Boolean).join(' ')} aria-hidden>
       T
     </span>
   )
@@ -79,7 +76,7 @@ export function RtStrikeIcon(props: Omit<RtToolbarIconProps, 'src'>) {
 }
 
 export function RtLineHeightIcon(props: Omit<RtToolbarIconProps, 'src'>) {
-  return <RtToolbarIcon src={densityMediumUrl} {...props} />
+  return <RtToolbarIcon src={lineHeightUrl} {...props} />
 }
 
 export function RtSuperscriptIcon(props: Omit<RtToolbarIconProps, 'src'>) {
@@ -99,7 +96,7 @@ export function RtHighlightIcon(props: Omit<RtToolbarIconProps, 'src'>) {
 }
 
 export function RtAlignLeftIcon(props: Omit<RtToolbarIconProps, 'src'>) {
-  return <RtToolbarIcon src={alignHorizontalLeftUrl} {...props} />
+  return <RtToolbarIcon src={alignLeftUrl} {...props} />
 }
 
 export function RtListIcon(props: Omit<RtToolbarIconProps, 'src'>) {
