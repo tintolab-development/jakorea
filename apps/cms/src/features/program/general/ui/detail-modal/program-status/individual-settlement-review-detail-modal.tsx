@@ -324,6 +324,7 @@ export function IndividualSettlementReviewDetailModal({
         open={approveOpen}
         data={rejectStatement}
         zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
+        applicationKind="receipt"
         onCancel={() => setApproveOpen(false)}
         onConfirm={({ lectureFeePaymentScheduledDateIso }) =>
           void handleApprove(lectureFeePaymentScheduledDateIso)
@@ -344,6 +345,7 @@ export function IndividualSettlementReviewDetailModal({
         onReject={payload => void handleReject(payload)}
         data={rejectStatement}
         confirmLoading={rejectMutation.isPending}
+        applicationKind="receipt"
       />
 
       <PaymentOrderCalculationBasisDetailModal
