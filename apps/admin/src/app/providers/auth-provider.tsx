@@ -8,6 +8,7 @@ import {
   isAdminAuthUnauthorizedError,
   postAdminAuthActivity,
 } from '@/features/auth/api/admin-session-fetcher'
+import { notifyAdminActivityRecorded } from '@/features/auth/lib/admin-activity-signal'
 import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const initial = useAuthStore.getState()
       if (!initial.isAuthenticated || !initial.token) return
       const requestedToken = initial.token
-      void postAdminAuthActivity().catch(error => {
+      void postAdminAuthActivity().then(notifyAdminActivityRecorded).catch(error => {
         const current = useAuthStore.getState()
         // A delayed 401 from the previous access token must not end a refreshed login.
         if (!current.isAuthenticated || current.token !== requestedToken) return

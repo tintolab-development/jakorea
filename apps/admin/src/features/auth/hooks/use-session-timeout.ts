@@ -5,6 +5,7 @@ import {
   createSessionWarningDismissState,
   isSessionIdleStillValid,
   parseInstantMs,
+  readJwtSidClaim,
   resolveSessionWarningView,
   type AdminAuthSessionResponse,
   type SessionWarningKind,
@@ -22,6 +23,7 @@ import {
   AUTH_REFRESH_TOKEN_KEY,
   AUTH_USER_KEY,
 } from '@/features/auth/model/auth-storage'
+import { subscribeAdminActivityRecorded } from '@/features/auth/lib/admin-activity-signal'
 import { setSessionWarningActivitySuppressed } from '@/features/auth/lib/session-keepalive'
 
 export function useSessionTimeout() {
@@ -37,6 +39,10 @@ export function useSessionTimeout() {
   const syncSequenceRef = useRef(0)
   const expiryRecheckPendingRef = useRef(false)
   const lastExpiryRecheckAtRef = useRef(0)
+  /** 현재 session 상태를 받아 온 로그인 sid — 같은 로그인일 때만 조회 실패 시 이전 상태를 유지한다 */
+  const sessionSidRef = useRef<string | null>(null)
+  /** 유휴 경고 진입 직전 서버 재확인을 이미 한 유휴 기한 */
+  const idleEntryCheckedForRef = useRef<number | null>(null)
 
   const syncSession = useCallback(async () => {
     const initial = useAuthStore.getState()
@@ -51,6 +57,7 @@ export function useSessionTimeout() {
     try {
       const next = await getAdminAuthSession()
       if (!isCurrent()) return
+      sessionSidRef.current = readJwtSidClaim(requestedToken)
       sessionRef.current = next
       setSession(next)
       setServerClockOffsetMs(previous =>
@@ -65,6 +72,10 @@ export function useSessionTimeout() {
       }
       // 403 is permission denial, 404 can mean the BE route is not deployed, and
       // transport/invalid-response failures are not proof that the JWT expired.
+      // 같은 로그인(sid)이면 마지막 서버 상태를 유지해 경고·만료 경계 재확인을 이어 간다.
+      const sid = readJwtSidClaim(requestedToken)
+      if (sid != null && sid === sessionSidRef.current) return
+      sessionSidRef.current = null
       sessionRef.current = null
       setSession(null)
     }
@@ -79,6 +90,8 @@ export function useSessionTimeout() {
       syncSequenceRef.current += 1
       expiryRecheckPendingRef.current = false
       lastExpiryRecheckAtRef.current = 0
+      sessionSidRef.current = null
+      idleEntryCheckedForRef.current = null
       sessionRef.current = null
       setSession(null)
       setVisibleKind(null)
@@ -89,6 +102,15 @@ export function useSessionTimeout() {
     }
     void syncSession()
   }, [isAuthenticated, token, syncSession])
+
+  // 전역 입력 Activity가 기록되면, 정책 ON일 때만 새 유휴 기한을 서버에서 다시 읽는다.
+  // (다른 탭 활동·경고를 닫은 뒤 계속 작업한 경우 오래된 유휴 기한으로 경고가 다시 뜨지 않도록)
+  useEffect(() => {
+    if (!isAuthenticated) return
+    return subscribeAdminActivityRecorded(() => {
+      if (sessionRef.current?.idlePolicyEnforced) void syncSession()
+    })
+  }, [isAuthenticated, syncSession])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -148,6 +170,12 @@ export function useSessionTimeout() {
             expiryRecheckPendingRef.current = false
           })
         }
+        return
+      }
+      // 유휴 경고 진입 직전 1회 서버 재확인 — 다른 탭 활동으로 이미 연장됐을 수 있다.
+      if (view?.kind === 'idle' && idleEntryCheckedForRef.current !== view.expiresAtMs) {
+        idleEntryCheckedForRef.current = view.expiresAtMs
+        void syncSession()
         return
       }
       dismissRef.current.resetIfExpiryChanged(view?.kind ?? null, view?.expiresAtMs ?? null)
