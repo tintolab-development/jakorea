@@ -94,18 +94,38 @@ jobs:
           set -euo pipefail
           test "$(aws sts get-caller-identity --query Account --output text)" = "$AWS_ACCOUNT_ID"
           aws s3api head-bucket --bucket "$ADMIN_BUCKET"
-          test "$(aws s3api get-bucket-versioning --bucket "$ADMIN_BUCKET" --query Status --output text)" = Enabled
+
+          VERSIONING="$(aws s3api get-bucket-versioning --bucket "$ADMIN_BUCKET" --query Status --output text)"
+          echo "ADMIN_QA_BUCKET_VERSIONING=$VERSIONING"
+          if [ "$VERSIONING" != Enabled ]; then
+            echo "Enabling S3 versioning on $ADMIN_BUCKET"
+            aws s3api put-bucket-versioning \
+              --bucket "$ADMIN_BUCKET" \
+              --versioning-configuration Status=Enabled
+            VERSIONING="$(aws s3api get-bucket-versioning --bucket "$ADMIN_BUCKET" --query Status --output text)"
+            echo "ADMIN_QA_BUCKET_VERSIONING=$VERSIONING"
+          fi
+          test "$VERSIONING" = Enabled
+
           CF_ORIGIN="$(aws cloudfront get-distribution --id "$ADMIN_DISTRIBUTION_ID" \
             --query 'Distribution.DistributionConfig.Origins.Items[0].DomainName' --output text)"
+          echo "ADMIN_QA_CF_ORIGIN=$CF_ORIGIN"
           test "$CF_ORIGIN" = "$ADMIN_BUCKET.s3.$AWS_REGION.amazonaws.com"
-          test "$(aws cloudfront get-distribution --id "$ADMIN_DISTRIBUTION_ID" \
-            --query 'Distribution.DistributionConfig.Enabled' --output text)" = True
-          test "$(aws cloudfront get-distribution --id "$ADMIN_DISTRIBUTION_ID" \
-            --query 'Distribution.DistributionConfig.DefaultCacheBehavior.TargetOriginId' --output text)" = s3-admin
+
+          CF_ENABLED="$(aws cloudfront get-distribution --id "$ADMIN_DISTRIBUTION_ID" \
+            --query 'Distribution.DistributionConfig.Enabled' --output text)"
+          echo "ADMIN_QA_CF_ENABLED=$CF_ENABLED"
+          test "$CF_ENABLED" = True
+
+          CF_ORIGIN_ID="$(aws cloudfront get-distribution --id "$ADMIN_DISTRIBUTION_ID" \
+            --query 'Distribution.DistributionConfig.DefaultCacheBehavior.TargetOriginId' --output text)"
+          echo "ADMIN_QA_CF_TARGET_ORIGIN_ID=$CF_ORIGIN_ID"
+          test "$CF_ORIGIN_ID" = s3-admin
+
           OLD_VERSION="$(aws s3api head-object --bucket "$ADMIN_BUCKET" --key index.html \
             --query VersionId --output text)"
-          test -n "$OLD_VERSION" && test "$OLD_VERSION" != None
           echo "ADMIN_QA_PREDEPLOY_INDEX_VERSION=$OLD_VERSION"
+          test -n "$OLD_VERSION" && test "$OLD_VERSION" != None
           echo 'ADMIN_QA_AWS_TARGETS_AND_ROLLBACK_VERSION=PASS'
 
       - name: Upload new assets without deleting old versions
