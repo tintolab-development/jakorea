@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { BookOutlined } from '@ant-design/icons'
+import { LnbInfoIcon } from '@/shared/ui/icons'
 import { CmsButton, CmsCheckbox, CmsInput, CmsRadio, CmsSelect, useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -44,7 +44,7 @@ const TEXTBOOK_DETAIL_LNB_ITEMS: DetailModalSidebarNavItem[] = [
   {
     key: 'textbook-detail',
     label: '교재 정보',
-    icon: <BookOutlined className="detail-fullpage-modal__lnb-icon" />,
+    icon: <LnbInfoIcon className="detail-fullpage-modal__lnb-icon" />,
   },
 ]
 
