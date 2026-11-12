@@ -9,6 +9,7 @@ vi.mock('@/shared/lib/use-session-admin-role-code', () => ({
 import {
   AccountPaymentConfirmationModal,
   formatAccountPaymentBulkProgramDisplay,
+  withAccountPaymentPlainAccount,
 } from './account-payment-confirmation-modal'
 
 describe('formatAccountPaymentBulkProgramDisplay', () => {
@@ -62,5 +63,47 @@ describe('AccountPaymentConfirmationModal bulk', () => {
     expect(screen.getByText('2026년 JA Korea 초등 경제교육 외 2개')).toBeTruthy()
     expect(screen.getByText('2,915,000원')).toBeTruthy()
     expect(screen.getByText('총 16명')).toBeTruthy()
+  })
+})
+
+describe('withAccountPaymentPlainAccount — 목록 단건 팝업 원문 계좌(CMS-11)', () => {
+  const detail = {
+    plainAccountForPaymentConfirm: { bankAndNumber: '가상은행 000-000-000000', holder: '가나다' },
+  }
+
+  it('단건은 계좌·예금주만 상세 원문으로 바꾸고 금액·프로그램은 유지한다', () => {
+    expect(
+      withAccountPaymentPlainAccount(
+        {
+          kind: 'single',
+          programDisplay: '가상 프로그램',
+          settlementAmount: 1000,
+          accountBankAndNumber: '가상은행 ***-***-******',
+          accountHolder: '가*다',
+          recipientName: '가나다',
+        },
+        detail
+      )
+    ).toEqual({
+      kind: 'single',
+      programDisplay: '가상 프로그램',
+      settlementAmount: 1000,
+      accountBankAndNumber: '가상은행 000-000-000000',
+      accountHolder: '가나다',
+      recipientName: '가나다',
+    })
+  })
+
+  it('다건·빈 값은 그대로 둔다', () => {
+    const bulk = {
+      kind: 'bulk' as const,
+      programDisplay: '가상 프로그램',
+      recipientLabel: '총 2명',
+      settlementAmount: 2000,
+      recipientName: '가나다',
+      otherRecipientCount: 1,
+    }
+    expect(withAccountPaymentPlainAccount(bulk, detail)).toBe(bulk)
+    expect(withAccountPaymentPlainAccount(null, detail)).toBeNull()
   })
 })

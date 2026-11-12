@@ -18,8 +18,10 @@ import {
   formatAccountPaymentSessionLabelDisplay,
   isPaymentOrderStatementConfirmedForAccountPayments,
   type AccountPaymentRow,
+  type AccountPaymentStatusDetail,
   type AccountPaymentTransferStatus,
 } from '@/features/settlement-management/model/account-payments-list'
+import { getAccountPaymentDetailRemote } from '@/features/settlement-management/api/account-payments/admin-account-payments-service'
 import {
   ACCOUNT_PAYMENT_ACCOUNT_MISSING,
   getSettlementApiErrorCode,
@@ -76,6 +78,7 @@ import {
 import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentConfirmationPayloadForSelection,
+  withAccountPaymentPlainAccount,
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
 import {
   AccountPaymentCompleteSuccessModal,
@@ -250,6 +253,15 @@ export default function AccountPaymentsPage() {
   const [accountPayConfirmSelection, setAccountPayConfirmSelection] = useState<
     AccountPaymentRow[] | null
   >(null)
+  /**
+   * 단건 지급 확인 팝업의 원문 계좌. 상세 GET(정산금의 계좌 지급 처리를 위함)으로 받아 팝업이 열린 동안
+   * 이 화면 상태에만 둔다 — Query 캐시에 쓰지 않고 닫으면 버린다.
+   */
+  const [accountPayConfirmDetail, setAccountPayConfirmDetail] =
+    useState<AccountPaymentStatusDetail | null>(null)
+  const [accountPayConfirmLoading, setAccountPayConfirmLoading] = useState(false)
+  /** 열기 요청마다 증가. 닫기·재요청 뒤 늦게 온 상세 응답은 버린다. */
+  const accountPayConfirmRequestRef = useRef(0)
   const [bulkTransferPreviewOpen, setBulkTransferPreviewOpen] = useState(false)
   const [taxFilingPreviewOpen, setTaxFilingPreviewOpen] = useState(false)
   /** 대량이체·세금신고 미리보기에 넘길 행 */
@@ -398,8 +410,11 @@ export default function AccountPaymentsPage() {
 
   const accountPaymentConfirmModalData = useMemo(() => {
     if (!accountPayConfirmSelection?.length) return null
-    return buildAccountPaymentConfirmationPayloadForSelection(accountPayConfirmSelection)
-  }, [accountPayConfirmSelection])
+    const payload = buildAccountPaymentConfirmationPayloadForSelection(accountPayConfirmSelection)
+    return accountPayConfirmDetail
+      ? withAccountPaymentPlainAccount(payload, accountPayConfirmDetail)
+      : payload
+  }, [accountPayConfirmDetail, accountPayConfirmSelection])
 
   const completedTotalForSelectedYear = useMemo(() => {
     if (accountPaymentsRemote) return 0
@@ -859,7 +874,10 @@ export default function AccountPaymentsPage() {
   )
 
   const closeAccountPaymentConfirmModal = useCallback(() => {
+    accountPayConfirmRequestRef.current += 1
     setAccountPayConfirmSelection(null)
+    setAccountPayConfirmDetail(null)
+    setAccountPayConfirmLoading(false)
   }, [])
 
   const openAccountPaymentConfirmFromSelection = useCallback(() => {
@@ -885,8 +903,33 @@ export default function AccountPaymentsPage() {
       })
       return
     }
-    setAccountPayConfirmSelection(picked)
-  }, [canManageAccountPayments, filteredRows, selectedRowKeys])
+    const requestId = ++accountPayConfirmRequestRef.current
+    setAccountPayConfirmDetail(null)
+    // 다건 팝업은 계좌를 표시하지 않는다. 단건만 상세 GET으로 원문 계좌를 받고 조회 이력을 남긴다(CMS-11).
+    if (!accountPaymentsRemote || picked.length !== 1) {
+      setAccountPayConfirmSelection(picked)
+      return
+    }
+    setAccountPayConfirmLoading(true)
+    void getAccountPaymentDetailRemote(picked[0])
+      .then(detail => {
+        if (requestId !== accountPayConfirmRequestRef.current) return
+        setAccountPayConfirmDetail(detail)
+        setAccountPayConfirmSelection(picked)
+      })
+      .catch(error => {
+        if (requestId !== accountPayConfirmRequestRef.current) return
+        if (isGlobalApiErrorAlertShown(error)) return
+        cmsAlertModal.show({
+          title: '안내',
+          content: getSettlementApiErrorMessage(error, '계좌 지급 정보를 불러오지 못했습니다.'),
+        })
+      })
+      .finally(() => {
+        if (requestId !== accountPayConfirmRequestRef.current) return
+        setAccountPayConfirmLoading(false)
+      })
+  }, [accountPaymentsRemote, canManageAccountPayments, filteredRows, selectedRowKeys])
 
   const accountPaymentsFilterTableActions = useMemo(
     () => (
@@ -942,11 +985,12 @@ export default function AccountPaymentsPage() {
           variant="primary"
           type="button"
           onClick={openAccountPaymentConfirmFromSelection}
+          loading={accountPayConfirmLoading}
         >
           일괄 지급 처리
         </FilterTableToolbarButton>
       ) : null,
-    [canManageAccountPayments, openAccountPaymentConfirmFromSelection]
+    [accountPayConfirmLoading, canManageAccountPayments, openAccountPaymentConfirmFromSelection]
   )
 
   const accountPaymentsExcelExport = useMemo((): FilterTableExcelExportConfig => {
