@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { TEMPLATE_FORM_IPS_FIELD_LABELS } from '@/features/template/lib/template-form-select-options'
 import {
   describeIncompleteTrainedTeachersProgramRegistrationRequiredFields,
   hasIncompleteTrainedTeachersProgramRegistrationRequiredFields,
@@ -80,8 +81,8 @@ describe('hasIncompleteTrainedTeachersProgramRegistrationRequiredFields', () => 
         '사업 운영 기간',
         '사업 분야',
         '교육 과정',
-        'IP Owned',
-        'Course Delivered By',
+        TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned,
+        TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy,
         'IPS 유형',
         '1차시 단원명',
         '1차시 교육 내용',
