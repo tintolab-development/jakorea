@@ -473,6 +473,13 @@ axiosClient.interceptors.response.use(
         // A stale failed Refresh must not logout/revoke a newer access/refresh session.
         return Promise.reject(err)
       }
+      if (classifyRefreshFailure(err) === 'transient') {
+        // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 로그아웃하지 않고 원 요청 실패로 돌려준다.
+        if (axios.isAxiosError(err) && !isRequestCanceledError(err)) {
+          showGlobalApiErrorAlert(err, originalRequest)
+        }
+        return Promise.reject(err)
+      }
       handleAuthFailure()
       return Promise.reject(err)
     }
