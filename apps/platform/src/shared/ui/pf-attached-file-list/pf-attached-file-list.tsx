@@ -1,5 +1,6 @@
 import { PFItemDeleteButton } from '../pf-item-delete-button'
 import { PFText } from '../pf-text'
+import { getFileTypeIconUrl } from './file-type-icon'
 import styles from './pf-attached-file-list.module.css'
 
 export type PFAttachedFileListItem = {
@@ -29,15 +30,25 @@ export function PFAttachedFileList({
     <ul className={[styles.list, className].filter(Boolean).join(' ')} aria-label={ariaLabel}>
       {files.map(file => (
         <li key={file.id} className={styles.row}>
-          <PFText
-            as="span"
-            typo="bd-md-md"
-            color="black"
-            className={styles.name}
-            title={file.name}
-          >
-            {file.name}
-          </PFText>
+          <span className={styles.file}>
+            <img
+              className={styles.fileIcon}
+              src={getFileTypeIconUrl(file.name)}
+              alt=""
+              aria-hidden="true"
+              width={24}
+              height={24}
+            />
+            <PFText
+              as="span"
+              typo="bd-md-md"
+              color="black"
+              className={styles.name}
+              title={file.name}
+            >
+              {file.name}
+            </PFText>
+          </span>
           {onRemove ? (
             <PFItemDeleteButton
               aria-label={`${file.name} 삭제`}
