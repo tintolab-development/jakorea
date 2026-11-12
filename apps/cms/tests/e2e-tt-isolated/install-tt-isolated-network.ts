@@ -427,6 +427,8 @@ function isAllowedGet(pathname: string): boolean {
   if (pathname === '/api/admin/me/dashboard-preferences') return true
   if (pathname === '/api/admin/me/dashboard-shortcut-badges') return true
   if (pathname === '/api/portal/me') return true
+  // QA-0137: 새로고침 복원 refresh 뒤 Platform이 세션 회원(auth/me)을 다시 읽는다
+  if (pathname === '/api/portal/auth/me') return true
   if (pathname === '/api/portal/programs') return true
   if (pathname.startsWith('/api/admin/sponsors/')) return true
   if (pathname.startsWith('/api/admin/form-templates/')) return true
@@ -606,7 +608,12 @@ export async function installTtIsolatedNetwork(
       )
       return
     }
-    if (method === 'GET' && (pathname === '/api/portal/me' || pathname === '/api/portal/me/profile')) {
+    if (
+      method === 'GET' &&
+      (pathname === '/api/portal/me' ||
+        pathname === '/api/portal/me/profile' ||
+        pathname === '/api/portal/auth/me')
+    ) {
       await route.fulfill(
         json({
           memberId: 171701,

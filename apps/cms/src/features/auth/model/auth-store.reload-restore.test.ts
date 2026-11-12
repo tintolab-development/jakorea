@@ -14,6 +14,18 @@ vi.mock('@/features/auth/api/fetch-admin-me', () => ({
   fetchAdminMe: vi.fn(async () => ({ uuid: 'admin-uuid', roleCode: 'MASTER' })),
 }))
 vi.mock('@/shared/config/real-api-modules', () => ({ isRealApiModuleEnabled: () => true }))
+const assignLoginAfterSessionEndSpy = vi.hoisted(() => vi.fn())
+vi.mock('@/shared/utils/post-auth-redirect', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/shared/utils/post-auth-redirect')>()
+  return {
+    ...actual,
+    assignLoginAfterSessionEnd: (...args: unknown[]) => assignLoginAfterSessionEndSpy(...args),
+  }
+})
+vi.mock('@/features/auth/api/admin-auth-fetcher', () => ({
+  fetchAdminAuthLogout: vi.fn(async () => undefined),
+  fetchAdminAuthRefreshCookieLogout: vi.fn(async () => undefined),
+}))
 vi.mock('@/shared/instance/axios-instance', async importOriginal => {
   const actual = await importOriginal<typeof import('@/shared/instance/axios-instance')>()
   return {
@@ -43,6 +55,8 @@ const USER = {
 } as const
 
 const RESTORED_TOKEN = 'head.eyJzaWQiOiJzLTEifQ.sig'
+/** 테스트가 logout을 mock으로 바꾸기 전 실제 logout */
+const originalLogout = useAuthStore.getState().logout
 
 /** 새로고침 직후 loadAuthFromStorage가 만든 상태 (메모리 토큰 없음) */
 function seedReloadRestore() {
@@ -328,6 +342,25 @@ describe('새로고침 세션 복원 안내', () => {
     expect(consumeSessionEndedNotice()).toBe(true)
     // 로그인 화면은 한 번만 띄운다
     expect(consumeSessionEndedNotice()).toBe(false)
+  })
+
+  it('① 로그아웃은 로그인 화면의 기존 redirect 파라미터로 이동한다 (로그인 뒤 원래 화면으로)', async () => {
+    seedReloadRestore()
+    useAuthStore.setState({ logout: originalLogout })
+    refreshOutcomeMock.mockResolvedValue('invalid')
+
+    await runCheckAuth()
+
+    expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledTimes(1)
+    expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledWith({ returnParam: 'redirect' })
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(localStorage.getItem('auth_refresh_token')).toBeNull()
+    expect(consumeSessionEndedNotice()).toBe(true)
+
+    // 일반 로그아웃은 기존 동작(next 파라미터) 그대로
+    assignLoginAfterSessionEndSpy.mockClear()
+    useAuthStore.getState().logout()
+    expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledWith(undefined)
   })
 
   it('refresh 수단이 그 사이 사라졌으면(다른 탭 로그아웃 등) 안내 없이 로그아웃만 한다', async () => {

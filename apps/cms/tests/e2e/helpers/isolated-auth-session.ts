@@ -13,6 +13,8 @@ export const ISOLATED_E2E_REFRESH_TOKEN = 'e2e.mock.refresh'
 
 const ADMIN_REFRESH_PATH = '/api/admin/auth/refresh'
 const PORTAL_REFRESH_PATH = '/api/portal/auth/refresh'
+const PORTAL_SESSION_PATH = '/api/portal/auth/session'
+const PORTAL_ACTIVITY_PATH = '/api/portal/auth/activity'
 
 function refreshResponseBody(accessToken: string) {
   return {
@@ -25,19 +27,47 @@ function refreshResponseBody(accessToken: string) {
   }
 }
 
+/** 유휴 정책 없는 세션 상태 — 경고 모달이 뜨지 않는다 */
+function sessionStatusBody() {
+  const now = Date.now()
+  return {
+    sessionStartedAt: new Date(now - 10_000).toISOString(),
+    absoluteExpiresAt: new Date(now + 12 * 3600_000).toISOString(),
+    lastUserActivityAt: new Date(now).toISOString(),
+    idleExpiresAt: null,
+    refreshIdleExpiresAt: new Date(now + 30 * 60_000).toISOString(),
+    idlePolicyEnforced: false,
+    serverNow: new Date(now).toISOString(),
+  }
+}
+
 /**
  * refresh mock. 기존 `**\/*` route보다 나중에 등록해야 먼저 처리된다(Playwright는 나중 등록 route 우선).
- * refresh가 아니면 기존 route로 넘긴다.
+ * Platform은 복원 refresh 뒤 회원 세션(`/api/portal/auth/session`·`activity`)을 다시 조회하므로 함께 답한다.
+ * 그 밖의 요청은 기존 route로 넘긴다.
  */
 export async function installIsolatedAuthRefreshRoutes(
   page: Page,
   options?: { accessToken?: string },
 ): Promise<void> {
   const accessToken = options?.accessToken ?? ISOLATED_E2E_ACCESS_TOKEN
-  await page.route('**/api/*/auth/refresh', async (route: Route) => {
+  await page.route(/\/api\/(admin|portal)\/auth\/(refresh|session|activity)$/, async (route: Route) => {
     const request = route.request()
     const { pathname } = new URL(request.url())
-    if (request.method() === 'POST' && (pathname === ADMIN_REFRESH_PATH || pathname === PORTAL_REFRESH_PATH)) {
+    const method = request.method()
+    if (method === 'GET' && pathname === PORTAL_SESSION_PATH) {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sessionStatusBody()) })
+      return
+    }
+    if (method === 'POST' && pathname === PORTAL_ACTIVITY_PATH) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ lastUserActivityAt: new Date().toISOString(), updated: true }),
+      })
+      return
+    }
+    if (method === 'POST' && (pathname === ADMIN_REFRESH_PATH || pathname === PORTAL_REFRESH_PATH)) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

@@ -501,7 +501,9 @@ function isAllowedGet(pathname: string): boolean {
     pathname === '/api/admin/me/dashboard-preferences' ||
     pathname === '/api/admin/me/dashboard-shortcut-badges' ||
     pathname === '/api/admin/settlement-configs/current' ||
-    pathname === '/api/portal/me'
+    pathname === '/api/portal/me' ||
+    // QA-0137: 새로고침 복원 refresh 뒤 Platform이 세션 회원(auth/me)을 다시 읽는다
+    pathname === '/api/portal/auth/me'
   ) {
     return true
   }
@@ -686,7 +688,12 @@ export async function installCsIsolatedNetwork(
       )
       return
     }
-    if (method === 'GET' && (pathname === '/api/portal/me' || pathname === '/api/portal/me/profile')) {
+    if (
+      method === 'GET' &&
+      (pathname === '/api/portal/me' ||
+        pathname === '/api/portal/me/profile' ||
+        pathname === '/api/portal/auth/me')
+    ) {
       await route.fulfill(
         json({
           memberId: 171721,
