@@ -92,6 +92,8 @@ export type IndividualSettlementReviewDetailModalProps = {
   settlementApplicationId: number | null
   programSessionProgressDisplay?: string | null
   businessPeriodDisplay?: string | null
+  /** 기관형 프로그램만 true — 산출 내역 표에 '참여 기관명' 열을 보인다(개인형은 숨김) */
+  showInstitutionColumn?: boolean
   onClose: () => void
   onReviewed?: () => Promise<void> | void
 }
@@ -103,6 +105,7 @@ export function IndividualSettlementReviewDetailModal({
   settlementApplicationId,
   programSessionProgressDisplay,
   businessPeriodDisplay,
+  showInstitutionColumn = false,
   onClose,
   onReviewed,
 }: IndividualSettlementReviewDetailModalProps) {
@@ -155,9 +158,10 @@ export function IndividualSettlementReviewDetailModal({
         ? mapIndividualSettlementReviewToCalculationStatement(detail, {
             programSessionProgressDisplay,
             businessPeriodDisplay,
+            includeInstitution: showInstitutionColumn,
           })
         : null,
-    [businessPeriodDisplay, detail, programSessionProgressDisplay]
+    [businessPeriodDisplay, detail, programSessionProgressDisplay, showInstitutionColumn]
   )
 
   const rejectStatement = useMemo((): PaymentOrderProgramCalculationStatement | null => {
@@ -279,7 +283,7 @@ export function IndividualSettlementReviewDetailModal({
               blocks={statementView.blocks}
               formulaLabel={statementView.formulaLabel}
               totalAmount={statementView.totalAmount}
-              hideInstitutionColumn
+              hideInstitutionColumn={!showInstitutionColumn}
               dateColumnTitle="교육 진행 일자"
               lectureSessionSegmentLabel="round"
               tableCellSpec="cms-data-table"

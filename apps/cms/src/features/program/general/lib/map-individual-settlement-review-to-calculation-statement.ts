@@ -78,6 +78,11 @@ function extractSessionLabel(scheduleName: string | undefined): string {
 export type IndividualSettlementReviewBasicExtras = {
   programSessionProgressDisplay?: string | null
   businessPeriodDisplay?: string | null
+  /**
+   * 참여 기관명을 쓸지 — 기관형만 true(기본). 개인형은 서버가 null을 주지만, 저장값이 주소일 수 있어
+   * 화면에서도 쓰지 않는다(열·팝업 모두 비노출, 기획 2026-11-12 2차 1번).
+   */
+  includeInstitution?: boolean
 }
 
 export function mapIndividualSettlementReviewToCalculationStatement(
@@ -140,9 +145,10 @@ export function mapIndividualSettlementReviewToCalculationStatement(
         ? []
         : [
             {
-              // 참여 기관명은 프로그램명으로 대신 채우지 않는다. 개인형은 열을 숨기고,
-              // 기관형은 서버 제출 시점 기관명을 받은 뒤 채운다 (기획 2026-11-12 2차 1번)
-              institutionName: '',
+              // 서버의 제출 시점 기관명만 쓴다(없으면 '-'). 프로그램명·주소로 대신 채우지 않는다.
+              // 개인형은 서버가 null을 주고 화면이 열을 숨긴다 (기획 2026-11-12 2차 1번)
+              institutionName:
+                extras?.includeInstitution === false ? '' : detail.institutionName?.trim() || '-',
               lectureDateDisplay: lectureDateDisplay === '' ? '-' : lectureDateDisplay,
               lectureSessionDisplay,
               lines,

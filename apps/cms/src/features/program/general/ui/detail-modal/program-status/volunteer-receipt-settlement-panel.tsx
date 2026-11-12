@@ -40,6 +40,7 @@ import { formatBusinessPeriodDisplay } from '@/features/settlement-management/ap
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT } from '@/features/settlement/lib/payment-statement-view-unavailable-alert'
+import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
 import { IndividualSettlementReviewDetailModal } from './individual-settlement-review-detail-modal'
 import './participating-instructor-settlement-section.css'
 import './individual-settlement-review-detail-modal.css'
@@ -100,6 +101,9 @@ export function VolunteerReceiptSettlementPanel({
 }: VolunteerReceiptSettlementPanelProps) {
   const { showAlert } = useCmsAlert()
   const programId = program.id != null ? String(program.id) : ''
+  // 산출 내역서 '참여 기관명' 열은 일반 기관형 프로그램의 참여 봉사자만 보인다(개인형·UJAT 봉사자는 숨김)
+  const isInstitutionSurface = useIsInstitutionProgramSurface(program)
+  const showInstitutionColumn = target.kind === 'participant' && isInstitutionSurface
 
   const { isLoading, isError, errorMessage, rows, summary, remoteEnabled, reviewKey, invalidate } =
     useVolunteerReceiptSettlementList({
@@ -301,6 +305,7 @@ export function VolunteerReceiptSettlementPanel({
         settlementApplicationId={detailApplicationId}
         programSessionProgressDisplay={programSessionProgressDisplay}
         businessPeriodDisplay={businessPeriodDisplay}
+        showInstitutionColumn={showInstitutionColumn}
         onClose={() => setDetailApplicationId(null)}
         onReviewed={invalidate}
       />

@@ -46,7 +46,13 @@ export type IndividualSettlementReviewDetailView = Omit<
   IndividualSettlementReviewDetail,
   'individualApplicationId'
 > &
-  VolunteerSettlementReviewFields
+  VolunteerSettlementReviewFields & {
+    /**
+     * 최신 Revision 제출 시점의 참여 기관명. 개인형 프로그램은 항상 null(열 숨김),
+     * 기관형에서 저장된 값이 없으면 null(화면 '-'). 프로그램명·주소로 대신 채우지 않는다.
+     */
+    institutionName?: string | null
+  }
 
 export function resolveIndividualSettlementReviewApplicationType(
   value: string | null | undefined
