@@ -43,7 +43,7 @@ assert.deepEqual(labelsOf('instructor_only'), [
   '정산 현황',
   '교육현황',
   '봉사현황',
-  '문의내역',
+  '문의하기',
 ])
 
 const instructorItems = getMypageLnbItems('instructor_only')

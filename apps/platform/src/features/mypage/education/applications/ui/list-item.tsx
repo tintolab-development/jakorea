@@ -74,7 +74,7 @@ export function EducationApplicationListItemRow({
             </PFText>
             <div className={styles.periodBlock}>
               <PFText as="span" typo="bd-md-md" color="primary-700" className={styles.periodLabel}>
-                모집기간
+                모집 기간
               </PFText>
               <PFText as="span" typo="bd-md-md" color="primary-500" className={styles.periodValue}>
                 {item.recruitmentPeriodLabel}
@@ -82,7 +82,7 @@ export function EducationApplicationListItemRow({
             </div>
             <div className={styles.periodBlock}>
               <PFText as="span" typo="bd-md-md" color="primary-700" className={styles.periodLabel}>
-                진행기간
+                진행 기간
               </PFText>
               <PFText as="span" typo="bd-md-md" color="primary-500" className={styles.periodValue}>
                 {item.operatingPeriodLabel}
@@ -106,7 +106,7 @@ export function EducationApplicationListItemRow({
         </>
       }
       aside={
-        <PFText as="span" typo="bd-lg-sb" className={statusClassName}>
+        <PFText as="span" typo="hl-sm" className={statusClassName}>
           {statusLabel}
         </PFText>
       }
