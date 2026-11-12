@@ -107,8 +107,12 @@ jobs:
           fi
           test "$VERSIONING" = Enabled
 
+          aws cloudfront get-distribution --id "$ADMIN_DISTRIBUTION_ID" \
+            --query 'Distribution.DistributionConfig.Origins.Items[*].[Id,DomainName]' \
+            --output text
           CF_ORIGIN="$(aws cloudfront get-distribution --id "$ADMIN_DISTRIBUTION_ID" \
-            --query 'Distribution.DistributionConfig.Origins.Items[0].DomainName' --output text)"
+            --query "Distribution.DistributionConfig.Origins.Items[?Id=='s3-admin'].DomainName | [0]" \
+            --output text)"
           echo "ADMIN_QA_CF_ORIGIN=$CF_ORIGIN"
           test "$CF_ORIGIN" = "$ADMIN_BUCKET.s3.$AWS_REGION.amazonaws.com"
 
