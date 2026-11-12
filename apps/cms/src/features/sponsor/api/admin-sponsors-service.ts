@@ -37,6 +37,7 @@ import {
   fetchSponsorRemote,
   fetchSponsorsRemote,
   fetchYearlyBusinessesRemote,
+  type SponsorContactPrivacyMode,
   type SponsorContactsQueryParams,
   updateSponsorContactRemote,
   updateSponsorRemote,
@@ -100,9 +101,13 @@ async function withEnrichedLogosIfNeeded(
   return logos === detail.logos ? detail : { ...detail, logos }
 }
 
-export async function getSponsorDetail(id: string): Promise<SponsorManagementDetailView> {
+export async function getSponsorDetail(
+  id: string,
+  options?: { contactPrivacy?: SponsorContactPrivacyMode }
+): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
-  const dto = await fetchSponsorRemote(id)
+  // 옵션이 없으면 기존 호출 그대로(데이터 관리 RAW). 프로그램 공통 정보 수정만 MASKED를 넘긴다.
+  const dto = await (options ? fetchSponsorRemote(id, options) : fetchSponsorRemote(id))
   const detail = mapSponsorDetailResponse(dto)
   return withEnrichedLogosIfNeeded(detail)
 }

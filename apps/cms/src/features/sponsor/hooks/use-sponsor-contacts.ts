@@ -1,6 +1,7 @@
 import type React from 'react'
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { showRegisterCompletedAlert } from '@/shared/ui/show-register-completed-alert'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
 import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
@@ -169,6 +170,8 @@ export function useSponsorContacts(
         const contactType = contacts.length === 0 ? ('lead' as const) : payload.contactType
         await remoteActions.onRegister(payload, contactType)
         setRegisterModalOpenState(false)
+        // QA-0318: 후원사·교재·세부 프로그램 등록과 같은 공통 완료 알림
+        showRegisterCompletedAlert()
         return
       }
       setContacts(prev => {
@@ -196,6 +199,7 @@ export function useSponsorContacts(
         return normalizeSponsorContactsSingleLead([nextContact, ...base])
       })
       setRegisterModalOpenState(false)
+      showRegisterCompletedAlert()
     },
     [canWrite, contacts.length, remoteActions, setContacts]
   )

@@ -40,8 +40,24 @@ export async function fetchSponsorsRemote(
   return unwrapApiBody(await getDataManagementSubsetApi().sponsors(params))
 }
 
-export async function fetchSponsorRemote(id: string): Promise<SponsorDetailResponse> {
-  return unwrapApiBody(await getDataManagementSubsetApi().sponsor(pathId(id)))
+/**
+ * 후원사 담당자 연락처 노출 모드 — `contactPrivacy` 쿼리(기본 RAW).
+ * RAW: 데이터 관리 > 후원사 담당자 정보(원문 + 고정 사유 자동 기록, CMS-17).
+ * MASKED: 프로그램 공통 정보 수정의 담당자 선택지(마스킹, 기록 없음, 정책 32·37). 서버 반영 전에는 무시된다.
+ */
+export type SponsorContactPrivacyMode = 'RAW' | 'MASKED'
+
+export async function fetchSponsorRemote(
+  id: string,
+  options?: { contactPrivacy?: SponsorContactPrivacyMode }
+): Promise<SponsorDetailResponse> {
+  const contactPrivacy = options?.contactPrivacy
+  return unwrapApiBody(
+    await getDataManagementSubsetApi().sponsor(
+      pathId(id),
+      contactPrivacy ? { params: { contactPrivacy } } : undefined
+    )
+  )
 }
 
 export async function createSponsorRemote(body: SponsorWriteRequest): Promise<SponsorResponse> {
@@ -106,6 +122,8 @@ export type SponsorContactsQueryParams = {
   department?: string
   position?: string
   name?: string
+  /** 생략하면 서버 기본(RAW). 프로그램 공통 정보 수정 선택지는 MASKED */
+  contactPrivacy?: SponsorContactPrivacyMode
 }
 
 function unwrapSponsorContactList(payload: unknown): SponsorContactResponse[] {
