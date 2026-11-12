@@ -1,6 +1,6 @@
 /**
  * 공통 커스텀 아이콘
- * Ant Design 아이콘으로 커버되지 않는 디자인 시안 전용 SVG 아이콘을 여기서 관리합니다.
+ * Figma 시안 원본 SVG(`shared/assets/icons`) 기반 아이콘을 여기서 관리합니다.
  */
 
 export { GoogleMarkIcon } from './GoogleMarkIcon'
@@ -41,5 +41,20 @@ export {
   FieldSearchIcon,
 } from './FieldIcons'
 export type { FieldIconProps } from './FieldIcons'
+export {
+  LnbAdjustmentIcon,
+  LnbChartIcon,
+  LnbDashboardIcon,
+  LnbDataIcon,
+  LnbMailIcon,
+  LnbMemberIcon,
+  LnbPostIcon,
+  LnbProgramIcon,
+  LnbSecurityIcon,
+  LnbTemplateIcon,
+} from './LnbIcons'
+export type { LnbIconProps } from './LnbIcons'
+export { GnbAlarmIcon } from './GnbIcons'
+export type { GnbAlarmIconProps } from './GnbIcons'
 export { ModalCloseIcon } from './ModalCloseIcon'
 export type { ModalCloseIconProps } from './ModalCloseIcon'
