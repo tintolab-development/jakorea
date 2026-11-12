@@ -46,7 +46,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
+import illustPeopleUrl from '@/shared/assets/illustration/graphic-84-01.png'
 import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import styles from './page.module.css'
 

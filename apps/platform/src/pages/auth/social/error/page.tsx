@@ -13,7 +13,7 @@ import {
   PFButton,
   PFText,
 } from '@/shared/ui'
-import illustSearchUrl from '@/shared/assets/illustration/illust-search.png'
+import illustSearchUrl from '@/shared/assets/illustration/graphic-84-08.png'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 

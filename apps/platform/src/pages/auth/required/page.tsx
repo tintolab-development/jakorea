@@ -1,5 +1,5 @@
 import { PFButton, PFText } from '@/shared/ui'
-import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation.svg'
+import illustLoginRequiredUrl from '@/shared/assets/illustration/graphic-84-02.png'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import { useNavigate } from 'react-router-dom'
@@ -32,7 +32,7 @@ export function RequiredPage() {
   return (
     <section>
       <div className={styles.intro}>
-        <img className={styles.illustration} src={illustQuotationUrl} alt="" aria-hidden="true" />
+        <img className={styles.illustration} src={illustLoginRequiredUrl} alt="" aria-hidden="true" />
         <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
           로그인이 필요한 서비스예요
         </PFText>
