@@ -47,8 +47,33 @@ export function resolveSessionAuthFailureRedirect(options: {
   if (isPasswordChangeRequiredPath(options.pathname)) {
     return null
   }
-  const path = `${options.pathname}${options.search ?? ''}`
-  return `/login?next=${encodeURIComponent(path)}`
+  return buildLoginPathWithRedirect(`${options.pathname}${options.search ?? ''}`)
+}
+
+/** 로그인 후 원래 화면으로 돌아가기 위한 쿼리 키 */
+export const LOGIN_REDIRECT_PARAM = 'redirect'
+
+/** `/login?redirect=<경로>` — 안전하지 않은 경로면 `/login`만 반환 */
+export function buildLoginPathWithRedirect(path: string | null | undefined): string {
+  const safe = sanitizeLoginRedirectPath(path)
+  if (!safe) return '/login'
+  return `/login?${LOGIN_REDIRECT_PARAM}=${encodeURIComponent(safe)}`
+}
+
+/**
+ * 로그인 후 이동할 redirect 값 검증.
+ * 같은 앱 내부 경로만 허용하고, 로그인·인증 화면(루프)과 `/`(기본 경로와 동일)는 제외한다.
+ */
+export function sanitizeLoginRedirectPath(value: string | null | undefined): string | null {
+  if (value == null) return null
+  const path = value.trim()
+  if (path === '' || !path.startsWith('/')) return null
+  if (path.startsWith('//') || path.includes('://') || path.includes('\\')) return null
+  const pathname = path.split(/[?#]/)[0] ?? ''
+  if (pathname === '/' || pathname === '') return null
+  if (isCmsLoggedOutPublicPath(pathname)) return null
+  if (pathname === '/mfa' || pathname.startsWith('/mfa/')) return null
+  return path
 }
 
 /** 로그인·가입·찾기 등 비로그인 공개 화면 — 로그아웃 후 다시 보내지 않음 */
@@ -70,17 +95,19 @@ export function assignLoginAfterSessionEnd(options?: {
   pathname?: string
   search?: string
   complete?: boolean
+  /** `false`면 원래 경로를 붙이지 않는다 (사용자가 직접 로그아웃). 기본 `true` */
+  preserveReturnPath?: boolean
   assign?: (url: string) => void
 }): void {
   if (typeof window === 'undefined' && options?.assign == null) return
   const pathname = options?.pathname ?? window.location.pathname
   const search = options?.search ?? window.location.search
   if (isCmsLoggedOutPublicPath(pathname)) return
-  const target = resolveSessionAuthFailureRedirect({
-    pathname,
-    search,
-    complete: options?.complete === true,
-  })
+  const complete = options?.complete === true
+  const target =
+    options?.preserveReturnPath === false && !complete
+      ? '/login'
+      : resolveSessionAuthFailureRedirect({ pathname, search, complete })
   if (target == null) return
   const current = `${pathname}${search}`
   if (current === target) return

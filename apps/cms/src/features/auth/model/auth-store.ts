@@ -75,7 +75,8 @@ interface AuthState {
     request: LoginRequest,
     options?: LoginOptions
   ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
-  logout: () => void
+  /** `preserveReturnPath: false` — 사용자가 직접 로그아웃 (로그인 후 원래 화면 복귀 안 함) */
+  logout: (options?: { preserveReturnPath?: boolean }) => void
   checkAuth: () => Promise<void>
   updateUser: (userData: Partial<Omit<User, 'password'>>) => void
   clearError: () => void
@@ -414,7 +415,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       void refreshAdminSessionFromMe()
     },
 
-    logout: () => {
+    logout: options => {
       const refreshToken =
         typeof window !== 'undefined' && window.localStorage
           ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
@@ -464,7 +465,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPerformanceQueryCache()
       clearProgramQueryCache()
       clearNotificationsQueryCache()
-      assignLoginAfterSessionEnd()
+      assignLoginAfterSessionEnd({ preserveReturnPath: options?.preserveReturnPath })
     },
 
     checkAuth: async () => {

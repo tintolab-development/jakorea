@@ -9,12 +9,13 @@
  */
 
 import { Spin } from 'antd'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   PASSWORD_CHANGE_REQUIRED_PATH,
+  buildLoginPathWithRedirect,
   passwordChangeRequiredPaths,
 } from '@/shared/utils/post-auth-redirect'
 import type { UserRole } from '@/types/user'
@@ -30,6 +31,7 @@ export function ProtectedRoute({
   requiredRoles,
   requireAuth = true,
 }: ProtectedRouteProps) {
+  const location = useLocation()
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const user = useAuthStore(state => state.user)
   const requiresMfa = useAuthStore(state => state.requiresMfa)
@@ -60,12 +62,15 @@ export function ProtectedRoute({
     )
   }
 
+  // 로그인 후 원래 화면으로 돌아오도록 현재 경로를 redirect로 넘긴다.
+  const loginPath = buildLoginPathWithRedirect(`${location.pathname}${location.search}`)
+
   if (requireAuth && !isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={loginPath} replace />
   }
 
   if (requireAuth && user?.role === 'ADMIN' && requiresMfa && !mfaState?.isVerified) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={loginPath} replace />
   }
 
   if (requireAuth && passwordChangeRequired) {

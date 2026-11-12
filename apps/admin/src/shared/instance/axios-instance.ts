@@ -14,6 +14,7 @@ import {
 } from '@/features/auth/model/auth-storage'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { getApiBaseUrl, getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
+import { buildLoginPathWithRedirect } from '@/shared/lib/login-redirect'
 import axios, {
   type AxiosError,
   type AxiosRequestHeaders,
@@ -231,9 +232,9 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
 function handleAuthFailure() {
   useAuthStore.getState().logout()
   if (typeof window !== 'undefined') {
-    const path = `${window.location.pathname}${window.location.search}`
-    const next = encodeURIComponent(path)
-    window.location.assign(`/login?redirect=${next}`)
+    window.location.assign(
+      buildLoginPathWithRedirect(`${window.location.pathname}${window.location.search}`)
+    )
   }
 }
 

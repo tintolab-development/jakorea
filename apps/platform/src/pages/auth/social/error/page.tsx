@@ -16,6 +16,7 @@ import {
 import illustSearchUrl from '@/shared/assets/illustration/graphic-84-08.png'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { buildSignInPathWithRedirect, sanitizeLoginRedirectPath } from '@/shared/lib/login-redirect'
 
 const socialLoginItems: Array<{
   provider: SocialProvider
@@ -45,9 +46,14 @@ export function SocialErrorPage() {
   const [searchParams] = useSearchParams()
   const reason = searchParams.get('reason')
   const copy = resolveErrorCopy(reason)
+  // 소셜 로그인 시작 시 보관한 원래 화면 — 재시도·로그인 화면 이동에도 유지
+  const loginReturnUrl =
+    platformSocialAuthClient.state.getOAuthIntent() === 'login'
+      ? (sanitizeLoginRedirectPath(platformSocialAuthClient.state.getReturnUrl()) ?? undefined)
+      : undefined
 
   const handleSignIn = () => {
-    navigate('/auth/sign-in')
+    navigate(buildSignInPathWithRedirect(loginReturnUrl))
   }
 
   const handleSignUp = () => {
@@ -61,7 +67,7 @@ export function SocialErrorPage() {
     }
 
     void platformSocialAuthClient
-      .startLogin({ provider, intent: 'login' })
+      .startLogin({ provider, intent: 'login', returnUrl: loginReturnUrl })
       .then(url => {
         if (!url?.trim()) {
           throw new SocialAuthApiError('INVALID_RESPONSE', '소셜 로그인 URL을 받지 못했습니다.')

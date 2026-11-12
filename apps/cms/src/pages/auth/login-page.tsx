@@ -21,10 +21,11 @@ import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
-import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+import { resolveLoginRedirectTarget } from '@/shared/utils/auth-redirect'
 import {
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
+  sanitizeLoginRedirectPath,
 } from '@/shared/utils/post-auth-redirect'
 import {
   canShowDevRoleLogin,
@@ -95,7 +96,8 @@ export function LoginPage() {
     getRemainingLockMinutes,
   } = useLoginAttempts()
 
-  const redirectPath = params.redirect
+  // `next`는 이전 세션 만료 링크 호환용. 안전하지 않은 값은 버린다.
+  const redirectPath = sanitizeLoginRedirectPath(params.redirect ?? params.next) ?? undefined
   const showSocialNotLinked =
     SOCIAL_ACCOUNT_LINK_ENABLED &&
     (params.socialNotLinked === '1' || params.socialNotLinked === 'true')
@@ -119,7 +121,7 @@ export function LoginPage() {
       return
     }
     if (isAuthenticated && user) {
-      const fallback = redirectPath || getRedirectPathByRole(user)
+      const fallback = resolveLoginRedirectTarget(redirectPath, user)
       navigate(
         resolvePostAuthRedirectPath({
           complete,
@@ -156,9 +158,10 @@ export function LoginPage() {
         return
       }
 
-      const currentUser = authStore.user
+      // 렌더 시점 스냅샷이 아닌 로그인 직후 최신 사용자로 역할 판정
+      const currentUser = useAuthStore.getState().user
       const fallback = currentUser
-        ? redirectPath || getRedirectPathByRole(currentUser)
+        ? resolveLoginRedirectTarget(redirectPath, currentUser)
         : redirectPath || '/'
       navigate(
         resolvePostAuthRedirectPath({
@@ -210,7 +213,7 @@ export function LoginPage() {
 
     if (currentIsAuthenticated && !currentRequiresMfa && mfaModalOpen && currentUser) {
       setMfaModalOpen(false)
-      const fallback = redirectPath || getRedirectPathByRole(currentUser)
+      const fallback = resolveLoginRedirectTarget(redirectPath, currentUser)
       setTimeout(() => {
         const latest = useAuthStore.getState()
         navigate(
@@ -232,7 +235,7 @@ export function LoginPage() {
       const authState = useAuthStore.getState()
       if (authState.isAuthenticated && !authState.requiresMfa && mfaModalOpen && authState.user) {
         setMfaModalOpen(false)
-        const fallback = redirectPath || getRedirectPathByRole(authState.user)
+        const fallback = resolveLoginRedirectTarget(redirectPath, authState.user)
         navigate(
           resolvePostAuthRedirectPath({
             complete: hasPasswordChangeRequiredComplete(),
