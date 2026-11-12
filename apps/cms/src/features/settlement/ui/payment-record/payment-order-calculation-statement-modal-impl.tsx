@@ -52,10 +52,7 @@ import {
 import { PaymentOrderPaymentRejectionResultModal } from './payment-order-payment-rejection-result-modal'
 import { PaymentOrderPaymentCorrectionModal } from './payment-order-payment-correction-modal'
 import { PaymentOrderCorrectionRejectModal } from './payment-order-correction-reject-modal'
-import {
-  PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH,
-  PaymentOrderCalculationBreakdownTable,
-} from './payment-order-calculation-breakdown-table'
+import { PaymentOrderCalculationBreakdownTable } from './payment-order-calculation-breakdown-table'
 import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
@@ -64,8 +61,6 @@ import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payme
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
-
-const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH
 
 export type PaymentOrderCalculationStatementProgramContext = Extract<
   PaymentOrderProgramCalculationStatement,
@@ -480,7 +475,6 @@ export function PaymentOrderCalculationStatementModalImpl({
             ? statement.basic
             : (statement.basic as unknown as PaymentOrderCalculationStatementProgramContext['basic'])
         }
-        style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
         onResendNotificationClick={
           canResendNotification ? () => setNotificationResendOpen(true) : undefined
         }
@@ -492,7 +486,6 @@ export function PaymentOrderCalculationStatementModalImpl({
             ? statement.basic
             : (statement.basic as unknown as PaymentOrderCalculationStatementInstructorContext['basic'])
         }
-        style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
         onResendNotificationClick={
           canResendNotification ? () => setNotificationResendOpen(true) : undefined
         }
