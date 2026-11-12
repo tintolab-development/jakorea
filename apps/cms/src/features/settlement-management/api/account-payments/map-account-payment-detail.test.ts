@@ -292,7 +292,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
       settlement: {
         id: '185986',
         wageItemType: 'GEMINI',
-        lectureFeeStandardTitle: '제미나이 강사비',
+        lectureFeeStandardTitle: 'Gemini 강사비',
         lectureFeeStandardAmount: 170_000,
         sessionOrdinal: 2,
         lectureSessionDisplay: '14:30 ~ 16:30',
@@ -301,7 +301,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         items: [
           {
             type: 'instructor_fee',
-            description: '제미나이 강사비',
+            description: 'Gemini 강사비',
             amount: 170_000,
             calculationDetail: {
               layout: 'lectureFeeGemini',
@@ -311,7 +311,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
                 layout: 'lectureFeeGemini',
                 itemType: 'LECTURE_FEE',
                 wageItemType: 'GEMINI',
-                categoryLabel: '제미나이 강사비',
+                categoryLabel: 'Gemini 강사비',
                 feeAssessmentWon: 170_000,
                 amount: 170_000,
                 sessionOrdinal: 2,
@@ -334,14 +334,14 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     if (line?.basisDetail?.layout !== 'lectureFeeGemini') return
     expect(line.basisDetail.lectureTimeDisplay).toBe('2차시')
     expect(line.basisDetail.feeAssessmentWon).toBe(170_000)
-    expect(line.basisDetail.categoryLabel).toBe('제미나이 강사비')
+    expect(line.basisDetail.categoryLabel).toBe('Gemini 강사비')
   })
 
   it('BE N3·N5 — Gemini 상세(AP-…): 진행 회차 null은 「-」, 인정 차시는 recognizedSessionCount, basisJson에 sessionOrdinal 없음', () => {
     const settlement = {
       id: 'AP-77',
       wageItemType: 'GEMINI',
-      lectureFeeStandardTitle: '세미나이 강사비',
+      lectureFeeStandardTitle: 'Gemini 강사비',
       lectureFeeStandardAmount: 170_000,
       sessionOrdinal: null,
       sessionCompleted: null,
@@ -352,7 +352,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
       items: [
         {
           type: 'instructor_fee',
-          description: '프로그램 2차시 강사비 (세미나이 강사비)',
+          description: '프로그램 2차시 강사비 (Gemini 강사비)',
           amount: 170_000,
           calculationDetail: {
             layout: 'lectureFeeTier',
@@ -362,7 +362,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
               layout: 'lectureFeeTier',
               itemType: 'LECTURE_FEE',
               wageItemType: 'GEMINI',
-              categoryLabel: '세미나이 강사비',
+              categoryLabel: 'Gemini 강사비',
               feeAssessmentWon: 170_000,
               amount: 170_000,
               lectureTimeDisplay: '2차시',
