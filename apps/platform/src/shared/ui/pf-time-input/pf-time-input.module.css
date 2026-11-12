@@ -6,18 +6,33 @@
 
 .leadingIcon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   z-index: 3;
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   transform: translateY(-50%);
   pointer-events: none;
 }
 
+.leadingIconDesktop {
+  display: none;
+}
+
+@media (--bp-pc-up) {
+  .leadingIconMobile {
+    display: none;
+  }
+
+  .leadingIconDesktop {
+    display: block;
+    width: 22px;
+    height: 22px;
+  }
+}
+
 /*
- * Figma Input 120 기준: 시계·쉐브론을 두고도 HH:mm(≈48px)이 잘리지 않게
- * 좌 12+16+6=34 · 우 쉐브론 영역 36 → 가용 ≈50
+ * 시안 Input type=time: 좌 14 + 아이콘(모바일 24 · PC 22) + 간격 8 · 우 12, 펼침 화살표 없음
  */
 .trigger {
   position: absolute;
@@ -27,12 +42,18 @@
   min-width: 0;
   align-items: center;
   box-sizing: border-box;
-  padding: var(--spacing-12) 36px var(--spacing-12) 34px;
+  padding: var(--spacing-12) 12px var(--spacing-12) 46px;
   border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
   touch-action: manipulation;
+}
+
+@media (--bp-pc-up) {
+  .trigger {
+    padding-left: 44px;
+  }
 }
 
 .trigger:disabled {
