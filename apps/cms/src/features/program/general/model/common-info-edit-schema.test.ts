@@ -198,7 +198,21 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(patch.sponsorId).toBe('sponsor-new')
     expect(patch.managerName).toBe('김담당')
-    expect(patch.contactPhone).toBe('010-0000-0000')
+  })
+
+  it('담당자를 선택해도 담당자 전화를 문의처(contactPhone)로 patch에 넣지 않는다', () => {
+    const program = baseProgram({ contactPhone: '02-1234-5678' })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.sponsorManagementIds = ['sponsor-new']
+    values.sponsorManagerContactIds = [
+      encodeSponsorManagerContactRef('sponsor-new', 'contact-1'),
+    ]
+    values.sponsorManagerContactId = encodeSponsorManagerContactRef('sponsor-new', 'contact-1')
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(patch.managerName).toBe('김담당')
+    expect(patch).not.toHaveProperty('contactPhone')
+    // 기존 문의처는 patch 병합 후에도 그대로
+    expect({ ...program, ...patch }.contactPhone).toBe('02-1234-5678')
   })
 
   it('저장된 담당자가 미선택이면 수정 폼에도 미선택이 체크된다', () => {
