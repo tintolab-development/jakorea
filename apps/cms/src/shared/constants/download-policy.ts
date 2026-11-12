@@ -15,6 +15,17 @@ const COMPOUND_SURNAMES_TWO = new Set([
   '서문',
 ])
 
+/** BE maskAccountHolderValue와 같은 규칙(코드포인트 기준). */
+function maskAccountHolderCanonical(trimmed: string): string {
+  const points = Array.from(trimmed)
+  const n = points.length
+  if (n <= 1) return '*'
+  if (n === 2) return `${points[0]}*`
+  if (n === 3) return `${points[0]}*${points[2]}`
+  const surnameLen = COMPOUND_SURNAMES_TWO.has(points[0] + points[1]) ? 2 : 1
+  return points.slice(0, surnameLen).join('') + '*'.repeat(n - surnameLen - 1) + points[n - 1]
+}
+
 /**
  * 다운로드 제한 정책
  */
@@ -82,24 +93,17 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 예금주: 성 + 마지막 글자. 중간만 `*`.
-   * 성 다음이 한 글자면 그 글자를 마스킹 (`김이` → `김*`).
-   * 복성 2글자. 이미 `*`면 재마스킹하지 않음.
+   * 예금주(기획 결정 2026-11-12, BE PrivacyMaskingSupport.maskAccountHolder·골든 벡터 ACCOUNT_HOLDER와 같은 출력):
+   * 1글자 `*`, 2글자 성 + `*`, 3글자 이상 성 + 가운데 글자 수만큼 `*` + 끝 글자.
+   * 복성(4글자 이상이고 앞 두 글자가 남궁·황보·제갈·선우·독고·사공·서문·동방)은 성 2글자.
+   * 이미 정규 형태로 마스킹된 값은 그대로, 일부만 가려진 값(`김*철수`)은 다시 정규 형태로 가린다.
    */
   accountHolderName: (value: string): string => {
     if (!value) return value
     const trimmed = value.trim()
-    if (!trimmed || trimmed.includes('*')) return value
-    let surnameLen = 1
-    if (trimmed.length >= 2 && COMPOUND_SURNAMES_TWO.has(trimmed.slice(0, 2))) {
-      surnameLen = 2
-    }
-    if (trimmed.length <= surnameLen) return '*'.repeat(trimmed.length)
-    if (trimmed.length === surnameLen + 1) {
-      return trimmed.slice(0, surnameLen) + '*'
-    }
-    const middleLen = trimmed.length - surnameLen - 1
-    return trimmed.slice(0, surnameLen) + '*'.repeat(middleLen) + trimmed.slice(-1)
+    if (!trimmed) return value
+    const canonical = maskAccountHolderCanonical(trimmed)
+    return trimmed.includes('*') && canonical === trimmed ? trimmed : canonical
   },
 
   /**
