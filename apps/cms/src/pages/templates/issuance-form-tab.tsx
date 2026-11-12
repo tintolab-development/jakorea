@@ -342,7 +342,8 @@ function IssuanceFormTabContent() {
   })
 
   const settlementPdfHostRef = useRef<HTMLDivElement>(null)
-  const [settlementPdfLoading, setSettlementPdfLoading] = useState(false)
+  // 정산 신청서는 편집기 문서 다운로드 미제공 (QA 261113 #43) — 미리보기 PDF host만 유지
+  const [settlementPdfLoading] = useState(false)
   const settlementDocumentPreviewDraft = useMemo(
     () => buildSettlementApplicationDocumentPreviewDraft(),
     []
@@ -690,20 +691,6 @@ function IssuanceFormTabContent() {
     }
   }, [paymentStatementPreConsentA4Title])
 
-  const handleDownloadSettlementApplicationDocument = useCallback(async () => {
-    const root = settlementPdfHostRef.current
-    if (root == null) return
-    setSettlementPdfLoading(true)
-    try {
-      const pageEls = collectFormDocumentPdfPageElements(root)
-      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(settlementA4Title))
-    } catch (e) {
-      handleError(e, { context: 'issuanceFormTab.downloadSettlementApplicationPdf' })
-    } finally {
-      setSettlementPdfLoading(false)
-    }
-  }, [settlementA4Title])
-
   const handleDownloadLectureReportDocument = useCallback(async () => {
     const root = lectureReportPdfHostRef.current
     if (root == null) return
@@ -821,8 +808,9 @@ function IssuanceFormTabContent() {
             ? () => void handleDownloadPaymentStatementDocument()
             : isPaymentStatementPreConsent
               ? () => void handleDownloadPaymentStatementPreConsentDocument()
-            : isSettlementApplicationIssuance
-              ? () => void handleDownloadSettlementApplicationDocument()
+            : // 정산 신청서 — 상단 버튼은 미리보기·저장만 (QA 261113 #43)
+              isSettlementApplicationIssuance
+              ? undefined
               : isLectureReportIssuance
                 ? () => void handleDownloadLectureReportDocument()
                 : isUjatStructuredIssuance
@@ -870,7 +858,8 @@ function IssuanceFormTabContent() {
               editorKind="survey"
               singleItemListActiveItemId={ujatStructuredIssuanceVm.singleItemListActiveItemId}
               onSelectSingleItemListItem={ujatStructuredIssuanceVm.onSelectSingleItemListItem}
-              middleParagraphActions={ujatStructuredIssuanceVm.middleParagraphActions}
+              // 보고 양식 — 단락 추가·복제·삭제 미노출 (QA 261113 #45)
+              middleParagraphActions={undefined}
               structureLockedParagraphIds={ujatStructuredIssuanceVm.structureLockedParagraphIds}
               hideDragHandleForParagraphIds={
                 UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES[ujatStructuredIssuanceVariant ?? 'plan']
@@ -888,7 +877,8 @@ function IssuanceFormTabContent() {
               editorKind="survey"
               singleItemListActiveItemId={lectureReportVm.singleItemListActiveItemId}
               onSelectSingleItemListItem={lectureReportVm.onSelectSingleItemListItem}
-              middleParagraphActions={lectureReportVm.middleParagraphActions}
+              // 보고 양식 — 단락 추가·복제·삭제 미노출 (QA 261113 #45)
+              middleParagraphActions={undefined}
               structureLockedParagraphIds={lectureReportVm.structureLockedParagraphIds}
               hideDragHandleForParagraphIds={LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS}
               headingDescriptionExtraClassName="paragraph-input-explanation-title"

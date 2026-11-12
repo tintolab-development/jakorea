@@ -15,13 +15,11 @@ import {
 } from '@/shared/lib/admin-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
+  '- 파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
-
-const TEMPLATE_UPLOAD_DISABLED_HINT = '프로그램에서 등록 시 첨부 가능합니다.'
 
 type AttachmentRow = {
   fileName: string
@@ -109,11 +107,7 @@ export function VolunteerPreviousJaProgramParagraph(props?: {
           fullRow
           edit={
             <>
-              {uploadDisabled ? (
-                <p className="form-editor-template-field-hint-text" role="status">
-                  {TEMPLATE_UPLOAD_DISABLED_HINT}
-                </p>
-              ) : null}
+              {/* 템플릿 편집 「프로그램에서 등록 시 첨부 가능합니다.」 안내 제거 (QA 261113 #62) */}
               <ParagraphFileUpload
                 accept={CERTIFICATE_ACCEPT}
                 multiple

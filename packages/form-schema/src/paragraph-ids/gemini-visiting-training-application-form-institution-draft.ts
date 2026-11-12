@@ -20,19 +20,23 @@ export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS = {
 export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS =
   new Set<string>(Object.values(GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS))
 
-const PERSONAL_INFO_TITLE = '개인 정보수집 및 제공에 대한 동의'
-const THIRD_PARTY_TITLE = '제 3자 정보 제공 동의'
-const PORTRAIT_TITLE = '초상권에 대한 동의'
+const PERSONAL_INFO_TITLE = '개인정보 수집‧이용'
+const THIRD_PARTY_TITLE = '제3자 정보 제공‧이용 동의'
+const PORTRAIT_TITLE = '초상권 수집·이용 동의'
 const CONTACT_PERSON_TITLE = '담당 교사 정보'
 const PREFERRED_SCHEDULE_DESCRIPTION =
-  '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.'
+  '1~3순위 희망 날짜 및 교육 시간을 기재해 주세요.'
 const LEGACY_CONTACT_PERSON_TITLES = ['담당자 정보'] as const
 
-const LEGACY_PERSONAL_INFO_TITLES = ['개인정보 수집·이용'] as const
-const LEGACY_THIRD_PARTY_TITLES = ['개인정보 제3자 정보 제공·이용 동의'] as const
-const LEGACY_PORTRAIT_TITLES = ['초상권 수집·이용 동의'] as const
+const LEGACY_PERSONAL_INFO_TITLES = ['개인정보 수집·이용', '개인 정보수집 및 제공에 대한 동의'] as const
+const LEGACY_THIRD_PARTY_TITLES = [
+  '개인정보 제3자 정보 제공·이용 동의',
+  '제 3자 정보 제공 동의',
+] as const
+const LEGACY_PORTRAIT_TITLES = ['초상권에 대한 동의'] as const
 const LEGACY_PREFERRED_SCHEDULE_DESCRIPTIONS = [
   '1~3순위 희망 날짜 및 희망 교육 시간을 기재해 주세요.',
+  '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.',
 ] as const
 
 const PERSONAL_INFO_BOTTOM =

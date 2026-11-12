@@ -58,7 +58,7 @@ function createInstitutionPersonalInfoHorizontalTable(): HorizontalTableParagrap
   const bodyRow = [
     {
       kind: 'text' as const,
-      value: '이름, 학교명, 학교 소재지, 개인 연락처, 이메일',
+      value: '이름, 학교명, 학교주소, 개인 연락처, e-mail',
     },
     {
       kind: 'text' as const,
@@ -102,7 +102,7 @@ function createInstitutionThirdPartyHorizontalTable(): HorizontalTableParagraph 
     { kind: 'text' as const, value: '' },
     {
       kind: 'text' as const,
-      value: '이름, 학교명, 학교 소재지, 개인 연락처, 이메일',
+      value: '이름, 학교명, 학교주소, 개인 연락처, e-mail',
     },
     {
       kind: 'text' as const,

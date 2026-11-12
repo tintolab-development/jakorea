@@ -217,14 +217,16 @@ export function TemplateFullpageModal({
     ) : (
       <>
         {headerActionsLeading}
-        <CmsButton
-          variant="secondary"
-          icon={<ButtonDownloadIcon />}
-          onClick={onDownloadDocument} className="full-page-modal__download-btn"
-          disabled={downloadDocumentLoading}
-          aria-busy={downloadDocumentLoading} >
-          문서 다운로드
-        </CmsButton>
+        {onDownloadDocument != null ? (
+          <CmsButton
+            variant="secondary"
+            icon={<ButtonDownloadIcon />}
+            onClick={onDownloadDocument} className="full-page-modal__download-btn"
+            disabled={downloadDocumentLoading}
+            aria-busy={downloadDocumentLoading} >
+            문서 다운로드
+          </CmsButton>
+        ) : null}
         {showPreview ? (
           <CmsButton variant="secondary" onClick={onPreview}>
             미리보기

@@ -299,3 +299,10 @@
   align-items: center;
   gap: 6px;
 }
+
+/* 후원사 담당자 — 후원사 선택 전(비활성)에도 placeholder는 시안 #85969d
+ * (공통 `.cms-select--disabled` 규칙보다 우선하도록 클래스를 겹쳐 쓴다) */
+.program-registration-sponsor-manager-select.program-registration-sponsor-manager-select
+  .cms-select-multi__trigger-text--placeholder {
+  color: var(--Content-tertiary, #85969d);
+}

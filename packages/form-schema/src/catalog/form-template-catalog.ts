@@ -298,8 +298,8 @@ export interface IssuanceTemplateCodeCatalogEntry {
  */
 export const ISSUANCE_TEMPLATE_CODE_CATALOG: Record<string, IssuanceTemplateCodeCatalogEntry> = {
   'issuance-1': { templateName: 'UJAT 결과리포트', category: 'REPORT' },
-  'issuance-2': { templateName: 'UJAT 교육계획서', category: 'REPORT' },
-  'issuance-ujat-edu-journal': { templateName: 'UJAT 교육일지', category: 'REPORT' },
+  'issuance-2': { templateName: 'UJAT_교육계획서', category: 'REPORT' },
+  'issuance-ujat-edu-journal': { templateName: 'UJAT_교육일지', category: 'REPORT' },
   'issuance-3': { templateName: '강의보고서', category: 'REPORT' },
   'issuance-4': { templateName: '정산 신청서', category: 'REPORT' },
   'issuance-5': { templateName: '결과보고서', category: 'REPORT' },

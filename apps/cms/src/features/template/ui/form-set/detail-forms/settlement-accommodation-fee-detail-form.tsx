@@ -21,9 +21,9 @@ const INPUT_W = 244
 const ACCOMMODATION_RECEIPT_ACCEPT =
   '.jpg,.jpeg,.png,.xls,.xlsx,.pdf,.doc,.docx'
 
+/** 정산 신청서 영수증 첨부 안내 (QA 261113 #52) */
 const ACCOMMODATION_RECEIPT_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 파일은 PDF, JPG, PNG, Excel, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
 ]
 
 export type SettlementAccommodationFeeAutofillValues = {

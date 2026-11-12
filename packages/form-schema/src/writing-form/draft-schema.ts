@@ -3764,7 +3764,7 @@ export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
 export function createDefaultDirectAgreementDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,
-    formSettings: { titleNumbering: 'none' },
+    formSettings: { titleNumbering: 'numeric' },
     paragraphs: [
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title,
@@ -3819,7 +3819,7 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
           {
             id: 'agreement-short-essay-item-3',
             label: '보유 및 이용 기간',
-            placeholder: 'ex) 회원 탈퇴 후 1개월 또는 개인정보수집 동의일로부터 5년',
+            placeholder: 'ex) 동의일로부터 3년',
             bodyText: '',
           },
         ],
@@ -3982,8 +3982,8 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause2,
         '2',
-        '종교적 정치적 중립성 유지',
-        '교육 내용 및 발언에 있어 종교적·정치적으로 편향이나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.'
+        '종교적·정치적 중립성 유지',
+        '교육 내용 및 발언에 있어 종교적·정치적으로 편향되거나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.'
       ),
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
@@ -4006,7 +4006,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: false,
         /** 1행 = 서명 카드 확인문, 2행 이후 = 회색 안내(유효·보관 기간) */
-        body: '본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다.\n본 서약은 서약일로부터 1년간 유효하며, 서약서는 활동 종료 후 3년간 보관한 뒤 파기합니다.',
+        body: '본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다.\n본 서약은 서약일로부터 1년간 유효하며, 서약서는 활동 종료 후 3년간 보관된 뒤 파기됩니다.',
       },
       {
         id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,
@@ -4672,7 +4672,7 @@ function createLectureReportEducationPhotosParagraph(id: string): FileAttachment
     answerRequired: true,
     requiredMark: true,
     paragraphTitle: '교육 사진',
-    paragraphDescription: '교육 장면 사진을 2장 이상 첨부해 주세요',
+    paragraphDescription: '교육 당일 사진을 2장 이상 첨부해 주세요',
     participatesInTitleNumbering: true,
   }
 }
@@ -4695,7 +4695,7 @@ export function createUjatEducationJournalIssuanceDraft(): WritingFormDraft {
   const base = createUjatEducationIssuanceDraft(
     UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
     'JA KOREA 대학생경제교육봉사단(UJAT) 교육일지',
-    n => `${n}차시 교육 일지`,
+    n => `${n}차시 교육 내용 및 역할`,
     {
       paragraphsAfterVolunteer: [
         createUjatJournalEducationInfoParagraph(

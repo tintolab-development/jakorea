@@ -243,12 +243,12 @@ export function createUjatProgramApplicationFormInstitutionDraft(): WritingFormD
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
       '학년 별 신청 정보',
-      '학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해주세요.'
+      '학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해 주세요.'
     ),
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime,
       '학년 별 수업 시간',
-      '신청 학년 별 수업 진행 시간을 작성해주세요.'
+      '신청 학년 별 수업 진행 시간을 작성해 주세요.'
     ),
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,

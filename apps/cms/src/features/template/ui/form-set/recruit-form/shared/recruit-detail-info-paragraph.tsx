@@ -8,6 +8,7 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   getRecruitDetailInfoRecord,
   getRecruitDetailInfoScope,
@@ -337,6 +338,9 @@ export function RecruitDetailInfoParagraph({
 }: RecruitDetailInfoParagraphProps) {
   // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교·Gemini·UJAT·교육받은 교사·템플릿 관리는 기존 문구
   const isGeneralWizard = useIsGeneralRegistrationWizard()
+  /** 썸네일·첨부 안내 시안 문구 — 일반 등록 위저드 + 템플릿 관리 모집 폼 전체 (QA 261113 #57) */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const showSpecAttachmentGuide = isGeneralWizard || isTemplateManagementScreen
   const resolvedTextFields = isGeneralWizard
     ? textFields.map(field => ({ ...field, placeholder: toGeneralWizardPlaceholder(field.placeholder) }))
     : textFields
@@ -625,7 +629,7 @@ export function RecruitDetailInfoParagraph({
                 previewUrl={thumbnailPreviewUrl}
                 fileName={thumbFileName}
                 guideLines={
-                  isGeneralWizard
+                  showSpecAttachmentGuide
                     ? GENERAL_RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
                     : RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
                 }
@@ -683,9 +687,13 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <ParagraphFileUpload
-                accept={isGeneralWizard ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_ACCEPT : attachmentAccept}
+                accept={
+                  showSpecAttachmentGuide ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_ACCEPT : attachmentAccept
+                }
                 guideLines={
-                  isGeneralWizard ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES : attachmentGuideLines
+                  showSpecAttachmentGuide
+                    ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES
+                    : attachmentGuideLines
                 }
                 multiple
                 fileNames={attachmentFileNames}

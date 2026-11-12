@@ -17,6 +17,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-form-instructor-info-paragraph.css'
 
@@ -157,6 +158,8 @@ export function RecruitFormInstructorInfoParagraph() {
 
   // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교 강사 모집·템플릿 관리·상세 수정은 기존 문구
   const isGeneralWizard = useIsGeneralRegistrationWizard()
+  // 템플릿 관리 강사 모집 폼 — 합격자 발표일 시안 플레이스홀더 (QA 261113 #56)
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
 
   return (
     <div className="recruit-form-instructor-info-paragraph__forms">
@@ -291,7 +294,11 @@ export function RecruitFormInstructorInfoParagraph() {
                   presetMode="date"
                   value={finalAnnounceDate}
                   disabledDate={createFinalAnnounceDisabledDate(recruitRange)}
-                  placeholder={isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'}
+                  placeholder={
+                    isGeneralWizard || isTemplateManagementScreen
+                      ? '합격자 발표일을 선택해 주세요'
+                      : '합격자 발표일'
+                  }
                   suppressAutoTodayWhenEmpty
                   onChange={next => setFinalAnnounceDate(next)}
                 />

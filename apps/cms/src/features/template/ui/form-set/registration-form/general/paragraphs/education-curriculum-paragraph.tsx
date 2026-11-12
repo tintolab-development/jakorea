@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, type CSSProperties, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -55,8 +55,13 @@ import { useIsGeneralRegistrationWizard } from '@/features/template/context/gene
 import './program-registration-paragraph.css'
 
 /** 교육 내용 입력 플레이스홀더 — 일반 프로그램 등록 위저드는 시안 문구, 그 외(교육받은 교사·상세 수정)는 기존 문구 */
+const CurriculumContentPlaceholderContext = createContext<string | null>(null)
+
 function useCurriculumContentPlaceholder(): string {
-  return useIsGeneralRegistrationWizard() ? '교육 내용을 작성해 주세요' : '교육 내용을 작성하세요'
+  const explicit = useContext(CurriculumContentPlaceholderContext)
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+  if (explicit) return explicit
+  return isGeneralWizard ? '교육 내용을 작성해 주세요' : '교육 내용을 작성하세요'
 }
 
 const EMPTY_STRING_BY_INDEX: Record<number, string> = {}
@@ -142,6 +147,8 @@ type ProgramRegistrationEducationCurriculumParagraphProps = {
    * replaceFirst: 첫 차시/회차를 연수로 치환 (교육받은 교사)
    */
   preEducationDisplayMode?: 'prepend' | 'replaceFirst'
+  /** 교육 내용 입력 placeholder — 지정하면 위저드 기본 문구 대신 쓴다(교육받은 교사 등록) */
+  contentPlaceholder?: string
   /** 교육받은 교사 — 과제 설정 비노출 (교육일지와 구분) */
   hideAssignmentSettings?: boolean
   /** 일반 등록·참여자 <개인> — 교육 진행 장소(일정 별 상이 시 블록 최하단) */
@@ -349,6 +356,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   hideAssignmentSettings = false,
   educationPlaceEnabled = false,
   hidePreEducationScheduleName = false,
+  contentPlaceholder,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
   const [educationPlaceScheduleDetail] = useProgramRegistrationOverlayKv<string>(
     REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
@@ -913,6 +921,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   }
 
   return (
+    <CurriculumContentPlaceholderContext.Provider value={contentPlaceholder ?? null}>
     <div className="program-registration-curriculum__sessions">
       {prependTraining ? renderIndividualPreEducationScheduleBlock() : null}
       {Array.from({ length: curriculumSessionCount }, (_, i) => {
@@ -1036,5 +1045,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
         )
       })}
     </div>
+    </CurriculumContentPlaceholderContext.Provider>
   )
 }

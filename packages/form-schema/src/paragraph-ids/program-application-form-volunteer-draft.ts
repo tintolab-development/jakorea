@@ -213,7 +213,7 @@ function createVolunteerFreeTextItemsPlaceholderTable(): HorizontalTableParagrap
     variant: 'horizontal_table',
     requiredMark: true,
     paragraphTitle: '자유 작성 항목',
-    paragraphDescription: '1~3번 문항은 자유롭게 작성 가능합니다.',
+    paragraphDescription: '1~4번 문항은 자유롭게 작성 가능합니다.',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],

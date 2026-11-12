@@ -35,7 +35,7 @@ export const TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE = '__detailed_program_non
 
 export const TEMPLATE_FORM_DETAILED_PROGRAM_NONE_OPTION: TemplateFormSelectOption = {
   value: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
-  label: '해당없음',
+  label: '해당 없음',
 }
 
 /** API·mock에서 만든 `{ value, label }[]` 끝에 `해당없음`을 붙인다. */

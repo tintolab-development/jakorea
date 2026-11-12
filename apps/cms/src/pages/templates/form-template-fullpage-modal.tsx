@@ -41,6 +41,18 @@ import { useFormCertificatePreviewProps } from './use-form-certificate-preview-p
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/modal/template-preview-modal.css'
 
+/** 참가·강사·봉사 활동인증서 — 배경 항목 라벨 「양식 배경」 (QA 261113 #54) */
+const NON_COMPLETION_CERTIFICATE_EDITABLE_FIELDS = CERTIFICATE_EDITABLE_CUSTOM_FIELDS.map(field =>
+  field.name === 'certificateBackground' ? { ...field, label: '양식 배경' } : field
+)
+
+/** 수료증(document-3)만 「수료증 배경」 */
+function resolveCertificateEditableFields(templateCode: string | undefined) {
+  return templateCode === 'document-3'
+    ? CERTIFICATE_EDITABLE_CUSTOM_FIELDS
+    : NON_COMPLETION_CERTIFICATE_EDITABLE_FIELDS
+}
+
 export interface FormTemplateFullpageModalProps {
   open: boolean
   onClose: () => void
@@ -324,7 +336,7 @@ export function FormTemplateFullpageModal({
       rightNavigation={
         <TemplateCustomFieldsForm
           key={customFieldsFormKey}
-          fields={CERTIFICATE_EDITABLE_CUSTOM_FIELDS}
+          fields={resolveCertificateEditableFields(templateCode)}
           initialStringValues={stringPreviewValues}
           initialLogoPreviewUrls={initialLogoPreviewUrls}
           selectedFieldName={activeFieldName}

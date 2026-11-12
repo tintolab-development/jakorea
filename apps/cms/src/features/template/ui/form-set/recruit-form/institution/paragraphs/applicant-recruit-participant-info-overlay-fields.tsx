@@ -27,10 +27,16 @@ import {
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
-/** 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교·교육받은 교사·템플릿 관리·상세 수정은 기존 문구 */
+/**
+ * 시안 플레이스홀더 — 일반 프로그램 등록 위저드 + 템플릿 관리(일반 모집 폼, QA 261113 #56).
+ * 1사1교·교육받은 교사 등록 위저드·상세 수정은 기존 문구.
+ */
 function useGeneralWizardPlaceholder(generalText: string, fallback: string): string {
-  return useIsGeneralRegistrationWizard() ? generalText : fallback
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  return isGeneralWizard || isTemplateManagementScreen ? generalText : fallback
 }
 
 type RangeSeal = { start: string; end: string } | null

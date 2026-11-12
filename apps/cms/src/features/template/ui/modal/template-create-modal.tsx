@@ -16,6 +16,10 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import './template-create-modal.css'
 
 export interface TemplateCreateModalProps {
@@ -96,8 +100,6 @@ export function TemplateCreateModal({
 
   const selectPlaceholder = '기본 구조로 사용할 양식을 선택해 주세요'
 
-  const selection = useMemo(() => resolveSelection(kind, selectValue), [kind, selectValue])
-  const canSubmit = selection != null
 
   const handleKindChange = (next: TemplateCreateKind) => {
     setKind(next)
@@ -122,7 +124,14 @@ export function TemplateCreateModal({
 
   const handleRegister = useCallback(async () => {
     const resolved = resolveSelection(kind, selectValue)
-    if (resolved == null) return
+    // 등록 버튼은 항상 활성 — 유형·기본 구조 미선택 시 공통 필수 안내 (QA 261113 #10)
+    if (resolved == null) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
 
     // 설문/동의 신규: 서버 생성은 편집기 「저장」까지 미룸 (mode=new)
     if (resolved.source === 'direct') {
@@ -191,7 +200,7 @@ export function TemplateCreateModal({
         variant="primary"
         size="large"
         type="button"
-        disabled={!canSubmit || submitting}
+        disabled={submitting}
         loading={submitting}
         onClick={() => {
           void handleRegister()
@@ -212,7 +221,12 @@ export function TemplateCreateModal({
       description={'신규 템플릿을 등록하시겠습니까?\n등록하시려는 템플릿의 유형을 선택해 주세요.'}
     >
       <div className="template-create-modal__field">
-        <span className="template-create-modal__label">템플릿 유형</span>
+        <span className="template-create-modal__label">
+          템플릿 유형
+          <span className="template-create-modal__required" aria-hidden="true">
+            *
+          </span>
+        </span>
         <CmsRadioGroup
           className="template-create-modal__radios"
           size="medium"

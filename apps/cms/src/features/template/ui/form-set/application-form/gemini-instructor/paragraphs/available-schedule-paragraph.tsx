@@ -5,7 +5,7 @@ import { InstructorAvailableScheduleParagraph } from '@/features/template/ui/for
 import {
   ProgramApplicationScheduleSummaryHintText,
   ProgramApplicationScheduleTemplateHintParagraph,
-  PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT,
+  GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT,
 } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph.css'
 
@@ -20,7 +20,7 @@ function GeminiInstructorAvailableScheduleTemplatePlaceholder() {
     <div className="program-application-form-instructor__available-schedule">
       <div className="program-application-schedule-template-placeholder">
         <ProgramApplicationScheduleTemplateHintParagraph
-          hintText={PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT}
+          hintText={GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT}
         />
       </div>
       <DetailInfoForm title="" hideHeader mode="edit">

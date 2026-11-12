@@ -28,11 +28,18 @@ const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
 /** 시안(9899:215345) 표시 라벨 —「강사 교통비, 숙박비(1사1교)」. 카탈로그 id·정산 키는 그대로 */
 const PAYMENT_LABEL_TRANSPORT_1C1S = '강사 교통비'
 const PAYMENT_LABEL_LODGING_1C1S = '숙박비(1사1교)'
+/** 1사1교 전용 교통·숙박 카탈로그 라벨(`교통비(일사일교)` 등) */
+function isCompanySchoolTransportLabel(label: string): boolean {
+  return /^교통비\((일사일교|1사1교)\)$/.test(label.replace(/\s+/g, ''))
+}
+function isCompanySchoolLodgingLabel(label: string): boolean {
+  return /^숙박비\((일사일교|1사1교)\)$/.test(label.replace(/\s+/g, ''))
+}
 
 const WAGE_FEE_ROWS = [
   {
     feeLabel: '1급 강사비',
-    distanceLabel: '1급 장거리비',
+    distanceLabel: '1급 강사 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade1Fee',
     distanceKey: 'economyRegistration.wageInfo.grade1DistanceFee',
     maxText: '최대 500,000원',
@@ -42,7 +49,7 @@ const WAGE_FEE_ROWS = [
   },
   {
     feeLabel: '2급 강사비',
-    distanceLabel: '2급 장거리비',
+    distanceLabel: '2급 강사 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade2Fee',
     distanceKey: 'economyRegistration.wageInfo.grade2DistanceFee',
     maxText: '최대 400,000원',
@@ -52,7 +59,7 @@ const WAGE_FEE_ROWS = [
   },
   {
     feeLabel: '3급 강사비',
-    distanceLabel: '3급 장거리비',
+    distanceLabel: '3급 강사 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade3Fee',
     distanceKey: 'economyRegistration.wageInfo.grade3DistanceFee',
     maxText: '최대 300,000원',
@@ -92,10 +99,11 @@ export function OneCOneSRegistrationWageInfoParagraph() {
   const paymentItemOptions = useMemo((): CmsSelectMultipleOption[] => {
     return remotePaymentOptions.map(opt => {
       const label = opt.label.trim()
-      if (label === PAYMENT_LABEL_TRANSPORT_CATALOG) {
+      // 카탈로그 라벨이 「교통비(일사일교)」「숙박비(일사일교)」여도 시안 표기로 보여 준다(QA 2026-11-13 1사1교 #2)
+      if (label === PAYMENT_LABEL_TRANSPORT_CATALOG || isCompanySchoolTransportLabel(label)) {
         return { ...opt, label: PAYMENT_LABEL_TRANSPORT_1C1S }
       }
-      if (label === PAYMENT_LABEL_LODGING_CATALOG) {
+      if (label === PAYMENT_LABEL_LODGING_CATALOG || isCompanySchoolLodgingLabel(label)) {
         return { ...opt, label: PAYMENT_LABEL_LODGING_1C1S }
       }
       return opt

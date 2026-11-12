@@ -7,6 +7,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { RECRUIT_FORM_MAX_SUFFIX_CLASS } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 export type RecruitInterviewPeriodState = {
   recruitAnchor: Dayjs | null
@@ -43,8 +44,11 @@ export function RecruitInterviewConditionalRows({
 }) {
   // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 그 외 화면은 기존 문구 (early return 전에 호출)
   const isGeneralWizard = useIsGeneralRegistrationWizard()
-  const docAnnouncePlaceholder = isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '발표일'
-  const finalAnnouncePlaceholder = isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'
+  // 템플릿 관리 모집 폼도 시안 플레이스홀더 (QA 261113 #56)
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const showSpecPlaceholder = isGeneralWizard || isTemplateManagementScreen
+  const docAnnouncePlaceholder = showSpecPlaceholder ? '합격자 발표일을 선택해 주세요' : '발표일'
+  const finalAnnouncePlaceholder = showSpecPlaceholder ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'
   const finalAnnounceDisabledDate = createFinalAnnounceDisabledDate(state.recruitRange)
   if (interviewEnabled) {
     return (

@@ -31,7 +31,10 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import { allocateUniqueWritingTemplateName } from '@/features/template/lib/allocate-unique-writing-template-name'
-import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import {
+  AGREEMENT_TEMPLATE_SAVE_SUCCESS_COPY,
+  useFormTemplateSaveFeedback,
+} from '@/features/template/lib/form-template-save-feedback'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
@@ -59,6 +62,11 @@ import {
 import { DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-direct/paragraph-config'
 import { DIRECT_AGREEMENT_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import { useAgreementDocumentPdf } from '@/features/template/ui/form-set/editors/agreement-document-pdf'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 
 import {
   type FormDocumentPreviewParagraphGapResolver,
@@ -153,6 +161,17 @@ function resolveAgreementTemplateName(draft: WritingFormDraft): string {
   return DEFAULT_NEW_AGREEMENT_TEMPLATE_NAME
 }
 
+/** 제목형(문서 제목) 단락이 있고 제목이 비었는지 — 템플릿 관리 저장 차단용 */
+function isAgreementDraftTitleMissing(draft: WritingFormDraft): boolean {
+  const titleParagraph = draft.paragraphs.find(
+    p => p.kind === 'description' && p.variant === 'survey_title_with_period'
+  )
+  if (titleParagraph == null || titleParagraph.requiredMark !== true) return false
+  if (titleParagraph.kind !== 'description' || titleParagraph.variant !== 'survey_title_with_period')
+    return false
+  return (titleParagraph.surveyTitle ?? '').trim() === ''
+}
+
 /** 구조 잠금 해제 시에도 마무리+날짜+서명 확인 카드 옵션 유지 */
 const EMPTY_PARAGRAPH_ID_SET: ReadonlySet<string> = new Set<string>()
 
@@ -236,6 +255,7 @@ export function AgreementWritingFormShell({
   const queryClient = useQueryClient()
   const { sections } = useWritingFormSections()
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const { showAlert } = useCmsAlert()
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null || enableCreateOnSave
   const [persistedTemplateCode, setPersistedTemplateCode] = useState<string | null>(
     templateCode != null && templateCode !== '' ? templateCode : null
@@ -498,6 +518,14 @@ export function AgreementWritingFormShell({
   }, [setParams, openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
+    // 필수 제목(제목형 단락) 미입력 시 공통 필수 안내 후 저장하지 않음 (QA 261113 #34)
+    if (isTemplateManagementSave && isAgreementDraftTitleMissing(draft)) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     void (async () => {
       try {
         let nextTemplateCode = persistedTemplateCode
@@ -528,7 +556,8 @@ export function AgreementWritingFormShell({
           publishAfterSave: isTemplateManagementSave,
         })
 
-        if (enableCreateOnSave) {
+        // 저장 후 목록 최근 수정일 갱신 — 신규 생성뿐 아니라 기존 양식 저장도 목록 재조회 (QA 261113 #35)
+        if (isTemplateManagementSave) {
           await queryClient.invalidateQueries({
             queryKey: formTemplateQueryKeys.writingSections(),
           })
@@ -540,7 +569,7 @@ export function AgreementWritingFormShell({
               onTemplateCreated?.(nextTemplateCode)
             }
             onTemplateDraftSaveConfirmed?.()
-          })
+          }, AGREEMENT_TEMPLATE_SAVE_SUCCESS_COPY)
         }
       } catch (error) {
         console.debug('agreementWritingFormShell save failed', error)
@@ -558,6 +587,7 @@ export function AgreementWritingFormShell({
     persistedTemplateCode,
     queryClient,
     sections,
+    showAlert,
     showSaveFailure,
     showSaveSuccess,
   ])

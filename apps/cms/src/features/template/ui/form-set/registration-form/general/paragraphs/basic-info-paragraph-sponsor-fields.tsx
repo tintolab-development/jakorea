@@ -466,6 +466,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
+              className="program-registration-sponsor-manager-select"
               mode="multiple"
               withAllOption={false}
               inputSize="small"

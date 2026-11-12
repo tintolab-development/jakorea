@@ -7,8 +7,8 @@ import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui
 
 export const LECTURE_FEE_CALCULATION_SAMPLE_VALUES: LectureFeeCalculationAutofillValues = {
   lectureFeeType: '3급 강사비',
-  feeBasisLeft: '1시간 당',
-  feeBasisRight: '기본 : 240,000원',
+  feeBasisLeft: '1시간당',
+  feeBasisRight: '240,000원',
   businessIncomeLeft: '해당 없음',
   businessIncomeRight: '기타 소득 8.8% 적용',
   sessionCount: '',

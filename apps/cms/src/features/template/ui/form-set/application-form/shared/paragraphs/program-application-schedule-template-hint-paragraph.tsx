@@ -16,9 +16,9 @@ export const PROGRAM_APPLICATION_SCHEDULE_SUMMARY_HINT =
 export const PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT =
   '기관 프로그램은 기관이 신청한 희망 일정 및 시간이 노출되며,\n개인 프로그램은 프로그램 등록 시 관리자가 설정한 일정 및 시간이 노출됩니다.'
 
-/** @deprecated `PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT` 사용 */
+/** Gemini 찾아가는 연수 강사 신청 — 기관 신청 희망 일정만 노출 (QA 261113 #63) */
 export const GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT =
-  PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT
+  '기관이 신청한 희망 일정 및 시간이 노출됩니다.'
 
 /** 봉사자 신청 폼 — 면접 일정 우측 열(템플릿 작성) */
 export const VOLUNTEER_INTERVIEW_APPLICANT_SCHEDULE_TEMPLATE_HINT =

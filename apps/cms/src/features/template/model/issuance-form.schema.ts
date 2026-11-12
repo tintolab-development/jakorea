@@ -10,8 +10,8 @@ export const LECTURE_REPORT_TEMPLATE_CODE = 'issuance-3' as const
 export const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
 export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME = '지급조서 사전 동의서'
 export const SETTLEMENT_APPLICATION_TEMPLATE_NAME = '정산 신청서'
-export const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT 교육계획서'
-export const UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME = 'UJAT 교육일지'
+export const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT_교육계획서'
+export const UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME = 'UJAT_교육일지'
 export const LECTURE_REPORT_TEMPLATE_NAME = '강의보고서'
 
 export type IssuanceTemplateRow = TemplateRow

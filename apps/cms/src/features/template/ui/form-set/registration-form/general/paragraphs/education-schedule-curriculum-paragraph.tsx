@@ -1,3 +1,5 @@
+import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import { TEACHER_TRAINING_BLOCK_LABEL } from '@/features/program/trained-teachers/lib/teacher-training-block'
 import { Fragment, useEffect, useMemo, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -383,7 +385,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     {}
   )
   // 블록 제목 표시만 「사전 교육」 — overlay 기본 일정명은 preEducationBlockLabel 그대로 기록한다.
-  const preEducationHeadingLabel = toPreEducationHeadingLabel(preEducationBlockLabel)
+  // 교육받은 교사 — 일정명 데이터는 「교육 연수」(BE SoT) 그대로, 블록 제목만 「교사 연수」(QA 2026-11-13 교육받은 교사 #6)
+  const preEducationHeadingLabel =
+    preEducationBlockLabel === TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
+      ? TEACHER_TRAINING_BLOCK_LABEL
+      : toPreEducationHeadingLabel(preEducationBlockLabel)
   // UI 기본 일정명을 overlay에 기록 — 미터치 시에도 등록 완료·검증에 반영
   useEffect(() => {
     if (!scheduleCurriculumPreEducation) return

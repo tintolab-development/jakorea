@@ -164,7 +164,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
 
   const credentialsField = (
     <DetailInfoForm.Field
-      label="성범죄 경력조회용 정보"
+      label="성범죄경력 조회용 정보"
       edit={
         <div
           className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
