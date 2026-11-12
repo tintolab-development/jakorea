@@ -54,6 +54,10 @@ import {
   RECEIPT_UPLOAD_HINTS,
   RECEIPT_UPLOAD_POLICY,
 } from '../lib/receipt-upload-policy'
+import {
+  RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE,
+  resolveReceiptUploadServerErrorMessage,
+} from '../lib/receipt-upload-errors'
 import { toSeoulIsoDate } from '../lib/seoul-deadline'
 import {
   SETTLEMENT_TRANSIT_OPTIONS,
@@ -87,7 +91,7 @@ import {
   useIndividualSettlementSchedulesQuery,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { isInstructorMypageProfile } from '@/features/mypage/lib/member-profile'
-import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
+import { sumUploadFileBytes, validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import {
   MemberFileTooLargeError,
   MemberFileTypeNotAllowedError,
@@ -274,7 +278,10 @@ function ReceiptUpload({
             if (files.length === 0) return
             const policyError = validateUploadBatch({
               currentCount: visibleNames.length,
-              currentTotalBytes: 0,
+              // 총 100MB는 항목 단위 — 같은 항목에 이미 올린 첨부의 크기를 합산한다(크기를 모르는 기존 첨부는 0)
+              currentTotalBytes: sumUploadFileBytes(
+                (uploadEnabled ? (attachments ?? []) : []).map(item => ({ size: item.fileSize ?? 0 }))
+              ),
               incoming: files,
             })
             if (policyError) {
@@ -295,16 +302,19 @@ function ReceiptUpload({
                     filePurpose: 'EXPENSE_RECEIPT',
                     policy: RECEIPT_UPLOAD_POLICY,
                   })
-                  uploaded.push({ fileObjectId, fileName: file.name })
+                  uploaded.push({ fileObjectId, fileName: file.name, fileSize: file.size })
                 }
                 onAttachmentsChange?.(uploaded)
               } catch (error) {
                 if (error instanceof MemberFileTooLargeError) {
                   onError(error.message)
                 } else if (error instanceof MemberFileTypeNotAllowedError) {
-                  onError('JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.')
+                  onError(RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE)
                 } else {
-                  onError('영수증 업로드에 실패했습니다. 다시 시도해 주세요.')
+                  onError(
+                    resolveReceiptUploadServerErrorMessage(error) ??
+                      '영수증 업로드에 실패했습니다. 다시 시도해 주세요.'
+                  )
                 }
               } finally {
                 setUploading(false)
