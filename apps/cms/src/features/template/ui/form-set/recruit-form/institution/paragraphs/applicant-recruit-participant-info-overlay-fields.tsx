@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { createFinalAnnounceDisabledDate } from '@/features/template/ui/form-set/recruit-form/shared/recruit-final-announce-date'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import {
   syncInstitutionApplicationBridgeFromApplicantRecruitOverlay,
@@ -147,7 +148,7 @@ export const ApplicantRecruitAnnouncementPublishedField = memo(
     size?: 'large' | 'medium'
   }) {
     const [announcementPublished, setAnnouncementPublished] =
-      useApplicantRecruitInstitutionOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue>(
+      useApplicantRecruitInstitutionOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue | ''>(
         APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.announcementPublished,
         RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
       )
@@ -465,6 +466,19 @@ export const ApplicantRecruitFinalAnnounceField = memo(
         APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceMethod,
         ''
       )
+    const [recruitRangeSeal] = useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitRangeSeal,
+      null
+    )
+    const finalAnnounceDisabledDate = useMemo(
+      () =>
+        createFinalAnnounceDisabledDate(
+          recruitRangeSeal == null
+            ? null
+            : [dayjs(recruitRangeSeal.start), dayjs(recruitRangeSeal.end)]
+        ),
+      [recruitRangeSeal]
+    )
     const finalAnnounceDate = finalAnnounceIso ? dayjs(finalAnnounceIso) : null
     const finalAnnouncePlaceholder = useGeneralWizardPlaceholder(
       '합격자 발표일을 선택해 주세요',
@@ -488,6 +502,7 @@ export const ApplicantRecruitFinalAnnounceField = memo(
               mode="single"
               presetMode="date"
               value={finalAnnounceDate}
+              disabledDate={finalAnnounceDisabledDate}
               placeholder={finalAnnouncePlaceholder}
               suppressAutoTodayWhenEmpty
               onChange={next => setFinalAnnounceDate(next)}

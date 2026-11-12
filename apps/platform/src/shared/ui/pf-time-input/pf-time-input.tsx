@@ -11,9 +11,10 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
-import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
-import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
+import clockMobileCompletedUrl from './icons/clock-mobile-completed.svg'
+import clockMobileDefaultUrl from './icons/clock-mobile-default.svg'
+import clockPcCompletedUrl from './icons/clock-pc-completed.svg'
+import clockPcDefaultUrl from './icons/clock-pc-default.svg'
 import type { PFSelectSize, PFSelectVariant } from '../pf-select/pf-select'
 import selectStyles from '../pf-select/pf-select.module.css'
 import styles from './pf-time-input.module.css'
@@ -567,7 +568,19 @@ export function PFTimeInput({
 
   return (
     <div className={rootClassName} ref={rootRef} style={rootStyle}>
-      <img className={styles.leadingIcon} src={clockGrayUrl} alt="" aria-hidden="true" />
+      {/* 시안 Input type=time: 왼쪽 시계 아이콘만(모바일 24 · PC 22), 값이 있으면 진한 색 */}
+      <img
+        className={[styles.leadingIcon, styles.leadingIconMobile].join(' ')}
+        src={hasValue ? clockMobileCompletedUrl : clockMobileDefaultUrl}
+        alt=""
+        aria-hidden="true"
+      />
+      <img
+        className={[styles.leadingIcon, styles.leadingIconDesktop].join(' ')}
+        src={hasValue ? clockPcCompletedUrl : clockPcDefaultUrl}
+        alt=""
+        aria-hidden="true"
+      />
       <div className={selectStyles.control}>
         <div className={fieldClassName} ref={fieldRef}>
           <button
@@ -585,15 +598,6 @@ export function PFTimeInput({
           >
             <span className={valueClassName}>{hasValue ? displayValue : placeholder}</span>
           </button>
-          <span className={selectStyles.trailing}>
-            <span className={selectStyles.chevronButton} aria-hidden="true">
-              <img
-                className={selectStyles.chevron}
-                src={hasValue ? chevronDownBlackUrl : chevronDownGrayUrl}
-                alt=""
-              />
-            </span>
-          </span>
         </div>
       </div>
       {popover}

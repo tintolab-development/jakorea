@@ -58,7 +58,7 @@ function toProgramDetailInstructorRow(
     programId: item.programId ?? undefined,
     statementId: resolveStatementId(item, statementMap),
     instructorName: item.instructorName ?? '-',
-    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
+    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName) || '-',
     lectureDate: item.lectureDate ?? '',
     sessionOrdinal: item.sessionOrdinal ?? null,
     processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
@@ -98,7 +98,7 @@ function toInstructorDetailProgramRow(
     programId: item.programId ?? undefined,
     statementId: resolveStatementId(item, statementMap),
     programName: item.programNameKo ?? '-',
-    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
+    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName) || '-',
     lectureDate: item.lectureDate ?? '',
     sessionOrdinal: item.sessionOrdinal ?? null,
     processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
@@ -139,8 +139,8 @@ export function buildProgramDetailFromSettlements(
     aggregateProcessingStatus: row.processingStatus,
     businessPeriodStart: period.businessPeriodStart,
     businessPeriodEnd: period.businessPeriodEnd,
-    sessionCompleted: progress?.sessionCompleted ?? 0,
-    sessionTotal: progress?.sessionTotal ?? 0,
+    sessionCompleted: progress?.sessionCompleted ?? null,
+    sessionTotal: progress?.sessionTotal ?? null,
     instructorRows,
   }
 }

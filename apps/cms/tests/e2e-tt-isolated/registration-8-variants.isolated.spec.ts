@@ -16,7 +16,9 @@ import {
   walkToComplete,
 } from './tt-isolated-helpers'
 
-test.describe('TT P4-B 8조합 브라우저 등록', () => {
+// 신규 등록은 커리큘럼형 + 기간 지정만 가능(CMS-FUNC-0591·0277) — 단일·복수 × 교육 연수 ON/OFF 4조합.
+// 파일명은 기존 실행 스크립트 호환을 위해 유지한다.
+test.describe('TT P4-B 신규 등록 4조합 브라우저 등록', () => {
   for (const variant of TT_P4B_VARIANTS) {
     test(`${variant.id} ${variant.educationStructure}/${variant.sessionRound}/연수${variant.teacherTrainingEnabled ? 'ON' : 'OFF'}`, async ({
       page,

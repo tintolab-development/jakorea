@@ -29,8 +29,11 @@ function FieldError({ message }: { message?: string }) {
 export function LectureFeeBasisView({
   instructor,
   copyVariant = 'default',
+  emptyLabel = '-',
 }: {
   instructor: ApplicantInstructorRow
+  /** 강사비가 없을 때 문구. 기본 `-` — 참여 강사 상세는 「미등록」(BE 회신 A4: feePolicy null) */
+  emptyLabel?: string
   /**
    * 기본 `default`: 「유형 | 지급 기준 | 금액」(1사1교·일반 개인형·참여 강사 상세).
    * `general-organization`: 일반(기관형) 강사 신청 시안 06-1·06-2 표기.
@@ -41,7 +44,7 @@ export function LectureFeeBasisView({
     copyVariant === 'general-organization'
       ? buildGeneralOrganizationLectureFeeBasisViewSegments(instructor)
       : buildLectureFeeBasisViewSegments(instructor)
-  if (segments.length === 0) return <span>-</span>
+  if (segments.length === 0) return <span>{emptyLabel}</span>
   if (segments.length === 1) return <span>{segments[0]}</span>
 
   return (
@@ -53,13 +56,10 @@ export function LectureFeeBasisEditField({
   draft,
   onDraftChange,
   validationError,
-  measureOptions = LECTURE_FEE_MEASURE_OPTIONS,
 }: {
   draft: ApplicantInstructorEditDraft
   onDraftChange: (partial: Partial<ApplicantInstructorEditDraft>) => void
   validationError?: string
-  /** 지급 기준 셀렉트 옵션. 기본 `LECTURE_FEE_MEASURE_OPTIONS` */
-  measureOptions?: { value: string; label: string }[]
 }) {
   const isProgramBasis = draft.lectureFeeBasisType === 'program'
 
@@ -111,7 +111,10 @@ export function LectureFeeBasisEditField({
               ? LECTURE_FEE_MEASURE_NOT_APPLICABLE
               : draft.lectureFeeMeasure || undefined
           }
-          options={isProgramBasis ? [LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION] : measureOptions}
+          options={
+            // 지급 기준 라벨은 모든 프로그램 유형 공통 「차시당 / 출강 1회당」(기획 11/10)
+            isProgramBasis ? [LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION] : LECTURE_FEE_MEASURE_OPTIONS
+          }
           onChange={v => onDraftChange({ lectureFeeMeasure: v != null ? String(v) : '' })}
           getPopupContainer={() => document.body}
         />

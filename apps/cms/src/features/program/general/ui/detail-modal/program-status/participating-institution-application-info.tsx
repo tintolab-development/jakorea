@@ -31,6 +31,7 @@ import '@/features/program/shared/ui/program-detail/applicant-list/applicant-ins
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
 import './participating-institution-application-info.css'
+import type { CompanySchoolHopeScheduleBlock } from '@/features/program/1c-1s/lib/progress-schedule-display'
 
 export interface ParticipatingInstitutionApplicationInfoProps {
   /** 정보 수정 모드 — 기본 정보 타이틀 `*` 표시 */
@@ -77,6 +78,19 @@ export interface ParticipatingInstitutionApplicationInfoProps {
    * 기본 `default`(1사1교 등) 기존 그대로.
    */
   copyVariant?: 'default' | 'general-institution'
+  /**
+   * 1사1교 시안(05-2 01) — 신청 학급 수 행 아래 「결연 금융 회사 | 전년도 진행 여부」.
+   * 넘길 때만 행을 그린다(다른 유형 기본 없음).
+   */
+  companySchoolEconomyRow?: {
+    affiliatedFinancialCompany: ReactNode
+    previousYearParticipation: ReactNode
+  }
+  /**
+   * 1사1교 — 확정 일정이 없을 때 「교육 진행 일정」에 보여 줄 희망 일정 블록(requested-schedules).
+   * 넘기면 `sessions` 대신 이 블록을 시안 형식으로 그린다. 확정 일정이 있으면 넘기지 않는다.
+   */
+  companySchoolHopeBlocks?: CompanySchoolHopeScheduleBlock[]
 }
 
 const GENERAL_INSTITUTION_GUIDANCE_EDIT_DESCRIPTION =
@@ -113,6 +127,65 @@ function groupCompanySchoolSessions(
   }
 
   return Array.from(groups.values()).map(group => [...group].sort((a, b) => a.round - b.round))
+}
+
+/**
+ * 1사1교 희망 일정(확정 전) — 「날짜 | N~(N+1)교시 (N차시)」, 교육 시간 「N교시 (시간) | N+1교시 (시간)」.
+ * 지망 구분은 시간 칸이 아니라 교육 진행 현황 칸(「진행 대기 | N지망」)에 둔다.
+ */
+function CompanySchoolHopeScheduleFields({ blocks }: { blocks: CompanySchoolHopeScheduleBlock[] }) {
+  return (
+    <>
+      {blocks.map(block => (
+        <Fragment key={block.key}>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="교육 진행 현황"
+              fullRow
+              readOnlyDisplay
+              view={
+                <ProgramDetailTdSegmentWrap>
+                  {withProgramDetailTdDivider([
+                    <span
+                      key="status"
+                      className="participating-institution-application-info__session-status participating-institution-application-info__session-status--pending"
+                    >
+                      진행 대기
+                    </span>,
+                    ...(block.preferenceOrder != null ? [`${block.preferenceOrder}지망`] : []),
+                  ])}
+                </ProgramDetailTdSegmentWrap>
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="교육일 및 차시"
+              readOnlyDisplay
+              view={
+                <ProgramDetailTdSegmentWrap>
+                  {withProgramDetailTdDivider(block.dateUnitSegments)}
+                </ProgramDetailTdSegmentWrap>
+              }
+            />
+            <DetailInfoForm.Field
+              label="교육 시간"
+              readOnlyDisplay
+              view={
+                block.periodTimeLabels.length > 0 ? (
+                  <ProgramDetailTdSegmentWrap>
+                    {withProgramDetailTdDivider(block.periodTimeLabels)}
+                  </ProgramDetailTdSegmentWrap>
+                ) : (
+                  '-'
+                )
+              }
+            />
+          </DetailInfoForm.Row>
+        </Fragment>
+      ))}
+    </>
+  )
 }
 
 function CompanySchoolProgressScheduleFields({
@@ -206,6 +279,8 @@ export function ParticipatingInstitutionApplicationInfo({
   useCompanySchoolScheduleFormat = false,
   scheduleTitleTrailing,
   copyVariant = 'default',
+  companySchoolEconomyRow,
+  companySchoolHopeBlocks,
 }: ParticipatingInstitutionApplicationInfoProps) {
   const isGeneralInstitutionCopy = copyVariant === 'general-institution'
   const showProgramProgressRow = !isGeneralInstitutionCopy || !isBasicInfoEditing
@@ -345,6 +420,20 @@ export function ParticipatingInstitutionApplicationInfo({
               />
             </DetailInfoForm.Row>
           )}
+          {companySchoolEconomyRow ? (
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="결연 금융 회사"
+                readOnlyDisplay
+                view={companySchoolEconomyRow.affiliatedFinancialCompany}
+              />
+              <DetailInfoForm.Field
+                label="전년도 진행 여부"
+                readOnlyDisplay
+                view={companySchoolEconomyRow.previousYearParticipation}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="담당 교사 정보"
@@ -375,7 +464,7 @@ export function ParticipatingInstitutionApplicationInfo({
 
       {showGuidanceSection ? (
         <DetailInfoForm
-          title={isGeneralInstitutionCopy ? '안내사항' : '안내 사항'}
+          title="안내사항"
           mode="view"
           {...(isGeneralInstitutionCopy && isBasicInfoEditing
             ? {
@@ -430,7 +519,9 @@ export function ParticipatingInstitutionApplicationInfo({
       ) : null}
 
       <DetailInfoForm title="교육 진행 일정" mode="view" titleTrailing={scheduleTitleTrailing}>
-        {displaySessions.length === 0 ? (
+        {useCompanySchoolScheduleFormat && companySchoolHopeBlocks?.length ? (
+          <CompanySchoolHopeScheduleFields blocks={companySchoolHopeBlocks} />
+        ) : displaySessions.length === 0 ? (
           <DetailInfoForm.Row type="custom">
             <p className="participating-institution-application-info__schedule-empty">
               {scheduleSessionsEmptyMessage}

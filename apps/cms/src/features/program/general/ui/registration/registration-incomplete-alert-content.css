@@ -1,0 +1,30 @@
+/* 일반 프로그램 등록 — 필수 미입력 항목 목록 (QA-0042) */
+.registration-incomplete-alert__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  margin: 12px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  text-align: left;
+  white-space: normal;
+}
+
+.registration-incomplete-alert__item {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-blue, #017eaf);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.registration-incomplete-alert__item:focus-visible {
+  outline: 2px solid var(--color-blue, #017eaf);
+  outline-offset: 2px;
+}

@@ -54,7 +54,7 @@ export const CALENDAR_EVENT_FALLBACK_TITLE: Record<MypageScheduleEventType, stri
   satisfaction: '만족도조사',
   survey: '설문조사',
   receipt: '영수증 신청 마감',
-  education: '교육 일정',
+  education: '프로그램 일정',
   lecture_report_deadline: '강의보고서 제출 마감',
 }
 

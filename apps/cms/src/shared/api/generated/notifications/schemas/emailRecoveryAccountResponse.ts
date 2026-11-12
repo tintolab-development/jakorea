@@ -9,7 +9,9 @@
 export interface EmailRecoveryAccountResponse {
   accountId?: number;
   accountType?: string;
+  /** 본인인증 후 표시용 원문(정책 10/26 본인 화면, CMS-02·USER-03). FE는 이 값을 표시 SSOT로 쓴다. */
   email?: string;
+  /** 하위 호환용 마스킹값(@ 앞 3자리). 표시에는 email을 쓴다. */
   maskedEmail?: string;
   status?: string;
   createdAt?: string;

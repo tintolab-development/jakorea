@@ -46,6 +46,7 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import { POSTS_NEW_DEFAULT_VISIBILITY } from '@/features/posts/lib/posts-public-save-confirm'
 
 const NOTICE_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('notice', 'single')
 import './notice-register-modal.css'
@@ -120,6 +121,19 @@ export function NoticeFormModal({
     { fileUploadOwner: noticeInlineOwner }
   )
 
+  /**
+   * QA-0273 — 본문 에러가 떠 있을 때만 에디터 변경을 구독해 첫 입력에서 해제한다.
+   * 에러가 없으면 구독하지 않아 타이핑마다 모달이 리렌더되지 않는다 (rich-text-compose-input-perf).
+   */
+  useEffect(() => {
+    if (!editor || !contentError) return
+    const clearContentError = () => setContentError(null)
+    editor.on('update', clearContentError)
+    return () => {
+      editor.off('update', clearContentError)
+    }
+  }, [editor, contentError])
+
   /* 모달이 열릴 때마다 폼·첨부 세션 초기화(등록↔수정·다른 공지 전환) */
   /* eslint-disable react-hooks/set-state-in-effect -- open/mode/notice 변경 시 의도적 초기화 */
   useEffect(() => {
@@ -131,7 +145,7 @@ export function NoticeFormModal({
     } else {
       form.setFieldsValue({
         categoryId: undefined,
-        visibility: 'public',
+        visibility: POSTS_NEW_DEFAULT_VISIBILITY,
         pinTop: 'off',
         title: '',
       })

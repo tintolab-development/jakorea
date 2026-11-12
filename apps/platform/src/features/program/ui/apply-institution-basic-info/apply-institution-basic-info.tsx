@@ -17,7 +17,10 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import styles from './apply-institution-basic-info.module.css'
-import { normalizePortalEducationFormat } from './apply-institution-basic-info-answers'
+import {
+  normalizePortalEducationFormat,
+  PORTAL_EDUCATION_PLACE_OPTIONS,
+} from './apply-institution-basic-info-answers'
 import type {
   ApplyInstitutionBasicInfoValues,
   PortalEducationFormat,
@@ -48,11 +51,6 @@ const EDUCATION_FORMAT_OPTIONS = [
   { value: 'hybrid', label: '온/오프라인' },
 ] as const satisfies ReadonlyArray<{ value: PortalEducationFormat; label: string }>
 
-const EDUCATION_PLACE_OPTIONS = [
-  { value: 'inside', label: '기관 안' },
-  { value: 'outside', label: '기관 밖' },
-  { value: 'custom', label: '기타(직접입력)' },
-] as const
 
 export type ApplyInstitutionBasicInfoProfile = {
   schoolName?: string
@@ -279,7 +277,7 @@ export function ApplyInstitutionBasicInfo({
                 <RadioGroup
                   name="tt-education-place"
                   value={value.educationPlace || 'inside'}
-                  options={EDUCATION_PLACE_OPTIONS}
+                  options={PORTAL_EDUCATION_PLACE_OPTIONS}
                   onChange={next => patch({ educationPlace: next })}
                 />
               </PFFormInlineSegment>

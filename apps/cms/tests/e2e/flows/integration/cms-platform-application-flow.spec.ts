@@ -1,3 +1,4 @@
+import { requireCmsAccessToken } from '../../helpers/browser-access-token'
 import { expect, type Browser, type Page } from '@playwright/test'
 import { test } from '../../fixtures/test'
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
@@ -65,8 +66,7 @@ function unwrap(value: unknown): unknown {
 }
 
 async function adminSchedules(page: Page, programId: number): Promise<ProgramSchedule[]> {
-  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
-  if (!token) throw new Error('CMS 일정 조회에 필요한 auth_token이 없습니다.')
+  const token = await requireCmsAccessToken(page, 'CMS 일정 조회')
   const response = await page.request.get(`/api/admin/programs/${programId}/schedules`, {
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -141,8 +141,7 @@ async function ensureMultiProgramSchedules(page: Page, program: CmsProgramSnapsh
   ).length
   if (alignedScheduleCount >= 2) return
 
-  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
-  if (!token) throw new Error('CMS 일정 보정에 필요한 auth_token이 없습니다.')
+  const token = await requireCmsAccessToken(page, 'CMS 일정 보정')
   const response = await page.request.patch(`/api/admin/programs/${program.programId}`, {
     headers: { Authorization: `Bearer ${token}` },
     data: {

@@ -12,12 +12,28 @@ import {
 } from '@/features/program/general/model/registration-flow'
 import '@/features/program/shared/ui/registration/registration-body-header.css'
 
+function TabLabel({ label, incompleteCount }: { label: string; incompleteCount?: number }) {
+  if (!incompleteCount) return <>{label}</>
+  return (
+    <span className="registration-body-header__tab-label">
+      {label}
+      <span
+        className="registration-body-header__tab-incomplete"
+        aria-label={`미입력 필수 항목 ${incompleteCount}개`}
+      >
+        {incompleteCount}
+      </span>
+    </span>
+  )
+}
+
 export function GeneralProgramRegistrationBodyHeader({
   activeStep,
   visibleRecruitTabKeys,
   visibleApplicationTabKeys,
   onSelectStep,
   programPhaseHint = GENERAL_PROGRAM_REGISTRATION_PHASE_HINT.program,
+  incompleteCountByStep,
 }: {
   activeStep: GeneralProgramRegistrationStepKey
   visibleRecruitTabKeys: readonly GeneralProgramRecruitTabKey[]
@@ -25,6 +41,8 @@ export function GeneralProgramRegistrationBodyHeader({
   onSelectStep: (key: GeneralProgramRegistrationStepKey) => void
   /** 공통 정보 단계 안내 — 생략 시 기존 기본 문구(1사1교·교육받은 교사) */
   programPhaseHint?: string
+  /** 탭 제목 미입력 개수 — 일반 프로그램 등록만 넘긴다(QA-0042). 생략 시 표시 없음 */
+  incompleteCountByStep?: Partial<Record<GeneralProgramRegistrationStepKey, number>>
 }) {
   const phase = getGeneralProgramRegistrationPhase(activeStep)
 
@@ -52,7 +70,12 @@ export function GeneralProgramRegistrationBodyHeader({
         ariaLabel="일반 프로그램 모집 정보"
         items={visibleRecruitTabKeys.map(key => ({
           key,
-          label: GENERAL_PROGRAM_RECRUIT_TAB_LABELS[key],
+          label: (
+            <TabLabel
+              label={GENERAL_PROGRAM_RECRUIT_TAB_LABELS[key]}
+              incompleteCount={incompleteCountByStep?.[registrationStepFromRecruitTab(key)]}
+            />
+          ),
         }))}
       />
     )
@@ -74,7 +97,12 @@ export function GeneralProgramRegistrationBodyHeader({
       ariaLabel="일반 프로그램 신청 정보"
       items={visibleApplicationTabKeys.map(key => ({
         key,
-        label: GENERAL_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS[key],
+        label: (
+          <TabLabel
+            label={GENERAL_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS[key]}
+            incompleteCount={incompleteCountByStep?.[key]}
+          />
+        ),
       }))}
     />
   )

@@ -22,6 +22,7 @@ import {
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
+import { resolveLoginRedirectTarget } from '@/shared/lib/login-redirect'
 import './login-page.css'
 
 const { Text } = Typography
@@ -46,11 +47,12 @@ export function LoginPage() {
     getRemainingLockMinutes,
   } = useLoginAttempts()
 
-  const redirectPath = searchParams.get('redirect') || undefined
+  // 외부 URL·로그인 화면 등 안전하지 않은 redirect는 대시보드(/)로 대체
+  const redirectPath = resolveLoginRedirectTarget(searchParams.get('redirect'))
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(redirectPath || '/', { replace: true })
+      navigate(redirectPath, { replace: true })
     }
   }, [isAuthenticated, user, navigate, redirectPath])
 
@@ -76,7 +78,7 @@ export function LoginPage() {
         return
       }
 
-      navigate(redirectPath || '/', { replace: true })
+      navigate(redirectPath, { replace: true })
     } catch (loginError: unknown) {
       if (isAdminLoginApprovalPendingError(loginError)) {
         clearError()
@@ -103,7 +105,7 @@ export function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && !requiresMfa && mfaModalOpen && user) {
       setMfaModalOpen(false)
-      navigate(redirectPath || '/', { replace: true })
+      navigate(redirectPath, { replace: true })
     }
   }, [isAuthenticated, requiresMfa, mfaModalOpen, navigate, user, redirectPath])
 
@@ -212,6 +214,7 @@ export function LoginPage() {
             <Form.Item className="login-submit-actions">
               <CmsButton
                 variant="primary"
+                type="submit"
                 size="h52" className="login-submit-btn"
                 loading={loading && loginSubmitting}
                 disabled={isLocked || !apiLoginAvailable}
@@ -246,8 +249,7 @@ export function LoginPage() {
               ))}
             </Space>
             <Text type="secondary" className="login-dev-quick__hint">
-              실 API: Master → MFA 000000. Accounting Manager/Program Manager/Program Viewer는 BE QA
-              seed 전까지 401일 수 있습니다.
+              로컬 공통 비밀번호 admin1234! · MFA 000000
             </Text>
           </div>
           ) : null}

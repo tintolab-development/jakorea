@@ -88,3 +88,19 @@ export function formatNotificationFailedReason(raw?: string | null): string {
   if (text.startsWith('필수 변수') || text.startsWith('템플릿 필수 변수')) return text
   return text
 }
+
+/**
+ * 발송 이력(메일·알림톡·문자) 수신자별 실패 사유 — 세 채널 공통 (QA-0178).
+ * 서버 `displayReason`(발송사 결과 코드 기준 한국어 표시값, 매핑 전에는 `발송 실패(코드: NNNN)`)이 있으면 그대로 쓰고,
+ * 없을 때만 `failedReason` 등 원시 사유를 `formatNotificationFailedReason`으로 정리해 쓴다.
+ */
+export function resolveNotificationFailedReason(
+  displayReason: string | null | undefined,
+  rawReason: string | null | undefined
+): string {
+  const display = (displayReason ?? '').trim()
+  if (display) return display
+  const raw = (rawReason ?? '').trim()
+  if (!raw) return ''
+  return formatNotificationFailedReason(raw) || raw
+}

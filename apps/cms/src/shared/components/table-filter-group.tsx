@@ -437,6 +437,7 @@ export function TableFilterGroup({
             'table-filter-group__field',
             'table-filter-group__field--select',
             compact ? 'table-filter-group__field--address-region' : undefined,
+            compact ? 'table-filter-group__field--compact-select-pair' : undefined,
           ]
             .filter(Boolean)
             .join(' ')}

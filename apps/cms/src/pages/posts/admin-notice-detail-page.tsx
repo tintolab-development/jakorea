@@ -2,9 +2,9 @@
  * 게시글 관리 — 공지사항 상세 (관리자)
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { formatDateTimeSecondsDot } from '@/shared/utils/date'
+import { resolvePostsDetailMetaDates } from '@/features/posts/lib/posts-detail-meta-dates'
 import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
@@ -110,7 +110,7 @@ export function AdminNoticeDetailPage() {
     )
   }
 
-  const dateStr = formatDateTimeSecondsDot(notice.createdAt)
+  const metaDates = resolvePostsDetailMetaDates(notice)
   const isPublic = notice.status === 'published'
 
   return (
@@ -171,7 +171,14 @@ export function AdminNoticeDetailPage() {
             </div>
             <h1 className="admin-notice-detail-page__title">{notice.title}</h1>
             <div className="admin-notice-detail-page__meta">
-              <span className="admin-notice-detail-page__meta-text">{dateStr}</span>
+              {metaDates.map((item, index) => (
+                <Fragment key={item.key}>
+                  {index > 0 ? (
+                    <span className="admin-notice-detail-page__meta-divider" aria-hidden />
+                  ) : null}
+                  <span className="admin-notice-detail-page__meta-text">{item.text}</span>
+                </Fragment>
+              ))}
               {notice.author ? (
                 <>
                   <span className="admin-notice-detail-page__meta-divider" aria-hidden />

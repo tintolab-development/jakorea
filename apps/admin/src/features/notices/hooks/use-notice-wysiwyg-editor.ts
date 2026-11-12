@@ -11,6 +11,11 @@ export type NoticeWysiwygEditorOptions = {
    * 인라인 이미지·YouTube 등 (기본 true — full preset)
    */
   allowInlineMedia?: boolean
+  /**
+   * 본문 이미지 업로드 — 기본은 공지사항 용도. 이 훅을 빌려 쓰는 화면(교재 단원 소개 등)은 자기 용도로 바꿔 끼운다.
+   * 렌더마다 새 함수를 넘기지 말고 모듈 수준 함수를 넘긴다.
+   */
+  uploadInlineImage?: (file: File) => Promise<string>
 }
 
 /**
@@ -26,9 +31,10 @@ export function useNoticeWysiwygEditor(
   const placeholder = options?.placeholder
   const contentFormat = options?.contentFormat ?? 'markdown'
   const allowInlineMedia = options?.allowInlineMedia ?? true
+  const uploadInlineImage = options?.uploadInlineImage ?? uploadNoticeInlineImage
   const resolveImageSrc = useCallback((file: File) => {
-    return uploadNoticeInlineImage(file)
-  }, [])
+    return uploadInlineImage(file)
+  }, [uploadInlineImage])
 
   const adminEditor = useAdminHtmlEditor({
     enabled: open,

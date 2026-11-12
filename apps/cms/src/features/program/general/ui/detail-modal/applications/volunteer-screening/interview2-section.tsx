@@ -25,6 +25,7 @@ import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterview2BulkFailModal } from './general-volunteer-interview2-bulk-fail-modal'
 import { GeneralVolunteerInterview2FailModal } from './general-volunteer-interview2-fail-modal'
 import { GeneralVolunteerInterview2PassTypeModal } from './interview2-pass-type-modal'
+import { GeneralVolunteerOrganizationAssignOnPassModal } from './organization-assign-on-pass-modal'
 import { GeneralVolunteerEducationAssignModal } from './education-assign-modal'
 import { GeneralVolunteerInterview2ResultCompleteModal } from './interview2-result-complete-modal'
 import { GeneralVolunteerInterview2CancelPassModal } from './general-volunteer-interview2-cancel-pass-modal'
@@ -65,6 +66,11 @@ export function GeneralVolunteerInterview2Section({
   const isParticipant = subjectKind === 'participant'
 
   const {
+    organizationAssignOnPass,
+    organizationAssignTarget,
+    organizationAssignSubmitting,
+    cancelOrganizationAssign,
+    confirmOrganizationAssign,
     list,
     pendingFilters,
     handleFilterChange,
@@ -256,6 +262,19 @@ export function GeneralVolunteerInterview2Section({
         onCancel={closePassModal}
         onConfirm={handlePassModalConfirm}
       />
+      {organizationAssignOnPass ? (
+        // 시안 16-2(4968:105398) — 기관형 봉사자 면접 합격 시 기관 배정 (BE A1)
+        <GeneralVolunteerOrganizationAssignOnPassModal
+          open={organizationAssignTarget != null}
+          programId={programId}
+          volunteerName={organizationAssignTarget?.volunteerName ?? ''}
+          confirmLoading={organizationAssignSubmitting}
+          onCancel={cancelOrganizationAssign}
+          onConfirm={selected => {
+            void confirmOrganizationAssign(selected)
+          }}
+        />
+      ) : null}
       {educationAssignOnPass ? (
         <GeneralVolunteerEducationAssignModal
           open={educationAssign.target != null}

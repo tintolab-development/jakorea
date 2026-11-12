@@ -2,6 +2,7 @@ import { Typography } from 'antd'
 import { SESSION_POLICY_DISPLAY } from '@jakorea/domain/session'
 import { CmsButton, ContentModal } from '@/shared/ui'
 import { useSessionTimeout } from '../hooks/use-session-timeout'
+import { LOGIN_PATH } from '@/shared/lib/login-redirect'
 import './session-warning-modal.css'
 
 const { Paragraph } = Typography
@@ -21,6 +22,13 @@ export function SessionWarningModal() {
     logout,
   } = useSessionTimeout()
 
+  // 사용자가 직접 로그아웃 — 로그인 후 원래 화면으로 복귀하지 않도록 redirect 없이 이동
+  // (이 모달은 RouterProvider 밖에 있어 navigate 대신 location을 쓴다)
+  const handleLogout = () => {
+    logout()
+    window.location.assign(LOGIN_PATH)
+  }
+
   if (!showWarning || warningKind == null) return null
 
   const isIdle = warningKind === 'idle'
@@ -37,7 +45,7 @@ export function SessionWarningModal() {
       footer={
         isIdle ? (
           <>
-            <CmsButton variant="secondary" size="medium" type="button" onClick={() => logout()}>
+            <CmsButton variant="secondary" size="medium" type="button" onClick={handleLogout}>
               {SESSION_POLICY_DISPLAY.idleLogoutLabel}
             </CmsButton>
             <CmsButton

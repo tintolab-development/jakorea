@@ -14,6 +14,8 @@ export * from './employeeVolunteerCountReplaceRequest';
 export * from './employeeVolunteerCountSetResponse';
 export * from './errorDetail';
 export * from './errorDetailDetails';
+export * from './fieldErrorItem';
+export * from './fieldErrorItemReason';
 export * from './freeTextItemRequest';
 export * from './freeTextItemsRequest';
 export * from './generatedFileJobResponse';

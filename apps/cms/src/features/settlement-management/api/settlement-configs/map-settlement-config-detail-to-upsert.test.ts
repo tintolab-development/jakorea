@@ -274,7 +274,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
         {
           id: 166205,
           paymentItemType: PaymentItemResponsePaymentItemType.ACTIVITY,
-          itemName: '참여자 활동비',
+          itemName: '활동비',
           layout: 'activity',
           maxAmount: 1_000_000,
           maxLimitWon: 1_000_000,
@@ -290,7 +290,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
       apiItemId: 166205,
       sectionKind: 'payment',
       paymentItemType: PaymentItemResponsePaymentItemType.ACTIVITY,
-      title: '참여자 활동비',
+      title: '활동비',
       description: '',
       iconKey: 'pay_activity',
     }
@@ -301,7 +301,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     }
 
     const body = buildSettlementConfigUpdateRequest(config, item, detail, {
-      title: '참여자 활동비',
+      title: '활동비',
       description: '',
     })
     const dj = JSON.parse(body.paymentItems?.[0]?.detailJson ?? '{}') as Record<string, unknown>

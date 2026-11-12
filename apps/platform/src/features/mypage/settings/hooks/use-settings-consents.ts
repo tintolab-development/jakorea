@@ -10,12 +10,12 @@ import {
   type SettingsConsentItem,
 } from '../lib/consent-catalog'
 import {
+  ensureInstructorDocumentConsentItems,
   filterBasicConsentItemsByAudience,
   isMinorSettingsMember,
   isTeacherSettingsProfile,
 } from '../lib/consent-visibility'
 import { buildConsentItemsFromSummaries } from '../lib/map-consents'
-import { ensurePinnedPaymentStatementConsentItem } from '../lib/payment-statement-consent-status'
 
 const CONSENTS_STALE_MS = 30_000
 
@@ -60,7 +60,7 @@ export function useSettingsConsents(): {
       isMinor: audience.isMinor,
       isInstructor,
       basicItems: getBasicConsentItems(audience),
-      documentItems: ensurePinnedPaymentStatementConsentItem(DOCUMENT_CONSENT_ITEMS),
+      documentItems: ensureInstructorDocumentConsentItems(DOCUMENT_CONSENT_ITEMS, isInstructor),
     }
   }
 
@@ -73,6 +73,6 @@ export function useSettingsConsents(): {
     isMinor: audience.isMinor,
     isInstructor,
     basicItems: filterBasicConsentItemsByAudience(built.basicItems, audience),
-    documentItems: ensurePinnedPaymentStatementConsentItem(built.documentItems),
+    documentItems: ensureInstructorDocumentConsentItems(built.documentItems, isInstructor),
   }
 }

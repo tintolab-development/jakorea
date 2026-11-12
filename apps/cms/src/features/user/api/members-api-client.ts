@@ -10,7 +10,7 @@ import { extractApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { EXTERNAL_IDENTIFIER_PROVIDER_1365 } from '@/features/user/api/map-external-identifiers'
 import {
   MEMBER_DETAIL_SCREEN_CODE,
-  resolveLatestMemberAdminCommentDetail,
+  resolveMemberAdminComment,
 } from '@/features/user/api/map-member-comments'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
@@ -59,7 +59,6 @@ import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequestWithAddress } from '@/features/user/api/map-patch-user-basic-info'
 import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
-import type { AdminCommentUpdateRequest } from '@/shared/api/generated/members/schemas/adminCommentUpdateRequest'
 import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberDeleteRequest'
 import type { AdminCommentResponse } from '@/shared/api/generated/members/schemas/adminCommentResponse'
 import type { UserResponse } from '@/shared/api/generated/members/schemas/userResponse'
@@ -150,7 +149,11 @@ export async function bulkDeleteSchoolsRemote(body: BulkDecisionRequest) {
   return result
 }
 
-/** Swagger `deleteSchool` — `DELETE /api/admin/organizations/schools/{organizationId}` */
+/**
+ * Swagger `deleteSchool` — `DELETE /api/admin/organizations/schools/{organizationId}`
+ * 삭제 차단(409, QA-0431): `SCHOOL_HAS_ACTIVE_TEACHERS`·`SCHOOL_HAS_ACTIVE_MEMBERS`·`SCHOOL_HAS_BUSINESS_HISTORY`.
+ * 문구 기획 확인 대기라 FE 매핑 없이 서버 원문(없으면 공통 409 문구)을 그대로 쓴다.
+ */
 export async function deleteSchoolRemote(organizationId: number, params?: DeleteSchoolParams) {
   await membersApi.deleteSchool(organizationId, params)
 }
@@ -297,14 +300,6 @@ export async function createMemberCommentRemote(
   return unwrapApiBody(await membersApi.createMemberComment(memberId, body))
 }
 
-export async function updateMemberCommentRemote(
-  memberId: number,
-  commentId: number,
-  body: AdminCommentUpdateRequest
-): Promise<AdminCommentResponse> {
-  return unwrapApiBody(await membersApi.updateMemberComment(memberId, commentId, body))
-}
-
 export async function createAdminAccountCommentRemote(
   adminAccountId: number,
   body: AdminMemberCommentCreateRequest
@@ -312,25 +307,18 @@ export async function createAdminAccountCommentRemote(
   return unwrapApiBody(await membersApi.createComment(adminAccountId, body))
 }
 
-export async function updateAdminAccountCommentRemote(
-  adminAccountId: number,
-  commentId: number,
-  body: AdminCommentUpdateRequest
-): Promise<AdminCommentResponse> {
-  return unwrapApiBody(await membersApi.updateComment(adminAccountId, commentId, body))
-}
-
 /**
- * 회원/학교 organization/관리자 계정 관리자 코멘트 upsert.
- * - `adminAccount`: `/api/admin/admin-accounts/{adminAccountId}/comments`
- * - `schoolOrganization`: `/api/admin/users/{organizationId}/comments`
- * - `member`: `/api/admin/users/{memberId}/comments`
+ * 회원/학교 organization/관리자 계정 관리자 코멘트 저장.
+ * 코멘트는 대상·화면(screenCode)마다 1건이고 등록 API를 다시 호출하면 서버가 덮어쓴다 (QA-0044).
+ * 기존 코멘트 조회·수정(PATCH) 분기 없이 등록(POST)만 호출한다.
+ * - `adminAccount`: `POST /api/admin/admin-accounts/{adminAccountId}/comments`
+ * - `schoolOrganization`: `POST /api/admin/users/{organizationId}/comments`
+ * - `member`: `POST /api/admin/users/{memberId}/comments`
  */
 export async function upsertMemberAdminCommentRemote(
   resourceId: number,
   comment: string,
   options?: {
-    existingCommentId?: number
     screenCode?: string
     target?: 'member' | 'schoolOrganization' | 'adminAccount'
   }
@@ -342,21 +330,6 @@ export async function upsertMemberAdminCommentRemote(
     throw new Error('관리자 코멘트가 비어 있습니다.')
   }
 
-  let commentId = options?.existingCommentId
-  if (commentId == null) {
-    const existingComments = await fetchAdminCommentsRemote(resourceId, target, { screenCode }).catch(
-      () => []
-    )
-    commentId = resolveLatestMemberAdminCommentDetail(existingComments, screenCode)?.commentId
-  }
-
-  if (commentId != null) {
-    if (target === 'adminAccount') {
-      return updateAdminAccountCommentRemote(resourceId, commentId, { comment: trimmed })
-    }
-    return updateMemberCommentRemote(resourceId, commentId, { comment: trimmed })
-  }
-
   if (target === 'adminAccount') {
     return createAdminAccountCommentRemote(resourceId, { screenCode, comment: trimmed })
   }
@@ -365,6 +338,45 @@ export async function upsertMemberAdminCommentRemote(
 
 export async function deleteMemberCommentRemote(memberId: number, commentId: number): Promise<void> {
   await membersApi.deleteMemberComment(memberId, commentId)
+}
+
+export async function deleteAdminAccountCommentRemote(
+  adminAccountId: number,
+  commentId: number
+): Promise<void> {
+  await membersApi.deleteComment(adminAccountId, commentId)
+}
+
+/**
+ * 회원/학교 organization/관리자 계정 관리자 코멘트 삭제 (내용을 비워 저장 — QA-0044).
+ * - `adminAccount`: `DELETE /api/admin/admin-accounts/{adminAccountId}/comments/{commentId}`
+ * - `member`·`schoolOrganization`: `DELETE /api/admin/users/{id}/comments/{commentId}`
+ * 삭제할 코멘트를 찾지 못하면 아무것도 호출하지 않고 `false`.
+ */
+export async function deleteMemberAdminCommentRemote(
+  resourceId: number,
+  options?: {
+    existingCommentId?: number
+    screenCode?: string
+    target?: 'member' | 'schoolOrganization' | 'adminAccount'
+  }
+): Promise<boolean> {
+  const screenCode = options?.screenCode ?? MEMBER_DETAIL_SCREEN_CODE
+  const target = options?.target ?? 'member'
+
+  let commentId = options?.existingCommentId
+  if (commentId == null) {
+    const existingComments = await fetchAdminCommentsRemote(resourceId, target, { screenCode })
+    commentId = resolveMemberAdminComment(existingComments, screenCode)?.commentId
+  }
+  if (commentId == null) return false
+
+  if (target === 'adminAccount') {
+    await deleteAdminAccountCommentRemote(resourceId, commentId)
+  } else {
+    await deleteMemberCommentRemote(resourceId, commentId)
+  }
+  return true
 }
 
 export async function updateAffiliatedTeacherEmploymentStatusRemote(

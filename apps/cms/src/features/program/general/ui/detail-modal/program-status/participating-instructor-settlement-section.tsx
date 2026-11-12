@@ -59,7 +59,7 @@ const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
 function lectureProgressAccent(
   label: ParticipatingInstructorSettlementApiRow['lectureProgressLabel']
 ): string {
-  return label === '진행 완료' ? STATUS_ACCENT_DEFAULT : STATUS_ACCENT_SCHEDULED
+  return label === '진행 예정' ? STATUS_ACCENT_SCHEDULED : STATUS_ACCENT_DEFAULT
 }
 
 /** 일반 기관형 Figma 06-2/11 — 확인 처리되지 않은 항목만 있을 때 지급조서 일괄 다운로드 */
@@ -68,11 +68,17 @@ export const PAYMENT_STATEMENT_ISSUE_BLOCKED_ALERT = {
   content: '지급조서 확인 처리가 되지 않은 항목은 지급조서 발급이 불가합니다.',
 } as const
 
-/** 일반 기관형 Figma — 지급조서 신청이 없는 행(진행 예정·미신청) 처리 현황 표기 */
-export const PAYMENT_STATEMENT_NOT_APPLICABLE_LABEL = '해당 없음'
-
 function isPaymentStatementNotApplicable(row: ParticipatingInstructorSettlementApiRow): boolean {
-  return row.lectureProgressLabel === '진행 예정' || !row.hasPaymentStatementApplication
+  return (
+    row.isNotApplied ||
+    row.lectureProgressLabel === '진행 예정' ||
+    !row.hasPaymentStatementApplication
+  )
+}
+
+/** 미신청 행·진행 예정 행은 [지급조서 보기]를 비활성화한다 */
+function isPaymentStatementViewDisabled(row: ParticipatingInstructorSettlementApiRow): boolean {
+  return row.isNotApplied || row.lectureProgressLabel === '진행 예정'
 }
 
 function formatSettlementAmount(amount: number | null): string {
@@ -80,22 +86,23 @@ function formatSettlementAmount(amount: number | null): string {
   return `${formatNumberDisplay(amount)}원`
 }
 
-function renderPaymentStatementProcessingStatus(
-  row: ParticipatingInstructorSettlementApiRow,
-  notApplicableLabel = '-'
-) {
+/** 미신청 행·진행 예정 행은 정산 예정 금액을 '-'로 표시한다 */
+function formatRowSettlementAmount(row: ParticipatingInstructorSettlementApiRow): string {
+  if (isPaymentStatementViewDisabled(row)) return '-'
+  return formatSettlementAmount(row.scheduledSettlementAmount)
+}
+
+/** 미신청·진행 예정 행 처리 현황은 기관형·개인형 모두 '-' (기획 2026-11-12) */
+function renderPaymentStatementProcessingStatus(row: ParticipatingInstructorSettlementApiRow) {
   if (isPaymentStatementNotApplicable(row)) {
-    return notApplicableLabel
+    return '-'
   }
   return <InstructorSettlementStatusText status={row.paymentStatementStatus} />
 }
 
-function resolvePaymentStatementExportLabel(
-  row: ParticipatingInstructorSettlementApiRow,
-  notApplicableLabel = '-'
-): string {
+function resolvePaymentStatementExportLabel(row: ParticipatingInstructorSettlementApiRow): string {
   if (isPaymentStatementNotApplicable(row)) {
-    return notApplicableLabel
+    return '-'
   }
   return getInstructorSettlementStatusLabel(row.paymentStatementStatus)
 }
@@ -124,11 +131,10 @@ function formatInstructorSessionProgress(
   return `${summary.completed} / ${summary.total}건 (강의 진행 회차 기준)`
 }
 
-/** 기관형은 시안 라벨 「지급조서 처리 현황」·「해당 없음」, 그 외 유형은 기존 표기 */
+/** 기관형은 시안 라벨 「지급조서 처리 현황」, 그 외 유형은 기존 표기 */
 function buildSettlementExportColumns(
   isInstitution: boolean
 ): ColumnsType<ParticipatingInstructorSettlementApiRow> {
-  const notApplicableLabel = isInstitution ? PAYMENT_STATEMENT_NOT_APPLICABLE_LABEL : '-'
   return [
     { title: 'No.', dataIndex: 'no', key: 'no' },
     { title: '기관명', dataIndex: 'institutionName', key: 'institutionName' },
@@ -138,12 +144,12 @@ function buildSettlementExportColumns(
     {
       title: isInstitution ? '지급조서 처리 현황' : '지급조서 처리현황',
       key: 'paymentStatementStatus',
-      render: (_: unknown, record) => resolvePaymentStatementExportLabel(record, notApplicableLabel),
+      render: (_: unknown, record) => resolvePaymentStatementExportLabel(record),
     },
     {
       title: '정산 예정 금액',
       key: 'scheduledSettlementAmount',
-      render: (_: unknown, record) => formatSettlementAmount(record.scheduledSettlementAmount),
+      render: (_: unknown, record) => formatRowSettlementAmount(record),
     },
   ]
 }
@@ -158,9 +164,8 @@ export function ParticipatingInstructorSettlementSection({
   program,
 }: ParticipatingInstructorSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
-  /** 일반 기관형 — Figma 06-2/10·11 (라벨 띄어쓰기, 「해당 없음」, 보기 비활성, 발급 불가 안내) */
+  /** 일반 기관형 — Figma 06-2/10·11 (라벨 띄어쓰기, 보기 비활성, 발급 불가 안내) */
   const isInstitutionSurface = useIsInstitutionProgramSurface(program)
-  const notApplicableLabel = isInstitutionSurface ? PAYMENT_STATEMENT_NOT_APPLICABLE_LABEL : '-'
   const processingStatusLabel = isInstitutionSurface ? '지급조서 처리 현황' : '지급조서 처리현황'
   const settlementExportColumns = useMemo(
     () => buildSettlementExportColumns(isInstitutionSurface),
@@ -339,8 +344,7 @@ export function ParticipatingInstructorSettlementSection({
         key: 'paymentStatementStatus',
         align: 'center',
         width: 160,
-        render: (_: unknown, record) =>
-          renderPaymentStatementProcessingStatus(record, notApplicableLabel),
+        render: (_: unknown, record) => renderPaymentStatementProcessingStatus(record),
       },
       {
         title: '정산 예정 금액',
@@ -349,7 +353,7 @@ export function ParticipatingInstructorSettlementSection({
         width: 140,
         render: (_: unknown, record) => (
           <span className="participating-instructor-settlement-section__amount-dash">
-            {formatSettlementAmount(record.scheduledSettlementAmount)}
+            {formatRowSettlementAmount(record)}
           </span>
         ),
       },
@@ -366,6 +370,7 @@ export function ParticipatingInstructorSettlementSection({
               size="h32"
               disabled={
                 !remoteEnabled ||
+                isPaymentStatementViewDisabled(record) ||
                 (isInstitutionSurface && isPaymentStatementNotApplicable(record))
               }
               onClick={() => paymentStatementView.handleOpen(record)}
@@ -383,6 +388,8 @@ export function ParticipatingInstructorSettlementSection({
         render: (_: unknown, record) => {
           const applicationId = record.settlementApplicationId
           if (!record.isPendingApplication || applicationId == null) return null
+          // 진행 예정 행은 지급조서 상태를 보여 주지 않으므로 신청서 처리 버튼도 숨긴다 (기획 2026-11-12)
+          if (record.lectureProgressLabel === '진행 예정') return null
           const buttons = SETTLEMENT_APPLICATION_ACTION_BUTTONS.filter(button =>
             hasSettlementApplicationAction(record, button.kind)
           )
@@ -410,7 +417,6 @@ export function ParticipatingInstructorSettlementSection({
     [
       applicationAction.isPending,
       isInstitutionSurface,
-      notApplicableLabel,
       paymentStatementView.handleOpen,
       processingStatusLabel,
       remoteEnabled,
@@ -424,7 +430,14 @@ export function ParticipatingInstructorSettlementSection({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label={processingStatusLabel}
-              view={<InstructorSettlementStatusText status={instructor.settlementStatus} />}
+              view={
+                // 신청 건이 없으면 '해당 없음' 대신 '-' (기획 2026-11-12 2차 4-2)
+                !instructor.settlementStatus || instructor.settlementStatus === 'none' ? (
+                  '-'
+                ) : (
+                  <InstructorSettlementStatusText status={instructor.settlementStatus} />
+                )
+              }
             />
             <DetailInfoForm.Field
               label="프로그램 진행 회차"

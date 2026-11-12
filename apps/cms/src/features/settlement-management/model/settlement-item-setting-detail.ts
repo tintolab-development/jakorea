@@ -10,7 +10,6 @@ export type SettlementItemSettingDetailLayout =
   | 'tier1'
   | 'specialLecture'
   | 'gemini'
-  | 'assistantInstructor'
   | 'simpleLabor'
   | 'multiInstructor'
   | 'simple'

@@ -17,7 +17,6 @@ import {
   hydrateSettlementWriteFormState,
 } from '../lib/build-write-draft'
 import {
-  INSTRUCTOR_MEAL_MAX_WON,
   formatSettlementAmountInput,
   parseSettlementAmount,
 } from '../lib/format-write-draft'
@@ -47,18 +46,27 @@ import {
 } from '../lib/payment-items'
 import { paymentItemLimitError } from '../lib/payment-item-limit'
 import { instructorTransportExclusionNotice } from '../lib/instructor-transport-exclusion'
+import { DEFAULT_INSTRUCTOR_EXPENSE_POLICIES } from '../lib/instructor-expense-items'
+import { SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE } from '../lib/instructor-settlement-contract'
 import { useInstructorSettlementPreviewQuery } from '../api/use-instructor-settlement-preview-query'
 import {
   RECEIPT_UPLOAD_ACCEPT,
   RECEIPT_UPLOAD_HINTS,
   RECEIPT_UPLOAD_POLICY,
 } from '../lib/receipt-upload-policy'
+import {
+  RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE,
+  resolveReceiptUploadServerErrorMessage,
+} from '../lib/receipt-upload-errors'
 import { toSeoulIsoDate } from '../lib/seoul-deadline'
 import {
   SETTLEMENT_TRANSIT_OPTIONS,
   SETTLEMENT_TRIP_TYPE_OPTIONS,
 } from '../lib/settlement-options'
-import type { SettlementDocumentKind } from '../lib/settlement-status-ui'
+import {
+  PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
+  type SettlementDocumentKind,
+} from '../lib/settlement-status-ui'
 import {
   SETTLEMENT_WRITE_ALERT_TITLE,
   resolveSettlementWriteValidationAlert,
@@ -83,7 +91,7 @@ import {
   useIndividualSettlementSchedulesQuery,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { isInstructorMypageProfile } from '@/features/mypage/lib/member-profile'
-import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
+import { sumUploadFileBytes, validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import {
   MemberFileTooLargeError,
   MemberFileTypeNotAllowedError,
@@ -270,7 +278,10 @@ function ReceiptUpload({
             if (files.length === 0) return
             const policyError = validateUploadBatch({
               currentCount: visibleNames.length,
-              currentTotalBytes: 0,
+              // 총 100MB는 항목 단위 — 같은 항목에 이미 올린 첨부의 크기를 합산한다(크기를 모르는 기존 첨부는 0)
+              currentTotalBytes: sumUploadFileBytes(
+                (uploadEnabled ? (attachments ?? []) : []).map(item => ({ size: item.fileSize ?? 0 }))
+              ),
               incoming: files,
             })
             if (policyError) {
@@ -291,16 +302,19 @@ function ReceiptUpload({
                     filePurpose: 'EXPENSE_RECEIPT',
                     policy: RECEIPT_UPLOAD_POLICY,
                   })
-                  uploaded.push({ fileObjectId, fileName: file.name })
+                  uploaded.push({ fileObjectId, fileName: file.name, fileSize: file.size })
                 }
                 onAttachmentsChange?.(uploaded)
               } catch (error) {
                 if (error instanceof MemberFileTooLargeError) {
                   onError(error.message)
                 } else if (error instanceof MemberFileTypeNotAllowedError) {
-                  onError('JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.')
+                  onError(RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE)
                 } else {
-                  onError('영수증 업로드에 실패했습니다. 다시 시도해 주세요.')
+                  onError(
+                    resolveReceiptUploadServerErrorMessage(error) ??
+                      '영수증 업로드에 실패했습니다. 다시 시도해 주세요.'
+                  )
                 }
               } finally {
                 setUploading(false)
@@ -563,8 +577,6 @@ export function EducationSettlementWriteForm({
   )
 
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
-  /** 교통비 섹션 하단 안내용(기존 화면 유지). 교통비는 한도가 없어 입력 오류·제출 차단에는 쓰지 않는다 */
-  const transportMaxWon = readPayableMaxLimitWon(transportItem)
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
   const [departAmount, setDepartAmount] = useState(
     formatSettlementAmountInput(hydrated?.departAmount ?? ''),
@@ -598,7 +610,7 @@ export function EducationSettlementWriteForm({
     return amountItems.map(createEmptyAmountItemDraft)
   })
   const [mealAmount, setMealAmount] = useState(
-    formatSettlementAmountInput(hydrated?.mealAmount ?? '', INSTRUCTOR_MEAL_MAX_WON),
+    formatSettlementAmountInput(hydrated?.mealAmount ?? ''),
   )
   const [mealFiles, setMealFiles] = useState<string[]>(hydrated?.mealFiles ?? [])
   const [mealAttachments, setMealAttachments] = useState<SettlementReceiptAttachment[]>(
@@ -720,6 +732,14 @@ export function EducationSettlementWriteForm({
   const transportExclusionNotice = isReceipt
     ? null
     : instructorTransportExclusionNotice(instructorSettlementPreview.transportExclusion)
+  /**
+   * 강사 식사비·활동비 정책(미리보기 payableItems, K14): 한도는 CMS 설정 maxLimitWon(고정 3만원 아님),
+   * 영수증 필요 여부는 evidenceRequired, 프로그램에서 끈 항목은 검증·송신에서 뺀다.
+   * TODO(K14 시안 대기): 끈 항목의 입력 칸 숨김, 식사비 하단 안내의 '최대 3만원' 문구를 한도에 맞추기
+   */
+  const expensePolicies = isReceipt
+    ? DEFAULT_INSTRUCTOR_EXPENSE_POLICIES
+    : instructorSettlementPreview.expensePolicies
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -759,6 +779,11 @@ export function EducationSettlementWriteForm({
     }
     if (lectureFeeBlocked) {
       showAlert(lectureFeeBlockerMessage ?? '지금은 정산을 신청할 수 없습니다.')
+      return
+    }
+    // 사업 운영 종료 후 최초 제출 차단(A1) — 서버 409와 같은 문구
+    if (instructorSettlementPreview.blockerCode === SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE) {
+      showAlert(PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE)
       return
     }
     if (receiptLimitError) {
@@ -824,16 +849,19 @@ export function EducationSettlementWriteForm({
             amount: formatSettlementAmountInput(item.amount),
           }))
         : [],
-      mealAmount: formatSettlementAmountInput(mealAmount, INSTRUCTOR_MEAL_MAX_WON),
+      mealAmount: formatSettlementAmountInput(mealAmount, expensePolicies.meal.maxLimitWon),
       mealFiles:
         mealAttachments.length > 0 ? mealAttachments.map(file => file.fileName) : mealFiles,
       mealAttachments,
-      activityAmount,
+      activityAmount: formatSettlementAmountInput(activityAmount, expensePolicies.activity.maxLimitWon),
       activityFiles:
         activityAttachments.length > 0
           ? activityAttachments.map(file => file.fileName)
           : activityFiles,
       activityAttachments,
+      ...(expensePolicies.loaded
+        ? { mealPolicy: expensePolicies.meal, activityPolicy: expensePolicies.activity }
+        : {}),
       companySchoolLodgingRequested: showCompanySchoolLodging && lodgingRequested,
       companySchoolLodgingFiles: showCompanySchoolLodging
         ? lodgingAttachments.length > 0
@@ -1032,11 +1060,6 @@ export function EducationSettlementWriteForm({
                 ? '편도 30km 이상 이동 시 지원되는 비용입니다. 가는 편과 오는 편을 구분해 실제 사용한 교통비를 신청해 주세요.'
                 : '편도 30km 이상 이동 시 지원되는 비용입니다.'
             }
-            footer={
-              isReceipt && transportMaxWon != null
-                ? `최대 ${transportMaxWon.toLocaleString('ko-KR')}원까지 지급됩니다.`
-                : undefined
-            }
           >
             {isReceipt ? (
               <>
@@ -1158,7 +1181,7 @@ export function EducationSettlementWriteForm({
                       value={mealAmount}
                       onChange={setMealAmount}
                       ariaLabel="식사비"
-                      maxWon={INSTRUCTOR_MEAL_MAX_WON}
+                      maxWon={expensePolicies.meal.maxLimitWon}
                     />
                   </PFFormField>
                 </PFFormFieldRow>
@@ -1194,6 +1217,7 @@ export function EducationSettlementWriteForm({
                       value={activityAmount}
                       onChange={setActivityAmount}
                       ariaLabel="활동비"
+                      maxWon={expensePolicies.activity.maxLimitWon}
                     />
                   </PFFormField>
                 </PFFormFieldRow>

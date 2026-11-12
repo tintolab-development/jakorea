@@ -8,10 +8,10 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import calendarBlackUrl from '@/shared/assets/icons/calendar-black.svg'
-import calendarGrayUrl from '@/shared/assets/icons/calendar-gray.svg'
 import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
+import calendarBlackUrl from './icons/calendar-completed.svg'
+import calendarGrayUrl from './icons/calendar-default.svg'
 import {
   formatDateInputDisplay,
   formatDisplayYear,

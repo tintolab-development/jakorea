@@ -7,7 +7,11 @@ import type { FormInstance } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton, CmsInput } from '@/shared/ui'
+import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import {
+  SESSION_ENDED_NOTICE,
+  consumeSessionEndedNotice,
+} from '@/features/auth/lib/session-restore-notice'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
 import type { LoginMode } from '@/entities/user/api/auth-service'
@@ -21,10 +25,11 @@ import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
-import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+import { resolveLoginRedirectTarget } from '@/shared/utils/auth-redirect'
 import {
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
+  sanitizeLoginRedirectPath,
 } from '@/shared/utils/post-auth-redirect'
 import {
   canShowDevRoleLogin,
@@ -95,7 +100,8 @@ export function LoginPage() {
     getRemainingLockMinutes,
   } = useLoginAttempts()
 
-  const redirectPath = params.redirect
+  // `next`는 이전 세션 만료 링크 호환용. 안전하지 않은 값은 버린다.
+  const redirectPath = sanitizeLoginRedirectPath(params.redirect ?? params.next) ?? undefined
   const showSocialNotLinked =
     SOCIAL_ACCOUNT_LINK_ENABLED &&
     (params.socialNotLinked === '1' || params.socialNotLinked === 'true')
@@ -105,6 +111,13 @@ export function LoginPage() {
   const registerPath = redirectPath
     ? `/register?redirect=${encodeURIComponent(redirectPath)}`
     : '/register'
+
+  // 새로고침 세션 복원이 거절돼 로그아웃된 경우에만 안내한다 (QA-0137). 확인 버튼만.
+  const { showAlert } = useCmsAlert()
+  useEffect(() => {
+    if (!consumeSessionEndedNotice()) return
+    showAlert({ title: SESSION_ENDED_NOTICE.title, content: SESSION_ENDED_NOTICE.content })
+  }, [showAlert])
 
   useEffect(() => {
     if (requiresMfa && !isAuthenticated) {
@@ -119,7 +132,7 @@ export function LoginPage() {
       return
     }
     if (isAuthenticated && user) {
-      const fallback = redirectPath || getRedirectPathByRole(user)
+      const fallback = resolveLoginRedirectTarget(redirectPath, user)
       navigate(
         resolvePostAuthRedirectPath({
           complete,
@@ -156,9 +169,10 @@ export function LoginPage() {
         return
       }
 
-      const currentUser = authStore.user
+      // 렌더 시점 스냅샷이 아닌 로그인 직후 최신 사용자로 역할 판정
+      const currentUser = useAuthStore.getState().user
       const fallback = currentUser
-        ? redirectPath || getRedirectPathByRole(currentUser)
+        ? resolveLoginRedirectTarget(redirectPath, currentUser)
         : redirectPath || '/'
       navigate(
         resolvePostAuthRedirectPath({
@@ -210,7 +224,7 @@ export function LoginPage() {
 
     if (currentIsAuthenticated && !currentRequiresMfa && mfaModalOpen && currentUser) {
       setMfaModalOpen(false)
-      const fallback = redirectPath || getRedirectPathByRole(currentUser)
+      const fallback = resolveLoginRedirectTarget(redirectPath, currentUser)
       setTimeout(() => {
         const latest = useAuthStore.getState()
         navigate(
@@ -232,7 +246,7 @@ export function LoginPage() {
       const authState = useAuthStore.getState()
       if (authState.isAuthenticated && !authState.requiresMfa && mfaModalOpen && authState.user) {
         setMfaModalOpen(false)
-        const fallback = redirectPath || getRedirectPathByRole(authState.user)
+        const fallback = resolveLoginRedirectTarget(redirectPath, authState.user)
         navigate(
           resolvePostAuthRedirectPath({
             complete: hasPasswordChangeRequiredComplete(),
@@ -364,6 +378,7 @@ export function LoginPage() {
                     <Form.Item className="login-submit-actions">
                       <CmsButton
                         variant="primary"
+                        type="submit"
                         size="h52" className="login-submit-btn"
                         loading={loading && loginMode === 'api'}
                         disabled={isLocked || !apiLoginAvailable}
@@ -398,8 +413,7 @@ export function LoginPage() {
                         ))}
                       </Space>
                       <Text type="secondary" className="login-dev-quick__hint">
-                        실 API: Master → MFA 000000. Accounting Manager/Program Manager/Program
-                        Viewer는 BE QA seed 전까지 401일 수 있습니다.
+                        로컬 공통 비밀번호 admin1234! · MFA 000000
                       </Text>
                     </div>
                   ) : null}

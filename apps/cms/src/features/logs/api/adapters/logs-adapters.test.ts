@@ -1,3 +1,4 @@
+import { formatDownloadLogContainedPii } from '@/features/logs/api/adapters/logs-adapters'
 import { describe, expect, it } from 'vitest'
 import {
   mapBugIssueLogListPageResponse,
@@ -215,5 +216,13 @@ describe('logs-adapters', () => {
     expect(detail.message).toBe('INTERNAL_SERVER_ERROR')
     expect(detail.apiPath).toBe('POST /api/admin/programs/{id}')
     expect(detail.actorTypeLabel).toBe('시스템')
+  })
+})
+
+describe('formatDownloadLogContainedPii — K(2026-11-12) 9종 라벨', () => {
+  it('신규 6종을 한국어 라벨로 고정 순서에 맞춰 보여 준다', () => {
+    expect(
+      formatDownloadLogContainedPii(['EMAIL', 'NAME', 'PHONE', 'BIRTH_DATE', 'GENDER', 'HOME_ADDRESS', 'EXTERNAL_1365_ID'])
+    ).toBe('이름·생년월일·성별·전화번호·이메일·자택 주소·1365 ID가 포함된 파일입니다.')
   })
 })

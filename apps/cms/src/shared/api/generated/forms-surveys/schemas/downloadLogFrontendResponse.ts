@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { DownloadLogFrontendResponseFilterConditions } from './downloadLogFrontendResponseFilterConditions';
 
 export interface DownloadLogFrontendResponse {
   id?: string;
@@ -15,4 +16,8 @@ export interface DownloadLogFrontendResponse {
   downloadedAt?: string;
   kind?: string;
   containedPiiTypes?: string[];
+  /** 파일에 들어간 대상 건수(QA-0146). 기록하지 않은 다운로드는 null. */
+  targetCount?: number | null;
+  /** 내려받을 때의 조회 조건 {키: 값}(QA-0146). 이메일·전화번호·토큰과 자유 입력 검색어는 가려서 저장. 기록하지 않았으면 빈 객체. */
+  filterConditions?: DownloadLogFrontendResponseFilterConditions;
 }

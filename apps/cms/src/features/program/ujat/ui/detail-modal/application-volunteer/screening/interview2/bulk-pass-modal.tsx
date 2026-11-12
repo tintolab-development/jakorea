@@ -5,6 +5,7 @@ import {
   type UjatInterview2BulkPassType,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import { useNotifyAnnouncementDisabled } from '@/shared/components/notify-announcement-context'
 import {
   getDefaultManualNotifyAt,
   getMinimumManualNotifyAt,
@@ -86,6 +87,13 @@ export function UjatVolunteerInterview2BulkPassModal({
     setDateTimePickerOpen(false)
     setNotifyError('')
   }, [open])
+
+  /** 봉사자 모집 발표일 경과·미설정 — 「발표일에 맞춰서」 비활성, 골라 둔 상태면 즉시로 되돌린다 */
+  const announcementDisabled = useNotifyAnnouncementDisabled()
+  useEffect(() => {
+    if (!open || !announcementDisabled) return
+    setNotifyTiming(prev => (prev === 'on_announcement' ? 'immediate' : prev))
+  }, [open, announcementDisabled])
 
   const handleNotifyTimingChange = (next: UjatInterview2BulkPassNotifyTiming) => {
     setNotifyTiming(next)
@@ -183,7 +191,9 @@ export function UjatVolunteerInterview2BulkPassModal({
               }
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
-              <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
+              <CmsRadio value="on_announcement" disabled={announcementDisabled}>
+                발표일에 맞춰서
+              </CmsRadio>
               <span ref={manualRadioAnchorRef} className="ujat-volunteer-interview2-bulk-pass-modal__manual-anchor">
                 <CmsRadio
                   value="manual"

@@ -1,4 +1,8 @@
-import { toPolicyMaskedBirthDisplay } from '@/features/user/api/format-gender-birth-display'
+import {
+  formatBirthDisplayWithManAge,
+  toPolicyMaskedBirthDisplay,
+} from '@/features/user/api/format-gender-birth-display'
+import { readParticipantManAge } from '@/features/program/general/api/adapters/participant-man-age'
 import dayjs from 'dayjs'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { Program } from '@/types/domain'
@@ -115,10 +119,13 @@ function mapGenderLabel(gender?: string | null): string {
   return toDisplayGender(gender)
 }
 
-function mapBirthLabel(birthDate?: string | null): string {
+function mapBirthLabel(birthDate?: string | null, age?: number | null): string {
   // BE 마스킹(yyyy-**-**)은 정책 표기(yyyy.**.**) — 날짜 파서에 넣지 않는다.
+  // 만 나이는 서버 age가 있을 때만 붙인다(CMS 표기 YYYY.**.** (만 NN세)).
   const masked = toPolicyMaskedBirthDisplay(birthDate)
-  if (masked && masked !== (birthDate?.trim() ?? '')) return masked
+  if (masked && masked !== (birthDate?.trim() ?? '')) {
+    return formatBirthDisplayWithManAge(birthDate, { age })
+  }
   return formatDateLabel(birthDate, 'YYYY.MM.DD') || '-'
 }
 
@@ -234,7 +241,7 @@ function mapParticipantRow(
     name: participant.memberName?.trim() || `참여자 ${participantId}`,
     genderBirthLabel: formatIndividualProgressAttendanceGenderBirthLabel(
       mapGenderLabel(participant.gender),
-      mapBirthLabel(participant.birthDate)
+      mapBirthLabel(participant.birthDate, readParticipantManAge(participant))
     ),
     affiliationGradeLabel: formatIndividualProgressAttendanceAffiliationGradeLabel(
       affiliation,

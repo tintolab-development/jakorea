@@ -1,3 +1,4 @@
+import { readBrowserAccessToken } from '../../helpers/browser-access-token'
 import { expect, type Browser } from '@playwright/test'
 import { test } from '../../fixtures/test'
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
@@ -194,13 +195,13 @@ test('기존 E2E 프로그램에서 역할별 신청 가능한 계정을 최대�
     }
   }
 
-  const multiScheduleCheck = await page.evaluate(async programId => {
-    const token = localStorage.getItem('auth_token')
+  const adminToken = await readBrowserAccessToken(page, 'cms')
+  const multiScheduleCheck = await page.evaluate(async ({ programId, token }) => {
     const response = await fetch(`/api/admin/programs/${programId}/schedules`, {
       headers: { Authorization: `Bearer ${token ?? ''}` },
     })
     return { ok: response.ok, body: (await response.json()) as unknown }
-  }, EXISTING_PROGRAM_IDS[1])
+  }, { programId: EXISTING_PROGRAM_IDS[1], token: adminToken })
   expect(multiScheduleCheck.ok).toBe(true)
   const multiSchedules = multiScheduleCheck.body
   expect(

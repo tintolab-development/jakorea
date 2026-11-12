@@ -228,7 +228,7 @@ export async function submitMailSend(input: {
   variables?: Record<string, unknown>
   placeholderKeys?: Iterable<string>
   variableCatalog?: AlimtalkVariableCatalogEntry[] | null
-}): Promise<void> {
+}): Promise<number | null> {
   const {
     draft,
     templateDisplayName,
@@ -352,5 +352,7 @@ export async function submitMailSend(input: {
     if (bodyHtml.trim()) body.contentTemplate = bodyHtml
   }
 
-  await createSendBatchRemote(body, idempotencyKey)
+  const created = await createSendBatchRemote(body, idempotencyKey)
+  // 발송 요청 완료 팝업 개인정보 조회 기록(CMS-22)에 쓴다.
+  return created.batchId ?? null
 }

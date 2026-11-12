@@ -10,7 +10,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { FILE_SELECT_MAX_FILE_BYTES } from '@/shared/ui/file-select-field-limits'
 import type { Program, ProgramPost } from '@/types/domain'
@@ -42,7 +42,9 @@ import {
   buildPostWriteAudienceOptions,
   buildPostWriteVisibilityType,
   defaultPostWriteAudience,
+  isPostWriteAudienceChanged,
   postWriteAudienceFromStored,
+  postWriteAudienceLabel,
   reconcilePostWriteAudienceSelection,
   type PostWriteAudienceApiKey,
 } from '../../lib/post-write-audience'
@@ -109,6 +111,8 @@ export function PostWriteModal({
   >([])
   const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null)
   const [loading, setLoading] = useState(false)
+  /** QA-0093 — 수정 시 공개 범위 변경 확인 */
+  const [audienceChangeConfirmOpen, setAudienceChangeConfirmOpen] = useState(false)
   const { showAlert } = useCmsAlert()
   const loadedAttachmentIdsRef = useRef<number[] | null>(null)
 
@@ -143,6 +147,7 @@ export function PostWriteModal({
   useEffect(() => {
     if (!open) {
       setAudience(defaultPostWriteAudience(program))
+      setAudienceChangeConfirmOpen(false)
       setFiles([])
       setExistingAttachments([])
       loadedAttachmentIdsRef.current = null
@@ -221,9 +226,17 @@ export function PostWriteModal({
     setFiles(prev => [...prev, ...valid])
   }
 
-  const handleRegister = async () => {
+  const handleRegister = async (options?: { audienceChangeConfirmed?: boolean }) => {
     const trimmed = getMarkdown().trim()
     if (!trimmed) {
+      return
+    }
+    if (
+      isEditMode &&
+      !options?.audienceChangeConfirmed &&
+      isPostWriteAudienceChanged(editingPost?.audience, audience, program)
+    ) {
+      setAudienceChangeConfirmOpen(true)
       return
     }
 
@@ -372,96 +385,119 @@ export function PostWriteModal({
   }
 
   return (
-    <ContentModal
-      open={open}
-      onCancel={onCancel}
-      title={isEditMode ? '게시글 수정' : '게시글 등록'}
-      width={1000}
-      className="post-write-modal"
-      footer={
-        <div className="post-write-modal__footer-actions">
-          <CmsButton variant="secondary" size="h40" onClick={onCancel} disabled={loading}>
-            취소
-          </CmsButton>
-          <CmsButton variant="primary" size="h40" onClick={handleRegister} loading={loading}>
-            {isEditMode ? '수정' : '등록'}
-          </CmsButton>
-        </div>
-      }
-    >
-      <div className="post-write-modal__body">
-        <div className="post-write-modal__field">
-          <CmsCheckbox.Group
-            label="게시글 공개 범위"
-            required
-            checkboxSize="medium"
-            options={audienceOptions}
-            value={audience}
-            onChange={vals =>
-              setAudience(
-                reconcilePostWriteAudienceSelection(vals as PostWriteAudienceApiKey[], program)
-              )
-            }
-          />
-        </div>
-
-        <div className="post-write-modal__field post-write-modal__field--editor">
-          <div className="post-write-modal__editor-host">
-            <RichTextEditor
-              editor={editor}
-              minHeight={editorMinHeight}
-              fileUploadOwner={inlineImageOwner}
-            />
-            {fieldError &&
-            (fieldError.field === 'content' || fieldError.field === 'inlineImages') ? (
-              <p className="text-area-field-row__field-error" role="alert">
-                {fieldError.message}
-              </p>
-            ) : null}
+    <>
+      <ConfirmModal
+        open={audienceChangeConfirmOpen}
+        title="공개 범위 변경 안내"
+        content={`게시글 공개 범위를 '${postWriteAudienceLabel(
+          postWriteAudienceFromStored(editingPost?.audience, program),
+          program
+        )}'에서 '${postWriteAudienceLabel(audience, program)}'(으)로 변경합니다.\n변경한 범위의 사용자에게만 게시글이 보입니다. 저장하시겠습니까?`}
+        confirmText="변경 저장"
+        zIndex={1100}
+        footerButtonSize="h40"
+        onCancel={() => setAudienceChangeConfirmOpen(false)}
+        onConfirm={() => {
+          setAudienceChangeConfirmOpen(false)
+          void handleRegister({ audienceChangeConfirmed: true })
+        }}
+      />
+      <ContentModal
+        open={open}
+        onCancel={onCancel}
+        title={isEditMode ? '게시글 수정' : '게시글 등록'}
+        width={1000}
+        className="post-write-modal"
+        footer={
+          <div className="post-write-modal__footer-actions">
+            <CmsButton variant="secondary" size="h40" onClick={onCancel} disabled={loading}>
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="h40"
+              onClick={() => void handleRegister()}
+              loading={loading}
+            >
+              {isEditMode ? '수정' : '등록'}
+            </CmsButton>
           </div>
-        </div>
-
-        <DetailInfoForm
-          title="첨부 파일"
-          hideHeader
-          mode="edit"
-          className="post-write-modal__attachment-form"
-        >
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="첨부 파일"
-              colSpan={2}
-              view=""
-              edit={
-                <>
-                  <FileSelectField
-                    accept={ATTACHMENT_ACCEPT}
-                    fileNames={fileNames}
-                    maxFileBytes={FILE_SELECT_MAX_FILE_BYTES}
-                    maxTotalBytes={MAX_ATTACHMENT_TOTAL_BYTES}
-                    currentTotalBytes={attachedTotalBytes}
-                    sizeExceededMessage={file =>
-                      file
-                        ? '파일당 최대 20MB까지 업로드 가능합니다.'
-                        : '파일은 총 최대 100MB까지 업로드 가능합니다.'
-                    }
-                    onFilesChange={handleFilesChange}
-                    onRemoveFile={handleRemoveFile}
-                    uploading={loading}
-                    guideLines={ATTACHMENT_GUIDE_LINES}
-                    className="post-write-modal__file-field file-select-field--edit"
-                  />
-                  {fieldError?.field === 'attachments' ? (
-                    <p className="text-area-field-row__field-error" role="alert">
-                      {fieldError.message}
-                    </p>
-                  ) : null}
-                </>
+        }
+      >
+        <div className="post-write-modal__body">
+          <div className="post-write-modal__field">
+            <CmsCheckbox.Group
+              label="게시글 공개 범위"
+              required
+              checkboxSize="medium"
+              options={audienceOptions}
+              value={audience}
+              onChange={vals =>
+                setAudience(
+                  reconcilePostWriteAudienceSelection(vals as PostWriteAudienceApiKey[], program)
+                )
               }
             />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-      </div>
-    </ContentModal>
+          </div>
+
+          <div className="post-write-modal__field post-write-modal__field--editor">
+            <div className="post-write-modal__editor-host">
+              <RichTextEditor
+                editor={editor}
+                minHeight={editorMinHeight}
+                fileUploadOwner={inlineImageOwner}
+              />
+              {fieldError &&
+              (fieldError.field === 'content' || fieldError.field === 'inlineImages') ? (
+                <p className="text-area-field-row__field-error" role="alert">
+                  {fieldError.message}
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <DetailInfoForm
+            title="첨부 파일"
+            hideHeader
+            mode="edit"
+            className="post-write-modal__attachment-form"
+          >
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="첨부 파일"
+                colSpan={2}
+                view=""
+                edit={
+                  <>
+                    <FileSelectField
+                      accept={ATTACHMENT_ACCEPT}
+                      fileNames={fileNames}
+                      maxFileBytes={FILE_SELECT_MAX_FILE_BYTES}
+                      maxTotalBytes={MAX_ATTACHMENT_TOTAL_BYTES}
+                      currentTotalBytes={attachedTotalBytes}
+                      sizeExceededMessage={file =>
+                        file
+                          ? '파일당 최대 20MB까지 업로드 가능합니다.'
+                          : '파일은 총 최대 100MB까지 업로드 가능합니다.'
+                      }
+                      onFilesChange={handleFilesChange}
+                      onRemoveFile={handleRemoveFile}
+                      uploading={loading}
+                      guideLines={ATTACHMENT_GUIDE_LINES}
+                      className="post-write-modal__file-field file-select-field--edit"
+                    />
+                    {fieldError?.field === 'attachments' ? (
+                      <p className="text-area-field-row__field-error" role="alert">
+                        {fieldError.message}
+                      </p>
+                    ) : null}
+                  </>
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        </div>
+      </ContentModal>
+    </>
   )
 }

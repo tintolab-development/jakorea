@@ -100,9 +100,9 @@ export function resolveLatestAdminCommentText(
 export type UpsertAdminCommentByTargetInput = {
   targetType: AdminCommentTargetType
   targetId: number
-  /** Create 시 필수. Update/Delete에는 불필요하나 신규 POST에 사용 */
+  /** 등록(POST)·삭제 대상 조회에 사용 */
   screenCode: string
-  /** trim 후 빈 문자열이면 최신 코멘트 DELETE (없으면 no-op) */
+  /** trim 후 빈 문자열이면 기존 코멘트 DELETE (없으면 no-op) */
   comment: string
 }
 
@@ -112,47 +112,38 @@ export type UpsertAdminCommentByTargetResult = {
 }
 
 /**
- * 대상별 관리자 코멘트 upsert.
- * - 본문 있음 + 최신 commentId → PATCH
- * - 본문 있음 + 없음 → POST
- * - 본문 빈값 + 최신 commentId → DELETE
+ * 대상별 관리자 코멘트 저장.
+ * 코멘트는 대상·화면(screenCode)마다 1건이고 등록 API를 다시 호출하면 서버가 덮어쓴다 (QA-0044).
+ * - 본문 있음 → POST (기존 코멘트 조회·PATCH 분기 없음)
+ * - 본문 빈값 + 기존 commentId → DELETE
  * - 본문 빈값 + 없음 → no-op
  */
 export async function upsertAdminCommentByTargetRemote(
   input: UpsertAdminCommentByTargetInput
 ): Promise<UpsertAdminCommentByTargetResult> {
   const trimmed = input.comment.trim()
-  const existing = await listAdminCommentsByTargetRemote({
-    targetType: input.targetType,
-    targetId: input.targetId,
-    screenCode: input.screenCode,
-  })
-  const latest = resolveLatestAdminComment(existing)
-  const latestId = latest?.commentId
 
   if (!trimmed) {
-    if (typeof latestId === 'number' && Number.isFinite(latestId)) {
-      await deleteAdminCommentRemote(latestId)
+    const existing = await listAdminCommentsByTargetRemote({
+      targetType: input.targetType,
+      targetId: input.targetId,
+      screenCode: input.screenCode,
+    })
+    const existingId = resolveLatestAdminComment(existing)?.commentId
+    if (typeof existingId === 'number' && Number.isFinite(existingId)) {
+      await deleteAdminCommentRemote(existingId)
     }
     return { commentText: undefined, comment: null }
   }
 
-  if (typeof latestId === 'number' && Number.isFinite(latestId)) {
-    const updated = await updateAdminCommentRemote(latestId, { comment: trimmed })
-    return {
-      commentText: updated.comment?.trim() || trimmed,
-      comment: updated,
-    }
-  }
-
-  const created = await createAdminCommentRemote({
+  const saved = await createAdminCommentRemote({
     targetType: input.targetType,
     targetId: input.targetId,
     screenCode: input.screenCode,
     comment: trimmed,
   })
   return {
-    commentText: created.comment?.trim() || trimmed,
-    comment: created,
+    commentText: saved.comment?.trim() || trimmed,
+    comment: saved,
   }
 }

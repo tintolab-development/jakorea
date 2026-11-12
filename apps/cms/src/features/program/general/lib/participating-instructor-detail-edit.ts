@@ -8,6 +8,7 @@ import {
   normalizeLectureFeeMeasure,
   parseBusinessIncomeStatus,
   parseLectureFeeAmountDigits,
+  resolveLectureFeeMeasureValue,
   DEFAULT_LECTURE_FEE_MEASURE,
   LECTURE_FEE_MEASURE_NOT_APPLICABLE,
   type ApplicantInstructorBusinessIncomeStatus,
@@ -104,10 +105,12 @@ export function resolveLectureFeeBasisFromParticipatingRow(
         : segments[0]?.includes('기타')
           ? 'other_labor'
           : 'program')
-    const amountSegment = segments.find(s => /[\d,]+/.test(s)) ?? segments[segments.length - 1]
-    const measureSegment = segments.find(
-      s => s === '출강 1회당' || s === '1시간 당' || s === '1회 기준'
-    )
+    // 「출강 1회당」의 1을 금액으로 읽지 않는다
+    const amountSegment =
+      segments.find(s => /[\d,]+/.test(s) && resolveLectureFeeMeasureValue(s) == null) ??
+      segments[segments.length - 1]
+    // 값·공통 라벨(차시당/출강 1회당)·예전 라벨(1회 기준·1시간 기준·1회당·1시간당) 모두 값으로 읽는다
+    const measureSegment = segments.find(s => resolveLectureFeeMeasureValue(s) != null)
 
     return {
       type,

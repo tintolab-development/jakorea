@@ -14,15 +14,13 @@ import { SocialConnectCompleteView } from '@/features/auth/ui/social-connect-com
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 
 import './register-complete-page.css'
 
-function resolveMaskedAccountEmail(email?: string | null): string {
-  const trimmed = email?.trim()
-  if (!trimmed) return '-'
-  return MASKING_POLICY.email(trimmed)
+/** 본인 계정 화면 — 이메일 전체 노출(정책 CMS-02 「소셜 계정 연결 완료」 동일 적용) */
+function resolveAccountEmail(email?: string | null): string {
+  return email?.trim() || '-'
 }
 
 export function SocialConnectCompletePage() {
@@ -32,7 +30,7 @@ export function SocialConnectCompletePage() {
   const fallbackPath = getRedirectPathByRole(user)
   const homePath = normalizeSocialConnectRedirectPath(params.redirect, fallbackPath) ?? fallbackPath
   const socialConnectPath = buildRegisterSocialConnectPath(homePath)
-  const maskedEmail = resolveMaskedAccountEmail(user?.email)
+  const accountEmail = resolveAccountEmail(user?.email)
 
   useEffect(() => {
     if (!SOCIAL_ACCOUNT_LINK_ENABLED) {
@@ -47,7 +45,7 @@ export function SocialConnectCompletePage() {
   return (
     <AuthPageShell showLogo={false} cardClassName="auth-card--register-complete">
       <SocialConnectCompleteView
-        maskedEmail={maskedEmail}
+        email={accountEmail}
         onGoLogin={() => navigate(homePath, { replace: true })}
         onConnectMore={() => navigate(socialConnectPath, { replace: true })}
       />

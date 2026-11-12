@@ -721,7 +721,7 @@ const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[
         title: '이메일 찾기 mock',
         steps: [
           '본인인증 모듈 placeholder → "본인인증 후 이메일 찾기" 클릭',
-          '/auth/find-email/complete — Ja****@gmail.com 표시',
+          '/auth/find-email/complete — jakorea@gmail.com(전체) 표시',
         ],
         href: '/auth/find-email',
         buttonLabel: '이메일 찾기',
@@ -2699,11 +2699,7 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
 
         <div className={styles.guideNote}>
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-            로그인 상태: Portal access token (
-            <PFText as="span" typo="bd-sm-sb" color="black">
-              platform_auth_token
-            </PFText>
-            ). 마이페이지 프로필:{' '}
+            마이페이지 프로필:{' '}
             <PFText as="span" typo="bd-sm-sb" color="black">
               platform:dev:member-profile
             </PFText>

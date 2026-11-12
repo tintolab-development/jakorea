@@ -1,11 +1,11 @@
 import { useMemo, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { extractEducationScheduleCalendarDates } from '@jakorea/form-schema/program-application'
 import {
-  buildInstitutionSessionCountOptions,
-  clampInstitutionScheduleBlockCount,
-} from '@/features/template/lib/participant-recruitment-institution-limits'
+  buildTrainedTeachersPreferredSessionCountOptions,
+  extractEducationScheduleCalendarDates,
+} from '@jakorea/form-schema/program-application'
+import { clampInstitutionScheduleBlockCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   useTrainedTeachersApplicationField,
@@ -267,8 +267,9 @@ function TrainedTeachersPreferredScheduleFields({
   readOnlyPreview: boolean
 }) {
   const maxBlocks = clampInstitutionScheduleBlockCount(bridge.maxScheduleCount)
+  // Platform TT 신청과 같은 상한 — 모집 1일 최대 차시(상한 16), 값 없으면 2차시
   const sessionOptions = useMemo(
-    () => buildInstitutionSessionCountOptions(bridge.maxSessionsPerDay),
+    () => buildTrainedTeachersPreferredSessionCountOptions(bridge.maxSessionsPerDay),
     [bridge.maxSessionsPerDay]
   )
 

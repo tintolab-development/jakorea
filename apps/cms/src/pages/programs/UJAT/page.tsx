@@ -47,10 +47,8 @@ import {
   useUpdateProgram,
 } from '@/features/program/ujat/api/queries'
 import {
-  buildProgramSingleDeleteGuideLines,
   isProgramHardDeleteBlockedError,
-  PROGRAM_DELETE_GUIDE_TITLE,
-  resolveProgramDeleteGuideModalCopy,
+  resolveProgramDeleteGuideModalCopyWithNames,
   resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
@@ -368,9 +366,21 @@ function UjatProgramListPageContent() {
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
-  const bulkDeleteGuide = useMemo(
-    () => resolveProgramDeleteGuideModalCopy(selectedRowKeys.length),
-    [selectedRowKeys.length]
+  // 일반 프로그램 목록과 같은 안내 — 단건 `[이름]` / 일괄 `[첫 이름] 외 N개` (QA-0296)
+  const bulkDeleteGuide = useMemo(() => {
+    const selected = new Set(selectedRowKeys.map(String))
+    const names = programs
+      .filter(program => selected.has(String(program.id)))
+      .map(resolveUjatProgramDisplayTitle)
+    return resolveProgramDeleteGuideModalCopyWithNames(selectedRowKeys.length, names)
+  }, [programs, selectedRowKeys])
+  const singleDeleteGuide = useMemo(
+    () =>
+      resolveProgramDeleteGuideModalCopyWithNames(
+        1,
+        programPendingDelete ? [resolveUjatProgramDisplayTitle(programPendingDelete)] : []
+      ),
+    [programPendingDelete]
   )
 
   const handleBulkDeleteClick = useCallback(() => {
@@ -542,7 +552,8 @@ function UjatProgramListPageContent() {
         key: 'no',
         width: 80,
         align: 'center',
-        render: (_value, _record, index) => filteredRows.length - index,
+        // 모든 프로그램 목록 공통: 보이는 정렬 순서대로 1부터 (무한 스크롤로 이어 붙여 페이지가 넘어가도 이어진다, QA-0385·0423)
+        render: (_value, _record, index) => index + 1,
       },
       {
         title: '진행년도',
@@ -587,7 +598,7 @@ function UjatProgramListPageContent() {
         render: (_value, record) => formatUjatVolunteerHalfRecruitment(record, 'h2'),
       },
     ],
-    [filteredRows]
+    []
   )
 
   const openNewRegistration = useCallback(
@@ -749,8 +760,8 @@ function UjatProgramListPageContent() {
 
       <DeleteGuideModal
         open={programPendingDelete != null}
-        title={PROGRAM_DELETE_GUIDE_TITLE}
-        lines={buildProgramSingleDeleteGuideLines()}
+        title={singleDeleteGuide.title}
+        lines={singleDeleteGuide.lines}
         confirmText="삭제"
         confirmLoading={deleteProgramMutation.isPending}
         onConfirm={() => {

@@ -1,6 +1,13 @@
 import { useEffect } from 'react'
 import { Form } from 'antd'
-import { CmsButton, CmsInput, CmsPhoneInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsInput,
+  CmsPhoneInput,
+  CmsRadioGroup,
+  CmsSelect,
+  ContentModal,
+} from '@/shared/ui'
 import {
   CmsDateTextInput,
   birthDateFormValueToApi,
@@ -19,6 +26,11 @@ import {
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
 } from '@jakorea/domain/shared/required-consent-alert'
+import {
+  ADMIN_PERMISSION_SELECT_OPTIONS,
+  isAdminPermissionTagVariant,
+  type AdminPermissionTagVariant,
+} from '@/features/user/shared/lib/admin-permission-display'
 import './admin-register-modal.css'
 
 const FORM_ID = 'cms-admin-register-modal-form'
@@ -33,6 +45,11 @@ export interface AdminRegisterModalFormValues {
   birthDate: string
   contact: string
   email: string
+  /**
+   * 권한 유형 — 신규 등록에서 필수·기본값 없음 (관리자 서비스 이용약관 제4조, QA-0394).
+   * 같은 값 타입을 쓰는 관리자 상세 프로필 수정 폼은 권한 유형을 따로 다루므로 선택 속성으로 둔다.
+   */
+  permissionType?: AdminPermissionTagVariant
   consentTermsOfService: ConsentValue
   consentPersonalInfo: ConsentValue
   consentMarketing: ConsentValue
@@ -63,6 +80,8 @@ const INITIAL_VALUES: AdminRegisterModalFormValues = {
   birthDate: '',
   contact: '',
   email: '',
+  // 권한 유형은 미선택으로 시작 — 기본 권한을 정하지 않는다.
+  permissionType: undefined,
   consentTermsOfService: 'agree',
   consentPersonalInfo: 'agree',
   consentMarketing: 'disagree',
@@ -127,6 +146,10 @@ export function collectAdminRegisterValidation(values: AdminRegisterModalFormVal
     missingRequired = true
   } else if (!EMAIL_PATTERN.test(email)) {
     formatMessages.push('올바른 이메일 형식이 아닙니다')
+  }
+
+  if (!isAdminPermissionTagVariant(values.permissionType)) {
+    missingRequired = true
   }
 
   return { missingRequired, formatMessages }
@@ -292,6 +315,27 @@ export function AdminRegisterModal({
                 edit={
                   <Form.Item name="email" style={FORM_ITEM_STYLE}>
                     <CmsInput placeholder="이메일" inputSize="small" width="100%" />
+                  </Form.Item>
+                }
+              />
+            </DetailInfoForm.Row>
+
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="권한 유형"
+                required
+                labelWidth={200}
+                view="-"
+                edit={
+                  <Form.Item name="permissionType" style={FORM_ITEM_STYLE}>
+                    {/* 선택지·라벨은 권한 승인 화면과 같은 목록 */}
+                    <CmsSelect
+                      inputSize="small"
+                      width="100%"
+                      placeholder="관리자 권한을 선택해 주세요"
+                      withAllOption={false}
+                      options={ADMIN_PERMISSION_SELECT_OPTIONS}
+                    />
                   </Form.Item>
                 }
               />

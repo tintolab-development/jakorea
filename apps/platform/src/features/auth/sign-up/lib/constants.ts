@@ -1,5 +1,5 @@
 import illustHouseUrl from '@/shared/assets/illustration/illust-house.svg'
-import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
+import illustSparkleUrl from '@/shared/assets/illustration/illust-sparkle.svg'
 import type {
   AgreementItem,
   MemberType,
@@ -45,7 +45,7 @@ export const memberTypeOptions: MemberTypeOption[] = [
     title: '일반 회원',
     primaryDescription: 'JA Korea 프로그램과\n소식을 확인하고 참여할 수\n있어요.',
     secondaryDescription: '학생, 청소년, 일반 참여자라면\n일반회원으로 가입해 주세요.',
-    imageUrl: illustPeopleUrl,
+    imageUrl: illustSparkleUrl,
   },
   {
     type: 'teacher',

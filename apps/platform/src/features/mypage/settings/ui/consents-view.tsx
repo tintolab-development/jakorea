@@ -241,7 +241,7 @@ function ConsentStatusBadge({
     consentType,
     allItemsAgreed,
     expired,
-    agreedLabel: '동의함',
+    agreedLabel: '동의',
   })
   return (
     <PFStateBadge
@@ -393,7 +393,7 @@ function ConsentCard({
         <div className={styles.actions}>
           {canWithdraw ? (
             <PFButton
-              size="large"
+              size="medium"
               variant="tertiary"
               className={styles.actionButton}
               disabled={withdrawPending}
@@ -404,7 +404,7 @@ function ConsentCard({
           ) : null}
           {isCrimeDocument ? (
             <PFButton
-              size="large"
+              size="medium"
               variant="tertiary"
               className={styles.actionButton}
               onClick={() => onDownloadDocument?.(item)}
@@ -413,7 +413,7 @@ function ConsentCard({
             </PFButton>
           ) : (
             <PFButton
-              size="large"
+              size="medium"
               variant="tertiary"
               className={styles.actionButton}
               onClick={() => onViewDocument?.(item)}
@@ -422,7 +422,7 @@ function ConsentCard({
             </PFButton>
           )}
           <PFButton
-            size="large"
+            size="medium"
             variant="primary"
             className={styles.actionButton}
             onClick={() => onWriteDocument?.(item)}
@@ -435,7 +435,7 @@ function ConsentCard({
       {item.kind === 'document' && !agreed ? (
         <div className={styles.actions}>
           <PFButton
-            size="large"
+            size="medium"
             variant="primary"
             width="100%"
             onClick={() => onWriteDocument?.(item)}
@@ -775,6 +775,9 @@ export function SettingsConsentsView() {
 
   return (
     <div className={styles.page}>
+      <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.pageLead}>
+        서비스 이용에 필요한 약관·동의 현황을 확인하고 관리할 수 있습니다.
+      </PFText>
       <section className={styles.section}>
         <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
           기본 동의항목

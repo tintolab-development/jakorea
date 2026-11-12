@@ -25,6 +25,7 @@ export {
   rememberCareersListReturnPath,
   resolveCareersListReturnPath,
 } from './lib/list-params'
+export { CAREERS_SCROLL_TO_JOBS_STATE, shouldScrollToCareersJobs } from './lib/list-scroll'
 export { careerJobBadgeVariant } from './lib/badge-variant'
 export { filterCareerJobs } from './lib/filter-jobs'
 export {

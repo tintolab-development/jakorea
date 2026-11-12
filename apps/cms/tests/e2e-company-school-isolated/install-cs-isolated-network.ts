@@ -1,3 +1,4 @@
+import { installIsolatedAuthRefreshRoutes } from '../e2e/helpers/isolated-auth-session'
 import { Buffer } from 'node:buffer'
 import type { Page, Request, Route } from '@playwright/test'
 import {
@@ -500,7 +501,9 @@ function isAllowedGet(pathname: string): boolean {
     pathname === '/api/admin/me/dashboard-preferences' ||
     pathname === '/api/admin/me/dashboard-shortcut-badges' ||
     pathname === '/api/admin/settlement-configs/current' ||
-    pathname === '/api/portal/me'
+    pathname === '/api/portal/me' ||
+    // QA-0137: 새로고침 복원 refresh 뒤 Platform이 세션 회원(auth/me)을 다시 읽는다
+    pathname === '/api/portal/auth/me'
   ) {
     return true
   }
@@ -607,7 +610,8 @@ export async function installCsIsolatedNetwork(
   let portalSubmitted = false
 
   await page.addInitScript(() => {
-    localStorage.setItem('auth_token', 'e2e.mock.header.payload')
+    // QA-0137: access token은 메모리 전용 — refresh token만 넣고 복원 refresh는 mock이 답한다
+    localStorage.setItem('auth_refresh_token', 'e2e.mock.refresh')
     localStorage.setItem('auth_expires_at', new Date(Date.now() + 60 * 60 * 1000).toISOString())
     localStorage.setItem(
       'auth_user',
@@ -622,7 +626,7 @@ export async function installCsIsolatedNetwork(
         programRoles: {},
       })
     )
-    localStorage.setItem('platform_auth_token', 'e2e.mock.header.payload')
+    localStorage.setItem('platform_auth_refresh_token', 'e2e.mock.refresh')
     localStorage.setItem(
       'platform_auth_expires_at',
       new Date(Date.now() + 60 * 60 * 1000).toISOString()
@@ -684,7 +688,12 @@ export async function installCsIsolatedNetwork(
       )
       return
     }
-    if (method === 'GET' && (pathname === '/api/portal/me' || pathname === '/api/portal/me/profile')) {
+    if (
+      method === 'GET' &&
+      (pathname === '/api/portal/me' ||
+        pathname === '/api/portal/me/profile' ||
+        pathname === '/api/portal/auth/me')
+    ) {
       await route.fulfill(
         json({
           memberId: 171721,
@@ -1317,6 +1326,7 @@ export async function installCsIsolatedNetwork(
   })
 
   void templateCodeByVersion
+  await installIsolatedAuthRefreshRoutes(page)
   return log
 }
 

@@ -1,13 +1,15 @@
 import { memo, useEffect, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import {
   SPONSOR_SELECT_SEARCH_DEBOUNCE_MS,
   useSponsorSelectOptionsInfinite,
 } from '@/features/sponsor/hooks/use-sponsor-select-options-infinite'
 import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
-import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import {
+  useGeneralProgramSponsorEditContext,
+  useProgramSponsorContactsMaskedQuery,
+} from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   encodeSponsorManagerContactRef,
   decodeSponsorManagerContactRef,
@@ -220,7 +222,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     allowMultipleSponsors ? sponsorIds : [],
     catalogReady
   )
-  const singleContactsQuery = useSponsorContactsQuery(
+  // 등록 양식 담당자 선택지 — contactPrivacy=MASKED(후원사 선택 후에만 조회, 데이터 관리 RAW 캐시와 분리, 정책 32·37)
+  const singleContactsQuery = useProgramSponsorContactsMaskedQuery(
     !allowMultipleSponsors && !isAllSponsor ? sponsorId || null : null,
     !allowMultipleSponsors && !isAllSponsor && Boolean(sponsorId)
   )

@@ -15,13 +15,6 @@ export type MailPreviewAttachment = {
   sizeBytes?: number
 }
 
-/** 시안 미리보기용 샘플 수신자 */
-export const MAIL_PREVIEW_SAMPLE_RECIPIENT = {
-  name: '수신자',
-  email: 'gildong@jakorea.org',
-  extraCount: 914,
-} as const
-
 /**
  * 회차·차시를 구분해 보여야 하는 변수만 예시값으로 바꾼다(BE N2). 그 외 변수는 토큰 그대로.
  * 실제 값은 발송 시 BE가 치환한다.
@@ -86,12 +79,14 @@ export type MailPreviewRecipient = {
   extraCount?: number
 }
 
+/**
+ * 받는 사람 표시 — 실제 수신자만 쓴다. 샘플 수신자(「외 N명」)로 채우지 않는다(QA-0114).
+ * 수신자가 없으면 `-`.
+ */
 export function formatMailPreviewRecipient(recipient?: MailPreviewRecipient): string {
-  const name = recipient?.name ?? MAIL_PREVIEW_SAMPLE_RECIPIENT.name
-  const email = recipient?.email ?? MAIL_PREVIEW_SAMPLE_RECIPIENT.email
-  const extraCount = recipient?.extraCount ?? MAIL_PREVIEW_SAMPLE_RECIPIENT.extraCount
-  const person = formatMailPreviewPerson(name, email)
-  if (extraCount <= 0) return person
+  const person = formatMailPreviewPerson(recipient?.name, recipient?.email)
+  const extraCount = recipient?.extraCount ?? 0
+  if (person === '-' || extraCount <= 0) return person
   return `${person} 외 ${extraCount}명`
 }
 

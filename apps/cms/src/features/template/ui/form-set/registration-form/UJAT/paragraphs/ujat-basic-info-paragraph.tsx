@@ -9,7 +9,7 @@ import dayjs from 'dayjs'
 import { useForm, useWatch, type UseFormReturn } from 'react-hook-form'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
+import { useProgramSponsorContactsMaskedQuery } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
@@ -26,6 +26,7 @@ import {
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
+  TEMPLATE_FORM_IPS_FIELD_LABELS,
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -46,6 +47,8 @@ import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 import {
+  UJAT_BASIC_INFO_REP_EN_DEFAULT,
+  UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DEFAULT_SPONSOR_ID,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
@@ -449,7 +452,11 @@ function UjatBasicInfoLegacyParagraph({
   const sponsorApiOptions = sponsorCatalogQuery.options
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
-  const contactsQuery = useSponsorContactsQuery(sponsorId, Boolean(sponsorId))
+  // 등록 양식 담당자 선택지 — contactPrivacy=MASKED(후원사 선택 후에만 조회, 데이터 관리 RAW 캐시와 분리, 정책 32·37)
+  const contactsQuery = useProgramSponsorContactsMaskedQuery(
+    sponsorId,
+    Boolean(sponsorId) && sponsorId !== UJAT_SPONSOR_ALL_VALUE
+  )
 
   const sponsorOptions = useMemo(() => [...sponsorApiOptions], [sponsorApiOptions])
 
@@ -644,7 +651,7 @@ function UjatBasicInfoLegacyParagraph({
             label="대표 프로그램명 (국문)"
             validationKey="basicInfo.repKo"
             overlayKey="ujat.basicInfo.repKo"
-            placeholder="대표 프로그램명을 입력해 주세요"
+            placeholder={`예) ${UJAT_BASIC_INFO_REP_KO_DEFAULT}`}
             defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
@@ -654,7 +661,7 @@ function UjatBasicInfoLegacyParagraph({
             label="대표 프로그램명 (영문)"
             validationKey="basicInfo.repEn"
             overlayKey="ujat.basicInfo.repEn"
-            placeholder="대표 프로그램명을 입력해 주세요"
+            placeholder={`예) ${UJAT_BASIC_INFO_REP_EN_DEFAULT}`}
             defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
@@ -909,7 +916,7 @@ function UjatBasicInfoLegacyParagraph({
             view="-"
           />
           <DetailInfoForm.Field
-            label="IP Owned"
+            label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
             validationKey="basicInfo.ipOwned"
             edit={
               <CmsSelect
@@ -926,7 +933,7 @@ function UjatBasicInfoLegacyParagraph({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="Course Delivered By"
+            label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
             validationKey="basicInfo.courseDeliveredBy"
             edit={
               <CmsSelect
@@ -941,7 +948,7 @@ function UjatBasicInfoLegacyParagraph({
             view="-"
           />
           <DetailInfoForm.Field
-            label="Partner Involvement"
+            label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
             validationKey="basicInfo.partnerInvolvement"
             edit={
               <CmsRadioGroup

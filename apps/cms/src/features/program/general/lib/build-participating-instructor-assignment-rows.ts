@@ -35,6 +35,10 @@ import {
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  buildCompanySchoolAssignedScheduleLine,
+  type CompanySchoolScheduleUnit,
+} from '@/features/program/1c-1s/lib/assigned-schedule-line'
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
   const fromSessions = buildParticipatingSchoolSessionLines(
@@ -98,6 +102,11 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
   instructorMemberId: string
   schoolRows: ParticipatingSchoolRow[]
   scheduleLabelById: Map<string, { date?: string; time?: string; session?: string }>
+  /**
+   * 1사1교만 넘긴다 — 배정 일정 id별 신청 차시·교시. 있으면 「날짜 | N차시 / N교시 | 시간」
+   * (연결이 없는 일정은 「날짜 | 시간」). 생략 시 기존 표기.
+   */
+  companySchoolScheduleUnitByScheduleId?: ReadonlyMap<string, CompanySchoolScheduleUnit>
 }): ParticipatingInstructorAssignedSchoolRowRemote[] {
   const groups = groupAssignmentsBySchool(input.assignments, input.instructorMemberId)
   const rows: ParticipatingInstructorAssignedSchoolRowRemote[] = []
@@ -115,8 +124,17 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
       const lectureDate = extractLectureDateKey(a.lectureDate) ?? label?.date
       const time = label?.time
       const session = label?.session
-      const parts = [lectureDate, time, session].filter(Boolean)
-      if (parts.length > 0) return [parts.join(' | ')]
+      if (input.companySchoolScheduleUnitByScheduleId) {
+        const line = buildCompanySchoolAssignedScheduleLine({
+          date: lectureDate,
+          time,
+          unit: scheduleId ? input.companySchoolScheduleUnitByScheduleId.get(scheduleId) : undefined,
+        })
+        if (line) return [line]
+      } else {
+        const parts = [lectureDate, time, session].filter(Boolean)
+        if (parts.length > 0) return [parts.join(' | ')]
+      }
       if (school) return scheduleLinesForSchool(school)
       return ['-']
     })
@@ -213,6 +231,23 @@ function buildAssignedInstructorsBySchedule(
   return map
 }
 
+/** 기관(기관 신청 id, 없으면 기관명) 단위 — 취소되지 않은 배정 강사 memberId 수 */
+function countAssignedInstructorsForOrganization(
+  school: ParticipatingSchoolRow,
+  assignments: InstructorAssignmentListItemEnriched[]
+): number {
+  const orgAppId = school.organizationApplicationId
+  const members = new Set<string>()
+  for (const a of assignments) {
+    if (a.instructorMemberId == null || isCancelledAssignment(a)) continue
+    const matches = orgAppId
+      ? a.organizationApplicationId != null && String(a.organizationApplicationId) === orgAppId
+      : a.organizationApplicationId == null && a.organizationName?.trim() === school.schoolName
+    if (matches) members.add(String(a.instructorMemberId))
+  }
+  return members.size
+}
+
 function countAssignedInstructorsForSession(
   school: ParticipatingSchoolRow,
   session: ParticipatingSchoolSession,
@@ -292,7 +327,7 @@ function groupSessionsByResolvedScheduleId(
 
 /**
  * 강사 관점 배정 대기.
- * - 1사1교: 기존 그대로 — 기관×날짜 행, 배정된 기관 제외, 정원 도달은 no_assignable_schedule.
+ * - 1사1교: 기관×날짜 행, 배정된 기관 제외, 정원 도달은 배정 불가(unavailable), 배정 강사 수는 기관 단위.
  * - 기관형: 신청 기관 + 신청 일정(scheduleId)별 행.
  *   · 이 강사가 배정된 일정 행은 제외(배정 완료 비노출)
  *   · 이 강사의 배정이 취소된 일정은 배정 취소(assignment_cancelled)
@@ -340,19 +375,25 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
 
     const assignmentSessions = getParticipatingSchoolAssignmentSessions(school)
     if (assignmentSessions.length === 0) continue
-    // 1사1교 — 정원 도달도 기존 라벨(no_assignable_schedule) 유지
+    // 1사1교 시안(06-2 01) — 정원(maxAssignableInstructors)에 도달한 일정만 남으면 「배정 불가」
     const resolveStatus = (
       sessions: ParticipatingSchoolSession[]
     ): InstructorWaitingSchoolRow['assignmentStatus'] => {
       const baseStatus = resolveWaitingAssignmentStatus(sessions)
       if (baseStatus !== 'waiting') return baseStatus
-      return resolveWaitingAssignmentStatus(
+      const capStatus = resolveWaitingAssignmentStatus(
         sessions.filter(
           session =>
             !isSessionAtInstructorCap(school, session, assignedBySchedule, maxAssignableInstructors)
         )
       )
+      return capStatus === 'waiting' ? 'waiting' : 'unavailable'
     }
+    // 1사1교 시안 「배정 강사 수」 — 이 기관 신청에 취소되지 않은 배정 강사(중복 제외) 수
+    const assignedInstructorCountLabel = `${countAssignedInstructorsForOrganization(
+      school,
+      input.assignments
+    )}명`
 
     const groups = buildScheduleGroups(assignmentSessions)
     for (const group of groups) {
@@ -370,7 +411,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
         distanceFromHome: formatWaitingOrganizationDistance(input.organizationDistances, school),
         educationScheduleLines: [group.line],
         assignmentStatus,
-        assignedInstructorCountLabel: '-',
+        assignedInstructorCountLabel,
         organizationApplicationId: orgAppId,
         instructorApplicationId: input.instructor.instructorApplicationId,
         instructorMemberId: input.instructorMemberId,

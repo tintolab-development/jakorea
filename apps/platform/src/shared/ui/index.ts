@@ -33,6 +33,7 @@ export type { PFStateBadgeProps, PFStateBadgeSize, PFStateBadgeTone } from './pf
 export { SchoolTeacherEmploymentStatusBadge } from './school-teacher-employment-status-badge'
 export type { SchoolTeacherEmploymentStatusBadgeProps } from './school-teacher-employment-status-badge'
 export { PFButton } from './pf-button'
+export { PFFloatingAction } from './pf-floating-action'
 export { PFDescriptionList } from './pf-description-list'
 export type { PFDescriptionListProps } from './pf-description-list'
 export { PFCheckbox } from './pf-checkbox'
@@ -45,7 +46,12 @@ export { PFItemDeleteButton } from './pf-item-delete-button'
 export type { PFItemDeleteButtonProps } from './pf-item-delete-button'
 export { PFAttachedFileList } from './pf-attached-file-list'
 export type { PFAttachedFileListItem, PFAttachedFileListProps } from './pf-attached-file-list'
-export { PFCalendar, CALENDAR_LEGEND_ITEMS, CALENDAR_EVENT_COLORS } from './pf-calendar'
+export {
+  PFCalendar,
+  CALENDAR_LEGEND_ITEMS,
+  CALENDAR_EVENT_COLORS,
+  resolveCalendarEventColors,
+} from './pf-calendar'
 export type { PFCalendarProps, PFCalendarEvent, CalendarLegendItem } from './pf-calendar'
 export { PFDivider } from './pf-divider'
 export type { PFDividerOrientation, PFDividerProps, PFDividerVariant } from './pf-divider'

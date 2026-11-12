@@ -113,12 +113,22 @@ function TrainedTeachersProgramPageContent() {
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  /** 캘린더 우측 목록에서 체크한 프로그램 id — 캘린더 뷰의 선택 삭제 대상 (일반 프로그램과 동일) */
+  const [calendarSelectedProgramIds, setCalendarSelectedProgramIds] = useState<Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
-  const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+  /**
+   * 삭제 대기 프로그램 id. 캘린더 선택은 목록에 아직 로드되지 않은 프로그램일 수 있어
+   * Program 행이 아니라 id로 들고 있는다.
+   */
+  const [programIdsPendingBulkDelete, setProgramIdsPendingBulkDelete] = useState<string[]>([])
   const programBulkDeleteGuide = useMemo(
-    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
-    [programsPendingBulkDelete.length]
+    () => resolveProgramDeleteGuideModalCopy(programIdsPendingBulkDelete.length),
+    [programIdsPendingBulkDelete.length]
   )
+  const clearProgramSelections = useCallback(() => {
+    setSelectedRowKeys([])
+    setCalendarSelectedProgramIds([])
+  }, [])
   const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
   const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
     title: '',
@@ -160,8 +170,8 @@ function TrainedTeachersProgramPageContent() {
         : selectedProgramForFullPageModal)
 
   useEffect(() => {
-    setSelectedRowKeys([])
-  }, [statusFilter])
+    clearProgramSelections()
+  }, [clearProgramSelections, statusFilter])
 
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -394,38 +404,42 @@ function TrainedTeachersProgramPageContent() {
   }, [location.pathname, setSearchParams])
 
   const handleBulkDeleteClick = useCallback(() => {
-    const programsToDelete = filteredPrograms.filter(program =>
-      selectedRowKeys.includes(program.id)
-    )
-    if (programsToDelete.length === 0) {
+    // 캘린더 뷰는 우측 목록 체크, 리스트 뷰는 테이블 행 선택을 삭제 대상으로 쓴다 (일반 프로그램과 동일).
+    const idsToDelete =
+      viewMode === 'calendar'
+        ? [...new Set(calendarSelectedProgramIds.map(String))]
+        : filteredPrograms
+            .filter(program => selectedRowKeys.includes(program.id))
+            .map(program => program.id)
+    if (idsToDelete.length === 0) {
       showAlert(NO_SELECTION_ALERT)
       return
     }
     void (async () => {
       // 권한 설정 V1.2: 프로그램 삭제는 담당 프로그램의 Program Owner·Program Assistant만. 확인 모달 전에 막는다.
-      if (!(await ensureProgramWriteAllowed(programsToDelete.map(program => program.id)))) return
-      setProgramsPendingBulkDelete(programsToDelete)
+      if (!(await ensureProgramWriteAllowed(idsToDelete))) return
+      setProgramIdsPendingBulkDelete(idsToDelete)
       setBulkDeleteModalOpen(true)
     })()
-  }, [filteredPrograms, selectedRowKeys, showAlert])
+  }, [calendarSelectedProgramIds, filteredPrograms, selectedRowKeys, showAlert, viewMode])
 
   const handleBulkDeleteConfirm = useCallback(async () => {
-    const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+    const idsToDelete = programIdsPendingBulkDelete
     if (programIdFromUrl && idsToDelete.includes(programIdFromUrl)) {
       handleCloseFullPageModal()
     }
     if (remoteEnabled) {
       try {
         await deleteProgramsMutation.mutateAsync(idsToDelete)
-        setSelectedRowKeys([])
+        clearProgramSelections()
         refetchPrograms()
         setBulkDeleteModalOpen(false)
-        setProgramsPendingBulkDelete([])
+        setProgramIdsPendingBulkDelete([])
         showDeleteCompletedAlert()
         return
       } catch (error) {
         if (isProgramHardDeleteBlockedError(error)) {
-          const count = programsPendingBulkDelete.length
+          const count = idsToDelete.length
           setProgramDeleteBlockedCopy(resolveProgramHardDeleteBlockedModalCopy(count))
           setProgramDeleteBlockedOpen(true)
         } else {
@@ -436,21 +450,24 @@ function TrainedTeachersProgramPageContent() {
         }
       }
       setBulkDeleteModalOpen(false)
-      setProgramsPendingBulkDelete([])
+      setProgramIdsPendingBulkDelete([])
       return
     }
-    handleBulkDelete(programsPendingBulkDelete, () => {
-      setSelectedRowKeys([])
+    const programsToDelete = filteredPrograms.filter(program => idsToDelete.includes(program.id))
+    handleBulkDelete(programsToDelete, () => {
+      clearProgramSelections()
       refetchPrograms()
     })
     setBulkDeleteModalOpen(false)
-    setProgramsPendingBulkDelete([])
+    setProgramIdsPendingBulkDelete([])
   }, [
+    clearProgramSelections,
     deleteProgramsMutation,
+    filteredPrograms,
     handleBulkDelete,
     handleCloseFullPageModal,
     programIdFromUrl,
-    programsPendingBulkDelete,
+    programIdsPendingBulkDelete,
     refetchPrograms,
     remoteEnabled,
     showAlert,
@@ -513,6 +530,8 @@ function TrainedTeachersProgramPageContent() {
         disableUrlSync={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
         onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
         selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
+        calendarSelectedProgramIds={showBulkSelection ? calendarSelectedProgramIds : undefined}
+        onCalendarSelectionChange={showBulkSelection ? setCalendarSelectedProgramIds : undefined}
         showRowSelection={showBulkSelection}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
@@ -555,7 +574,7 @@ function TrainedTeachersProgramPageContent() {
               : undefined
           }
           onRequestDelete={program => {
-            setProgramsPendingBulkDelete([program])
+            setProgramIdsPendingBulkDelete([program.id])
             setBulkDeleteModalOpen(true)
           }}
         />
@@ -587,7 +606,7 @@ function TrainedTeachersProgramPageContent() {
         }}
         onCancel={() => {
           setBulkDeleteModalOpen(false)
-          setProgramsPendingBulkDelete([])
+          setProgramIdsPendingBulkDelete([])
         }}
       />
       <DeleteBlockedGuideModal

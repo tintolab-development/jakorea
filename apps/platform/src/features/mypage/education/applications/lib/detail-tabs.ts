@@ -118,6 +118,12 @@ function isTrainedTeacher(options: ActivityTabOptions): boolean {
   return options.programType?.trim().toUpperCase() === 'TRAINED_TEACHER'
 }
 
+/** 1사1교 — 프로그램 type `COMPANY_SCHOOL`(구 `ONE_COMPANY_ONE_SCHOOL`) */
+function isCompanySchool(options: ActivityTabOptions): boolean {
+  const type = options.programType?.trim().toUpperCase()
+  return type === 'COMPANY_SCHOOL' || type === 'ONE_COMPANY_ONE_SCHOOL'
+}
+
 function isTeacherStudentDocumentTabsVisible(options: ActivityTabOptions): boolean {
   return options.teacherStudentDocumentTabsVisible !== false
 }
@@ -184,7 +190,7 @@ export function shouldShowSettlementTab(options: ActivityTabOptions): boolean {
 
 function appendSettlementTab(items: EducationDetailTabItem[], options: ActivityTabOptions): void {
   if (!shouldShowSettlementTab(options)) return
-  items.push({ key: 'settlement', label: '정산현황' })
+  items.push({ key: 'settlement', label: '정산 현황' })
 }
 
 /**
@@ -250,6 +256,16 @@ export function buildInProgressDetailTabItems(
 export function buildTeacherInProgressDetailTabItems(
   options: ActivityTabOptions
 ): EducationDetailTabItem[] {
+  // 1사1교 교사(USER-FUNC-0209·0203·0204) — 안내사항 / 교육 일정 / 설문조사 / 만족도조사만.
+  // 학생 명단(학생 수료증 발급·초상권 동의서 업로드 포함)·교육일지·강의보고서·정산현황 탭은 두지 않는다.
+  if (isCompanySchool(options)) {
+    const items: EducationDetailTabItem[] = [
+      { key: 'notice', label: '안내사항' },
+      { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
+    ]
+    appendSurveySatisfactionTabs(items, options)
+    return items
+  }
   // 교육받은 교사는 교육일지가 진행 화면의 진입점이다.
   // 교육일지 기능이 서버에서 활성화된 경우 시안과 동일하게 안내사항 탭은 노출하지 않는다.
   const items: EducationDetailTabItem[] = options.educationJournalEnabled === true

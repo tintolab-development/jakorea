@@ -21,13 +21,13 @@ export const WRITING_FORM_SECTION_CATALOG: readonly WritingFormSectionCatalogEnt
   {
     key: 'registration',
     title: '등록 양식',
-    description: '모든 항목의 추가 및 삭제, 수정이 불가한 양식입니다.',
+    description: '항목 구성(추가·삭제·수정)은 변경할 수 없으며, 초기값은 설정할 수 있는 양식입니다.',
     category: 'REGISTRATION',
   },
   {
     key: 'application',
     title: '모집 양식',
-    description: '모든 항목의 추가 및 삭제, 수정이 불가한 양식입니다.',
+    description: '항목 구성(추가·삭제·수정)은 변경할 수 없으며, 초기값은 설정할 수 있는 양식입니다.',
     category: 'RECRUITMENT',
   },
   {

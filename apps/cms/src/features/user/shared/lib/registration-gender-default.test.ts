@@ -24,6 +24,8 @@ const ADMIN_FILLED: AdminRegisterModalFormValues = {
   birthDate: '1990-01-15',
   contact: '010-1234-5678',
   email: 'admin@example.test',
+  // 권한 유형은 필수(QA-0394) — 성별 검사만 보도록 채워 둔다
+  permissionType: 'viewer',
   consentTermsOfService: 'agree',
   consentPersonalInfo: 'agree',
   consentMarketing: 'disagree',

@@ -170,4 +170,65 @@ describe('CmsNumericInput', () => {
     fireEvent.blur(input)
     expect(input).toHaveValue('00102')
   })
+
+  it('QA-0111 rejectInvalidInput: 부호·소수점·문자·자릿수 초과 입력은 값을 바꾸지 않고 거부한다', () => {
+    const onValueChange = vi.fn()
+    const onInvalidInput = vi.fn()
+    render(
+      createElement(CmsNumericInput, {
+        mode: 'integer',
+        'aria-label': '수량',
+        value: '24',
+        min: 1,
+        maxDigits: 3,
+        rejectInvalidInput: true,
+        normalizeOnBlur: false,
+        onValueChange,
+        onInvalidInput,
+      })
+    )
+    const input = screen.getByRole('textbox', { name: '수량' })
+
+    fireEvent.change(input, { target: { value: '-1.5abc' } })
+    expect(onValueChange).not.toHaveBeenCalled()
+    expect(onInvalidInput).toHaveBeenLastCalledWith('invalid-char')
+
+    fireEvent.change(input, { target: { value: '1234' } })
+    expect(onValueChange).not.toHaveBeenCalled()
+    expect(onInvalidInput).toHaveBeenLastCalledWith('too-long')
+
+    fireEvent.change(input, { target: { value: '120' } })
+    expect(onValueChange).toHaveBeenLastCalledWith('120')
+  })
+
+  it('QA-0111 normalizeOnBlur=false면 blur에서 min 보정·부호 제거를 하지 않는다', () => {
+    const onValueChange = vi.fn()
+    render(
+      createElement(CmsNumericInput, {
+        mode: 'integer',
+        'aria-label': '수량',
+        value: '0',
+        min: 1,
+        normalizeOnBlur: false,
+        onValueChange,
+      })
+    )
+    fireEvent.blur(screen.getByRole('textbox', { name: '수량' }))
+    expect(onValueChange).not.toHaveBeenCalled()
+  })
+
+  it('기본값(opt-in 없음)은 기존처럼 blur에서 min을 적용한다', () => {
+    const onValueChange = vi.fn()
+    render(
+      createElement(CmsNumericInput, {
+        mode: 'integer',
+        'aria-label': '수량',
+        value: '0',
+        min: 1,
+        onValueChange,
+      })
+    )
+    fireEvent.blur(screen.getByRole('textbox', { name: '수량' }))
+    expect(onValueChange).toHaveBeenLastCalledWith('1')
+  })
 })

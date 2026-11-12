@@ -14,6 +14,7 @@ import {
   resolveEducationScheduleRowLabel,
 } from './common-info-label.ts'
 import { isTrainedTeacherOrganizationSchedule } from './trained-teacher-organization.ts'
+import { formatCompanySchoolDottedDate } from '../../applications/lib/company-school-date-label.ts'
 import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
@@ -279,6 +280,32 @@ function resolveOperationalDayDurationLabel(
   return sessionCount != null ? `${sessionCount}차시` : undefined
 }
 
+function isCompanySchoolProgramType(programType: string | null | undefined): boolean {
+  const type = programType?.trim().toUpperCase()
+  return type === 'COMPANY_SCHOOL' || type === 'ONE_COMPANY_ONE_SCHOOL'
+}
+
+/**
+ * 1사1교 배정 교육 일정(USER-FUNC-0207) — 같은 scheduleId 희망 블록의 시작 교시·차시 수로
+ * `N~(N+1)교시 (2차시)` / `N교시 (1차시)`. 2차시 교시는 1차시 + 1(연강 고정).
+ * 매칭 블록이나 교시가 없으면 undefined — 지어내지 않는다.
+ */
+function resolveCompanySchoolPeriodUnitLabel(
+  scheduleId: number | null | undefined,
+  preferredScheduleBlocks: readonly PortalPreferredScheduleBlock[] | null | undefined,
+): string | undefined {
+  if (scheduleId == null) return undefined
+  const block = (preferredScheduleBlocks ?? []).find(row => row.scheduleId === scheduleId)
+  if (!block) return undefined
+  const times = block.sessionTimes ?? block.times ?? []
+  const firstPeriodRaw = times[0]?.classPeriod?.replace(/교시\s*$/u, '').trim()
+  const startPeriod = positiveInteger(firstPeriodRaw ? Number(firstPeriodRaw) : undefined)
+  if (startPeriod == null) return undefined
+  const count = positiveInteger(block.sessionCount) ?? (times.length > 0 ? times.length : 1)
+  const periods = count > 1 ? `${startPeriod}~${startPeriod + count - 1}교시` : `${startPeriod}교시`
+  return `${periods} (${count}차시)`
+}
+
 /**
  * 신청 GET .../schedules → 교육일정 탭 행. 행 수 = items 수(배정 집합).
  * startAt이 없어도 매핑은 유지한다. 화면은 scheduleId 있는 배정 일정만 노출한다.
@@ -325,12 +352,21 @@ export function mapPortalEducationSchedule(
         blockKind: item.blockKind,
       })
   const preferenceLabel = preferenceRank != null ? `${preferenceRank}지망` : undefined
+  const companySchoolSchedule = isCompanySchoolProgramType(meta?.programType)
+  const companySchoolPeriodUnitLabel = companySchoolSchedule
+    ? resolveCompanySchoolPeriodUnitLabel(item.scheduleId, meta?.preferredScheduleBlocks)
+    : undefined
+  // 1사1교 배정 교육 일정 날짜 — 기획 형식 「YYYY.MM.DD(요일)」(플랫폼 공통 날짜 표기는 그대로)
+  const companySchoolDateLabel = companySchoolSchedule
+    ? formatCompanySchoolDottedDate(optionalText(item.startAt ?? undefined))
+    : ''
   const rowLabel =
-    operationalDayView
+    companySchoolPeriodUnitLabel ??
+    (operationalDayView
       ? mappedRowLabel
       : mappedRowLabel !== '-'
         ? mappedRowLabel
-        : preferenceLabel ?? mappedRowLabel
+        : preferenceLabel ?? mappedRowLabel)
   const heldAt = optionalText(item.startAt ?? undefined) ?? ''
   const endAt = optionalText(item.endAt ?? undefined)
   const progressTimeLabel =
@@ -379,6 +415,7 @@ export function mapPortalEducationSchedule(
     rowLabel,
     ...(preferenceRank != null ? { preferenceRank } : {}),
     ...(operationalDayView ? { operationalDayView: true } : {}),
+    ...(companySchoolDateLabel ? { dateLabelOverride: companySchoolDateLabel } : {}),
     ...(durationLabel ? { durationLabel } : {}),
     attendanceStatus,
     ...(absenceReason ? { absenceReason } : {}),

@@ -1032,6 +1032,7 @@ function GeneralProgramDetailFullPageModalContent({
     useGeneralProgramCommonInfoSave({
       form: infoForm,
       program: displayProgram ?? null,
+      isEditMode: isEditModeInfo,
       onSaveEdit: displayProgram
         ? async (draft, patch, baseline, serializeOptions) => {
             await persistGeneralProgramDraft(draft, patch, baseline, serializeOptions)

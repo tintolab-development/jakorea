@@ -2,6 +2,10 @@ import chevronLeftBlackUrl from '@/shared/assets/icons/chevron-left-black.svg'
 import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
 import chevronRightBlackUrl from '@/shared/assets/icons/chevron-right-black.svg'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
+import chevronLeftDefaultMobileUrl from './icons/chevron-left-default-mobile.svg'
+import chevronLeftDisabledMobileUrl from './icons/chevron-left-disabled-mobile.svg'
+import chevronRightDefaultMobileUrl from './icons/chevron-right-default-mobile.svg'
+import chevronRightDisabledMobileUrl from './icons/chevron-right-disabled-mobile.svg'
 import styles from './pf-pagination.module.css'
 
 export type PFPaginationVariant = 'numbered' | 'compact'
@@ -89,8 +93,15 @@ export function PFPagination({
         disabled={isFirstPage}
         onClick={() => handlePageChange(safeCurrentPage - 1)}
       >
+        {/* 시안: 모바일은 각진 꺾쇠, PC는 둥근 꺾쇠 */}
         <img
-          className={styles.icon}
+          className={[styles.icon, styles.iconMobile].join(' ')}
+          src={isFirstPage ? chevronLeftDisabledMobileUrl : chevronLeftDefaultMobileUrl}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className={[styles.icon, styles.iconDesktop].join(' ')}
           src={isFirstPage ? chevronLeftGrayUrl : chevronLeftBlackUrl}
           alt=""
           aria-hidden="true"
@@ -145,8 +156,15 @@ export function PFPagination({
         disabled={isLastPage}
         onClick={() => handlePageChange(safeCurrentPage + 1)}
       >
+        {/* 시안: 모바일은 각진 꺾쇠, PC는 둥근 꺾쇠 */}
         <img
-          className={styles.icon}
+          className={[styles.icon, styles.iconMobile].join(' ')}
+          src={isLastPage ? chevronRightDisabledMobileUrl : chevronRightDefaultMobileUrl}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className={[styles.icon, styles.iconDesktop].join(' ')}
           src={isLastPage ? chevronRightGrayUrl : chevronRightBlackUrl}
           alt=""
           aria-hidden="true"

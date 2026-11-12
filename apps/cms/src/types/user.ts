@@ -238,6 +238,8 @@ export interface User {
   // 회원 상세 모달 표시용 (선택)
   nameEn?: string
   birthDate?: DateValue
+  /** 서버 만 나이(회원·관리자·강사 권한 신청 상세 `age`). 마스킹 생년월일 옆 「(만 NN세)」 표시에 쓴다. */
+  manAge?: number
   gender?: string
   affiliation?: string
   /** 개인 회원 — API `enrollmentStatus` (`ENROLLED` | `NOT_ENROLLED`) */

@@ -58,6 +58,10 @@ import {
   parseAlimtalkDndId,
   ALIMTALK_DND_CATEGORY_MOVE_PREFIX,
 } from './category-tree'
+import {
+  ALIMTALK_TEMPLATE_LIST_NHN_EDIT_GUIDE,
+  ALIMTALK_TEMPLATE_LIST_REGISTER_GUIDE,
+} from '@/features/notifications/model/alimtalk-template/list-guide'
 import { DetailPanel } from './detail-panel'
 import { PreviewModal } from './preview-modal'
 import '@/pages/programs/program-list-page.css'
@@ -660,6 +664,10 @@ export function AlimtalkTemplateList({
           </>
         }
       >
+        <div className="alimtalk-template-list__guide" role="note">
+          <p>{ALIMTALK_TEMPLATE_LIST_NHN_EDIT_GUIDE}</p>
+          <p>{ALIMTALK_TEMPLATE_LIST_REGISTER_GUIDE}</p>
+        </div>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="alimtalk-template-split">
             <CategoryTree

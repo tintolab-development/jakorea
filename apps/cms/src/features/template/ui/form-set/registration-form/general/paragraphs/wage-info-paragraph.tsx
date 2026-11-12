@@ -10,7 +10,8 @@ import {
 import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { RegistrationWageFeeInput } from '@/features/program/shared/ui/registration/wage-fee-input'
+import { REGISTRATION_WAGE_GRADE_FEE_MAX } from '@/features/program/shared/lib/wage-fee-input-rules'
 import {
   patchProgramRegistrationOverlay,
   useProgramRegistrationOverlayKv,
@@ -18,9 +19,9 @@ import {
 import './program-registration-paragraph.css'
 
 const WAGE_GRADE_ROWS = [
-  { label: '1급 강사비', max: 500_000, maxLabel: '500,000' },
-  { label: '2급 강사비', max: 400_000, maxLabel: '400,000' },
-  { label: '3급 강사비', max: 300_000, maxLabel: '300,000' },
+  { label: '1급 강사비', max: REGISTRATION_WAGE_GRADE_FEE_MAX[1], maxLabel: '500,000' },
+  { label: '2급 강사비', max: REGISTRATION_WAGE_GRADE_FEE_MAX[2], maxLabel: '400,000' },
+  { label: '3급 강사비', max: REGISTRATION_WAGE_GRADE_FEE_MAX[3], maxLabel: '300,000' },
 ] as const
 
 const WageGradeFeeField = memo(function WageGradeFeeField({
@@ -42,24 +43,11 @@ const WageGradeFeeField = memo(function WageGradeFeeField({
         edit={
           <div className="detail-info-form-inputs-wrapper">
             <span className="detail-info-form--text">1시간 당</span>
-            <CmsNumericInput
-              mode="currency"
-              min={0}
+            <RegistrationWageFeeInput
+              value={value}
+              onChange={setValue}
               max={row.max}
-              allowNegative={false}
-              inputSize="small"
-              placeholder="직접 입력"
-              width={120}
-              value={value == null ? '' : String(value)}
-              onValueChange={raw => {
-                const trimmed = raw.trim()
-                if (!trimmed) {
-                  setValue(null)
-                  return
-                }
-                const n = Number(trimmed.replace(/,/g, ''))
-                setValue(Number.isFinite(n) ? n : null)
-              }}
+              aria-label={row.label}
             />
             <span className="detail-info-form--text">원 (최대 {row.maxLabel}원)</span>
           </div>

@@ -319,7 +319,16 @@ export function JaGradeEvaluationModal({
               </div>
             ) : null}
             {draft != null ? (
-              <div className="ja-grade-evaluation-modal__form-panel">
+              // 정책이 없으면 완료 버튼과 함께 평가 입력도 막는다 (QA-0105)
+              <div
+                className={
+                  policyBlocksSubmit
+                    ? 'ja-grade-evaluation-modal__form-panel ja-grade-evaluation-modal__form-panel--disabled'
+                    : 'ja-grade-evaluation-modal__form-panel'
+                }
+                inert={policyBlocksSubmit}
+                aria-disabled={policyBlocksSubmit || undefined}
+              >
                 <FormEditorLeftPanel
                   paragraphs={draft.paragraphs}
                   titleNumbering={draft.formSettings.titleNumbering}

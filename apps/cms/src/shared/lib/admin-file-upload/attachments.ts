@@ -421,12 +421,22 @@ export function getFileContentPath(fileObjectId: number): string {
   return `/api/admin/files/${fileObjectId}/content`
 }
 
-export async function fetchFileContentBlob(fileObjectId: number): Promise<Blob> {
-  return customInstance<Blob>({
-    url: getFileContentPath(fileObjectId),
-    method: 'GET',
-    responseType: 'blob',
-  })
+/**
+ * `GET /api/admin/files/{id}/content` — 인라인 미리보기(짧은 서명 URL로 302). 다운로드 이력을 남기지 않는다.
+ * 허용 용도(에디터 인라인 이미지·후원사 로고 image/*)가 아니면 BE가 404를 준다.
+ */
+export async function fetchFileContentBlob(
+  fileObjectId: number,
+  options?: { skipGlobalErrorAlert?: boolean }
+): Promise<Blob> {
+  return customInstance<Blob>(
+    {
+      url: getFileContentPath(fileObjectId),
+      method: 'GET',
+      responseType: 'blob',
+    },
+    options
+  )
 }
 
 export function parseOwnerResourceId(value: unknown): number | null {

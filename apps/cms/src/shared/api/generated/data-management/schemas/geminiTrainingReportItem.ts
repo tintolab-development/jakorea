@@ -33,4 +33,10 @@ export interface GeminiTrainingReportItem {
   createdAt?: string;
   /** 계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=과거 적재분(신규 import는 FAILED로 전환) */
   paymentExclusionReason?: GeminiTrainingReportItemPaymentExclusionReason;
+  /** 이 실적이 만든 지급조서(settlement) ID. 지급 제외 실적·과거 직접 지급 건은 null. */
+  settlementId?: number | null;
+  /** 연결된 지급조서의 statementStatus(지급조서 목록과 같은 값, 예: WAITING_CONFIRM·CONFIRMED). settlementId가 null이면 null. */
+  statementStatus?: string | null;
+  /** true면 삭제(무효화) 불가. DELETE·bulk-delete가 409 GEMINI_TRAINING_REPORT_ACCOUNT_PAID를 내는 조건과 같다: 과거 직접 지급이 PAID, 연결된 지급조서가 확인완료(CONFIRMED), 또는 그 지급조서로 계좌 지급이 이미 생성됨. */
+  deleteBlocked?: boolean;
 }

@@ -1,6 +1,7 @@
 /**
  * 교육받은 교사 등록 1단계 필수 검사.
- * 일반 검사와 동일 규칙이되 KPI·임금은 없고, 교육 연수는 첫 차시/회차·세부 일정(replaceFirst).
+ * 일반 검사와 동일 규칙이되 KPI·임금은 없다. 교사 연수는 커리큘럼형이면 별도 블록(prepend — 진행 일정 필수),
+ * 일정형은 첫 세부 일정 치환(replaceFirst).
  */
 import { normalizeRegistrationOverlayForApply } from '@/features/program/general/lib/registration-overlay-to-program'
 import { projectTrainedTeachersRhfToOverlayRecord } from './registration-rhf-values'
@@ -56,7 +57,9 @@ function toGeneralRequiredFieldContext(ctx: TrainedTeachersRegistrationRequiredF
     programTitleKo: ctx.programTitleKo,
     omitKpiAndWage: true,
     allowEmptySponsor: true,
-    preEducationDisplayMode: 'replaceFirst' as const,
+    // 커리큘럼형: ■ 교사 연수 별도 블록(진행 일정 필수, 시간 포함). 일정형(신규 등록 미노출)은 기존 첫 일정 치환 유지
+    preEducationDisplayMode:
+      ctx.programType === 'curriculum' ? ('prepend' as const) : ('replaceFirst' as const),
   }
 }
 

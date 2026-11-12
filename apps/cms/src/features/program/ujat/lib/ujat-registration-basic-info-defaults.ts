@@ -10,6 +10,7 @@ export { createUjatSurveyItemsDefault }
 
 export const UJAT_REGISTRATION_TEMPLATE_ID = 'registration-ujat' as const
 
+/** 대표 프로그램명 입력 예시 — 신규 등록 폼에는 placeholder 로만 쓴다(QA-0389-8556). 상세 빈 값 표시용 대체값으로도 쓴다. */
 export const UJAT_BASIC_INFO_REP_KO_DEFAULT = '대학생경제교육봉사단'
 export const UJAT_BASIC_INFO_REP_EN_DEFAULT = 'University Students JA Team'
 export const UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT =

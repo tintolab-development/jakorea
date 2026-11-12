@@ -4,7 +4,12 @@ import {
   formatEducationNoticeFileDate,
   formatEducationNoticeFileSize,
 } from '../lib/format'
-import fileDocumentUrl from '../assets/icon/file-document.svg'
+import fileIllustEtcUrl from '../assets/icon/file-illust-etc.svg'
+import fileIllustExcelUrl from '../assets/icon/file-illust-excel.svg'
+import fileIllustHwpUrl from '../assets/icon/file-illust-hwp.svg'
+import fileIllustPdfUrl from '../assets/icon/file-illust-pdf.svg'
+import fileIllustPptUrl from '../assets/icon/file-illust-ppt.svg'
+import fileIllustWordUrl from '../assets/icon/file-illust-word.svg'
 import moreVerticalUrl from '../assets/icon/more-vertical.svg'
 import filePreviewUrl from '@/shared/assets/icons/file-preview.svg'
 import { PFOptionList, PFText } from '@/shared/ui'
@@ -14,6 +19,26 @@ const IMAGE_FILE_PATTERN = /\.(png|jpe?g|gif|webp|svg)$/i
 
 function isImageFileName(fileName: string) {
   return IMAGE_FILE_PATTERN.test(fileName)
+}
+
+/** 시안 File Item — Illust(40) 파일 종류별 그래픽, 시안에 없는 확장자는 기타 */
+const FILE_ILLUST_BY_EXTENSION: Record<string, string> = {
+  pdf: fileIllustPdfUrl,
+  xls: fileIllustExcelUrl,
+  xlsx: fileIllustExcelUrl,
+  csv: fileIllustExcelUrl,
+  doc: fileIllustWordUrl,
+  docx: fileIllustWordUrl,
+  hwp: fileIllustHwpUrl,
+  hwpx: fileIllustHwpUrl,
+  ppt: fileIllustPptUrl,
+  pptx: fileIllustPptUrl,
+}
+
+function getFileIllustUrl(fileName: string) {
+  const dotIndex = fileName.lastIndexOf('.')
+  const extension = dotIndex >= 0 ? fileName.slice(dotIndex + 1).toLowerCase() : ''
+  return FILE_ILLUST_BY_EXTENSION[extension] ?? fileIllustEtcUrl
 }
 
 type EducationInProgressFileRowProps = {
@@ -77,9 +102,12 @@ export function EducationInProgressFileRow({
       {isImage ? (
         <img className={styles.imageCover} src={filePreviewUrl} alt="" aria-hidden="true" />
       ) : (
-        <div className={styles.icon} aria-hidden="true">
-          <img className={styles.iconImg} src={fileDocumentUrl} alt="" />
-        </div>
+        <img
+          className={styles.imageCover}
+          src={getFileIllustUrl(file.fileName)}
+          alt=""
+          aria-hidden="true"
+        />
       )}
 
       <div className={styles.info}>

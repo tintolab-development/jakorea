@@ -9,6 +9,7 @@ import type { PortalProgramDetail } from './types.ts'
 import {
   withRecruitmentMethod,
   mapPortalProgramDetail,
+  mapPortalProgramEducationBadgeLabels,
   mapPortalProgramListItem,
   parsePortalProgramId,
   portalPublicFileContentUrl,
@@ -880,10 +881,24 @@ const trainedTeacherProgress = mapPortalProgramDetail({
   venueKind: 'inside',
 })
 assert.ok(trainedTeacherProgress)
-assert.equal(
-  trainedTeacherProgress.educationVenueLabel,
-  '기관 안 | 서울시 강서구 가양 데시앙플렉스'
-)
+// QA-0516: 교육 형태가 온라인이면 기관 안/밖 주소 대신 온라인 안내만 보인다.
+assert.equal(trainedTeacherProgress.educationVenueLabel, '온라인')
+{
+  // 장소 구분 표기(`기관 안 | 상세`)는 오프라인 교육에서 그대로 유지한다.
+  const offlineVenueFormat = mapPortalProgramDetail({
+    programId: 186019,
+    programType: 'TRAINED_TEACHER',
+    title: '오프라인 장소 표기',
+    educationForm: 'offline',
+    venue: '서울시 강서구 가양 데시앙플렉스',
+    venueKind: 'inside',
+  })
+  assert.ok(offlineVenueFormat)
+  assert.equal(
+    offlineVenueFormat.educationVenueLabel,
+    '기관 안 | 서울시 강서구 가양 데시앙플렉스'
+  )
+}
 assert.equal(trainedTeacherProgress.detailCase, 'general')
 assert.equal(trainedTeacherProgress.educationStructure, 'curriculum')
 assert.equal(trainedTeacherProgress.sessions.length, 1)
@@ -1212,7 +1227,7 @@ assert.equal(
 )
 assert.equal(geminiTraining.geminiTrainingRequestStartDate, '2026-09-01')
 assert.equal(geminiTraining.geminiTrainingRequestEndDate, '2026-09-30')
-assert.equal(geminiTraining.recruitmentPhases[0]?.label, '기관 모집 기간')
+assert.equal(geminiTraining.recruitmentPhases[0]?.label, '참여 기관 모집 기간')
 
 const geminiWithoutTrainingRequestPeriod = mapPortalProgramDetail({
   programId: 185004,
@@ -2203,6 +2218,68 @@ assert.equal(
   '초등학생 4~6학년',
 )
 
+// QA-0198: 강사 모집 상세도 봉사자처럼 모집 대상 아래에 모집 대상 상세를 보인다.
+const instructorRecruitmentTargetDetail = mapPortalProgramDetail(
+  {
+    programId: 186250,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '기관/일정/단일/날짜',
+    educationTargets: ['elementary'],
+    recruitmentTarget: '강사',
+    recruitmentTargets: ['adult'],
+    recruitmentTargetDetail: '경제 교육 경력 1년 이상',
+    recruitments: [{ recruitmentType: 'INSTRUCTOR', applicationTypes: ['INSTRUCTOR'] }],
+  },
+  { applicationTypes: ['INSTRUCTOR'] },
+)
+assert.ok(instructorRecruitmentTargetDetail)
+assert.equal(instructorRecruitmentTargetDetail.detailCase, 'instructor')
+{
+  const labels = instructorRecruitmentTargetDetail.basicInfoFields.map(field => field.label)
+  assert.equal(labels.indexOf('모집 대상 상세'), labels.indexOf('모집 대상') + 1)
+}
+assert.equal(
+  instructorRecruitmentTargetDetail.basicInfoFields.find(field => field.label === '모집 대상')?.value,
+  '강사',
+)
+assert.equal(
+  instructorRecruitmentTargetDetail.basicInfoFields.find(field => field.label === '모집 대상 상세')
+    ?.value,
+  '경제 교육 경력 1년 이상',
+)
+assert.equal(
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '모집 대상 상세'),
+  undefined,
+)
+
+// QA-0516: 교육 형태가 온라인이면 교육 장소에 오프라인 주소를 보이지 않고 온라인 안내만 보인다.
+const onlineVenue = mapPortalProgramDetail({
+  programId: 186310,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '온라인 교육',
+  educationForm: 'online',
+  venue: '서울시 중구 세종대로 110',
+  educationPlaceScheduleDetail: 'common',
+  educationPlaceAddress: '서울시 영등포구 국제금융로 10',
+})
+assert.ok(onlineVenue)
+assert.equal(onlineVenue.educationVenueLabel, '온라인')
+assert.equal(
+  onlineVenue.basicInfoFields.find(field => field.label === '교육 장소')?.value,
+  '온라인',
+)
+
+const hybridVenue = mapPortalProgramDetail({
+  programId: 186311,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '온/오프라인 교육',
+  educationForm: 'hybrid',
+  educationPlaceScheduleDetail: 'common',
+  educationPlaceAddress: '서울시 영등포구 국제금융로 10',
+})
+assert.ok(hybridVenue)
+assert.equal(hybridVenue.educationVenueLabel, '서울시 영등포구 국제금융로 10')
+
 // 개인 일반 「교육 진행 장소」 — common: 공통 주소가 venue보다 앞서고 행에는 반복하지 않는다.
 const educationPlaceCommon = mapPortalProgramDetail({
   programId: 186301,
@@ -2562,6 +2639,37 @@ assert.equal(
   assert.equal(phaseValue(participantNoInterview, '1차 서류 합격자 발표'), undefined)
   assert.equal(phaseValue(participantNoInterview, '2차 면접 기간'), undefined)
   assert.ok(phaseValue(participantNoInterview, '최종 합격자 발표'))
+}
+
+// QA-0210: 마이페이지 신청 카드가 쓰는 배지 라벨 함수는 상세 헤더 배지와 같은 값을 낸다.
+{
+  const audienceCases: Array<
+    Pick<
+      PortalProgramDetail,
+      'educationTargets' | 'educationForm' | 'educationFormLabel' | 'educationFormScheduleDetail'
+    >
+  > = [
+    { educationTargets: ['elementary', 'university'], educationForm: 'online', educationFormLabel: '온라인', educationFormScheduleDetail: 'common' },
+    { educationTargets: ['adult'], educationForm: 'hybrid', educationFormLabel: null, educationFormScheduleDetail: 'common' },
+    { educationTargets: [], educationForm: 'offline', educationFormLabel: null, educationFormScheduleDetail: 'perSchedule' },
+  ]
+  for (const audience of audienceCases) {
+    const detail = mapPortalProgramDetail({
+      programId: 186900,
+      programType: 'GENERAL_INDIVIDUAL',
+      title: '교육대상·형태 일치',
+      ...audience,
+    } as PortalProgramDetail)
+    assert.ok(detail)
+    const badge = mapPortalProgramEducationBadgeLabels(audience)
+    assert.equal(badge.educationTargetLabel, detail.educationTargetLabel)
+    assert.equal(badge.educationForm, detail.educationForm)
+    assert.equal(badge.educationFormLabel, detail.educationFormLabel)
+  }
+  assert.equal(
+    mapPortalProgramEducationBadgeLabels({ educationTargets: ['elementary', 'university'] }).educationTargetLabel,
+    '초등학교, 대학(원)생',
+  )
 }
 
 console.log('program portal mappers.selfcheck: ok')

@@ -13,9 +13,6 @@ export function parseSettlementAmount(value: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
-/** 지급조서 식사비 안내 문구(시간 당 최대 3만원)와 동일한 상한 */
-export const INSTRUCTOR_MEAL_MAX_WON = 30_000
-
 export function readPositiveWonLimit(value: number | null | undefined): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
   return Math.floor(value)
@@ -65,7 +62,7 @@ export function formatSettlementResidentNumber(draft: SettlementWriteDraft): str
   const front = draft.basic.residentFront.trim()
   const back = draft.basic.residentBack.trim()
   if (!front && !back) return ''
-  if (front && back) return `${front} - ${back}`
+  if (front && back) return `${front}-${back}`
   return front || back
 }
 

@@ -5,8 +5,9 @@
 
 import { Card, Statistic, Row, Col, Tag } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { invalidateQueriesForMemberManagementNavigation } from '@/features/user/api/invalidate-member-management-navigation-queries'
+import './card-link.css'
 
 export interface StatisticsCardTag {
   color: string
@@ -33,22 +34,16 @@ export function StatisticsCard({
   to,
   loading = false,
 }: StatisticsCardProps) {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const hasTags = (tags?.length ?? 0) > 0
 
-  const handleClick = () => {
-    invalidateQueriesForMemberManagementNavigation(queryClient, to)
-    navigate(to)
-  }
-
   return (
-    <Card
-      hoverable
-      onClick={handleClick}
-      style={{ cursor: 'pointer', height: '100%' }}
-      loading={loading}
+    <Link
+      to={to}
+      className="dashboard-card-link"
+      onClick={() => invalidateQueriesForMemberManagementNavigation(queryClient, to)}
     >
+    <Card hoverable style={{ height: '100%' }} loading={loading}>
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Statistic
@@ -72,5 +67,6 @@ export function StatisticsCard({
         ) : null}
       </Row>
     </Card>
+    </Link>
   )
 }

@@ -11,6 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
+import { useAdminNotificationNavigate } from '@/features/dashboard/hooks/use-admin-notification-navigate'
 import { useDashboardNotificationCount } from '@/features/dashboard/hooks/use-dashboard-notification-count'
 import { formatDashboardCountLabel } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
@@ -35,6 +36,7 @@ const SHOW_NOTIFICATION_SETTINGS = false
 export function MainHeader() {
   const navigate = useNavigate()
   const location = useLocation()
+  const navigateToNotificationTarget = useAdminNotificationNavigate()
   const { user, logout, checkAuth } = useAuthStore()
   const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
   const { data: remoteUnreadCount, refetch: refetchRemoteUnreadCount } =
@@ -177,7 +179,7 @@ export function MainHeader() {
   }, [location.pathname, location.search, user])
 
   const handleLogout = () => {
-    logout()
+    logout({ preserveReturnPath: false })
     navigate('/login')
   }
 
@@ -198,8 +200,7 @@ export function MainHeader() {
     if (!notification.read) {
       await markAsRead(notification.id)
     }
-    if (notification.link) {
-      navigate(notification.link)
+    if (navigateToNotificationTarget(notification)) {
       setDropdownOpen(false)
     }
   }
@@ -210,8 +211,7 @@ export function MainHeader() {
         await markAsRead(notification.id)
       }
       await removeNotification(notification.id)
-      if (notification.link) {
-        navigate(notification.link)
+      if (navigateToNotificationTarget(notification)) {
         setDropdownOpen(false)
       }
     } catch (error) {

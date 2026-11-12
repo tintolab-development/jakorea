@@ -1,4 +1,5 @@
-import { expect, type BrowserContext, type Page } from '@playwright/test'
+import { requireCmsAccessToken, readBrowserAccessToken, rememberAccessToken, installAccessTokenRecorder } from '../helpers/browser-access-token'
+import { expect, type BrowserContext, type Page, type Response } from '@playwright/test'
 
 type ApiEnvelope = {
   success?: boolean
@@ -112,8 +113,7 @@ export async function fetchCmsProgramSnapshot(
   page: Page,
   programId: string
 ): Promise<CmsProgramSnapshot> {
-  const authToken = await page.evaluate(() => localStorage.getItem('auth_token'))
-  if (!authToken) throw new Error('CMS 프로그램 조회에 필요한 auth_token이 없습니다.')
+  const authToken = await requireCmsAccessToken(page, 'CMS 프로그램 조회')
   const response = await page.request.get(`/api/admin/programs/${encodeURIComponent(programId)}`, {
     headers: { Authorization: `Bearer ${authToken}` },
   })
@@ -158,8 +158,7 @@ export async function activateCmsProgramRecruitmentsForIntegration(
   page: Page,
   program: CmsProgramSnapshot
 ) {
-  const accessToken = await page.evaluate(() => localStorage.getItem('auth_token'))
-  if (!accessToken) throw new Error('CMS 프로그램 모집 기간 조정에 필요한 access token이 없습니다.')
+  const accessToken = await requireCmsAccessToken(page, 'CMS 프로그램 모집 기간 조정')
 
   let serviceDetailJson: Record<string, unknown>
   try {
@@ -217,6 +216,19 @@ export function recruitmentForType(
   return match
 }
 
+/** Portal 로그인 응답 본문의 accessToken (`{ data: { accessToken } }` 또는 루트) */
+async function readAccessTokenFromLoginResponse(response: Response): Promise<string | null> {
+  try {
+    const body = (await response.json()) as Record<string, unknown> | null
+    const data = (body && typeof body.data === 'object' && body.data ? body.data : body) as
+      | Record<string, unknown>
+      | null
+    return typeof data?.accessToken === 'string' ? data.accessToken : null
+  } catch {
+    return null
+  }
+}
+
 export class PlatformApplicationFlowPage {
   private accessToken: string | null = null
 
@@ -227,6 +239,8 @@ export class PlatformApplicationFlowPage {
   ) {}
 
   async signIn(email: string) {
+    // QA-0137: Platform access token은 화면 메모리에만 있다 — 로그인 응답·화면 요청에서 얻는다
+    installAccessTokenRecorder(this.page.context())
     for (let attempt = 0; attempt < 2; attempt += 1) {
       await this.page.goto(`${this.baseUrl}/auth/sign-in`)
       await this.page.getByPlaceholder('이메일 주소를 입력해 주세요').fill(email)
@@ -252,7 +266,12 @@ export class PlatformApplicationFlowPage {
       }
 
       await expect(this.page).not.toHaveURL(/\/auth\/sign-in/, { timeout: 30_000 })
-      this.accessToken = await this.page.evaluate(() => localStorage.getItem('platform_auth_token'))
+      rememberAccessToken(
+        this.page.context(),
+        'platform',
+        response ? await readAccessTokenFromLoginResponse(response) : null,
+      )
+      this.accessToken = await readBrowserAccessToken(this.page, 'platform')
       if (!this.accessToken) throw new Error('Platform 로그인 후 access token을 찾지 못했습니다.')
       return
     }
@@ -261,9 +280,8 @@ export class PlatformApplicationFlowPage {
   }
 
   private async authenticatedHeaders() {
-    if (!this.accessToken) {
-      this.accessToken = await this.page.evaluate(() => localStorage.getItem('platform_auth_token'))
-    }
+    // 화면이 refresh로 토큰을 바꿨을 수 있으니 마지막으로 보낸 값을 우선한다
+    this.accessToken = (await readBrowserAccessToken(this.page, 'platform')) ?? this.accessToken
     if (!this.accessToken)
       throw new Error('인증된 Portal API 요청에 필요한 access token이 없습니다.')
     return { Authorization: `Bearer ${this.accessToken}` }

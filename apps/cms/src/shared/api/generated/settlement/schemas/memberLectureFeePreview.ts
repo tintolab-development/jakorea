@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberLectureFeePreviewFeePricingMode } from './memberLectureFeePreviewFeePricingMode';
 import type { MemberLectureFeePreviewInstructorFeeCalculationUnit } from './memberLectureFeePreviewInstructorFeeCalculationUnit';
 import type { MemberLectureFeePreviewLectureFeeType } from './memberLectureFeePreviewLectureFeeType';
 
@@ -28,4 +29,10 @@ export interface MemberLectureFeePreview {
   actualTrainingMinutes?: number | null;
   /** 확정 강사비를 신청할 수 없을 때 코드. SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED(기관·개인), SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED(제미나이), SETTLEMENT_WAGE_RATE_NOT_CONFIGURED. 확정 가능하면 null. */
   settlementBlockerCode?: string | null;
+  /** 배정에 저장된 강사비 책정 방식. PROGRAM_STANDARD=프로그램 기준 적용(등급 단가), SPECIAL_LECTURE=특강 강사비, OTHER_LABOR=기타 인건비. 특강·기타는 instructorFeeAmount(승인 금액)와 instructorFeeCalculationUnit(PER_LECTURE=출강 1회당, PER_CLASS=차시당)으로 계산한다. 제미나이는 null. */
+  feePricingMode?: MemberLectureFeePreviewFeePricingMode;
+  /** 화면 표시용 강사비 이름. 예: 1급 강사비, 특강 강사비, 기타 인건비. 지급조서 강사비 항목 이름과 같다. 없으면 null. */
+  wageTitle?: string | null;
+  /** 1사1교 장거리 강사비 단가가 적용되면 true. 그 외 false. 제미나이는 null. */
+  longDistance?: boolean | null;
 }

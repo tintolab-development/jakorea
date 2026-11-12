@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { act, render } from '@testing-library/react'
+import { act, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const refreshAccessTokenSessionMock = vi.hoisted(() => vi.fn())
@@ -38,7 +38,6 @@ const USER = {
 
 function seed(expiresInMs: number, issuedAgoMs: number) {
   const expiresAt = new Date(Date.now() + expiresInMs).toISOString()
-  localStorage.setItem('auth_token', 'access-token')
   localStorage.setItem('auth_expires_at', expiresAt)
   localStorage.setItem('auth_user', JSON.stringify(USER))
   localStorage.setItem('auth_refresh_token', 'refresh')
@@ -88,15 +87,72 @@ describe('AuthProvider keep-alive', () => {
     expect(logoutMock).not.toHaveBeenCalled()
   })
 
-  it('init: 만료됐고 refresh token도 없으면 logout한다', async () => {
+  it('init: 만료됐고 refresh token도 없으면(갱신 실패) logout한다', async () => {
     seed(-5 * MIN, 70 * MIN)
     localStorage.removeItem('auth_refresh_token')
+    // 실제 refreshAccessTokenSession은 refresh 수단이 없으면 요청 없이 false
+    refreshAccessTokenSessionMock.mockResolvedValue(false)
 
     await act(async () => {
       render(<AuthProvider>x</AuthProvider>)
     })
 
-    expect(refreshAccessTokenSessionMock).not.toHaveBeenCalled()
+    expect(logoutMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('새로고침: 메모리에 access token이 없으면 보호 화면을 막은 채 refresh로 다시 받고, 브라우저 저장소에는 쓰지 않는다', async () => {
+    localStorage.setItem('auth_user', JSON.stringify(USER))
+    localStorage.setItem('auth_refresh_token', 'refresh')
+    useAuthStore.setState({
+      user: { ...USER } as never,
+      token: null,
+      expiresAt: null,
+      isAuthenticated: true,
+      isBootstrapping: true,
+      logout: logoutMock,
+      _isCheckingAuth: false,
+      _checkAuthPromise: null,
+    })
+    refreshAccessTokenSessionMock.mockImplementation(async () => {
+      // axios-instance가 commitRefreshedAccessToken으로 스토어(메모리)에만 반영하는 동작
+      useAuthStore.setState({
+        token: 'access-after-reload',
+        expiresAt: new Date(Date.now() + 60 * MIN).toISOString(),
+      })
+      return true
+    })
+
+    await act(async () => {
+      render(<AuthProvider>x</AuthProvider>)
+    })
+
+    await waitFor(() => expect(useAuthStore.getState().isBootstrapping).toBe(false))
+    expect(refreshAccessTokenSessionMock).toHaveBeenCalledTimes(1)
+    expect(logoutMock).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().token).toBe('access-after-reload')
+    expect(localStorage.getItem('auth_token')).toBeNull()
+  })
+
+  it('새로고침: refresh가 실패하면 logout한다', async () => {
+    localStorage.setItem('auth_user', JSON.stringify(USER))
+    localStorage.setItem('auth_refresh_token', 'refresh')
+    useAuthStore.setState({
+      user: { ...USER } as never,
+      token: null,
+      expiresAt: null,
+      isAuthenticated: true,
+      isBootstrapping: true,
+      logout: logoutMock,
+      _isCheckingAuth: false,
+      _checkAuthPromise: null,
+    })
+    refreshAccessTokenSessionMock.mockResolvedValue(false)
+
+    await act(async () => {
+      render(<AuthProvider>x</AuthProvider>)
+    })
+
+    expect(refreshAccessTokenSessionMock).toHaveBeenCalledTimes(1)
     expect(logoutMock).toHaveBeenCalledTimes(1)
   })
 

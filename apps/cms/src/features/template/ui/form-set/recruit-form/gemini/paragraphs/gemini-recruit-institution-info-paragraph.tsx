@@ -7,6 +7,7 @@ import type { GeminiRecruitmentEducationForm } from '@/features/program/gemini/l
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { GEMINI_RECRUITMENT_VALIDATION_KEYS } from '@/features/program/gemini/lib/recruitment/validation-keys'
 import {
   GEMINI_RECRUIT_FIELD_KEYS,
   useGeminiRecruitField,
@@ -184,6 +185,7 @@ export function GeminiRecruitInstitutionInfoParagraph() {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="공고 게시 여부"
+            validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.announcementPublished}
             fullRow
             view="-"
             edit={

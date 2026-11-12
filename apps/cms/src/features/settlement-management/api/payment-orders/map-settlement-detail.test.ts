@@ -112,6 +112,22 @@ describe('buildProgramDetailFromSettlements', () => {
     expect(detail.businessPeriodEnd).toBe('2026-12-30')
   })
 
+  it('진행 회차 값이 없으면(Gemini 등) 0으로 채우지 않고 null', () => {
+    const detail = buildProgramDetailFromSettlements(
+      programRow,
+      [
+        listItem({
+          sessionCompleted: undefined,
+          sessionTotal: undefined,
+          programSessionProgressDisplay: undefined,
+        }),
+      ],
+      []
+    )
+    expect(detail.sessionCompleted).toBeNull()
+    expect(detail.sessionTotal).toBeNull()
+  })
+
   it('statementId가 없으면 statements join으로 채움', () => {
     const detail = buildProgramDetailFromSettlements(
       programRow,
@@ -172,7 +188,7 @@ describe('buildInstructorDetailFromSettlements', () => {
     })
   })
 
-  it('개인 프로그램 기관명은 공란(비노출)이고 총액은 반려·정정 제외', () => {
+  it('개인 프로그램 기관명은 하이픈(-)이고 총액은 반려·정정 제외', () => {
     const detail = buildInstructorDetailFromSettlements(
       instructorRow,
       [
@@ -197,7 +213,7 @@ describe('buildInstructorDetailFromSettlements', () => {
       ],
       []
     )
-    expect(detail.programRows.every(r => r.institutionName === '')).toBe(true)
+    expect(detail.programRows.every(r => r.institutionName === '-')).toBe(true)
     expect(detail.totalEstimatedAmount).toBe(100_000)
   })
 })

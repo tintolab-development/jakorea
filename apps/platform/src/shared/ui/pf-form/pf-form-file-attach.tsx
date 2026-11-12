@@ -1,4 +1,5 @@
 import { type ChangeEvent, useId, useRef } from 'react'
+import { getFileTypeIconUrl } from '../pf-attached-file-list/file-type-icon'
 import { PFButton } from '../pf-button'
 import { PFItemDeleteButton } from '../pf-item-delete-button'
 import { PFText } from '../pf-text'
@@ -87,7 +88,17 @@ export function PFFormFileAttach({
     <div className={[styles.fileAttach, className].filter(Boolean).join(' ')}>
       {name ? (
         <span className={styles.fileAttachChip}>
-          <span className={styles.fileAttachName}>{name}</span>
+          <span className={styles.fileAttachFile}>
+            <img
+              className={styles.fileAttachIcon}
+              src={getFileTypeIconUrl(name)}
+              alt=""
+              aria-hidden="true"
+              width={24}
+              height={24}
+            />
+            <span className={styles.fileAttachName}>{name}</span>
+          </span>
           {onRemove ? (
             <PFItemDeleteButton
               aria-label={`${name} 삭제`}

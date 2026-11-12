@@ -1,4 +1,5 @@
-import { calculateInternationalAge } from '../utils'
+import { calculateInternationalAge, checkBirthDateInput } from '../utils'
+import { birthDateRangeMessage } from '../birth-date-bounds'
 import { MIN_GENERAL_MEMBER_AGE } from '../constants'
 import { readSignupWizardFields } from '../signup-wizard-field-storage'
 import {
@@ -9,16 +10,31 @@ import {
 
 export type BirthStepValidationResult =
   | { status: 'valid' }
-  | { status: 'invalid-format'; message: string }
+  | {
+      status: 'invalid-format'
+      message: string
+      /** QA-0220: 범위 오류(future·too-old)는 생년월일 입력란 아래에 보여 준다 */
+      reason: 'format' | 'future' | 'too-old'
+    }
   | { status: 'under-age' }
 
 export function validateBirthStep(birthDate: string): BirthStepValidationResult {
+  const checked = checkBirthDateInput(birthDate)
+  if (checked.status === 'future' || checked.status === 'too-old') {
+    return {
+      status: 'invalid-format',
+      message: birthDateRangeMessage(checked.status) ?? '',
+      reason: checked.status,
+    }
+  }
+
   const age = calculateInternationalAge(birthDate)
 
   if (age === null) {
     return {
       status: 'invalid-format',
       message: '생년월일을 YYYY.MM.DD 형식으로 입력해 주세요.',
+      reason: 'format',
     }
   }
 

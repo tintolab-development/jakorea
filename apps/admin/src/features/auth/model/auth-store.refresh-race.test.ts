@@ -23,7 +23,6 @@ describe('Homepage Admin: periodic Refresh race', () => {
     vi.clearAllMocks()
     localStorage.clear()
     const expiry = new Date(Date.now() + 10_000).toISOString()
-    localStorage.setItem('hp_admin_auth_token', initialAccess)
     localStorage.setItem('hp_admin_auth_expires_at', expiry)
     localStorage.setItem('hp_admin_auth_refresh_token', initialRefresh)
     refreshPromise = new Promise<boolean>(resolve => { settle = resolve })
@@ -42,7 +41,6 @@ describe('Homepage Admin: periodic Refresh race', () => {
 
   it('failure of a previous Refresh cannot logout a newly rotated access/refresh pair', async () => {
     expect(useAuthStore.getState().checkSessionExpiry()).toBe(false)
-    localStorage.setItem('hp_admin_auth_token', replacementAccess)
     localStorage.setItem('hp_admin_auth_refresh_token', replacementRefresh)
     useAuthStore.setState({ token: replacementAccess })
     await complete(false)
@@ -79,7 +77,6 @@ describe('Homepage Admin: periodic Refresh race', () => {
     })
 
     const pending = useAuthStore.getState().checkAuth()
-    localStorage.setItem('hp_admin_auth_token', replacementAccess)
     localStorage.setItem('hp_admin_auth_user', JSON.stringify({ id: 'new-user', isActive: true }))
     localStorage.setItem('hp_admin_auth_expires_at', new Date(Date.now() + 3600_000).toISOString())
     useAuthStore.setState({ token: replacementAccess, isAuthenticated: true })
@@ -102,7 +99,6 @@ describe('Homepage Admin: periodic Refresh race', () => {
 
     const pending = useAuthStore.getState().checkAuth()
     const newUser = JSON.stringify({ id: 'new-user', isActive: true })
-    localStorage.setItem('hp_admin_auth_token', replacementAccess)
     localStorage.setItem('hp_admin_auth_user', newUser)
     localStorage.setItem('hp_admin_auth_expires_at', new Date(Date.now() + 3600_000).toISOString())
     useAuthStore.setState({ token: replacementAccess, isAuthenticated: true })

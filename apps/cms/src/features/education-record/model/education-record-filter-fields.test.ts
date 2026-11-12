@@ -18,4 +18,12 @@ describe('createEducationRecordFilterFields', () => {
       width: FILTER_ADDRESS_REGION_FIELD_WIDTH_PX,
     })
   })
+
+  it('QA-0371 시/도를 고르면 시/군/구 옵션은 시/군/구명만 보인다', () => {
+    const fields = createEducationRecordFilterFields({ availableYears: [2026] })
+    const region = fields.find(field => field.key === 'institutionRegion')
+    const options = region?.addressRegion?.getSigunguOptions('강원도') ?? []
+    const gangneung = options.find(option => option.value === '강릉시')
+    expect(gangneung).toEqual({ label: '강릉시', value: '강릉시' })
+  })
 })

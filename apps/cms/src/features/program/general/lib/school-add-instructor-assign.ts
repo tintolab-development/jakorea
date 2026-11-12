@@ -157,6 +157,8 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
   applicantInstructors?: readonly ApplicantInstructorRow[]
   participatingInstructorList: ParticipatingInstructorRow[]
   participatingSchoolList?: ParticipatingSchoolRow[]
+  /** 칩 순위 라벨. 기본 `N회차` — 1사1교는 회차 대신 지망({@link resolveAssignmentRoundSessionLabel} 대체) */
+  resolveSessionRoundLabel?: (session: ParticipatingSchoolSession) => string
 }): InstructorAssignSessionOption[] {
   const {
     schoolId,
@@ -166,6 +168,7 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
     applicantInstructors = [],
     participatingInstructorList,
     participatingSchoolList = [],
+    resolveSessionRoundLabel = resolveAssignmentRoundSessionLabel,
   } = params
 
   if (!sessions?.length) return []
@@ -192,7 +195,7 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
       dateLabel: dateLabel || undefined,
       timeLabel,
       scheduleLabel,
-      sessionRoundLabel: resolveAssignmentRoundSessionLabel(session),
+      sessionRoundLabel: resolveSessionRoundLabel(session),
       capacityLabel: '0명',
       dateKey: dateKey ?? undefined,
       slotKey,

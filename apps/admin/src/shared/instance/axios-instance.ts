@@ -2,18 +2,29 @@
  * Homepage Admin Axios 클라이언트
  * - Bearer 토큰 부착
  * - 401 시 refresh single-flight
+ * - 리프레시: `POST /api/admin/auth/refresh` (no Bearer). QA-0137 전환기: 저장된 refreshToken이 있으면 본문으로 보내고,
+ *   HttpOnly 쿠키(`JA_ADMIN_RT`)도 함께 실리도록 인증 호출은 `withCredentials`를 명시한다.
+ *   응답 본문에 refreshToken이 없으면 쿠키 세션으로 전환한다 (`features/auth/lib/refresh-credential`).
+ * - access token은 메모리(`useAuthStore.token`)에만 둔다. 탭마다 따로 갖고, 여러 탭의 refresh는 Web Locks로 직렬화한다.
  */
 
 import { readJwtSidClaim } from '@jakorea/domain/session'
 import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
-import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  AUTH_EXPIRY_KEY,
-  AUTH_REFRESH_TOKEN_KEY,
-  AUTH_TOKEN_KEY,
-} from '@/features/auth/model/auth-storage'
+  buildRefreshRequestBody,
+  hasRefreshCredential,
+  readStoredRefreshToken,
+  storeRefreshTokenFromResponse,
+} from '@/features/auth/lib/refresh-credential'
+import {
+  classifyRefreshFailure,
+  type RefreshSessionResult,
+} from '@/features/auth/lib/refresh-failure'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { AUTH_EXPIRY_KEY, AUTH_REFRESH_TOKEN_KEY } from '@/features/auth/model/auth-storage'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { getApiBaseUrl, getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
+import { buildLoginPathWithRedirect } from '@/shared/lib/login-redirect'
 import axios, {
   type AxiosError,
   type AxiosRequestHeaders,
@@ -133,13 +144,18 @@ if (ngrokSkip) {
   axiosInstance.defaults.headers.common['ngrok-skip-browser-warning'] = ngrokSkip
 }
 
-export async function postAuthenticationRefreshToken(refreshToken: string) {
+/**
+ * POST refresh. 저장된 refreshToken이 있으면 본문(전환기), 없으면 본문 없이 HttpOnly 쿠키로 갱신한다.
+ */
+export async function postAuthenticationRefreshToken(refreshToken: string | null) {
   return axiosInstance.post<unknown>(
     adminAuthPaths.refresh(),
-    { refreshToken },
+    buildRefreshRequestBody(refreshToken),
     {
       skipRefresh: true,
       skipAuth: true,
+      // QA-0137: 인증 호출은 refresh 쿠키가 오가도록 명시 (클라이언트 기본값과 무관하게 유지)
+      withCredentials: true,
     } as RetryableRequest
   )
 }
@@ -163,15 +179,14 @@ function processQueue(token: string | null, error: unknown = null) {
 }
 
 function readRefreshToken(): string | null {
-  if (typeof window === 'undefined' || !window.localStorage) return null
-  return localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
+  return readStoredRefreshToken()
 }
 
+/** refresh 결과 반영 — access token은 메모리에만, 만료 시각은 기존처럼 localStorage에도 남긴다 (auth-store 저장 정책과 동일) */
 function persistAccessToken(accessToken: string, expiresAtIso?: string) {
   const expires = expiresAtIso ?? new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
   if (typeof window !== 'undefined' && window.localStorage) {
-    localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
     localStorage.setItem(AUTH_EXPIRY_KEY, expires)
   }
   recordTokenIssuedAt()
@@ -182,10 +197,9 @@ function persistAccessToken(accessToken: string, expiresAtIso?: string) {
   })
 }
 
-function persistRefreshToken(refreshToken: string) {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, refreshToken)
-  }
+/** 본문 refreshToken이 없으면(쿠키 전용 운영) 저장값을 undefined로 덮지 않고 쿠키 세션으로 전환한다 */
+function persistRefreshToken(refreshToken: string | null) {
+  storeRefreshTokenFromResponse(refreshToken)
 }
 
 function parseAccessTokenFromRefreshBody(payload: unknown): string | null {
@@ -231,9 +245,9 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
 function handleAuthFailure() {
   useAuthStore.getState().logout()
   if (typeof window !== 'undefined') {
-    const path = `${window.location.pathname}${window.location.search}`
-    const next = encodeURIComponent(path)
-    window.location.assign(`/login?redirect=${next}`)
+    window.location.assign(
+      buildLoginPathWithRedirect(`${window.location.pathname}${window.location.search}`)
+    )
   }
 }
 
@@ -252,31 +266,16 @@ function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
 }
 
 const REFRESH_LOCK_NAME = 'jakorea-hp-admin-refresh'
-const ADOPT_EXPIRY_BUFFER_MS = 30 * 1000
 
-function adoptTokensRotatedByAnotherTab(usedRefreshToken: string): string | null {
-  if (typeof window === 'undefined' || !window.localStorage) return null
-  const storedRefresh = readRefreshToken()
-  if (!storedRefresh || storedRefresh === usedRefreshToken) return null
-
-  const storedAccess = localStorage.getItem(AUTH_TOKEN_KEY)
-  const storedExpiry = localStorage.getItem(AUTH_EXPIRY_KEY)
-  if (!storedAccess || !storedExpiry) return null
-  const expiryMs = new Date(storedExpiry).getTime()
-  if (!Number.isFinite(expiryMs) || expiryMs <= Date.now() + ADOPT_EXPIRY_BUFFER_MS) return null
-
-  useAuthStore.setState({ token: storedAccess, expiresAt: storedExpiry })
-  return storedAccess
-}
-
-async function postRefreshAndPersist(refreshToken: string): Promise<string> {
+async function postRefreshAndPersist(refreshToken: string | null): Promise<string> {
   const res = await postAuthenticationRefreshToken(refreshToken)
   const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
   const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
   const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
 
-  if (!newAccessToken || !newRefreshToken) {
-    throw new Error('Invalid refresh response: missing access or refresh token')
+  // QA-0137: refreshToken은 전환기에만 본문에 온다. access만 필수.
+  if (!newAccessToken) {
+    throw new Error('Invalid refresh response: missing access token')
   }
 
   const expiresAtIso =
@@ -290,33 +289,33 @@ async function postRefreshAndPersist(refreshToken: string): Promise<string> {
   return newAccessToken
 }
 
-async function refreshWithAdoption(startedWithRefreshToken: string): Promise<string> {
-  const adoptedBefore = adoptTokensRotatedByAnotherTab(startedWithRefreshToken)
-  if (adoptedBefore) return adoptedBefore
-
-  const tokenToUse = readRefreshToken() ?? startedWithRefreshToken
-  try {
-    return await postRefreshAndPersist(tokenToUse)
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response?.status === 409) {
-      const adopted = adoptTokensRotatedByAnotherTab(tokenToUse)
-      if (adopted) return adopted
-    }
-    throw err
-  }
+/**
+ * 잠금 안에서 refresh 수단을 다시 읽는다. 다른 탭이 먼저 rotate했으면 그 새 값(전환기 본문) 또는 갱신된 쿠키를 쓴다.
+ * access token은 탭마다 메모리에 있으므로 다른 탭의 토큰을 가져다 쓰지 않고 이 탭도 직접 refresh한다.
+ */
+async function refreshWithLatestCredential(startedWithRefreshToken: string | null): Promise<string> {
+  // 저장값이 없으면(쿠키 세션) 본문 없이 쿠키로 요청한다.
+  // 쿠키 세션에서 이 탭이 시작 때 쓰던 값을 다시 쓰지 않는다 — 다른 탭이 지운 rotate된 토큰일 수 있다.
+  const tokenToUse =
+    readRefreshToken() ?? (hasRefreshCredential() ? null : startedWithRefreshToken)
+  return postRefreshAndPersist(tokenToUse)
 }
 
-async function refreshAcrossTabs(startedWithRefreshToken: string): Promise<string> {
+async function refreshAcrossTabs(startedWithRefreshToken: string | null): Promise<string> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
   if (locks && typeof locks.request === 'function') {
     return await locks.request(REFRESH_LOCK_NAME, () =>
-      refreshWithAdoption(startedWithRefreshToken)
+      refreshWithLatestCredential(startedWithRefreshToken)
     )
   }
-  return refreshWithAdoption(startedWithRefreshToken)
+  return refreshWithLatestCredential(startedWithRefreshToken)
 }
 
-async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
+/**
+ * refreshToken=null은 쿠키 세션(본문 없이 HttpOnly 쿠키로 refresh).
+ * 요청은 중단하지 않는다 — 서버가 이미 rotate했을 수 있어 중단 뒤 재전송하면 재사용 탐지에 걸린다.
+ */
+async function runSingleFlightRefresh(refreshToken: string | null): Promise<string> {
   if (refreshPromise) {
     return refreshPromise
   }
@@ -332,17 +331,29 @@ async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
   return refreshPromise
 }
 
-/** 선제·수동 갱신용. 인터셉터와 동일 single-flight를 공유한다. */
-export async function refreshAccessTokenSession(): Promise<boolean> {
+/**
+ * 새로고침 세션 복원용. 인터셉터와 동일 single-flight·탭 간 잠금을 쓰고, 실패 원인을 나눠 돌려준다.
+ * refresh 수단이 없으면 되살릴 세션이 없으므로 session-invalid.
+ */
+export async function refreshAccessTokenSessionWithResult(): Promise<RefreshSessionResult> {
+  if (!hasRefreshCredential()) return { ok: false, kind: 'session-invalid' }
   const refreshToken = readRefreshToken()
-  if (!refreshToken) return false
 
   try {
     await runSingleFlightRefresh(refreshToken)
-    return true
-  } catch {
-    return false
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, kind: classifyRefreshFailure(err) }
   }
+}
+
+/**
+ * 선제·수동 갱신용. 인터셉터와 동일 single-flight를 공유한다.
+ * refresh 수단(저장된 refreshToken 또는 쿠키 세션 표시)이 없거나 실패하면 false.
+ */
+export async function refreshAccessTokenSession(): Promise<boolean> {
+  const result = await refreshAccessTokenSessionWithResult()
+  return result.ok
 }
 
 axiosInstance.interceptors.request.use(
@@ -405,11 +416,11 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const refreshToken = readRefreshToken()
-    if (!refreshToken) {
+    if (!hasRefreshCredential()) {
       handleAuthFailure()
       return Promise.reject(error)
     }
+    const refreshToken = readRefreshToken()
 
     if (isRefreshing) {
       return enqueueWhileRefreshing(originalRequest)

@@ -60,11 +60,12 @@ describe('교육 진행 차시 · 교육 진행 회차 (BE N2)', () => {
     expect(getMailVariablePanelNote('회원명')).toBeUndefined()
   })
 
-  it('카탈로그 설명보다 FE 차시 설명을 우선하고, 카탈로그에 없는 변수는 끼워 넣지 않는다', () => {
+  it('카탈로그 설명(정본)을 그대로 쓰고, 카탈로그에 없는 변수는 끼워 넣지 않는다', () => {
+    const catalogDescription = '차시 개수(N차시). 정산 알림은 정산 인정 차시(recognizedSessionCount)'
     const groups = groupMailTemplateVariablesFromCatalog([
       {
         key: '교육 진행 차시',
-        description: '교육 진행 차시',
+        description: catalogDescription,
         requiresProgram: true,
         enabled: false,
         categoryCode: 'TIME',
@@ -72,7 +73,14 @@ describe('교육 진행 차시 · 교육 진행 회차 (BE N2)', () => {
       },
     ])
     expect(groups[0]?.items).toHaveLength(1)
-    expect(groups[0]?.items[0]?.hint).toContain('차시 개수')
+    expect(groups[0]?.items[0]?.hint).toBe(catalogDescription)
+  })
+
+  it('카탈로그 설명이 비어 있을 때만 FE 차시·회차 문구로 채운다', () => {
+    const groups = groupMailTemplateVariablesFromCatalog([
+      { key: '교육 진행 회차', description: '  ', requiresProgram: true, categoryCode: 'TIME', categoryLabel: '시간' },
+    ])
+    expect(groups[0]?.items[0]?.hint).toBe('일정 회차 번호(N회차)')
   })
 })
 

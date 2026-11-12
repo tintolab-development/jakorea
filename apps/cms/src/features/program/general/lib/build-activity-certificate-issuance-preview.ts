@@ -1,12 +1,10 @@
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import type { Program } from '@/types/domain'
+import { ACTIVITY_CERTIFICATE_BODY_CONTENT } from '@/features/template/lib/certificate-body-content'
 import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export const ACTIVITY_CERTIFICATE_DOCUMENT_TITLE = '활동인증서'
-
-export const ACTIVITY_CERTIFICATE_BODY_CONTENT =
-  '귀하는 위 프로그램에서 교육진행자로 참여하여\n교육 활동을 수행하였음을 확인합니다.'
 
 function formatDateValue(value: Program['startDate'] | undefined): string | null {
   if (value == null || value === '') return null

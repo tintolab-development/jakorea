@@ -7,7 +7,10 @@ import {
   resolveIndividualSettlementExportAmount,
 } from '@/features/program/general/lib/participating-individual-instructor-settlement-display'
 import type { ParticipatingInstructorSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
-import type { IndividualSettlementReviewListRow } from '@/features/program/general/lib/map-individual-settlement-review-rows'
+import {
+  isIndividualSettlementRowNotApplicable,
+  type IndividualSettlementReviewListRow,
+} from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import { individualSettlementTableProcessingLabel } from '@/features/program/general/lib/individual-settlement-review-status'
 
 export const PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<ParticipatingInstructorSettlementApiRow> =
@@ -45,11 +48,15 @@ export const PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<Ind
     {
       title: '지급조서 처리 현황',
       key: 'status',
-      render: (_value, record) => individualSettlementTableProcessingLabel(record.status),
+      render: (_value, record) =>
+        isIndividualSettlementRowNotApplicable(record)
+          ? '-'
+          : individualSettlementTableProcessingLabel(record.status),
     },
     {
       title: '정산 예정 금액',
-      dataIndex: 'totalAmountLabel',
       key: 'totalAmountLabel',
+      render: (_value, record) =>
+        isIndividualSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
     },
   ]

@@ -11,6 +11,19 @@ import type {
 } from '@/features/sponsor/model/sponsor-management.types'
 import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
 
+/**
+ * 후원사 담당자 원문(연락처·이메일) 조회 — 성공할 때마다 서버가 「후원사 담당자 정보를 확인하기 위함」
+ * 조회 이력을 남긴다(CMS-17). 캐시가 남으면 재진입 때 GET이 없어 이력이 빠지고 원문이 메모리에 남으므로
+ * 진입마다 다시 조회하고, 화면을 떠나 관찰자가 없어지면 바로 버린다(Class G).
+ */
+export const SPONSOR_CONTACT_PII_QUERY_CACHE = {
+  staleTime: 0,
+  gcTime: 0,
+  retry: false as const,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+} as const
+
 function patchDetailContacts(
   queryClient: QueryClient,
   sponsorId: string,
@@ -111,6 +124,23 @@ export function applyDeletedContactsToDetail(
   ids: readonly string[]
 ): void {
   patchContactCaches(queryClient, sponsorId, contacts => removeContactsById(contacts, ids))
+}
+
+/**
+ * 담당자 등록·수정 응답은 연락처가 마스킹이고 조회 이력 대상이 아니다(서버 CMS-17, 프로그램 담당자 추가·수정과 같은 규칙).
+ * 응답을 캐시에 넣지 않고 GET /contacts(기본 RAW + 조회 이력)를 다시 받는다. 상세는 stale 표시만 해 다음 진입 때 다시 조회한다.
+ */
+export async function refetchSponsorContactsAfterSave(
+  queryClient: QueryClient,
+  sponsorId: string
+): Promise<void> {
+  void queryClient.invalidateQueries({
+    queryKey: dataManagementQueryKeys.sponsors.detail(sponsorId),
+    refetchType: 'none',
+  })
+  await queryClient.invalidateQueries({
+    queryKey: dataManagementQueryKeys.sponsors.contactsAll(sponsorId),
+  })
 }
 
 export function invalidateSponsorLists(queryClient: QueryClient): void {

@@ -131,7 +131,7 @@ export function EconomyProgramApplicationBasicInfoParagraph({
       <CmsInput
         inputSize="small"
         width={240}
-        placeholder="담당 교사의 내선 번호(직통 번호)"
+        placeholder="담당 교사의 내선(직통 번호)"
         value={teacherTel}
         onChange={e => setTeacherTel(e.target.value)}
       />

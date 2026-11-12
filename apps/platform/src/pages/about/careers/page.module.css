@@ -152,6 +152,8 @@
   flex-direction: column;
   align-items: stretch;
   padding-bottom: var(--spacing-100);
+  /* 「목록으로」 복귀 시 고정 헤더에 가리지 않게(QA-0486) */
+  scroll-margin-top: calc(var(--app-header-height) + var(--spacing-24));
 }
 
 .joinTitle {

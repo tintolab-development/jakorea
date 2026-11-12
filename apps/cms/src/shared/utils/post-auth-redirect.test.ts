@@ -9,13 +9,15 @@ import {
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
   resolveSessionAuthFailureRedirect,
+  buildLoginPathWithRedirect,
+  sanitizeLoginRedirectPath,
 } from './post-auth-redirect'
 
 describe('resolvePostAuthRedirectPath', () => {
   it('임시 비밀번호 변경이 필요하면 온보딩 안내로 보낸다', () => {
-    expect(
-      resolvePostAuthRedirectPath({ passwordChangeRequired: true, fallbackPath: '/' })
-    ).toBe(PASSWORD_CHANGE_REQUIRED_PATH)
+    expect(resolvePostAuthRedirectPath({ passwordChangeRequired: true, fallbackPath: '/' })).toBe(
+      PASSWORD_CHANGE_REQUIRED_PATH
+    )
   })
 
   it('비밀번호 변경 완료 플래그가 있으면 대시보드보다 완료 화면을 우선한다', () => {
@@ -31,9 +33,9 @@ describe('resolvePostAuthRedirectPath', () => {
 
 describe('resolveSessionAuthFailureRedirect', () => {
   it('완료 플래그가 있으면 로그인 대신 완료 화면으로 보낸다', () => {
-    expect(
-      resolveSessionAuthFailureRedirect({ pathname: '/', complete: true })
-    ).toBe(passwordChangeRequiredPaths.complete)
+    expect(resolveSessionAuthFailureRedirect({ pathname: '/', complete: true })).toBe(
+      passwordChangeRequiredPaths.complete
+    )
   })
 
   it('온보딩 경로면 현재 화면을 유지한다', () => {
@@ -45,10 +47,20 @@ describe('resolveSessionAuthFailureRedirect', () => {
     ).toBeNull()
   })
 
-  it('일반 경로면 로그인으로 보낸다', () => {
+  it('대시보드(/)면 redirect 없이 로그인으로 보낸다', () => {
+    expect(resolveSessionAuthFailureRedirect({ pathname: '/', search: '', complete: false })).toBe(
+      '/login'
+    )
+  })
+
+  it('일반 경로면 쿼리까지 redirect로 붙여 로그인으로 보낸다', () => {
     expect(
-      resolveSessionAuthFailureRedirect({ pathname: '/', search: '', complete: false })
-    ).toBe('/login?next=%2F')
+      resolveSessionAuthFailureRedirect({
+        pathname: '/settlement-management/payment-orders',
+        search: '?po_exp=instructor',
+        complete: false,
+      })
+    ).toBe('/login?redirect=%2Fsettlement-management%2Fpayment-orders%3Fpo_exp%3Dinstructor')
   })
 })
 
@@ -64,7 +76,36 @@ describe('assignLoginAfterSessionEnd', () => {
   it('대시보드에 남아 있으면 로그인으로 보낸다', () => {
     const assign = vi.fn()
     assignLoginAfterSessionEnd({ pathname: '/', search: '', complete: false, assign })
-    expect(assign).toHaveBeenCalledWith('/login?next=%2F')
+    expect(assign).toHaveBeenCalledWith('/login')
+  })
+
+  it('세션 만료면 현재 경로를 redirect로 유지한다', () => {
+    const assign = vi.fn()
+    assignLoginAfterSessionEnd({ pathname: '/users/list', search: '?page=2', assign })
+    expect(assign).toHaveBeenCalledWith('/login?redirect=%2Fusers%2Flist%3Fpage%3D2')
+  })
+
+  it('직접 로그아웃(preserveReturnPath: false)이면 redirect를 붙이지 않는다', () => {
+    const assign = vi.fn()
+    assignLoginAfterSessionEnd({
+      pathname: '/users/list',
+      search: '?page=2',
+      preserveReturnPath: false,
+      assign,
+    })
+    expect(assign).toHaveBeenCalledWith('/login')
+  })
+
+  it('새로고침 복원 ① 안내는 로그인 화면의 기존 redirect 파라미터로 원래 화면을 넘긴다', () => {
+    const assign = vi.fn()
+    assignLoginAfterSessionEnd({
+      pathname: '/programs/general',
+      search: '?page=2',
+      complete: false,
+      assign,
+      returnParam: 'redirect',
+    })
+    expect(assign).toHaveBeenCalledWith('/login?redirect=%2Fprograms%2Fgeneral%3Fpage%3D2')
   })
 
   it('이미 로그인 화면이면 다시 보내지 않는다', () => {
@@ -113,5 +154,53 @@ describe('isAdminFirstLoginOnboardingIncomplete', () => {
 
   it('스토리지 키 이름을 사용한다', () => {
     expect(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY).toBe('auth_password_change_required')
+  })
+})
+
+describe('sanitizeLoginRedirectPath', () => {
+  it('같은 앱 내부 경로는 쿼리·해시까지 그대로 허용한다', () => {
+    expect(
+      sanitizeLoginRedirectPath('/settlement-management/payment-orders?po_inst=%EA%B9%80#top')
+    ).toBe('/settlement-management/payment-orders?po_inst=%EA%B9%80#top')
+  })
+
+  it.each([
+    [null],
+    [undefined],
+    [''],
+    ['   '],
+    ['https://evil.com'],
+    ['//evil.com'],
+    ['/\\evil.com'],
+    ['/foo?u=https://evil.com'],
+    ['javascript:alert(1)'],
+    ['users/list'],
+  ])('외부·비정상 경로 %s 는 거부한다', value => {
+    expect(sanitizeLoginRedirectPath(value)).toBeNull()
+  })
+
+  it.each([
+    ['/'],
+    ['/login'],
+    ['/login?redirect=%2Fusers'],
+    ['/register/complete'],
+    ['/oauth/callback/google'],
+    ['/mfa'],
+    ['/auth/password-change-required/identity'],
+  ])('로그인·인증 화면 %s 는 루프 방지를 위해 거부한다', value => {
+    expect(sanitizeLoginRedirectPath(value)).toBeNull()
+  })
+})
+
+describe('buildLoginPathWithRedirect', () => {
+  it('안전한 경로는 인코딩해 redirect로 붙인다', () => {
+    expect(buildLoginPathWithRedirect('/users/list?page=2')).toBe(
+      '/login?redirect=%2Fusers%2Flist%3Fpage%3D2'
+    )
+  })
+
+  it('안전하지 않은 경로면 /login만 반환한다', () => {
+    expect(buildLoginPathWithRedirect('//evil.com')).toBe('/login')
+    expect(buildLoginPathWithRedirect('/login')).toBe('/login')
   })
 })

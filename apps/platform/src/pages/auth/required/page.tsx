@@ -1,16 +1,15 @@
 import { PFButton, PFText } from '@/shared/ui'
-import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation.svg'
+import illustLoginRequiredUrl from '@/shared/assets/illustration/graphic-84-02.png'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import { useNavigate } from 'react-router-dom'
+import { buildSignInPathWithRedirect } from '@/shared/lib/login-redirect'
 
 export function RequiredPage() {
   const navigate = useNavigate()
   const searchParams = new URLSearchParams(window.location.search)
-  const redirectPath = searchParams.get('redirect')
-  const signInPath = redirectPath
-    ? `/auth/sign-in?redirect=${encodeURIComponent(redirectPath)}`
-    : '/auth/sign-in'
+  // 안전하지 않은 redirect는 버리고 로그인 화면만 연다
+  const signInPath = buildSignInPathWithRedirect(searchParams.get('redirect'))
 
   const handleSignIn = () => {
     navigate(signInPath)
@@ -32,7 +31,7 @@ export function RequiredPage() {
   return (
     <section>
       <div className={styles.intro}>
-        <img className={styles.illustration} src={illustQuotationUrl} alt="" aria-hidden="true" />
+        <img className={styles.illustration} src={illustLoginRequiredUrl} alt="" aria-hidden="true" />
         <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
           로그인이 필요한 서비스예요
         </PFText>

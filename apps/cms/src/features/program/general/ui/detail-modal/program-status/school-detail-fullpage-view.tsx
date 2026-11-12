@@ -109,6 +109,17 @@ import {
   omitCompanySchoolScheduleRoundLabels,
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
 import {
+  buildCompanySchoolAssignedScheduleLine,
+  buildCompanySchoolScheduleUnitByScheduleId,
+  resolveCompanySchoolAssignSessionRoundLabel,
+  type CompanySchoolScheduleUnit,
+} from '@/features/program/1c-1s/lib/assigned-schedule-line'
+import { AffiliatedFinancialCompanyValue } from '@/features/program/1c-1s/ui/affiliated-financial-company-value'
+import {
+  buildCompanySchoolHopeScheduleBlocks,
+  resolveCompanySchoolConfirmedSessions,
+} from '@/features/program/1c-1s/lib/progress-schedule-display'
+import {
   getGeneralProgramApiErrorMessage,
   getParticipationConsentRequiredMessage,
 } from '@/features/program/general/api/get-general-program-api-error'
@@ -477,7 +488,7 @@ const LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_CONTENT =
 const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '신청 정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
@@ -799,8 +810,29 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
 
   const requestedHopeSchedulesQuery = useQuery({
     ...organizationRequestedSchedulesQueryOptions(organizationApplicationIdForDetail),
-    enabled: isGeneralOrgProgram && organizationApplicationIdForDetail.length > 0,
+    // 1사1교 — 배정 일정 「N차시 / N교시」를 희망 일정(sessionCount·startPeriod) 연결로만 만든다
+    enabled:
+      (isGeneralOrgProgram || isCompanySchool) && organizationApplicationIdForDetail.length > 0,
   })
+
+  /** 1사1교 — 배정 일정 id → 신청 차시 수·시작 교시 (resolvedScheduleId(s)로 연결된 희망 일정만) */
+  const companySchoolScheduleUnitByScheduleId = useMemo(
+    () =>
+      isCompanySchool
+        ? buildCompanySchoolScheduleUnitByScheduleId(requestedHopeSchedulesQuery.data)
+        : new Map<string, CompanySchoolScheduleUnit>(),
+    [isCompanySchool, requestedHopeSchedulesQuery.data]
+  )
+  /**
+   * 1사1교 「교육 진행 일정」 — 확정 일정(participants.sessions)이 있으면 그것만(기존 경로),
+   * 없으면 희망 일정을 시안 형식(날짜 | N차시, N교시 (시간))으로. 백엔드가 확정 일정을 주면 자동 전환.
+   */
+  const companySchoolHopeBlocks = useMemo(() => {
+    if (!isCompanySchool) return undefined
+    if (resolveCompanySchoolConfirmedSessions(row).length > 0) return undefined
+    const blocks = buildCompanySchoolHopeScheduleBlocks(requestedHopeSchedulesQuery.data)
+    return blocks.length > 0 ? blocks : undefined
+  }, [isCompanySchool, requestedHopeSchedulesQuery.data, row])
 
   const hopeEducationSessions = useMemo(() => {
     if (isGeneralOrgProgram) {
@@ -1298,17 +1330,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     endTeacherPrivacyReveal()
   }, [cancelApplicationInfoEdit, endTeacherPrivacyReveal])
 
-  const privacyMasked = !personalInfoRevealed
   const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
   const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
-
-  const requestStartApplicationInfoEdit = useCallback(() => {
-    if (personalInfoRevealed) {
-      enterApplicationInfoEdit()
-      return
-    }
-    setEditUnmaskConfirmOpen(true)
-  }, [enterApplicationInfoEdit, personalInfoRevealed])
 
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
@@ -1343,6 +1366,18 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         setEditUnmaskConfirmLoading(false)
       })
   }, [editUnmaskConfirmLoading, enterApplicationInfoEdit, mergedDetail, revealWithReason])
+
+  /**
+   * CMS-29: [개인정보 상세보기]로 이미 해제했어도 수정 진입은 EDIT_MODE 원문 조회로 「신청 정보 수정」을 기록한다.
+   * 해제 전이면 안내 팝업을 거친다.
+   */
+  const requestStartApplicationInfoEdit = useCallback(() => {
+    if (personalInfoRevealed) {
+      confirmEditUnmaskAndStartEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [confirmEditUnmaskAndStartEdit, personalInfoRevealed])
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
@@ -1566,9 +1601,16 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         assignedDate: r.assignedDate,
         assignedTime: r.assignedTime,
         assignedSession: r.assignedSession,
-        assignedScheduleLine: [r.assignedDate, r.assignedTime, r.assignedSession]
-          .filter(Boolean)
-          .join(' '),
+        // 1사1교 — 「날짜 | N차시 / N교시 | 시간」(차시·교시는 희망 일정 연결 시에만)
+        assignedScheduleLine: isCompanySchool
+          ? buildCompanySchoolAssignedScheduleLine({
+              date: r.assignedDate,
+              time: r.assignedTime,
+              unit: r.scheduleId
+                ? companySchoolScheduleUnitByScheduleId.get(r.scheduleId)
+                : undefined,
+            })
+          : [r.assignedDate, r.assignedTime, r.assignedSession].filter(Boolean).join(' '),
         assignmentId: r.assignmentId,
         instructorMemberId: r.instructorMemberId,
         scheduleId: r.scheduleId,
@@ -1595,6 +1637,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     row.organizationApplicationId,
     assignedScheduleLinesByInstructorId,
     assignmentBoard,
+    companySchoolScheduleUnitByScheduleId,
   ])
 
   /** 활성 배정 — 인원·팀장·배정 취소·역할 변경·엑셀은 취소 행을 제외한 이 목록만 본다 */
@@ -2767,7 +2810,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         width: TABLE_COLUMN_WIDTHS.address,
         ellipsis: true,
         render: (v: string | undefined) => (
-          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+          // 목록은 항상 목록 마스킹(정책 35·기획 Q6) — 상세의 [개인정보 상세보기] 해제와 연동하지 않는다.
+          <PrivacyHomeAddressDisplay address={v} revealed={false} />
         ),
       },
       {
@@ -2814,7 +2858,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         ),
       },
     ],
-    [openRoleDropdownId, handleRoleChange, privacyMasked]
+    [openRoleDropdownId, handleRoleChange]
   )
 
   const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(
@@ -2834,7 +2878,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         width: TABLE_COLUMN_WIDTHS.address,
         ellipsis: true,
         render: (v: string | undefined) => (
-          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+          // 목록은 항상 목록 마스킹(정책 35·기획 Q6) — 상세의 [개인정보 상세보기] 해제와 연동하지 않는다.
+          <PrivacyHomeAddressDisplay address={v} revealed={false} />
         ),
       },
       {
@@ -2885,7 +2930,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         ),
       },
     ],
-    [privacyMasked]
+    []
   )
 
   const assignedInstructorExportColumns: ColumnsType<{
@@ -3247,10 +3292,26 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
               programProgressCell={<ProgramEnrollmentStatusText status={programProgressStatus} />}
-              programApprovalStatusCell={programApprovalStatusCell}
+              // 1사1교 시안(05-2 01) — 조회 화면 기본 정보에 「프로그램 승인 현황」 행 없음
+              programApprovalStatusCell={
+                isCompanySchool && !isApplicationInfoEditing ? null : programApprovalStatusCell
+              }
               textbookCell={textbookCell}
               combinedClassCell={combinedClassCell}
               hideCombinedClass={!isGeneralOrganizationProgram(program)}
+              companySchoolEconomyRow={
+                isCompanySchool
+                  ? {
+                      affiliatedFinancialCompany: (
+                        <AffiliatedFinancialCompanyValue
+                          value={mergedDetail.affiliatedFinancialCompany}
+                          sponsorId={program.sponsorId}
+                        />
+                      ),
+                      previousYearParticipation: mergedDetail.previousYearParticipation ?? '-',
+                    }
+                  : undefined
+              }
               schoolName={
                 isApplicationDetailEditing ? (
                   <InstitutionReadonlyInput width={240} value={mergedDetail.schoolName ?? ''} />
@@ -3344,6 +3405,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               sessions={applicationTabScheduleSessions}
               scheduleSessionsEmptyMessage={applicationTabScheduleEmptyMessage}
               useCompanySchoolScheduleFormat={isCompanySchool}
+              companySchoolHopeBlocks={companySchoolHopeBlocks}
               scheduleTitleTrailing={
                 isApplicationInfoEditing && canChangeEducationSchedule ? (
                   <CmsButton
@@ -3405,9 +3467,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 <div className="table-header-title--wrapper">
                   <span className="table-title">배정된 강사 목록</span>
                   <span className="table-description">
-                    {isCompanySchool
-                      ? `${currentAssignedCount} / ${requiredInstructorCount}명`
-                      : `총 ${assignedTableRows.length}건`}
+                    {`총 ${assignedTableRows.length}건`}
                   </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
@@ -3457,7 +3517,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 <div className="table-header-title--wrapper">
                   <span className="table-title">배정 대기 강사 목록</span>
                   <span className="table-description">
-                    {isCompanySchool ? `${waitingRows.length}건` : `총 ${waitingRows.length}건`}
+                    {`총 ${waitingRows.length}건`}
                   </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
@@ -3525,6 +3585,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               schoolId={row.id}
               schoolName={row.schoolName}
               schoolSessions={instructorAssignScheduleSessions}
+              // 1사1교는 회차가 없다 — 배정일 칩에 「N회차」 대신 지망 순위(없으면 생략)
+              resolveSessionRoundLabel={
+                isCompanySchool ? resolveCompanySchoolAssignSessionRoundLabel : undefined
+              }
               participatingInstructorList={instructorList}
               participatingSchoolList={participatingSchoolList}
               assignedInstructorNames={assignedInstructorNames}

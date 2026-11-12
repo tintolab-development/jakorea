@@ -50,7 +50,8 @@ export interface AdminMfaVerifyRequestBody {
 /** POST /api/admin/auth/mfa/verify · refresh 200 */
 export interface AuthTokenResponse {
   accessToken: string
-  refreshToken: string
+  /** QA-0137: 전환기에만 본문에 온다. 없으면 HttpOnly 쿠키(`JA_ADMIN_RT`)로만 refresh */
+  refreshToken?: string
   tokenType?: string
   expiresInSeconds?: number
   /** 관리자 발급 임시 비밀번호 변경 필요 */
@@ -62,7 +63,8 @@ export interface AuthTokenResponse {
 }
 
 export interface RefreshTokenRequestBody {
-  refreshToken: string
+  /** QA-0137: 선택. 생략하면 서버가 HttpOnly refresh 쿠키를 쓴다 */
+  refreshToken?: string
 }
 
 export interface AdminLoginErrorBody {

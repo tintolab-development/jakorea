@@ -1,6 +1,7 @@
 /**
  * 프로그램 상세 담당자 정보 — remote only
- * Cache: Class C (standard nested list) — staleTime 30s, invalidate on mutation
+ * Cache: 담당자 목록은 AUTO_RAW_ACCESS(진입마다 조회 기록) — staleTime 0·gcTime 0, invalidate on mutation
+ * 담당자 후보 검색은 Class C(staleTime 30s)
  */
 
 import { useCallback, useMemo } from 'react'
@@ -12,6 +13,7 @@ import {
   updateGeneralProgramManager,
 } from '@/features/program/general/api/admin-general-programs-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { AUTO_RAW_ACCESS_QUERY_OPTIONS } from '@/features/program/general/api/auto-raw-access-query'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import {
@@ -85,7 +87,8 @@ export function useProgramManagers(
     queryKey: generalProgramQueryKeys.managers(programId ?? '', filtersKey),
     queryFn: () => fetchGeneralProgramManagers(programId!, managersListQuery),
     enabled: remoteEnabled && Boolean(programId) && managersListAllowed,
-    staleTime: 30_000,
+    // GET …/managers는 이메일 원문 + 고정 사유 자동 기록(CMS-31) — 진입마다 조회·이탈 시 캐시 제거
+    ...AUTO_RAW_ACCESS_QUERY_OPTIONS,
     retry: false,
   })
 

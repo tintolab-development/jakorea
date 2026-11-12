@@ -21,7 +21,7 @@ import {
   type SettlementDeadlinePolicy,
 } from './settlement-rules.ts'
 import {
-  individualIneligibleMessage,
+  individualIneligibleRowMessage,
   individualTransportIneligibleNotice,
   isEvidencePolicyUnconfigured,
   type ScheduleSettlementAudience,
@@ -66,6 +66,8 @@ export type SettlementLectureReportJoin = {
   curriculumSessionCount?: number | null
   lectureFeePreview?: LectureFeePreview | null
   instructorTransportPreview?: InstructorTransportPreview | null
+  /** 지급조서 제출 마감(강의일 기준 다음 달 5일 23:59:59 KST, K20) */
+  settlementSubmitDeadlineAt?: string | null
 }
 
 const COMPLETED_LECTURE = new Set(['COMPLETED', 'DONE', 'HELD', 'FINISHED'])
@@ -412,8 +414,10 @@ export function buildAssignedSettlementItems(
       individual?.status ?? settlement?.status ?? receipt?.receiptStatus
     const statementStatus = settlement?.statementStatus ?? settlement?.status
     const paymentStatus = readPaymentStatus(settlement) ?? readPaymentStatus(receipt)
+    // 강사 지급조서 제출 마감은 강의보고서 배정의 settlementSubmitDeadlineAt (K20)
     const deadlineAt =
       seoulBusinessEndDeadlineAt(individual?.businessEndDate) ??
+      (lecture?.settlementSubmitDeadlineAt?.trim() || undefined) ??
       readSettlementDeadlineAt(settlement) ??
       readReceiptDeadlineAt(receipt)
     const submitted = hasKnownSubmission(receipt, settlement) || individual?.settlementApplicationId != null
@@ -437,8 +441,11 @@ export function buildAssignedSettlementItems(
       now,
     })
     const status = resolved.status
+    // 정산 신청 금액: 최신 정산 revision 금액(정정 후 금액) 우선, 정산이 없으면 제출 당시 금액
     const amount = readFiniteAmount(
+      settlement?.latestNetPaymentAmount,
       settlement?.netPaymentAmount,
+      settlement?.latestGrossAmount,
       settlement?.grossAmount,
       receipt?.amount,
     )
@@ -459,7 +466,7 @@ export function buildAssignedSettlementItems(
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
     /** 교통비만 지급 항목이었고 거리 미달·주소 없음으로 빠진 회차 — 빈 payableItems를 설정 오류로 보지 않는다 */
     const ineligibleMessage =
-      individualIneligibleMessage(
+      individualIneligibleRowMessage(
         individual?.ineligibleReason,
         input.scheduleSettlementAudience ?? 'individual',
       ) ??
@@ -528,6 +535,9 @@ export function buildAssignedSettlementItems(
         ? { reapplyDeadlineDate: settlement.statementReapplyDeadlineDate }
         : {}),
       ...(operationEnded ? { operationEnded: true } : {}),
+      ...(input.deadlinePolicy === 'payment_statement' && input.businessEndAt?.trim()
+        ? { businessEndDate: input.businessEndAt.trim().slice(0, 10) }
+        : {}),
     }
   })
 }

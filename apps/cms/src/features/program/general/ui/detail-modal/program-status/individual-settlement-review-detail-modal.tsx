@@ -5,6 +5,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   individualSettlementReviewDetailQueryOptions,
   isIndividualSettlementReviewRemoteEnabled,
@@ -91,6 +92,8 @@ export type IndividualSettlementReviewDetailModalProps = {
   settlementApplicationId: number | null
   programSessionProgressDisplay?: string | null
   businessPeriodDisplay?: string | null
+  /** 기관형 프로그램만 true — 산출 내역 표에 '참여 기관명' 열을 보인다(개인형은 숨김) */
+  showInstitutionColumn?: boolean
   onClose: () => void
   onReviewed?: () => Promise<void> | void
 }
@@ -102,6 +105,7 @@ export function IndividualSettlementReviewDetailModal({
   settlementApplicationId,
   programSessionProgressDisplay,
   businessPeriodDisplay,
+  showInstitutionColumn = false,
   onClose,
   onReviewed,
 }: IndividualSettlementReviewDetailModalProps) {
@@ -154,9 +158,10 @@ export function IndividualSettlementReviewDetailModal({
         ? mapIndividualSettlementReviewToCalculationStatement(detail, {
             programSessionProgressDisplay,
             businessPeriodDisplay,
+            includeInstitution: showInstitutionColumn,
           })
         : null,
-    [businessPeriodDisplay, detail, programSessionProgressDisplay]
+    [businessPeriodDisplay, detail, programSessionProgressDisplay, showInstitutionColumn]
   )
 
   const rejectStatement = useMemo((): PaymentOrderProgramCalculationStatement | null => {
@@ -166,7 +171,7 @@ export function IndividualSettlementReviewDetailModal({
         ? statementView.blocks
         : [
             {
-              institutionName: statementView.basic.programName,
+              institutionName: '',
               lectureDateDisplay: '-',
               lectureSessionDisplay: '-',
               lines: [],
@@ -203,9 +208,13 @@ export function IndividualSettlementReviewDetailModal({
       setApproveOpen(false)
       setApproveDoneOpen(true)
     } catch (error) {
-      showMutationError(error)
+      // 지급 예정일 400(SCHEDULED_PAYMENT_DATE_*)은 강사 지급조서 확인과 같은 문구로 안내한다
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '개인 정산 심사를 처리하지 못했습니다.'),
+      })
     }
-  }, [approveMutation, expectedRevisionNo, settlementApplicationId, showMutationError])
+  }, [approveMutation, expectedRevisionNo, settlementApplicationId, showAlert])
 
   const handleReject = useCallback(
     async (payload: PaymentOrderRejectSubmitPayload) => {
@@ -274,7 +283,7 @@ export function IndividualSettlementReviewDetailModal({
               blocks={statementView.blocks}
               formulaLabel={statementView.formulaLabel}
               totalAmount={statementView.totalAmount}
-              hideInstitutionColumn
+              hideInstitutionColumn={!showInstitutionColumn}
               dateColumnTitle="교육 진행 일자"
               lectureSessionSegmentLabel="round"
               tableCellSpec="cms-data-table"
@@ -319,6 +328,7 @@ export function IndividualSettlementReviewDetailModal({
         open={approveOpen}
         data={rejectStatement}
         zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
+        applicationKind="receipt"
         onCancel={() => setApproveOpen(false)}
         onConfirm={({ lectureFeePaymentScheduledDateIso }) =>
           void handleApprove(lectureFeePaymentScheduledDateIso)
@@ -339,6 +349,7 @@ export function IndividualSettlementReviewDetailModal({
         onReject={payload => void handleReject(payload)}
         data={rejectStatement}
         confirmLoading={rejectMutation.isPending}
+        applicationKind="receipt"
       />
 
       <PaymentOrderCalculationBasisDetailModal

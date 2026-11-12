@@ -8,6 +8,16 @@ const EDUCATION_FORMAT_VALUES = new Set<PortalEducationFormat>([
   'hybrid',
 ])
 
+/**
+ * 교육 장소 코드 — 기본 정보 문단 답변 `educationPlace`에 이 값을 그대로 보낸다.
+ * CMS 교육받은 교사 기관 신청 상세가 같은 코드로 라벨을 붙인다(inside 기관 안 / outside 기관 밖 / custom 기타).
+ */
+export const PORTAL_EDUCATION_PLACE_OPTIONS = [
+  { value: 'inside', label: '기관 안' },
+  { value: 'outside', label: '기관 밖' },
+  { value: 'custom', label: '기타(직접입력)' },
+] as const
+
 export type ApplyInstitutionBasicInfoValues = {
   schoolName: string
   /** 기관 소재지 표시 (프로필 자동) */
@@ -58,6 +68,11 @@ export function emptyInstitutionBasicInfo(): ApplyInstitutionBasicInfoValues {
 export type BasicInfoAnswerFromValuesOptions = {
   /** 서버 런타임에서 선택 가능할 때만 희망 교육 형태·장소를 보낸다. */
   includePreferredEducationFields?: boolean
+  /**
+   * 교육 장소 행을 노출하는 유형(교육받은 교사·1사1교 기관 신청)이면 true —
+   * 희망 교육 형태 노출 여부와 무관하게 화면의 교육 장소·상세 장소를 보낸다.
+   */
+  includeEducationPlaceFields?: boolean
   /** UI가 숨겨져도 서버 draft에 이미 있던 educationFormat은 보존한다. */
   existingAnswer?: unknown
 }
@@ -74,6 +89,8 @@ export function basicInfoAnswerFromValues(
   const addressDetail = values.addressDetail.trim()
   const regionLabel = values.regionLabel.trim()
   const includePreferredEducation = options?.includePreferredEducationFields === true
+  const includeEducationPlace =
+    includePreferredEducation || options?.includeEducationPlaceFields === true
   const existingAnswer =
     options?.existingAnswer && typeof options.existingAnswer === 'object'
       ? (options.existingAnswer as Record<string, unknown>)
@@ -110,16 +127,16 @@ export function basicInfoAnswerFromValues(
             : preservedEducationFormat,
         }
       : {}),
-    ...((includePreferredEducation && educationPlace) ||
-    (!includePreferredEducation && preservedEducationPlace)
+    ...((includeEducationPlace && educationPlace) ||
+    (!includeEducationPlace && preservedEducationPlace)
       ? {
-          educationPlace: includePreferredEducation ? educationPlace : preservedEducationPlace,
+          educationPlace: includeEducationPlace ? educationPlace : preservedEducationPlace,
         }
       : {}),
-    ...((includePreferredEducation && educationPlaceDetail) ||
-    (!includePreferredEducation && preservedEducationPlaceDetail)
+    ...((includeEducationPlace && educationPlaceDetail) ||
+    (!includeEducationPlace && preservedEducationPlaceDetail)
       ? {
-          educationPlaceDetail: includePreferredEducation
+          educationPlaceDetail: includeEducationPlace
             ? educationPlaceDetail
             : preservedEducationPlaceDetail,
         }

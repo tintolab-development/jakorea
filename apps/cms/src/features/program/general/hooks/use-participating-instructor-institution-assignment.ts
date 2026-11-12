@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
 import { omitCompanySchoolScheduleRoundLabels } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
+import { buildCompanySchoolScheduleUnitByScheduleId } from '@/features/program/1c-1s/lib/assigned-schedule-line'
+import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { fetchGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -18,6 +20,7 @@ import {
   buildParticipatingInstructorWaitingSchoolRowsFromBoard,
   buildParticipatingInstructorWaitingScheduleRowsFromBoard,
 } from '@/features/program/general/lib/build-participating-instructor-assignment-rows'
+import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
@@ -34,6 +37,13 @@ import {
   collectInstructorApplicationOrganizationDistances,
   mergeWaitingOrganizationDistances,
 } from '@/features/program/general/lib/assignment-waiting-distance'
+
+/** useQueries combine — 모듈 상수라 참조가 고정돼 결과가 바뀔 때만 다시 계산된다 */
+function flattenRequestedScheduleResults(
+  results: ReadonlyArray<{ data?: RequestedScheduleResponse[] }>
+): RequestedScheduleResponse[] {
+  return results.flatMap(result => result.data ?? [])
+}
 
 /**
  * 배정 현황 SSOT = GET /api/admin/program-execution/instructor-assignments (board.assignments).
@@ -140,6 +150,33 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   const queryClient = useQueryClient()
   const queryError = boardQuery.error
 
+  /**
+   * 1사1교 배정된 기관 「N차시 / N교시」 — 이 강사가 배정된 기관 신청의 희망 일정(requested-schedules)이
+   * 배정 일정과 resolvedScheduleId(s)로 연결될 때만 쓴다. 일반 기관형은 조회하지 않는다.
+   */
+  const companySchoolAssignedOrganizationApplicationIds = useMemo(() => {
+    if (!useCompanySchoolBoard || !instructorMemberId) return []
+    const assignments = boardQuery.data?.assignments ?? []
+    const ids = new Set<string>()
+    for (const assignment of selectAssignmentsForInstructor(assignments, instructorMemberId)) {
+      if (assignment.organizationApplicationId != null) {
+        ids.add(String(assignment.organizationApplicationId))
+      }
+    }
+    return [...ids].sort()
+  }, [boardQuery.data?.assignments, instructorMemberId, useCompanySchoolBoard])
+  const companySchoolRequestedSchedules = useQueries({
+    queries: companySchoolAssignedOrganizationApplicationIds.map(applicationId => ({
+      ...organizationRequestedSchedulesQueryOptions(applicationId),
+      enabled: queryEnabled,
+    })),
+    combine: flattenRequestedScheduleResults,
+  })
+  const companySchoolScheduleUnitByScheduleId = useMemo(
+    () => buildCompanySchoolScheduleUnitByScheduleId(companySchoolRequestedSchedules),
+    [companySchoolRequestedSchedules]
+  )
+
   const rows = useMemo(() => {
     if (!remoteEnabled || !instructorMemberId) {
       return {
@@ -170,6 +207,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       instructorMemberId,
       schoolRows: input.schoolRows,
       scheduleLabelById,
+      ...(useCompanySchoolBoard ? { companySchoolScheduleUnitByScheduleId } : {}),
     })
     const assignedSchedules = buildParticipatingInstructorAssignedScheduleRowsFromBoard({
       assignments: assignedAssignments,
@@ -233,6 +271,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     }
   }, [
     boardQuery.data,
+    companySchoolScheduleUnitByScheduleId,
     queryError,
     input.instructor,
     input.instructorList,

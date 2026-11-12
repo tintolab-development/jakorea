@@ -6,7 +6,6 @@ import {
   isSameDay,
   type CalendarDay,
 } from '../pf-calendar/calendar-month'
-import { PFPageButton } from '../pf-page-button'
 import {
   canNavigateViewMonth,
   chunkWeeks,
@@ -16,6 +15,10 @@ import {
   toIsoDate,
   type DateRangeValue,
 } from './date-utils'
+import monthLeftDefaultUrl from './icons/month-left-default.svg'
+import monthLeftDisabledUrl from './icons/month-left-disabled.svg'
+import monthRightDefaultUrl from './icons/month-right-default.svg'
+import monthRightDisabledUrl from './icons/month-right-disabled.svg'
 import styles from './pf-date-input.module.css'
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
@@ -173,21 +176,36 @@ export function PFDatePickerCalendar({
       aria-label={ariaLabel}
     >
       <div className={styles.header}>
-        <PFPageButton
-          size="large"
-          direction="left"
+        {/* 시안 Calendar / Miniview: 테두리 없는 20px 꺾쇠 */}
+        <button
+          type="button"
+          className={styles.monthNavButton}
           aria-label="이전 달"
           disabled={!canNavigateViewMonth(viewMonth, -1)}
           onClick={() => setViewMonth(prev => clampViewMonth(addMonths(prev, -1)))}
-        />
+        >
+          <img
+            className={styles.monthNavIcon}
+            src={canNavigateViewMonth(viewMonth, -1) ? monthLeftDefaultUrl : monthLeftDisabledUrl}
+            alt=""
+            aria-hidden="true"
+          />
+        </button>
         <p className={styles.yearMonth}>{formatYearMonth(viewMonth)}</p>
-        <PFPageButton
-          size="large"
-          direction="right"
+        <button
+          type="button"
+          className={styles.monthNavButton}
           aria-label="다음 달"
           disabled={!canNavigateViewMonth(viewMonth, 1)}
           onClick={() => setViewMonth(prev => clampViewMonth(addMonths(prev, 1)))}
-        />
+        >
+          <img
+            className={styles.monthNavIcon}
+            src={canNavigateViewMonth(viewMonth, 1) ? monthRightDefaultUrl : monthRightDisabledUrl}
+            alt=""
+            aria-hidden="true"
+          />
+        </button>
       </div>
 
       <div className={styles.body}>

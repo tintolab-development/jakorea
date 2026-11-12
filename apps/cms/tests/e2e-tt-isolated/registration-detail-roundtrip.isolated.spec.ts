@@ -55,7 +55,8 @@ test.describe('TT P4-B CREATE → 상세 GET → PATCH → 재GET', () => {
       }
     }
     const courseSelect = page
-      .getByText('Course Delivered By', { exact: true })
+      // 등록 양식 라벨은 한글(교육 운영 주체), 상세 화면은 영문 라벨일 수 있다
+      .getByText(/^(Course Delivered By|교육 운영 주체)$/)
       .locator('xpath=following::div[contains(@class,"ant-select")][1]')
     if ((await courseSelect.count()) > 0) {
       const current = (await courseSelect.innerText().catch(() => '')).trim()

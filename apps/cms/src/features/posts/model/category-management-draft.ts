@@ -30,6 +30,14 @@ export function validateCategoryName(value: string): CategoryNameValidation {
   return /^[가-힣A-Za-z0-9_-]+$/u.test(name) ? 'valid' : 'invalid_characters'
 }
 
+/** 입력칸 에러 문구 (QA-0272) — 유효하면 null */
+export function categoryNameFieldError(value: string): string | null {
+  const validation = validateCategoryName(value)
+  if (validation === 'empty') return CATEGORY_NAME_REQUIRED_MESSAGE
+  if (validation === 'invalid_characters') return CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE
+  return null
+}
+
 export function buildCategoryManagementDraftChanges(
   baseRows: readonly PostsCategoryRow[],
   draftRows: readonly PostsCategoryRow[]

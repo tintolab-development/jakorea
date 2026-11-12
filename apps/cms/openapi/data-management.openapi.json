@@ -309,6 +309,10 @@
       "description": "로그인 사용자 기준 CMS 대시보드 개인화 설정 API"
     },
     {
+      "name": "로그 관리",
+      "description": "Logging 관련 API"
+    },
+    {
       "name": "기타 API",
       "description": "CMS 학교 organization 조회 및 소속 교사 관리 API"
     },
@@ -331,6 +335,10 @@
     {
       "name": "공개 콘텐츠",
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
+    },
+    {
+      "name": "신청/프로그램 워크플로우",
+      "description": "참여 강사 강사비 책정 기준"
     },
     {
       "name": "파일 관리",
@@ -1242,6 +1250,15 @@
           },
           {
             "name": "name",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contactPrivacy",
             "in": "query",
             "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
             "required": false,
@@ -2273,6 +2290,15 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "contactPrivacy",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3987,7 +4013,9 @@
             "type": "string"
           },
           "gender": {
-            "type": "string"
+            "type": "string",
+            "description": "성별. AUTO_RAW_ACCESS·RAW_POLICY_EXCEPTION: 저장 원문 코드(예: M, F, MALE, FEMALE), MASKED: **. FE는 원문 코드를 남·여로 표시한다.",
+            "nullable": true
           },
           "birthDate": {
             "type": "string",
@@ -4115,7 +4143,7 @@
           },
           "privacyAccessMode": {
             "type": "string",
-            "description": "개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate 원문), MASKED(SENSITIVE_PII_READ가 없는 CMS 조회: phone·email·birthDate 생략, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님)."
+            "description": "개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate·gender 원문), MASKED(Program Owner·Assistant가 아닌 CMS 조회(Program Viewer 등): phone·email·birthDate 생략, gender는 **, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님)."
           }
         }
       },
@@ -4727,10 +4755,43 @@
             "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다.",
             "nullable": true
           },
+          "fieldErrors": {
+            "type": "array",
+            "description": "충돌한 항목 목록. 관리자(/api/admin/**) API의 DB 중복·참조 충돌(HTTP 409)에서만 채우며, 그 밖의 응답에서는 필드를 내려주지 않습니다.",
+            "items": {
+              "$ref": "#/components/schemas/FieldErrorItem"
+            },
+            "nullable": true
+          },
           "detail": {
             "type": "string",
             "description": "RFC7807 detail. message와 동일합니다.",
             "example": "면접이 아직 종료되지 않았습니다."
+          }
+        }
+      },
+      "FieldErrorItem": {
+        "type": "object",
+        "description": "충돌한 항목 하나. 입력값 원문은 담지 않습니다.",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "충돌한 항목 키(camelCase). DUPLICATE는 입력 필드 키, IN_USE는 이 데이터를 참조하는 데이터 종류 키입니다.",
+            "example": "email"
+          },
+          "label": {
+            "type": "string",
+            "description": "화면 표시용 한글 항목명. 기획에서 항목명이 확정될 때까지 null입니다.",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "description": "충돌 원인. DUPLICATE=이미 등록된 값과 중복, IN_USE=다른 데이터에서 사용 중이라 삭제·변경 불가",
+            "enum": [
+              "DUPLICATE",
+              "IN_USE"
+            ],
+            "example": "DUPLICATE"
           }
         }
       },
@@ -5711,12 +5772,13 @@
           },
           "sponsorContactPhone": {
             "type": "string",
-            "description": "담당자 전화번호(휴대전화 우선, 없으면 내선). GET /api/admin/sponsors/{sponsorId}/contacts의 phone과 같은 값입니다. MASTER_DATA_READ 권한이 있을 때만 원문으로 채워지고 개인정보 조회 이력이 기록됩니다. 권한이 없거나 값이 없으면 null.",
+            "description": "담당자 전화번호(휴대전화 우선, 없으면 내선) 마스킹값, 기록 없음(정책 CMS-32·37). 원문은 데이터 관리 > 후원사 담당자 정보(GET /api/admin/sponsors/{sponsorId}/contacts)에서만. 값이 없으면 null.",
+            "example": "010-****-5678",
             "nullable": true
           },
           "sponsorContactEmail": {
             "type": "string",
-            "description": "담당자 이메일. sponsorContactPhone과 같은 권한·조회 이력 규칙을 따릅니다. 권한이 없거나 값이 없으면 null.",
+            "description": "담당자 이메일 마스킹값(@ 앞 3자리), 기록 없음(정책 CMS-32·37). 원문은 데이터 관리 > 후원사 담당자 정보(GET /api/admin/sponsors/{sponsorId}/contacts)에서만. 값이 없으면 null.",
             "nullable": true
           }
         }
@@ -9367,10 +9429,24 @@
             "items": {
               "type": "string",
               "minLength": 1,
-              "pattern": "^(NAME|RESIDENT_REGISTRATION_NUMBER|ACCOUNT_NUMBER)$"
+              "pattern": "^(NAME|RESIDENT_REGISTRATION_NUMBER|ACCOUNT_NUMBER|BIRTH_DATE|GENDER|PHONE|EMAIL|HOME_ADDRESS|EXTERNAL_1365_ID)$"
             },
-            "maxItems": 3,
+            "maxItems": 9,
             "minItems": 0
+          },
+          "targetCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "파일에 들어간 대상(행) 수(QA-0146). 모르면 생략.",
+            "nullable": true
+          },
+          "filterConditions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "내려받을 때 화면의 조회 조건 {키: 값}(QA-0146). 최대 30개, 값은 500자. 서버가 이메일·전화번호·토큰과 자유 입력 검색어(keyword, name, email, phone 등)를 가린 뒤 저장한다.",
+            "nullable": true
           }
         },
         "required": [
@@ -11330,6 +11406,24 @@
           }
         }
       },
+      "InstructorPayableItem": {
+        "type": "object",
+        "properties": {
+          "itemType": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "string"
+          },
+          "maxLimitWon": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evidenceRequired": {
+            "type": "boolean"
+          }
+        }
+      },
       "SettlementApplicationPreviewResponse": {
         "type": "object",
         "properties": {
@@ -11411,6 +11505,13 @@
               "UNKNOWN"
             ],
             "nullable": true
+          },
+          "payableItems": {
+            "type": "array",
+            "description": "강사가 신청할 수 있는 실비 항목(프로그램에서 켠 항목만). 숙박비(LODGING, 1사1교 제외)·활동비(ACTIVITY)·식사비(MEAL). maxLimitWon은 CMS 정산 항목 설정의 신청 1건 기준 최대 한도(없으면 null), evidenceRequired는 영수증 필요 여부(미설정이면 null). 넘으면 400 PAYMENT_ITEM_LIMIT_EXCEEDED. 교통비·1사1교 숙박비는 별도 필드로 다룬다.",
+            "items": {
+              "$ref": "#/components/schemas/InstructorPayableItem"
+            }
           }
         }
       },
@@ -13392,10 +13493,12 @@
             "type": "string"
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "본인인증 후 표시용 원문(정책 10/26 본인 화면, CMS-02·USER-03). FE는 이 값을 표시 SSOT로 쓴다."
           },
           "maskedEmail": {
-            "type": "string"
+            "type": "string",
+            "description": "하위 호환용 마스킹값(@ 앞 3자리). 표시에는 email을 쓴다."
           },
           "status": {
             "type": "string"
@@ -13413,7 +13516,9 @@
             "type": "boolean"
           },
           "maskedEmail": {
-            "type": "string"
+            "type": "string",
+            "description": "첫 계정의 하위 호환용 마스킹값. 표시는 accounts[].email(원문)을 쓴다.",
+            "nullable": true
           },
           "accounts": {
             "type": "array",
@@ -14413,6 +14518,30 @@
           }
         }
       },
+      "FinalPassAssignment": {
+        "type": "object",
+        "description": "합격 처리와 함께 배정할 기관·회차",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "실제 프로그램 일정 ID",
+            "example": 11001,
+            "minimum": 1
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관 신청 ID",
+            "example": 22001,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "organizationApplicationId",
+          "scheduleId"
+        ]
+      },
       "VolunteerFinalResultRequest": {
         "type": "object",
         "description": "최종 결과 처리 요청(봉사자/개인 공통)",
@@ -14451,6 +14580,16 @@
             "type": "string",
             "format": "date-time",
             "description": "notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
+          },
+          "assignments": {
+            "type": "array",
+            "description": "봉사자 최종 결과 API 전용. 기관형(GENERAL_ORGANIZATION) 봉사자를 합격 처리하면서 기관·회차를 함께 배정한다.\n생략·null·[] 이면 기존과 같이 합격만 처리한다. result=PASS일 때만 허용하고 RESERVE·FAIL에 값이 오면 400\nVOLUNTEER_FINAL_RESULT_ASSIGNMENTS_PASS_ONLY. 같은 scheduleId가 두 번 오면 400\nVOLUNTEER_FINAL_RESULT_ASSIGNMENT_SCHEDULE_DUPLICATED. 개인 신청 최종 결과 API에 값이 오면 400\nVOLUNTEER_FINAL_RESULT_ASSIGNMENTS_NOT_SUPPORTED.\n합격과 배정은 한 트랜잭션이며 배정 하나라도 실패하면 합격도 롤백된다.\n배정 검증·에러 코드·저장 데이터·배정 알림은 POST /api/admin/programs/{programId}/volunteer-assignments 와 같다.\n배정 알림 발송 시각은 합격 알림 발송 시각(notifyTiming/scheduledAt)에 맞춘다.\n",
+            "items": {
+              "$ref": "#/components/schemas/FinalPassAssignment"
+            },
+            "maxItems": 100,
+            "minItems": 0,
+            "nullable": true
           }
         },
         "required": [
@@ -14799,6 +14938,13 @@
           "birthYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null(연도만 있어도 null). 마스킹·원문 응답 모두 같은 값. CMS 표기 YYYY.**.**(만 NN세)",
+            "example": 26,
+            "nullable": true
           },
           "gender": {
             "type": "string"
@@ -17408,10 +17554,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -24393,6 +24539,103 @@
           }
         }
       },
+      "PrivacyAccessRecipient": {
+        "type": "object",
+        "properties": {
+          "actorType": {
+            "type": "string",
+            "description": "MEMBER | ADMIN | DIRECT",
+            "example": "MEMBER",
+            "minLength": 1,
+            "pattern": "^(MEMBER|ADMIN|DIRECT)$"
+          },
+          "actorId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "MEMBER·ADMIN의 id. DIRECT는 null",
+            "example": 190081
+          }
+        },
+        "required": [
+          "actorType"
+        ]
+      },
+      "PrivacyAccessRecordRequest": {
+        "type": "object",
+        "description": "발송 화면·발송 결과 팝업 개인정보 조회 기록 요청(정책 CMS-21·22).\nevent=SEND_SCREEN: 발송 화면 수신자 표에 MEMBER·ADMIN 행이 보일 때. recipients 필수.\nevent=SEND_RESULT_POPUP: batchId가 있으면 서버가 배치 수신자를 직접 읽어 기록(recipients 무시),\nbatchId가 없으면(발송 실패 팝업) recipients 필수.\n",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "SEND_SCREEN | SEND_RESULT_POPUP",
+            "example": "SEND_SCREEN"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "발송 화면에서 선택한 프로그램 id. 미선택이면 생략",
+            "example": 186046
+          },
+          "batchId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "발송 요청 완료 팝업의 배치 id(SEND_RESULT_POPUP)",
+            "example": 5101
+          },
+          "recipients": {
+            "type": "array",
+            "description": "화면에 표시된 수신자. DIRECT는 기록하지 않는다(정책 CMS-25). 최대 500",
+            "items": {
+              "$ref": "#/components/schemas/PrivacyAccessRecipient"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        }
+      },
+      "ApiResponsePrivacyAccessRecordResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PrivacyAccessRecordResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
+          }
+        }
+      },
+      "PrivacyAccessRecordResponse": {
+        "type": "object",
+        "properties": {
+          "recordedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "이번 요청으로 커밋된 개인정보 조회 기록 수",
+            "example": 2
+          }
+        }
+      },
       "ApiResponseNotificationDeliveryOperationResponse": {
         "type": "object",
         "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
@@ -25150,6 +25393,105 @@
           }
         }
       },
+      "ClientErrorReportRequest": {
+        "type": "object",
+        "description": "화면 오류 수집 요청. 인증 토큰·이메일·전화번호·입력 원문은 서버가 저장 전에 가립니다. 관리자 ID는 인증 정보에서 채웁니다.",
+        "properties": {
+          "appCode": {
+            "type": "string",
+            "description": "오류가 난 앱. 이 API는 CMS만 받습니다(홈페이지 Admin은 자체 백엔드로 보냄).",
+            "enum": [
+              "CMS"
+            ],
+            "example": "CMS",
+            "maxLength": 16,
+            "minLength": 0
+          },
+          "screenPath": {
+            "type": "string",
+            "description": "화면 경로. 쿼리 문자열과 # 이후는 저장하지 않습니다.",
+            "example": "/members/123",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 메시지. 저장 시 255자로 자릅니다.",
+            "example": "Cannot read properties of undefined (reading 'name')",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "stack": {
+            "type": "string",
+            "description": "줄인 stack. 저장 시 40줄·8,000자로 자릅니다.",
+            "maxLength": 16000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "userAgent": {
+            "type": "string",
+            "description": "브라우저 userAgent. 저장 시 512자로 자릅니다.",
+            "maxLength": 1000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "화면에서 오류가 난 시각(ISO-8601). 없거나 서버 시각과 하루 넘게 차이 나면 null로 저장합니다.",
+            "example": "2026-11-12T05:30:00Z",
+            "nullable": true
+          }
+        },
+        "required": [
+          "appCode",
+          "message",
+          "screenPath"
+        ]
+      },
+      "ApiResponseClientErrorReportResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/ClientErrorReportResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
+          }
+        }
+      },
+      "ClientErrorReportResponse": {
+        "type": "object",
+        "description": "화면 오류 수집 결과",
+        "properties": {
+          "recorded": {
+            "type": "boolean",
+            "description": "저장 여부. 항상 true이며, 수신량 제한에 걸리면 HTTP 429(RATE_LIMIT_EXCEEDED)로 응답합니다."
+          }
+        }
+      },
       "InterviewAssignmentCreateRequest": {
         "type": "object",
         "description": "면접 배정/재배정 요청. volunteerApplicationId와 individualApplicationId는 상호 배타이며 둘 중 하나만 필수입니다.",
@@ -25620,6 +25962,13 @@
             "type": "integer",
             "format": "int32"
           },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null. 마스킹·원문 응답 모두 같은 값",
+            "example": 26,
+            "nullable": true
+          },
           "phone": {
             "type": "string"
           },
@@ -25924,10 +26273,12 @@
         "properties": {
           "basisType": {
             "type": "string",
+            "description": "강사비 책정 방식. PROGRAM(프로그램 기준 적용) | SPECIAL_LECTURE(특강 강사비) | OTHER_LABOR(기타 인건비). 특강·기타 인건비는 이 신청의 모든 배정에 지급 기준·지급금액이 복사된다. 옛 값 RECRUITMENT는 특강·기타를 구분할 수 없어 프로그램 기준으로 계산한다.",
             "minLength": 1
           },
           "measure": {
             "type": "string",
+            "description": "지급 기준. 출강 1회당 | 차시당 | 해당 없음, 또는 코드 PER_LECTURE(출강 1회당) | PER_CLASS(차시당) | FIXED. 1시간 당·PER_HOUR는 차시당과 같은 기준으로 읽는다. PER_SESSION은 신규 입력 불가(422 INVALID_FEE_POLICY), 기존 저장값은 출강 1회당으로 읽는다.",
             "minLength": 1
           },
           "amount": {
@@ -26830,7 +27181,7 @@
           "accountPaymentId": {
             "type": "integer",
             "format": "int64",
-            "description": "지급 완료(PAID)이거나 import가 account_payment를 생성한 경우에만. 지급 제외(IDENTITY_BLANK/EXTERNAL_PAYEE 등)와 preview 미생성 건은 null.",
+            "description": "지급조서 확인완료·지급완료로 보호된 기존 중복 행(preview FAILED)의 계좌 지급 ID. import는 지급조서(확인 대기 중)만 만들고 계좌 지급은 지급조서 확인 때 생기므로 그 외에는 null.",
             "nullable": true
           },
           "trainingMinutes": {
@@ -27933,6 +28284,13 @@
           "teacherBirthDate": {
             "type": "string",
             "description": "상세 GET은 yyyy-**-**. POST .../privacy/unmask 시 yyyy-MM-dd 원문. 없으면 null",
+            "nullable": true
+          },
+          "teacherAge": {
+            "type": "integer",
+            "format": "int32",
+            "description": "담당 교사 만 나이(서울 기준 오늘). 상세 GET·unmask 모두 같은 값. 생년월일 원문이 없으면 null. CMS 표기 YYYY.**.** (만 N세)",
+            "example": 41,
             "nullable": true
           },
           "teacherPhone": {
@@ -32813,6 +33171,16 @@
           "configJson": {
             "type": "string",
             "description": "TT detail 전용 opaque JSON. programs serviceDetailJson 통짜 복사가 아님."
+          },
+          "teacherTrainingEducationFormat": {
+            "type": "string",
+            "description": "교사 연수 교육 형태. 생략(null)이면 기존 값 유지, 빈 문자열이면 삭제. ONLINE|OFFLINE|HYBRID(대소문자 무관, online/offline/hybrid·온라인/오프라인/온오프라인 허용)만 받으며 그 외 값은 400 INVALID_REQUESTED_EDUCATION_FORMAT. teacherTrainingEnabled=false로 저장하면 함께 삭제됩니다.",
+            "enum": [
+              "ONLINE",
+              "OFFLINE",
+              "HYBRID"
+            ],
+            "nullable": true
           }
         }
       },
@@ -32877,6 +33245,54 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "teacherTrainingEducationFormat": {
+            "type": "string",
+            "description": "교사 연수 교육 형태. ONLINE|OFFLINE|HYBRID 또는 null. teacherTrainingEnabled=false이거나 저장된 값이 없으면 null. 커리큘럼 차시의 교육 형태로 채우지 않습니다. IPS 유형은 Prepare 고정이라 저장·반환하지 않습니다.",
+            "enum": [
+              "ONLINE",
+              "OFFLINE",
+              "HYBRID"
+            ],
+            "nullable": true
+          },
+          "teacherTrainingSchedule": {
+            "description": "교사 연수 일정(program_schedule) 읽기 전용 투영. teacherTrainingEnabled=true이고 일정명이 teacherTrainingScheduleName과 같은(대소문자·앞뒤 공백 무시) 활성 일정 중 시작 시각이 가장 빠른 1건. 연수 일정은 configJson.generalCommonInfo.scheduleDetails의 같은 이름 행으로 저장합니다. 없으면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TrainedTeacherTrainingSchedule"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "TrainedTeacherTrainingSchedule": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_schedule.id"
+          },
+          "scheduleName": {
+            "type": "string",
+            "description": "일정명. teacherTrainingScheduleName과 같은 이름.",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "연수 시작 시각. 없으면 null.",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "연수 종료 시각. 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -34105,6 +34521,13 @@
           },
           "reason": {
             "type": "string"
+          },
+          "scheduledPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "승인(확인) 시 필수. 계좌 지급 예정일, KST 기준 오늘 또는 이후. 강사 지급조서 확인과 같은 규칙이며 누락 시 400 SCHEDULED_PAYMENT_DATE_REQUIRED, 오늘 이전이면 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER. 승인하면 이 날짜로 계좌 지급 건(sourceType=INDIVIDUAL_SETTLEMENT, WAITING_PAYMENT)이 만들어진다. 반려에는 쓰지 않는다.",
+            "example": "2026-11-20",
+            "nullable": true
           }
         },
         "required": [
@@ -37291,7 +37714,7 @@
           "statementReapplyDeadlineDate": {
             "type": "string",
             "format": "date",
-            "description": "지급조서 재신청 마감일(Asia/Seoul, 그날 포함). 정정 처리일로부터 14일과 사업 운영 종료일 중 빠른 날. 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT)에만 값이 있고, 기한이 지나도 그대로 내려준다. Gemini 프로그램·그 외 상태는 null.",
+            "description": "재신청 마감일(Asia/Seoul, 그날 포함). 기준일로부터 14일과 사업 운영 종료일 중 빠른 날. (1) 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT): 기준일=정정 처리일. (2) 반려 건(최신 지급조서 REJECTED 또는 정산 신청 REJECTED): 기준일=반려일(rejectedAt). 기한이 지나도 그대로 내려준다. 재신청으로 대체된 이전 이력(superseded=true), Gemini 프로그램, 반려일을 알 수 없는 건, 그 외 상태는 null. statementReapplyAvailable은 (1)에만 해당하고 반려 건(2)은 false로 둔다. 반려 건도 기한이 지나면 서버가 재신청을 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED로 거절한다.",
             "example": "2026-11-25",
             "nullable": true
           },
@@ -37307,6 +37730,48 @@
             "format": "date-time",
             "description": "정산 대상 회차 종료 시각. 회차가 없거나 찾지 못하면 null.",
             "example": "2026-11-06T06:10:00Z",
+            "nullable": true
+          },
+          "superseded": {
+            "type": "boolean",
+            "description": "다시 제출되어 다음 revision으로 대체된 이전 신청이면 true(status=RESUBMITTED). 목록에서 이전 이력 행으로 표시하고 합계에서 뺀다.",
+            "example": false
+          },
+          "supersededReason": {
+            "type": "string",
+            "description": "대체된 이전 신청의 원래 결과. REJECTED=신청 반려, CORRECTION_REQUESTED=지급 정정 요청. superseded=false이면 null.",
+            "enum": [
+              "REJECTED",
+              "CORRECTION_REQUESTED"
+            ],
+            "example": "REJECTED",
+            "nullable": true
+          },
+          "latestGrossAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "최신 정산 revision의 지급 총액(원). 정정 승인 후에는 정정된 금액. 정산이 아직 없으면 null. grossAmount는 정산 신청 제출 당시 금액으로 바뀌지 않는다.",
+            "example": 403000,
+            "nullable": true
+          },
+          "latestNetPaymentAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "최신 정산 revision의 실지급액(원). 정정 승인 후에는 정정된 금액. 정산이 아직 없으면 null. netPaymentAmount는 정산 신청 제출 당시 금액으로 바뀌지 않는다.",
+            "example": 391450,
+            "nullable": true
+          },
+          "rejectedReason": {
+            "type": "string",
+            "description": "반려 사유. 최신 지급조서가 REJECTED이면 지급조서 반려 사유, 정산 신청이 반려됐거나 반려로 대체된 이전 신청이면 정산 신청 반려 사유. 반려가 아니면 null.",
+            "example": "증빙 확인 필요로 반려",
+            "nullable": true
+          },
+          "rejectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "반려 시각. rejectedReason과 같은 기준. 반려가 아니면 null.",
+            "example": "2026-11-11T13:50:16Z",
             "nullable": true
           }
         }
@@ -37495,6 +37960,12 @@
             "format": "int64",
             "description": "총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음.",
             "example": 209810,
+            "nullable": true
+          },
+          "longDistance": {
+            "type": "boolean",
+            "description": "1사1교 장거리 강사비 단가가 적용됐으면 true, 아니면 false. 제출 당시 스냅샷 기준이며 제출 전 lectureFeePreview.longDistance와 같다. 제미나이, 영수증 경로, 이 값을 저장하기 전에 제출된 스냅샷은 null.",
+            "example": false,
             "nullable": true
           }
         }
@@ -37695,6 +38166,29 @@
             "description": "확정 강사비를 신청할 수 없을 때 코드. SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED(기관·개인), SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED(제미나이), SETTLEMENT_WAGE_RATE_NOT_CONFIGURED. 확정 가능하면 null.",
             "example": "SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED",
             "nullable": true
+          },
+          "feePricingMode": {
+            "type": "string",
+            "description": "배정에 저장된 강사비 책정 방식. PROGRAM_STANDARD=프로그램 기준 적용(등급 단가), SPECIAL_LECTURE=특강 강사비, OTHER_LABOR=기타 인건비. 특강·기타는 instructorFeeAmount(승인 금액)와 instructorFeeCalculationUnit(PER_LECTURE=출강 1회당, PER_CLASS=차시당)으로 계산한다. 제미나이는 null.",
+            "enum": [
+              "PROGRAM_STANDARD",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
+            "example": "SPECIAL_LECTURE",
+            "nullable": true
+          },
+          "wageTitle": {
+            "type": "string",
+            "description": "화면 표시용 강사비 이름. 예: 1급 강사비, 특강 강사비, 기타 인건비. 지급조서 강사비 항목 이름과 같다. 없으면 null.",
+            "example": "특강 강사비",
+            "nullable": true
+          },
+          "longDistance": {
+            "type": "boolean",
+            "description": "1사1교 장거리 강사비 단가가 적용되면 true. 그 외 false. 제미나이는 null.",
+            "example": false,
+            "nullable": true
           }
         }
       },
@@ -37810,6 +38304,13 @@
                 "type": "null"
               }
             ]
+          },
+          "settlementSubmitDeadlineAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "지급조서 제출 마감 시각. 강의일(회차 시작, Asia/Seoul) 기준 다음 달 5일 23:59:59(KST). 지나도 사업 운영 종료일까지는 제출할 수 있다(감점 없음). 강의보고서 마감 submitDueAt과 다르다. 제미나이(강사가 지급조서를 제출하지 않음)이거나 회차 시작 시각이 없으면 null.",
+            "example": "2026-12-05T14:59:59Z",
+            "nullable": true
           }
         }
       },
@@ -38230,6 +38731,45 @@
             "type": "string",
             "format": "date-time",
             "description": "모집 종료 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다.",
+            "nullable": true
+          },
+          "educationTargets": {
+            "type": "array",
+            "description": "교육대상 코드 배열(QA-0210). 공개 프로그램 상세 GET /api/portal/programs/{programId}의 educationTargets와 같은 값·같은 순서이며 신청한 모집 행과 무관합니다. 없으면 빈 배열.",
+            "enum": [
+              "elementary",
+              "middle",
+              "high",
+              "university",
+              "adult"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "educationForm": {
+            "type": "string",
+            "description": "교육형태 코드(QA-0210). 프로그램 상세 educationForm과 같은 값. 없으면 null.",
+            "enum": [
+              "online",
+              "offline",
+              "hybrid",
+              "participant_selection"
+            ],
+            "nullable": true
+          },
+          "educationFormLabel": {
+            "type": "string",
+            "description": "교육형태 한글 라벨. 프로그램 상세 educationFormLabel과 같은 값. educationFormScheduleDetail=perSchedule(일정별 상이)이면 상세와 같이 null.",
+            "nullable": true
+          },
+          "educationFormScheduleDetail": {
+            "type": "string",
+            "description": "교육형태 일정 공통/일정 별 상이. 프로그램 상세 educationFormScheduleDetail과 같은 값.",
+            "enum": [
+              "common",
+              "perSchedule"
+            ],
             "nullable": true
           }
         }
@@ -43344,7 +43884,7 @@
           },
           "institutionName": {
             "type": "string",
-            "description": "참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null",
+            "description": "참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null. Gemini 실적 지급조서는 실적의 학교·기관명(계좌 지급 목록과 같은 값)",
             "nullable": true
           },
           "businessPeriodStart": {
@@ -43357,14 +43897,20 @@
           },
           "sessionCompleted": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "프로그램 일정 기준 완료 회차 수. Gemini 실적 지급조서는 회차 개념이 없어 null",
+            "nullable": true
           },
           "sessionTotal": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "프로그램 일정 기준 전체 회차 수. Gemini 실적 지급조서는 null",
+            "nullable": true
           },
           "programSessionProgressDisplay": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램 커리큘럼/스케줄 기준 진행 회차 (예: 4 / 16). Gemini 실적 지급조서는 null",
+            "nullable": true
           },
           "calculationStatus": {
             "type": "string"
@@ -43430,6 +43976,63 @@
             "items": {
               "type": "string"
             }
+          },
+          "paymentStatementPreConsentStatus": {
+            "type": "string",
+            "description": "Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null.",
+            "enum": [
+              "COMPLETE",
+              "MISSING"
+            ],
+            "nullable": true
+          },
+          "rowType": {
+            "type": "string",
+            "description": "프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null.",
+            "enum": [
+              "SETTLEMENT",
+              "SETTLEMENT_APPLICATION",
+              "NOT_APPLIED"
+            ],
+            "nullable": true
+          },
+          "lectureProgressStatus": {
+            "type": "string",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 강의 진행 여부. SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 회차. 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null.",
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "GAVE_UP"
+            ],
+            "nullable": true
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정 시작 시각(program_schedule.start_at, ISO-8601 UTC). 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null.",
+            "nullable": true
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정 종료 시각(program_schedule.end_at, ISO-8601 UTC). 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null.",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정명(program_schedule.schedule_name). 일정형·복수 등 회차 번호가 없는 일정(sessionOrdinal=null)은 이 값이 일정 이름이다. 일정이 없는 행과 다른 정산 목록에서는 null.",
+            "nullable": true
+          },
+          "scheduleKind": {
+            "type": "string",
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 일정 종류(program_schedule.schedule_kind). 값이 비어 있는 일정과 일정이 없는 행, 다른 정산 목록에서는 null.",
+            "enum": [
+              "PRE_EDUCATION",
+              "EDUCATION",
+              "CLOSING",
+              "SESSION"
+            ],
+            "nullable": true
           }
         }
       },
@@ -44598,7 +45201,7 @@
           "expectedSettlementAmount": {
             "type": "integer",
             "format": "int64",
-            "description": "미지급/예정 정산 금액(세후 net). expected_transfer_date 범위."
+            "description": "미지급/예정 정산 금액(세후 net). expected_transfer_date 범위. 영수증 계좌 지급(원천징수 0원)도 포함."
           },
           "completedPaymentAmount": {
             "type": "integer",
@@ -44623,7 +45226,7 @@
           "settlementCount": {
             "type": "integer",
             "format": "int32",
-            "description": "정산 건수(해당 연도 최신 정산 행 전체). paidCount와 분리."
+            "description": "정산 건수(해당 연도 최신 정산 행 전체 + 그해 영수증 지급 건). 연도 기준은 강사와 같이 이체 예정일 → 교육일 → 생성일. paidCount와 분리."
           },
           "paidCount": {
             "type": "integer",
@@ -44725,7 +45328,7 @@
           },
           "sensitiveAccount": {
             "$ref": "#/components/schemas/AccountPaymentSensitiveDetailResponse",
-            "description": "상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보. 개인정보 조회 이력이 accessPurpose=정산금 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다."
+            "description": "상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보(은행·계좌번호·예금주). 개인정보 조회 이력이 accessPurpose=정산금의 계좌 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다."
           },
           "programType": {
             "type": "string",
@@ -44792,7 +45395,9 @@
             "format": "date-time"
           },
           "sourceType": {
-            "type": "string"
+            "type": "string",
+            "description": "계좌 지급 출처. SETTLEMENT(강사 지급조서) | GEMINI_TRAINING_REPORT(옛 Gemini 직접 지급) | INDIVIDUAL_SETTLEMENT(참여자·봉사자 영수증).",
+            "nullable": true
           },
           "sourceId": {
             "type": "integer",
@@ -44856,12 +45461,28 @@
             "items": {
               "type": "string"
             }
+          },
+          "payeeType": {
+            "type": "string",
+            "description": "지급 대상 유형. INSTRUCTOR(강사 지급조서·Gemini) | PARTICIPANT(참여자 영수증) | VOLUNTEER(봉사자 영수증). 영수증은 sourceType=INDIVIDUAL_SETTLEMENT, sourceId=영수증 정산 신청 id, settlementId=null이며 원천징수 0원입니다.",
+            "enum": [
+              "INSTRUCTOR",
+              "PARTICIPANT",
+              "VOLUNTEER"
+            ],
+            "example": "INSTRUCTOR"
+          },
+          "maskedRecipientPhone": {
+            "type": "string",
+            "description": "받는 분 휴대폰 마스킹값. 대량이체 양식 미리보기용. 원문은 서버 XLSX 다운로드에만 있음. 출처는 서버 XLSX와 같은 회원 휴대폰(정산 건 강사, 직접 지급 건 지급 대상 회원). 없으면 null.",
+            "example": "010-****-5678",
+            "nullable": true
           }
         }
       },
       "AccountPaymentSensitiveDetailResponse": {
         "type": "object",
-        "description": "계좌 지급 상세 진입 시 반환하는 원문 계좌정보(bankName, accountNo, accountHolder). 목록에는 포함하지 않습니다. 성별·생년월일·연락처·이메일·자택주소는 계좌 지급 상세 계약에 없습니다. GET /api/admin/account-payments/{paymentId} 성공 시 감사 사유는 정확히 '정산금의 계좌 지급 처리를 위함'이며, 감사 저장 실패 시 이 원문을 반환하지 않습니다.",
+        "description": "계좌 지급 현황 상세(Master·Accounting Manager)의 원문 범위는 성별·생년월일·연락처·이메일·자택 주소·정산 계좌. sensitiveAccount는 원문 계좌정보(은행·계좌번호·예금주), 같은 응답 settlement.payee는 privacyMaskingLevel=RAW로 연락처·이메일·성별·생년월일(yyyy-MM-dd)·자택 주소 원문. payee의 주민등록번호·영문명·소속은 이 화면 항목이 아니어서 마스킹값이며 표시 대상이 아님. Gemini 직접 지급 건은 payee 없음. 진입 시 '정산금의 계좌 지급 처리를 위함' 자동 기록(기록 실패 시 원문 미반환). GET /api/admin/account-payments/{paymentId} 쿼리 파라미터 reason은 받기만 하고 쓰지 않는다(FE 호환, 제거 금지).",
         "properties": {
           "bankName": {
             "type": "string"
@@ -45201,6 +45822,81 @@
             "items": {
               "$ref": "#/components/schemas/ProviderDeliveryAttemptCountResponse"
             }
+          }
+        }
+      },
+      "VolunteerAssignmentCandidateResponse": {
+        "type": "object",
+        "description": "기관형 봉사자 배정 후보(기관 신청 × 회차). POST volunteer-assignments 와 final-result assignments[] 가 받는 조합만 내려준다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "실제 프로그램 일정 ID. assignments[].scheduleId 로 보낸다.",
+            "example": 11001
+          },
+          "scheduleName": {
+            "type": "string",
+            "description": "일정명",
+            "example": "2회차",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "description": "회차 번호(program_schedule.session_no). 없으면 null",
+            "example": 2,
+            "nullable": true
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "일정 시작 시각(ISO-8601). 날짜·시간 표시는 이 값을 KST로 변환한다.",
+            "nullable": true
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "일정 종료 시각(ISO-8601)",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관 신청 ID. assignments[].organizationApplicationId 로 보낸다.",
+            "example": 22001
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관 ID",
+            "nullable": true
+          },
+          "organizationName": {
+            "type": "string",
+            "description": "기관명"
+          },
+          "regionSido": {
+            "type": "string",
+            "description": "기관 소재지 시/도",
+            "nullable": true
+          },
+          "regionSigungu": {
+            "type": "string",
+            "description": "기관 소재지 시/군/구",
+            "nullable": true
+          },
+          "assignedVolunteerCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "현재 이 기관·회차에 ASSIGNED 상태로 배정된 봉사자 수",
+            "example": 1
+          },
+          "requiredVolunteerCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "필요 봉사자 수. 기관형 기관 신청에는 아직 저장 데이터가 없어 항상 null(기획 확정 후 채움)",
+            "nullable": true
           }
         }
       },
@@ -45774,6 +46470,16 @@
             "items": {
               "$ref": "#/components/schemas/GradeBlock"
             },
+            "nullable": true
+          },
+          "educationPlace": {
+            "type": "string",
+            "description": "신청 기본 정보 답변의 교육 장소(educationPlace) 원문. 신청 폼이 보낸 코드값을 그대로 반환하며 서버가 라벨로 바꾸거나 프로그램 설정으로 채우지 않습니다. 최신 제출 답변에 없으면 null.",
+            "nullable": true
+          },
+          "educationPlaceDetail": {
+            "type": "string",
+            "description": "신청 기본 정보 답변의 교육 장소 상세(educationPlaceDetail, 기타 직접 입력·상세) 원문. 없으면 null.",
             "nullable": true
           }
         }
@@ -46895,15 +47601,28 @@
           },
           "birthDate": {
             "type": "string",
-            "format": "date",
-            "description": "참여자 생년월일 (개인 신청 스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null",
-            "example": "2008-03-15",
+            "description": "참여자 생년월일 마스킹값(yyyy-**-**). 원문은 제공하지 않는다(정책 CMS-39, 목록 마스킹). 개인 신청 스냅샷 우선, 없으면 회원 정보. 회원 없는 행·기관 행은 null. 2026-10-07 인증서 발급용 원문 계약은 폐기 — 인증서·활동증명서 발급은 발급 직전 원문 해제 API를 쓴다.",
+            "example": "2008-**-**",
             "nullable": true
           },
           "gender": {
             "type": "string",
-            "description": "참여자 성별 원시 코드 (스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null",
-            "example": "MALE",
+            "description": "성별 마스킹값 **. 원시 코드는 제공하지 않는다. 값이 없으면 null",
+            "example": "**",
+            "nullable": true
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32",
+            "description": "원문 생년월일의 연도. 없으면 null",
+            "example": 2008,
+            "nullable": true
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null. CMS 표기 YYYY.**.**(만 NN세)",
+            "example": 18,
             "nullable": true
           },
           "requestedSchedules": {
@@ -46928,6 +47647,26 @@
             "type": "integer",
             "format": "int64",
             "description": "봉사자 행 장거리 출강 횟수. 봉사자 거리를 산출하지 않아 항상 null.",
+            "nullable": true
+          },
+          "instructorFeePolicy": {
+            "description": "강사(INSTRUCTOR) 행의 현재 강사비 책정 기준(강사 승인 Approval.feePolicy와 같은 형태). 강사 신청이 있으면 신청서 값, 직접 추가한 강사면 참여 강사 값. 정하지 않았거나 강사가 아닌 행은 null. 수정: PATCH /api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FeePolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instructorFeePolicySource": {
+            "type": "string",
+            "description": "instructorFeePolicy 정본 위치. INSTRUCTOR_APPLICATION | PARTICIPANT. 강사가 아닌 행은 null.",
+            "enum": [
+              "INSTRUCTOR_APPLICATION",
+              "PARTICIPANT"
+            ],
             "nullable": true
           }
         }
@@ -48351,6 +49090,13 @@
           "birthYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null. CMS 표기 YYYY.**.**(만 NN세)",
+            "example": 16,
+            "nullable": true
           },
           "affiliation": {
             "type": "string"
@@ -51696,6 +52442,21 @@
           "deliveredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "providerResultCode": {
+            "type": "string",
+            "description": "NHN이 돌려준 수신 결과 코드. 결과가 없으면 null.",
+            "nullable": true
+          },
+          "providerResultMessage": {
+            "type": "string",
+            "description": "NHN이 돌려준 결과 원문 메시지. 결과가 없으면 null.",
+            "nullable": true
+          },
+          "displayReason": {
+            "type": "string",
+            "description": "수신 실패(SEND_FAILED·DELIVERY_FAILED) 사유 한국어 표시값(QA-0178). 서버 매핑에 없는 코드는 '발송 실패(코드: NNNN)'. 실패가 아니거나 코드가 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -52170,6 +52931,11 @@
           "smsMessageType": {
             "type": "string",
             "description": "SMS|LMS|MMS. SMS 목록 메시지 유형. preview/스냅샷 또는 템플릿 sms_message_type."
+          },
+          "displayReason": {
+            "type": "string",
+            "description": "수신 실패(SEND_FAILED·DELIVERY_FAILED) 사유 한국어 표시값(QA-0178). providerResultCode 기준이며 서버 매핑에 없는 코드는 '발송 실패(코드: NNNN)'. 실패가 아니거나 코드가 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -52435,6 +53201,15 @@
           },
           "severity": {
             "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "description": "오류 출처. SERVER=서버 실패, CLIENT=CMS 화면 오류(QA-0183). 목록 검색 파라미터 source로도 거를 수 있습니다.",
+            "enum": [
+              "SERVER",
+              "CLIENT"
+            ],
+            "example": "SERVER"
           }
         }
       },
@@ -52592,6 +53367,15 @@
           },
           "traceId": {
             "type": "string"
+          },
+          "targetType": {
+            "type": "string",
+            "description": "조회 대상 유형(QA-0153). 예: MEMBER, ADMIN_ACCOUNT, INSTRUCTOR_PROFILE, NOTIFICATION_DELIVERY, ACCOUNT_PAYMENT."
+          },
+          "targetId": {
+            "type": "string",
+            "description": "조회 대상 식별번호(target_id, QA-0153). 대상이 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -52676,6 +53460,19 @@
             "items": {
               "type": "string"
             }
+          },
+          "targetCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "파일에 들어간 대상 건수(QA-0146). 기록하지 않은 다운로드는 null.",
+            "nullable": true
+          },
+          "filterConditions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "내려받을 때의 조회 조건 {키: 값}(QA-0146). 이메일·전화번호·토큰과 자유 입력 검색어는 가려서 저장. 기록하지 않았으면 빈 객체."
           }
         }
       },
@@ -53359,6 +54156,21 @@
               "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 실적이 만든 지급조서(settlement) ID. 지급 제외 실적·과거 직접 지급 건은 null.",
+            "nullable": true
+          },
+          "statementStatus": {
+            "type": "string",
+            "description": "연결된 지급조서의 statementStatus(지급조서 목록과 같은 값, 예: WAITING_CONFIRM·CONFIRMED). settlementId가 null이면 null.",
+            "nullable": true
+          },
+          "deleteBlocked": {
+            "type": "boolean",
+            "description": "true면 삭제(무효화) 불가. DELETE·bulk-delete가 409 GEMINI_TRAINING_REPORT_ACCOUNT_PAID를 내는 조건과 같다: 과거 직접 지급이 PAID, 연결된 지급조서가 확인완료(CONFIRMED), 또는 그 지급조서로 계좌 지급이 이미 생성됨."
           }
         }
       },
@@ -54966,6 +55778,38 @@
             "type": "string",
             "description": "program_schedule.education_slot_key",
             "nullable": true
+          },
+          "eventType": {
+            "type": "string",
+            "description": "일정 유형(QA-0382). 목록 캘린더(includeOperationalEvents=true)와 같은 값. 교육 회차: EDUCATION(시각 있는 회차)·EDUCATION_PERIOD(여러 날 종일 기간)·EVENT(행사). 운영 기간: BUSINESS_START·BUSINESS_END. 모집 기간: RECRUITMENT_START·RECRUITMENT_END (운영·모집은 includeOperationalEvents=true일 때만 내려감).",
+            "enum": [
+              "EDUCATION",
+              "EDUCATION_PERIOD",
+              "EVENT",
+              "BUSINESS_START",
+              "BUSINESS_END",
+              "RECRUITMENT_START",
+              "RECRUITMENT_END"
+            ]
+          },
+          "eventKey": {
+            "type": "string",
+            "description": "이벤트 고유 키. 교육 회차는 {eventType}:{scheduleId}, 운영은 BUSINESS_START:{programId}, 모집은 RECRUITMENT_START:{recruitmentId} 형식."
+          },
+          "eventLabel": {
+            "type": "string",
+            "description": "유형별 표시 라벨(예: 교육, 운영 시작, 모집 마감). 목록 캘린더와 같은 문구."
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Asia/Seoul 달력 날짜. 운영 시작/종료와 종일 교육은 이 값으로 표시. 시각 있는 교육 회차와 모집 시작/종료(startAt 사용)는 null.",
+            "nullable": true
+          },
+          "recruitmentType": {
+            "type": "string",
+            "description": "모집 유형(PARTICIPANT·INSTRUCTOR·VOLUNTEER 등). 모집 일정만 채우고 나머지는 null.",
+            "nullable": true
           }
         }
       },
@@ -55711,6 +56555,13 @@
           "birthYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "만 나이(서울 기준 오늘). 생년월일 원문이 없으면 null. CMS 표기 YYYY.**.**(만 NN세)",
+            "example": 35,
+            "nullable": true
           },
           "status": {
             "type": "string"

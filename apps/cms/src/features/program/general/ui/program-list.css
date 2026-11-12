@@ -694,3 +694,9 @@
   cursor: pointer;
   display: inline-block;
 }
+
+/* QA-0256 — 목록 행 키보드 포커스 표시 (일반·1사1교·교육받은 교사 공통, 클릭 동작 변화 없음) */
+.program-list-table-fit-wrap .ant-table-tbody > tr[data-row-activatable='true']:focus-visible {
+  outline: 2px solid rgba(0, 160, 175, 0.6);
+  outline-offset: -2px;
+}

@@ -45,7 +45,7 @@ export async function createInstructorSettlementApplication(
 
 /**
  * POST /api/portal/me/instructor-assignments/{assignmentId}/settlement-applications/preview
- * 교통비 제외 사유(transportationExcludedReason)·주소 쪽(transportationUnresolvedAddressSide)만 쓴다.
+ * 교통비 제외 사유·주소 쪽, 차단 사유(blockerCode), 실비 항목(payableItems: LODGING·ACTIVITY·MEAL)을 쓴다.
  */
 export type PortalInstructorSettlementPreview = {
   assignmentId?: number | null
@@ -53,6 +53,13 @@ export type PortalInstructorSettlementPreview = {
   blockerCode?: string | null
   transportationExcludedReason?: string | null
   transportationUnresolvedAddressSide?: string | null
+  /** 프로그램에서 켠 실비 항목만. maxLimitWon은 신청 1건 기준 한도, evidenceRequired 미설정이면 null */
+  payableItems?: Array<{
+    itemType?: string | null
+    itemName?: string | null
+    maxLimitWon?: number | null
+    evidenceRequired?: boolean | null
+  }> | null
 }
 
 export async function previewInstructorSettlementApplication(

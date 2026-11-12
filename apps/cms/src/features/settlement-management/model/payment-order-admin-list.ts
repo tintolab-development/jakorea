@@ -163,8 +163,10 @@ export interface PaymentOrderAdminProgramDetail {
   aggregateProcessingStatus: PaymentOrderAdminProcessingStatus
   businessPeriodStart: string
   businessPeriodEnd: string
-  sessionCompleted: number
-  sessionTotal: number
+  /** 프로그램 진행 회차(완료). 회차 개념이 없는 프로그램(Gemini 등)은 null */
+  sessionCompleted: number | null
+  /** 프로그램 진행 회차(전체). 회차 개념이 없는 프로그램(Gemini 등)은 null */
+  sessionTotal: number | null
   instructorRows: PaymentOrderAdminProgramDetailInstructorRow[]
 }
 
@@ -206,6 +208,8 @@ export type PaymentOrderCalculationLineKind =
   | 'meal'
   | 'activity'
   | 'withholding'
+  /** BE items[].type `other`(기타) 양수 행 — 강사비로 분류하지 않는다 */
+  | 'other'
 
 /** 산출 내역서 모달 — 기본 정보(프로그램 맥락 4열 `program-detail-info-tab`) */
 export interface PaymentOrderCalculationStatementProgramBasicInfo {

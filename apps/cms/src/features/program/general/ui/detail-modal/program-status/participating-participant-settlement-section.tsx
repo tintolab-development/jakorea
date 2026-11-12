@@ -26,9 +26,12 @@ import {
   individualSettlementTableProcessingLabel,
   resolveIndividualSettlementReviewUiStatus,
 } from '@/features/program/general/lib/individual-settlement-review-status'
-import type { IndividualSettlementReviewListRow } from '@/features/program/general/lib/map-individual-settlement-review-rows'
+import {
+  isIndividualSettlementRowNotApplicable,
+  resolveIndividualSettlementReviewSummaryLabel,
+  type IndividualSettlementReviewListRow,
+} from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
-import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import { useParticipatingParticipantSettlementList } from '@/features/program/general/hooks/use-participating-participant-settlement-list'
 import { formatBusinessPeriodDisplay } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
@@ -106,9 +109,7 @@ export function ParticipatingParticipantSettlementSection({
         align: 'center',
         width: 160,
         render: (_value, record) => {
-          if (record.settlementApplicationId == null) {
-            return <InstructorSettlementStatusText status="none" />
-          }
+          if (isIndividualSettlementRowNotApplicable(record)) return '-'
           const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status)
           if (uiStatus) return <InstructorSettlementStatusText status={uiStatus} />
           return (
@@ -123,10 +124,11 @@ export function ParticipatingParticipantSettlementSection({
       },
       {
         title: '정산 예정 금액',
-        dataIndex: 'totalAmountLabel',
         key: 'totalAmountLabel',
         align: 'center',
         width: 140,
+        render: (_value, record) =>
+          isIndividualSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
       },
       {
         title: '지급조서',
@@ -139,7 +141,7 @@ export function ParticipatingParticipantSettlementSection({
               variant="default"
               size="h32"
               style={{ width: '100%' }}
-              disabled={!remoteEnabled}
+              disabled={!remoteEnabled || isIndividualSettlementRowNotApplicable(record)}
               onClick={() => {
                 if (!record.canOpenDetail || record.settlementApplicationId == null) {
                   showAlert(PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT)
@@ -170,19 +172,7 @@ export function ParticipatingParticipantSettlementSection({
     formatDate: iso => formatDateDotWithWeekday(iso),
   })
 
-  const summaryStatusLabel = isError
-    ? '조회 실패'
-    : summary.submitted > 0 && (summary.approved > 0 || summary.rejected > 0)
-      ? '확인 진행 중'
-      : summary.submitted > 0
-        ? '확인 대기 중'
-        : summary.approved > 0
-          ? getInstructorSettlementStatusLabel('payment_statement_verified')
-          : summary.rejected > 0
-            ? '신청 반려'
-            : summary.total > 0
-              ? '해당 없음'
-              : '-'
+  const summaryStatusLabel = resolveIndividualSettlementReviewSummaryLabel(summary, isError)
 
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">

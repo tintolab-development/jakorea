@@ -465,6 +465,10 @@ export type ParagraphTimePickerPopoverProps = {
   onEndTimeToggleOn?: () => void
   onApply: () => void
   inputSize?: CmsControlSize
+  /** opt-in: 분 선택 스텝(예: 30 → 00/30). 기본 1분 */
+  minuteStep?: number
+  /** opt-in: 활성 행의 분 셀렉트도 강조 */
+  emphasizeActiveMinute?: boolean
 }
 
 export function ParagraphTimePickerPopover({
@@ -492,6 +496,8 @@ export function ParagraphTimePickerPopover({
   onEndTimeToggleOn,
   onApply,
   inputSize = 'medium',
+  minuteStep,
+  emphasizeActiveMinute = false,
 }: ParagraphTimePickerPopoverProps) {
   const { popoverRef, popoverStyle } = useDateTimePickerPopoverLayer({
     open,
@@ -516,6 +522,8 @@ export function ParagraphTimePickerPopover({
       minute={m}
       onHourChange={setH}
       onMinuteChange={setM}
+      minuteStep={minuteStep}
+      emphasizeActiveMinute={emphasizeActiveMinute}
       getPopupContainer={() => popoverRef.current ?? document.body}
       disabled={disabled}
       hourActive={

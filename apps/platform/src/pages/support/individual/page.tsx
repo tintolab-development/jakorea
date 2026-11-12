@@ -1,4 +1,10 @@
-import { CtaSection, HeroSection, ImpactSection, WhySection } from '@/features/individual-donation'
+import {
+  CtaSection,
+  FloatingCta,
+  HeroSection,
+  ImpactSection,
+  WhySection,
+} from '@/features/individual-donation'
 import { usePublicPersonalSponsorshipView } from '@/features/individual-donation/api/hooks'
 import { PublicContentPageLoading } from '@/shared/ui'
 import styles from './page.module.css'
@@ -16,6 +22,7 @@ export function IndividualDonationPage() {
       <WhySection />
       <CtaSection />
       <ImpactSection />
+      <FloatingCta />
     </section>
   )
 }

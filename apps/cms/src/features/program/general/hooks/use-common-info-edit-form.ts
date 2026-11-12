@@ -97,9 +97,15 @@ export function useGeneralProgramCommonInfoEditForm({
     () => (program ? resolveSponsorManagementIds(program, interimSponsorContext) : []),
     [interimSponsorContext, program]
   )
-  const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds, true, {
-    sponsorRows: sponsorsQuery.data ?? EMPTY_INTERIM_SPONSORS,
-  })
+  // 담당자 선택지는 수정 모드에서만 받는다. contacts API는 원문 + 후원사 담당자 고정 사유 자동 기록(CMS-17)이고,
+  // 수정 폼 기본값(resolveSponsorManagerContactIds)은 담당자 목록 없이 배정 응답의 contact id로 만든다.
+  const sponsorContext = useGeneralProgramSponsorEditContext(
+    initialSponsorIds,
+    Boolean(program) && isEditMode,
+    {
+      sponsorRows: sponsorsQuery.data ?? EMPTY_INTERIM_SPONSORS,
+    }
+  )
   // 세부 프로그램 옵션은 수정 모드에서만 필요하다. 수정 진입 시 handleInfoEdit이 먼저 받아 둔다.
   const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program) && isEditMode)
   const detailedProgramCatalog = useMemo(

@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorPayableItem } from './instructorPayableItem';
 import type { SettlementApplicationCalculationDetailResponse } from './settlementApplicationCalculationDetailResponse';
 import type { SettlementApplicationItemResponse } from './settlementApplicationItemResponse';
 import type { SettlementApplicationPreviewResponseTransportationExcludedReason } from './settlementApplicationPreviewResponseTransportationExcludedReason';
@@ -30,4 +31,6 @@ export interface SettlementApplicationPreviewResponse {
   transportationExcludedReason?: SettlementApplicationPreviewResponseTransportationExcludedReason;
   /** 찾지 못한 쪽. ORIGIN=강사 자택 주소, DESTINATION=교육 장소, ROUTE=경로. 제외되지 않았으면 null. */
   transportationUnresolvedAddressSide?: SettlementApplicationPreviewResponseTransportationUnresolvedAddressSide;
+  /** 강사가 신청할 수 있는 실비 항목(프로그램에서 켠 항목만). 숙박비(LODGING, 1사1교 제외)·활동비(ACTIVITY)·식사비(MEAL). maxLimitWon은 CMS 정산 항목 설정의 신청 1건 기준 최대 한도(없으면 null), evidenceRequired는 영수증 필요 여부(미설정이면 null). 넘으면 400 PAYMENT_ITEM_LIMIT_EXCEEDED. 교통비·1사1교 숙박비는 별도 필드로 다룬다. */
+  payableItems?: InstructorPayableItem[];
 }

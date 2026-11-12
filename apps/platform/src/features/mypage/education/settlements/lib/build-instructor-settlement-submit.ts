@@ -119,18 +119,19 @@ export function buildInstructorSettlementPayloadParts(draft: SettlementWriteDraf
     })
   }
 
-  pushItem(requestedItems, evidenceAttachments, {
-    itemType: 'MEAL',
-    amount: parseSettlementAmount(draft.meal.amount),
-    fileObjectIds: (draft.meal.attachments ?? []).map(file => file.fileObjectId),
-    evidenceRequired: true,
-  })
-  pushItem(requestedItems, evidenceAttachments, {
-    itemType: 'ACTIVITY',
-    amount: parseSettlementAmount(draft.activity.amount),
-    fileObjectIds: (draft.activity.attachments ?? []).map(file => file.fileObjectId),
-    evidenceRequired: true,
-  })
+  // 식사비·활동비: 프로그램에서 끈 항목은 보내지 않고, 영수증 필요 여부는 미리보기 기준 (K14)
+  for (const [itemType, item] of [
+    ['MEAL', draft.meal],
+    ['ACTIVITY', draft.activity],
+  ] as const) {
+    if (item.allowed === false) continue
+    pushItem(requestedItems, evidenceAttachments, {
+      itemType,
+      amount: parseSettlementAmount(item.amount),
+      fileObjectIds: (item.attachments ?? []).map(file => file.fileObjectId),
+      evidenceRequired: item.evidenceRequired !== false,
+    })
+  }
 
   // 1사1교 숙박비 — 금액 없이 신청 1건, 영수증 필수(BE 2026-11-09)
   const lodging = draft.companySchoolLodging

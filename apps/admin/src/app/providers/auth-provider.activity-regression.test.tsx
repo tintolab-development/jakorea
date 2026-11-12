@@ -40,6 +40,7 @@ vi.mock('@/features/auth/api/admin-session-fetcher', () => ({
   isAdminAuthForbiddenError: (e: { response?: { status?: number } }) => e?.response?.status === 403,
 }))
 vi.mock('@/features/auth/ui/session-warning-modal', () => ({ SessionWarningModal: () => null }))
+vi.mock('@/features/auth/ui/bootstrap-session-notice', () => ({ BootstrapSessionNotice: () => null }))
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { AuthProvider } from './auth-provider'
@@ -52,7 +53,6 @@ describe('Homepage Admin: AuthProvider stale Activity errors', () => {
     vi.clearAllMocks()
     tracker.fire = null
     localStorage.clear()
-    localStorage.setItem('hp_admin_auth_token', OLD)
     localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-fixture')
     const expiresAt = new Date(Date.now() + 60 * 60_000).toISOString()
     localStorage.setItem('hp_admin_auth_expires_at', expiresAt)

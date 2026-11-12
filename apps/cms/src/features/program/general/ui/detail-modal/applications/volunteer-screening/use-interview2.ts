@@ -38,6 +38,12 @@ import type {
 import { useGeneralVolunteerInterview2Columns } from './interview2-columns'
 import { useGeneralVolunteerEducationAssignApproval } from './use-education-assign-approval'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import {
+  toVolunteerFinalPassAssignments,
+  type VolunteerFinalPassAssignmentSlot,
+} from '@/features/program/general/lib/volunteer-final-pass-assignment'
+import type { FinalPassAssignment } from '@/shared/api/generated/dashboard/schemas/finalPassAssignment'
 import type {
   PermissionModalNotifyTiming,
   PermissionModalPayload,
@@ -254,7 +260,8 @@ export function useGeneralVolunteerInterview2({
       ids: string[],
       status: GeneralSecondInterviewScreeningStatus,
       reason?: string,
-      notify?: { notifyTiming?: string; scheduledAt?: string }
+      notify?: { notifyTiming?: string; scheduledAt?: string },
+      assignments?: FinalPassAssignment[]
     ): Promise<boolean> => {
       if (
         status !== 'pass' &&
@@ -267,7 +274,7 @@ export function useGeneralVolunteerInterview2({
         return false
       }
       if (volunteerRemote.remoteEnabled) {
-        return volunteerRemote.applyRemoteFinalResult(ids, status, reason, notify)
+        return volunteerRemote.applyRemoteFinalResult(ids, status, reason, notify, assignments)
       }
       notifyProgramApiUnavailable('general-volunteer-interview2-action', '봉사자 2차 면접 심사')
       return false
@@ -320,10 +327,66 @@ export function useGeneralVolunteerInterview2({
   })
   const openEducationAssign = educationAssign.open
 
+  /**
+   * 기관형 봉사자 — 합격 유형 「합격」이면 「기관 배정 안내」(시안 16-2)에서 기관·일정을 고른 뒤
+   * final-result PASS + assignments 한 번으로 처리(BE A1, 합격·배정 한 트랜잭션). 배정은 선택 사항.
+   * 예비합격·불합격·일괄 합격·참여자는 기존대로 assignments 없이.
+   */
+  const organizationAssignOnPass = subjectKind === 'volunteer' && isGeneralOrganizationProgram(program)
+  const [organizationAssignTarget, setOrganizationAssignTarget] = useState<
+    | ({ applicationId: string; volunteerName: string } & Pick<
+        Interview2PassConfirmPayload,
+        'notifyTiming' | 'manualNotifyAt'
+      >)
+    | null
+  >(null)
+  const [organizationAssignSubmitting, setOrganizationAssignSubmitting] = useState(false)
+
+  const cancelOrganizationAssign = useCallback(() => {
+    if (organizationAssignSubmitting) return
+    setOrganizationAssignTarget(null)
+  }, [organizationAssignSubmitting])
+
+  const confirmOrganizationAssign = useCallback(
+    async (selected: VolunteerFinalPassAssignmentSlot[]) => {
+      const target = organizationAssignTarget
+      if (!target || organizationAssignSubmitting) return
+      setOrganizationAssignSubmitting(true)
+      try {
+        const ok = await applySecondInterviewStatus(
+          [target.applicationId],
+          'pass',
+          undefined,
+          toScreeningNotifyFields(target.notifyTiming, target.manualNotifyAt),
+          toVolunteerFinalPassAssignments(selected)
+        )
+        // 실패(합격·배정 롤백) 시 팝업·선택을 그대로 두고 다시 시도할 수 있게 한다
+        if (!ok) return
+        setOrganizationAssignTarget(null)
+        setFinalResultNotifyById(prev => ({ ...prev, [target.applicationId]: target.notifyTiming }))
+        setSelectedRowKeys(prev => prev.filter(key => String(key) !== target.applicationId))
+        setPassCompleteVolunteerName(target.volunteerName)
+      } finally {
+        setOrganizationAssignSubmitting(false)
+      }
+    },
+    [applySecondInterviewStatus, organizationAssignSubmitting, organizationAssignTarget]
+  )
+
   const handlePassModalConfirm = useCallback(
     async (payload: Interview2PassConfirmPayload) => {
       if (!passModalVolunteer) return
       const { id, name: volunteerName } = passModalVolunteer
+      if (organizationAssignOnPass && (payload.passType ?? 'pass') === 'pass') {
+        closePassModal()
+        setOrganizationAssignTarget({
+          applicationId: id,
+          volunteerName,
+          notifyTiming: payload.notifyTiming,
+          manualNotifyAt: payload.manualNotifyAt,
+        })
+        return
+      }
       if (educationAssignOnPass && (payload.passType ?? 'pass') === 'pass') {
         closePassModal()
         openEducationAssign({
@@ -351,6 +414,7 @@ export function useGeneralVolunteerInterview2({
       closePassModal,
       educationAssignOnPass,
       openEducationAssign,
+      organizationAssignOnPass,
       passModalVolunteer,
     ]
   )
@@ -680,6 +744,11 @@ export function useGeneralVolunteerInterview2({
   return {
     educationAssign,
     educationAssignOnPass,
+    organizationAssignOnPass,
+    organizationAssignTarget,
+    organizationAssignSubmitting,
+    cancelOrganizationAssign,
+    confirmOrganizationAssign,
     list,
     pendingFilters,
     handleFilterChange,
