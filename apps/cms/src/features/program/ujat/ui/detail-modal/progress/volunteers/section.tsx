@@ -21,6 +21,7 @@ import type { ParticipatingVolunteerDetailRow } from '@/features/program/general
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import { ACTIVITY_CERTIFICATE_DOCUMENT_TITLE } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/detail-modal/program-status/student-certificate-pdf-export-host'
@@ -71,6 +72,10 @@ export function UjatEducationProgressVolunteersSection({
   const [addRegistrationMemberId, setAddRegistrationMemberId] = useState<string | null>(null)
   const [activityCertificateVolunteer, setActivityCertificateVolunteer] =
     useState<ParticipatingVolunteerDetailRow | null>(null)
+  /** 활동인증서 발급 사유 모달(CMS-FUNC-0161·0265) → 사유 선택 후 미리보기 */
+  const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
+  const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
+  const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [studentCertificateIssueModalOpen, setStudentCertificateIssueModalOpen] = useState(false)
   const [studentCertificateExportContext, setStudentCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
@@ -246,6 +251,8 @@ export function UjatEducationProgressVolunteersSection({
       setActivityCertificateVolunteer(
         buildActivityCertificateVolunteerFromUjatDetail(detail, bundle)
       )
+      setActivityCertReasonLabel(undefined)
+      setActivityCertReasonOpen(true)
     })()
   }, [loadSelectedVolunteerProgressBundle, selectedRowKeys, selectedVolunteerDetail, showAlert])
 
@@ -444,12 +451,29 @@ export function UjatEducationProgressVolunteersSection({
       />
       {activityCertificateVolunteer ? (
         <ParticipatingVolunteerActivityCertificatePreviewModal
-          open
-          onClose={() => setActivityCertificateVolunteer(null)}
+          open={activityCertPreviewOpen}
+          onClose={() => {
+            setActivityCertPreviewOpen(false)
+            setActivityCertificateVolunteer(null)
+          }}
           volunteer={activityCertificateVolunteer}
           program={program}
+          issuanceReasonLabel={activityCertReasonLabel}
         />
       ) : null}
+      <CertificateBulkIssueReasonModal
+        open={activityCertReasonOpen}
+        onCancel={() => {
+          setActivityCertReasonOpen(false)
+          setActivityCertificateVolunteer(null)
+        }}
+        applicationIds={activityCertificateVolunteer ? [activityCertificateVolunteer.id] : []}
+        certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+        onIssue={(_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+          setActivityCertReasonLabel(reasonLabel)
+          setActivityCertPreviewOpen(true)
+        }}
+      />
       <CertificateBulkIssueReasonModal
         open={studentCertificateIssueModalOpen}
         onCancel={() => setStudentCertificateIssueModalOpen(false)}
