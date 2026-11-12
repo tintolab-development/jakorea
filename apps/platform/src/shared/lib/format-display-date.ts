@@ -46,6 +46,8 @@ export type DisplayDateTimeParts = {
 export type FormatDisplayRangeOptions = {
   empty?: string
   dateOnly?: boolean
+  /** 기본 true. false면 `2026년 8월 15일`처럼 요일을 붙이지 않는다. */
+  weekday?: boolean
 }
 
 function isValidYmd(year: number, month: number, day: number): boolean {
@@ -195,9 +197,13 @@ export function formatDisplayClockLabel(raw: string): string {
   return formatDisplayClock(Number(match[1]), Number(match[2]))
 }
 
-export function formatDisplayDateParts(parts: Pick<DisplayDateTimeParts, 'year' | 'month' | 'day'>): string {
-  const weekday = weekdayKo(parts.year, parts.month, parts.day)
-  return `${parts.year}년 ${parts.month}월 ${parts.day}일(${weekday})`
+export function formatDisplayDateParts(
+  parts: Pick<DisplayDateTimeParts, 'year' | 'month' | 'day'>,
+  weekday = true,
+): string {
+  const date = `${parts.year}년 ${parts.month}월 ${parts.day}일`
+  if (!weekday) return date
+  return `${date}(${weekdayKo(parts.year, parts.month, parts.day)})`
 }
 
 function formatDateTimeParts(parts: DisplayDateTimeParts): string {
@@ -252,13 +258,14 @@ export function formatDisplayDateRange(
   options: FormatDisplayRangeOptions = {},
 ): string {
   const empty = options.empty ?? '-'
+  const weekday = options.weekday !== false
   const startParts = start == null || start === '' ? null : parseSource(start, 'date')
   const endParts = end == null || end === '' ? null : parseSource(end, 'date')
   if (!startParts && !endParts) return empty
-  if (startParts && !endParts) return formatDisplayDateParts(startParts)
-  if (!startParts && endParts) return formatDisplayDateParts(endParts)
-  if (sameCalendarDay(startParts!, endParts!)) return formatDisplayDateParts(startParts!)
-  return `${formatDisplayDateParts(startParts!)} ~ ${formatDisplayDateParts(endParts!)}`
+  if (startParts && !endParts) return formatDisplayDateParts(startParts, weekday)
+  if (!startParts && endParts) return formatDisplayDateParts(endParts, weekday)
+  if (sameCalendarDay(startParts!, endParts!)) return formatDisplayDateParts(startParts!, weekday)
+  return `${formatDisplayDateParts(startParts!, weekday)} ~ ${formatDisplayDateParts(endParts!, weekday)}`
 }
 
 /** 모집기간처럼 날짜만 짧게 표시할 때 사용한다. 같은 연도는 종료일의 연도를 생략한다. */

@@ -33,6 +33,10 @@ assert.equal(
   '2026년 4월 20일(월) ~ 2026년 11월 20일(금)',
 )
 assert.equal(formatDisplayDateRange('2026-04-20', '2026-04-20'), '2026년 4월 20일(월)')
+assert.equal(
+  formatDisplayDateRange('2026-08-15', '2026-09-16', { weekday: false }),
+  '2026년 8월 15일 ~ 2026년 9월 16일',
+)
 assert.equal(formatDisplayDateRange(null, null), '-')
 assert.equal(
   formatDisplayDateRangeCompact('2026-05-15', '2026-06-15'),
