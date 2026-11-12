@@ -167,7 +167,7 @@ async function resolveSponsor(): Promise<ResolvedUjatDevDependencies['sponsor']>
     .sort(byId)
   for (const sponsor of sponsors) {
     const sponsorId = String(sponsor.id).trim()
-    const contacts = [...(await getSponsorContacts(sponsorId))].filter(row => row?.id).sort(byId)
+    const contacts = [...(await getSponsorContacts(sponsorId, undefined, { contactPrivacy: 'MASKED' }))].filter(row => row?.id).sort(byId)
     const contact = contacts[0]
     if (contact) return { sponsorId, contactId: String(contact.id).trim() }
   }

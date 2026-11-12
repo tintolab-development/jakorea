@@ -924,7 +924,7 @@ async function resolveSponsorAndContact(allowAllSentinel: boolean): Promise<{
     for (const sponsor of ordered) {
       if (!sponsor?.id) continue
       const sponsorId = String(sponsor.id).trim()
-      const contacts = await getSponsorContacts(sponsorId)
+      const contacts = await getSponsorContacts(sponsorId, undefined, { contactPrivacy: 'MASKED' })
       if (contacts.length === 0) continue
       const contact = pick(contacts)
       if (!contact?.id) continue
