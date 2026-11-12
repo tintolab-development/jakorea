@@ -214,29 +214,23 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
     ).toBe(false)
   })
 
-  it('개인 모집 — 면접 유무 라디오 미조작(기본 면접 있음)이면 interviewRequired 로 막지 않는다', () => {
+  it('개인 모집 — 면접 유무 라디오 미조작(미선택)이면 interviewRequired 로 막는다(QA-0121)', () => {
     const row = filledIndividual()
     delete row['recruit.individual.interviewRequired']
-    replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, {
-      ...row,
-      'recruit.individual.docDeadlineIso': '2026-09-10T00:00:00.000Z',
-      'recruit.individual.docAnnounceMethod': '문자',
-      'recruit.individual.interviewRangeSeal': RANGE,
-      'recruit.individual.interviewMethod': '대면',
-    })
+    replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, row)
     const keys = listIncompleteGeneralProgramRecruitmentRequiredFields(
       ctx({
         participant: { individual: true, organization: false, teacherInstructor: false, volunteer: false },
       })
     )
-    expect(keys).not.toContain('recruit.individual.interviewRequired')
-    expect(keys).toEqual([])
+    expect(keys).toEqual(['recruit.individual.interviewRequired'])
   })
 
-  it('개인 모집 — 면접 유무 미조작이면 기본 면접 있음이라 면접 일정은 필수', () => {
-    const row = filledIndividual()
-    delete row['recruit.individual.interviewRequired']
-    replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, row)
+  it('개인 모집 — 면접 있음을 고르면 면접 일정이 필수', () => {
+    replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, {
+      ...filledIndividual(),
+      'recruit.individual.interviewRequired': 'yes',
+    })
     const keys = listIncompleteGeneralProgramRecruitmentRequiredFields(
       ctx({
         participant: { individual: true, organization: false, teacherInstructor: false, volunteer: false },
@@ -246,7 +240,7 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
     expect(keys).toContain('recruit.individual.interviewMethod')
   })
 
-  it('봉사자 모집 — 면접 유무 라디오 미조작(기본 면접 있음) + 일정 입력이면 완료', () => {
+  it('봉사자 모집 — 면접 유무 라디오 미조작(미선택)이면 일정을 넣어도 interviewRequired 로 막는다', () => {
     const row = filledVolunteerWithInterview(['09:00'])
     delete row['recruit.volunteer.interviewRequired']
     replaceGeneralRecruitOverlayForScope(VOLUNTEER_CODE, row)
@@ -255,13 +249,14 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
         participant: { individual: false, organization: false, teacherInstructor: false, volunteer: true },
       })
     )
-    expect(keys).toEqual([])
+    expect(keys).toEqual(['recruit.volunteer.interviewRequired'])
   })
 
-  it('봉사자 모집 — 면접 유무 미조작이면 기본 면접 있음이라 면접 일정은 필수', () => {
-    const row = filledVolunteerNoInterview()
-    delete row['recruit.volunteer.interviewRequired']
-    replaceGeneralRecruitOverlayForScope(VOLUNTEER_CODE, row)
+  it('봉사자 모집 — 면접 있음을 고르면 면접 일정은 필수', () => {
+    replaceGeneralRecruitOverlayForScope(VOLUNTEER_CODE, {
+      ...filledVolunteerNoInterview(),
+      'recruit.volunteer.interviewRequired': 'yes',
+    })
     const keys = listIncompleteGeneralProgramRecruitmentRequiredFields(
       ctx({
         participant: { individual: false, organization: false, teacherInstructor: false, volunteer: true },
@@ -380,7 +375,7 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
           },
         })
       )
-    ).toContain('recruit.instructor.programRangeSeal')
+    ).toContain('recruit.instructor.recruitTargetDetail')
   })
 
   it('게시인데 모집 기간이 비면 미완료이다', () => {
@@ -405,7 +400,7 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
   })
 })
 
-describe('라디오 화면 기본값 미조작 — 미입력으로 막지 않는다(재발 방지)', () => {
+describe('라디오 화면 기본값 미조작 — 공고 게시는 미선택이라 미입력, 명단·사전 안내는 기본값(QA-0121)', () => {
   const allTabs = (patch: Partial<GeneralProgramRecruitmentRequiredFieldContext['participant']>) =>
     ctx({
       participant: {
@@ -431,40 +426,60 @@ describe('라디오 화면 기본값 미조작 — 미입력으로 막지 않는
     resetGeneralRecruitOverlayStoreForTests()
   })
 
-  it('기관 — 공고 게시·학생 명단·사전 안내 라디오 미조작이면 완료', () => {
+  it('기관 — 학생 명단·사전 안내 미조작은 기본값(필요), 공고 게시 미조작은 미입력', () => {
     const row = filledInstitution()
     delete row[K.announcementPublished]
     delete row[K.studentListRequired]
     delete row[K.preguidanceRequired]
     replaceApplicantRecruitInstitutionOverlayForScope(INSTITUTION_CODE, row)
-    expect(listIncompleteGeneralProgramRecruitmentRequiredFields(ctx())).toEqual([])
+    expect(listIncompleteGeneralProgramRecruitmentRequiredFields(ctx())).toEqual([
+      'recruit.institution.announcementPublished',
+    ])
   })
 
-  it('개인 — 공고 게시 라디오 미조작이면 완료(스크린샷 케이스)', () => {
+  it('개인 — 공고 게시 라디오 미조작이면 미입력', () => {
     const row = filledIndividual()
     delete row['recruit.individual.announcementPublished']
     replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, row)
     expect(listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ individual: true }))).toEqual(
-      []
+      ['recruit.individual.announcementPublished']
     )
   })
 
-  it('강사 — 공고 게시 라디오 미조작이면 완료', () => {
+  it('강사 — 공고 게시 라디오 미조작이면 미입력', () => {
     const row = filledInstructor()
     delete row['recruit.instructor.announcementPublished']
     replaceGeneralRecruitOverlayForScope('recruitment-instructor', row)
     expect(
       listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ teacherInstructor: true }))
-    ).toEqual([])
+    ).toEqual(['recruit.instructor.announcementPublished'])
   })
 
-  it('봉사 — 공고 게시 라디오 미조작이면 완료', () => {
+  it('봉사 — 공고 게시 라디오 미조작이면 미입력', () => {
     const row = filledVolunteerNoInterview()
     delete row['recruit.volunteer.announcementPublished']
     replaceGeneralRecruitOverlayForScope(VOLUNTEER_CODE, row)
     expect(listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ volunteer: true }))).toEqual(
-      []
+      ['recruit.volunteer.announcementPublished']
     )
+  })
+
+  it('미선택은 「미게시」와 달리 모집 기간 검사를 건너뛰지 않는다', () => {
+    const row = filledInstructor()
+    delete row['recruit.instructor.announcementPublished']
+    delete row['recruit.instructor.recruitRangeSeal']
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', row)
+    const unselected = listIncompleteGeneralProgramRecruitmentRequiredFields(
+      allTabs({ teacherInstructor: true })
+    )
+    expect(unselected).toContain('recruit.instructor.recruitRangeSeal')
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', {
+      ...row,
+      'recruit.instructor.announcementPublished': 'unpublished',
+    })
+    expect(
+      listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ teacherInstructor: true }))
+    ).not.toContain('recruit.instructor.recruitRangeSeal')
   })
 
   it('명시적 빈 값(화면 미선택)은 여전히 미입력이다', () => {
@@ -488,7 +503,7 @@ describe('라디오 화면 기본값 미조작 — 미입력으로 막지 않는
     ).toContain('recruit.instructor.announcementPublished')
   })
 
-  it('1사1교 강사 탭(일반 단락) — 공고 게시 미조작이면 완료', () => {
+  it('1사1교 강사 탭(일반 단락) — 공고 게시 미조작이면 미입력', () => {
     const row = filledInstructor()
     delete row['recruit.instructor.announcementPublished']
     replaceGeneralRecruitOverlayForScope('recruitment-instructor', row)
@@ -497,6 +512,6 @@ describe('라디오 화면 기본값 미조작 — 미입력으로 막지 않는
         ...allTabs({ teacherInstructor: true }),
         registrationProgramType: 'COMPANY_SCHOOL',
       })
-    ).toEqual([])
+    ).toEqual(['recruit.instructor.announcementPublished'])
   })
 })

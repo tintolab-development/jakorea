@@ -9,7 +9,13 @@
  * 대상 아님(화면도 미선택이라 검사와 이미 같다): 1사1교·교육받은 교사 기관 모집 RHF(`''`), Gemini(`''`),
  * UJAT(RHF 값 그대로 표시).
  *
- * 상세 수정 초기값은 `recruit-radio-edit-prefill.ts` (같은 상수 사용).
+ * QA-0121(2026-11-12, 기획 답변 B-14·CMS-FUNC-0029): 공고 게시 여부·면접 유무·강사 모집 대상은 모두
+ * 선택 전 빈 값(미선택)으로 시작하고 필수 검사로 막는다. 「게시」를 골라 등록하면 노출 확인 팝업을 거친다.
+ * 「미게시」를 직접 고른 경우만 모집 기간·발표일 검사를 건너뛴다(미선택은 건너뛰지 않는다).
+ * 1사1교 강사 모집 탭도 같은 단락·상수를 쓴다.
+ *
+ * 상세 수정 초기값은 `recruit-radio-edit-prefill.ts` — 이미 등록된(예전 기본값 「게시」·「면접 있음」으로 저장된)
+ * 프로그램의 빈 값 해석이라 등록 기본값과 따로 둔다.
  */
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
@@ -18,15 +24,15 @@ import {
   type OperationalSeedDefaultStore,
 } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
-/** 공고 게시 여부 화면 기본값 */
-export const RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT = 'published' as const
-/** 참여자·봉사자 면접 유무 화면 기본값 */
-export const RECRUIT_INTERVIEW_REQUIRED_DEFAULT = 'yes' as const
+/** 공고 게시 여부 화면 기본값 — 미선택(`''`). 등록 필수 검사로 막는다. */
+export const RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT = '' as const
+/** 참여자·봉사자 면접 유무 화면 기본값 — 미선택(`''`). 등록 필수 검사로 막는다. */
+export const RECRUIT_INTERVIEW_REQUIRED_DEFAULT = '' as const
 /** 학생 명단 제출·사전 안내 사항 작성 여부 화면 기본값(일반 기관 모집, limitDefaults 없을 때) */
 export const RECRUIT_NEED_OR_NOT_DEFAULT = 'need' as const
-/** 강사 모집 대상 화면 기본값 — 라디오는 아니지만 같은 위저드 KV 보정 정책을 쓴다 */
+/** 강사 모집 대상 화면 기본값 — 미선택. 라디오는 아니지만 같은 위저드 KV 보정 정책을 쓴다(빈 배열 → 필수 검사) */
 export const RECRUIT_INSTRUCTOR_TARGETS_KEY = 'recruit.instructor.recruitTargets'
-export const RECRUIT_INSTRUCTOR_TARGETS_DEFAULT: string[] = ['adult']
+export const RECRUIT_INSTRUCTOR_TARGETS_DEFAULT: string[] = []
 
 /**
  * 모집 단락 라디오 키 → 화면 기본값 (단락·검사·저장·수정이 모두 이 표를 따른다).
@@ -56,8 +62,8 @@ type RadioDefaultEntry = {
   value: string
   store: OperationalSeedDefaultStore
   /**
-   * 면접 유무 라디오는 `''`·null 도 「면접 있음」으로 그린다(`isRecruitInterviewRequiredOff`).
-   * 공고 게시·명단·사전안내는 `''` 이면 미선택으로 그리므로 키가 없을 때만 기본값이다.
+   * `''`·null 도 화면에서 기본값으로 그리는가. 지금은 모든 라디오가 `''` 를 미선택으로 그리므로
+   * 키가 없을 때만 기본값이다(면접 유무 기본값 자체가 `''`).
    */
   blankMeansDefault: boolean
 }
@@ -120,7 +126,7 @@ function listRadioDefaultEntries(
         key: K.individual.interviewRequired,
         value: RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
         store,
-        blankMeansDefault: true,
+        blankMeansDefault: false,
       }
     )
   }
@@ -144,7 +150,7 @@ function listRadioDefaultEntries(
         key: K.volunteer.interviewRequired,
         value: RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
         store,
-        blankMeansDefault: true,
+        blankMeansDefault: false,
       }
     )
   }

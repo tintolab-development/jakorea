@@ -1,12 +1,11 @@
 /** @vitest-environment node */
 import { describe, expect, it } from 'vitest'
-import { withIndividualInterviewRequiredCreateDefault } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { buildGeneralProgramCreateFromWizardRhf } from './build-registration-create-from-rhf'
 import { createDefaultRegistrationWizardUiValues } from './registration-wizard-ui-values'
 
 /**
- * 회귀 — 개인 모집 「참여자 면접 유무」 기본 '면접 있음'을 건드리지 않고 등록하면
- * serviceDetailJson.generalParticipantInterviewEnabled 가 빠져 상세에 '-' 로 보이던 문제.
+ * 개인 모집 「참여자 면접 유무」 — QA-0121 이후 기본값 없음(미선택, 등록 필수 검사로 막음).
+ * 고른 값만 serviceDetailJson.generalParticipantInterviewEnabled 로 싣는다.
  */
 
 const KEY = 'recruit.individual.interviewRequired'
@@ -35,26 +34,17 @@ function build(
   return JSON.parse(built.createRequest.serviceDetailJson ?? '{}') as Record<string, unknown>
 }
 
-describe('withIndividualInterviewRequiredCreateDefault', () => {
-  it('개인 선택 + 키 없음 → yes', () => {
-    expect(withIndividualInterviewRequiredCreateDefault({}, true)).toEqual({ [KEY]: 'yes' })
-  })
-  it('사용자가 고른 값은 유지', () => {
-    expect(withIndividualInterviewRequiredCreateDefault({ [KEY]: 'no' }, true)).toEqual({
-      [KEY]: 'no',
-    })
-  })
-  it('개인 미선택은 그대로', () => {
-    const overlay = { 'recruit.recruitRangeSeal': RANGE }
-    expect(withIndividualInterviewRequiredCreateDefault(overlay, false)).toBe(overlay)
-  })
-})
-
 describe('위저드 RHF 생성 — 개인 참여자 면접 유무 기본값', () => {
-  it('개인: 라디오 미조작(기본 면접 있음) → generalParticipantInterviewEnabled=true', () => {
-    expect(build({ individual: true, organization: false }).generalParticipantInterviewEnabled).toBe(
-      true
-    )
+  it('개인: 라디오 미조작(미선택) → 면접 있음으로 채우지 않는다', () => {
+    expect(
+      build({ individual: true, organization: false }).generalParticipantInterviewEnabled
+    ).not.toBe(true)
+  })
+  it('개인: 면접 있음 선택 → true', () => {
+    expect(
+      build({ individual: true, organization: false }, { [KEY]: 'yes' })
+        .generalParticipantInterviewEnabled
+    ).toBe(true)
   })
   it('개인: 면접 없음 선택 → false', () => {
     expect(

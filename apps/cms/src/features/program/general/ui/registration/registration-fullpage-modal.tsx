@@ -19,6 +19,7 @@ import {
   generalRegistrationRecruitmentPreviewTitle,
   normalizeGeneralProgramRegistrationStepKey,
   recruitmentPreviewAudienceFromRegistrationStep,
+  type GeneralProgramRegistrationApplicationTabKey,
 } from '@/features/program/general/model/registration-flow'
 import {
   ParticipantRecruitmentPreviewModal,
@@ -64,6 +65,15 @@ import type { GeneralRegistrationDevAutofillCaseId } from '@/features/program/ge
 import { TrainedTeachersDevAutofillToolbar } from '@/features/program/trained-teachers/ui/registration/trained-teachers-dev-autofill-toolbar'
 import type { TrainedTeachersRegistrationDevAutofillCaseId } from '@/features/program/trained-teachers/lib/registration-dev-autofill-cases'
 import { useCmsAlert } from '@/shared/ui'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import {
+  buildGeneralRegistrationIncompleteItems,
+  countGeneralRegistrationIncompleteByStep,
+  type GeneralRegistrationIncompleteItem,
+} from '@/features/program/general/lib/registration-incomplete-summary'
+import { RegistrationIncompleteAlertContent } from '@/features/program/general/ui/registration/registration-incomplete-alert-content'
+import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
+import { ANNOUNCEMENT_PUBLISH_CONFIRM_TITLE } from '@/features/program/general/lib/registration-announcement-publish-confirm'
 import { registrationStepForOperationDateFocus } from '@/features/program/shared/lib/program-date-outside-open-period-alert'
 import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
@@ -151,8 +161,12 @@ function GeneralProgramRegistrationFullpageModalInner({
 }: GeneralProgramRegistrationFullpageModalProps) {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { showAlert } = useCmsAlert()
-  const { reportIncomplete } = useRegistrationWizardValidationHighlight()
+  const { showAlert, closeAlert } = useCmsAlert()
+  const {
+    reportIncomplete,
+    incompleteKeys: highlightedIncompleteKeys,
+    attemptId: validationAttemptId,
+  } = useRegistrationWizardValidationHighlight()
   const reportValidationIncomplete = useCallback(
     (keys: readonly string[]) => {
       reportIncomplete(keys)
@@ -298,6 +312,23 @@ function GeneralProgramRegistrationFullpageModalInner({
     [applicationPreview, applicationPreviewSponsorName]
   )
 
+  /** 필수 미입력 팝업 항목 클릭 → 해당 탭 이동·단락 스크롤 (일반 프로그램, QA-0042) */
+  const navigateToIncompleteRef = useRef<(item: GeneralRegistrationIncompleteItem) => void>(
+    () => {}
+  )
+  const activeApplicationStepRef = useRef<GeneralProgramRegistrationApplicationTabKey | null>(null)
+  const buildRequiredFieldsAlertContent = useCallback(
+    (keys: readonly string[]) => (
+      <RegistrationIncompleteAlertContent
+        items={buildGeneralRegistrationIncompleteItems(keys, {
+          applicationStep: activeApplicationStepRef.current,
+        })}
+        onNavigate={item => navigateToIncompleteRef.current(item)}
+      />
+    ),
+    []
+  )
+
   const flow = useGeneralProgramRegistrationFlow(open, {
     initialStep,
     onProgramRegistrationSaved: handleRegistrationCreated,
@@ -305,7 +336,46 @@ function GeneralProgramRegistrationFullpageModalInner({
     registrationFormVariant,
     skipDraftRestore,
     reportValidationIncomplete,
+    buildRequiredFieldsAlertContent:
+      registrationFormVariant === 'general' ? buildRequiredFieldsAlertContent : undefined,
   })
+
+  const flowSelectStep = flow.selectStep
+  const flowActiveStep = flow.activeStep
+  const activeApplicationStep =
+    flow.phase === 'application'
+      ? (flowActiveStep as GeneralProgramRegistrationApplicationTabKey)
+      : null
+  useEffect(() => {
+    activeApplicationStepRef.current = activeApplicationStep
+    navigateToIncompleteRef.current = item => {
+      closeAlert()
+      setTemplatePickerOpen(false)
+      flowSelectStep(item.step)
+      // 탭 전환 렌더 후 해당 항목 단락으로 스크롤한다(강조 상태는 유지)
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          scrollToFirstRegistrationWizardIncompleteParagraph(
+            resolveRegistrationWizardIncompleteParagraphIds(
+              [item.key],
+              registrationWizardHighlightVariant(registrationFormVariant)
+            )
+          )
+        )
+      )
+    }
+  }, [activeApplicationStep, closeAlert, flowSelectStep, registrationFormVariant])
+
+  /** 탭 제목 미입력 개수 — 마지막 검사 결과(필드 강조와 같은 수명), 일반 프로그램만 */
+  const incompleteCountByStep = useMemo(
+    () =>
+      registrationFormVariant === 'general' && validationAttemptId > 0
+        ? countGeneralRegistrationIncompleteByStep(highlightedIncompleteKeys, {
+            applicationStep: activeApplicationStep,
+          })
+        : undefined,
+    [activeApplicationStep, highlightedIncompleteKeys, registrationFormVariant, validationAttemptId]
+  )
   useProgramOperationDateErrorFocus(open, focus => {
     const step = registrationStepForOperationDateFocus(
       focus.recruitmentType,
@@ -558,6 +628,7 @@ function GeneralProgramRegistrationFullpageModalInner({
               setTemplatePickerOpen(false)
               flow.selectStep(key)
             }}
+            incompleteCountByStep={incompleteCountByStep}
           />
         }
         bodyHeaderBelow={
@@ -625,6 +696,15 @@ function GeneralProgramRegistrationFullpageModalInner({
           setOverwriteOpen(false)
         }}
         onConfirm={handleOverwriteConfirm}
+      />
+      <ConfirmModal
+        open={flow.announcementPublishConfirm.open}
+        title={ANNOUNCEMENT_PUBLISH_CONFIRM_TITLE}
+        content={flow.announcementPublishConfirm.content}
+        confirmText="등록"
+        zIndex={CMS_ALERT_MODAL_Z_INDEX}
+        onConfirm={flow.announcementPublishConfirm.onConfirm}
+        onCancel={flow.announcementPublishConfirm.onCancel}
       />
       <RegistrationDraftSaveSuccessModal
         open={draftSaveSuccessOpen}

@@ -15,6 +15,7 @@ import { participatingInstructorsFilterFields } from '@/features/program/general
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
+  ACTIVITY_CERTIFICATE_ISSUE_NO_INSTRUCTOR_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
   GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_MESSAGE,
@@ -461,6 +462,11 @@ export function ParticipatingInstructorsSection({
   ])
 
   const handleActivityCertificateIssueClick = useCallback(() => {
+    // 참여 강사가 없으면 선택 안내 대신 발급 대상 없음 안내(버튼은 비활성화하지 않는다)
+    if (instructorList.length === 0) {
+      showAlert({ title: '안내', content: ACTIVITY_CERTIFICATE_ISSUE_NO_INSTRUCTOR_ALERT_MESSAGE })
+      return
+    }
     const selectedCount = selectedInstructorRowKeys.length
     if (selectedCount === 0) {
       showAlert({ title: '안내', content: ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE })
@@ -488,7 +494,7 @@ export function ParticipatingInstructorsSection({
       return
     }
     setActivityCertPreviewOpen(true)
-  }, [filteredInstructors, isInstitutionSurface, selectedInstructorRowKeys, showAlert])
+  }, [filteredInstructors, instructorList.length, isInstitutionSurface, selectedInstructorRowKeys, showAlert])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {

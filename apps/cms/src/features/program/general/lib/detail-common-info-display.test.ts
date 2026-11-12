@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatGeneralParticipantTypesSummary,
   resolveGeneralProgramCommonInfo,
   resolveGeneralProgramDetailedProgramNameDisplay,
   resolveGeneralProgramDisplayTitle,
@@ -302,5 +303,15 @@ describe('resolveGeneralProgramCommonInfo 교육 형태', () => {
       })
     )
     expect(common.educationFormLabel).toBe('오프라인')
+  })
+})
+
+describe('formatGeneralParticipantTypesSummary (QA-0419)', () => {
+  it('등록 선택지와 같은 라벨(학교/기관·교사/강사)로 보여 준다', () => {
+    expect(
+      formatGeneralParticipantTypesSummary(
+        baseProgram({ generalParticipantTypes: ['school_institution', 'teacher_instructor'] })
+      )
+    ).toBe('학교/기관, 교사/강사')
   })
 })
