@@ -46,6 +46,8 @@ export type ImpactStory = {
   viewCount: number
   /** 홈·목록 카드 썸네일 (첨부 파일과 별도) */
   thumbnail: ImpactStoryAttachment | null
+  /** 서버 필수 우회용 「썸네일 없음」 표식 자산 — 화면에는 썸네일 없음으로 보이고, 다시 저장할 때 재사용 */
+  placeholderThumbnailAssetId?: number
   attachments: ImpactStoryAttachment[]
   /** Optimistic locking — remote API */
   version?: number
