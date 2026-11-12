@@ -4,6 +4,7 @@ import { RichTextEditor } from '@/shared/rich-text'
 import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
@@ -20,6 +21,11 @@ import {
   RECRUIT_DETAIL_FILE_MAX_BYTES,
   RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_MAX_COUNT,
+  GENERAL_RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
   isRecruitDetailContentPersistSuppressed,
@@ -520,6 +526,17 @@ export function RecruitDetailInfoParagraph({
       if (files.length === 0) return
       const incomingNames = files.map(file => file.name)
       const previousCount = Array.isArray(attachmentFileNames) ? attachmentFileNames.length : 0
+      // 일반 등록 위저드 — 상세 모집 정보와 같은 최대 10개 제한
+      if (
+        isGeneralWizard &&
+        previousCount + files.length > GENERAL_RECRUIT_DETAIL_ATTACHMENT_MAX_COUNT
+      ) {
+        cmsAlertModal.show({
+          title: '안내',
+          content: GENERAL_RECRUIT_DETAIL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE,
+        })
+        return
+      }
       // 업로드 완료 전에 단계를 바꿔도 파일명이 남도록 먼저 기록한다.
       updateRecruitDetailInfoKey<string[]>(attachmentFileNamesKey, prev => [
         ...(prev ?? []),
@@ -575,6 +592,7 @@ export function RecruitDetailInfoParagraph({
       attachmentFileNames,
       attachmentFileNamesKey,
       attachmentFileObjectIdsKey,
+      isGeneralWizard,
       overlayKeyPrefix,
       overlayScope,
     ]
@@ -606,7 +624,11 @@ export function RecruitDetailInfoParagraph({
               <ThumbnailUploadField
                 previewUrl={thumbnailPreviewUrl}
                 fileName={thumbFileName}
-                guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
+                guideLines={
+                  isGeneralWizard
+                    ? GENERAL_RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
+                    : RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
+                }
                 maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
                 sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 uploading={uploadingThumbnail}
@@ -661,8 +683,10 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <ParagraphFileUpload
-                accept={attachmentAccept}
-                guideLines={attachmentGuideLines}
+                accept={isGeneralWizard ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_ACCEPT : attachmentAccept}
+                guideLines={
+                  isGeneralWizard ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES : attachmentGuideLines
+                }
                 multiple
                 fileNames={attachmentFileNames}
                 maxTotalBytes={0}

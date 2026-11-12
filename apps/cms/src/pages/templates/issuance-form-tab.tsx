@@ -101,6 +101,7 @@ import './template-form-tab.css'
 import { handleError } from '@/shared/utils/error-handler'
 import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
+import { ISSUANCE_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import {
   findIssuanceTemplateRowById,
   LECTURE_REPORT_TEMPLATE_CODE,
@@ -766,6 +767,7 @@ function IssuanceFormTabContent() {
             <TemplateListCard
               title={reportSection?.title ?? '보고 양식'}
               description={reportSection?.description ?? ''}
+              totalCount={reportSection?.rows.length ?? 0}
               headerInline
             >
               <TemplateTable
@@ -776,6 +778,7 @@ function IssuanceFormTabContent() {
             <TemplateListCard
               title={documentSection?.title ?? '서류 양식'}
               description={documentSection?.description ?? ''}
+              totalCount={documentSection?.rows.length ?? 0}
               headerInline
             >
               <TemplateTable
@@ -796,7 +799,7 @@ function IssuanceFormTabContent() {
         open={isPreviewOpen && selectedTemplate != null && !isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={issuanceModalTitle}
-        description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+        description={ISSUANCE_MODAL_DESCRIPTION}
         templateTabType="issuance"
         onPreview={handleModalPreview}
         onTitleCommit={handleIssuanceTitleCommit}

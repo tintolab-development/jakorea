@@ -57,6 +57,8 @@ import {
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 import { DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-direct/paragraph-config'
+import { DIRECT_AGREEMENT_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
+import { useAgreementDocumentPdf } from '@/features/template/ui/form-set/editors/agreement-document-pdf'
 
 import {
   type FormDocumentPreviewParagraphGapResolver,
@@ -250,8 +252,9 @@ export function AgreementWritingFormShell({
     forceUserEditable: forceUserEditable || enableCreateOnSave,
   })
   /** 사용자 복제·신규 — 시드 잠금 props가 남아 있어도 편집 허용 */
-  const effectiveStructureLockedParagraphIds =
-    isStructureLocked ? structureLockedParagraphIds : undefined
+  const effectiveStructureLockedParagraphIds = isStructureLocked
+    ? structureLockedParagraphIds
+    : undefined
   const effectiveHideDragHandleForParagraphIds = isStructureLocked
     ? hideDragHandleForParagraphIds
     : undefined
@@ -300,7 +303,10 @@ export function AgreementWritingFormShell({
     return resolveInitialDraft().paragraphs[0]?.id ?? null
   })
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
-  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(
+    setDraft,
+    setActiveParagraphId
+  )
   const {
     openWritingUserPreview,
     syncWritingUserPreviewSession,
@@ -495,10 +501,7 @@ export function AgreementWritingFormShell({
     void (async () => {
       try {
         let nextTemplateCode = persistedTemplateCode
-        if (
-          (nextTemplateCode == null || nextTemplateCode === '') &&
-          enableCreateOnSave
-        ) {
+        if ((nextTemplateCode == null || nextTemplateCode === '') && enableCreateOnSave) {
           const existingNames = getWritingTemplateRowsByCategory('agreement', sections).map(
             row => row.templateName
           )
@@ -564,6 +567,19 @@ export function AgreementWritingFormShell({
     setSingleItemListActiveItemId(null)
   }, [])
 
+  /** 템플릿 관리 편집기 상단 「문서 다운로드」 — 미리보기 A4 PDF와 동일 (QA 261113 #15·#71) */
+  const documentPdf = useAgreementDocumentPdf({
+    enabled: isTemplateManagementSave,
+    draft,
+    headerTitle: writingPreviewHeaderTitle,
+    a4HiddenParagraphIds,
+    a4PageBreakBeforeParagraphIds,
+    a4RenderMode,
+    a4ParagraphGapPx,
+    paragraphBodyOptions: effectiveParagraphBodyOptions,
+    agreementClosingFooter,
+  })
+
   const {
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
@@ -578,79 +594,85 @@ export function AgreementWritingFormShell({
   })
 
   return (
-    <TemplateFullpageModal
-      open
-      onClose={onClose}
-      title={modalTitleText !== '' ? editableModalTitle : modalTitle}
-      description={modalDescription}
-      templateTabType="writing"
-      onTitleCommit={modalTitleText !== '' ? commitModalTitle : undefined}
-      leftContent={
-        <FormEditorLeftPanel
-          paragraphs={draft.paragraphs}
-          titleNumbering={draft.formSettings.titleNumbering}
-          selectedCardId={activeParagraphId}
-          onSelectCard={handleSelectParagraph}
-          onReorderMiddle={onReorderMiddle}
-          updateParagraph={updateParagraph}
-          editorKind="agreement"
-          singleItemListActiveItemId={singleItemListActiveItemId}
-          onSelectSingleItemListItem={(paragraphId, itemId) => {
-            setActiveParagraphId(paragraphId)
-            setSingleItemListActiveItemId(itemId)
-          }}
-          horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
-          onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
-          verticalTableBodyRowSelection={verticalTableBodyRowSelection}
-          onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
-          structureLockedParagraphIds={leftPanelStructureLockedParagraphIds}
-          hideDragHandleForParagraphIds={leftPanelHideDragHandleForParagraphIds}
-          paragraphBodyOptions={leftPanelParagraphBodyOptions}
-          agreementClosingFooter={agreementClosingFooter}
-          middleParagraphActions={
-            leftPanelStructureLockedParagraphIds != null ? undefined : middleParagraphActions
-          }
-        />
-      }
-      rightNavigation={
-        <FormEditorFieldNav
-          sectionTitle="커스텀 필드"
-          pinnedTop={pinnedTop}
-          sortableMiddle={sortableMiddle}
-          pinnedBottom={pinnedBottom}
-          hideSortableDragHandleForIds={leftPanelHideDragHandleForParagraphIds}
-          selectedItemId={activeParagraphId}
-          onSelectItem={handleSelectParagraph}
-          onReorderMiddle={onReorderMiddle}
-          fieldListBottomSlot={
-            <FormEditorTitleNumberingField
-              value={draft.formSettings.titleNumbering}
-              onChange={onTitleNumberingChange}
-            />
-          }
-        >
-          <FormEditorRightPanel
-            draft={draft}
-            activeParagraphId={activeParagraphId}
-            onTitleNumberingChange={onTitleNumberingChange}
+    <>
+      {documentPdf.hostNode}
+      <TemplateFullpageModal
+        open
+        onClose={onClose}
+        title={modalTitleText !== '' ? editableModalTitle : modalTitle}
+        description={modalDescription}
+        templateTabType="writing"
+        onTitleCommit={modalTitleText !== '' ? commitModalTitle : undefined}
+        showHeaderCloseButton={!isTemplateManagementSave}
+        onDownloadDocument={isTemplateManagementSave ? documentPdf.download : undefined}
+        downloadDocumentLoading={documentPdf.loading}
+        leftContent={
+          <FormEditorLeftPanel
+            paragraphs={draft.paragraphs}
+            titleNumbering={draft.formSettings.titleNumbering}
+            selectedCardId={activeParagraphId}
+            onSelectCard={handleSelectParagraph}
+            onReorderMiddle={onReorderMiddle}
             updateParagraph={updateParagraph}
             editorKind="agreement"
-            showTitleNumbering={false}
             singleItemListActiveItemId={singleItemListActiveItemId}
-            horizontalTableRowSelection={activeHorizontalTableRowSelection}
-            onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
+            onSelectSingleItemListItem={(paragraphId, itemId) => {
+              setActiveParagraphId(paragraphId)
+              setSingleItemListActiveItemId(itemId)
+            }}
+            horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+            onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
             verticalTableBodyRowSelection={verticalTableBodyRowSelection}
-            onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
+            onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
             structureLockedParagraphIds={leftPanelStructureLockedParagraphIds}
+            hideDragHandleForParagraphIds={leftPanelHideDragHandleForParagraphIds}
+            paragraphBodyOptions={leftPanelParagraphBodyOptions}
+            agreementClosingFooter={agreementClosingFooter}
+            middleParagraphActions={
+              leftPanelStructureLockedParagraphIds != null ? undefined : middleParagraphActions
+            }
           />
-        </FormEditorFieldNav>
-      }
-      onPreview={handlePreview}
-      onSave={handleSave}
-      showDeleteButton={showDeleteButton}
-      onDelete={onDelete}
-      deleteLoading={deleteLoading}
-    />
+        }
+        rightNavigation={
+          <FormEditorFieldNav
+            sectionTitle="커스텀 필드"
+            pinnedTop={pinnedTop}
+            sortableMiddle={sortableMiddle}
+            pinnedBottom={pinnedBottom}
+            hideSortableDragHandleForIds={leftPanelHideDragHandleForParagraphIds}
+            selectedItemId={activeParagraphId}
+            onSelectItem={handleSelectParagraph}
+            onReorderMiddle={onReorderMiddle}
+            fieldListBottomSlot={
+              <FormEditorTitleNumberingField
+                value={draft.formSettings.titleNumbering}
+                onChange={onTitleNumberingChange}
+              />
+            }
+          >
+            <FormEditorRightPanel
+              draft={draft}
+              activeParagraphId={activeParagraphId}
+              onTitleNumberingChange={onTitleNumberingChange}
+              updateParagraph={updateParagraph}
+              editorKind="agreement"
+              showTitleNumbering={false}
+              singleItemListActiveItemId={singleItemListActiveItemId}
+              horizontalTableRowSelection={activeHorizontalTableRowSelection}
+              onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
+              verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+              onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
+              structureLockedParagraphIds={leftPanelStructureLockedParagraphIds}
+            />
+          </FormEditorFieldNav>
+        }
+        onPreview={handlePreview}
+        onSave={handleSave}
+        showDeleteButton={showDeleteButton}
+        onDelete={onDelete}
+        deleteLoading={deleteLoading}
+      />
+    </>
   )
 }
 
@@ -677,7 +699,7 @@ export default function NewAgreementForm() {
       initialDraft={createDefaultDirectAgreementDraft}
       defaultActiveParagraphId={DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title}
       modalTitle="동의 양식 신규 폼"
-      modalDescription="* 등록 시 최소 1개의 단락은 존재해야 하며, 제목, 마무리글, 날짜, 서명란을 제외하고 최소 1개의 단락은 존재해야합니다."
+      modalDescription={DIRECT_AGREEMENT_MODAL_DESCRIPTION}
       paragraphBodyOptions={DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS}
       enableCreateOnSave
       forceUserEditable

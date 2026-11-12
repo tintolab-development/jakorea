@@ -241,7 +241,8 @@ function PinnedFormCardInner({
               updateParagraph,
               structureLockedParagraphIds,
               hideParagraphRequiredChrome,
-              paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn
+              paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn,
+              editorKind === 'survey' ? '설문 기간' : undefined
             )
           : undefined
       }
@@ -479,7 +480,8 @@ function SortableMiddleFormCardInner({
                 updateParagraph,
                 structureLockedParagraphIds,
                 hideParagraphRequiredChrome,
-                paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn
+                paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn,
+                editorKind === 'survey' ? '설문 기간' : undefined
               )
             : undefined
         }

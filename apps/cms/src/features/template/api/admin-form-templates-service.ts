@@ -176,7 +176,7 @@ async function ensureReceiptPreConsentWritingListItem(
       templateCode: RECEIPT_PRE_CONSENT_TEMPLATE_CODE,
       templateName:
         TEMPLATE_CODE_CATALOG[RECEIPT_PRE_CONSENT_TEMPLATE_CODE]?.templateName ??
-        '영수증 발급 사전 동의서',
+        '영수증 사전 동의서',
       formType: WRITING_FORM_TYPE,
       category: 'AGREEMENT',
       useYn: true,

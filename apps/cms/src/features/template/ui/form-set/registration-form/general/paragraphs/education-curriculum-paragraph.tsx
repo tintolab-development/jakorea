@@ -25,7 +25,7 @@ import {
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   PRE_EDUCATION_SCHEDULE_LABEL,
-  toPreEducationDisplayLabel,
+  toPreEducationHeadingLabel,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
@@ -397,8 +397,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     'generalRegistration.educationCurriculum.preEducationScheduleLine',
     null
   )
-  // 블록 제목 표시만 「사전교육」 — overlay 기본 일정명은 저장 라벨 그대로 기록한다.
-  const preEducationHeadingLabel = toPreEducationDisplayLabel(preEducationBlockLabel)
+  // 블록 제목 표시만 「사전 교육」 — overlay 기본 일정명은 저장 라벨 그대로 기록한다.
+  const preEducationHeadingLabel = toPreEducationHeadingLabel(preEducationBlockLabel)
 
   useEffect(() => {
     // 일정명 행이 없는 교사 연수는 일정명을 기록하지 않는다 (서버 연수 일정명이 정본)
@@ -676,8 +676,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
   if (sessionRoundType === 'single') {
     const isSingleIpsPerChart = ipsScheduleDetail === 'perSchedule'
-    const showChartSessionHeading =
-      scheduleCurriculumPreEducation || curriculumChartSessionCount > 1
+    // 시안 — 차시가 1개여도 차시별 표 위에 「■ 1차시」 소제목을 둔다.
+    const showChartSessionHeading = true
 
     return (
       <div className="program-registration-curriculum__sessions">

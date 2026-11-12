@@ -269,7 +269,7 @@ export function PaymentStatementBasicInfoDetailForm({
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label={hideResidentFields ? '지역/주소' : '자택 주소'}
+          label={hideResidentFields ? '지역/주소' : '자택 주소지'}
           fullRow
           view={textOrDash(addressText)}
           edit={

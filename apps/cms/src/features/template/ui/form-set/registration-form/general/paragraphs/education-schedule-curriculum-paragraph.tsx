@@ -21,7 +21,7 @@ import {
   isScheduleEducationAndIpsBothPerSchedule,
   PRE_EDUCATION_SCHEDULE_LABEL,
   shouldUseScheduleEventBlockLayout,
-  toPreEducationDisplayLabel,
+  toPreEducationHeadingLabel,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import {
@@ -382,8 +382,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     'generalRegistration.educationScheduleCurriculum.participationByDetail',
     {}
   )
-  // 블록 제목 표시만 「사전교육」 — overlay 기본 일정명은 preEducationBlockLabel 그대로 기록한다.
-  const preEducationHeadingLabel = toPreEducationDisplayLabel(preEducationBlockLabel)
+  // 블록 제목 표시만 「사전 교육」 — overlay 기본 일정명은 preEducationBlockLabel 그대로 기록한다.
+  const preEducationHeadingLabel = toPreEducationHeadingLabel(preEducationBlockLabel)
   // UI 기본 일정명을 overlay에 기록 — 미터치 시에도 등록 완료·검증에 반영
   useEffect(() => {
     if (!scheduleCurriculumPreEducation) return

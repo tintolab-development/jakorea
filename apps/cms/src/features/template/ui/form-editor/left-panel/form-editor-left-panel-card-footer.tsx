@@ -38,7 +38,9 @@ export function modalCardFooterToggles(
   structureLockedParagraphIds?: ReadonlySet<string>,
   hideParagraphRequiredChrome?: boolean,
   /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」ON 고정 */
-  lockWritingPeriodToggleOn?: boolean
+  lockWritingPeriodToggleOn?: boolean,
+  /** 제목 단락 기간 토글 라벨 — 설문 양식은 「설문 기간」(QA 261113 #13) */
+  writingPeriodLabel = '작성 기간'
 ): ReactNode {
   const structureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
   /* 잠금 단락은 기본적으로 하단 토글 숨김 — 제목형(작성 기간)만 예외로 좌측 스위치 유지(단락 액션과 같은 줄) */
@@ -162,7 +164,7 @@ export function modalCardFooterToggles(
     return (
       <div className="form-editor-card__toggles-row" onClick={event => event.stopPropagation()}>
         <CmsToggle
-          label="작성 기간"
+          label={writingPeriodLabel}
           checked={lockWritingPeriodToggleOn === true || (titleParagraph.showWritingPeriodOnForm ?? false)}
           disabled={lockWritingPeriodToggleOn === true}
           onChange={checked =>

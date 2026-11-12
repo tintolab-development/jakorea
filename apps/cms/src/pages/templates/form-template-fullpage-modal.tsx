@@ -302,7 +302,7 @@ export function FormTemplateFullpageModal({
       open={open}
       onClose={onClose}
       title={modalTitle}
-      description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+      description="※ 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
       templateTabType="issuance"
       onPreview={handlePreview}
       onSave={handleSave}
@@ -343,6 +343,7 @@ export function FormTemplateFullpageModal({
           }}
           participantRowVisibility={participantRowVisibility}
           participantRowLabels={modalState.participantLayout.rowLabels}
+          participantRowsLocked={modalState.participantLayout.rowVisibilityLocked}
           defaultCertificateBackgroundThumbSrc={modalState.participantLayout.defaultBackgroundSrc}
           onParticipantRowVisibilityChange={(index, checked) => {
             setParticipantRowVisibility(prev => {

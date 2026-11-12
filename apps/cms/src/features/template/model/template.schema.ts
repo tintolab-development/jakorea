@@ -58,7 +58,7 @@ const registrationDefinitions: TemplateDefinition[] = [
   { id: 'registration-ujat', templateName: 'UJAT 프로그램 등록 폼', variant: 'default' },
   {
     id: 'registration-trained-teachers',
-    templateName: '교육받은 교사 프로그램 등록 폼',
+    templateName: '교육 받은 교사 프로그램 등록 폼',
     variant: 'default',
   },
 ]
@@ -95,7 +95,7 @@ const recruitmentDefinitions: TemplateDefinition[] = [
   },
   {
     id: 'recruitment-trained-teachers',
-    templateName: '교육받은 교사_참여 기관 모집 폼',
+    templateName: '교육 받은 교사_참여 기관 모집 폼',
     variant: 'default',
   },
 ]
@@ -150,58 +150,58 @@ const surveyDefinitions: TemplateDefinition[] = [
   { id: 'survey-default', templateName: '설문조사', variant: 'default' },
   { id: 'survey-student', templateName: '만족도조사 (학생용)', variant: 'default' },
   { id: 'survey-teacher', templateName: '만족도조사 (교사용)', variant: 'default' },
-  { id: 'survey-admin', templateName: '강의평가 (관리자용)', variant: 'default' },
+  { id: 'survey-admin', templateName: '강의 평가 (관리자용)', variant: 'default' },
 ]
 
 /** Notion 5-0. 동의 양식 순서 */
 const agreementDefinitions: TemplateDefinition[] = [
-  { id: 'agreement-portrait', templateName: '초상권 수집·이용 동의', variant: 'default' },
+  { id: 'agreement-portrait', templateName: '초상권 수집·이용 동의서', variant: 'default' },
   { id: 'agreement-third-party', templateName: '지급조서 사전 동의서', variant: 'default' },
   {
     id: 'agreement-receipt-pre-consent',
-    templateName: '영수증 발급 사전 동의서',
+    templateName: '영수증 사전 동의서',
     variant: 'default',
   },
   {
     id: 'agreement-crime',
-    templateName: '성범죄 경력조회 동의서',
+    templateName: '성범죄경력 조회 동의서',
     variant: 'default',
   },
-  { id: 'agreement-notice', templateName: '행정정보 공동이용 사전 동의서', variant: 'default' },
-  { id: 'agreement-expense', templateName: 'JA Korea 교육진행자 서약서(안)', variant: 'default' },
+  { id: 'agreement-notice', templateName: '행정정보 공동이용 사전동의서', variant: 'default' },
+  { id: 'agreement-expense', templateName: 'JA Korea 교육진행자 서약서', variant: 'default' },
 ]
 
 export const writingSections: TemplateSection[] = [
   {
     key: 'registration',
     title: '등록 양식',
-    description: '항목 구성(추가·삭제·수정)은 변경할 수 없으며, 초기값은 설정할 수 있는 양식입니다.',
+    description: '단락과 항목은 추가·삭제할 수 없고 문구·항목값도 수정할 수 없습니다. 단, 항목별 초기값은 설정이 가능합니다.',
     rows: createRows('registration', registrationDefinitions),
   },
   {
     key: 'application',
     title: '모집 양식',
-    description: '항목 구성(추가·삭제·수정)은 변경할 수 없으며, 초기값은 설정할 수 있는 양식입니다.',
+    description: '단락과 항목은 추가·삭제할 수 없고 문구·항목값도 수정할 수 없습니다. 단, 항목별 초기값은 설정이 가능합니다.',
     rows: createRows('recruitment', recruitmentDefinitions),
   },
   {
     key: 'application_form',
     title: '신청 양식',
     description:
-      '기존 항목의 삭제가 불가하며, 일부 텍스트만 수정이 가능합니다. 필요한 항목은 직접 추가 가능한 양식입니다.',
+      '기존 단락과 항목은 삭제할 수 없습니다. 단, 항목 추가와 일부 문구·항목값 수정, 항목별 초기값 설정은 가능합니다.',
     rows: createRows('application', applicationDefinitions),
   },
   {
     key: 'survey',
     title: '설문 양식',
-    description: '모든 항목의 추가 및 삭제, 수정이 가능한 양식입니다.',
+    description: '단락과 항목의 추가·삭제와 문구·항목값 수정, 항목별 초기값 설정이 모두 가능합니다.',
     rows: createRows('survey', surveyDefinitions),
   },
   {
     key: 'agreement',
     title: '동의 양식',
     description:
-      '모든 항목의 추가 및 삭제가 불가하며, 일부 텍스트만 수정이 가능합니다. (*성범죄 경력조회 동의서는 수정이 불가합니다.)',
+      '단락과 항목은 추가·삭제할 수 없습니다. 단, 일부 문구·항목값 수정과 항목별 초기값 설정은 가능합니다. (*성범죄경력 조회 동의서는 파일 교체만 가능합니다.)',
     rows: createRows('agreement', agreementDefinitions),
   },
 ]

@@ -1,4 +1,5 @@
 import {
+  ISSUANCE_FORM_LIST_TEMPLATE_CODES,
   ISSUANCE_FORM_SECTION_CATALOG,
   ISSUANCE_TEMPLATE_CODE_CATALOG,
   isIssuanceFormListTemplateCode,
@@ -58,9 +59,30 @@ export function mapFormTemplateListItemToRow(
   }
 }
 
-/** API 행만 노출 — mock 카탈로그 merge 없음 (remote SSOT). */
+/**
+ * API 행만 노출 — mock 카탈로그 merge 없음 (remote SSOT).
+ * No.는 내림차순(맨 위 행이 가장 큰 번호, QA 261113 #1·#8).
+ */
 function renumberRows(apiRows: TemplateRow[]): TemplateRow[] {
-  return apiRows.map((row, index) => ({ ...row, no: index + 1 }))
+  return apiRows.map((row, index) => ({ ...row, no: apiRows.length - index }))
+}
+
+const ISSUANCE_LIST_ORDER_INDEX = new Map<string, number>(
+  ISSUANCE_FORM_LIST_TEMPLATE_CODES.map((code, index) => [code, index])
+)
+
+/** 발급 양식 목록 — `ISSUANCE_FORM_LIST_TEMPLATE_CODES` 순서로 표시(목록에 없는 코드는 API 순서로 뒤에) */
+function sortIssuanceItemsByListOrder(
+  items: FormTemplateListItemResponse[]
+): FormTemplateListItemResponse[] {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const ai = ISSUANCE_LIST_ORDER_INDEX.get(a.item.templateCode?.trim() ?? '') ?? Number.MAX_SAFE_INTEGER
+      const bi = ISSUANCE_LIST_ORDER_INDEX.get(b.item.templateCode?.trim() ?? '') ?? Number.MAX_SAFE_INTEGER
+      return ai === bi ? a.index - b.index : ai - bi
+    })
+    .map(({ item }) => item)
 }
 
 function groupItemsByCategory(
@@ -149,7 +171,7 @@ export function buildIssuanceFormSectionsFromApiItems(
   const grouped = groupIssuanceItemsByCategory(items)
 
   return ISSUANCE_FORM_SECTION_CATALOG.map(section => {
-    const categoryItems = grouped.get(section.category) ?? []
+    const categoryItems = sortIssuanceItemsByListOrder(grouped.get(section.category) ?? [])
     const apiRows = categoryItems
       .map((item, index) =>
         mapFormTemplateListItemToIssuanceRow(item, { rowIndex: index, rowKeyPrefix: section.key })
