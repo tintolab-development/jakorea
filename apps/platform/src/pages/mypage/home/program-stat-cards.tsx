@@ -1,6 +1,6 @@
-import { Fragment } from 'react'
 import type { MypageProgramStats } from '@/features/mypage'
 import illustBookUrl from '@/shared/assets/illustration/illust-book.svg'
+import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
 import { PFText } from '@/shared/ui'
 import { SkeletonBlock } from '@/shared/ui/skeleton-block'
@@ -18,7 +18,7 @@ const STAT_ITEMS: {
 }[] = [
   { key: 'applied', label: '신청한 프로그램', illustrationUrl: illustBookUrl },
   { key: 'inProgress', label: '진행중인 프로그램', illustrationUrl: illustFlagUrl },
-  { key: 'completed', label: '종료된 프로그램', illustrationUrl: illustBookUrl },
+  { key: 'completed', label: '종료된 프로그램', illustrationUrl: illustDiplomaUrl },
 ]
 
 export function ProgramStatCards({ stats, isLoading = false }: ProgramStatCardsProps) {
@@ -32,17 +32,7 @@ export function ProgramStatCards({ stats, isLoading = false }: ProgramStatCardsP
         <article key={item.key} className={styles.card}>
           <div className={styles.info}>
             <PFText as="p" typo="bd-md-md" color="black" className={styles.label}>
-              {item.label.split(' ').map((part, index) => (
-                <Fragment key={`${item.key}-${part}`}>
-                  {index > 0 ? (
-                    <>
-                      <span className={styles.labelSpace}> </span>
-                      <br className={styles.labelBreak} />
-                    </>
-                  ) : null}
-                  {part}
-                </Fragment>
-              ))}
+              {item.label}
             </PFText>
             {isLoading ? (
               <SkeletonBlock className={styles.valueBone} />
