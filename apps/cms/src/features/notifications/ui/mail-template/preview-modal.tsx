@@ -7,7 +7,7 @@ import {
   applyMailPreviewTokens,
   formatMailPreviewAttachment,
   formatMailPreviewDateTime,
-  formatMailPreviewPerson,
+  formatMailPreviewSender,
   formatMailPreviewRecipient,
   MAIL_SEND_PREVIEW_TITLE,
   type MailPreviewAttachment,
@@ -57,7 +57,7 @@ export function PreviewModal({
 }: PreviewModalProps) {
   const previewSubject = useMemo(() => applyMailPreviewTokens(subject), [subject])
   const previewHtml = useMemo(() => applyMailPreviewBody(bodyHtml), [bodyHtml])
-  const sender = formatMailPreviewPerson(senderName, senderEmail)
+  const sender = formatMailPreviewSender(senderName, senderEmail)
   const attachmentLines = attachments.map(formatMailPreviewAttachment).filter(Boolean)
   const hasRecipient = recipient != null
   const showListActions = onEdit != null || onDelete != null || onUseTemplate != null

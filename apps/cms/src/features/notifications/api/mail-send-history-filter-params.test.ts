@@ -34,7 +34,7 @@ describe('mail send-history 4-1 filters', () => {
 
   it('sendStatus/receiptStatus를 SSOT enum으로 매핑', () => {
     const filters = readMailSendHistoryFiltersFromParams(new URLSearchParams())
-    filters.sendStatus = '예약'
+    filters.sendStatus = '발송 예약'
     filters.receiveStatus = '확인 대기중'
     const params = mailSendHistoryParamsFromFilters(filters)
     expect(params.sendStatus).toBe('SCHEDULED')
