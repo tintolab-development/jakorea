@@ -40,6 +40,11 @@ export function resolveSessionAuthFailureRedirect(options: {
   pathname: string
   search?: string
   complete: boolean
+  /**
+   * 돌아올 경로를 싣는 로그인 화면 파라미터. 기본 `next`(기존 동작).
+   * `redirect`는 로그인 화면이 로그인 뒤 그 경로로 돌려보내는 기존 파라미터다 (새로고침 복원 ① 안내).
+   */
+  returnParam?: 'next' | 'redirect'
 }): string | null {
   if (options.complete) {
     return passwordChangeRequiredPaths.complete
@@ -48,7 +53,7 @@ export function resolveSessionAuthFailureRedirect(options: {
     return null
   }
   const path = `${options.pathname}${options.search ?? ''}`
-  return `/login?next=${encodeURIComponent(path)}`
+  return `/login?${options.returnParam ?? 'next'}=${encodeURIComponent(path)}`
 }
 
 /** 로그인·가입·찾기 등 비로그인 공개 화면 — 로그아웃 후 다시 보내지 않음 */
@@ -71,6 +76,7 @@ export function assignLoginAfterSessionEnd(options?: {
   search?: string
   complete?: boolean
   assign?: (url: string) => void
+  returnParam?: 'next' | 'redirect'
 }): void {
   if (typeof window === 'undefined' && options?.assign == null) return
   const pathname = options?.pathname ?? window.location.pathname
@@ -80,6 +86,7 @@ export function assignLoginAfterSessionEnd(options?: {
     pathname,
     search,
     complete: options?.complete === true,
+    returnParam: options?.returnParam,
   })
   if (target == null) return
   const current = `${pathname}${search}`

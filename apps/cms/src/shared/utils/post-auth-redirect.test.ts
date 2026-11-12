@@ -67,6 +67,18 @@ describe('assignLoginAfterSessionEnd', () => {
     expect(assign).toHaveBeenCalledWith('/login?next=%2F')
   })
 
+  it('새로고침 복원 ① 안내는 로그인 화면의 기존 redirect 파라미터로 원래 화면을 넘긴다', () => {
+    const assign = vi.fn()
+    assignLoginAfterSessionEnd({
+      pathname: '/programs/general',
+      search: '?page=2',
+      complete: false,
+      assign,
+      returnParam: 'redirect',
+    })
+    expect(assign).toHaveBeenCalledWith('/login?redirect=%2Fprograms%2Fgeneral%3Fpage%3D2')
+  })
+
   it('이미 로그인 화면이면 다시 보내지 않는다', () => {
     const assign = vi.fn()
     assignLoginAfterSessionEnd({ pathname: '/login', search: '', complete: false, assign })

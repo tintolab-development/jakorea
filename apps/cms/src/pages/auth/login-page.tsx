@@ -7,7 +7,11 @@ import type { FormInstance } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton, CmsInput } from '@/shared/ui'
+import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import {
+  SESSION_ENDED_NOTICE,
+  consumeSessionEndedNotice,
+} from '@/features/auth/lib/session-restore-notice'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
 import type { LoginMode } from '@/entities/user/api/auth-service'
@@ -105,6 +109,13 @@ export function LoginPage() {
   const registerPath = redirectPath
     ? `/register?redirect=${encodeURIComponent(redirectPath)}`
     : '/register'
+
+  // 새로고침 세션 복원이 거절돼 로그아웃된 경우에만 안내한다 (QA-0137). 확인 버튼만.
+  const { showAlert } = useCmsAlert()
+  useEffect(() => {
+    if (!consumeSessionEndedNotice()) return
+    showAlert({ title: SESSION_ENDED_NOTICE.title, content: SESSION_ENDED_NOTICE.content })
+  }, [showAlert])
 
   useEffect(() => {
     if (requiresMfa && !isAuthenticated) {

@@ -1,3 +1,4 @@
+import { installIsolatedAuthRefreshRoutes } from '../e2e/helpers/isolated-auth-session'
 import type { Page, Request, Route } from '@playwright/test'
 import {
   createProgramApplicationFormTrainedTeachersDraft,
@@ -522,7 +523,8 @@ export async function installTtIsolatedNetwork(
   let createdBindings: unknown[] = []
 
   await page.addInitScript(() => {
-    localStorage.setItem('auth_token', 'e2e.mock.header.payload')
+    // QA-0137: access token은 메모리 전용 — refresh token만 넣고 복원 refresh는 mock이 답한다
+    localStorage.setItem('auth_refresh_token', 'e2e.mock.refresh')
     localStorage.setItem('auth_expires_at', new Date(Date.now() + 60 * 60 * 1000).toISOString())
     localStorage.setItem(
       'auth_user',
@@ -537,7 +539,7 @@ export async function installTtIsolatedNetwork(
         programRoles: {},
       })
     )
-    localStorage.setItem('platform_auth_token', 'e2e.mock.header.payload')
+    localStorage.setItem('platform_auth_refresh_token', 'e2e.mock.refresh')
     localStorage.setItem(
       'platform_auth_expires_at',
       new Date(Date.now() + 60 * 60 * 1000).toISOString()
@@ -965,6 +967,7 @@ export async function installTtIsolatedNetwork(
     }
   })
 
+  await installIsolatedAuthRefreshRoutes(page)
   return log
 }
 

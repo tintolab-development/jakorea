@@ -12,6 +12,7 @@ import {
 import type { OAuthIntent, SocialProvider } from '@jakorea/social-auth'
 
 import { loginWithSocial } from '@/entities/user/api/auth-service'
+import { readAccessTokenFromMemory } from '@/features/auth/lib/access-token-memory'
 import {
   isSocialAuthLoginRemoteEnabled,
   isSocialAuthSignupRemoteEnabled,
@@ -109,8 +110,8 @@ export const cmsSocialAuthClient = createSocialAuthClient({
   },
   storagePrefix,
   state: socialAuthState,
-  getAccessToken: () =>
-    typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null,
+  // QA-0137: access token은 메모리에만 있다
+  getAccessToken: readAccessTokenFromMemory,
   remoteAdapter: createCompositeRemoteAdapter({
     adminSso: adminSsoAdapter,
     signupSocial: signupSocialAdapter,
