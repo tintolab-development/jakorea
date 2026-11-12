@@ -4,6 +4,7 @@
  */
 
 import { type Page, expect } from '@playwright/test'
+import { readBrowserAccessToken } from '../helpers/browser-access-token'
 import {
   EDITABLE_UJAT_DUMMY_TITLE,
   UJAT_DETAIL_SEED_CANDIDATES,
@@ -148,8 +149,8 @@ export class UjatProgramDetailPage {
     await this.page.goto(LIST_PATH)
     if (!(await this.tryExpectListShell())) return null
 
-    const candidates = await this.page.evaluate(async () => {
-      const token = localStorage.getItem('auth_token')
+    const token = await readBrowserAccessToken(this.page, 'cms')
+    const candidates = await this.page.evaluate(async token => {
       if (!token) return [] as UjatDataRichCandidate[]
       const headers = { Authorization: `Bearer ${token}` }
 
@@ -204,7 +205,7 @@ export class UjatProgramDetailPage {
         })
       )
       return result
-    })
+    }, token)
 
     const scored = (candidates as UjatDataRichCandidate[])
       .filter(

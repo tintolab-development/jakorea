@@ -9,12 +9,14 @@
  */
 
 import { Spin } from 'antd'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { ReloadRestoreFailureModal } from '@/features/auth/ui/reload-restore-failure-modal'
 import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   PASSWORD_CHANGE_REQUIRED_PATH,
+  buildLoginPathWithRedirect,
   passwordChangeRequiredPaths,
 } from '@/shared/utils/post-auth-redirect'
 import type { UserRole } from '@/types/user'
@@ -30,6 +32,7 @@ export function ProtectedRoute({
   requiredRoles,
   requireAuth = true,
 }: ProtectedRouteProps) {
+  const location = useLocation()
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const user = useAuthStore(state => state.user)
   const requiresMfa = useAuthStore(state => state.requiresMfa)
@@ -41,7 +44,8 @@ export function ProtectedRoute({
     return <Navigate to={passwordChangeRequiredPaths.complete} replace />
   }
 
-  // 만료된 토큰 갱신 결과 전에는 보호 화면을 그리지 않는다 (메인 → 로그인 깜빡임 방지).
+  // 새로고침 뒤 access token을 refresh로 다시 받기 전에는 보호 화면을 그리지 않는다 (메인 → 로그인 깜빡임 방지).
+  // 네트워크·서버 오류로 확인하지 못하면 이 로딩 화면 위에 닫기·다시 시도 안내를 띄운다.
   if (requireAuth && isBootstrapping) {
     return (
       <div
@@ -56,16 +60,20 @@ export function ProtectedRoute({
         }}
       >
         <Spin size="large" />
+        <ReloadRestoreFailureModal />
       </div>
     )
   }
 
+  // 로그인 후 원래 화면으로 돌아오도록 현재 경로를 redirect로 넘긴다.
+  const loginPath = buildLoginPathWithRedirect(`${location.pathname}${location.search}`)
+
   if (requireAuth && !isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={loginPath} replace />
   }
 
   if (requireAuth && user?.role === 'ADMIN' && requiresMfa && !mfaState?.isVerified) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={loginPath} replace />
   }
 
   if (requireAuth && passwordChangeRequired) {

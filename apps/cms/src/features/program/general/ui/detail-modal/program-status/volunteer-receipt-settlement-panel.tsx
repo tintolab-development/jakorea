@@ -30,6 +30,7 @@ import {
   resolveIndividualSettlementReviewUiStatus,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import {
+  isIndividualSettlementRowNotApplicable,
   resolveIndividualSettlementReviewSummaryLabel,
   type IndividualSettlementReviewListRow,
 } from '@/features/program/general/lib/map-individual-settlement-review-rows'
@@ -39,6 +40,7 @@ import { formatBusinessPeriodDisplay } from '@/features/settlement-management/ap
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT } from '@/features/settlement/lib/payment-statement-view-unavailable-alert'
+import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
 import { IndividualSettlementReviewDetailModal } from './individual-settlement-review-detail-modal'
 import './participating-instructor-settlement-section.css'
 import './individual-settlement-review-detail-modal.css'
@@ -67,9 +69,16 @@ function buildExcelColumns(showProgress: boolean): ColumnsType<IndividualSettlem
       title: '지급조서 처리 현황',
       key: 'status',
       render: (_value: unknown, record: IndividualSettlementReviewListRow) =>
-        individualSettlementTableProcessingLabel(record.status),
+        isIndividualSettlementRowNotApplicable(record)
+          ? '-'
+          : individualSettlementTableProcessingLabel(record.status),
     },
-    { title: '정산 예정 금액', dataIndex: 'totalAmountLabel', key: 'totalAmountLabel' },
+    {
+      title: '정산 예정 금액',
+      key: 'totalAmountLabel',
+      render: (_value: unknown, record: IndividualSettlementReviewListRow) =>
+        isIndividualSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
+    },
   ]
 }
 
@@ -92,6 +101,9 @@ export function VolunteerReceiptSettlementPanel({
 }: VolunteerReceiptSettlementPanelProps) {
   const { showAlert } = useCmsAlert()
   const programId = program.id != null ? String(program.id) : ''
+  // 산출 내역서 '참여 기관명' 열은 일반 기관형 프로그램의 참여 봉사자만 보인다(개인형·UJAT 봉사자는 숨김)
+  const isInstitutionSurface = useIsInstitutionProgramSurface(program)
+  const showInstitutionColumn = target.kind === 'participant' && isInstitutionSurface
 
   const { isLoading, isError, errorMessage, rows, summary, remoteEnabled, reviewKey, invalidate } =
     useVolunteerReceiptSettlementList({
@@ -152,9 +164,7 @@ export function VolunteerReceiptSettlementPanel({
         align: 'center',
         width: 160,
         render: (_value, record) => {
-          if (record.settlementApplicationId == null) {
-            return <InstructorSettlementStatusText status="none" />
-          }
+          if (isIndividualSettlementRowNotApplicable(record)) return '-'
           const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status)
           if (uiStatus) return <InstructorSettlementStatusText status={uiStatus} />
           return (
@@ -169,10 +179,11 @@ export function VolunteerReceiptSettlementPanel({
       },
       {
         title: '정산 예정 금액',
-        dataIndex: 'totalAmountLabel',
         key: 'totalAmountLabel',
         align: 'center',
         width: 140,
+        render: (_value, record) =>
+          isIndividualSettlementRowNotApplicable(record) ? '-' : record.totalAmountLabel,
       },
       {
         title: '지급조서',
@@ -185,7 +196,7 @@ export function VolunteerReceiptSettlementPanel({
               variant="default"
               size="h32"
               style={{ width: '100%' }}
-              disabled={!remoteEnabled}
+              disabled={!remoteEnabled || isIndividualSettlementRowNotApplicable(record)}
               onClick={() => {
                 if (!record.canOpenDetail || record.settlementApplicationId == null) {
                   showAlert(PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT)
@@ -294,6 +305,7 @@ export function VolunteerReceiptSettlementPanel({
         settlementApplicationId={detailApplicationId}
         programSessionProgressDisplay={programSessionProgressDisplay}
         businessPeriodDisplay={businessPeriodDisplay}
+        showInstitutionColumn={showInstitutionColumn}
         onClose={() => setDetailApplicationId(null)}
         onReviewed={invalidate}
       />

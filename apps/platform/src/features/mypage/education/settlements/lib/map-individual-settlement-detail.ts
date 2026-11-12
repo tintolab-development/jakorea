@@ -27,6 +27,7 @@ function filesOf(item: PortalIndividualSettlementItemDetail): SettlementReceiptA
         {
           fileObjectId,
           fileName: file.fileName?.trim() || file.originalFileName?.trim() || `파일-${fileObjectId}`,
+          ...(typeof file.fileSize === 'number' && file.fileSize > 0 ? { fileSize: file.fileSize } : {}),
         },
       ]
     }),

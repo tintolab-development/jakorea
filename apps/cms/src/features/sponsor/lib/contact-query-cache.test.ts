@@ -1,5 +1,5 @@
-import { QueryClient } from '@tanstack/react-query'
-import { describe, expect, it } from 'vitest'
+import { QueryClient, QueryObserver } from '@tanstack/react-query'
+import { describe, expect, it, vi } from 'vitest'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import {
   EMPTY_CONTACTS_PARAMS_KEY,
@@ -10,6 +10,7 @@ import {
   applyDeletedContactsToDetail,
   applyUpdatedContactToDetail,
   mergeCreatedContact,
+  refetchSponsorContactsAfterSave,
 } from './contact-query-cache'
 import type {
   SponsorContactRow,
@@ -158,5 +159,34 @@ describe('applyUpdatedContactToDetail list cache', () => {
     expect(queryClient.getQueryData<SponsorContactRow[]>(filteredKey)?.map(row => row.id)).toEqual([
       'c1',
     ])
+  })
+})
+
+describe('refetchSponsorContactsAfterSave', () => {
+  it('refetches GET /contacts (raw + audit) instead of caching the masked save response', async () => {
+    const queryClient = new QueryClient()
+    const detailKey = dataManagementQueryKeys.sponsors.detail('sp-1')
+    const contactsKey = dataManagementQueryKeys.sponsors.contacts('sp-1', EMPTY_CONTACTS_PARAMS_KEY)
+    queryClient.setQueryData(detailKey, detail([contact({ id: 'c1', contactType: 'lead' })]))
+    let contactFetches = 0
+    const observer = new QueryObserver<SponsorContactRow[]>(queryClient, {
+      queryKey: contactsKey,
+      queryFn: async () => {
+        contactFetches += 1
+        return [contact({ id: 'c1', contactType: 'lead', phone: '010-1234-5678' })]
+      },
+    })
+    const unsubscribe = observer.subscribe(() => {})
+    await vi.waitFor(() => expect(observer.getCurrentResult().isSuccess).toBe(true))
+    expect(contactFetches).toBe(1)
+
+    await refetchSponsorContactsAfterSave(queryClient, 'sp-1')
+
+    expect(contactFetches).toBe(2)
+    expect(queryClient.getQueryData<SponsorContactRow[]>(contactsKey)?.[0]?.phone).toBe('010-1234-5678')
+    // 상세는 stale 표시만 하고 다시 조회하지 않는다(상세 GET도 원문 조회 이력을 남기므로).
+    expect(queryClient.getQueryState(detailKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryData<SponsorManagementDetailView>(detailKey)?.contacts).toHaveLength(1)
+    unsubscribe()
   })
 })

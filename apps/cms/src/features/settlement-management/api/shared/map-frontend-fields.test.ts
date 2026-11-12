@@ -161,6 +161,12 @@ describe('mapSettlementFrontendItemTypeToLineKind', () => {
     expect(mapSettlementFrontendItemTypeToLineKind('meal', 15000)).toBe('meal')
     expect(mapSettlementFrontendItemTypeToLineKind('activity', 20000)).toBe('activity')
   })
+
+  it('기타(other) 양수는 강사비가 아닌 other, 음수는 기존처럼 공제(withholding)', () => {
+    expect(mapSettlementFrontendItemTypeToLineKind('other', 10000)).toBe('other')
+    expect(mapSettlementFrontendItemTypeToLineKind('other', -10000)).toBe('withholding')
+    expect(mapSettlementFrontendItemTypeToLineKind(undefined, 10000)).toBe('lecture_fee')
+  })
 })
 
 describe('mapCalculationDetailToBasisDetail', () => {
@@ -206,7 +212,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
       layout: 'lectureFeeGemini',
       basisJson: JSON.stringify({
         layout: 'lectureFeeGemini',
-        categoryLabel: '제미나이 강사비',
+        categoryLabel: 'Gemini 강사비',
         lectureTimeDisplay: '2차시',
         feeAssessmentWon: 170000,
       }),
@@ -227,7 +233,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
         layout: 'lectureFeeTier',
         itemType: 'LECTURE_FEE',
         wageItemType: 'GEMINI',
-        categoryLabel: '세미나이 강사비',
+        categoryLabel: 'Gemini 강사비',
         feeAssessmentWon: 170000,
         amount: 170000,
         lectureTimeDisplay: '2차시',
@@ -245,7 +251,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
       resultAmount: 170000,
       basisJson: JSON.stringify({
         layout: 'lectureFeeGemini',
-        categoryLabel: '제미나이 강사비',
+        categoryLabel: 'Gemini 강사비',
         feeAssessmentWon: 170000,
         amount: 170000,
       }),
@@ -263,7 +269,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
         layout: 'lectureFeeGemini',
         itemType: 'LECTURE_FEE',
         wageItemType: 'GEMINI',
-        categoryLabel: '제미나이 강사비',
+        categoryLabel: 'Gemini 강사비',
         feeAssessmentWon: 170000,
         amount: 170000,
         sessionOrdinal: 2,
@@ -271,7 +277,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
     })
     expect(detail?.layout).toBe('lectureFeeGemini')
     if (detail?.layout !== 'lectureFeeGemini') return
-    expect(detail.categoryLabel).toBe('제미나이 강사비')
+    expect(detail.categoryLabel).toBe('Gemini 강사비')
     expect(detail.feeAssessmentWon).toBe(170000)
     expect(detail.lectureTimeDisplay).toBe('-')
   })
@@ -281,7 +287,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
       layout: 'lectureFeeGemini',
       basisJson: JSON.stringify({
         layout: 'lectureFeeGemini',
-        categoryLabel: '제미나이 강사비',
+        categoryLabel: 'Gemini 강사비',
         feeAssessmentWon: 170000,
         lectureTimeDisplay: '14:30 ~ 16:30',
         sessionOrdinal: 2,

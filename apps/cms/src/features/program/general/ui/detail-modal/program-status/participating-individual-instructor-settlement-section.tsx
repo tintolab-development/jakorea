@@ -279,7 +279,14 @@ export function ParticipatingIndividualInstructorSettlementSection({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="지급조서 처리현황"
-              view={<InstructorSettlementStatusText status={instructor.settlementStatus} />}
+              view={
+                // 신청 건이 없으면 '해당 없음' 대신 '-' (기획 2026-11-12 2차 4-2)
+                !instructor.settlementStatus || instructor.settlementStatus === 'none' ? (
+                  '-'
+                ) : (
+                  <InstructorSettlementStatusText status={instructor.settlementStatus} />
+                )
+              }
             />
             <DetailInfoForm.Field
               label="프로그램 진행 회차"

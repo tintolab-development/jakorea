@@ -35,7 +35,6 @@ const USER = {
 
 function seedSession(opts: { expiresInMs: number; issuedAgoMs?: number | null; refresh?: boolean }) {
   const expiresAt = new Date(Date.now() + opts.expiresInMs).toISOString()
-  localStorage.setItem('auth_token', 'access-token')
   localStorage.setItem('auth_expires_at', expiresAt)
   localStorage.setItem('auth_user', JSON.stringify(USER))
   if (opts.refresh !== false) localStorage.setItem('auth_refresh_token', 'refresh')
@@ -149,15 +148,15 @@ describe('checkSessionExpiry — refresh-first / 활동 게이트', () => {
     expect(logoutMock).not.toHaveBeenCalled()
   })
 
-  it('다른 탭이 localStorage 만료 시각을 늘렸으면 이 탭은 refresh하지 않는다', async () => {
+  it('다른 탭이 저장소 만료 시각을 늘려도 이 탭 메모리 토큰이 만료 임박이면 직접 refresh한다', async () => {
     seedSession({ expiresInMs: 10_000, issuedAgoMs: 1 * MIN })
-    // 다른 탭이 refresh한 결과 (메모리 expiresAt은 아직 옛 값)
+    // 다른 탭이 refresh한 결과 — 그 탭의 access token은 이 탭이 쓸 수 없다 (QA-0137 메모리 전용)
     localStorage.setItem('auth_expires_at', new Date(Date.now() + 60 * MIN).toISOString())
 
     useAuthStore.getState().checkSessionExpiry()
     await flush()
 
-    expect(refreshAccessTokenSessionMock).not.toHaveBeenCalled()
+    expect(refreshAccessTokenSessionMock).toHaveBeenCalledTimes(1)
     expect(logoutMock).not.toHaveBeenCalled()
   })
 
@@ -167,28 +166,50 @@ describe('checkSessionExpiry — refresh-first / 활동 게이트', () => {
   })
 })
 
-describe('loadAuthFromStorage — 새로고침 시 access 만료 + refresh token', () => {
+describe('loadAuthFromStorage — 새로고침 시 메모리 access token 없이 복원', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.resetModules()
   })
 
-  it('access가 만료돼도 refresh token이 있으면 세션을 복원한다 (login 리다이렉트 방지)', async () => {
-    localStorage.setItem('auth_token', 'access-token')
-    localStorage.setItem('auth_expires_at', new Date(Date.now() - 5 * MIN).toISOString())
+  it('refresh 수단이 있으면 사용자만 복원하고 access token은 비운 채 refresh 결과를 기다린다', async () => {
+    localStorage.setItem('auth_expires_at', new Date(Date.now() + 30 * MIN).toISOString())
     localStorage.setItem('auth_user', JSON.stringify(USER))
     localStorage.setItem('auth_refresh_token', 'refresh')
 
     const mod = await import('./auth-store')
-    expect(mod.useAuthStore.getState().isAuthenticated).toBe(true)
+    const state = mod.useAuthStore.getState()
+    expect(state.isAuthenticated).toBe(true)
+    expect(state.token).toBeNull()
+    expect(state.isBootstrapping).toBe(true)
   })
 
-  it('만료 + refresh token 없음이면 복원하지 않는다', async () => {
-    localStorage.setItem('auth_token', 'access-token')
-    localStorage.setItem('auth_expires_at', new Date(Date.now() - 5 * MIN).toISOString())
+  it('쿠키 세션 표시만 있어도(QA-0137) 복원한다', async () => {
+    localStorage.setItem('auth_user', JSON.stringify(USER))
+    localStorage.setItem('auth_refresh_cookie_session', '1')
+
+    const mod = await import('./auth-store')
+    expect(mod.useAuthStore.getState().isAuthenticated).toBe(true)
+    expect(mod.useAuthStore.getState().isBootstrapping).toBe(true)
+  })
+
+  it('이전 버전이 남긴 auth_token은 읽지 않고 지운다', async () => {
+    localStorage.setItem('auth_token', 'legacy-access-token')
+    localStorage.setItem('auth_user', JSON.stringify(USER))
+    localStorage.setItem('auth_refresh_token', 'refresh')
+
+    const mod = await import('./auth-store')
+    expect(localStorage.getItem('auth_token')).toBeNull()
+    expect(mod.useAuthStore.getState().token).toBeNull()
+  })
+
+  it('refresh 수단이 없으면 복원하지 않는다', async () => {
+    localStorage.setItem('auth_token', 'legacy-access-token')
+    localStorage.setItem('auth_expires_at', new Date(Date.now() + 30 * MIN).toISOString())
     localStorage.setItem('auth_user', JSON.stringify(USER))
 
     const mod = await import('./auth-store')
     expect(mod.useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(mod.useAuthStore.getState().isBootstrapping).toBe(false)
   })
 })

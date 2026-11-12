@@ -11,6 +11,10 @@ import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
+import {
+  getPaymentApplicationCopy,
+  type PaymentApplicationKind,
+} from '@/features/settlement/lib/payment-application-copy'
 import './payment-order-payment-confirmation-modal.css'
 
 function formatKoreanDateWithWeekday(value: Dayjs): string {
@@ -25,6 +29,8 @@ export interface PaymentOrderPaymentConfirmationModalProps {
   data: PaymentOrderProgramCalculationStatement | null
   /** 산출 내역서를 풀페이지 위(zIndex 지정)에서 열었을 때 그보다 위 */
   zIndex?: number
+  /** 신청 유형별 문구 — 기본 강사 지급조서, 참여자·봉사자 영수증은 receipt */
+  applicationKind?: PaymentApplicationKind
 }
 
 function getInstructorName(statement: PaymentOrderProgramCalculationStatement): string {
@@ -38,7 +44,9 @@ export function PaymentOrderPaymentConfirmationModal({
   onConfirm,
   data,
   zIndex,
+  applicationKind,
 }: PaymentOrderPaymentConfirmationModalProps) {
+  const copy = getPaymentApplicationCopy(applicationKind)
   const block0 = data?.blocks[0]
   /** 기관·교육일·일정 칸(lectureSessionDisplay: 회차 또는 차시 원문) 중 값이 있는 것만 — 없는 개인 정산 등에서 끝 구분선이 남지 않게 */
   const detailParts = [
@@ -91,10 +99,10 @@ export function PaymentOrderPaymentConfirmationModal({
         <div className="payment-order-payment-confirm">
           <p className="payment-order-payment-confirm__line">
             <strong className="payment-order-payment-confirm__name">[{instructorName}]</strong>{' '}
-            님의 강사비 지급조서 신청을 확인 처리하시겠습니까?
+            님의 {copy.confirmSubject} 신청을 확인 처리하시겠습니까?
           </p>
           <p className="payment-order-payment-confirm__line">
-            정산된 금액은 <strong>매월 셋째 주 화요일에 계좌 지급</strong>됩니다.
+            {copy.payee}는 <strong>매월 셋째 주 화요일에 지급</strong>됩니다.
           </p>
           <div
             className="payment-order-payment-confirm__detail-line"

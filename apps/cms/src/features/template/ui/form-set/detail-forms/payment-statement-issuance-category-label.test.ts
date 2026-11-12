@@ -86,3 +86,20 @@ describe('resolvePaymentStatementIssuanceCategoryLabel', () => {
     expect(resolvePaymentStatementIssuanceCategoryLabel(withDisplay)).toBe('사업소득')
   })
 })
+
+describe('resolvePaymentStatementIssuanceCategoryLabel — 기타', () => {
+  it('기타(other)는 설명이 없으면 「기타」, 있으면 설명을 쓴다', () => {
+    const line: PaymentOrderCalculationStatementLine = {
+      id: 'other-1',
+      itemLabel: '기타',
+      description: '—',
+      amount: 10000,
+      kind: 'other',
+    }
+    expect(resolvePaymentStatementIssuanceCategoryLabel(line)).toBe('기타')
+    expect(resolvePaymentStatementIssuanceCategoryLabel({ ...line, description: '' })).toBe('기타')
+    expect(
+      resolvePaymentStatementIssuanceCategoryLabel({ ...line, description: '교재 구입비' })
+    ).toBe('교재 구입비')
+  })
+})

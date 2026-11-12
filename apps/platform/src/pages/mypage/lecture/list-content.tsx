@@ -69,6 +69,7 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
               item={item}
               recruitmentRoleLabel="강사"
               badgeSize="regular"
+              hideCategoryLabel
               onClick={() =>
                 navigate(lectureApplicationDetailPath(item.id, item.applicationType), {
                   state: {

@@ -22,6 +22,7 @@ import { useCmsAlert } from '@/shared/ui'
 import { NotificationDropdown, type HeaderNotification } from './notification-dropdown'
 import './main-header.css'
 import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
+import { LOGIN_PATH } from '@/shared/lib/login-redirect'
 
 const { Header: AntHeader } = Layout
 const { Text } = Typography
@@ -114,7 +115,9 @@ export function MainHeader() {
   const handleLogout = () => {
     setAccountDropdownOpen(false)
     logout()
-    navigate('/login', { replace: true })
+    // 직접 로그아웃은 redirect 없이 로그인으로. SPA navigate는 ProtectedRoute의
+    // `/login?redirect=` 이동보다 늦게 반영될 수 있어 location으로 확정한다.
+    window.location.assign(LOGIN_PATH)
   }
 
   const handleOpenProfile = () => {

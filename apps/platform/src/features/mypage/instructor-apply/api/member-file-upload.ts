@@ -42,6 +42,8 @@ export type MemberFileUploadPolicy = {
   allowedFileTypes?: readonly {
     extensions: readonly string[]
     contentType: string
+    /** 브라우저가 같은 형식에 주는 비표준 MIME. 일치하면 `contentType`(표준 MIME)으로 보정해 보낸다. */
+    contentTypeAliases?: readonly string[]
   }[]
 }
 
@@ -233,7 +235,8 @@ function resolvePolicyFileType(file: File, policy: MemberFileUploadPolicy): stri
   const match = policy.allowedFileTypes?.find(
     fileType =>
       fileType.extensions.some(allowedExtension => allowedExtension.toLowerCase() === extension) &&
-      fileType.contentType.toLowerCase() === mimeType
+      (fileType.contentType.toLowerCase() === mimeType ||
+        (fileType.contentTypeAliases ?? []).some(alias => alias.toLowerCase() === mimeType))
   )
   if (!match) throw new MemberFileTypeNotAllowedError()
   return match.contentType
@@ -370,7 +373,11 @@ export async function uploadMemberPortalFile(input: {
     ? resolvePolicyFileType(input.file, input.policy)
     : resolveMemberPortalUploadContentType(input.file)
   let checksumSha256 = input.checksumSha256?.trim() || undefined
-  if (!checksumSha256 && isPortalElectronicSignaturePurpose(String(input.filePurpose))) {
+  if (
+    !checksumSha256 &&
+    (isPortalElectronicSignaturePurpose(String(input.filePurpose)) ||
+      input.filePurpose === 'CRIMINAL_HISTORY_CONSENT_ORIGINAL')
+  ) {
     checksumSha256 = await createSha256(input.file)
   }
   return withFileUploadOverlay(() =>

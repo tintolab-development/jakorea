@@ -73,7 +73,9 @@ function formatSignedWon(n: number): string {
   return `${sign}${n.toLocaleString('ko-KR')}원`
 }
 
-export function formatPaymentOrderCalculationWonPlain(n: number): string {
+/** 서버 typed basis에 금액 키가 빠진 부분 payload도 화면이 깨지지 않게 '-'로 표시한다 */
+export function formatPaymentOrderCalculationWonPlain(n: number | null | undefined): string {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return '-'
   return `${n.toLocaleString('ko-KR')}원`
 }
 

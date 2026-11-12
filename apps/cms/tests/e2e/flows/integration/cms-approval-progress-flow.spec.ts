@@ -1,3 +1,4 @@
+import { requireCmsAccessToken } from '../../helpers/browser-access-token'
 import { expect, type Browser, type Page } from '@playwright/test'
 import { test } from '../../fixtures/test'
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
@@ -186,8 +187,7 @@ async function adminRequest(
   if (page.url() === 'about:blank') {
     await page.goto('/')
   }
-  const token = await page.evaluate(() => localStorage.getItem('auth_token'))
-  if (!token) throw new Error('CMS 관리자 auth_token이 없습니다.')
+  const token = await requireCmsAccessToken(page, 'CMS 관리자')
   const response = await page.request.fetch(path, {
     method,
     headers: { Authorization: `Bearer ${token}` },

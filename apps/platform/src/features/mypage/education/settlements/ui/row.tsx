@@ -178,9 +178,12 @@ export function EducationSettlementRow({
   const relatedDateIso = showUnsubmittedDeadline
     ? (item.deadlineAt ?? operationEndAt)
     : item.submittedAt
-  const relatedDatePrefix = showUnsubmittedDeadline ? '제출 마감일' : '제출일'
   const relatedDate = formatDisplayDate(relatedDateIso)
-  const description = relatedDate ? `${relatedDatePrefix} : ${relatedDate}` : item.deadlineLabel
+  const description = relatedDate
+    ? showUnsubmittedDeadline
+      ? `${relatedDate}까지`
+      : `제출일 : ${relatedDate}`
+    : item.deadlineLabel
   const actions = config.actions ?? []
   // 운영 종료 행은 "강의보고서 작성 이후…" 안내를 붙이지 않는다(작성 자체가 불가)
   const actionHint =
@@ -218,10 +221,8 @@ export function EducationSettlementRow({
       : config.amountKind === 'expected'
         ? '정산 예정금액'
         : '정산 완료금액'
-  const headline =
-    documentKind === 'payment_statement' && item.sessionMeta
-      ? `${formatEducationSessionDate(item.heldAt)} ${item.sessionMeta}`
-      : formatEducationSessionDate(item.heldAt)
+  const headline = formatEducationSessionDate(item.heldAt)
+  const sessionSubtitle = item.sessionMeta?.trim() || ''
   const institutionName = item.institutionName?.trim() || ''
   const grade = item.grade?.trim() || ''
   const institutionPrimary =
@@ -397,9 +398,9 @@ export function EducationSettlementRow({
           }
           date={headline}
           subtitle={
-            item.sessionMeta && documentKind !== 'payment_statement' ? (
+            sessionSubtitle ? (
               <PFText as="span" typo="bd-lg-rg">
-                {item.sessionMeta}
+                {sessionSubtitle}
               </PFText>
             ) : undefined
           }

@@ -75,7 +75,7 @@ export function ProgramStatusBadges({
 
   /**
    * regular(목록 카드): Figma Badge Category icon·large — 20px 아이콘, pl12·pr16, gap 6.
-   * 시안: 교육 대상=수업, 교육 형태=온라인·오프라인·온/오프라인, 모집 역할=대상 아이콘.
+   * 시안: 교육 대상 → 교육 형태 → 모집 역할(강사 등). 역할 배지 아이콘은 대상 아이콘.
    * 아이콘은 PC만 — 모바일은 CSS로 숨기고 기존 24px 배지 그대로.
    */
   const withIcon = size === 'regular'
@@ -99,18 +99,6 @@ export function ProgramStatusBadges({
         )}
       </PFStateBadge>
 
-      {showRole ? (
-        <PFCategoryBadge
-          size={withIcon ? 'large' : 'small'}
-          variant="primary"
-          icon={renderIcon(typeTargetIconUrl)}
-          iconVariant="primary"
-          className={badgeClassName}
-        >
-          {recruitmentRoleLabel}
-        </PFCategoryBadge>
-      ) : null}
-
       {educationTargetLabel.trim() ? (
         <PFCategoryBadge
           size={categoryBadgeSize}
@@ -132,6 +120,18 @@ export function ProgramStatusBadges({
           className={badgeClassName}
         >
           {educationFormLabel}
+        </PFCategoryBadge>
+      ) : null}
+
+      {showRole ? (
+        <PFCategoryBadge
+          size={withIcon ? 'large' : 'small'}
+          variant="primary"
+          icon={renderIcon(typeTargetIconUrl)}
+          iconVariant="primary"
+          className={badgeClassName}
+        >
+          {recruitmentRoleLabel}
         </PFCategoryBadge>
       ) : null}
     </div>

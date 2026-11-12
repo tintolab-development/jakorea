@@ -444,7 +444,7 @@ describe('mapPaymentItemToSettingDetail', () => {
   it('ACTIVITY에 API layout=meal이 와도 activity로 정규화해 활동비 본문을 연다', () => {
     const activity = mapPaymentItemToSettingDetail({
       paymentItemType: PaymentItemResponsePaymentItemType.ACTIVITY,
-      itemName: '참여자 활동비',
+      itemName: '활동비',
       layout: 'meal',
     })
 

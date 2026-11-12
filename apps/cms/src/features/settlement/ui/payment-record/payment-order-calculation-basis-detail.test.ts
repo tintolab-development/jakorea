@@ -47,11 +47,11 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(isSupportedBasisDetailLayout(detail)).toBe(true)
   })
 
-  it('buildLectureFeeGeminiBasisDetail returns 제미나이 payload', () => {
+  it('buildLectureFeeGeminiBasisDetail returns Gemini payload', () => {
     const detail = buildLectureFeeGeminiBasisDetail(170000, '2차시')
     expect(detail).toEqual({
       layout: 'lectureFeeGemini',
-      categoryLabel: '제미나이 강사비',
+      categoryLabel: 'Gemini 강사비',
       lectureTimeDisplay: '2차시',
       feeAssessmentWon: 170000,
     })
@@ -59,19 +59,22 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(isSupportedBasisDetailLayout(detail)).toBe(true)
   })
 
-  it('resolvePaymentOrderCalculationBasisDetailForRow uses 제미나이 layout', () => {
-    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
-      {
-        kind: 'lecture_fee',
-        itemLabel: '강사비',
-        amount: 170000,
-        lineId: 'lecture-gemini-1',
-        lectureSessionDisplay: '2차시',
-      },
-      { lectureFeeStandardTitle: '제미나이 강사비' }
-    )
-    expect(detail?.layout).toBe('lectureFeeGemini')
-  })
+  it.each(['Gemini 강사비', '제미나이 강사비', '세미나이 강사비'])(
+    'resolvePaymentOrderCalculationBasisDetailForRow uses Gemini layout for %s',
+    lectureFeeStandardTitle => {
+      const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+        {
+          kind: 'lecture_fee',
+          itemLabel: '강사비',
+          amount: 170000,
+          lineId: 'lecture-gemini-1',
+          lectureSessionDisplay: '2차시',
+        },
+        { lectureFeeStandardTitle }
+      )
+      expect(detail?.layout).toBe('lectureFeeGemini')
+    }
+  )
 
   it('구분에 항목 타입 라벨 강사비 대신 강사비 책정 기준을 쓴다', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
@@ -225,15 +228,15 @@ describe('payment-order-calculation-basis-detail', () => {
     const activity = buildActivityBasisDetail()
     expect(activity).toEqual({
       layout: 'activity',
-      categoryLabel: '참여자 활동비',
+      categoryLabel: '활동비',
       activityFee: {
         amountWon: 50000,
-        receiptFileName: '참여자 활동비 영수증.pdf',
+        receiptFileName: '활동비 영수증.pdf',
       },
       totalWon: 50000,
     })
     expect(resolveActivityBasisDetailTotalWon(activity)).toBe(50000)
-    expect(resolveBasisDetailModalTitle(activity)).toBe('참여자 활동비 산정 기준 상세')
+    expect(resolveBasisDetailModalTitle(activity)).toBe('활동비 산정 기준 상세')
   })
 
   it('buildWithholdingBasisDetail returns withholding breakdown for daily salary total', () => {
@@ -483,16 +486,16 @@ describe('payment-order-calculation-basis-detail', () => {
         lectureSessionDisplay: '14:30 ~ 16:30',
         basisDetail: {
           layout: 'lectureFeeGemini',
-          categoryLabel: '제미나이 강사비',
+          categoryLabel: 'Gemini 강사비',
           lectureTimeDisplay: '2차시',
           feeAssessmentWon: 170000,
         },
       },
-      { lectureFeeStandardTitle: '제미나이 강사비', remoteData: true }
+      { lectureFeeStandardTitle: 'Gemini 강사비', remoteData: true }
     )
     expect(detail?.layout).toBe('lectureFeeGemini')
     if (detail?.layout !== 'lectureFeeGemini') return
-    expect(detail.categoryLabel).toBe('제미나이 강사비')
+    expect(detail.categoryLabel).toBe('Gemini 강사비')
     expect(detail.feeAssessmentWon).toBe(170000)
     expect(detail.lectureTimeDisplay).toBe('2차시')
   })
@@ -597,5 +600,35 @@ describe('payment-order-calculation-basis-detail', () => {
 
   it('DISTANCE_SNAPSHOT_UNLINKED_NOTICE is the F3-2 copy', () => {
     expect(DISTANCE_SNAPSHOT_UNLINKED_NOTICE).toBe('거리 스냅샷 미연결 — 산출 금액만 표시')
+  })
+
+  it('기타(other) 행은 강사비 모달을 만들지 않고 서버 calculationDetail만 쓴다', () => {
+    const base = {
+      kind: 'other',
+      itemLabel: '기타',
+      amount: 10000,
+      lineId: 'other-1',
+      lectureSessionDisplay: '—',
+    }
+    expect(
+      resolvePaymentOrderCalculationBasisDetailForRow(base, { remoteData: true })
+    ).toBeUndefined()
+    expect(
+      resolvePaymentOrderCalculationBasisDetailForRow(
+        { ...base, basisDetail: buildLectureFeeTierBasisDetail('1급 강사비', 10000, '1차시') },
+        { remoteData: true, lectureFeeStandardTitle: '1급 강사비' }
+      )
+    ).toBeUndefined()
+    const remote = {
+      layout: 'remote' as const,
+      title: '기타 산정 기준 상세',
+      resultAmount: 10000,
+    }
+    expect(
+      resolvePaymentOrderCalculationBasisDetailForRow(
+        { ...base, basisDetail: remote as never },
+        { remoteData: true }
+      )
+    ).toBe(remote)
   })
 })

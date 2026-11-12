@@ -24,6 +24,8 @@ type EducationApplicationListItemRowProps = {
   recruitmentRoleLabel?: string
   /** Figma 목록 카드 배지 크기 */
   badgeSize?: 'compact' | 'regular'
+  /** 강의현황 시안 — 프로그램 유형 텍스트(`기관` 등) 대신 대상·형태·역할 배지만 */
+  hideCategoryLabel?: boolean
 }
 
 export function EducationApplicationListItemRow({
@@ -33,6 +35,7 @@ export function EducationApplicationListItemRow({
   isTeacher = false,
   recruitmentRoleLabel,
   badgeSize = 'compact',
+  hideCategoryLabel = false,
 }: EducationApplicationListItemRowProps) {
   const statusTone = getEducationDisplayStatusTone(item.displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[statusTone]]
@@ -61,10 +64,14 @@ export function EducationApplicationListItemRow({
         <>
           <div className={styles.info}>
             <div className={styles.metaRow}>
-              <PFText as="span" typo="bd-lg-sb" color="black" className={styles.categoryLabel}>
-                {item.categoryLabel}
-              </PFText>
-              <span className={styles.metaDivider} aria-hidden="true" />
+              {hideCategoryLabel ? null : (
+                <>
+                  <PFText as="span" typo="bd-lg-sb" color="black" className={styles.categoryLabel}>
+                    {item.categoryLabel}
+                  </PFText>
+                  <span className={styles.metaDivider} aria-hidden="true" />
+                </>
+              )}
               <span className={[statusClassName, styles.statusInMeta].filter(Boolean).join(' ')}>
                 {statusLabel}
               </span>

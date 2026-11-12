@@ -9,6 +9,10 @@ import { CmsButton } from '@/shared/ui'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import { isBeforeSeoulToday } from '@/shared/utils/date'
 import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
+import {
+  getPaymentApplicationCopy,
+  type PaymentApplicationKind,
+} from '@/features/settlement/lib/payment-application-copy'
 import './payment-order-batch-confirm-modal.css'
 
 export interface PaymentOrderBatchConfirmModalProps {
@@ -22,6 +26,8 @@ export interface PaymentOrderBatchConfirmModalProps {
   initialScheduledDate?: Dayjs
   /** 확인 완료 (추후 API 연동) */
   onConfirm?: (scheduledDate: Dayjs) => void
+  /** 신청 유형별 문구 — 기본 강사 지급조서, 참여자·봉사자 영수증은 receipt */
+  applicationKind?: PaymentApplicationKind
 }
 
 export function PaymentOrderBatchConfirmModal({
@@ -31,7 +37,9 @@ export function PaymentOrderBatchConfirmModal({
   otherApplicantCount,
   initialScheduledDate,
   onConfirm,
+  applicationKind,
 }: PaymentOrderBatchConfirmModalProps) {
+  const copy = getPaymentApplicationCopy(applicationKind)
   const fallbackDate = defaultLectureFeePaymentScheduledDate()
   const [scheduledDate, setScheduledDate] = useState<Dayjs | null>(
     initialScheduledDate ?? fallbackDate
@@ -78,10 +86,9 @@ export function PaymentOrderBatchConfirmModal({
           <strong>
             [{leadApplicantName}] 님{otherApplicantCount > 0 ? ` 외 ${otherApplicantCount}명` : ''}
           </strong>
-          의 강사비 지급조서 신청을 일괄 확인 처리하시겠습니까?
+          의 {copy.confirmSubject} 신청을 일괄 확인 처리하시겠습니까?
           <br />
-          정산된 금액은 <strong>매월 셋째 주 화요일에 계좌 지급</strong>
-          됩니다.
+          {copy.payee}는 <strong>매월 셋째 주 화요일에 지급</strong>됩니다.
         </p>
         <div className="payment-order-batch-confirm-modal__field">
           <span className="payment-order-batch-confirm-modal__label">

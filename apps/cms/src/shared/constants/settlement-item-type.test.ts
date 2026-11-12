@@ -10,7 +10,7 @@ describe('formatSettlementItemTypeLabel', () => {
     expect(formatSettlementItemTypeLabel('transportation')).toBe('교통비')
     expect(formatSettlementItemTypeLabel('accommodation')).toBe('숙박비')
     expect(formatSettlementItemTypeLabel('meal')).toBe('식사비')
-    expect(formatSettlementItemTypeLabel('activity')).toBe('참여자 활동비')
+    expect(formatSettlementItemTypeLabel('activity')).toBe('활동비')
     expect(formatSettlementItemTypeLabel('withholding')).toBe('원천징수')
     expect(formatSettlementItemTypeLabel('other')).toBe('기타')
     expect(formatSettlementItemTypeLabel('TRANSPORTATION')).toBe('교통비')

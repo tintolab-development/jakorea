@@ -55,10 +55,21 @@ const detail: IndividualSettlementReviewDetail = {
 }
 
 describe('mapIndividualSettlementReviewToCalculationStatement', () => {
-  it('1열은 프로그램명이고 기관명 필드로 채우지 않는다', () => {
+  it('참여 기관명은 서버 제출 시점 값만 쓰고, 없으면 -이다(프로그램명으로 대신 채우지 않는다)', () => {
     const view = mapIndividualSettlementReviewToCalculationStatement(detail)
     expect(view.basic.programName).toBe('JA 경제교육')
-    expect(view.blocks[0]?.institutionName).toBe('JA 경제교육')
+    expect(view.blocks[0]?.institutionName).toBe('-')
+    const withInstitution = mapIndividualSettlementReviewToCalculationStatement({
+      ...detail,
+      institutionName: ' 용문중학교 ',
+    })
+    expect(withInstitution.blocks[0]?.institutionName).toBe('용문중학교')
+    // 개인형은 서버 저장값이 주소여도 쓰지 않는다
+    const individual = mapIndividualSettlementReviewToCalculationStatement(
+      { ...detail, institutionName: '서울특별시 광진구 뚝섬로 633-5' },
+      { includeInstitution: false }
+    )
+    expect(individual.blocks[0]?.institutionName).toBe('')
     expect(view.blocks[0]?.lectureSessionDisplay).toBe('2회차')
   })
 
