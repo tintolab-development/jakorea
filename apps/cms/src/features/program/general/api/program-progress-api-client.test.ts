@@ -17,6 +17,8 @@ import {
   fetchEmployeeVolunteerCountsRemote,
   fetchProgramAttendancesBulkRemote,
   fetchProgramParticipantsRemote,
+  fetchParticipantInstructorFeePolicyRemote,
+  patchParticipantInstructorFeePolicyRemote,
   patchParticipantTextbookDeliveryRemote,
   putEmployeeVolunteerCountsRemote,
   putParticipantAssignedOrganizationsRemote,
@@ -315,5 +317,50 @@ describe('putParticipantAssignedOrganizationsRemote', () => {
         reason: '봉사 배정',
       },
     })
+  })
+})
+
+describe('참여 강사 강사비 API (A4)', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('GET instructor-fee-policy 를 참여 강사 경로로 호출한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      programId: 186469,
+      participantId: 1695024,
+      instructorApplicationId: null,
+      feePolicySource: 'PARTICIPANT',
+      feePolicy: null,
+      updatedAssignmentCount: 0,
+    })
+
+    const res = await fetchParticipantInstructorFeePolicyRemote('186469', '1695024')
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/programs/186469/participants/1695024/instructor-fee-policy',
+      method: 'GET',
+    })
+    expect(res.feePolicy).toBeNull()
+    expect(res.feePolicySource).toBe('PARTICIPANT')
+  })
+
+  it('PATCH body는 { feePolicy } 만 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({ updatedAssignmentCount: 1 })
+    const feePolicy = {
+      basisType: 'SPECIAL_LECTURE',
+      measure: 'PER_CLASS',
+      amount: 150000,
+      instructorFeeGrade: 'GRADE_2',
+    }
+
+    const res = await patchParticipantInstructorFeePolicyRemote('186469', '1695024', { feePolicy })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/programs/186469/participants/1695024/instructor-fee-policy',
+      method: 'PATCH',
+      data: { feePolicy },
+    })
+    expect(res.updatedAssignmentCount).toBe(1)
   })
 })

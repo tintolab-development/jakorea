@@ -122,6 +122,11 @@ export interface ParticipatingInstructorRow {
   affiliationEmploymentStatus?: SchoolTeacherEmploymentStatus
   /** 참여 강사 상세 — 강사비 등급 라벨 */
   instructorFeeGradeLabel?: string
+  /**
+   * 강사비 정본 위치(participants `instructorFeePolicySource`) — 신청서 값(INSTRUCTOR_APPLICATION)
+   * 또는 신청 없이 직접 추가한 참여 강사 값(PARTICIPANT). 저장은 둘 다 참여 강사 강사비 API로 한다.
+   */
+  instructorFeePolicySource?: 'INSTRUCTOR_APPLICATION' | 'PARTICIPANT'
   /** 강사가 일정 불가로 선택한 교육일 (YYYY-MM-DD) — 추가 배정 모달 일정 비활성용 */
   unavailableEducationDateKeys?: string[]
   /** 활동 포기 처리 여부 (기관 사유) */

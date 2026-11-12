@@ -63,6 +63,18 @@ import {
 } from '../../add-participating-instructor-modal'
 import { ParticipatingInstructorAddConsentModal } from '../../participating-instructor-add-consent-modal'
 import {
+  InstructorFeeApprovalModal,
+  type InstructorFeeApprovalConfirmDetail,
+} from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
+import {
+  INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  toInstructorApplicationFeePolicy,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  PARTICIPATING_INSTRUCTOR_FEE_SAVE_FAILED_TITLE,
+  buildParticipatingInstructorFeeSaveFailedMessage,
+} from '@/features/program/general/lib/participating-instructor-register'
+import {
   ParticipatingInstructorFullpageView,
   type InstructorDetailTabKey,
 } from './participating-instructor-fullpage-view'
@@ -305,15 +317,70 @@ export function ParticipatingInstructorsSection({
     setPendingInstructorMemberId(null)
   }, [])
 
-  const handleInstructorConsentConfirm = useCallback(async () => {
+  /** 참여 강사 추가 등록 2단계 — 「강사비 책정 및 등록 안내」 (BE 회신 A4: 등록 → 강사비 저장) */
+  const [instructorFeeStepMemberId, setInstructorFeeStepMemberId] = useState<string | null>(null)
+  const [instructorFeeStepError, setInstructorFeeStepError] = useState<string | null>(null)
+  const [instructorFeeStepSubmitting, setInstructorFeeStepSubmitting] = useState(false)
+  const instructorFeeStepName = useMemo(
+    () =>
+      instructorMemberOptions.find(option => option.memberId === instructorFeeStepMemberId)
+        ?.instructorName ?? '',
+    [instructorFeeStepMemberId, instructorMemberOptions]
+  )
+  const instructorFeePolicyContext = useMemo(
+    () => ({ programWageGradeRows: program?.generalCommonInfo?.wageGradeRows }),
+    [program?.generalCommonInfo?.wageGradeRows]
+  )
+
+  const handleInstructorConsentConfirm = useCallback(() => {
     const memberId = pendingInstructorMemberId
     setInstructorConsentModalOpen(false)
     setPendingInstructorMemberId(null)
     if (!memberId) return
+    setInstructorFeeStepError(null)
+    setInstructorFeeStepMemberId(memberId)
+  }, [pendingInstructorMemberId])
 
-    try {
-      const success = await handleAddInstructorByMemberId(memberId)
-      if (success) {
+  const handleInstructorFeeStepCancel = useCallback(() => {
+    if (instructorFeeStepSubmitting) return
+    setInstructorFeeStepMemberId(null)
+    setInstructorFeeStepError(null)
+  }, [instructorFeeStepSubmitting])
+
+  const handleInstructorFeeStepConfirm = useCallback(
+    async (detail: InstructorFeeApprovalConfirmDetail) => {
+      const memberId = instructorFeeStepMemberId
+      if (!memberId || instructorFeeStepSubmitting) return
+      const feePolicy = toInstructorApplicationFeePolicy(
+        {
+          basisType: detail.lectureFeeBasisType,
+          measure: detail.lectureFeeMeasure,
+          amount: detail.lectureFeeAmount,
+          instructorFeeGrade: detail.instructorFeeGrade,
+        },
+        instructorFeePolicyContext
+      )
+      if (!feePolicy) {
+        setInstructorFeeStepError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
+        return
+      }
+
+      setInstructorFeeStepSubmitting(true)
+      try {
+        const result = await handleAddInstructorByMemberId(memberId, feePolicy)
+        if (!result) return
+        setInstructorFeeStepMemberId(null)
+        setInstructorFeeStepError(null)
+        if (result.status === 'fee-failed') {
+          // 등록은 끝났다 — 강사비만 다시 저장하도록 안내(상세 [정보 수정])
+          showAlert({
+            title: PARTICIPATING_INSTRUCTOR_FEE_SAVE_FAILED_TITLE,
+            content: buildParticipatingInstructorFeeSaveFailedMessage(
+              getGeneralProgramApiErrorMessage(result.error, '강사비를 저장하지 못했습니다.')
+            ),
+          })
+          return
+        }
         showAlert(
           isInstitutionSurface
             ? {
@@ -322,17 +389,47 @@ export function ParticipatingInstructorsSection({
               }
             : { title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE }
         )
+      } catch (error) {
+        // 등록(POST) 자체 실패 — 아무것도 바뀌지 않았다. 팝업을 유지해 다시 시도할 수 있게 한다.
+        showAlert({
+          title: '강사 등록 실패',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '강사 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
+        })
+      } finally {
+        setInstructorFeeStepSubmitting(false)
       }
-    } catch (error) {
-      showAlert({
-        title: '강사 등록 실패',
-        content: getGeneralProgramApiErrorMessage(
-          error,
-          '강사 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-        ),
-      })
-    }
-  }, [handleAddInstructorByMemberId, isInstitutionSurface, pendingInstructorMemberId, showAlert])
+    },
+    [
+      handleAddInstructorByMemberId,
+      instructorFeePolicyContext,
+      instructorFeeStepMemberId,
+      instructorFeeStepSubmitting,
+      isInstitutionSurface,
+      showAlert,
+    ]
+  )
+
+  const instructorFeeStepModal = (
+    <InstructorFeeApprovalModal
+      open={instructorFeeStepMemberId != null}
+      onCancel={handleInstructorFeeStepCancel}
+      instructorName={instructorFeeStepName}
+      feePolicyContext={instructorFeePolicyContext}
+      feePolicyError={instructorFeeStepError}
+      submitting={instructorFeeStepSubmitting}
+      title="강사비 책정 및 등록 안내"
+      confirmLabel="등록"
+      description={`**[${instructorFeeStepName}]**님의 강사비 책정 방식을 선택해 주세요.\n선택한 방식으로 강사비가 책정되며, 참여 강사로 등록됩니다.`}
+      // 알림(등록 안내)은 이번 반영에 없음 — 보낼 API가 없어 알림 시점 항목을 숨긴다(BE 회신 A4)
+      hideNotifyTiming
+      onConfirm={detail => {
+        void handleInstructorFeeStepConfirm(detail)
+      }}
+    />
+  )
 
   const filteredInstructors = useMemo(() => {
     return baseFiltered.filter(row => {
@@ -817,6 +914,7 @@ export function ParticipatingInstructorsSection({
           onConfirm={handleInstructorConsentConfirm}
           preset={isInstitutionSurface ? 'generalInstitution' : 'default'}
         />
+        {instructorFeeStepModal}
       </div>
     )
   }
@@ -1069,6 +1167,7 @@ export function ParticipatingInstructorsSection({
         onConfirm={handleInstructorConsentConfirm}
         preset={isInstitutionSurface ? 'generalInstitution' : 'default'}
       />
+      {instructorFeeStepModal}
 
       {activityCertPreviewInstructor ? (
         <ActivityCertificateIssuancePreviewModal
