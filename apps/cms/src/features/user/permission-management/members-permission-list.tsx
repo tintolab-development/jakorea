@@ -13,6 +13,7 @@ import {
   useImperativeHandle,
   forwardRef,
   useRef,
+  type CSSProperties,
   type Key,
   type MouseEvent,
 } from 'react'
@@ -50,6 +51,17 @@ import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton, ContentModal, useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+
+/** 시안: 강사 권한 신청 목록 열 폭 (체크 60 · No. 80 · 회원명 200 · 연락처 266 · 이메일 266 · 회원 유형 200 · 승인 현황 200 · 신청일 266) */
+const INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH = {
+  selection: 60,
+  name: 200,
+  phone: 266,
+  email: 266,
+  memberCategory: 200,
+  approvalStatus: 200,
+  appliedAt: 266,
+} as const
 
 /** 강사 권한승인 목록 — BE `학교/기관`은 UI `학교(교사)`로 표시 */
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
@@ -502,6 +514,7 @@ export const MembersPermissionList = forwardRef<
 
   const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(() => {
     const listMasked = instructorRemote || adminRemote
+    const isInstructorList = memberType === 'instructor'
     const cols: ColumnsType<MemberPermissionApplicationRow> = [
       {
         title: 'No.',
@@ -516,20 +529,24 @@ export const MembersPermissionList = forwardRef<
         title: '회원명',
         dataIndex: 'name',
         key: 'name',
-        width: TABLE_COLUMN_WIDTHS.name,
+        width: isInstructorList ? INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.name : TABLE_COLUMN_WIDTHS.name,
         ellipsis: true,
       },
       {
         title: '연락처',
         key: 'phone',
-        width: TABLE_COLUMN_WIDTHS.phone,
+        width: isInstructorList
+          ? INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.phone
+          : TABLE_COLUMN_WIDTHS.phone,
         render: (_: unknown, r: MemberPermissionApplicationRow) =>
           displayPhone(r.phone, listMasked),
       },
       {
         title: '이메일',
         key: 'email',
-        width: TABLE_COLUMN_WIDTHS.email,
+        width: isInstructorList
+          ? INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.email
+          : TABLE_COLUMN_WIDTHS.email,
         ellipsis: true,
         render: (_: unknown, r: MemberPermissionApplicationRow) =>
           displayEmail(r.email, listMasked),
@@ -542,7 +559,7 @@ export const MembersPermissionList = forwardRef<
         title: '회원 유형',
         dataIndex: 'memberCategory',
         key: 'memberCategory',
-        width: 120,
+        width: INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.memberCategory,
         align: 'center',
         render: (c: MemberPermissionApplicationRow['memberCategory']) => MEMBER_CATEGORY_LABEL[c],
       })
@@ -553,7 +570,7 @@ export const MembersPermissionList = forwardRef<
         title: '권한 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 120,
+        width: isInstructorList ? INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.approvalStatus : 120,
         align: 'center',
         onHeaderCell: () => ({
           className: 'members-permission-list__col--approval-status',
@@ -568,7 +585,9 @@ export const MembersPermissionList = forwardRef<
         title: '신청일',
         dataIndex: 'appliedAt',
         key: 'appliedAt',
-        width: TABLE_COLUMN_WIDTHS.date,
+        width: isInstructorList
+          ? INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.appliedAt
+          : TABLE_COLUMN_WIDTHS.date,
         render: (v: string) => dayjs(v).format('YYYY.MM.DD'),
       }
     )
@@ -654,6 +673,13 @@ export const MembersPermissionList = forwardRef<
         <CmsDataTable<MemberPermissionApplicationRow>
           rowKey="id"
           className="cms-data-table members-permission-list__table"
+          style={
+            memberType === 'instructor'
+              ? ({
+                  '--table-selection-column-width': `${INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.selection}px`,
+                } as CSSProperties)
+              : undefined
+          }
           columns={columns}
           dataSource={tableData}
           loading={remoteLoading}
@@ -665,7 +691,10 @@ export const MembersPermissionList = forwardRef<
             style: { cursor: onOpenUserDetail ? 'pointer' : undefined },
           })}
           rowSelection={{
-            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+            columnWidth:
+              memberType === 'instructor'
+                ? INSTRUCTOR_PERMISSION_LIST_COLUMN_WIDTH.selection
+                : TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             getCheckboxProps: record => ({ disabled: record.approvalStatus !== 'PENDING' }),
             onChange: keys => {

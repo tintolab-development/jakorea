@@ -11,6 +11,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
+import { showRegisterCompletedAlert } from '@/shared/ui/show-register-completed-alert'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { FILE_SELECT_MAX_FILE_BYTES } from '@/shared/ui/file-select-field-limits'
 import type { Program, ProgramPost } from '@/types/domain'
@@ -364,6 +365,8 @@ export function PostWriteModal({
       setFiles([])
       onSuccess?.()
       onCancel()
+      // 시안 — 게시글 신규 등록 완료 「등록 완료 / 등록되었습니다.」 (수정은 위 분기에서 반환)
+      showRegisterCompletedAlert()
     } catch (error) {
       const data =
         error && typeof error === 'object' && 'response' in error
