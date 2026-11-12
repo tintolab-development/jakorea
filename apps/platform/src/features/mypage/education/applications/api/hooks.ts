@@ -105,14 +105,11 @@ export function useMyProgramApplications(
   const pageSize = options?.pageSize ?? EDUCATION_APPLICATION_PAGE_SIZE
   const uiPage = Math.max(1, options?.page ?? 1)
   const useClientTabFilter = tab != null && tab !== 'all'
-  const statusGroup = useClientTabFilter
-    ? undefined
-    : tab != null
-      ? resolveStatusGroupForTab(tab)
-      : undefined
+  const statusGroup =
+    tab != null && tab !== 'all' ? resolveStatusGroupForTab(tab) : undefined
   const serverPaged = tab != null && !useClientTabFilter
   const statusGroupKey = useClientTabFilter
-    ? `TAB:${tab}`
+    ? `TAB:${tab}:${statusGroup ?? ''}`
     : tab === 'all'
       ? 'ALL'
       : statusGroup == null
@@ -139,7 +136,8 @@ export function useMyProgramApplications(
           fetchMyProgramApplications(
             {
               applicationType,
-              statusGroup: statusGroup ?? undefined,
+              // 탭 클라이언트 필터: BE statusGroup이 결과 대기를 빼면 신청 탭이 비므로 전체에서 displayStatus로 나눈다.
+              statusGroup: useClientTabFilter ? undefined : statusGroup ?? undefined,
               page: apiPage,
               size: apiSize,
             },

@@ -7,19 +7,23 @@ import type {
   PortalSessionRound,
 } from '../../applications/api/activity-client'
 import type { ProgramApplicationType } from '../../applications/api/types'
-import type { PortalPreferredScheduleBlock } from '../../../../program/api/application-types.ts'
+import type {
+  PortalPreferredScheduleBlock,
+  PortalPreferredScheduleSessionTime,
+} from '../../../../program/api/application-types.ts'
 import {
   EDUCATION_SCHEDULE_EMPTY_LABEL,
   resolveEducationScheduleCommonInfoLabel,
   resolveEducationScheduleRowLabel,
 } from './common-info-label.ts'
 import { isTrainedTeacherOrganizationSchedule } from './trained-teacher-organization.ts'
-import { formatCompanySchoolDottedDate } from '../../applications/lib/company-school-date-label.ts'
+import { joinEducationScheduleDateAndTime } from './held-label.ts'
 import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
 } from '../../../../../shared/lib/education-schedule-name.ts'
 import {
+  formatDisplayDate,
   formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
 } from '../../../../../shared/lib/format-display-date.ts'
@@ -306,6 +310,45 @@ function resolveCompanySchoolPeriodUnitLabel(
   return `${periods} (${count}차시)`
 }
 
+function formatClassPeriodLabel(raw: string): string {
+  const digits = raw.replace(/교시\s*$/u, '').trim()
+  return /^\d+$/.test(digits) ? `${digits}교시` : raw
+}
+
+function formatSessionClockRange(slot: PortalPreferredScheduleSessionTime): string {
+  const start = slot.startTime?.trim() || slot.start?.trim() || ''
+  const end = slot.endTime?.trim() || slot.end?.trim() || ''
+  if (start && end) return `${start} ~ ${end}`
+  return slot.timeRange?.trim() || start || end
+}
+
+/**
+ * 1사1교 카드 본문 — 희망 블록 sessionTimes가 있으면 교시·시각 행.
+ * 없으면 undefined (curriculumSessions GET만 사용). 슬롯을 지어내지 않는다.
+ */
+function mapCompanySchoolPeriodSessions(
+  scheduleId: number | null | undefined,
+  preferredScheduleBlocks: readonly PortalPreferredScheduleBlock[] | null | undefined,
+): EducationCurriculumSession[] | undefined {
+  if (scheduleId == null) return undefined
+  const block = (preferredScheduleBlocks ?? []).find(row => row.scheduleId === scheduleId)
+  if (!block) return undefined
+  const times = block.sessionTimes ?? block.times ?? []
+  const mapped = times.flatMap((slot, index) => {
+    const periodRaw = slot.classPeriod?.trim()
+    const timeRange = formatSessionClockRange(slot)
+    if (!periodRaw && !timeRange) return []
+    return [
+      {
+        sessionNo: positiveInteger(slot.sessionIndex) ?? index + 1,
+        ...(periodRaw ? { sessionLabel: formatClassPeriodLabel(periodRaw) } : {}),
+        ...(timeRange ? { title: timeRange } : {}),
+      } satisfies EducationCurriculumSession,
+    ]
+  })
+  return mapped.length > 0 ? mapped : undefined
+}
+
 /**
  * 신청 GET .../schedules → 교육일정 탭 행. 행 수 = items 수(배정 집합).
  * startAt이 없어도 매핑은 유지한다. 화면은 scheduleId 있는 배정 일정만 노출한다.
@@ -356,10 +399,6 @@ export function mapPortalEducationSchedule(
   const companySchoolPeriodUnitLabel = companySchoolSchedule
     ? resolveCompanySchoolPeriodUnitLabel(item.scheduleId, meta?.preferredScheduleBlocks)
     : undefined
-  // 1사1교 배정 교육 일정 날짜 — 기획 형식 「YYYY.MM.DD(요일)」(플랫폼 공통 날짜 표기는 그대로)
-  const companySchoolDateLabel = companySchoolSchedule
-    ? formatCompanySchoolDottedDate(optionalText(item.startAt ?? undefined))
-    : ''
   const rowLabel =
     companySchoolPeriodUnitLabel ??
     (operationalDayView
@@ -375,6 +414,10 @@ export function mapPortalEducationSchedule(
       : undefined) ??
     formatGroupTimes(item.groupTimes) ??
     formatPeriodLabel(item.startAt, item.endAt)
+  // 1사1교 카드 날짜 — 「2026년 4월 3일(금) 9:00 ~ 9:40」. 시각은 progressTimeLabel SSOT.
+  const companySchoolDateLabel = companySchoolSchedule
+    ? joinEducationScheduleDateAndTime(formatDisplayDate(heldAt) || heldAt, progressTimeLabel)
+    : ''
   const id =
     item.scheduleId != null ? String(item.scheduleId) : `schedule-${sessionNumber}-${index}`
   const assignmentAllowed =
@@ -399,7 +442,10 @@ export function mapPortalEducationSchedule(
     : undefined
   const curriculumSessions = operationalDayView
     ? undefined
-    : mapCurriculumSessions(item.curriculumSessions)
+    : companySchoolSchedule
+      ? (mapCompanySchoolPeriodSessions(item.scheduleId, meta?.preferredScheduleBlocks) ??
+        mapCurriculumSessions(item.curriculumSessions))
+      : mapCurriculumSessions(item.curriculumSessions)
 
   return {
     id,

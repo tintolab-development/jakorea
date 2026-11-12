@@ -530,9 +530,12 @@ const companySchoolRow = mapPortalEducationSchedule(
   { applicationType: 'ORGANIZATION', programType: 'COMPANY_SCHOOL', preferredScheduleBlocks: companySchoolBlocks },
 )
 assert.equal(companySchoolRow.rowLabel, '2~3교시 (2차시)')
-// 1사1교 카드 날짜 — 기획 형식 「YYYY.MM.DD(요일)」
-assert.equal(companySchoolRow.dateLabelOverride, '2026.11.12(목)')
-// 다른 유형은 날짜 override 없음(플랫폼 공통 날짜 표기)
+assert.equal(companySchoolRow.dateLabelOverride, '2026년 11월 12일(목) 09:50 ~ 11:20')
+assert.equal(companySchoolRow.curriculumSessions?.length, 2)
+assert.equal(companySchoolRow.curriculumSessions?.[0]?.sessionLabel, '2교시')
+assert.equal(companySchoolRow.curriculumSessions?.[0]?.title, '09:50 ~ 10:30')
+assert.equal(companySchoolRow.curriculumSessions?.[1]?.sessionLabel, '3교시')
+assert.equal(companySchoolRow.curriculumSessions?.[1]?.title, '10:40 ~ 11:20')
 assert.equal(withId.dateLabelOverride, undefined)
 const companySchoolUnmatched = mapPortalEducationSchedule(
   { scheduleId: 999, sessionNo: 1, startAt: '2026-11-12T09:50:00+09:00' },

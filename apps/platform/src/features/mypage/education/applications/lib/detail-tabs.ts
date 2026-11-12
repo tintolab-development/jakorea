@@ -28,7 +28,7 @@ export const INSTRUCTOR_ASSIGNMENT_TAB_LABEL = '배정 현황'
 
 /**
  * 교육 일정 탭 라벨.
- * - 봉사: 배정현황
+ * - 봉사: 배정 현황
  * - UJAT: 배정 및 출결 현황
  * - 강사: 강의 일정
  * - 그 외: 교육 일정
@@ -36,7 +36,7 @@ export const INSTRUCTOR_ASSIGNMENT_TAB_LABEL = '배정 현황'
 export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase): string {
   switch (detailCase) {
     case 'volunteer':
-      return '배정현황'
+      return '배정 현황'
     case 'ujat-volunteer':
       return '배정 및 출결 현황'
     case 'ujat-participant':

@@ -317,7 +317,7 @@ function WaitingScheduleTable({ rows }: { rows: readonly WaitingTableRow[] }) {
         <thead>
           <tr>
             <th scope="col">No.</th>
-            <th scope="col">출강지</th>
+            <th scope="col">기관 소재지</th>
             <th scope="col">자택과의 거리</th>
             <th scope="col">교육 진행 희망 일정</th>
             <th scope="col">배정 현황</th>

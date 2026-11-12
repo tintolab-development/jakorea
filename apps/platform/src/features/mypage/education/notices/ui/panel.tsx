@@ -5,6 +5,7 @@ import {
   useApplicationNoticeDetailQuery,
   useApplicationNoticeFiles,
   useApplicationNoticesQuery,
+  useDeleteApplicationNoticeMutation,
 } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import type { GeminiOfficialDocumentDisplay } from '../../applications/lib/official-document-from-answers'
@@ -27,6 +28,7 @@ import { EducationInProgressNoticeCard } from './card'
 import { EducationInProgressNoticeDetailModal } from './detail-modal'
 import { EducationProgramInfoModal } from './program-info-modal'
 import { EducationProgramNoticeWriteModal } from './notice-write-modal'
+import { resolvePortalNoticeWriteErrorMessage } from '../lib/notice-write-errors'
 import { PFAlertModal, PFButton, PFSearchInput, PFText } from '@/shared/ui'
 import styles from './panel.module.css'
 
@@ -83,6 +85,8 @@ export function EducationInProgressNoticePanel({
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(readNoticeIdFromLocation)
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(readCommentIdFromLocation)
   const [downloadErrorOpen, setDownloadErrorOpen] = useState(false)
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null)
+  const deleteNoticeMutation = useDeleteApplicationNoticeMutation(applicationType, applicationId)
   /** 이 패널이 push 한 history 엔트리 위에 있으면 닫을 때 back 으로 되돌린다. */
   const pushedNoticeEntryRef = useRef(false)
   const remoteDetail = useApplicationNoticeDetailQuery(
@@ -187,8 +191,24 @@ export function EducationInProgressNoticePanel({
     }
   }
 
-  const deleteNotice = (_noticeId: string) => {
-    closeNoticeDetail()
+  const deleteNotice = (noticeId: string) => {
+    if (!remoteNotices.enabled || !applicationType || !applicationId) {
+      closeNoticeDetail()
+      return
+    }
+    deleteNoticeMutation.mutate(noticeId, {
+      onSuccess: () => {
+        closeNoticeDetail()
+      },
+      onError: error => {
+        setDeleteErrorMessage(
+          resolvePortalNoticeWriteErrorMessage(
+            error,
+            '안내사항을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          ),
+        )
+      },
+    })
   }
 
   if (remoteNotices.isLoading) {
@@ -357,6 +377,11 @@ export function EducationInProgressNoticePanel({
         open={downloadErrorOpen}
         title="첨부파일을 내려받지 못했습니다."
         onConfirm={() => setDownloadErrorOpen(false)}
+      />
+      <PFAlertModal
+        open={deleteErrorMessage != null}
+        title={deleteErrorMessage ?? ''}
+        onConfirm={() => setDeleteErrorMessage(null)}
       />
     </div>
   )

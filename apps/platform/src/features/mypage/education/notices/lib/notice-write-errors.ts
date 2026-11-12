@@ -6,7 +6,7 @@ const NOTICE_WRITE_ERROR_MESSAGES: Record<string, string> = {
   NOTICE_WRITE_NOT_ALLOWED: '진행 중인 프로그램에서만 안내사항을 등록할 수 있습니다.',
   INVALID_REQUEST: '입력값을 확인해 주세요. (본문·공개 범위·기관 정보)',
   INVALID_IDENTIFIER: '신청 정보가 올바르지 않습니다.',
-  NOTICE_NOT_OWNED: '본인이 작성한 안내사항만 수정할 수 있습니다.',
+  NOTICE_NOT_OWNED: '본인이 작성한 안내사항만 수정·삭제할 수 있습니다.',
   INLINE_IMAGE_FILE_PURPOSE_MISMATCH: '본문 이미지 용도가 올바르지 않습니다.',
   INLINE_IMAGE_FILE_OWNER_MISMATCH: '본인이 업로드한 본문 이미지만 사용할 수 있습니다.',
   INLINE_IMAGE_FILE_NOT_AVAILABLE: '본문 이미지 보안 검사가 아직 끝나지 않았습니다.',

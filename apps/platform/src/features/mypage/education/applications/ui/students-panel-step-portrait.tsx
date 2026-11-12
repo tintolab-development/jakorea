@@ -75,7 +75,7 @@ export function StudentsPanelStepPortrait({
           <span className={styles.stepLabel}>Step 2</span> 학생 초상권 동의서를 업로드 해주세요
         </PFText>
         <PFText as="p" typo="bd-md-md" color="black" className={styles.stepDescription}>
-          제공된 양식에 초상권 동의를 받은 후 업로드 해주세요.
+          제공된 양식에 초상권 동의를 받은 후 업로드 해주세요. PDF, JPG, PNG 파일 1개, 최대 20MB.
         </PFText>
       </div>
 

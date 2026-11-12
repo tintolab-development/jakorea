@@ -21,11 +21,13 @@ export function EducationSessionCardHeader({
   return (
     <div className={[styles.top, mobileStack ? styles.mobileStack : undefined].filter(Boolean).join(' ')}>
       <div className={styles.meta}>
-        {badge}
-        <PFText as="span" typo="hd-sm" color="black" className={styles.date}>
-          {date}
-        </PFText>
-        {subtitle}
+        <div className={styles.dateRow}>
+          {badge}
+          <PFText as="span" typo="hd-sm" color="black" className={styles.date}>
+            {date}
+          </PFText>
+        </div>
+        {subtitle ? <div className={styles.subtitle}>{subtitle}</div> : null}
       </div>
       {aside ? <div className={styles.aside}>{aside}</div> : null}
     </div>

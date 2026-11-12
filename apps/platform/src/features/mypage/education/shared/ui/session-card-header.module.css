@@ -12,12 +12,24 @@
   display: flex;
   min-width: 0;
   flex: 1 1 280px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+}
+
+.dateRow {
+  display: flex;
+  min-width: 0;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-8) var(--spacing-12);
 }
 
 .date {
+  margin: 0;
+}
+
+.subtitle {
   margin: 0;
 }
 

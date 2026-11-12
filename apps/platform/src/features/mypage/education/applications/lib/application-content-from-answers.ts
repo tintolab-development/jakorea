@@ -147,9 +147,17 @@ function formatPreferredScheduleBlock(block: Record<string, unknown>): string | 
       : typeof rankRaw === 'string' && /^\d+$/.test(rankRaw.trim())
         ? Number(rankRaw.trim())
         : null
+  const sessionCountRaw = block.sessionCount
+  const sessionCount =
+    typeof sessionCountRaw === 'number' && Number.isSafeInteger(sessionCountRaw) && sessionCountRaw > 0
+      ? sessionCountRaw
+      : sessions.length > 0
+        ? sessions.length
+        : null
   const parts = [
     rank != null && rank > 0 ? `${rank}지망` : '',
     core,
+    sessionCount != null ? `${sessionCount}차시` : '',
     org ?? '',
   ].filter(Boolean)
   return parts.join(' | ')

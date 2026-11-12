@@ -4,8 +4,10 @@ import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-register
 import {
   buildLectureApplicationListPath,
   EDUCATION_APPLICATION_TAB_ITEMS,
+  canAccessMypageLnbItem,
   getMypageLnbItems,
   MYPAGE_LECTURE_PATH,
+  MYPAGE_PATH,
   MypageLayoutBootSkeleton,
   navigateMypageLnb,
   readEducationApplicationListParams,
@@ -37,6 +39,13 @@ export function MypageLecturePage() {
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
+
+  useEffect(() => {
+    if (!isAuthReady || member.isLoading) return
+    if (!canAccessMypageLnbItem(member.profile, 'lectures')) {
+      navigate(MYPAGE_PATH, { replace: true })
+    }
+  }, [isAuthReady, member.isLoading, member.profile, navigate])
 
   const updateParams = (next: Partial<EducationApplicationListParams>) => {
     const merged = { ...params, ...next }
