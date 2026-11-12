@@ -19,12 +19,12 @@ alwaysApply: false
 
 | 항목 | 값 |
 |------|-----|
-| 필드·컨트롤 폭 | **260px** (`--filter-control-max-width`, `--table-filter-field-min/max-width`) |
+| 필드·컨트롤 폭 | **245px** (`--filter-control-max-width`, `--table-filter-field-min/max-width`) |
 | 필드 사이 gap | **12px** (`--filter-field-gap`, `--table-filter-field-gap`) |
 | 라벨↔컨트롤 gap | **6px** (`--filter-label-control-gap`) |
 | 조회 버튼 | **160×44** (`.table-filter-group__search-button`) |
 | addressRegion | 120px × 2 + gap 12 |
-| dateRange 분리형 | 2×260 + 가운데 20px |
+| dateRange 분리형 | 2×180 + 가운데 20px = 380 |
 
 ## 화면별 props (FilterTableLayout)
 
