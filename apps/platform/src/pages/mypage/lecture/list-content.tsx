@@ -67,6 +67,8 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
             <EducationApplicationListItemRow
               key={`${item.applicationType ?? 'application'}:${item.id}`}
               item={item}
+              recruitmentRoleLabel="강사"
+              badgeSize="regular"
               onClick={() =>
                 navigate(lectureApplicationDetailPath(item.id, item.applicationType), {
                   state: {

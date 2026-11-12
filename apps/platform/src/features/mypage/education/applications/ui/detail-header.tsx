@@ -11,7 +11,7 @@ import {
   type EducationDisplayStatusAudience,
 } from '../lib/display-status'
 import jaSendMintUrl from '@/shared/assets/icons/ja-send-mint.svg'
-import { PFText } from '@/shared/ui'
+import { PFCategoryBadge, PFText } from '@/shared/ui'
 import styles from './detail-header.module.css'
 
 type EducationDetailHeaderProps = {
@@ -21,6 +21,8 @@ type EducationDetailHeaderProps = {
   educationForm: EducationForm
   educationFormLabel: string
   statusAudience?: EducationDisplayStatusAudience
+  /** Figma 상단 역할 배지 — 강의현황 상세는 `강사` */
+  participationRoleLabel?: string
 }
 
 export function EducationDetailHeader({
@@ -30,6 +32,7 @@ export function EducationDetailHeader({
   educationForm,
   educationFormLabel,
   statusAudience = 'general',
+  participationRoleLabel,
 }: EducationDetailHeaderProps) {
   const tone = getEducationDisplayStatusTone(displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[tone]]
@@ -79,6 +82,11 @@ export function EducationDetailHeader({
               {educationFormLabel}
             </PFText>
           </span>
+        ) : null}
+        {participationRoleLabel?.trim() ? (
+          <PFCategoryBadge size="small" variant="primary" className={styles.roleBadge}>
+            {participationRoleLabel.trim()}
+          </PFCategoryBadge>
         ) : null}
       </div>
     </header>

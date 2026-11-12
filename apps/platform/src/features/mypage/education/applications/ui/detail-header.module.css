@@ -38,6 +38,10 @@
   gap: var(--spacing-4);
 }
 
+.roleBadge {
+  flex-shrink: 0;
+}
+
 .metaIcon {
   display: block;
   flex-shrink: 0;

@@ -20,6 +20,10 @@ type EducationApplicationListItemRowProps = {
   /** 교육현황은 `teacher`(승인 대기 세트). 봉사·강의현황은 기본 `general`. */
   statusAudience?: EducationDisplayStatusAudience
   isTeacher?: boolean
+  /** 강의·봉사 현황 목록 — 모집 역할 배지(강사·봉사자 등) */
+  recruitmentRoleLabel?: string
+  /** Figma 목록 카드 배지 크기 */
+  badgeSize?: 'compact' | 'regular'
 }
 
 export function EducationApplicationListItemRow({
@@ -27,6 +31,8 @@ export function EducationApplicationListItemRow({
   onClick,
   statusAudience = 'general',
   isTeacher = false,
+  recruitmentRoleLabel,
+  badgeSize = 'compact',
 }: EducationApplicationListItemRowProps) {
   const statusTone = getEducationDisplayStatusTone(item.displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[statusTone]]
@@ -94,6 +100,8 @@ export function EducationApplicationListItemRow({
             educationTargetLabel={item.educationTargetLabel}
             educationForm={item.educationForm}
             educationFormLabel={item.educationFormLabel}
+            recruitmentRoleLabel={recruitmentRoleLabel}
+            size={badgeSize}
           />
         </>
       }
