@@ -41,6 +41,28 @@ describe('download-access-log-meta', () => {
     expect(buildFileAccessLogMetaBody(undefined)).toEqual({})
   })
 
+  it('K(2026-11-12): 9종 유형을 서버 허용 순서로 최대 9개까지 보낸다', () => {
+    vi.stubEnv(FILE_ACCESS_CLIENT_LOG_META_ENV, 'true')
+    expect(
+      buildFileAccessLogMetaBody({
+        downloadKind: 'PROGRAM_STUDENT_LIST_EXPORT',
+        containedPiiTypes: ['EMAIL', 'PHONE', 'BIRTH_DATE', 'GENDER', 'NAME'],
+      })
+    ).toEqual({
+      downloadKind: 'PROGRAM_STUDENT_LIST_EXPORT',
+      containedPiiTypes: ['NAME', 'BIRTH_DATE', 'GENDER', 'PHONE', 'EMAIL'],
+    })
+    expect(
+      buildFileAccessLogMetaBody({
+        downloadKind: 'VOLUNTEER_1365_HOURS_EXPORT',
+        containedPiiTypes: [
+          'EXTERNAL_1365_ID', 'HOME_ADDRESS', 'EMAIL', 'PHONE', 'GENDER',
+          'BIRTH_DATE', 'ACCOUNT_NUMBER', 'RESIDENT_REGISTRATION_NUMBER', 'NAME',
+        ],
+      }).containedPiiTypes
+    ).toHaveLength(9)
+  })
+
   it('함수 입력은 다운로드 시점에 계산한다', () => {
     let mode: 'applicant' | 'program' = 'program'
     const input = () => ({
