@@ -69,6 +69,46 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
     ])
   })
 
+  it('일정 시각이 오면 날짜 | 시간 | 회차 형식으로 표시한다', () => {
+    expect(
+      buildParticipatingInstructorSettlementRowScheduleLabel({
+        lectureDate: '2026-11-09',
+        sessionOrdinal: 3,
+        scheduleStartAt: '2026-11-09T00:30:00Z',
+        scheduleEndAt: '2026-11-09T02:30:00Z',
+      })
+    ).toBe('2026.11.09(월) | 09:30~11:30 | 3회차')
+  })
+
+  it('회차 자리는 사전교육 > N회차 > 일정명 순서로 쓰고 자동 기본명은 숨긴다', () => {
+    const base = {
+      scheduleStartAt: '2026-10-30T01:00:00+00:00',
+      scheduleEndAt: '2026-10-30T03:00:00+00:00',
+    }
+    expect(
+      buildParticipatingInstructorSettlementRowScheduleLabel({
+        ...base,
+        sessionOrdinal: 1,
+        scheduleKind: 'PRE_EDUCATION',
+        scheduleName: '사전 교육',
+      })
+    ).toBe('2026.10.30(금) | 10:00~12:00 | 사전교육')
+    expect(
+      buildParticipatingInstructorSettlementRowScheduleLabel({
+        ...base,
+        scheduleKind: 'EDUCATION',
+        scheduleName: '가을 진로 특강',
+      })
+    ).toBe('2026.10.30(금) | 10:00~12:00 | 가을 진로 특강')
+    expect(
+      buildParticipatingInstructorSettlementRowScheduleLabel({
+        ...base,
+        scheduleKind: 'EDUCATION',
+        scheduleName: '공통 교육 예정 2',
+      })
+    ).toBe('2026.10.30(금) | 10:00~12:00')
+  })
+
   it('builds education schedule label from session display or date', () => {
     expect(
       buildParticipatingInstructorEducationScheduleLabel({

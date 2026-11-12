@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
 import type { IndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewListItem'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import type { IndividualSettlementReviewListItemView } from '@/features/program/general/api/individual-settlement-review-types'
 import {
   assignedSessionsForIndividualSettlementReview,
   mapIndividualSettlementReviewListRows,
@@ -326,5 +327,96 @@ describe('resolveIndividualSettlementReviewSummaryLabel', () => {
     expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, rejected: 1, total: 1 }, false)).toBe('신청 반려')
     expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, total: 3 }, false)).toBe('해당 없음')
     expect(resolveIndividualSettlementReviewSummaryLabel(empty, false)).toBe('-')
+  })
+})
+
+describe('참여 봉사자 정산 현황 — 서버 행(rowType) 그대로 쓰기', () => {
+  const notApplied: IndividualSettlementReviewListItemView = {
+    settlementApplicationId: null,
+    programId: 186565,
+    participantId: 1695107,
+    programScheduleId: 187747,
+    scheduleName: '기관 확정 2026-11-08',
+    scheduleStartAt: '2026-11-08T14:10:00Z',
+    scheduleEndAt: '2026-11-08T14:59:00Z',
+    scheduleKind: 'EDUCATION',
+    status: null,
+    totalAmount: null,
+    latestRevisionNo: null,
+    applicationType: 'VOLUNTEER',
+    volunteerApplicationId: 1691684,
+    rowType: 'NOT_APPLIED',
+    lectureProgressStatus: 'COMPLETED',
+  }
+  const applied: IndividualSettlementReviewListItemView = {
+    settlementApplicationId: 31,
+    programId: 186565,
+    participantId: 1695107,
+    programScheduleId: 187748,
+    scheduleName: '사전 교육',
+    scheduleStartAt: '2026-11-09T03:00:00Z',
+    scheduleEndAt: '2026-11-09T04:00:00Z',
+    scheduleKind: 'PRE_EDUCATION',
+    status: 'SUBMITTED',
+    totalAmount: 12_000,
+    latestRevisionNo: 1,
+    submittedAt: '2026-11-10T01:00:00Z',
+    applicationType: 'VOLUNTEER',
+    rowType: 'SETTLEMENT_APPLICATION',
+    lectureProgressStatus: 'COMPLETED',
+  }
+
+  it('rowType이 있으면 배정 일정과 합치지 않고 서버 행 순서대로 1행씩 만든다', () => {
+    const rows = resolveIndividualSettlementReviewRowsForQueryState({
+      listReady: true,
+      isError: false,
+      assignedSessions: [{ resolvedScheduleId: 999 } as ParticipatingSchoolSession],
+      applications: [applied, notApplied],
+    })
+
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toMatchObject({
+      id: 'SETTLEMENT_APPLICATION:31',
+      no: 1,
+      educationScheduleLabel: '2026.11.09(월) | 12:00~13:00 | 사전교육',
+      lectureProgress: 'completed',
+      isNotApplied: false,
+      settlementApplicationId: 31,
+      status: 'SUBMITTED',
+      totalAmount: 12_000,
+      canOpenDetail: true,
+    })
+    expect(rows[1]).toMatchObject({
+      id: 'NOT_APPLIED:187747',
+      no: 2,
+      educationScheduleLabel: '2026.11.08(일) | 23:10~23:59 | 기관 확정 2026-11-08',
+      lectureProgress: 'completed',
+      isNotApplied: true,
+      settlementApplicationId: null,
+      status: 'NONE',
+      totalAmount: null,
+      totalAmountLabel: '-',
+      canOpenDetail: false,
+    })
+  })
+
+  it('활동 포기 회차는 활동 포기로 표시한다', () => {
+    const rows = resolveIndividualSettlementReviewRowsForQueryState({
+      listReady: true,
+      isError: false,
+      assignedSessions: [],
+      applications: [{ ...applied, lectureProgressStatus: 'GAVE_UP' }],
+    })
+    expect(rows[0]?.lectureProgress).toBe('activity_withdrawn')
+  })
+
+  it('rowType이 없는 응답(UJAT 등)은 기존처럼 배정 일정과 신청을 합친다', () => {
+    const rows = resolveIndividualSettlementReviewRowsForQueryState({
+      listReady: true,
+      isError: false,
+      assignedSessions: [],
+      applications: [{ ...applied, rowType: null, lectureProgressStatus: null }],
+    })
+    expect(rows[0]).toMatchObject({ id: 'application:31', orphanApplication: true, isNotApplied: false })
   })
 })

@@ -1,10 +1,14 @@
 import dayjs from 'dayjs'
-import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
-import { formatDateDot, formatDateDotWithWeekday, getSeoulCalendarDate } from '@/shared/utils/date'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { resolveSettlementUiStatus } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import type { ParticipatingIndividualInstructorLectureProgress } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
+import {
+  buildSettlementScheduleDisplayLabel,
+  formatIsoDateTime,
+  formatLectureDateOnly,
+  mapSettlementLectureProgressStatus,
+} from '@/features/program/general/lib/settlement-schedule-display-label'
 
 /** 정산 현황 행 종류 — 서버 rowType, 없으면 ID로 추론 */
 export type ParticipatingInstructorSettlementRowType =
@@ -42,21 +46,6 @@ export interface ParticipatingInstructorSettlementApiRow {
   sessionTotal?: number
 }
 
-function formatIsoDateTime(iso?: string | null): string {
-  if (!iso?.trim()) return ''
-  const parsed = dayjs(iso)
-  if (!parsed.isValid()) return iso.trim()
-  return formatYmdHmWithKoreanWeekday(parsed)
-}
-
-function formatLectureDateOnly(iso?: string | null): string {
-  if (!iso?.trim()) return ''
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso.trim()
-  const label = formatDateDot(getSeoulCalendarDate(date))
-  return label === '-' ? iso.trim() : label
-}
-
 export function buildParticipatingInstructorEducationScheduleLabel(
   item: SettlementListItemResponse
 ): string {
@@ -85,36 +74,23 @@ export function toParticipatingInstructorLectureProgressLabel(
   return LECTURE_PROGRESS_LABELS[progress]
 }
 
-const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-
 /**
- * 정산 현황 행 「교육 진행 일정」 — 행 하나가 배정 일정 1건이라 날짜·회차를 먼저 보여 준다.
- * (진행 회차 요약 `programSessionProgressDisplay`는 행마다 같은 값이라 일정 구분이 안 된다)
- * 날짜·회차가 모두 없을 때만 기존 라벨 규칙을 쓴다.
+ * 정산 현황 행 「교육 진행 일정」 — `YYYY.MM.DD(요일) | HH:MM~HH:MM | N회차 또는 일정명` (기획 2026-11-12).
+ * 행 하나가 배정 일정 1건이라 진행 회차 요약(`programSessionProgressDisplay`)보다 일정 정보를 먼저 쓴다.
+ * 시간·회차·일정명이 없으면 있는 부분만, 모두 없으면 기존 라벨 규칙을 쓴다.
  */
 export function buildParticipatingInstructorSettlementRowScheduleLabel(
   item: SettlementListItemResponse
 ): string {
-  const rawDate = item.lectureDate?.trim() ?? ''
-  const datePart = DATE_ONLY_PATTERN.test(rawDate)
-    ? formatDateDotWithWeekday(rawDate)
-    : formatIsoDateTime(rawDate) || formatLectureDateOnly(rawDate)
-  const normalizedDate = datePart === '-' ? '' : datePart
-  const sessionPart =
-    item.sessionOrdinal != null && item.sessionOrdinal > 0 ? `${item.sessionOrdinal}회차` : ''
-  if (normalizedDate && sessionPart) return `${normalizedDate} | ${sessionPart}`
-  if (normalizedDate || sessionPart) return normalizedDate || sessionPart
-  return buildParticipatingInstructorEducationScheduleLabel(item)
+  return buildSettlementScheduleDisplayLabel(item) || buildParticipatingInstructorEducationScheduleLabel(item)
 }
 
 /** 서버 lectureProgressStatus 우선, 값이 없을 때만 일정일로 추론한다 */
 export function inferParticipatingInstructorLectureProgress(
   item: SettlementListItemResponse
 ): ParticipatingIndividualInstructorLectureProgress {
-  const serverStatus = item.lectureProgressStatus?.toUpperCase()
-  if (serverStatus === 'COMPLETED') return 'completed'
-  if (serverStatus === 'SCHEDULED') return 'scheduled'
-  if (serverStatus === 'GAVE_UP') return 'activity_withdrawn'
+  const serverProgress = mapSettlementLectureProgressStatus(item.lectureProgressStatus)
+  if (serverProgress) return serverProgress
 
   const lectureDate = item.lectureDate?.slice(0, 10)
   if (lectureDate) {

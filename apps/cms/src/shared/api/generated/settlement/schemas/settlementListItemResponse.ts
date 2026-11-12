@@ -8,6 +8,7 @@
 import type { SettlementListItemResponseLectureProgressStatus } from './settlementListItemResponseLectureProgressStatus';
 import type { SettlementListItemResponsePaymentStatementPreConsentStatus } from './settlementListItemResponsePaymentStatementPreConsentStatus';
 import type { SettlementListItemResponseRowType } from './settlementListItemResponseRowType';
+import type { SettlementListItemResponseScheduleKind } from './settlementListItemResponseScheduleKind';
 
 export interface SettlementListItemResponse {
   settlementId?: number;
@@ -57,4 +58,12 @@ export interface SettlementListItemResponse {
   rowType?: SettlementListItemResponseRowType;
   /** 프로그램 참여 강사 정산 현황에서만 채우는 강의 진행 여부. SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 회차. 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null. */
   lectureProgressStatus?: SettlementListItemResponseLectureProgressStatus;
+  /** 프로그램 참여 강사 정산 현황에서만 채우는 일정 시작 시각(program_schedule.start_at, ISO-8601 UTC). 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null. */
+  scheduleStartAt?: string | null;
+  /** 프로그램 참여 강사 정산 현황에서만 채우는 일정 종료 시각(program_schedule.end_at, ISO-8601 UTC). 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null. */
+  scheduleEndAt?: string | null;
+  /** 프로그램 참여 강사 정산 현황에서만 채우는 일정명(program_schedule.schedule_name). 일정형·복수 등 회차 번호가 없는 일정(sessionOrdinal=null)은 이 값이 일정 이름이다. 일정이 없는 행과 다른 정산 목록에서는 null. */
+  scheduleName?: string | null;
+  /** 프로그램 참여 강사 정산 현황에서만 채우는 일정 종류(program_schedule.schedule_kind). 값이 비어 있는 일정과 일정이 없는 행, 다른 정산 목록에서는 null. */
+  scheduleKind?: SettlementListItemResponseScheduleKind;
 }

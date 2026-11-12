@@ -11,6 +11,10 @@ import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '
 import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import type { ParticipatingIndividualInstructorLectureProgress } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
+import {
+  buildSettlementScheduleDisplayLabel,
+  mapSettlementLectureProgressStatus,
+} from '@/features/program/general/lib/settlement-schedule-display-label'
 
 export type IndividualSettlementReviewListRow = {
   id: string
@@ -28,6 +32,8 @@ export type IndividualSettlementReviewListRow = {
   settlementApplicationId: number | null
   canOpenDetail: boolean
   orphanApplication: boolean
+  /** 정산 현황 응답의 미신청 배정 일정 행(rowType=NOT_APPLIED) */
+  isNotApplied: boolean
 }
 
 function positiveId(value: unknown): number | null {
@@ -116,6 +122,54 @@ export function assignedSessionsForIndividualSettlementReview(
   )
 }
 
+/** 정산 현황 응답인지 — 서버가 행 종류(rowType)를 채웠을 때만 서버 행을 그대로 쓴다 */
+export function isIndividualSettlementStatusResponse(
+  applications: ReadonlyArray<IndividualSettlementReviewListItemView>
+): boolean {
+  return applications.some(item => typeof item.rowType === 'string' && item.rowType.trim() !== '')
+}
+
+function statusRowLectureProgress(
+  item: IndividualSettlementReviewListItemView
+): ParticipatingIndividualInstructorLectureProgress {
+  const fromServer = mapSettlementLectureProgressStatus(item.lectureProgressStatus)
+  if (fromServer) return fromServer
+  const endAt = item.scheduleEndAt ?? item.scheduleStartAt
+  if (endAt) {
+    const end = new Date(endAt)
+    if (!Number.isNaN(end.getTime())) return end.getTime() < Date.now() ? 'completed' : 'scheduled'
+  }
+  return 'scheduled'
+}
+
+/**
+ * 참여 봉사자 정산 현황 — 서버 행(배정 봉사 일정 1건 = 1행)을 순서 그대로 표 행으로 바꾼다.
+ * 미신청 행(NOT_APPLIED)은 신청 정보 없이 일정·진행 여부만 채운다.
+ */
+export function mapIndividualSettlementStatusRows(
+  applications: ReadonlyArray<IndividualSettlementReviewListItemView>
+): IndividualSettlementReviewListRow[] {
+  return applications.map((item, index) => {
+    const isNotApplied = item.rowType?.trim().toUpperCase() === 'NOT_APPLIED'
+    const scheduleId = positiveId(item.programScheduleId)
+    const settlementApplicationId = isNotApplied ? null : positiveId(item.settlementApplicationId)
+    const label = buildSettlementScheduleDisplayLabel(item) || applicationScheduleLabel(item)
+    return {
+      id:
+        settlementApplicationId != null
+          ? `SETTLEMENT_APPLICATION:${settlementApplicationId}`
+          : `NOT_APPLIED:${scheduleId ?? `index-${index}`}`,
+      no: index + 1,
+      programScheduleId: scheduleId,
+      educationScheduleLabel: label,
+      lectureProgress: statusRowLectureProgress(item),
+      orphanApplication: false,
+      isNotApplied,
+      ...mapApplicationFields(isNotApplied ? undefined : item),
+    }
+  })
+}
+
 export function resolveIndividualSettlementReviewRowsForQueryState(input: {
   listReady: boolean
   isError: boolean
@@ -123,6 +177,9 @@ export function resolveIndividualSettlementReviewRowsForQueryState(input: {
   applications: ReadonlyArray<IndividualSettlementReviewListItemView>
 }): IndividualSettlementReviewListRow[] {
   if (!input.listReady || input.isError) return []
+  if (isIndividualSettlementStatusResponse(input.applications)) {
+    return mapIndividualSettlementStatusRows(input.applications)
+  }
   return mapIndividualSettlementReviewListRows({
     assignedSessions: input.assignedSessions,
     applications: input.applications,
@@ -157,6 +214,7 @@ export function mapIndividualSettlementReviewListRows(input: {
       educationScheduleLabel: sessionScheduleLabel(session),
       lectureProgress: sessionLectureProgress(session),
       orphanApplication: false,
+      isNotApplied: false,
       ...mapApplicationFields(application),
     })
   }
@@ -175,6 +233,7 @@ export function mapIndividualSettlementReviewListRows(input: {
       educationScheduleLabel: applicationScheduleLabel(item),
       lectureProgress: 'scheduled',
       orphanApplication: true,
+      isNotApplied: false,
       ...mapApplicationFields(item),
     })
   }
