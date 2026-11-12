@@ -342,6 +342,8 @@ export function FormTemplateFullpageModal({
             setLogoUploadResults(prev => ({ ...prev, [fieldName]: result }))
           }}
           participantRowVisibility={participantRowVisibility}
+          participantRowLabels={modalState.participantLayout.rowLabels}
+          defaultCertificateBackgroundThumbSrc={modalState.participantLayout.defaultBackgroundSrc}
           onParticipantRowVisibilityChange={(index, checked) => {
             setParticipantRowVisibility(prev => {
               const next = [...prev]

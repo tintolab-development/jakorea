@@ -148,6 +148,10 @@ export interface TemplateCustomFieldsFormProps {
   onParticipantRowVisibilityChange?: (index: number, checked: boolean) => void
   /** API·템플릿에서 복원한 이미지 URL — 우측 썸네일 동기화 */
   initialLogoPreviewUrls?: Record<string, string>
+  /** 참여자 정보 체크 항목 라벨(증명서 종류별 — 활동인증서 5줄). 미지정 시 기본 6줄 */
+  participantRowLabels?: readonly string[]
+  /** 수료증 배경 미업로드 시 썸네일(증명서 종류별 기본 배경). 미지정 시 기본 배경 */
+  defaultCertificateBackgroundThumbSrc?: string
 }
 
 export function TemplateCustomFieldsForm({
@@ -161,6 +165,8 @@ export function TemplateCustomFieldsForm({
   participantRowVisibility,
   onParticipantRowVisibilityChange,
   initialLogoPreviewUrls,
+  participantRowLabels = PARTICIPANT_INFO_ROW_LABELS,
+  defaultCertificateBackgroundThumbSrc,
 }: TemplateCustomFieldsFormProps) {
   const [activeField, setActiveField] = useState<TemplateCustomFieldDef | null>(() => {
     if (selectedFieldName === undefined || selectedFieldName === null || selectedFieldName === '')
@@ -320,13 +326,17 @@ export function TemplateCustomFieldsForm({
 
   const activeThumbSrc =
     activeField && isImageUploadField(activeField)
-      ? (activeLogoPreviewUrl ?? DEFAULT_FIELD_THUMB_SRC[activeField.name])
+      ? (activeLogoPreviewUrl ??
+        (activeField.name === TEMPLATE_FIELD_CERTIFICATE_BACKGROUND
+          ? defaultCertificateBackgroundThumbSrc
+          : undefined) ??
+        DEFAULT_FIELD_THUMB_SRC[activeField.name])
       : undefined
 
   const participantVisibilityResolved =
-    participantRowVisibility && participantRowVisibility.length === PARTICIPANT_INFO_ROW_COUNT
+    participantRowVisibility && participantRowVisibility.length === participantRowLabels.length
       ? participantRowVisibility
-      : createDefaultParticipantRowVisibility()
+      : participantRowLabels.map(() => true)
 
   return (
     <div className="template-custom-fields-form">
@@ -378,7 +388,7 @@ export function TemplateCustomFieldsForm({
                 role="group"
                 aria-label="참여자 정보 항목 표시"
               >
-                {PARTICIPANT_INFO_ROW_LABELS.map((rowLabel, index) => (
+                {participantRowLabels.map((rowLabel, index) => (
                   <label
                     key={rowLabel}
                     className="template-custom-fields-form__participant-check-row"
