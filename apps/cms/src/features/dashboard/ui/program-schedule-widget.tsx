@@ -6,7 +6,7 @@
 
 import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { Card, List, Popover } from 'antd'
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
 import { useState, useMemo, Fragment, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
@@ -952,7 +952,7 @@ export function ProgramScheduleWidget({
                 className="program-schedule-widget__head-nav-btn"
                 aria-label="이전"
               >
-                <LeftOutlined />
+                <ButtonLeftIcon className="program-schedule-widget__head-nav-icon" />
               </button>
               <span className="program-schedule-widget__head-date">{headerTitle}</span>
               <button
@@ -961,7 +961,7 @@ export function ProgramScheduleWidget({
                 className="program-schedule-widget__head-nav-btn"
                 aria-label="다음"
               >
-                <RightOutlined />
+                <ButtonRightIcon className="program-schedule-widget__head-nav-icon" />
               </button>
             </div>
           </div>
