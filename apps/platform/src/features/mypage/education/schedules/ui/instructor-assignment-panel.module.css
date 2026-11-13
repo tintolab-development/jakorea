@@ -128,6 +128,21 @@
   width: 31.613%; /* 역할 열에 넘긴 1.026%만큼 줄임 (기존 32.639%) */
 }
 
+/* 제미나이 — Figma node 11001-286882: No. 100 / 기관명·소재지·거리 280 / 일정 나머지 (1440px 기준) */
+.geminiAssignedTable .numberColumn {
+  width: 6.944%;
+}
+
+.geminiAssignedTable .institutionColumn,
+.geminiAssignedTable .locationColumn,
+.geminiAssignedTable .distanceColumn {
+  width: 19.444%;
+}
+
+.geminiAssignedTable col:last-child {
+  width: 34.724%;
+}
+
 /*
  * Figma node 11001-286939 기준이지만 원래 비율 합이 106.875%라 열이 일괄 축소돼 "희망 학년"이 두 줄이 됐다.
  * 합 100%로 다시 맞추고, 공통 열(No.·기관명·기관 소재지·배정 상태)은 배정된 기관 목록과 같은 비율을 쓴다.
@@ -169,6 +184,20 @@
   flex-direction: column;
   gap: var(--spacing-4);
   align-items: center;
+}
+
+/* 제미나이 일정 한 줄 — `일시 │ N차시` */
+.scheduleLine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.scheduleDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  background: var(--color-border-default);
 }
 
 /* 배정 상태 텍스트 — 봉사 배정 현황(assignment-table.module.css) statusWaiting/statusCancelled와 같은 색 */
@@ -257,6 +286,7 @@
   }
 
   .assignedTable.assignedTable col:last-child,
+  .geminiAssignedTable.geminiAssignedTable col:last-child,
   .waitingTable.waitingTable col:nth-last-child(2) {
     width: 300px;
   }
