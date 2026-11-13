@@ -112,7 +112,11 @@ interface AuthState {
     options?: LoginOptions
   ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
   /** `preserveReturnPath: false` — 사용자가 직접 로그아웃 (로그인 후 원래 화면 복귀 안 함) */
-  logout: (options?: { preserveReturnPath?: boolean }) => void
+  /**
+   * skipRemote: 서버 logout(본문·쿠키)을 보내지 않고 로컬만 정리한다.
+   * 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있는 경우(409 ROTATED 무효, 다른 계정 로그인 감지)에 쓴다.
+   */
+  logout: (options?: { preserveReturnPath?: boolean; skipRemote?: boolean }) => void
   /** silentRetry: 새로고침 복원 refresh가 네트워크·서버 오류면 한 번 조용히 다시 시도 (기본 true) */
   checkAuth: (options?: { silentRetry?: boolean }) => Promise<void>
   /** 새로고침 복원 안내의 [다시 시도] — 진행 중 refresh가 있으면 합류하고, 없으면 탭 간 잠금 아래 1회 시작 */
@@ -482,11 +486,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // Authorization 없이 refreshToken body만으로 서버 세션 무효화 (로컬 clear 전에 요청 시작)
       // TODO(QA-0137 인프라 전환 후 삭제): 저장된 refreshToken이 사라지면 본문 logout 분기를 지운다.
       let remoteLogout: Promise<void> | undefined
-      if (isRealApiModuleEnabled('adminAuth') && refreshToken) {
+      const remoteAllowed = isRealApiModuleEnabled('adminAuth') && options?.skipRemote !== true
+      if (remoteAllowed && refreshToken) {
         remoteLogout = fetchAdminAuthLogout({ refreshToken })
       }
       // QA-0137: HttpOnly refresh 쿠키 폐기·삭제. best effort — 실패해도 로컬 로그아웃은 그대로 진행한다.
-      if (isRealApiModuleEnabled('adminAuth') && hadSession) {
+      if (remoteAllowed && hadSession) {
         void fetchAdminAuthRefreshCookieLogout()
       }
 

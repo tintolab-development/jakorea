@@ -225,6 +225,15 @@ function readRefreshToken(): string | null {
   return readStoredRefreshToken()
 }
 
+/** refresh 수단을 저장소로 판단할 수 있는 환경인지 (저장소가 없으면 시작 시 값을 그대로 쓴다) */
+function isRefreshStorageAvailable(): boolean {
+  try {
+    return typeof window !== 'undefined' && !!window.localStorage
+  } catch {
+    return false
+  }
+}
+
 /** access token은 auth-store 저장 정책(메모리 전용)으로만 반영한다 */
 function persistAccessToken(accessToken: string, expiresAtIso?: string) {
   const expires = expiresAtIso ?? expiresAtIsoFromExpiresInSeconds(undefined)
@@ -236,13 +245,13 @@ function persistRefreshToken(refreshToken: string | undefined) {
   storeRefreshTokenFromResponse(refreshToken)
 }
 
-function handleAuthFailure() {
+function handleAuthFailure(options?: { skipRemote?: boolean }) {
   const complete =
     typeof window !== 'undefined' ? hasPasswordChangeRequiredComplete() : false
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
   const search = typeof window !== 'undefined' ? window.location.search : ''
 
-  useAuthStore.getState().logout()
+  useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined)
   if (typeof window === 'undefined') return
 
   const target = resolveSessionAuthFailureRedirect({
@@ -293,13 +302,18 @@ async function postRefreshAndPersist(refreshToken: string | null): Promise<strin
 async function refreshWithLatestCredential(startedWithRefreshToken: string | null): Promise<string> {
   // 저장값이 없으면(쿠키 세션) 본문 없이 쿠키로 요청한다.
   // 쿠키 세션에서 이 탭이 시작 때 쓰던 값을 다시 쓰지 않는다 — 다른 탭이 지운 rotate된 토큰일 수 있다.
-  const tokenToUse = readRefreshToken() ?? (hasRefreshCredential() ? null : startedWithRefreshToken)
+  const storedRefreshToken = readRefreshToken()
+  if (storedRefreshToken == null && !hasRefreshCredential() && isRefreshStorageAvailable()) {
+    // 잠금을 기다리는 사이 다른 탭이 refresh 수단을 지웠다(로그아웃 등). 시작 때 값은 이미 rotate됐을 수 있어 보내지 않는다.
+    throw new Error('Refresh credential was cleared while waiting for the refresh lock')
+  }
+  const tokenToUse = storedRefreshToken ?? (hasRefreshCredential() ? null : startedWithRefreshToken)
   try {
     return await postRefreshAndPersist(tokenToUse)
   } catch (err) {
     // 락 미지원 환경 등에서 동시 refresh에 진 경우(409 REFRESH_TOKEN_ALREADY_ROTATED):
     // 승자가 rotate한 최신 refresh 수단으로 한 번만 다시 시도한다 (같은 값 재전송 금지).
-    if (axios.isAxiosError(err) && err.response?.status === 409) {
+    if (isRefreshAlreadyRotatedError(err)) {
       const latest = readRefreshToken()
       if (latest && latest !== tokenToUse) return postRefreshAndPersist(latest)
       if (!latest && tokenToUse == null && hasRefreshCredential()) return postRefreshAndPersist(null)
@@ -344,6 +358,15 @@ const REFRESH_REJECTED_STATUSES = new Set([400, 401, 403])
 
 /** 서버가 이미 rotate한 refresh token을 받았다는 409 코드 */
 const REFRESH_TOKEN_ALREADY_ROTATED = 'REFRESH_TOKEN_ALREADY_ROTATED'
+
+/** 409 REFRESH_TOKEN_ALREADY_ROTATED인지 (다른 409와 구분) */
+function isRefreshAlreadyRotatedError(error: unknown): boolean {
+  return (
+    axios.isAxiosError(error) &&
+    error.response?.status === 409 &&
+    getErrorCode(error.response?.data) === REFRESH_TOKEN_ALREADY_ROTATED
+  )
+}
 
 /**
  * refresh 실패 분류.
@@ -504,7 +527,8 @@ axiosClient.interceptors.response.use(
         }
         return Promise.reject(err)
       }
-      handleAuthFailure()
+      // 409 ROTATED 무효: 저장소·쿠키에는 다른 탭이 회전한 새 세션이 있을 수 있다 — 서버 logout으로 그 세션을 끊지 않는다.
+      handleAuthFailure(isRefreshAlreadyRotatedError(err) ? { skipRemote: true } : undefined)
       return Promise.reject(err)
     }
   }
