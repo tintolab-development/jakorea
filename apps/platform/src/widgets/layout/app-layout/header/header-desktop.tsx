@@ -17,9 +17,6 @@ import {
 } from './header-config'
 import styles from './header-desktop.module.css'
 
-/** TODO(임시): 상단 메뉴를 펼친 상태로 고정 — 확인이 끝나면 false로 되돌리거나 지운다 */
-const FORCE_NAV_OPEN = true
-
 type HeaderDesktopProps = {
   groups: readonly NavigationGroup[]
   isLoggedIn?: boolean
@@ -120,8 +117,7 @@ export function HeaderDesktop({
     getActiveNavigationGroupCode(pathname)
   )
   const [hoveredGroupCode, setHoveredGroupCode] = useState<string | null>(null)
-  const [isNavOpenState, setIsNavOpen] = useState(false)
-  const isNavOpen = FORCE_NAV_OPEN || isNavOpenState
+  const [isNavOpen, setIsNavOpen] = useState(false)
   const [menuPanelBottom, setMenuPanelBottom] = useState<number | null>(null)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const navigationRef = useRef<HTMLElement | null>(null)
