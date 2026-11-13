@@ -6,7 +6,8 @@
 
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import viewIconUrl from '@/shared/assets/icons/posts/view.svg'
+import fileIconUrl from '@/shared/assets/icons/posts/file.svg'
 import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
@@ -280,7 +281,14 @@ function RecruitPostingDetailView({
             </div>
             <span className="admin-detail-top-actions">
               <span className="recruit-posting-detail-page__views">
-                <EyeOutlined className="recruit-posting-detail-page__views-icon" aria-hidden />
+                <img
+                  className="recruit-posting-detail-page__views-icon"
+                  src={viewIconUrl}
+                  alt=""
+                  width={20}
+                  height={20}
+                  aria-hidden
+                />
                 {posting.viewCount.toLocaleString('ko-KR')}
               </span>
               <AdminDetailMoreMenu onEdit={onEdit} onDelete={onDelete} />
@@ -306,7 +314,14 @@ function RecruitPostingDetailView({
           {hasAttachments ? (
             <div className="recruit-posting-detail-page__attachments">
               <div className="recruit-posting-detail-page__attachments-head">
-                <PaperClipOutlined className="recruit-posting-detail-page__clip" aria-hidden />
+                <img
+                  className="recruit-posting-detail-page__clip"
+                  src={fileIconUrl}
+                  alt=""
+                  width={20}
+                  height={20}
+                  aria-hidden
+                />
                 <span>첨부파일</span>
               </div>
               <ul className="recruit-posting-detail-page__attachments-list">
