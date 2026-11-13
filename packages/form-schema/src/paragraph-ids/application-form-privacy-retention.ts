@@ -11,11 +11,11 @@
 
 /** 개인정보 수집·이용 표 보유기간 셀 — 교육 받은 교사 신청서를 제외한 신청서 공통 */
 export const APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
 
-/** 개인정보 수집·이용 표 보유기간 셀 — 교육 받은 교사 신청서 전용(BE seed가 항목 앞 `- `를 유지) */
+/** 개인정보 수집·이용 표 보유기간 셀 — 교육 받은 교사 신청서용. 2026-11-13 시안 재대조로 공통 셀과 같은 값(항목 앞 `- ` 없음) */
 export const TRAINED_TEACHERS_APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL =
-  '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 동의일로부터 3년 보관 후 폐기'
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL
 
 /** 개인정보 제3자 제공 표 보유기간 셀 — 신청서 공통 */
-export const APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+export const APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
