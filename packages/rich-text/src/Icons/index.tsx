@@ -4,6 +4,7 @@ import fontUrl from './font.svg?url'
 import boldUrl from './Icon-6.svg?url'
 import chevronDownUrl from './field.svg?url'
 import gridOnUrl from './grid_on.svg?url'
+import headingUrl from './heading.svg?url'
 import alignLeftUrl from './Icon.svg?url'
 import horizontalRuleUrl from './density_medium.svg?url'
 import lineHeightUrl from './align_self_stretch.svg?url'
@@ -55,6 +56,11 @@ export function RtChevronDownIcon({
 /** 글꼴 — 시안 `Icon / Text Editor / w16` font 원본 */
 export function RtFontFamilyIcon({ className }: { className?: string }) {
   return <RtToolbarIcon src={fontUrl} className={className} />
+}
+
+/** 제목 — 시안 `Icon / Text Editor / w16` heading 원본 */
+export function RtHeadingIcon(props: Omit<RtToolbarIconProps, 'src'>) {
+  return <RtToolbarIcon src={headingUrl} {...props} />
 }
 
 export function RtBoldIcon(props: Omit<RtToolbarIconProps, 'src'>) {

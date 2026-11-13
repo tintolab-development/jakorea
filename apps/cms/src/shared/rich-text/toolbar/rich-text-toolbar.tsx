@@ -51,6 +51,7 @@ import {
   BoldIcon,
   EmojiIcon,
   FontFamilyIcon,
+  HeadingIcon,
   HighlightIcon,
   HorizontalRuleIcon,
   ItalicIcon,
@@ -199,9 +200,6 @@ export function RichTextToolbar({
     [run]
   )
 
-  const headingTriggerLabel = useMemo(() => {
-    return HEADING_OPTIONS.find(o => o.value === state.heading)?.triggerLabel ?? 'H₁'
-  }, [state.heading])
 
   const fontFamilyMenuItems: MenuProps['items'] = useMemo(
     () =>
@@ -428,7 +426,8 @@ export function RichTextToolbar({
       <ToolbarDropdown
         ariaLabel="제목"
         label="제목"
-        valueLabel={headingTriggerLabel}
+        leadingIcon={<HeadingIcon />}
+        iconOnly
         menuItems={headingMenuItems}
         disabled={disabled}
       />
