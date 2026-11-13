@@ -936,7 +936,7 @@ export function EducationSettlementWriteForm({
         ) : null}
 
         {!isReceipt && instructorSettlementPreview.calculation ? (
-          <PFFormSection id="instructor-settlement-calculation" title="예상 정산 계산 내역">
+          <PFFormSection id="instructor-settlement-calculation" title="기본 정산 미리보기 (추가 신청 항목 제외)">
             <div className={styles.calculationPreview} aria-live="polite">
               <PFText as="p" typo="bd-md-rg" color="black">
                 {instructorSettlementPreview.calculation.lecture}
