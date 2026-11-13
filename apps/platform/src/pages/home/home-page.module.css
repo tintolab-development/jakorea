@@ -32,6 +32,14 @@
   padding-bottom: 0;
 }
 
+/* 모바일 시안: 스토리 제목 아래 335×84 · 모서리 16 영상 띠 */
+.youtubeRevealMobile.youtubeRevealMobile {
+  --reveal-mask-height: 84px;
+  padding: 0;
+  gap: 0;
+  background: transparent;
+}
+
 @media (--bp-pc-up) {
   .youtubeReveal.youtubeReveal {
     /* block이면 gap 무시 — flex column 유지 */

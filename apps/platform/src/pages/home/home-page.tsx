@@ -52,7 +52,18 @@ export function HomePage() {
           />
         )}
 
-        <StorySection />
+        <StorySection
+          mobileVideo={
+            isBelowPc ? (
+              <ScrollRevealYoutubeVideo
+                youtubeUrl={youtubeUrl}
+                iframeTitle="JA Korea 소개 영상"
+                animateOnce
+                className={styles.youtubeRevealMobile}
+              />
+            ) : null
+          }
+        />
       </div>
 
       {/* Achievements + 파트너/CTA: 시안상 동일 배경 밴드 (1920×2064) */}

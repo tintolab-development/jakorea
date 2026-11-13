@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   IMPACT_STORIES_PATH,
@@ -110,7 +110,12 @@ function SubStoryCard({ story, className }: { story: ImpactStoryListItem; classN
   )
 }
 
-export function StorySection() {
+type StorySectionProps = {
+  /** 모바일 시안: 섹션 제목 아래 소개 영상 (PC는 페이지 상단 별도 영역) */
+  mobileVideo?: ReactNode
+}
+
+export function StorySection({ mobileVideo }: StorySectionProps) {
   const { featuredStory, impactTitle } = useHomeMain()
   const featured = featuredStory
   const { items: subStories, isPending: subStoriesPending } = useHomeImpactSubStories(
@@ -128,6 +133,8 @@ export function StorySection() {
         <h2 className={styles.mobileTitle}>
           <TitleLines title={mobileTitle} />
         </h2>
+
+        {mobileVideo}
 
         <FeaturedStory story={featured} />
 
