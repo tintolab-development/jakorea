@@ -7,6 +7,7 @@ import valueIcon02Url from './assets/value-icon-02.svg'
 import valueIcon03Url from './assets/value-icon-03.svg'
 import valueIcon04Url from './assets/value-icon-04.svg'
 import valueIcon05Url from './assets/value-icon-05.svg'
+import valueIcon06Url from './assets/value-icon-06.svg'
 
 type ValueIconProps = {
   iconKey: GlobalValueKey
@@ -21,6 +22,7 @@ const VALUE_ICON_SRC: Record<GlobalValueKey, string> = {
   value_3: valueIcon03Url,
   value_4: valueIcon04Url,
   value_5: valueIcon05Url,
+  value_6: valueIcon06Url,
 }
 
 export function ValueIcon({ iconKey, size = 40, className }: ValueIconProps) {
