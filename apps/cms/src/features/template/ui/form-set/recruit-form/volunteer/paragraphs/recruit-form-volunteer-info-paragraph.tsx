@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
@@ -22,6 +23,7 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
 import {
+  isRecruitInterviewRequiredOff,
   isRecruitInterviewRequiredOn,
   recruitInterviewRequiredRadioValue,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-required'
@@ -44,11 +46,10 @@ type RangeSeal = { start: string; end: string } | null
 
 /** 프로그램 봉사자 모집 폼 — 봉사자 모집 정보 */
 export function RecruitFormVolunteerInfoParagraph() {
-  const [announcementPublished, setAnnouncementPublished] =
-    useVolunteerRecruitField<ParticipantRecruitmentAnnouncementPublishedValue | ''>(
-      'recruit.volunteer.announcementPublished',
-      RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
-    )
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const [announcementPublished, setAnnouncementPublished] = useVolunteerRecruitField<
+    ParticipantRecruitmentAnnouncementPublishedValue | ''
+  >('recruit.volunteer.announcementPublished', RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT)
   const [interviewRequired, setInterviewRequired] = useVolunteerRecruitField<string>(
     'recruit.volunteer.interviewRequired',
     RECRUIT_INTERVIEW_REQUIRED_DEFAULT
@@ -186,7 +187,13 @@ export function RecruitFormVolunteerInfoParagraph() {
   )
   const [notes, setNotes] = useVolunteerRecruitField<string>('recruit.volunteer.notes', '')
 
-  const interviewEnabled = isRecruitInterviewRequiredOn(interviewRequired)
+  /**
+   * 템플릿 관리 화면은 면접 유무 라디오가 미선택이어도 「면접 있음」 항목(서류·면접·최종 발표)을 보여 준다.
+   * 「면접 없음」을 직접 고른 경우만 숨긴다. 등록·상세는 「면접 있음」을 고른 경우만.
+   */
+  const interviewEnabled = isTemplateManagementScreen
+    ? !isRecruitInterviewRequiredOff(interviewRequired)
+    : isRecruitInterviewRequiredOn(interviewRequired)
   const interviewRadioValue = recruitInterviewRequiredRadioValue(interviewRequired)
 
   return (
@@ -289,7 +296,11 @@ export function RecruitFormVolunteerInfoParagraph() {
               <CmsInput
                 inputSize="small"
                 width="100%"
-                placeholder="상세 모집 대상을 입력해 주세요"
+                placeholder={
+                  isTemplateManagementScreen
+                    ? '상세 교육 대상을 입력해 주세요'
+                    : '상세 모집 대상을 입력해 주세요'
+                }
                 value={volunteerTargetDetail}
                 onChange={e => setVolunteerTargetDetail(e.target.value)}
               />

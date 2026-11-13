@@ -1360,7 +1360,7 @@ export class GeneralProgramRegistrationPage {
         // 미입력 셀은 값 대신 placeholder 문구를 텍스트로 렌더한다(horizontal-table-paragraph-body.tsx:1182-1184)
         const emptyCells = this.page
           .locator('.form-editor-horizontal-table__td--field')
-          .filter({ hasText: /^제공받는 곳을 입력해 주세요$/ })
+          .filter({ hasText: /^제공받는 (곳|기관명)을 입력해 주세요$/ })
         const cellCount = await emptyCells.count()
         for (let i = 0; i < cellCount; i += 1) {
           const cell = emptyCells.first()

@@ -2,15 +2,23 @@
  * 지급조서(발급용) — 근무일지 단락 전용 정적 테이블(입력 없음).
  */
 
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './work-log-detail-block.css'
 
 const MAIN_HEADERS = ['날짜', '근무자(인)', '확인자(인)', '날짜', '근무자(인)', '확인자(인)'] as const
 const BODY_ROW_COUNT = 16
-const TOTAL_HEADERS = ['총 근무일수', '총 지급액'] as const
+const TOTAL_HEADERS = ['총 근무일 수', '총 지급액'] as const
 
 export function WorkLogDetailBlock() {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
-    <div className="work-log-detail-block">
+    <div
+      className={
+        isTemplateManagementScreen
+          ? 'work-log-detail-block work-log-detail-block--template'
+          : 'work-log-detail-block'
+      }
+    >
       <div className="work-log-detail-block__table-radius">
         <table className="work-log-detail-block__main-table">
           <colgroup>

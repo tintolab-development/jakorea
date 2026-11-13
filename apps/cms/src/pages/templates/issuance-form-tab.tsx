@@ -113,9 +113,9 @@ import {
   SETTLEMENT_APPLICATION_TEMPLATE_CODE,
   SETTLEMENT_APPLICATION_TEMPLATE_NAME,
   type IssuanceTemplateRow,
-  UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE,
+  isUjatEducationJournalTemplate,
+  isUjatEducationPlanTemplate,
   UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME,
-  UJAT_EDUCATION_PLAN_TEMPLATE_CODE,
   UJAT_EDUCATION_PLAN_TEMPLATE_NAME,
 } from '@/features/template/model/issuance-form.schema'
 
@@ -127,11 +127,11 @@ const UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES: Record<
   journal: UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS }
 const MULTI_PAGE_ISSUANCE_PREVIEW_TEMPLATE_NAMES = new Set(['결과보고서'])
 
-function getIssuanceUserPreviewDraft(templateName?: string): WritingFormDraft {
-  if (templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME) {
+function getIssuanceUserPreviewDraft(templateName?: string, templateCode?: string): WritingFormDraft {
+  if (isUjatEducationPlanTemplate({ templateCode, templateName })) {
     return createUjatEducationPlanIssuanceDraft()
   }
-  if (templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME) {
+  if (isUjatEducationJournalTemplate({ templateCode, templateName })) {
     return createUjatEducationJournalIssuanceDraft()
   }
   if (templateName === LECTURE_REPORT_TEMPLATE_NAME) {
@@ -223,11 +223,17 @@ function IssuanceFormTabContent() {
     selectedTemplate?.id === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE ||
     selectedTemplate?.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
   const isUjatEducationPlan =
-    selectedTemplate?.id === UJAT_EDUCATION_PLAN_TEMPLATE_CODE ||
-    selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
+    selectedTemplate != null &&
+    isUjatEducationPlanTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
   const isUjatEducationJournal =
-    selectedTemplate?.id === UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE ||
-    selectedTemplate?.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+    selectedTemplate != null &&
+    isUjatEducationJournalTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
   const ujatStructuredIssuanceVariant: UjatEducationIssuanceVariant | null = isUjatEducationPlan
     ? 'plan'
     : isUjatEducationJournal
@@ -524,8 +530,12 @@ function IssuanceFormTabContent() {
       templateCode: selectedTemplate.id,
       templateName: selectedTemplate.templateName,
     })
-    const isUjatPlanPreview = selectedTemplate.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
-    const isJournalPreview = selectedTemplate.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+    const ujatTemplateRef = {
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    }
+    const isUjatPlanPreview = isUjatEducationPlanTemplate(ujatTemplateRef)
+    const isJournalPreview = isUjatEducationJournalTemplate(ujatTemplateRef)
     const ujatPreviewVariant: UjatEducationIssuanceVariant | null = isUjatPlanPreview
       ? 'plan'
       : isJournalPreview
@@ -555,7 +565,7 @@ function IssuanceFormTabContent() {
           ? PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
           : undefined)
     openWritingUserPreview({
-      draft: getIssuanceUserPreviewDraft(selectedTemplate.templateName),
+      draft: getIssuanceUserPreviewDraft(selectedTemplate.templateName, selectedTemplate.id),
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate.templateName ?? '발급 양식 미리보기',
       editorKind: previewEditorKind,
@@ -760,6 +770,7 @@ function IssuanceFormTabContent() {
               <TemplateTable
                 rows={reportSection?.rows ?? []}
                 onPreview={openTemplatePreview}
+                actionLabel="양식 상세보기"
               />
             </TemplateListCard>
             <TemplateListCard
@@ -771,6 +782,7 @@ function IssuanceFormTabContent() {
               <TemplateTable
                 rows={documentSection?.rows ?? []}
                 onPreview={openTemplatePreview}
+                actionLabel="양식 상세보기"
               />
             </TemplateListCard>
           </>

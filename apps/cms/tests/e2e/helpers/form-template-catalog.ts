@@ -26,7 +26,7 @@ export const WRITING_TEMPLATE_NAMES = [
   'Gemini_찾아가는 연수 강사 신청 폼',
   'UJAT_참여 기관 신청 폼',
   'UJAT_봉사자 신청 폼',
-  '교육받은 교사_참여 기관 신청 폼',
+  '교육 받은 교사_참여 기관 신청 폼',
   // 설문 4
   '설문조사',
   '만족도조사 (학생용)',
@@ -42,8 +42,8 @@ export const WRITING_TEMPLATE_NAMES = [
 ] as const
 
 export const ISSUANCE_TEMPLATE_NAMES = [
-  'UJAT_교육계획서',
-  'UJAT_교육일지',
+  'UJAT 교육계획서',
+  'UJAT 교육일지',
   '강의보고서',
   '정산 신청서',
   '지급조서(발급용)',

@@ -32,6 +32,7 @@ import {
   normalizeTrainedTeachersAllSelectValue,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import { mergeSponsorRegistrationSelectOptions } from '@/features/program/general/lib/registration-sponsor-select-option-merge'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   isSponsorContactUnselected,
   normalizeSponsorContactUnselectedSelection,
@@ -67,6 +68,10 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   onSponsorContactIdChange,
   trainedTeachersDefaults = false,
 }: ControlledSponsorProps) {
+  // 교육받은 교사 템플릿 관리 시안(5767:196354): 후원사·담당자 셀렉트가 칸을 채운다. 그 밖의 화면은 기존 240
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const sponsorSelectWidth: number | '100%' =
+    trainedTeachersDefaults && isTemplateManagementScreen ? '100%' : 240
   // 일반·교육받은 교사 모두 Multi Select (기획: 후원사/담당자 Multi)
   const allowMultipleSponsors = true
   const sponsorIdKey = trainedTeachersDefaults
@@ -415,7 +420,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 withAllOption={false}
                 inputSize="small"
                 placeholder="후원사를 선택해 주세요"
-                width={240}
+                width={sponsorSelectWidth}
                 options={sponsorOptions}
                 value={sponsorIds}
                 loading={sponsorOptionsLoading}
@@ -441,7 +446,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 withAllOption={trainedTeachersDefaults}
                 inputSize="small"
                 placeholder="후원사를 선택해 주세요"
-                width={240}
+                width={sponsorSelectWidth}
                 options={sponsorOptions}
                 value={sponsorId}
                 onOpenChange={onSelectOpenChange}
@@ -471,7 +476,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               withAllOption={false}
               inputSize="small"
               placeholder="후원사 담당자를 선택해 주세요"
-              width={240}
+              width={sponsorSelectWidth}
               showSearch
               optionFilterProp="label"
               options={managerSelectOptions}

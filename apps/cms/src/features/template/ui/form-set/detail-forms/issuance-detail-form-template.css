@@ -1,0 +1,42 @@
+/*
+ * 템플릿 관리 > 발급 양식 편집기(지급조서·정산 신청서) 표 공통 — 시안 5767:46455·5767:44580
+ * 표 셀: 헤더 8×16 · 본문 12 패딩 · 행 60, 표 안 글자 14px, 구분선 좌우 16
+ * 프로그램·문서 미리보기는 `issuance-detail-form--template` 클래스가 없어 기존 레이아웃 유지
+ */
+.issuance-detail-form--template .detail-info-form__field {
+  height: auto;
+  min-height: 60px;
+  max-height: none;
+}
+
+.issuance-detail-form--template .detail-info-form__field-label {
+  padding: 8px 16px;
+}
+
+.issuance-detail-form--template .detail-info-form__field-content {
+  padding: 12px;
+}
+
+.issuance-detail-form--template .lecture-fee-calculation-detail-form__text,
+.issuance-detail-form--template .lecture-fee-calculation-detail-form__suffix,
+.issuance-detail-form--template .settlement-transport-fee-detail-form__suffix,
+.issuance-detail-form--template .settlement-accommodation-fee-detail-form__suffix {
+  font-size: 14px;
+}
+
+.issuance-detail-form--template .lecture-fee-calculation-detail-form__session {
+  gap: 16px;
+}
+
+.issuance-detail-form--template
+  .lecture-fee-calculation-detail-form__session
+  .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.issuance-detail-form--template .lecture-fee-calculation-detail-form__total-fee,
+.issuance-detail-form--template .lecture-fee-calculation-detail-form__student-count,
+.issuance-detail-form--template .settlement-transport-fee-detail-form__suffix-row,
+.issuance-detail-form--template .settlement-accommodation-fee-detail-form__suffix-row {
+  gap: 6px;
+}

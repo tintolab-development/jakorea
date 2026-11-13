@@ -20,6 +20,7 @@ import {
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
 import './volunteer-interview-applicant-schedule-paragraph.css'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 type SelectedSlot = {
   dateKey: string
@@ -78,6 +79,7 @@ function VolunteerInterviewApplicantScheduleTemplatePlaceholder() {
   const scheduleTopRef = useRef<HTMLDivElement>(null)
   const calendarWrapRef = useRef<HTMLDivElement>(null)
   useProgramRegistrationScheduleTopCalendarHeightSync(scheduleTopRef, calendarWrapRef)
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
 
   const summaryHint = (
     <div className="program-application-form-instructor__field-summary-wrap">
@@ -86,7 +88,17 @@ function VolunteerInterviewApplicantScheduleTemplatePlaceholder() {
   )
 
   return (
-    <div className="volunteer-interview-applicant-schedule program-application-form-instructor__available-schedule program-application-form-instructor__available-schedule--readonly-preview">
+    <div
+      className={[
+        'volunteer-interview-applicant-schedule program-application-form-instructor__available-schedule program-application-form-instructor__available-schedule--readonly-preview',
+        // 템플릿 관리 시안(12875:514060) — 캘린더 ↔ 안내 박스 16, 상단 ↔ 요약 표 16
+        isTemplateManagementScreen && 'volunteer-interview-applicant-schedule--template-spec',
+        isTemplateManagementScreen &&
+          'program-application-form-instructor__available-schedule--template-spec',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div
         ref={scheduleTopRef}
         className="program-application-form-instructor__available-schedule-top"

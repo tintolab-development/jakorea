@@ -14,6 +14,7 @@ import {
   isProgramScopedOperationalWritingTemplate,
   resolveWritingFormTemplateDeletable,
 } from '@/features/template/lib/form-template-delete-policy'
+import { isFormTemplateSeedPreviewActive } from '@/features/template/lib/form-template-seed-preview'
 import type { TemplateRow, TemplateSection } from '@/features/template/model/template.schema'
 import type { FormTemplateListItemResponse } from '@/shared/api/generated/forms-surveys/schemas'
 
@@ -27,6 +28,21 @@ function formatTemplateDate(iso?: string): string {
   return `${y}.${m}.${d}`
 }
 
+/**
+ * 목록 양식 이름 — 서버 `templateName` 우선.
+ * 로컬 개발 「시드로 보기」에서는 시스템 양식을 프론트 카탈로그 이름으로 보여 준다.
+ */
+function resolveListTemplateName(
+  item: Pick<FormTemplateListItemResponse, 'templateName' | 'systemTemplate'>,
+  catalogName: string | undefined,
+  templateCode: string
+): string {
+  if (catalogName != null && item.systemTemplate !== false && isFormTemplateSeedPreviewActive()) {
+    return catalogName
+  }
+  return item.templateName?.trim() || catalogName || templateCode
+}
+
 export function mapFormTemplateListItemToRow(
   item: FormTemplateListItemResponse,
   options: { rowIndex: number; rowKeyPrefix: string }
@@ -38,7 +54,7 @@ export function mapFormTemplateListItemToRow(
   const systemTemplate = item.systemTemplate
   return {
     id: templateCode,
-    templateName: item.templateName?.trim() || catalog?.templateName || templateCode,
+    templateName: resolveListTemplateName(item, catalog?.templateName, templateCode),
     variant: catalog?.variant ?? 'default',
     key: `${options.rowKeyPrefix}-${options.rowIndex + 1}`,
     no: options.rowIndex + 1,
@@ -155,7 +171,7 @@ export function mapFormTemplateListItemToIssuanceRow(
   const catalog = ISSUANCE_TEMPLATE_CODE_CATALOG[templateCode]
   return {
     id: templateCode,
-    templateName: item.templateName?.trim() || catalog?.templateName || templateCode,
+    templateName: resolveListTemplateName(item, catalog?.templateName, templateCode),
     variant: 'default',
     key: `${options.rowKeyPrefix}-${options.rowIndex + 1}`,
     no: options.rowIndex + 1,

@@ -18,6 +18,12 @@ import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
+import {
+  RECRUIT_TEMPLATE_ANNOUNCE_DATE_WIDTH,
+  RECRUIT_TEMPLATE_FIXED_DATE_STYLE,
+  RECRUIT_TEMPLATE_INQUIRY_INPUT_WIDTH,
+  RECRUIT_TEMPLATE_INQUIRY_LABEL_GAP,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-form-instructor-info-paragraph.css'
 
@@ -47,14 +53,22 @@ function InquiryContactColumn({
   phone?: boolean
 }) {
   const InputComponent = phone ? CmsPhoneInput : CmsInput
+  // 템플릿 관리 시안 — 입력 200·라벨 간격 6 (등록·상세는 240·8)
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
-    <div style={inquiryColumnStyle}>
+    <div
+      style={
+        isTemplateManagementScreen
+          ? { ...inquiryColumnStyle, gap: RECRUIT_TEMPLATE_INQUIRY_LABEL_GAP }
+          : inquiryColumnStyle
+      }
+    >
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
       <InputComponent
         inputSize="small"
-        width={240}
+        width={isTemplateManagementScreen ? RECRUIT_TEMPLATE_INQUIRY_INPUT_WIDTH : 240}
         placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -158,7 +172,7 @@ export function RecruitFormInstructorInfoParagraph() {
 
   // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교 강사 모집·템플릿 관리·상세 수정은 기존 문구
   const isGeneralWizard = useIsGeneralRegistrationWizard()
-  // 템플릿 관리 강사 모집 폼 — 합격자 발표일 시안 플레이스홀더 (QA 261113 #56)
+  // 템플릿 관리 강사 모집 폼 — 합격자 발표일·비고 시안 플레이스홀더 (QA 261113 #56)
   const isTemplateManagementScreen = useIsTemplateManagementScreen()
 
   return (
@@ -243,7 +257,11 @@ export function RecruitFormInstructorInfoParagraph() {
               <CmsInput
                 inputSize="small"
                 width="100%"
-                placeholder="상세 모집 대상을 입력해 주세요"
+                placeholder={
+                  isTemplateManagementScreen
+                    ? '상세 교육 대상을 입력해 주세요'
+                    : '상세 모집 대상을 입력해 주세요'
+                }
                 value={recruitTargetDetail}
                 onChange={e => setRecruitTargetDetail(e.target.value)}
               />
@@ -293,6 +311,12 @@ export function RecruitFormInstructorInfoParagraph() {
                   mode="single"
                   presetMode="date"
                   value={finalAnnounceDate}
+                  {...(isTemplateManagementScreen
+                    ? {
+                        width: RECRUIT_TEMPLATE_ANNOUNCE_DATE_WIDTH,
+                        style: RECRUIT_TEMPLATE_FIXED_DATE_STYLE,
+                      }
+                    : {})}
                   disabledDate={createFinalAnnounceDisabledDate(recruitRange)}
                   placeholder={
                     isGeneralWizard || isTemplateManagementScreen
@@ -378,7 +402,11 @@ export function RecruitFormInstructorInfoParagraph() {
                   inputSize="small"
                   width="100%"
                   style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder={isGeneralWizard ? '비고를 입력해 주세요' : '비고란을 작성하세요'}
+                  placeholder={
+                    isGeneralWizard || isTemplateManagementScreen
+                      ? '비고를 입력해 주세요'
+                      : '비고란을 작성하세요'
+                  }
                   value={notes}
                   disabled={notesNotApplicable}
                   onChange={e => setNotes(e.target.value)}

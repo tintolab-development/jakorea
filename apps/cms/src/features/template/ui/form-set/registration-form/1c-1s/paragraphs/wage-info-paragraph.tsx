@@ -20,6 +20,7 @@ import {
   getProgramRegistrationOverlayRecord,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 /** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 */
@@ -79,9 +80,18 @@ function HourlyFeeInput({
   maxText: string
 }) {
   const [value, setValue] = useProgramRegistrationOverlayKv<number | null>(overlayKey, null)
+  // 템플릿 관리 시안(5767:191506) 「1시간당 [입력] 원」 간격 6 — 등록 위저드·상세는 기존 12 유지
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
-    <div className="detail-info-form-inputs-wrapper">
-      <span className="detail-info-form--text">1시간 당</span>
+    <div
+      className={
+        isTemplateManagementScreen
+          ? 'detail-info-form-inputs-wrapper program-registration-paragraph__fee-group'
+          : 'detail-info-form-inputs-wrapper'
+      }
+    >
+      {/* 시안(5767:191506 · 9899:215345) 표기 — 저장 pricing 문자열(「1시간 당 | …」)과 별개 */}
+      <span className="detail-info-form--text">1시간당</span>
       <RegistrationWageFeeInput value={value} onChange={setValue} max={max} />
       <span className="detail-info-form--text">원 ({maxText})</span>
     </div>

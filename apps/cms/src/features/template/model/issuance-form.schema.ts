@@ -10,8 +10,36 @@ export const LECTURE_REPORT_TEMPLATE_CODE = 'issuance-3' as const
 export const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
 export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME = '지급조서 사전 동의서'
 export const SETTLEMENT_APPLICATION_TEMPLATE_NAME = '정산 신청서'
-export const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT_교육계획서'
-export const UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME = 'UJAT_교육일지'
+/** 시안 발급 양식 목록·편집기 GNB(5767:48529·5767:44097) 띄어쓰기 */
+export const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT 교육계획서'
+export const UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME = 'UJAT 교육일지'
+/** 서버 저장본 이름(BE 시드 갱신 전) — 이름으로 양식을 가를 때 함께 받는다 */
+const LEGACY_UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT_교육계획서'
+const LEGACY_UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME = 'UJAT_교육일지'
+
+/** UJAT 교육계획서 양식인지 — 템플릿 코드 우선, 이름은 새·옛 이름 모두 */
+export function isUjatEducationPlanTemplate(ref: {
+  templateCode?: string | null
+  templateName?: string | null
+}): boolean {
+  return (
+    ref.templateCode === UJAT_EDUCATION_PLAN_TEMPLATE_CODE ||
+    ref.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME ||
+    ref.templateName === LEGACY_UJAT_EDUCATION_PLAN_TEMPLATE_NAME
+  )
+}
+
+/** UJAT 교육일지 양식인지 — 템플릿 코드 우선, 이름은 새·옛 이름 모두 */
+export function isUjatEducationJournalTemplate(ref: {
+  templateCode?: string | null
+  templateName?: string | null
+}): boolean {
+  return (
+    ref.templateCode === UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE ||
+    ref.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME ||
+    ref.templateName === LEGACY_UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+  )
+}
 export const LECTURE_REPORT_TEMPLATE_NAME = '강의보고서'
 
 export type IssuanceTemplateRow = TemplateRow

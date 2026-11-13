@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import {
   ADMIN_FILE_OWNER,
@@ -17,7 +18,7 @@ import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
@@ -43,6 +44,9 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
   /** 추가 등록·프로그램 연동 시 PROGRAM owner id. 없으면 업로드 비활성 */
   programId?: string | number | null
 }) {
+  /** 템플릿 관리 시안(12875:515697) — 활동 기수·활동 년도 입력 140 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const termYearInputWidth = isTemplateManagementScreen ? 140 : 240
   const [term, setTerm] = useUjatApplicationVolunteerOverlayKv<string>(
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm,
     ''
@@ -105,7 +109,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
               <CmsNumericInput
                 mode="numericText"
                 inputSize="small"
-                width={240}
+                width={termYearInputWidth}
                 placeholder="활동 기수"
                 value={term}
                 onValueChange={setTerm}
@@ -113,7 +117,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="small"
-                width={240}
+                width={termYearInputWidth}
                 placeholder="활동 년도"
                 value={year}
                 onChange={e => setYear(e.target.value)}

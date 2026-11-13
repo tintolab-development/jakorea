@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import {
+  getFormNavDisplayLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   cloneHorizontalTableParagraph,
   cloneVerticalTableParagraph,
@@ -240,9 +244,14 @@ export function useHorizontalTableFormDraft({
     }))
   }, [])
 
+  /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { sortableMiddle, pinnedBottom } = useMemo(() => {
     const ps = draft.paragraphs
-    const { titleNumbering } = draft.formSettings
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen
+    )
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
@@ -265,7 +274,7 @@ export function useHorizontalTableFormDraft({
       sortableMiddle: tableBlocks.map(line),
       pinnedBottom: line(tail),
     }
-  }, [draft])
+  }, [draft, isTemplateManagementScreen])
 
   return {
     draft,

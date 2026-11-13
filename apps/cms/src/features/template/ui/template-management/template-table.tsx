@@ -28,9 +28,11 @@ const TEMPLATE_LIST_SCROLL_X =
 interface TemplateTableProps {
   rows: TemplateRow[]
   onPreview: (row: TemplateRow) => void
+  /** 행 버튼 문구 — 작성 양식 「상세보기」, 발급 양식 「양식 상세보기」(시안 5767:48529) */
+  actionLabel?: string
 }
 
-export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
+export function TemplateTable({ rows, onPreview, actionLabel = '상세보기' }: TemplateTableProps) {
   const columns = useMemo<ColumnsType<TemplateRow>>(
     () => [
       {
@@ -95,12 +97,12 @@ export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
         }),
         render: (_, row) => (
           <CmsButton size="small" variant="default" onClick={() => onPreview(row)}>
-            상세보기
+            {actionLabel}
           </CmsButton>
         ),
       },
     ],
-    [onPreview]
+    [onPreview, actionLabel]
   )
 
   return (

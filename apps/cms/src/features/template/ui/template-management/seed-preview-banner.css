@@ -1,0 +1,16 @@
+/* 로컬 개발 「시드로 보기」 표시 — 운영·QA 빌드에는 렌더되지 않는다 */
+.template-seed-preview-banner {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2000;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: #d32f2f;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}

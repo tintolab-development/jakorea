@@ -43,6 +43,7 @@ import {
   useLockParagraphHeading,
   useShowParagraphActiveOutline,
 } from '@/features/template/context/paragraph-selection-chrome-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 function isAgreementAdminProxyConfirmCard(
   paragraph: WritingFormParagraph,
@@ -163,6 +164,7 @@ function PinnedFormCardInner({
     ),
     !showEditorChrome
   )
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const lockHeading = useLockParagraphHeading()
   const editableHeadingResolved = withAgreementAdminProxyConfirmHeading(
     withProgramApplicationFixedScheduleHeading(
@@ -177,7 +179,8 @@ function PinnedFormCardInner({
                   paragraphBodyOptions
                 ),
                 paragraph,
-                paragraphBodyOptions
+                paragraphBodyOptions,
+                isTemplateManagementScreen
               ),
               paragraph,
               paragraphBodyOptions
@@ -371,6 +374,7 @@ function SortableMiddleFormCardInner({
     ),
     !showEditorChrome
   )
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const lockHeading = useLockParagraphHeading()
   const editableHeadingResolved = withAgreementAdminProxyConfirmHeading(
     withProgramApplicationFixedScheduleHeading(
@@ -385,7 +389,8 @@ function SortableMiddleFormCardInner({
                   paragraphBodyOptions
                 ),
                 paragraph,
-                paragraphBodyOptions
+                paragraphBodyOptions,
+                isTemplateManagementScreen
               ),
               paragraph,
               paragraphBodyOptions

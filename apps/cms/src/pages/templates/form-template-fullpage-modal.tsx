@@ -1,11 +1,12 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   buildCertificateFormSettings,
   EMPTY_CERTIFICATE_SCHEMA_DRAFT,
 } from '@/features/template/lib/certificate-form-settings'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
+import { resolveCertificateVariableChips } from '@/features/template/lib/certificate-participant-layout'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
@@ -124,6 +125,11 @@ export function FormTemplateFullpageModal({
 
   const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
     useFormCertificatePreviewProps(modalState, pdfIssueDate ?? issueDate, pdfSerialNumber)
+  /** 편집 캔버스만 변수 칩 — 미리보기 팝업(시안 14673:48080)·PDF 캡처는 실제 값 */
+  const certificateVariableChips = useMemo(
+    () => resolveCertificateVariableChips(templateCode),
+    [templateCode]
+  )
 
   useEffect(() => {
     if (!open) {
@@ -326,7 +332,11 @@ export function FormTemplateFullpageModal({
       leftContent={
         <>
           <FormCertificateEditScaleViewport>
-            <FormCertificatePreview {...certificatePreviewProps} showSampleWatermark />
+            <FormCertificatePreview
+              {...certificatePreviewProps}
+              showSampleWatermark
+              variableChips={certificateVariableChips}
+            />
           </FormCertificateEditScaleViewport>
           <div className={FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS} aria-hidden>
             <FormCertificatePreview {...certificatePdfExportProps} canvasRef={pdfExportCanvasRef} />
@@ -356,6 +366,7 @@ export function FormTemplateFullpageModal({
           participantRowVisibility={participantRowVisibility}
           participantRowLabels={modalState.participantLayout.rowLabels}
           participantRowsLocked={modalState.participantLayout.rowVisibilityLocked}
+          certificateTypeName={title}
           defaultCertificateBackgroundThumbSrc={modalState.participantLayout.defaultBackgroundSrc}
           onParticipantRowVisibilityChange={(index, checked) => {
             setParticipantRowVisibility(prev => {

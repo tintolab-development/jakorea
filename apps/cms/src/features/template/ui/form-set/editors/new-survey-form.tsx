@@ -19,7 +19,13 @@ import {
 } from '@/features/program/shared/lib/survey-management/use-survey-writing-save-validation-feedback'
 import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { useAgreementDocumentPdf } from '@/features/template/ui/form-set/editors/agreement-document-pdf'
+import {
+  buildTemplateManagementNavLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
+import { titleWithPeriodPlaceholder } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
 import {
   createNewSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
@@ -72,8 +78,9 @@ function NewSurveyFormInner() {
     templateCode: templateId,
     initialName: '설문조사 신규 폼',
   })
+  // 시안 12723:137188 — 진입 시 제목 단락 선택(우측 제목·작성 기간 설정 노출). 동의 양식 신규 폼과 같음
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
-    DEFAULT_SURVEY_PARAGRAPH_IDS.user
+    DEFAULT_SURVEY_PARAGRAPH_IDS.title
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
@@ -111,16 +118,25 @@ function NewSurveyFormInner() {
     }))
   }, [])
 
+  /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { sortableMiddle } = useMemo(() => {
-    const { titleNumbering } = draft.formSettings
-    const line = (p: WritingFormParagraph) => ({
-      id: p.id,
-      displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
-    })
+    // 시안 5767:42989·5767:43362·12723:137188 — 카드 제목은 「Q1.」이어도 목록은 단락 순번 숫자
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen,
+      { survey: true }
+    )
+    // 시안 12723:137188 — 빈 제목은 「설문 제목 입력」·「N. 타이틀을 입력해 주세요」 회색, 제목·마무리글 행은 핸들 없음
+    const line = (p: WritingFormParagraph) =>
+      buildTemplateManagementNavLine(draft.paragraphs, p, titleNumbering, {
+        titlePlaceholder: titleWithPeriodPlaceholder('survey'),
+        closingPlaceholder: true,
+      })
     return {
       sortableMiddle: draft.paragraphs.map(line),
     }
-  }, [draft])
+  }, [draft, isTemplateManagementScreen])
 
   const writingPreviewSession = useMemo(
     () => ({
@@ -227,66 +243,82 @@ function NewSurveyFormInner() {
     activeParagraphId,
   })
 
+  /** 시안 12723:137188 상단 「문서 다운로드」 — 동의 양식 편집기와 같은 A4 PDF 내보내기(설문 단락으로 렌더) */
+  const documentPdf = useAgreementDocumentPdf({
+    enabled: true,
+    draft,
+    headerTitle: modalTitle,
+    editorKind: 'survey',
+  })
+
   return (
-    <TemplateFullpageModal
-      open
-      onClose={handleClose}
-      title={modalTitle}
-      description="* 설문 제목(제목형 단락)은 필수입니다. 제목·마무리글·설문자 정보를 제외한 문항 단락은 최소 1개 이상 필요합니다."
-      templateTabType="writing"
-      onTitleCommit={commitModalTitle}
-      leftContent={
-        <FormEditorLeftPanel
-          paragraphs={draft.paragraphs}
-          titleNumbering={draft.formSettings.titleNumbering}
-          selectedCardId={activeParagraphId}
-          onSelectCard={handleSelectParagraph}
-          onReorderMiddle={onReorderMiddle}
-          updateParagraph={updateParagraph}
-          editorKind="survey"
-          singleItemListActiveItemId={singleItemListActiveItemId}
-          onSelectSingleItemListItem={(paragraphId, itemId) => {
-            setActiveParagraphId(paragraphId)
-            setSingleItemListActiveItemId(itemId)
-          }}
-          horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
-          onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
-          verticalTableBodyRowSelection={verticalTableBodyRowSelection}
-          onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
-          middleParagraphActions={middleParagraphActions}
-        />
-      }
-      rightNavigation={
-        <FormEditorFieldNav
-          sectionTitle="커스텀 필드"
-          sortableMiddle={sortableMiddle}
-          selectedItemId={activeParagraphId}
-          onSelectItem={handleSelectParagraph}
-          onReorderMiddle={onReorderMiddle}
-          fieldListBottomSlot={
-            <FormEditorTitleNumberingField
-              value={draft.formSettings.titleNumbering}
-              onChange={onTitleNumberingChange}
-            />
-          }
-        >
-          <FormEditorRightPanel
-            draft={draft}
-            activeParagraphId={activeParagraphId}
-            onTitleNumberingChange={onTitleNumberingChange}
+    <>
+      {documentPdf.hostNode}
+      <TemplateFullpageModal
+        open
+        onClose={handleClose}
+        title={modalTitle}
+        // 시안 12723:137188 상단 안내 문구 그대로 (동의 양식 신규 폼과 같은 문구)
+        description="※ 최소 1개 이상의 단락이 존재해야 등록이 가능합니다. (제목글, 마무리글, 년도, 서명란 제외)"
+        templateTabType="writing"
+        onTitleCommit={commitModalTitle}
+        // 닫기는 우측 상단 X (QA 261113 #11)
+        showHeaderCloseButton={false}
+        onDownloadDocument={documentPdf.download}
+        downloadDocumentLoading={documentPdf.loading}
+        leftContent={
+          <FormEditorLeftPanel
+            paragraphs={draft.paragraphs}
+            titleNumbering={draft.formSettings.titleNumbering}
+            selectedCardId={activeParagraphId}
+            onSelectCard={handleSelectParagraph}
+            onReorderMiddle={onReorderMiddle}
             updateParagraph={updateParagraph}
             editorKind="survey"
-            showTitleNumbering={false}
             singleItemListActiveItemId={singleItemListActiveItemId}
-            horizontalTableRowSelection={activeHorizontalTableRowSelection}
-            onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
+            onSelectSingleItemListItem={(paragraphId, itemId) => {
+              setActiveParagraphId(paragraphId)
+              setSingleItemListActiveItemId(itemId)
+            }}
+            horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+            onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
             verticalTableBodyRowSelection={verticalTableBodyRowSelection}
-            onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
+            onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+            middleParagraphActions={middleParagraphActions}
           />
-        </FormEditorFieldNav>
-      }
-      onPreview={handlePreview}
-      onSave={handleSave}
-    />
+        }
+        rightNavigation={
+          <FormEditorFieldNav
+            sectionTitle="커스텀 필드"
+            sortableMiddle={sortableMiddle}
+            selectedItemId={activeParagraphId}
+            onSelectItem={handleSelectParagraph}
+            onReorderMiddle={onReorderMiddle}
+            fieldListBottomSlot={
+              <FormEditorTitleNumberingField
+                value={draft.formSettings.titleNumbering}
+                onChange={onTitleNumberingChange}
+              />
+            }
+          >
+            <FormEditorRightPanel
+              draft={draft}
+              activeParagraphId={activeParagraphId}
+              onTitleNumberingChange={onTitleNumberingChange}
+              updateParagraph={updateParagraph}
+              editorKind="survey"
+              showTitleNumbering={false}
+              singleItemListActiveItemId={singleItemListActiveItemId}
+              horizontalTableRowSelection={activeHorizontalTableRowSelection}
+              onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
+              verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+              onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
+            />
+          </FormEditorFieldNav>
+        }
+        onPreview={handlePreview}
+        onSave={handleSave}
+      />
+    </>
   )
 }

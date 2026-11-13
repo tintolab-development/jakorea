@@ -23,3 +23,18 @@
   margin: 0;
   gap: 8px;
 }
+
+/* 템플릿 관리 시안(12875:515171) — 라디오 간격 16, 좌우 8, 줄 높이 44 */
+.application-region-paragraph.application-region-paragraph--spec {
+  padding: 0 8px;
+}
+
+.application-region-paragraph--spec .app-radio-group {
+  gap: 16px;
+  min-height: 44px;
+}
+
+/* 템플릿 관리 UJAT 봉사자 신청 폼 시안(12875:515697) — 희망 교육 활동 지역 라디오 간격 16 */
+.multiple-choice-body .multiple-choice-radio-group--inline-wrap.multiple-choice-radio-group--inline-wrap-spec.app-radio-group {
+  gap: 16px;
+}

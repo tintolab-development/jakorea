@@ -35,9 +35,10 @@ export interface TemplateCreateModalProps {
 const NEW_TEMPLATE_OPTION_VALUE = '__new__'
 
 function resolveSelection(
-  kind: TemplateCreateKind,
+  kind: TemplateCreateKind | null,
   selectValue: string | null
 ): TemplateCreateSelection | null {
+  if (kind == null) return null
   if (selectValue == null || selectValue === '') return null
   if (kind === 'survey' || kind === 'agreement') {
     if (selectValue === NEW_TEMPLATE_OPTION_VALUE) {
@@ -75,18 +76,20 @@ export function TemplateCreateModal({
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
   const { sections } = useWritingFormSections()
-  const [kind, setKind] = useState<TemplateCreateKind>('application')
+  /** 시안 5767:48673 — 템플릿 유형 라디오는 미선택으로 시작 */
+  const [kind, setKind] = useState<TemplateCreateKind | null>(null)
   const [selectValue, setSelectValue] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) return
-    setKind('application')
+    setKind(null)
     setSelectValue(null)
     setSubmitting(false)
   }, [open])
 
   const selectOptions = useMemo(() => {
+    if (kind == null) return []
     const category = kind as WritingTemplateCategory
     const rows = getWritingTemplateRowsByCategory(category, sections).map(row => ({
       label: row.templateName,
@@ -230,7 +233,7 @@ export function TemplateCreateModal({
         <CmsRadioGroup
           className="template-create-modal__radios"
           size="medium"
-          value={kind}
+          value={kind ?? undefined}
           onChange={e => handleKindChange(e.target.value as TemplateCreateKind)}
         >
           <CmsRadio value="application">모집 양식</CmsRadio>

@@ -263,6 +263,7 @@ export function renderProgramRegistrationParagraphBody(
               preEducationDisplayMode="prepend"
               hidePreEducationScheduleName
               hideAssignmentSettings
+              trainedTeachersTemplateDesign
             />
           </>
         )
@@ -284,6 +285,7 @@ export function renderProgramRegistrationParagraphBody(
           ipsScheduleDetail={options.ipsScheduleDetail}
           scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
           educationPlaceEnabled={isGeneralIndividualEducationPlaceEnabled(options)}
+          generalDesignCopy
         />
       ) : (
         <ProgramRegistrationEducationCurriculumParagraph
@@ -300,6 +302,7 @@ export function renderProgramRegistrationParagraphBody(
           ipsScheduleDetail={options.ipsScheduleDetail}
           scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
           educationPlaceEnabled={isGeneralIndividualEducationPlaceEnabled(options)}
+          generalDesignCopy
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:

@@ -98,7 +98,7 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
     await expect(page.getByText('서류 양식')).toBeVisible()
     await expect(page.getByText('결과보고서')).toHaveCount(0)
 
-    await openTemplateByName(page, 'UJAT_교육계획서')
+    await openTemplateByName(page, 'UJAT 교육계획서')
     await saveAndConfirm(page)
     await closeTemplateEditor(page)
 

@@ -16,7 +16,14 @@ import {
   shouldUseFormsSurveysRemoteApi,
 } from '@/features/template/api/admin-form-templates-service'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import {
+  buildTemplateManagementNavLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
+import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
+import { resolveEducatorPledgeNavLabel } from '@/features/template/ui/form-set/agreement-expense/nav-labels'
+import { titleWithPeriodPlaceholder } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import {
   createDefaultDirectAgreementDraft,
@@ -293,17 +300,20 @@ export function AgreementWritingFormShell({
   /** 좌측 카드 액션·표 행열·우측 유형 선택은 잠그고, 본문 렌더는 빈 잠금 집합으로 기존 편집 유지 */
   const leftPanelStructureLockedParagraphIds =
     effectiveStructureLockedParagraphIds ?? structureControlLockedParagraphIds
-  const leftPanelParagraphBodyOptions = useMemo<RenderFormParagraphBodyOptions | undefined>(
-    () =>
+  const leftPanelParagraphBodyOptions = useMemo<RenderFormParagraphBodyOptions | undefined>(() => {
+    const base =
       structureControlLockedParagraphIds == null
         ? effectiveParagraphBodyOptions
         : {
             ...effectiveParagraphBodyOptions,
             structureLockedParagraphIds: EMPTY_PARAGRAPH_ID_SET,
             structureLockedAuthoringOperationalFill: true,
-          },
-    [effectiveParagraphBodyOptions, structureControlLockedParagraphIds]
-  )
+          }
+    // 템플릿 관리 동의 양식(시스템 초상권·지급조서·영수증 등 + 직접 등록·사용자 복제) — 하단 동의 라디오는 미선택 표시
+    // (시드·저장 `bottomConsent: 'agree'`와 무관). 사용자 결정 2026-11-13: 시안에 선택돼 있어도 템플릿 관리 라디오는 모두 미선택.
+    if (!isTemplateManagementSave) return base
+    return { ...base, templateAuthoringConsentChoiceUnselected: true }
+  }, [effectiveParagraphBodyOptions, structureControlLockedParagraphIds, isTemplateManagementSave])
   const leftPanelHideDragHandleForParagraphIds = useMemo<ReadonlySet<string> | undefined>(() => {
     if (structureControlLockedParagraphIds == null) return effectiveHideDragHandleForParagraphIds
     return new Set([
@@ -431,13 +441,28 @@ export function AgreementWritingFormShell({
     }))
   }, [])
 
+  /** 좌측 캔버스에서 숨긴 단락(대리 확인 카드에 합친 날짜·서명, 「JA KOREA 귀하」 등)은 우측 목록에서도 뺀다 — 시안 5767:42072·16046:109928 */
+  const navHiddenParagraphIds = effectiveParagraphBodyOptions?.hiddenParagraphIds
+  /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
     const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
-    const { titleNumbering } = draft.formSettings
-    const line = (p: WritingFormParagraph) => ({
-      id: p.id,
-      displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
-    })
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen
+    )
+    const isNavVisible = (p: WritingFormParagraph) => !(navHiddenParagraphIds?.has(p.id) ?? false)
+    // 빈 제목 단락은 좌측 카드와 같은 안내 문구(시안: 「동의서 제목 입력」)·회색, 구조 잠금 단락은 핸들 없음
+    const line = (p: WritingFormParagraph) =>
+      buildTemplateManagementNavLine(draft.paragraphs, p, titleNumbering, {
+        titlePlaceholder: titleWithPeriodPlaceholder('agreement'),
+        // 시안 5767:49321 직접 등록 마무리글만 회색(서약서 등 시스템 동의서 마무리글은 본문색)
+        closingPlaceholder: p.id === DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
+        proxyConfirmHost: isAgreementAdminProxyConfirmHostId(p.id),
+        pinnedIds: leftPanelHideDragHandleForParagraphIds,
+        // 시안 12956:1678 — 교육진행자 서약서 목록 전용 문구(카드 제목·저장값은 그대로)
+        navLabel: isTemplateManagementScreen ? resolveEducatorPledgeNavLabel : undefined,
+      })
     if (split == null) {
       return {
         pinnedTop: null,
@@ -446,13 +471,20 @@ export function AgreementWritingFormShell({
       }
     }
     const { head, middle, pinnedTail } = split
-    const pinnedBottomCards = pinnedTail.filter(p => !isAgreementLockedSystemParagraph(p))
+    const pinnedBottomCards = pinnedTail.filter(
+      p => !isAgreementLockedSystemParagraph(p) && isNavVisible(p)
+    )
     return {
       pinnedTop: line(head),
-      sortableMiddle: middle.map(line),
+      sortableMiddle: middle.filter(isNavVisible).map(line),
       pinnedBottom: pinnedBottomCards.map(line),
     }
-  }, [draft])
+  }, [
+    draft,
+    navHiddenParagraphIds,
+    leftPanelHideDragHandleForParagraphIds,
+    isTemplateManagementScreen,
+  ])
 
   const writingPreviewSession = useMemo(
     () => ({

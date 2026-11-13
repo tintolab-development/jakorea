@@ -8,6 +8,10 @@ import { EconomyProgramApplicationLessonReplyParagraph } from '@/features/templa
 import { EconomyProgramApplicationPreferredScheduleParagraph } from '@/features/template/ui/form-set/application-form/1c-1s/paragraphs/preferred-schedule-paragraph'
 import { ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-sex-offense-consent-inquiry-paragraph'
 import { ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-sex-offense-consent-submission-paragraph'
+import {
+  PROGRAM_APPLICATION_SCHEDULE_STRUCTURE_HINT,
+  ProgramApplicationScheduleTemplateHintParagraph,
+} from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 
 export type EconomyProgramApplicationParagraphBodyOptions = {
   enabled: boolean
@@ -69,6 +73,14 @@ export function renderEconomyProgramApplicationParagraphBody(
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.educationExperience:
       return <EconomyProgramApplicationEducationExperienceParagraph />
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule:
+      // 템플릿 편집 — 시안(12875:514854)처럼 구조 안내만 노출
+      if (isTemplateAuthoringMode) {
+        return (
+          <ProgramApplicationScheduleTemplateHintParagraph
+            hintText={PROGRAM_APPLICATION_SCHEDULE_STRUCTURE_HINT}
+          />
+        )
+      }
       return <EconomyProgramApplicationPreferredScheduleParagraph />
     default:
       return null

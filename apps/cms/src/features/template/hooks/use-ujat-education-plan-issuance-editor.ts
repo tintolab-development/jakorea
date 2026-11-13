@@ -26,13 +26,13 @@ const UJAT_ISSUANCE_CONFIG: Record<
     createDraft: createUjatEducationPlanIssuanceDraft,
     defaultActiveParagraphId: UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.title,
     structureLockedParagraphIds: UJAT_EDUCATION_PLAN_SEED_PARAGRAPH_IDS,
-    previewHeaderTitle: 'UJAT_교육계획서',
+    previewHeaderTitle: 'UJAT 교육계획서',
   },
   journal: {
     createDraft: createUjatEducationJournalIssuanceDraft,
     defaultActiveParagraphId: UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.title,
     structureLockedParagraphIds: UJAT_EDUCATION_JOURNAL_SEED_PARAGRAPH_IDS,
-    previewHeaderTitle: 'UJAT_교육일지',
+    previewHeaderTitle: 'UJAT 교육일지',
   },
 }
 

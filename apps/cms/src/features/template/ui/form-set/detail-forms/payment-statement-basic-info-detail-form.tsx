@@ -17,6 +17,7 @@ import {
   mergePaymentStatementBasicInfo,
 } from '@jakorea/form-schema/consent'
 import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './payment-statement-basic-info-detail-form.css'
 
 /** 발급·미리보기에서 채울 값. CMS 템플릿 편집기에서는 비워 두고 placeholder만 노출할 수 있음 */
@@ -44,6 +45,32 @@ const LEGACY_AFFILIATION_LABELS: Record<string, string> = {
 
 const PAYMENT_STATEMENT_ADDRESS_SEARCH_MODAL_Z_INDEX = 1300
 
+/** 발급 양식(지급조서·정산 신청서) 템플릿 편집 — 시안 5767:46455·5767:44580 입력 폭 */
+const ISSUANCE_TEMPLATE_INPUT_W = {
+  name: 200,
+  resident: 200,
+  affiliation: 200,
+  address: 240,
+  bank: 120,
+  account: 200,
+  holder: 120,
+  paymentPurpose: 240,
+} as const
+
+/** 지급조서·영수증 사전 동의서 템플릿 편집 — 시안 5767:42072·16046:109928 입력 폭 */
+const PRE_CONSENT_TEMPLATE_INPUT_W = {
+  name: 200,
+  resident: 200,
+  affiliation: 200,
+  address: 240,
+  bank: 120,
+  account: 200,
+  holder: 120,
+} as const
+
+/** 발급 양식 편집기 레이아웃 — 지급조서(발급용)·정산 신청서 */
+export type PaymentStatementBasicInfoIssuanceLayout = 'payment_statement' | 'settlement_application'
+
 export type PaymentStatementBasicInfoDetailFormProps = {
   values?: Partial<PaymentStatementBasicInfoAutofillValues>
   className?: string
@@ -62,6 +89,11 @@ export type PaymentStatementBasicInfoDetailFormProps = {
   hideResidentFields?: boolean
   /** 편집 가능 모드에서 값 변경 시 (확인·서명란 성명 동기화 등) */
   onValuesChange?: (values: PaymentStatementBasicInfoAutofillValues) => void
+  /**
+   * 발급 양식 편집기(지급조서·정산 신청서). 템플릿 관리 화면에서만 시안 폭·자리 표시·라벨을 쓴다.
+   * 정산 신청서는 「소속 없음」 미노출·지급 목적 전체 폭(시안 5767:44580).
+   */
+  issuanceLayout?: PaymentStatementBasicInfoIssuanceLayout
 }
 
 function textOrDash(value: string): string {
@@ -83,8 +115,32 @@ export function PaymentStatementBasicInfoDetailForm({
   lockedProfileFields = false,
   hideResidentFields = false,
   onValuesChange,
+  issuanceLayout,
 }: PaymentStatementBasicInfoDetailFormProps) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const isDocumentMode = displayMode === 'document'
+  /** 템플릿 관리 > 발급 양식 편집기 전용 — 프로그램·동의서 화면은 기존 레이아웃 유지 */
+  const issuanceTemplate =
+    issuanceLayout != null &&
+    isTemplateManagementScreen &&
+    !isDocumentMode &&
+    !onlyPaymentPurposeLocked &&
+    !lockedProfileFields &&
+    !hideResidentFields
+  const isSettlementIssuanceTemplate =
+    issuanceTemplate && issuanceLayout === 'settlement_application'
+  const iw = issuanceTemplate ? ISSUANCE_TEMPLATE_INPUT_W : null
+  /**
+   * 템플릿 관리 > 지급조서·영수증 사전 동의서 편집기 — 시안 5767:42072·16046:109928.
+   * 마이페이지에서 불러오는 성명·소속·주소는 비활성, 입력 폭 고정, 「소속 없음」 미노출.
+   * 회원 작성 팝업·발급 양식 화면은 기존 그대로.
+   */
+  const preConsentTemplate =
+    isTemplateManagementScreen &&
+    onlyPaymentPurposeLocked &&
+    !isDocumentMode &&
+    issuanceLayout == null
+  const pw = preConsentTemplate ? PRE_CONSENT_TEMPLATE_INPUT_W : null
   const merged = useMemo(
     () => mergePaymentStatementBasicInfo({ ...EMPTY, ...valuesProp }),
     [valuesProp]
@@ -101,7 +157,7 @@ export function PaymentStatementBasicInfoDetailForm({
     onValuesChange(merged)
   }, [editable, merged, onValuesChange, valuesProp?.paymentPurpose])
 
-  const profileLocked = lockedProfileFields && !isDocumentMode
+  const profileLocked = (lockedProfileFields || preConsentTemplate) && !isDocumentMode
   const v = {
     ...(editable ? local : merged),
     ...(profileLocked
@@ -157,12 +213,61 @@ export function PaymentStatementBasicInfoDetailForm({
     .filter(part => part && part !== '-')
     .join(' · ')
 
+  const renderAffiliationField = (fullRow: boolean) => (
+    <DetailInfoForm.Field
+      label="소속"
+      fullRow={fullRow}
+      view={affiliationText}
+      edit={
+        <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__affiliation">
+          <CmsInput
+            disabled={profileFieldLocked || v.noAffiliation}
+            inputSize="small"
+            placeholder={issuanceTemplate || preConsentTemplate ? '소속' : '소속 기관명'}
+            value={v.affiliation}
+            onChange={e => patch({ affiliation: e.target.value })}
+            width={iw?.affiliation ?? pw?.affiliation ?? '100%'}
+            style={iw || pw ? undefined : { flex: '1 1 0', minWidth: 0 }}
+            aria-label="소속 (발급 시 자동 입력)"
+          />
+          {isSettlementIssuanceTemplate || preConsentTemplate ? null : (
+            <>
+              <DetailInfoForm.InputsSeparator />
+              <CmsCheckbox
+                disabled={profileFieldLocked}
+                checked={v.noAffiliation}
+                onChange={e =>
+                  patch({
+                    noAffiliation: e.target.checked,
+                    ...(e.target.checked ? { affiliation: '' } : {}),
+                  })
+                }
+                checkboxSize="medium"
+              >
+                소속 없음
+              </CmsCheckbox>
+            </>
+          )}
+        </div>
+      }
+    />
+  )
+
   return (
     <DetailInfoForm
       title="지급조서 기본 정보"
       hideHeader
       mode={isDocumentMode ? 'view' : 'edit'}
-      className={['payment-statement-basic-info-detail-form', className].filter(Boolean).join(' ')}
+      className={[
+        'payment-statement-basic-info-detail-form',
+        issuanceTemplate || preConsentTemplate
+          ? 'payment-statement-basic-info-detail-form--issuance-template'
+          : '',
+        preConsentTemplate ? 'payment-statement-basic-info-detail-form--pre-consent-template' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
@@ -172,10 +277,10 @@ export function PaymentStatementBasicInfoDetailForm({
             <CmsInput
               disabled={profileFieldLocked}
               inputSize="small"
-              placeholder="한글 성명"
+              placeholder={issuanceTemplate ? '성명' : '한글 성명'}
               value={v.nameKo}
               onChange={e => patch({ nameKo: e.target.value })}
-              width="100%"
+              width={iw?.name ?? pw?.name ?? '100%'}
               aria-label="한글 성명 (발급 시 자동 입력)"
             />
           }
@@ -190,7 +295,7 @@ export function PaymentStatementBasicInfoDetailForm({
               placeholder="영문 성명"
               value={v.nameEn}
               onChange={e => patch({ nameEn: e.target.value })}
-              width="100%"
+              width={iw?.name ?? pw?.name ?? '100%'}
               aria-label="영문 성명 (발급 시 자동 입력)"
             />
           }
@@ -216,65 +321,50 @@ export function PaymentStatementBasicInfoDetailForm({
                 value={v.residentFront}
                 onValueChange={value => patch({ residentFront: value })}
                 maxLength={6}
-                width="100%"
+                width={iw?.resident ?? pw?.resident ?? '100%'}
                 aria-label="주민등록번호 앞자리"
               />
               {rowDash}
               <CmsResidentBackInput
                 disabled={allAutofillLocked}
                 inputSize="small"
-                placeholder="주민등록 뒤 7자리"
+                placeholder={issuanceTemplate ? '주민등록 뒷 7자리' : '주민등록 뒤 7자리'}
                 value={v.residentBack}
                 onValueChange={value => patch({ residentBack: value })}
-                width="100%"
+                width={iw?.resident ?? pw?.resident ?? '100%'}
                 aria-label="주민등록번호 뒷자리"
               />
             </div>
           }
         />
-        <DetailInfoForm.Field
-          label="소속"
-          view={affiliationText}
-          edit={
-            <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__affiliation">
-              <CmsInput
-                disabled={profileFieldLocked || v.noAffiliation}
-                inputSize="small"
-                placeholder="소속 기관명"
-                value={v.affiliation}
-                onChange={e => patch({ affiliation: e.target.value })}
-                width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
-                aria-label="소속 (발급 시 자동 입력)"
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsCheckbox
-                disabled={profileFieldLocked}
-                checked={v.noAffiliation}
-                onChange={e =>
-                  patch({
-                    noAffiliation: e.target.checked,
-                    ...(e.target.checked ? { affiliation: '' } : {}),
-                  })
-                }
-                checkboxSize="medium"
-              >
-                소속 없음
-              </CmsCheckbox>
-            </div>
-          }
-        />
+        {renderAffiliationField(false)}
       </DetailInfoForm.Row>
       )}
+      {/* 영수증 사전 동의서(주민번호 없음) — 시안 16046:109928은 소속 단독 행 */}
+      {hideResidentFields && preConsentTemplate ? (
+        <DetailInfoForm.Row type="single">{renderAffiliationField(true)}</DetailInfoForm.Row>
+      ) : null}
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label={hideResidentFields ? '지역/주소' : '자택 주소지'}
+          label={issuanceTemplate ? '자택 주소' : '자택 주소지'}
           fullRow
           view={textOrDash(addressText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__address">
-              {editable && !profileLocked ? (
+              {preConsentTemplate ? (
+                // 시안: 검색 아이콘이 있는 비활성 주소 칸(240)
+                <AddressSearch
+                  value={v.addressRoad}
+                  onChange={() => {}}
+                  placeholder="건물명, 도로명 또는 지번"
+                  inputSize="small"
+                  width={pw?.address}
+                  disabled
+                  className="payment-statement-basic-info-detail-form__address-search"
+                  modalZIndex={PAYMENT_STATEMENT_ADDRESS_SEARCH_MODAL_Z_INDEX}
+                />
+              ) : editable && !profileLocked ? (
                 <AddressSearch
                   value={v.addressRoad}
                   onChange={next => patch({ addressRoad: next })}
@@ -292,7 +382,7 @@ export function PaymentStatementBasicInfoDetailForm({
                   placeholder="건물명, 도로명 또는 지번"
                   value={v.addressRoad}
                   onChange={e => patch({ addressRoad: e.target.value })}
-                  width="auto"
+                  width={iw?.address ?? 'auto'}
                   aria-label="도로명·지번 주소 (발급 시 자동 입력)"
                 />
               )}
@@ -303,7 +393,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 placeholder="상세 주소"
                 value={v.addressDetail}
                 onChange={e => patch({ addressDetail: e.target.value })}
-                width="auto"
+                width={iw?.address ?? pw?.address ?? 'auto'}
                 aria-label="상세 주소 (발급 시 자동 입력)"
               />
             </div>
@@ -322,19 +412,20 @@ export function PaymentStatementBasicInfoDetailForm({
                 disabled={allAutofillLocked}
                 inputSize="small"
                 placeholder="은행명"
-                width={200}
+                width={iw?.bank ?? pw?.bank ?? 200}
                 value={v.bankName}
                 onChange={e => patch({ bankName: e.target.value })}
                 aria-label="은행명 (발급 시 자동 입력)"
               />
+              {issuanceTemplate || preConsentTemplate ? <DetailInfoForm.InputsSeparator /> : null}
               <CmsNumericInput
                 mode="numericText"
                 disabled={allAutofillLocked}
                 inputSize="small"
-                placeholder="계좌번호(숫자만)"
+                placeholder={issuanceTemplate ? '계좌번호' : '계좌번호(숫자만)'}
                 value={v.accountNumber}
                 onValueChange={value => patch({ accountNumber: value })}
-                width={200}
+                width={iw?.account ?? pw?.account ?? 200}
                 aria-label="계좌번호 (발급 시 자동 입력)"
               />
               <DetailInfoForm.InputsSeparator />
@@ -344,7 +435,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 placeholder="예금주명"
                 value={v.accountHolder}
                 onChange={e => patch({ accountHolder: e.target.value })}
-                width={200}
+                width={iw?.holder ?? pw?.holder ?? 200}
                 aria-label="예금주명 (발급 시 자동 입력)"
               />
             </div>
@@ -363,7 +454,7 @@ export function PaymentStatementBasicInfoDetailForm({
               inputSize="small"
               placeholder="강사비 지급"
               value={v.paymentPurpose}
-              width="100%"
+              width={iw != null && !isSettlementIssuanceTemplate ? iw.paymentPurpose : '100%'}
               aria-label="지급 목적 (고정 문구)"
             />
           }

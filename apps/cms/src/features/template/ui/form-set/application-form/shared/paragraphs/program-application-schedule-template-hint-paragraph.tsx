@@ -1,5 +1,6 @@
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-application-schedule-template-hint-paragraph.css'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 export const PROGRAM_APPLICATION_SCHEDULE_TEMPLATE_DEFAULT_HINT =
   '프로그램 등록 / 모집 폼의 설정값에 따라 상이'
@@ -10,7 +11,7 @@ export const PROGRAM_APPLICATION_SCHEDULE_STRUCTURE_HINT =
 
 /** 강의/면접 진행 가능일 요약 칸 — 템플릿·미선택 시 안내 */
 export const PROGRAM_APPLICATION_SCHEDULE_SUMMARY_HINT =
-  '신청자가 선택한 진행 가능일이 노출됩니다.'
+  '일정을 먼저 선택해 주세요'
 
 /** 강사·Gemini 강사 신청 — 템플릿 write 모드 강의 진행 가능 일정 안내 */
 export const PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT =
@@ -47,11 +48,14 @@ export function ProgramApplicationScheduleTemplateHintParagraph({
   hintText = PROGRAM_APPLICATION_SCHEDULE_TEMPLATE_DEFAULT_HINT,
   fillScheduleSide = false,
 }: ProgramApplicationScheduleTemplateHintParagraphProps) {
+  /** 템플릿 관리 신청 폼 시안(12875:514537 등) — 흰 배경·테두리 박스, 높이 200, 안내 18px */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
     <div
       className={[
         'program-application-schedule-template-hint',
         fillScheduleSide ? 'program-application-schedule-template-hint--fillScheduleSide' : '',
+        isTemplateManagementScreen ? 'program-application-schedule-template-hint--spec' : '',
       ]
         .filter(Boolean)
         .join(' ')}

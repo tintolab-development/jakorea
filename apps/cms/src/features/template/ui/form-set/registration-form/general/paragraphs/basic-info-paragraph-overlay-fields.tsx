@@ -39,8 +39,46 @@ import {
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 type OperationRangeSeal = { start: string; end: string } | null
+
+/**
+ * 교육받은 교사 템플릿 관리 등록 폼(시안 5767:196354) IP Owned·Course Delivered By 초기값 「JA」.
+ * 신규 등록 RHF 시작값(`createNewTrainedTeachersRegistrationRhfValues`)과 같다. 템플릿 관리에는 RHF가 없어
+ * overlay 키가 비어 있을 때만 쓴다. 일반 프로그램·프로그램 화면은 기존대로 미선택.
+ */
+const TRAINED_TEACHERS_TEMPLATE_IPS_OWNER_DEFAULT = 'ja'
+
+function useTrainedTeachersTemplateSelectDefault(trainedTeachersDefaults: boolean): string {
+  const isTemplateManagement = useIsTemplateManagementScreen()
+  return trainedTeachersDefaults && isTemplateManagement
+    ? TRAINED_TEACHERS_TEMPLATE_IPS_OWNER_DEFAULT
+    : ''
+}
+
+/** 일반 프로그램 템플릿 관리 등록 폼 시안(12931:3800 · 12829:411618) 셀렉트 폭 — 교육 과정·IP Owned·Course Delivered By */
+const GENERAL_TEMPLATE_IPS_OWNER_SELECT_WIDTH = 140
+/** 같은 시안 「사업 분야」 셀렉트 폭 */
+const GENERAL_TEMPLATE_BUSINESS_FIELD_SELECT_WIDTH = 200
+/** 등록 위저드·상세 수정 기존 폭 */
+const DEFAULT_BASIC_INFO_SELECT_WIDTH = 240
+
+/** 교육받은 교사 템플릿 관리 등록 폼 시안(5767:196354) — 교육 과정·IP Owned·Course Delivered By ≈200 (사업 분야는 240 그대로) */
+const TRAINED_TEACHERS_TEMPLATE_IPS_OWNER_SELECT_WIDTH = 200
+
+/** 템플릿 관리 화면에서만 시안 폭을 쓴다. 등록·상세는 기존 폭 */
+function useGeneralTemplateSelectWidth(
+  trainedTeachersDefaults: boolean,
+  templateWidth: number
+): number {
+  const isTemplateManagement = useIsTemplateManagementScreen()
+  if (!isTemplateManagement) return DEFAULT_BASIC_INFO_SELECT_WIDTH
+  if (!trainedTeachersDefaults) return templateWidth
+  return templateWidth === GENERAL_TEMPLATE_IPS_OWNER_SELECT_WIDTH
+    ? TRAINED_TEACHERS_TEMPLATE_IPS_OWNER_SELECT_WIDTH
+    : DEFAULT_BASIC_INFO_SELECT_WIDTH
+}
 
 function participantTypeLabel(
   value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']
@@ -201,10 +239,16 @@ export const ProgramRegistrationBasicInfoParticipantTypesField = memo(
 export const ProgramRegistrationBasicInfoBusinessFieldField = memo(
   function ProgramRegistrationBasicInfoBusinessFieldField({
     overlayPrefix,
+    trainedTeachersDefaults = false,
   }: Pick<OverlayPrefixProps, 'overlayPrefix'> & Partial<OverlayPrefixProps>) {
+    const width = useGeneralTemplateSelectWidth(
+      trainedTeachersDefaults,
+      GENERAL_TEMPLATE_BUSINESS_FIELD_SELECT_WIDTH
+    )
     return (
       <ProgramRegistrationOverlaySelectField
         label="사업 분야"
+        width={width}
         validationKey="basicInfo.businessField"
         overlayKey={`${overlayPrefix}.businessField`}
         placeholder="사업 분야를 선택해 주세요"
@@ -313,6 +357,10 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
       `${overlayPrefix}.educationCourse`,
       trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
     )
+    const selectWidth = useGeneralTemplateSelectWidth(
+      trainedTeachersDefaults,
+      GENERAL_TEMPLATE_IPS_OWNER_SELECT_WIDTH
+    )
     const educationCourse = trainedTeachersDefaults
       ? normalizeTrainedTeachersAllSelectValue(educationCourseRaw)
       : educationCourseRaw
@@ -327,7 +375,7 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
               inputSize="small"
               placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
               withAllOption={false}
-              width={240}
+              width={selectWidth}
               options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
               value={trainedTeachersDefaults ? educationCourse : educationCourse || undefined}
               onChange={v => setEducationCourse(String(v ?? ''))}
@@ -345,14 +393,20 @@ export const ProgramRegistrationBasicInfoIpOwnedField = memo(
     overlayPrefix,
     trainedTeachersDefaults,
   }: OverlayPrefixProps) {
+    const defaultValue = useTrainedTeachersTemplateSelectDefault(trainedTeachersDefaults)
+    const selectWidth = useGeneralTemplateSelectWidth(
+      trainedTeachersDefaults,
+      GENERAL_TEMPLATE_IPS_OWNER_SELECT_WIDTH
+    )
     return (
       <ProgramRegistrationOverlaySelectField
+        width={selectWidth}
         label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
         validationKey="basicInfo.ipOwned"
         overlayKey={`${overlayPrefix}.ipOwned`}
         placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
         options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
-        defaultValue=""
+        defaultValue={defaultValue}
       />
     )
   }
@@ -363,14 +417,20 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
     overlayPrefix,
     trainedTeachersDefaults,
   }: OverlayPrefixProps) {
+    const defaultValue = useTrainedTeachersTemplateSelectDefault(trainedTeachersDefaults)
+    const selectWidth = useGeneralTemplateSelectWidth(
+      trainedTeachersDefaults,
+      GENERAL_TEMPLATE_IPS_OWNER_SELECT_WIDTH
+    )
     return (
       <ProgramRegistrationOverlaySelectField
+        width={selectWidth}
         label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
         validationKey="basicInfo.courseDeliveredBy"
         overlayKey={`${overlayPrefix}.courseDeliveredBy`}
         placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
         options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
-        defaultValue=""
+        defaultValue={defaultValue}
       />
     )
   }
@@ -384,16 +444,19 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
     const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
       'yes' | 'no' | ''
     >(`${overlayPrefix}.partnerInvolvement`, '')
+    const isTemplateManagement = useIsTemplateManagementScreen()
 
     // 일반: 시안대로 미선택('')은 미선택 표시 — 등록 시 필수 선택(`basicInfo.partnerInvolvement`).
-    // 교육받은 교사: 미선택('')·키 없음은 저장 빌더(`partnerInvolvementFromOverlay`)와 동일하게 No — 'yes'만 Yes
-    const radioValue = trainedTeachersDefaults
-      ? partnerInvolvement === 'yes'
-        ? 'yes'
-        : 'no'
-      : partnerInvolvement === 'yes' || partnerInvolvement === 'no'
-        ? partnerInvolvement
-        : ''
+    // 교육받은 교사: 미선택('')·키 없음은 저장 빌더(`partnerInvolvementFromOverlay`)와 동일하게 No — 'yes'만 Yes.
+    // 단, 템플릿 관리 화면은 라디오를 모두 미선택으로 시작한다(사용자 결정 2026-11-13) — 고른 값만 보인다.
+    const radioValue =
+      trainedTeachersDefaults && !isTemplateManagement
+        ? partnerInvolvement === 'yes'
+          ? 'yes'
+          : 'no'
+        : partnerInvolvement === 'yes' || partnerInvolvement === 'no'
+          ? partnerInvolvement
+          : ''
 
     return (
       <DetailInfoForm.Field

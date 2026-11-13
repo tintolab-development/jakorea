@@ -23,6 +23,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './institution-sex-offense-consent-inquiry-paragraph.css'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 const nowrapSpanStyle = { whiteSpace: 'nowrap' as const, flexShrink: 0 as const }
 
@@ -42,9 +43,14 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
 } = {}) {
   const visibilityVersion = useInstitutionApplicationFormVisibilityVersion()
   void visibilityVersion
+  /**
+   * 템플릿 관리 시안(12875:513810·514854) — 조회 방식 미선택으로 시작(사이트 입력란 미노출),
+   * 라디오 간격 16, 하단 안내 글머리표 목록
+   */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [inquiryMethod, setInquiryMethod] = useGeneralApplicationOverlayKv<string>(
     'application.institution.sexOffense.inquiryMethod',
-    DEFAULT_SEX_OFFENSE_INQUIRY_METHOD
+    isTemplateManagementScreen ? '' : DEFAULT_SEX_OFFENSE_INQUIRY_METHOD
   )
   const [siteSubmission, setSiteSubmission] = useGeneralApplicationOverlayKv<string>(
     'application.institution.sexOffense.siteSubmission',
@@ -67,6 +73,8 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
   useEffect(() => {
     if (choiceDisplayOnly) return
     if (!isSexOffenseInquiryMethod(inquiryMethod)) {
+      // 템플릿 관리 — 미선택('') 유지
+      if (isTemplateManagementScreen && inquiryMethod === '') return
       setInquiryMethod(DEFAULT_SEX_OFFENSE_INQUIRY_METHOD)
     }
     patchInstitutionSexOffenseConsentInquiryMethod(
@@ -74,7 +82,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
         ? inquiryMethod
         : DEFAULT_SEX_OFFENSE_INQUIRY_METHOD) as InstitutionSexOffenseConsentInquiryMethod
     )
-  }, [choiceDisplayOnly, inquiryMethod, setInquiryMethod])
+  }, [choiceDisplayOnly, inquiryMethod, isTemplateManagementScreen, setInquiryMethod])
 
   useEffect(() => {
     if (choiceDisplayOnly) return
@@ -92,7 +100,11 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
     return null
   }
 
-  const displayInquiryMethod = choiceDisplayOnly ? resolvedInquiryMethod : inquiryMethod
+  const displayInquiryMethod = choiceDisplayOnly
+    ? resolvedInquiryMethod
+    : isSexOffenseInquiryMethod(inquiryMethod)
+      ? inquiryMethod
+      : undefined
   const displaySiteSubmission = choiceDisplayOnly
     ? undefined
     : isSexOffenseSiteSubmission(siteSubmission)
@@ -125,7 +137,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
             setInstitutionId('')
             setVerificationNumber('')
           }}
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: isTemplateManagementScreen ? 16 : 8 }}
         >
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS.map(option => (
             <CmsRadio size="medium" key={option.value} value={option.value}>
@@ -149,7 +161,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
             if (choiceDisplayOnly) return
             setSiteSubmission(event.target.value)
           }}
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: isTemplateManagementScreen ? 16 : 8 }}
         >
           {INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS.map(option => (
             <CmsRadio size="medium" key={option.value} value={option.value}>
@@ -212,7 +224,14 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
           </DetailInfoForm.Row>
         ) : null}
       </DetailInfoForm>
-      <div className="institution-sex-offense-inquiry__notes">
+      <div
+        className={[
+          'institution-sex-offense-inquiry__notes',
+          isTemplateManagementScreen && 'institution-sex-offense-inquiry__notes--spec',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <ul className="institution-sex-offense-inquiry__note-list">
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES.map(note => (
             <li key={note}>{note}</li>

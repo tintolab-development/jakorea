@@ -138,7 +138,11 @@ export function TemplateFullpageModal({
 }: TemplateFullpageModalProps) {
   const bodyRef = useRef<HTMLDivElement>(null)
   // 양식 관리 「양식 상세보기」 조회 모드 — 본문 잠금, 저장·삭제 대신 「수정」
-  const { readOnly: detailReadOnly, onRequestEdit } = useTemplateDetailViewMode()
+  const {
+    readOnly: detailReadOnly,
+    onRequestEdit,
+    templateManagement: isTemplateManagementScreen,
+  } = useTemplateDetailViewMode()
   const resolvedShowSave = showSave && !detailReadOnly
   const resolvedShowDeleteButton = showDeleteButton && !detailReadOnly
   const resolvedFooterActions = bodyLoading
@@ -150,6 +154,8 @@ export function TemplateFullpageModal({
     rightNavigation == null ? 'full-page-modal--no-right-nav' : '',
     bodyLoading ? 'full-page-modal--body-loading' : '',
     detailReadOnly ? 'full-page-modal--detail-read-only' : '',
+    // 템플릿 관리(작성·발급 양식 탭) 편집기 — 표 칸 여백을 시안 치수로 (template-fullpage-modal.css)
+    isTemplateManagementScreen === true ? 'full-page-modal--template-management' : '',
     className,
   ]
     .filter(Boolean)

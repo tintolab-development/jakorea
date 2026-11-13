@@ -18,7 +18,7 @@ const CRIME_RECORD_ID = PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord
 describe('공통_강사 신청 폼 성범죄경력 조회 동의서 제출 방법 안내 단락 migration', () => {
   it('안내 본문·불릿·확인 문구가 Figma 시안과 같다', () => {
     expect(INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO).toBe(
-      '기관 배정 시 마이페이지 > 해당 프로그램 상세에서 배정된 기관이 요청한 제출 방식을 꼭 확인해 주세요.'
+      '기관에 배정되면 마이페이지 > 해당 프로그램 상세에서 배정된 기관이 요청한 제출 방식을 꼭 확인해 주세요.'
     )
     expect(INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS).toEqual([
       {

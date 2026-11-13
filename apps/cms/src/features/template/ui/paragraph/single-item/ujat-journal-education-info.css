@@ -118,3 +118,76 @@
   flex: 1 1 auto !important;
   min-width: 0 !important;
 }
+
+/*
+ * 템플릿 관리 편집기(UJAT 교육일지 교육 정보) — 시안 5767:44886
+ * 헤더 180·8×16, 본문 셀 12 패딩, 입력 h36·14px, 담당 학교명·수업 일자 240, 학년 120 | 반 120, 구분선 좌우 16
+ */
+.ujat-journal-edu-info--template .form-editor-vertical-table__th {
+  width: 180px;
+  min-width: 180px;
+  min-height: 52px;
+  padding: 8px 16px;
+}
+
+.ujat-journal-edu-info--template .form-editor-vertical-table__td {
+  min-height: 52px;
+  padding: 12px;
+}
+
+.ujat-journal-edu-info--template .form-editor-vertical-table__cell-input-shell {
+  min-height: 36px;
+}
+
+.ujat-journal-edu-info--template .ujat-journal-edu-info__field-wrap,
+.ujat-journal-edu-info--template .ujat-journal-edu-info__class-wrap {
+  height: 36px;
+  padding: 0 14px;
+}
+
+.ujat-journal-edu-info--template .ujat-journal-edu-info__field-wrap {
+  flex: 0 0 auto;
+  width: 240px;
+}
+
+.ujat-journal-edu-info--template .ujat-journal-edu-info__class-wrap {
+  flex: 0 0 auto;
+  width: 120px;
+}
+
+.ujat-journal-edu-info--template .ujat-journal-edu-info__grade-class-row {
+  gap: 16px;
+  width: auto;
+}
+
+.ujat-journal-edu-info--template .ujat-journal-edu-info__divider {
+  margin: 0;
+}
+
+.ujat-journal-edu-info--template .ujat-journal-edu-info__school-input.ant-input,
+.ujat-journal-edu-info--template .ujat-journal-edu-info__class-input.ant-input,
+.ujat-journal-edu-info--template .ant-picker .ant-picker-input > input {
+  font-size: 14px !important;
+  line-height: 140% !important;
+}
+
+.ujat-journal-edu-info--template .ujat-journal-edu-info__school-input.ant-input::placeholder,
+.ujat-journal-edu-info--template .ujat-journal-edu-info__class-input.ant-input::placeholder,
+.ujat-journal-edu-info--template .ant-picker .ant-picker-input > input::placeholder {
+  font-size: 14px;
+  line-height: 140%;
+}
+
+.ujat-journal-edu-info--template
+  .ujat-journal-edu-info__dt-picker.form-editor-vertical-table__field-box.form-editor-vertical-table__field-box--picker.ant-picker {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 14px 0 10px;
+}
+
+.ujat-journal-edu-info--template
+  .ujat-journal-edu-info__dt-picker.form-editor-vertical-table__dt-picker--full {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+}

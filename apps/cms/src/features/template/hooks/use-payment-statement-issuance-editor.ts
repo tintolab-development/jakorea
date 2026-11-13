@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import {
+  getFormNavDisplayLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import {
@@ -10,6 +14,7 @@ import {
 import { usePaymentStatementIssuanceMiddleActions } from '@/features/template/hooks/use-payment-statement-issuance-middle-actions'
 import {
   createPaymentStatementIssuanceDraft,
+  migratePaymentStatementIssuanceParagraphs,
   PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-issuance-draft'
 import {
@@ -51,8 +56,9 @@ export function usePaymentStatementIssuanceEditor(
 
   const applyDraftSnapshot = useCallback((next: WritingFormDraft) => {
     // 양식 관리 견본 — 고정 발급일 대신 자리 표시(실발급은 발급 시점 날짜로 새 draft 사용)
+    // 예전 저장본(산출 정보 7항목·산출 행 표) → 시안 5767:46455 구성 보정(서버·로컬 경로 공통, 멱등)
     const normalized = maskPaymentStatementIssuanceClosingDateForAuthoring(
-      normalizeWritingFormDraft(next)
+      migratePaymentStatementIssuanceParagraphs(normalizeWritingFormDraft(next))
     )
     setDraft(normalized)
     setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
@@ -149,9 +155,14 @@ export function usePaymentStatementIssuanceEditor(
     setSingleItemListActiveItemId(null)
   }, [])
 
+  /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
     const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
-    const { titleNumbering } = draft.formSettings
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen
+    )
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
@@ -170,7 +181,7 @@ export function usePaymentStatementIssuanceEditor(
       sortableMiddle: middle.map(line),
       pinnedBottom: bottomLines.length === 1 ? bottomLines[0]! : bottomLines,
     }
-  }, [draft])
+  }, [draft, isTemplateManagementScreen])
 
   const writingPreviewSession = useMemo(
     () => ({

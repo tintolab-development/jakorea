@@ -32,6 +32,8 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   onVolunteerChange: (checked: boolean) => void
   hideEducationPlace?: boolean
   includeFooterIpsType?: boolean
+  /** 하단 박스(교육 과정·IP·Partner) 뒤에 붙일 행 — 교육받은 교사 템플릿 「IPS 유형」 등. 생략 시 기존 그대로 */
+  footerExtraRows?: ReactNode
   participantTypesEdit?: ReactNode
   sponsorId?: string
   onSponsorIdChange?: (sponsorId: string) => void
@@ -50,6 +52,7 @@ export function ProgramRegistrationBasicInfoParagraph({
   onVolunteerChange,
   hideEducationPlace = false,
   includeFooterIpsType = false,
+  footerExtraRows,
   participantTypesEdit,
   sponsorId: sponsorIdProp,
   onSponsorIdChange,
@@ -137,6 +140,7 @@ export function ProgramRegistrationBasicInfoParagraph({
             <ProgramRegistrationBasicInfoFooterIpsTypeField {...overlayFieldProps} />
           </DetailInfoForm.Row>
         ) : null}
+        {footerExtraRows}
       </DetailInfoForm>
     </>
   )

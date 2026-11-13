@@ -5,7 +5,10 @@
  */
 
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  FormEditorKind,
+  WritingFormDraft,
+} from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import {
   getA4DocumentTitle,
@@ -45,6 +48,8 @@ type UseAgreementDocumentPdfArgs = {
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   agreementClosingFooter?: { showSubmitButton?: boolean; showRecipient?: boolean }
+  /** 기본 동의 양식. 템플릿 관리 신규 설문(시안 12723:137188)은 `survey` */
+  editorKind?: Extract<FormEditorKind, 'agreement' | 'survey'>
 }
 
 type UseAgreementDocumentPdfResult = {
@@ -64,6 +69,7 @@ export function useAgreementDocumentPdf({
   a4ParagraphGapPx,
   paragraphBodyOptions,
   agreementClosingFooter,
+  editorKind = 'agreement',
 }: UseAgreementDocumentPdfArgs): UseAgreementDocumentPdfResult {
   const { showAlert } = useCmsAlert()
   const hostRef = useRef<HTMLDivElement>(null)
@@ -85,7 +91,7 @@ export function useAgreementDocumentPdf({
   const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
     allParagraphs: previewParagraphs,
     titleNumbering: draft.formSettings.titleNumbering,
-    editorKind: 'agreement',
+    editorKind,
     enabled,
     paragraphBodyOptions,
     renderMode: a4RenderMode,
@@ -129,7 +135,7 @@ export function useAgreementDocumentPdf({
                 paragraphs={pageParagraphs}
                 allParagraphs={previewParagraphs}
                 titleNumbering={draft.formSettings.titleNumbering}
-                editorKind="agreement"
+                editorKind={editorKind}
                 overflowParagraphIds={overflowParagraphIds}
                 paragraphBodyOptions={paragraphBodyOptions}
                 renderMode={a4RenderMode}

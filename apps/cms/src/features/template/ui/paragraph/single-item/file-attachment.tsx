@@ -5,6 +5,7 @@ import {
   type FileAttachmentParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   ADMIN_FILE_OWNER,
   ADMIN_FILE_PURPOSE,
@@ -18,6 +19,12 @@ const EDUCATION_DOCUMENT_PHOTOS_ACCEPT = '.jpg,.jpeg,.png'
 
 const EDUCATION_DOCUMENT_PHOTOS_GUIDE_LINES = [
   '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+]
+
+/** 템플릿 관리 편집기 — 시안 5767:44347·5767:44785 교육 사진 안내 2줄(특수문자 안내 포함) */
+const EDUCATION_DOCUMENT_PHOTOS_TEMPLATE_GUIDE_LINES = [
+  ...EDUCATION_DOCUMENT_PHOTOS_GUIDE_LINES,
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const EDUCATION_DOCUMENT_PHOTOS_PARAGRAPH_IDS = new Set<string>([
@@ -34,6 +41,7 @@ export function FileAttachment({
   onChange?: (next: FileAttachmentParagraph) => void
   isEditMode: boolean
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [fileNames, setFileNames] = useState<string[]>([])
   const isEducationDocumentPhotos = EDUCATION_DOCUMENT_PHOTOS_PARAGRAPH_IDS.has(paragraph.id)
 
@@ -44,7 +52,11 @@ export function FileAttachment({
         <ParagraphFileUpload
           accept={isEducationDocumentPhotos ? EDUCATION_DOCUMENT_PHOTOS_ACCEPT : '.jpg,.jpeg,.png'}
           guideLines={
-            isEducationDocumentPhotos ? EDUCATION_DOCUMENT_PHOTOS_GUIDE_LINES : undefined
+            isEducationDocumentPhotos
+              ? isTemplateManagementScreen
+                ? EDUCATION_DOCUMENT_PHOTOS_TEMPLATE_GUIDE_LINES
+                : EDUCATION_DOCUMENT_PHOTOS_GUIDE_LINES
+              : undefined
           }
           multiple
           disabled={!isEditMode}

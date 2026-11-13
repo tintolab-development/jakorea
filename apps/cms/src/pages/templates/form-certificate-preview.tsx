@@ -10,6 +10,7 @@ import templateStamp from '@/assets/images/template/template-stamp.png'
 import {
   DEFAULT_CERTIFICATE_PARTICIPANT_LAYOUT,
   type CertificateParticipantLayout,
+  type CertificateVariableChips,
 } from '@/features/template/lib/certificate-participant-layout'
 import { CertificatePreviewFooter } from './certificate-preview-footer'
 import { CertificatePreviewParticipantBlock } from './certificate-preview-participant-block'
@@ -95,10 +96,15 @@ export interface FormCertificatePreviewProps {
    */
   showSampleWatermark?: boolean
   /**
-   * 증명서 종류별 참여자 정보 줄 구성·기본 배경. 미지정 시 6줄 + 라벨 합성 기본 배경.
-   * 활동인증서는 5줄 + 라벨 없는 기본 배경(라벨을 시스템이 그림).
+   * 증명서 종류별 참여자 정보 줄 라벨(기간 줄 — 수료증 「프로그램 기간」·참가인증서 「참여기간」·활동인증서 「활동기간」)·기본 배경.
+   * 라벨은 배경과 상관없이 늘 HTML로 그린다(기본 배경에는 라벨이 없다).
    */
   participantLayout?: CertificateParticipantLayout
+  /**
+   * 템플릿 관리 인증서 편집 캔버스 전용 — 참여자 정보 값·발급일자 자리에 변수 칩(@성명·@발급일자 등)을 그린다.
+   * 실제 발급 PDF·프로그램 발급 화면·미리보기 팝업은 넘기지 않는다(실제 값 표시).
+   */
+  variableChips?: CertificateVariableChips
 }
 
 /** PDF 캡처 시 편집용 닷·프레임을 숨길 때 루트에 붙이는 클래스 */
@@ -111,9 +117,9 @@ export const FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS = `${P}__pdf-export-
  * 양식 관리 — 봉사활동인증서 프리뷰 슬롯
  * 캔버스(1144×1618 비율) 기준 절대 배치 오버레이
  *
- * 기본 `certificate-background.png`는 로고·참여자 라벨·서명·직인·푸터가
+ * 기본 `certificate-background.png`는 로고·서명·직인·푸터가
  * 합성된 이미지이므로, 업로드 배경이 없을 때는 해당 HTML 레이어를 숨긴다.
- * (타이틀·본문·발급일·고유번호·참여자 값만 오버레이)
+ * (타이틀·본문·발급일·고유번호·참여자 라벨·값만 오버레이 — 참여자 라벨은 증명서마다 달라 배경에 넣지 않는다)
  */
 export function FormCertificatePreview({
   orgLogoPreviewSrc,
@@ -138,6 +144,7 @@ export function FormCertificatePreview({
   serialNumber = CERTIFICATE_SERIAL_PLACEHOLDER,
   showSampleWatermark = false,
   participantLayout = DEFAULT_CERTIFICATE_PARTICIPANT_LAYOUT,
+  variableChips,
 }: FormCertificatePreviewProps) {
   const logoSrc = orgLogoPreviewSrc ?? templateLogo
   const educationSrc = orgLogo02PreviewSrc ?? templateEducation
@@ -154,9 +161,6 @@ export function FormCertificatePreview({
   const showLogoLayer = showBakedInStaticLayers || Boolean(orgLogoPreviewSrc)
   const showEducationLayer = showBakedInStaticLayers || Boolean(orgLogo02PreviewSrc)
   const showStampLayer = showBakedInStaticLayers || Boolean(chairmanSealPreviewSrc)
-  /** 라벨이 그려지지 않은 기본 배경(활동인증서)도 라벨을 HTML로 그린다 */
-  const showParticipantLabels =
-    showBakedInStaticLayers || !participantLayout.defaultBackgroundHasParticipantLabels
 
   const previewActiveFieldName =
     activeFieldName != null && shouldShowCertificateEditChrome(activeFieldName)
@@ -236,7 +240,7 @@ export function FormCertificatePreview({
             role={showBackgroundEditChrome ? 'button' : undefined}
             tabIndex={showBackgroundEditChrome ? 0 : undefined}
             className={cn(`${P}__canvas-bg`, shouldDim(region, 'canvas') && FRAME_DIMMED)}
-            aria-label="수료증 배경 편집"
+            aria-label="양식 배경 편집"
             {...(showBackgroundEditChrome
               ? getRegionActivationHandlers(bgField, onRegionClick)
               : {})}
@@ -259,8 +263,8 @@ export function FormCertificatePreview({
             {displaySerialNumber}
           </span>
           {showSampleMark ? (
-            <span className={`${P}__sample-mark`} data-certificate-sample="mark" aria-label="견본">
-              SAMPLE
+            <span className={`${P}__sample-mark`} data-certificate-sample="mark">
+              견본(SAMPLE)
             </span>
           ) : null}
           {showLogoLayer ? (
@@ -337,7 +341,7 @@ export function FormCertificatePreview({
             participantTextColor={participantTextColor}
             onRegionClick={undefined}
             showEditChrome={false}
-            showLabels={showParticipantLabels}
+            variableChips={variableChips?.participantRows}
           />
           <p
             role={showBodyEditChrome ? 'button' : undefined}
@@ -362,12 +366,25 @@ export function FormCertificatePreview({
               </Fragment>
             ))}
           </p>
-          <time
-            className={cn(`${P}__issue-date`, shouldDim(region, 'decor') && FRAME_DIMMED)}
-            dateTime={certificateIssueDateIso(issueDate)}
-          >
-            {formatCertificateIssueDate(issueDate)}
-          </time>
+          {variableChips != null ? (
+            <span
+              className={cn(
+                `${P}__variable-chip`,
+                `${P}__variable-chip--issue-date`,
+                shouldDim(region, 'decor') && FRAME_DIMMED
+              )}
+              data-certificate-variable-chip="issue-date"
+            >
+              {variableChips.issueDate}
+            </span>
+          ) : (
+            <time
+              className={cn(`${P}__issue-date`, shouldDim(region, 'decor') && FRAME_DIMMED)}
+              dateTime={certificateIssueDateIso(issueDate)}
+            >
+              {formatCertificateIssueDate(issueDate)}
+            </time>
+          )}
           {showBakedInStaticLayers ? (
             <p className={cn(`${P}__org-name`, shouldDim(region, 'decor') && FRAME_DIMMED)}>
               사단법인 제이에이코리아

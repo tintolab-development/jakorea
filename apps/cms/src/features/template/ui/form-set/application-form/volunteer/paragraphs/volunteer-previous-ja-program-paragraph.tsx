@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import {
   useGeneralApplicationOverlayKv,
@@ -16,7 +17,7 @@ import {
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
@@ -38,6 +39,8 @@ function displayLabel(row: AttachmentRow): string {
 export function VolunteerPreviousJaProgramParagraph(props?: {
   programId?: string | number | null
 }) {
+  /** 템플릿 관리 시안(12875:514060) — 진행년도 입력 140 고정, 프로그램명 입력이 남은 폭 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [applicationYear, setApplicationYear] = useGeneralApplicationOverlayKv(
     'application.volunteer.previousProgram.applicationYear',
     ''
@@ -80,8 +83,12 @@ export function VolunteerPreviousJaProgramParagraph(props?: {
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsInput
                 inputSize="small"
-                width="100%"
-                style={{ flex: '3 1 0', minWidth: 0 }}
+                width={isTemplateManagementScreen ? 140 : '100%'}
+                style={
+                  isTemplateManagementScreen
+                    ? { flex: '0 0 140px' }
+                    : { flex: '3 1 0', minWidth: 0 }
+                }
                 placeholder="진행년도"
                 value={applicationYear}
                 onChange={e => setApplicationYear(e.target.value)}
@@ -91,7 +98,7 @@ export function VolunteerPreviousJaProgramParagraph(props?: {
                 inputSize="small"
                 width="100%"
                 style={{ flex: '7 1 0', minWidth: 0 }}
-                placeholder="프로그램명"
+                placeholder="참여한 봉사 프로그램명을 입력해 주세요"
                 value={programName}
                 onChange={e => setProgramName(e.target.value)}
               />

@@ -5,7 +5,12 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { RECRUIT_FORM_MAX_SUFFIX_CLASS } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
+import {
+  RECRUIT_FORM_MAX_SUFFIX_CLASS,
+  RECRUIT_TEMPLATE_ANNOUNCE_DATE_WIDTH,
+  RECRUIT_TEMPLATE_FIXED_DATE_STYLE,
+  RECRUIT_TEMPLATE_INTERVIEW_METHOD_WIDTH,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
@@ -50,6 +55,10 @@ export function RecruitInterviewConditionalRows({
   const docAnnouncePlaceholder = showSpecPlaceholder ? '합격자 발표일을 선택해 주세요' : '발표일'
   const finalAnnouncePlaceholder = showSpecPlaceholder ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'
   const finalAnnounceDisabledDate = createFinalAnnounceDisabledDate(state.recruitRange)
+  /** 템플릿 관리 시안 — 발표일 날짜 칸 고정 240 (등록·상세는 기존 남은 폭 채움) */
+  const announceDateSizing = isTemplateManagementScreen
+    ? { width: RECRUIT_TEMPLATE_ANNOUNCE_DATE_WIDTH, style: RECRUIT_TEMPLATE_FIXED_DATE_STYLE }
+    : {}
   if (interviewEnabled) {
     return (
       <>
@@ -94,6 +103,7 @@ export function RecruitInterviewConditionalRows({
                   mode="single"
                   presetMode="date"
                   value={state.docDeadlineDate}
+                  {...announceDateSizing}
                   placeholder={docAnnouncePlaceholder}
                   suppressAutoTodayWhenEmpty
                   onChange={next => state.setDocDeadlineDate(next)}
@@ -142,7 +152,7 @@ export function RecruitInterviewConditionalRows({
                 <DetailInfoForm.InputsSeparator />
                 <CmsSelect
                   inputSize="small"
-                  width={140}
+                  width={isTemplateManagementScreen ? RECRUIT_TEMPLATE_INTERVIEW_METHOD_WIDTH : 140}
                   placeholder="면접 유형"
                   options={INTERVIEW_METHOD_OPTIONS}
                   withAllOption={false}
@@ -166,6 +176,7 @@ export function RecruitInterviewConditionalRows({
                   mode="single"
                   presetMode="date"
                   value={state.finalAnnounceDate}
+                  {...announceDateSizing}
                   disabledDate={finalAnnounceDisabledDate}
                   placeholder={finalAnnouncePlaceholder}
                   suppressAutoTodayWhenEmpty
@@ -231,6 +242,7 @@ export function RecruitInterviewConditionalRows({
               mode="single"
               presetMode="date"
               value={state.finalAnnounceDate}
+              {...announceDateSizing}
               disabledDate={finalAnnounceDisabledDate}
               placeholder={finalAnnouncePlaceholder}
               suppressAutoTodayWhenEmpty

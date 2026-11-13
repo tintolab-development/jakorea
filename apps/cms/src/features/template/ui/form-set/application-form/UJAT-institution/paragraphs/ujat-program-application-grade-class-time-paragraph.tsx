@@ -5,6 +5,7 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import {
   UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
@@ -44,6 +45,9 @@ function PeriodTimeFields({
     patch: { start?: string | null; end?: string | null }
   ) => void
 }) {
+  /** 템플릿 관리 시안(12875:515171) — 수업 시작/종료 입력 120, 「~」 12px #85969d, 간격 6 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const timeInputWidth = isTemplateManagementScreen ? 120 : 168
   const stored = periodsByBlock[blockKey]?.[periodId]
   const start = stored?.start ? dayjs(stored.start) : null
   const end = stored?.end ? dayjs(stored.end) : null
@@ -52,7 +56,15 @@ function PeriodTimeFields({
     <DetailInfoForm.Field
       label={periodLabel}
       edit={
-        <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap ujat-program-application-grade-class-time-paragraph__period-inputs">
+        <div
+          className={[
+            'detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap ujat-program-application-grade-class-time-paragraph__period-inputs',
+            isTemplateManagementScreen &&
+              'ujat-program-application-grade-class-time-paragraph__period-inputs--spec',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           <ParagraphTimePicker inputSize="small"
             value={start?.isValid() ? start : null}
             onChange={value =>
@@ -61,7 +73,7 @@ function PeriodTimeFields({
               })
             }
             placeholder="수업 시작"
-            width={168}
+            width={timeInputWidth}
           />
           <span className="ujat-program-application-grade-class-time-paragraph__tilde">~</span>
           <ParagraphTimePicker inputSize="small"
@@ -72,7 +84,7 @@ function PeriodTimeFields({
               })
             }
             placeholder="수업 종료"
-            width={168}
+            width={timeInputWidth}
           />
         </div>
       }
