@@ -1416,7 +1416,7 @@ export class GeneralProgramRegistrationPage {
     await this.fillApplicationConsentIfPresent()
     await checkRadioIfVisible(this.page, '있음')
     await fillByPlaceholderIfVisible(this.page, '진행년도', '2025')
-    await fillByPlaceholderIfVisible(this.page, '프로그램명', 'E2E 이전 JA 프로그램')
+    await fillByPlaceholderIfVisible(this.page, '참여한 봉사 프로그램명을 입력해 주세요', 'E2E 이전 JA 프로그램')
     await fillAllByPlaceholder(
       this.page,
       '자유롭게 작성해 주세요',
