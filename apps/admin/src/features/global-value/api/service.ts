@@ -17,7 +17,8 @@ async function putRemoteGlobalValues(rows: GlobalValue[]): Promise<GlobalValue[]
         .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 async function resolveCurrentRows(cachedRows?: GlobalValue[]): Promise<GlobalValue[]> {
-    if (cachedRows && cachedRows.length === 5) {
+    // 목록 캐시는 GET 전체 응답이다. 항목 수(서버 고정 5→6 전환)는 서버가 검증한다.
+    if (cachedRows && cachedRows.length > 0) {
         return [...cachedRows].sort((a, b) => a.sortOrder - b.sortOrder);
     }
     return listRemoteGlobalValues();

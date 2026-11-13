@@ -12,6 +12,8 @@ import {
   useSaveGlobalValues,
   useSetGlobalValueActive,
 } from '@/features/global-value/api/hooks'
+import { GLOBAL_VALUE_SIX_ITEMS_SERVER_READY } from '@/features/global-value/api/capabilities'
+import { GLOBAL_VALUE_PREVIEW_ROWS } from '@/features/global-value/api/preview-rows'
 import { globalValueQueryKeys } from '@/features/global-value/api/query-keys'
 import { GLOBAL_VALUES_CHANGED_EVENT } from '@/features/global-value/api/store'
 import {
@@ -37,14 +39,26 @@ function buildDraftTexts(rows: GlobalValue[]): DraftTexts {
   )
 }
 
+/**
+ * 서버 6항목 지원 전: 시안 6행 미리보기. 서버 조회·저장 없음.
+ * 순서·사용 여부는 화면 안에서만 바뀌고(새로고침 시 초기화), [수정]은 비활성화한다.
+ */
+const IS_PREVIEW = !GLOBAL_VALUE_SIX_ITEMS_SERVER_READY
+
 export function GlobalValuePage() {
   const { showAlert } = useCmsAlert()
-  const listQuery = useGlobalValuesList()
+  const listQuery = useGlobalValuesList(!IS_PREVIEW)
   const reorderMutation = useReorderGlobalValues()
   const setActiveMutation = useSetGlobalValueActive()
   const saveMutation = useSaveGlobalValues()
+  const [previewRows, setPreviewRows] = useState<GlobalValue[]>(() => [
+    ...GLOBAL_VALUE_PREVIEW_ROWS,
+  ])
 
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = useMemo(
+    () => (IS_PREVIEW ? previewRows : (listQuery.data ?? [])),
+    [listQuery.data, previewRows]
+  )
   const [isEditing, setIsEditing] = useState(false)
   const [draftTexts, setDraftTexts] = useState<DraftTexts>({})
 
@@ -52,6 +66,10 @@ export function GlobalValuePage() {
 
   const handleRowsReorder = useCallback(
     (reorderedRows: GlobalValue[]) => {
+      if (IS_PREVIEW) {
+        setPreviewRows(reorderedRows.map((row, index) => ({ ...row, sortOrder: index + 1 })))
+        return
+      }
       void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(() => {
         showAlert({
           title: '순서 변경 실패',
@@ -65,6 +83,10 @@ export function GlobalValuePage() {
 
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
+      if (IS_PREVIEW) {
+        setPreviewRows(prev => prev.map(row => (row.id === id ? { ...row, isActive } : row)))
+        return
+      }
       void setActiveMutation.mutateAsync({ id, isActive }).catch(() => {
         showAlert({
           title: '사용 여부 변경 실패',
@@ -165,7 +187,8 @@ export function GlobalValuePage() {
         width: 110,
         align: 'center',
         className: 'global-value-table__col--icon',
-        render: (_value, record) => <ValueIcon iconKey={record.iconKey} size={48} />,
+        // 시안 아이콘 54×54 (Figma 27:41296)
+        render: (_value, record) => <ValueIcon iconKey={record.iconKey} size={54} />,
       },
       {
         title: '메인 텍스트',
@@ -265,7 +288,7 @@ export function GlobalValuePage() {
                 size="h40"
                 type="button"
                 onClick={handleStartEdit}
-                disabled={listQuery.isLoading || rows.length === 0}
+                disabled={IS_PREVIEW || listQuery.isLoading || rows.length === 0}
               >
                 수정
               </CmsButton>
