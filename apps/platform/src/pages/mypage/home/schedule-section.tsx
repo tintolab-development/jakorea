@@ -151,11 +151,7 @@ export function ScheduleSection({
                     <button
                       type="button"
                       className={styles.listItemButton}
-                      style={{
-                        borderColor: colors.accent,
-                        borderLeftWidth: 6,
-                        backgroundColor: colors.background,
-                      }}
+                      style={{ borderLeftColor: colors.accent }}
                       disabled={!isNavigable}
                       aria-label={`${event.programName} ${event.title} 일정 상세`}
                       onClick={() => handleScheduleClick(event)}
