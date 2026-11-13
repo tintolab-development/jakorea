@@ -93,12 +93,12 @@
   overflow: visible;
 }
 
-.content :global(.rich-text-content) {
-  color: #3d3d3d;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 160%;
-  letter-spacing: -0.2px;
+/* Figma PC 본문: 20px / Medium / 170% */
+@media (--bp-pc-up) {
+  .content :global(.rich-text-content) {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
 }
 
 .footerNav {

@@ -24,8 +24,8 @@ export function PrincipleIcon({ icon }: PrincipleIconProps) {
       src={PRINCIPLE_ICON_SRC[icon]}
       alt=""
       aria-hidden="true"
-      width={140}
-      height={140}
+      width={80}
+      height={80}
       draggable={false}
     />
   )

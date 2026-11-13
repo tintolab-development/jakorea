@@ -95,7 +95,7 @@
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--radius-24);
+  border-radius: var(--radius-16);
   background: #f8fcfe;
 }
 
@@ -160,7 +160,6 @@
   min-width: 0;
   min-height: 180px;
   aspect-ratio: 335 / 180;
-  
 }
 
 .imageFrame {
@@ -272,7 +271,7 @@
     min-height: auto;
     aspect-ratio: auto;
   }
-  
+
   .badge {
     height: 39px;
     font-size: 18px;
