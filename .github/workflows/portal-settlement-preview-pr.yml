@@ -1,0 +1,38 @@
+name: Portal instructor settlement preview regression
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/platform/src/features/mypage/education/settlements/**'
+      - '.github/workflows/portal-settlement-preview-pr.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-settlement-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  platform-settlement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install dependencies
+        env:
+          HUSKY: '0'
+        run: pnpm install --frozen-lockfile
+      - name: Instructor settlement preview calculation selfcheck
+        run: node --experimental-strip-types --experimental-transform-types apps/platform/src/features/mypage/education/settlements/lib/instructor-settlement-calculation-preview.selfcheck.ts
+      - name: Platform typecheck
+        run: pnpm --filter platform typecheck
