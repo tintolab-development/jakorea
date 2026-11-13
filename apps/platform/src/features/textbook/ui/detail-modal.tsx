@@ -221,10 +221,11 @@ function UnitIntroRichText({ html, onReady }: { html: string; onReady: () => voi
   )
 }
 
+/** dd는 기본 글꼴(16px)을 물려받아 줄 높이가 라벨보다 커지므로, 라벨과 같은 bd-sm 블록으로 감싼다 */
 function SessionValue({ content }: { content: TextbookContent }) {
   if (content.unitCount > 0) {
     return (
-      <>
+      <PFText as="p" typo="bd-sm-rg" color="black" className={styles.sessionValue}>
         <PFText as="span" typo="bd-sm-sb" color="black">
           총 {content.unitCount}단원
         </PFText>
@@ -234,11 +235,11 @@ function SessionValue({ content }: { content: TextbookContent }) {
             ({content.unitSessionText})
           </PFText>
         ) : null}
-      </>
+      </PFText>
     )
   }
   return (
-    <PFText as="span" typo="bd-sm-sb" color="black">
+    <PFText as="p" typo="bd-sm-sb" color="black" className={styles.sessionValue}>
       {content.sessionSummary}
     </PFText>
   )
