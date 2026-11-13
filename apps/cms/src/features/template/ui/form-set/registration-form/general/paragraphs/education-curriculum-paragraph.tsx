@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, type CSSProperties, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -52,11 +52,32 @@ import {
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './program-registration-paragraph.css'
 
 /** 교육 내용 입력 플레이스홀더 — 일반 프로그램 등록 위저드는 시안 문구, 그 외(교육받은 교사·상세 수정)는 기존 문구 */
+const CurriculumContentPlaceholderContext = createContext<string | null>(null)
+
+/** 일반 프로그램 등록 폼 시안 — 교육 내용 입력 */
+const GENERAL_DESIGN_CONTENT_PLACEHOLDER = '교육 내용을 작성해 주세요'
+/** 일반 프로그램 등록 폼 시안 — 사전 교육 일정명·진행 일정 */
+const GENERAL_DESIGN_PRE_EDUCATION_NAME_PLACEHOLDER = '행사 일정명을 작성해 주세요'
+const GENERAL_DESIGN_PROGRESS_SCHEDULE_PLACEHOLDER = '일정을 선택해 주세요'
+
+/**
+ * 일반 프로그램 등록 폼 + 템플릿 관리 화면에서만 true — 시안(12932:675 · 12932:1713 · 12800:300285)
+ * 입력 폭(단원명·사전 교육 일정명·진행 일정 240, 진행 차시 120)과 라디오 미선택 시작을 적용한다.
+ * 등록 위저드·상세 수정·교육받은 교사는 false(기존 동작).
+ */
+const GeneralTemplateDesignContext = createContext(false)
+const GENERAL_TEMPLATE_FIELD_WIDTH = 240
+const GENERAL_TEMPLATE_PROGRESS_SESSION_SELECT_WIDTH = 120
+
 function useCurriculumContentPlaceholder(): string {
-  return useIsGeneralRegistrationWizard() ? '교육 내용을 작성해 주세요' : '교육 내용을 작성하세요'
+  const explicit = useContext(CurriculumContentPlaceholderContext)
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+  if (explicit) return explicit
+  return isGeneralWizard ? '교육 내용을 작성해 주세요' : '교육 내용을 작성하세요'
 }
 
 const EMPTY_STRING_BY_INDEX: Record<number, string> = {}
@@ -71,11 +92,13 @@ function CurriculumOverlayTextInput({
   index,
   placeholder,
   style,
+  width = '100%',
 }: {
   recordKey: string
   index: number
   placeholder: string
   style?: CSSProperties
+  width?: number | string
 }) {
   const [record] = useProgramRegistrationOverlayKv<Record<number, string>>(
     recordKey,
@@ -85,7 +108,7 @@ function CurriculumOverlayTextInput({
     <CmsInput
       inputSize="small"
       placeholder={placeholder}
-      width="100%"
+      width={width}
       style={style}
       value={record[index] ?? ''}
       onChange={event => {
@@ -100,7 +123,12 @@ function CurriculumOverlayTextInput({
   )
 }
 
-function PreEducationScheduleNameInput() {
+function PreEducationScheduleNameInput({
+  placeholder = '행사 일정명을 작성하세요',
+}: {
+  placeholder?: string
+}) {
+  const generalTemplateDesign = useContext(GeneralTemplateDesignContext)
   const [name, setName] = useProgramRegistrationOverlayKv(
     CURRICULUM_PRE_EDUCATION_NAME_KEY,
     PRE_EDUCATION_SCHEDULE_LABEL
@@ -109,9 +137,9 @@ function PreEducationScheduleNameInput() {
     <CmsInput
       inputSize="small"
       value={name}
-      placeholder="행사 일정명을 작성하세요"
-      width="100%"
-      style={{ minWidth: 0, flex: '1 1 0' }}
+      placeholder={placeholder}
+      width={generalTemplateDesign ? GENERAL_TEMPLATE_FIELD_WIDTH : '100%'}
+      style={generalTemplateDesign ? undefined : { minWidth: 0, flex: '1 1 0' }}
       onChange={event => setName(event.target.value)}
     />
   )
@@ -142,6 +170,8 @@ type ProgramRegistrationEducationCurriculumParagraphProps = {
    * replaceFirst: 첫 차시/회차를 연수로 치환 (교육받은 교사)
    */
   preEducationDisplayMode?: 'prepend' | 'replaceFirst'
+  /** 교육 내용 입력 placeholder — 지정하면 위저드 기본 문구 대신 쓴다(교육받은 교사 등록) */
+  contentPlaceholder?: string
   /** 교육받은 교사 — 과제 설정 비노출 (교육일지와 구분) */
   hideAssignmentSettings?: boolean
   /** 일반 등록·참여자 <개인> — 교육 진행 장소(일정 별 상이 시 블록 최하단) */
@@ -152,6 +182,16 @@ type ProgramRegistrationEducationCurriculumParagraphProps = {
    * 생략 시 기존(일반 사전 교육) 동작 그대로.
    */
   hidePreEducationScheduleName?: boolean
+  /**
+   * 일반 프로그램 등록 폼(템플릿 관리·등록 위저드) — 시안 placeholder 문구.
+   * 생략 시(교육받은 교사·상세 수정) 기존 문구 그대로.
+   */
+  generalDesignCopy?: boolean
+  /**
+   * 교육받은 교사 템플릿 관리 시안(5767:196354) — 문구는 그대로 두고 칸 폭(240)·라디오 미선택만 일반 템플릿 시안과 같이 쓴다.
+   * 템플릿 관리 화면에서만 적용(등록 위저드·상세는 기존 동작).
+   */
+  trainedTeachersTemplateDesign?: boolean
 }
 
 type ProgramRegistrationCurriculumMultiSessionRowPlan =
@@ -196,13 +236,15 @@ export function getProgramRegistrationCurriculumMultiSessionRowPlan(
 
 function ProgramRegistrationCurriculumUnitContentInputs({ chartIndex }: { chartIndex: number }) {
   const contentPlaceholder = useCurriculumContentPlaceholder()
+  const generalTemplateDesign = useContext(GeneralTemplateDesignContext)
   return (
     <div className="detail-info-form-inputs-wrapper">
       <CurriculumOverlayTextInput
         recordKey={CURRICULUM_UNIT_NAME_KEY}
         index={chartIndex}
         placeholder="단원명을 입력해 주세요"
-        style={{ minWidth: 0, flex: '1 1 0' }}
+        width={generalTemplateDesign ? GENERAL_TEMPLATE_FIELD_WIDTH : '100%'}
+        style={generalTemplateDesign ? { flexShrink: 0 } : { minWidth: 0, flex: '1 1 0' }}
       />
       <DetailInfoForm.InputsSeparator />
       <CurriculumOverlayTextInput
@@ -240,6 +282,7 @@ function ProgramRegistrationMultiRoundClassRow({
   onProgressSessionChange: (value: string) => void
 }) {
   const contentPlaceholder = useCurriculumContentPlaceholder()
+  const generalTemplateDesign = useContext(GeneralTemplateDesignContext)
   return (
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
@@ -255,7 +298,7 @@ function ProgramRegistrationMultiRoundClassRow({
               inputSize="small"
               withAllOption={false}
               placeholder="진행 차시"
-              width={144}
+              width={generalTemplateDesign ? GENERAL_TEMPLATE_PROGRESS_SESSION_SELECT_WIDTH : 144}
               options={GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS}
               value={progressSession || undefined}
               onChange={v => onProgressSessionChange(String(v ?? ''))}
@@ -349,7 +392,15 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   hideAssignmentSettings = false,
   educationPlaceEnabled = false,
   hidePreEducationScheduleName = false,
+  contentPlaceholder,
+  generalDesignCopy = false,
+  trainedTeachersTemplateDesign = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
+  const resolvedContentPlaceholder =
+    contentPlaceholder ?? (generalDesignCopy ? GENERAL_DESIGN_CONTENT_PLACEHOLDER : null)
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const generalTemplateDesign =
+    (generalDesignCopy || trainedTeachersTemplateDesign) && isTemplateManagementScreen
   const [educationPlaceScheduleDetail] = useProgramRegistrationOverlayKv<string>(
     REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
     'common'
@@ -411,6 +462,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   // 사전 교육 교육 형태 — 라디오 표시 기본값(online)을 overlay에 기록. 미터치·자동채우기 후 0번 누락 방지
   const preEducationEducationFormMissing = !educationFormBySession?.[PRE_EDUCATION_SESSION_INDEX]
   useEffect(() => {
+    // 템플릿 관리(일반): 시안대로 사전 교육 교육 형태를 미선택으로 둔다 — 기본값을 기록하지 않음
+    if (generalTemplateDesign) return
     if (!prependTraining || !preEducationEducationFormMissing) return
     updateProgramRegistrationOverlayKey<Record<number, string>>(
       'generalRegistration.educationCurriculum.educationFormBySession',
@@ -419,10 +472,11 @@ export function ProgramRegistrationEducationCurriculumParagraph({
           ? prev
           : { ...(prev ?? {}), [PRE_EDUCATION_SESSION_INDEX]: 'online' }
     )
-  }, [prependTraining, preEducationEducationFormMissing])
+  }, [generalTemplateDesign, prependTraining, preEducationEducationFormMissing])
 
+  // 표시용 기본값 — 템플릿 관리(일반)는 미선택
   const educationFormForSession = (sessionIndex: number) =>
-    educationFormBySession[sessionIndex] ?? 'online'
+    educationFormBySession[sessionIndex] ?? (generalTemplateDesign ? '' : 'online')
   const [singleEducationForm] = useProgramRegistrationOverlayKv<string>(
     'generalRegistration.typeSettings.singleEducationForm',
     DEFAULT_REGISTRATION_EDUCATION_FORM
@@ -444,7 +498,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
       rowEducationForm: educationFormBySession[index],
     })
   const participationForSession = (sessionIndex: number) =>
-    participationBySession[sessionIndex] ?? 'individual'
+    participationBySession[sessionIndex] ?? (generalTemplateDesign ? '' : 'individual')
   const assignmentForRound = (roundIndex: number) =>
     assignmentByRound[roundIndex] ?? EMPTY_PROGRAM_REGISTRATION_MULTI_ROUND_ASSIGNMENT
 
@@ -619,7 +673,13 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   <DetailInfoForm.Field
                     label="일정명"
                     validationKey="curriculum.preEducationScheduleName"
-                    edit={<PreEducationScheduleNameInput />}
+                    edit={
+                      <PreEducationScheduleNameInput
+                        placeholder={
+                          generalDesignCopy ? GENERAL_DESIGN_PRE_EDUCATION_NAME_PLACEHOLDER : undefined
+                        }
+                      />
+                    }
                     view="-"
                   />
                 )}
@@ -634,6 +694,10 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                         participantOrganization={participantOrganization}
                         programType="curriculum"
                         sessionRound={sessionRoundType}
+                        width={generalTemplateDesign ? GENERAL_TEMPLATE_FIELD_WIDTH : undefined}
+                        placeholder={
+                          generalDesignCopy ? GENERAL_DESIGN_PROGRESS_SCHEDULE_PLACEHOLDER : undefined
+                        }
                         value={scheduleRange?.[0] ?? null}
                         appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
                         appliedSurfaceWithTime={scheduleHasClock}
@@ -680,6 +744,11 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     const showChartSessionHeading = true
 
     return (
+      // 단일 회차는 일반 등록 폼만 시안 문구 — 교육받은 교사 등 다른 유형은 기존 동작 유지
+      <GeneralTemplateDesignContext.Provider value={generalTemplateDesign}>
+      <CurriculumContentPlaceholderContext.Provider
+        value={generalDesignCopy ? resolvedContentPlaceholder : null}
+      >
       <div className="program-registration-curriculum__sessions">
         {renderPreEducationChartBlock()}
         {Array.from({ length: curriculumChartSessionCount }, (_, i) => {
@@ -734,6 +803,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
           )
         })}
       </div>
+      </CurriculumContentPlaceholderContext.Provider>
+      </GeneralTemplateDesignContext.Provider>
     )
   }
 
@@ -913,6 +984,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   }
 
   return (
+    <GeneralTemplateDesignContext.Provider value={generalTemplateDesign}>
+    <CurriculumContentPlaceholderContext.Provider value={resolvedContentPlaceholder}>
     <div className="program-registration-curriculum__sessions">
       {prependTraining ? renderIndividualPreEducationScheduleBlock() : null}
       {Array.from({ length: curriculumSessionCount }, (_, i) => {
@@ -957,6 +1030,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                             fullRow={options.fullRow}
                             validationKey={`curriculum.assignment[${roundIndex}]`}
                             value={assignmentForRound(roundIndex)}
+                            untouched={assignmentByRound[roundIndex] == null}
                             onChange={next => setAssignmentForRound(roundIndex, next)}
                           />
                         )
@@ -1036,5 +1110,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
         )
       })}
     </div>
+    </CurriculumContentPlaceholderContext.Provider>
+    </GeneralTemplateDesignContext.Provider>
   )
 }

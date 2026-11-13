@@ -109,7 +109,7 @@ function GradeApplicationBlock({
               <CmsNumericInput
                 inputSize="small"
                 width={120}
-                placeholder="총 학급 수"
+                placeholder="총 학급"
                 mode="integer"
                 value={classCountInput}
                 onValueChange={next => patchDetail({ classCountInput: next })}
@@ -128,7 +128,7 @@ function GradeApplicationBlock({
           edit={
             classCount < 1 ? (
               <span className="form-editor-template-field-hint-text">
-                총 학급 수를 먼저 입력해 주세요.
+                총 학급 수를 먼저 입력해 주세요
               </span>
             ) : (
               <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap ujat-program-application-grade-info-paragraph__student-inputs-row">

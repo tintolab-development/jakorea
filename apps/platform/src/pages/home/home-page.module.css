@@ -32,6 +32,21 @@
   padding-bottom: 0;
 }
 
+/*
+ * 모바일 시안: 스토리 제목 아래 영상 띠 — 틀 335×84(모서리 16) 비율 유지,
+ * 영상은 틀 폭에 맞춰 가득 채우고 세로 가운데만 보이게 자름
+ */
+.youtubeRevealMobile.youtubeRevealMobile {
+  --reveal-mask-height: calc(var(--reveal-mask-width) * 84 / 335);
+  padding: 0;
+  gap: 0;
+  background: transparent;
+}
+
+.youtubeRevealMobile.youtubeRevealMobile iframe {
+  width: var(--reveal-mask-width);
+}
+
 @media (--bp-pc-up) {
   .youtubeReveal.youtubeReveal {
     /* block이면 gap 무시 — flex column 유지 */
@@ -70,15 +85,22 @@
   align-self: stretch;
   flex-direction: column;
   overflow-x: clip;
+  /* 모바일 시안: 상단 무늬·곡선 + 하단 사진(CTA 뒤) */
   background-color: var(--color-primary-800);
-  background-image: url('../../assets/background_gradient/home-achievements-section-bg.jpg');
+  background-image:
+    url('../../assets/background_gradient/home-achievements-section-bg-mobile-top.jpg'),
+    url('../../assets/background_gradient/home-achievements-section-bg-mobile-photo.jpg');
   background-repeat: no-repeat;
-  background-position: center top;
+  background-position:
+    center top,
+    center bottom;
   background-size: 100% auto;
 }
 
 @media (--bp-pc-up) {
   .achievementsBand {
+    background-image: url('../../assets/background_gradient/home-achievements-section-bg.jpg');
+    background-position: center top;
     /* 배경 영역 높이가 달라도 원본 비율을 유지하고 중앙 기준으로 잘라냄 */
     aspect-ratio: 1920 / 2064;
     background-size: cover;

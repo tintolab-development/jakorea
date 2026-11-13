@@ -70,7 +70,7 @@ import {
   GENERAL_SURVEY_MENU_EMPTY_COPY,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
-  GENERAL_SURVEY_POLL_SHARE_TOAST_COPY,
+  buildGeneralSurveyPollShareToastCopy,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import type {
   RegisteredSurvey,
@@ -1001,9 +1001,7 @@ export function GeneralSurveyManagementView({
 
   /** 공유 링크 복사 완료 — 「설문조사 공유」·「만족도조사 공유」 안내 팝업 (시안 9767:119096 · 16057:321961) */
   const showShareCopiedAlert = useCallback(
-    (
-      copy: { title: string; line1: string; line2: string } = GENERAL_SURVEY_POLL_SHARE_TOAST_COPY
-    ) => {
+    (copy: { title: string; line1: string; line2: string }) => {
       void showAlert({ title: copy.title, content: `${copy.line1}\n${copy.line2}` })
     },
     [showAlert]
@@ -1444,7 +1442,7 @@ export function GeneralSurveyManagementView({
           queryKey: generalProgramQueryKeys.surveys(program.id),
           exact: true,
         })
-        showShareCopiedAlert()
+        showShareCopiedAlert(buildGeneralSurveyPollShareToastCopy(survey.title))
       } catch (error) {
         handleError(error, { context: 'generalSurveyShareLink' })
         showAlert({
@@ -1906,6 +1904,8 @@ export function GeneralSurveyManagementView({
                   ),
                 }}
                 labels={GENERAL_SURVEY_POLL_ACTION_LABELS}
+                // 시안 — 진행 중부터 결과 다운로드 활성(응답 0건이어도 0건 상태로 내려받기)
+                downloadEnabled
                 onShareClick={() => shareRegisteredSurveyUrl(activeRegisteredSurvey)}
                 onAddClick={() => openCreateModal('survey')}
                 onOpenTemplatePreview={() =>

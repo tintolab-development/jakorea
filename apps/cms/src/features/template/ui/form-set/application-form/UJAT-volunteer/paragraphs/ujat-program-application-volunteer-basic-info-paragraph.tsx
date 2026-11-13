@@ -1,5 +1,5 @@
 import { FieldSearchIcon } from '@/shared/ui/icons'
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   UJAT_PROGRAM_APPLICATION_VOLUNTEER_GRADE_OPTIONS,
   UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OPTIONS,
@@ -10,6 +10,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { UniversitySearch } from '@/shared/ui/university-search'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import type { UjatProgramApplicationVolunteerType } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 import {
   UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
@@ -38,6 +39,12 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
   onApplicationTypeChange,
   isTemplateAuthoringMode = false,
 }: BasicInfoFieldsProps): ReactNode {
+  /**
+   * 템플릿 관리 시안(12875:515697) — 지원 경로 셀렉트·직접 입력 240, 지원 형태 라디오 미선택(간격 16).
+   * 지원 형태 값은 편집기 상태(단락 노출 분기)라 그대로 두고 화면 표시만 처음에 비운다.
+   */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const [applicationTypeTouched, setApplicationTypeTouched] = useState(false)
   const [universityName, setUniversityName] = useUjatApplicationVolunteerOverlayKv<string>(
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.universityName,
     ''
@@ -62,7 +69,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
     <CmsInput
       inputSize="small"
       width={240}
-      placeholder="학교명을 입력해 보세요"
+      placeholder="학교명을 입력해 주세요"
       icon={<FieldSearchIcon />}
       value={universityName}
       onChange={e => setUniversityName(e.target.value)}
@@ -71,7 +78,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
     <UniversitySearch
       inputSize="small"
       width={240}
-      placeholder="학교명을 입력해 보세요"
+      placeholder="학교명을 입력해 주세요"
       value={universityName}
       onChange={setUniversityName}
     />
@@ -90,7 +97,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
                 inputSize="small"
                 width={120}
                 withAllOption
-                placeholder="전체"
+                placeholder="학년"
                 value={grade}
                 onChange={v => setGrade(v == null ? undefined : String(v))}
                 options={GRADE_OPTIONS}
@@ -121,9 +128,9 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
                 inputSize="small"
-                width={160}
+                width={isTemplateManagementScreen ? 240 : 160}
                 withAllOption
-                placeholder="전체"
+                placeholder="경로"
                 value={applicationRoute}
                 onChange={v => setApplicationRoute(v == null ? undefined : String(v))}
                 options={APPLICATION_ROUTE_OPTIONS}
@@ -131,8 +138,12 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="small"
-                width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
+                width={isTemplateManagementScreen ? 240 : '100%'}
+                style={
+                  isTemplateManagementScreen
+                    ? { flex: '0 0 240px' }
+                    : { flex: '1 1 0', minWidth: 0 }
+                }
                 placeholder="직접 입력"
                 disabled={!isOtherApplicationRoute}
                 value={applicationRouteOther}
@@ -147,11 +158,14 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
           edit={
             <CmsRadioGroup
               size="medium"
-              value={applicationType}
-              onChange={e =>
-                onApplicationTypeChange(e.target.value as UjatProgramApplicationVolunteerType)
+              value={
+                isTemplateManagementScreen && !applicationTypeTouched ? undefined : applicationType
               }
-              style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}
+              onChange={e => {
+                setApplicationTypeTouched(true)
+                onApplicationTypeChange(e.target.value as UjatProgramApplicationVolunteerType)
+              }}
+              style={{ display: 'flex', flexWrap: 'wrap', gap: isTemplateManagementScreen ? 16 : 20 }}
             >
               <CmsRadio size="medium" value="new">신규 봉사자</CmsRadio>
               <CmsRadio size="medium" value="ujat-graduate">UJAT 수료자 봉사자</CmsRadio>

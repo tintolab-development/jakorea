@@ -29,3 +29,29 @@
   text-align: center;
   white-space: pre-line;
 }
+
+/**
+ * 템플릿 관리 신청 폼 시안(12875:514537·515880·515926·513810 등) —
+ * 흰 배경 + 테두리 #e0e0e0 · radius 8 · 높이 200 · 안내 18px 가운데 정렬
+ */
+.program-application-schedule-template-hint.program-application-schedule-template-hint--spec {
+  height: 200px;
+  min-height: 200px;
+  padding: 1px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.program-application-schedule-template-hint--spec .form-editor-template-field-hint-text {
+  font-size: 18px;
+  line-height: 150%;
+  text-align: center;
+  white-space: pre-line;
+}
+
+/* 봉사자 면접 — 캘린더 옆 열(이미 테두리 박스) 안에서는 테두리 없이 채움 */
+.program-application-schedule-template-hint.program-application-schedule-template-hint--spec.program-application-schedule-template-hint--fillScheduleSide {
+  height: 100%;
+  min-height: 0;
+  border: none;
+}

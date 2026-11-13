@@ -9,7 +9,8 @@ import {
   resolveNoticeDetailMetaDates,
 } from '@/features/posts/lib/posts-detail-meta-dates'
 import { Spin } from 'antd'
-import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import viewUrl from '@/shared/assets/icons/posts/view.svg'
+import fileUrl from '@/shared/assets/icons/posts/file.svg'
 import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import { AttachmentDownloadIcon } from '@/shared/ui'
 import { downloadNoticeAttachment } from '@/features/posts/api/notices/notice-attachments'
@@ -160,7 +161,7 @@ export function AdminNoticeDetailPage() {
               </div>
               <span className="admin-detail-top-actions">
                 <span className="admin-notice-detail-page__views">
-                  <EyeOutlined className="admin-notice-detail-page__views-icon" aria-hidden />
+                  <img src={viewUrl} width={20} height={20} alt="" aria-hidden draggable={false} className="admin-notice-detail-page__views-icon" />
                   {notice.viewCount.toLocaleString('ko-KR')}
                 </span>
                 <AdminDetailMoreMenu
@@ -195,7 +196,7 @@ export function AdminNoticeDetailPage() {
           {attachmentItems.length > 0 ? (
             <div className="admin-notice-detail-page__attachments">
               <div className="admin-notice-detail-page__attachments-head">
-                <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
+                <img src={fileUrl} width={20} height={20} alt="" aria-hidden draggable={false} className="admin-notice-detail-page__clip" />
                 <span>첨부 파일</span>
               </div>
               <ul className="admin-notice-detail-page__attachments-list">

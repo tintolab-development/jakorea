@@ -1425,8 +1425,7 @@ function ProgramDetailFullPageModalContent({
     ? resolveGeneralProgramDisplayTitle(displayProgram)
     : '프로그램 상세'
   const companySchoolInstitutionApplicantMeta =
-    isCompanySchoolDetail &&
-    !isTrainedTeachersDetail &&
+    (isCompanySchoolDetail || isTrainedTeachersDetail) &&
     activeLnb === 'applicants' &&
     searchParams.get(APPLICANT_ID_PARAM) &&
     companySchoolApplicantDetailMeta?.kind === 'institution'
@@ -2399,7 +2398,8 @@ function ProgramDetailFullPageModalContent({
                   detailVariant="general"
                   onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
                   onApplicantDetailMetaChange={
-                    isCompanySchoolDetail && !isTrainedTeachersDetail
+                    // 교육받은 교사도 「참여 기관 신청 상세 (기관명)」(QA 2026-11-13 교육받은 교사 #16)
+                    isCompanySchoolDetail || isTrainedTeachersDetail
                       ? setCompanySchoolApplicantDetailMeta
                       : undefined
                   }

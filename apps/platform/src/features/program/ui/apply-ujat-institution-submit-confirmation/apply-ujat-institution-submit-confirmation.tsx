@@ -6,8 +6,10 @@ type ApplyUjatInstitutionSubmitConfirmationProps = {
   label: string
   checked: boolean
   onCheckedChange: (checked: boolean) => void
-  /** 신청 양식은 체크, 협의된 일정 확인 시안은 라디오 */
+  /** UJAT 참여 기관 신청·협의된 일정 확인 시안은 라디오, 봉사자 신청은 체크 */
   control?: 'checkbox' | 'radio'
+  /** 라디오 name — 기본은 협의된 일정 확인 화면 값 */
+  radioName?: string
 }
 
 export function readUjatSubmitConfirmationItem(
@@ -28,12 +30,13 @@ export function isUjatSubmitConfirmationChecked(paragraph: WritingFormParagraph)
   return paragraph.selectedPreviewSingleId === item.id
 }
 
-/** 시안 확인 단락 — 신청은 체크, 협의된 일정 확인은 라디오 */
+/** 시안 확인 단락 — 참여 기관 신청·협의된 일정 확인은 라디오, 봉사자 신청은 체크 */
 export function ApplyUjatInstitutionSubmitConfirmation({
   label,
   checked,
   onCheckedChange,
   control = 'checkbox',
+  radioName = 'ujat-progress-confirm-submit',
 }: ApplyUjatInstitutionSubmitConfirmationProps) {
   if (control === 'radio') {
     return (
@@ -41,7 +44,7 @@ export function ApplyUjatInstitutionSubmitConfirmation({
         <label className={styles.radioOption}>
           <input
             type="radio"
-            name="ujat-progress-confirm-submit"
+            name={radioName}
             checked={checked}
             onClick={() => onCheckedChange(!checked)}
             onChange={() => onCheckedChange(true)}

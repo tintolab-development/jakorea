@@ -1,5 +1,8 @@
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { PAYMENT_STATEMENT_ISSUANCE_IDS } from '@/features/template/model/payment-statement-issuance-draft'
+import {
+  isPaymentStatementLegacyCalcInfoParagraph,
+  PAYMENT_STATEMENT_ISSUANCE_IDS,
+} from '@/features/template/model/payment-statement-issuance-draft'
 import { SETTLEMENT_APPLICATION_ISSUANCE_IDS } from '@/features/template/model/settlement-application-issuance-draft'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
@@ -49,12 +52,38 @@ export function renderPaymentStatementIssuanceParagraphBody({
           values={values?.basicInfo}
           displayMode={displayMode}
           onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+          issuanceLayout="payment_statement"
         />
       )
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcInfo:
-      return <LectureFeeCalculationParagraph values={values?.lectureFeeCalculation} displayMode={displayMode} />
+      // 템플릿 시드(시안 5767:46455)는 정산 신청서와 같은 5항목, 실제 발급 문서 draft는 예전 7항목(총 학생 수 등)
+      return (
+        <LectureFeeCalculationParagraph
+          values={values?.lectureFeeCalculation}
+          displayMode={displayMode}
+          feeLayout={
+            isPaymentStatementLegacyCalcInfoParagraph(paragraph)
+              ? 'payment_statement'
+              : 'settlement_application'
+          }
+        />
+      )
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcLines:
       return <CalculationLinesParagraph lines={values?.calculationLines} />
+    case PAYMENT_STATEMENT_ISSUANCE_IDS.tableTransport:
+      return (
+        <>
+          <TransportFeeApplicationParagraph displayMode={displayMode} />
+          <SettlementApplicationIssuanceFootnote paragraph={paragraph} />
+        </>
+      )
+    case PAYMENT_STATEMENT_ISSUANCE_IDS.tableAccommodation:
+      return (
+        <>
+          <AccommodationFeeApplicationParagraph displayMode={displayMode} />
+          <SettlementApplicationIssuanceFootnote paragraph={paragraph} />
+        </>
+      )
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableWorkLog:
       return <WorkLogParagraph />
     case SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableBasic:
@@ -63,6 +92,7 @@ export function renderPaymentStatementIssuanceParagraphBody({
           values={values?.basicInfo}
           displayMode={displayMode}
           onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+          issuanceLayout="settlement_application"
         />
       )
     case SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableCalcInfo:

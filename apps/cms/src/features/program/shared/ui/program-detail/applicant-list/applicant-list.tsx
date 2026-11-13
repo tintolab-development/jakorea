@@ -2318,8 +2318,10 @@ export function ApplicantList({
         approvalStatus={notificationResendTarget?.approvalStatus ?? 'approved'}
         storedRejectionReason={notificationResendTarget?.storedRejectionReason}
         copyVariant={
-          notificationResendTarget?.subjectKind === 'institution' &&
-          isGeneralOrganizationInstitutionList
+          (notificationResendTarget?.subjectKind === 'institution' &&
+            isGeneralOrganizationInstitutionList) ||
+          (notificationResendTarget?.subjectKind === 'instructor' &&
+            (isGeneralOrganizationInstructorList || isGeneralIndividualInstructorList))
             ? 'general-organization'
             : 'default'
         }

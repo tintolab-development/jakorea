@@ -62,6 +62,10 @@ import {
   UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
 } from '@/features/program/ujat/lib/registration-survey-items'
 import { UjatBasicInfoRHFParagraph } from './ujat-basic-info-rhf-paragraph'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
+
+/** 템플릿 관리 시안(5767:194428) 짧은 셀렉트·입력 폭 ≈200 */
+const TEMPLATE_MANAGEMENT_COMPACT_FIELD_WIDTH = 200
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
@@ -212,6 +216,10 @@ function UjatBasicInfoLegacyParagraph({
   lockDetailedProgramToNone = false,
   infoForm,
 }: UjatBasicInfoParagraphProps) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  /** 템플릿 관리 시안 폭 — 그 밖의 화면은 기존 폭 유지 */
+  const compactFieldWidth = (fallback: number | '100%') =>
+    isTemplateManagementScreen ? TEMPLATE_MANAGEMENT_COMPACT_FIELD_WIDTH : fallback
   const { values: formValues } = useUjatBasicInfoFormValues(infoForm)
   const [detailedProgramId, setDetailedProgramId] = useUjatBasicInfoValue<string>(
     infoForm,
@@ -334,9 +342,10 @@ function UjatBasicInfoLegacyParagraph({
     'ujat.basicInfo.businessField',
     ''
   )
+  // 템플릿 관리 화면 라디오는 미선택으로 시작(시안 5767:194428 교육 장소 3개 모두 미선택)
   const [educationVenueKind, setEducationVenueKind] = useUjatProgramRegistrationOverlayKv<
-    'inside' | 'outside' | 'other'
-  >('ujat.basicInfo.educationVenueKind', 'inside')
+    'inside' | 'outside' | 'other' | ''
+  >('ujat.basicInfo.educationVenueKind', isTemplateManagementScreen ? '' : 'inside')
   const [educationVenueDetail, setEducationVenueDetail] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.educationVenueDetail',
     ''
@@ -427,8 +436,12 @@ function UjatBasicInfoLegacyParagraph({
     'ujat.basicInfo.educationCourse',
     ''
   )
+  // 템플릿 관리 화면 라디오는 미선택으로 시작(사용자 결정 2026-11-13). 그 밖의 화면은 기존 기본 No
   const [overlayPartnerInvolvement, setOverlayPartnerInvolvement] =
-    useUjatProgramRegistrationOverlayKv<'yes' | 'no'>('ujat.basicInfo.partnerInvolvement', 'no')
+    useUjatProgramRegistrationOverlayKv<'yes' | 'no' | ''>(
+      'ujat.basicInfo.partnerInvolvement',
+      isTemplateManagementScreen ? '' : 'no'
+    )
   const partnerInvolvement = infoForm
     ? formValues.partnerInvolvement === true
       ? 'yes'
@@ -637,6 +650,100 @@ function UjatBasicInfoLegacyParagraph({
     )
   }
 
+  /* ── 교육 과정 ~ IPS 유형 ── */
+  const ipsRows = (
+    <>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="교육 과정"
+          validationKey="basicInfo.educationCourse"
+          edit={
+            <CmsSelect
+              withAllOption={false}
+              inputSize="small"
+              placeholder="교육 과정을 선택해 주세요"
+              width={compactFieldWidth('100%')}
+              options={educationCourseSelectOptions}
+              value={educationCourse}
+              onChange={v => setEducationCourse(String(v ?? ''))}
+            />
+          }
+          view="-"
+        />
+        <DetailInfoForm.Field
+          label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
+          validationKey="basicInfo.ipOwned"
+          edit={
+            <CmsSelect
+              withAllOption={false}
+              inputSize="small"
+              width={compactFieldWidth('100%')}
+              options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
+              value={selectValue(ipOwned)}
+              onChange={v => setSelectValue(setIpOwned, v, 'ipOwned')}
+            />
+          }
+          view="-"
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
+          validationKey="basicInfo.courseDeliveredBy"
+          edit={
+            <CmsSelect
+              withAllOption={false}
+              inputSize="small"
+              width={compactFieldWidth('100%')}
+              options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
+              value={selectValue(courseDeliveredBy)}
+              onChange={v => setSelectValue(setCourseDeliveredBy, v, 'courseDeliveredBy')}
+            />
+          }
+          view="-"
+        />
+        <DetailInfoForm.Field
+          label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
+          validationKey="basicInfo.partnerInvolvement"
+          edit={
+            <CmsRadioGroup
+              size="medium"
+              value={partnerInvolvement}
+              onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
+            >
+              <CmsRadio size="medium" value="yes">
+                Yes
+              </CmsRadio>
+              <CmsRadio size="medium" value="no">
+                No
+              </CmsRadio>
+            </CmsRadioGroup>
+          }
+          view="-"
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="IPS 유형"
+          validationKey="basicInfo.ipsCategory"
+          fullRow
+          edit={
+            <CmsSelect
+              withAllOption={false}
+              inputSize="small"
+              placeholder="IPS 유형을 선택해 주세요"
+              width={compactFieldWidth(240)}
+              options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
+              value={ipsCategory}
+              onChange={v => setIpsCategory(String(v ?? ''))}
+            />
+          }
+          view="-"
+        />
+      </DetailInfoForm.Row>
+    </>
+  )
+
   return (
     <>
       {/* ── 대표 프로그램명 ~ 세부 프로그램명 ── */}
@@ -743,7 +850,14 @@ function UjatBasicInfoLegacyParagraph({
             label="참여자 유형"
             validationKey="basicInfo.audience"
             edit={
-              <div className="detail-info-form-inputs-wrapper">
+              <div
+                className={
+                  isTemplateManagementScreen
+                    ? // 시안: 간격 16 · 고정 선택(학교/기관·봉사자)은 활성 선택 모양
+                      'detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium program-registration-paragraph__locked-checked'
+                    : 'detail-info-form-inputs-wrapper'
+                }
+              >
                 <CmsCheckbox checkboxSize="medium" checked={resolvedIndividualChecked} disabled>
                   {participantTypeLabel('individual')}
                 </CmsCheckbox>
@@ -769,7 +883,7 @@ function UjatBasicInfoLegacyParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="사업 분야를 선택해 주세요"
-                  width="100%"
+                  width={compactFieldWidth('100%')}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField}
                   onChange={v => setBusinessField(String(v ?? ''))}
@@ -816,6 +930,11 @@ function UjatBasicInfoLegacyParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
+                  className={
+                    isTemplateManagementScreen
+                      ? 'program-registration-sponsor-manager-select program-registration-sponsor-manager-select--template-idle'
+                      : undefined
+                  }
                   mode="multiple"
                   withAllOption={false}
                   inputSize="small"
@@ -847,7 +966,7 @@ function UjatBasicInfoLegacyParagraph({
               <div className="detail-info-form-inputs-wrapper">
                 <CmsRadioGroup
                   size="medium"
-                  value={educationVenueKind}
+                  value={educationVenueKind || undefined}
                   onChange={event =>
                     setEducationVenueKind(event.target.value as 'inside' | 'outside' | 'other')
                   }
@@ -881,7 +1000,13 @@ function UjatBasicInfoLegacyParagraph({
             label="설문 진행 항목"
             fullRow
             edit={
-              <div className="detail-info-form-inputs-wrapper">
+              <div
+                className={
+                  isTemplateManagementScreen
+                    ? 'detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium'
+                    : 'detail-info-form-inputs-wrapper'
+                }
+              >
                 {UJAT_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
                   <CmsCheckbox
                     key={id}
@@ -897,96 +1022,14 @@ function UjatBasicInfoLegacyParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
-        {/* ── 교육 과정 ~ IPS 유형 ── */}
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="교육 과정"
-            validationKey="basicInfo.educationCourse"
-            edit={
-              <CmsSelect
-                withAllOption={false}
-                inputSize="small"
-                placeholder="교육 과정을 선택해 주세요"
-                width="100%"
-                options={educationCourseSelectOptions}
-                value={educationCourse}
-                onChange={v => setEducationCourse(String(v ?? ''))}
-              />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
-            validationKey="basicInfo.ipOwned"
-            edit={
-              <CmsSelect
-                withAllOption={false}
-                inputSize="small"
-                width="100%"
-                options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
-                value={selectValue(ipOwned)}
-                onChange={v => setSelectValue(setIpOwned, v, 'ipOwned')}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
-            validationKey="basicInfo.courseDeliveredBy"
-            edit={
-              <CmsSelect
-                withAllOption={false}
-                inputSize="small"
-                width="100%"
-                options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
-                value={selectValue(courseDeliveredBy)}
-                onChange={v => setSelectValue(setCourseDeliveredBy, v, 'courseDeliveredBy')}
-              />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
-            validationKey="basicInfo.partnerInvolvement"
-            edit={
-              <CmsRadioGroup
-                size="medium"
-                value={partnerInvolvement}
-                onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
-              >
-                <CmsRadio size="medium" value="yes">
-                  Yes
-                </CmsRadio>
-                <CmsRadio size="medium" value="no">
-                  No
-                </CmsRadio>
-              </CmsRadioGroup>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="IPS 유형"
-            validationKey="basicInfo.ipsCategory"
-            fullRow
-            edit={
-              <CmsSelect
-                withAllOption={false}
-                inputSize="small"
-                placeholder="IPS 유형을 선택해 주세요"
-                width={240}
-                options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
-                value={ipsCategory}
-                onChange={v => setIpsCategory(String(v ?? ''))}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        {isTemplateManagementScreen ? null : ipsRows}
       </DetailInfoForm>
+      {/* 템플릿 관리 시안(5767:194428): 교육 과정 ~ IPS 유형은 별도 표(간격 16) */}
+      {isTemplateManagementScreen ? (
+        <DetailInfoForm title="" hideHeader mode="edit" className="program-registration-paragraph">
+          {ipsRows}
+        </DetailInfoForm>
+      ) : null}
     </>
   )
 }

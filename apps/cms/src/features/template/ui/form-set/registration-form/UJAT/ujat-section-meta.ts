@@ -24,7 +24,7 @@ export const UJAT_REGISTRATION_SECTION_META = {
   },
   educationScheduleSettings: {
     title: '교육 진행 일정 설정',
-    description: '교육이 진행되는 일정을 설정해 주세요.',
+    description: '교육이 실행되는 일정을 설정해 주세요.',
   },
   educationClassCapacityByRegion: {
     title: '지역 별 교육 진행 가능 학급 및 봉사단 수',

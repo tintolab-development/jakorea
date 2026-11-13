@@ -24,3 +24,21 @@
 .institution-sex-offense-inquiry__note-list > li::before {
   content: '• ';
 }
+
+/* 템플릿 관리 시안(12875:513810·514854) — 글머리표(disc) 들여쓰기 24, 항목 사이 간격 없음, 좌우 8 */
+.institution-sex-offense-inquiry__notes--spec {
+  padding-inline: 8px;
+}
+
+.institution-sex-offense-inquiry__notes--spec .institution-sex-offense-inquiry__note-list {
+  padding-left: 24px;
+  list-style: disc;
+}
+
+.institution-sex-offense-inquiry__notes--spec .institution-sex-offense-inquiry__note-list > li + li {
+  margin-top: 0;
+}
+
+.institution-sex-offense-inquiry__notes--spec .institution-sex-offense-inquiry__note-list > li::before {
+  content: none;
+}

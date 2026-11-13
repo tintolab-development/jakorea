@@ -352,7 +352,7 @@ describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)',
     })
   }
 
-  it('서버가 UNAVAILABLE로 준 일정은 배정 불가 — 같은 날짜 다른 일정 배정(사유 코드 무관)', () => {
+  it('서버가 UNAVAILABLE로 준 일정은 배정 불가 — 같은 프로그램 다른 일정과 시간 겹침(사유 코드 무관)', () => {
     const rows = buildIndividual({
       memberId: '10',
       assignments: [],
@@ -360,7 +360,7 @@ describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)',
         {
           scheduleId: 301,
           availabilityStatus: 'UNAVAILABLE',
-          unavailableReason: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+          unavailableReason: 'INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT',
         },
         { scheduleId: 302, availabilityStatus: 'UNAVAILABLE', unavailableReason: 'UNKNOWN_FUTURE_REASON' },
         { scheduleId: 303, availabilityStatus: 'AVAILABLE', unavailableReason: null },

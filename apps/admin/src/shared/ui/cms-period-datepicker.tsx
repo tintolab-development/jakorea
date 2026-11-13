@@ -5,7 +5,7 @@
  */
 
 import { useRef, useState, type CSSProperties } from 'react'
-import { CalendarOutlined } from '@ant-design/icons'
+import { FieldCalendarIcon } from '@jakorea/admin-ui/field'
 import { DatePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { cmsControlSizeClass } from '@jakorea/admin-ui'
@@ -128,7 +128,9 @@ export function CmsPeriodDatePicker({
         }
       }}
     >
-      <CalendarOutlined className="cms-field__icon cms-datepicker__calendar-icon" aria-hidden />
+      <span className="cms-field__icon" aria-hidden>
+        <FieldCalendarIcon className="cms-datepicker__calendar-icon" />
+      </span>
       <span
         className={[
           'cms-period-datepicker__text',

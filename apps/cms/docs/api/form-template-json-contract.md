@@ -304,7 +304,7 @@ Body: `FormTemplateVersionUpdateRequest`
 | `bodyContent` | string | 본문 (멀티라인) |
 | `chairmanName`, `orgAddress`, `orgPhone`, `orgFax`, `orgWebsite` | string | 푸터·직인 영역 |
 | `participantInfo` | string | 참여자 6줄 블록 (실발급 시 runtime override) |
-| `participantRowVisibility` | boolean[6] | 성명·생년월일·소속·프로그램명·활동기간·발급목적 행 노출 |
+| `participantRowVisibility` | boolean[6] | 성명·생년월일·소속·프로그램명·기간(수료증 「프로그램 기간」·참가인증서 「참여기간」·활동인증서 「활동기간」)·발급목적 행 노출 |
 
 `schemaJson` 없이 `settingsJson`만 사용하는 양식: 인증서 5종 (`document-2` ~ `document-5`, `document-participation-certificate`).
 

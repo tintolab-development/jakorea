@@ -215,12 +215,9 @@
 }
 
 .main-header-notification-icon {
-  font-size: var(--font-size-14);
-  color: var(--color-brand-primary);
-  display: flex;
-  align-items: center;
-  /* 시안: 아이콘 박스 20×20 (글리프 크기는 유지) */
-  justify-content: center;
+  /* 시안 Icon / Etc / Toggle alarm 20 원본(민트) */
+  display: block;
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
 }

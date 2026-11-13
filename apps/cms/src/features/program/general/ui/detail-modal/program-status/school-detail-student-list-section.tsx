@@ -1035,64 +1035,6 @@ export function SchoolDetailStudentListSection({
     ]
   )
 
-  const handleEditInfoClick = useCallback(() => {
-    if (studentListInfoEditComingSoonAlert) {
-      showAlert({ title: '안내', content: STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE })
-      return
-    }
-    if (isStudentListEditMode) {
-      if (isDirty) {
-        void handleStudentListSave()
-      } else {
-        handleStudentListCancel()
-      }
-    } else if (rosterRemote.remoteEnabled && unmaskedRosterRows == null) {
-      if (privacyRolePending || !canRevealSensitive) {
-        // 권한 설정 V1.2: 다른 화면과 같은 접근 불가 안내(역할 확인 중에는 조용히 대기)
-        if (!privacyRolePending) showAdminAccessDeniedAlert()
-        return
-      }
-      if (rosterRemote.rawAccess) {
-        // AUTO_RAW_ACCESS: 진입 GET이 이미 원문 + 조회 기록이다. 안내 팝업·privacy-detail 재조회(기록 2건) 없이 수정한다.
-        enterStudentListEditMode()
-        return
-      }
-      const entryCheck = validateStudentRosterEditEntry({
-        remoteEnabled: true,
-        isLoading: rosterRemote.isLoading,
-        isError: rosterRemote.isError,
-        baselineRows: studentList,
-        totalCount: rosterRemote.totalCount,
-        revisionNo: rosterRemote.revisionNo,
-      })
-      if (!entryCheck.ok) {
-        showAlert({ title: '안내', content: entryCheck.message })
-        return
-      }
-      setEditUnmaskConfirmOpen(true)
-    } else {
-      enterStudentListEditMode()
-    }
-  }, [
-    studentListInfoEditComingSoonAlert,
-    isStudentListEditMode,
-    isDirty,
-    handleStudentListSave,
-    handleStudentListCancel,
-    enterStudentListEditMode,
-    rosterRemote.isError,
-    rosterRemote.isLoading,
-    rosterRemote.rawAccess,
-    rosterRemote.remoteEnabled,
-    rosterRemote.revisionNo,
-    rosterRemote.totalCount,
-    showAlert,
-    studentList,
-    unmaskedRosterRows,
-    canRevealSensitive,
-    privacyRolePending,
-  ])
-
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmOpen(false)
@@ -1162,6 +1104,67 @@ export function SchoolDetailStudentListSection({
     canRevealSensitive,
     privacyRolePending,
   ])
+
+  const handleEditInfoClick = useCallback(() => {
+    if (studentListInfoEditComingSoonAlert) {
+      showAlert({ title: '안내', content: STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE })
+      return
+    }
+    if (isStudentListEditMode) {
+      if (isDirty) {
+        void handleStudentListSave()
+      } else {
+        handleStudentListCancel()
+      }
+    } else if (rosterRemote.remoteEnabled && unmaskedRosterRows == null) {
+      if (privacyRolePending || !canRevealSensitive) {
+        // 권한 설정 V1.2: 다른 화면과 같은 접근 불가 안내(역할 확인 중에는 조용히 대기)
+        if (!privacyRolePending) showAdminAccessDeniedAlert()
+        return
+      }
+      if (rosterRemote.rawAccess) {
+        // AUTO_RAW_ACCESS: 진입 GET이 이미 원문 + 조회 기록이다. 안내 팝업·privacy-detail 재조회(기록 2건) 없이 수정한다.
+        enterStudentListEditMode()
+        return
+      }
+      const entryCheck = validateStudentRosterEditEntry({
+        remoteEnabled: true,
+        isLoading: rosterRemote.isLoading,
+        isError: rosterRemote.isError,
+        baselineRows: studentList,
+        totalCount: rosterRemote.totalCount,
+        revisionNo: rosterRemote.revisionNo,
+      })
+      if (!entryCheck.ok) {
+        showAlert({ title: '안내', content: entryCheck.message })
+        return
+      }
+      // 시안 — 안내 팝업 없이 바로 원문 조회 후 수정 모드로 들어간다(감사 기록은 서버).
+      confirmEditUnmaskAndStartEdit()
+    } else {
+      enterStudentListEditMode()
+    }
+  }, [
+    studentListInfoEditComingSoonAlert,
+    isStudentListEditMode,
+    isDirty,
+    handleStudentListSave,
+    handleStudentListCancel,
+    enterStudentListEditMode,
+    rosterRemote.isError,
+    rosterRemote.isLoading,
+    rosterRemote.rawAccess,
+    rosterRemote.remoteEnabled,
+    rosterRemote.revisionNo,
+    rosterRemote.totalCount,
+    showAlert,
+    studentList,
+    unmaskedRosterRows,
+    canRevealSensitive,
+    privacyRolePending,
+    confirmEditUnmaskAndStartEdit,
+  ])
+
 
   const displayCount = isStudentListEditMode
     ? editModeVisibleRows.length

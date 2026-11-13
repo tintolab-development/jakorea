@@ -268,15 +268,15 @@ function testInstitutionGemini() {
   )
   assert.equal(
     titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection],
-    '개인 정보수집 및 제공에 대한 동의'
+    '개인정보 수집‧이용'
   )
   assert.equal(
     titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent],
-    '제 3자 정보 제공 동의'
+    '개인정보 제3자 정보 제공‧이용 동의'
   )
   assert.equal(
     titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.portraitConsent],
-    '초상권에 대한 동의'
+    '초상권 수집·이용 동의'
   )
   assert.equal(
     titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo],
@@ -294,7 +294,7 @@ function testInstitutionGemini() {
   assert.equal(schedule?.paragraphTitle, '진행 희망 교육 일정')
   assert.equal(
     schedule?.paragraphDescription,
-    '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.'
+    '1~3순위 희망 날짜 및 교육 시간을 기재해 주세요.'
   )
 }
 

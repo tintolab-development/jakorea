@@ -6,3 +6,37 @@
 .general-program-list-page.program-list-page--program-list-overview {
   width: 100%;
 }
+
+/* 시안 L-1 — 상태 요약 탭: 활성 라벨 18/Bold·건수 32/Bold, 비활성 건수 #3d3d3d */
+.general-program-list-page
+  .program-progress-widget__stage--selected
+  .program-progress-widget__stage-label,
+.general-program-list-page
+  .program-progress-widget__stage--selected
+  .program-progress-widget__stage-count,
+.general-program-list-page
+  .program-progress-widget__stage--selected
+  .program-progress-widget__stage-count-unit {
+  font-weight: var(--font-weight-700, 700);
+}
+
+.general-program-list-page
+  .program-progress-widget__stage:not(.program-progress-widget__stage--selected):not(
+    .program-progress-widget__stage--matching
+  )
+  .program-progress-widget__stage-count,
+.general-program-list-page
+  .program-progress-widget__stage:not(.program-progress-widget__stage--selected):not(
+    .program-progress-widget__stage--matching
+  )
+  .program-progress-widget__stage-count-unit {
+  color: var(--default-BK, #3d3d3d);
+}
+
+/* 시안 L-3 — 목록 필터 기본 표기 「전체」는 placeholder 색이 아닌 본문색 #3d3d3d */
+.general-program-list-page
+  .filter-table-layout
+  .cms-select:not(.cms-select--disabled)
+  .ant-select-selection-placeholder {
+  color: var(--default-BK, #3d3d3d);
+}

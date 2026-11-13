@@ -20,6 +20,7 @@ import {
 
 import './section-shared.css'
 import './interview-section.css'
+import { FieldSearchIcon } from '@jakorea/admin-ui/field'
 
 type Draft = {
   mainText: string
@@ -52,22 +53,6 @@ function inlineFieldClass(isEditing: boolean): string {
       ? 'talent-intro-interview__field--edit'
       : 'talent-intro-interview__field--readonly',
   ].join(' ')
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      aria-hidden
-    >
-      <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  )
 }
 
 type Props = {
@@ -280,7 +265,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                       aria-label="게시글 검색"
                       onClick={() => setPickerOpen(true)}
                     >
-                      <SearchIcon />
+                      <FieldSearchIcon style={{ width: 20, height: 20 }} />
                     </button>
                   ) : undefined
                 }

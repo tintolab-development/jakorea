@@ -258,9 +258,12 @@ export function renderProgramRegistrationParagraphBody(
               scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
               // 시안 9899:221372 — ■ 교사 연수 별도 블록(진행 일정·교육 형태·IPS 고정) + ■1차시…
               preEducationBlockLabel={TEACHER_TRAINING_BLOCK_LABEL}
+              // QA 2026-11-13 교육받은 교사 #5
+              contentPlaceholder="교육 내용을 작성해 주세요"
               preEducationDisplayMode="prepend"
               hidePreEducationScheduleName
               hideAssignmentSettings
+              trainedTeachersTemplateDesign
             />
           </>
         )
@@ -282,6 +285,7 @@ export function renderProgramRegistrationParagraphBody(
           ipsScheduleDetail={options.ipsScheduleDetail}
           scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
           educationPlaceEnabled={isGeneralIndividualEducationPlaceEnabled(options)}
+          generalDesignCopy
         />
       ) : (
         <ProgramRegistrationEducationCurriculumParagraph
@@ -298,6 +302,7 @@ export function renderProgramRegistrationParagraphBody(
           ipsScheduleDetail={options.ipsScheduleDetail}
           scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
           educationPlaceEnabled={isGeneralIndividualEducationPlaceEnabled(options)}
+          generalDesignCopy
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:

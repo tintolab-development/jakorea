@@ -8,11 +8,14 @@
 
 .title {
   margin: 0;
-  color: #85969d;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  letter-spacing: -0.16px;
+}
+
+/* Figma PC: 20px / Regular / 150% · #285f74 */
+@media (--bp-pc-up) {
+  .title {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
 }
 
 .grid {

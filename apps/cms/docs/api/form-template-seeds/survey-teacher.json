@@ -119,7 +119,7 @@
         "answerRequired": true,
         "requiredMark": true,
         "paragraphTitle": "프로그램 신청 계기",
-        "paragraphDescription": "본 프로그램을 신청하신 계기를 선택해 주세요",
+        "paragraphDescription": "본 프로그램을 신청하신 계기를 선택해 주세요.",
         "participatesInTitleNumbering": true,
         "allowMultiple": true,
         "items": [
@@ -348,10 +348,10 @@
         "answerRequired": true,
         "requiredMark": true,
         "paragraphTitle": "본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요",
-        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
+        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요.",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
-        "itemInputRows": 4,
+        "itemInputRows": 1,
         "items": [
           {
             "id": "survey-short-essay-item-1",
@@ -371,10 +371,10 @@
         "answerRequired": true,
         "requiredMark": true,
         "paragraphTitle": "프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요",
-        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
+        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요.",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
-        "itemInputRows": 4,
+        "itemInputRows": 1,
         "items": [
           {
             "id": "survey-short-essay-item-2",
@@ -393,11 +393,11 @@
         "variant": "short_essay",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요",
-        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
+        "paragraphTitle": "현재 가장 필요로 하는 교육 콘텐츠가 있다면 기재해 주세요",
+        "paragraphDescription": "추후 콘텐츠 개발 활용을 위한 선호도 조사입니다.",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
-        "itemInputRows": 4,
+        "itemInputRows": 1,
         "items": [
           {
             "id": "survey-short-essay-item-3",

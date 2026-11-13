@@ -57,6 +57,10 @@ export function getProgramRegistrationSeedParagraphIds(
   return PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS
 }
 
+/** 1사1교·교육받은 교사 커리큘럼 카드 설명 — 시안(5767:191506 · 5767:196354) 마침표 포함 */
+export const PROGRAM_REGISTRATION_ECONOMY_TT_CURRICULUM_DESCRIPTION =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.registrationDescription
+
 function createSeedParagraph(
   id: string,
   title: string,
@@ -88,12 +92,11 @@ export function createProgramRegistrationDraft(
   variant: ProgramRegistrationFormVariant = 'general'
 ): WritingFormDraft {
   const paragraphs: HorizontalTableParagraph[] = [
+    // 1사1교·교육받은 교사도 시안(5767:191506 · 5767:196354)대로 기본 정보 카드 설명을 둔다
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.basicInfo,
       PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.title,
-      variant === 'general'
-        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
-        : ''
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
     ),
   ]
   if (variant !== 'trainedTeachers') {
@@ -102,7 +105,9 @@ export function createProgramRegistrationDraft(
       createSeedParagraph(
         PROGRAM_REGISTRATION_IDS.wageInfo,
         PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title,
-        PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription
+        // 1사1교 시안(5767:191506 · 9899:215345)·일반 등록 폼 시안(12931:3854 · 12829:411618):
+        // 임금 정보 카드 설명 없음(「설명 입력」 자리표시). 상세 수정 안내는 meta.editDescription을 따로 쓴다
+        ''
       )
     )
   }
@@ -122,8 +127,8 @@ export function createProgramRegistrationDraft(
         ? '교육 진행 (커리큘럼)'
         : PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.title,
       variant === 'general'
-        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescription
-        : '차시 별 정보를 입력해 주세요'
+        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.registrationDescription
+        : PROGRAM_REGISTRATION_ECONOMY_TT_CURRICULUM_DESCRIPTION
     )
   )
   paragraphs.push(

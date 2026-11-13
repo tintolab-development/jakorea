@@ -54,6 +54,7 @@ import {
   normalizeWritingFormDraftFromApi,
 } from '@/features/template/lib/form-template-seed-registry'
 import { shouldUseRemoteDraftApiForTemplateCode } from '@/features/template/lib/form-template-remote-draft'
+import { isFormTemplateSeedPreviewActive } from '@/features/template/lib/form-template-seed-preview'
 import {
   removeWritingFormTemplateSave,
   type WritingFormTemplateSaveRecord,
@@ -377,6 +378,10 @@ export async function loadFormTemplateVersionDraft(
   templateCode: string
 ): Promise<WritingFormTemplateSaveRecord | null> {
   if (!shouldUseRemoteDraftApiForTemplate(templateCode)) {
+    return null
+  }
+  // 로컬 개발 「시드로 보기」(`/templates?seed=1`) — 서버 저장본 대신 에디터 seed hydrate
+  if (isFormTemplateSeedPreviewActive()) {
     return null
   }
 

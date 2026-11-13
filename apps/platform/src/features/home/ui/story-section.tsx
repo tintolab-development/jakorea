@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   IMPACT_STORIES_PATH,
@@ -87,22 +87,18 @@ function SubStoryCardSkeleton() {
   )
 }
 
-function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
+function SubStoryCard({ story, className }: { story: ImpactStoryListItem; className?: string }) {
   const imageUrl = story.imageUrl || undefined
   return (
     <Link
-      className={styles.subCard}
+      className={className ? `${styles.subCard} ${className}` : styles.subCard}
       to={impactStoryDetailPath(story.id)}
       aria-label={`${story.title} 상세 보기`}
     >
       <div
         className={imageUrl ? styles.subCardMedia : `${styles.subCardMedia} ${styles.mediaDefault}`}
       >
-        <img
-          className={styles.subCardImage}
-          src={imageUrl || defaultThumbnailUrl}
-          alt=""
-        />
+        <img className={styles.subCardImage} src={imageUrl || defaultThumbnailUrl} alt="" />
         <PFCategoryBadge size="small" variant="primary" className={styles.subCardBadge}>
           {story.categoryLabel}
         </PFCategoryBadge>
@@ -114,11 +110,16 @@ function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
   )
 }
 
-export function StorySection() {
+type StorySectionProps = {
+  /** 모바일 시안: 섹션 제목 아래 소개 영상 (PC는 페이지 상단 별도 영역) */
+  mobileVideo?: ReactNode
+}
+
+export function StorySection({ mobileVideo }: StorySectionProps) {
   const { featuredStory, impactTitle } = useHomeMain()
   const featured = featuredStory
   const { items: subStories, isPending: subStoriesPending } = useHomeImpactSubStories(
-    featured?.id ?? null,
+    featured?.id ?? null
   )
   const mobileTitle = impactTitle.trim() || FALLBACK_IMPACT_TITLE
 
@@ -133,9 +134,13 @@ export function StorySection() {
           <TitleLines title={mobileTitle} />
         </h2>
 
+        {mobileVideo}
+
         <FeaturedStory story={featured} />
 
         <div className={styles.subGrid}>
+          {/* 모바일 시안: 피처드도 카드 목록 첫 항목으로 노출 (PC는 상단 피처드) */}
+          <SubStoryCard story={featured} className={styles.subCardMobileOnly} />
           {subStoriesPending
             ? SUB_STORY_SKELETON_KEYS.map(key => <SubStoryCardSkeleton key={key} />)
             : subStories.map(story => <SubStoryCard story={story} key={story.id} />)}

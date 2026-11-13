@@ -1,5 +1,5 @@
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import { useMemo, useState } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_EMPTY_COPY } from '@/shared/ui/cms-table-empty-copy'
@@ -209,7 +209,7 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
         <div className="send-template-select-modal__search">
           <span className="send-template-select-modal__search-input">
             <CmsInput
-              icon={<SearchOutlined />}
+              icon={<FieldSearchIcon />}
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}

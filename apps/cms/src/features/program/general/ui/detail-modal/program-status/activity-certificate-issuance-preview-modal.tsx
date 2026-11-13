@@ -112,11 +112,9 @@ export function ActivityCertificateIssuancePreviewModal({
     () =>
       buildActivityCertificateInitialStringValues(unmaskedInstructor, program, issuanceReasonLabel, {
         participationPeriod: periodHours.participationPeriod,
-        activityHours: periodHours.activityHours,
       }),
     [
       issuanceReasonLabel,
-      periodHours.activityHours,
       periodHours.participationPeriod,
       program,
       unmaskedInstructor,

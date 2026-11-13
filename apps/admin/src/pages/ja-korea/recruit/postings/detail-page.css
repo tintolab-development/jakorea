@@ -140,7 +140,11 @@
 }
 
 .recruit-posting-detail-page__views-icon {
-  font-size: 16px;
+  /* 시안 Icon / Etc / Basic view 20 원본(민트) */
+  display: block;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 }
 
 .recruit-posting-detail-page__title {
@@ -219,7 +223,11 @@
 }
 
 .recruit-posting-detail-page__clip {
-  font-size: 16px;
+  /* 시안 Icon / Etc / Basic file 20 원본(민트) */
+  display: block;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 }
 
 .recruit-posting-detail-page__attachments-list {

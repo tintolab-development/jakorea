@@ -12,3 +12,13 @@
   min-height: 320px;
   padding: 48px 24px;
 }
+
+/* 시안 6647:36345 — 안내 문구 2줄(18px·150%), 44px 고정 높이 해제 */
+.crime-consent-doc-modal__notice-wrap.member-consent-crime-modal__notice-wrap {
+  height: auto;
+  min-height: 44px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+}

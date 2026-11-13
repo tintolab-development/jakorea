@@ -59,9 +59,14 @@ function exclusionStateFromModalSelectedDates(
 }
 
 /**
- * 날짜 라벨 형식 — `korean`: 「26년 3월 26일」(기존), `dotted`: 「2026.03.26(목)」(일반 프로그램 등록 시안)
+ * 날짜 라벨 형식 — `korean`: 「26년 3월 26일」(기존), `dotted`: 「2026.03.26(목)」(일반 프로그램 등록 시안),
+ * `korean-full`: 「2026년 03월 24일(화)」(템플릿 관리 봉사자 모집 폼 진행 불가일 선택 팝업 시안 5767:40137)
  */
-type UnavailableDateLabelFormat = 'korean' | 'dotted'
+export type UnavailableDateLabelFormat = 'korean' | 'dotted' | 'korean-full'
+
+function formatKoreanFullDateWithWeekday(date: Dayjs): string {
+  return `${date.format('YYYY년 MM월 DD일')}(${WEEKDAYS_KO[date.day()]})`
+}
 
 function formatDottedDateWithWeekday(date: Dayjs): string {
   return `${date.format('YYYY.MM.DD')}(${WEEKDAYS_KO[date.day()]})`
@@ -75,6 +80,7 @@ function formatModalSelectedLabel(
   if (value === RECURRING_SUNDAY) return '일요일 제외'
   if (value === RECURRING_HOLIDAY) return RECURRING_HOLIDAY
   if (ISO_DATE_PATTERN.test(value)) {
+    if (labelFormat === 'korean-full') return formatKoreanFullDateWithWeekday(dayjs(value))
     return labelFormat === 'dotted'
       ? formatDottedDateWithWeekday(dayjs(value))
       : dayjs(value).format('YY년 M월 D일')
@@ -138,6 +144,7 @@ function formatUnavailableDateLabel(
   if (!date.isValid()) return value
 
   if (labelFormat === 'dotted') return formatDottedDateWithWeekday(date)
+  if (labelFormat === 'korean-full') return formatKoreanFullDateWithWeekday(date)
   return `${date.format('YY년 M월 D일')}(${WEEKDAYS_KO[date.day()]})`
 }
 
@@ -160,6 +167,9 @@ export function DirectUnavailableDateAddButton({
   appliedDatesDisplay = 'badge',
   modalUnavailableDescriptionLead = DEFAULT_MODAL_UNAVAILABLE_LEAD,
   modalUnavailableDescriptionSecond = DEFAULT_MODAL_UNAVAILABLE_SECOND,
+  modalTitle: modalTitleProp,
+  dateLabelFormat: dateLabelFormatProp,
+  addButtonSize = 'medium',
   canOpenDirectUnavailableModal,
   onDirectUnavailableModalBlocked,
   exclusionState,
@@ -182,6 +192,12 @@ export function DirectUnavailableDateAddButton({
   modalUnavailableDescriptionLead?: string
   /** 모달 본문 둘째 줄 */
   modalUnavailableDescriptionSecond?: string
+  /** 모달 제목 — 생략 시 일반 등록 위저드 「진행 불가일 선택」, 그 외 「진행 불가일 직접 선택」 */
+  modalTitle?: string
+  /** 날짜 라벨 형식 — 생략 시 일반 등록 위저드 `dotted`, 그 외 `korean` */
+  dateLabelFormat?: UnavailableDateLabelFormat
+  /** 「진행 불가일 직접 추가」 버튼 크기 — 템플릿 관리 봉사자 모집 폼 시안은 h36 */
+  addButtonSize?: 'medium' | 'h36'
   /**
    * `false`이면 직접 추가 모달을 열지 않고 `onDirectUnavailableModalBlocked` 호출
    */
@@ -194,8 +210,10 @@ export function DirectUnavailableDateAddButton({
 }) {
   // 일반 프로그램 등록 위저드만 시안 날짜 형식·팝업 제목 — 그 외(UJAT·템플릿 관리·상세)는 기존 유지
   const isGeneralWizard = useIsGeneralRegistrationWizard()
-  const dateLabelFormat: UnavailableDateLabelFormat = isGeneralWizard ? 'dotted' : 'korean'
-  const modalTitle = isGeneralWizard ? '진행 불가일 선택' : '진행 불가일 직접 선택'
+  const dateLabelFormat: UnavailableDateLabelFormat =
+    dateLabelFormatProp ?? (isGeneralWizard ? 'dotted' : 'korean')
+  const modalTitle =
+    modalTitleProp ?? (isGeneralWizard ? '진행 불가일 선택' : '진행 불가일 직접 선택')
   const isControlled = appliedDatesProp !== undefined
   const [open, setOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
@@ -278,7 +296,7 @@ export function DirectUnavailableDateAddButton({
       >
         <CmsButton
           type="button"
-          size="medium"
+          size={addButtonSize}
           disabled={disabled}
           icon={<DirectUnavailableDateAddIcon />}
           onClick={() => {

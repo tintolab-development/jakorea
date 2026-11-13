@@ -38,11 +38,9 @@
   gap: var(--spacing-16);
 }
 
+/* PC 여백은 EducationSessionCard 기본값(28px 32px, Figma 11001:285742)을 그대로 쓴다 */
 .row {
   box-sizing: border-box;
-  gap: var(--spacing-16);
-  padding: var(--spacing-20) var(--spacing-24);
-  border-radius: var(--radius-24);
 }
 
 .timeLabel {
@@ -91,62 +89,6 @@
 .reportStatusSubmitted .reportStatusIcon {
   width: 23px;
   height: 17px;
-}
-
-.reportGuide {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-20);
-  padding: var(--spacing-20);
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-cool-50);
-}
-
-.reportGuideSubmitted {
-  background: var(--color-element-hover);
-}
-
-.reportGuideCopy {
-  display: flex;
-  min-width: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-8);
-}
-
-.reportMessage,
-.reportDueDate {
-  margin: 0;
-}
-
-.reportMessage {
-  color: var(--color-neutral-black);
-  font-family: var(--font-family-base);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 140%;
-  word-break: keep-all;
-}
-
-.reportGuideSubmitted .reportMessage {
-  color: var(--color-neutral-cool-700);
-}
-
-.reportMessage strong {
-  font-weight: 700;
-}
-
-.reportDueDate {
-  color: var(--color-neutral-cool-600);
-  font-family: var(--font-family-base);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 140%;
 }
 
 .reportActionButton {
@@ -198,17 +140,6 @@
   .headerAside {
     width: 100%;
     justify-content: flex-start;
-  }
-
-  .reportGuide {
-    align-items: stretch;
-    flex-direction: column;
-    gap: var(--spacing-16);
-    padding: var(--spacing-16);
-  }
-
-  .reportActionButton {
-    width: 100%;
   }
 
   .errorState {

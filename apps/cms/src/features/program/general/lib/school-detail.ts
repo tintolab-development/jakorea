@@ -338,6 +338,8 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
   const waitingRoomLocation = stringField('waitingRoomLocation')
   const mealNotice = stringField('mealNotice')
   const parkingInfo = stringField('parkingInfo')
+  // 성범죄경력 조회서 요청 — 상세 응답 표시 문구(신청서 선택값). 승인 후 참여 기관 상세에서도 그대로 쓴다.
+  const sexOffenseCheckRequest = stringField('sexOffenseCheckRequest')
   const rejectReason = stringField('rejectReason')
   const resultNotificationSentAt = formatSchoolDetailResultNotificationSentAt(
     dto.resultNotificationSentAt
@@ -370,6 +372,7 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
     mealProvided: dto.mealProvided ?? undefined,
     mealNotice,
     parkingInfo,
+    ...(sexOffenseCheckRequest ? { criminalCheckRequest: sexOffenseCheckRequest } : {}),
     textbookId: dto.textbookId != null ? String(dto.textbookId) : undefined,
     textbookName,
     textbookGrade,

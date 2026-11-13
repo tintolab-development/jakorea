@@ -1,6 +1,7 @@
 import {
   normalizeTitleWithPeriodParagraph,
   UJAT_EDU_JOURNAL_END_ACTIVITY_PRESET_LABEL,
+  UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL,
   UJAT_EDU_PLAN_END_ACTIVITY_PRESET_LABEL,
 } from './title-with-period-normalize.js'
 
@@ -2523,12 +2524,30 @@ function migrateAgreementPortraitSeedRequiredMarks(p: WritingFormParagraph): Wri
   return { ...p, requiredMark: true }
 }
 
-/** 지급조서 사전 동의서 시드 단락 — 필수항목(*)·답변 필수 강제 */
+function forceParagraphNotRequired(p: WritingFormParagraph): WritingFormParagraph {
+  if (p.kind === 'single_item') {
+    if (p.requiredMark === false && p.answerRequired === false) return p
+    return { ...p, requiredMark: false, answerRequired: false }
+  }
+  // 제목형은 타입상 requiredMark 고정
+  if (p.variant === 'survey_title_with_period' || p.requiredMark === false) return p
+  return { ...p, requiredMark: false }
+}
+
+/** 지급조서 사전 동의서 시드 단락 — 필수항목(*)·답변 필수 강제 (서문은 `*` 없음) */
 function migratePaymentStatementPreConsentSeedRequiredMarks(
   p: WritingFormParagraph
 ): WritingFormParagraph {
+  // 영수증 사전 동의서 서문 — 시안 16046:109928: `*` 없음(Platform `INTRO_PARAGRAPH_IDS_WITHOUT_REQUIRED`와 같음)
+  if (p.id === 'receipt-pre-consent-seed-intro') {
+    return forceParagraphNotRequired(p)
+  }
   if (!p.id.startsWith('payment-statement-pre-consent-seed-')) {
     return p
+  }
+  // 서문 — 시안 5767:42072·6130:133665: `*` 없음
+  if (p.id === 'payment-statement-pre-consent-seed-intro') {
+    return forceParagraphNotRequired(p)
   }
   // 2·4번(법령에 따른 수집·제공) — 동의 라디오를 끈 양식(시안·재저장본)만 `*`·답변 필수 강제 제외.
   // 서버 양식에 라디오가 아직 켜져 있으면 기존처럼 필수 유지(필수 검증 완화 방지).
@@ -2570,8 +2589,16 @@ function migrateRecruitFormDetailInfoOptionalRequired(
   return { ...p, requiredMark: false, answerRequired: false }
 }
 
+/** 행정정보 공동이용 — 제목 `*`만 표시하는 단락(1. 이용기관 명칭·2. 이용사무·4. 정보주체 동의사항) */
+const AGREEMENT_NOTICE_DISPLAY_REQUIRED_MARK_PARAGRAPH_IDS = new Set<string>([
+  'agreement-notice-institution',
+  'agreement-notice-purpose',
+  'agreement-notice-consent-static',
+])
+
 /**
- * 행정정보 공동이용 사전동의서 — 「대상자 본인」만 필수.
+ * 행정정보 공동이용 사전동의서 — 「대상자 본인」만 답변 필수.
+ * 1·2·4번은 제목 `*`만 표시(시안 5767:41434), 3번 표·식별번호·하단 안내 등은 `*` 없음.
  * 제목형(survey_title_with_period)은 타입상 requiredMark 고정.
  */
 function migrateAgreementNoticeSeedRequiredMarks(p: WritingFormParagraph): WritingFormParagraph {
@@ -2580,6 +2607,16 @@ function migrateAgreementNoticeSeedRequiredMarks(p: WritingFormParagraph): Writi
   }
   if (p.kind === 'description' && p.variant === 'survey_title_with_period') {
     return p
+  }
+
+  /** 시안 5767:41434 — 1·2·4번 제목 `*` 표시만(응답 항목 없음 → 답변 필수 아님) */
+  if (AGREEMENT_NOTICE_DISPLAY_REQUIRED_MARK_PARAGRAPH_IDS.has(p.id)) {
+    if (p.kind === 'single_item') {
+      if (p.requiredMark === true && p.answerRequired === false) return p
+      return { ...p, requiredMark: true, answerRequired: false }
+    }
+    if (p.requiredMark === true) return p
+    return { ...p, requiredMark: true }
   }
 
   const isSubject = p.id === 'agreement-notice-subject'
@@ -2919,6 +2956,19 @@ function migrateSettlementTransportParagraphCopy(p: WritingFormParagraph): Writi
   }
 }
 
+/** 정산 신청서 강사비 산출 내역 — 설명이 비어 있는 예전 저장본에 시드 설명 보정 */
+function migrateSettlementCalcInfoParagraphDescription(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.id !== 'settlement-application-seed-table-calc-info' || p.kind !== 'single_item') {
+    return p
+  }
+  if (p.variant !== 'horizontal_table') return p
+  const current = p.paragraphDescription?.trim() ?? ''
+  if (current !== '' && current !== '설명 입력') return p
+  return { ...p, paragraphDescription: '강사비는 사전에 책정된 금액으로 지급됩니다.' }
+}
+
 /** 정산 신청서 숙박비 신청 — 설명·하단 안내 시드 보정 */
 function migrateSettlementAccommodationParagraphCopy(
   p: WritingFormParagraph
@@ -2999,6 +3049,7 @@ function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormPara
   next = migrateAgreementExpensePledgeIntroParagraph(next)
   next = migrateEducatorFacilitatorPledgeTitleParagraph(next)
   next = migrateSettlementTransportParagraphCopy(next)
+  next = migrateSettlementCalcInfoParagraphDescription(next)
   next = migrateSettlementAccommodationParagraphCopy(next)
   next = migrateUjatEducationExplanationOptionalTitle(next)
   next = normalizeShortEssayMaxLength(next)
@@ -3176,7 +3227,7 @@ export const AGREEMENT_NOTICE_INSTITUTION_PARAGRAPH: AgreementExplanationTextPar
   id: AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '이용기관 명칭',
   paragraphDescription: '',
   participatesInTitleNumbering: true,
@@ -3190,7 +3241,7 @@ export const AGREEMENT_NOTICE_PURPOSE_PARAGRAPH: AgreementExplanationTextParagra
   id: AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '이용사무(이용목적)',
   paragraphDescription: '',
   participatesInTitleNumbering: true,
@@ -3298,7 +3349,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
         kind: 'description',
         variant: 'static_description_lines',
-        requiredMark: false,
+        requiredMark: true,
         paragraphTitle: '정보주체(본인) 동의사항',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
@@ -3324,7 +3375,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
           },
           {
             id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth,
-            label: '생년월일',
+            label: '생년월일(8자리)',
             placeholder: AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER,
             bodyText: '',
           },
@@ -3764,7 +3815,7 @@ export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
 export function createDefaultDirectAgreementDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,
-    formSettings: { titleNumbering: 'none' },
+    formSettings: { titleNumbering: 'numeric' },
     paragraphs: [
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title,
@@ -3819,7 +3870,7 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
           {
             id: 'agreement-short-essay-item-3',
             label: '보유 및 이용 기간',
-            placeholder: 'ex) 회원 탈퇴 후 1개월 또는 개인정보수집 동의일로부터 5년',
+            placeholder: 'ex) 동의일로부터 3년',
             bodyText: '',
           },
         ],
@@ -3982,8 +4033,8 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause2,
         '2',
-        '종교적 정치적 중립성 유지',
-        '교육 내용 및 발언에 있어 종교적·정치적으로 편향이나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.'
+        '종교적·정치적 중립성 유지',
+        '교육 내용 및 발언에 있어 종교적·정치적으로 편향되거나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.'
       ),
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
@@ -4189,7 +4240,8 @@ function createDefaultSurveyScaleParagraph(id: string, paragraphTitle: string): 
 function createDefaultSurveyShortEssayParagraph(
   id: string,
   paragraphTitle: string,
-  itemId: string
+  itemId: string,
+  paragraphDescription = '없다면 ‘없음’으로 기재해 주세요.'
 ): ShortEssayParagraph {
   return {
     id,
@@ -4198,10 +4250,11 @@ function createDefaultSurveyShortEssayParagraph(
     answerRequired: true,
     requiredMark: true,
     paragraphTitle,
-    paragraphDescription: '없다면 ‘없음’으로 기재해 주세요',
+    paragraphDescription,
     participatesInTitleNumbering: true,
     showItemTitle: false,
-    itemInputRows: 4,
+    // 시안 5767:42989·5767:43362 — 주관식 답변 칸 한 줄(field/h44, 리사이즈 핸들)
+    itemInputRows: 1,
     items: [
       {
         id: itemId,
@@ -4249,7 +4302,8 @@ export function createNewSurveyDraft(): WritingFormDraft {
         variant: 'user_info',
         answerRequired: true,
         requiredMark: true,
-        paragraphTitle: '설문자 정보',
+        // 시안 12723:137188 — 신규 설문 단락 제목은 「기본 정보」(기존 설문 시드는 「설문자 정보」)
+        paragraphTitle: '기본 정보',
         paragraphDescription: '선택한 항목을 자동으로 불러옵니다.',
         participatesInTitleNumbering: true,
         userFields: [
@@ -4271,7 +4325,8 @@ export function createNewSurveyDraft(): WritingFormDraft {
           { key: 'teamName', label: '팀 명' },
           { key: 'teamPartnerName', label: '팀원/파트너 명' },
         ],
-        selectedUserFieldKeys: ['name', 'addressRegion'],
+        // 시안 12723:137188 — 신규 등록 시 설문자 정보 항목은 미선택으로 시작
+        selectedUserFieldKeys: [],
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.score,
@@ -4382,7 +4437,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         answerRequired: true,
         requiredMark: true,
         paragraphTitle: '프로그램 신청 계기',
-        paragraphDescription: '본 프로그램을 신청하신 계기를 선택해 주세요',
+        paragraphDescription: '본 프로그램을 신청하신 계기를 선택해 주세요.',
         participatesInTitleNumbering: true,
         allowMultiple: true,
         items: createDefaultMultipleChoiceItems().map((it: MultipleChoiceItem) => ({ ...it })),
@@ -4425,8 +4480,9 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
       ),
       createDefaultSurveyShortEssayParagraph(
         DEFAULT_SURVEY_PARAGRAPH_IDS.subjective3,
-        '현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요',
-        'survey-short-essay-item-3'
+        '현재 가장 필요로 하는 교육 콘텐츠가 있다면 기재해 주세요',
+        'survey-short-essay-item-3',
+        '추후 콘텐츠 개발 활용을 위한 선호도 조사입니다.'
       ),
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.star,
@@ -4648,7 +4704,7 @@ function createUjatEducationJournalContentFeedbackParagraph(id: string): ShortEs
     answerRequired: true,
     requiredMark: true,
     paragraphTitle: '교육 내용 피드백',
-    paragraphDescription: '잘된 점과 어려웠던 점, 기타 사항을 작성해 주세요',
+    paragraphDescription: '잘된 점과 어려웠던 점, 기타 사항을 작성해 주세요.',
     participatesInTitleNumbering: true,
     showItemTitle: false,
     items: [
@@ -4672,7 +4728,7 @@ function createLectureReportEducationPhotosParagraph(id: string): FileAttachment
     answerRequired: true,
     requiredMark: true,
     paragraphTitle: '교육 사진',
-    paragraphDescription: '교육 장면 사진을 2장 이상 첨부해 주세요',
+    paragraphDescription: '교육 당일 사진을 2장 이상 첨부해 주세요.',
     participatesInTitleNumbering: true,
   }
 }
@@ -4685,7 +4741,7 @@ function createUjatEducationJournalEducationPhotosParagraph(id: string): FileAtt
     answerRequired: true,
     requiredMark: true,
     paragraphTitle: '교육 사진',
-    paragraphDescription: '교육 당일 사진을 2장 이상 첨부해 주세요',
+    paragraphDescription: '교육 당일 사진을 2장 이상 첨부해 주세요.',
     participatesInTitleNumbering: true,
   }
 }
@@ -4695,7 +4751,7 @@ export function createUjatEducationJournalIssuanceDraft(): WritingFormDraft {
   const base = createUjatEducationIssuanceDraft(
     UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
     'JA KOREA 대학생경제교육봉사단(UJAT) 교육일지',
-    n => `${n}차시 교육 일지`,
+    n => `${n}차시 교육 내용 및 역할`,
     {
       paragraphsAfterVolunteer: [
         createUjatJournalEducationInfoParagraph(
@@ -4715,11 +4771,12 @@ export function createUjatEducationJournalIssuanceDraft(): WritingFormDraft {
     return normalizeTitleWithPeriodParagraph({
       ...p,
       periodMode: 'custom',
-      startPeriodMode: 'immediate',
+      // 시안 5767:44785 — 작성 기간 「활동일 ~ 활동일 다음주 목요일」
+      startPeriodMode: 'custom',
       endPeriodMode: 'custom',
       startAt: null,
       endAt: null,
-      startPeriodPresetLabel: null,
+      startPeriodPresetLabel: UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL,
       endPeriodPresetLabel: UJAT_EDU_JOURNAL_END_ACTIVITY_PRESET_LABEL,
       showWritingPeriodOnForm: true,
     })
@@ -4851,7 +4908,7 @@ export function createLectureReportIssuanceDraft(): WritingFormDraft {
         answerRequired: true,
         requiredMark: true,
         paragraphTitle: '강의 종합 평가 및 개선점',
-        paragraphDescription: 'ex) 강의 총평, 잘 된 점, 아쉬운 점, 개선 방향 등',
+        paragraphDescription: 'ex) 강의 총평, 잘 된 점, 아쉬운 점, 개선 방향 등.',
         participatesInTitleNumbering: true,
         showItemTitle: false,
         items: [

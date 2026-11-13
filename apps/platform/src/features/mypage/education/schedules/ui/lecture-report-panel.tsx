@@ -7,7 +7,7 @@ import {
   toSeoulDisplayParts,
 } from '@/shared/lib/format-display-date'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
-import { EducationSessionCard, EducationSessionCardHeader } from '../../shared'
+import { EducationSessionCard, EducationSessionCardHeader, EducationSessionGuideBlock } from '../../shared'
 import villaIconUrl from '@/shared/assets/icons/villa.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
 import checkDarkMintLargeUrl from '@/shared/assets/icons/check-dark-mint-large.svg'
@@ -63,6 +63,13 @@ function lectureStatusPresentation(value: string | null | undefined): { label: s
     case 'IN_PROGRESS':
     case 'ONGOING': return { label: '진행 중', tone: 'progress' }
     default: return { label: '진행 현황 확인 중', tone: 'disabled' }
+  }
+}
+function reportStatusLabel(status: LectureReportStatus | undefined): string | undefined {
+  switch (status) {
+    case 'SUBMITTED': return '강의보고서 제출 완료'
+    case 'OVERDUE': return '미제출'
+    default: return undefined
   }
 }
 function reportMessage(status: LectureReportStatus | undefined, canSubmit: boolean): string {
@@ -207,29 +214,35 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
             <EducationSessionCardHeader
               badge={<PFStateBadge size="small" tone={lectureStatus.tone}>{lectureStatus.label}</PFStateBadge>}
               date={formatDisplayDate(row.startAt) || '강의 일정'}
-              subtitle={timeLabel ? <PFText as="span" typo="bd-lg-rg" className={styles.timeLabel}>{timeLabel}</PFText> : undefined}
+              subtitle={timeLabel ? <PFText as="span" typo="bd-lg-rg" color="black" className={styles.timeLabel}>{timeLabel}</PFText> : undefined}
               aside={<div className={styles.headerAside}>{institutionMeta}{reportMeta}</div>}
             />
-            <div className={[styles.reportGuide, submitted ? styles.reportGuideSubmitted : undefined].filter(Boolean).join(' ')}>
-              <div className={styles.reportGuideCopy}>
-                <p className={styles.reportMessage}>{reportMessage(reportStatus, action === 'write')}</p>
-                {reportStatus !== 'UPCOMING' && row.submitDueAt ? <p className={styles.reportDueDate}>{formatDueDate(row.submitDueAt)}</p> : null}
-              </div>
-              <PFButton
-                type="button"
-                size="large"
-                variant={submitted ? 'tertiary' : 'primary'}
-                className={styles.reportActionButton}
-                disabled={submitted ? false : action !== 'write'}
-                onClick={() =>
-                  submitted
-                    ? openPreviewModal(row.assignmentId)
-                    : navigate(lectureReportWritePath(applicationId, row.assignmentId, 'write'))
-                }
-              >
-                {submitted ? '강의보고서 확인하기' : '강의보고서 작성하기'}
-              </PFButton>
-            </div>
+            {/* Figma 11001:285665 — 제출 완료: 민트 머리말 + 민트 배경, 기한 마감: 「미제출」 머리말, 진행 예정: 회색 문구 */}
+            <EducationSessionGuideBlock
+              mobileStack
+              variant={submitted ? 'submitted' : 'default'}
+              statusLabel={reportStatusLabel(reportStatus)}
+              statusTone={submitted ? 'submitted' : 'unsubmitted'}
+              message={reportMessage(reportStatus, action === 'write')}
+              messageColor={reportStatus === 'UPCOMING' ? 'neutral-cool-500' : 'black'}
+              description={reportStatus !== 'UPCOMING' && row.submitDueAt ? formatDueDate(row.submitDueAt) : undefined}
+              actions={
+                <PFButton
+                  type="button"
+                  size="large"
+                  variant={submitted ? 'tertiary' : 'primary'}
+                  className={styles.reportActionButton}
+                  disabled={submitted ? false : action !== 'write'}
+                  onClick={() =>
+                    submitted
+                      ? openPreviewModal(row.assignmentId)
+                      : navigate(lectureReportWritePath(applicationId, row.assignmentId, 'write'))
+                  }
+                >
+                  {submitted ? '강의보고서 확인하기' : '강의보고서 작성하기'}
+                </PFButton>
+              }
+            />
           </EducationSessionCard>
         )
       })}</div>

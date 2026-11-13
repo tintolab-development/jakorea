@@ -1,6 +1,6 @@
 .section {
   width: 100%;
-  padding-block: var(--spacing-64);
+  padding-block: var(--spacing-56);
   background: var(--color-neutral-white);
 }
 
@@ -30,7 +30,8 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-32);
+  /* 모바일 시안: 헤더 ↔ 카드 24 */
+  gap: var(--spacing-24);
   min-width: 0;
   padding-inline: var(--spacing-20);
   overflow-x: clip;
@@ -95,7 +96,7 @@
   flex-shrink: 0;
   align-items: flex-end;
   justify-content: center;
-  gap: 0;
+  gap: 2px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -198,17 +199,11 @@
   }
 
   .header {
-    padding-inline: max(
-      var(--spacing-80),
-      calc((100% - var(--content-shell-max-width)) / 2)
-    );
+    padding-inline: max(var(--spacing-80), calc((100% - var(--content-shell-max-width)) / 2));
   }
 
   .viewport {
-    padding-left: max(
-      var(--spacing-80),
-      calc((100% - var(--content-shell-max-width)) / 2)
-    );
+    padding-left: max(var(--spacing-80), calc((100% - var(--content-shell-max-width)) / 2));
   }
 }
 
@@ -295,10 +290,7 @@
   .cardMedia {
     width: 283px;
     height: 400px;
-    border-radius: 20px;
-    box-shadow:
-      0 17.5px 28.75px rgb(0 0 0 / 12%),
-      0 0 15px rgb(0 0 0 / 8%);
+    border-radius: var(--radius-24);
   }
 }
 
@@ -423,10 +415,12 @@
   overflow: hidden;
   color: var(--color-neutral-black, #3d3d3d);
   font-family: var(--font-family-base);
-  font-size: 16px;
+  /* 모바일 시안: 15 / Bold / 140% */
+  font-size: 15px;
   font-style: normal;
-  font-weight: 600;
-  line-height: 145%;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: -0.15px;
   text-overflow: ellipsis;
   white-space: normal;
   word-break: keep-all;
@@ -453,8 +447,8 @@
   font-family: var(--font-family-base);
   font-size: 14px;
   font-style: normal;
-  font-weight: 400;
-  line-height: 145%;
+  font-weight: 600;
+  line-height: normal;
 }
 
 @media (--bp-pc-up) {

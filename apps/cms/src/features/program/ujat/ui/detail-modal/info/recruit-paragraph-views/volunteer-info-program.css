@@ -51,3 +51,74 @@
   max-width: 160px;
   min-width: 0;
 }
+
+/*
+ * 템플릿 관리 UJAT 모집 폼 시안(5800:157724·158529) — 프로그램 상세·등록에는 클래스가 붙지 않는다.
+ * - 발표일 240 + 발표 방법 안내 남은 폭
+ * - 2차 면접 기간: 날짜 남은 폭 + 면접 유형 셀렉트 120
+ * - 문의처: 라벨↔입력 6, 입력 200·h36·radius 8
+ * - 활동 기수: 입력 120 + 「기」 6
+ */
+.ujat-recruit-inline-result-row.ujat-recruit-inline-result-row--template-spec {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.ujat-recruit-inline-result-row.ujat-recruit-inline-result-row--template-spec
+  .cms-input.program-detail-info-tab__result-method-input {
+  flex: 1 1 0;
+  width: auto !important;
+  max-width: none;
+  min-width: 0;
+}
+
+.ujat-recruit-inline-result-row.ujat-recruit-inline-result-row--template-spec
+  > .ujat-recruit-inline-result-row__period {
+  flex: 1 1 0;
+  width: auto !important;
+  max-width: none;
+  min-width: 0;
+}
+
+.ujat-recruit-inline-result-row.ujat-recruit-inline-result-row--template-spec
+  > .ujat-recruit-inline-result-row__period
+  > .paragraph-date-picker {
+  width: 100% !important;
+  max-width: none;
+}
+
+.ujat-recruit-inline-result-row.ujat-recruit-inline-result-row--template-spec
+  .cms-select.program-detail-info-tab__select--interview-method {
+  flex: 0 0 120px;
+  width: 120px !important;
+  max-width: 120px;
+}
+
+.program-detail-info-tab__contact-inputs--template-spec.program-detail-info-tab__contact-inputs--even
+  .program-detail-info-tab__contact-group {
+  gap: 6px;
+}
+
+.program-detail-info-tab__contact-inputs--template-spec.program-detail-info-tab__contact-inputs--even
+  .program-detail-info-tab__contact-group
+  .cms-input {
+  flex: 0 0 200px;
+  width: 200px;
+}
+
+.program-detail-info-tab__contact-inputs--template-spec.program-detail-info-tab__contact-inputs--even
+  .program-detail-info-tab__contact-group
+  .cms-input
+  .cms-input__control {
+  height: 36px;
+  border-radius: 8px;
+}
+
+.ujat-recruit-activity-term-field.ujat-recruit-activity-term-field--template-spec > .cms-input {
+  flex: 0 0 120px;
+  width: 120px !important;
+}
+
+.ujat-recruit-activity-term-field--template-spec .ujat-recruit-activity-term-field__suffix {
+  margin-left: 6px;
+}

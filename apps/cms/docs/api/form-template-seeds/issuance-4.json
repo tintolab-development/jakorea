@@ -6,7 +6,7 @@
   "schemaJson": {
     "schemaVersion": 1,
     "formSettings": {
-      "titleNumbering": "numeric"
+      "titleNumbering": "none"
     },
     "paragraphs": [
       {
@@ -86,7 +86,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "강사비 산출 내역",
-        "paragraphDescription": "",
+        "paragraphDescription": "강사비는 사전에 책정된 금액으로 지급됩니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

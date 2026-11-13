@@ -25,13 +25,13 @@ import {
 import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
 
 /** 템플릿 편집(authoring) — 교육 진행 희망일 값 영역 */
-const AUTHORING_PREFERRED_DATES_HINT = '관리자가 선택한 진행 가능일이 노출됩니다.'
+const AUTHORING_PREFERRED_DATES_HINT = '일정을 먼저 선택해 주세요'
 
 /** 등록 위저드 신청 양식 — 시드 fill 잠금 시 신청자 입력 안내 */
 const DISPLAY_ONLY_PREFERRED_DATES_HINT = '신청자가 선택한 진행 희망일이 노출됩니다.'
 
 const AUTHORING_SCHEDULE_PLACEHOLDER_HINT =
-  '프로그램 등록 시 관리자가 설정한 진행 일정이 노출됩니다.'
+  '프로그램 등록 시 관리자가 설정한 일정이 노출됩니다.'
 
 export const PREVIEW_PLACEHOLDER_SCHEDULE_HINT =
   '프로그램에 연결하면 교육 일정이 표시됩니다.'

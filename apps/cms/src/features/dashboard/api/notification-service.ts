@@ -64,7 +64,8 @@ export async function getNotifications(
     read,
     createdAt: new Date(now.getTime() - hoursAgo * 60 * 60 * 1000).toISOString() })
 
-  const notificationsByRole: Record<UserRole, Notification[]> = {
+  /** CMS 로그인은 관리자만 — 관리자 외 역할 목업은 두지 않는다 */
+  const notificationsByRole: Partial<Record<UserRole, Notification[]>> = {
     ADMIN: [
       createNotification(
         'notif-admin-1',
@@ -165,92 +166,6 @@ export async function getNotifications(
         true,
         36,
         'HSBC/HKU Business Case Competition 2026'
-      ),
-    ],
-    INSTRUCTOR: [
-      createNotification(
-        'notif-inst-1',
-        'schedule',
-        '다가오는 일정',
-        '내일 오후 2시 "JA 경제 교육" 프로그램 일정이 있습니다.',
-        '/schedules/my',
-        false,
-        2,
-        'JA 경제 교육'
-      ),
-      createNotification(
-        'notif-inst-2',
-        'matching',
-        '새 매칭 알림',
-        '"JA 창업 캠프" 프로그램에 매칭되었습니다.',
-        '/programs/my',
-        false,
-        5,
-        'JA 창업 캠프'
-      ),
-      createNotification(
-        'notif-inst-3',
-        'settlement',
-        '정산 완료',
-        '2025년 1월 정산이 승인되었습니다.',
-        '/settlements/my',
-        true,
-        24,
-        'JA 경제 교육'
-      ),
-    ],
-    INDIVIDUAL: [
-      createNotification(
-        'notif-individual-1',
-        'system',
-        '할일',
-        '마이페이지에서 확인해야 할 작업이 있습니다.',
-        '/mypage',
-        false,
-        3,
-        '마이페이지'
-      ),
-      createNotification(
-        'notif-individual-2',
-        'schedule',
-        '일정',
-        '예정된 프로그램 일정이 있습니다.',
-        '/schedules/my',
-        false,
-        10,
-        '내 일정'
-      ),
-      createNotification(
-        'notif-individual-3',
-        'system',
-        '개별 안내사항',
-        '신청한 프로그램 관련 안내사항이 도착했습니다.',
-        '/',
-        true,
-        30,
-        '공지사항'
-      ),
-    ],
-    SCHOOL: [
-      createNotification(
-        'notif-school-1',
-        'system',
-        '할일',
-        '학교 단위 신청 관련 확인이 필요합니다.',
-        '/mypage',
-        false,
-        3,
-        '학교 신청'
-      ),
-      createNotification(
-        'notif-school-2',
-        'schedule',
-        '일정',
-        '예정된 프로그램 일정이 있습니다.',
-        '/schedules/my',
-        false,
-        10,
-        '내 일정'
       ),
     ] }
 

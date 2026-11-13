@@ -20,6 +20,7 @@ import {
   getProgramRegistrationOverlayRecord,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 /** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 */
@@ -28,11 +29,18 @@ const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
 /** 시안(9899:215345) 표시 라벨 —「강사 교통비, 숙박비(1사1교)」. 카탈로그 id·정산 키는 그대로 */
 const PAYMENT_LABEL_TRANSPORT_1C1S = '강사 교통비'
 const PAYMENT_LABEL_LODGING_1C1S = '숙박비(1사1교)'
+/** 1사1교 전용 교통·숙박 카탈로그 라벨(`교통비(일사일교)` 등) */
+function isCompanySchoolTransportLabel(label: string): boolean {
+  return /^교통비\((일사일교|1사1교)\)$/.test(label.replace(/\s+/g, ''))
+}
+function isCompanySchoolLodgingLabel(label: string): boolean {
+  return /^숙박비\((일사일교|1사1교)\)$/.test(label.replace(/\s+/g, ''))
+}
 
 const WAGE_FEE_ROWS = [
   {
     feeLabel: '1급 강사비',
-    distanceLabel: '1급 장거리비',
+    distanceLabel: '1급 강사 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade1Fee',
     distanceKey: 'economyRegistration.wageInfo.grade1DistanceFee',
     maxText: '최대 500,000원',
@@ -42,7 +50,7 @@ const WAGE_FEE_ROWS = [
   },
   {
     feeLabel: '2급 강사비',
-    distanceLabel: '2급 장거리비',
+    distanceLabel: '2급 강사 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade2Fee',
     distanceKey: 'economyRegistration.wageInfo.grade2DistanceFee',
     maxText: '최대 400,000원',
@@ -52,7 +60,7 @@ const WAGE_FEE_ROWS = [
   },
   {
     feeLabel: '3급 강사비',
-    distanceLabel: '3급 장거리비',
+    distanceLabel: '3급 강사 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade3Fee',
     distanceKey: 'economyRegistration.wageInfo.grade3DistanceFee',
     maxText: '최대 300,000원',
@@ -72,9 +80,18 @@ function HourlyFeeInput({
   maxText: string
 }) {
   const [value, setValue] = useProgramRegistrationOverlayKv<number | null>(overlayKey, null)
+  // 템플릿 관리 시안(5767:191506) 「1시간당 [입력] 원」 간격 6 — 등록 위저드·상세는 기존 12 유지
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
-    <div className="detail-info-form-inputs-wrapper">
-      <span className="detail-info-form--text">1시간 당</span>
+    <div
+      className={
+        isTemplateManagementScreen
+          ? 'detail-info-form-inputs-wrapper program-registration-paragraph__fee-group'
+          : 'detail-info-form-inputs-wrapper'
+      }
+    >
+      {/* 시안(5767:191506 · 9899:215345) 표기 — 저장 pricing 문자열(「1시간 당 | …」)과 별개 */}
+      <span className="detail-info-form--text">1시간당</span>
       <RegistrationWageFeeInput value={value} onChange={setValue} max={max} />
       <span className="detail-info-form--text">원 ({maxText})</span>
     </div>
@@ -92,10 +109,11 @@ export function OneCOneSRegistrationWageInfoParagraph() {
   const paymentItemOptions = useMemo((): CmsSelectMultipleOption[] => {
     return remotePaymentOptions.map(opt => {
       const label = opt.label.trim()
-      if (label === PAYMENT_LABEL_TRANSPORT_CATALOG) {
+      // 카탈로그 라벨이 「교통비(일사일교)」「숙박비(일사일교)」여도 시안 표기로 보여 준다(QA 2026-11-13 1사1교 #2)
+      if (label === PAYMENT_LABEL_TRANSPORT_CATALOG || isCompanySchoolTransportLabel(label)) {
         return { ...opt, label: PAYMENT_LABEL_TRANSPORT_1C1S }
       }
-      if (label === PAYMENT_LABEL_LODGING_CATALOG) {
+      if (label === PAYMENT_LABEL_LODGING_CATALOG || isCompanySchoolLodgingLabel(label)) {
         return { ...opt, label: PAYMENT_LABEL_LODGING_1C1S }
       }
       return opt

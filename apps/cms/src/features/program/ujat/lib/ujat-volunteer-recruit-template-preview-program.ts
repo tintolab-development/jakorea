@@ -14,9 +14,8 @@ export const UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM: Program = {
   startDate: '',
   endDate: '',
   generalCommonInfo: {
+    // 공고 게시 여부·모집 공고 노출 시점 라디오는 템플릿 관리에서 미선택으로 시작
     volunteerRecruitmentInfo: {
-      announcementPublished: true,
-      noticeExposureTiming: 'start-day',
       notesNotApplicable: false,
     },
   },

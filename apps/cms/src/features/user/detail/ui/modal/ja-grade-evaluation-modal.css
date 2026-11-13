@@ -118,3 +118,11 @@
   -webkit-text-fill-color: var(--default-BK, #3d3d3d);
   opacity: 1;
 }
+
+/** 시안: 제목 「JA 등급 평가지」 필수 표시(*) 없음 — 설문 제목 단락은 스키마상 requiredMark 고정이라 화면에서만 숨김 */
+.ja-grade-evaluation-modal
+  .paragraph-card--survey-title-with-period
+  .paragraph-card__title-block
+  .paragraph-input__required {
+  display: none;
+}

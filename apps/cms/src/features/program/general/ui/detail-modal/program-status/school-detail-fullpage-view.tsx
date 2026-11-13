@@ -425,7 +425,7 @@ function buildCombinedClassViewValue(
 }
 
 function formatAssignedInstructorScheduleExport(row: AssignedInstructorDisplayRow): string {
-  if (row.assignedScheduleLine) return row.assignedScheduleLine
+  if (row.assignedScheduleLine) return formatCmsScheduleDisplayLabel(row.assignedScheduleLine)
   const date = row.assignedDate ?? '-'
   const time = row.assignedTime ?? '-'
   if (date === '-' && time === '-') return '-'
@@ -489,8 +489,9 @@ const LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_CONTENT =
 
 const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
+/** 시안 — 참여 기관 상세 신청 정보 [정보 수정]. 서버 EDIT_MODE 감사 사유 문구 변경은 BE 요청 */
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '신청 정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  '기관은 정보 수정 시 담당 교사의 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 ‘참여 기관의 신청 정보 수정’으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?'
 
 const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
@@ -1555,12 +1556,16 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     mergedDetail.teacherEmail &&
       `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
-  const mealDisplay =
-    mergedDetail.mealNotice === '가능'
-      ? '가능'
-      : mergedDetail.mealProvided
-        ? renderDetailInfoPipeSeparated(`제공 | ${mergedDetail.mealNotice ?? ''}`)
-        : '미제공'
+  // 식사 가능 여부 및 안내 — 신청서 입력값(상세 응답 mealNotice 스냅샷)을 그대로 보여 준다.
+  // 승인 후 mealProvided가 비어 「미제공」으로 바뀌던 문제를 막는다. 입력값이 없을 때만 boolean으로 표시.
+  const mealNoticeText = mergedDetail.mealNotice?.trim()
+  const mealDisplay = mealNoticeText
+    ? renderDetailInfoPipeSeparated(mealNoticeText)
+    : mergedDetail.mealProvided === true
+      ? '제공'
+      : mergedDetail.mealProvided === false
+        ? '미제공'
+        : '-'
 
   /** ` | ` 구분 값 → td 디바이더 (안내 사항·성범죄 경력 조회서 등) */
   const formatGuidanceSegmentValue = (raw?: string): ReactNode => {
@@ -1612,7 +1617,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 ? companySchoolScheduleUnitByScheduleId.get(r.scheduleId)
                 : undefined,
             })
-          : [r.assignedDate, r.assignedTime, r.assignedSession].filter(Boolean).join(' '),
+          : // 일반 — 시안 `YYYY.MM.DD(요일) HH:mm ~ HH:mm` (회차 표기 없이, 표시는 formatCmsScheduleDisplayLabel)
+            [r.assignedDate, r.assignedTime].filter(Boolean).join(' '),
         assignmentId: r.assignmentId,
         instructorMemberId: r.instructorMemberId,
         scheduleId: r.scheduleId,
@@ -4026,6 +4032,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         subjectKind="institution"
         subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
         approvalStatus={applicationApprovalStatus === 'rejected' ? 'rejected' : 'approved'}
+        copyVariant={isCompanySchool ? 'default' : 'general-organization'}
         confirmLoading={notificationResendSubmitting}
         zIndex={2600}
         onCancel={() => {

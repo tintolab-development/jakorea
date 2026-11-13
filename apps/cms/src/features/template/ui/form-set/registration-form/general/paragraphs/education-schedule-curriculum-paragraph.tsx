@@ -1,3 +1,5 @@
+import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import { TEACHER_TRAINING_BLOCK_LABEL } from '@/features/program/trained-teachers/lib/teacher-training-block'
 import { Fragment, useEffect, useMemo, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -62,6 +64,7 @@ import {
   useProgramRegistrationOverlayKv,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './program-registration-paragraph.css'
 
 type ScheduleEventAssignmentValue = {
@@ -75,6 +78,7 @@ const EMPTY_SCHEDULE_EVENT_ASSIGNMENT: ScheduleEventAssignmentValue = {
 }
 
 const PRE_EDUCATION_DETAIL_INDEX = 0
+const GENERAL_TEMPLATE_EMPTY_IPS: ProgramRegistrationIpsTypeValue = { category: '', detail: '' }
 const EMPTY_EVENT_NAME_BY_DETAIL: Record<number, string> = {}
 const SCHEDULE_EVENT_NAME_KEY = 'generalRegistration.educationScheduleCurriculum.eventNameByDetail'
 const SCHEDULE_PRE_EDUCATION_NAME_KEY =
@@ -119,7 +123,16 @@ function ScheduleEventNameInput({
   )
 }
 
-function SchedulePreEducationNameInput({ fallback }: { fallback: string }) {
+function SchedulePreEducationNameInput({
+  fallback,
+  placeholder = '행사 일정명을 작성하세요',
+  templateDesign = false,
+}: {
+  fallback: string
+  placeholder?: string
+  /** 일반 등록 폼 + 템플릿 관리 — 시안 폭 240 */
+  templateDesign?: boolean
+}) {
   const [preEducationName, setPreEducationName] = useProgramRegistrationOverlayKv(
     SCHEDULE_PRE_EDUCATION_NAME_KEY,
     fallback
@@ -128,9 +141,9 @@ function SchedulePreEducationNameInput({ fallback }: { fallback: string }) {
     <CmsInput
       inputSize="small"
       value={preEducationName}
-      placeholder="행사 일정명을 작성하세요"
-      width="100%"
-      style={{ minWidth: 0, flex: '1 1 0' }}
+      placeholder={placeholder}
+      width={templateDesign ? GENERAL_TEMPLATE_FIELD_WIDTH : '100%'}
+      style={templateDesign ? undefined : { minWidth: 0, flex: '1 1 0' }}
       onChange={event => setPreEducationName(event.target.value)}
     />
   )
@@ -158,20 +171,30 @@ function overlayScheduleToRange(raw: string | null | undefined): [Dayjs, Dayjs] 
   return parsed.isValid() ? [parsed, parsed] : null
 }
 
+/** 일반 등록 폼 템플릿 관리 시안(12934:675 · 12935:682) — 입력 폭 240 */
+const GENERAL_TEMPLATE_FIELD_WIDTH = 240
+
 function ScheduleDetailAssignmentInputs({
   value,
   onChange,
+  templateDesign = false,
+  untouched = false,
 }: {
   value: ScheduleEventAssignmentValue
   onChange: (next: ScheduleEventAssignmentValue) => void
+  /** 일반 등록 폼 + 템플릿 관리 — 라디오 미선택 시작 · 제출 기한 240 (등록·상세는 기존) */
+  templateDesign?: boolean
+  /** 해당 세부 일정 과제 설정 overlay가 아직 없음 */
+  untouched?: boolean
 }) {
   const appliedSurfaceRange = parseEducationScheduleLineToRange(value.period)
+  const radioValue = templateDesign && untouched ? '' : value.enabled ? 'yes' : 'no'
 
   return (
     <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
       <CmsRadioGroup
         size="medium"
-        value={value.enabled ? 'yes' : 'no'}
+        value={radioValue}
         onChange={e => {
           const enabled = e.target.value === 'yes'
           onChange({
@@ -202,7 +225,7 @@ function ScheduleDetailAssignmentInputs({
             period: formatEducationScheduleLineFromRange([start, end]),
           })
         }}
-        width={360}
+        width={templateDesign ? GENERAL_TEMPLATE_FIELD_WIDTH : 360}
         placeholder="제출 기한을 설정해 주세요"
       />
     </div>
@@ -222,12 +245,14 @@ type ScheduleGroupTimeSlot = EducationScheduleGroupTimeSlot | null
 function ScheduleCurriculumGroupTimeRow({
   groupLetter,
   showGroupLabel,
+  timePlaceholder = '시간 선택',
   slot,
   onChange,
   onDelete,
 }: {
   groupLetter: string
   showGroupLabel: boolean
+  timePlaceholder?: string
   slot: ScheduleGroupTimeSlot
   onChange: (value: EducationScheduleGroupTimeSlot | null) => void
   onDelete?: () => void
@@ -245,7 +270,7 @@ function ScheduleCurriculumGroupTimeRow({
       <div className="program-registration-schedule-curriculum__time-group-control">
         <ParagraphTimePicker inputSize="small"
           endTimeAlwaysOn
-          placeholder="시간 선택"
+          placeholder={timePlaceholder}
           width={200}
           value={initialTimeRange?.[0] ?? null}
           initialTimeRange={initialTimeRange}
@@ -299,7 +324,20 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   directScheduleEventDateOnly?: boolean
   /** 일반 등록·참여자 <개인> — 교육 진행 장소(일정 별 상이 시 블록 최하단) */
   educationPlaceEnabled?: boolean
+  /**
+   * 일반 프로그램 등록 폼(템플릿 관리·등록 위저드) — 시안 라벨·placeholder 문구.
+   * 생략 시(교육받은 교사) 기존 문구 그대로.
+   */
+  generalDesignCopy?: boolean
 }
+
+/** 일반 프로그램 등록 폼 시안 문구 (generalDesignCopy) */
+const GENERAL_DESIGN_COPY = {
+  eventNamePlaceholder: '행사 일정명을 작성해 주세요',
+  detailNamePlaceholder: '세부 일정명을 작성해 주세요',
+  timePlaceholder: '시간을 선택해 주세요',
+  progressSchedulePlaceholder: '일정을 선택해 주세요',
+} as const
 
 export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   scheduleDetailCount,
@@ -319,7 +357,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   hideAssignmentSettings = false,
   directScheduleEventDateOnly = false,
   educationPlaceEnabled = false,
+  generalDesignCopy = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
+  // 일반 등록 폼 + 템플릿 관리에서만 시안 폭·라디오 미선택·IPS 미선택 시작. 교육받은 교사·등록·상세는 기존
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const generalTemplateDesign = generalDesignCopy && isTemplateManagementScreen
   const [educationPlaceScheduleDetail] = useProgramRegistrationOverlayKv<string>(
     REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
     'common'
@@ -383,7 +425,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     {}
   )
   // 블록 제목 표시만 「사전 교육」 — overlay 기본 일정명은 preEducationBlockLabel 그대로 기록한다.
-  const preEducationHeadingLabel = toPreEducationHeadingLabel(preEducationBlockLabel)
+  // 교육받은 교사 — 일정명 데이터는 「교육 연수」(BE SoT) 그대로, 블록 제목만 「교사 연수」(QA 2026-11-13 교육받은 교사 #6)
+  const preEducationHeadingLabel =
+    preEducationBlockLabel === TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
+      ? TEACHER_TRAINING_BLOCK_LABEL
+      : toPreEducationHeadingLabel(preEducationBlockLabel)
   // UI 기본 일정명을 overlay에 기록 — 미터치 시에도 등록 완료·검증에 반영
   useEffect(() => {
     if (!scheduleCurriculumPreEducation) return
@@ -393,6 +439,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   }, [preEducationBlockLabel, scheduleCurriculumPreEducation])
   // 사전 교육 교육 형태 — 라디오 표시 기본값(online)을 overlay에 기록. 미터치 시 payload 누락 방지
   useEffect(() => {
+    // 템플릿 관리(일반): 시안대로 사전 교육 교육 형태 미선택 — 기본값을 기록하지 않음
+    if (generalTemplateDesign) return
     if (!prependTraining) return
     updateProgramRegistrationOverlayKey<Record<number, string>>(
       'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
@@ -401,7 +449,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           ? prev
           : { ...(prev ?? {}), [PRE_EDUCATION_DETAIL_INDEX]: 'online' }
     )
-  }, [prependTraining])
+  }, [generalTemplateDesign, prependTraining])
 
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
     updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(
@@ -416,7 +464,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   ): ProgramRegistrationIpsTypeValue =>
     locked
       ? PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT
-      : (ipsByDetailIndex[detailIndex] ?? PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT)
+      : (ipsByDetailIndex[detailIndex] ??
+        // 템플릿 관리(일반) 시안(12800:303159 · 14858:605197): 세부 일정 IPS는 미선택 표시
+        (generalTemplateDesign
+          ? GENERAL_TEMPLATE_EMPTY_IPS
+          : PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT))
 
   const setIpsForDetailUnlessLocked = (
     detailIndex: number,
@@ -428,7 +480,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   }
 
   const educationFormForDetail = (detailIndex: number) =>
-    educationFormByDetail[detailIndex] ?? 'online'
+    educationFormByDetail[detailIndex] ?? (generalTemplateDesign ? '' : 'online')
   const [singleEducationForm] = useProgramRegistrationOverlayKv<string>(
     'generalRegistration.typeSettings.singleEducationForm',
     DEFAULT_REGISTRATION_EDUCATION_FORM
@@ -452,7 +504,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       rowEducationForm: educationFormByDetail[detailIndex],
     })
   const participationForDetail = (detailIndex: number) =>
-    participationByDetail[detailIndex] ?? 'individual'
+    participationByDetail[detailIndex] ?? (generalTemplateDesign ? '' : 'individual')
 
   const onEducationFormRadioChange = (detailIndex: number) => (e: RadioChangeEvent) => {
     const nextValue = String(e.target.value)
@@ -659,6 +711,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         edit={
           <ScheduleDetailAssignmentInputs
             value={assignment}
+            templateDesign={generalTemplateDesign}
+            untouched={assignmentByDetail[detailIndex] == null}
             onChange={next => setAssignmentForDetail(detailIndex, next)}
           />
         }
@@ -783,6 +837,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
               edit={
                 <ScheduleDetailAssignmentInputs
                   value={assignment}
+                  templateDesign={generalTemplateDesign}
+                  untouched={assignmentByDetail[detailIndex] == null}
                   onChange={next => setAssignmentForDetail(detailIndex, next)}
                 />
               }
@@ -813,6 +869,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
             edit={
               <ScheduleDetailAssignmentInputs
                 value={assignment}
+                templateDesign={generalTemplateDesign}
+                untouched={assignmentByDetail[detailIndex] == null}
                 onChange={next => setAssignmentForDetail(detailIndex, next)}
               />
             }
@@ -839,6 +897,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
             edit={
               <ScheduleDetailAssignmentInputs
                 value={assignment}
+                templateDesign={generalTemplateDesign}
+                untouched={assignmentByDetail[detailIndex] == null}
                 onChange={next => setAssignmentForDetail(detailIndex, next)}
               />
             }
@@ -969,6 +1029,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
             <ScheduleCurriculumGroupTimeRow
               groupLetter={letter}
               showGroupLabel={groupCount > 1}
+              timePlaceholder={generalDesignCopy ? GENERAL_DESIGN_COPY.timePlaceholder : undefined}
               slot={groupTimeSlot(detailIndex, gi)}
               onChange={value => setGroupTime(detailIndex, gi, value)}
               onDelete={gi > 0 ? () => deleteScheduleGroup(gi) : undefined}
@@ -1002,6 +1063,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           programType="schedule"
           sessionRound={sessionRoundType}
           directEventDateOnly={directScheduleEventDateOnly}
+          width={generalTemplateDesign ? GENERAL_TEMPLATE_FIELD_WIDTH : undefined}
+          placeholder={
+            generalDesignCopy ? GENERAL_DESIGN_COPY.progressSchedulePlaceholder : undefined
+          }
           value={scheduleRange?.[0] ?? null}
           appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
           appliedSurfaceWithTime={scheduleHasClock}
@@ -1038,7 +1103,15 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                 <DetailInfoForm.Field
                   label="일정명"
                   validationKey="scheduleCurriculum.preEducationName"
-                  edit={<SchedulePreEducationNameInput fallback={preEducationBlockLabel} />}
+                  edit={
+                    <SchedulePreEducationNameInput
+                      fallback={preEducationBlockLabel}
+                      templateDesign={generalTemplateDesign}
+                      placeholder={
+                        generalDesignCopy ? GENERAL_DESIGN_COPY.eventNamePlaceholder : undefined
+                      }
+                    />
+                  }
                   view="-"
                 />
                 <DetailInfoForm.Field
@@ -1087,7 +1160,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                           <ScheduleEventNameInput
                             detailIndex={n}
                             disabled={isTrainingDetail}
-                            placeholder="행사 일정명을 작성하세요"
+                            placeholder={
+                              generalDesignCopy
+                                ? GENERAL_DESIGN_COPY.eventNamePlaceholder
+                                : '행사 일정명을 작성하세요'
+                            }
                             forcedValue={isTrainingDetail ? preEducationBlockLabel : undefined}
                           />
                         }
@@ -1146,7 +1223,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                 >
                   <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
-                      label={groupCount > 1 ? '일정명' : '일정 상세'}
+                      // 일반 시안: 그룹 수와 관계없이「일정명」. 그 외 유형은 기존 분기 유지
+                      label={generalDesignCopy || groupCount > 1 ? '일정명' : '일정 상세'}
                       validationKey={`scheduleCurriculum.eventName[${n}]`}
                       fullRow
                       edit={
@@ -1154,9 +1232,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                           detailIndex={n}
                           disabled={isTrainingDetail}
                           placeholder={
-                            groupCount > 1
-                              ? '세부 일정명을 작성하세요'
-                              : '일정 상세 내용을 작성하세요'
+                            generalDesignCopy
+                              ? GENERAL_DESIGN_COPY.detailNamePlaceholder
+                              : groupCount > 1
+                                ? '세부 일정명을 작성하세요'
+                                : '일정 상세 내용을 작성하세요'
                           }
                           forcedValue={isTrainingDetail ? preEducationBlockLabel : undefined}
                         />

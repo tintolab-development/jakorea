@@ -7,6 +7,8 @@ type EducationSessionGuideBlockProps = {
   statusLabel?: string
   statusTone?: 'submitted' | 'unsubmitted'
   message: string
+  /** 비활성 안내(예: 진행 예정 강의보고서)는 Figma에서 neutral-cool-500 */
+  messageColor?: 'black' | 'neutral-cool-500'
   description?: string
   actions?: ReactNode
   children?: ReactNode
@@ -19,6 +21,7 @@ export function EducationSessionGuideBlock({
   statusLabel,
   statusTone,
   message,
+  messageColor = 'black',
   description,
   actions,
   children,
@@ -48,7 +51,7 @@ export function EducationSessionGuideBlock({
                 {statusLabel}
               </PFText>
             ) : null}
-            <PFText as="span" typo="hl-sm" color="black" className={styles.message}>
+            <PFText as="span" typo="hl-sm" color={messageColor} className={styles.message}>
               {message}
             </PFText>
           </p>

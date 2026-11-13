@@ -8,12 +8,16 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { formatNumberDisplay } from '@/shared/utils'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './lecture-fee-calculation-detail-form.css'
+import './issuance-detail-form-template.css'
 
 /** 강사비 산출 정보 — 교육 진행 차시 제외 필드 인풋 너비(px), 높이는 medium(40px) */
 const LECTURE_FEE_INPUT_WIDTH_PX = 244
 /** 교육 진행 차시·시간 인풋 너비(px) */
 const LECTURE_FEE_SESSION_INPUT_WIDTH_PX = 221
+/** 템플릿 관리 > 발급 양식 편집기 — 시안 5767:44580·5767:46455 표 입력 폭 140 */
+const LECTURE_FEE_TEMPLATE_INPUT_WIDTH_PX = 140
 
 export type LectureFeeCalculationAutofillValues = {
   lectureFeeType: string
@@ -95,16 +99,28 @@ export function LectureFeeCalculationDetailForm({
   displayMode = 'editor',
   feeLayout = 'payment_statement',
 }: LectureFeeCalculationDetailFormProps) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
   const isSettlementLayout = feeLayout === 'settlement_application'
+  const issuanceTemplate = isTemplateManagementScreen && !isDocumentMode
+  const inputW = issuanceTemplate ? LECTURE_FEE_TEMPLATE_INPUT_WIDTH_PX : LECTURE_FEE_INPUT_WIDTH_PX
+  const sessionInputW = issuanceTemplate
+    ? LECTURE_FEE_TEMPLATE_INPUT_WIDTH_PX
+    : LECTURE_FEE_SESSION_INPUT_WIDTH_PX
 
   return (
     <DetailInfoForm
       title="강사비 산출 정보"
       hideHeader
       mode={isDocumentMode ? 'view' : 'edit'}
-      className={['lecture-fee-calculation-detail-form', className].filter(Boolean).join(' ')}
+      className={[
+        'lecture-fee-calculation-detail-form',
+        issuanceTemplate ? 'issuance-detail-form--template' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
@@ -114,8 +130,9 @@ export function LectureFeeCalculationDetailForm({
             <CmsInput
               disabled
               inputSize="small"
+              placeholder="강사비 유형"
               value={v.lectureFeeType}
-              width={LECTURE_FEE_INPUT_WIDTH_PX}
+              width={inputW}
               aria-label="강사비 유형 (발급 시 자동 입력)"
             />
           }
@@ -143,16 +160,16 @@ export function LectureFeeCalculationDetailForm({
                 inputSize="small"
                 placeholder="진행 차시"
                 value={v.sessionCount}
-                width={LECTURE_FEE_SESSION_INPUT_WIDTH_PX}
+                width={sessionInputW}
                 aria-label="교육 진행 차시"
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 disabled
                 inputSize="small"
-                placeholder="시간"
+                placeholder="교육 시간"
                 value={v.sessionHours}
-                width={LECTURE_FEE_SESSION_INPUT_WIDTH_PX}
+                width={sessionInputW}
                 aria-label="교육 진행 시간"
               />
             </div>
@@ -185,7 +202,7 @@ export function LectureFeeCalculationDetailForm({
                   disabled
                   inputSize="small"
                   value={v.totalStudents}
-                  width={LECTURE_FEE_INPUT_WIDTH_PX}
+                  width={inputW}
                   aria-label="총 학생 수"
                 />
                 <span className="lecture-fee-calculation-detail-form__suffix">명</span>
@@ -205,8 +222,9 @@ export function LectureFeeCalculationDetailForm({
               <CmsInput
                 disabled
                 inputSize="small"
+                placeholder="총 강사비"
                 value={v.totalLectureFee}
-                width={LECTURE_FEE_INPUT_WIDTH_PX}
+                width={inputW}
                 aria-label="총 강사비"
               />
               <span className="lecture-fee-calculation-detail-form__suffix">원</span>

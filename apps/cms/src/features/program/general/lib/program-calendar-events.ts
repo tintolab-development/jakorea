@@ -160,6 +160,18 @@ function buildEducationLabel(item: AdminProgramCalendarItem, fallback: string): 
   return scheduleName ? `${organizationName} ${scheduleName}` : organizationName
 }
 
+/**
+ * 교육받은 교사 목록 캘린더 — 서버 일정명 「운영 시작」을 시안 표기 「프로그램 운영 시작」으로 보인다
+ * (QA 2026-11-13 교육받은 교사 #15). 다른 유형은 서버 일정명 그대로.
+ */
+function resolveTrainedTeacherCalendarScheduleName(
+  scheduleName: string,
+  programType: string | undefined
+): string {
+  if (programType?.toUpperCase() !== 'TRAINED_TEACHER') return scheduleName
+  return scheduleName === '운영 시작' ? '프로그램 운영 시작' : scheduleName
+}
+
 function hasExplicitKstClock(value: dayjs.Dayjs | null): boolean {
   if (!value) return false
   return value.hour() !== 0 || value.minute() !== 0 || value.second() !== 0
@@ -258,9 +270,12 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
   }
 
   const programTitle = item.programName?.trim() || ''
-  const scheduleName = buildEducationLabel(item, programTitle)
-  const colorKey = resolveProgramCalendarColorKey(item)
   const programType = item.programType?.trim() || undefined
+  const scheduleName = resolveTrainedTeacherCalendarScheduleName(
+    buildEducationLabel(item, programTitle),
+    programType
+  )
+  const colorKey = resolveProgramCalendarColorKey(item)
 
   return {
     id: eventId,

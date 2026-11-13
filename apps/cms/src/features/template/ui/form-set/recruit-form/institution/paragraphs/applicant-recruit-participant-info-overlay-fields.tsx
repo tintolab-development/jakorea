@@ -23,14 +23,22 @@ import {
   RecruitInquiryContactRow,
   RecruitNotesRow,
   RECRUIT_FORM_MAX_SUFFIX_CLASS,
+  RECRUIT_TEMPLATE_ANNOUNCE_DATE_WIDTH,
+  RECRUIT_TEMPLATE_FIXED_DATE_STYLE,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
-/** 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교·교육받은 교사·템플릿 관리·상세 수정은 기존 문구 */
+/**
+ * 시안 플레이스홀더 — 일반 프로그램 등록 위저드 + 템플릿 관리(일반 모집 폼, QA 261113 #56).
+ * 1사1교·교육받은 교사 등록 위저드·상세 수정은 기존 문구.
+ */
 function useGeneralWizardPlaceholder(generalText: string, fallback: string): string {
-  return useIsGeneralRegistrationWizard() ? generalText : fallback
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  return isGeneralWizard || isTemplateManagementScreen ? generalText : fallback
 }
 
 type RangeSeal = { start: string; end: string } | null
@@ -148,7 +156,9 @@ export const ApplicantRecruitAnnouncementPublishedField = memo(
     size?: 'large' | 'medium'
   }) {
     const [announcementPublished, setAnnouncementPublished] =
-      useApplicantRecruitInstitutionOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue | ''>(
+      useApplicantRecruitInstitutionOverlayKv<
+        ParticipantRecruitmentAnnouncementPublishedValue | ''
+      >(
         APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.announcementPublished,
         RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
       )
@@ -176,10 +186,12 @@ export const ApplicantRecruitStudentListRequiredField = memo(
   }: {
     defaultValue?: 'need' | 'none'
   }) {
+    // 템플릿 관리 모집 폼은 라디오를 모두 미선택으로 보여 준다(등록·상세는 기존 기본값).
+    const isTemplateManagementScreen = useIsTemplateManagementScreen()
     const [studentListRequired, setStudentListRequired] =
       useApplicantRecruitInstitutionOverlayKv<string>(
         APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.studentListRequired,
-        defaultValue
+        isTemplateManagementScreen ? '' : defaultValue
       )
     return (
       <DetailInfoForm.Field
@@ -198,10 +210,12 @@ export const ApplicantRecruitPreguidanceRequiredField = memo(
   }: {
     defaultValue?: 'need' | 'none'
   }) {
+    // 템플릿 관리 모집 폼은 라디오를 모두 미선택으로 보여 준다(등록·상세는 기존 기본값).
+    const isTemplateManagementScreen = useIsTemplateManagementScreen()
     const [preguidanceRequired, setPreguidanceRequired] =
       useApplicantRecruitInstitutionOverlayKv<string>(
         APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.preguidanceRequired,
-        defaultValue
+        isTemplateManagementScreen ? '' : defaultValue
       )
     return (
       <DetailInfoForm.Field
@@ -487,6 +501,8 @@ export const ApplicantRecruitFinalAnnounceField = memo(
     const setFinalAnnounceDate = (next: Dayjs | null) => {
       setFinalAnnounceIso(next == null ? null : next.toISOString())
     }
+    /** 템플릿 관리 시안 — 발표일 날짜 칸 고정 240 (등록·상세는 기존 남은 폭 채움) */
+    const isTemplateManagementScreen = useIsTemplateManagementScreen()
 
     return (
       <DetailInfoForm.Field
@@ -502,6 +518,12 @@ export const ApplicantRecruitFinalAnnounceField = memo(
               mode="single"
               presetMode="date"
               value={finalAnnounceDate}
+              {...(isTemplateManagementScreen
+                ? {
+                    width: RECRUIT_TEMPLATE_ANNOUNCE_DATE_WIDTH,
+                    style: RECRUIT_TEMPLATE_FIXED_DATE_STYLE,
+                  }
+                : {})}
               disabledDate={finalAnnounceDisabledDate}
               placeholder={finalAnnouncePlaceholder}
               suppressAutoTodayWhenEmpty
@@ -529,6 +551,8 @@ export const ApplicantRecruitTargetLevelsField = memo(function ApplicantRecruitT
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevels,
     []
   )
+  /** 템플릿 관리 시안 — 교육 대상 셀렉트 고정 240 (등록·상세는 기존 칸 채움) */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
     <DetailInfoForm.Field
       label="교육 대상"
@@ -539,7 +563,7 @@ export const ApplicantRecruitTargetLevelsField = memo(function ApplicantRecruitT
           withAllOption={false}
           inputSize="small"
           placeholder="교육 대상을 선택해 주세요"
-          width="100%"
+          width={isTemplateManagementScreen ? 240 : '100%'}
           options={[...TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS]}
           value={targetLevels}
           onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}

@@ -1,10 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { recordMenuClick } from '@/features/analytics'
-import {
-  NotificationInboxPanel,
-  useMyNotificationUnreadCountQuery,
-} from '@/features/notification'
+import { NotificationInboxPanel, useMyNotificationUnreadCountQuery } from '@/features/notification'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import notificationsActiveIconUrl from '../image/icon/notifications-active.svg'
@@ -117,7 +114,7 @@ export function HeaderDesktop({
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [activeGroupCode, setActiveGroupCode] = useState<string | null>(() =>
-    getActiveNavigationGroupCode(pathname),
+    getActiveNavigationGroupCode(pathname)
   )
   const [hoveredGroupCode, setHoveredGroupCode] = useState<string | null>(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
@@ -273,7 +270,7 @@ export function HeaderDesktop({
                     closeNav()
                     if (target.external) {
                       const source = group.children.find(
-                        child => child.external && child.href === target.href,
+                        child => child.external && child.href === target.href
                       )
                       if (source) recordMenuClick(source.menuCode)
                       window.open(target.href, '_blank', 'noopener,noreferrer')
@@ -367,7 +364,7 @@ export function HeaderDesktop({
                 >
                   <img className={styles.actionIcon} src={iconUrl} alt="" aria-hidden="true" />
                 </button>
-              ),
+              )
             )}
           </div>
         ) : (
@@ -399,7 +396,6 @@ export function HeaderDesktop({
           aria-hidden="true"
         />
       ) : null}
-
     </header>
   )
 }

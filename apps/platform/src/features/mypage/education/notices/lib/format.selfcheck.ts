@@ -8,6 +8,16 @@ assert.equal(toEducationNoticePlainText('\\[E2E\\](강사) 안내'), '[E2E](강�
 assert.equal(toEducationNoticePlainText('별표 \\*\\* 유지'), '별표 ** 유지')
 assert.equal(toEducationNoticePlainText('경로 C:\\\\temp'), '경로 C:\\temp')
 assert.equal(resolveEducationNoticeTitle('\\[E2E\\] 제목', ''), '[E2E] 제목')
+// 예전 CMS가 저장한 망가진 제목(`\E2E\`)보다 본문 첫 줄을 우선한다 — QA 261113 화면 재현값
+assert.equal(
+  resolveEducationNoticeTitle(
+    '\\E2E\\ 강사 안내사항 테스트 게시글입니다.',
+    '\\[E2E\\] 강사 안내사항 테스트 게시글입니다.'
+  ),
+  '[E2E] 강사 안내사항 테스트 게시글입니다.'
+)
+assert.equal(resolveEducationNoticeTitle('제목만', ''), '제목만')
+assert.equal(resolveEducationNoticeTitle('', ''), '-')
 
 // 기존 동작 유지
 assert.equal(toEducationNoticePlainText('[링크](https://example.com) 확인'), '링크 확인')

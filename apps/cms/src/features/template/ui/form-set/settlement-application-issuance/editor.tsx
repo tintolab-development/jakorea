@@ -30,7 +30,8 @@ export function SettlementApplicationIssuanceEditorLeftColumn({
       onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
       verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
       onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
-      middleParagraphActions={vm.middleParagraphActions}
+      // 보고 양식 — 단락 추가·복제·삭제 미노출, 작성 기간만 설정 (QA 261113 #45)
+      middleParagraphActions={undefined}
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}

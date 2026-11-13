@@ -36,6 +36,13 @@ export type TemplateRegistryDefinition = {
 export const REGISTRATION_MODAL_DESCRIPTION =
   '※ 해당 폼의 단락과 항목은 추가·삭제할 수 없습니다. 단, 일부 문구·항목값 수정과 항목별 초기값 설정은 가능합니다.'
 
+/**
+ * 일반 프로그램 등록 폼 편집기 상단 안내 — 시안(일반 프로그램 등록 폼_학교·기관/개인)은 모집 폼과 같은 문구.
+ * QA 261113 #40(`REGISTRATION_MODAL_DESCRIPTION`)은 1사1교·UJAT·교육 받은 교사 등록 폼만 대상.
+ */
+export const GENERAL_REGISTRATION_MODAL_DESCRIPTION =
+  '※ 해당 폼의 단락과 항목은 추가·삭제할 수 없고 문구·항목값도 수정할 수 없습니다. 단, 항목별 초기값은 설정이 가능합니다.'
+
 /** 모집 폼 편집기 상단 안내 (QA 261113 #41) */
 export const RECRUITMENT_MODAL_DESCRIPTION =
   '※ 해당 폼의 단락과 항목은 추가·삭제할 수 없고 문구·항목값도 수정할 수 없습니다. 단, 항목별 초기값은 설정이 가능합니다.'
@@ -72,6 +79,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     registrationEditor: 'general',
     registrationFormVariant: 'general',
     previewHeaderTitleFallback: '일반 프로그램 등록 폼',
+    modalDescription: GENERAL_REGISTRATION_MODAL_DESCRIPTION,
   },
   'registration-economy': {
     id: 'registration-economy',
@@ -213,7 +221,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     category: 'application',
     rendererKey: 'participant-application',
     editorVariant: 'trained-teachers-application-institution',
-    previewHeaderTitleFallback: '교육받은 교사_참여 기관 신청 폼',
+    previewHeaderTitleFallback: '교육 받은 교사_참여 기관 신청 폼',
     modalDescription: APPLICATION_MODAL_DESCRIPTION,
   },
   'application-gemini-visiting-training-instructor': {

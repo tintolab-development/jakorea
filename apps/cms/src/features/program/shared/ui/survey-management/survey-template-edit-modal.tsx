@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { showSaveCompletedAlert } from '@/shared/ui/show-save-completed-alert'
 import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
@@ -94,7 +95,7 @@ function SurveyTemplateEditModalInner({
   variant = 'default',
 }: SurveyTemplateEditModalProps) {
   const generalVariant = variant === 'general'
-  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const { showSaveFailure } = useFormTemplateSaveFeedback()
   const { handleDraftValidationFailure } = useSurveyWritingSaveValidationFeedback()
   const templateRow = useMemo(
     () => (open && programEdit == null ? findWritingTemplateRowByDefinitionId(templateId) : null),
@@ -214,7 +215,8 @@ function SurveyTemplateEditModalInner({
         }
         const savedId =
           'templateVersionId' in result ? String(result.templateVersionId) : templateId
-        showSaveSuccess(() => onSaved?.(savedId))
+        // 시안 — 설문 양식 저장 완료 「저장 완료 / 저장되었습니다.」
+        showSaveCompletedAlert({ onConfirm: () => onSaved?.(savedId) })
       } catch (error) {
         const programFailure =
           programEdit != null ? resolveProgramSurveyFormEditFailure(error) : undefined
@@ -232,7 +234,6 @@ function SurveyTemplateEditModalInner({
     onSaved,
     programEdit,
     showSaveFailure,
-    showSaveSuccess,
     templateId,
   ])
 

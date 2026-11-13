@@ -21,6 +21,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 /** 신청 학년 — 1학년 ~ 6학년만 노출 */
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
@@ -40,7 +41,7 @@ const DETAIL_ADDRESS_PLACEHOLDER = '교구재 등 택배 발송을 위한 정확
 const PREVIEW_AUTO_USER_INFO_SAMPLE = {
   institutionName: '신청 기관명',
   institutionAddress: '기관 소재지',
-  teacherName: '담당 교사',
+  teacherName: '담당 교사명',
   tel: '',
   mobile: '',
   email: '',
@@ -77,7 +78,7 @@ const InstitutionApplicationTeacherContactFields = memo(
         <CmsInput
           inputSize="small"
           width={240}
-          placeholder="담당 교사의 내선 번호(직통 번호)"
+          placeholder="담당 교사의 내선(직통 번호)"
           value={teacherTel}
           onChange={e => setTeacherTel(e.target.value)}
         />
@@ -105,6 +106,8 @@ const InstitutionApplicationTeacherContactFields = memo(
 )
 
 const InstitutionApplicationGradeField = memo(function InstitutionApplicationGradeField() {
+  /** 템플릿 관리 시안(12875:513810) — 학년 선택 셀렉트 120 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
     'application.institution.applicationGrade',
     ''
@@ -115,7 +118,7 @@ const InstitutionApplicationGradeField = memo(function InstitutionApplicationGra
       edit={
         <CmsSelect
           inputSize="small"
-          width="100%"
+          width={isTemplateManagementScreen ? 120 : '100%'}
           withAllOption={false}
           placeholder="학년 선택"
           value={applicationGrade === '' ? undefined : applicationGrade}
@@ -129,9 +132,11 @@ const InstitutionApplicationGradeField = memo(function InstitutionApplicationGra
 })
 
 const InstitutionApplicationEducationFormField = memo(function InstitutionApplicationEducationFormField() {
+  /** 템플릿 관리 시안(12875:513810) — 희망 교육 형태 미선택 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [educationForm, setEducationForm] = useGeneralApplicationOverlayKv<string>(
     'application.institution.educationForm',
-    EDUCATION_FORM_OPTIONS[0]?.value ?? 'online'
+    isTemplateManagementScreen ? '' : (EDUCATION_FORM_OPTIONS[0]?.value ?? 'online')
   )
   return (
     <DetailInfoForm.Field
@@ -139,7 +144,7 @@ const InstitutionApplicationEducationFormField = memo(function InstitutionApplic
       edit={
         <CmsRadioGroup
           size="medium"
-          value={educationForm}
+          value={educationForm === '' ? undefined : educationForm}
           onChange={e => setEducationForm(e.target.value)}
           style={inlineChoiceStyle}
         >
@@ -292,7 +297,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
           label="신청 사유"
           fullRow
           edit={
-            <CmsInput inputSize="small" placeholder="신청 사유를 입력해 주세요." width="100%" />
+            <CmsInput inputSize="small" placeholder="신청 사유를 입력해 주세요" width="100%" />
           }
           view="-"
         />
@@ -305,7 +310,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
           edit={
             <CmsInput
               inputSize="small"
-              placeholder="기타 요청사항을 입력해 주세요."
+              placeholder="기타 요청사항을 입력해 주세요"
               width="100%"
             />
           }

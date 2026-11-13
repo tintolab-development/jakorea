@@ -17,4 +17,12 @@ describe('toProgramPostPlainText', () => {
   it('이미지만 있는 본문은 빈 문자열이 된다', () => {
     expect(toProgramPostPlainText('![](https://cdn.example.test/a.png)')).toBe('')
   })
+
+  it('CMS 에디터가 이스케이프한 기호를 원래 글자로 보여 준다 (QA 261113 \\[E2E\\])', () => {
+    expect(toProgramPostPlainText('\\[E2E\\] 강사 안내사항 테스트 게시글입니다.')).toBe(
+      '[E2E] 강사 안내사항 테스트 게시글입니다.'
+    )
+    expect(toProgramPostPlainText('별표 \\*\\* 유지')).toBe('별표 ** 유지')
+    expect(toProgramPostPlainText('[링크](https://example.com) 확인')).toBe('링크 확인')
+  })
 })

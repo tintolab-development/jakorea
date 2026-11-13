@@ -23,21 +23,27 @@ export const ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE = '기관 및 학교 
 
 export type ActivityCertificateParticipantInfoInput = {
   name: string | null | undefined
+  /** 생년월일 — 원문 조회(unmask) 값. 없으면 '-' */
+  birthDate?: string | null
+  /** 소속 — 참여자 소속 학교/기관명. 없으면 '-' */
+  affiliation?: string | null
   program?: Program | null
   /**
    * 참여기간 — 본인의 진행 완료된 첫 일정일 ~ 마지막 일정일(기획 회신 261113).
    * 서버 값이 아직 없어 비워 두면 '-'.
    */
   participationPeriod?: string | null
-  /** 활동시수 — 진행 완료 일정의 실제 교육 시간 합계('총 N시간 M분'). 서버 값이 없으면 '-' */
-  activityHours?: string | null
   /** 발급 사유 모달에서 고른 사유 라벨 — 「발급목적」 줄 */
   issuanceReasonLabel?: string
 }
 
+function birthDateOrEmpty(value: string | null | undefined): string {
+  return valueOrEmpty(value?.replace(/\s/g, ''))
+}
+
 /**
- * 활동인증서 참여자 정보 5줄(강사·봉사자 공통, CMS-FUNC-0265):
- * 성명 · 프로그램명 · 참여기간 · 활동시수 · 발급목적. 줄 순서는
+ * 활동인증서 참여자 정보 6줄(강사·봉사자 공통, 시안 5767:46959·5767:47403 — 사용자 결정 261113):
+ * 성명 · 생년월일 · 소속 · 프로그램명 · 활동기간 · 발급목적. 줄 순서는
  * `ACTIVITY_CERTIFICATE_PARTICIPANT_ROW_LABELS`와 같다.
  */
 export function buildActivityCertificateParticipantInfoLines(
@@ -45,17 +51,17 @@ export function buildActivityCertificateParticipantInfoLines(
 ): string {
   return [
     valueOrEmpty(input.name),
+    birthDateOrEmpty(input.birthDate),
+    valueOrEmpty(input.affiliation),
     resolveProgramName(input.program),
     valueOrEmpty(input.participationPeriod),
-    valueOrEmpty(input.activityHours),
     input.issuanceReasonLabel?.trim() || ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
   ].join('\n')
 }
 
-/** 서버 계산값(eligibility)을 표시 문구로 바꾼 참여기간·활동시수 */
+/** 서버 계산값(eligibility)을 표시 문구로 바꾼 참여기간(「활동기간」 줄) */
 export type ActivityCertificatePeriodHoursText = {
   participationPeriod?: string | null
-  activityHours?: string | null
 }
 
 export function buildActivityCertificateParticipantInfo(
@@ -67,10 +73,11 @@ export function buildActivityCertificateParticipantInfo(
 ): string {
   return buildActivityCertificateParticipantInfoLines({
     name: instructor.instructorName,
+    birthDate: instructor.birthDate,
+    affiliation: instructor.affiliation,
     program,
     issuanceReasonLabel,
     participationPeriod: periodHours?.participationPeriod,
-    activityHours: periodHours?.activityHours,
   })
 }
 
@@ -105,6 +112,10 @@ export function buildActivityCertificateFileName(
 }
 
 export type ActivityCertificateVolunteerOptions = ActivityCertificatePeriodHoursText & {
+  /** 생년월일 — 원문 조회(unmask) 값 */
+  birthDate?: string | null
+  /** 소속 학교/기관명 */
+  affiliation?: string | null
   program?: Program | null
   /** 발급 사유 모달에서 고른 사유 라벨 — 「발급목적」 줄 */
   issuanceReasonLabel?: string
@@ -116,10 +127,11 @@ export function buildActivityCertificateParticipantInfoForVolunteer(
 ): string {
   return buildActivityCertificateParticipantInfoLines({
     name: volunteerName,
+    birthDate: options?.birthDate,
+    affiliation: options?.affiliation,
     program: options?.program,
     issuanceReasonLabel: options?.issuanceReasonLabel,
     participationPeriod: options?.participationPeriod,
-    activityHours: options?.activityHours,
   })
 }
 

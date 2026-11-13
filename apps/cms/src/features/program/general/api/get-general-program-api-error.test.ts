@@ -30,16 +30,16 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toContain('사업 시작일')
   })
 
-  it('문구 매핑이 없는 코드만 message로 오면 코드 대신 fallback을 노출한다 (같은 날짜 배정 409)', () => {
+  it('문구 매핑이 없는 코드만 message로 오면 코드 대신 fallback을 노출한다 (매핑 없는 409)', () => {
     const error = {
       response: {
         status: 409,
         data: {
           success: false,
-          message: 'CONFLICT: INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+          message: 'CONFLICT: SOME_UNMAPPED_CONFLICT',
           error: {
-            code: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
-            message: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+            code: 'SOME_UNMAPPED_CONFLICT',
+            message: 'SOME_UNMAPPED_CONFLICT',
           },
         },
       },
@@ -295,6 +295,62 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
       '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.'
     )
+  })
+})
+
+describe('getGeneralProgramApiErrorMessage instructor assignment write conflicts', () => {
+  const conflict = (code: string, message?: string) => ({
+    response: {
+      status: 409,
+      data: {
+        success: false,
+        message,
+        error: { code, message },
+      },
+    },
+  })
+
+  // INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT(같은 프로그램 다른 일정 시간 겹침)는 기획 확정 문구가 없어 FE 매핑을 두지 않는다
+  it('INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT — 서버 공통 충돌 문구를 그대로 쓴다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        conflict(
+          'INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT',
+          '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.'
+        ),
+        'fallback'
+      )
+    ).toBe('현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.')
+  })
+
+  it('INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT — 코드만 오면 코드 대신 fallback', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        conflict('INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT', 'INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT'),
+        'fallback'
+      )
+    ).toBe('fallback')
+  })
+
+  it('매핑된 코드는 서버 구체 메시지가 있으면 그대로 쓴다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        conflict('INSTRUCTOR_ASSIGNMENT_CAPACITY_FULL', '이 일정은 강사 3명까지 배정할 수 있습니다.'),
+        'fallback'
+      )
+    ).toBe('이 일정은 강사 3명까지 배정할 수 있습니다.')
+  })
+
+  it('매핑된 코드는 서버 공통 충돌 문구 대신 코드별 안내', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        conflict(
+          'INSTRUCTOR_ASSIGNMENT_CAPACITY_FULL',
+          '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.'
+        ),
+        'fallback'
+      )
+    ).toBe('최대 배정 가능 강사 수를 초과하여 배정할 수 없습니다.')
   })
 })
 

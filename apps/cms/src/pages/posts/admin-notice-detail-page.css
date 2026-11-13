@@ -135,7 +135,10 @@
 }
 
 .admin-notice-detail-page__views-icon {
-  font-size: 16px;
+  /* 시안 Icon / Etc / Basic view 20 */
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .admin-notice-detail-page__title {
@@ -213,7 +216,10 @@
 }
 
 .admin-notice-detail-page__clip {
-  font-size: 16px;
+  /* 시안 Icon / Etc / Basic file 20 */
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .admin-notice-detail-page__attachments-list {

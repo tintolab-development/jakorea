@@ -114,6 +114,19 @@ function resolveDetailInfoVariantCopy(variant: DetailInfoSectionVariant) {
 
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
 
+/** 수정 모드 placeholder 덮어쓰기 — 템플릿 관리 UJAT 모집 폼 시안(5800:157724·158529)만 넘긴다 */
+export type DetailInfoPlaceholderOverrides = Partial<
+  Record<
+    | 'description'
+    | 'recruitmentGuide'
+    | 'applicationMethod'
+    | 'learningSupportContent'
+    | 'additionalContent'
+    | 'otherNotes',
+    string
+  >
+>
+
 function axiosErrorData(error: unknown): unknown {
   if (!error || typeof error !== 'object' || !('response' in error)) return undefined
   return (error as { response?: { data?: unknown } }).response?.data
@@ -657,6 +670,7 @@ function ThumbnailImageField({
   thumbnailFilename,
   guideLines,
   showRequiredStar,
+  buttonLabel,
 }: {
   program: Program
   isEditMode: boolean
@@ -672,6 +686,8 @@ function ThumbnailImageField({
   thumbnailFilename: string
   guideLines: string[]
   showRequiredStar: boolean
+  /** 썸네일 버튼 문구 — 생략 시 `ThumbnailUploadField` 기본(「파일 추가」) */
+  buttonLabel?: string
 }) {
   const { showAlert } = useCmsAlert()
 
@@ -682,6 +698,7 @@ function ThumbnailImageField({
         previewAlt={program.title}
         fileName={thumbnailFilename}
         guideLines={guideLines}
+        buttonLabel={buttonLabel}
         maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
         sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
         disabled={disabled}
@@ -1024,6 +1041,10 @@ export interface DetailInfoSectionProps {
   hideFormHeader?: boolean
   /** `general`: 일반 프로그램 모집 정보 시안(파일 형식·개수·안내 문구). 생략 시 기존 동작 */
   variant?: DetailInfoSectionVariant
+  /** 수정 모드 placeholder 덮어쓰기(템플릿 관리 UJAT 시안). 생략 시 기존 문구 */
+  placeholderOverrides?: DetailInfoPlaceholderOverrides
+  /** 썸네일 버튼 문구 덮어쓰기(템플릿 관리 UJAT 시안 「파일 선택」). 생략 시 「파일 추가」 */
+  thumbnailButtonLabel?: string
 }
 
 export function DetailInfoSection({
@@ -1041,6 +1062,8 @@ export function DetailInfoSection({
   textFieldControl = 'input',
   hideFormHeader = false,
   variant = 'default',
+  placeholderOverrides,
+  thumbnailButtonLabel,
 }: DetailInfoSectionProps) {
   const variantCopy = resolveDetailInfoVariantCopy(variant)
   const {
@@ -1095,6 +1118,7 @@ export function DetailInfoSection({
             thumbnailFilename={thumbnailFilename}
             guideLines={variantCopy.thumbnailGuideLines}
             showRequiredStar={false}
+            buttonLabel={thumbnailButtonLabel}
           />
         ) : null}
         <ProgramDetailTextAreaField
@@ -1103,7 +1127,7 @@ export function DetailInfoSection({
           isFormEdit={isFormEdit}
           form={f}
           name="description"
-          placeholder="프로그램 설명"
+          placeholder={placeholderOverrides?.description ?? '프로그램 설명'}
           control={textFieldControl}
           readContent={resolveTextReadContent(
             program.description,
@@ -1118,7 +1142,7 @@ export function DetailInfoSection({
           form={f}
           program={program}
           name="recruitmentGuide"
-          placeholder="모집 안내"
+          placeholder={placeholderOverrides?.recruitmentGuide ?? '모집 안내'}
           readContent={resolveTextReadContent(
             program.recruitmentGuide,
             emptyReadDisplay,
@@ -1133,7 +1157,11 @@ export function DetailInfoSection({
             form={f}
             program={program}
             name="applicationMethod"
-            placeholder={variantCopy.applicationMethodPlaceholder ?? recruitmentMethodLabel}
+            placeholder={
+              placeholderOverrides?.applicationMethod ??
+              variantCopy.applicationMethodPlaceholder ??
+              recruitmentMethodLabel
+            }
             readContent={program.applicationMethod ?? '-'}
           />
         ) : null}
@@ -1144,7 +1172,11 @@ export function DetailInfoSection({
           form={f}
           program={program}
           name="learningSupportContent"
-          placeholder={variantCopy.learningSupportPlaceholder ?? '학습 지원 내용'}
+          placeholder={
+            placeholderOverrides?.learningSupportContent ??
+            variantCopy.learningSupportPlaceholder ??
+            '학습 지원 내용'
+          }
           readContent={resolveTextReadContent(
             program.learningSupportContent,
             emptyReadDisplay,
@@ -1158,7 +1190,7 @@ export function DetailInfoSection({
           form={f}
           program={program}
           name="additionalContentHtml"
-          placeholder="내용을 작성하세요"
+          placeholder={placeholderOverrides?.additionalContent ?? '내용을 작성하세요'}
           readContent={additionalContentReadContent(program, emptyReadDisplay)}
         />
         <AttachmentDetailField
@@ -1342,6 +1374,10 @@ export interface VolunteerDetailInfoSectionProps {
   hideFormHeader?: boolean
   /** `general`: 일반 프로그램 모집 정보 시안(파일 형식·개수·안내 문구). 생략 시 기존 동작 */
   variant?: DetailInfoSectionVariant
+  /** 수정 모드 placeholder 덮어쓰기(템플릿 관리 UJAT 시안). 생략 시 기존 문구 */
+  placeholderOverrides?: DetailInfoPlaceholderOverrides
+  /** 썸네일 버튼 문구 덮어쓰기(템플릿 관리 UJAT 시안 「파일 선택」). 생략 시 「파일 추가」 */
+  thumbnailButtonLabel?: string
 }
 
 export function VolunteerDetailInfoSection({
@@ -1355,6 +1391,8 @@ export function VolunteerDetailInfoSection({
   emptyReadDisplay = 'mock-default',
   hideFormHeader = false,
   variant = 'default',
+  placeholderOverrides,
+  thumbnailButtonLabel,
 }: VolunteerDetailInfoSectionProps) {
   const variantCopy = resolveDetailInfoVariantCopy(variant)
   const {
@@ -1414,6 +1452,7 @@ export function VolunteerDetailInfoSection({
           thumbnailFilename={thumbnailFilename}
           guideLines={variantCopy.thumbnailGuideLines}
           showRequiredStar={false}
+          buttonLabel={thumbnailButtonLabel}
         />
         <ProgramDetailTextAreaField
           label="프로그램 설명"
@@ -1421,7 +1460,7 @@ export function VolunteerDetailInfoSection({
           isFormEdit={isFormEdit}
           form={f}
           name="description"
-          placeholder="프로그램 설명"
+          placeholder={placeholderOverrides?.description ?? '프로그램 설명'}
           readContent={resolveTextReadContent(
             program.description,
             emptyReadDisplay,
@@ -1435,7 +1474,7 @@ export function VolunteerDetailInfoSection({
           form={f}
           program={program}
           name="recruitmentGuide"
-          placeholder="모집 안내"
+          placeholder={placeholderOverrides?.recruitmentGuide ?? '모집 안내'}
           readContent={resolveTextReadContent(
             program.recruitmentGuide,
             emptyReadDisplay,
@@ -1449,7 +1488,11 @@ export function VolunteerDetailInfoSection({
           form={f}
           program={program}
           name="applicationMethod"
-          placeholder={variantCopy.applicationMethodPlaceholder ?? '지원 방법'}
+          placeholder={
+            placeholderOverrides?.applicationMethod ??
+            variantCopy.applicationMethodPlaceholder ??
+            '지원 방법'
+          }
           readContent={applicationMethod}
         />
         <RichTextDetailField
@@ -1459,7 +1502,7 @@ export function VolunteerDetailInfoSection({
           form={f}
           program={program}
           name="additionalContentHtml"
-          placeholder="내용을 작성하세요"
+          placeholder={placeholderOverrides?.additionalContent ?? '내용을 작성하세요'}
           readContent={additionalContentReadContent(program, emptyReadDisplay)}
         />
         <RichTextDetailField
@@ -1469,7 +1512,7 @@ export function VolunteerDetailInfoSection({
           form={f}
           program={program}
           name="otherNotes"
-          placeholder="기타사항"
+          placeholder={placeholderOverrides?.otherNotes ?? '기타사항'}
           readContent={otherNotes}
         />
         <AttachmentDetailField

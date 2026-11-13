@@ -22,8 +22,8 @@ export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS = {
 } as const
 
 const PREFERRED_EDUCATION_SCHEDULE_DESCRIPTION =
-  '* 금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다.\n' +
-  '* 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.'
+  '※ 금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다.\n' +
+  '※ 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.'
 
 export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS = new Set<string>(
   Object.values(UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS)
@@ -64,8 +64,8 @@ export const UJAT_PROGRAM_APPLICATION_INSTITUTION_APPLICATION_REGION_ITEMS: Read
 ]
 
 const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 
 const PERSONAL_INFO_COLLECTION_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
@@ -170,7 +170,7 @@ function createSubmitConfirmationMultipleChoiceParagraph(): MultipleChoiceParagr
     requiredMark: true,
     paragraphTitle: '상기 내용 모두 확인하였으며 현재 답변으로 제출합니다.',
     paragraphDescription:
-      '*신청 학년 정보 및 교육 일정은 추후 수정이 가능하며, 교육자 배정 과정에서 조정될 수 있습니다.',
+      '* 신청 학년 정보 및 교육 일정은 추후 수정이 가능하며, 교육자 배정 과정에서 조정될 수 있습니다.',
     participatesInTitleNumbering: true,
     answerRequired: true,
     allowMultiple: false,
@@ -243,12 +243,12 @@ export function createUjatProgramApplicationFormInstitutionDraft(): WritingFormD
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
       '학년 별 신청 정보',
-      '학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해주세요.'
+      '학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해 주세요.'
     ),
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime,
       '학년 별 수업 시간',
-      '신청 학년 별 수업 진행 시간을 작성해주세요.'
+      '신청 학년 별 수업 진행 시간을 작성해 주세요.'
     ),
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,

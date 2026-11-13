@@ -141,7 +141,7 @@ const applicationDefinitions: TemplateDefinition[] = [
   },
   {
     id: 'application-trained-teachers',
-    templateName: '교육받은 교사_참여 기관 신청 폼',
+    templateName: '교육 받은 교사_참여 기관 신청 폼',
     variant: 'default',
   },
 ]
@@ -201,7 +201,7 @@ export const writingSections: TemplateSection[] = [
     key: 'agreement',
     title: '동의 양식',
     description:
-      '단락과 항목은 추가·삭제할 수 없습니다. 단, 일부 문구·항목값 수정과 항목별 초기값 설정은 가능합니다. (*성범죄경력 조회 동의서는 파일 교체만 가능합니다.)',
+      '단락과 항목은 추가·삭제할 수 없습니다. 단, 일부 문구·항목값 수정과 항목별 초기값 설정은 가능합니다. (*성범죄 경력조회 동의서는 파일 교체만 가능합니다.)',
     rows: createRows('agreement', agreementDefinitions),
   },
 ]

@@ -362,7 +362,7 @@ export class UjatProgramRegistrationPage {
       '교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요',
       '서울시 중구 JA Korea UJAT 신청 기관 상세 주소'
     )
-    await fillAllByPlaceholder(this.page, '담당 교사의 내선 번호(직통 번호)', '02-1234-0001')
+    await fillAllByPlaceholder(this.page, '담당 교사의 내선(직통 번호)', '02-1234-0001')
     await fillAllByPlaceholder(this.page, '담당 교사의 휴대폰 번호', '010-1234-0001')
     await fillAllByPlaceholder(this.page, '담당 교사의 이메일', CONTACT_EMAIL)
     await fillVisibleFreeTextFields(this.page, 'E2E UJAT 기관 신청')
@@ -372,7 +372,7 @@ export class UjatProgramRegistrationPage {
     // 지원 형태별 단락 visibility는 전용 단위 테스트에서 검증하고, E2E에서는
     // 기본값을 임의로 바꾸어 controlled radio 상태를 깨지 않도록 한다.
     await checkRadioIfVisible(this.page, '있음')
-    await fillByPlaceholderIfVisible(this.page, '학교명을 입력해 보세요', 'JA Korea 대학교')
+    await fillByPlaceholderIfVisible(this.page, '학교명을 입력해 주세요', 'JA Korea 대학교')
     await fillByPlaceholderIfVisible(
       this.page,
       '복수전공이나 부전공이 있을 경우, 함께 기재해 주세요',

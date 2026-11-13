@@ -1,6 +1,6 @@
 {
   "templateCode": "agreement-expense",
-  "templateName": "JA Korea 교육진행자 서약서(안)",
+  "templateName": "JA Korea 교육진행자 서약서",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {
@@ -68,8 +68,8 @@
         "kind": "single_item",
         "variant": "multiple_choice",
         "requiredMark": true,
-        "paragraphTitle": "종교적 정치적 중립성 유지",
-        "paragraphDescription": "교육 내용 및 발언에 있어 종교적·정치적으로 편향이나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.",
+        "paragraphTitle": "종교적·정치적 중립성 유지",
+        "paragraphDescription": "교육 내용 및 발언에 있어 종교적·정치적으로 편향되거나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.",
         "participatesInTitleNumbering": true,
         "answerRequired": true,
         "allowMultiple": false,

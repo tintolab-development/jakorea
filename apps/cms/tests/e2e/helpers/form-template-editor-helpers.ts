@@ -50,7 +50,7 @@ export async function closeTemplateEditor(page: Page) {
 
 export async function saveAndConfirm(page: Page) {
   await page.getByRole('button', { name: '저장' }).click()
-  const dialog = page.getByRole('dialog').filter({ hasText: '양식이 저장되었습니다' })
+  const dialog = page.getByRole('dialog').filter({ hasText: '저장되었습니다' })
   await expect(dialog).toBeVisible({ timeout: 15_000 })
   await dialog.getByRole('button', { name: '확인' }).click()
   await expect(dialog).toBeHidden()

@@ -7,10 +7,12 @@
  * - 개인 → STUDENT (학생·개인 참여자)
  */
 
+import { toProgramPostPlainText } from '@/features/user/detail/lib/post-content-plain-text'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
+import { showRegisterCompletedAlert } from '@/shared/ui/show-register-completed-alert'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { FILE_SELECT_MAX_FILE_BYTES } from '@/shared/ui/file-select-field-limits'
 import type { Program, ProgramPost } from '@/types/domain'
@@ -282,13 +284,9 @@ export function PostWriteModal({
       const audienceForSave = audience.includes('all')
         ? (['all'] as string[])
         : audience.filter(key => key !== 'all')
+      // 목록 미리보기와 같은 변환으로 제목을 만든다 — 기호를 글자 단위로 지우면 `\[E2E\]`가 `\E2E\`로 저장된다
       const title =
-        trimmed
-          .replace(/<img\b[^>]*>/gi, '')
-          .replace(/!\[[^\]]*]\([^)]*\)/g, '')
-          .replace(/[#*_`>\-[\]()]/g, '')
-          .trim()
-          .slice(0, 40) || '게시글'
+        (toProgramPostPlainText(trimmed).split('\n')[0] ?? '').trim().slice(0, 40) || '게시글'
       const inlineImageIds = collectFileObjectIdsFromHtml(trimmed)
 
       if (isEditMode && editingPost) {
@@ -364,6 +362,8 @@ export function PostWriteModal({
       setFiles([])
       onSuccess?.()
       onCancel()
+      // 시안 — 게시글 신규 등록 완료 「등록 완료 / 등록되었습니다.」 (수정은 위 분기에서 반환)
+      showRegisterCompletedAlert()
     } catch (error) {
       const data =
         error && typeof error === 'object' && 'response' in error
