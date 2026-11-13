@@ -4,6 +4,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './user-info.css'
 
 const DEFAULT_USER_INFO_FIELDS = DEFAULT_USER_INFO_FIELD_CATALOG
@@ -87,9 +88,7 @@ export function UserInfoPreviewTable({
     return (
       <p
         className={
-          isA4
-            ? 'form-document-preview-paragraph__body-text'
-            : 'user-info-preview-table__empty'
+          isA4 ? 'form-document-preview-paragraph__body-text' : 'user-info-preview-table__empty'
         }
         role="status"
       >
@@ -186,10 +185,63 @@ export function UserInfoPreviewTable({
 }
 
 /** A4 `FormDocumentPreviewParagraph`와 측정 레이어에서 동일 엔트리 집합을 쓰기 위함 */
-export function getUserInfoPreviewSelectedEntries(paragraph: UserInfoParagraph): UserInfoFieldEntry[] {
+export function getUserInfoPreviewSelectedEntries(
+  paragraph: UserInfoParagraph
+): UserInfoFieldEntry[] {
   const fields = normalizeFields(paragraph)
   const selected = new Set(paragraph.selectedUserFieldKeys ?? [])
   return fields.filter(f => selected.has(f.key))
+}
+
+/**
+ * 설문자 정보 미리보기 — 공통 상세 정보 폼(DetailInfoForm) 규격.
+ * 값이 없으면 「설문자 {항목명}」 예시 문구로 통일한다(2026-11-13 요청).
+ * 항목 4개 이상이면 한 행에 두 항목씩.
+ */
+export const SURVEY_RESPONDENT_PREVIEW_VALUE_PREFIX = '설문자'
+
+function SurveyRespondentDetailInfoPreview({
+  selectedEntries,
+  previewValues,
+}: {
+  selectedEntries: UserInfoFieldEntry[]
+  previewValues?: UserInfoPreviewValues
+}) {
+  if (selectedEntries.length === 0) {
+    return (
+      <p className="user-info-preview-table__empty" role="status">
+        선택된 항목이 없습니다.
+      </p>
+    )
+  }
+  const valueFor = (field: UserInfoFieldEntry) => {
+    const v = previewValues?.[field.key]?.trim()
+    return v ? v : `${SURVEY_RESPONDENT_PREVIEW_VALUE_PREFIX} ${field.label}`
+  }
+  const paired = selectedEntries.length >= 4
+  const rows: UserInfoFieldEntry[][] = []
+  for (let i = 0; i < selectedEntries.length; i += paired ? 2 : 1) {
+    rows.push(selectedEntries.slice(i, i + (paired ? 2 : 1)))
+  }
+  return (
+    <DetailInfoForm title="설문자 정보" hideHeader mode="view">
+      {rows.map(row => (
+        <DetailInfoForm.Row
+          key={row.map(f => f.key).join('-')}
+          type={row.length === 2 ? 'double' : 'single'}
+        >
+          {row.map(field => (
+            <DetailInfoForm.Field
+              key={field.key}
+              label={field.label}
+              view={<span className="user-info-respondent-preview__value">{valueFor(field)}</span>}
+              fullRow={row.length === 1}
+            />
+          ))}
+        </DetailInfoForm.Row>
+      ))}
+    </DetailInfoForm>
+  )
 }
 
 export type UserInfoLayout = 'chips' | 'previewTable'
@@ -203,6 +255,7 @@ export function UserInfo({
   previewValues,
   forceTwoColumnRow = false,
   answerEditable = false,
+  surveyRespondentPreview = false,
 }: {
   paragraph: UserInfoParagraph
   onChange?: (next: UserInfoParagraph) => void
@@ -211,6 +264,8 @@ export function UserInfo({
   previewValues?: UserInfoPreviewValues
   forceTwoColumnRow?: boolean
   answerEditable?: boolean
+  /** 설문 단락의 설문자 정보 — 미리보기를 DetailInfoForm 규격·「설문자 OO」 예시 값으로 */
+  surveyRespondentPreview?: boolean
 }) {
   const fields = normalizeFields(paragraph)
   const selected = new Set(paragraph.selectedUserFieldKeys ?? [])
@@ -225,6 +280,15 @@ export function UserInfo({
       userFields: fields,
       selectedUserFieldKeys: [...next],
     })
+  }
+
+  if (layout === 'previewTable' && surveyRespondentPreview && !answerEditable) {
+    return (
+      <SurveyRespondentDetailInfoPreview
+        selectedEntries={getUserInfoPreviewSelectedEntries(paragraph)}
+        previewValues={previewValues ?? paragraph.fieldAnswers}
+      />
+    )
   }
 
   if (layout === 'previewTable') {

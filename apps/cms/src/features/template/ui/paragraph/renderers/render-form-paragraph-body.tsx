@@ -65,6 +65,7 @@ import type { EconomyProgramApplicationParagraphBodyOptions } from '@/features/t
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import {
   mergeSubjectiveFromShortEssayEdit,
   ShortEssay,
@@ -1000,6 +1001,11 @@ export function renderFormParagraphBody(
             (p.kind === 'single_item' && p.variant === 'user_info' ? p.fieldAnswers : undefined)
           }
           forceTwoColumnRow={p.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
+          // 설문 단락의 설문자 정보만 — UJAT 교육일지 봉사자 정보·강의보고서 강사 정보는 기존 표
+          surveyRespondentPreview={
+            p.id !== UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo &&
+            p.id !== LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID
+          }
         />
       )
     case 'file_attachment':
