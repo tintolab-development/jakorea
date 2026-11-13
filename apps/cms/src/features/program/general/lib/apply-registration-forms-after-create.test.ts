@@ -491,6 +491,89 @@ describe('applyRegistrationFormsAfterCreate', () => {
       expect.objectContaining({ templateCode: 'application-participant-individual' }),
     ])
   })
+
+  it('409 details의 reason·paragraphId는 콘솔에만 남기고 사용자 문구는 BE message 그대로 쓴다', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 7,
+        formType: 'APPLICATION',
+        targetType: 'INSTRUCTOR',
+        targetRole: 'INSTRUCTOR',
+        templateVersionId: 2743,
+        active: true,
+      },
+    ])
+    saveProgramScopedOperationalFormVersion.mockRejectedValue({
+      response: {
+        data: {
+          success: false,
+          error: {
+            code: 'FORM_SCHEMA_IMMUTABLE',
+            message: '시스템 기본 양식의 보호된 구조 또는 항목은 수정할 수 없습니다.',
+            details: {
+              path: '$',
+              reason: 'FOREIGN_PROTECTED_ID',
+              templateScope: 'PROGRAM',
+              paragraphId: 'program-instructor-application-seed-personal-info',
+            },
+          },
+        },
+      },
+    })
+
+    const result = await applyRegistrationFormsAfterCreate({
+      program: generalProgram,
+      forms: [{ templateCode: 'application-instructor', formType: 'APPLICATION', draft }],
+    })
+
+    expect(result.failed).toEqual([
+      {
+        templateCode: 'application-instructor',
+        recruitmentId: undefined,
+        message: '시스템 기본 양식의 보호된 구조 또는 항목은 수정할 수 없습니다.',
+        code: 'FORM_SCHEMA_IMMUTABLE',
+      },
+    ])
+    expect(warn).toHaveBeenCalledWith(
+      '[registration-form-apply] 양식 적용 실패 상세',
+      expect.objectContaining({
+        templateCode: 'application-instructor',
+        code: 'FORM_SCHEMA_IMMUTABLE',
+        reason: 'FOREIGN_PROTECTED_ID',
+        paragraphId: 'program-instructor-application-seed-personal-info',
+        path: '$',
+        templateScope: 'PROGRAM',
+      })
+    )
+    warn.mockRestore()
+  })
+
+  it('details가 없는 실패는 상세 콘솔을 남기지 않는다', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 7,
+        formType: 'APPLICATION',
+        targetType: 'INSTRUCTOR',
+        targetRole: 'INSTRUCTOR',
+        templateVersionId: 2743,
+        active: true,
+      },
+    ])
+    saveProgramScopedOperationalFormVersion.mockRejectedValue(new Error('양식 적용에 실패했습니다.'))
+
+    const result = await applyRegistrationFormsAfterCreate({
+      program: generalProgram,
+      forms: [{ templateCode: 'application-instructor', formType: 'APPLICATION', draft }],
+    })
+
+    expect(result.failed).toEqual([
+      expect.objectContaining({ templateCode: 'application-instructor', message: '양식 적용에 실패했습니다.' }),
+    ])
+    expect(warn).not.toHaveBeenCalledWith('[registration-form-apply] 양식 적용 실패 상세', expect.anything())
+    warn.mockRestore()
+  })
 })
 
 describe('applyPreparedRegistrationFormsAfterCreate (부분 실패 → 안내·재시도)', () => {
