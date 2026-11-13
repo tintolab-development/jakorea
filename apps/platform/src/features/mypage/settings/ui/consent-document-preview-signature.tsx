@@ -42,10 +42,10 @@ function isSignatureParagraph(paragraph: WritingFormParagraph): boolean {
 
 function confirmText(paragraph: WritingFormParagraph): string {
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
-    return paragraph.body.trim()
+    return paragraph.body?.trim() ?? ''
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text') {
-    return paragraph.bodyText.trim()
+    return paragraph.bodyText?.trim() ?? ''
   }
   return ''
 }
@@ -130,7 +130,7 @@ export function resolveConsentDocumentPreviewChrome(
   const isUntitledExplanationBeforeDate =
     paragraph.kind === 'single_item' &&
     paragraph.variant === 'agreement_explanation_text' &&
-    paragraph.paragraphTitle.trim().length === 0 &&
+    (paragraph.paragraphTitle?.trim().length ?? 0) === 0 &&
     nextParagraph != null &&
     isDateParagraph(nextParagraph)
 

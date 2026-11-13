@@ -1,6 +1,6 @@
 {
   "templateCode": "agreement-notice",
-  "templateName": "행정정보 공동이용 사전 동의서",
+  "templateName": "행정정보 공동이용 사전동의서",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {
@@ -32,7 +32,7 @@
         "id": "agreement-notice-institution",
         "kind": "single_item",
         "variant": "agreement_explanation_text",
-        "requiredMark": false,
+        "requiredMark": true,
         "paragraphTitle": "이용기관 명칭",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
@@ -44,7 +44,7 @@
         "id": "agreement-notice-purpose",
         "kind": "single_item",
         "variant": "agreement_explanation_text",
-        "requiredMark": false,
+        "requiredMark": true,
         "paragraphTitle": "이용사무(이용목적)",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
@@ -136,7 +136,7 @@
         "id": "agreement-notice-consent-static",
         "kind": "description",
         "variant": "static_description_lines",
-        "requiredMark": false,
+        "requiredMark": true,
         "paragraphTitle": "정보주체(본인) 동의사항",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
@@ -164,7 +164,7 @@
           },
           {
             "id": "agreement-notice-subj-birth",
-            "label": "생년월일",
+            "label": "생년월일(8자리)",
             "placeholder": "생년월일 8자리를 입력해 주세요",
             "bodyText": ""
           },

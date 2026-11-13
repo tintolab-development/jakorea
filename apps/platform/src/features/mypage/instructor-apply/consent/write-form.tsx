@@ -31,6 +31,7 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
 import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
+import { RECEIPT_GUARDIAN_SIGNATURE_NOTICE } from '@/features/mypage/education/settlements/lib/receipt-guardian-consent-copy'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isAxiosError } from 'axios'
@@ -186,12 +187,18 @@ export function SchemaConsentWriteForm({
   onComplete,
   readOnly = false,
   submitContext = 'instructorApply',
+  guardianVerificationToken,
+  guardianSignerName,
   onTitleAside,
 }: {
   consentKey: DocumentConsentWriteKey
   onComplete: () => void
   readOnly?: boolean
   submitContext?: ConsentWriteSubmitContext
+  /** 만 14세 미만 영수증 사전동의 — 보호자 본인인증 1회용 토큰(보호자 서명란·complete). 화면·로그에 출력하지 않는다 */
+  guardianVerificationToken?: string
+  /** 만 14세 미만 영수증 사전동의 — 마지막 서명란 서명자(보호자) 이름. 있으면 보호자 서명란으로 표시·새로 서명(기획 A-4) */
+  guardianSignerName?: string
   /** 페이지 제목 우측 — 전자서명 만들기/수정하기 */
   onTitleAside?: (aside: ReactNode | null) => void
 }) {
@@ -208,10 +215,10 @@ export function SchemaConsentWriteForm({
     }
   }, [lockedBasic, templateId])
   const paymentStatementProfileValues = useMemo(() => {
-    if (submitContext !== 'instructorApply' || templateId !== 'agreement-third-party') {
+    if (templateId !== 'agreement-third-party') {
       return null
     }
-    const draft = loadInstructorApplyFormDraft()
+    const draft = submitContext === 'instructorApply' ? loadInstructorApplyFormDraft() : null
     const memberType = lockedBasic.memberType || draft?.memberType
     return buildPaymentStatementProfileLinkedValues({
       name: lockedBasic.name || draft?.name,
@@ -450,7 +457,11 @@ export function SchemaConsentWriteForm({
 
     if (portalSubmitEnabled) {
       setIsSubmitting(true)
-      void submitPortalConsentDocumentFromWriteState(consentKey, writeState)
+      void submitPortalConsentDocumentFromWriteState(
+        consentKey,
+        writeState,
+        guardianVerificationToken ? { guardianVerificationToken } : undefined,
+      )
         .then(() => {
           if (submitContext === 'instructorApply' && isInstructorApplyConsentKey(consentKey)) {
             markInstructorApplyConsentAgreed(consentKey)
@@ -526,6 +537,14 @@ export function SchemaConsentWriteForm({
 
   const lockedNoticeSubjectMemberName =
     templateId === 'agreement-notice' ? lockedBasic.name.trim() : undefined
+
+  /** 영수증 사전동의 마지막 서명란 — 만 14세 미만이면 보호자가 직접 서명 (기획 A-4) */
+  const receiptGuardianSigner = useMemo(() => {
+    const name = guardianSignerName?.trim()
+    return templateId === 'agreement-receipt-pre-consent' && name
+      ? { signerName: name, notice: RECEIPT_GUARDIAN_SIGNATURE_NOTICE }
+      : null
+  }, [guardianSignerName, templateId])
 
   const showDraftSignature = signatureSlots.length > 0 && !readOnly
 
@@ -603,18 +622,23 @@ export function SchemaConsentWriteForm({
     (paragraph: WritingFormParagraph) => {
       const signatureParagraphSlot = signatureParagraphSlotById.get(paragraph.id)
       if (signatureParagraphSlot != null) {
+        const guardianSlot = signatureParagraphSlot === 'final' ? receiptGuardianSigner : null
         return (
-          <PFFormSignatureBlock
-            className={styles.statementSignatureBlock}
-            signerName={signerName}
-            signature={state.signatures?.[signatureParagraphSlot]}
-            onSignatureChange={value =>
-              setState(prev => ({
-                ...prev,
-                signatures: { ...prev.signatures, [signatureParagraphSlot]: value },
-              }))
-            }
-          />
+          <>
+            {guardianSlot ? <p className={styles.statementNote}>{guardianSlot.notice}</p> : null}
+            <PFFormSignatureBlock
+              className={styles.statementSignatureBlock}
+              signerName={guardianSlot?.signerName ?? signerName}
+              independentSigner={guardianSlot != null}
+              signature={state.signatures?.[signatureParagraphSlot]}
+              onSignatureChange={value =>
+                setState(prev => ({
+                  ...prev,
+                  signatures: { ...prev.signatures, [signatureParagraphSlot]: value },
+                }))
+              }
+            />
+          </>
         )
       }
       if (
@@ -693,7 +717,9 @@ export function SchemaConsentWriteForm({
         return (
           <ConsentSignatureStatement
             statement={body}
-            signerName={signerName}
+            signerName={receiptGuardianSigner?.signerName ?? signerName}
+            independentSigner={receiptGuardianSigner != null}
+            signerNotice={receiptGuardianSigner?.notice}
             signature={state.signatures?.final}
             showSignatureBlock={!signatureSlotsAtSignatureParagraph.has('final')}
             onSignatureChange={finalSig =>
@@ -742,6 +768,7 @@ export function SchemaConsentWriteForm({
     [
       signatureParagraphSlotById,
       signatureSlotsAtSignatureParagraph,
+      receiptGuardianSigner,
       signerName,
       paymentBasicInfo,
       paymentStatementProfileValues,
@@ -874,12 +901,16 @@ export function InstructorApplyConsentWriteForm({
   onComplete,
   readOnly = false,
   submitContext = 'instructorApply',
+  guardianVerificationToken,
+  guardianSignerName,
   onTitleAside,
 }: {
   consentKey: DocumentConsentWriteKey
   onComplete: () => void
   readOnly?: boolean
   submitContext?: ConsentWriteSubmitContext
+  guardianVerificationToken?: string
+  guardianSignerName?: string
   onTitleAside?: (aside: ReactNode | null) => void
 }) {
   return (
@@ -888,6 +919,8 @@ export function InstructorApplyConsentWriteForm({
       onComplete={onComplete}
       readOnly={readOnly}
       submitContext={submitContext}
+      guardianVerificationToken={guardianVerificationToken}
+      guardianSignerName={guardianSignerName}
       onTitleAside={onTitleAside}
     />
   )

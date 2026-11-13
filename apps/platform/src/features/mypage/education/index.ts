@@ -37,6 +37,7 @@ export {
   EDUCATION_DISPLAY_STATUS_TONE,
   EDUCATION_DISPLAY_STATUS_TONE_CLASS,
   canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
   resolveEducationApplicationTab,

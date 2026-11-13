@@ -4,6 +4,6 @@
  * 선택은 했지만 조건이 맞지 않는 경우(1건만 가능, 상태 제한 등)는 해당 사유 문구를 쓴다.
  */
 export const NO_SELECTION_ALERT = {
-  title: '항목 선택 안내',
+  title: '항목 미선택 안내',
   content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
 } as const

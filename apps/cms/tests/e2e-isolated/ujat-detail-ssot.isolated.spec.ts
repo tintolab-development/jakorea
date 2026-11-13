@@ -209,7 +209,7 @@ async function saveEdit(page: Page, log: IsolatedNetworkLog) {
   const beforeTyped =
     log.typedDetailPuts.length + log.typedDetailPatches.length + log.physicalSchedulePuts.length
   await page.getByRole('button', { name: '저장' }).click()
-  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 입력 안내' })
+  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력 안내' })
   if (await requiredDialog.isVisible({ timeout: 3_000 }).catch(() => false)) {
     await requiredDialog.getByRole('button', { name: '확인' }).click()
     await fillVisibleRequiredCommonFields(page)

@@ -87,3 +87,37 @@
   line-height: 140%;
   color: var(--default-BK, #3d3d3d);
 }
+
+/* 템플릿 관리 시안(5767:194428) — 공통 표 머리(180 · 14px Bold) · 칸 여백 12 · 단위 14px · 입력↔단위 6 · 구분선 양옆 16 */
+.ujat-education-class-capacity--template
+  .ujat-education-class-capacity__form
+  .detail-info-form__field {
+  --detail-info-label-w: 180px !important;
+}
+
+.ujat-education-class-capacity--template
+  .ujat-education-class-capacity__form
+  .detail-info-form__field-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ujat-education-class-capacity--template
+  .ujat-education-class-capacity__form
+  .detail-info-form__field-content {
+  padding: 12px;
+}
+
+.ujat-education-class-capacity--template .ujat-education-class-capacity__inputs {
+  gap: 6px;
+}
+
+.ujat-education-class-capacity--template
+  .ujat-education-class-capacity__inputs
+  > .detail-info-form-inputs-separator {
+  margin: 0 10px;
+}
+
+.ujat-education-class-capacity--template .ujat-education-class-capacity__unit {
+  font-size: 14px;
+}

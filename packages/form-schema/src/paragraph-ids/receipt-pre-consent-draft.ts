@@ -142,14 +142,15 @@ const intro: AgreementExplanationTextParagraph = {
   id: RECEIPT_PRE_CONSENT_IDS.intro,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
-  requiredMark: true,
+  // 시안: 서문 카드 `*` 없음
+  requiredMark: false,
   paragraphTitle: '개인정보 수집‧이용 및 제공 동의서',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
     'JA KOREA (이하 “기관”이라 함)는 「개인정보 보호법」제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며, 개인정보 제공자가 동의한 이용목적 외의 용도로는 이용․제공되지 않습니다. 제공된 개인정보는 개인정보 보호책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
-  answerRequired: true,
+  answerRequired: false,
 }
 
 const midConsentLine: AgreementExplanationTextParagraph = {
@@ -196,7 +197,9 @@ const paymentRecord = normalizeVerticalTableParagraph({
   // 시안: `3. 지급조서 *` — 입력 칸 필수(영문 성명·정산 계좌)
   requiredMark: true,
   paragraphTitle: '지급조서',
-  paragraphDescription: '',
+  // 시안 16046:109928 — 단락 설명(Platform `PAYMENT_RECORD_WRITE_DESCRIPTION`과 같은 문구)
+  paragraphDescription:
+    '영문 성명·정산 계좌 외의 기본 정보는 마이페이지에 등록된 정보를 불러옵니다. 수정이 필요하면 마이페이지에서 변경해 주세요.',
   participatesInTitleNumbering: true,
   rows: [{ stageCount: 1, headers: [''], cells: [''], stageKinds: ['text'] }],
   bottomText: '',

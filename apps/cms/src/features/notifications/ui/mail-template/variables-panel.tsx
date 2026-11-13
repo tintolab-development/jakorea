@@ -1,6 +1,6 @@
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { Collapse } from 'antd'
-import { SearchOutlined } from '@ant-design/icons'
 import { CmsInput } from '@/shared/ui'
 import {
   MAIL_TEMPLATE_VARIABLE_GROUPS,
@@ -133,7 +133,7 @@ export const VariablesPanel = memo(function VariablesPanel({
         value={query}
         onChange={event => setQuery(event.target.value)}
         allowClear
-        icon={<SearchOutlined />}
+        icon={<FieldSearchIcon />}
       />
       <div className="mail-template-variables__list">
         <Collapse

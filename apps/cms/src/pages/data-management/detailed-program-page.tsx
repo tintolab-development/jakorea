@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
+import { useCallback, useMemo, useRef, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -28,6 +28,7 @@ import {
 import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { buildBulkDeleteGuideTitle } from '@/shared/ui/delete-guide-messages'
+import { buildNamedDeleteGuideHeadline } from '@/features/data-management/lib/named-delete-guide-headline'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { detailedProgramManagementFilterFields } from '@/features/detailed-program/model/detailed-program-management-filter-fields'
 import { detailedProgramManagementTablePageConfig } from '@/features/detailed-program/model/detailed-program-management-table.config'
@@ -84,7 +85,15 @@ function detailedProgramDeleteGuideTitle(selectedCount: number): string {
     : DETAILED_PROGRAM_DELETE_GUIDE_TITLE
 }
 
-function detailedProgramDeleteGuideLines(selectedCount: number): string[] {
+/** 단건 `[이름] 세부 프로그램을…` / 일괄 `[첫 이름] 외 N개의 세부 프로그램을…` (이름 없으면 기존 문구) */
+function detailedProgramDeleteGuideLines(names: readonly string[]): string[] {
+  const selectedCount = names.length
+  const named = buildNamedDeleteGuideHeadline({
+    entityLabel: '세부 프로그램',
+    names,
+    selectedCount,
+  })
+  if (named) return [named, DETAILED_PROGRAM_DELETE_GUIDE_LINES_SINGLE[1]]
   if (selectedCount <= 1) return [...DETAILED_PROGRAM_DELETE_GUIDE_LINES_SINGLE]
   return [
     `**선택한 ${selectedCount}개의 세부 프로그램**을 삭제하시겠습니까?`,
@@ -117,20 +126,6 @@ export default function DetailedProgramPage() {
   const canWrite = canPerformWriteAction(useAuthStore(s => s.user))
   const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
-
-  const dpUseParam = searchParams.get('dp_use')
-  useEffect(() => {
-    if (dpUseParam === 'active' || dpUseParam === 'inactive') return
-    setSearchParams(
-      prev => {
-        if (prev.get('dp_use') === 'active' || prev.get('dp_use') === 'inactive') return prev
-        const next = new URLSearchParams(prev)
-        next.set('dp_use', 'active')
-        return next
-      },
-      { replace: true }
-    )
-  }, [dpUseParam, setSearchParams])
 
   const listQuery = useDetailedProgramListQuery(searchParams, true)
   const isInitialListLoading = isDataManagementListLoading({
@@ -330,7 +325,10 @@ export default function DetailedProgramPage() {
     }
 
     const selectedIds = selectedRowKeys.map(String)
-    const selectedRows = rows.filter(r => selectedIds.includes(r.id))
+    const rowById = new Map(rows.map(row => [row.id, row]))
+    const selectedRows = selectedIds
+      .map(id => rowById.get(id))
+      .filter((row): row is DetailedProgramManagementRow => row != null)
     const deletableRows = selectedRows.filter(row => !row.inUse)
 
     if (deletableRows.length === 0) {
@@ -350,7 +348,7 @@ export default function DetailedProgramPage() {
     pendingDeleteAppliesImmediatelyRef.current = !isEditMode
     viewDeletePendingIdsRef.current = deletableRows.map(r => r.id)
     setViewDeleteModalTitle(detailedProgramDeleteGuideTitle(deletableRows.length))
-    setViewDeleteModalLines(detailedProgramDeleteGuideLines(deletableRows.length))
+    setViewDeleteModalLines(detailedProgramDeleteGuideLines(deletableRows.map(r => r.name)))
     setViewDeleteModalOpen(true)
   }, [canWrite, isEditMode, rows, selectedRowKeys, showAlert])
 
@@ -455,7 +453,7 @@ export default function DetailedProgramPage() {
         },
       },
       {
-        title: '세부 프로그램명',
+        title: '세부 프로그램',
         dataIndex: 'name',
         key: 'name',
         className: 'detailed-program-page__name-col',

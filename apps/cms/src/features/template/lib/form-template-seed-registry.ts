@@ -46,7 +46,10 @@ import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/u
 import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
 import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/model/economy-recruit-form-institution-draft'
 import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
-import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
+import {
+  createPaymentStatementIssuanceDraft,
+  migratePaymentStatementIssuanceParagraphs,
+} from '@/features/template/model/payment-statement-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { createReceiptPreConsentDraft } from '@/features/template/model/receipt-pre-consent-draft'
 import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
@@ -55,6 +58,8 @@ import {
   createAgreementPortraitDraft,
   createDefaultSurveyDraft,
   createEducatorFacilitatorPledgeDraft,
+  createSurveyDefaultTemplateDraft,
+  createSurveyStudentTemplateDraft,
   createLectureReportIssuanceDraft,
   createUjatEducationJournalIssuanceDraft,
   createUjatEducationPlanIssuanceDraft,
@@ -89,8 +94,8 @@ const FORM_TEMPLATE_SEED_FACTORIES: Record<string, FormTemplateSeedFactory> = {
     createGeminiVisitingTrainingApplicationFormInstitutionDraft(),
   'application-ujat-school': () => createUjatProgramApplicationFormInstitutionDraft(),
   'application-ujat-volunteer': () => createUjatProgramApplicationFormVolunteerDraft(),
-  'survey-default': () => createDefaultSurveyDraft(),
-  'survey-student': () => createDefaultSurveyDraft(),
+  'survey-default': () => createSurveyDefaultTemplateDraft(),
+  'survey-student': () => createSurveyStudentTemplateDraft(),
   'survey-teacher': () => createDefaultSurveyDraft(),
   'survey-admin': () => createDefaultSurveyDraft(),
   'agreement-third-party': () => createPaymentStatementPreConsentDraft(),
@@ -154,6 +159,10 @@ export function normalizeWritingFormDraftFromApi(
     }
     if (catalogCode === 'application-trained-teachers') {
       return migrateProgramApplicationFormTrainedTeachersParagraphs(draft)
+    }
+    if (catalogCode === 'document-payment-order-issue') {
+      // 시안 5767:46455 단락 구성(사용자 결정 261113) — 예전 산출 정보·산출 행 표 저장본 보정
+      return migratePaymentStatementIssuanceParagraphs(draft)
     }
     if (
       catalogCode.startsWith('recruitment-') ||

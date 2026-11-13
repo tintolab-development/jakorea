@@ -4,6 +4,7 @@
  * SSOT: GET /api/portal/me/consents (MemberPortalConsentSummary). 서버 값을 그대로 판정하고 mock 은 쓰지 않는다.
  * - 모든 프로그램 신청: PORTRAIT_RIGHTS
  * - UJAT 신청: FACILITATOR_PLEDGE · CRIMINAL_HISTORY_CHECK_CONSENT · PORTRAIT_RIGHTS
+ *   (교육진행자 서약서는 강사·봉사 신청만 — 교사 기관(ORGANIZATION) 신청은 서약서를 요구하지 않는다)
  *   (ADMINISTRATIVE_INFO_CONSENT 는 2026-10-29 필수 해제 — 마이페이지 작성·조회는 유지)
  * - 서버가 NOT_APPLICABLE(applicable=false) 로 내린 항목(예: 만 14세 미만 성범죄 경력조회)은 건너뛴다.
  * - 이미 동의 완료(만료·재동의·정책 갱신 아님)면 통과.
@@ -48,12 +49,22 @@ const BLOCKING_STATUSES = new Set([
   'REJECTED',
 ])
 
+/** 교육진행자 서약서를 요구하는 신청 유형 — 강사·봉사 신청만 */
+const FACILITATOR_PLEDGE_APPLICATION_TYPES = new Set(['INSTRUCTOR', 'VOLUNTEER'])
+
+/**
+ * @param applicationType 선택한 모집의 신청 유형. 모르면(빈 값) UJAT 3종을 그대로 요구한다.
+ */
 export function resolveRequiredApplyConsentTypes(input: {
   programType?: string | null
+  applicationType?: string | null
 }): RequiredApplyConsentType[] {
-  return isUjatProgramType(input.programType ?? undefined)
-    ? [...UJAT_REQUIRED_APPLY_CONSENT_TYPES]
-    : [PORTRAIT_RIGHTS_CONSENT_TYPE]
+  if (!isUjatProgramType(input.programType ?? undefined)) return [PORTRAIT_RIGHTS_CONSENT_TYPE]
+  const applicationType = normalizeType(input.applicationType ?? undefined)
+  if (applicationType && !FACILITATOR_PLEDGE_APPLICATION_TYPES.has(applicationType)) {
+    return UJAT_REQUIRED_APPLY_CONSENT_TYPES.filter(type => type !== 'FACILITATOR_PLEDGE')
+  }
+  return [...UJAT_REQUIRED_APPLY_CONSENT_TYPES]
 }
 
 function normalizeType(value: string | undefined): string {

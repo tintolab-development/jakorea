@@ -83,12 +83,6 @@
   line-height: 1.2;
 }
 
-/* 대시보드 설정 아이콘: h44 아이콘 박스(24)는 유지하고 글리프만 시안 크기(16)로 축소 — 공통 규칙이 svg를 24로 늘림 */
-.dashboard-toolbar-settings-btn.cms-button.ant-btn .cms-button__icon svg {
-  width: 16px;
-  height: 16px;
-}
-
 .dashboard-widgets-left,
 .dashboard-widgets-right {
   width: 100%;

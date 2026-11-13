@@ -31,11 +31,6 @@
   min-width: 0;
 }
 
-.labeled-search-input__icon {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-14);
-}
-
 .labeled-search-input .cms-input .ant-input-affix-wrapper .ant-input-prefix {
   margin-inline-end: 8px;
 }

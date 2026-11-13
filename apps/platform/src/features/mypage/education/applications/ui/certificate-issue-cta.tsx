@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import type { PortalCertificateIssueReason } from '../api/personal-certificate-types'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
@@ -16,6 +17,8 @@ import {
 } from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import {
+  PERSONAL_CERTIFICATE_ISSUE_NOTICE,
+  PERSONAL_CERTIFICATE_ISSUE_REASONS,
   portalCertificateCtaButtonLabel,
   portalCertificateDocumentLabel,
 } from '../lib/personal-certificate-eligibility'
@@ -76,6 +79,7 @@ export function CertificateIssueCta({
   const { displayName } = useMypageMember()
   const pendingRef = useRef(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [issueReason, setIssueReason] = useState<PortalCertificateIssueReason>('PERSONAL_ARCHIVE')
   const [completeIssuedAt, setCompleteIssuedAt] = useState<string | null>(null)
   const [completeIssueId, setCompleteIssueId] = useState<number | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
@@ -129,7 +133,7 @@ export function CertificateIssueCta({
         programId: parsedProgramId,
         participantId,
         certificateType: 'COMPLETION',
-        issueReason: 'PERSONAL_ARCHIVE',
+        issueReason,
       })
       setConfirmOpen(false)
       if (result.certificateIssueId == null) {
@@ -192,9 +196,22 @@ export function CertificateIssueCta({
         title={`${documentLabel} 발급하기`}
         description={
           <>
+            {PERSONAL_CERTIFICATE_ISSUE_NOTICE}
+            <span className={styles.reasonList}>
+              {PERSONAL_CERTIFICATE_ISSUE_REASONS.map(reason => (
+                <label key={reason.value} className={styles.reasonItem}>
+                  <input
+                    type="radio"
+                    name="certificate-issue-reason"
+                    checked={issueReason === reason.value}
+                    onChange={() => setIssueReason(reason.value)}
+                  />
+                  {reason.label}
+                </label>
+              ))}
+            </span>
             {programTitle ? `${programTitle} ${documentLabel}을 발급합니다. ` : null}
-            발급 후에는 취소할 수 없습니다. 파일은 관리자 양식의 제목·본문·이사장명·하단
-            정보를 따릅니다.
+            발급 후에는 취소할 수 없습니다.
           </>
         }
         confirmLabel="발급하기"

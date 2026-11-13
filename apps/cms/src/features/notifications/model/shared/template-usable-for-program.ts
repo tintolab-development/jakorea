@@ -44,7 +44,7 @@ function usedKeysFromInput(input: {
  * 메일·문자·알림톡 템플릿 피커 usable (카탈로그 소속·enabled).
  * - catalog 미로드: false (로딩을 정상 활성으로 표시하지 않음)
  * - 미등록 키: 프로그램 유무와 관계없이 비활성
- * - 프로그램 미선택: requiresProgram 키는 비활성 (BE 발송 가드와 동일)
+ * - 프로그램 미선택: 등록된 변수는 막지 않는다 — 수신자별 직접 입력 (QA 2026-11-13)
  * - 프로그램 지정: #{키} ⊆ catalog 이고 모두 enabled=true
  * - `recipientTypeScope`(템플릿 선택 단계): 수신자 유형이 안 정해져서만 비활성인 키는 막지 않는다
  * 알림톡 EVENT_ONLY/SYSTEM 차단은 채널 어댑터에서 추가한다.
@@ -78,13 +78,19 @@ export function listNotificationSendTemplateDisabledKeysForProgram(input: {
   if (usedKeys.size === 0) return []
 
   const programId = input.programNumericId
+  const hasProgram = programId != null && Number.isFinite(programId)
   const byKey = catalogByKey(input.catalog)
   const disabled: string[] = []
   for (const key of usedKeys) {
     const item = byKey.get(key)
-    if (!item || isNotificationCatalogVariableDisabled(item, programId)) {
+    if (!item) {
+      disabled.push(key)
+      continue
+    }
+    // 대상 프로그램을 고른 경우에만 그 프로그램에서 쓸 수 없는 변수로 막는다 (QA 2026-11-13)
+    if (!hasProgram) continue
+    if (isNotificationCatalogVariableDisabled(item, programId)) {
       if (
-        item &&
         isNotificationCatalogVariablePendingRecipientType(item, programId, input.recipientTypeScope)
       ) {
         continue

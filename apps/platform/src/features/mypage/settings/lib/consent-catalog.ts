@@ -85,7 +85,7 @@ const TEACHER_INFO_ITEM: SettingsConsentItem = {
 
 const GUARDIAN_LEGAL_ITEM: SettingsConsentItem = {
   id: 'guardianLegal',
-  title: '만 14세 미만 아동 회원가입 및 개인정보 수집·이용에 대한 법정대리인 동의',
+  title: '만 14세 미만 아동 법정대리인 동의',
   required: true,
   kind: 'terms',
   agreed: true,
@@ -112,6 +112,7 @@ const MARKETING_ITEM: SettingsConsentItem = {
   agreed: true,
   agreedAt: MOCK_AGREED_AT,
   termsViewType: 'marketing',
+  hint: '광고·홍보성 정보를 수신하시려면 동의해 주세요.',
 }
 
 const PORTRAIT_ITEM: SettingsConsentItem = {
@@ -183,7 +184,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
   },
   {
     id: 'administrativeJoint',
-    title: '행정정보 공동이용 사전동의서',
+    title: '행정정보 공동이용 동의서',
     required: false,
     kind: 'document',
     agreed: true,

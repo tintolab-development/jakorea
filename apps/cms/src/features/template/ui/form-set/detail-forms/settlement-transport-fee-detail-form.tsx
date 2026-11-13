@@ -7,9 +7,13 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { formatNumberDisplay } from '@/shared/utils'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './settlement-transport-fee-detail-form.css'
+import './issuance-detail-form-template.css'
 
 const INPUT_W = 244
+/** 템플릿 관리 > 발급 양식 편집기 — 시안 5767:44580 표 입력 폭 140 */
+const TEMPLATE_INPUT_W = 140
 
 export type SettlementTransportFeeAutofillValues = {
   distanceKm: string
@@ -71,10 +75,19 @@ export function SettlementTransportFeeDetailForm({
   className,
   displayMode = 'editor',
 }: SettlementTransportFeeDetailFormProps) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
   const mode = isDocumentMode ? 'view' : 'edit'
-  const rootClass = ['settlement-transport-fee-detail-form', className].filter(Boolean).join(' ')
+  const issuanceTemplate = isTemplateManagementScreen && !isDocumentMode
+  const inputW = issuanceTemplate ? TEMPLATE_INPUT_W : INPUT_W
+  const rootClass = [
+    'settlement-transport-fee-detail-form',
+    issuanceTemplate ? 'issuance-detail-form--template' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div className={rootClass}>
@@ -91,6 +104,7 @@ export function SettlementTransportFeeDetailForm({
             edit={
               <SuffixInput
                 value={v.distanceKm}
+                width={inputW}
                 placeholder="거리"
                 aria-label="자택과 출강지 간 거리(km)"
                 suffix="km (편도)"
@@ -103,12 +117,28 @@ export function SettlementTransportFeeDetailForm({
           <DetailInfoForm.Field
             label="유류비"
             view={formatAmountView(v.fuelCost, '원')}
-            edit={<SuffixInput value={v.fuelCost} aria-label="유류비" suffix="원" />}
+            edit={
+              <SuffixInput
+                value={v.fuelCost}
+                width={inputW}
+                placeholder="유류비"
+                aria-label="유류비"
+                suffix="원"
+              />
+            }
           />
           <DetailInfoForm.Field
             label="톨비"
             view={formatAmountView(v.tollFee, '원')}
-            edit={<SuffixInput value={v.tollFee} aria-label="톨비" suffix="원" />}
+            edit={
+              <SuffixInput
+                value={v.tollFee}
+                width={inputW}
+                placeholder="톨비"
+                aria-label="톨비"
+                suffix="원"
+              />
+            }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -125,7 +155,13 @@ export function SettlementTransportFeeDetailForm({
             fullRow
             view={formatAmountView(v.totalTransportFee, '원')}
             edit={
-              <SuffixInput value={v.totalTransportFee} aria-label="총 산정 교통비" suffix="원" />
+              <SuffixInput
+                value={v.totalTransportFee}
+                width={inputW}
+                placeholder="총 산정 교통비"
+                aria-label="총 산정 교통비"
+                suffix="원"
+              />
             }
           />
         </DetailInfoForm.Row>

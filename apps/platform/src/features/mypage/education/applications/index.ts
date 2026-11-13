@@ -80,6 +80,7 @@ export {
   EDUCATION_DISPLAY_STATUS_TONE_CLASS,
   TEACHER_EDUCATION_DISPLAY_STATUS_LABEL,
   canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
   resolveEducationApplicationTab,

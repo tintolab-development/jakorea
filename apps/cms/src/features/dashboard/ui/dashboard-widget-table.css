@@ -68,7 +68,10 @@
   top: 0;
   z-index: 1;
   height: 52px !important;
-  background: #f5f6f7;
+  /* 시안 Background/header: #E7EBEF 60% + 흰 바탕 */
+  background:
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff;
   color: var(--default-BK, #3d3d3d);
   text-align: center !important;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
@@ -116,8 +119,9 @@
   border-right: 1px solid var(--table-line, #e0e0e0);
 }
 
-.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr,
-.dashboard-widget-table__data .ant-table-tbody > tr {
+/* antd 열 너비 측정 행(높이 0)은 제외 — 포함하면 맨 위에 52px 빈 줄이 생긴다 */
+.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr:not(.ant-table-measure-row),
+.dashboard-widget-table__data .ant-table-tbody > tr:not(.ant-table-measure-row) {
   height: 52px !important;
   min-height: 52px !important;
   max-height: 52px !important;
@@ -137,10 +141,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #017eaf;
+  color: var(--Brand-500, #00a0af);
   text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -161,14 +165,14 @@
 }
 
 .dashboard-widget-table__pending-dot {
+  /* 시안 Status / Text / Alarm: 글자 오른쪽 위 5px, Status/red/main */
   position: absolute;
-  top: 0;
-  right: -5px;
-  transform: translate(calc(50% + 3.5px), calc(-50% + 7px));
+  top: 2px;
+  right: -8px;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #e4223f;
+  background: #c32f4a;
   flex-shrink: 0;
 }
 
@@ -180,7 +184,7 @@
   color: #3d3d3d;
   text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;

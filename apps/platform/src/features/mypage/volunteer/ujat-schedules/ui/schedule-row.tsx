@@ -10,6 +10,7 @@ import {
   formatUjatScheduleCardDate,
   isAssignedUjatSchedule,
   resolveUjatScheduleDayStatus,
+  type UjatScheduleDayStatusTone,
 } from '../lib/history'
 import type { UjatEducationDayDocuments, UjatEducationDocumentTemplateSetup } from '../lib/documents'
 import type { UjatDocumentFillMode } from './document-slot'
@@ -33,6 +34,15 @@ type UjatVolunteerScheduleRowProps = {
     documents: UjatEducationDayDocuments,
   ) => void
   onViewDocumentFeedback?: (kind: 'PLAN' | 'JOURNAL', documents: UjatEducationDayDocuments) => void
+}
+
+const DAY_STATUS_TONE_CLASS: Record<UjatScheduleDayStatusTone, string | undefined> = {
+  present: styles.statusPresent,
+  late: styles.statusLate,
+  absent: styles.statusAbsent,
+  excused: styles.statusExcused,
+  giveUp: styles.statusGiveUp,
+  scheduled: styles.statusScheduled,
 }
 
 export function UjatVolunteerScheduleRow({
@@ -69,12 +79,8 @@ export function UjatVolunteerScheduleRow({
   const schoolLabel = school ?? (unassigned ? '미배정' : null)
   const classText = classLabel ?? (unassigned ? '미배정' : null)
   const showPlace = Boolean(schoolLabel || classText)
-  const attendanceToneClass =
-    dayStatus.tone === 'present'
-      ? styles.statusPresent
-      : dayStatus.tone === 'alert'
-        ? styles.statusAlert
-        : styles.statusScheduled
+  const attendanceToneClass = DAY_STATUS_TONE_CLASS[dayStatus.tone]
+  const checkInEnabled = canCheckIn && onCheckIn != null
 
   return (
     <EducationSessionCard className={styles.card}>
@@ -130,20 +136,24 @@ export function UjatVolunteerScheduleRow({
             출석하기
           </PFButton>
           <div className={styles.actionButtons}>
-            {canSubmitAbsence ? (
-              <PFButton
-                type="button"
-                variant="secondary"
-                size="large"
-                className={styles.rowButton}
-                onClick={() => onAbsenceReasonSubmit?.(item)}
-              >
-                결석 사유 제출하기
-              </PFButton>
-            ) : null}
+            {/* Figma 11005:341745(비활성)·341925(활성) — 항상 노출, 제출 불가면 비활성 */}
             <PFButton
               type="button"
               variant="secondary"
+              size="large"
+              className={styles.rowButton}
+              disabled={!canSubmitAbsence}
+              onClick={() => {
+                if (!canSubmitAbsence) return
+                onAbsenceReasonSubmit?.(item)
+              }}
+            >
+              결석 사유 제출하기
+            </PFButton>
+            {/* Figma 11005:341746 — 흰 배경 · 회색 테두리 · 검정 글자 */}
+            <PFButton
+              type="button"
+              variant="tertiary"
               size="large"
               className={styles.rowButton}
               disabled={!canViewAttendance || onViewAttendance == null}
@@ -152,7 +162,7 @@ export function UjatVolunteerScheduleRow({
                 onViewAttendance(item)
               }}
             >
-              출석 현황 보기
+              출석현황 보기
             </PFButton>
           </div>
           <span className={styles.divider} aria-hidden="true" />
@@ -169,8 +179,10 @@ export function UjatVolunteerScheduleRow({
             <PFText
               as="span"
               typo="bd-md-sb"
-              color={canCheckIn ? 'black' : 'neutral-warm-500'}
-              className={styles.checkInLabel}
+              color="primary-700"
+              className={[styles.checkInLabel, checkInEnabled ? undefined : styles.checkInLabelDisabled]
+                .filter(Boolean)
+                .join(' ')}
             >
               출석하기
             </PFText>

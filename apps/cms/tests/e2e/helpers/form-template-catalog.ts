@@ -5,7 +5,7 @@ export const WRITING_TEMPLATE_NAMES = [
   '일반 프로그램 등록 폼',
   '1사1교 프로그램 등록 폼',
   'UJAT 프로그램 등록 폼',
-  '교육받은 교사 프로그램 등록 폼',
+  '교육 받은 교사 프로그램 등록 폼',
   // 모집 9
   '공통_강사 모집 폼',
   '공통_봉사자 모집 폼',
@@ -15,7 +15,7 @@ export const WRITING_TEMPLATE_NAMES = [
   'Gemini_찾아가는 연수 모집 폼',
   'UJAT_참여 기관 모집 폼',
   'UJAT_봉사자 모집 폼',
-  '교육받은 교사_참여 기관 모집 폼',
+  '교육 받은 교사_참여 기관 모집 폼',
   // 신청 11
   '공통_강사 신청 폼',
   '공통_봉사자 신청 폼',
@@ -26,19 +26,19 @@ export const WRITING_TEMPLATE_NAMES = [
   'Gemini_찾아가는 연수 강사 신청 폼',
   'UJAT_참여 기관 신청 폼',
   'UJAT_봉사자 신청 폼',
-  '교육받은 교사_참여 기관 신청 폼',
+  '교육 받은 교사_참여 기관 신청 폼',
   // 설문 4
   '설문조사',
   '만족도조사 (학생용)',
   '만족도조사 (교사용)',
-  '강의평가 (관리자용)',
+  '강의 평가 (관리자용)',
   // 동의 6
-  '초상권 수집·이용 동의',
+  '초상권 수집·이용 동의서',
   '지급조서 사전 동의서',
-  '영수증 발급 사전 동의서',
-  '성범죄 경력조회 동의서',
-  '행정정보 공동이용 사전 동의서',
-  'JA Korea 교육진행자 서약서(안)',
+  '영수증 사전 동의서',
+  '성범죄경력 조회 동의서',
+  '행정정보 공동이용 사전동의서',
+  'JA Korea 교육진행자 서약서',
 ] as const
 
 export const ISSUANCE_TEMPLATE_NAMES = [
@@ -53,7 +53,7 @@ export const ISSUANCE_TEMPLATE_NAMES = [
   '강사 활동인증서',
 ] as const
 
-export const CRIME_CONSENT_TEMPLATE_NAME = '성범죄 경력조회 동의서' as const
+export const CRIME_CONSENT_TEMPLATE_NAME = '성범죄경력 조회 동의서' as const
 
 /** E2E open+save 불가 — 앱 크래시. [`form-template-fe-gap-report.md`](../docs/qa/form-template-fe-gap-report.md) Fail #1 */
 export const E2E_OPEN_SAVE_SKIP_TEMPLATE_NAMES = new Set<string>(['UJAT_봉사자 모집 폼'])

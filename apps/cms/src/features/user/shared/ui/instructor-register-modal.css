@@ -3,6 +3,23 @@
   overflow-y: auto;
 }
 
+/** 시안: 섹션 제목 18/Bold · 텍스트 좌측 8 (팝업 패딩 30 + 8 = 38) */
+.instructor-register-modal .detail-info-form > .detail-info-form__header .detail-info-form__title {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 0 8px;
+}
+
+/** 시안: 학력사항 안내 14/Medium 50% */
+.instructor-register-modal
+  .instructor-register-education
+  > .detail-info-form__header
+  .detail-info-form__description {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.5;
+}
+
 .instructor-register-modal__stack {
   display: flex;
   flex-direction: column;

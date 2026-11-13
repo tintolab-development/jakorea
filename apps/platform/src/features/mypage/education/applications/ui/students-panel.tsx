@@ -27,6 +27,7 @@ import {
   isPortalStudentDocumentsSupported,
   isPortalStudentDocumentsUnsupported,
   resolvePortraitUploadBlockedMessage,
+  resolveRosterUploadBlockedMessage,
   STUDENT_DOCUMENTS_UNSUPPORTED_MESSAGE,
 } from '../lib/student-documents-policy'
 import { validatePortraitConsentUploadFile } from '../lib/validate-student-document-file'
@@ -143,13 +144,18 @@ export function EducationStudentsPanel({
     () => resolvePortraitUploadBlockedMessage(policy),
     [policy]
   )
+  const rosterUploadBlockedMessage = useMemo(
+    () => resolveRosterUploadBlockedMessage(policy),
+    [policy]
+  )
 
   const hasPortraitSubmission = useMemo(
     () => hasOrganizationPortraitConsentSubmission(portraitQuery.data),
     [portraitQuery.data]
   )
 
-  const certificateButtonEnabled = rosterCount > 0
+  const certificateButtonEnabled =
+    rosterCount > 0 && rows.some(row => row.satisfactionSurveyCompleted === true)
 
   const isPolicyLoading = remoteEnabled && policyQuery.isLoading
   const isDocumentsLoading =
@@ -274,8 +280,13 @@ export function EducationStudentsPanel({
             .mutateAsync()
             .catch(error => handleAsyncError(error, '학생 명단 양식을 받지 못했습니다.'))
         }}
+        rosterUploadBlockedMessage={rosterUploadBlockedMessage}
         onImportFile={file => {
           if (!ensureDocumentsApiReady()) return
+          if (rosterUploadBlockedMessage) {
+            setErrorMessage(rosterUploadBlockedMessage)
+            return
+          }
           void importRoster
             .mutateAsync(file)
             .catch(error => handleAsyncError(error, '학생 명단을 업로드하지 못했습니다.'))

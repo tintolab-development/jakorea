@@ -7,13 +7,14 @@ import {
   resolveAdminProvisionedOnboardingPath,
   validateAdminRegisteredChangePassword,
 } from '@/features/auth/admin-registered'
+import { ADMIN_REGISTERED_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
 import { getLoginApiErrorMessage, usePortalPasswordChangeMutation } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
-const PASSWORD_HELP_TEXT = '영문, 숫자, 특수문자를 조합해 12자 이상 입력해 주세요.'
+const PASSWORD_HELP_TEXT = ADMIN_REGISTERED_PASSWORD_HELP_TEXT
 
 export function AdminRegisteredChangePasswordPage() {
   const navigate = useNavigate()

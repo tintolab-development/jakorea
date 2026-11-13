@@ -49,7 +49,7 @@ const verticalTableDef: ParagraphEditorDefinition = {
 const titleDef: ParagraphEditorDefinition = {
   detail: 'title',
   kind: 'description',
-  label: '제목형',
+  label: '설문 제목형',
   create: id => createParagraphByDetail('title', id),
   match: p => p.kind === 'description' && p.variant === 'survey_title_with_period',
 }

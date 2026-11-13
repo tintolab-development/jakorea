@@ -1,4 +1,5 @@
 import { Controller } from 'react-hook-form'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -51,6 +52,12 @@ import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segm
 import {
   UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS,
   UJAT_RECRUIT_PROGRESS_HINT,
+  UJAT_TEMPLATE_CONTACT_INPUTS_SPEC_CLASS,
+  UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER,
+  UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER,
+  UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER,
+  UJAT_TEMPLATE_NOTES_PLACEHOLDER,
+  UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER,
   UjatRecruitFormDateMethodRow,
   UjatRecruitFormInterviewPeriodRow,
   UjatRecruitFormPeriodDatePicker,
@@ -126,6 +133,8 @@ export function UjatRecruitVolunteerInfoProgramView({
   /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
   isTemplateAuthoring?: boolean
 }) {
+  /** 템플릿 관리 화면 — 시안 치수 수식 클래스(문의처·발표 방법·면접 유형·활동 기수) */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const recruitKey = (suffix: string) => `recruit.volunteer.${volunteerHalf}.${suffix}`
   const period = getUjatVolunteerRecruitPeriod(program, volunteerHalf)
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
@@ -283,7 +292,11 @@ export function UjatRecruitVolunteerInfoProgramView({
                       value={field.value ?? (isTemplateAuthoring ? '' : '')}
                       inputSize="small"
                       width="100%"
-                      placeholder="공고용 프로그램명"
+                      placeholder={
+                        isTemplateAuthoring
+                          ? UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER
+                          : '공고용 프로그램명'
+                      }
                     />
                   )}
                 />
@@ -301,7 +314,14 @@ export function UjatRecruitVolunteerInfoProgramView({
                   control={form.control}
                   render={({ field }) => (
                     <div
-                      className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-activity-term-field`}
+                      className={[
+                        UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS,
+                        'ujat-recruit-activity-term-field',
+                        isTemplateManagementScreen &&
+                          'ujat-recruit-activity-term-field--template-spec',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     >
                       <CmsNumericInput
                         {...field}
@@ -416,7 +436,11 @@ export function UjatRecruitVolunteerInfoProgramView({
                     form={form}
                     startName={recruitStartName}
                     endName={recruitEndName}
-                    placeholder="봉사자 모집 기간을 선택해 주세요"
+                    placeholder={
+                      isTemplateAuthoring
+                        ? UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER
+                        : '봉사자 모집 기간을 선택해 주세요'
+                    }
                     clearToUndefined
                     dateOnly
                   />
@@ -437,8 +461,12 @@ export function UjatRecruitVolunteerInfoProgramView({
                   form={form}
                   dateName="documentPassAnnouncementDate"
                   methodName="documentPassAnnouncementMethod"
-                  datePlaceholder="합격자 발표일"
-                  methodPlaceholder="공지 방법"
+                  datePlaceholder={
+                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
+                  }
+                  methodPlaceholder={
+                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER : '공지 방법'
+                  }
                 />
               ) : undefined
             }
@@ -474,8 +502,12 @@ export function UjatRecruitVolunteerInfoProgramView({
                   form={form}
                   dateName="finalPassAnnouncementDate"
                   methodName="finalPassAnnouncementMethod"
-                  datePlaceholder="합격자 발표일"
-                  methodPlaceholder="공지 방법"
+                  datePlaceholder={
+                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
+                  }
+                  methodPlaceholder={
+                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER : '공지 방법'
+                  }
                 />
               ) : undefined
             }
@@ -501,7 +533,14 @@ export function UjatRecruitVolunteerInfoProgramView({
             }
             edit={
               isEdit && form ? (
-                <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
+                <div
+                  className={[
+                    'program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even',
+                    isTemplateManagementScreen && UJAT_TEMPLATE_CONTACT_INPUTS_SPEC_CLASS,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
                   <div className="program-detail-info-tab__contact-group">
                     <span className="program-detail-info-tab__contact-label">문의처</span>
                     <Controller
@@ -570,7 +609,16 @@ export function UjatRecruitVolunteerInfoProgramView({
             validationKey={recruitKey('notes')}
             fullRow
             view={notes}
-            edit={isEdit && form ? <UjatRecruitVolunteerNotesField form={form} /> : undefined}
+            edit={
+              isEdit && form ? (
+                <UjatRecruitVolunteerNotesField
+                  form={form}
+                  placeholder={
+                    isTemplateAuthoring ? UJAT_TEMPLATE_NOTES_PLACEHOLDER : undefined
+                  }
+                />
+              ) : undefined
+            }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

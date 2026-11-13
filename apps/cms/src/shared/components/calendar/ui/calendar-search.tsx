@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { SearchOutlined } from '@ant-design/icons'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { getScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 
 interface CalendarSearchOption {
   id: string
@@ -34,7 +34,7 @@ export function CalendarSearch({
         <CmsInput
           width={'100%'}
           placeholder="프로그램명을 입력해 주세요"
-          icon={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
+          icon={<FieldSearchIcon />}
           value={keyword}
           onChange={e => onKeywordChange(e.target.value)}
           allowClear

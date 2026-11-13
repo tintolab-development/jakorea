@@ -14,6 +14,7 @@ import {
 } from '../lib/instructor-assignment-support'
 import {
   formatInstructorEducationScheduleLine,
+  formatInstructorEducationScheduleLineParts,
   type InstructorEducationScheduleDisplayInput,
 } from '../lib/instructor-education-schedule-display'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
@@ -31,11 +32,20 @@ type InstructorAssignmentPanelProps = {
   individual?: boolean
   /** 일정형 + 복수 회차 — 회차/차시 대신 일정명 표시 */
   useScheduleName?: boolean
+  /**
+   * 제미나이 — Figma 11001-286882 배정된 기관 목록.
+   * No. / 기관명 / 기관 소재지 / 자택과의 거리 / 담당 교육 진행 일정(일시 | 차시). 역할·담당학년 열 없음.
+   */
+  variant?: 'default' | 'gemini'
 }
 
 type AssignmentTableLine = {
   id: string
   schedule: string
+  /** 일정 일시 (`schedule`을 일시·단위로 나눈 앞부분) */
+  scheduleDateTime: string
+  /** 교육 단위(차시 등). 없으면 빈 문자열 */
+  scheduleUnit: string
 }
 
 /**
@@ -86,10 +96,15 @@ function buildRows(
         individual ? first?.scheduleLocation : first?.institutionAddress,
       ),
       distance: formatAssignmentDistanceKm(first?.distanceKm),
-      lines: groupItems.map(item => ({
-        id: String(item.assignmentId),
-        schedule: formatScheduleLine(item, useScheduleName),
-      })),
+      lines: groupItems.map(item => {
+        const parts = formatInstructorEducationScheduleLineParts(item, useScheduleName)
+        return {
+          id: String(item.assignmentId),
+          schedule: formatScheduleLine(item, useScheduleName),
+          scheduleDateTime: parts.dateTime,
+          scheduleUnit: parts.unit,
+        }
+      }),
     }
   })
 }
@@ -186,13 +201,72 @@ function AssignedInstitutionTable({ rows }: { rows: readonly AssignmentTableRow[
   )
 }
 
+/** 제미나이 일정 한 줄 — Figma: `일시 │ N차시` (구분선 14px, 간격 12px) */
+function renderGeminiScheduleLines(row: AssignmentTableRow) {
+  return (
+    <div className={styles.scheduleLines}>
+      {row.lines.map(line => (
+        <span key={`${row.id}-${line.id}`} className={styles.scheduleLine}>
+          <span>{line.scheduleDateTime}</span>
+          {line.scheduleUnit ? (
+            <>
+              <span className={styles.scheduleDivider} aria-hidden="true" />
+              <span>{line.scheduleUnit}</span>
+            </>
+          ) : null}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/** 제미나이 — Figma 11001-286882. 역할·담당학년 열 없이 5열. */
+function GeminiAssignedInstitutionTable({ rows }: { rows: readonly AssignmentTableRow[] }) {
+  return (
+    <div className={styles.tableWrap}>
+      <table
+        className={`${styles.table} ${styles.geminiAssignedTable}`}
+        aria-label="배정된 기관 목록"
+      >
+        <colgroup>
+          <col className={styles.numberColumn} />
+          <col className={styles.institutionColumn} />
+          <col className={styles.locationColumn} />
+          <col className={styles.distanceColumn} />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">No.</th>
+            <th scope="col">기관명</th>
+            <th scope="col">기관 소재지</th>
+            <th scope="col">자택과의 거리</th>
+            <th scope="col">담당 교육 진행 일정</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={row.id}>
+              <td>{rows.length - index}</td>
+              <td>{row.institutionName}</td>
+              <td>{row.location}</td>
+              <td>{row.distance}</td>
+              <td>{renderGeminiScheduleLines(row)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 /** 개인 프로그램 — 배정된 교육 일정. 일정(scheduleId)마다 한 행, 출강지는 scheduleLocation. */
 function AssignedScheduleTable({ rows }: { rows: readonly AssignmentTableRow[] }) {
   return (
     <div className={styles.tableWrap}>
       <table
         className={`${styles.table} ${styles.assignedTable}`}
-        aria-label="배정된 교육 일정"
+        aria-label="배정된 일정 목록"
       >
         <colgroup>
           <col className={styles.numberColumn} />
@@ -317,7 +391,7 @@ function WaitingScheduleTable({ rows }: { rows: readonly WaitingTableRow[] }) {
         <thead>
           <tr>
             <th scope="col">No.</th>
-            <th scope="col">출강지</th>
+            <th scope="col">기관 소재지</th>
             <th scope="col">자택과의 거리</th>
             <th scope="col">교육 진행 희망 일정</th>
             <th scope="col">배정 현황</th>
@@ -352,6 +426,7 @@ export function InstructorAssignmentPanel({
   waitingItems = [],
   individual = false,
   useScheduleName = false,
+  variant = 'default',
 }: InstructorAssignmentPanelProps) {
   const rows = buildRows(assignedItems, individual, useScheduleName)
   const waitingRows = buildWaitingRows(waitingItems, individual, useScheduleName)
@@ -368,6 +443,8 @@ export function InstructorAssignmentPanel({
         {rows.length > 0 ? (
           individual ? (
             <AssignedScheduleTable rows={rows} />
+          ) : variant === 'gemini' ? (
+            <GeminiAssignedInstitutionTable rows={rows} />
           ) : (
             <AssignedInstitutionTable rows={rows} />
           )

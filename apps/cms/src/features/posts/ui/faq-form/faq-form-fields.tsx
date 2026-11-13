@@ -14,6 +14,7 @@ function isRegisterableFaqCategory(value: unknown): value is string {
 /**
  * FAQ 등록/수정 폼 본문 — 부모 `Form` 안에서만 사용.
  * 모달·상세 등 레이아웃은 래퍼에서 담당.
+ * 필수값 검사는 `useFaqFormModal.handleSubmit`이 공통 「필수 항목 미입력 안내」 팝업으로 처리한다(필드 인라인 오류 없음).
  */
 export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
   const registerOptions = categoryOptions.filter(opt => isRegisterableFaqCategory(opt.value))
@@ -25,15 +26,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           name="category"
           className="faq-form-modal__field faq-form-modal__field--category"
           normalize={value => (isRegisterableFaqCategory(value) ? value.trim() : undefined)}
-          rules={[
-            {
-              validator: async (_, value) => {
-                if (!isRegisterableFaqCategory(value)) {
-                  throw new Error('카테고리를 선택해 주세요.')
-                }
-              },
-            },
-          ]}
         >
           <CmsSelect
             label="카테고리"
@@ -49,16 +41,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
         <Form.Item
           name="visibility"
           className="faq-form-modal__field faq-form-modal__field--visibility"
-          initialValue="public"
-          rules={[
-            {
-              validator: async (_, value) => {
-                if (value !== 'public' && value !== 'private') {
-                  throw new Error('공개 여부를 선택해 주세요.')
-                }
-              },
-            },
-          ]}
         >
           <CmsRadioGroup
             label="공개 여부"
@@ -74,7 +56,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
       <Form.Item
         name="question"
         className="faq-form-modal__section"
-        rules={[{ required: true, whitespace: true, message: '제목을 입력해 주세요.' }]}
       >
         <CmsInput
           label="제목 (질문)"
@@ -87,7 +68,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
       </Form.Item>
       <Form.Item
         name="answer"
-        rules={[{ required: true, whitespace: true, message: '내용을 입력해 주세요.' }]}
       >
         {/* 시안: 서식 편집기 없이 일반 텍스트 입력 — 홈페이지 FAQ도 답변을 텍스트로 표시한다 */}
         <CmsTextArea

@@ -100,11 +100,11 @@ const contractErrorCases = [
   ],
   ['ASSIGNMENT_SUBMISSION_NOT_STARTED', '과제 제출 기간이 아직 시작되지 않았습니다.'],
   ['ASSIGNMENT_SUBMISSION_CLOSED', '과제 제출 기간이 종료되었습니다.'],
-  ['ASSIGNMENT_SUBMISSION_NOT_ALLOWED', '참여 중인 교육일정에서만 과제를 제출할 수 있습니다.'],
+  ['ASSIGNMENT_SUBMISSION_NOT_ALLOWED', '참여 중인 교육 일정에서만 과제를 제출할 수 있습니다.'],
   ['ASSIGNMENT_SUBMISSION_UNAVAILABLE', '현재 상태에서는 과제를 제출할 수 없습니다.'],
   ['ASSIGNMENT_ALREADY_SUBMITTED', '이미 제출한 과제입니다. 수정 제출을 이용해 주세요.'],
   ['ASSIGNMENT_NOT_SUBMITTED', '제출한 과제가 없습니다.'],
-  ['ASSIGNMENT_NOT_ENABLED', '과제가 설정되지 않은 교육일정입니다.'],
+  ['ASSIGNMENT_NOT_ENABLED', '과제가 설정되지 않은 교육 일정입니다.'],
   ['ASSIGNMENT_RESUBMIT_NOT_ALLOWED', '현재 상태에서는 과제를 수정 제출할 수 없습니다.'],
   ['FORM_SUBMISSION_CLOSED', '설문 작성 기간이 종료되었습니다.'],
   [

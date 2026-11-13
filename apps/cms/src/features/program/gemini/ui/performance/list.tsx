@@ -549,7 +549,9 @@ export function GeminiPerformanceList() {
           accessLog: { downloadKind: 'GEMINI_TRAINING_PERFORMANCE_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: allRows,
-          selectedRowKeys: showBulkDelete ? selectedRowKeys : undefined,
+          // 선택 행이 있으면 선택 행만, 없으면 조회 목록 전체를 내려받는다(QA 2026-11-13 Gemini #13).
+          selectedRowKeys:
+            showBulkDelete && selectedRowKeys.length > 0 ? selectedRowKeys : undefined,
         }}
         actionsAfterExcel={
           <span className="file-upload-picker">
@@ -591,10 +593,8 @@ export function GeminiPerformanceList() {
                   columnWidth: SELECTION_COL_WIDTH,
                   selectedRowKeys,
                   onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                  // 지급 완료(deleteBlocked) 행도 엑셀 선택은 가능하다. 삭제 차단은 [선택 삭제]에서 안내한다.
                   preserveSelectedRowKeys: false,
-                  getCheckboxProps: (row: GeminiPerformanceRow) => ({
-                    disabled: row.deleteBlocked === true,
-                  }),
                 }
               : undefined
           }

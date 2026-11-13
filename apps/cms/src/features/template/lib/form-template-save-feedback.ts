@@ -57,13 +57,28 @@ function resolveSaveFailureMessage(error?: unknown): string {
   return '양식 저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
 }
 
+/** 양식 저장 완료 안내 — 기본 */
+export const FORM_TEMPLATE_SAVE_SUCCESS_COPY = {
+  title: '저장',
+  content: '양식이 저장되었습니다.',
+} as const
+
+/** 동의 양식 편집기 저장 완료 안내 (QA 261113 #36) */
+export const AGREEMENT_TEMPLATE_SAVE_SUCCESS_COPY = {
+  title: '저장 완료',
+  content: '저장되었습니다.',
+} as const
+
 export function useFormTemplateSaveFeedback() {
   const { showAlert } = useCmsAlert()
 
-  const showSaveSuccess = (onConfirm?: () => void) => {
+  const showSaveSuccess = (
+    onConfirm?: () => void,
+    copy: { title: string; content: string } = FORM_TEMPLATE_SAVE_SUCCESS_COPY
+  ) => {
     showAlert({
-      title: '저장',
-      content: '양식이 저장되었습니다.',
+      title: copy.title,
+      content: copy.content,
       onConfirm,
     })
   }

@@ -11,6 +11,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   FilterTableToolbarButton,
+  showRegisterCompletedAlert,
   showSaveCompletedAlert,
 } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -244,6 +245,7 @@ export default function UjatEducationRegionsPage() {
       try {
         await createMutation.mutateAsync(values)
         setRegisterOpen(false)
+        showRegisterCompletedAlert()
       } catch (error) {
         if (isUjatEducationRegionDuplicateNameError(error)) {
           showAlert({
@@ -359,15 +361,6 @@ export default function UjatEducationRegionsPage() {
         title: '등록자명',
         dataIndex: 'createdByName',
         key: 'createdByName',
-        width: TABLE_COLUMN_WIDTHS.name,
-        align: 'center',
-        ellipsis: true,
-        render: (value?: string | null) => value?.trim() || '-',
-      },
-      {
-        title: '수정자명',
-        dataIndex: 'updatedByName',
-        key: 'updatedByName',
         width: TABLE_COLUMN_WIDTHS.name,
         align: 'center',
         ellipsis: true,

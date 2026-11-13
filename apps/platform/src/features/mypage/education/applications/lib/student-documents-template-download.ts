@@ -1,9 +1,8 @@
 export const PORTRAIT_CONSENT_TEMPLATE_FILE_NAME = '학생 초상권 동의서.zip'
 export const PORTRAIT_CONSENT_TEMPLATE_MIME_TYPE = 'application/zip'
-export const PORTRAIT_CONSENT_UPLOAD_EXTENSION = 'docx'
-export const PORTRAIT_CONSENT_UPLOAD_MIME_TYPE =
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-export const PORTRAIT_CONSENT_UPLOAD_ACCEPT = `${PORTRAIT_CONSENT_UPLOAD_MIME_TYPE},.${PORTRAIT_CONSENT_UPLOAD_EXTENSION}`
+export const PORTRAIT_CONSENT_UPLOAD_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png'] as const
+export const PORTRAIT_CONSENT_UPLOAD_ACCEPT =
+  'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png'
 
 export const PORTRAIT_CONSENT_TEMPLATE_PENDING_STATUSES = new Set([
   'REQUESTED',

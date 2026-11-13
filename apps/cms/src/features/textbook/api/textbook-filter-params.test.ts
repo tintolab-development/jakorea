@@ -14,7 +14,7 @@ const empty: TextbookListFilters = {
 }
 
 describe('textbook-filter-params', () => {
-  it('always sends useStatus and optional grade/textbookName', () => {
+  it('sends useStatus when 사용/미사용 and optional grade/textbookName', () => {
     expect(
       textbooksParamsFromFilters({
         ...empty,
@@ -28,16 +28,17 @@ describe('textbook-filter-params', () => {
     })
   })
 
-  it('omits ALL/empty filters but keeps useStatus', () => {
-    const params = textbooksParamsFromFilters(empty)
-    expect(params.useStatus).toBe('USED')
+  it('omits ALL/empty filters including useStatus 전체', () => {
+    const params = textbooksParamsFromFilters({ ...empty, useStatus: 'ALL' })
+    expect(params.useStatus).toBeUndefined()
     expect(params.grade).toBeUndefined()
     expect(params.textbookName).toBeUndefined()
     expect(params.businessArea).toBeUndefined()
   })
 
-  it('defaults missing tb_use to USED', () => {
-    expect(parseTextbookUseStatus(null)).toBe('USED')
+  it('defaults missing tb_use to ALL', () => {
+    expect(parseTextbookUseStatus(null)).toBe('ALL')
+    expect(parseTextbookUseStatus('ALL')).toBe('ALL')
     expect(parseTextbookUseStatus('UNUSED')).toBe('UNUSED')
     expect(parseTextbookUseStatus('USED')).toBe('USED')
   })

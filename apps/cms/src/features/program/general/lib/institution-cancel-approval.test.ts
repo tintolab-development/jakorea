@@ -34,6 +34,30 @@ describe('institution-cancel-approval', () => {
     ).toBe('alreadySent')
   })
 
+  it('서버 발송 시각이 미래(예약 미발송)면 pendingNotification, 지났으면 alreadySent', () => {
+    const now = new Date('2026-11-13T10:00:00+09:00')
+    expect(
+      resolveInstitutionCancelApprovalNotifyVariant(
+        {
+          ...baseRow,
+          approvalNotificationSentAt: '2026.11.20 09:00',
+          approvalNotificationSentAtIso: '2026-11-20T09:00:00+09:00',
+        },
+        now
+      )
+    ).toBe('pendingNotification')
+    expect(
+      resolveInstitutionCancelApprovalNotifyVariant(
+        {
+          ...baseRow,
+          approvalNotificationSentAt: '2026.11.01 09:00',
+          approvalNotificationSentAtIso: '2026-11-01T09:00:00+09:00',
+        },
+        now
+      )
+    ).toBe('alreadySent')
+  })
+
   it('예약 승인 알림은 pendingNotification 분기를 사용한다', () => {
     expect(
       resolveInstitutionCancelApprovalNotifyVariant({

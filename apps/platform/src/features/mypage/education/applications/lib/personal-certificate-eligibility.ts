@@ -1,4 +1,17 @@
+import type { PortalCertificateIssueReason } from '../api/personal-certificate-types'
 import type { ProgramApplicationType } from '../api/types'
+
+export const PERSONAL_CERTIFICATE_ISSUE_REASONS: readonly {
+  value: PortalCertificateIssueReason
+  label: string
+}[] = [
+  { value: 'INSTITUTION_SUBMISSION', label: '기관 제출용' },
+  { value: 'EDUCATION_COMPLETION_PROOF', label: '교육 이수 증빙용' },
+  { value: 'PERSONAL_ARCHIVE', label: '개인 보관용' },
+]
+
+export const PERSONAL_CERTIFICATE_ISSUE_NOTICE =
+  '수료증은 개인정보 보관 기간 내에만 발급할 수 있어요. 프로그램 신청일 기준 3년까지 가능합니다.'
 
 function isExcludedGeminiSurface(input: {
   programType?: string | null

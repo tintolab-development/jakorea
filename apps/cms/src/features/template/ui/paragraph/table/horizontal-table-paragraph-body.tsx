@@ -29,7 +29,9 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 import { resolveTableBottomConsentRadioValue } from '@/features/template/lib/resolve-table-bottom-consent-radio-value'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/recruit-form/individual/paragraph-body'
 import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/institution/paragraph-body'
@@ -114,13 +116,46 @@ function dateTimeFieldPlaceholder(
   return '날짜를 선택해 주세요'
 }
 
-/** 캔버스 테이블 셀 전용 — 우측 커스텀 필드는 비번호 고정 문구 유지 */
-function tableHeaderPlaceholder(_colIndex: number) {
-  return '항목명을 입력해 주세요'
+/**
+ * 캔버스 테이블 셀 전용 — 우측 커스텀 필드는 비번호 고정 문구 유지.
+ * 템플릿 관리 화면(`numbered`)은 시안 5767:49321 「1. 항목명을 입력해 주세요」·「1-1. 내용을 입력해 주세요」.
+ */
+function tableHeaderPlaceholder(colIndex: number, numbered = false) {
+  return numbered ? `${colIndex + 1}. 항목명을 입력해 주세요` : '항목명을 입력해 주세요'
 }
 
-function tableCellPlaceholder(_colIndex: number, _rowIndex: number) {
-  return '텍스트를 입력해 주세요'
+function tableCellPlaceholder(colIndex: number, rowIndex: number, numbered = false) {
+  return numbered
+    ? `${colIndex + 1}-${rowIndex + 1}. 내용을 입력해 주세요`
+    : '텍스트를 입력해 주세요'
+}
+
+/**
+ * 지급조서·영수증 사전 동의서 수집·이용 표(1열) — 템플릿 관리(편집기·미리보기) 시안
+ * 5767:42072·16046:109928은 「수집 항목」, 회원 작성 팝업 6130:133665·Platform은 시드 「항목」.
+ * 저장값은 바꾸지 않고 템플릿 관리 화면 표시만 분기한다.
+ */
+const PRE_CONSENT_COLLECTION_TABLE_IDS = new Set<string>([
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection,
+  RECEIPT_PRE_CONSENT_IDS.p1Collection,
+])
+
+function resolveTemplateManagementHeaderLabel(
+  paragraphId: string,
+  colIndex: number,
+  header: string,
+  isTemplateManagementScreen: boolean
+): string {
+  if (
+    isTemplateManagementScreen &&
+    colIndex === 0 &&
+    header.trim() === '항목' &&
+    PRE_CONSENT_COLLECTION_TABLE_IDS.has(paragraphId)
+  ) {
+    return '수집 항목'
+  }
+  return header
 }
 
 /** 필드형·비편집: 텍스트형은 기본 안내 문구·셀별 placeholder 조합 */
@@ -572,6 +607,8 @@ export function HorizontalTableParagraphBody({
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
   const hideSelectionChrome = useHideParagraphSelectionChrome()
+  /** 템플릿 관리 — 텍스트형 표 빈 칸 안내 번호 표기(시안) */
+  const numberedCanvasPlaceholders = useIsTemplateManagementScreen()
 
   const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(
     null
@@ -972,6 +1009,12 @@ export function HorizontalTableParagraphBody({
       !PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id))
 
   const isAgreementNoticeTable = p.id === 'agreement-notice-table'
+  /** 템플릿 관리 작성 — 행정정보 식별번호 「주민등록번호」 라디오 미선택 표시(사용자 결정 2026-11-13, 저장값 무관) */
+  const agreementNoticeIdTypeRadioUnselected =
+    isAgreementNoticeTable &&
+    numberedCanvasPlaceholders &&
+    paragraphInteractionMode === 'authoring' &&
+    paymentStatementDisplayMode !== 'document'
   const isAgreementPortraitTable =
     p.id === 'agreement-portrait-personal-consent-table' ||
     p.id === 'agreement-portrait-delegated-consent-table' ||
@@ -1031,7 +1074,15 @@ export function HorizontalTableParagraphBody({
           aria-selected={canvasInteractive && isHeaderRowSelected()}
         >
           {headers.map((h, i) => {
-            const ph = suppressPlaceholderText ? '' : tableHeaderPlaceholder(i)
+            const ph = suppressPlaceholderText
+              ? ''
+              : tableHeaderPlaceholder(i, numberedCanvasPlaceholders)
+            const shownHeader = resolveTemplateManagementHeaderLabel(
+              p.id,
+              i,
+              h ?? '',
+              numberedCanvasPlaceholders
+            )
             return (
               <div
                 key={`h-${i}`}
@@ -1065,7 +1116,11 @@ export function HorizontalTableParagraphBody({
                       />
                     ) : (
                       <div className="form-editor-horizontal-table__cell-text-hit">
-                        <HorizontalTableCellText value={h ?? ''} placeholder={ph} variant="header" />
+                        <HorizontalTableCellText
+                          value={shownHeader}
+                          placeholder={ph}
+                          variant="header"
+                        />
                       </div>
                     )
                   ) : (
@@ -1089,7 +1144,7 @@ export function HorizontalTableParagraphBody({
                     </div>
                   )
                 ) : (
-                  <HorizontalTableCellText value={h ?? ''} placeholder={ph} variant="header" />
+                  <HorizontalTableCellText value={shownHeader} placeholder={ph} variant="header" />
                 )}
               </div>
             )
@@ -1113,7 +1168,9 @@ export function HorizontalTableParagraphBody({
               const bodyColumnEditable = isBodyColumnEditable(colIdx)
               if (!isField) {
                 const cell = cells[colIdx] ?? ''
-                const ph = suppressPlaceholderText ? '' : tableCellPlaceholder(colIdx, rowIdx)
+                const ph = suppressPlaceholderText
+                  ? ''
+                  : tableCellPlaceholder(colIdx, rowIdx, numberedCanvasPlaceholders)
                 return (
                   <div
                     key={`c-${rowIdx}-${colIdx}`}
@@ -1344,6 +1401,7 @@ export function HorizontalTableParagraphBody({
               isEditMode={effectiveEditMode || agreementNoticeIdTypeInteractive}
               documentMode={paymentStatementDisplayMode === 'document'}
               lockResidentIdType={isAgreementNoticeTable}
+              radioUnselectedDisplay={agreementNoticeIdTypeRadioUnselected}
             />
           ) : null}
           {p.showBottomConsent ? (

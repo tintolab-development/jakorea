@@ -3,6 +3,7 @@
 @import './shared/ui/ant-table-rows.css';
 @import '@jakorea/admin-ui/table/styles';
 @import './shared/ui/ant-table-selection-checkbox.css';
+@import './shared/ui/ant-checkbox-check.css';
 @import './features/program/shared/ui/program-attendance-detail.css';
 @import './shared/ui/button-loading-only.css';
 @import './shared/ui/page-content-loading.css';

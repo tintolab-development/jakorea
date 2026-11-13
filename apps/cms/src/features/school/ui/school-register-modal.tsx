@@ -7,7 +7,7 @@
  */
 
 import { useEffect } from 'react'
-import { Form, Space } from 'antd'
+import { Form } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import {
   CmsButton,
@@ -23,8 +23,11 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
+import './school-register-modal.css'
 
 const FORM_ID = 'cms-school-register-modal-form'
+/** 시안: 기관명 검색 240 · 기관 소재지 240 + 240 */
+const SCHOOL_REGISTER_INPUT_WIDTH = 240
 
 export type SchoolRegisterModalFormValues = {
   institutionName: string
@@ -168,7 +171,7 @@ export function SchoolRegisterModal({
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
-            닫기
+            취소
           </CmsButton>
           <CmsButton
             variant="primary"
@@ -221,7 +224,7 @@ export function SchoolRegisterModal({
                     onSelect={handleSchoolSelect}
                     placeholder="기관명"
                     inputSize="small"
-                    width="100%"
+                    width={SCHOOL_REGISTER_INPUT_WIDTH}
                   />
                 </Form.Item>
               }
@@ -233,7 +236,7 @@ export function SchoolRegisterModal({
               fullRow
               view="-"
               edit={
-                <Space.Compact style={{ width: '100%' }}>
+                <div className="detail-info-form-inputs-wrapper-no-gap school-register-modal__address-row">
                   <Form.Item name="roadAddress" noStyle>
                     <CmsInput
                       value={roadAddress}
@@ -241,7 +244,7 @@ export function SchoolRegisterModal({
                       disabled
                       placeholder="건물명, 도로명 또는 지번"
                       inputSize="small"
-                      width="100%"
+                      width={SCHOOL_REGISTER_INPUT_WIDTH}
                     />
                   </Form.Item>
                   <DetailInfoForm.InputsSeparator />
@@ -249,11 +252,11 @@ export function SchoolRegisterModal({
                     <CmsInput
                       placeholder="상세 주소"
                       inputSize="small"
-                      width="100%"
+                      width={SCHOOL_REGISTER_INPUT_WIDTH}
                       disabled={!roadAddress.trim()}
                     />
                   </Form.Item>
-                </Space.Compact>
+                </div>
               }
             />
           </DetailInfoForm.Row>

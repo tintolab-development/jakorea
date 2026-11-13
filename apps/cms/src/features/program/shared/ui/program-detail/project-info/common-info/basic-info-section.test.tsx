@@ -168,7 +168,7 @@ describe('BasicInfoSection — 후원사 담당자 선택과 문의처(contactPh
     expect(form?.getValues('contactPhone')).toBe(INQUIRY_PHONE)
   })
 
-  it('조회 모드 담당자 옆 연락처는 배정 응답 값이고 문의처(contactPhone)를 쓰지 않는다', () => {
+  it('조회 모드 담당자는 이름·직책만 보이고 연락처·문의처(contactPhone)를 붙이지 않는다', () => {
     const ref = encodeSponsorManagerContactRef('s1', 'c1')
     const withDetail = baseProgram({
       generalCommonInfo: {
@@ -181,7 +181,7 @@ describe('BasicInfoSection — 후원사 담당자 선택과 문의처(contactPh
       },
     } as Partial<Program>)
     const view = renderWithProviders(<BasicInfoSection program={withDetail} />)
-    expect(view.container.textContent).toContain('010-****-8888')
+    expect(view.container.textContent).not.toContain('8888')
     expect(view.container.textContent).not.toContain(INQUIRY_PHONE)
     cleanup()
 

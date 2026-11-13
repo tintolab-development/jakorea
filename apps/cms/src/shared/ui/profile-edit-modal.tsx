@@ -5,7 +5,9 @@
 import dayjs from 'dayjs'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { genderBirthView } from '@/features/user/detail/ui/user-basic-info/display'
+import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
   getAdminPermissionVariant,
@@ -36,7 +38,7 @@ import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { ProfilePasswordChangeModal } from '@/shared/ui/profile-password-change-modal'
 import type { User, TermsAgreementRow } from '@/types/user'
-import { formatDate } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
 import '@/features/user/detail/ui/user-consent-agreement-section.css'
 import './profile-edit-modal.css'
 
@@ -235,6 +237,34 @@ function ProfileFieldWithAction({
         onClick={onAction} >
         {actionLabel}
       </CmsButton>
+    </span>
+  )
+}
+
+/** 내 정보 확인 — 생년월일 `YYYY.MM.DD (만 N세)` (공백 없는 점 표기) */
+function formatProfileBirthDisplay(user: Omit<User, 'password'>): string {
+  const birth = user.birthDate
+  const raw =
+    birth instanceof Date
+      ? dayjs(birth).isValid()
+        ? dayjs(birth).format('YYYY-MM-DD')
+        : ''
+      : birth == null
+        ? ''
+        : String(birth)
+  if (!raw) return '-'
+  return formatBirthDisplayWithManAge(raw, { age: user.manAge }).replace(
+    /^(\d{4})\. (\d{2})\. (\d{2})/,
+    '$1.$2.$3'
+  )
+}
+
+function ProfileGenderBirthView({ user }: { user: Omit<User, 'password'> }) {
+  return (
+    <span className="user-basic-info-section__inline-segments">
+      <span>{toDisplayGender(user.gender)}</span>
+      <DetailInfoFormTdDivider />
+      <span>{formatProfileBirthDisplay(user)}</span>
     </span>
   )
 }
@@ -550,6 +580,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
             variant="secondary"
             size="medium"
             type="button"
+            className="profile-edit-modal__password-change-btn"
             onClick={handleOpenPasswordChangeModal} >
             비밀번호 변경
           </CmsButton>
@@ -579,7 +610,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                 <DetailInfoForm.Field
                   label="가입일"
                   readOnlyDisplay
-                  view={<span>{formatDate(user.createdAt)}</span>}
+                  view={<span>{formatDateDot(user.createdAt)}</span>}
                 />
               </DetailInfoForm.Row>
             </div>
@@ -594,7 +625,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                 <DetailInfoForm.Field
                   label="성별 및 생년월일"
                   readOnlyDisplay
-                  view={<span>{genderBirthView(user)}</span>}
+                  view={<ProfileGenderBirthView user={user} />}
                 />
               </DetailInfoForm.Row>
 
@@ -644,7 +675,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         <DetailInfoForm title="약관 및 동의" mode="view">
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
-              labelWidth={220}
+              labelWidth={180}
               label="서비스 이용약관 동의"
               readOnlyDisplay
               view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
@@ -652,7 +683,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
             <DetailInfoForm.Field
               label="개인정보 수집·이용 동의"
               readOnlyDisplay
-              labelWidth={220}
+              labelWidth={180}
               view={consentReadonlyContent(
                 personalInfoTerms.agreed,
                 personalInfoTerms.agreedAtDisplay
@@ -664,7 +695,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
             {/* Figma 16299:623421(미동의) · 8193:140673(동의) — 상태 | 버튼 (+ 동의 일시) */}
             <DetailInfoForm.Field
               label="마케팅 정보 수신 동의"
-              labelWidth={220}
+              labelWidth={180}
               readOnlyDisplay
               view={
                 <span className="profile-edit-modal__marketing-consent">
@@ -683,7 +714,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                       handleMarketingChange(marketingConsent === 'agree' ? 'disagree' : 'agree')
                     }
                   >
-                    {marketingConsent === 'agree' ? '동의 철회' : '동의하기'}
+                    {marketingConsent === 'agree' ? '동의 철회하기' : '동의하기'}
                   </CmsButton>
                   {marketingConsent === 'agree' && marketingAgreedAt !== '-' ? (
                     <span className="user-consent-agreement-section__value-datetime">
@@ -695,7 +726,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
             />
             <DetailInfoForm.Field
               label="2단계 인증 설정 동의"
-              labelWidth={220}
+              labelWidth={180}
               readOnlyDisplay
               view={consentReadonlyContent(mfaSetupTerms.agreed, mfaSetupTerms.agreedAtDisplay)}
             />

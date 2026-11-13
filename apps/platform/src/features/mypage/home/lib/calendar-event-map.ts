@@ -139,16 +139,17 @@ export function formatPortalCalendarTimeRange(item: {
   const hasClock = start != null || end != null
   const clockLabel =
     start && end ? (start === end ? start : `${start}~${end}`) : (start ?? end ?? '')
-  const allDayTimeConflict = item.allDay === true && hasClock
-
-  if (availability === 'TIME_PRESENT') {
-    return { time: clockLabel, allDayTimeConflict }
-  }
-  if (availability === 'DATE_ONLY' || (item.allDay === true && !hasClock)) {
+  if (availability === 'DATE_ONLY') {
     return { time: '종일', allDayTimeConflict: false }
   }
+  if (item.allDay === true) {
+    return { time: '종일', allDayTimeConflict: hasClock }
+  }
+  if (availability === 'TIME_PRESENT') {
+    return { time: clockLabel, allDayTimeConflict: false }
+  }
   if (hasClock) {
-    return { time: clockLabel, allDayTimeConflict }
+    return { time: clockLabel, allDayTimeConflict: false }
   }
   return { time: '', allDayTimeConflict: false }
 }

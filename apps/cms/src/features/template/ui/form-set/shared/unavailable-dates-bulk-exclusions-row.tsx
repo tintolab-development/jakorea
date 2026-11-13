@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { DirectUnavailableDateAddButton } from '@/features/template/ui/form-set/shared/direct-unavailable-date-add-button'
+import {
+  DirectUnavailableDateAddButton,
+  type UnavailableDateLabelFormat,
+} from '@/features/template/ui/form-set/shared/direct-unavailable-date-add-button'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import './unavailable-dates-bulk-exclusions-row.css'
@@ -19,6 +22,12 @@ export type UnavailableDatesBulkExclusionsRowProps = {
   modalUnavailableDescriptionLead?: string
   /** 모달 본문 둘째 줄 */
   modalUnavailableDescriptionSecond?: string
+  /** 직접 추가 모달 제목 — 생략 시 버튼 기본 제목 */
+  modalTitle?: string
+  /** 진행 불가일 날짜 라벨 형식 — 생략 시 버튼 기본 */
+  dateLabelFormat?: UnavailableDateLabelFormat
+  /** 「진행 불가일 직접 추가」 버튼 크기 — 생략 시 medium(h40) */
+  addButtonSize?: 'medium' | 'h36'
   defaultExcludeSaturday?: boolean
   defaultExcludeSunday?: boolean
   defaultExcludeHoliday?: boolean
@@ -103,6 +112,9 @@ export function UnavailableDatesBulkExclusionsRow({
   onApplyDatesChange,
   modalUnavailableDescriptionLead,
   modalUnavailableDescriptionSecond,
+  modalTitle,
+  dateLabelFormat,
+  addButtonSize,
   canOpenDirectUnavailableModal,
   onDirectUnavailableModalBlocked,
   defaultExcludeSaturday,
@@ -202,6 +214,9 @@ export function UnavailableDatesBulkExclusionsRow({
         freezeCalendarInteraction={freezeCalendarInteraction}
         modalUnavailableDescriptionLead={modalUnavailableDescriptionLead}
         modalUnavailableDescriptionSecond={modalUnavailableDescriptionSecond}
+        modalTitle={modalTitle}
+        dateLabelFormat={dateLabelFormat}
+        addButtonSize={addButtonSize}
         canOpenDirectUnavailableModal={canOpenDirectUnavailableModal}
         onDirectUnavailableModalBlocked={onDirectUnavailableModalBlocked}
       />

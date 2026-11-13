@@ -65,6 +65,7 @@ import type { EconomyProgramApplicationParagraphBodyOptions } from '@/features/t
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import {
   mergeSubjectiveFromShortEssayEdit,
   ShortEssay,
@@ -264,6 +265,11 @@ export type RenderFormParagraphBodyOptions = {
    * (프로그램 등록 신청 양식)
    */
   structureLockedChoiceDisplayOnly?: boolean
+  /**
+   * 템플릿 관리 동의 양식 작성(authoring) — 표·설명글 하단 동의 라디오를 저장값과 무관하게 미선택·입력 불가로 표시.
+   * (시안: 템플릿 관리 화면 라디오는 모두 미선택)
+   */
+  templateAuthoringConsentChoiceUnselected?: boolean
   /** 초상권 동의 fill — 1번 표 성명·소속 응답 입력만 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
   /**
@@ -368,6 +374,11 @@ export function renderFormParagraphBody(
     structureLocked &&
     options?.structureLockedChoiceDisplayOnly === true &&
     paragraphInteractionMode === 'authoring'
+  /** 하단 동의 라디오 — 프로그램 등록 시드 잠금 또는 템플릿 관리 동의 양식 작성 */
+  const bottomConsentChoiceDisplayOnly =
+    structureLockedChoiceDisplayOnly ||
+    (options?.templateAuthoringConsentChoiceUnselected === true &&
+      paragraphInteractionMode === 'authoring')
   switch (p.variant) {
     case 'survey_title_with_period':
       /* 작성 기간 ON이면 단락 비선택(포커스 해제) 상태에서도 기간 입력란 노출 — 비선택은 읽기 전용 */
@@ -480,7 +491,7 @@ export function renderFormParagraphBody(
           isEditMode={isAgreementNoticeExplanationEditMode || isBodyInteractive}
           bodyDisplayMode={explanationBodyDisplayMode}
           bottomConsentInteractive={isBodyInteractive || structureLockedConsentChoiceInteractive}
-          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
+          bottomConsentDisplayOnly={bottomConsentChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
         />
       )
@@ -548,7 +559,7 @@ export function renderFormParagraphBody(
             structureLockedPartialTextEdit && isStructureLockedPartialDisclaimerEdit(hp.id)
           }
           bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
-          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
+          bottomConsentDisplayOnly={bottomConsentChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
@@ -725,7 +736,7 @@ export function renderFormParagraphBody(
           }
           portraitSeedPresetLocked={structureLocked}
           bottomConsentInteractive={structureLockedConsentChoiceInteractive}
-          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
+          bottomConsentDisplayOnly={bottomConsentChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
         />
       )
@@ -990,6 +1001,11 @@ export function renderFormParagraphBody(
             (p.kind === 'single_item' && p.variant === 'user_info' ? p.fieldAnswers : undefined)
           }
           forceTwoColumnRow={p.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
+          // 설문 단락의 설문자 정보만 — UJAT 교육일지 봉사자 정보·강의보고서 강사 정보는 기존 표
+          surveyRespondentPreview={
+            p.id !== UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo &&
+            p.id !== LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID
+          }
         />
       )
     case 'file_attachment':

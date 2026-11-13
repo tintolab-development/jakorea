@@ -70,7 +70,7 @@ import {
   GENERAL_SURVEY_MENU_EMPTY_COPY,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
-  GENERAL_SURVEY_POLL_SHARE_TOAST_COPY,
+  buildGeneralSurveyPollShareToastCopy,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import type {
   RegisteredSurvey,
@@ -101,6 +101,7 @@ import {
   sortSatisfactionScheduleDisplayItemsAsc,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import {
+  isSurveyPollPeriodProgram,
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
@@ -472,8 +473,12 @@ export function GeneralSurveyManagementView({
     return last == null ? null : formatSatisfactionOnceAtEndScheduleLabel(last)
   }, [satisfactionScheduleOptionsQuery.schedules])
   const showSurveyPollScheduleSelectField = useMemo(
-    () => shouldShowSurveyPollScheduleSelectField(program),
-    [program]
+    () =>
+      shouldShowSurveyPollScheduleSelectField(program, {
+        options: surveyScheduleOptionsQuery.options,
+        isLoading: surveyScheduleOptionsQuery.isLoading,
+      }),
+    [program, surveyScheduleOptionsQuery.isLoading, surveyScheduleOptionsQuery.options]
   )
 
   useEffect(() => {
@@ -996,9 +1001,7 @@ export function GeneralSurveyManagementView({
 
   /** 공유 링크 복사 완료 — 「설문조사 공유」·「만족도조사 공유」 안내 팝업 (시안 9767:119096 · 16057:321961) */
   const showShareCopiedAlert = useCallback(
-    (
-      copy: { title: string; line1: string; line2: string } = GENERAL_SURVEY_POLL_SHARE_TOAST_COPY
-    ) => {
+    (copy: { title: string; line1: string; line2: string }) => {
       void showAlert({ title: copy.title, content: `${copy.line1}\n${copy.line2}` })
     },
     [showAlert]
@@ -1144,6 +1147,17 @@ export function GeneralSurveyManagementView({
               return
             }
           } else {
+            // 일정 칸이 숨겨진 비기간형 = 선택 가능한 일정 없음. 일정은 있으나 모두 설문이 연결된 경우 그 사유로 안내
+            if (
+              !isSurveyPollPeriodProgram(program) &&
+              surveyScheduleOptionsQuery.options.length > 0
+            ) {
+              void showAlert({
+                title: '등록 실패',
+                content: SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
+              })
+              return
+            }
             const surveyTarget =
               await resolveSurveyPollBindingTargetWhenScheduleFieldHidden(program)
             if (surveyTarget == null) {
@@ -1304,6 +1318,7 @@ export function GeneralSurveyManagementView({
     showAlert,
     showSurveyPollScheduleSelectField,
     surveyScheduleOptionsQuery.hasSessionSchedules,
+    surveyScheduleOptionsQuery.options.length,
     surveysRemote,
     surveyTemplateOptions,
   ])
@@ -1427,7 +1442,7 @@ export function GeneralSurveyManagementView({
           queryKey: generalProgramQueryKeys.surveys(program.id),
           exact: true,
         })
-        showShareCopiedAlert()
+        showShareCopiedAlert(buildGeneralSurveyPollShareToastCopy(survey.title))
       } catch (error) {
         handleError(error, { context: 'generalSurveyShareLink' })
         showAlert({
@@ -1889,6 +1904,8 @@ export function GeneralSurveyManagementView({
                   ),
                 }}
                 labels={GENERAL_SURVEY_POLL_ACTION_LABELS}
+                // 시안 — 진행 중부터 결과 다운로드 활성(응답 0건이어도 0건 상태로 내려받기)
+                downloadEnabled
                 onShareClick={() => shareRegisteredSurveyUrl(activeRegisteredSurvey)}
                 onAddClick={() => openCreateModal('survey')}
                 onOpenTemplatePreview={() =>

@@ -1,10 +1,14 @@
 /**
- * UJAT 프로그램 상세 전용 LNB (다단 메뉴 — 기존 DetailModalSidebar는 2뎁스만 지원)
+ * UJAT 프로그램 상세 전용 LNB — 시안 「LNB / Full Page」(UJAT 공통 정보 13276:334261).
+ * 메뉴는 모두 1depth(프로그램 정보 · 기관 신청 목록(시안 표기 「참여 기관 신청 목록」) · 상/하반기 봉사자 신청 목록 ·
+ * 상/하반기 교육 진행 현황 · 교육 진행 요약 · 설문 관리 · 담당자 정보), 하위는 2depth뿐이다.
+ * 마크업·클래스는 일반 프로그램 LNB(general/ui/detail-modal/detail-sidebar.tsx)와 같다.
  */
 
 import { useCallback, useState, type ReactNode } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
-import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
+import { LnbFigmaArrowDown } from '@/features/program/general/ui/detail-modal/lnb-figma-icons'
+import '@/features/program/general/ui/detail-modal/detail-sidebar.css'
 import type { UjatSurveyMenuItem } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import type { UjatDetailLnbKey } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { LnbIconManagers, LnbIconProjectInfo } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
@@ -150,7 +154,7 @@ export function UjatProgramDetailSidebar({
         <li key={tab}>
           <button
             type="button"
-            className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === 'education_progress' && activeTab === tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+            className={`detail-fullpage-modal__lnb-child ${activeLnb === 'education_progress' && activeTab === tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
             onClick={() => handleSelectChildTab('education_progress', tab)}
           >
             <span className="detail-fullpage-modal__lnb-child-dot" />
@@ -164,7 +168,11 @@ export function UjatProgramDetailSidebar({
   }
 
   return (
-    <nav className="detail-fullpage-modal__lnb" aria-label="UJAT 프로그램 상세 메뉴">
+    <nav
+      // 일반·1사1교·교육받은 교사 상세와 같은 시안 LNB 스타일(detail-sidebar.css 범위)
+      className="detail-fullpage-modal__lnb detail-fullpage-modal__lnb--program-detail"
+      aria-label="UJAT 프로그램 상세 메뉴"
+    >
       <DetailFullpageModalLnbBrand />
       <div className="detail-fullpage-modal__lnb-body">
         <ul className="detail-fullpage-modal__lnb-list">
@@ -175,11 +183,11 @@ export function UjatProgramDetailSidebar({
             className={`detail-fullpage-modal__lnb-item ${activeLnb === 'info' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
             onClick={() => toggleTopBody('info')}
           >
-            <span className="detail-fullpage-modal__lnb-item-icon">
+            <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
               <LnbIconProjectInfo />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">프로그램 정보</span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('info') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -229,7 +237,7 @@ export function UjatProgramDetailSidebar({
             <span className="detail-fullpage-modal__lnb-item-label">
               {UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL}
             </span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('institution_applications') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -273,7 +281,7 @@ export function UjatProgramDetailSidebar({
                   className={`detail-fullpage-modal__lnb-item ${activeLnb === top ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
                   onClick={() => handleSelectChildTab(top, allTab)}
                 >
-                  <span className="detail-fullpage-modal__lnb-item-icon">
+                  <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
                     <LnbVolunteerHandshakeIcon />
                   </span>
                   <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
@@ -292,7 +300,7 @@ export function UjatProgramDetailSidebar({
             <li key={row.tab}>
               <button
                 type="button"
-                className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === top && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+                className={`detail-fullpage-modal__lnb-child ${activeLnb === top && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
                 onClick={() => handleSelectChildTab(top, row.tab)}
               >
                 <span className="detail-fullpage-modal__lnb-child-dot" />
@@ -310,11 +318,11 @@ export function UjatProgramDetailSidebar({
                 className={`detail-fullpage-modal__lnb-item ${activeLnb === top ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
                 onClick={() => toggleTopBody(top)}
               >
-                <span className="detail-fullpage-modal__lnb-item-icon">
+                <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
                   <LnbVolunteerHandshakeIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
-                <DetailFullpageModalLnbArrowDown
+                <LnbFigmaArrowDown
                   className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen(top) ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                 />
               </button>
@@ -339,7 +347,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbEducationBookIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">상반기 교육 진행 현황</span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('education_progress_h1') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -347,7 +355,7 @@ export function UjatProgramDetailSidebar({
             className={childrenWrapClass(isTopBodyOpen('education_progress_h1'))}
             aria-hidden={!isTopBodyOpen('education_progress_h1')}
           >
-            <ul className="detail-fullpage-modal__lnb-children ujat-detail-lnb__education-list">
+            <ul className="detail-fullpage-modal__lnb-children">
               {renderEducationHalfChildren('h1')}
             </ul>
           </div>
@@ -363,7 +371,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbEducationBookIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">하반기 교육 진행 현황</span>
-            <DetailFullpageModalLnbArrowDown
+            <LnbFigmaArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('education_progress_h2') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -371,7 +379,7 @@ export function UjatProgramDetailSidebar({
             className={childrenWrapClass(isTopBodyOpen('education_progress_h2'))}
             aria-hidden={!isTopBodyOpen('education_progress_h2')}
           >
-            <ul className="detail-fullpage-modal__lnb-children ujat-detail-lnb__education-list">
+            <ul className="detail-fullpage-modal__lnb-children">
               {renderEducationHalfChildren('h2')}
             </ul>
           </div>
@@ -401,7 +409,7 @@ export function UjatProgramDetailSidebar({
                 <UjatLnbSurveyManagementIcon />
               </span>
               <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
-              <DetailFullpageModalLnbArrowDown
+              <LnbFigmaArrowDown
                 className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
               />
             </button>
@@ -436,7 +444,7 @@ export function UjatProgramDetailSidebar({
             className={`detail-fullpage-modal__lnb-item ${activeLnb === 'managers' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
             onClick={() => handleSelectChildTab('managers', 'main')}
           >
-            <span className="detail-fullpage-modal__lnb-item-icon">
+            <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
               <LnbIconManagers />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">담당자 정보</span>

@@ -96,43 +96,14 @@ export function InquiryAccordionList({
                   </div>
 
                   <div className={styles.rowMeta}>
-                    <div className={styles.metaDate}>
-                      <PFText
-                        as="span"
-                        typo="bd-md-rg"
-                        color="neutral-cool-500"
-                        className={styles.metaLabel}
-                      >
-                        문의
-                      </PFText>
-                      <PFText
-                        as="span"
-                        typo="bd-md-rg"
-                        color="neutral-cool-600"
-                        className={styles.date}
-                      >
-                        {item.createdAt || '-'}
-                      </PFText>
-                    </div>
-                    <span className={styles.metaDivider} aria-hidden="true" />
-                    <div className={styles.metaDate}>
-                      <PFText
-                        as="span"
-                        typo="bd-md-rg"
-                        color="neutral-cool-500"
-                        className={styles.metaLabel}
-                      >
-                        답변
-                      </PFText>
-                      <PFText
-                        as="span"
-                        typo="bd-md-rg"
-                        color="neutral-cool-600"
-                        className={styles.date}
-                      >
-                        {item.answeredAt || '-'}
-                      </PFText>
-                    </div>
+                    <PFText
+                      as="span"
+                      typo="bd-md-rg"
+                      color="neutral-cool-600"
+                      className={styles.date}
+                    >
+                      {item.createdAt || '-'}
+                    </PFText>
                     <span className={styles.metaDivider} aria-hidden="true" />
                     <PFText
                       as="span"
@@ -140,7 +111,7 @@ export function InquiryAccordionList({
                       color="neutral-cool-500"
                       className={styles.programName}
                     >
-                      {item.programName}
+                      {item.programName || '-'}
                     </PFText>
                   </div>
                 </div>

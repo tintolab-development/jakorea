@@ -5,6 +5,7 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
@@ -32,7 +33,7 @@ const EDUCATION_PLACE_OPTIONS = [
 const PREVIEW_AUTO_USER_INFO_SAMPLE = {
   institutionName: '신청 기관명',
   institutionAddress: '기관 소재지',
-  teacherName: '담당 교사',
+  teacherName: '담당 교사명',
   tel: '',
   mobile: '',
   email: '',
@@ -46,6 +47,8 @@ export function EconomyProgramApplicationBasicInfoParagraph({
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
+  /** 템플릿 관리 시안(16268:599774) — 라디오 미선택, 학년 선택 셀렉트 120, 교육 장소 구분선 양옆 16 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
     'application.economy.basicInfo.applicationGrade',
     ''
@@ -64,11 +67,11 @@ export function EconomyProgramApplicationBasicInfoParagraph({
   )
   const [educationFormat, setEducationFormat] = useGeneralApplicationOverlayKv<string>(
     'application.economy.basicInfo.educationFormat',
-    'online'
+    isTemplateManagementScreen ? '' : 'online'
   )
   const [educationPlace, setEducationPlace] = useGeneralApplicationOverlayKv<string>(
     'application.economy.basicInfo.educationPlace',
-    'inside'
+    isTemplateManagementScreen ? '' : 'inside'
   )
   const [educationPlaceDetail, setEducationPlaceDetail] = useGeneralApplicationOverlayKv<string>(
     'application.economy.basicInfo.educationPlaceDetail',
@@ -171,7 +174,7 @@ export function EconomyProgramApplicationBasicInfoParagraph({
           edit={
             <CmsSelect
               inputSize="small"
-              width={140}
+              width={isTemplateManagementScreen ? 120 : 140}
               withAllOption={false}
               placeholder="학년 선택"
               value={applicationGrade === '' ? undefined : applicationGrade}
@@ -238,7 +241,7 @@ export function EconomyProgramApplicationBasicInfoParagraph({
           edit={
             <CmsRadioGroup
               size="medium"
-              value={educationFormat}
+              value={educationFormat === '' ? undefined : educationFormat}
               onChange={event => setEducationFormat(event.target.value)}
               style={inlineChoiceStyle}
             >
@@ -260,11 +263,17 @@ export function EconomyProgramApplicationBasicInfoParagraph({
           edit={
             <div
               className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
-              style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%' }}
+              style={{
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                // 시안 간격 16 = gap 4 + 구분선 좌우 margin 12
+                gap: isTemplateManagementScreen ? 4 : 8,
+                width: '100%',
+              }}
             >
               <CmsRadioGroup
                 size="medium"
-                value={educationPlace}
+                value={educationPlace === '' ? undefined : educationPlace}
                 onChange={event => setEducationPlace(event.target.value)}
                 style={inlineChoiceStyle}
               >
@@ -302,7 +311,7 @@ export function EconomyProgramApplicationBasicInfoParagraph({
               inputSize="small"
               rows={1}
               expandableFromSingleRow
-              placeholder="신청 사유를 입력해 주세요."
+              placeholder="신청 사유를 입력해 주세요"
               width="100%"
               value={applicationReason}
               onChange={e => setApplicationReason(e.target.value)}
@@ -321,7 +330,7 @@ export function EconomyProgramApplicationBasicInfoParagraph({
               inputSize="small"
               rows={1}
               expandableFromSingleRow
-              placeholder="기타 요청사항을 입력해 주세요."
+              placeholder="기타 요청사항을 입력해 주세요"
               width="100%"
               value={otherRequests}
               onChange={e => setOtherRequests(e.target.value)}

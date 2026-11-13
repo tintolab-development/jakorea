@@ -26,6 +26,9 @@
 
 .tabBar {
   flex: 0 0 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
   padding: var(--spacing-12) var(--spacing-16) var(--spacing-16);
   border-bottom: 1px solid var(--color-border-default);
   background: var(--color-neutral-cool-50);

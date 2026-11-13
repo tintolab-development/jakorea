@@ -15,6 +15,7 @@ import {
   isSettingsConsentWriteKey,
   SETTINGS_PORTRAIT_CONSENT_WRITE_KEY,
 } from '@/features/mypage/settings/lib/settings-consent-key'
+import { RECEIPT_PRE_CONSENT_WRITE_KEY } from '@/features/mypage/instructor-apply/consent/catalog'
 import { MypagePortraitConsentWriteForm } from '@/features/mypage/settings/ui/mypage-portrait-consent-write-form'
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
 import { useListConsentOnWriteEnter } from '@/features/mypage/settings/hooks/use-list-consent-on-write-enter'
@@ -29,6 +30,8 @@ type PortraitGuardianRouteState = {
   guardianVerificationToken?: string
   portraitGuardian?: { guardianVerificationToken?: string }
   programMinorPortrait?: { guardianVerificationToken?: string }
+  /** 만 14세 미만 영수증 사전동의 — 정산 현황 보호자 본인인증 직후 (`useReceiptMinorGuardianGate`) */
+  receiptGuardian?: { guardianVerificationToken?: string; guardianName?: string }
 } | null
 
 export function MypageSettingsConsentPage() {
@@ -52,6 +55,14 @@ export function MypageSettingsConsentPage() {
     routeState?.guardianVerificationToken ??
     routeState?.portraitGuardian?.guardianVerificationToken ??
     routeState?.programMinorPortrait?.guardianVerificationToken
+  const receiptGuardianVerificationToken =
+    consentKey === RECEIPT_PRE_CONSENT_WRITE_KEY
+      ? routeState?.receiptGuardian?.guardianVerificationToken
+      : undefined
+  const receiptGuardianSignerName =
+    consentKey === RECEIPT_PRE_CONSENT_WRITE_KEY && receiptGuardianVerificationToken
+      ? routeState?.receiptGuardian?.guardianName
+      : undefined
   const [titleAside, setTitleAside] = useState<ReactNode>(null)
   useListConsentOnWriteEnter(consentKey, isValidKey && !isView)
 
@@ -114,6 +125,8 @@ export function MypageSettingsConsentPage() {
           consentKey={consentKey}
           readOnly={isView}
           submitContext="mypageSettings"
+          guardianVerificationToken={receiptGuardianVerificationToken}
+          guardianSignerName={receiptGuardianSignerName}
           onTitleAside={setTitleAside}
           onComplete={handleComplete}
         />

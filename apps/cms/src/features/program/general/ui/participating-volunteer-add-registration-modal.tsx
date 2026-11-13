@@ -136,7 +136,7 @@ function ParticipatingVolunteerAddRegistrationModalBody({
       hideBasicInfoSection: hideBasicInfoSection ?? false,
     })
     if (!built.ok) {
-      // 필수 항목 미입력은 공통 「필수 항목 입력 안내」 모달로 통일. 길이 등 형식 오류만 개별 문구.
+      // 필수 항목 미입력은 공통 「필수 항목 미입력 안내」 모달로 통일. 길이 등 형식 오류만 개별 문구.
       showAlert(
         built.kind === 'required'
           ? {

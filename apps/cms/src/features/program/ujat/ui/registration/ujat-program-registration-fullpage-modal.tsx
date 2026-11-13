@@ -23,7 +23,10 @@ import {
 import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/use-ujat-program-registration-flow'
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
 import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
-import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
+import {
+  HideParagraphSelectionChromeContext,
+  LockParagraphHeadingContext,
+} from '@/features/template/context/paragraph-selection-chrome-context'
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { hasPendingRegistrationFormApplyFailures } from '@/features/program/general/lib/apply-registration-forms-after-create'
@@ -406,7 +409,10 @@ function UjatProgramRegistrationFullpageModalInner({
             key={`${flow.activeStep}::${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
             value
           >
-            {flow.panels.leftContent}
+            {/* 등록폼은 템플릿 편집이 아닌 작성 — 단락 제목·설명 고정, 빈 설명 숨김 */}
+            <LockParagraphHeadingContext.Provider value={flow.phase === 'program'}>
+              {flow.panels.leftContent}
+            </LockParagraphHeadingContext.Provider>
           </HideParagraphSelectionChromeContext.Provider>
         }
         rightNavigation={flow.phase === 'application' ? flow.panels.rightNavigation : null}

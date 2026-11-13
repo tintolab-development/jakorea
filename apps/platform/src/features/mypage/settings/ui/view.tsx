@@ -204,7 +204,7 @@ export function SettingsView({
             rows={[
               { label: '이름', value: guardian.name },
               { label: '휴대폰 번호', value: guardian.phone },
-              { label: '가입자의 관계', value: guardian.relationship },
+              { label: '가입자와의 관계', value: guardian.relationship },
             ]}
           />
         </section>

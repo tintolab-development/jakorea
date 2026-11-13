@@ -56,3 +56,13 @@
   line-height: 150%;
   text-align: center;
 }
+
+/* 템플릿 관리 봉사자 신청 폼 시안(12875:514060) — 캘린더 ↔ 안내 박스 16, 상단 ↔ 요약 표 16 */
+.volunteer-interview-applicant-schedule.volunteer-interview-applicant-schedule--template-spec {
+  gap: 16px;
+}
+
+.volunteer-interview-applicant-schedule--template-spec
+  .program-application-form-instructor__available-schedule-top {
+  gap: 16px;
+}

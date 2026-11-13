@@ -1,4 +1,8 @@
-export type MemberGuardianVerificationPurpose = 'PORTRAIT_RIGHTS' | 'PROGRAM_APPLICATION'
+export type MemberGuardianVerificationPurpose =
+  | 'PORTRAIT_RIGHTS'
+  | 'PROGRAM_APPLICATION'
+  /** 만 14세 미만 영수증 사전동의 — programId 전송 금지(서버 400 RECEIPT_GUARDIAN_PROGRAM_TARGET_NOT_ALLOWED) */
+  | 'RECEIPT_PRE_CONSENT'
 
 export type MemberGuardianVerificationStatus =
   | 'PENDING'

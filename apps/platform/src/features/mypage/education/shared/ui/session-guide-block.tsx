@@ -7,11 +7,15 @@ type EducationSessionGuideBlockProps = {
   statusLabel?: string
   statusTone?: 'submitted' | 'unsubmitted'
   message: string
+  /** 비활성 안내(예: 진행 예정 강의보고서)는 Figma에서 neutral-cool-500 */
+  messageColor?: 'black' | 'neutral-cool-500'
   description?: string
   actions?: ReactNode
   children?: ReactNode
   /** PC 미만에서 문구·버튼을 세로로 쌓고 버튼을 꽉 채움 (opt-in, 기본 off) */
   mobileStack?: boolean
+  /** 화면별 보정(예: UJAT 문서 칸 radius 12) */
+  className?: string
 }
 
 export function EducationSessionGuideBlock({
@@ -19,16 +23,19 @@ export function EducationSessionGuideBlock({
   statusLabel,
   statusTone,
   message,
+  messageColor = 'black',
   description,
   actions,
   children,
   mobileStack = false,
+  className,
 }: EducationSessionGuideBlockProps) {
   const blockClassName = [
     styles.block,
     variant === 'submitted' ? styles.submitted : undefined,
     variant === 'feedback' ? styles.feedback : undefined,
     mobileStack ? styles.mobileStack : undefined,
+    className,
   ]
     .filter(Boolean)
     .join(' ')
@@ -48,7 +55,7 @@ export function EducationSessionGuideBlock({
                 {statusLabel}
               </PFText>
             ) : null}
-            <PFText as="span" typo="hl-sm" color="black" className={styles.message}>
+            <PFText as="span" typo="hl-sm" color={messageColor} className={styles.message}>
               {message}
             </PFText>
           </p>

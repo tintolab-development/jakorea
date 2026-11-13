@@ -52,6 +52,16 @@
 
 .title {
   margin: 0;
+  word-break: keep-all;
+}
+
+@media (--bp-pc-up) {
+  .title {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 140%;
+    letter-spacing: -0.48px;
+  }
 }
 
 .meta {
@@ -81,6 +91,14 @@
 
 .content {
   overflow: visible;
+}
+
+/* Figma PC 본문: 20px / Medium / 170% */
+@media (--bp-pc-up) {
+  .content :global(.rich-text-content) {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
 }
 
 .footerNav {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Form, Space } from 'antd'
+import { Form } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
@@ -7,7 +7,6 @@ import { individualAffiliationGradeSelectOptions } from '@/features/user/detail/
 import {
   AddressSearch,
   CmsButton,
-  CmsCheckbox,
   CmsInput,
   CmsPhoneInput,
   CmsRadioGroup,
@@ -65,7 +64,8 @@ export interface AddUserIndividualFormValues {
   /** 신규 등록은 미선택(undefined)으로 시작 — 남성으로 추정하지 않는다. */
   gender: GenderValue | undefined
   birthDate: string
-  schoolEnrollmentStatus: SchoolEnrollmentStatus
+  /** 신규 등록은 미선택(undefined)으로 시작 — 「재학 중」·「해당 없음」 모두 미선택 */
+  schoolEnrollmentStatus: SchoolEnrollmentStatus | undefined
   schoolName: string
   grade: string
   schoolProvider?: string
@@ -138,7 +138,13 @@ function ConsentDocumentFieldEdit({
         {value === 'agree' ? '동의' : '미동의'}
       </span>
       <DetailInfoForm.InputsSeparator />
-      <CmsButton variant="secondary" size="small" type="button" onClick={onWrite}>
+      <CmsButton
+        variant="secondary"
+        size="small"
+        type="button"
+        className="add-user-individual__consent-write-btn"
+        onClick={onWrite}
+      >
         동의서 작성
       </CmsButton>
     </span>
@@ -162,7 +168,7 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   name: '',
   gender: undefined,
   birthDate: '',
-  schoolEnrollmentStatus: 'enrolled',
+  schoolEnrollmentStatus: undefined,
   schoolName: '',
   grade: '',
   affiliationOrganization: '',
@@ -224,6 +230,13 @@ export function collectMemberRegisterValidation(values: AddUserIndividualFormVal
     formatMessages.push('만 14세 미만 회원은 관리자가 직접 등록할 수 없습니다.')
   }
 
+  if (
+    values.schoolEnrollmentStatus !== 'enrolled' &&
+    values.schoolEnrollmentStatus !== 'not_enrolled'
+  ) {
+    missingRequired = true
+  }
+
   if (values.schoolEnrollmentStatus === 'enrolled') {
     if (!values.schoolName?.trim()) {
       missingRequired = true
@@ -277,10 +290,11 @@ export function AddUserIndividual({
   const address = Form.useWatch('address', form) ?? ''
   const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
-  const affiliationNone = Form.useWatch('affiliationNone', form) === true
-  const schoolEnrollmentStatus =
-    Form.useWatch('schoolEnrollmentStatus', form) ?? INITIAL_VALUES.schoolEnrollmentStatus
+  const schoolEnrollmentStatus = Form.useWatch('schoolEnrollmentStatus', form) as
+    | SchoolEnrollmentStatus
+    | undefined
   const isEnrolled = schoolEnrollmentStatus === 'enrolled'
+  const isEnrollmentUnselected = schoolEnrollmentStatus == null
 
   const activeConsentEntry =
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
@@ -342,9 +356,7 @@ export function AddUserIndividual({
     const enrolled = values.schoolEnrollmentStatus === 'enrolled'
     const affiliation = enrolled
       ? values.schoolName.trim()
-      : values.affiliationNone
-        ? undefined
-        : values.affiliationOrganization.trim() || undefined
+      : values.affiliationOrganization.trim() || undefined
 
     const request: CreateUserRequest = {
       email: values.email.trim(),
@@ -450,6 +462,7 @@ export function AddUserIndividual({
   }
 
   useEffect(() => {
+    if (schoolEnrollmentStatus == null) return
     if (schoolEnrollmentStatus === 'not_enrolled') {
       form.setFieldsValue({
         schoolName: '',
@@ -640,11 +653,8 @@ export function AddUserIndividual({
                           placeholder="소속 기관명"
                           inputSize="small"
                           width="100%"
-                          disabled={affiliationNone}
+                          disabled={isEnrollmentUnselected}
                         />
-                      </Form.Item>
-                      <Form.Item name="affiliationNone" valuePropName="checked" noStyle>
-                        <CmsCheckbox checkboxSize="medium">소속 없음</CmsCheckbox>
                       </Form.Item>
                     </div>
                   )
@@ -660,7 +670,7 @@ export function AddUserIndividual({
                 labelWidth={FIELD_LABEL_WIDTH}
                 view="-"
                 edit={
-                  <Space.Compact style={{ width: '100%' }}>
+                  <div className="detail-info-form-inputs-wrapper-no-gap add-user-individual__address-row">
                     <Form.Item name="address" noStyle>
                       <AddressSearch
                         inputSize="small"
@@ -674,7 +684,7 @@ export function AddUserIndividual({
                     <Form.Item name="detailAddress" noStyle>
                       <CmsInput placeholder="상세 주소" inputSize="small" width={ADDRESS_INPUT_WIDTH} />
                     </Form.Item>
-                  </Space.Compact>
+                  </div>
                 }
               />
             </DetailInfoForm.Row>
@@ -819,6 +829,9 @@ export function AddUserIndividual({
                           }
                           onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                         />
+                      </>
+                    }
+                  />
                   <DetailInfoForm.Field
                     label="행정정보 공동이용 동의서"
                     labelWidth={FIELD_LABEL_WIDTH}
@@ -833,9 +846,6 @@ export function AddUserIndividual({
                           }
                           onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                         />
-                      </>
-                    }
-                  />
                       </>
                     }
                   />

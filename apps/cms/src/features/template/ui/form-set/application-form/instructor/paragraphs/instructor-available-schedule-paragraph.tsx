@@ -20,6 +20,7 @@ import {
   updateGeneralApplicationOverlayKey,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 const EMPTY_SCHEDULE_SLOTS: readonly InstructorAvailableScheduleSlot[] = []
 
@@ -84,6 +85,7 @@ function InstructorAvailableScheduleTemplatePlaceholder({
 }: {
   summaryFieldLabel?: string
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const summaryHint = (
     <div className="program-application-form-instructor__field-summary-wrap">
       <ProgramApplicationScheduleSummaryHintText />
@@ -91,7 +93,16 @@ function InstructorAvailableScheduleTemplatePlaceholder({
   )
 
   return (
-    <div className="program-application-form-instructor__available-schedule">
+    <div
+      className={[
+        'program-application-form-instructor__available-schedule',
+        // 템플릿 관리 시안(12875:514537) — 안내 박스 ↔ 요약 표 16
+        isTemplateManagementScreen &&
+          'program-application-form-instructor__available-schedule--template-spec',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="program-application-schedule-template-placeholder">
         <ProgramApplicationScheduleTemplateHintParagraph
           hintText={PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT}

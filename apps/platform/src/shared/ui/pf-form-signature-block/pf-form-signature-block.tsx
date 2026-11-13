@@ -26,12 +26,20 @@ export const PFFormSignatureBlock = forwardRef<
   PFFormSignatureBlockHandle,
   PFFormSignatureBlockProps
 >(function PFFormSignatureBlock(
-  { signerName, signature, onSignatureChange, className, contentAlign = 'center' },
+  {
+    signerName,
+    signature,
+    onSignatureChange,
+    className,
+    contentAlign = 'center',
+    independentSigner = false,
+  },
   ref,
 ) {
   const [signOpen, setSignOpen] = useState(false)
   const [editConfirmOpen, setEditConfirmOpen] = useState(false)
-  const draftSignature = usePFFormDraftSignatureOptional()
+  const providedDraftSignature = usePFFormDraftSignatureOptional()
+  const draftSignature = independentSigner ? null : providedDraftSignature
   /** 제목 행 전자서명 Provider — 본문 칸에서는 서명 후 수정 불가(제목에서만 수정) */
   const bodyEditLocked = draftSignature != null
   const storedSignature = useMemo(() => normalizeFormSignatureValue(signature), [signature])

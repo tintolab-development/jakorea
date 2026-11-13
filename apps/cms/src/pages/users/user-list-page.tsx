@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
-import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
@@ -13,7 +12,7 @@ import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { searchWithUpdatesDiffersFromLocation } from '@/shared/lib/search-params-diff'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { UserList } from '@/features/user/shared/ui/user-list'
+import { UserList, buildUserListExcelColumns } from '@/features/user/shared/ui/user-list'
 import {
   UserDetailFullPageModal,
   USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
@@ -382,15 +381,10 @@ export function UserListPage() {
     [resolvedMemberListKind]
   )
 
-  const userExcelColumns = useMemo<
-    ColumnsType<{ id: string; name: string; email: string; phone: string }>
-  >(
-    () => [
-      { title: '이름', dataIndex: 'name', key: 'name' },
-      { title: '이메일', dataIndex: 'email', key: 'email' },
-      { title: '전화번호', dataIndex: 'phone', key: 'phone' },
-    ],
-    []
+  /** 엑셀 — 탭별 화면 테이블 열 구성 그대로 (목록 마스킹 유지) */
+  const userExcelColumns = useMemo(
+    () => buildUserListExcelColumns(resolvedMemberListKind),
+    [resolvedMemberListKind]
   )
 
   const selectedUsersForExcel = useMemo(
@@ -398,16 +392,7 @@ export function UserListPage() {
     [listUsers, selectedRowKeys, selectedRowsSnapshot]
   )
 
-  const userExcelData = useMemo(
-    () =>
-      selectedUsersForExcel.map(user => ({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone ?? '',
-      })),
-    [selectedUsersForExcel]
-  )
+  const userExcelData = selectedUsersForExcel
 
   /**
    * URL에서 id가 빠지면(뒤로가기 등) 풀페이지·드로어를 같은 페인트 전에 닫는다.
@@ -1276,6 +1261,9 @@ export function UserListPage() {
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
         bordered={false}
+        className={
+          resolvedMemberListKind === 'institutions' ? 'user-list-page--institutions' : undefined
+        }
         toolbarAdminAction={isAdminMemberList ? 'adminAccountManage' : 'write'}
         fields={userListFilterFields}
         filters={
@@ -1462,6 +1450,9 @@ export function UserListPage() {
           requiredConfirmInput={memberDeleteGuide.requiredConfirmInput}
           confirmInputPlaceholder={memberDeleteGuide.confirmInputPlaceholder}
           confirmLoading={deleteLoading}
+          className={
+            resolvedMemberListKind === 'institutions' ? 'delete-guide-modal--school' : undefined
+          }
         />
       )}
 

@@ -109,6 +109,7 @@ import {
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { CompanySchoolInstructorAvailableScheduleInfo } from '@/features/program/1c-1s/ui/applicant-detail/instructor-available-schedule-info'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
 export type ApplicantType =
@@ -1860,6 +1861,9 @@ export function ApplicantsDetailContents({
             }}
             copyVariant={isGeneralOrganizationInstructorDetail ? 'general-organization' : 'default'}
           />
+          {isCompanySchoolProgram(program ?? null) ? (
+            <CompanySchoolInstructorAvailableScheduleInfo instructor={d} />
+          ) : null}
           <ApplicantInstructorResume
             instructor={d}
             // 일반(기관형) 시안 01(1141:243619)에는 「JA Korea 활동 경험」 섹션이 없다

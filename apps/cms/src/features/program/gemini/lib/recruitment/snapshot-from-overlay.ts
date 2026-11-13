@@ -204,7 +204,7 @@ export function listGeminiRecruitmentInstitutionMissingFields(
     missing.push({ key: keys.applicationPeriod, label: '기관 모집 기간' })
   }
   if (!skipPeriods && !(snapshot.trainingRequestPeriodStart && snapshot.trainingRequestPeriodEnd)) {
-    missing.push({ key: keys.trainingRequestPeriod, label: '연수 요청 가능기간' })
+    missing.push({ key: keys.trainingRequestPeriod, label: '연수 요청 가능 기간' })
   }
   if ((snapshot.minStudentCount ?? 0) < 1) {
     missing.push({ key: keys.minStudentCount, label: '최소 수강 인원' })

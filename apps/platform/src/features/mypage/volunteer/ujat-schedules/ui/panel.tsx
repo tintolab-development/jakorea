@@ -222,7 +222,7 @@ export function UjatVolunteerSchedulePanel({
                   <PFText as="span" typo="hl-lg" color="black" className={styles.monthLabel}>
                     {group.monthLabel}
                   </PFText>
-                  <PFStateBadge size="small" tone={monthProgress === 'scheduled' ? 'progress' : 'success'}>
+                  <PFStateBadge size="small" tone={monthProgress === 'in_progress' ? 'progress' : 'success'}>
                     {ujatMonthProgressLabel(monthProgress)}
                   </PFStateBadge>
                 </span>

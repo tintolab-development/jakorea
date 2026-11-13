@@ -19,7 +19,6 @@ import {
   buildTemplateConfig,
 } from '@/features/template/lib/build-template-config'
 import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
-import { useFormTemplateDeleteAction } from '@/features/template/hooks/use-form-template-delete-action'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
 import { TemplateTable } from '@/features/template/ui/template-management/template-table'
@@ -180,16 +179,6 @@ function TemplateFormTabContent() {
     [orderedLeftContentConfig]
   )
 
-  const {
-    showDeleteButton,
-    deleteLoading,
-    requestDelete,
-    deleteConfirmModal,
-  } = useFormTemplateDeleteAction({
-    templateRow: selectedTemplate,
-    onDeleted: handleCloseTemplatePreview,
-  })
-
   const genericModalState = useMemo(
     () => ({
       orderedLeftContentConfig,
@@ -299,20 +288,14 @@ function TemplateFormTabContent() {
 
   if (isCrimeConsentDetail) {
     return (
-      <>
-        {deleteConfirmModal}
-        <CrimeRecordConsentDocumentFullpageModal
-          open
-          onClose={handleCloseTemplatePreview}
-        />
-      </>
+      <CrimeRecordConsentDocumentFullpageModal open onClose={handleCloseTemplatePreview} />
     )
   }
 
   if (agreementWritingFormConfig != null) {
     return (
       <>
-        {deleteConfirmModal}
+        {/* 사용자 생성 양식도 편집기 삭제 미제공 (QA 261113 #73) */}
         <AgreementWritingFormShell
           {...agreementWritingFormConfig}
           templateCode={params.id?.trim()}
@@ -324,9 +307,6 @@ function TemplateFormTabContent() {
           forceUserEditable={forceUserEditable}
           onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
           onClose={handleCloseTemplatePreview}
-          showDeleteButton={showDeleteButton}
-          onDelete={requestDelete}
-          deleteLoading={deleteLoading}
         />
       </>
     )
@@ -334,7 +314,6 @@ function TemplateFormTabContent() {
 
   return (
     <>
-      {deleteConfirmModal}
       <div className="template-form-tab__content">
         {isFormsApiUnavailable ? (
           <p className="template-form-tab__catalog-notice" role="status">
@@ -355,6 +334,7 @@ function TemplateFormTabContent() {
               key={section.key}
               title={section.title}
               description={section.description}
+              totalCount={section.rows.length}
             >
               <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
             </TemplateListCard>
@@ -366,9 +346,6 @@ function TemplateFormTabContent() {
         open={isPreviewOpen && selectedTemplate != null}
         onClose={handleCloseTemplatePreview}
         title={resolvePreviewHeaderTitle(registryEntry, selectedTemplate?.templateName)}
-        showDeleteButton={showDeleteButton}
-        onDelete={requestDelete}
-        deleteLoading={deleteLoading}
         registryEntry={registryEntry}
         templateId={templateId}
         templateVersionId={selectedTemplate?.latestVersionId}

@@ -1,10 +1,14 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { fileDownloadHistoryFilterFields } from '@/features/download/model/file-download-history-filter-fields'
 import { fileDownloadHistoryTablePageConfig } from '@/features/download/model/file-download-history-table.config'
-import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import {
+  exportFileDownloadLogs,
+  getLogsApiErrorMessage,
+} from '@/features/logs/api/admin-logs-service'
+import { fileDownloadLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { useFileDownloadHistoryQuery } from '@/features/logs/hooks/use-file-download-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
@@ -15,6 +19,7 @@ import {
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { useCmsAlert } from '@/shared/ui'
 import type { DownloadLog } from '@/types/download-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -108,6 +113,24 @@ export default function FileDownloadHistoryPage() {
     [totalElements]
   )
 
+  // 엑셀: 화면에 불러온 페이지가 아니라 조회 조건 전체 — 서버 export (다른 로그 3종과 같은 방식)
+  const { showAlert } = useCmsAlert()
+  const [isExporting, setIsExporting] = useState(false)
+  const exportExcel = useCallback(async () => {
+    if (!remoteEnabled || isExporting) return
+    setIsExporting(true)
+    try {
+      await exportFileDownloadLogs(fileDownloadLogsParamsFromSearchParams(searchParams))
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getLogsApiErrorMessage(error, '파일 다운로드 이력 다운로드에 실패했습니다.'),
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }, [isExporting, remoteEnabled, searchParams, showAlert])
+
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
@@ -123,11 +146,8 @@ export default function FileDownloadHistoryPage() {
       title="파일 다운로드 이력"
       description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
-      excelExport={{
-        accessLog: { downloadKind: 'FILE_DOWNLOAD_LOG_EXPORT', containedPiiTypes: ['NAME'] },
-        columns,
-        data: tableData,
-      }}
+      onExcelDownload={exportExcel}
+      excelDownloadLoading={isExporting}
     >
       {!remoteEnabled ? (
         <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />

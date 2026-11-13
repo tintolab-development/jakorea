@@ -39,6 +39,16 @@ const tanstackColumns: ColumnDef<AdminInquiryRow>[] = [{ accessorKey: 'id', id: 
 
 const searchSyncRules: readonly TableSearchParamRule<AdminInquiryPendingFilters>[] = [
   {
+    /* 프로그램명을 바꾸거나 지우면 대시보드에서 넘어온 프로그램 ID 조건도 함께 푼다(inq_prog 갱신 전에 비교). */
+    kind: 'apply',
+    apply: (nextParams, f) => {
+      if (!nextParams.has('inq_pid')) return
+      if ((nextParams.get('inq_prog') ?? '').trim() !== f.programName.trim()) {
+        nextParams.delete('inq_pid')
+      }
+    },
+  },
+  {
     kind: 'param',
     filterKey: 'status',
     paramKey: 'inq_st',

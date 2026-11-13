@@ -22,13 +22,23 @@ export function resolveInstitutionCancelApprovalNotificationResult(response: {
 }
 
 export function resolveInstitutionCancelApprovalNotifyVariant(
-  row: ApplicantSchoolRow
+  row: ApplicantSchoolRow,
+  now: Date = new Date()
 ): InstitutionCancelApprovalNotifyVariant {
   if (row.approvalNotifyTiming === 'immediate') {
     return 'alreadySent'
   }
   if (row.approvalNotifyTiming === 'on_announcement' || row.approvalNotifyTiming === 'manual') {
     return 'pendingNotification'
+  }
+
+  // 서버 `resultNotificationSentAt`은 예약 발송이면 미래 scheduledAt — 아직 발송 전이면 [12-1] 발송 전 문구
+  const sentAtIso = row.approvalNotificationSentAtIso?.trim()
+  if (sentAtIso) {
+    const sentAt = new Date(sentAtIso)
+    if (!Number.isNaN(sentAt.getTime())) {
+      return sentAt.getTime() > now.getTime() ? 'pendingNotification' : 'alreadySent'
+    }
   }
 
   if (row.approvalNotificationSentAt?.trim()) {

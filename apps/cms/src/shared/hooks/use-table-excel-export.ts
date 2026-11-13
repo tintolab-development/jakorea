@@ -6,7 +6,7 @@
  * `useCmsAlert` 컨텍스트 의존으로 레이아웃 전체를 깨지 않는다.
  *
  * `selectedRowKeys`를 넘기면(빈 배열 포함) 선택 필수:
- * 미선택·필터 교집합 없음 → 다운로드하지 않고 항목 선택 안내.
+ * 미선택·필터 교집합 없음 → 다운로드하지 않고 항목 미선택 안내.
  */
 
 import { useCallback, useState, type Key } from 'react'

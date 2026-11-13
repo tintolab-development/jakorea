@@ -72,6 +72,8 @@ export interface ProgramListProps {
   data: Program[]
   loading?: boolean
   headerTitle?: string
+  /** true면 목록 상단 제목을 숨기고 「총 N건」·안내만 노출(일반 전체 탭 시안). 엑셀 파일명은 headerTitle 유지 */
+  hideHeaderTitle?: boolean
   onView: (program: Program) => void
   onBulkDelete?: (programs: Program[]) => void
   onSelectionChange?: (selectedKeys: React.Key[]) => void
@@ -107,6 +109,7 @@ export function ProgramList({
   loading,
   onView,
   headerTitle,
+  hideHeaderTitle = false,
   onBulkDelete,
   onSelectionChange,
   selectedRowKeys: externalSelectedRowKeys,
@@ -325,6 +328,7 @@ export function ProgramList({
           onSearch={handleSearch}
           bordered={false}
           title={headerTitle}
+          showTitle={!hideHeaderTitle}
           description={headerDescription}
           actions={children}
           actionsAfterExcel={toolbarActionsAfterExcel}
@@ -390,7 +394,7 @@ export function ProgramList({
               toolbar={
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">
-                    <span className="table-title">{headerTitle}</span>
+                    {hideHeaderTitle ? null : <span className="table-title">{headerTitle}</span>}
                     <span className="table-description">
                       {headerDescription}
                     </span>

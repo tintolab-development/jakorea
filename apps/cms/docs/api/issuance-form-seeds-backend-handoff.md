@@ -44,7 +44,7 @@
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
-| `document-payment-order-issue` | 지급조서(발급용) | A | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) | 7 |
+| `document-payment-order-issue` | 지급조서(발급용) | A | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) | 8 |
 | `document-payment-order-pre-consent` | 지급조서 사전 동의서 | A | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) | 14 |
 | `document-1` | 지출증빙서류(필수폼) | E | [document-1.json](./form-template-seeds/document-1.json) | 0 |
 | `document-2` | 휴가 인증서 | D | [document-2.json](./form-template-seeds/document-2.json) | 0 |
@@ -75,10 +75,10 @@
 | `ujat-edu-journal-explanation-text` | single_item | agreement_explanation_text |  |
 | `ujat-edu-journal-volunteer-info` | single_item | user_info | 봉사자 정보 |
 | `ujat-edu-journal-education-info` | single_item | ujat_journal_education_info | 교육 정보 |
-| `ujat-edu-journal-session-1` | single_item | session_plan_short_essay | 1차시 교육 일지 |
-| `ujat-edu-journal-session-2` | single_item | session_plan_short_essay | 2차시 교육 일지 |
-| `ujat-edu-journal-session-3` | single_item | session_plan_short_essay | 3차시 교육 일지 |
-| `ujat-edu-journal-session-4` | single_item | session_plan_short_essay | 4차시 교육 일지 |
+| `ujat-edu-journal-session-1` | single_item | session_plan_short_essay | 1차시 교육 내용 및 역할 |
+| `ujat-edu-journal-session-2` | single_item | session_plan_short_essay | 2차시 교육 내용 및 역할 |
+| `ujat-edu-journal-session-3` | single_item | session_plan_short_essay | 3차시 교육 내용 및 역할 |
+| `ujat-edu-journal-session-4` | single_item | session_plan_short_essay | 4차시 교육 내용 및 역할 |
 | `ujat-edu-journal-content-feedback` | single_item | short_essay | 교육 내용 피드백 |
 | `ujat-edu-journal-education-photos` | single_item | file_attachment | 교육 사진 |
 
@@ -108,9 +108,10 @@
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
 | `payment-statement-seed-title` | description | survey_title_with_period |  |
-| `payment-statement-seed-table-basic` | single_item | horizontal_table | 지급조서 |
-| `payment-statement-seed-table-calc-info` | single_item | horizontal_table | 강사비 산출 정보 |
-| `payment-statement-seed-table-calc-lines` | single_item | horizontal_table | 강사비 산출 내역 |
+| `payment-statement-seed-table-basic` | single_item | horizontal_table | 기본 정보 |
+| `payment-statement-seed-table-calc-info` | single_item | horizontal_table | 강사비 산출 내역 |
+| `payment-statement-seed-table-transport` | single_item | horizontal_table | 교통비 신청 |
+| `payment-statement-seed-table-accommodation` | single_item | horizontal_table | 숙박비 신청 |
 | `payment-statement-seed-table-work-log` | single_item | horizontal_table | 근무일지 |
 | `payment-statement-seed-closing-date` | description | closing |  |
 | `payment-statement-seed-closing-signature` | description | closing |  |

@@ -135,6 +135,14 @@
   word-break: break-word;
 }
 
+/* Figma PC 본문: 20px / Medium / 170% */
+@media (--bp-pc-up) {
+  .content :global(.rich-text-content) {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
+}
+
 .content :global(.rich-text-content > *) {
   max-width: 100%;
 }

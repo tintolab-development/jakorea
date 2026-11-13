@@ -814,7 +814,7 @@ export function InstructorProfileFormBody({
                 </DetailInfoForm.Row>
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="마케팅 제공 동의"
+                    label="마케팅 정보 수신 동의"
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={
@@ -825,7 +825,7 @@ export function InstructorProfileFormBody({
                     }
                   />
                   <DetailInfoForm.Field
-                    label="초상권 수집·이용 동의"
+                    label="초상권 수집·이용 동의서"
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={

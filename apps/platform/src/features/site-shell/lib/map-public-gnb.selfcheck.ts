@@ -46,6 +46,25 @@ const designLabelOverlay = mapPublicGnb([
     ],
   },
 ])
+const careerSpacingOverlay = mapPublicGnb([
+  {
+    groupCode: 'EDUCATION',
+    groupName: '교육 소개',
+    menus: [
+      { menuCode: 'EDU_CAREER', displayName: '진로취업' },
+      { menuCode: 'EDU_ECONOMY', displayName: '경제금융' },
+    ],
+  },
+])
+assert.equal(
+  careerSpacingOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_CAREER')?.label,
+  '진로·취업',
+)
+assert.equal(
+  careerSpacingOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_ECONOMY')?.label,
+  '경제·금융',
+)
+
 assert.equal(
   designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_ENTREPRENEURSHIP')
     ?.label,
@@ -54,7 +73,7 @@ assert.equal(
 assert.equal(
   designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_DIGITAL_LITERACY')
     ?.label,
-  '디지털리터러시'
+  '디지털 리터러시'
 )
 assert.equal(
   designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_MATERIAL')?.label,
@@ -97,9 +116,9 @@ const mobileMenuDesignOverlay = mapPublicGnb([
 assert.equal(mobileMenuDesignOverlay?.groups[0]?.label, 'JA Korea')
 assert.deepEqual(
   mobileMenuDesignOverlay?.groups[0]?.children.map(item => item.menuCode),
-  ['JA_ORGANIZATION', 'JA_HISTORY', 'JA_NOTICE'],
+  ['JA_ORGANIZATION', 'JA_HISTORY'],
 )
-assert.equal(mobileMenuDesignOverlay?.groups[1]?.label, '임팩트 스토리')
+assert.equal(mobileMenuDesignOverlay?.groups[1]?.label, '임팩트')
 const impactGroup = mobileMenuDesignOverlay?.groups.find(g => g.groupCode === 'IMPACT_STORY')
 assert.equal(impactGroup?.children[0]?.label, '임팩트 스토리')
 

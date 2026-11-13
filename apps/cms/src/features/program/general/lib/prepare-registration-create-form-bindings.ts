@@ -23,9 +23,20 @@ import {
   peekActiveUjatRecruitVolunteerOverlayRecord,
 } from '@/features/program/ujat/lib/ujat-registration-rhf-api'
 
-/** 수정하지 않은 신청 양식도 프로그램 전용 COPY로 발행해야 하는 프로그램 유형(GENERAL만). */
-function shouldAlwaysApplyApplicationForms(program: Program): boolean {
-  return resolveProgramOperationalBindingKind(program) === 'GENERAL'
+/**
+ * 수정하지 않은 신청 양식도 프로그램 전용 COPY로 발행해야 하는지.
+ * - GENERAL: 신청 양식 전부
+ * - COMPANY_SCHOOL(1사1교): 강사 신청 양식만 — 탭을 열지 않고 등록해도 포털 강사 신청이
+ *   「신청 양식 미설정」이 되지 않게 한다(QA 2026-11-13 1사1교 #9). 기관 신청 양식은 기존 동작 유지.
+ */
+function shouldAlwaysApplyApplicationForm(
+  program: Program,
+  spec: { formType: string; targetRole?: string }
+): boolean {
+  if (spec.formType !== 'APPLICATION') return false
+  const kind = resolveProgramOperationalBindingKind(program)
+  if (kind === 'GENERAL') return true
+  return kind === 'COMPANY_SCHOOL' && spec.targetRole === 'INSTRUCTOR'
 }
 
 function overlayRecordHasUserValues(record: Record<string, unknown> | null | undefined): boolean {
@@ -68,10 +79,11 @@ export type CompleteRegistrationBindingOptions = {
  * CREATE는 `autoApplyDefaultFormBindings: true`로 카탈로그 기본 양식을 붙이고,
  * 여기서 모은 양식은 `applyRegistrationFormsAfterCreate`가 CREATE 직후 적용한다.
  * 변경이 없는 양식(로컬 초안·overlay·override 없음)은 기본 바인딩을 그대로 쓴다.
- * 단 GENERAL 프로그램의 APPLICATION 양식(개인·기관·강사·봉사자)은 수정 여부와 상관없이 항상 포함한다.
+ * 단 GENERAL 프로그램의 APPLICATION 양식(개인·기관·강사·봉사자)과 1사1교 강사 신청 양식은
+ * 수정 여부와 상관없이 항상 포함한다.
  * BE 자동 적용이 카탈로그 DRAFT 버전(v148 sync)을 그대로 바인딩할 수 있고, 포털 resolver는 PUBLISHED만 읽기 때문에
  * 프로그램 전용 COPY로 발행해 두지 않으면 신청 양식이 "미설정"(APPLICATION_FORM_NOT_CONFIGURED)이 된다.
- * UJAT·1사1교·교육받은 교사는 기존 동작(수정한 양식만)을 유지한다.
+ * UJAT·교육받은 교사·1사1교 기관 신청은 기존 동작(수정한 양식만)을 유지한다.
  */
 export async function prepareRegistrationCreateFormBindings(args: {
   program: Program
@@ -90,7 +102,6 @@ export async function prepareRegistrationCreateFormBindings(args: {
     (args.operationalOverrides ?? []).map(item => [item.templateCode, item])
   )
   const forms: RegistrationFormApplyItem[] = []
-  const alwaysApplyApplicationForms = shouldAlwaysApplyApplicationForms(args.program)
   // 같은 templateCode가 여러 단계에 매핑되면(1사1교: 기관·강사 탭 → recruitment/application-economy)
   // 내용(templateCode 기준 초안·overlay)이 같으므로 한 번만 적용한다. 중복 COPY·바인딩 덮어쓰기 방지.
   const seenTemplateCodes = new Set<string>()
@@ -137,9 +148,9 @@ export async function prepareRegistrationCreateFormBindings(args: {
       ? overlay != null && Object.keys(overlay).length > 0
       : overlayRecordHasUserValues(overlay)
     if (!hasWizardOperationalDraft && !hasOverlay) {
-      // 수정하지 않은 GENERAL 신청 양식: 본문 없이 담아 두면 `applyOne`이 바인딩된 카탈로그 버전 본문을
+      // 수정하지 않은 GENERAL 신청 양식·1사1교 강사 신청 양식: 본문 없이 담아 두면 `applyOne`이 바인딩된 카탈로그 버전 본문을
       // (loadFormTemplateVersionDraftByVersionId → createSeedDraftForOperationalCatalogId 순) 채워 COPY·발행한다.
-      if (alwaysApplyApplicationForms && spec.formType === 'APPLICATION') {
+      if (shouldAlwaysApplyApplicationForm(args.program, spec)) {
         forms.push({ templateCode: spec.templateCode, formType: spec.formType, draft: null })
       }
       continue

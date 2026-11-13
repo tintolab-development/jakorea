@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CmsButton, CmsInput, CmsRadio, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import './register-modal.css'
 
 export type UjatEducationRegionRegisterValues = {
   active: boolean
@@ -45,53 +46,49 @@ export function UjatEducationRegionRegisterModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="UJAT 교육 지역 신규 등록"
+      title="교육 지역 신규 등록"
       width={600}
+      className="ujat-education-region-register-modal"
+      wrapClassName="ujat-education-region-register-modal-wrap"
+      titleBodyGap="none"
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="medium"
+            size="large"
             type="button"
             disabled={!name.trim()}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             등록
           </CmsButton>
         </>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div>
-          <div style={{ marginBottom: 8, fontWeight: 500 }}>사용 여부</div>
-          <CmsRadioGroup
-            size="medium"
-            value={active}
-            onChange={e => setActive(coerceRadioBoolean(e.target.value))}
-          >
-            <CmsRadio size="medium" value={true}>
-              사용
-            </CmsRadio>
-            <CmsRadio size="medium" value={false}>
-              미사용
-            </CmsRadio>
-          </CmsRadioGroup>
-        </div>
-        <div>
-          <div style={{ marginBottom: 8, fontWeight: 500 }}>
-            교육 지역명 <span style={{ color: 'var(--color-red, #c32f4a)' }}>*</span>
-          </div>
-          <CmsInput
-            inputSize="medium"
-            width="100%"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="교육 지역명을 입력해 주세요"
-            maxLength={100}
-          />
-        </div>
+      <div className="ujat-education-region-register-modal__form">
+        <CmsInput
+          label="교육 지역명"
+          required
+          inputSize="large"
+          width="100%"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="교육 지역명을 입력해 주세요"
+          maxLength={100}
+        />
+        <CmsRadioGroup
+          label="사용 여부"
+          required
+          size="large"
+          value={active}
+          onChange={e => setActive(coerceRadioBoolean(e.target.value))}
+        >
+          <CmsRadio value={true}>사용</CmsRadio>
+          <CmsRadio value={false}>미사용</CmsRadio>
+        </CmsRadioGroup>
       </div>
     </ContentModal>
   )

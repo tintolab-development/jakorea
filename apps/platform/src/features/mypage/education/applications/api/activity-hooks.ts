@@ -40,6 +40,7 @@ import {
 } from '../lib/portal-form-list'
 import {
   createApplicationNotice,
+  deleteApplicationNotice,
   createApplicationNoticeComment,
   putApplicationNoticeAttachments,
   putApplicationNoticeInlineImages,
@@ -571,6 +572,46 @@ export function useUpdateApplicationNoticeMutation(
         queryKey: platformQueryKeys.mypage.programApplications.notices(
           applicationType,
           applicationId
+        ),
+        exact: true,
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-attachments',
+          applicationType,
+          applicationId,
+        ],
+      })
+    },
+  })
+}
+
+export function useDeleteApplicationNoticeMutation(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('application scope is required')
+      }
+      await deleteApplicationNotice(applicationType, applicationId, postId)
+    },
+    onSuccess: (_data, postId) => {
+      if (!applicationType || !applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
+          applicationType,
+          applicationId,
+          postId,
+        ),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.notices(
+          applicationType,
+          applicationId,
         ),
         exact: true,
       })

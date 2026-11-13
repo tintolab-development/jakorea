@@ -144,7 +144,11 @@
 }
 
 .impact-story-detail-page__views-icon {
-  font-size: 16px;
+  /* 시안 Icon / Etc / Basic view 20 원본(민트) */
+  display: block;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 }
 
 .impact-story-detail-page__title {
@@ -242,8 +246,9 @@
 
 .impact-story-detail-page__clip {
   display: block;
-  width: 13px;
-  height: 16px;
+  /* 시안 Icon / Etc / Basic file 20 원본(민트) */
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 

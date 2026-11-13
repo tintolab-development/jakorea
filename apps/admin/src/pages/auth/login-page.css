@@ -66,8 +66,9 @@
 }
 
 .login-admin-approval-pending-notice__icon {
-  width: 15.167px;
-  height: 15.167px;
+  /* 시안 Icon / Etc / Error error 20 원본(여백 포함) */
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   aspect-ratio: 1 / 1;
 }

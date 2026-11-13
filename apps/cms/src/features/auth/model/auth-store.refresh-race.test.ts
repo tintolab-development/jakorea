@@ -30,12 +30,14 @@ describe('CMS: periodic Refresh race', () => {
     useAuthStore.setState({
       token: initialAccess, isAuthenticated: true, expiresAt: expiry,
       logout, refreshToken: vi.fn(() => refreshPromise),
+      refreshSession: vi.fn(() => refreshPromise.then(ok => (ok ? 'ok' as const : 'invalid' as const))),
     })
   })
   afterEach(() => {
     useAuthStore.setState({
       token: null, isAuthenticated: false, logout: original.logout,
       refreshToken: original.refreshToken,
+      refreshSession: original.refreshSession,
     })
     localStorage.clear()
   })
@@ -63,6 +65,14 @@ describe('CMS: periodic Refresh race', () => {
     expect(logout).toHaveBeenCalledTimes(1)
   })
 
+  it('a near-expiry Refresh that fails with 5xx/network (transient) does not logout', async () => {
+    useAuthStore.setState({ refreshSession: vi.fn(async () => 'transient' as const) })
+    expect(useAuthStore.getState().checkSessionExpiry()).toBe(false)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(logout).not.toHaveBeenCalled()
+  })
+
   it('a successful near-expiry Refresh never logs out', async () => {
     expect(useAuthStore.getState().checkSessionExpiry()).toBe(false)
     await complete(true)
@@ -88,6 +98,24 @@ describe('CMS: periodic Refresh race', () => {
 
     expect(logout).not.toHaveBeenCalled()
     expect(useAuthStore.getState().token).toBe(replacementAccess)
+  })
+
+  it('a failed checkAuth Refresh logs out locally without a server logout (stored credential may be another tab login)', async () => {
+    const expiresAt = new Date(Date.now() - 10_000).toISOString()
+    localStorage.setItem('auth_expires_at', expiresAt)
+    localStorage.setItem('auth_user', JSON.stringify({ id: 'same-user', isActive: true }))
+    useAuthStore.setState({
+      expiresAt,
+      _isCheckingAuth: false,
+      _checkAuthPromise: null,
+    })
+
+    const pending = useAuthStore.getState().checkAuth()
+    await complete(false)
+    await pending
+
+    expect(logout).toHaveBeenCalledTimes(1)
+    expect(logout).toHaveBeenCalledWith({ skipRemote: true })
   })
 
   it('a delayed successful boot checkAuth may not replace a different login identity', async () => {

@@ -7,14 +7,14 @@ import { CMS_DATA_TABLE_CELL_H40_ACTION_CLASS } from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /**
- * 작성·발급 양식 탭 공통 컬럼 폭 — 등록 양식 시안 기준
- * 템플릿명 666px 고정, 나머지 고정
+ * 작성·발급 양식 탭 공통 컬럼 폭 — 시안 기준 (QA 261113 CSS #1)
+ * 템플릿명 738px(유연), 생성자·최초 생성일·최근 수정일·양식 관리 각 180px
  */
 const TEMPLATE_LIST_COL_WIDTH = {
   no: 80,
-  name: 666,
-  creator: 160,
-  date: 160,
+  name: 738,
+  creator: 180,
+  date: 180,
   action: 180,
 } as const
 
@@ -28,9 +28,11 @@ const TEMPLATE_LIST_SCROLL_X =
 interface TemplateTableProps {
   rows: TemplateRow[]
   onPreview: (row: TemplateRow) => void
+  /** 행 버튼 문구 — 작성 양식 「상세보기」, 발급 양식 「양식 상세보기」(시안 5767:48529) */
+  actionLabel?: string
 }
 
-export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
+export function TemplateTable({ rows, onPreview, actionLabel = '상세보기' }: TemplateTableProps) {
   const columns = useMemo<ColumnsType<TemplateRow>>(
     () => [
       {
@@ -94,13 +96,13 @@ export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
           className: `template-table__col-action ${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS}`,
         }),
         render: (_, row) => (
-          <CmsButton size="medium" variant="default" onClick={() => onPreview(row)}>
-            양식 상세보기
+          <CmsButton size="small" variant="default" onClick={() => onPreview(row)}>
+            {actionLabel}
           </CmsButton>
         ),
       },
     ],
-    [onPreview]
+    [onPreview, actionLabel]
   )
 
   return (

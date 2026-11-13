@@ -54,12 +54,12 @@
 }
 
 .agreement-template-preview-modal__title-pen {
-  width: 24px;
-  height: 25px;
+  /* 시안 Icon / GNB / w28 edit 원본(흐림 40% 포함) */
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.4;
 }
 
 .agreement-template-preview-modal__close {

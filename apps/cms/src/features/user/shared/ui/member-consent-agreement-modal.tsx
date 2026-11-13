@@ -327,7 +327,7 @@ export function MemberConsentAgreementModal({
         <div className="full-page-modal__body">
           <div className="full-page-modal__body-header member-consent-agreement-modal__body-header">
             <p className="full-page-modal__description member-consent-agreement-modal__description">
-              * 동의서는 관리자가 당사자의 서면 동의 확인 후 작성이 필요합니다.
+              ※ 동의서는 관리자가 당사자의 서면 동의 확인 후 작성이 필요합니다.
             </p>
             <div className="full-page-modal__actions member-consent-agreement-modal__actions">
               <CmsButton variant="secondary" size="medium" onClick={onClose}>

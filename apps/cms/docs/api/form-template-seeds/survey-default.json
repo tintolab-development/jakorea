@@ -115,33 +115,35 @@
       {
         "id": "survey-paragraph-score",
         "kind": "single_item",
-        "variant": "multiple_choice",
+        "variant": "scale_type",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "프로그램 신청 계기",
-        "paragraphDescription": "본 프로그램을 신청하신 계기를 선택해 주세요",
+        "paragraphTitle": "오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요?",
+        "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
-        "allowMultiple": true,
         "items": [
           {
-            "id": "multiple-choice-item-1",
-            "label": "text 1"
+            "id": "scale-type-item-1",
+            "label": "전혀 그렇지 않다"
           },
           {
-            "id": "multiple-choice-item-2",
-            "label": "text 2"
+            "id": "scale-type-item-2",
+            "label": "그렇지 않다"
           },
           {
-            "id": "multiple-choice-item-3",
-            "label": "text 3"
+            "id": "scale-type-item-3",
+            "label": "보통이다"
           },
           {
-            "id": "multiple-choice-item-4",
-            "label": "text 4"
+            "id": "scale-type-item-4",
+            "label": "그렇다"
+          },
+          {
+            "id": "scale-type-item-5",
+            "label": "매우 그렇다"
           }
         ],
-        "selectedPreviewSingleId": null,
-        "selectedPreviewMultipleIds": []
+        "selectedPreviewItemId": null
       },
       {
         "id": "survey-paragraph-score-2",
@@ -149,7 +151,7 @@
         "variant": "scale_type",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "프로그램 교육 일정 및 시간이 적절하였나요?",
+        "paragraphTitle": "프로그램 전반적인 프로세스에 대해 명확히 이해했나요?",
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "items": [
@@ -174,172 +176,7 @@
             "label": "매우 그렇다"
           }
         ],
-        "selectedPreviewItemId": "scale-type-item-5"
-      },
-      {
-        "id": "survey-paragraph-score-3",
-        "kind": "single_item",
-        "variant": "scale_type",
-        "answerRequired": true,
-        "requiredMark": true,
-        "paragraphTitle": "교육이 체계적으로 구성되어 있었나요?",
-        "paragraphDescription": "설명 입력",
-        "participatesInTitleNumbering": true,
-        "items": [
-          {
-            "id": "scale-type-item-1",
-            "label": "전혀 그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-2",
-            "label": "그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-3",
-            "label": "보통이다"
-          },
-          {
-            "id": "scale-type-item-4",
-            "label": "그렇다"
-          },
-          {
-            "id": "scale-type-item-5",
-            "label": "매우 그렇다"
-          }
-        ],
-        "selectedPreviewItemId": "scale-type-item-5"
-      },
-      {
-        "id": "survey-paragraph-score-4",
-        "kind": "single_item",
-        "variant": "scale_type",
-        "answerRequired": true,
-        "requiredMark": true,
-        "paragraphTitle": "학생들의 수준을 고려한 프로그램이었나요?",
-        "paragraphDescription": "설명 입력",
-        "participatesInTitleNumbering": true,
-        "items": [
-          {
-            "id": "scale-type-item-1",
-            "label": "전혀 그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-2",
-            "label": "그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-3",
-            "label": "보통이다"
-          },
-          {
-            "id": "scale-type-item-4",
-            "label": "그렇다"
-          },
-          {
-            "id": "scale-type-item-5",
-            "label": "매우 그렇다"
-          }
-        ],
-        "selectedPreviewItemId": "scale-type-item-5"
-      },
-      {
-        "id": "survey-paragraph-score-5",
-        "kind": "single_item",
-        "variant": "scale_type",
-        "answerRequired": true,
-        "requiredMark": true,
-        "paragraphTitle": "청소년 교육에 도움 되었나요?",
-        "paragraphDescription": "설명 입력",
-        "participatesInTitleNumbering": true,
-        "items": [
-          {
-            "id": "scale-type-item-1",
-            "label": "전혀 그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-2",
-            "label": "그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-3",
-            "label": "보통이다"
-          },
-          {
-            "id": "scale-type-item-4",
-            "label": "그렇다"
-          },
-          {
-            "id": "scale-type-item-5",
-            "label": "매우 그렇다"
-          }
-        ],
-        "selectedPreviewItemId": "scale-type-item-5"
-      },
-      {
-        "id": "survey-paragraph-score-6",
-        "kind": "single_item",
-        "variant": "scale_type",
-        "answerRequired": true,
-        "requiredMark": true,
-        "paragraphTitle": "진행 중에 참가자들의 요구와 관심이 반영되었나요?",
-        "paragraphDescription": "설명 입력",
-        "participatesInTitleNumbering": true,
-        "items": [
-          {
-            "id": "scale-type-item-1",
-            "label": "전혀 그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-2",
-            "label": "그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-3",
-            "label": "보통이다"
-          },
-          {
-            "id": "scale-type-item-4",
-            "label": "그렇다"
-          },
-          {
-            "id": "scale-type-item-5",
-            "label": "매우 그렇다"
-          }
-        ],
-        "selectedPreviewItemId": "scale-type-item-5"
-      },
-      {
-        "id": "survey-paragraph-score-7",
-        "kind": "single_item",
-        "variant": "scale_type",
-        "answerRequired": true,
-        "requiredMark": true,
-        "paragraphTitle": "내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요?",
-        "paragraphDescription": "설명 입력",
-        "participatesInTitleNumbering": true,
-        "items": [
-          {
-            "id": "scale-type-item-1",
-            "label": "전혀 그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-2",
-            "label": "그렇지 않다"
-          },
-          {
-            "id": "scale-type-item-3",
-            "label": "보통이다"
-          },
-          {
-            "id": "scale-type-item-4",
-            "label": "그렇다"
-          },
-          {
-            "id": "scale-type-item-5",
-            "label": "매우 그렇다"
-          }
-        ],
-        "selectedPreviewItemId": "scale-type-item-5"
+        "selectedPreviewItemId": null
       },
       {
         "id": "survey-paragraph-subjective",
@@ -347,11 +184,11 @@
         "variant": "short_essay",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요",
-        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
+        "paragraphTitle": "오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요.",
+        "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
-        "itemInputRows": 4,
+        "itemInputRows": 1,
         "items": [
           {
             "id": "survey-short-essay-item-1",
@@ -370,11 +207,11 @@
         "variant": "short_essay",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요",
-        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
+        "paragraphTitle": "기타 의견이 있다면 작성해 주세요.",
+        "paragraphDescription": "교육 워크숍 진행, 강의 내용 등에 대한 기타 의견을 작성해 주세요.",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
-        "itemInputRows": 4,
+        "itemInputRows": 1,
         "items": [
           {
             "id": "survey-short-essay-item-2",
@@ -386,40 +223,6 @@
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
         "maxLength": 1000
-      },
-      {
-        "id": "survey-paragraph-subjective-3",
-        "kind": "single_item",
-        "variant": "short_essay",
-        "answerRequired": true,
-        "requiredMark": true,
-        "paragraphTitle": "현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요",
-        "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
-        "participatesInTitleNumbering": true,
-        "showItemTitle": false,
-        "itemInputRows": 4,
-        "items": [
-          {
-            "id": "survey-short-essay-item-3",
-            "label": "Title 01",
-            "placeholder": "답변을 입력해 주세요",
-            "bodyText": ""
-          }
-        ],
-        "bodyPlaceholder": "답변을 입력해 주세요",
-        "bodyText": "",
-        "maxLength": 1000
-      },
-      {
-        "id": "survey-paragraph-star",
-        "kind": "single_item",
-        "variant": "star_rate",
-        "answerRequired": true,
-        "requiredMark": true,
-        "paragraphTitle": "프로그램 전반에 대한 만족도를 선택해 주세요",
-        "paragraphDescription": "설명 입력",
-        "participatesInTitleNumbering": true,
-        "selectedPreviewStars": null
       },
       {
         "id": "survey-paragraph-closing",

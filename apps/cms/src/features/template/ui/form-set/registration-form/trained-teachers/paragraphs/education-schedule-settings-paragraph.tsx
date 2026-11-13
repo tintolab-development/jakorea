@@ -18,6 +18,7 @@ import {
   updateTrainedTeachersRegistrationField,
   useTrainedTeachersRegistrationField,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/trained-teachers-registration-form-rhf'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const EMPTY_SCHEDULE_LINES: string[] = []
@@ -35,6 +36,8 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
   educationScheduleMode,
   overlayKeyPrefix = 'trainedTeachersRegistration.educationScheduleSettings',
 }: TrainedTeachersRegistrationEducationScheduleSettingsParagraphProps) {
+  // 템플릿 관리 시안(5767:196354) 캘린더 칸 ≈240 — 등록 위저드·상세는 기존 360 유지
+  const pickerWidth = useIsTemplateManagementScreen() ? 240 : 360
   const [singleDateIso, setSingleDateIso] = useTrainedTeachersRegistrationField<string | null>(
     `${overlayKeyPrefix}.singleDateIso`,
     null
@@ -161,7 +164,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
               value={periodDate}
               onChange={setPeriodDate}
               onRangeChange={handleScheduleRangeApply}
-              width={360}
+              width={pickerWidth}
               placeholder="진행 기간을 선택해 주세요"
               disabledDate={disableOutsideOperation}
             />

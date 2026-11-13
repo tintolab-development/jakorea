@@ -5,6 +5,54 @@ import type {
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 
+/**
+ * 예전 시드가 서버 저장본에 그대로 남아 있는 단락 설명 — 불러올 때 현재 시드 문구로 바꾼다.
+ * 관리자가 직접 고친 문구(목록에 없는 값)는 그대로 둔다. (Figma 재대조 2026-11-13, BE 요청서 T7·T9)
+ */
+const LEGACY_SEED_PARAGRAPH_DESCRIPTIONS: Readonly<Record<string, readonly string[]>> = {
+  'economy-recruit-institution-seed-detail-info': [
+    '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.',
+  ],
+  'gemini-vt-recruit-seed-detail-info': ['공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.'],
+  'trained-teachers-recruit-institution-seed-detail-info': [
+    '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.',
+  ],
+  'ujat-recruit-institution-seed-detail-info': [
+    '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.',
+  ],
+  'ujat-recruit-form-volunteer-seed-recruit-info': [
+    '봉사자 모집은 프로그램 등록 시 상반기/하반기 구분되어 진행되며, 양식 내용은 동일하게 노출됩니다. (모집 공고 노출 시점은 하반기 모집 폼에서만 노출됩니다.)',
+  ],
+  'ujat-recruit-form-volunteer-seed-detail-info': [
+    '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.',
+  ],
+  'ujat-recruit-form-volunteer-seed-interview-schedule': [
+    '면접 진행 가능 시간을 입력해주세요. 면접 진행 가능 일정은 평일만 선택 가능합니다.',
+  ],
+  'recruit-form-volunteer-seed-interview-schedule': [
+    '면접 진행 가능 시간을 입력해주세요. 면접 진행 가능 일정은 평일만 선택 가능합니다.',
+  ],
+  'program-registration-seed-wage-info': [
+    '해당 프로그램 내에서 각 등급별로 지급할 강사비를 책정해 주세요.',
+  ],
+  'program-registration-seed-education-curriculum': ['차시 별 정보를 입력해 주세요'],
+  'ujat-reg-first-half-education-schedule': ['행사 일정 별 정보를 입력해 주세요'],
+  'ujat-reg-second-half-education-schedule': ['행사 일정 별 정보를 입력해 주세요'],
+  'ujat-reg-education-schedule-settings': ['교육이 진행되는 일정을 설정해 주세요.'],
+}
+
+function resolveParagraphDescriptionFromEditor(
+  seedParagraph: WritingFormParagraph,
+  editorParagraph: WritingFormParagraph
+): string {
+  const editorValue = editorParagraph.paragraphDescription ?? ''
+  const legacy = LEGACY_SEED_PARAGRAPH_DESCRIPTIONS[seedParagraph.id]
+  if (legacy != null && legacy.includes(editorValue.trim())) {
+    return seedParagraph.paragraphDescription ?? ''
+  }
+  return editorValue
+}
+
 function applyAllowedParagraphCopyFromEditor(
   seedParagraph: WritingFormParagraph,
   editorParagraph: WritingFormParagraph
@@ -15,7 +63,7 @@ function applyAllowedParagraphCopyFromEditor(
   let next: WritingFormParagraph = {
     ...seedParagraph,
     paragraphTitle: editorParagraph.paragraphTitle ?? '',
-    paragraphDescription: editorParagraph.paragraphDescription ?? '',
+    paragraphDescription: resolveParagraphDescriptionFromEditor(seedParagraph, editorParagraph),
   }
 
   if (
@@ -68,10 +116,7 @@ export function buildOperationalImmutableFormSchemaDraft(args: {
   /** COPY GET schema — FE 시드가 아니라 이 복사본이 잠근 구조 */
   catalogBaseline?: WritingFormDraft | null
 }): WritingFormDraft | null {
-  const catalogCode = resolveWritingFormBaseTemplateCode(
-    args.templateCode,
-    args.baseTemplateCode
-  )
+  const catalogCode = resolveWritingFormBaseTemplateCode(args.templateCode, args.baseTemplateCode)
   const seed = args.catalogBaseline ?? getFormTemplateSeedDraft(catalogCode)
   if (seed == null) return null
 

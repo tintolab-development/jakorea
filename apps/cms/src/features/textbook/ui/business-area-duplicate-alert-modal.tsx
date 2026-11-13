@@ -19,11 +19,11 @@ export function BusinessAreaDuplicateAlertModal({
     <ContentModal
       open={open}
       onCancel={onClose}
-      title="사업 분야 중복 안내"
+      title="사업 분야명 중복 안내"
       width={WIDTH}
       zIndex={zIndex}
       className="business-area-delete-blocked-modal notice-category-delete-blocked-modal"
-      description={'동일한 사업 분야명이 이미 등록되어 있습니다.\n다른 명칭으로 입력해 주세요.'}
+      description="동일한 사업 분야명이 존재합니다."
       footer={
         <CmsButton variant="secondary" size="h40" type="button" onClick={onClose}>
           확인

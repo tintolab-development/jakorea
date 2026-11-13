@@ -4,7 +4,7 @@ import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-register
 import {
   buildInProgressDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
-  canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
@@ -310,6 +310,7 @@ export function MypageVolunteerDetailPage() {
 
   useEffect(() => {
     if (isWithdrawnDuring) {
+      if (withdrawnDuringKeys.length === 0) return
       const fallback = withdrawnDuringKeys[0] ?? 'schedule'
       if (!isActivitySection(section) || !withdrawnDuringKeys.includes(section)) {
         setSection(fallback)
@@ -317,6 +318,7 @@ export function MypageVolunteerDetailPage() {
       return
     }
     if (isActivityStatus) {
+      if (inProgressKeys.length === 0) return
       const fallback = inProgressKeys[0] ?? 'notice'
       if (!isActivitySection(section) || !inProgressKeys.includes(section)) {
         setSection(fallback)
@@ -424,8 +426,10 @@ export function MypageVolunteerDetailPage() {
   }
 
   const showBanner = shouldShowDocumentPassBanner(application)
-  const showCancelCta =
-    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
+  const showCancelCta = shouldShowEducationApplicationCancelCta(
+    application.displayStatus,
+    application.cancellable,
+  )
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection = isActivitySection(section)
     ? section
@@ -571,6 +575,7 @@ export function MypageVolunteerDetailPage() {
         educationTargetLabel={program.educationTargetLabel}
         educationForm={program.educationForm}
         educationFormLabel={program.educationFormLabel}
+        participationRoleLabel="봉사자"
       />
 
       {showBanner && appliedSection === 'application' ? (

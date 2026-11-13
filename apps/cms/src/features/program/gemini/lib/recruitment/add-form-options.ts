@@ -31,7 +31,7 @@ export const GEMINI_RECRUITMENT_ADD_SECTION_IDS = {
 
 export const GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD = {
   label: '프로그램 설명',
-  placeholder: '프로그램 설명을 작성하세요',
+  placeholder: '프로그램 설명을 작성해 주세요',
   key: 'programDescription' as const,
 }
 

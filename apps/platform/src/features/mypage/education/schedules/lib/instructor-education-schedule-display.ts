@@ -185,11 +185,18 @@ function parseDisplayDateTime(value: string | null | undefined): { date: string;
   return { date: match[1], time: match[2] }
 }
 
-/** 배정 현황 「담당 교육 진행 일정」 한 줄. `날짜 시각~시각 | 단위` */
-export function formatInstructorEducationScheduleLine(
+export type InstructorEducationScheduleLineParts = {
+  /** `날짜 시각 ~ 시각`. 일정·단위를 모두 모르면 `-` */
+  dateTime: string
+  /** 교육 단위(차시 등). 모르면 빈 문자열 */
+  unit: string
+}
+
+/** 배정 현황 「담당 교육 진행 일정」 한 줄을 일시·단위로 나눈다. */
+export function formatInstructorEducationScheduleLineParts(
   item: InstructorEducationScheduleDisplayInput,
   useScheduleName: boolean,
-): string {
+): InstructorEducationScheduleLineParts {
   const start = parseDisplayDateTime(item.startAt)
   const end = parseDisplayDateTime(item.endAt)
   const date = start?.date || end?.date || '-'
@@ -198,7 +205,15 @@ export function formatInstructorEducationScheduleLine(
       ? `${start.time} ~ ${end.time}`
       : start?.time || end?.time || '-'
   const session = formatAssignmentEducationUnitLabel(item, useScheduleName)
-  if (!start && !end && session === '-') return '-'
-  if (session === '-') return `${date} ${time}`
-  return `${date} ${time} ${session}`
+  if (!start && !end && session === '-') return { dateTime: '-', unit: '' }
+  return { dateTime: `${date} ${time}`, unit: session === '-' ? '' : session }
+}
+
+/** 배정 현황 「담당 교육 진행 일정」 한 줄. `날짜 시각~시각 단위` */
+export function formatInstructorEducationScheduleLine(
+  item: InstructorEducationScheduleDisplayInput,
+  useScheduleName: boolean,
+): string {
+  const { dateTime, unit } = formatInstructorEducationScheduleLineParts(item, useScheduleName)
+  return unit ? `${dateTime} ${unit}` : dateTime
 }

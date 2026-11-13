@@ -176,6 +176,8 @@ export interface ApplicantSchoolRow {
   rejectionNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
   /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 (`resultNotificationSentAt`) */
   approvalNotificationSentAt?: string
+  /** `resultNotificationSentAt` 원본(ISO) — 예약 발송은 미래 scheduledAt이라 발송 전/후 판별에 쓴다 */
+  approvalNotificationSentAtIso?: string
   /** BE availableActions — 알림 재발송 등 헤더 CTA 게이트 */
   availableActions?: string[]
   /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */

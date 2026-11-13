@@ -14,7 +14,7 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "개인 정보수집 및 제공에 대한 동의",
+        "paragraphTitle": "개인정보 수집‧이용",
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "tableFlavor": "field",
@@ -56,7 +56,7 @@
             },
             {
               "kind": "text",
-              "value": "이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기"
+              "value": "이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기"
             }
           ]
         ],
@@ -72,7 +72,7 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "제 3자 정보 제공 동의",
+        "paragraphTitle": "개인정보 제3자 정보 제공‧이용 동의",
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "tableFlavor": "field",
@@ -120,11 +120,11 @@
             },
             {
               "kind": "text",
-              "value": "Gemini Academy 연수 참가자 공유 및 프로그램 진행에 필요한 정보 안내"
+              "value": "Gemini Academy 연수 참가자 공유 및\n프로그램 진행에 필요한 정보 안내"
             },
             {
               "kind": "text",
-              "value": "동의일로부터 3년 보관 후 폐기"
+              "value": "동의일로부터 3년 보관 후 파기"
             }
           ]
         ],
@@ -140,7 +140,7 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "초상권에 대한 동의",
+        "paragraphTitle": "초상권 수집·이용 동의",
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "tableFlavor": "field",
@@ -245,7 +245,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "진행 희망 교육 일정",
-        "paragraphDescription": "1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.",
+        "paragraphDescription": "1~3순위 희망 날짜 및 교육 시간을 기재해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

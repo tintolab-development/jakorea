@@ -151,18 +151,17 @@
   cursor: inherit;
 }
 
+/* 시안 Icon / Etc / Check 프레임(28·24, 여백 포함)이 체크 칸을 그대로 채운다 */
 .register-terms-check-icon--agree-all {
-  width: 21px;
-  height: 15.4px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
-  aspect-ratio: 15 / 11;
 }
 
 .register-terms-check-icon--item {
-  width: 15px;
-  height: 11px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
-  aspect-ratio: 15 / 11;
 }
 
 .register-terms-agreement__list {

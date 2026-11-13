@@ -1,22 +1,24 @@
 /**
  * 일반 프로그램 상세 — 공통·모집·신청 양식 「정보 수정」 가능 여부
  * 공통 정보: 사업 종료일(`endDate` = businessEndDate) 당일까지. 한국 시간 다음 날부터 불가.
- * 모집 정보: 그 모집행의 `startAt` 전. 시작하지 않은 행이 있으면 그 유형은 연다.
+ * 모집 정보: 그 모집 유형의 프로그램 운영 시작일(`operationStartDate`) 전까지. 운영 시작 후 불가
+ *   (신청 양식의 모집 시작 전 수정 제한과 구분한다).
  * 신청 양식: 모집별 신청 건수가 0건일 때만 클라이언트에서 수정 가능 상태로 본다.
  * 실제 저장 가능 여부는 서버가 최종 판단한다.
  */
 
 import type { Program } from '@/types/domain'
-import {
-  PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED_MESSAGE,
-  PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE,
-  PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE,
-} from '@/shared/lib/program-edit-window-error-message'
+import { PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import {
   isCommonInfoEditPeriodOpen,
-  isRecruitmentTypeGeneralInfoClosed,
+  isProgramOperationStartLocked,
   type ProgramRecruitmentEditType,
 } from '@/features/program/shared/lib/program-edit-window'
+
+/** 일반 프로그램 상세 — 모집 정보 「정보 수정」 불가 팝업 (시안) */
+export const GENERAL_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE = '정보 수정 불가 안내'
+export const GENERAL_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_MESSAGE =
+  '해당 모집 유형의 프로그램 운영이 시작된 이후에는 모집 정보를 수정할 수 없습니다.'
 
 export type ApplicationFormEditContext = {
   /** 해당 모집에 연결된 신청 양식 바인딩이 있는지. 없으면 항상 허용한다. */
@@ -47,22 +49,22 @@ export function getGeneralProgramCommonInfoEditBlockedAlertMessage(_program: Pro
   return PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED_MESSAGE
 }
 
-/** 모집 정보 — 저장된 행이 모두 `startAt`을 지나면 닫는다. 시작 전 행이 있으면 연다. */
+/** 모집 정보 — 그 모집 유형의 프로그램 운영 시작일(서울 달력) 당일부터 닫는다. 모집 시작과 무관. */
 export function canGeneralProgramRecruitmentInfoEdit(
   program: Program | null | undefined,
   recruitmentType: ProgramRecruitmentEditType,
   now: Date = new Date()
 ): boolean {
   if (!program) return false
-  return !isRecruitmentTypeGeneralInfoClosed(program, recruitmentType, now)
+  return !isProgramOperationStartLocked(program, recruitmentType, now)
 }
 
 export function getGeneralProgramRecruitmentInfoEditBlockedAlertTitle(): string {
-  return PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE
+  return GENERAL_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE
 }
 
 export function getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(_program: Program): string {
-  return PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE
+  return GENERAL_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_MESSAGE
 }
 
 /**

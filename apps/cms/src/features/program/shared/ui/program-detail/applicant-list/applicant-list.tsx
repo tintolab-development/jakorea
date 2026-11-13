@@ -532,7 +532,7 @@ export function ApplicantList({
     menu === 'institutions' &&
     institutionColumnPreset === 'general-detail' &&
     !isCompanySchoolProgram(program)
-  /** 일반 프로그램(기관형) 기관·강사 신청 목록 공통 툴바 — 「총 N건」·「캘린더 뷰 보기」·「리스트 뷰 보기」 */
+  /** 일반 프로그램(기관형) 기관·강사 신청 목록 공통 툴바 — 「총 N건」·「캘린더 뷰로 보기」·「리스트 뷰 보기」 */
   const usesGeneralOrganizationListToolbarCopy =
     detailVariant === 'general' &&
     isGeneralOrganizationProgram(program) &&
@@ -2318,8 +2318,10 @@ export function ApplicantList({
         approvalStatus={notificationResendTarget?.approvalStatus ?? 'approved'}
         storedRejectionReason={notificationResendTarget?.storedRejectionReason}
         copyVariant={
-          notificationResendTarget?.subjectKind === 'institution' &&
-          isGeneralOrganizationInstitutionList
+          (notificationResendTarget?.subjectKind === 'institution' &&
+            isGeneralOrganizationInstitutionList) ||
+          (notificationResendTarget?.subjectKind === 'instructor' &&
+            (isGeneralOrganizationInstructorList || isGeneralIndividualInstructorList))
             ? 'general-organization'
             : 'default'
         }
@@ -2655,7 +2657,7 @@ export function ApplicantList({
                     variant="secondary"
                     onClick={handleViewCalendar}
                   >
-                    {usesGeneralOrganizationListToolbarCopy ? '캘린더 뷰 보기' : '캘린더 뷰로 보기'}
+                    캘린더 뷰로 보기
                   </FilterTableToolbarButton>
                 )}
                 {showApplicationListViewToggle && displayViewMode === 'calendar' && (

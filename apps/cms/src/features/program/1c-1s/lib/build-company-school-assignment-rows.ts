@@ -170,11 +170,43 @@ const WAITING_CANDIDATE_APPROVED_STATUSES: readonly string[] = [
   'ASSIGNED',
 ]
 
+/** 배정 완료 건 키 — 강사 회원 ID × 배정 일정 ID */
+export function companySchoolAssignedPairKey(
+  instructorMemberId: string | number,
+  scheduleId: string | number
+): string {
+  return `${String(instructorMemberId)}__${String(scheduleId)}`
+}
+
+/** 이 기관 신청의 배정(취소 포함) → 강사 × 일정 키. 취소 건은 재배정하지 않으므로 함께 숨긴다. */
+export function collectCompanySchoolAssignedInstructorSchedulePairs(
+  assignments: readonly Pick<
+    InstructorAssignmentListItemEnriched,
+    'organizationApplicationId' | 'instructorMemberId' | 'scheduleId'
+  >[],
+  organizationApplicationId: string
+): Set<string> {
+  const pairs = new Set<string>()
+  for (const a of assignments) {
+    if (a.organizationApplicationId == null) continue
+    if (String(a.organizationApplicationId) !== organizationApplicationId) continue
+    if (a.instructorMemberId == null || a.scheduleId == null) continue
+    pairs.add(companySchoolAssignedPairKey(a.instructorMemberId, a.scheduleId))
+  }
+  return pairs
+}
+
 export function buildCompanySchoolWaitingInstructorRows(input: {
   schoolName: string
   sessions: ParticipatingSchoolSession[] | undefined
   approvedInstructors: InstructorApplicationListItemResponse[]
   assignedInstructorMemberIds: Set<string>
+  /**
+   * 있으면 강사 단위 제외(`assignedInstructorMemberIds`) 대신 「강사 × 배정 일정」 단위로만 뺀다.
+   * 값은 {@link companySchoolAssignedPairKey}(강사 회원 ID, 배정 일정 ID). 1사1교 참여 기관 상세 —
+   * 배정 완료 건만 숨기고 같은 강사의 다른 희망 일정은 계속 보여 준다(QA 2026-11-13 1사1교 #12).
+   */
+  assignedInstructorSchedulePairs?: ReadonlySet<string> | null
   occupiedLectureDatesByInstructorId?: Map<string, Set<string>> | null
   /**
    * 일반 기관형만 넘긴다. 있으면 「기관과의 거리」를 강사 신청의 기관별 거리에서 이 기관 신청 id로 찾는다.
@@ -195,10 +227,11 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
   const sessions = (input.sessions ?? []).filter(s => Boolean(extractLectureDateKey(s.date) || s.date))
   if (sessions.length === 0) return []
 
+  const assignedPairs = input.assignedInstructorSchedulePairs ?? null
   const candidates = input.approvedInstructors.filter(app => {
     const memberId = app.instructorMemberId != null ? String(app.instructorMemberId) : ''
     if (!memberId) return false
-    if (input.assignedInstructorMemberIds.has(memberId)) return false
+    if (assignedPairs == null && input.assignedInstructorMemberIds.has(memberId)) return false
     if (candidateStatuses === 'any') return true
     const status = (app.applicationStatus ?? '').toUpperCase()
     return candidateStatuses.includes(status)
@@ -214,6 +247,13 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
         : undefined)
 
     for (const session of sessions) {
+      if (
+        assignedPairs != null &&
+        session.resolvedScheduleId != null &&
+        assignedPairs.has(companySchoolAssignedPairKey(memberId, session.resolvedScheduleId))
+      ) {
+        continue
+      }
       const hope = resolveHopeSchedule(session, hopeSessionLabelMode)
       const scheduleKey = `${session.date}|${session.round}|${session.classNum}`
       const conflictStatus = resolveOneSchoolPerDayAssignmentStatus(

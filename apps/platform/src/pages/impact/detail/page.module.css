@@ -46,6 +46,14 @@
   word-break: break-word;
 }
 
+/* Figma PC 본문: 20px / Medium / 170% */
+@media (--bp-pc-up) {
+  .content :global(.rich-text-content) {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
+}
+
 .content :global(.rich-text-content > *) {
   max-width: 100%;
 }
@@ -76,6 +84,18 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--spacing-16) var(--spacing-24);
+}
+
+.categoryBadge {
+  box-sizing: border-box;
+  min-width: 66px;
+  height: 36px;
+  padding: 0 var(--spacing-12);
+  border-radius: 999px;
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .headerLead {

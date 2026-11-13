@@ -10,6 +10,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   educationOperationRangeSealKeyFromSchedulePrefix,
   isEducationScheduleSelectionDateDisabled,
@@ -34,6 +35,8 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
   onEducationScheduleModeChange: _onEducationScheduleModeChange,
   overlayKeyPrefix = 'economyRegistration.educationScheduleSettings',
 }: OneCOneSEducationScheduleSettingsProps) {
+  // 템플릿 관리 시안(5767:191506) 캘린더 칸 ≈240 — 등록 위저드·상세는 기존 320 유지
+  const pickerWidth = useIsTemplateManagementScreen() ? 240 : 320
   const [dateRangeSeal, setDateRangeSeal] = useProgramRegistrationOverlayKv<{
     start: string
     end: string
@@ -98,7 +101,7 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
                 value={appliedRange?.[0] ?? null}
                 appliedSurfaceRange={appliedRange}
                 appliedSurfaceWithTime={false}
-                width={320}
+                width={pickerWidth}
                 placeholder="진행 기간을 선택해 주세요"
                 disabledDate={disableScheduleSelectionDate}
                 onRangeChange={range => persistRange(range)}

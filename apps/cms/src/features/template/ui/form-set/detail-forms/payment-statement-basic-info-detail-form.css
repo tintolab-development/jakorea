@@ -121,3 +121,81 @@
   width: 100%;
   min-width: 0;
 }
+
+/*
+ * 템플릿 관리 > 발급 양식 편집기(지급조서·정산 신청서) — 시안 5767:46455·5767:44580
+ * 표 셀: 헤더 8×16 · 본문 12 패딩 · 행 60, 입력 사이 간격·구분선 16, 입력 폭은 JS(width)로 고정
+ */
+.payment-statement-basic-info-detail-form--issuance-template .detail-info-form__field,
+.payment-statement-basic-info-detail-form--issuance-template
+  .detail-info-form__field:has(.payment-statement-basic-info-detail-form__address),
+.payment-statement-basic-info-detail-form--issuance-template
+  .detail-info-form__field:has(.payment-statement-basic-info-detail-form__account) {
+  height: auto;
+  min-height: 60px;
+  max-height: none;
+}
+
+.payment-statement-basic-info-detail-form--issuance-template .detail-info-form__field-label {
+  padding: 8px 16px;
+}
+
+.payment-statement-basic-info-detail-form--issuance-template .detail-info-form__field-content {
+  padding: 12px;
+}
+
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__resident {
+  gap: 6px;
+  width: auto;
+}
+
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__resident
+  > .cms-input,
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__resident
+  > .cms-numeric-input {
+  flex: 0 0 auto;
+}
+
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__dash {
+  color: var(--Content-tertiary, #85969d);
+  font-size: 12px;
+}
+
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__affiliation,
+.payment-statement-basic-info-detail-form--issuance-template
+  .detail-info-form__field-content--edit
+  > .payment-statement-basic-info-detail-form__address,
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__account {
+  gap: 16px;
+  width: auto;
+}
+
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__address
+  > .cms-input,
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__account
+  > .cms-input,
+.payment-statement-basic-info-detail-form--issuance-template
+  .payment-statement-basic-info-detail-form__account
+  > .cms-numeric-input {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+/*
+ * 템플릿 관리 > 지급조서·영수증 사전 동의서 편집기 — 시안 5767:42072·16046:109928
+ * 표 치수는 위 `--issuance-template` 규칙을 함께 쓰고, 비활성 주소 검색 칸만 240 고정(늘어나지 않게)
+ */
+.payment-statement-basic-info-detail-form--pre-consent-template
+  .payment-statement-basic-info-detail-form__address
+  > .address-search__trigger-wrap {
+  flex: 0 0 auto;
+}

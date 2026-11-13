@@ -16,28 +16,13 @@ import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/constants/filter-field-wid
 import { CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
 
 import './interview-select-modal.css'
+import { FieldSearchIcon } from '@jakorea/admin-ui/field'
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEAR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   const year = CURRENT_YEAR - i
   return { label: `${year}년`, value: String(year) }
 })
-
-function SearchIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      aria-hidden
-    >
-      <circle cx="9" cy="9" r="6.25" stroke="#9E9E9E" strokeWidth="1.5" />
-      <path d="M13.5 13.5L17 17" stroke="#9E9E9E" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
 
 function yearRange(year: string): Pick<ImpactStoryListFilter, 'publishedFrom' | 'publishedTo'> {
   if (!year) return {}
@@ -174,7 +159,7 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
           inputSize="large"
           width="100%"
           placeholder="고정 노출할 게시글 제목을 입력해 주세요"
-          icon={<SearchIcon />}
+          icon={<FieldSearchIcon />}
           value={pendingTitle}
           onChange={e => setPendingTitle(e.target.value)}
           onPressEnter={handleSearch}

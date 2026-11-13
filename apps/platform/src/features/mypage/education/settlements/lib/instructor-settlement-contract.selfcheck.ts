@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict'
 import {
   INSTRUCTOR_PAYMENT_STATEMENT_CONSENT_REQUIRED_CODE,
+  INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE,
   PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE,
   instructorSettlementApiErrorMessage,
   isInstructorPaymentStatementSubmit,
   isPaymentStatementConsentRequiredError,
   isSettlementTransportationAddressUnresolvedError,
+  readInstructorPreviewSubmitBlock,
   readInstructorSettlementErrorCode,
+  SETTLEMENT_CALCULATION_ITEMS_REQUIRED_CODE,
+  SETTLEMENT_PAYMENT_ITEM_NOT_ENABLED_CODE,
   SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED_MESSAGE,
 } from './instructor-settlement-contract.ts'
 
@@ -134,5 +138,64 @@ const providerUnavailable = Object.assign(new Error('unavailable'), {
 })
 assert.equal(isSettlementTransportationAddressUnresolvedError(providerUnavailable), false)
 assert.equal(instructorSettlementApiErrorMessage(providerUnavailable, 'FALLBACK'), 'FALLBACK')
+
+// 미리보기 200 canSubmit=false — 지급 항목 0건(BE 1b13439db): 서버 blockerMessage 그대로
+const itemsRequiredMessage = '정산 지급 항목이 없어 신청할 수 없습니다.'
+assert.deepEqual(
+  readInstructorPreviewSubmitBlock({
+    canSubmit: false,
+    blockerCode: SETTLEMENT_CALCULATION_ITEMS_REQUIRED_CODE,
+    blockerMessage: itemsRequiredMessage,
+    items: [],
+    payableItems: [],
+  }),
+  { code: SETTLEMENT_CALCULATION_ITEMS_REQUIRED_CODE, message: itemsRequiredMessage },
+)
+// 모르는 blockerCode도 서버 blockerMessage로 폴백
+assert.deepEqual(
+  readInstructorPreviewSubmitBlock({
+    canSubmit: false,
+    blockerCode: 'some_new_blocker',
+    blockerMessage: ' 서버 안내 ',
+  }),
+  { code: 'SOME_NEW_BLOCKER', message: '서버 안내' },
+)
+// blockerMessage가 없으면 같은 code의 기존 문구 → 그것도 없으면 기존 fallback
+assert.equal(
+  readInstructorPreviewSubmitBlock({ canSubmit: false, blockerCode: 'LECTURE_NOT_ENDED' })?.message,
+  '강의가 종료된 이후에 지급조서를 제출할 수 있습니다.',
+)
+assert.equal(
+  readInstructorPreviewSubmitBlock({ canSubmit: false, blockerCode: 'UNKNOWN_X' })?.message,
+  INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE,
+)
+// canSubmit이 true이거나 없으면 차단하지 않는다(기존 정상 흐름)
+assert.equal(readInstructorPreviewSubmitBlock({ canSubmit: true, items: [{}] }), null)
+assert.equal(readInstructorPreviewSubmitBlock({ payableItems: [] }), null)
+assert.equal(readInstructorPreviewSubmitBlock(null), null)
+
+// 400 SETTLEMENT_PAYMENT_ITEM_NOT_ENABLED — 서버 message 그대로
+const notEnabledMessage =
+  '이 프로그램에서 신청할 수 없는 지급 항목입니다. 담당자에게 프로그램 지급 항목 설정을 확인해 주세요.'
+const notEnabled = Object.assign(new Error('bad request'), {
+  isAxiosError: true,
+  response: {
+    status: 400,
+    data: {
+      error: {
+        code: SETTLEMENT_PAYMENT_ITEM_NOT_ENABLED_CODE,
+        message: notEnabledMessage,
+        field: 'requestedItems',
+      },
+    },
+  },
+})
+assert.equal(instructorSettlementApiErrorMessage(notEnabled, 'FALLBACK'), notEnabledMessage)
+// 서버 message가 비면 호출부 fallback
+const notEnabledNoMessage = Object.assign(new Error('bad request'), {
+  isAxiosError: true,
+  response: { status: 400, data: { error: { code: SETTLEMENT_PAYMENT_ITEM_NOT_ENABLED_CODE } } },
+})
+assert.equal(instructorSettlementApiErrorMessage(notEnabledNoMessage, 'FALLBACK'), 'FALLBACK')
 
 console.log('instructor-settlement-contract.selfcheck: ok')

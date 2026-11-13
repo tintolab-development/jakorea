@@ -6,7 +6,8 @@ import {
   isSponsorSponsorshipStatus,
   parseSponsorSponsorshipStatusFilter,
 } from '@/features/sponsor/model/sponsorship-status'
-import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
+import type { SponsorOrganizationKindFilter } from '@/features/sponsor/model/sponsor-management.types'
+import type { SponsorSponsorshipStatus } from '@/types/domain'
 import type { DateValue } from '@/types'
 
 /** OpenAPI SponsorsParams에 아직 없는 후원 시작일 구간 — BE 갭 P1 */
@@ -22,9 +23,12 @@ export const SPONSOR_LIST_PAGE_SIZE = DATA_MANAGEMENT_LIST_PAGE_SIZE
 /** 후원사 셀렉트·드롭다운 전량 로드 (BE max 100) */
 export const SPONSOR_OPTIONS_LIST_SIZE = 20
 
-function parseKind(raw: string | null): SponsorOrganizationKind {
-  if (raw === 'foundation') return 'foundation'
-  return 'corporate'
+/** URL `sp_kind` → 구분 필터. 없거나 알 수 없는 값이면 전체(`ALL`) */
+export function parseSponsorOrganizationKindFilter(
+  raw: string | null
+): SponsorOrganizationKindFilter {
+  if (raw === 'corporate' || raw === 'foundation') return raw
+  return 'ALL'
 }
 
 function parseStatus(raw: string | null): 'ALL' | SponsorSponsorshipStatus {
@@ -41,7 +45,8 @@ export function sponsorsParamsFromSearchParams(
     size,
   }
 
-  params.organizationKind = parseKind(searchParams.get('sp_kind'))
+  const kind = parseSponsorOrganizationKindFilter(searchParams.get('sp_kind'))
+  if (kind !== 'ALL') params.organizationKind = kind
 
   const name = (searchParams.get('sp_name') ?? '').trim()
   if (name) params.keyword = name
@@ -63,7 +68,8 @@ export function sponsorsParamsFromSearchParams(
 /** 목록 캐시 키 — 상세 overlay(`sponsorId` 등)는 제외해 필터가 같으면 같은 키. */
 export function serializeSponsorListFilters(searchParams: URLSearchParams): string {
   const next = new URLSearchParams()
-  next.set('sp_kind', parseKind(searchParams.get('sp_kind')))
+  const kind = parseSponsorOrganizationKindFilter(searchParams.get('sp_kind'))
+  if (kind !== 'ALL') next.set('sp_kind', kind)
   const name = (searchParams.get('sp_name') ?? '').trim()
   if (name) next.set('sp_name', name)
   const mgr = (searchParams.get('sp_mgr') ?? '').trim()

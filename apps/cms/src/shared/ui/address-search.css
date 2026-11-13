@@ -158,7 +158,7 @@
 
 .address-search__result-zip {
   overflow: hidden;
-  color: var(--color-mint-01, #01a1af);
+  color: var(--Brand-500, #00a0af);
   text-overflow: ellipsis;
   font-size: 16px;
   font-weight: 700;

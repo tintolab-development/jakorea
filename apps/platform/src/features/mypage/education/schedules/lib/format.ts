@@ -39,15 +39,11 @@ export function resolveEducationScheduleDateLabel(
 }
 
 /**
- * 교육일정 카드 행 날짜 라벨 — 날짜만 노출(진행 시간 제외).
+ * 교육일정 카드 행 날짜 라벨 — 날짜 + 진행 시간.
  * 일시가 없으면 기존 라벨 규칙(`resolveEducationScheduleDateLabel`)을 따른다.
  */
 export function resolveEducationScheduleRowDateLabel(
   item: Parameters<typeof resolveEducationScheduleDateLabel>[0],
 ): string {
-  const heldAt = item.heldAt?.trim()
-  if (heldAt && !Number.isNaN(new Date(heldAt).getTime())) {
-    return formatEducationSessionDate(heldAt)
-  }
   return resolveEducationScheduleDateLabel(item)
 }

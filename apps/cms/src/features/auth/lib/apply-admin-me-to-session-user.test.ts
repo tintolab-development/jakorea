@@ -86,7 +86,7 @@ describe('applyAdminMeToSessionUser', () => {
       gender: 'FEMALE',
       birthDate: '1990-09-15',
     })
-    expect(next.gender).toBe('F')
+    expect(next.gender).toBe('FEMALE')
     expect(next.birthDate).toBe('1990-09-15')
   })
 

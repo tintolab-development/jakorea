@@ -6,6 +6,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  TRAINED_TEACHERS_APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 /** 교육받은 교사 프로그램 참여자 신청 폼 — 시드 단락 ID */
 export const PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS = {
@@ -42,8 +46,7 @@ function createTrainedTeachersPersonalInfoHorizontalTable(): HorizontalTablePara
     },
     {
       kind: 'text' as const,
-      value:
-        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 동의일로부터 3년 보관 후 폐기',
+      value: TRAINED_TEACHERS_APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
     },
   ]
 
@@ -86,7 +89,7 @@ function createTrainedTeachersThirdPartyHorizontalTable(): HorizontalTableParagr
       kind: 'text' as const,
       value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text' as const, value: '동의일로부터 3년 보관 후 폐기' },
+    { kind: 'text' as const, value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
   ]
 
   return normalizeHorizontalTableParagraph({
@@ -209,15 +212,49 @@ export function migrateProgramApplicationFormTrainedTeachersParagraphs(
       }
     }
     if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.personalInfoCollection &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table'
+    ) {
+      // 보유기간 셀(시스템 값) — 구 임시저장본 문구(`- ` 접두·폐기 등)를 공통 상수로 보정
+      const next = patchHorizontalTableTextCell(
+        paragraph,
+        0,
+        2,
+        TRAINED_TEACHERS_APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL
+      )
+      if (next !== paragraph) changed = true
+      return next
+    }
+    if (
       paragraph.id !== PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.thirdPartyConsent ||
       paragraph.kind !== 'single_item' ||
       paragraph.variant !== 'horizontal_table'
     ) {
       return paragraph
     }
-    const next = migrateTrainedTeachersThirdPartyProviderColumn(paragraph)
+    const migrated = migrateTrainedTeachersThirdPartyProviderColumn(paragraph)
+    const next = patchHorizontalTableTextCell(migrated, 0, 3, APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL)
     if (next !== paragraph) changed = true
     return next
   })
   return changed ? { ...draft, paragraphs } : draft
+}
+
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
 }

@@ -158,19 +158,27 @@
   overflow: visible;
 }
 
-/* 양식 관리 견본 표시 — 실발급 PDF 캡처 DOM에는 렌더하지 않는다 */
+/* 양식 관리 견본 표시 — 실발급 PDF 캡처 DOM에는 렌더하지 않는다.
+ * 시안 5767:46820 등 「견본(SAMPLE)」 칩: 좌 34 · 위 142, 청록 2px 테두리·10% 배경, 20/Bold */
 .form-certificate-preview__sample-mark {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 142px;
+  left: 34px;
   z-index: 3;
-  transform: translate(-50%, -50%) rotate(-30deg);
-  color: rgba(220, 38, 38, 0.18);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 240px;
-  font-weight: 900;
-  letter-spacing: 24px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: flex-start;
+  box-sizing: border-box;
+  /* 시안 안쪽 선(2px) 기준 2/12/6 여백 → CSS 테두리 바깥 기준 0/10/4 (전체 163×38) */
+  padding: 0 10px 4px;
+  border: 2px solid var(--Brand-500, #00a0af);
+  border-radius: 6px;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff;
+  color: rgba(61, 61, 61, 0.8);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  line-height: 1.5;
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
@@ -192,7 +200,10 @@
   overflow-wrap: anywhere;
 }
 
-/* 본문 영역 — 내부: 좌 111px · 갭 56px · 우측 나머지 */
+/*
+ * 본문 영역 — 내부: 라벨 열(가장 긴 라벨 폭, 최소 111px) · 갭 56px · 값 열 451px.
+ * 시안: 참가인증서·활동인증서 111+56+451=618, 수료증(「프로그램 기간」) 138+56+451=645.
+ */
 .form-certificate-preview__content-frame {
   position: absolute;
   top: 507px;
@@ -201,18 +212,12 @@
   flex-direction: row;
   align-items: stretch;
   gap: 56px;
-  width: 618px;
+  width: auto;
   min-height: 0;
   height: auto;
   box-sizing: border-box;
   background: transparent;
   pointer-events: none;
-}
-
-/* 기본 합성 배경 — 라벨은 이미지에 있음. 값만 배경 라벨 오른쪽에 맞춤(111+56) */
-.form-certificate-preview__content-frame--values-only {
-  padding-left: 167px;
-  width: 785px;
 }
 
 /* 우측 폼에서 지정한 흑백 색 — 자식에 고정 #606060이 있어 inherit로 통일 */
@@ -223,11 +228,11 @@
 
 .form-certificate-preview__content-frame-labels {
   display: flex;
-  flex: 0 0 111px;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 24px;
   align-items: stretch;
-  width: 111px;
+  width: auto;
   min-width: 111px;
   box-sizing: border-box;
 }
@@ -243,7 +248,7 @@
   overflow: hidden;
 }
 
-/* 111px 안에서 글자 사이 간격 자동 — 첫·끝 글자는 양끝 정렬 */
+/* 라벨 열 폭 안에서 글자 사이 간격 자동 — 첫·끝 글자는 양끝 정렬 */
 .form-certificate-preview__label-text {
   display: flex;
   width: 100%;
@@ -262,13 +267,19 @@
   flex-shrink: 0;
 }
 
+/* 띄어쓰기가 있는 라벨(수료증 「프로그램 기간」) — 시안처럼 글자를 벌리지 않는다 */
+.form-certificate-preview__label-text--natural {
+  display: block;
+  white-space: nowrap;
+}
+
 .form-certificate-preview__content-frame-values {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 0 451px;
   flex-direction: column;
   gap: 24px;
   align-items: stretch;
-  width: 100%;
+  width: 451px;
   min-width: 0;
   box-sizing: border-box;
 }
@@ -297,6 +308,48 @@
   line-height: 150%; /* 36px */
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/*
+ * 템플릿 관리 편집 캔버스 변수 칩(@성명·@발급일자 등) — 시안 5767:46850 등.
+ * 청록 2px 테두리·6px 모서리·10% 청록 배경, 24/Bold #22404d.
+ * 시안 안쪽 선 기준 여백 2/12/6 → CSS 테두리 바깥 기준 0/10/4 (높이 44).
+ */
+.form-certificate-preview__variable-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px 4px;
+  border: 2px solid var(--Brand-500, #00a0af);
+  border-radius: 6px;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff;
+  color: var(--Brand-800, #22404d);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
+  white-space: nowrap;
+}
+
+/* 기간 칩 — 값 열(451px) 폭을 다 채운다 */
+.form-certificate-preview__variable-chip--full {
+  width: 451px;
+}
+
+/* 발급일자 칩 — 가운데, 아래 381px(위 1178px), 34/Bold, 높이 59 */
+.form-certificate-preview__variable-chip--issue-date {
+  position: absolute;
+  z-index: 1;
+  top: 1178px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 5.3px;
+  font-size: 34px;
+  line-height: 150%; /* 51px */
+  pointer-events: none;
 }
 
 .form-certificate-preview__confirm {

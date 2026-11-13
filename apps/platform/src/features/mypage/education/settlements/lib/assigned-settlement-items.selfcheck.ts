@@ -506,7 +506,7 @@ assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.upcoming.writeDisabled, true)
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.pending_submit.message, '기한 내에 영수증을 제출해 주세요')
 assert.equal(
   EDUCATION_SETTLEMENT_STATUS_UI.overdue.message,
-  '영수증 제출기한이 마감되었어요',
+  '영수증 제출 기한이 지났어요',
 )
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.overdue.markLabel, '영수증 미제출')
 assert.equal(EDUCATION_SETTLEMENT_STATUS_UI.waiting_confirm.markLabel, '확인 대기')

@@ -9,8 +9,7 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
-import { Flex, Pagination } from 'antd'
+import { Flex } from 'antd'
 import { pickJusoRoadAddressLine } from '@jakorea/location/juso'
 import {
   getCmsJusoMissingKeyMessage,
@@ -21,19 +20,15 @@ import {
 } from '@/shared/hooks'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsCompactPagination } from '@/shared/ui/cms-compact-pagination'
 import { CmsInput } from '@/shared/ui/cms-input'
 import type { CmsInputProps } from '@/shared/ui/cms-input'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import './address-search.css'
 
 const MODAL_SEARCH_PLACEHOLDER = '예) 마곡중앙로 171, 분당 주공, 백현동'
 const AUTOCOMPLETE_MIN_LENGTH = 2
 const AUTOCOMPLETE_DEBOUNCE_MS = 300
-
-const RESULT_LIST_SCROLL_END_THRESHOLD = 4
-
-function isResultListScrolledToEnd(el: HTMLElement): boolean {
-  return el.scrollHeight - el.scrollTop - el.clientHeight <= RESULT_LIST_SCROLL_END_THRESHOLD
-}
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -109,7 +104,6 @@ export function AddressSearch({
   /** [검색] 후 카드에서 「영문보기」 펼침 키 */
   const [expandedEngKey, setExpandedEngKey] = useState<string | null>(null)
   const resultListRef = useRef<HTMLUListElement>(null)
-  const [resultListAtEnd, setResultListAtEnd] = useState(false)
 
   const confmKey = confmKeyProp ?? readJusoConfmKeyFromEnv()
   const countPerPage = 10
@@ -171,19 +165,6 @@ export function AddressSearch({
     closeModal()
   }
 
-  const syncResultListScrollEnd = useCallback(() => {
-    const el = resultListRef.current
-    if (!el) {
-      setResultListAtEnd(false)
-      return
-    }
-    setResultListAtEnd(isResultListScrolledToEnd(el))
-  }, [])
-
-  const handleResultListScroll = useCallback(() => {
-    syncResultListScrollEnd()
-  }, [syncResultListScrollEnd])
-
   const trimmedKeyword = keyword.trim()
   const effectiveHasQueried = hasQueried && trimmedKeyword.length > 0
   const showSuggestList = isSuggesting && !loading && !error && addresses.length > 0
@@ -226,50 +207,22 @@ export function AddressSearch({
     .filter(Boolean)
     .join(' ')
 
-  /** 3건 이하: 즉시 · 4건+: 목록 스크롤 끝 */
-  const showPagination =
-    effectiveHasQueried && showResultList && !loading && (isSparseResults || resultListAtEnd)
-
-  useEffect(() => {
-    if (!open || !effectiveHasQueried || !showResultList) {
-      setResultListAtEnd(false)
-      return
-    }
-
-    const el = resultListRef.current
-    if (!el) return
-
-    const raf = requestAnimationFrame(() => syncResultListScrollEnd())
-    const ro = new ResizeObserver(() => syncResultListScrollEnd())
-    ro.observe(el)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      ro.disconnect()
-    }
-  }, [
-    open,
-    effectiveHasQueried,
-    showResultList,
-    addresses,
-    expandedEngKey,
-    isResultsTall,
-    syncResultListScrollEnd,
-  ])
+  /** 한 페이지 최대 10건 — 결과가 있으면 하단에 「현재 / 전체」 페이지 표시 + 이동 */
+  const totalPages = Math.max(1, Math.ceil(totalCount / countPerPage))
+  const showPagination = effectiveHasQueried && showResultList && !loading
 
   useEffect(() => {
     const el = resultListRef.current
     if (el) {
       el.scrollTop = 0
     }
-    setResultListAtEnd(false)
   }, [page, effectiveHasQueried])
 
   return (
     <>
       <span className="address-search__trigger-wrap" style={{ width: width || '100%' }}>
         <CmsInput
-          icon={<SearchOutlined />}
+          icon={<FieldSearchIcon />}
           value={value}
           readOnly
           onClick={openModal}
@@ -412,7 +365,6 @@ export function AddressSearch({
                 ref={resultListRef}
                 className="address-search__result-card-list"
                 aria-label="주소 검색 결과"
-                onScroll={handleResultListScroll}
               >
                 {addresses.map(item => {
                   const cardKey = `${item.zipNo}-${item.roadAddr}-${item.jibunAddr}`
@@ -500,13 +452,12 @@ export function AddressSearch({
             ) : null}
             {showPagination ? (
               <div className="address-search__pagination">
-                <Pagination
-                  size="small"
-                  current={page}
-                  total={totalCount}
-                  pageSize={countPerPage}
-                  onChange={p => void runSearch(p)}
-                  showSizeChanger={false}
+                <CmsCompactPagination
+                  variant="modal"
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={p => void runSearch(p)}
+                  ariaLabel="주소 검색 페이지 이동"
                 />
               </div>
             ) : null}

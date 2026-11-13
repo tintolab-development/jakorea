@@ -98,6 +98,7 @@ export function MemberWithdrawGuideModal(props: MemberWithdrawGuideModalProps) {
       hideConfirmInputLabel={guide.hideConfirmInputLabel}
       confirmLoading={confirmLoading}
       zIndex={zIndex}
+      className={props.variant === 'self_withdraw' ? 'delete-guide-modal--self-withdraw' : undefined}
     />
   )
 }
