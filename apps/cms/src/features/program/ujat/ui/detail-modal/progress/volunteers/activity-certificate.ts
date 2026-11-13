@@ -107,6 +107,8 @@ export function buildActivityCertificateVolunteerFromUjatDetail(
     gender: applicant.gender,
     birthDate: applicant.birthDate,
     age: applicant.age,
+    /** 활동인증서 「소속」 줄 — 참여 봉사자 상세 「소속」과 같은 회원 프로필 소속 학교명 */
+    affiliation: applicant.affiliationSchool.trim() || undefined,
     hasJaVolunteerExperience: applicant.hasEducationExperience === true,
     applicationType: applicant.applicationType === 'ujat-graduate' ? 'ujat-graduate' : 'new',
     adminComment: detail.adminComment,

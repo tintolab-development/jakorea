@@ -25,6 +25,14 @@ export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE = '동의서 파
 /** 성범죄 경력조회 동의서 — PDF 외 파일 선택 시 AlertModal 본문 */
 export const CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE = 'PDF 파일만 업로드할 수 있습니다.'
 
+/** 회원 화면 성범죄 동의서 업로드 — PDF·JPG·PNG 외 파일 선택 시 AlertModal 본문 */
+export const MEMBER_CRIME_CONSENT_EVIDENCE_FILE_TYPE_ALERT_MESSAGE =
+  'PDF, JPG, PNG 파일만 업로드할 수 있습니다.'
+
+/** 회원 화면 성범죄 동의서 업로드 — 20MB 초과 시 AlertModal 본문 */
+export const MEMBER_CRIME_CONSENT_EVIDENCE_FILE_SIZE_ALERT_MESSAGE =
+  '파일은 최대 20MB까지 첨부할 수 있습니다.'
+
 /** 개인 재학 소속 — 검색 미선택·불완전 선택(학교명만) 시 AlertModal 본문 */
 export const INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE =
   '재학 중인 회원은 학교를 검색해 선택해 주세요.'

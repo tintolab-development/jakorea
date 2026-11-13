@@ -35,6 +35,9 @@ import { GeminiRecruitmentPeriodDatePicker } from './gemini-recruitment-period-d
 const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
+/** 문의처 입력 폭·라벨 간격 — 템플릿 관리 모집 폼 시안(5798:96247)만 200·6, 생략 시 240·8 */
+export type GeminiInquiryInputLayout = { inputWidth: number; labelGap: number }
+
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
   minWidth: 0,
@@ -49,6 +52,7 @@ function InquiryContactColumn({
   onChange,
   phone,
   deferTextCommit,
+  layout,
 }: {
   label: string
   placeholder: string
@@ -56,17 +60,20 @@ function InquiryContactColumn({
   onChange: (next: string) => void
   phone?: boolean
   deferTextCommit?: boolean
+  layout?: GeminiInquiryInputLayout
 }) {
+  const columnStyle = layout ? { ...inquiryColumnStyle, gap: layout.labelGap } : inquiryColumnStyle
+  const inputWidth = layout?.inputWidth ?? 240
   if (deferTextCommit) {
     const Deferred = phone ? GeminiDeferredCmsPhoneInput : GeminiDeferredCmsInput
     return (
-      <div style={inquiryColumnStyle}>
+      <div style={columnStyle}>
         <span className="nowrap" style={{ flexShrink: 0 }}>
           {label}
         </span>
         <Deferred
           inputSize="small"
-          width={240}
+          width={inputWidth}
           placeholder={placeholder}
           value={value}
           onCommit={onChange}
@@ -76,13 +83,13 @@ function InquiryContactColumn({
   }
   const InputComponent = phone ? CmsPhoneInput : CmsInput
   return (
-    <div style={inquiryColumnStyle}>
+    <div style={columnStyle}>
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
       <InputComponent
         inputSize="small"
-        width={240}
+        width={inputWidth}
         placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -103,6 +110,16 @@ export type GeminiRecruitmentInstitutionFieldsProps = {
   onMinStudentCountChange?: (value: string) => void
   /** true면 텍스트 타이핑은 blur 때 draft commit (수정 모드 TipTap 격리) */
   deferTextCommit?: boolean
+  /** 템플릿 관리 모집 폼 — 교육 대상을 고정 값 셀렉트로 표시(선택지 1개, 시안 5798:96247) */
+  fixedEducationTargetLabel?: string
+  /** 템플릿 관리 모집 폼 — 시안 placeholder(5798:96247). 없으면 기존 문구 */
+  placeholderOverrides?: {
+    title?: string
+    applicationPeriod?: string
+    trainingRequestPeriod?: string
+  }
+  /** 템플릿 관리 모집 폼 — 문의처 입력 폭·라벨 간격(시안 5798:96247). 없으면 기존 240·8 */
+  inquiryInputLayout?: GeminiInquiryInputLayout
 }
 
 export function GeminiRecruitmentInstitutionFields({
@@ -116,7 +133,15 @@ export function GeminiRecruitmentInstitutionFields({
   onTrainingRequestPeriodChange,
   onMinStudentCountChange,
   deferTextCommit = false,
+  fixedEducationTargetLabel,
+  placeholderOverrides,
+  inquiryInputLayout,
 }: GeminiRecruitmentInstitutionFieldsProps) {
+  const titlePlaceholder = placeholderOverrides?.title ?? '공고명을 입력해 주세요'
+  const applicationPeriodPlaceholder =
+    placeholderOverrides?.applicationPeriod ?? '기관 모집 기간을 선택해 주세요'
+  const trainingRequestPeriodPlaceholder =
+    placeholderOverrides?.trainingRequestPeriod ?? '연수 요청 가능 기간을 선택해 주세요'
   const isEdit = mode === 'edit' && onChange != null
   const minStudentCountCommitted =
     values.minStudentCount != null ? String(values.minStudentCount) : ''
@@ -159,7 +184,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiDeferredCmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="공고명을 입력해 주세요"
+                  placeholder={titlePlaceholder}
                   value={values.title}
                   onCommit={next => onChange({ title: next })}
                 />
@@ -167,7 +192,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <CmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="공고명을 입력해 주세요"
+                  placeholder={titlePlaceholder}
                   value={values.title}
                   onChange={e => onChange({ title: e.target.value })}
                 />
@@ -181,9 +206,17 @@ export function GeminiRecruitmentInstitutionFields({
         <DetailInfoForm.Field
           label="교육 대상"
           validationKey={GEMINI_RECRUITMENT_VALIDATION_KEYS.educationTargetLevels}
-          view={formatEducationTargetLevels(values.educationTargetLevels)}
+          view={fixedEducationTargetLabel ?? formatEducationTargetLevels(values.educationTargetLevels)}
           edit={
-            isEdit ? (
+            fixedEducationTargetLabel != null ? (
+              <CmsSelect
+                inputSize="small"
+                width={240}
+                withAllOption={false}
+                options={[{ label: fixedEducationTargetLabel, value: fixedEducationTargetLabel }]}
+                value={fixedEducationTargetLabel}
+              />
+            ) : isEdit ? (
               <CmsSelect
                 mode="multiple"
                 inputSize="small"
@@ -243,7 +276,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiRecruitmentPeriodDatePicker
                   value={applicationPeriod}
                   onChange={onApplicationPeriodChange}
-                  placeholder="기관 모집 기간을 선택해 주세요"
+                  placeholder={applicationPeriodPlaceholder}
                   dateOnly
                 />
               </div>
@@ -263,7 +296,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiRecruitmentPeriodDatePicker
                   value={trainingRequestPeriod}
                   onChange={onTrainingRequestPeriodChange}
-                  placeholder="연수 요청 가능 기간을 선택해 주세요"
+                  placeholder={trainingRequestPeriodPlaceholder}
                 />
               </div>
             ) : undefined
@@ -350,6 +383,7 @@ export function GeminiRecruitmentInstitutionFields({
                   value={values.inquiryContactName}
                   onChange={next => onChange({ inquiryContactName: next })}
                   deferTextCommit={deferTextCommit}
+                  layout={inquiryInputLayout}
                 />
                 <DetailInfoForm.InputsSeparator />
                 <InquiryContactColumn
@@ -359,6 +393,7 @@ export function GeminiRecruitmentInstitutionFields({
                   onChange={next => onChange({ inquiryTel: next })}
                   phone
                   deferTextCommit={deferTextCommit}
+                  layout={inquiryInputLayout}
                 />
                 <DetailInfoForm.InputsSeparator />
                 <InquiryContactColumn
@@ -367,6 +402,7 @@ export function GeminiRecruitmentInstitutionFields({
                   value={values.inquiryEmail}
                   onChange={next => onChange({ inquiryEmail: next })}
                   deferTextCommit={deferTextCommit}
+                  layout={inquiryInputLayout}
                 />
               </div>
             ) : undefined

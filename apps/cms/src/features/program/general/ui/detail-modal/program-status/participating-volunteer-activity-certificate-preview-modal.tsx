@@ -115,16 +115,18 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   const runtimeStringValues = useMemo(
     () =>
       buildActivityCertificateInitialStringValuesForVolunteer(unmaskedVolunteer.volunteerName, {
+        birthDate: unmaskedVolunteer.birthDate,
+        affiliation: unmaskedVolunteer.affiliation,
         program,
         issuanceReasonLabel,
         participationPeriod: periodHours.participationPeriod,
-        activityHours: periodHours.activityHours,
       }),
     [
       issuanceReasonLabel,
-      periodHours.activityHours,
       periodHours.participationPeriod,
       program,
+      unmaskedVolunteer.affiliation,
+      unmaskedVolunteer.birthDate,
       unmaskedVolunteer.volunteerName,
     ]
   )
