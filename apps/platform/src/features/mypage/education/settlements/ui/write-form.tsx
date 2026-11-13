@@ -935,6 +935,33 @@ export function EducationSettlementWriteForm({
           </PFFormSection>
         ) : null}
 
+        {!isReceipt && instructorSettlementPreview.calculation ? (
+          <PFFormSection id="instructor-settlement-calculation" title="예상 정산 계산 내역">
+            <div className={styles.calculationPreview} aria-live="polite">
+              <PFText as="p" typo="bd-md-rg" color="black">
+                {instructorSettlementPreview.calculation.lecture}
+              </PFText>
+              <PFText as="p" typo="bd-md-rg" color="black">
+                {instructorSettlementPreview.calculation.transportation}
+              </PFText>
+              <PFText as="p" typo="bd-md-rg" color="black">
+                {`지급 총액: ${instructorSettlementPreview.calculation.gross}`}
+              </PFText>
+              <PFText as="p" typo="bd-md-rg" color="black">
+                {`원천징수액: ${instructorSettlementPreview.calculation.withholding}`}
+              </PFText>
+              <PFText as="p" typo="bd-md-rg" color="black">
+                {`예상 실지급액: ${instructorSettlementPreview.calculation.net}`}
+              </PFText>
+              {instructorSettlementPreview.calculation.explanation ? (
+                <PFText as="p" typo="bd-md-rg" color="error">
+                  {instructorSettlementPreview.calculation.explanation}
+                </PFText>
+              ) : null}
+            </div>
+          </PFFormSection>
+        ) : null}
+
         <PFFormSection
           id="settlement-basic"
           title={`${basicSectionNo}. 기본 정보`}
