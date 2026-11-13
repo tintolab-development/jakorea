@@ -53,7 +53,8 @@ export function UjatCheckInModal({
 
   return (
     <PFModal
-      showCloseButton={false}
+      // Figma 11005:342147 우상단 닫기(X) — 제출 중에는 닫지 못하게 숨긴다
+      showCloseButton={!checkInMutation.isPending}
       open={open}
       onClose={onClose}
       title="출석하기"
@@ -64,9 +65,9 @@ export function UjatCheckInModal({
     >
       <div className={styles.body}>
         <div id={descriptionId} className={styles.description}>
-          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
+          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
             지정된 모집 장소에 도착 후 출석을 확인해 주세요. 수업시간 30분 전까지 모집 장소에
-            도착해야 하며, 이후 불참 건은 지각 처리됩니다.
+            도착해야 하며, 이후 출석 건은 지각 처리됩니다.
           </PFText>
         </div>
         {query.isLoading ? (
