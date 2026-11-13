@@ -387,7 +387,7 @@ export function PFCalendar({
                           gridColumn: `${segment.startCol + 1} / ${segment.endCol + 2}`,
                           gridRow: segment.lane + 1,
                           backgroundColor: colors.background,
-                          borderColor: colors.accent,
+                          borderLeftColor: segment.isRangeStart ? colors.accent : 'transparent',
                         }}
                       >
                         <span className={styles.eventBarProgram}>{segment.programName}</span>
