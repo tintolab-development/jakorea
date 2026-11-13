@@ -31,7 +31,11 @@ import {
   type AuthBootstrapDeps,
   type AuthBootstrapResult,
 } from '@/shared/lib/auth-bootstrap'
-import { showAuthRestoreNotice } from '@/shared/lib/auth-restore-notice'
+import {
+  isSessionExpiredNoticePending,
+  showAuthRestoreNotice,
+  showSessionExpiredNotice,
+} from '@/shared/lib/auth-restore-notice'
 import { getServerCorrectedNowMs } from '@/shared/lib/server-clock'
 import {
   getAccessToken,
@@ -398,12 +402,22 @@ async function handleAuthFailure(ctx: AuthFailureContext, options: { redirect?: 
   const path =
     typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/'
   const { logoutPortalSession } = await import('@/features/auth/session/portal-logout')
-  await logoutPortalSession({
-    serverLogout: ctx.serverLogout,
-    refreshToken: ctx.refreshToken,
+  if (options.redirect === false) {
     // 시작 시 복원 실패는 이동하지 않는다 — 로그인이 필요한 화면은 각 가드가 비로그인으로 처리한다.
-    redirectTo:
-      options.redirect === false ? null : `/auth/sign-in?redirect=${encodeURIComponent(path)}`,
+    await logoutPortalSession({
+      serverLogout: ctx.serverLogout,
+      refreshToken: ctx.refreshToken,
+      redirectTo: null,
+    })
+    return
+  }
+  // 사용 중 세션 종료: 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면 이동.
+  showSessionExpiredNotice(() => {
+    void logoutPortalSession({
+      serverLogout: ctx.serverLogout,
+      refreshToken: ctx.refreshToken,
+      redirectTo: `/auth/sign-in?redirect=${encodeURIComponent(path)}`,
+    })
   })
 }
 
@@ -687,6 +701,10 @@ axiosClient.interceptors.response.use(
     }
 
     const isAccessTokenFailure = status === 401 && code === 'UNAUTHORIZED'
+    if (isAccessTokenFailure && isSessionExpiredNoticePending()) {
+      // 세션 종료 안내가 떠 있는 동안에는 refresh를 다시 시도하지 않는다 ([확인] 시 로그아웃)
+      return Promise.reject(error)
+    }
     if (!isAccessTokenFailure || originalRequest._retry) {
       return Promise.reject(error)
     }

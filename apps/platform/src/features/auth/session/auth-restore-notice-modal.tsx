@@ -2,7 +2,7 @@ import { useId, useState, useSyncExternalStore } from 'react'
 import { retryPortalAccessTokenRestore } from '@/shared/api/axios-instance'
 import {
   buildSignInPathWithRedirect,
-  dismissAuthRestoreNotice,
+  confirmAuthRestoreNotice,
   getAuthRestoreNotice,
   resolveAuthRestoreNoticeActions,
   subscribeAuthRestoreNotice,
@@ -46,7 +46,8 @@ export function PlatformAuthRestoreNoticeModal({
   const copy = PLATFORM_AUTH_RESTORE_NOTICE_DISPLAY
   const pathname = currentPath.split('?')[0] ?? currentPath
   const actions = resolveAuthRestoreNoticeActions(notice, pathname)
-  const isSessionEnded = notice === 'session-ended'
+  // 사용 중 세션 종료(session-expired)도 같은 「로그인이 종료되었어요.」 문구를 쓴다
+  const isSessionEnded = notice === 'session-ended' || notice === 'session-expired'
 
   const handleRetry = async () => {
     setRetrying(true)
@@ -62,10 +63,10 @@ export function PlatformAuthRestoreNoticeModal({
     switch (action) {
       case 'close':
       case 'confirm':
-        dismissAuthRestoreNotice()
+        confirmAuthRestoreNotice()
         return
       case 'sign-in':
-        dismissAuthRestoreNotice()
+        confirmAuthRestoreNotice()
         navigate(buildSignInPathWithRedirect(currentPath))
         return
       case 'retry':

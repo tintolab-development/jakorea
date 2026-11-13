@@ -18,6 +18,10 @@ import {
   PLATFORM_AUTH_TOKEN_KEY,
 } from '@/shared/lib/auth-token'
 import {
+  isSessionExpiredNoticePending,
+  showSessionExpiredNotice,
+} from '@/shared/lib/auth-restore-notice'
+import {
   resetServerClockOffset,
   setServerClockOffsetMs as storeServerClockOffsetMs,
 } from '@/shared/lib/server-clock'
@@ -104,9 +108,15 @@ export function usePortalSessionTimeout() {
     void logoutPortalSession({ redirectTo: SIGN_IN_PATH })
   }, [])
 
-  /** 서버 401로 세션 무효가 확정됐을 때만 호출한다. */
+  /**
+   * 서버 401로 세션 무효가 확정됐을 때만 호출한다.
+   * 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면으로 이동한다.
+   */
   const endInvalidSession = useCallback(() => {
-    void logoutPortalSession({ redirectTo: signInRedirectPath() })
+    setVisibleKind(null)
+    showSessionExpiredNotice(() => {
+      void logoutPortalSession({ redirectTo: signInRedirectPath() })
+    })
   }, [])
 
   const syncSession = useCallback(async () => {
@@ -229,7 +239,8 @@ export function usePortalSessionTimeout() {
   useEffect(() => {
     if (!activityTrackingEnabled) return
     return startPortalActivityTracking({
-      isSuppressed: () => extendingRef.current,
+      // 연장 처리 중이거나 세션 종료 안내가 떠 있으면 Activity를 보내지 않는다
+      isSuppressed: () => extendingRef.current || isSessionExpiredNoticePending(),
       onNetworkActivity: () => {
         postPortalMemberActivity()
           .then(() => {
@@ -258,6 +269,11 @@ export function usePortalSessionTimeout() {
       return
     }
     const tick = () => {
+      // 세션 종료 안내가 떠 있으면 유휴 경고는 띄우지 않는다
+      if (isSessionExpiredNoticePending()) {
+        setVisibleKind(null)
+        return
+      }
       const nowMs = correctedNowMs(Date.now(), serverClockOffsetMs)
       const view = resolveSessionWarningView({ session, nowMs })
       const idleExpiresAtMs = session.idlePolicyEnforced
