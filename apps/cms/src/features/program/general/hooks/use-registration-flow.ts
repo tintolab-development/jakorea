@@ -512,14 +512,11 @@ export function useGeneralProgramRegistrationFlow(
         : isTrainedTeachersRegistration
           ? 'trainedTeachers'
           : undefined,
+      // 1사1교 — 배정 강사·학급·일정·차시 최대값은 기본값 없이 빈 칸으로 시작한다(2026-11-13 요청)
       applicantRecruitInstitutionDefaults: isCompanySchoolRegistration
         ? {
             studentListRequired: 'none',
             preguidanceRequired: 'need',
-            maxAssignableInstructors: 2,
-            maxClassCount: 4,
-            maxScheduleCount: 2,
-            maxSessionsPerDay: 2,
           }
         : isTrainedTeachersRegistration
           ? {
