@@ -577,7 +577,7 @@ export type ParticipantEducationScopeScheduleEnrich = {
    * UNAVAILABLE = 배정 불가(사유는 unavailableReason).
    */
   availabilityStatus?: 'AVAILABLE' | 'UNAVAILABLE' | null
-  /** UNAVAILABLE 사유 코드. 현재 `INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT`(같은 날짜 다른 일정 배정)만 */
+  /** UNAVAILABLE 사유 코드. 현재 `INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT`(같은 프로그램 다른 배정 일정과 시간 겹침, 맞닿음 포함)만 */
   unavailableReason?: string | null
 }
 
