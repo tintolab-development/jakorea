@@ -1,5 +1,6 @@
 import type { ImgHTMLAttributes } from 'react'
 import addReactionUrl from './add_reaction.svg?url'
+import fontUrl from './font.svg?url'
 import boldUrl from './Icon-6.svg?url'
 import chevronDownUrl from './field.svg?url'
 import gridOnUrl from './grid_on.svg?url'
@@ -51,12 +52,9 @@ export function RtChevronDownIcon({
   )
 }
 
+/** 글꼴 — 시안 `Icon / Text Editor / w16` font 원본 */
 export function RtFontFamilyIcon({ className }: { className?: string }) {
-  return (
-    <span className={['rt-toolbar-font-icon', className].filter(Boolean).join(' ')} aria-hidden>
-      T
-    </span>
-  )
+  return <RtToolbarIcon src={fontUrl} className={className} />
 }
 
 export function RtBoldIcon(props: Omit<RtToolbarIconProps, 'src'>) {
