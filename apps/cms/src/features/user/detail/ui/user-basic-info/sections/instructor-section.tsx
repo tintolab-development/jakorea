@@ -205,7 +205,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         : undefined
 
   const genderRadioValue =
-    toApiGender(d?.gender) === 'M' ? 'male' : toApiGender(d?.gender) === 'F' ? 'female' : undefined
+    toApiGender(d?.gender) === 'MALE' ? 'male' : toApiGender(d?.gender) === 'FEMALE' ? 'female' : undefined
 
   const businessIncomeField = (
     <EditableField
