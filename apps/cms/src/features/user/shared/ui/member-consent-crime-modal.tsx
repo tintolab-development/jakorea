@@ -261,8 +261,8 @@ export function MemberConsentCrimeModal({
           <div className="crime-consent-doc-modal__toolbar">
             <div className="crime-consent-doc-modal__notice-wrap">
               <p className="crime-consent-doc-modal__notice">
-                동의서 문서를 업로드한 후 제출해 주세요. 제출까지 완료되어야 동의된 것으로
-                간주됩니다.
+                ※ 양식을 다운로드하여 작성 후 업로드해 주세요. 제출 완료 시 동의된 것으로
+                간주합니다.
               </p>
             </div>
             <div className="crime-consent-doc-modal__actions member-consent-crime-modal__actions">
@@ -297,7 +297,7 @@ export function MemberConsentCrimeModal({
                   tabIndex={isSubmitting ? undefined : -1}
                   onClick={handlePickDocument}
                   disabled={isSubmitting} >
-                  문서 업로드
+                  동의서 업로드
                 </CmsButton>
               </span>
               <CmsButton
@@ -306,7 +306,7 @@ export function MemberConsentCrimeModal({
                 onClick={() => void handleSubmit()}
                 disabled={isSubmitting}
                 loading={isSubmitting} >
-                제출
+                동의서 제출
               </CmsButton>
             </div>
           </div>

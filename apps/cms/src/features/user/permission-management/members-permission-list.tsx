@@ -626,8 +626,8 @@ export const MembersPermissionList = forwardRef<
     const dateField: FilterFieldConfig = {
       key: 'createdAtRange',
       type: 'dateRange',
-      /** 시안: 강사 권한 승인 목록 「신청일」 (관리자 탭은 기존 라벨 유지) */
-      label: memberType === 'admin' ? '신청 시기' : '신청일',
+      /** 시안: 권한 승인 목록 「신청일」 — 강사·관리자 탭 공통 (QA 2026-11-13 회원 #25) */
+      label: '신청일',
       width: '40%',
       defaultValue: null,
     }
