@@ -42,8 +42,8 @@ function toApiBirthDate(value: string): string {
 
 function toApiGender(value: string): string {
   const normalized = value.trim().toLowerCase()
-  if (normalized === 'female' || normalized === 'f') return 'F'
-  return 'M'
+  if (normalized === 'female' || normalized === 'f') return 'FEMALE'
+  return 'MALE'
 }
 
 /** CMS `formatMonth` — wire `YYYY-MM` (폼 문자열: YYYY / YYYY.MM / YYYY-MM / …) */
