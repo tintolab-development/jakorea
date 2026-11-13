@@ -100,6 +100,24 @@ describe('CMS: periodic Refresh race', () => {
     expect(useAuthStore.getState().token).toBe(replacementAccess)
   })
 
+  it('a failed checkAuth Refresh logs out locally without a server logout (stored credential may be another tab login)', async () => {
+    const expiresAt = new Date(Date.now() - 10_000).toISOString()
+    localStorage.setItem('auth_expires_at', expiresAt)
+    localStorage.setItem('auth_user', JSON.stringify({ id: 'same-user', isActive: true }))
+    useAuthStore.setState({
+      expiresAt,
+      _isCheckingAuth: false,
+      _checkAuthPromise: null,
+    })
+
+    const pending = useAuthStore.getState().checkAuth()
+    await complete(false)
+    await pending
+
+    expect(logout).toHaveBeenCalledTimes(1)
+    expect(logout).toHaveBeenCalledWith({ skipRemote: true })
+  })
+
   it('a delayed successful boot checkAuth may not replace a different login identity', async () => {
     const expiresAt = new Date(Date.now() - 10_000).toISOString()
     localStorage.setItem('auth_expires_at', expiresAt)

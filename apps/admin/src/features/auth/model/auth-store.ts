@@ -535,7 +535,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             } else {
               const refreshed = await get().refreshToken()
               if (!refreshed) {
-                if (isCurrentLogin() && get().token === tokenAtStart) get().logout()
+                // 저장소의 refresh 수단은 다른 탭의 새 로그인 값일 수 있다 — 서버 logout으로 그 세션을 끊지 않고 로컬만 정리한다
+                if (isCurrentLogin() && get().token === tokenAtStart) get().logout({ skipRemote: true })
                 return
               }
             }
