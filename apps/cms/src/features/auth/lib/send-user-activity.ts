@@ -4,7 +4,8 @@ import {
   postAdminAuthActivity,
 } from '@/features/auth/api/admin-session-fetcher'
 import { notifyAdminActivityRecorded } from '@/features/auth/lib/admin-activity-signal'
-import { shouldRefreshAccessToken, useAuthStore } from '@/features/auth/model/auth-store'
+import { endExpiredSession, shouldRefreshAccessToken, useAuthStore } from '@/features/auth/model/auth-store'
+import { isSessionEndConfirmPending } from '@/features/auth/lib/session-ended-confirm'
 
 /**
  * 전역 입력 Activity 전송. 이 탭의 access token이 만료됐거나 곧 만료되면 먼저 refresh한다.
@@ -15,6 +16,8 @@ import { shouldRefreshAccessToken, useAuthStore } from '@/features/auth/model/au
 export async function sendUserActivity(): Promise<void> {
   const initial = useAuthStore.getState()
   if (!initial.isAuthenticated || !initial.token) return
+  // 세션 종료 안내가 떠 있는 동안에는 Activity를 보내지 않는다
+  if (isSessionEndConfirmPending()) return
   if (initial.expiresAt &&
       shouldRefreshAccessToken(new Date(initial.expiresAt).getTime(), Date.now())) {
     if ((await initial.refreshSession()) !== 'ok') return
@@ -30,7 +33,8 @@ export async function sendUserActivity(): Promise<void> {
     // A delayed 401 from the previous access token must not end a refreshed login.
     if (!current.isAuthenticated || current.token !== requestedToken) return
     if (isAdminAuthUnauthorizedError(error)) {
-      current.logout()
+      // 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃한다.
+      endExpiredSession()
     } else if (isAdminAuthForbiddenError(error)) {
       // Permission/account-type mismatch is not token expiration.
       console.warn('[ADMIN_SESSION] Activity was denied (403); verify ADMIN JWT and sid.')

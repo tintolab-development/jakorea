@@ -30,8 +30,8 @@ import {
   RELOAD_RESTORE_NOTICE_DELAY_MS,
   RELOAD_RESTORE_SILENT_RETRY_DELAY_MS,
   SESSION_ENDED_NOTICE,
-  markSessionEndedNotice,
 } from '@/features/auth/lib/session-restore-notice'
+import { confirmSessionEnded } from '@/features/auth/lib/session-ended-confirm'
 import { cmsAlertModal, isCmsAlertModalReady } from '@/shared/ui/cms-alert-modal-api'
 import {
   clearRefreshCredential,
@@ -880,7 +880,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // QA-0137: 저장된 refreshToken이 없어도 HttpOnly 쿠키 세션이면 refresh를 시도한다
       if (!refreshToken && !hasRefreshCredential()) {
         if (nearExpiry) {
-          get().logout()
+          endExpiredSession()
           return true
         }
         return false
@@ -901,7 +901,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           if (current.isAuthenticated &&
               current.token === accessAtRefreshStart &&
               storedRefresh === refreshAtRefreshStart) {
-            current.logout()
+            endExpiredSession()
           }
         })
       return false
@@ -931,21 +931,35 @@ async function restoreAccessTokenAfterReload(options: {
 
 /**
  * ① 세션 종료 안내 + 로그아웃.
- * 보호 화면이면 로그아웃이 로그인 화면으로 전체 이동하므로 표시를 남겨 로그인 화면이 띄운다.
- * 이미 로그인 화면 등 공개 화면이면([닫기] 뒤 늦은 거절) 이동이 없으니 바로 띄운다.
+ * 보호 화면: 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고, [확인](또는 닫기) 때 로그아웃해 로그인 화면으로 간다.
+ *   로그인 후 원래 화면으로 돌아오도록 redirect 파라미터를 넘긴다. 공통 Alert를 쓸 수 없으면 로그인 화면이 안내한다.
+ * 이미 로그인 화면 등 공개 화면이면([닫기] 뒤 늦은 거절) 이동할 곳이 없으니 바로 로그아웃하고 안내만 띄운다.
  */
 function endSessionWithNotice(logout: () => void): void {
   const onPublicPage =
     typeof window !== 'undefined' && isCmsLoggedOutPublicPath(window.location.pathname)
-  if (!onPublicPage) {
-    markSessionEndedNotice()
+  if (onPublicPage) {
+    logout()
+    if (isCmsAlertModalReady()) {
+      cmsAlertModal.show({ title: SESSION_ENDED_NOTICE.title, content: SESSION_ENDED_NOTICE.content })
+    }
+    return
+  }
+  confirmSessionEnded(() => {
     nextLogoutReturnParam = 'redirect'
-  }
-  logout()
-  nextLogoutReturnParam = undefined
-  if (onPublicPage && isCmsAlertModalReady()) {
-    cmsAlertModal.show({ title: SESSION_ENDED_NOTICE.title, content: SESSION_ENDED_NOTICE.content })
-  }
+    logout()
+    nextLogoutReturnParam = undefined
+  })
+}
+
+/**
+ * 서버가 세션 무효를 확정했을 때(유휴·절대 만료, refresh 거절, Activity 401 등) 공통 종료 처리.
+ * 지금 화면에서 안내를 띄우고 [확인] 때 로그아웃한다. skipRemote는 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있을 때.
+ */
+export function endExpiredSession(options?: { skipRemote?: boolean }): void {
+  endSessionWithNotice(() =>
+    useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined)
+  )
 }
 
 export async function refreshAdminSessionFromMe(): Promise<void> {

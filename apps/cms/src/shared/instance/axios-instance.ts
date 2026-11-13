@@ -31,6 +31,10 @@ import {
 } from '@/features/auth/lib/refresh-credential'
 import { readJwtSidClaim } from '@jakorea/domain/session'
 import { getAuthGeneration, SessionChangedDuringRefreshError } from '@/features/auth/lib/auth-generation'
+import {
+  confirmSessionEnded,
+  isSessionEndConfirmPending,
+} from '@/features/auth/lib/session-ended-confirm'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
@@ -246,7 +250,15 @@ function persistRefreshToken(refreshToken: string | undefined) {
   storeRefreshTokenFromResponse(refreshToken)
 }
 
+/**
+ * 세션 무효 확정 — 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인](또는 닫기) 때 로그아웃·이동한다.
+ * 여러 요청이 동시에 와도 안내와 로그아웃은 한 번만 한다 (session-ended-confirm).
+ */
 function handleAuthFailure(options?: { skipRemote?: boolean }) {
+  confirmSessionEnded(() => logoutAfterAuthFailure(options))
+}
+
+function logoutAfterAuthFailure(options?: { skipRemote?: boolean }) {
   const complete =
     typeof window !== 'undefined' ? hasPasswordChangeRequiredComplete() : false
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
@@ -485,6 +497,10 @@ axiosClient.interceptors.response.use(
     }
 
     const isAccessTokenFailure = status === 401 && isAccessTokenUnauthorizedCode(code)
+    if (isAccessTokenFailure && isSessionEndConfirmPending()) {
+      // 세션 종료 안내가 떠 있는 동안에는 refresh를 다시 시도하지 않는다 (확인 시 로그아웃)
+      return Promise.reject(error)
+    }
     if (!isAccessTokenFailure || originalRequest._retry) {
       showGlobalApiErrorAlert(error, originalRequest)
       return Promise.reject(error)

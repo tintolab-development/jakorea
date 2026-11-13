@@ -11,6 +11,13 @@ export type CmsAlertModalShowOptions = {
   zIndex?: number
   /** 확인 버튼 클릭 시 (모달 닫기 전에 호출) */
   onConfirm?: () => void
+  /** 확인이 아닌 방법(X·바깥 클릭·Esc)으로 닫을 때 호출 */
+  onDismiss?: () => void
+  /**
+   * 열려 있는 동안 다른 Alert가 이 Alert를 덮어쓰거나 밖에서 닫지 못하게 한다.
+   * 사용자가 직접 확인·닫기를 해야 다음 단계(예: 세션 종료 후 로그아웃)로 넘어가는 안내에 쓴다.
+   */
+  exclusive?: boolean
 }
 
 type CmsAlertModalListener = {

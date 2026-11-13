@@ -17,7 +17,8 @@ import {
   isAdminAuthUnauthorizedError,
   postAdminAuthActivity,
 } from '@/features/auth/api/admin-session-fetcher'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { endExpiredSession, useAuthStore } from '@/features/auth/model/auth-store'
+import { isSessionEndConfirmPending } from '@/features/auth/lib/session-ended-confirm'
 import { subscribeAdminActivityRecorded } from '@/features/auth/lib/admin-activity-signal'
 import { setSessionWarningActivitySuppressed } from '@/features/auth/lib/session-keepalive'
 import {
@@ -81,7 +82,9 @@ export function useSessionTimeout() {
       if (!isCurrent()) return
       if (isAdminAuthUnauthorizedError(error)) {
         // Axios has already performed the single permitted Refresh/retry for GET Session.
-        logout()
+        // 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃한다.
+        setVisibleKind(null)
+        endExpiredSession()
         return
       }
       // 403 is permission denial, 404 can mean the BE route is not deployed, and
@@ -93,7 +96,7 @@ export function useSessionTimeout() {
       sessionRef.current = null
       setSession(null)
     }
-  }, [logout])
+  }, [])
 
   useEffect(() => {
     sessionRef.current = session
@@ -163,6 +166,11 @@ export function useSessionTimeout() {
   useEffect(() => {
     if (!isAuthenticated) return
     const tick = () => {
+      // 세션 종료 안내가 떠 있으면 유휴 경고는 띄우지 않는다
+      if (isSessionEndConfirmPending()) {
+        setVisibleKind(null)
+        return
+      }
       const nowMs = correctedNowMs(Date.now(), serverClockOffsetMs)
       const view = resolveSessionWarningView({ session, nowMs })
       // The warning view becomes null after an idle deadline has already passed.
@@ -240,7 +248,8 @@ export function useSessionTimeout() {
     } catch (error) {
       if (!isCurrent()) return
       if (isAdminAuthUnauthorizedError(error)) {
-        logout()
+        setVisibleKind(null)
+        endExpiredSession()
         return
       }
       if (isAdminAuthForbiddenError(error) || isAdminAuthRetryableTransportError(error)) {
@@ -252,7 +261,7 @@ export function useSessionTimeout() {
       setSessionWarningActivitySuppressed(false)
       setExtending(false)
     }
-  }, [logout])
+  }, [])
 
   return {
     showWarning: visibleKind != null,
