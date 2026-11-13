@@ -51,6 +51,7 @@ export const INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES: Record<string, strin
     '같은 시간에 다른 기관에 배정된 강사입니다.',
   INSTRUCTOR_ASSIGNMENT_SAME_ORGANIZATION_OTHER_SCHEDULE:
     '같은 기관의 다른 일정에 이미 배정된 강사입니다.',
+  INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT: '같은 날짜에 이미 다른 일정에 배정된 강사입니다.',
   INSTRUCTOR_REPRESENTATIVE_ASSIGNMENT_SCOPE_NOT_FOUND:
     '대표 강사로 지정할 기관 배정 정보를 찾을 수 없습니다.',
   GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT:

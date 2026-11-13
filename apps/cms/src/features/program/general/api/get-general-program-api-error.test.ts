@@ -30,16 +30,16 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toContain('사업 시작일')
   })
 
-  it('문구 매핑이 없는 코드만 message로 오면 코드 대신 fallback을 노출한다 (같은 날짜 배정 409)', () => {
+  it('문구 매핑이 없는 코드만 message로 오면 코드 대신 fallback을 노출한다 (매핑 없는 409)', () => {
     const error = {
       response: {
         status: 409,
         data: {
           success: false,
-          message: 'CONFLICT: INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+          message: 'CONFLICT: SOME_UNMAPPED_CONFLICT',
           error: {
-            code: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
-            message: 'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+            code: 'SOME_UNMAPPED_CONFLICT',
+            message: 'SOME_UNMAPPED_CONFLICT',
           },
         },
       },
@@ -295,6 +295,40 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
       '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.'
     )
+  })
+})
+
+describe('getGeneralProgramApiErrorMessage instructor assignment write conflicts', () => {
+  const conflict = (code: string, message?: string) => ({
+    response: {
+      status: 409,
+      data: {
+        success: false,
+        message,
+        error: { code, message },
+      },
+    },
+  })
+
+  it('INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT — 서버 공통 충돌 문구 대신 코드별 안내', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        conflict(
+          'INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT',
+          '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.'
+        ),
+        'fallback'
+      )
+    ).toBe('같은 날짜에 이미 다른 일정에 배정된 강사입니다.')
+  })
+
+  it('서버 구체 메시지가 있으면 그대로 쓴다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        conflict('INSTRUCTOR_ASSIGNMENT_SAME_DAY_CONFLICT', '11월 13일에 이미 배정된 강사입니다.'),
+        'fallback'
+      )
+    ).toBe('11월 13일에 이미 배정된 강사입니다.')
   })
 })
 
