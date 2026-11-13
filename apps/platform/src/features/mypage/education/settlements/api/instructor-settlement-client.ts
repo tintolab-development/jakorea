@@ -51,6 +51,15 @@ export type PortalInstructorSettlementPreview = {
   assignmentId?: number | null
   canSubmit?: boolean
   blockerCode?: string | null
+  grossAmount?: number | null
+  withholdingTaxAmount?: number | null
+  netPaymentAmount?: number | null
+  calculationDetails?: Array<{
+    calculationType?: string | null
+    basisJsonb?: string | null
+    resultAmount?: number | null
+    formulaText?: string | null
+  }> | null
   transportationExcludedReason?: string | null
   transportationUnresolvedAddressSide?: string | null
   /** 프로그램에서 켠 실비 항목만. maxLimitWon은 신청 1건 기준 한도, evidenceRequired 미설정이면 null */
