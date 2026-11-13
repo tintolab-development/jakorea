@@ -12,6 +12,7 @@ import {
   resolveSettlementDocumentKind,
   useSettlementApplicationDocumentQuery,
   type SettlementWriteDraftLocationState,
+  buildSettlementConfirmPath,
 } from '@/features/mypage/education/settlements'
 import {
   useMyProgramApplicationDetail,
@@ -53,7 +54,6 @@ import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useReceiptPaymentStatementConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
 import {
   buildSettlementPaymentConsentPath,
-  buildSettlementReceiptConsentPath,
 } from '@/features/mypage/education/settlements/lib/consent-path'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import {
@@ -66,7 +66,6 @@ import {
 } from '@/features/mypage/education/settlements/lib/application-document-errors'
 import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
-  RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
   individualSettlementApiErrorMessage,
   isReceiptPreConsentRequiredError,
   readIndividualSettlementErrorCode,
@@ -80,6 +79,9 @@ import {
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
+import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
+import { ReceiptGuardianGateModals } from '@/features/mypage/education/settlements/ui/receipt-guardian-gate-modals'
+import { RECEIPT_PRE_CONSENT_SUBMIT_BLOCKED_DESCRIPTION } from '@/features/mypage/education/settlements/lib/settlement-pre-consent-copy'
 import styles from './page.module.css'
 
 function readRevisionNoParam(raw: string | null): number | null {
@@ -137,7 +139,11 @@ export function MypageEducationSettlementConfirmPage() {
     applicationId,
     area,
     applicationType,
+    // 기획 B: 동의서 작성을 마치면 제출 화면으로 돌아온다(입력값은 sessionStorage draft로 유지)
+    returnTo: buildSettlementConfirmPath({ applicationId, sessionId, area, applicationType }),
   })
+  /** 영수증 사전 동의서 미작성 안내 팝업 (사전 가드·서버 RECEIPT_PRE_CONSENT_REQUIRED 공용) */
+  const [receiptConsentModalOpen, setReceiptConsentModalOpen] = useState(false)
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
@@ -319,8 +325,7 @@ export function MypageEducationSettlementConfirmPage() {
       return
     }
     if (documentKind === 'receipt' && !receiptConsent.isConsentSubmitted) {
-      setAlertMessage(RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
-      setAlertOpen(true)
+      setReceiptConsentModalOpen(true)
       return
     }
     if (!isInstructorSubmit && !useIndividualSettlementApi) {
@@ -425,8 +430,7 @@ export function MypageEducationSettlementConfirmPage() {
         })
         .catch(error => {
           if (documentKind === 'receipt' && isReceiptPreConsentRequiredError(error)) {
-            setAlertMessage(RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
-            setAlertOpen(true)
+            setReceiptConsentModalOpen(true)
             return
           }
           if (readIndividualSettlementErrorCode(error) === PAYMENT_ITEM_LIMIT_EXCEEDED_CODE) {
@@ -474,23 +478,27 @@ export function MypageEducationSettlementConfirmPage() {
         onComplete={handleComplete}
         onBack={handleBack}
       />
+      {documentKind === 'receipt' ? (
+        <>
+          <PaymentStatementPreConsentModal
+            open={receiptConsentModalOpen && receiptConsent.minorGuardian.step == null}
+            variant="receipt"
+            description={RECEIPT_PRE_CONSENT_SUBMIT_BLOCKED_DESCRIPTION}
+            onCancel={() => setReceiptConsentModalOpen(false)}
+            onWriteConsent={() => {
+              setReceiptConsentModalOpen(false)
+              receiptConsent.goToConsents()
+            }}
+          />
+          <ReceiptGuardianGateModals flow={receiptConsent.minorGuardian} />
+        </>
+      ) : null}
       <PFAlertModal
         open={alertOpen}
         title="안내"
         description={alertMessage}
         onConfirm={() => {
           setAlertOpen(false)
-          if (documentKind === 'receipt' && alertMessage === RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE) {
-            navigate(
-              buildSettlementReceiptConsentPath({
-                applicationId,
-                mode: 'write',
-                area,
-                applicationType,
-              })
-            )
-            return
-          }
           if (alertMessage === PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE) {
             navigate(
               buildSettlementPaymentConsentPath({
