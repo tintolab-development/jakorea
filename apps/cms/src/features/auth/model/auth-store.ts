@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import { readJwtSidClaim } from '@jakorea/domain/session'
+import { bumpAuthGeneration } from '@/features/auth/lib/auth-generation'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import {
@@ -355,6 +356,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     completeAdminAuth: (tokens: AuthTokenResponse) => {
       const state = get()
       if (!state.user) return
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
 
       const normalizedUser = applyAccessTokenRoleToSessionUser(state.user, tokens.accessToken)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
@@ -439,6 +442,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     applySocialAuthTokens: (tokens: AuthTokenResponse) => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const placeholderUser: Omit<User, 'password'> = {
         id: 'social-sso-pending',
         email: '',
@@ -476,6 +481,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     logout: options => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const refreshToken =
         typeof window !== 'undefined' && window.localStorage
           ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
@@ -775,6 +782,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     // Phase 0.1.3: 인증 상태 직접 설정 (휴대폰/소셜 로그인용)
     setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const normalizedUser = withSessionAdminRole(authData.user)
       persistAccessTokenSession(authData.expiresAt)
       persistSessionUser(normalizedUser)

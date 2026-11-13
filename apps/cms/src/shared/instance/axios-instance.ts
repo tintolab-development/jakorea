@@ -30,6 +30,7 @@ import {
   storeRefreshTokenFromResponse,
 } from '@/features/auth/lib/refresh-credential'
 import { readJwtSidClaim } from '@jakorea/domain/session'
+import { getAuthGeneration, SessionChangedDuringRefreshError } from '@/features/auth/lib/auth-generation'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
@@ -281,12 +282,14 @@ function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
 
 const REFRESH_LOCK_NAME = 'jakorea-admin-refresh'
 
-async function postRefreshAndPersist(refreshToken: string | null): Promise<string> {
+async function postRefreshAndPersist(refreshToken: string | null, generation: number): Promise<string> {
   const res = await postAuthenticationRefreshToken(refreshToken)
   const parsed = parseAuthTokenResponse(res.data)
   if (!parsed) {
     throw new Error('Invalid refresh response: missing access token')
   }
+  // F5: 응답을 기다리는 사이 로그아웃·다른 로그인이 있었으면 저장하지 않는다 (로그아웃 뒤 세션이 되살아나지 않게)
+  if (getAuthGeneration() !== generation) throw new SessionChangedDuringRefreshError()
 
   persistAccessToken(parsed.accessToken, expiresAtIsoFromExpiresInSeconds(parsed.expiresInSeconds))
   persistRefreshToken(parsed.refreshToken)
@@ -299,7 +302,12 @@ async function postRefreshAndPersist(refreshToken: string | null): Promise<strin
  * access token은 탭 메모리에만 있으므로 다른 탭의 결과를 채택하지 않고, 이 탭도 직접 refresh한다.
  * refresh token은 매번 rotate되므로 잠금을 기다린 뒤 저장소의 최신 값(또는 브라우저가 실어 보내는 최신 쿠키)을 쓴다.
  */
-async function refreshWithLatestCredential(startedWithRefreshToken: string | null): Promise<string> {
+async function refreshWithLatestCredential(
+  startedWithRefreshToken: string | null,
+  generation: number,
+): Promise<string> {
+  // 잠금을 기다리는 사이 로그아웃·다른 로그인이 있었으면 refresh를 보내지 않는다
+  if (getAuthGeneration() !== generation) throw new SessionChangedDuringRefreshError()
   // 저장값이 없으면(쿠키 세션) 본문 없이 쿠키로 요청한다.
   // 쿠키 세션에서 이 탭이 시작 때 쓰던 값을 다시 쓰지 않는다 — 다른 탭이 지운 rotate된 토큰일 수 있다.
   const storedRefreshToken = readRefreshToken()
@@ -309,28 +317,28 @@ async function refreshWithLatestCredential(startedWithRefreshToken: string | nul
   }
   const tokenToUse = storedRefreshToken ?? (hasRefreshCredential() ? null : startedWithRefreshToken)
   try {
-    return await postRefreshAndPersist(tokenToUse)
+    return await postRefreshAndPersist(tokenToUse, generation)
   } catch (err) {
     // 락 미지원 환경 등에서 동시 refresh에 진 경우(409 REFRESH_TOKEN_ALREADY_ROTATED):
     // 승자가 rotate한 최신 refresh 수단으로 한 번만 다시 시도한다 (같은 값 재전송 금지).
     if (isRefreshAlreadyRotatedError(err)) {
       const latest = readRefreshToken()
-      if (latest && latest !== tokenToUse) return postRefreshAndPersist(latest)
-      if (!latest && tokenToUse == null && hasRefreshCredential()) return postRefreshAndPersist(null)
+      if (latest && latest !== tokenToUse) return postRefreshAndPersist(latest, generation)
+      if (!latest && tokenToUse == null && hasRefreshCredential()) return postRefreshAndPersist(null, generation)
     }
     throw err
   }
 }
 
 /** 탭 간 refresh 직렬화 (Web Locks). 미지원 환경은 기존 동작(탭 내 single-flight만). */
-async function refreshAcrossTabs(startedWithRefreshToken: string | null): Promise<string> {
+async function refreshAcrossTabs(startedWithRefreshToken: string | null, generation: number): Promise<string> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
   if (locks && typeof locks.request === 'function') {
     return await locks.request(REFRESH_LOCK_NAME, () =>
-      refreshWithLatestCredential(startedWithRefreshToken),
+      refreshWithLatestCredential(startedWithRefreshToken, generation),
     )
   }
-  return refreshWithLatestCredential(startedWithRefreshToken)
+  return refreshWithLatestCredential(startedWithRefreshToken, generation)
 }
 
 /** refreshToken=null은 쿠키 세션(본문 없이 HttpOnly 쿠키로 refresh) */
@@ -339,9 +347,10 @@ async function runSingleFlightRefresh(refreshToken: string | null): Promise<stri
     return refreshPromise
   }
 
+  const generation = getAuthGeneration()
   refreshPromise = (async () => {
     try {
-      return await refreshAcrossTabs(refreshToken)
+      return await refreshAcrossTabs(refreshToken, generation)
     } finally {
       refreshPromise = null
     }

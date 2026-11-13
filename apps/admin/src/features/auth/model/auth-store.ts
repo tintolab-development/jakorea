@@ -59,6 +59,7 @@ import { visitorStatsQueryKeys } from '@/features/visitor-stats/api/query-keys'
 import { adminMeQueryKeys } from '@/features/auth/api/admin-me-query-keys'
 import { systemInboxQueryKeys } from '@/features/system-inbox/api/query-keys'
 import { queryClient } from '@/shared/lib/query-client'
+import { bumpAuthGeneration } from '@/features/auth/lib/auth-generation'
 import {
   refreshAccessTokenSession,
   refreshAccessTokenSessionWithResult,
@@ -377,6 +378,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     completeAdminAuth: (tokens: AuthTokenResponse) => {
       const state = get()
       if (!state.user) return
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
 
       const verifiedMfaState = state.mfaState ? { ...state.mfaState, isVerified: true } : null
       // QA-0137: 본문에 refreshToken이 없으면 undefined로 덮지 않고 HttpOnly 쿠키 세션으로 표시
@@ -407,10 +410,14 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     setAuth: session => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       get().applyAuthSession(session)
     },
 
     logout: options => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const skipRemote = options?.skipRemote === true
       const refreshToken =
         typeof window !== 'undefined' && window.localStorage
