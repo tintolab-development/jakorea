@@ -34,5 +34,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Instructor settlement preview calculation selfcheck
         run: node --experimental-strip-types --experimental-transform-types apps/platform/src/features/mypage/education/settlements/lib/instructor-settlement-calculation-preview.selfcheck.ts
+      - name: Build workspace dependencies for platform imports
+        run: pnpm --filter platform build:workspace-deps
       - name: Platform typecheck
         run: pnpm --filter platform typecheck
