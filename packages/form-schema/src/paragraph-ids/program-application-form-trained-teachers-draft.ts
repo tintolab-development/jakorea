@@ -212,15 +212,49 @@ export function migrateProgramApplicationFormTrainedTeachersParagraphs(
       }
     }
     if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.personalInfoCollection &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table'
+    ) {
+      // 보유기간 셀(시스템 값) — 구 임시저장본 문구(`- ` 접두·폐기 등)를 공통 상수로 보정
+      const next = patchHorizontalTableTextCell(
+        paragraph,
+        0,
+        2,
+        TRAINED_TEACHERS_APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL
+      )
+      if (next !== paragraph) changed = true
+      return next
+    }
+    if (
       paragraph.id !== PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.thirdPartyConsent ||
       paragraph.kind !== 'single_item' ||
       paragraph.variant !== 'horizontal_table'
     ) {
       return paragraph
     }
-    const next = migrateTrainedTeachersThirdPartyProviderColumn(paragraph)
+    const migrated = migrateTrainedTeachersThirdPartyProviderColumn(paragraph)
+    const next = patchHorizontalTableTextCell(migrated, 0, 3, APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL)
     if (next !== paragraph) changed = true
     return next
   })
   return changed ? { ...draft, paragraphs } : draft
+}
+
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
 }
