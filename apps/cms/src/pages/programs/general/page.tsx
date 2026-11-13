@@ -476,8 +476,6 @@ export function GeneralProgramListPageContent() {
         data={filteredPrograms}
         loading={listLoading && (filteredPrograms.length === 0 || isListPlaceholderData)}
         headerTitle={headerTitle}
-        // 시안 — 전체 탭은 제목 없이 「총 N건」·안내만(진행 예정·중·완료 탭은 제목 유지)
-        hideHeaderTitle={statusFilter == null}
         headerCount={isRemoteDataSource ? totalElements : undefined}
         onView={handleView}
         searchParams={searchParams}
