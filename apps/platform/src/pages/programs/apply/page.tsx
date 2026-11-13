@@ -96,6 +96,7 @@ import {
   isUjatInstitutionClassTimeParagraphId,
   isUjatInstitutionGradeInfoParagraphId,
   isUjatInstitutionPreferredScheduleParagraphId,
+  isUjatInstitutionSubmitConfirmationParagraphId,
   isUjatSubmitConfirmationParagraphId,
   isUjatVolunteerBasicInfoParagraphId,
   isUjatVolunteerFreeTextItemsParagraphId,
@@ -1839,6 +1840,10 @@ export function ProgramApplyPage() {
         if (!item) return undefined
         return (
           <ApplyUjatInstitutionSubmitConfirmation
+            control={
+              isUjatInstitutionSubmitConfirmationParagraphId(paragraph.id) ? 'radio' : 'checkbox'
+            }
+            radioName={paragraph.id}
             label={item.label}
             checked={isUjatSubmitConfirmationChecked(paragraph)}
             onCheckedChange={checked => {

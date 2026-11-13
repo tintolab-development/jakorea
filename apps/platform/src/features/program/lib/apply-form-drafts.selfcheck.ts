@@ -272,7 +272,7 @@ function testInstitutionGemini() {
   )
   assert.equal(
     titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent],
-    '제3자 정보 제공‧이용 동의'
+    '개인정보 제3자 정보 제공‧이용 동의'
   )
   assert.equal(
     titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.portraitConsent],
