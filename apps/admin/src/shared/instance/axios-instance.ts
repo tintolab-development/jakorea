@@ -10,6 +10,10 @@
 
 import { readJwtSidClaim } from '@jakorea/domain/session'
 import { getAuthGeneration, SessionChangedDuringRefreshError } from '@/features/auth/lib/auth-generation'
+import {
+  confirmSessionEnded,
+  isSessionEndConfirmPending,
+} from '@/features/auth/lib/session-ended-confirm'
 import { isAccessTokenUnauthorizedCode } from '@/features/auth/lib/access-token-unauthorized-code'
 import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
 import {
@@ -271,13 +275,19 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
   return undefined
 }
 
+/**
+ * 세션 무효 확정 — 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인](또는 닫기) 때 로그아웃·이동한다.
+ * 여러 요청이 동시에 와도 안내와 로그아웃은 한 번만 한다 (session-ended-confirm).
+ */
 function handleAuthFailure(options?: { skipRemote?: boolean }) {
-  useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined)
-  if (typeof window !== 'undefined') {
-    window.location.assign(
-      buildLoginPathWithRedirect(`${window.location.pathname}${window.location.search}`)
-    )
-  }
+  confirmSessionEnded(() => {
+    useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined)
+    if (typeof window !== 'undefined') {
+      window.location.assign(
+        buildLoginPathWithRedirect(`${window.location.pathname}${window.location.search}`)
+      )
+    }
+  })
 }
 
 function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
@@ -469,6 +479,10 @@ axiosInstance.interceptors.response.use(
 
     // CMS와 같은 판정: UNAUTHORIZED·TOKEN_EXPIRED·ACCESS_TOKEN_EXPIRED
     const isAccessTokenFailure = status === 401 && isAccessTokenUnauthorizedCode(code)
+    if (isAccessTokenFailure && isSessionEndConfirmPending()) {
+      // 세션 종료 안내가 떠 있는 동안에는 refresh를 다시 시도하지 않는다 (확인 시 로그아웃)
+      return Promise.reject(error)
+    }
     if (!isAccessTokenFailure || originalRequest._retry) {
       return Promise.reject(error)
     }

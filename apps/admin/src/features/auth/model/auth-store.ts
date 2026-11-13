@@ -60,6 +60,7 @@ import { adminMeQueryKeys } from '@/features/auth/api/admin-me-query-keys'
 import { systemInboxQueryKeys } from '@/features/system-inbox/api/query-keys'
 import { queryClient } from '@/shared/lib/query-client'
 import { bumpAuthGeneration } from '@/features/auth/lib/auth-generation'
+import { confirmSessionEnded } from '@/features/auth/lib/session-ended-confirm'
 import {
   refreshAccessTokenSession,
   refreshAccessTokenSessionWithResult,
@@ -303,8 +304,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         }
         if (outcome.kind === 'session-invalid') {
           if (get().token !== tokenAtStart) return
-          get().logout()
-          set({ bootstrapNotice: 'session-ended' })
+          // 복원 로딩 화면 위에서 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃한다
+          // (로그아웃 뒤 ProtectedRoute가 원래 경로를 redirect로 넘겨 로그인 화면으로 보낸다).
+          endExpiredSession()
           return
         }
         if (bootstrapDismissed) {
@@ -627,7 +629,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // QA-0137: 저장된 refreshToken이 없어도 HttpOnly 쿠키 세션이면 refresh를 시도한다
       if (!refreshToken && !hasRefreshCredential()) {
         if (nearExpiry) {
-          get().logout()
+          endExpiredSession()
           return true
         }
         return false
@@ -648,10 +650,23 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           if (current.isAuthenticated &&
               current.token === accessAtRefreshStart &&
               storedRefresh === refreshAtRefreshStart) {
-            current.logout()
+            endExpiredSession()
           }
         })
       return false
     },
   }
 })
+
+/**
+ * 서버가 세션 무효를 확정했을 때(유휴·절대 만료, refresh 거절, Activity 401 등) 공통 종료 처리.
+ * 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인](또는 닫기) 때 로그아웃한다.
+ * skipRemote는 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있을 때.
+ */
+export function endExpiredSession(options?: { skipRemote?: boolean }): void {
+  confirmSessionEnded(
+    () => useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined),
+    // 공통 Alert를 못 쓰면 기존처럼 로그아웃 뒤 로그인 화면(BootstrapSessionNotice)이 안내한다
+    { onUnavailable: () => useAuthStore.setState({ bootstrapNotice: 'session-ended' }) },
+  )
+}
