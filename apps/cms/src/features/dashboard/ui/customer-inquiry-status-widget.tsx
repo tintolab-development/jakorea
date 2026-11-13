@@ -71,7 +71,8 @@ export function CustomerInquiryStatusWidget({ isHalfColumn = false }: { isHalfCo
         width: countColumnWidth,
         align: 'center',
         render: (value: number | null, record: ProgramInquiryRow) =>
-          value != null && value > 0 ? (
+          /* 시안 Status / Text / Alarm: 0건도 브랜드 색, 점은 미확인 문의가 있을 때만 */
+          value != null ? (
             <span className="dashboard-widget-table__pending-btn" role="presentation">
               <span className="dashboard-widget-table__pending-inner">
                 <span className="dashboard-widget-table__pending-text">{value}건</span>
@@ -83,9 +84,7 @@ export function CustomerInquiryStatusWidget({ isHalfColumn = false }: { isHalfCo
               </span>
             </span>
           ) : (
-            <span className="dashboard-widget-table__count--muted">
-              {value == null ? '-' : '0건'}
-            </span>
+            <span className="dashboard-widget-table__count--muted">-</span>
           ),
       },
       {

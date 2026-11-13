@@ -29,11 +29,19 @@ describe('inquiriesParamsFromSearchParams', () => {
     })
   })
 
-  it('sends numeric program as both programName and programId', () => {
-    const params = inquiriesParamsFromSearchParams(new URLSearchParams('inq_prog=12&inq_st=ANSWERED'))
-    expect(params.programName).toBe('12')
-    expect(params.programId).toBe(12)
+  it('sends only programId when dashboard link carries inq_pid', () => {
+    const params = inquiriesParamsFromSearchParams(
+      new URLSearchParams('inq_prog=커리큘럼형&inq_pid=186324&inq_st=ANSWERED')
+    )
+    expect(params.programId).toBe(186324)
+    expect(params.programName).toBeUndefined()
     expect(params.status).toBe('answered')
+  })
+
+  it('treats legacy numeric inq_prog as programId only', () => {
+    const params = inquiriesParamsFromSearchParams(new URLSearchParams('inq_prog=12'))
+    expect(params.programId).toBe(12)
+    expect(params.programName).toBeUndefined()
   })
 
   it('sends createdFrom or createdTo when only one URL date is set', () => {
