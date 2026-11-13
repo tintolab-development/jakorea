@@ -17,6 +17,10 @@ import {
   PLATFORM_AUTH_REFRESH_TOKEN_KEY,
   PLATFORM_AUTH_TOKEN_KEY,
 } from '@/shared/lib/auth-token'
+import {
+  resetServerClockOffset,
+  setServerClockOffsetMs as storeServerClockOffsetMs,
+} from '@/shared/lib/server-clock'
 import { startPortalActivityTracking } from './portal-activity-tracker'
 import { logoutPortalSession } from './portal-logout'
 import {
@@ -91,6 +95,8 @@ export function usePortalSessionTimeout() {
     if (offsetMs != null) {
       offsetRef.current = offsetMs
       setServerClockOffsetMs(offsetMs)
+      // Axios 인터셉터(Session GET 401의 Access 만료 판단)도 서버 기준 시각을 쓰도록 모듈에 함께 저장한다.
+      storeServerClockOffsetMs(offsetMs)
     }
   }, [])
 
@@ -181,6 +187,7 @@ export function usePortalSessionTimeout() {
       expiryRecheckPendingRef.current = false
       lastExpiryRecheckAtRef.current = 0
       applySession(null)
+      resetServerClockOffset()
       setStatus('anonymous')
       setVisibleKind(null)
       setRemainingMs(0)

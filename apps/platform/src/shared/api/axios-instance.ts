@@ -32,6 +32,7 @@ import {
   type AuthBootstrapResult,
 } from '@/shared/lib/auth-bootstrap'
 import { showAuthRestoreNotice } from '@/shared/lib/auth-restore-notice'
+import { getServerCorrectedNowMs } from '@/shared/lib/server-clock'
 import {
   getAccessToken,
   getAuthGeneration,
@@ -192,8 +193,14 @@ function readBearerToken(headers: InternalAxiosRequestConfig['headers'] | undefi
   return match?.[1]?.trim() || null
 }
 
-/** 요청 제어 힌트: JWT exp가 지났으면 true. 판독 불가면 false(만료로 단정하지 않음). */
-function isAccessTokenExpiredByHint(accessToken: string | null, nowMs = Date.now()): boolean {
+/**
+ * 요청 제어 힌트: JWT exp가 지났으면 true. 판독 불가면 false(만료로 단정하지 않음).
+ * 현재 시각은 세션 응답 `serverNow`로 보정한 서버 기준 시각을 쓴다(보정값이 없으면 PC 시계).
+ */
+function isAccessTokenExpiredByHint(
+  accessToken: string | null,
+  nowMs = getServerCorrectedNowMs(),
+): boolean {
   const expMs = readJwtExpiresAtMs(accessToken)
   return expMs != null && expMs <= nowMs + ACCESS_EXPIRY_HINT_SKEW_MS
 }
