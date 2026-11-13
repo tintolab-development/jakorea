@@ -78,7 +78,7 @@ const COMPANY_SCHOOL_WAGE_ROWS = [
   {
     gradeLabel: '1급',
     regularLabel: '1급 강사비',
-    longDistanceLabel: '1급 장거리비',
+    longDistanceLabel: '1급 강사 장거리비',
     regularField: 'wageGrade1Amount' as const,
     longDistanceField: 'wageGrade1LongDistanceAmount' as const,
     regularValue: '500,000',
@@ -89,7 +89,7 @@ const COMPANY_SCHOOL_WAGE_ROWS = [
   {
     gradeLabel: '2급',
     regularLabel: '2급 강사비',
-    longDistanceLabel: '2급 장거리비',
+    longDistanceLabel: '2급 강사 장거리비',
     regularField: 'wageGrade2Amount' as const,
     longDistanceField: 'wageGrade2LongDistanceAmount' as const,
     regularValue: '400,000',
@@ -100,7 +100,7 @@ const COMPANY_SCHOOL_WAGE_ROWS = [
   {
     gradeLabel: '3급',
     regularLabel: '3급 강사비',
-    longDistanceLabel: '3급 장거리비',
+    longDistanceLabel: '3급 강사 장거리비',
     regularField: 'wageGrade3Amount' as const,
     longDistanceField: 'wageGrade3LongDistanceAmount' as const,
     regularValue: '300,000',
