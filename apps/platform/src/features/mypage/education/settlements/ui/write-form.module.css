@@ -143,3 +143,11 @@
   display: flex;
   flex-direction: column;
 }
+
+/* 미리보기 canSubmit=false — 입력 섹션(PFFormSection)과 같은 흰 카드 안에 인라인 빈 상태 */
+.form .blocked-state {
+  padding: var(--spacing-40) var(--spacing-20);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-lg);
+}

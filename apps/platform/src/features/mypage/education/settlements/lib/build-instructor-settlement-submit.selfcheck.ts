@@ -215,6 +215,16 @@ assert.equal(lodgingNotRequested.requestedItems.some(item => item.itemType === '
       .activity.evidenceRequired,
     true,
   )
+  // 지급 항목 0건 미리보기(payableItems: []) — 받은 것으로 보고 식사비·활동비 모두 끈다(입력 칸 숨김)
+  const noneOffered = readInstructorExpensePolicies({
+    canSubmit: false,
+    blockerCode: 'SETTLEMENT_CALCULATION_ITEMS_REQUIRED',
+    items: [],
+    payableItems: [],
+  })
+  assert.equal(noneOffered.loaded, true)
+  assert.equal(noneOffered.meal.allowed, false)
+  assert.equal(noneOffered.activity.allowed, false)
 
   const draft = buildSettlementWriteDraft({
     ...base,

@@ -23,6 +23,7 @@ import {
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { useSubmitInstructorSettlementMutation } from '@/features/mypage/education/settlements/api/use-submit-instructor-settlement-mutation'
+import { useInstructorSettlementPreviewQuery } from '@/features/mypage/education/settlements/api/use-instructor-settlement-preview-query'
 import { findAssignedSettlementItem } from '@/features/mypage/education/settlements/lib/assigned-settlement-items'
 import { normalizeSettlementNamedExpense } from '@/features/mypage/education/settlements/lib/build-write-draft'
 import {
@@ -202,6 +203,11 @@ export function MypageEducationSettlementConfirmPage() {
     viewMode,
   ])
 
+  /** 강사 최초 제출 전 — 작성 화면과 같은 미리보기(캐시 공유)의 canSubmit=false면 제출을 호출하지 않는다 */
+  const instructorSettlementPreview = useInstructorSettlementPreviewQuery(
+    isInstructorSubmit && !viewMode ? storedDraft?.meta.assignmentId : null
+  )
+
   useEffect(() => {
     if (!applicationId || !sessionId) {
       navigate(buildSettlementTabPath(applicationId, area, applicationType), { replace: true })
@@ -375,6 +381,12 @@ export function MypageEducationSettlementConfirmPage() {
           draft.meta.resubmit === true && settlementApplicationId != null
             ? buildInstructorSettlementResubmitRequest(draft)
             : undefined
+        // 지급 항목 0건 등 미리보기 차단 — 빈 항목 제출은 서버 오류가 날 수 있어 FE에서 막는다(BE 409 작업 전)
+        if (!resubmit && instructorSettlementPreview.submitBlock) {
+          setAlertMessage(instructorSettlementPreview.submitBlock.message)
+          setAlertOpen(true)
+          return
+        }
         const create = resubmit ? undefined : buildInstructorSettlementCreateRequest(draft)
         void instructorSubmitMutation
           .mutateAsync({

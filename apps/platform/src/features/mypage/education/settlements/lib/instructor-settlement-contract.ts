@@ -39,11 +39,55 @@ export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
   SETTLEMENT_CORRECTION_NOT_FOUND: '정정 내역을 찾을 수 없어요.',
 }
 
-/** 서버 message를 먼저 쓰는 오류 코드 (없으면 위 문구) */
+/** 미리보기 지급 항목 0건 — 200 canSubmit=false의 blockerCode (BE 1b13439db) */
+export const SETTLEMENT_CALCULATION_ITEMS_REQUIRED_CODE = 'SETTLEMENT_CALCULATION_ITEMS_REQUIRED'
+
+/** 프로그램에서 꺼진 실비 항목을 requestedItems로 보냄 — 400, field=requestedItems (BE 1b13439db) */
+export const SETTLEMENT_PAYMENT_ITEM_NOT_ENABLED_CODE = 'SETTLEMENT_PAYMENT_ITEM_NOT_ENABLED'
+
+/** 서버 message를 먼저 쓰는 오류 코드 (없으면 위 문구 → 호출부 fallback) */
 const SERVER_MESSAGE_FIRST_CODES = new Set([
   'SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED',
   'SETTLEMENT_CORRECTION_NOT_FOUND',
+  SETTLEMENT_PAYMENT_ITEM_NOT_ENABLED_CODE,
+  SETTLEMENT_CALCULATION_ITEMS_REQUIRED_CODE,
 ])
+
+/** blockerMessage·code 문구가 모두 없을 때 — 작성 화면의 기존 정산 차단 fallback과 같은 문구 */
+export const INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE = '지금은 정산을 신청할 수 없습니다.'
+
+/** 미리보기(200) 제출 차단 — canSubmit=false일 때만 */
+export type InstructorPreviewSubmitBlock = {
+  /** 대문자 blockerCode. 없으면 null */
+  code: string | null
+  /** 서버 blockerMessage → 같은 code의 기존 오류 문구 → fallback 순 */
+  message: string
+}
+
+/**
+ * 미리보기 응답 → 제출 차단 사유. canSubmit이 false가 아니면 null.
+ * 문구는 서버 blockerMessage를 그대로 쓴다(모르는 code도 blockerMessage로 폴백).
+ */
+export function readInstructorPreviewSubmitBlock(preview: unknown): InstructorPreviewSubmitBlock | null {
+  if (!preview || typeof preview !== 'object') return null
+  const body = preview as { canSubmit?: unknown; blockerCode?: unknown; blockerMessage?: unknown }
+  if (body.canSubmit !== false) return null
+  const code =
+    typeof body.blockerCode === 'string' && body.blockerCode.trim()
+      ? body.blockerCode.trim().toUpperCase()
+      : null
+  const serverMessage =
+    typeof body.blockerMessage === 'string' && body.blockerMessage.trim()
+      ? body.blockerMessage.trim()
+      : null
+  return {
+    code,
+    message:
+      serverMessage ??
+      (code ? INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE[code] : undefined) ??
+      INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE,
+  }
+}
 
 export const PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE =
   '지급조서 재신청에 실패했습니다. 잠시 후 다시 시도해 주세요.'
