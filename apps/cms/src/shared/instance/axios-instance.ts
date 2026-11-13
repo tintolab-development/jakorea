@@ -121,6 +121,23 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
   return isExcludedFromBearerAuth(url) || path === `${adminAuthPaths.prefix}/activity`
 }
 
+/**
+ * 늦게 도착한 401(이 탭이 이미 refresh로 토큰을 바꾼 뒤)을 새 토큰으로 1회 재시도해도 되는지.
+ * 같은 로그인 세션(sid)일 때만 허용한다 — 다른 계정으로 바뀐 뒤 이전 요청이 새 계정으로 실행되면 안 된다.
+ */
+function shouldRetryWithNewerAccessToken(
+  request: RetryableRequest,
+  requestUrl: string,
+  code: string | undefined,
+  sentBearer: string,
+  activeToken: string | null,
+): boolean {
+  if (!activeToken || request._retry || request.skipRefresh) return false
+  if (isExcludedFromAutoRefresh(requestUrl) || !isAccessTokenUnauthorizedCode(code)) return false
+  const sentSid = readJwtSidClaim(sentBearer.slice('Bearer '.length))
+  return sentSid != null && sentSid === readJwtSidClaim(activeToken)
+}
+
 /** refresh/logout 실패는 세션 핸들러·로그인 UI가 담당 — 글로벌 Alert 억제 */
 function isSessionAuthUtilityPath(url?: string): boolean {
   if (!url) return false
@@ -407,12 +424,19 @@ axiosClient.interceptors.response.use(
     const code = getErrorCode(response.data)
 
     // A late 401 from an access token superseded by login/Refresh in this tab
-    // must not refresh, retry, or revoke the newly active admin session.
+    // must not refresh or revoke the newly active admin session.
     const sentBearer = originalRequest.headers?.get?.('Authorization')
     const activeToken = useAuthStore.getState().token
     if (status === 401 && typeof sentBearer === 'string' &&
         sentBearer.startsWith('Bearer ') &&
         sentBearer !== `Bearer ${activeToken ?? ''}`) {
+      // 같은 로그인(sid)이 이미 refresh로 새 토큰을 받았으면 원 요청만 그 토큰으로 1회 다시 보낸다.
+      // 로그아웃·다른 계정 로그인·자동 갱신 제외 경로(Activity 등)는 다시 보내지 않는다.
+      if (shouldRetryWithNewerAccessToken(originalRequest, requestUrl, code, sentBearer, activeToken)) {
+        originalRequest._retry = true
+        originalRequest.headers = setAuthorizationHeader(originalRequest.headers, activeToken!)
+        return axiosClient(originalRequest)
+      }
       return Promise.reject(error)
     }
 
