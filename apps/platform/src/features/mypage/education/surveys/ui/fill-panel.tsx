@@ -40,6 +40,7 @@ import {
   PORTAL_SURVEY_FORM_TYPE_QUERIES,
 } from '../../applications/lib/portal-form-list'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import type { EducationDisplayStatus } from '../../applications/model/types'
 import type { EducationSurveyListEntry } from '../lib/survey-list-types'
 import { resolveEducationSurveyFillNotice } from '../lib/fill-notice'
 import {
@@ -85,6 +86,8 @@ export type EducationSurveyFillPanelProps = {
   /** 상세 `participation.participantId` — submit `contextType=PARTICIPANT` */
   participantId?: number | null
   pendingSurveyCount?: number
+  /** 빈 상태 시안 분기 — 진행중이면 「진행 중인 …가 없음」 */
+  displayStatus?: EducationDisplayStatus
 }
 
 function surveyRenderLoadFallback(kind: EducationSurveySeedKind): string {
@@ -142,7 +145,9 @@ export function EducationSurveyFillPanel({
   programId,
   participantId,
   pendingSurveyCount,
+  displayStatus,
 }: EducationSurveyFillPanelProps) {
+  const emptyInProgress = displayStatus === 'in_progress'
   const hasApplicationContext = Boolean(applicationType && applicationId)
   const applicationForms = useApplicationFormsQuery(
     applicationType,
@@ -548,14 +553,16 @@ export function EducationSurveyFillPanel({
   }
 
   if (!holdFillSurface && !remoteForms.enabled) {
-    return <EducationSurveyEmptyPanel kind={kind} />
+    return <EducationSurveyEmptyPanel kind={kind} inProgress={emptyInProgress} />
   }
 
   if (!holdFillSurface && remoteForms.enabled && surveyList.length === 0) {
     if (kind === 'survey' && pendingSurveyCount != null && pendingSurveyCount > 0) {
-      return <EducationSurveyEmptyPanel kind={kind} pendingMismatchHint />
+      return (
+        <EducationSurveyEmptyPanel kind={kind} inProgress={emptyInProgress} pendingMismatchHint />
+      )
     }
-    return <EducationSurveyEmptyPanel kind={kind} />
+    return <EducationSurveyEmptyPanel kind={kind} inProgress={emptyInProgress} />
   }
 
   const effectivePeriodBlockReason = periodBlockReason
