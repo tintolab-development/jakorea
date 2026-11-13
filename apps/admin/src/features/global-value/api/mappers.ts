@@ -11,6 +11,7 @@ const ITEM_CODE_TO_KEY: Record<string, GlobalValueKey> = {
   VALUE_3: 'value_3',
   VALUE_4: 'value_4',
   VALUE_5: 'value_5',
+  VALUE_6: 'value_6',
 }
 
 export function mapGlobalValueResponseToDomain(row: GlobalValueResponse): GlobalValue {
