@@ -4,7 +4,8 @@
  */
 
 import { Layout, Space, Typography, Dropdown } from 'antd'
-import { BellOutlined, BellFilled } from '@ant-design/icons'
+import alarmOffUrl from '@/shared/assets/icons/gnb/alarm-off.svg'
+import alarmOnUrl from '@/shared/assets/icons/gnb/alarm-on.svg'
 import { useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAdminGnbRoleLabel } from '@/features/auth/hooks/use-admin-gnb-role-label'
@@ -163,11 +164,16 @@ export function MainHeader() {
               )}
             >
               <div className="main-header-notification-badge" role="button" tabIndex={0}>
-                {unreadCount > 0 ? (
-                  <BellFilled className="main-header-notification-icon" />
-                ) : (
-                  <BellOutlined className="main-header-notification-icon" />
-                )}
+                {/* 시안 Icon / Etc / Toggle alarm: 안 읽은 알림 있음=on(채움), 없음=off(선) */}
+                <img
+                  src={unreadCount > 0 ? alarmOnUrl : alarmOffUrl}
+                  alt=""
+                  aria-hidden
+                  width={20}
+                  height={20}
+                  draggable={false}
+                  className="main-header-notification-icon"
+                />
                 <Text className="main-header-notification-count">{unreadCount}건</Text>
               </div>
             </Dropdown>
