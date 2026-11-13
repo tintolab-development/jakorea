@@ -9,6 +9,7 @@ import {
   buildTravelBasisDetail,
   buildWithholdingBasisDetail,
   isGenericLectureFeeCategoryLabel,
+  mapWithholdingRateCalculationDetailToBasisDetail,
   isSupportedBasisDetailLayout,
   mapTransportationSnapshotToBasisDetail,
   DISTANCE_SNAPSHOT_UNLINKED_NOTICE,
@@ -641,5 +642,90 @@ describe('isGenericLectureFeeCategoryLabel', () => {
     expect(isGenericLectureFeeCategoryLabel('-')).toBe(true)
     expect(isGenericLectureFeeCategoryLabel('')).toBe(true)
     expect(isGenericLectureFeeCategoryLabel('1급 강사비')).toBe(false)
+  })
+})
+
+describe('mapWithholdingRateCalculationDetailToBasisDetail', () => {
+  const detail = (basis: Record<string, unknown>, resultAmount?: number) => ({
+    layout: 'withholding' as const,
+    basisJson: JSON.stringify(basis),
+    ...(resultAmount != null ? { resultAmount } : {}),
+  })
+
+  it('사업소득 3.3% — 소득 유형·세율(%)·소액부징수 기준·과세 대상액·세액을 매핑한다', () => {
+    expect(
+      mapWithholdingRateCalculationDetailToBasisDetail(
+        detail({
+          taxIncomeType: 'BUSINESS_INCOME',
+          taxIncomeTypeDisplay: '사업소득',
+          taxableAmount: 500000,
+          rate: 0.033,
+          smallTaxExemptionThreshold: 1000,
+          incomeTaxAmount: 15000,
+          localIncomeTaxAmount: 1500,
+          withholdingTaxAmount: 16500,
+          appliedRule: 'NONE',
+          appliedRuleThreshold: null,
+        })
+      )
+    ).toEqual({
+      layout: 'withholdingRate',
+      taxIncomeTypeLabel: '사업소득',
+      ratePercent: 3.3,
+      smallTaxExemptionThresholdWon: 1000,
+      taxableAmountWon: 500000,
+      withholdingTaxAmountWon: 16500,
+    })
+  })
+
+  it('appliedRule이 있으면 적용 안내 문구를 만든다', () => {
+    expect(
+      mapWithholdingRateCalculationDetailToBasisDetail(
+        detail({
+          taxIncomeType: 'OTHER_INCOME',
+          taxableAmount: 100000,
+          rate: '0.088000',
+          withholdingTaxAmount: 0,
+          appliedRule: 'TAXABLE_MINIMUM',
+          appliedRuleThreshold: 125000,
+        })
+      )
+    ).toMatchObject({
+      taxIncomeTypeLabel: '기타소득',
+      ratePercent: 8.8,
+      appliedRuleNotice: '과세최저한 적용(125,000원 이하)',
+    })
+    expect(
+      mapWithholdingRateCalculationDetailToBasisDetail(
+        detail({
+          taxIncomeType: 'BUSINESS_INCOME',
+          taxableAmount: 20000,
+          rate: 0.033,
+          withholdingTaxAmount: 0,
+          appliedRule: 'SMALL_AMOUNT_EXEMPTION',
+          appliedRuleThreshold: 1000,
+        })
+      )
+    ).toMatchObject({ appliedRuleNotice: '소액부징수 적용(소득세 1,000원 미만)' })
+  })
+
+  it('표시명이 없으면 정산 항목 설정 표기로 소득 유형을 정하고, 세액이 없으면 resultAmount를 쓴다', () => {
+    expect(
+      mapWithholdingRateCalculationDetailToBasisDetail(
+        detail({ taxIncomeType: 'AWARD', taxableAmount: 300000, rate: 0.044 }, 13200)
+      )
+    ).toMatchObject({
+      taxIncomeTypeLabel: '상금(기타소득)',
+      ratePercent: 4.4,
+      withholdingTaxAmountWon: 13200,
+    })
+  })
+
+  it('세율·과세 대상액이 없으면 매핑하지 않는다', () => {
+    expect(
+      mapWithholdingRateCalculationDetailToBasisDetail(
+        detail({ taxIncomeType: 'BUSINESS_INCOME', withholdingTaxAmount: 100 })
+      )
+    ).toBeUndefined()
   })
 })

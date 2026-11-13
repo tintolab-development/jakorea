@@ -113,6 +113,7 @@ export {
   type PaymentOrderCalculationBasisDetailTransportOneWay,
   type PaymentOrderCalculationBasisDetailTransportRoundTrip,
   type PaymentOrderCalculationBasisDetailWithholding,
+  type PaymentOrderCalculationBasisDetailWithholdingRate,
 } from './payment-order-calculation-basis-detail'
 export {
   PaymentOrderCalculationBasisDetailLodging1s1gView,
