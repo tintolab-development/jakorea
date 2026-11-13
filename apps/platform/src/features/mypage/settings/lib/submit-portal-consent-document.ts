@@ -3,6 +3,7 @@ import {
   toReceiptPreConsentFilledBasicInfo,
 } from '@jakorea/form-schema/consent'
 import { type WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import { buildPortraitFilledDocument } from '@/features/auth/sign-up/lib/map-portrait-consent-filled-document'
 import { resolveConsentSignatureValuesForServerFields } from './resolve-consent-signature-field-values'
 import { isAxiosError } from 'axios'
@@ -61,16 +62,32 @@ async function registerSignatureProfile(signature: FormSignatureValue): Promise<
   return profile.signatureProfileId
 }
 
+/**
+ * 보호자 서명란 — 회원 서명 프로필이 아니라 서명 이미지 파일 + 보호자 인증 토큰으로 서명한다.
+ * (만 14세 미만 영수증 사전동의, 서버 `MemberPortalConsentSignFieldRequest` guardian* 필드)
+ */
+async function uploadGuardianSignatureFile(signature: FormSignatureValue): Promise<number> {
+  const file = await dataUrlToPngFile(signature.dataUrl)
+  return uploadMemberPortalFile({ file, filePurpose: SIGNATURE_FILE_PURPOSE })
+}
+
+type GuardianSignOptions = {
+  /** 보호자 본인인증 1회용 토큰. 화면·로그에 출력하지 않는다 */
+  guardianVerificationToken: string
+  /** 보호자가 서명하는 서명란 fieldKey */
+  guardianFieldKeys: ReadonlySet<string>
+}
+
 async function signDocumentSignatureFields(
   documentId: number,
   state: SchemaConsentWriteState,
-  options?: { fallbackSlot?: 'mid' | 'final' },
+  options?: { fallbackSlot?: 'mid' | 'final'; guardian?: GuardianSignOptions },
 ): Promise<void> {
   const detail = await fetchPortalConsentDocumentDetail(documentId)
   const pending = resolveConsentSignatureValuesForServerFields(
     detail.signatureFields,
     state.signatures,
-    options,
+    options?.fallbackSlot ? { fallbackSlot: options.fallbackSlot } : undefined,
   )
 
   for (const field of pending) {
@@ -80,12 +97,27 @@ async function signDocumentSignatureFields(
       }
       continue
     }
+    const guardian = options?.guardian
+    if (guardian && guardian.guardianFieldKeys.has(field.fieldKey)) {
+      const guardianSignatureFileObjectId = await uploadGuardianSignatureFile(field.signature)
+      await signPortalConsentDocumentField(documentId, field.fieldKey, {
+        guardianVerificationToken: guardian.guardianVerificationToken,
+        guardianSignatureFileObjectId,
+        guardianSignConfirmed: true,
+      })
+      continue
+    }
     const signatureProfileId = await registerSignatureProfile(field.signature)
     await signPortalConsentDocumentField(documentId, field.fieldKey, {
       signatureProfileId,
     })
   }
 }
+
+/** 영수증 사전동의 — 보호자(만 14세 미만 회원의 법정대리인)가 서명하는 서명란 */
+const RECEIPT_GUARDIAN_SIGNATURE_FIELD_KEYS: ReadonlySet<string> = new Set([
+  RECEIPT_PRE_CONSENT_IDS.tailSignature,
+])
 
 function readCreatedConsentTemplateVersion(created: PortalConsentDocumentDetail): {
   templateVersionId?: number | null
@@ -160,15 +192,33 @@ async function resolveDocumentForSubmit(
   }
 }
 
-/** 마이페이지 설정 — Portal document create → sign fields → complete */
+/**
+ * 마이페이지 설정 — Portal document create → sign fields → complete
+ * `guardianVerificationToken`: 만 14세 미만 회원의 영수증 사전동의. 보호자 서명란은 이 토큰으로 서명하고
+ * complete에도 같은 토큰을 보낸다(서버 purpose=RECEIPT_PRE_CONSENT 1회용).
+ */
 export async function submitPortalConsentDocumentFromWriteState(
   consentKey: DocumentConsentWriteKey,
   state: SchemaConsentWriteState,
+  options?: { guardianVerificationToken?: string },
 ): Promise<void> {
   const portalDocument = await resolveDocumentForSubmit(consentKey, state)
   const documentId = portalDocument.documentId
+  const guardianVerificationToken = options?.guardianVerificationToken?.trim()
+  const isReceipt = resolvePortalConsentCreateType(consentKey) === 'RECEIPT_PRE_CONSENT'
 
-  await signDocumentSignatureFields(documentId, state)
+  await signDocumentSignatureFields(
+    documentId,
+    state,
+    guardianVerificationToken && isReceipt
+      ? {
+          guardian: {
+            guardianVerificationToken,
+            guardianFieldKeys: RECEIPT_GUARDIAN_SIGNATURE_FIELD_KEYS,
+          },
+        }
+      : undefined,
+  )
 
   const filledDocument = buildPortalConsentFilledDocument(consentKey, {
     ...state,
@@ -182,6 +232,7 @@ export async function submitPortalConsentDocumentFromWriteState(
       ...filledDocument,
       schemaJson: filledDocument.schemaJson as unknown as Record<string, unknown>,
     },
+    ...(guardianVerificationToken && isReceipt ? { guardianVerificationToken } : {}),
   })
 }
 

@@ -99,9 +99,10 @@
   align-items: flex-start;
   justify-content: center;
   padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) var(--spacing-20);
-  border: 1px solid transparent;
-  border-left-width: 6px;
-  border-radius: var(--radius-12);
+  /* Figma calendar / tag: 흰 바탕 + 왼쪽 6px 유형 색 띠만, 모서리 없음 */
+  border: 0;
+  border-left: 6px solid transparent;
+  border-radius: 0;
   background: var(--color-neutral-white);
   box-shadow: var(--shadow-card-sm);
   min-width: 0;
@@ -144,8 +145,9 @@
   min-width: 0;
 }
 
+/* 제목 바로 뒤에 시간(gap 8) — 제목이 길면 제목만 줄인다 */
 .listTitle {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
@@ -234,5 +236,52 @@
     font-weight: 400;
     line-height: 160%;
     letter-spacing: 0;
+  }
+}
+
+/* Figma 나의 홈 PC — 안내 18 / 총 개수 30 Bold / 프로그램명 14 / 제목 18 SemiBold / 시간 16 */
+@media (--bp-pc-up) {
+  .listHeader {
+    gap: var(--spacing-24);
+  }
+
+  .listHeader + .listItems {
+    margin-top: calc(var(--spacing-16) - var(--spacing-24));
+  }
+
+  .listLead {
+    color: var(--color-neutral-cool-600);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 150%;
+    letter-spacing: -0.18px;
+  }
+
+  .listCount {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 144%;
+    letter-spacing: 0;
+  }
+
+  .listProgram {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+
+  .listTitle {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.18px;
+  }
+
+  .listTime {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 150%;
+    letter-spacing: -0.16px;
   }
 }

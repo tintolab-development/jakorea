@@ -164,7 +164,10 @@
 
 /* 시안: 비선택 1뎁스 행 opacity 0.8 (행 배경·호버 면은 유지, 내용만) */
 .sidebar-menu.ant-menu > li.ant-menu-item:not(.ant-menu-item-selected) > *,
-.sidebar-menu.ant-menu > li.ant-menu-submenu:not(.ant-menu-submenu-selected) > .ant-menu-submenu-title > * {
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu:not(.ant-menu-submenu-selected)
+  > .ant-menu-submenu-title
+  > * {
   opacity: 0.8;
 }
 
@@ -343,8 +346,7 @@
 
 .sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected:hover {
   background:
-    var(--sidebar-hover-overlay),
-    linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
+    var(--sidebar-hover-overlay), linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
 }
 
 /* 2뎁스 리프(자식 없는 메뉴) 선택 배경 명시 적용 */
@@ -490,7 +492,33 @@
   transform: translateY(-50%) !important;
 }
 
-/* 2·3뎁스: 시안은 불릿·아이콘 없음 — 라벨 시작 x = 행 왼쪽 패딩(2뎁스 24, 3뎁스 48) */
+/*
+ * 2·3뎁스 불릿: 시안 LNB(12543:26382 · UJAT 13196:143782) — 라벨 앞 불릿(disc)
+ * 2뎁스 라벨 시작 x = 48 (행 왼쪽 24 + 불릿 앞 13 + 닷 3 + 간격 8)
+ * 3뎁스 라벨 시작 x = 72 (행 왼쪽 48 + 불릿 앞 13 + 닷 3 + 간격 8)
+ */
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > .ant-menu-item
+  > .ant-menu-title-content::before,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title
+  > .ant-menu-title-content::before,
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item > .ant-menu-title-content::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin: 0 8px 0 13px;
+  border-radius: 50%;
+  background-color: currentColor;
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
 
 /* ---- 포커스: 브라우저·Ant 기본 outline / 포커스 링 제거 (사이드바 영역 한정) ---- */
 .sidebar-container .sidebar-header :focus,

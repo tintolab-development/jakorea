@@ -51,6 +51,8 @@ export type PortalInstructorSettlementPreview = {
   assignmentId?: number | null
   canSubmit?: boolean
   blockerCode?: string | null
+  /** canSubmit=false일 때 화면에 그대로 보이는 서버 문구 */
+  blockerMessage?: string | null
   transportationExcludedReason?: string | null
   transportationUnresolvedAddressSide?: string | null
   /** 프로그램에서 켠 실비 항목만. maxLimitWon은 신청 1건 기준 한도, evidenceRequired 미설정이면 null */
