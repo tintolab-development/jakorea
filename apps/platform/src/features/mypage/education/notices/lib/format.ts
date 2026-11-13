@@ -68,9 +68,14 @@ export function toEducationNoticePlainText(value: string): string {
     .trim()
 }
 
+/**
+ * 카드 제목 — 본문 첫 줄을 우선한다.
+ * 서버 제목은 CMS·홈페이지 모두 본문에서 만들어 저장하는 값인데, 예전 CMS는 기호를 글자 단위로 지워
+ * `[E2E]`(본문 `\[E2E\]`)가 `\E2E\`처럼 망가진 제목으로 저장돼 있다. 본문이 비었을 때만 서버 제목을 쓴다.
+ */
 export function resolveEducationNoticeTitle(title: string, content: string): string {
-  const trimmedTitle = toEducationNoticePlainText(title).split(/\n/)[0]?.trim() ?? ''
-  if (trimmedTitle.length > 0) return trimmedTitle
   const firstLine = toEducationNoticePlainText(content).split(/\n/)[0]?.trim() ?? ''
-  return firstLine || '-'
+  if (firstLine.length > 0) return firstLine
+  const trimmedTitle = toEducationNoticePlainText(title).split(/\n/)[0]?.trim() ?? ''
+  return trimmedTitle || '-'
 }
