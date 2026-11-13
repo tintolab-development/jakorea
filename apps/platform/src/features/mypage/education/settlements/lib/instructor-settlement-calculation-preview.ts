@@ -59,17 +59,17 @@ export function readInstructorSettlementCalculation(
   const transportWon = won(transportDetail?.resultAmount)
   const transportReason = asText(transport.reason)
 
-  const wageInfo = unit != null && sessions != null &&
+  const wageInfo = unit != null && sessions != null && wage != null &&
       ['PER_HOUR', 'PER_CLASS'].includes(String(lecture.instructorFeeCalculationUnit))
-    ? `강사비: ${wonLabel(unit)} × ${sessions}차시 = ${wonLabel(wage ?? 0)}` +
+    ? `강사비: ${wonLabel(unit)} × ${sessions}차시 = ${wonLabel(wage)}` +
       (minutes != null ? ` (교육 ${minutes}분)` : '')
     : wage != null
       ? `강사비: 서버 확정 ${wonLabel(wage)}`
       : '강사비: 계산 근거 확인 필요'
 
-  const transportInfo = transportReason === 'EDUCATION_FORM_ZERO'
-    ? `교통비: 온라인·혼합 교육 0km → ${wonLabel(transportWon ?? 0)}`
-    : transportReason === 'BELOW_MINIMUM_DISTANCE'
+  const transportInfo = transportReason === 'EDUCATION_FORM_ZERO' && transportWon != null
+    ? `교통비: 온라인·혼합 교육 0km → ${wonLabel(transportWon)}`
+    : transportReason === 'BELOW_MINIMUM_DISTANCE' && transportWon != null
       ? `교통비: 최소 지급 거리 미달 → ${wonLabel(transportWon ?? 0)}`
       : transportReason === 'ADDRESS_UNRESOLVED'
         ? '교통비: 주소·경로 확인 불가로 제외'
