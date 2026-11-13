@@ -1,10 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { recordMenuClick } from '@/features/analytics'
-import {
-  NotificationInboxPanel,
-  useMyNotificationUnreadCountQuery,
-} from '@/features/notification'
+import { NotificationInboxPanel, useMyNotificationUnreadCountQuery } from '@/features/notification'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import notificationsActiveIconUrl from '../image/icon/notifications-active.svg'
@@ -19,6 +16,9 @@ import {
   type NavigationSubItem,
 } from './header-config'
 import styles from './header-desktop.module.css'
+
+/** TODO(임시): 상단 메뉴를 펼친 상태로 고정 — 확인이 끝나면 false로 되돌리거나 지운다 */
+const FORCE_NAV_OPEN = true
 
 type HeaderDesktopProps = {
   groups: readonly NavigationGroup[]
@@ -117,10 +117,11 @@ export function HeaderDesktop({
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [activeGroupCode, setActiveGroupCode] = useState<string | null>(() =>
-    getActiveNavigationGroupCode(pathname),
+    getActiveNavigationGroupCode(pathname)
   )
   const [hoveredGroupCode, setHoveredGroupCode] = useState<string | null>(null)
-  const [isNavOpen, setIsNavOpen] = useState(false)
+  const [isNavOpenState, setIsNavOpen] = useState(false)
+  const isNavOpen = FORCE_NAV_OPEN || isNavOpenState
   const [menuPanelBottom, setMenuPanelBottom] = useState<number | null>(null)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const navigationRef = useRef<HTMLElement | null>(null)
@@ -273,7 +274,7 @@ export function HeaderDesktop({
                     closeNav()
                     if (target.external) {
                       const source = group.children.find(
-                        child => child.external && child.href === target.href,
+                        child => child.external && child.href === target.href
                       )
                       if (source) recordMenuClick(source.menuCode)
                       window.open(target.href, '_blank', 'noopener,noreferrer')
@@ -367,7 +368,7 @@ export function HeaderDesktop({
                 >
                   <img className={styles.actionIcon} src={iconUrl} alt="" aria-hidden="true" />
                 </button>
-              ),
+              )
             )}
           </div>
         ) : (
@@ -399,7 +400,6 @@ export function HeaderDesktop({
           aria-hidden="true"
         />
       ) : null}
-
     </header>
   )
 }
