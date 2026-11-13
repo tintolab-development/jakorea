@@ -16,11 +16,13 @@ export const UJAT_REGISTRATION_SECTION_META = {
   },
   firstHalfEducationSchedule: {
     title: '상반기 교육 일정',
-    description: '행사 일정 별 정보를 입력해 주세요',
+    /** 시안(5767:194428) 마침표 포함 */
+    description: '행사 일정 별 정보를 입력해 주세요.',
   },
   secondHalfEducationSchedule: {
     title: '하반기 교육 일정',
-    description: '행사 일정 별 정보를 입력해 주세요',
+    /** 시안(5767:194428) 마침표 포함 */
+    description: '행사 일정 별 정보를 입력해 주세요.',
   },
   educationScheduleSettings: {
     title: '교육 진행 일정 설정',

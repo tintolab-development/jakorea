@@ -6,7 +6,7 @@ export const INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION = {
 } as const
 
 export const INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO =
-  '기관 배정 시 마이페이지 > 해당 프로그램 상세에서 배정된 기관이 요청한 제출 방식을 꼭 확인해 주세요.'
+  '기관에 배정되면 마이페이지 > 해당 프로그램 상세에서 배정된 기관이 요청한 제출 방식을 꼭 확인해 주세요.'
 
 export const INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS = [
   {

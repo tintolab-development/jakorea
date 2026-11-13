@@ -19,7 +19,17 @@ export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_HEADER = '제공받는 곳'
 /** 시드 placeholder. 셀 값으로 남아 있으면 미입력으로 본다. */
 export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_PLACEHOLDER = '제공받는 곳을 입력해 주세요'
 
-/** 공통 강사·봉사자·UJAT 봉사자 신청 폼 시드 기본값 */
+/**
+ * 공통 강사·봉사자·UJAT 봉사자 신청 폼 placeholder — Figma 12875:514537·12875:514060·12875:515697.
+ * 셀 값으로 남아 있으면 미입력으로 본다.
+ */
+export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_INSTITUTION_NAME_PLACEHOLDER =
+  '제공받는 기관명을 입력해 주세요'
+
+/**
+ * 예전 공통 강사·봉사자·UJAT 봉사자 신청 폼 시드 기본값.
+ * 시안(빈칸 + placeholder)에 맞춰 시드에서는 쓰지 않는다. 서버 저장본에 남은 값은 그대로 읽는다.
+ */
 export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL = '배정된 교육 대상 학교'
 
 /** Gemini 찾아가는 연수 신청 폼 시드 기본값 */
@@ -37,12 +47,9 @@ export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_SEED_BY_PARAGRAPH_ID: Record
   [UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent]: '',
   [GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent]:
     APPLICATION_FORM_THIRD_PARTY_RECIPIENT_GEMINI,
-  [PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent]:
-    APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL,
-  [PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent]:
-    APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL,
-  [UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent]:
-    APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL,
+  [PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent]: '',
+  [PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent]: '',
+  [UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent]: '',
 }
 
 /**
@@ -86,6 +93,7 @@ export function isBlankApplicationFormThirdPartyRecipientValue(raw: string): boo
   const value = raw.trim()
   if (!value) return true
   if (value === APPLICATION_FORM_THIRD_PARTY_RECIPIENT_PLACEHOLDER) return true
+  if (value === APPLICATION_FORM_THIRD_PARTY_RECIPIENT_INSTITUTION_NAME_PLACEHOLDER) return true
   if (value === HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER) return true
   return false
 }

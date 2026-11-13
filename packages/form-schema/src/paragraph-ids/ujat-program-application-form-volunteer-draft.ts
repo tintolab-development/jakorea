@@ -105,8 +105,8 @@ export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_EDUCATION_EXPERIENCE_OPTION_IDS 
 } as const
 
 const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 const FREE_TEXT_ITEMS_DESCRIPTION = '1~4번 문항은 자유롭게 작성 가능합니다.'
 /** 일반 봉사 신청 시드와 동일했던 구 설명 */
 const LEGACY_FREE_TEXT_ITEMS_DESCRIPTION = '1~3번 문항은 자유롭게 작성 가능합니다.'
@@ -170,18 +170,19 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
     columnHeaders: ['제공받는 곳', '수집 항목', '수집·이용 목적', '제공받는 자의 보유기간'],
     dataRows: [Array.from({ length: colCount }, () => '')],
     columnFields: [
-      { kind: 'text', placeholder: '제공받는 곳을 입력해 주세요' },
+      /** Figma 12875:515697: 빈칸 + 「제공받는 기관명…」 (`APPLICATION_FORM_THIRD_PARTY_RECIPIENT_INSTITUTION_NAME_PLACEHOLDER`) */
+      { kind: 'text', placeholder: '제공받는 기관명을 입력해 주세요' },
       { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
       { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
       { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     ],
     fieldDataRows: [
       [
-        { kind: 'text', value: '배정된 교육 대상 학교' },
+        { kind: 'text', value: '' },
         { kind: 'text', value: '이름, 연락처, 성별, 학년, 이메일, 소속(학교)' },
         {
           kind: 'text',
-          value: 'JA 프로그램 봉사활동 안내 및\n프로그램 진행에 필요한 정보 안내',
+          value: 'JA 프로그램 봉사활동 안내 및\n진행에 필요한 정보 안내',
         },
         { kind: 'text', value: THIRD_PARTY_RETENTION_CELL },
       ],
@@ -414,14 +415,14 @@ export function createUjatProgramApplicationFormVolunteerDraft(): WritingFormDra
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm,
       '이전 UJAT 활동 기수',
-      '이전에 UJAT 활동한 활동 기수 기재 및 해당 기수의 UJAT 수료증 이미지 파일을 첨부해야 수료증 전형으로 서류전형 통과가 가능합니다.'
+      '이전에 UJAT 활동한 활동 기수 기재 및 해당 기수의 UJAT 수료증 파일을 첨부해야 수료증 전형으로 서류전형 통과가 가능합니다.'
     ),
     createPreferredRegionMultipleChoiceParagraph(),
     createEducationExperienceMultipleChoiceParagraph(),
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
       '면접 진행 가능 일정',
-      '서류 합격 시 면접이 진행됩니다. 면접 진행이 가능한 일정을 모두 선택해 주세요.'
+      '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요.'
     ),
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,

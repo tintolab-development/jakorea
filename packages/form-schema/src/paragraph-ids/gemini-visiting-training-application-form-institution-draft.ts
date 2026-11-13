@@ -21,7 +21,8 @@ export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAP
   new Set<string>(Object.values(GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS))
 
 const PERSONAL_INFO_TITLE = '개인정보 수집‧이용'
-const THIRD_PARTY_TITLE = '제3자 정보 제공‧이용 동의'
+/** 시안 12875:515810 — 「개인정보 제3자 정보 제공‧이용 동의」(가운뎃점 U+2027) */
+const THIRD_PARTY_TITLE = '개인정보 제3자 정보 제공‧이용 동의'
 const PORTRAIT_TITLE = '초상권 수집·이용 동의'
 const CONTACT_PERSON_TITLE = '담당 교사 정보'
 const PREFERRED_SCHEDULE_DESCRIPTION =
@@ -31,6 +32,7 @@ const LEGACY_CONTACT_PERSON_TITLES = ['담당자 정보'] as const
 const LEGACY_PERSONAL_INFO_TITLES = ['개인정보 수집·이용', '개인 정보수집 및 제공에 대한 동의'] as const
 const LEGACY_THIRD_PARTY_TITLES = [
   '개인정보 제3자 정보 제공·이용 동의',
+  '제3자 정보 제공‧이용 동의',
   '제 3자 정보 제공 동의',
 ] as const
 const LEGACY_PORTRAIT_TITLES = ['초상권에 대한 동의'] as const
@@ -49,7 +51,7 @@ const PORTRAIT_BOTTOM =
   '동의하지 않을 권리가 있으며, 동의하지 않을 시 본 프로그램 참여가 불가능합니다.'
 
 const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
 
 function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
   const colCount = 3
@@ -121,9 +123,9 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value: 'Gemini Academy 연수 참가자 공유 및 프로그램 진행에 필요한 정보 안내',
+          value: 'Gemini Academy 연수 참가자 공유 및\n프로그램 진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: '동의일로부터 3년 보관 후 폐기' },
+        { kind: 'text', value: '동의일로부터 3년 보관 후 파기' },
       ],
     ],
     bottomText: THIRD_PARTY_BOTTOM,

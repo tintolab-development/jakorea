@@ -6,8 +6,10 @@ export const LECTURE_REPORT_START_ACTIVITY_PRESET_LABEL = '활동일 (09:00)' as
 /** 강의보고서 작성 종료 — 활동일 상대 규칙 */
 export const LECTURE_REPORT_END_ACTIVITY_PRESET_LABEL = '활동일 익월 5일 (24:00)' as const
 
-/** UJAT 교육일지 작성 시작 — 활동일 상대 규칙 (강의보고서와 동일 카피) */
-export const UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL = '활동일 (09:00)' as const
+/** UJAT 교육일지 작성 시작 — 활동일 상대 규칙. 시안 5767:44785 캔버스 「활동일」(시각 표기 없음) */
+export const UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL = '활동일' as const
+/** 예전 UJAT 교육일지 저장본(강의보고서 카피 혼입) — choice 해석만 허용 */
+export const UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL_LEGACY = '활동일 (09:00)' as const
 /** UJAT 교육일지 작성 종료 — 활동일 기준 다음 주 목요일 */
 export const UJAT_EDU_JOURNAL_END_ACTIVITY_PRESET_LABEL = '활동일 다음주 목요일 (24:00)' as const
 /** 레거시 시드(교육계획서 카피 혼입) — choice 해석만 허용 */
@@ -163,7 +165,11 @@ export function resolveUjatEduJournalStartPeriodChoice(
   paragraph: TitleWithPeriodParagraph
 ): UjatEduJournalStartPeriodChoice {
   if (resolveTitleStartPeriodMode(paragraph) === 'immediate') return 'immediate'
-  if (paragraph.startPeriodPresetLabel?.trim() === UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL) {
+  const label = paragraph.startPeriodPresetLabel?.trim() ?? ''
+  if (
+    label === UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL ||
+    label === UJAT_EDU_JOURNAL_START_ACTIVITY_PRESET_LABEL_LEGACY
+  ) {
     return 'activity'
   }
   return 'custom'
