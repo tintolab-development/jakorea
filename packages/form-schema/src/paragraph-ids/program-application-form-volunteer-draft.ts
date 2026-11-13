@@ -7,6 +7,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 /** 프로그램 봉사자 신청 폼 — 시드 단락 ID */
 export const PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS = {
@@ -64,10 +68,6 @@ const PERSONAL_INFO_COLLECTION_BOTTOM =
 const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
   '위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
-const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
-
 /** Figma 수집·이용 목적 — 제3자 제공 표는 「및」 뒤 줄바꿈 */
 const VOLUNTEER_COLLECTION_PURPOSE_CELL =
   'JA 프로그램 봉사활동 안내 및\n진행에 필요한 정보 안내'
@@ -99,7 +99,7 @@ function createVolunteerPersonalInfoHorizontalTable(): HorizontalTableParagraph 
     },
     {
       kind: 'text' as const,
-      value: PERSONAL_INFO_RETENTION_CELL,
+      value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -142,7 +142,7 @@ function createVolunteerThirdPartyHorizontalTable(): HorizontalTableParagraph {
       kind: 'text' as const,
       value: VOLUNTEER_COLLECTION_PURPOSE_CELL,
     },
-    { kind: 'text' as const, value: THIRD_PARTY_RETENTION_CELL },
+    { kind: 'text' as const, value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
   ]
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
@@ -307,12 +307,12 @@ export function migrateProgramApplicationFormVolunteerParagraphs(
       return paragraph
     }
     if (paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection) {
-      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      const next = patchHorizontalTableTextCell(paragraph, 0, 2, APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL)
       if (next !== paragraph) changed = true
       return next
     }
     if (paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent) {
-      const next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
+      const next = patchHorizontalTableTextCell(paragraph, 0, 3, APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL)
       if (next !== paragraph) changed = true
       return next
     }

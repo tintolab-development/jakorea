@@ -10,6 +10,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 export const PROGRAM_PARTICIPANT_APPLICATION_IDS = {
   personalInfoCollection: 'program-participant-application-seed-personal-info',
@@ -55,8 +59,7 @@ function createPersonalInfoHorizontalTable(): HorizontalTableParagraph {
     },
     {
       kind: 'text',
-      value:
-        '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기',
+      value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -98,7 +101,7 @@ function createThirdPartyHorizontalTable(): HorizontalTableParagraph {
       kind: 'text',
       value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text', value: '동의일로부터 3년 보관 후 파기' },
+    { kind: 'text', value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
   ]
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent,
