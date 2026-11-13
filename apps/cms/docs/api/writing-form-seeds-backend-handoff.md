@@ -34,7 +34,7 @@
 |--------------|--------------|---------|-----------|--------:|
 | `registration-economy` | 1사1교 프로그램 등록 폼 | A | [registration-economy.json](./form-template-seeds/registration-economy.json) | 5 |
 | `registration-ujat` | UJAT 프로그램 등록 폼 | C | [registration-ujat.json](./form-template-seeds/registration-ujat.json) | 7 |
-| `registration-trained-teachers` | 교육받은 교사 프로그램 등록 폼 | A | [registration-trained-teachers.json](./form-template-seeds/registration-trained-teachers.json) | 4 |
+| `registration-trained-teachers` | 교육 받은 교사 프로그램 등록 폼 | A | [registration-trained-teachers.json](./form-template-seeds/registration-trained-teachers.json) | 4 |
 
 ### 모집 양식 (9)
 
@@ -48,7 +48,7 @@
 | `recruitment-ujat-school` | UJAT_참여 기관 모집 폼 | C | [recruitment-ujat-school.json](./form-template-seeds/recruitment-ujat-school.json) | 2 |
 | `recruitment-ujat-volunteer` | UJAT_봉사자 모집 폼 | C | [recruitment-ujat-volunteer.json](./form-template-seeds/recruitment-ujat-volunteer.json) | 3 |
 | `recruitment-gemini-visiting-training` | Gemini_찾아가는 연수 모집 폼 | A | [recruitment-gemini-visiting-training.json](./form-template-seeds/recruitment-gemini-visiting-training.json) | 2 |
-| `recruitment-trained-teachers` | 교육받은 교사_참여 기관 모집 폼 | A | [recruitment-trained-teachers.json](./form-template-seeds/recruitment-trained-teachers.json) | 2 |
+| `recruitment-trained-teachers` | 교육 받은 교사_참여 기관 모집 폼 | A | [recruitment-trained-teachers.json](./form-template-seeds/recruitment-trained-teachers.json) | 2 |
 
 ### 신청 양식 (10)
 
@@ -59,7 +59,7 @@
 | `application-instructor` | 공통_강사 신청 폼 | A | [application-instructor.json](./form-template-seeds/application-instructor.json) | 4 |
 | `application-volunteer` | 공통_봉사자 신청 폼 | A | [application-volunteer.json](./form-template-seeds/application-volunteer.json) | 7 |
 | `application-economy` | 1사1교_참여 기관 신청 폼 | A | [application-economy.json](./form-template-seeds/application-economy.json) | 9 |
-| `application-trained-teachers` | 교육받은 교사_참여 기관 신청 폼 | A | [application-trained-teachers.json](./form-template-seeds/application-trained-teachers.json) | 4 |
+| `application-trained-teachers` | 교육 받은 교사_참여 기관 신청 폼 | A | [application-trained-teachers.json](./form-template-seeds/application-trained-teachers.json) | 4 |
 | `application-gemini-visiting-training-instructor` | Gemini_찾아가는 연수 강사 신청 폼 | A | [application-gemini-visiting-training-instructor.json](./form-template-seeds/application-gemini-visiting-training-instructor.json) | 2 |
 | `application-gemini-visiting-training-school` | Gemini_찾아가는 연수 참여 기관 신청 폼 | A | [application-gemini-visiting-training-school.json](./form-template-seeds/application-gemini-visiting-training-school.json) | 6 |
 | `application-ujat-school` | UJAT_참여 기관 신청 폼 | C | [application-ujat-school.json](./form-template-seeds/application-ujat-school.json) | 8 |
@@ -69,21 +69,21 @@
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
-| `survey-default` | 설문조사 | A | [survey-default.json](./form-template-seeds/survey-default.json) | 14 |
+| `survey-default` | 설문조사 | A | [survey-default.json](./form-template-seeds/survey-default.json) | 7 |
 | `survey-student` | 만족도조사 (학생용) | A | [survey-student.json](./form-template-seeds/survey-student.json) | 14 |
 | `survey-teacher` | 만족도조사 (교사용) | A | [survey-teacher.json](./form-template-seeds/survey-teacher.json) | 14 |
-| `survey-admin` | 강의평가 (관리자용) | A | [survey-admin.json](./form-template-seeds/survey-admin.json) | 14 |
+| `survey-admin` | 강의 평가 (관리자용) | A | [survey-admin.json](./form-template-seeds/survey-admin.json) | 14 |
 
 ### 동의 양식 (6)
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
 | `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 14 |
-| `agreement-receipt-pre-consent` | 영수증 발급 사전 동의서 | A | [agreement-receipt-pre-consent.json](./form-template-seeds/agreement-receipt-pre-consent.json) | 12 |
-| `agreement-crime` | 성범죄 경력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
-| `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 10 |
-| `agreement-expense` | JA Korea 교육진행자 서약서(안) | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) | 9 |
-| `agreement-portrait` | 초상권 수집·이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
+| `agreement-receipt-pre-consent` | 영수증 사전 동의서 | A | [agreement-receipt-pre-consent.json](./form-template-seeds/agreement-receipt-pre-consent.json) | 12 |
+| `agreement-crime` | 성범죄경력 조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
+| `agreement-notice` | 행정정보 공동이용 사전동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 10 |
+| `agreement-expense` | JA Korea 교육진행자 서약서 | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) | 9 |
+| `agreement-portrait` | 초상권 수집·이용 동의서 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
 
 ## 단락 id 요약
 
@@ -109,7 +109,7 @@
 | `ujat-reg-education-schedule-settings` | single_item | horizontal_table | 교육 진행 일정 설정 |
 | `ujat-reg-education-class-capacity-by-region` | single_item | horizontal_table | 지역 별 교육 진행 가능 학급 및 봉사단 수 |
 
-### `registration-trained-teachers` — 교육받은 교사 프로그램 등록 폼
+### `registration-trained-teachers` — 교육 받은 교사 프로그램 등록 폼
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
@@ -178,7 +178,7 @@
 | `gemini-vt-recruit-seed-recruit-info` | single_item | horizontal_table | 참여 기관 모집 정보 |
 | `gemini-vt-recruit-seed-detail-info` | single_item | horizontal_table | 상세 정보 |
 
-### `recruitment-trained-teachers` — 교육받은 교사_참여 기관 모집 폼
+### `recruitment-trained-teachers` — 교육 받은 교사_참여 기관 모집 폼
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
@@ -193,8 +193,8 @@
 | `program-application-institution-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공·이용 동의 |
 | `program-application-institution-seed-basic-info` | single_item | horizontal_table | 기본 정보 |
 | `program-application-institution-seed-guidance` | single_item | horizontal_table | 안내 사항 |
-| `program-application-institution-seed-sex-offense-consent-submission` | single_item | horizontal_table | 성범죄 경력 조회 동의서 제출 요청 |
-| `program-application-institution-seed-sex-offense-consent-inquiry` | single_item | horizontal_table | 성범죄 경력 조회 동의서 조회 방식 |
+| `program-application-institution-seed-sex-offense-consent-submission` | single_item | horizontal_table | 성범죄경력 조회 동의서 제출 요청 |
+| `program-application-institution-seed-sex-offense-consent-inquiry` | single_item | horizontal_table | 성범죄경력 조회 동의서 조회 방식 |
 | `program-application-institution-seed-schedule` | single_item | multiple_choice | 진행 희망 교육 일정 |
 
 ### `application-participant-individual` — 일반_참여자 신청 폼
@@ -236,13 +236,13 @@
 | `program-application-economy-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공·이용 동의 |
 | `program-application-economy-seed-basic-info` | single_item | horizontal_table | 기본 정보 |
 | `program-application-economy-seed-guidance` | single_item | horizontal_table | 안내 사항 |
-| `program-application-economy-seed-sex-offense-consent-submission` | single_item | horizontal_table | 성범죄 경력 조회 동의서 제출 요청 |
-| `program-application-economy-seed-sex-offense-consent-inquiry` | single_item | horizontal_table | 성범죄 경력 조회 동의서 조회 방식 |
+| `program-application-economy-seed-sex-offense-consent-submission` | single_item | horizontal_table | 성범죄경력 조회 동의서 제출 요청 |
+| `program-application-economy-seed-sex-offense-consent-inquiry` | single_item | horizontal_table | 성범죄경력 조회 동의서 조회 방식 |
 | `program-application-economy-seed-lesson-reply` | single_item | horizontal_table | 결연 금융 회사명 |
 | `program-application-economy-seed-education-experience` | single_item | horizontal_table | 전년도 1사1교 경제금융교육 진행 여부 |
 | `program-application-economy-seed-preferred-schedule` | single_item | horizontal_table | 진행 희망 교육 일정 |
 
-### `application-trained-teachers` — 교육받은 교사_참여 기관 신청 폼
+### `application-trained-teachers` — 교육 받은 교사_참여 기관 신청 폼
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
@@ -262,9 +262,9 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `gemini-vt-inst-seed-personal-info` | single_item | horizontal_table | 개인 정보수집 및 제공에 대한 동의 |
-| `gemini-vt-inst-seed-third-party` | single_item | horizontal_table | 제 3자 정보 제공 동의 |
-| `gemini-vt-inst-seed-portrait` | single_item | horizontal_table | 초상권에 대한 동의 |
+| `gemini-vt-inst-seed-personal-info` | single_item | horizontal_table | 개인정보 수집‧이용 |
+| `gemini-vt-inst-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공‧이용 동의 |
+| `gemini-vt-inst-seed-portrait` | single_item | horizontal_table | 초상권 수집·이용 동의 |
 | `gemini-vt-inst-seed-training-info` | single_item | horizontal_table | 연수 정보 |
 | `gemini-vt-inst-seed-contact` | single_item | horizontal_table | 담당 교사 정보 |
 | `gemini-vt-inst-seed-preferred-schedule` | single_item | horizontal_table | 진행 희망 교육 일정 |
@@ -302,17 +302,10 @@
 |----|------|---------|----------------|
 | `survey-paragraph-title` | description | survey_title_with_period |  |
 | `survey-paragraph-user` | single_item | user_info | 설문자 정보 |
-| `survey-paragraph-score` | single_item | multiple_choice | 프로그램 신청 계기 |
-| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 교육 일정 및 시간이 적절하였나요? |
-| `survey-paragraph-score-3` | single_item | scale_type | 교육이 체계적으로 구성되어 있었나요? |
-| `survey-paragraph-score-4` | single_item | scale_type | 학생들의 수준을 고려한 프로그램이었나요? |
-| `survey-paragraph-score-5` | single_item | scale_type | 청소년 교육에 도움 되었나요? |
-| `survey-paragraph-score-6` | single_item | scale_type | 진행 중에 참가자들의 요구와 관심이 반영되었나요? |
-| `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
-| `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
-| `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
-| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
-| `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
+| `survey-paragraph-score` | single_item | scale_type | 오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요? |
+| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 전반적인 프로세스에 대해 명확히 이해했나요? |
+| `survey-paragraph-subjective` | single_item | short_essay | 오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요. |
+| `survey-paragraph-subjective-2` | single_item | short_essay | 기타 의견이 있다면 작성해 주세요. |
 | `survey-paragraph-closing` | description | closing |  |
 
 ### `survey-student` — 만족도조사 (학생용)
@@ -330,7 +323,7 @@
 | `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
 | `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
 | `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
-| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
+| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 콘텐츠가 있다면 기재해 주세요 |
 | `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
 | `survey-paragraph-closing` | description | closing |  |
 
@@ -349,11 +342,11 @@
 | `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
 | `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
 | `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
-| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
+| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 콘텐츠가 있다면 기재해 주세요 |
 | `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
 | `survey-paragraph-closing` | description | closing |  |
 
-### `survey-admin` — 강의평가 (관리자용)
+### `survey-admin` — 강의 평가 (관리자용)
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
@@ -368,7 +361,7 @@
 | `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
 | `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
 | `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
-| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
+| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 콘텐츠가 있다면 기재해 주세요 |
 | `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
 | `survey-paragraph-closing` | description | closing |  |
 
@@ -393,7 +386,7 @@
 | `payment-statement-pre-consent-seed-tail-signature` | description | system | 서명란 유형 |
 | `payment-statement-pre-consent-seed-closing-recipient` | description | closing |  |
 
-### `agreement-receipt-pre-consent` — 영수증 발급 사전 동의서
+### `agreement-receipt-pre-consent` — 영수증 사전 동의서
 
 > 참여자/봉사자 영수증 발급 사전 동의서. 지급조서(agreement-third-party)와 독립.
 
@@ -412,13 +405,13 @@
 | `receipt-pre-consent-seed-tail-signature` | description | system | 서명란 유형 |
 | `receipt-pre-consent-seed-closing-recipient` | description | closing |  |
 
-### `agreement-crime` — 성범죄 경력조회 동의서
+### `agreement-crime` — 성범죄경력 조회 동의서
 
 > 정적 A4 문서 + 파일 교체 UI. schemaJson paragraphs 빈 배열 허용.
 
 _(paragraphs 없음)_
 
-### `agreement-notice` — 행정정보 공동이용 사전 동의서
+### `agreement-notice` — 행정정보 공동이용 사전동의서
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
@@ -433,21 +426,21 @@ _(paragraphs 없음)_
 | `agreement-notice-system-date` | description | system | 날짜 유형 |
 | `agreement-notice-system-signature` | description | system | 서명란 유형 |
 
-### `agreement-expense` — JA Korea 교육진행자 서약서(안)
+### `agreement-expense` — JA Korea 교육진행자 서약서
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
 | `agreement-expense-pledge-title` | description | survey_title_with_period |  |
 | `agreement-expense-pledge-intro` | single_item | agreement_explanation_text |  |
 | `agreement-expense-pledge-clause-1` | single_item | multiple_choice | 아동·청소년 보호 및 법령 준수 |
-| `agreement-expense-pledge-clause-2` | single_item | multiple_choice | 종교적 정치적 중립성 유지 |
+| `agreement-expense-pledge-clause-2` | single_item | multiple_choice | 종교적·정치적 중립성 유지 |
 | `agreement-expense-pledge-clause-3` | single_item | multiple_choice | 개인정보 보호 |
 | `agreement-expense-pledge-clause-4` | single_item | multiple_choice | 품위 유지 및 성실한 교육 수행 |
 | `agreement-expense-pledge-violation-closing` | description | closing |  |
 | `agreement-expense-pledge-system-date` | description | system | 날짜 유형 |
 | `agreement-expense-pledge-system-signature` | description | system | 서명란 유형 |
 
-### `agreement-portrait` — 초상권 수집·이용 동의
+### `agreement-portrait` — 초상권 수집·이용 동의서
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
