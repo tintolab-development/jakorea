@@ -80,9 +80,9 @@
 }
 
 @media (--bp-pc-up) {
-  /* Hero 680 + Push 100 + Value 500 + hold/reveal 200 = 1480vh */
+  /* Hero 680 + Push 100 + Value 600(6항목) + hold/reveal 200 = 1580vh — introduction-scroll-phase.ts와 일치 */
   .root.isMotionTrack {
-    height: 1480vh;
+    height: 1580vh;
   }
 
   .sticky {
