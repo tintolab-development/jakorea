@@ -18,6 +18,17 @@ export type PortalConsentSignatureField = {
   signedAt?: string
 }
 
+/** CMS `MemberPortalConsentEvent` — 문서 상태 전이 이력 */
+export type PortalConsentDocumentEvent = {
+  eventId?: number
+  eventType?: string
+  beforeStatus?: string
+  afterStatus?: string
+  reason?: string
+  occurredAt?: string
+}
+
+/** CMS `MemberPortalConsentDocumentResponse` (a823 스키마 기준 전체 필드) */
 export type PortalConsentDocumentDetail = {
   documentId?: number
   consentType?: string
@@ -25,17 +36,51 @@ export type PortalConsentDocumentDetail = {
   documentStatus?: string
   contentFormat?: string
   content?: string
+  contentSha256?: string
+  termsVersion?: string
+  targetType?: string
+  targetId?: number
+  required?: boolean
+  withdrawable?: boolean
+  participationRestricted?: boolean
+  paymentRestricted?: boolean
+  signedAt?: string
+  expiresAt?: string
+  withdrawnAt?: string
+  /** 서명 완료 PDF 파일 객체. bytes는 `download-requests` 1회용 릴레이로만 받는다 */
+  signedFileObjectId?: number
+  /** 서명 PDF 렌더 작업 ID */
+  generatedFileJobId?: number
   schemaJson?: unknown
   renderStatus?: string
+  renderFailureReason?: string
+  /** PORTRAIT_RIGHTS — `PARTIAL` 등 */
+  consentStatus?: string
+  /** PORTRAIT_RIGHTS — 1·2번 동의 기반 프로그램 참여 가능 여부(서버 계산) */
+  programEligible?: boolean
   signatureFields?: PortalConsentSignatureField[]
+  events?: PortalConsentDocumentEvent[]
   filledDocument?: PortalFilledDocumentRequest | null
   formTemplateVersion?: PortalConsentFormTemplateVersion | null
   /** 초상권 — 1·2·3번 모두 agree면 true. 응답 전용(라벨). complete 요청 바디에 넣지 않는다 */
   allItemsAgreed?: boolean | null
 }
 
+/**
+ * CMS `MemberPortalConsentSignFieldRequest`.
+ *
+ * 미성년자 영수증 사전동의서의 보호자 서명란(tail)은 이 요청으로 회원이 대리 전송할 수 없다(서버 403).
+ * 보호자는 `/api/guardian/receipt-signature/sessions/**` 독립 세션에서 직접 서명한다
+ * (`features/guardian-receipt-signature`). `guardian*` 필드는 만 14세 미만 초상권 등 기존 보호자 NICE 흐름 전용이다.
+ */
 export type PortalConsentSignFieldRequest = {
   signatureProfileId?: number
+  /** 회원 세션 보호자 NICE 1회 토큰 (`guardian-verifications`) */
+  guardianVerificationToken?: string
+  /** 보호자 서명 이미지 fileObjectId (회원 세션 보호자 흐름) */
+  guardianSignatureFileObjectId?: number
+  /** 보호자 서명 확인 체크 */
+  guardianSignConfirmed?: boolean
 }
 
 export type PortalFilledDocumentRequest = {
