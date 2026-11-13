@@ -32,12 +32,19 @@
   padding-bottom: 0;
 }
 
-/* 모바일 시안: 스토리 제목 아래 335×84 · 모서리 16 영상 띠 */
+/*
+ * 모바일 시안: 스토리 제목 아래 영상 띠 — 틀 335×84(모서리 16) 비율 유지,
+ * 영상은 틀 폭에 맞춰 가득 채우고 세로 가운데만 보이게 자름
+ */
 .youtubeRevealMobile.youtubeRevealMobile {
-  --reveal-mask-height: 84px;
+  --reveal-mask-height: calc(var(--reveal-mask-width) * 84 / 335);
   padding: 0;
   gap: 0;
   background: transparent;
+}
+
+.youtubeRevealMobile.youtubeRevealMobile iframe {
+  width: var(--reveal-mask-width);
 }
 
 @media (--bp-pc-up) {
