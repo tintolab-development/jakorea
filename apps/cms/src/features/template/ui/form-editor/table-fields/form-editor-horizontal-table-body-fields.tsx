@@ -71,6 +71,7 @@ function FieldModeConfigBlock({
   removeColumn,
   setColumnFieldAt,
   colCount,
+  structureControlLocked = false,
 }: {
   field: HorizontalTableColumnField
   colIdx: number
@@ -78,6 +79,8 @@ function FieldModeConfigBlock({
   removeColumn: (i: number) => void
   setColumnFieldAt: (i: number, next: HorizontalTableColumnField) => void
   colCount: number
+  /** 구조 조작 전용 잠금 — 열 삭제·셀 유형 변경 막음, 안내 텍스트·선택지는 편집 */
+  structureControlLocked?: boolean
 }) {
   const setColumnField = (next: HorizontalTableColumnField) => {
     setColumnFieldAt(colIdx, next)
@@ -86,6 +89,8 @@ function FieldModeConfigBlock({
   const selectOptions = isSeedDropdown
     ? [...FIELD_TYPE_OPTIONS, { value: 'dropdown' as const, label: '드롭다운형' }]
     : FIELD_TYPE_OPTIONS
+  const fieldTypeLocked = isSeedDropdown || structureControlLocked
+  const canRemoveColumn = !structureControlLocked && colCount > HORIZONTAL_TABLE_MIN_COLUMN_COUNT
 
   return (
     <FormEditorFieldListItem className="form-editor-horizontal-table-body-fields__item">
@@ -94,7 +99,7 @@ function FieldModeConfigBlock({
       </div>
       <FormEditorFieldTypeRow
         trailing={
-          colCount > HORIZONTAL_TABLE_MIN_COLUMN_COUNT ? (
+          canRemoveColumn ? (
             <ItemDeleteButton
               className="item-delete-button form-editor-horizontal-table-body-fields__cell-clear"
               aria-label={`${colIdx + 1}열 삭제`}
@@ -112,9 +117,9 @@ function FieldModeConfigBlock({
           width="100%"
           value={fieldToSelectValue(field)}
           options={selectOptions}
-          disabled={isSeedDropdown}
+          disabled={fieldTypeLocked}
           onChange={v => {
-            if (isSeedDropdown) return
+            if (fieldTypeLocked) return
             setColumnField(selectValueToField(v as HorizontalFieldTypeSelectValue))
           }}
           withAllOption={false}
@@ -182,6 +187,7 @@ export function FormEditorHorizontalTableBodyFields({
   focusedCol: _focusedCol,
   updateParagraph,
   onBodyRowDeleted,
+  structureControlLocked = false,
 }: {
   paragraph: HorizontalTableParagraph
   paragraphId: string
@@ -190,6 +196,8 @@ export function FormEditorHorizontalTableBodyFields({
   updateParagraph: FormUpdateParagraph
   /** 삭제 후 포커스할 데이터 행 인덱스(이전 행, 삭제 행이 0이면 0) */
   onBodyRowDeleted?: (nextRowIndex: number) => void
+  /** 구조 조작 전용 잠금 — 행/열 삭제·셀 유형 변경 숨김, 안내 텍스트는 편집 */
+  structureControlLocked?: boolean
 }) {
   const p = normalizeHorizontalTableParagraph(paragraph)
   const colCount = Math.max(1, p.columnHeaders.length)
@@ -210,21 +218,23 @@ export function FormEditorHorizontalTableBodyFields({
 
   return (
     <FormEditorCustomFieldPanel
-      onDeleteRow={deleteRow}
+      onDeleteRow={structureControlLocked ? undefined : deleteRow}
       hint={
-        <FormEditorFieldHint>
-          <FormEditorFieldHintLine>
-            <span>항목 옆</span>
-            <FormEditorFieldHintXInline>
-              <ItemDeleteButton
-                className="item-delete-button form-editor-horizontal-table-hint-button"
-                aria-label="동일 열 삭제 예시"
-                disabled
-              />
-            </FormEditorFieldHintXInline>
-            는 동일 열을, [행 삭제]는 선택 행을 삭제합니다.
-          </FormEditorFieldHintLine>
-        </FormEditorFieldHint>
+        structureControlLocked ? null : (
+          <FormEditorFieldHint>
+            <FormEditorFieldHintLine>
+              <span>항목 옆</span>
+              <FormEditorFieldHintXInline>
+                <ItemDeleteButton
+                  className="item-delete-button form-editor-horizontal-table-hint-button"
+                  aria-label="동일 열 삭제 예시"
+                  disabled
+                />
+              </FormEditorFieldHintXInline>
+              는 동일 열을, [행 삭제]는 선택 행을 삭제합니다.
+            </FormEditorFieldHintLine>
+          </FormEditorFieldHint>
+        )
       }
     >
       <FormEditorFieldList>
@@ -242,6 +252,7 @@ export function FormEditorHorizontalTableBodyFields({
               removeColumn={removeColumn}
               setColumnFieldAt={setColumnField}
               colCount={colCount}
+              structureControlLocked={structureControlLocked}
             />
           )
         })}
