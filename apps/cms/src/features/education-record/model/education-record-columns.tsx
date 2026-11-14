@@ -11,6 +11,8 @@ import type { ColumnsType } from 'antd/es/table'
 import {
   formatEducationRecordEducationType,
   formatEducationRecordInstitutionType,
+  formatEducationRecordIpOwned,
+  formatEducationRecordPartnerInvolvement,
   formatEducationRecordTargetLevel,
 } from '../lib/education-record-labels'
 import type { EducationRecordRow } from '../model/education-record-types'
@@ -37,13 +39,6 @@ function formatEducationMonth(record: EducationRecordRow): string {
     if (!Number.isNaN(parsed.getTime())) return String(parsed.getMonth() + 1)
   }
   return '-'
-}
-
-function formatPartnerInvolvement(value?: boolean | string): string {
-  if (value === true || value === 'Yes' || value === 'YES') return 'Yes'
-  if (value === false || value === 'No' || value === 'NO') return 'No'
-  if (value == null || value === '') return 'No'
-  return String(value)
 }
 
 export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> {
@@ -149,7 +144,7 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       key: 'ipOwned',
       width: 140,
       align: 'center',
-      render: (value?: string) => value || 'JA',
+      render: (value?: string) => formatEducationRecordIpOwned(value),
     },
     {
       title: 'Course Delivered By',
@@ -165,7 +160,7 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       key: 'partnerInvolvement',
       width: 160,
       align: 'center',
-      render: (value?: boolean | string) => formatPartnerInvolvement(value),
+      render: (value?: boolean | string) => formatEducationRecordPartnerInvolvement(value),
     },
     {
       title: '기관 구분',

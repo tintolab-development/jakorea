@@ -16,20 +16,20 @@ export type SummaryColumnMeta = {
   key: SummaryColumnKey
   /** 제목 앞머리(개수 / 합계) */
   kind: '개수' | '합계'
-  /** 뒤 라벨 (학교명 / 학급수 / 총 참가자 ...) */
+  /** 뒤 라벨 (학교 수 / 학급 수 / 총 참가자 ...) */
   label: string
 }
 
 /** 합계 미니 테이블 9열 정의 — `SummaryRow` 키 순서와 동일 */
 export const SUMMARY_COLUMNS: readonly SummaryColumnMeta[] = [
-  { key: 'schoolCount', kind: '개수', label: '학교명' },
-  { key: 'classCount', kind: '개수', label: '학급수' },
+  { key: 'schoolCount', kind: '개수', label: '학교 수' },
+  { key: 'classCount', kind: '개수', label: '학급 수' },
   { key: 'participants', kind: '합계', label: '총 참가자' },
-  { key: 'educationHours', kind: '합계', label: '교육시간' },
-  { key: 'generalVolunteers', kind: '합계', label: '일반자원봉사자' },
-  { key: 'staffVolunteers', kind: '합계', label: '임직원자원봉사자' },
-  { key: 'generalTeachers', kind: '합계', label: '일반담당교사' },
-  { key: 'educatedTeachers', kind: '합계', label: '교육받은교사' },
+  { key: 'educationHours', kind: '합계', label: '교육 시간' },
+  { key: 'generalVolunteers', kind: '합계', label: '일반 자원봉사자' },
+  { key: 'staffVolunteers', kind: '합계', label: '임직원 자원봉사자' },
+  { key: 'generalTeachers', kind: '합계', label: '일반 담당교사' },
+  { key: 'educatedTeachers', kind: '합계', label: '교육 받은 교사' },
   { key: 'instructors', kind: '합계', label: '강사' },
 ] as const
 
