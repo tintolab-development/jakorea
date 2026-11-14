@@ -59,6 +59,8 @@ import { visitorStatsQueryKeys } from '@/features/visitor-stats/api/query-keys'
 import { adminMeQueryKeys } from '@/features/auth/api/admin-me-query-keys'
 import { systemInboxQueryKeys } from '@/features/system-inbox/api/query-keys'
 import { queryClient } from '@/shared/lib/query-client'
+import { bumpAuthGeneration } from '@/features/auth/lib/auth-generation'
+import { confirmSessionEnded } from '@/features/auth/lib/session-ended-confirm'
 import {
   refreshAccessTokenSession,
   refreshAccessTokenSessionWithResult,
@@ -133,6 +135,8 @@ interface AuthState {
   completeAdminAuth: (tokens: AuthTokenResponse) => void
   setAuth: (authData: { user: AuthUser; token: string; expiresAt: string }) => void
   refreshToken: () => Promise<boolean>
+  /** refresh 결과 종류까지 돌려준다 — transient(5xx·네트워크)는 로그아웃 근거가 아니다 */
+  refreshSession: () => Promise<'ok' | 'invalid' | 'transient'>
   checkSessionExpiry: () => boolean
   /** unreachable 안내 [다시 시도] — 같은 잠금으로 refresh를 다시 시도한다 */
   retryBootstrapRestore: () => Promise<void>
@@ -300,8 +304,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         }
         if (outcome.kind === 'session-invalid') {
           if (get().token !== tokenAtStart) return
-          get().logout()
-          set({ bootstrapNotice: 'session-ended' })
+          // 복원 로딩 화면 위에서 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃한다
+          // (로그아웃 뒤 ProtectedRoute가 원래 경로를 redirect로 넘겨 로그인 화면으로 보낸다).
+          endExpiredSession()
           return
         }
         if (bootstrapDismissed) {
@@ -375,6 +380,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     completeAdminAuth: (tokens: AuthTokenResponse) => {
       const state = get()
       if (!state.user) return
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
 
       const verifiedMfaState = state.mfaState ? { ...state.mfaState, isVerified: true } : null
       // QA-0137: 본문에 refreshToken이 없으면 undefined로 덮지 않고 HttpOnly 쿠키 세션으로 표시
@@ -405,10 +412,14 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     setAuth: session => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       get().applyAuthSession(session)
     },
 
     logout: options => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const skipRemote = options?.skipRemote === true
       const refreshToken =
         typeof window !== 'undefined' && window.localStorage
@@ -526,7 +537,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             } else {
               const refreshed = await get().refreshToken()
               if (!refreshed) {
-                if (isCurrentLogin() && get().token === tokenAtStart) get().logout()
+                // 저장소의 refresh 수단은 다른 탭의 새 로그인 값일 수 있다 — 서버 logout으로 그 세션을 끊지 않고 로컬만 정리한다
+                if (isCurrentLogin() && get().token === tokenAtStart) get().logout({ skipRemote: true })
                 return
               }
             }
@@ -552,6 +564,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     clearError: () => set({ error: null }),
 
     refreshToken: async () => refreshAccessTokenSession(),
+
+    refreshSession: async () => {
+      // 실패 종류(session-invalid/transient)를 보존해, 일시 오류로 로그아웃하지 않게 한다
+      const result = await refreshAccessTokenSessionWithResult()
+      if (result.ok) return 'ok'
+      return result.kind === 'transient' ? 'transient' : 'invalid'
+    },
 
     retryBootstrapRestore: async () => {
       const state = get()
@@ -610,7 +629,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // QA-0137: 저장된 refreshToken이 없어도 HttpOnly 쿠키 세션이면 refresh를 시도한다
       if (!refreshToken && !hasRefreshCredential()) {
         if (nearExpiry) {
-          get().logout()
+          endExpiredSession()
           return true
         }
         return false
@@ -619,9 +638,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const accessAtRefreshStart = state.token
       const refreshAtRefreshStart = refreshToken
       void get()
-        .refreshToken()
-        .then(ok => {
-          if (ok || !nearExpiry) return
+        .refreshSession()
+        .then(outcome => {
+          if (outcome === 'ok' || !nearExpiry) return
+          // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 다음 점검이나 요청의 401 처리에 맡긴다.
+          if (outcome === 'transient') return
           const current = get()
           // Another tab or login may have rotated the session while this refresh
           // was in flight. Never revoke that replacement because of an old failure.
@@ -629,10 +650,23 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           if (current.isAuthenticated &&
               current.token === accessAtRefreshStart &&
               storedRefresh === refreshAtRefreshStart) {
-            current.logout()
+            endExpiredSession()
           }
         })
       return false
     },
   }
 })
+
+/**
+ * 서버가 세션 무효를 확정했을 때(유휴·절대 만료, refresh 거절, Activity 401 등) 공통 종료 처리.
+ * 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인](또는 닫기) 때 로그아웃한다.
+ * skipRemote는 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있을 때.
+ */
+export function endExpiredSession(options?: { skipRemote?: boolean }): void {
+  confirmSessionEnded(
+    () => useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined),
+    // 공통 Alert를 못 쓰면 기존처럼 로그아웃 뒤 로그인 화면(BootstrapSessionNotice)이 안내한다
+    { onUnavailable: () => useAuthStore.setState({ bootstrapNotice: 'session-ended' }) },
+  )
+}

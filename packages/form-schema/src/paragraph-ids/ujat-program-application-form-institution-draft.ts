@@ -7,6 +7,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 /** UJAT 프로그램 학교 신청 폼 — 시드 단락 ID */
 export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS = {
@@ -63,10 +67,6 @@ export const UJAT_PROGRAM_APPLICATION_INSTITUTION_APPLICATION_REGION_ITEMS: Read
   },
 ]
 
-const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
-
 const PERSONAL_INFO_COLLECTION_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
@@ -100,7 +100,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value: PERSONAL_INFO_RETENTION_CELL,
+          value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
         },
       ],
     ],
@@ -139,7 +139,7 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
           kind: 'text',
           value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: THIRD_PARTY_RETENTION_CELL },
+        { kind: 'text', value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
       ],
     ],
     bottomText: PERSONAL_INFO_THIRD_PARTY_BOTTOM,
@@ -301,7 +301,7 @@ export function migrateUjatProgramApplicationInstitutionParagraphs(
       paragraph.kind === 'single_item' &&
       paragraph.variant === 'horizontal_table'
     ) {
-      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      const next = patchHorizontalTableTextCell(paragraph, 0, 2, APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL)
       if (next !== paragraph) changed = true
       return next
     }
@@ -310,7 +310,7 @@ export function migrateUjatProgramApplicationInstitutionParagraphs(
       paragraph.kind === 'single_item' &&
       paragraph.variant === 'horizontal_table'
     ) {
-      let next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
+      let next = patchHorizontalTableTextCell(paragraph, 0, 3, APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL)
       const recipientCell = next.fieldDataRows?.[0]?.[0]
       const recipientText = recipientCell?.kind === 'text' ? recipientCell.value : ''
       if (

@@ -10,6 +10,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 export const PROGRAM_PARTICIPANT_APPLICATION_IDS = {
   personalInfoCollection: 'program-participant-application-seed-personal-info',
@@ -55,8 +59,7 @@ function createPersonalInfoHorizontalTable(): HorizontalTableParagraph {
     },
     {
       kind: 'text',
-      value:
-        '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기',
+      value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -98,7 +101,7 @@ function createThirdPartyHorizontalTable(): HorizontalTableParagraph {
       kind: 'text',
       value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text', value: '동의일로부터 3년 보관 후 파기' },
+    { kind: 'text', value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
   ]
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent,
@@ -213,15 +216,48 @@ const VOLUNTEER_INTERVIEW_SCHEDULE_PARAGRAPH_IDS = new Set([
 export function migrateProgramParticipantApplicationParagraphs(
   draft: WritingFormDraft
 ): WritingFormDraft {
-  const paragraphs = draft.paragraphs.filter(paragraph => {
+  const filtered = draft.paragraphs.filter(paragraph => {
     if (VOLUNTEER_INTERVIEW_SCHEDULE_PARAGRAPH_IDS.has(paragraph.id)) return false
     const title = 'paragraphTitle' in paragraph ? String(paragraph.paragraphTitle ?? '').trim() : ''
     if (title === '면접 진행 가능 일정') return false
     return true
   })
-  if (paragraphs.length === draft.paragraphs.length) return draft
+  // 보유기간 셀(시스템 값) — 구 임시저장본 문구를 공통 상수로 보정
+  let retentionChanged = false
+  const paragraphs = filtered.map(paragraph => {
+    if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
+      return paragraph
+    }
+    let next: HorizontalTableParagraph = paragraph
+    if (paragraph.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.personalInfoCollection) {
+      next = patchHorizontalTableTextCell(paragraph, 0, 2, APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL)
+    } else if (paragraph.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent) {
+      next = patchHorizontalTableTextCell(paragraph, 0, 3, APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL)
+    }
+    if (next !== paragraph) retentionChanged = true
+    return next
+  })
+  if (paragraphs.length === draft.paragraphs.length && !retentionChanged) return draft
   return normalizeWritingFormDraft({
     ...draft,
     paragraphs,
   })
+}
+
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
 }

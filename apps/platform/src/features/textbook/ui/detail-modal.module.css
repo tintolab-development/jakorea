@@ -191,6 +191,11 @@
   margin: 0;
 }
 
+.sessionValue {
+  display: block;
+  margin: 0;
+}
+
 .units {
   display: flex;
   flex-direction: column;

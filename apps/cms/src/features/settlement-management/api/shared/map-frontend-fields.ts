@@ -7,6 +7,7 @@ import {
   mapLectureFeeCalculationDetailToBasisDetail,
   mapTransportationCalculationDetailToBasisDetail,
   mapWithholdingCalculationDetailToBasisDetail,
+  mapWithholdingRateCalculationDetailToBasisDetail,
   resolveLectureTimeDisplayFromCalculationFields,
   type PaymentOrderCalculationBasisDetail,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
@@ -356,6 +357,10 @@ export function mapCalculationDetailToBasisDetail(
 
   const withholding = mapWithholdingCalculationDetailToBasisDetail(detail)
   if (withholding) return withholding
+
+  // 사업·기타소득 등 세율 방식 원천징수 — 정산 항목 설정 항목(소득 유형별 원천징수율·소액부징수 기준)으로 표시
+  const withholdingRate = mapWithholdingRateCalculationDetailToBasisDetail(detail)
+  if (withholdingRate) return withholdingRate
 
   return mapRemoteCalculationDetail(detail)
 }

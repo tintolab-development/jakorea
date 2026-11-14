@@ -26,7 +26,7 @@ describe('normalizeAdminMeProfile — CMS(JABACK) /api/admin/me 형식', () => {
         roleCode: profile.roleCode,
         permissions: profile.permissions,
       })
-    ).toEqual({ write: true, pii: true })
+    ).toEqual({ write: true, pii: true, download: true })
   })
 
   it('Master는 로그 관리에 접근한다', () => {

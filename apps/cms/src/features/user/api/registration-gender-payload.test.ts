@@ -43,8 +43,8 @@ function instructorRequest(gender: string | undefined): CreateUserRequest {
 
 describe('일반회원 신규 등록 payload', () => {
   it.each<[FormGender, string]>([
-    ['male', 'M'],
-    ['female', 'F'],
+    ['male', 'MALE'],
+    ['female', 'FEMALE'],
   ])('직접 고른 %s → gender %s', (formValue, expected) => {
     const body = mapCreateUserRequestToPreRegisterIndividual(
       individualRequest(registerFormGenderToApiLabel(formValue))
@@ -67,8 +67,8 @@ describe('일반회원 신규 등록 payload', () => {
 
 describe('강사회원 신규 등록 payload', () => {
   it.each<[FormGender, string]>([
-    ['male', 'M'],
-    ['female', 'F'],
+    ['male', 'MALE'],
+    ['female', 'FEMALE'],
   ])('직접 고른 %s → gender %s', (formValue, expected) => {
     const body = mapCreateUserRequestToPreRegisterInstructor(
       instructorRequest(registerFormGenderToApiLabel(formValue))
@@ -85,8 +85,8 @@ describe('강사회원 신규 등록 payload', () => {
 
 describe('관리자 신규 등록 payload (createUser 관리자 분기의 toApiGender)', () => {
   it('직접 고른 성별만 M/F로 바뀐다', () => {
-    expect(toApiGender(registerFormGenderToApiLabel('male'))).toBe('M')
-    expect(toApiGender(registerFormGenderToApiLabel('female'))).toBe('F')
+    expect(toApiGender(registerFormGenderToApiLabel('male'))).toBe('MALE')
+    expect(toApiGender(registerFormGenderToApiLabel('female'))).toBe('FEMALE')
   })
 
   it('미선택·마스킹·알 수 없는 값은 undefined(본문에서 빠짐)', () => {
@@ -123,7 +123,7 @@ describe('회원 유형 간 값 재사용 없음', () => {
   it('이전 등록의 성별이 다음 등록 요청에 남지 않는다', () => {
     const first = mapCreateUserRequestToPreRegisterInstructor(instructorRequest(registerFormGenderToApiLabel('female')))
     const second = mapCreateUserRequestToPreRegisterInstructor(instructorRequest(registerFormGenderToApiLabel(undefined)))
-    expect(first.gender).toBe('F')
+    expect(first.gender).toBe('FEMALE')
     expect(second).not.toHaveProperty('gender')
     expect(() =>
       mapCreateUserRequestToPreRegisterIndividual(individualRequest(registerFormGenderToApiLabel(undefined)))

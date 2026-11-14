@@ -18,6 +18,24 @@
   overflow-y: hidden;
 }
 
+/* 세로 스크롤은 본문 하나만 — 본문 자체 가로 스크롤 금지(가로 넘침은 산출 내역 상세 표 영역 안에서만) */
+.payment-order-calc-statement-modal .teal-header-modal__body--scrollable {
+  overflow-x: hidden;
+}
+
+/* 산출 내역 상세 표: 모달 폭에 맞춰 줄고, 최소 폭보다 좁아질 때만 표 영역 안에서 가로 스크롤 */
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__detail-section
+  .payment-statement-issuance-calculation-lines-table__wrap {
+  overflow-x: auto;
+}
+
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__detail-section
+  .payment-statement-issuance-calculation-lines-table__radius {
+  min-width: 1100px;
+}
+
 /* Figma: 타이틀 ↔ 기본 정보 24px, 기본 정보 ↔ 산출 내역 상세 24px (본문 gap) */
 .payment-order-calc-statement-modal.teal-header-modal .teal-header-modal__body {
   align-items: stretch;

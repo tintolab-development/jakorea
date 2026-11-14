@@ -84,27 +84,6 @@ export function setSessionWarningActivitySuppressed(suppressed: boolean): void {
   warningActivitySuppressed = suppressed
 }
 
-type ServerActivityRecordedListener = () => void
-const serverActivityRecordedListeners = new Set<ServerActivityRecordedListener>()
-
-/**
- * Activity API가 서버 유휴 기한을 갱신했을 때 알린다.
- * 세션 경고 타이머는 GET Session의 idleExpiresAt만 정본으로 쓰므로, 갱신 직후 다시 읽어
- * 로그인 시점 기한에 머물지 않게 한다 (미사용 25분 = 자동 로그아웃 5분 전 안내).
- */
-export function notifyServerActivityRecorded(): void {
-  serverActivityRecordedListeners.forEach(listener => listener())
-}
-
-export function subscribeServerActivityRecorded(
-  listener: ServerActivityRecordedListener
-): () => void {
-  serverActivityRecordedListeners.add(listener)
-  return () => {
-    serverActivityRecordedListeners.delete(listener)
-  }
-}
-
 type ActivityTrackerState = {
   lastLocalAt: number
   lastNetworkAt: number

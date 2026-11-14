@@ -7,6 +7,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 /** UJAT 프로그램 봉사자 신청 폼 — 시드 단락 ID */
 export const UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS = {
@@ -104,9 +108,6 @@ export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_EDUCATION_EXPERIENCE_OPTION_IDS 
   no: 'ujat-program-application-volunteer-education-experience-no',
 } as const
 
-const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 const FREE_TEXT_ITEMS_DESCRIPTION = '1~4번 문항은 자유롭게 작성 가능합니다.'
 /** 일반 봉사 신청 시드와 동일했던 구 설명 */
 const LEGACY_FREE_TEXT_ITEMS_DESCRIPTION = '1~3번 문항은 자유롭게 작성 가능합니다.'
@@ -144,7 +145,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value: PERSONAL_INFO_RETENTION_CELL,
+          value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
         },
       ],
     ],
@@ -184,7 +185,7 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
           kind: 'text',
           value: 'JA 프로그램 봉사활동 안내 및\n진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: THIRD_PARTY_RETENTION_CELL },
+        { kind: 'text', value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
       ],
     ],
     bottomText: PERSONAL_INFO_THIRD_PARTY_BOTTOM,
@@ -377,7 +378,7 @@ export function migrateUjatProgramApplicationVolunteerChoiceParagraphs(
       paragraph.kind === 'single_item' &&
       paragraph.variant === 'horizontal_table'
     ) {
-      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      const next = patchHorizontalTableTextCell(paragraph, 0, 2, APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL)
       if (next !== paragraph) changed = true
       return next
     }
@@ -386,7 +387,7 @@ export function migrateUjatProgramApplicationVolunteerChoiceParagraphs(
       paragraph.kind === 'single_item' &&
       paragraph.variant === 'horizontal_table'
     ) {
-      const next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
+      const next = patchHorizontalTableTextCell(paragraph, 0, 3, APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL)
       if (next !== paragraph) changed = true
       return next
     }

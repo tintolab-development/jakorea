@@ -18,8 +18,10 @@ import {
   isUjatVolunteerOwnScheduleRecord,
   resolveScheduleAttendanceQueryErrorMessage,
   resolveScheduleCheckInErrorMessage,
+  resolveUjatMonthProgressStatus,
   resolveUjatScheduleDayStatus,
   resolveUjatVolunteerWithdrawnDetailView,
+  ujatMonthProgressLabel,
 } from './history.ts'
 
 function item(
@@ -445,5 +447,26 @@ assert.equal(
   ),
   '포털에서 출석 체크인을 할 수 없습니다.',
 )
+
+// 월 진행 상태 — 일정 단위 판정을 모은다 (Figma 11005:341719 진행중 · 11005:341996 진행 예정)
+{
+  const now = new Date('2026-11-13T12:00:00+09:00')
+  const past = item({ id: 'past', heldAt: '2026-11-06T10:00:00+09:00', attendanceStatus: 'present' })
+  const pastNoAttendance = item({ id: 'past-none', heldAt: '2026-10-02T10:00:00+09:00' })
+  const future = item({ id: 'future', heldAt: '2026-11-20T10:00:00+09:00' })
+  const futureLater = item({ id: 'future-later', heldAt: '2026-12-04T10:00:00+09:00' })
+  assert.equal(resolveUjatMonthProgressStatus([past, pastNoAttendance], now), 'completed')
+  assert.equal(resolveUjatMonthProgressStatus([future, futureLater], now), 'scheduled')
+  assert.equal(resolveUjatMonthProgressStatus([past, future], now), 'in_progress')
+  assert.equal(resolveUjatMonthProgressStatus([], now), 'unscheduled')
+  assert.equal(ujatMonthProgressLabel('in_progress'), '진행중')
+  assert.equal(ujatMonthProgressLabel('scheduled'), '진행 예정')
+  assert.equal(ujatMonthProgressLabel('completed'), '진행 완료')
+}
+
+// 일자 카드 상태 색 구분 (Figma 11005:341655)
+assert.equal(resolveUjatScheduleDayStatus(item({ id: 'tone-late', attendanceStatus: 'late' })).tone, 'late')
+assert.equal(resolveUjatScheduleDayStatus(item({ id: 'tone-absent', attendanceStatus: 'absent' })).tone, 'absent')
+assert.equal(resolveUjatScheduleDayStatus(item({ id: 'tone-excused', attendanceStatus: 'excused' })).tone, 'excused')
 
 console.log('ujat volunteer withdrawal history.selfcheck: ok')

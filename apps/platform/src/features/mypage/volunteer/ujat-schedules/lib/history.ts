@@ -7,6 +7,7 @@ import {
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
   resolveEducationScheduleProgressStatus,
+  resolveEducationScheduleRowProgressStatus,
 } from '../../../education/schedules/lib/schedule-rules.ts'
 
 const SEOUL_YMD = new Intl.DateTimeFormat('en-CA', {
@@ -172,37 +173,58 @@ export function formatUjatAttendanceRosterDate(heldAt: string): string | null {
   return weekday ? `${cardDate} (${weekday})` : cardDate
 }
 
-export type UjatScheduleDayStatusTone = 'present' | 'alert' | 'scheduled'
+/**
+ * 일자 카드 상태 글자 색 — Figma 11005:341655
+ * present #4a88ed · late #850d0f · excused(사유 불참) #f07917 · giveUp(활동 포기) #ed4a4c
+ * absent(결석)는 목록 시안 없음 → 출석현황 팝업(11005:342162) #c31d20 · scheduled #999
+ */
+export type UjatScheduleDayStatusTone =
+  | 'present'
+  | 'late'
+  | 'absent'
+  | 'excused'
+  | 'giveUp'
+  | 'scheduled'
 
 export function resolveUjatScheduleDayStatus(item: EducationScheduleItem): {
   label: string
   tone: UjatScheduleDayStatusTone
 } {
   if (isCancelledUjatAssignment(item)) {
-    return { label: '활동 포기', tone: 'alert' }
+    return { label: '활동 포기', tone: 'giveUp' }
   }
   const attendance = item.scheduleId === null ? null : item.attendanceStatus
   if (attendance === 'present') return { label: '출석완료', tone: 'present' }
-  if (attendance === 'late') return { label: '지각', tone: 'alert' }
-  if (attendance === 'absent') return { label: '결석', tone: 'alert' }
-  if (attendance === 'excused') return { label: '사유 불참', tone: 'alert' }
+  if (attendance === 'late') return { label: '지각', tone: 'late' }
+  if (attendance === 'absent') return { label: '결석', tone: 'absent' }
+  if (attendance === 'excused') return { label: '사유 불참', tone: 'excused' }
   if (resolveEducationScheduleProgressStatus(item.heldAt) === 'scheduled') {
     return { label: '교육예정', tone: 'scheduled' }
   }
   return { label: '교육예정', tone: 'scheduled' }
 }
 
+/**
+ * 월 그룹 진행 상태 — 일정 단위 판정(`resolveEducationScheduleRowProgressStatus`)을 모은다.
+ * - 그 달 일정이 모두 완료 → completed(진행 완료)
+ * - 모두 아직 열리지 않음 → scheduled(진행 예정)
+ * - 그 외(일부 완료·진행 중) → in_progress(진행중)
+ */
 export function resolveUjatMonthProgressStatus(
   items: readonly EducationScheduleItem[],
+  now = new Date(),
 ): EducationScheduleProgressStatus {
-  if (items.some(item => resolveEducationScheduleProgressStatus(item.heldAt) === 'scheduled')) {
-    return 'scheduled'
-  }
-  return 'completed'
+  if (items.length === 0) return 'unscheduled'
+  const statuses = items.map(item => resolveEducationScheduleRowProgressStatus(item, now))
+  if (statuses.every(status => status === 'completed')) return 'completed'
+  if (statuses.every(status => status === 'scheduled' || status === 'unscheduled')) return 'scheduled'
+  return 'in_progress'
 }
 
+/** Figma 11005:341719 「진행중」(붙여 씀) · 11005:341996 「진행 예정」 */
 export function ujatMonthProgressLabel(status: EducationScheduleProgressStatus): string {
-  if (status === 'scheduled' || status === 'in_progress') return '진행중'
+  if (status === 'in_progress') return '진행중'
+  if (status === 'scheduled') return EDUCATION_SCHEDULE_PROGRESS_LABEL.scheduled
   if (status === 'unscheduled') return EDUCATION_SCHEDULE_PROGRESS_LABEL.unscheduled
   return EDUCATION_SCHEDULE_PROGRESS_LABEL.completed
 }

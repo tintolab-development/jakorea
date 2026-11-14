@@ -1,7 +1,7 @@
 import { birthDateFormValueToApi } from '@/shared/ui/date-text-input'
 
-/** CMS·플랫폼 공통 — API 전송용 성별 (`M` | `F`) */
-export function toApiGender(gender: string | undefined | null): 'M' | 'F' | undefined {
+/** CMS·플랫폼 공통 — API 전송용 성별 (`MALE` | `FEMALE`) */
+export function toApiGender(gender: string | undefined | null): 'MALE' | 'FEMALE' | undefined {
   const raw = gender?.trim()
   if (!raw) return undefined
 
@@ -16,7 +16,7 @@ export function toApiGender(gender: string | undefined | null): 'M' | 'F' | unde
     raw === '남자' ||
     raw.toLowerCase() === 'male'
   ) {
-    return 'M'
+    return 'MALE'
   }
   if (
     upper === 'FEMALE' ||
@@ -29,7 +29,7 @@ export function toApiGender(gender: string | undefined | null): 'M' | 'F' | unde
     raw === '여자' ||
     raw.toLowerCase() === 'female'
   ) {
-    return 'F'
+    return 'FEMALE'
   }
   return undefined
 }
@@ -41,14 +41,15 @@ export function isMaskedGenderValue(gender: string | undefined | null): boolean 
   return /^[*•]+$/.test(raw)
 }
 
-/** 회원 상세·목록 표시용 성별 — `남성` | `여성` | 확정 마스킹 `**` | `-` */
+/** 회원 상세·목록 표시용 성별 — `남성` | `여성` | `기타` | 확정 마스킹 `**` | `-` */
 export function toDisplayGender(gender: string | undefined | null): string {
   const raw = gender?.trim()
   if (!raw) return '-'
   if (isMaskedGenderValue(raw)) return '**'
   const api = toApiGender(raw)
-  if (api === 'M') return '남성'
-  if (api === 'F') return '여성'
+  if (api === 'MALE') return '남성'
+  if (api === 'FEMALE') return '여성'
+  if (raw.toUpperCase() === 'OTHER') return '기타'
   return '-'
 }
 

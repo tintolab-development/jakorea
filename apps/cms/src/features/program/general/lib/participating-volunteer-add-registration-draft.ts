@@ -7,6 +7,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from '@jakorea/form-schema/paragraph-ids/application-form-privacy-retention'
 
 export type JaVolunteerExperience = 'yes' | 'no' | undefined
 
@@ -29,12 +33,6 @@ const PERSONAL_INFO_COLLECTION_BOTTOM =
 
 const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
   '위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
-
-/** Figma · 봉사자 신청 시드와 동일 — 동의일 기준 3년 */
-const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
-
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 
 /** Figma 시안 — 제3자 「제공받는 곳」 입력 placeholder */
 export const PARTICIPATING_VOLUNTEER_THIRD_PARTY_RECIPIENT_PLACEHOLDER =
@@ -61,7 +59,8 @@ function createParticipatingVolunteerPersonalInfoTable(): HorizontalTableParagra
     },
     {
       kind: 'text' as const,
-      value: PERSONAL_INFO_RETENTION_CELL,
+      // Figma · 봉사자 신청 시드와 동일 — 신청서 공통 보유기간(FE·BE 공통 상수)
+      value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -103,7 +102,7 @@ function createParticipatingVolunteerThirdPartyTable(): HorizontalTableParagraph
       kind: 'text' as const,
       value: VOLUNTEER_COLLECTION_PURPOSE_CELL,
     },
-    { kind: 'text' as const, value: THIRD_PARTY_RETENTION_CELL },
+    { kind: 'text' as const, value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
   ]
   return normalizeHorizontalTableParagraph({
     id: PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.thirdPartyConsent,

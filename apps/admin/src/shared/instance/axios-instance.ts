@@ -9,6 +9,12 @@
  */
 
 import { readJwtSidClaim } from '@jakorea/domain/session'
+import { getAuthGeneration, SessionChangedDuringRefreshError } from '@/features/auth/lib/auth-generation'
+import {
+  confirmSessionEnded,
+  isSessionEndConfirmPending,
+} from '@/features/auth/lib/session-ended-confirm'
+import { isAccessTokenUnauthorizedCode } from '@/features/auth/lib/access-token-unauthorized-code'
 import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
 import {
   buildRefreshRequestBody,
@@ -105,6 +111,23 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
   return isExcludedFromBearerAuth(url) || path === `${adminAuthPaths.prefix}/activity`
 }
 
+/**
+ * 늦게 도착한 401(이 탭이 이미 refresh로 토큰을 바꾼 뒤)을 새 토큰으로 1회 재시도해도 되는지.
+ * 같은 로그인 세션(sid)일 때만 허용한다 — 다른 계정으로 바뀐 뒤 이전 요청이 새 계정으로 실행되면 안 된다.
+ */
+function shouldRetryWithNewerAccessToken(
+  request: RetryableRequest,
+  requestUrl: string,
+  code: string | undefined,
+  sentBearer: string,
+  activeToken: string | null,
+): boolean {
+  if (!activeToken || request._retry || request.skipRefresh) return false
+  if (isExcludedFromAutoRefresh(requestUrl) || !isAccessTokenUnauthorizedCode(code)) return false
+  const sentSid = readJwtSidClaim(sentBearer.slice('Bearer '.length))
+  return sentSid != null && sentSid === readJwtSidClaim(activeToken)
+}
+
 function clearAuthorizationHeader(
   headers: InternalAxiosRequestConfig['headers'] | undefined
 ): InternalAxiosRequestConfig['headers'] {
@@ -183,6 +206,15 @@ function readRefreshToken(): string | null {
   return readStoredRefreshToken()
 }
 
+/** refresh 수단을 저장소로 판단할 수 있는 환경인지 (저장소가 없으면 시작 시 값을 그대로 쓴다) */
+function isRefreshStorageAvailable(): boolean {
+  try {
+    return typeof window !== 'undefined' && !!window.localStorage
+  } catch {
+    return false
+  }
+}
+
 /** refresh 결과 반영 — access token은 메모리에만, 만료 시각은 기존처럼 localStorage에도 남긴다 (auth-store 저장 정책과 동일) */
 function persistAccessToken(accessToken: string, expiresAtIso?: string) {
   const expires = expiresAtIso ?? new Date(Date.now() + 60 * 60 * 1000).toISOString()
@@ -243,16 +275,24 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
   return undefined
 }
 
-function handleAuthFailure() {
-  useAuthStore.getState().logout()
-  if (typeof window !== 'undefined') {
-    window.location.assign(
-      buildLoginPathWithRedirect(`${window.location.pathname}${window.location.search}`)
-    )
-  }
+/**
+ * 세션 무효 확정 — 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인](또는 닫기) 때 로그아웃·이동한다.
+ * 여러 요청이 동시에 와도 안내와 로그아웃은 한 번만 한다 (session-ended-confirm).
+ */
+function handleAuthFailure(options?: { skipRemote?: boolean }) {
+  confirmSessionEnded(() => {
+    useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined)
+    if (typeof window !== 'undefined') {
+      window.location.assign(
+        buildLoginPathWithRedirect(`${window.location.pathname}${window.location.search}`)
+      )
+    }
+  })
 }
 
 function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
+  // 대기열에서 새 토큰으로 재시도한 요청이 다시 401이면 refresh를 또 시작하지 않는다 (CMS와 동일)
+  originalRequest._retry = true
   return new Promise((resolve, reject) => {
     failedQueue.push({
       resolve: (token: string) => {
@@ -268,7 +308,7 @@ function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
 
 const REFRESH_LOCK_NAME = 'jakorea-hp-admin-refresh'
 
-async function postRefreshAndPersist(refreshToken: string | null): Promise<string> {
+async function postRefreshAndPersist(refreshToken: string | null, generation: number): Promise<string> {
   const res = await postAuthenticationRefreshToken(refreshToken)
   const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
   const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
@@ -284,6 +324,8 @@ async function postRefreshAndPersist(refreshToken: string | null): Promise<strin
       ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
       : undefined
 
+  // F5: 응답을 기다리는 사이 로그아웃·다른 로그인이 있었으면 저장하지 않는다 (로그아웃 뒤 세션이 되살아나지 않게)
+  if (getAuthGeneration() !== generation) throw new SessionChangedDuringRefreshError()
   persistAccessToken(newAccessToken, expiresAtIso)
   persistRefreshToken(newRefreshToken)
 
@@ -294,34 +336,43 @@ async function postRefreshAndPersist(refreshToken: string | null): Promise<strin
  * 잠금 안에서 refresh 수단을 다시 읽는다. 다른 탭이 먼저 rotate했으면 그 새 값(전환기 본문) 또는 갱신된 쿠키를 쓴다.
  * access token은 탭마다 메모리에 있으므로 다른 탭의 토큰을 가져다 쓰지 않고 이 탭도 직접 refresh한다.
  */
-async function refreshWithLatestCredential(startedWithRefreshToken: string | null): Promise<string> {
+async function refreshWithLatestCredential(
+  startedWithRefreshToken: string | null,
+  generation: number,
+): Promise<string> {
+  // 잠금을 기다리는 사이 로그아웃·다른 로그인이 있었으면 refresh를 보내지 않는다
+  if (getAuthGeneration() !== generation) throw new SessionChangedDuringRefreshError()
   // 저장값이 없으면(쿠키 세션) 본문 없이 쿠키로 요청한다.
   // 쿠키 세션에서 이 탭이 시작 때 쓰던 값을 다시 쓰지 않는다 — 다른 탭이 지운 rotate된 토큰일 수 있다.
-  const tokenToUse =
-    readRefreshToken() ?? (hasRefreshCredential() ? null : startedWithRefreshToken)
+  const storedRefreshToken = readRefreshToken()
+  if (storedRefreshToken == null && !hasRefreshCredential() && isRefreshStorageAvailable()) {
+    // 잠금을 기다리는 사이 다른 탭이 refresh 수단을 지웠다(로그아웃 등). 시작 때 값은 이미 rotate됐을 수 있어 보내지 않는다.
+    throw new Error('Refresh credential was cleared while waiting for the refresh lock')
+  }
+  const tokenToUse = storedRefreshToken ?? (hasRefreshCredential() ? null : startedWithRefreshToken)
   try {
-    return await postRefreshAndPersist(tokenToUse)
+    return await postRefreshAndPersist(tokenToUse, generation)
   } catch (err) {
     // 락 미지원 환경 등에서 동시 refresh에 진 경우(409 REFRESH_TOKEN_ALREADY_ROTATED, 서버 10초 유예 안):
     // 승자가 rotate한 최신 refresh 수단으로 한 번만 다시 시도한다 (같은 값 재전송 금지 — 10초 뒤면 계정 전체 폐기).
     if (isRefreshAlreadyRotatedError(err)) {
       const latest = readRefreshToken()
-      if (latest && latest !== tokenToUse) return postRefreshAndPersist(latest)
+      if (latest && latest !== tokenToUse) return postRefreshAndPersist(latest, generation)
       // 쿠키 세션: 승자 응답의 Set-Cookie로 브라우저 쿠키가 이미 바뀌었을 수 있다. 본문 없이 한 번만.
-      if (!latest && tokenToUse == null && hasRefreshCredential()) return postRefreshAndPersist(null)
+      if (!latest && tokenToUse == null && hasRefreshCredential()) return postRefreshAndPersist(null, generation)
     }
     throw err
   }
 }
 
-async function refreshAcrossTabs(startedWithRefreshToken: string | null): Promise<string> {
+async function refreshAcrossTabs(startedWithRefreshToken: string | null, generation: number): Promise<string> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
   if (locks && typeof locks.request === 'function') {
     return await locks.request(REFRESH_LOCK_NAME, () =>
-      refreshWithLatestCredential(startedWithRefreshToken)
+      refreshWithLatestCredential(startedWithRefreshToken, generation)
     )
   }
-  return refreshWithLatestCredential(startedWithRefreshToken)
+  return refreshWithLatestCredential(startedWithRefreshToken, generation)
 }
 
 /**
@@ -333,9 +384,10 @@ async function runSingleFlightRefresh(refreshToken: string | null): Promise<stri
     return refreshPromise
   }
 
+  const generation = getAuthGeneration()
   refreshPromise = (async () => {
     try {
-      return await refreshAcrossTabs(refreshToken)
+      return await refreshAcrossTabs(refreshToken, generation)
     } finally {
       refreshPromise = null
     }
@@ -405,12 +457,19 @@ axiosInstance.interceptors.response.use(
     const code = getErrorCode(response.data)
 
     // A late 401 from an access token superseded by login/Refresh in this tab
-    // must not refresh, retry, or revoke the newly active admin session.
+    // must not refresh or revoke the newly active admin session.
     const sentBearer = originalRequest.headers?.get?.('Authorization')
     const activeToken = useAuthStore.getState().token
     if (status === 401 && typeof sentBearer === 'string' &&
         sentBearer.startsWith('Bearer ') &&
         sentBearer !== `Bearer ${activeToken ?? ''}`) {
+      // 같은 로그인(sid)이 이미 refresh로 새 토큰을 받았으면 원 요청만 그 토큰으로 1회 다시 보낸다.
+      // 로그아웃·다른 계정 로그인·자동 갱신 제외 경로(Activity 등)는 다시 보내지 않는다.
+      if (shouldRetryWithNewerAccessToken(originalRequest, requestUrl, code, sentBearer, activeToken)) {
+        originalRequest._retry = true
+        originalRequest.headers = setAuthorizationHeader(originalRequest.headers, activeToken!)
+        return axiosInstance(originalRequest)
+      }
       return Promise.reject(error)
     }
 
@@ -418,7 +477,12 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const isAccessTokenFailure = status === 401 && code === 'UNAUTHORIZED'
+    // CMS와 같은 판정: UNAUTHORIZED·TOKEN_EXPIRED·ACCESS_TOKEN_EXPIRED
+    const isAccessTokenFailure = status === 401 && isAccessTokenUnauthorizedCode(code)
+    if (isAccessTokenFailure && isSessionEndConfirmPending()) {
+      // 세션 종료 안내가 떠 있는 동안에는 refresh를 다시 시도하지 않는다 (확인 시 로그아웃)
+      return Promise.reject(error)
+    }
     if (!isAccessTokenFailure || originalRequest._retry) {
       return Promise.reject(error)
     }
@@ -466,7 +530,8 @@ axiosInstance.interceptors.response.use(
         // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 로그아웃하지 않고 원 요청 실패로 돌려준다.
         return Promise.reject(err)
       }
-      handleAuthFailure()
+      // 409 ROTATED 무효: 저장소·쿠키에는 다른 탭이 회전한 새 세션이 있을 수 있다 — 서버 logout으로 그 세션을 끊지 않는다.
+      handleAuthFailure(isRefreshAlreadyRotatedError(err) ? { skipRemote: true } : undefined)
       return Promise.reject(err)
     }
   }

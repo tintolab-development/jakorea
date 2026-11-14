@@ -5,8 +5,12 @@
  * node selfcheck에서 그대로 돌도록 `@/` 별칭 import를 쓰지 않는다.
  */
 
-/** session-ended: 서버가 세션 무효를 확정(401/400/403) · unavailable: 네트워크·5xx·timeout으로 확인 못 함 */
-export type AuthRestoreNotice = 'session-ended' | 'unavailable'
+/**
+ * session-ended: 시작 시 복원에서 서버가 세션 무효를 확정(401/400/403)
+ * unavailable: 네트워크·5xx·timeout으로 확인 못 함
+ * session-expired: 사용 중 세션이 끝남 — 지금 화면에 머문 채 안내하고 [확인] 때 로그아웃한다 (showSessionExpiredNotice)
+ */
+export type AuthRestoreNotice = 'session-ended' | 'unavailable' | 'session-expired'
 
 export type AuthRestoreNoticeAction = 'close' | 'sign-in' | 'confirm' | 'retry'
 
@@ -15,6 +19,8 @@ const SIGN_IN_PATH = '/auth/sign-in'
 const LOGIN_PROMPT_PATHS = [SIGN_IN_PATH, '/auth/required'] as const
 
 let notice: AuthRestoreNotice | null = null
+/** session-expired 안내를 [확인]으로 닫을 때 실행할 로그아웃 */
+let onSessionExpiredConfirm: (() => void) | null = null
 const listeners = new Set<() => void>()
 
 function emit() {
@@ -32,16 +38,48 @@ export function subscribeAuthRestoreNotice(listener: () => void): () => void {
 
 export function showAuthRestoreNotice(next: AuthRestoreNotice): void {
   if (notice === next) return
+  // 사용 중 세션 종료 안내는 사용자가 [확인]할 때까지 다른 안내로 바꾸지 않는다
+  if (notice === 'session-expired') return
   notice = next
   emit()
 }
 
-/** only를 주면 그 안내일 때만 닫는다 (예: 로그아웃 시 '확인 못 함' 안내만 닫기) */
+/**
+ * 사용 중 세션 종료: 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고, [확인] 때 onConfirm(로그아웃·이동)을 실행한다.
+ * 여러 요청·경로가 동시에 알려도 안내는 하나, onConfirm도 처음 것 한 번만 실행한다.
+ */
+export function showSessionExpiredNotice(onConfirm: () => void): void {
+  if (notice === 'session-expired') return
+  onSessionExpiredConfirm = onConfirm
+  notice = 'session-expired'
+  emit()
+}
+
+/** 사용 중 세션 종료 안내가 떠 있고 [확인]을 기다리는 중인지 (이 동안 refresh·Activity를 다시 시도하지 않는다) */
+export function isSessionExpiredNoticePending(): boolean {
+  return notice === 'session-expired'
+}
+
+/**
+ * 코드에서 안내를 닫는다. only를 주면 그 안내일 때만 닫는다 (예: 로그아웃 시 '확인 못 함' 안내만 닫기).
+ * session-expired를 여기서 닫으면(예: 다른 탭 재로그인으로 새 토큰을 받음) 로그아웃은 실행하지 않는다.
+ */
 export function dismissAuthRestoreNotice(only?: AuthRestoreNotice): void {
   if (notice == null) return
   if (only && notice !== only) return
+  onSessionExpiredConfirm = null
   notice = null
   emit()
+}
+
+/** 사용자가 안내 버튼([확인]·[닫기]·[로그인])으로 닫는다. session-expired면 등록된 로그아웃을 실행한다 */
+export function confirmAuthRestoreNotice(): void {
+  if (notice == null) return
+  const confirmSessionExpired = notice === 'session-expired' ? onSessionExpiredConfirm : null
+  onSessionExpiredConfirm = null
+  notice = null
+  emit()
+  confirmSessionExpired?.()
 }
 
 function isLoginPromptPath(pathname: string): boolean {
@@ -54,6 +92,7 @@ export function resolveAuthRestoreNoticeActions(
   pathname: string,
 ): AuthRestoreNoticeAction[] {
   if (kind === 'unavailable') return ['close', 'retry']
+  if (kind === 'session-expired') return ['confirm']
   if (isLoginPromptPath(pathname)) return ['confirm']
   return ['close', 'sign-in']
 }
@@ -67,5 +106,6 @@ export function buildSignInPathWithRedirect(currentPath: string): string {
 /** selfcheck 전용 */
 export function resetAuthRestoreNoticeForTest(): void {
   notice = null
+  onSessionExpiredConfirm = null
   listeners.clear()
 }

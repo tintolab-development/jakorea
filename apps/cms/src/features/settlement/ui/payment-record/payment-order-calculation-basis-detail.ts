@@ -163,6 +163,24 @@ export interface PaymentOrderCalculationBasisDetailWithholding {
   withholdingTaxAmountWon: number
 }
 
+/**
+ * 원천징수(사업·기타소득 등 세율 방식). 정산 항목 설정 「원천징수세액」의 항목
+ * (소득 유형별 원천징수율·소액부징수 기준)을 정산 당시 스냅샷 값으로 보여 준다.
+ */
+export interface PaymentOrderCalculationBasisDetailWithholdingRate {
+  layout: 'withholdingRate'
+  /** 소득 유형 표시명 (예: 사업소득) */
+  taxIncomeTypeLabel: string
+  /** 원천징수율(%) — BE rate(소수)를 %로 변환한 값 */
+  ratePercent: number
+  /** 소액부징수 기준(원). 없으면 행을 그리지 않는다 */
+  smallTaxExemptionThresholdWon?: number
+  taxableAmountWon: number
+  withholdingTaxAmountWon: number
+  /** BE appliedRule 기반 적용 안내. NONE·없음이면 undefined */
+  appliedRuleNotice?: string
+}
+
 /** 백엔드가 내려준 표시용 calculationDetail snapshot을 읽기 전용으로 표시한다. */
 export interface PaymentOrderCalculationBasisDetailRemote {
   layout: 'remote'
@@ -190,6 +208,7 @@ export type PaymentOrderCalculationBasisDetail =
   | PaymentOrderCalculationBasisDetailMeal
   | PaymentOrderCalculationBasisDetailActivity
   | PaymentOrderCalculationBasisDetailWithholding
+  | PaymentOrderCalculationBasisDetailWithholdingRate
   | PaymentOrderCalculationBasisDetailRemote
 
 const LECTURE_FEE_TIER_TITLE_MAP: Record<
@@ -236,6 +255,7 @@ export function resolveBasisDetailModalTitle(detail: PaymentOrderCalculationBasi
     case 'activity':
       return '활동비 산정 기준 상세'
     case 'withholding':
+    case 'withholdingRate':
       return '원천징수 산정 기준 상세'
     case 'remote':
       return detail.title || '산정 기준 상세'
@@ -261,6 +281,7 @@ export function isSupportedBasisDetailLayout(
     detail.layout === 'meal' ||
     detail.layout === 'activity' ||
     detail.layout === 'withholding' ||
+    detail.layout === 'withholdingRate' ||
     detail.layout === 'remote'
   )
 }
@@ -675,6 +696,94 @@ export function mapWithholdingCalculationDetailToBasisDetail(
   return undefined
 }
 
+/** 정산 항목 설정 「소득 유형별 원천징수율」 표기 — BE taxIncomeTypeDisplay가 없을 때만 쓴다 */
+const WITHHOLDING_TAX_INCOME_TYPE_LABELS: Record<string, string> = {
+  BUSINESS_INCOME: '사업소득',
+  OTHER_INCOME: '기타소득',
+  AWARD: '상금(기타소득)',
+  INTERVIEW_FEE: '면접비, 지원금, 경품(기타소득)',
+  SUPPORT_GRANT: '면접비, 지원금, 경품(기타소득)',
+  PRIZE: '면접비, 지원금, 경품(기타소득)',
+  EVENT_PRIZE: '면접비, 지원금, 경품(기타소득)',
+  DAILY_EMPLOYMENT_INCOME: '일용근로소득',
+}
+
+function formatWithholdingRatePercent(rate: number): number {
+  return Number((rate * 100).toFixed(2))
+}
+
+function resolveAppliedRuleNotice(
+  rule: string | undefined,
+  threshold: number | undefined
+): string | undefined {
+  const normalized = rule?.toUpperCase()
+  const amount =
+    threshold != null && Number.isFinite(threshold)
+      ? `${threshold.toLocaleString('ko-KR')}원`
+      : undefined
+  if (normalized === 'TAXABLE_MINIMUM') {
+    return amount ? `과세최저한 적용(${amount} 이하)` : '과세최저한 적용'
+  }
+  if (normalized === 'SMALL_AMOUNT_EXEMPTION') {
+    return amount ? `소액부징수 적용(소득세 ${amount} 미만)` : '소액부징수 적용'
+  }
+  return undefined
+}
+
+/**
+ * BE 원천징수 basisJson(사업·기타소득 등 세율 방식)을 정산 항목 설정 항목 기준 모달 payload로 매핑한다.
+ * 값은 정산 당시 스냅샷이며, 빠진 숫자를 FE 공식으로 채우지 않는다.
+ */
+export function mapWithholdingRateCalculationDetailToBasisDetail(
+  detail?: SettlementFrontendCalculationDetailResponse | null
+): PaymentOrderCalculationBasisDetailWithholdingRate | undefined {
+  if (!detail) return undefined
+  let basis: Record<string, unknown> | undefined
+  const raw = detail.basisJson as unknown
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    basis = raw as Record<string, unknown>
+  } else if (typeof detail.basisJson === 'string' && detail.basisJson.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(detail.basisJson)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        basis = parsed as Record<string, unknown>
+      }
+    } catch {
+      return undefined
+    }
+  }
+  if (!basis) return undefined
+
+  const taxIncomeType = stringValue(recordValue(basis, 'taxIncomeType'))?.toUpperCase()
+  const rate = numberValue(recordValue(basis, 'rate', 'combinedTaxRate'))
+  const taxableAmountWon = numberValue(recordValue(basis, 'taxableAmount'))
+  const withholdingTaxAmountWon =
+    numberValue(recordValue(basis, 'withholdingTaxAmount')) ?? detail.resultAmount ?? undefined
+  if (rate == null || taxableAmountWon == null || withholdingTaxAmountWon == null) return undefined
+
+  const taxIncomeTypeLabel =
+    stringValue(recordValue(basis, 'taxIncomeTypeDisplay')) ??
+    (taxIncomeType ? WITHHOLDING_TAX_INCOME_TYPE_LABELS[taxIncomeType] : undefined) ??
+    '-'
+  const smallTaxExemptionThresholdWon = numberValue(
+    recordValue(basis, 'smallTaxExemptionThreshold')
+  )
+  const appliedRuleNotice = resolveAppliedRuleNotice(
+    stringValue(recordValue(basis, 'appliedRule')),
+    numberValue(recordValue(basis, 'appliedRuleThreshold'))
+  )
+
+  return {
+    layout: 'withholdingRate',
+    taxIncomeTypeLabel,
+    ratePercent: formatWithholdingRatePercent(rate),
+    ...(smallTaxExemptionThresholdWon != null ? { smallTaxExemptionThresholdWon } : {}),
+    taxableAmountWon,
+    withholdingTaxAmountWon,
+    ...(appliedRuleNotice ? { appliedRuleNotice } : {}),
+  }
+}
+
 /** mock·데모 — 1일 급여 총액 기준 원천징수 산정 (소득세 3.3% · 근로소득세액공제) */
 export function buildWithholdingBasisDetail(
   dailySalaryTotalWon: number
@@ -730,7 +839,7 @@ export function buildLectureFeeTierBasisDetail(
   }
 }
 
-const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강사비', '—', '-'])
+const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강의비', '—', '-'])
 
 export function isGenericLectureFeeCategoryLabel(title: string | null | undefined): boolean {
   const normalized = title?.trim()

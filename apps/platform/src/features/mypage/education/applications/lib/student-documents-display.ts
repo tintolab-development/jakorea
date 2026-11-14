@@ -25,6 +25,7 @@ export function formatPortalStudentGender(gender?: string | null): string {
   ) {
     return '여'
   }
+  if (normalized === 'other') return '기타'
   return gender?.trim() || DASH
 }
 
