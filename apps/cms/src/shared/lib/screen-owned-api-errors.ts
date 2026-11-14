@@ -13,10 +13,7 @@ export const IDENTITY_CONTACT_MISMATCH_CODES: ReadonlySet<string> = new Set([
 /** 관리자 등록(R7) — 이름·생년월일·휴대폰이 같은 회원이 이미 있을 때 */
 export const ADMIN_IDENTITY_ALREADY_REGISTERED_CODE = 'ADMIN_IDENTITY_ALREADY_REGISTERED'
 
-/**
- * 회원 사전등록(개인·강사) — 같은 조건의 중복 코드.
- * BE 회신 대기 — 코드명 확정 시 교체 (관리자 등록 코드와 같다고 가정, BE는 사전 등록 경로에 아직 미적용).
- */
+/** 회원 사전등록(개인·강사) — 같은 조건의 중복 코드. 관리자 등록과 같은 코드로 확정(BE 회신 2026-11-14) */
 export const PRE_REGISTER_IDENTITY_DUPLICATE_CODE = ADMIN_IDENTITY_ALREADY_REGISTERED_CODE
 
 const IDENTITY_CONTACT_PATH = /\/api\/admin\/me\/identity-contact(?:$|[?#])/
