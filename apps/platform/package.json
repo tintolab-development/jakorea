@@ -51,6 +51,7 @@
     "@tiptap/starter-kit": "^3.25.0",
     "antd": "^5.28.0",
     "axios": "^1.7.9",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.54.2",
