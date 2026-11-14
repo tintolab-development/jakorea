@@ -7,6 +7,7 @@
  */
 
 import { useMemo, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -54,7 +55,11 @@ const VOLUNTEER_RECEIPT_BULK_DOWNLOAD_ALERT = {
 function buildExcelColumns(showProgress: boolean): ColumnsType<IndividualSettlementReviewListRow> {
   return [
     { title: 'No.', dataIndex: 'no', key: 'no' },
-    { title: '담당 봉사 진행 일정', dataIndex: 'educationScheduleLabel', key: 'educationScheduleLabel' },
+    {
+      title: '담당 봉사 진행 일정',
+      dataIndex: 'educationScheduleLabel',
+      key: 'educationScheduleLabel',
+    },
     ...(showProgress
       ? [
           {
@@ -227,11 +232,12 @@ export function VolunteerReceiptSettlementPanel({
     formatDate: iso => formatDateDotWithWeekday(iso),
   })
   const summaryStatusView = isLoading
-    ? '불러오는 중'
+    ? ''
     : resolveIndividualSettlementReviewSummaryLabel(summary, isError)
 
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
+      {isLoading ? <FullscreenSpinner /> : null}
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
         <DetailInfoForm title="정산 현황" mode="view">
           {showProgress ? (
