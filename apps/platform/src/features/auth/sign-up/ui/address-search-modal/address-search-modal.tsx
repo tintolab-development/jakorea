@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { pickJusoRoadAddressLine } from '@jakorea/location/juso'
 import {
   getPlatformJusoMissingKeyMessage,
@@ -7,19 +7,14 @@ import {
   useAddressSearch,
 } from '@/shared/hooks'
 import type { JusoAddressItem } from '@/shared/hooks'
-import { highlightKeyword } from '@/shared/lib/highlight-keyword'
+import { highlightKeywordTokens } from '@/shared/lib/highlight-keyword'
 import { PFButton, PFLoadingSpinner, PFModal, PFPagination, PFText, PFTextInput } from '@/shared/ui'
+import { buildAddressSuggestions, isAddressSuggestKeywordEligible } from './address-suggestions'
 import styles from './address-search-modal.module.css'
 
 const LIVE_SEARCH_DEBOUNCE_MS = 280
 const SUGGEST_COUNT_PER_PAGE = 10
 const RESULT_COUNT_PER_PAGE = 10
-const KEYWORD_TOO_SHORT_MESSAGE = '검색어는 두글자 이상 입력되어야 합니다.'
-
-function isKeywordTooShortError(message: string) {
-  return message.includes(KEYWORD_TOO_SHORT_MESSAGE) || message.includes('두글자')
-}
-
 /** `address`=도로명(roadAddr), 상세는 별도 `addressDetail` — BE geocoding: road + detail, 우편번호 제외 */
 export type SelectedAddress = {
   address: string
@@ -34,19 +29,12 @@ type AddressSearchModalProps = {
   onSelect: (selection: SelectedAddress) => void
 }
 
-function suggestionPrimaryLine(item: JusoAddressItem) {
-  const base = [item.siNm, item.sggNm, item.emdNm].filter(Boolean).join(' ').trim()
-  const roadName = item.rn?.trim()
-
-  if (base && roadName) return `${base} ${roadName}`
-  if (base) return base
-  return (item.roadAddr || item.jibunAddr).trim() || '-'
-}
-
 export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchModalProps) {
   const [keyword, setKeyword] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  // 한글 조합 중(compositionstart~compositionend)에는 자동완성을 호출하지 않는다
+  const [isComposing, setIsComposing] = useState(false)
   const { addresses, totalCount, loading, error, search, reset } = useAddressSearch({
     confmKey: readJusoConfmKeyFromEnv(),
     countPerPage: RESULT_COUNT_PER_PAGE,
@@ -57,9 +45,15 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   const trimmedKeyword = keyword.trim()
   const totalPages = Math.max(1, Math.ceil(totalCount / RESULT_COUNT_PER_PAGE))
   const hasAddressResults = addresses.length > 0
-  const suggestOverlayError = error && !isKeywordTooShortError(error.message) ? error.message : null
+  const isSuggestKeywordEligible = isAddressSuggestKeywordEligible(keyword)
+  const suggestions = useMemo(
+    () => (hasSearched ? [] : buildAddressSuggestions(addresses, keyword)),
+    [addresses, hasSearched, keyword],
+  )
+  // 자동완성 실패는 제안 목록을 비우는 것으로 처리한다(오류 원문을 화면에 쓰지 않는다)
   const showSuggestOverlay =
-    !hasSearched && trimmedKeyword.length > 0 && Boolean(suggestOverlayError || hasAddressResults)
+    !hasSearched && isSuggestKeywordEligible && !error && suggestions.length > 0
+  const isEmptySearchResult = hasSearched && !loading && !error && !hasAddressResults
 
   const handleClose = useCallback(() => {
     setKeyword('')
@@ -98,13 +92,14 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   }
 
   useEffect(() => {
-    if (!open || hasSearched) return
+    if (!open || hasSearched || isComposing) return
 
     const handle = window.setTimeout(() => {
       setCurrentPage(1)
 
-      if (trimmedKeyword.length > 0) {
-        void search(trimmedKeyword, 1, SUGGEST_COUNT_PER_PAGE)
+      if (isSuggestKeywordEligible) {
+        // 실패하면 훅이 제안 목록을 비운다 — 오류는 화면에 띄우지 않는다
+        search(trimmedKeyword, 1, SUGGEST_COUNT_PER_PAGE).catch(() => undefined)
         return
       }
 
@@ -112,7 +107,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
     }, LIVE_SEARCH_DEBOUNCE_MS)
 
     return () => window.clearTimeout(handle)
-  }, [hasSearched, keyword, open, search, trimmedKeyword])
+  }, [hasSearched, isComposing, isSuggestKeywordEligible, keyword, open, search, trimmedKeyword])
 
   return (
     <PFModal
@@ -127,6 +122,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
         className={[
           styles.addressModalMain,
           hasSearched ? styles.addressModalMainActive : undefined,
+          isEmptySearchResult ? styles.addressModalMainEmpty : undefined,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -149,6 +145,8 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                   handleSearch()
                 }
               }}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
             />
             <PFButton
               size="xlarge"
@@ -161,33 +159,19 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
 
           {showSuggestOverlay ? (
             <div className={styles.addressSuggestOverlay}>
-              {suggestOverlayError ? (
-                <div className={styles.addressSuggestError}>
-                  <PFText typo="bd-md-sb" color="error">
-                    {suggestOverlayError}
-                  </PFText>
-                </div>
-              ) : null}
-              {hasAddressResults ? (
-                <ul className={styles.addressSuggestList} aria-label="주소 자동완성">
-                  {addresses.map((item: JusoAddressItem) => {
-                    const line = suggestionPrimaryLine(item)
-                    const key = `${item.roadAddr}-${item.zipNo}-${item.jibunAddr}-${line}`
-
-                    return (
-                      <li key={key} className={styles.addressSuggestItem}>
-                        <button
-                          type="button"
-                          className={styles.addressSuggestButton}
-                          onClick={() => handleSelect(item)}
-                        >
-                          {highlightKeyword(line, keyword, styles.addressSuggestHit)}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              ) : null}
+              <ul className={styles.addressSuggestList} aria-label="주소 자동완성">
+                {suggestions.map(({ line, item }) => (
+                  <li key={line} className={styles.addressSuggestItem}>
+                    <button
+                      type="button"
+                      className={styles.addressSuggestButton}
+                      onClick={() => handleSelect(item)}
+                    >
+                      {highlightKeywordTokens(line, keyword, styles.addressSuggestHit)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : null}
         </div>
@@ -265,10 +249,16 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                   </PFText>
                 </div>
               ) : null}
-              {!loading && !error && !hasAddressResults ? (
+              {isEmptySearchResult ? (
                 <div className={styles.addressResultNotice}>
                   <PFText as="p" typo="bd-md-sb" color="black">
                     검색 결과가 없습니다.
+                  </PFText>
+                  <PFText as="p" typo="label-md" color="black">
+                    <PFText typo="label-md" color="primary-500">
+                      지역명, 도로명, 건물명
+                    </PFText>
+                    을 함께 입력하면 더 정확하게 찾을 수 있어요.
                   </PFText>
                 </div>
               ) : null}
