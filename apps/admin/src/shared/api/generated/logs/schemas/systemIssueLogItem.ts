@@ -11,4 +11,6 @@ export interface SystemIssueLogItem {
   errorMessage?: string;
   userName?: string;
   occurredAt?: string;
+  source?: string;
+  screenPath?: string;
 }
