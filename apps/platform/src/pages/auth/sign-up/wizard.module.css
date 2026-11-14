@@ -26,9 +26,10 @@
   background: var(--color-element-hover);
 }
 
+/* 시안 2734:70444 — 일러스트 60×60 (SVG 원본 크기) */
 .memberTypeImage {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 
