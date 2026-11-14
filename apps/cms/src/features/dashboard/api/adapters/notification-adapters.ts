@@ -26,8 +26,12 @@ interface NotificationInboxItemDto {
   createdAt?: string
   sentAt?: string
   eventType?: string
+  /** BE 탭 분류 SSOT (APPLICATION_MATCHING 등) */
+  notificationCategory?: string | null
+  /** notificationCategory가 없을 때만 쓰는 대체값 */
   category?: string
-  programName?: string
+  /** 발행 시점 프로그램명 스냅샷. 없으면 null */
+  programName?: string | null
   programTitle?: string
   sourceDomain?: string
   linkType?: string
@@ -55,15 +59,27 @@ function mapNotificationLinkTarget(
   return Object.keys(target).length > 0 ? target : undefined
 }
 
-function mapEventTypeToNotificationType(eventType?: string): NotificationType {
-  const normalized = (eventType ?? '').toLowerCase()
-  if (normalized.includes('schedule') || normalized.includes('일정')) return 'schedule'
-  if (normalized.includes('matching') || normalized.includes('매칭')) return 'matching'
-  if (normalized.includes('settlement') || normalized.includes('정산')) return 'settlement'
-  return 'system'
+/**
+ * BE `notificationCategory` → 드롭다운 탭.
+ * eventType으로 탭을 정하지 않는다(이벤트가 늘어나도 카테고리 SSOT를 따른다).
+ * INQUIRY_SYSTEM은 문의 알림만 담는다(보안 알림은 SYSTEM). 모르는 값은 system.
+ */
+const NOTIFICATION_CATEGORY_TO_TYPE: Readonly<Record<string, NotificationType>> = {
+  APPLICATION_MATCHING: 'matching',
+  PROGRAM_PROGRESS: 'progress',
+  SETTLEMENT: 'settlement',
+  INQUIRY_SYSTEM: 'inquiry',
+  UPDATE: 'schedule',
+  SYSTEM: 'system',
+  APPROVAL_REJECTION: 'system',
 }
 
-function pickString(...values: Array<string | undefined>): string {
+function mapNotificationCategoryToType(category: string): NotificationType {
+  const key = category.trim().toUpperCase()
+  return NOTIFICATION_CATEGORY_TO_TYPE[key] ?? 'system'
+}
+
+function pickString(...values: Array<string | null | undefined>): string {
   for (const value of values) {
     if (value && value.trim()) return value.trim()
   }
@@ -88,12 +104,11 @@ export function mapNotificationInboxItem(item: unknown): Notification | null {
   const body = pickString(dto.body, dto.message, dto.content, dto.summary, title)
   const link = pickString(dto.linkUrl, dto.link, dto.targetUrl) || undefined
   const createdAt = pickString(dto.createdAt, dto.sentAt) || new Date().toISOString()
-  const programName =
-    pickString(dto.programName, dto.programTitle) || undefined
+  const programName = pickString(dto.programName, dto.programTitle) || undefined
 
   return {
     id: String(recipientId),
-    type: mapEventTypeToNotificationType(eventType ?? dto.category),
+    type: mapNotificationCategoryToType(pickString(dto.notificationCategory, dto.category)),
     title,
     body,
     programName,

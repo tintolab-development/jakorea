@@ -21,7 +21,11 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import { getAdminPermissionDisplayLabel } from '@/features/user/shared/lib/admin-permission-display'
 import type { Notification } from '@/features/dashboard/api/notification-service'
-import { NotificationDropdown } from '@/features/dashboard/ui/notification-dropdown'
+import {
+  NotificationDropdown,
+  type NotificationCategoryKey,
+} from '@/features/dashboard/ui/notification-dropdown'
+import { resolveNotificationServerCategory } from '@/features/dashboard/lib/notification-tab-category'
 import { NotificationSettingsModal } from '@/features/dashboard/ui/notification-settings-modal'
 import { NotificationDetailModal } from '@/features/dashboard/ui/notification-detail-modal'
 import './main-header.css'
@@ -42,8 +46,11 @@ export function MainHeader() {
   const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
   const { data: remoteUnreadCount, refetch: refetchRemoteUnreadCount } =
     useDashboardNotificationCount(useRemoteNotificationCount)
+  /** 알림 드롭다운 탭 — 서버 category가 있는 탭은 탭별로 따로 조회한다 */
+  const [notificationTab, setNotificationTab] = useState<NotificationCategoryKey>('all')
   const {
     notifications: headerNotifications,
+    loading: notificationsLoading,
     unreadCount: listUnreadCount,
     markAsRead,
     removeNotification,
@@ -51,7 +58,7 @@ export function MainHeader() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useNotifications()
+  } = useNotifications(resolveNotificationServerCategory(notificationTab))
   const unreadCount = useRemoteNotificationCount
     ? typeof remoteUnreadCount === 'number'
       ? remoteUnreadCount
@@ -273,6 +280,9 @@ export function MainHeader() {
                   <NotificationDropdown
                     notifications={dropdownNotifications}
                     unreadCount={unreadCount}
+                    category={notificationTab}
+                    onCategoryChange={setNotificationTab}
+                    loading={notificationsLoading}
                     onNotificationClick={handleNotificationClick}
                     onConfirm={handleConfirm}
                     hasNextPage={hasNextPage}

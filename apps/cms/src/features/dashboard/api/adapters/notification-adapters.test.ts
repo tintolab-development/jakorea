@@ -54,3 +54,53 @@ describe('mapNotificationInboxItem link target', () => {
     expect(mapped?.target).toBeUndefined()
   })
 })
+
+describe('mapNotificationInboxItem 탭 분류 (notificationCategory SSOT)', () => {
+  const base = {
+    recipientId: 201,
+    title: '제목',
+    message: '본문',
+    createdAt: '2026-11-14T00:00:00Z',
+  }
+
+  it.each([
+    ['APPLICATION_MATCHING', 'matching'],
+    ['PROGRAM_PROGRESS', 'progress'],
+    ['SETTLEMENT', 'settlement'],
+    ['UPDATE', 'schedule'],
+    ['INQUIRY_SYSTEM', 'inquiry'],
+    ['SYSTEM', 'system'],
+    ['APPROVAL_REJECTION', 'system'],
+    ['application_matching', 'matching'],
+  ])('%s → %s', (notificationCategory, expected) => {
+    expect(mapNotificationInboxItem({ ...base, notificationCategory })?.type).toBe(expected)
+  })
+
+  it('eventType에 SCHEDULE이 있어도 PROGRAM_PROGRESS면 progress', () => {
+    const mapped = mapNotificationInboxItem({
+      ...base,
+      eventType: 'ADMIN_UJAT_INSTITUTION_SCHEDULE_CONFIRMED',
+      notificationCategory: 'PROGRAM_PROGRESS',
+    })
+    expect(mapped?.type).toBe('progress')
+  })
+
+  it('eventType에 SETTLEMENT가 있어도 카테고리가 없으면 eventType으로 정하지 않고 system', () => {
+    const mapped = mapNotificationInboxItem({
+      ...base,
+      eventType: 'ADMIN_SETTLEMENT_APPLICATION_SUBMITTED',
+    })
+    expect(mapped?.type).toBe('system')
+  })
+
+  it('null이나 모르는 값이면 system', () => {
+    expect(mapNotificationInboxItem({ ...base, notificationCategory: null })?.type).toBe('system')
+    expect(mapNotificationInboxItem({ ...base, notificationCategory: 'NEW_CATEGORY' })?.type).toBe(
+      'system'
+    )
+  })
+
+  it('notificationCategory가 없으면 category 값을 같은 표로 정한다', () => {
+    expect(mapNotificationInboxItem({ ...base, category: 'SETTLEMENT' })?.type).toBe('settlement')
+  })
+})
