@@ -1,7 +1,10 @@
 import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 
-/** 대량이체는 지급 대기 건만, 세금신고는 지급 완료 건만 서버가 허용한다. */
+/**
+ * 대량이체는 지급 대기·지급 완료 건을 함께 보낼 수 있어 status를 보내지 않는다.
+ * 세금신고는 지급 완료 건만 서버가 허용한다.
+ */
 export const ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT = 'WAITING_PAYMENT' as const
 export const ACCOUNT_PAYMENT_EXPORT_STATUS_PAID = 'PAID' as const
 
@@ -68,10 +71,7 @@ export function buildAccountPaymentExportRequest(
     hasDateRange && (input.kind === 'bulk-transfer' || input.selection.kind === 'all')
 
   return {
-    status:
-      input.kind === 'bulk-transfer'
-        ? ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT
-        : ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
+    ...(input.kind === 'tax-report' ? { status: ACCOUNT_PAYMENT_EXPORT_STATUS_PAID } : {}),
     reason:
       input.kind === 'bulk-transfer'
         ? BULK_TRANSFER_EXPORT_REASON

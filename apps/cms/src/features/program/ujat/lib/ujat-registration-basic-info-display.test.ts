@@ -7,6 +7,7 @@ import {
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
   applyUjatRegistrationOverlayToProgram,
+  applyUjatRegistrationTemplateDefaults,
   resolveUjatRegistrationBasicInfoDisplay,
   resolveUjatSurveyMenuItems,
 } from './ujat-registration-basic-info-display'
@@ -500,5 +501,24 @@ describe('UJAT 공통 저장 overlay/KPI roundtrip', () => {
       'survey-poll',
       'survey-school-satisfaction',
     ])
+  })
+})
+
+describe('UJAT 상세 조회 — settlementPolicy 임금 값 보존', () => {
+  it('상세 조회는 overlay에 지급 항목 값이 있든 없든 API 응답 지급·공제 항목을 유지한다', () => {
+    const overlays: Record<string, unknown>[] = [
+      { 'ujat.basicInfo.repKo': 'UJAT' },
+      { 'ujat.basicInfo.repKo': 'UJAT', 'ujat.wage.paymentItemValues': [] },
+    ]
+    for (const overlay of overlays) {
+      const applied = applyUjatRegistrationTemplateDefaults({
+        id: 'ujat-wage',
+        title: 'UJAT',
+        ujatRegistrationOverlay: overlay,
+        generalCommonInfo: { paymentItems: '교통비', deductionItems: '원천징수세액' },
+      } as Program)
+      expect(applied.generalCommonInfo?.paymentItems).toBe('교통비')
+      expect(applied.generalCommonInfo?.deductionItems).toBe('원천징수세액')
+    }
   })
 })

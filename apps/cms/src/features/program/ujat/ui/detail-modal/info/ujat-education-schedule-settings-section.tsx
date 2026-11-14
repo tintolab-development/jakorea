@@ -36,7 +36,7 @@ function formatIsoDateLabel(iso: string): string {
   return formatShortYearMdWithKoreanWeekday(d)
 }
 
-function UnavailableDatesView({
+export function UjatUnavailableDatesView({
   exclusion,
   unavailableDates,
 }: {
@@ -242,7 +242,7 @@ function TypedSemesterScheduleTableBlock({
             label="교육 진행 불가일"
             fullRow
             view={
-              <UnavailableDatesView exclusion={exclusion} unavailableDates={unavailableDates} />
+              <UjatUnavailableDatesView exclusion={exclusion} unavailableDates={unavailableDates} />
             }
             edit={
               mode === 'edit' ? (
@@ -298,7 +298,7 @@ function TypedSemesterScheduleReadonlyBlock({
           <DetailInfoForm.Field
             label="교육 진행 불가일"
             fullRow
-            view={<UnavailableDatesView exclusion={display.exclusion} unavailableDates={display.unavailableDates} />}
+            view={<UjatUnavailableDatesView exclusion={display.exclusion} unavailableDates={display.unavailableDates} />}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

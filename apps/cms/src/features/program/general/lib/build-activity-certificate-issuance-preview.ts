@@ -3,6 +3,7 @@ import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template
 import type { Program } from '@/types/domain'
 import { ACTIVITY_CERTIFICATE_BODY_CONTENT } from '@/features/template/lib/certificate-body-content'
 import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
+import { formatCertificateDateText } from '@/pages/templates/form-certificate-preview-utils'
 
 export const ACTIVITY_CERTIFICATE_DOCUMENT_TITLE = '활동인증서'
 
@@ -38,7 +39,8 @@ export type ActivityCertificateParticipantInfoInput = {
 }
 
 function birthDateOrEmpty(value: string | null | undefined): string {
-  return valueOrEmpty(value?.replace(/\s/g, ''))
+  // 시안 5767:47203 생년월일 표기 `YYYY.MM.DD`
+  return valueOrEmpty(formatCertificateDateText(value?.replace(/\s/g, '')))
 }
 
 /**

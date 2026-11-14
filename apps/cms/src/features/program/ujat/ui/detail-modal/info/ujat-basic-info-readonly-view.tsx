@@ -12,10 +12,6 @@ import { useGeneralProgramSponsorEditContext } from '@/features/program/general/
 import { resolveSponsorManagerViewLines } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
-import {
-  ProgramSponsorHomepageView,
-  ProgramSponsorLogoView,
-} from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
@@ -157,30 +153,6 @@ export function UjatBasicInfoReadonlyView({
             view={<UjatSponsorManagerFieldView program={program} display={display} />}
           />
         </DetailInfoForm.Row>
-        {program ? (
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="후원사 홈페이지"
-              view={
-                <ProgramSponsorHomepageView
-                  sponsorIds={program.generalCommonInfo?.sponsorManagementIds ?? []}
-                  sponsorNameById={program.generalCommonInfo?.sponsorManagementNames}
-                  details={program.generalCommonInfo?.sponsorAssignmentDetails}
-                />
-              }
-            />
-            <DetailInfoForm.Field
-              label="후원사 로고"
-              view={
-                <ProgramSponsorLogoView
-                  sponsorIds={program.generalCommonInfo?.sponsorManagementIds ?? []}
-                  sponsorNameById={program.generalCommonInfo?.sponsorManagementNames}
-                  details={program.generalCommonInfo?.sponsorAssignmentDetails}
-                />
-              }
-            />
-          </DetailInfoForm.Row>
-        ) : null}
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field label="설문 진행 항목" fullRow view={display.surveyItems} />
         </DetailInfoForm.Row>

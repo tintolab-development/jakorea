@@ -2,7 +2,7 @@
  * 정산 관리 > 계좌 지급 — 세금신고 양식 미리보기 (Fortune Sheet)
  */
 
-import { lazy, Suspense, useCallback, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -27,6 +27,9 @@ import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-downlo
 import './tax-filing-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
+
+/** Fortune Sheet 기본 행 머리(1, 2, 3…) 폭 */
+const FORTUNE_ROW_HEADER_WIDTH = 46
 
 export interface TaxFilingPreviewModalProps {
   open: boolean
@@ -56,9 +59,29 @@ export function TaxFilingPreviewModal({
     [previewWorkbook]
   )
 
+  // 시트 영역 폭(행 머리 제외)을 재서 열을 꽉 채운다 — 우측 빈 칸 방지
+  const [sheetFitWidth, setSheetFitWidth] = useState<number | undefined>(undefined)
+  const sheetHostObserverRef = useRef<ResizeObserver | null>(null)
+  const sheetHostRef = useCallback((host: HTMLDivElement | null) => {
+    sheetHostObserverRef.current?.disconnect()
+    sheetHostObserverRef.current = null
+    if (!host) return
+    const measure = () => {
+      const width = host.clientWidth - FORTUNE_ROW_HEADER_WIDTH
+      if (width > 0) setSheetFitWidth(width)
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(host)
+    sheetHostObserverRef.current = observer
+  }, [])
+
   const sheetData: Sheet[] = useMemo(() => {
-    return previewWorkbook ? [buildTaxFilingFortuneSheet(previewWorkbook)] : []
-  }, [previewWorkbook])
+    return previewWorkbook
+      ? [buildTaxFilingFortuneSheet(previewWorkbook, { fitWidth: sheetFitWidth })]
+      : []
+  }, [previewWorkbook, sheetFitWidth])
 
   const handleDownload = useCallback(() => {
     runProtectedDownload({
@@ -180,7 +203,7 @@ export function TaxFilingPreviewModal({
         </>
       }
     >
-      <div className="tax-filing-preview-modal__sheet-host">
+      <div ref={sheetHostRef} className="tax-filing-preview-modal__sheet-host">
         {previewValidationError ? (
           <div
             role="alert"
@@ -205,7 +228,7 @@ export function TaxFilingPreviewModal({
             }
           >
             <Workbook
-              key={sheetData[0]?.celldata?.length ?? 0}
+              key={`${sheetData[0]?.celldata?.length ?? 0}_${sheetFitWidth ?? 0}`}
               data={sheetData}
               column={TAX_FILING_SHEET_COLUMN_COUNT}
               showToolbar={false}

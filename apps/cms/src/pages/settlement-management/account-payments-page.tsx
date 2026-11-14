@@ -27,6 +27,8 @@ import {
   getSettlementApiErrorCode,
   getSettlementApiErrorMessage,
   readAccountPaymentMissingAccountIds,
+  TAX_REPORT_NO_ELIGIBLE_SELECTION,
+  TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import {
@@ -594,7 +596,7 @@ export default function AccountPaymentsPage() {
 
   /**
    * 툴바 양식 발급: 선택한 행만 대상.
-   * 대량이체 = 지급 대기, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
+   * 대량이체 = 지급 대기·지급 완료, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
    */
   const resolveToolbarFormIssueRows = useCallback(
     (kind: 'bulk-transfer' | 'tax-report'): AccountPaymentRow[] | null => {
@@ -622,7 +624,10 @@ export default function AccountPaymentsPage() {
   const notifyExportError = useCallback((error: unknown, fallback: string) => {
     if (isGlobalApiErrorAlertShown(error)) return
     cmsAlertModal.show({
-      title: networkAwareAlertTitle(error, '발급 불가'),
+      title:
+        getSettlementApiErrorCode(error) === TAX_REPORT_NO_ELIGIBLE_SELECTION
+          ? TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE
+          : networkAwareAlertTitle(error, '발급 불가'),
       content: getSettlementApiErrorMessage(error, fallback),
     })
   }, [])
@@ -702,8 +707,10 @@ export default function AccountPaymentsPage() {
       }
       setIssuedFormPreviewRows(rows)
       setIssuedFormExport(readyExport)
-      setBulkTransferPreviewOpen(true)
-      showIssueCompletedAlert()
+      // 발급 완료 안내를 먼저 보여 주고, 닫으면 미리보기를 연다(겹쳐 뜨지 않게).
+      // 이미 발급된 파일이므로 X·Esc로 닫아도 다운로드할 수 있게 미리보기를 연다.
+      const openPreview = () => setBulkTransferPreviewOpen(true)
+      showIssueCompletedAlert({ onConfirm: openPreview, onDismiss: openPreview })
     })()
   }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
 
@@ -1059,7 +1066,6 @@ export default function AccountPaymentsPage() {
 
   /**
    * 일괄 완료 모달「세금신고 양식 발급」— 방금 계좌 지급 완료한 행은 세금신고 대상이다.
-   * (대량이체는 지급 대기 건만 서버가 허용하므로 완료 직후에는 발급할 수 없다.)
    */
   const handleIssueTaxReportFromSuccessModal = useCallback(() => {
     const ctx = accountPaymentCompleteSuccessContext

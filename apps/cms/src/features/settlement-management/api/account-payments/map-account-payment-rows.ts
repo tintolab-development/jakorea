@@ -31,6 +31,7 @@ export function mapAccountPaymentListItemToRow(
     institutionName: item.institutionName?.trim() || '-',
     sessionLabel: resolveSessionLabel(item),
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(item.paymentStatus),
+    ...(item.paymentFailureYn === true ? { paymentFailureYn: true } : {}),
     amount: item.netPaymentAmount ?? 0,
     lectureDate: item.lectureDate ?? undefined,
     transferScheduledDate: item.scheduledPaymentDate ?? '',

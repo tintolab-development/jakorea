@@ -13,7 +13,7 @@ export class UjatRegistrationRequiredFieldsIncompleteError extends Error {
   }
 }
 
-import { TEMPLATE_FORM_IPS_FIELD_LABELS } from '@/features/template/lib/template-form-select-options'
+import { UJAT_FORM_IPS_FIELD_LABELS } from '@/features/template/lib/template-form-select-options'
 import { listVolunteerInterviewExceptionBlockIds } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
   interviewConfigHasSelectedSlots,
@@ -825,9 +825,9 @@ const UJAT_REQUIRED_FIELD_LABELS: Record<string, string> = {
   'basicInfo.sponsorId': '후원사',
   'basicInfo.sponsorContact': '후원사 담당자',
   'basicInfo.educationCourse': '교육 과정',
-  'basicInfo.ipOwned': TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned,
-  'basicInfo.courseDeliveredBy': TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy,
-  'basicInfo.partnerInvolvement': TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement,
+  'basicInfo.ipOwned': UJAT_FORM_IPS_FIELD_LABELS.ipOwned,
+  'basicInfo.courseDeliveredBy': UJAT_FORM_IPS_FIELD_LABELS.courseDeliveredBy,
+  'basicInfo.partnerInvolvement': UJAT_FORM_IPS_FIELD_LABELS.partnerInvolvement,
   'basicInfo.ipsCategory': 'IPS 유형',
   'kpi.participantCount': '참여 인원',
   'kpi.volunteer': '봉사자 수',

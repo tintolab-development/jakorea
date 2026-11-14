@@ -235,7 +235,7 @@ export class UjatProgramRegistrationPage {
     // 같은 화면에 반복 렌더링되므로 현재 보이는 미입력 피커를 모두 채운다.
     await fillAllParagraphDatesByPlaceholder(
       this.page,
-      '교육 진행 일정을 선택해 주세요',
+      '일정을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )

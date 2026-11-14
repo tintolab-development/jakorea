@@ -611,10 +611,18 @@ export interface Program {
   ujatProgressStatus?: UjatProgramProgressStatus
   /** 목록 DTO 기준 삭제 불가(교육 예정 참여자·교육 진행 이력) — 목록 체크박스 비활성 */
   listDeleteBlocked?: boolean
-  /** UJAT 목록 — 상반기 봉사자 모집 인원(현재) */
+  /** UJAT 등록·수정 — 상반기 봉사자 모집 정원(VOLUNTEER FIRST_HALF maxCount). 목록 표시에는 쓰지 않음 */
   ujatFirstHalfVolunteerCount?: number
-  /** UJAT 목록 — 하반기 봉사자 모집 인원(현재) */
+  /** UJAT 등록·수정 — 하반기 봉사자 모집 정원(VOLUNTEER SECOND_HALF maxCount). 목록 표시에는 쓰지 않음 */
   ujatSecondHalfVolunteerCount?: number
+  /** UJAT 목록 — 상반기 봉사자 모집 정원. null = 정원 미입력 */
+  ujatFirstHalfVolunteerCapacity?: number | null
+  /** UJAT 목록 — 하반기 봉사자 모집 정원. null = 정원 미입력 */
+  ujatSecondHalfVolunteerCapacity?: number | null
+  /** UJAT 목록 — 상반기 봉사자 모집된 인원(최종 합격) */
+  ujatFirstHalfVolunteerSelectedCount?: number
+  /** UJAT 목록 — 하반기 봉사자 모집된 인원(최종 합격) */
+  ujatSecondHalfVolunteerSelectedCount?: number
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보

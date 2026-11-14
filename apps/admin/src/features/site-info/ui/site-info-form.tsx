@@ -22,6 +22,19 @@ import {
 
 import './site-info-form.css'
 
+/** CMS·Admin 브라우저 탭과 같은 파일. 사이트 설정에 아이콘이 없거나 시드 자리표시면 이 이미지를 보여 준다. */
+const DEFAULT_BROWSER_TAB_ICON_URL = '/JA%20Korea_favicon%20image.png'
+
+function isSeedFavicon(url: string): boolean {
+  return url.includes('site-favicon-placeholder')
+}
+
+function browserTabIconPreview(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed || isSeedFavicon(trimmed)) return DEFAULT_BROWSER_TAB_ICON_URL
+  return trimmed
+}
+
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
@@ -450,8 +463,8 @@ export function SiteInfoFormCard({ data }: Props) {
               edit={
                 isEditing ? (
                   <ImageEditField
-                    imageUrl={draft.faviconUrl}
-                    fileName={draft.faviconFileName ?? ''}
+                    imageUrl={browserTabIconPreview(draft.faviconUrl)}
+                    fileName={isSeedFavicon(draft.faviconUrl) ? '' : (draft.faviconFileName ?? '')}
                     alt="브라우저탭 아이콘 미리보기"
                     variant="favicon"
                     onChange={(url, fileName, file) =>
@@ -472,7 +485,11 @@ export function SiteInfoFormCard({ data }: Props) {
                     }
                   />
                 ) : (
-                  <ImageView url={image.faviconUrl} alt="브라우저탭 아이콘" variant="favicon" />
+                  <ImageView
+                    url={browserTabIconPreview(image.faviconUrl)}
+                    alt="브라우저탭 아이콘"
+                    variant="favicon"
+                  />
                 )
               }
             />

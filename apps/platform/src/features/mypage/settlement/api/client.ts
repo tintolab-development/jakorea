@@ -223,7 +223,88 @@ function mapIndividualScheduleItem(input: {
   }
 }
 
-function buildSummary(
+/** ISO instant → KST 기준 YYYY-MM. 해석할 수 없으면 '' */
+export function kstMonthKey(iso: string): string {
+  const time = Date.parse(iso)
+  if (!Number.isFinite(time)) return ''
+  const kst = new Date(time + 9 * 60 * 60 * 1000)
+  return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+/** GET /api/portal/me/gemini-settlements 행 (연수 실적 1건 = 1행) */
+export type PortalGeminiSettlement = {
+  reportId?: number | null
+  programId?: number | null
+  programName?: string | null
+  institutionName?: string | null
+  trainingDate?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  /** 인정 차시 — 실제 시작·종료 시각으로 계산(엑셀 '연수 차시' 아님) */
+  recognizedClassCount?: number | null
+  calculatedAmount?: number | null
+  settlementId?: number | null
+  statementStatus?: string | null
+  paymentStatus?: string | null
+  netPaymentAmount?: number | null
+  paidAt?: string | null
+}
+
+/** 제미나이 실적 정산 목록. 실패해도 다른 정산 현황은 막지 않는다. */
+async function fetchGeminiSettlements(signal?: AbortSignal): Promise<PortalGeminiSettlement[]> {
+  try {
+    const { data } = await axiosClient.get<unknown>('/api/portal/me/gemini-settlements', { signal })
+    const unwrapped = unwrapEnvelope<{ items?: unknown }>(data)
+    const items = unwrapped && typeof unwrapped === 'object' ? unwrapped.items : null
+    return Array.isArray(items) ? (items as PortalGeminiSettlement[]) : []
+  } catch (error) {
+    if (signal?.aborted) throw error
+    return []
+  }
+}
+
+/**
+ * 제미나이 실적 1건 → 정산현황 행.
+ * - 정산 전 유효 실적은 '확인 대기 중', 지급조서·계좌 지급 상태는 공통 상태로 매핑한다.
+ * - 강사비 0원·미설정은 상태 '-'(statusUnavailable)로 두고 합계에서 뺀다. 0원은 0, 미설정은 null.
+ * - 목록·캘린더 금액(정산 신청 금액)은 상태와 관계없이 산정 강사비, 금액 카드 합계는 실지급액이다.
+ * - 교육 진행 일자 뒤에 인정 차시(N차시)를 붙인다.
+ */
+export function mapGeminiSettlementItem(row: PortalGeminiSettlement): SettlementOverviewItem | null {
+  const reportId = readOptionalNumber(row.reportId)
+  if (reportId == null) return null
+  const trainingDate = readOptionalText(row.trainingDate)
+  const startsAt =
+    readOptionalText(row.startAt) ?? (trainingDate ? `${trainingDate}T00:00:00+09:00` : '')
+  if (!startsAt) return null
+  const endsAt = readOptionalText(row.endAt) ?? startsAt
+  const calculatedAmount = readOptionalNumber(row.calculatedAmount)
+  const statusUnavailable = calculatedAmount == null || calculatedAmount === 0
+  const status =
+    mapSettlementOverviewStatus({
+      statementStatus: row.statementStatus,
+      paymentStatus: row.paymentStatus,
+    }) ?? 'waiting_confirm'
+  const paidAt = readOptionalText(row.paidAt)
+  const classCount = readOptionalNumber(row.recognizedClassCount)
+  return {
+    id: `gemini-${reportId}`,
+    programName: readOptionalText(row.programName) ?? '제미나이 아카데미',
+    organizationName: readOptionalText(row.institutionName) ?? '-',
+    startsAt,
+    endsAt,
+    sessionLabel: classCount != null && classCount > 0 ? `${classCount}차시` : '',
+    status,
+    appliedAmount: calculatedAmount,
+    summaryAmount: statusUnavailable
+      ? null
+      : (readOptionalNumber(row.netPaymentAmount) ?? calculatedAmount),
+    ...(statusUnavailable ? { statusUnavailable: true } : {}),
+    ...(paidAt ? { paidAt } : {}),
+  }
+}
+
+export function buildSummary(
   items: SettlementOverviewItem[],
   monthKey: string,
 ): SettlementOverviewSummary {
@@ -232,15 +313,17 @@ function buildSummary(
   let monthExpectedAmount: number | null = null
 
   for (const item of items) {
-    const amount = item.appliedAmount
-    // 대체된 이전 신청은 합계에서 뺀다
-    if (amount == null || item.superseded) continue
+    const amount = item.summaryAmount !== undefined ? item.summaryAmount : item.appliedAmount
+    // 대체된 이전 신청·정산 대상 상태가 없는 행(제미나이 0원·미설정)은 합계에서 뺀다
+    if (amount == null || item.superseded || item.statusUnavailable) continue
     const inMonth =
       item.startsAt.slice(0, 7) === monthKey || item.endsAt.slice(0, 7) === monthKey
+    // 제미나이 지급 완료는 실제 이체 완료일(KST) 월로 집계한다
+    const paidInMonth = item.paidAt ? kstMonthKey(item.paidAt) === monthKey : inMonth
 
     if (item.status === 'paid') {
       totalPaidAmount = (totalPaidAmount ?? 0) + amount
-      if (inMonth) monthPaidAmount = (monthPaidAmount ?? 0) + amount
+      if (paidInMonth) monthPaidAmount = (monthPaidAmount ?? 0) + amount
     }
     if (item.status === 'confirmed' && inMonth) {
       monthExpectedAmount = (monthExpectedAmount ?? 0) + amount
@@ -288,9 +371,10 @@ export async function fetchSettlementOverviewPageData(input?: {
   const signal = input?.signal
   const month = input?.month?.trim() || ''
 
-  const [instructorRows, applications] = await Promise.all([
+  const [instructorRows, applications, geminiRows] = await Promise.all([
     fetchSettlementApplications(signal),
     fetchAllMyProgramApplications(signal),
+    fetchGeminiSettlements(signal),
   ])
 
   const programTitleByProgramId = new Map<string, string>()
@@ -314,6 +398,12 @@ export async function fetchSettlementOverviewPageData(input?: {
     const applicationId = readOptionalNumber(row.applicationId)
     const superseded = applicationId != null && supersededIds.has(applicationId)
     const mapped = mapInstructorSettlementItem(row, programTitleByProgramId, superseded)
+    if (mapped) items.push(mapped)
+  }
+
+  // 제미나이: 신청·배정과 무관하게 연수 실적 기준(기획 2026-11-12 강사 LNB 기능정의)
+  for (const row of geminiRows) {
+    const mapped = mapGeminiSettlementItem(row)
     if (mapped) items.push(mapped)
   }
 

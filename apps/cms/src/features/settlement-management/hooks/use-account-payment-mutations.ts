@@ -43,7 +43,7 @@ export function useMarkAccountPaymentFailedMutation() {
   })
 }
 
-/** R2 bulk-transfer export — 지급 대기(WAITING_PAYMENT) 기준 서버 생성 요청 */
+/** R2 bulk-transfer export — 지급 대기·계좌 지급 완료 건 서버 생성 요청 (status 미전송, 지급 실패 제외) */
 export function useBulkTransferExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestBulkTransferExportRemote(body),

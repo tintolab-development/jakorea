@@ -16,10 +16,27 @@ function seoulDateParts(date: Date): { y: string; m: string; d: string } {
   return { y: v.year ?? '', m: v.month ?? '', d: v.day ?? '' }
 }
 
-/** 발급일자 — 년·월·일 (한국어, Asia/Seoul) */
+/** 발급일자 — `YYYY.MM.DD` (Asia/Seoul). 시안 5767:47248 */
 export function formatCertificateIssueDate(date: Date = new Date()): string {
   const { y, m, d } = seoulDateParts(date)
-  return `${y}년 ${Number(m)}월 ${Number(d)}일`
+  return `${y}.${m}.${d}`
+}
+
+const CERTIFICATE_DATE_TOKEN =
+  /(\d{4})\s*(?:년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일|[-./]\s*(\d{1,2})\s*[-./]\s*(\d{1,2})(?![\d]))/g
+
+/**
+ * 증명서 본문 날짜 표기를 시안(5767:47203)과 같은 `YYYY.MM.DD`로 맞춘다.
+ * `2009-09-15`·`2009년 9월 15일`·`2009.9.15`·`2009/09/15` 같은 날짜만 바꾸고 나머지 글자(` ~ ` 등)는 그대로 둔다.
+ */
+export function formatCertificateDateText(text: string | null | undefined): string {
+  if (text == null) return ''
+  return text.replace(CERTIFICATE_DATE_TOKEN, (match, y, km, kd, dm, dd) => {
+    const month = Number(km ?? dm)
+    const day = Number(kd ?? dd)
+    if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return match
+    return `${y}.${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`
+  })
 }
 
 export function certificateIssueDateIso(date: Date = new Date()): string {

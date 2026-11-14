@@ -25,4 +25,13 @@ describe('showIssueCompletedAlert', () => {
     })
     expect(MESSAGES.success.issued).toBe('발급되었습니다.')
   })
+  it('확인·닫기 콜백을 그대로 넘긴다', () => {
+    const show = vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+    const onConfirm = vi.fn()
+    const onDismiss = vi.fn()
+
+    showIssueCompletedAlert({ onConfirm, onDismiss })
+
+    expect(show).toHaveBeenCalledWith(expect.objectContaining({ onConfirm, onDismiss }))
+  })
 })

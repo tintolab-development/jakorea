@@ -25,14 +25,17 @@ function NotApplicableText() {
 function KpiValueWithUnit({
   children,
   unit,
+  hideUnit = false,
 }: {
   children: ReactNode
   unit: string
+  /** 프로그램 상세 조회 — 시안(4082:89939)은 숫자만 표기 */
+  hideUnit?: boolean
 }) {
   return (
     <div className="detail-info-form-inputs-wrapper">
       {children}
-      <span className="detail-info-form--text">{unit}</span>
+      {hideUnit ? null : <span className="detail-info-form--text">{unit}</span>}
     </div>
   )
 }
@@ -55,6 +58,8 @@ export function UjatBusinessKpiProgramView({
   const display = resolveUjatBusinessKpiDisplay(program)
   const isFormEdit = isEdit && form != null
   const formMode = isFormEdit ? 'edit' : 'view'
+  // 상세 조회(4082:89939)·등록/수정 시안(등록 폼_공통) 모두 숫자만 표기 — 수정 입력칸도 단위를 숨긴다
+  const hideViewUnit = !isEdit
   const participantTypes = isFormEdit
     ? (form.watch('generalParticipantTypes') ?? [])
     : (program.generalParticipantTypes ?? [])
@@ -85,13 +90,13 @@ export function UjatBusinessKpiProgramView({
         <DetailInfoForm.Field
           label="참여자 최종 인원"
           view={
-            <KpiValueWithUnit unit="명">
+            <KpiValueWithUnit unit="명" hideUnit={hideViewUnit}>
               <KpiNumber value={display.finalParticipants} />
             </KpiValueWithUnit>
           }
           edit={
             isFormEdit ? (
-              <KpiValueWithUnit unit="명">
+              <KpiValueWithUnit unit="명" hideUnit>
                 <Controller
                   name="kpiFinalParticipants"
                   control={form.control}
@@ -124,7 +129,7 @@ export function UjatBusinessKpiProgramView({
               <div className="program-registration-paragraph__instructor-kpi-group">
                 <span className="detail-info-form--text">봉사자</span>
                 {hasVolunteerRecruitment ? (
-                  <KpiValueWithUnit unit="명">
+                  <KpiValueWithUnit unit="명" hideUnit={hideViewUnit}>
                     <KpiNumber value={display.volunteerCount} />
                   </KpiValueWithUnit>
                 ) : (
@@ -150,7 +155,7 @@ export function UjatBusinessKpiProgramView({
                 <div className="program-registration-paragraph__instructor-kpi-group">
                   <span className="detail-info-form--text">봉사자</span>
                   {hasVolunteerRecruitment ? (
-                    <KpiValueWithUnit unit="명">
+                    <KpiValueWithUnit unit="명" hideUnit>
                       <Controller
                         name="kpiVolunteerCount"
                         control={form.control}
@@ -187,13 +192,13 @@ export function UjatBusinessKpiProgramView({
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
           view={
-            <KpiValueWithUnit unit="개">
+            <KpiValueWithUnit unit="개" hideUnit={hideViewUnit}>
               <KpiNumber value={display.finalSchools} />
             </KpiValueWithUnit>
           }
           edit={
             isFormEdit ? (
-              <KpiValueWithUnit unit="개">
+              <KpiValueWithUnit unit="개" hideUnit>
                 <Controller
                   name="kpiFinalSchools"
                   control={form.control}
@@ -217,13 +222,13 @@ export function UjatBusinessKpiProgramView({
         <DetailInfoForm.Field
           label="최종 파견 학급 수"
           view={
-            <KpiValueWithUnit unit="개">
+            <KpiValueWithUnit unit="개" hideUnit={hideViewUnit}>
               <KpiNumber value={display.finalClasses} />
             </KpiValueWithUnit>
           }
           edit={
             isFormEdit ? (
-              <KpiValueWithUnit unit="개">
+              <KpiValueWithUnit unit="개" hideUnit>
                 <Controller
                   name="kpiFinalClasses"
                   control={form.control}

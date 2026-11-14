@@ -179,6 +179,10 @@ export async function create(input: CreateInput): Promise<Program> {
       ...mediaOverlay,
     },
   }
+  // 지역 정원 빈 칸(UjatRegionCapacityIncompleteError)은 프로그램 생성 전에 막는다 — 생성 후 실패하면 정원 없이 남는다.
+  const regionCapacityUpserts = ujatRegionCapacityUpsertsFromState(
+    pending.ujatRegionCapacity ?? input.basicInfo?.ujatRegionCapacity
+  )
   const created = fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,
@@ -197,12 +201,7 @@ export async function create(input: CreateInput): Promise<Program> {
     const savedTypedDetail = await replaceUjatTypedDetailRemote(created.id, typedDetail)
     await syncUjatTypedDetailPhysicalSchedulesRemote(created.id, savedTypedDetail)
     try {
-      await replaceUjatRegionCapacitiesRemote(
-        created.id,
-        ujatRegionCapacityUpsertsFromState(
-          pending.ujatRegionCapacity ?? input.basicInfo?.ujatRegionCapacity
-        )
-      )
+      await replaceUjatRegionCapacitiesRemote(created.id, regionCapacityUpserts)
     } catch (capacityError) {
       const error = capacityError instanceof Error ? capacityError : new Error(String(capacityError))
       ;(error as Error & { programId?: string; stage?: string }).programId = created.id

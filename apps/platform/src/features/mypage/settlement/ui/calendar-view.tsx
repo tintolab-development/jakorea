@@ -290,7 +290,9 @@ export function SettlementCalendarView({
                     </PFText>
                     <div className={styles.listDetail}>
                       <PFText as="p" typo="bd-md-sb" color="black" className={styles.listTitle}>
-                        {item.supersededStatusUnknown ? '-' : SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
+                        {item.supersededStatusUnknown || item.statusUnavailable
+                          ? '-'
+                          : SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
                       </PFText>
                       <PFText
                         as="p"

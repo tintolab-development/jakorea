@@ -88,6 +88,39 @@ function formatTypedScheduleLines(rows: UjatTypedScheduleRow[]): string {
   return lines.length > 0 ? lines.join('\n') : '-'
 }
 
+/**
+ * 지역별 일정 행을 같은 날짜끼리 묶는다 — 상세 공통 정보 시안(4082:89939)
+ * 「서울, 경기, 대전, 인천 : 2026.02.25(수)」 형식. 날짜 순서는 입력(displayOrder) 순서를 따른다.
+ */
+function formatTypedScheduleLinesGroupedByDate(rows: UjatTypedScheduleRow[]): string {
+  const groups = new Map<string, string[]>()
+  rows
+    .slice()
+    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+    .forEach(row => {
+      const region = row.regionCode ? regionLabelByKey(row.regionCode) : ''
+      const date = typedDateLabel(row)
+      if (!region && date === '-') return
+      const regions = groups.get(date) ?? []
+      if (region && !regions.includes(region)) regions.push(region)
+      groups.set(date, regions)
+    })
+  const lines = [...groups.entries()].map(([date, regions]) =>
+    regions.length > 0 ? `${regions.join(', ')} : ${date}` : date
+  )
+  return lines.length > 0 ? lines.join('\n') : '-'
+}
+
+/** 상세 공통 정보 조회 — 사전교육·해단식 진행 일정을 날짜별로 묶은 문구 */
+export function resolveUjatHalfScheduleGroupedTextFromTypedDetail(
+  detail: UjatTypedDetail | null | undefined,
+  half: UjatHalfSemesterKey,
+  section: 'pre' | 'closing'
+): string {
+  const halfPlan = detail?.halfPlans?.find(item => item.semesterType === semesterForHalf(half))
+  return formatTypedScheduleLinesGroupedByDate(typedStageRows(halfPlan, section))
+}
+
 /** Canonical Typed RHF/server projection. This path does not read the registration overlay. */
 export function resolveUjatHalfEducationScheduleDisplayFromTypedDetail(
   detail: UjatTypedDetail | null | undefined,
@@ -101,10 +134,9 @@ export function resolveUjatHalfEducationScheduleDisplayFromTypedDetail(
   const preStage = typedStage(halfPlan, 'pre')
   const eventStage = typedStage(halfPlan, 'event')
   const closingStage = typedStage(halfPlan, 'closing')
-  const rangeStarts = eventRows.map(row => row.startDate).filter((value): value is string => Boolean(value))
-  const rangeEnds = eventRows.map(row => row.endDate).filter((value): value is string => Boolean(value))
-  const start = rangeStarts.sort()[0] ?? null
-  const end = rangeEnds.sort().at(-1) ?? null
+  // 교육 진행 기간 = MAIN rows[0](displayOrder 최소) — 「교육 진행 일정 설정」 표·BE 학교 희망 교육일 계산과 같은 기준.
+  const start = eventRow?.startDate ?? null
+  const end = eventRow?.endDate ?? null
   const textbook = preRows[0]?.textbook
   const hasPre = preRows.length > 0 || preStage != null
   const hasEvent = eventRows.length > 0 || eventStage != null

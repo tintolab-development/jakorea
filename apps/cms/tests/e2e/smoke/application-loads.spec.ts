@@ -7,7 +7,7 @@ test.describe('CMS application smoke', () => {
   test('login page loads with core UI', async ({ page }) => {
     await page.goto('/login')
 
-    await expect(page).toHaveTitle('JAKorea CMS')
+    await expect(page).toHaveTitle('JA Korea CMS')
     await expect(
       page.getByText('인가된 관리자만 접속 가능하며, 중요 활동의 경우 로그로 기록됩니다.')
     ).toBeVisible()
