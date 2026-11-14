@@ -631,6 +631,9 @@ export function useSignUp() {
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
     resetGuardianBridgeSession()
+    // 회원 유형 선택(1단계)으로 돌아가 일반회원이 선택된 상태로 둔다.
+    // 교사용 생년월일 화면을 history에서 바꿔, 뒤로가기로 다시 열리지 않게 한다.
+    replaceWizard(1)
   }
 
   const applyPreviousStepProgrammatically = () => {
