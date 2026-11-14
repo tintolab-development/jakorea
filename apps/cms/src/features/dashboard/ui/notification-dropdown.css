@@ -159,14 +159,9 @@
 }
 
 .notification-dropdown-loading {
-  display: block;
+  display: flex;
+  justify-content: center;
   padding: 4px 0 8px;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.55;
-  text-align: center;
 }
 
 .notification-dropdown-item:hover {

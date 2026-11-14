@@ -3,7 +3,7 @@
  * 최대 420×500, 카테고리 필터 6개(한 줄), 알림 목록
  */
 
-import { Typography } from 'antd'
+import { Spin, Typography } from 'antd'
 import { useEffect, useMemo, useRef } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
 import { useDragScroll } from '../hooks/use-drag-scroll'
@@ -236,7 +236,9 @@ export function NotificationDropdown({
             ) : null}
             <div ref={sentinelRef} className="notification-dropdown-sentinel" aria-hidden />
             {isFetchingNextPage ? (
-              <Text className="notification-dropdown-loading">알림을 더 불러오는 중</Text>
+              <div className="notification-dropdown-loading">
+                <Spin size="small" aria-label="알림을 더 불러오는 중" />
+              </div>
             ) : null}
           </div>
         )}
