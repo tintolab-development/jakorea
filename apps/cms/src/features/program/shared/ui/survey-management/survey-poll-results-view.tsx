@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -6,7 +6,11 @@ import {
   buildSurveyPollResultSectionsFromSummary,
   type SurveyPollResultSection,
 } from '../../lib/survey-management/aggregate-survey-poll-results'
-import { paginateSurveyPollPdfSections } from '../../lib/survey-management/paginate-survey-poll-pdf-pages'
+import {
+  paginateSurveyPollPdfSections,
+  paginateSurveyPollPdfSectionsByHeight,
+  type SurveyPollPdfPageItem,
+} from '../../lib/survey-management/paginate-survey-poll-pdf-pages'
 import { resolveSurveyWritingDraft } from '../../lib/survey-management/survey-writing-draft'
 import type {
   SurveyPollRawResponse,
@@ -40,6 +44,55 @@ export type SurveyPollResultsViewProps = {
 const SURVEY_RESULTS_STATUS_BADGE_LABELS: Partial<Record<SurveyProgressStatus, string>> = {
   in_progress: '진행 중',
   finished: '진행 완료',
+}
+
+/** PDF 한 쪽 높이(px) — `.ujat-survey-poll-results__pdf-page` 폭 794px의 A4 비율 */
+const SURVEY_POLL_PDF_PAGE_HEIGHT = 1123
+
+function toPx(value: string): number {
+  const parsed = Number.parseFloat(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+/** 측정용 쪽(화면 밖, 캡처 대상 아님)에서 머리말·요약·문항 카드 높이를 재 높이 기준 쪽 나눔 값을 만든다. */
+function measureSurveyPollPdfLayout(measurePage: HTMLElement, sections: readonly SurveyPollResultSection[]) {
+  const header = measurePage.querySelector<HTMLElement>('[data-survey-pdf-measure="header"]')
+  const summary = measurePage.querySelector<HTMLElement>('[data-survey-pdf-measure="summary"]')
+  const sectionList = measurePage.querySelector<HTMLElement>('[data-survey-pdf-measure="sections"]')
+  const sectionEls = Array.from(
+    measurePage.querySelectorAll<HTMLElement>('[data-survey-pdf-measure="section"]')
+  )
+  if (header == null || summary == null || sectionList == null || sectionEls.length !== sections.length) {
+    return null
+  }
+
+  const pageStyle = getComputedStyle(measurePage)
+  const pageGap = toPx(pageStyle.rowGap)
+  // 요약(총 N명 응답)은 첫 쪽에만 그리므로 2쪽부터는 요약 높이·간격만큼 문항 영역이 넓다.
+  const continuationPageContentHeight =
+    SURVEY_POLL_PDF_PAGE_HEIGHT -
+    toPx(pageStyle.paddingTop) -
+    toPx(pageStyle.paddingBottom) -
+    header.getBoundingClientRect().height -
+    pageGap
+  const pageContentHeight =
+    continuationPageContentHeight - summary.getBoundingClientRect().height - pageGap
+
+  return {
+    pageContentHeight,
+    continuationPageContentHeight,
+    sectionGap: toPx(getComputedStyle(sectionList).rowGap),
+    minSectionHeight: sectionEls[0] ? toPx(getComputedStyle(sectionEls[0]).minHeight) : 0,
+    sections: sectionEls.map((el, index) => ({
+      height: el.getBoundingClientRect().height,
+      rowHeights:
+        sections[index]?.kind === 'text'
+          ? Array.from(el.querySelectorAll<HTMLElement>('tbody tr')).map(
+              row => row.getBoundingClientRect().height
+            )
+          : undefined,
+    })),
+  }
 }
 
 export function SurveyPollResultsView({
@@ -93,7 +146,44 @@ export function SurveyPollResultsView({
     )
   }, [draft, needsDraft, questionSummaries, responses, useSummary])
 
-  const pdfPages = useMemo(() => paginateSurveyPollPdfSections(sections), [sections])
+  // 측정 전에는 개수 기준으로 나눠 두고, 측정 영역 높이를 잰 뒤 높이 기준으로 다시 채운다.
+  const fallbackPdfPages = useMemo(
+    (): SurveyPollPdfPageItem[][] =>
+      paginateSurveyPollPdfSections(sections).map(page =>
+        page.map(section => ({ key: section.paragraphId, section }))
+      ),
+    [sections]
+  )
+  const pdfMeasureRef = useRef<HTMLElement>(null)
+  const [measuredPdfPages, setMeasuredPdfPages] = useState<{
+    sections: readonly SurveyPollResultSection[]
+    pages: SurveyPollPdfPageItem[][]
+  } | null>(null)
+
+  useLayoutEffect(() => {
+    let cancelled = false
+    const measure = () => {
+      const measurePage = pdfMeasureRef.current
+      if (cancelled || measurePage == null) return
+      const measurements = measureSurveyPollPdfLayout(measurePage, sections)
+      if (measurements == null) return
+      setMeasuredPdfPages({
+        sections,
+        pages: paginateSurveyPollPdfSectionsByHeight(sections, measurements),
+      })
+    }
+    measure()
+    // 웹폰트가 늦게 오면 글자 높이가 바뀌므로 폰트 로드 후 한 번 더 잰다.
+    void document.fonts?.ready.then(measure)
+    return () => {
+      cancelled = true
+    }
+  }, [sections])
+
+  const pdfPages =
+    measuredPdfPages != null && measuredPdfPages.sections === sections
+      ? measuredPdfPages.pages
+      : fallbackPdfPages
 
   const renderSectionTitle = (section: SurveyPollResultSection) => (
     <>
@@ -166,7 +256,7 @@ export function SurveyPollResultsView({
       </div>
 
       <div className="ujat-survey-poll-results__pdf-pages" aria-hidden>
-        {pdfPages.map((pageSections, pageIndex) => (
+        {pdfPages.map((pageItems, pageIndex) => (
           <section
             key={`pdf-page-${pageIndex}`}
             className="ujat-survey-poll-results__pdf-page"
@@ -176,14 +266,17 @@ export function SurveyPollResultsView({
               <p className="ujat-survey-poll-results__pdf-kicker">JA Korea</p>
               <h2 className="ujat-survey-poll-results__pdf-title">{pdfTitle}</h2>
             </div>
-            <div className="ujat-survey-poll-results__summary ujat-survey-poll-results__pdf-summary">
-              {summary}
-            </div>
+            {/* 요약(총 N명 응답)은 첫 쪽에만 — 쪽마다 반복하면 머리말 아래에 같은 내용이 겹쳐 보인다. */}
+            {pageIndex === 0 ? (
+              <div className="ujat-survey-poll-results__summary ujat-survey-poll-results__pdf-summary">
+                {summary}
+              </div>
+            ) : null}
 
             <div className="ujat-survey-poll-results__pdf-sections">
-              {pageSections.map(section => (
+              {pageItems.map(({ key, section }) => (
                 <div
-                  key={`pdf-${pageIndex}-${section.paragraphId}`}
+                  key={`pdf-${pageIndex}-${key}`}
                   className="ujat-survey-poll-results__pdf-section"
                 >
                   <h3 className="ujat-survey-poll-results__pdf-section-title">
@@ -202,6 +295,44 @@ export function SurveyPollResultsView({
             </div>
           </section>
         ))}
+
+        {/* 쪽 나눔 측정 전용 — 캡처 대상(`data-form-document-pdf-page`)이 아니며 모든 문항을 한 번에 그려 높이를 잰다. */}
+        <section
+          ref={pdfMeasureRef}
+          className="ujat-survey-poll-results__pdf-page ujat-survey-poll-results__pdf-measure"
+        >
+          <div className="ujat-survey-poll-results__pdf-header" data-survey-pdf-measure="header">
+            <p className="ujat-survey-poll-results__pdf-kicker">JA Korea</p>
+            <h2 className="ujat-survey-poll-results__pdf-title">{pdfTitle}</h2>
+          </div>
+          <div
+            className="ujat-survey-poll-results__summary ujat-survey-poll-results__pdf-summary"
+            data-survey-pdf-measure="summary"
+          >
+            {summary}
+          </div>
+          <div className="ujat-survey-poll-results__pdf-sections" data-survey-pdf-measure="sections">
+            {sections.map(section => (
+              <div
+                key={`pdf-measure-${section.paragraphId}`}
+                className="ujat-survey-poll-results__pdf-section"
+                data-survey-pdf-measure="section"
+              >
+                <h3 className="ujat-survey-poll-results__pdf-section-title">
+                  {renderSectionTitle(section)}
+                </h3>
+                <div className="ujat-survey-poll-results__section-divider" aria-hidden />
+                <div className="ujat-survey-poll-results__section-body">
+                  {section.kind === 'scale' ? (
+                    <SurveyScaleResultChart data={section.data} />
+                  ) : (
+                    <SurveyTextResponsesTable rows={section.rows} />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   )
