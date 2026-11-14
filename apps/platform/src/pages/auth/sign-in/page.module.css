@@ -48,6 +48,20 @@
   align-items: center;
 }
 
+/* 시안(PC): 이메일 찾기·비밀번호 찾기·회원가입 하기 링크 12 SemiBold */
+@media (--bp-pc-up) {
+  .accountLinkItem .accountLinkButton {
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* 시안(PC): 또는 소셜 로그인 13 Medium */
+  .socialDivider .socialDividerLabel {
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
 .accountLinkSeparator {
   width: 1px;
   height: 15px;

@@ -32,3 +32,11 @@
   width: 100%;
   justify-content: center;
 }
+
+/* 시안(PC): 이전으로 링크 16 SemiBold */
+@media (--bp-pc-up) {
+  .back .backButton {
+    font-size: 16px;
+    font-weight: 600;
+  }
+}

@@ -98,10 +98,10 @@ export function FindEmailPage() {
     <section>
       <div className={styles.header}>
         <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
-          가입한 이메일을 찾아드릴게요
+          가입한 이메일을 찾아드릴게요.
         </PFText>
         <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
-          본인 확인 후 가입한 이메일을 확인할 수 있어요
+          본인인증 후 가입한 이메일을 확인할 수 있어요.
         </PFText>
       </div>
 

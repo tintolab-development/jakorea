@@ -163,7 +163,7 @@ export function FindPasswordPage() {
     <section>
       <div className={styles.header}>
         <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
-          비밀번호를 다시 설정할게요
+          비밀번호를 찾아드릴게요.
         </PFText>
         <PFText
           as="p"
@@ -171,7 +171,7 @@ export function FindPasswordPage() {
           color="primary-800"
           className={authPageCopyClass('description')}
         >
-          가입한 이메일과 본인인증이 필요해요.
+          가입한 이메일과 본인 인증이 필요해요.
         </PFText>
       </div>
 
@@ -191,7 +191,7 @@ export function FindPasswordPage() {
         />
 
         <PFButton size="xlarge" width="100%" disabled={busy} onClick={() => void handleVerify()}>
-          {busy ? '본인인증 진행 중…' : '본인인증 하기'}
+          {busy ? '본인인증 진행 중…' : '본인인증 후 비밀번호 찾기'}
         </PFButton>
       </div>
     </section>

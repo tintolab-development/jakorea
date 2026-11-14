@@ -402,7 +402,7 @@ button.agreementCheckButton {
 }
 
 .inlineRequiredMark {
-  color: var(--color-red);
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
 }
 
 .addressSearchRow {

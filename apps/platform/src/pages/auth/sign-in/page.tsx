@@ -234,7 +234,7 @@ export function SignInPage() {
           color="gradient-primary-01"
           className={authPageCopyClass('title', authPageCopy.titleAfterMedia)}
         >
-          다시 만나서 반가워요.
+          다시 만나서 반가워요
         </PFText>
         <PFText
           as="p"
@@ -242,7 +242,7 @@ export function SignInPage() {
           color="primary-800"
           className={authPageCopyClass('description', authPageCopy.descriptionTight)}
         >
-          이메일과 비밀번호로 로그인 해주세요.
+          이메일과 비밀번호로 로그인해 주세요.
         </PFText>
       </div>
 
@@ -302,6 +302,7 @@ export function SignInPage() {
             <PFButton
               variant="text"
               size={isBelowPc ? 'small' : 'medium'}
+              className={styles.accountLinkButton}
               onClick={
                 item.href
                   ? () => {
@@ -322,7 +323,7 @@ export function SignInPage() {
       <div className={styles.socialSection}>
         <div className={styles.socialDivider}>
           <span className={styles.socialDividerLine} />
-          <PFText typo="caption-rg" color="neutral-cool-500">
+          <PFText typo="caption-rg" color="neutral-cool-500" className={styles.socialDividerLabel}>
             또는 소셜 로그인
           </PFText>
           <span className={styles.socialDividerLine} />
