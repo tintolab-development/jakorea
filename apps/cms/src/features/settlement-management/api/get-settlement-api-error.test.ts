@@ -1,4 +1,10 @@
+import { AxiosError } from 'axios'
 import { describe, expect, it } from 'vitest'
+import {
+  networkAwareAlertTitle,
+  NETWORK_ERROR_ALERT_CONTENT,
+  NETWORK_ERROR_ALERT_TITLE,
+} from '@/shared/lib/extract-api-error-message'
 import {
   getSettlementConfigErrorField,
   getSettlementApiErrorMessage,
@@ -480,5 +486,31 @@ describe('normalizeSettlementApiErrorCode', () => {
       response: { status: 400, data: { error: { code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION' } } },
     }
     expect(getSettlementApiErrorMessage(error, 'fallback')).toBe('선택한 건 중 세금신고 대상이 없어요.')
+  })
+})
+
+describe('응답 없는 네트워크 오류 — 시안 「네트워크 오류 안내」', () => {
+  const networkError = () => new AxiosError('Network Error', 'ERR_NETWORK')
+
+  it('axios 개발 문구 대신 시안 본문을 돌려준다', () => {
+    expect(getSettlementApiErrorMessage(networkError(), '지급조서 일괄 발급에 실패했습니다.')).toBe(
+      NETWORK_ERROR_ALERT_CONTENT
+    )
+    expect(NETWORK_ERROR_ALERT_CONTENT).toBe(
+      '일시적인 네트워크 오류가 발생하였습니다.\n잠시 후 다시 시도해 주세요.'
+    )
+  })
+
+  it('Alert 제목도 화면별 제목 대신 「네트워크 오류 안내」를 쓴다', () => {
+    expect(networkAwareAlertTitle(networkError(), '안내')).toBe(NETWORK_ERROR_ALERT_TITLE)
+    expect(networkAwareAlertTitle(networkError(), '다운로드 불가')).toBe('네트워크 오류 안내')
+  })
+
+  it('응답이 있는 오류는 화면별 제목·서버 문구를 그대로 둔다', () => {
+    const error = {
+      response: { status: 409, data: { message: '이미 다운로드한 파일입니다.' } },
+    }
+    expect(networkAwareAlertTitle(error, '다운로드 불가')).toBe('다운로드 불가')
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe('이미 다운로드한 파일입니다.')
   })
 })
