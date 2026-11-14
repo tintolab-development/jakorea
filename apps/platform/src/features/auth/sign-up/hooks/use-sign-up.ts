@@ -1551,6 +1551,7 @@ export function useSignUp() {
       confirm: passwordConfirm,
       setConfirm: setPasswordConfirm,
       isMismatch: passwordDerived.isMismatch,
+      isPolicyUnmet: passwordDerived.isPolicyUnmet,
       isValid: passwordDerived.isValid,
       continue: handlePasswordContinue,
     },
