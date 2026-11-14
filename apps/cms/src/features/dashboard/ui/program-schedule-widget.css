@@ -394,6 +394,25 @@
   color: #bfbfbf;
 }
 
+/* 피그마: 일요일·공휴일 빨강, 토요일 파랑 — 다른 달 날짜(회색)·선택일(흰 글자)은 기존 표기 유지 */
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--sunday:not(.program-calendar-cell--other-month)
+  .program-calendar-cell-date,
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--holiday:not(.program-calendar-cell--other-month)
+  .program-calendar-cell-date {
+  color: var(--Status-red-main, #c32f4a);
+}
+
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--saturday:not(.program-calendar-cell--other-month)
+  .program-calendar-cell-date {
+  color: var(--Status-blue-main, #017eaf);
+}
+
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid
   .program-calendar-cell--selected
@@ -700,13 +719,14 @@
   align-self: flex-start;
 }
 
-/* 피그마: 일요일 #c32f4a, 토요일 #017eaf — 주 시작=일요일(WEEKDAY_LABELS)이라 열 위치로만 지정 */
-.program-schedule-widget .program-calendar-week-cell:nth-child(7n + 1) .program-calendar-week-cell-date {
-  color: #c32f4a;
+/* 피그마: 일요일·공휴일 빨강, 토요일 파랑 — 공휴일은 서버 공휴일 API(조회 실패 시 일·토만) */
+.program-schedule-widget .program-calendar-week-cell-date--sunday,
+.program-schedule-widget .program-calendar-week-cell-date--holiday {
+  color: var(--Status-red-main, #c32f4a);
 }
 
-.program-schedule-widget .program-calendar-week-cell:nth-child(7n) .program-calendar-week-cell-date {
-  color: #017eaf;
+.program-schedule-widget .program-calendar-week-cell-date--saturday {
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .program-schedule-widget .program-calendar-week-cell-date--selected {
@@ -771,7 +791,9 @@
 }
 
 /* 피그마 태그 테두리 통일 — 배경색만 데이터(inline) 사용 */
-.program-schedule-widget__week-event-card:not(.program-schedule-widget__week-event-card--color-only) {
+.program-schedule-widget__week-event-card:not(
+  .program-schedule-widget__week-event-card--color-only
+) {
   border: 1px solid rgba(61, 61, 61, 0.06);
 }
 
@@ -858,7 +880,9 @@
 }
 
 .program-schedule-widget.program-schedule-widget--dashboard-half
-  .program-schedule-widget__week-event-card:not(.program-schedule-widget__week-event-card--color-only) {
+  .program-schedule-widget__week-event-card:not(
+    .program-schedule-widget__week-event-card--color-only
+  ) {
   height: auto !important;
   min-height: 54px;
   max-height: none;
@@ -1131,7 +1155,8 @@
 }
 
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
-  .program-calendar-cell-preview__item + .program-calendar-cell-preview__item {
+  .program-calendar-cell-preview__item
+  + .program-calendar-cell-preview__item {
   padding-top: 8px;
   border-top: 1px solid var(--color-border-light, #f0f0f0) !important;
   border-right: 0 none !important;

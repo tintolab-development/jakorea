@@ -29,6 +29,7 @@ import { filterProgramsByACL } from '@/features/permission-request/lib/program-a
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import { useDashboardProgramSchedules } from '../hooks/use-dashboard-program-schedules'
 import { useDashboardProgramOptions } from '../hooks/use-dashboard-program-options'
+import { useDashboardPublicHolidayDateKeys } from '../hooks/use-dashboard-public-holidays'
 import {
   programScheduleKindToApiProgramType,
   type ProgramScheduleKind,
@@ -205,6 +206,20 @@ function getDisplayProgramIds(dayEvents: ScheduleEvent[], max = 2): string[] {
 }
 
 /** program-calendar-view Popover 미리보기와 동일 마크업·클래스 (제목만 SCHEDULE_COLORS.text) */
+type CalendarDayTone = 'holiday' | 'sunday' | 'saturday'
+
+/** 날짜 글자색 구분 — 공휴일·일요일 빨강, 토요일 파랑 (토요일 공휴일은 공휴일 우선) */
+function calendarDayTone(
+  date: Dayjs,
+  holidayDateKeys: ReadonlySet<string>
+): CalendarDayTone | null {
+  if (holidayDateKeys.has(date.format('YYYY-MM-DD'))) return 'holiday'
+  const dayOfWeek = date.day()
+  if (dayOfWeek === 0) return 'sunday'
+  if (dayOfWeek === 6) return 'saturday'
+  return null
+}
+
 function ScheduleWidgetWeekCellPreview({
   dayEvents,
   onEventClick,
@@ -468,6 +483,7 @@ export function ProgramScheduleWidget({
       programType: programScheduleKindToApiProgramType(variant),
       enabled: useRemoteSchedules,
     })
+  const publicHolidayDateKeys = useDashboardPublicHolidayDateKeys(scheduleDateFrom, scheduleDateTo)
 
   const schedulesByDate = useMemo(() => {
     if (useRemoteSchedules) {
@@ -613,11 +629,13 @@ export function ProgramScheduleWidget({
     const programIds = getDisplayProgramIds(dayEvents, 2)
     const hasEvents = programIds.length > 0
     const isSingleBlock = programIds.length === 1
+    const dayTone = calendarDayTone(date, publicHolidayDateKeys)
 
     const monthCell = (
       <div
         className={[
           'program-calendar-cell',
+          dayTone ? `program-calendar-cell--${dayTone}` : '',
           !isCurrentMonth ? 'program-calendar-cell--other-month' : '',
           isSelected ? 'program-calendar-cell--selected' : '',
           isToday ? 'program-calendar-cell--today' : '',
@@ -776,6 +794,7 @@ export function ProgramScheduleWidget({
           const hiddenEventCount = weekColorOnly
             ? dayEvents.filter(ev => !programIds.includes(ev.programId)).length
             : dayEvents.length - 2
+          const dayTone = calendarDayTone(date, publicHolidayDateKeys)
 
           const eventsClass = [
             'program-schedule-widget__week-events',
@@ -799,6 +818,7 @@ export function ProgramScheduleWidget({
               <div
                 className={[
                   'program-calendar-week-cell-date',
+                  dayTone ? `program-calendar-week-cell-date--${dayTone}` : '',
                   isSelected ? 'program-calendar-week-cell-date--selected' : '',
                   hasEvents ? 'program-calendar-week-cell-date--has-events' : '',
                 ]
