@@ -1,8 +1,10 @@
+import { PLATFORM_ALERT_COPY } from './platform-alert-copy'
+
 /**
- * 응답 본문이 없는 오류(서버 미응답·연결 끊김·502 등) 안내 — 시안 「네트워크 오류 안내」
- * (CMS Figma U6QntWGwBOxMszahPxjmGX 16898-166096, CMS `extract-api-error-message.ts`와 같은 문구).
- * 팝업이면 제목+본문, 인라인 문구면 본문만 쓴다.
+ * 응답 본문이 없는 오류(서버 미응답·연결 끊김·502 등) 안내 — Platform 시안 「네트워크 오류 안내」
+ * (사용자 플랫폼 Figma 14491-2867 '변경'). CMS 문구와는 별개다.
  */
-export const NETWORK_ERROR_ALERT_TITLE = '네트워크 오류 안내'
-export const NETWORK_ERROR_ALERT_CONTENT =
-  '일시적인 네트워크 오류가 발생하였습니다.\n잠시 후 다시 시도해 주세요.'
+export const NETWORK_ERROR_ALERT_TITLE = PLATFORM_ALERT_COPY.networkError.title
+export const NETWORK_ERROR_ALERT_CONTENT = PLATFORM_ALERT_COPY.networkError.description
+/** 팝업이 아닌 인라인 문구 — 본문만으로는 뜻이 없어 제목과 본문을 두 줄로 쓴다 */
+export const NETWORK_ERROR_INLINE_MESSAGE = `${NETWORK_ERROR_ALERT_TITLE}\n${NETWORK_ERROR_ALERT_CONTENT}`

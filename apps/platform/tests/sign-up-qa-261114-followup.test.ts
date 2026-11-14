@@ -12,7 +12,7 @@ import {
   buildConfirmationRows,
   resolveSubmittedSchoolStatus,
 } from '../src/features/auth/sign-up/lib/utils'
-import { NETWORK_ERROR_ALERT_CONTENT } from '../src/shared/lib/network-error-message'
+import { NETWORK_ERROR_INLINE_MESSAGE } from '../src/shared/lib/network-error-message'
 
 const generalInput = {
   selectedType: 'general' as const,
@@ -78,7 +78,7 @@ describe('학년 선택지와 범위 밖 학년 비우기 기준이 같은지 (1
 })
 
 describe('비밀번호 재설정 — 응답 본문 없는 오류 문구', () => {
-  it('본문 없는 502는 네트워크 오류 안내 본문을 쓴다', () => {
+  it('본문 없는 502는 네트워크 오류 안내(제목·본문 두 줄)를 쓴다', () => {
     const error = new AxiosError('Request failed with status code 502', undefined, undefined, undefined, {
       status: 502,
       data: '',
@@ -87,8 +87,8 @@ describe('비밀번호 재설정 — 응답 본문 없는 오류 문구', () => 
       config: {} as never,
     })
     expect(
-      getLoginApiErrorMessage(error, NETWORK_ERROR_ALERT_CONTENT, { overrideApprovalPending: false }),
-    ).toBe('일시적인 네트워크 오류가 발생하였습니다.\n잠시 후 다시 시도해 주세요.')
+      getLoginApiErrorMessage(error, NETWORK_ERROR_INLINE_MESSAGE, { overrideApprovalPending: false }),
+    ).toBe('일시적인 네트워크 오류가 발생했어요.\n잠시 후 다시 시도해 주세요.')
   })
 
   it('서버 메시지가 있으면 서버 메시지를 쓴다', () => {
@@ -100,7 +100,7 @@ describe('비밀번호 재설정 — 응답 본문 없는 오류 문구', () => 
       config: {} as never,
     })
     expect(
-      getLoginApiErrorMessage(error, NETWORK_ERROR_ALERT_CONTENT, { overrideApprovalPending: false }),
+      getLoginApiErrorMessage(error, NETWORK_ERROR_INLINE_MESSAGE, { overrideApprovalPending: false }),
     ).toBe('최근에 사용한 비밀번호는 다시 사용할 수 없습니다.')
   })
 })
