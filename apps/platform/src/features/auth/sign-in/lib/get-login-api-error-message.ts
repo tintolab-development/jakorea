@@ -67,9 +67,8 @@ export function getLoginApiErrorMessage(error: unknown, fallback: string): strin
         return message.trim()
       }
     }
-    if (typeof error.message === 'string' && error.message.trim()) {
-      return error.message.trim()
-    }
+    // axios 원문('Request failed with status code …', 'Network Error')은 화면에 쓰지 않는다
+    return fallback
   }
 
   if (error instanceof Error && error.message.trim()) {

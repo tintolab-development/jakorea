@@ -51,6 +51,22 @@ assert.equal(
 )
 
 assert.equal(getLoginApiErrorMessage(new Error('network'), fallback), 'network')
+
+// 서버 메시지 없는 axios 오류(예: 502 프록시 HTML) — axios 원문 대신 기본 문구
+assert.equal(
+  getLoginApiErrorMessage(
+    new AxiosError('Request failed with status code 502', undefined, undefined, undefined, {
+      status: 502,
+      data: '<html>Bad Gateway</html>',
+      statusText: 'Bad Gateway',
+      headers: {},
+      config: {} as never,
+    }),
+    fallback,
+  ),
+  fallback,
+)
+assert.equal(getLoginApiErrorMessage(new AxiosError('Network Error'), fallback), fallback)
 assert.equal(getLoginApiErrorMessage(undefined, fallback), fallback)
 
 assert.equal(
