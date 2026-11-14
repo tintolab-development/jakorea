@@ -31,8 +31,21 @@ export function isLoginApprovalPendingApiError(error: unknown): boolean {
   return Boolean(code && LOGIN_APPROVAL_PENDING_CODES.has(code.toUpperCase()))
 }
 
-export function getLoginApiErrorMessage(error: unknown, fallback: string): string {
-  if (isLoginApprovalPendingApiError(error)) {
+export type LoginApiErrorMessageOptions = {
+  /**
+   * 승인 대기·비활성 계정(423, ACCOUNT_INACTIVE 등)을 로그인 승인 대기 문구로 바꿀지. 기본 true.
+   * 로그인이 아닌 화면(예: 비밀번호 재설정)은 false로 두고 서버 메시지를 그대로 쓴다.
+   */
+  overrideApprovalPending?: boolean
+}
+
+export function getLoginApiErrorMessage(
+  error: unknown,
+  fallback: string,
+  options: LoginApiErrorMessageOptions = {},
+): string {
+  const { overrideApprovalPending = true } = options
+  if (overrideApprovalPending && isLoginApprovalPendingApiError(error)) {
     return LOGIN_APPROVAL_PENDING_MESSAGE
   }
 

@@ -70,7 +70,12 @@ export function FindPasswordResetPage() {
           newPasswordConfirm: confirmPassword,
         })
       } catch (error) {
-        setSubmitError(getLoginApiErrorMessage(error, IDENTITY_MISMATCH_MESSAGE))
+        // 비밀번호 재설정은 로그인이 아니므로 ACCOUNT_INACTIVE 등은 서버 메시지를 그대로 쓴다
+        setSubmitError(
+          getLoginApiErrorMessage(error, IDENTITY_MISMATCH_MESSAGE, {
+            overrideApprovalPending: false,
+          }),
+        )
         return
       }
     }

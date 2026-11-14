@@ -69,6 +69,16 @@ assert.equal(
 assert.equal(getLoginApiErrorMessage(new AxiosError('Network Error'), fallback), fallback)
 assert.equal(getLoginApiErrorMessage(undefined, fallback), fallback)
 
+// 로그인이 아닌 화면 — 비활성 계정은 서버 메시지를 그대로 쓴다
+assert.equal(
+  getLoginApiErrorMessage(
+    axiosErr(403, { error: { code: 'ACCOUNT_INACTIVE', message: '사용할 수 없는 계정입니다.' } }),
+    fallback,
+    { overrideApprovalPending: false },
+  ),
+  '사용할 수 없는 계정입니다.',
+)
+
 assert.equal(
   formatPortalProfileUpdateError(
     axiosErr(400, {
