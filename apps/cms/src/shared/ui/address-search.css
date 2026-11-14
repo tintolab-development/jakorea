@@ -46,16 +46,17 @@
   display: none !important;
 }
 
-/* [검색] 전 자동완성 — 입력 하단 드롭다운
- * 아이템 높이: padding 12+12 + line-height 15*1.5 = 46.5px
- * 기본 max-height = 10개 + 구분선 9개 → 이 이상은 컨테이너 내부 스크롤
+/* [검색] 전 자동완성 — 입력 하단 드롭다운 (시안 14661:55220)
+ * 행 높이 44 = padding 10+10 + 16*1.5 · 행 구분선 1 · 7행 + 구분선 6 + 테두리 2 = 316
+ * 이 이상은 컨테이너 내부 스크롤
  */
 .address-search__suggest-list {
   --address-search-suggest-item-height: 44px;
-  --address-search-suggest-max-10: 313px;
+  --address-search-suggest-max-10: 316px;
 
   position: absolute;
-  top: calc(100% + 4px);
+  /* 시안: 검색창 하단 ↔ 목록 상단 10.5 */
+  top: calc(100% + 10.5px);
   left: 0;
   z-index: 2;
   display: flex;
@@ -65,7 +66,7 @@
   padding: 0 14px 0 16px;
   flex-direction: column;
   border-radius: 8px;
-  border: 1px solid #c4cdd1;
+  border: 1px solid var(--Border-default, #e0e0e0);
   background: #fff;
   box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
   list-style: none;
@@ -88,16 +89,17 @@
   display: block;
   width: 100%;
   margin: 0;
-  padding: 12px 0;
+  /* 시안: 목록 padding 0/14/0/16 + 행 padding 0/14/0/16 · 행 높이 44 */
+  padding: 10px 14px 10px 16px;
   border: none;
   background: transparent;
   cursor: pointer;
   text-align: left;
   font-family: Pretendard, sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  color: var(--main-BK, #3d3d3d);
+  color: #464646;
   box-sizing: border-box;
 }
 
@@ -119,7 +121,8 @@
   min-height: 0;
   overflow-y: auto;
   border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--8, 8px);
+  /* 시안: radius 12 */
+  border-radius: var(--Radius-12, 12px);
   background: var(--main-WT, #fff);
 }
 
@@ -133,7 +136,8 @@
 }
 
 .address-search__result-card-body {
-  padding: 12px;
+  /* 시안: 행 padding 12/16/16/16 */
+  padding: 12px 16px 16px;
   box-sizing: border-box;
   cursor: pointer;
   outline: none;
@@ -181,7 +185,8 @@
   text-underline-position: from-font;
   cursor: pointer;
   margin: 0;
-  padding: 0;
+  /* 시안: 65×21 · padding 0/8 */
+  padding: 0 8px;
   border: none;
   background: transparent;
 }
@@ -210,7 +215,8 @@
   flex-shrink: 0;
   box-sizing: border-box;
   width: 52px;
-  padding: 3px 8px;
+  /* 시안 52×24 · padding 3/10 (테두리 Inside 포함) → 테두리 1 + 2/9 */
+  padding: 2px 9px;
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 4px;
   font-size: 12px;
@@ -249,7 +255,8 @@
 }
 
 .address-search__search-hint-line2 {
-  margin: 4px 0 0;
+  /* 시안: 2줄 42 (line-height 150%, 줄 사이 여백 없음) */
+  margin: 0;
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
@@ -295,7 +302,7 @@
 .address-search-modal .address-search__results--no-results {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .address-search__many-results-notice {
@@ -305,7 +312,9 @@
 .address-search__many-results-line1 {
   margin: 0;
   font-size: 14px;
+  font-weight: 500;
   line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
 }
 
 .address-search__many-results-em {
@@ -313,7 +322,7 @@
 }
 
 .address-search__many-results-line2 {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
@@ -339,25 +348,28 @@
   color: var(--default-BK, #3d3d3d);
 }
 
+/* 시안: 안내 Medium 14 · lh150% · 아래 빈 줄 21 */
 .address-search__tip-lead {
-  margin-bottom: 16px;
+  margin-bottom: 21px;
   font-size: 14px;
-  line-height: 160%;
-  color: var(--main-BK, #3d3d3d);
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
 }
 
+/* 시안: 항목명 21 + 예시 21 연속 · 항목 사이 빈 줄 21 */
 .address-search__tip-list {
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 21px;
 }
 
 .address-search__tip-item-label {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 0;
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
@@ -365,9 +377,11 @@
 }
 
 .address-search__tip-item-example {
+  display: block;
   font-size: 14px;
+  font-weight: 500;
   line-height: 150%;
-  color: var(--JA-mint-01, #01a1af);
+  color: var(--Brand-500, #00a0af);
 }
 
 /* 공통 셸 레이아웃 */
@@ -392,8 +406,14 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  gap: 4px;
+  /* 시안: 검색창 ↔ Tip·안내 문구 16 — 각 블록 margin-top 16으로만 둔다 */
+  gap: 0;
   overflow: hidden;
+}
+
+/* 시안: 제목줄 ↔ 검색창 16 (ContentModal always 12 덮어쓰기) */
+.address-search-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
+  padding-top: 16px;
 }
 
 .address-search-modal .address-search__search-input-wrap {
@@ -401,14 +421,20 @@
 }
 
 /*
- * suggest-list: 10개 높이 vs 모달 잔여 높이 중 작은 값.
- * 잔여 = 469 - pad(26+34) - header(36) - search(~40) - dropdown gap(4) - 여유(8)
+ * suggest-list: 시안 14661:55220 — 7행(316) 전부 노출.
+ * 목록은 셸 하단 padding(34) 영역까지 내려온다(목록 하단 ≈ 셸 상단 443 < 469).
+ * 검색 전 상태에서만 본문 클리핑을 풀어 목록이 하단 padding 위에서 잘리지 않게 한다.
+ * (셸 `.ant-modal-content`의 overflow hidden은 유지 — 469 밖으로는 나가지 않음)
  */
 .address-search-modal .address-search__suggest-list {
-  max-height: min(
-    var(--address-search-suggest-max-10),
-    calc(469px - 26px - 34px - 36px - 40px - 4px - 8px)
-  );
+  max-height: var(--address-search-suggest-max-10);
+}
+
+.address-search-modal:not(.address-search-modal--show-results).content-modal .ant-modal-body,
+.address-search-modal:not(.address-search-modal--show-results).content-modal
+  .teal-header-modal__body,
+.address-search-modal:not(.address-search-modal--show-results) .address-search__body {
+  overflow: visible;
 }
 
 .address-search-modal .address-search__results {
@@ -417,11 +443,11 @@
   overflow: hidden;
 }
 
-/* 검색 결과: 목록만 스크롤, 하단은 리스트가 채움 */
+/* 검색 결과: 목록만 스크롤, 하단은 리스트가 채움 · 시안 안내 문구 ↔ 목록 16 */
 .address-search-modal .address-search__results--queried {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .address-search-modal .address-search__results--queried .address-search__search-hint-notice,
@@ -462,7 +488,7 @@
 .address-search-modal--sparse-results .address-search__results--queried {
   flex: 1 1 auto;
   min-height: 0;
-  gap: 12px;
+  gap: 16px;
 }
 
 .address-search-modal--sparse-results
@@ -482,10 +508,20 @@
 }
 
 /* 1) 기본(검색 전) 2) 검색 버튼 전 미리보기 → 높이 469 고정 */
-.address-search-modal--compact.content-modal.ant-modal .ant-modal-content {
+.address-search-modal--compact:not(.address-search-modal--show-results).content-modal.ant-modal
+  .ant-modal-content {
   height: 469px;
   min-height: 469px;
   max-height: 469px;
+}
+
+/*
+ * 3건 이하 결과·결과 없음: 내용 높이만큼 (시안 3건 600×599 · 결과 없음 600×404)
+ * 결과 없음은 하단 padding 34 유지
+ */
+.address-search-modal--compact.address-search-modal--show-results.content-modal.ant-modal
+  .ant-modal-content:has(.address-search__results--no-results) {
+  padding-bottom: 34px;
 }
 
 /* 4건 이상 검색 결과: 모달 max 800, 목록이 남는 세로를 채움 */

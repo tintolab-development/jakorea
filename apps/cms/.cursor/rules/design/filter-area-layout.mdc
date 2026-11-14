@@ -17,23 +17,23 @@ category: design
 
 | 항목 | 값 | 토큰/상수 |
 |------|-----|-----------|
-| 단일 검색·셀렉트 폭 | **245px** (공유 SSOT) | `--filter-control-width` · `--filter-control-max-width` · `FILTER_CONTROL_MAX_WIDTH_PX` |
+| 단일 검색·셀렉트 폭 | **260px** (공유 SSOT, 시안 2026-11-14 전체 회원 CSS 검수) | `--filter-control-width` · `--filter-control-max-width` · `FILTER_CONTROL_MAX_WIDTH_PX` |
 | 컨트롤 높이 | **40px** (CmsField M) | `--filter-control-height` · `TableFilterGroup` `cms-control--medium` |
 | 필터 칸 사이 gap | 12px | `--filter-field-gap` |
 | 레이블·컨트롤 gap | 6px | `--filter-label-control-gap` |
 | 레이블 | **CmsField M** — 14px / 500 / 140% · `--filter-area-label-color`(#3D3D3D, 공유 룰 색) · 높이 22px(19.6+padding-bottom 2px) · `.cms-field__label` | `cms-control--medium` · `--filter-label-height` |
 | 조회 버튼 | 높이 40px · 폭은 medium min-width + 라벨 | `table-filter-group` 조회 · `size="medium"` |
-| 분리형 `dateRange`·`selectPair` 열 | 380px | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (2×180+20) |
+| 분리형 `dateRange`·`selectPair` 열 | 500px | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (2×240+20) |
 | **`addressRegion` 열 전체** | **235.5px** | `FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` |
 | **`addressRegion` 하위 셀렉트 각** | **114.75px** | `FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX` |
 | **`addressRegion` 하위 gap** | **6px** | `FILTER_ADDRESS_REGION_PAIR_GAP_PX` |
 
 ## FilterFieldConfig.width
 
-- **단일** `search` / `select`: `width: FILTER_CONTROL_MAX_WIDTH_PX` (245)
+- **단일** `search` / `select`: `width: FILTER_CONTROL_MAX_WIDTH_PX` (260)
 - **`radio`**: 폭 지정하지 않음 — 옵션 콘텐츠 허그. Col·필드가 240으로 늘어나면 다음 필터와 시각 갭이 과다해짐(칸 사이는 `--filter-field-gap` 12px만)
-- **`dateRange`** (시작·종료 분리 UI): `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (380)
-- **`selectPair`**: `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (380), 내부 gap 12px
+- **`dateRange`** (시작·종료 분리 UI): `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (500)
+- **`selectPair`**: `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (500), 내부 gap 12px
 - **`addressRegion`**: `width: FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` (235.5), 하위 각 114.75px · gap 6px
 - **`%` 비율 폭**: 행 가로를 채우며 컨트롤이 240px 상한을 넘을 수 있음 → **프로그램 관리 1뎁스·일반 목록 필터에 사용 금지**
 - **`flex: '1 1 0'` 등 grow**: Col만 늘고 컨트롤은 240px에서 멈춰 **칸 사이 빈 갭**이 과다 → **픽셀 `width` 사용**
@@ -94,10 +94,10 @@ category: design
 
 ## 회귀 체크
 
-- [ ] 검색·셀렉트 한 칸이 245px에서 멈추는지 (넓은 화면에서도 늘어나지 않음)
+- [ ] 검색·셀렉트 한 칸이 260px에서 멈추는지 (넓은 화면에서도 늘어나지 않음)
 - [ ] 칸 사이 12px · 조회 버튼과 필드 baseline 정렬
 - [ ] **`radio`**: Col/grid-cell이 콘텐츠 허그(240으로 안 늘어남) · 옵션 gap 16px · 다음 필터와 칸 갭 12px
-- [ ] dateRange 두 칸 합 380px 이내
+- [ ] dateRange 두 칸 합 500px 이내
 - [ ] addressRegion: 시/도·시/군/구 각 114.75px, 사이 6px, 열 합 235.5px
 
 **Last updated:** 2026-10-08

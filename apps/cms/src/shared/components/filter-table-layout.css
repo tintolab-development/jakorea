@@ -51,8 +51,8 @@
   margin: 0;
   padding: 0;
   border: 0;
-  /* 디자인 가이드 목록 레이아웃 구분선 — Content/weak #BDC6C9 */
-  border-top: 1px solid var(--Content-weak, #bdc6c9);
+  /* 필터↔목록 구분선 — 시안 1px #E0E0E0 (Border/default, 2026-11-14 전체 회원 CSS 검수) */
+  border-top: 1px solid var(--Border-default, #e0e0e0);
 }
 
 /* 레거시: Divider 컴포넌트를 직접 넣은 화면만 호환 */

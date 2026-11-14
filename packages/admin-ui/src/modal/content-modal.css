@@ -56,7 +56,14 @@
   min-width: 0;
 }
 
+/*
+ * 닫기(X) — 디자인 가이드 05 Popup: 24×24 아이콘이 셸 오른쪽 끝(패딩 30 안쪽)에 붙는다.
+ * 공통 버튼(32×32)에 24 아이콘을 가운데 두면 X가 4px 왼쪽으로 들어가므로 버튼을 아이콘 크기로 맞춘다.
+ * 헤더(높이 36)가 세로 가운데 정렬이라 세로 위치는 그대로다.
+ */
 .content-modal .teal-header-modal__close {
+  width: 24px;
+  height: 24px;
   color: var(--color-text-secondary, #8c8c8c);
 }
 
