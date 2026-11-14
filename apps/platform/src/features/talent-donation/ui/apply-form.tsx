@@ -28,7 +28,7 @@ import {
   EMPTY_TALENT_APPLY_FORM_VALUES,
   GENDER_OPTIONS,
   JA_PARTICIPATION_OPTIONS,
-  TALENT_APPLY_FILE_GUIDE,
+  TALENT_APPLY_FILE_GUIDE_LINES,
   TALENT_APPLY_PLACEHOLDERS as PH,
   TALENT_APPLY_LONG_TEXT_MAX_LENGTH,
   TALENT_APPLY_STEP_TITLES,
@@ -144,7 +144,7 @@ function JaParticipationRadioGroup({
     <div
       className={styles.radioGroup}
       role="radiogroup"
-      aria-label="JA 프로그램 참여 여부"
+      aria-label="JA 프로그램 참여 이력"
       aria-invalid={error || undefined}
     >
       {JA_PARTICIPATION_OPTIONS.map(option => (
@@ -435,7 +435,7 @@ export function TalentDonationApplyForm() {
             </div>
 
             <div className={styles.field}>
-              <FieldLabel required>지역 주소</FieldLabel>
+              <FieldLabel required>자택 주소</FieldLabel>
               <div className={styles.regionRow}>
                 <PFSelect
                   size="xlarge"
@@ -539,7 +539,7 @@ export function TalentDonationApplyForm() {
             />
 
             <div className={styles.field}>
-              <FieldLabel required>JA 프로그램 참여 여부</FieldLabel>
+              <FieldLabel required>JA 프로그램 참여 이력</FieldLabel>
               <JaParticipationRadioGroup
                 value={values.jaParticipation}
                 error={Boolean(errors.jaParticipation)}
@@ -589,7 +589,9 @@ export function TalentDonationApplyForm() {
                       color="neutral-warm-500"
                       className={styles.fileGuide}
                     >
-                      {TALENT_APPLY_FILE_GUIDE}
+                      {TALENT_APPLY_FILE_GUIDE_LINES[0]}
+                      <br />
+                      {TALENT_APPLY_FILE_GUIDE_LINES[1]}
                     </PFText>
                   </div>
                 ) : (
@@ -686,7 +688,7 @@ export function TalentDonationApplyForm() {
                       typo="bd-lg-sb"
                       color={values.privacyAgreed ? 'primary-600' : 'neutral-cool-700'}
                     >
-                      전체 동의하기
+                      동의함
                     </PFText>
                   </PFToggle>
                 </div>

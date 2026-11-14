@@ -167,3 +167,16 @@
     display: block;
   }
 }
+
+/* 시안(PC 1920): 히어로 설명 폭 502 */
+@media (--bp-pc-full-up) {
+  .textArea,
+  .text {
+    max-width: 502px;
+  }
+
+  .text .description {
+    width: 502px;
+    max-width: 502px;
+  }
+}

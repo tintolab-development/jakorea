@@ -68,7 +68,7 @@
 
 .requiredMark {
   flex-shrink: 0;
-  color: #c32f4a;
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
 }
 
 .control {
@@ -122,7 +122,7 @@
   max-height: none;
   padding: var(--spacing-12) var(--spacing-16);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-12);
   resize: vertical;
   overflow: auto;
   font-family: var(--font-family-base);

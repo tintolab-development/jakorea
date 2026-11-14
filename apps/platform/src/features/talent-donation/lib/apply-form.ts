@@ -20,8 +20,11 @@ export const TALENT_APPLY_PLACEHOLDERS = {
   periodEnd: '종료일',
 } as const
 
-export const TALENT_APPLY_FILE_GUIDE =
-  '공유해주실 자료가 있다면 자유롭게 첨부해 주세요'
+/** 첨부파일 안내 — 시안 2줄 */
+export const TALENT_APPLY_FILE_GUIDE_LINES = [
+  '공유해주실 자료가 있다면 자유롭게 첨부해 주세요.',
+  '파일은 JPG, PNG, HWP, Excel, PDF, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+] as const
 
 export const TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 

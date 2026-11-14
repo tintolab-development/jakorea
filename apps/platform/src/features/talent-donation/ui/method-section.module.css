@@ -258,8 +258,8 @@
   }
 
   .methodSurface {
-    min-height: 280px;
-    border-radius: var(--radius-16);
+    min-height: 283px;
+    border-radius: var(--radius-24);
   }
 
   .methodBody {
@@ -309,7 +309,7 @@
   }
 
   .storyImageFrame {
-    border-radius: 20px;
+    border-radius: var(--radius-24);
     aspect-ratio: 680 / 400;
   }
 

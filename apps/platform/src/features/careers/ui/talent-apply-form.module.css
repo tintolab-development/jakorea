@@ -86,7 +86,7 @@
 
 .requiredMark {
   flex-shrink: 0;
-  color: #c32f4a;
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
 }
 
 .control {
@@ -263,6 +263,7 @@
 .fileGuide {
   margin: 0;
   width: 100%;
+  white-space: pre-line;
   word-break: break-all;
 }
 
