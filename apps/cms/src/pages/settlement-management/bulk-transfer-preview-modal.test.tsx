@@ -68,5 +68,6 @@ describe('BulkTransferPreviewModal SERVER_FILE 다운로드', () => {
         password: 'Jafile1!',
       })
     })
+    expect(await screen.findByText('발급 완료')).toBeTruthy()
   })
 })

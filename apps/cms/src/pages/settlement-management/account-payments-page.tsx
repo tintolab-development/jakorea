@@ -49,7 +49,6 @@ import { useSettlementBudgetSummaryQuery } from '@/features/settlement-managemen
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
 import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
@@ -707,10 +706,8 @@ export default function AccountPaymentsPage() {
       }
       setIssuedFormPreviewRows(rows)
       setIssuedFormExport(readyExport)
-      // 발급 완료 안내를 먼저 보여 주고, 닫으면 미리보기를 연다(겹쳐 뜨지 않게).
-      // 이미 발급된 파일이므로 X·Esc로 닫아도 다운로드할 수 있게 미리보기를 연다.
-      const openPreview = () => setBulkTransferPreviewOpen(true)
-      showIssueCompletedAlert({ onConfirm: openPreview, onDismiss: openPreview })
+      // 「발급 완료」 안내는 미리보기의 엑셀 다운로드 성공 시점에 노출한다.
+      setBulkTransferPreviewOpen(true)
     })()
   }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
 

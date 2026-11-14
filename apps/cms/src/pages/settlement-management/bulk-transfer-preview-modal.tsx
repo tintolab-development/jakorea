@@ -17,6 +17,7 @@ import {
 } from '@/features/settlement-management/api/account-payments/download-issued-export-file'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import {
   BULK_TRANSFER_SHEET_COLUMN_COUNT,
   buildBulkTransferFortuneSheet,
@@ -94,12 +95,13 @@ export function BulkTransferPreviewModal({
           return
         }
         if (onReissueExport) {
-          await downloadIssuedSettlementExportFileOrReissue({
+          const downloaded = await downloadIssuedSettlementExportFileOrReissue({
             serverExport,
             kind: 'bulk-transfer',
             password,
             onReissue: onReissueExport,
           })
+          if (!downloaded) return
         } else {
           await downloadIssuedSettlementExportFile({
             serverExport,
@@ -107,6 +109,7 @@ export function BulkTransferPreviewModal({
             password,
           })
         }
+        showIssueCompletedAlert()
         return
       }
       if (shouldUseSettlementRemote('accountPayments')) {
@@ -120,6 +123,7 @@ export function BulkTransferPreviewModal({
       const { exportBulkTransferExcel } =
         await import('@/pages/settlement-management/bulk-transfer-excel')
       await exportBulkTransferExcel(previewRows, { password })
+      showIssueCompletedAlert()
     } catch (error) {
       notifySettlementExportDownloadError({
         error,
