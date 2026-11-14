@@ -94,4 +94,14 @@ assert.equal(serialized.includes('SnapshotJson'), false)
 assert.equal(serialized.includes('nameSnapshot'), false)
 assert.equal(serialized.includes('careerTextSnapshot'), false)
 
+// 프로필 성별이 있으면 폼 라디오(male) 대신 프로필 값을 보낸다 — OTHER를 MALE로 바꾸지 않는다
+const withProfileGender = (profileGender: string) =>
+  mapInstructorApplyFormToCreateRequest(values, { profileGender }).gender
+assert.equal(withProfileGender('OTHER'), 'OTHER')
+assert.equal(withProfileGender('FEMALE'), 'FEMALE')
+assert.equal(withProfileGender('f'), 'FEMALE')
+assert.equal(withProfileGender('MALE'), 'MALE')
+assert.equal(withProfileGender(' 기타 '), '기타')
+assert.equal(withProfileGender(''), '')
+
 console.log('map-create-request.selfcheck: ok')

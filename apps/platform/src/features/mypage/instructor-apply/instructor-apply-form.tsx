@@ -426,7 +426,9 @@ export function InstructorApplyForm({
 
     void (async () => {
       try {
-        const mapped = mapInstructorApplyFormToCreateRequest(values)
+        const mapped = mapInstructorApplyFormToCreateRequest(values, {
+          profileGender: lockedBasic.profileGender,
+        })
         const termsAgreements = await resolveInstructorApplyTermsAgreementVersions(
           mapped.termsAgreements,
         )

@@ -46,6 +46,19 @@ function toApiGender(value: string): string {
   return 'MALE'
 }
 
+/**
+ * 포털 프로필 성별 → 신청 API gender.
+ * MALE/FEMALE/OTHER(별칭 M/F 포함)는 표준값으로, 그 밖의 값은 원문 그대로 보낸다(판단은 서버 GENDER_INVALID).
+ */
+export function toInstructorApplyProfileApiGender(profileGender: string): string {
+  const raw = profileGender.trim()
+  const upper = raw.toUpperCase()
+  if (upper === 'MALE' || upper === 'M') return 'MALE'
+  if (upper === 'FEMALE' || upper === 'F') return 'FEMALE'
+  if (upper === 'OTHER') return 'OTHER'
+  return raw
+}
+
 /** CMS `formatMonth` — wire `YYYY-MM` (폼 문자열: YYYY / YYYY.MM / YYYY-MM / …) */
 function formatMonth(value: string | null | undefined): string | undefined {
   if (value == null) return undefined
@@ -305,13 +318,16 @@ function mapTermsAgreements(
  */
 export function mapInstructorApplyFormToCreateRequest(
   values: InstructorSharedProfileFormValues,
-  options?: { requestedActivityType?: string },
+  options?: { requestedActivityType?: string; profileGender?: string },
 ): InstructorRoleRequestCreateRequest {
   return {
     requestedActivityType:
       options?.requestedActivityType?.trim() || DEFAULT_INSTRUCTOR_REQUESTED_ACTIVITY_TYPE,
     name: values.name.trim(),
-    gender: toApiGender(values.gender),
+    gender:
+      options?.profileGender !== undefined
+        ? toInstructorApplyProfileApiGender(options.profileGender)
+        : toApiGender(values.gender),
     birthDate: toApiBirthDate(values.birthDate),
     /** BE는 `010-1234-5678` 하이픈 형식을 요구 (가입 API와 동일) */
     phone: formatKoreanPhoneNumber(values.contact.trim()),
