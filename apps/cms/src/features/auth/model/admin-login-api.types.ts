@@ -7,13 +7,19 @@
  * - POST `/api/admin/auth/logout` → RefreshTokenRequest (access 만료여도 revoke 가능)
  */
 
+import type { AdminMfaChallengeResponse as GeneratedAdminMfaChallengeResponse } from '@/shared/api/generated/members/schemas'
+
 export interface AdminLoginRequestBody {
   email: string
   password: string
 }
 
-/** POST /api/admin/auth/login 200. QR/Secret은 포함하지 않는다. */
-export interface AdminMfaChallengeResponse {
+/**
+ * POST /api/admin/auth/login 200. QR/Secret은 포함하지 않는다.
+ * 실패 횟수 필드는 생성 스키마(BE R4)를 그대로 쓴다.
+ */
+export interface AdminMfaChallengeResponse
+  extends Pick<GeneratedAdminMfaChallengeResponse, 'failedAttemptCount' | 'maxFailedAttempts'> {
   requiresMfa?: boolean
   challengeUuid: string
   mfaMethod: string

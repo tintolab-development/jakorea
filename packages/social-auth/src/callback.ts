@@ -128,6 +128,8 @@ export async function processSocialLoginSessionReturn(
         mfaMethod: err.challenge.mfaMethod,
         expiresAt: err.challenge.expiresAt,
         mfaSetupRequired: err.challenge.mfaSetupRequired,
+        failedAttemptCount: err.challenge.failedAttemptCount,
+        maxFailedAttempts: err.challenge.maxFailedAttempts,
       }
     }
     if (isSocialAccountNotLinkedError(err)) {

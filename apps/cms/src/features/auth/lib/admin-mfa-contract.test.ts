@@ -6,6 +6,7 @@ import {
   mapMfaResetError,
   mapMfaVerifyError,
   parseAdminMfaChallenge,
+  parseMfaFailedAttemptDetails,
   pickEnrollmentManualKey,
   pickEnrollmentQrDataUrl,
 } from './admin-mfa-contract'
@@ -35,6 +36,18 @@ describe('parseAdminMfaChallenge', () => {
       mfaSetupRequired: true,
     })
     expect(JSON.stringify(parsed)).not.toContain('SHOULD_NOT_LEAK')
+  })
+
+  it('서버 누적 실패 횟수(failedAttemptCount·maxFailedAttempts)를 읽는다', () => {
+    const parsed = parseAdminMfaChallenge({
+      challengeUuid: 'challenge-3',
+      mfaMethod: 'TOTP',
+      expiresAt: '2026-10-20T00:00:00Z',
+      failedAttemptCount: 3,
+      maxFailedAttempts: 5,
+    })
+    expect(parsed?.failedAttemptCount).toBe(3)
+    expect(parsed?.maxFailedAttempts).toBe(5)
   })
 
   it('기등록 계정은 mfaSetupRequired false', () => {
@@ -83,8 +96,9 @@ describe('enrollment QR alias', () => {
 })
 
 describe('mapMfaVerifyError', () => {
-  it('challenge 만료, OTP 실패, 잠금, 429를 구분한다', () => {
-    expect(mapMfaVerifyError('MFA_CHALLENGE_EXPIRED').kind).toBe('challenge')
+  it('challenge 무효, OTP 실패, 잠금, 429를 구분한다', () => {
+    // BE R3 — 만료 코드는 오지 않는다. 배포 전 응답은 잘못된 코드와 같게 본다
+    expect(mapMfaVerifyError('MFA_CHALLENGE_EXPIRED').kind).toBe('otp')
     expect(mapMfaVerifyError('MFA_CHALLENGE_INVALID').kind).toBe('challenge')
     expect(mapMfaVerifyError('MFA_VERIFICATION_FAILED').kind).toBe('otp')
     expect(mapMfaVerifyError('MFA_NOT_CONFIGURED').kind).toBe('not-configured')
@@ -149,5 +163,22 @@ describe('mapMfaResetError', () => {
     expect(mapMfaResetError('UNAUTHORIZED', 401).action).toBe('permission')
     expect(mapMfaResetError('MFA_VERIFICATION_FAILED').action).toBe('restart-step-up')
     expect(mapMfaResetError('MFA_RESET_STEP_UP_REQUIRED', 401).message).toContain('실행자 MFA')
+  })
+})
+
+describe('parseMfaFailedAttemptDetails', () => {
+  it('error.details의 문자열 숫자를 숫자로 바꾼다', () => {
+    expect(parseMfaFailedAttemptDetails({ failedAttemptCount: '2', maxFailedAttempts: '5' })).toEqual({
+      failedAttemptCount: 2,
+      maxFailedAttempts: 5,
+    })
+  })
+
+  it('숫자로 읽지 못한 값은 undefined로 둔다', () => {
+    expect(parseMfaFailedAttemptDetails({ failedAttemptCount: 'abc', maxFailedAttempts: '' })).toEqual({
+      failedAttemptCount: undefined,
+      maxFailedAttempts: undefined,
+    })
+    expect(parseMfaFailedAttemptDetails(undefined)).toEqual({})
   })
 })

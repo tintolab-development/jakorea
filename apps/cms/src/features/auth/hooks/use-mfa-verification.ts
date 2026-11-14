@@ -11,6 +11,7 @@ import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning, verifyTotp } from '@/entities/user/api/mfa-service'
 import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import { OTP_LENGTH, OTP_POLICY, clampMfaFailedAttempts, isAdminLocalTestMfa } from '@/shared/constants/mfa-policy'
+import type { MfaState } from '@/types/mfa'
 import { unknownErrorText } from '@/shared/utils/error-handler'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { TotpProvisioning } from '@/types/mfa'
@@ -22,6 +23,66 @@ export const MFA_TEMPORARY_FAILURE_ALERT_CONTENT =
 
 interface UseMfaVerificationOptions {
   open: boolean
+}
+
+/**
+ * 서버 누적 MFA 실패 횟수·잠금 표시 상태.
+ * challenge 응답(`failedAttemptCount`·`maxFailedAttempts`)으로 시작하고, 실패 응답 `error.details`로만 갱신한다.
+ * challenge가 바뀌면(재로그인) 새 challenge 값으로 다시 시작한다.
+ */
+interface ServerMfaAttemptState {
+  challengeUuid: string | undefined
+  failedAttempts: number
+  maxFailedAttempts: number
+  isLocked: boolean
+  lockUntil: string | null
+}
+
+export function serverMfaAttemptStateFromMfaState(
+  mfaState: Pick<MfaState, 'challengeUuid' | 'failedAttempts' | 'maxFailedAttempts'> | null | undefined
+): ServerMfaAttemptState {
+  const maxFailedAttempts =
+    mfaState?.maxFailedAttempts != null && mfaState.maxFailedAttempts > 0
+      ? mfaState.maxFailedAttempts
+      : OTP_POLICY.maxFailedAttempts
+  const failed = mfaState?.failedAttempts
+  return {
+    challengeUuid: mfaState?.challengeUuid,
+    failedAttempts:
+      typeof failed === 'number' && Number.isFinite(failed) && failed > 0
+        ? Math.min(Math.floor(failed), maxFailedAttempts)
+        : 0,
+    maxFailedAttempts,
+    isLocked: false,
+    lockUntil: null,
+  }
+}
+
+/** 실패 응답 details 반영 — 읽지 못한 값은 표시를 바꾸지 않는다. 최대치 도달 시 잠금 */
+export function applyServerMfaFailure(
+  previous: ServerMfaAttemptState,
+  server: { failedAttemptCount?: number; maxFailedAttempts?: number },
+  now: number
+): ServerMfaAttemptState {
+  if (previous.isLocked) return previous
+  const maxFailedAttempts =
+    server.maxFailedAttempts != null && server.maxFailedAttempts > 0
+      ? server.maxFailedAttempts
+      : previous.maxFailedAttempts
+  if (server.failedAttemptCount == null) {
+    return { ...previous, maxFailedAttempts }
+  }
+  const failedAttempts = Math.min(server.failedAttemptCount, maxFailedAttempts)
+  if (failedAttempts >= maxFailedAttempts) {
+    return {
+      ...previous,
+      maxFailedAttempts,
+      failedAttempts: maxFailedAttempts,
+      isLocked: true,
+      lockUntil: new Date(now + OTP_POLICY.lockoutDurationMinutes * 60 * 1000).toISOString(),
+    }
+  }
+  return { ...previous, maxFailedAttempts, failedAttempts }
 }
 
 interface UseMfaVerificationResult {
@@ -37,6 +98,8 @@ interface UseMfaVerificationResult {
   verifyNotice: string | null
   isLocalTestMfa: boolean
   failedAttempts: number
+  /** 잠금 전 허용 실패 횟수 — 실 API는 서버 maxFailedAttempts */
+  maxFailedAttempts: number
   isLocked: boolean
   lockUntil: string | null
   verifying: boolean
@@ -63,12 +126,16 @@ export function useMfaVerification({
   const [forceOtpOnly, setForceOtpOnly] = useState(false)
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null)
   const [remoteVerifying, setRemoteVerifying] = useState(false)
-  const [remoteFailedAttempts, setRemoteFailedAttempts] = useState(0)
-  const [remoteIsLocked, setRemoteIsLocked] = useState(false)
-  const [remoteLockUntil, setRemoteLockUntil] = useState<string | null>(null)
+  const [serverAttempts, setServerAttempts] = useState<ServerMfaAttemptState>(() =>
+    serverMfaAttemptStateFromMfaState(mfaState)
+  )
+  if (serverAttempts.challengeUuid !== mfaState?.challengeUuid) {
+    setServerAttempts(serverMfaAttemptStateFromMfaState(mfaState))
+  }
+  const remoteIsLocked = serverAttempts.isLocked
+  const remoteLockUntil = serverAttempts.lockUntil
   const [otpResetToken, setOtpResetToken] = useState(0)
   const verifyInFlightRef = useRef(false)
-  const remoteFailedAttemptsRef = useRef(0)
   /** <Form form={form}> 가 한 번이라도 마운트됐는지. 모달 body는 최초 open 전까지 렌더되지 않는다. */
   const formConnectedRef = useRef(false)
   const isBusy = verifying || remoteVerifying
@@ -91,7 +158,10 @@ export function useMfaVerification({
   const isLocalTestMfa = isRemoteMfa && isAdminLocalTestMfa(mfaState?.mfaMethod)
   const showQrSetup =
     isRemoteMfa && mfaState?.mfaSetupRequired === true && !isLocalTestMfa && !forceOtpOnly
-  const displayFailedAttempts = isRemoteMfa ? remoteFailedAttempts : failedAttempts
+  const displayFailedAttempts = isRemoteMfa ? serverAttempts.failedAttempts : failedAttempts
+  const displayMaxFailedAttempts = isRemoteMfa
+    ? serverAttempts.maxFailedAttempts
+    : OTP_POLICY.maxFailedAttempts
   const displayIsLocked = isRemoteMfa ? remoteIsLocked : isLocked
   const displayLockUntil = isRemoteMfa ? remoteLockUntil : lockUntil
 
@@ -104,35 +174,35 @@ export function useMfaVerification({
     setOtpResetToken(token => token + 1)
   }, [runOnForm])
 
+  /** 인증 성공·잠금 해제 시각 경과 — 서버도 성공 시 0으로 초기화한다 */
   const resetRemoteLockState = useCallback(() => {
-    remoteFailedAttemptsRef.current = 0
-    setRemoteFailedAttempts(0)
-    setRemoteIsLocked(false)
-    setRemoteLockUntil(null)
+    setServerAttempts(previous => ({
+      ...previous,
+      failedAttempts: 0,
+      isLocked: false,
+      lockUntil: null,
+    }))
   }, [])
 
+  /** 423 ACCOUNT_LOCKED */
   const applyRemoteAccountLock = useCallback(() => {
-    remoteFailedAttemptsRef.current = OTP_POLICY.maxFailedAttempts
-    setRemoteFailedAttempts(OTP_POLICY.maxFailedAttempts)
     const lockTime = new Date(Date.now() + OTP_POLICY.lockoutDurationMinutes * 60 * 1000)
-    setRemoteIsLocked(true)
-    setRemoteLockUntil(lockTime.toISOString())
+    setServerAttempts(previous => ({
+      ...previous,
+      failedAttempts: previous.maxFailedAttempts,
+      isLocked: true,
+      lockUntil: lockTime.toISOString(),
+    }))
   }, [])
 
-  /** 원격 MFA 실패 기록. 5회째(max) 도달 시 잠금. UI는 5 초과 표시 금지. */
-  const registerRemoteFailure = useCallback(() => {
-    if (remoteIsLocked) {
+  /** 401 MFA_VERIFICATION_FAILED — 서버 details(failedAttemptCount·maxFailedAttempts)로만 표시를 갱신한다 */
+  const registerRemoteFailure = useCallback(
+    (server: { failedAttemptCount?: number; maxFailedAttempts?: number }) => {
+      setServerAttempts(previous => applyServerMfaFailure(previous, server, Date.now()))
       clearOtpInput()
-      return
-    }
-    const next = clampMfaFailedAttempts(remoteFailedAttemptsRef.current + 1)
-    remoteFailedAttemptsRef.current = next
-    setRemoteFailedAttempts(next)
-    if (next >= OTP_POLICY.maxFailedAttempts) {
-      applyRemoteAccountLock()
-    }
-    clearOtpInput()
-  }, [clearOtpInput, remoteIsLocked, applyRemoteAccountLock])
+    },
+    [clearOtpInput]
+  )
 
   /**
    * 일시 오류 — 실패 횟수에 넣지 않고 상단 안내도 띄우지 않는다.
@@ -273,7 +343,6 @@ export function useMfaVerification({
 
               if (
                 response.errorCode === 'MFA_CHALLENGE_INVALID' ||
-                response.errorCode === 'MFA_CHALLENGE_EXPIRED' ||
                 response.errorCode === 'MFA_NOT_CONFIGURED' ||
                 response.errorCode === 'MFA_RATE_LIMITED' ||
                 response.errorCode === 'VALIDATION_ERROR'
@@ -283,9 +352,16 @@ export function useMfaVerification({
                 return
               }
 
-              if (response.errorCode === 'MFA_VERIFICATION_FAILED') {
-                // 코드 불일치 — 입력칸 아래 「잘못된 코드를 입력하였습니다. (실패 횟수 n / 5)」만 노출.
-                registerRemoteFailure()
+              // 코드 불일치 — 입력칸 아래 「잘못된 코드를 입력하였습니다. (실패 횟수 n / max)」만 노출.
+              // MFA_CHALLENGE_EXPIRED는 BE R3 이후 오지 않는다. 배포 전 응답은 잘못된 코드와 같은 화면으로 처리한다.
+              if (
+                response.errorCode === 'MFA_VERIFICATION_FAILED' ||
+                response.errorCode === 'MFA_CHALLENGE_EXPIRED'
+              ) {
+                registerRemoteFailure({
+                  failedAttemptCount: response.serverFailedAttemptCount,
+                  maxFailedAttempts: response.serverMaxFailedAttempts,
+                })
                 return
               }
 
@@ -395,7 +471,10 @@ export function useMfaVerification({
     showQrSetup,
     verifyNotice,
     isLocalTestMfa,
-    failedAttempts: clampMfaFailedAttempts(displayFailedAttempts),
+    failedAttempts: isRemoteMfa
+      ? Math.min(displayFailedAttempts, displayMaxFailedAttempts)
+      : clampMfaFailedAttempts(displayFailedAttempts),
+    maxFailedAttempts: displayMaxFailedAttempts,
     isLocked: displayIsLocked,
     lockUntil: displayLockUntil,
     verifying: verifying || remoteVerifying,

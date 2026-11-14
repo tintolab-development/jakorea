@@ -76,6 +76,35 @@ export function parseAdminMfaChallenge(payload: unknown): AdminMfaChallengeRespo
     expiresAt,
     mfaSetupRequired:
       typeof record.mfaSetupRequired === 'boolean' ? record.mfaSetupRequired : undefined,
+    failedAttemptCount: readNonNegativeInteger(record.failedAttemptCount),
+    maxFailedAttempts: readNonNegativeInteger(record.maxFailedAttempts),
+  }
+}
+
+function readNonNegativeInteger(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined
+}
+
+/** 문자열 숫자("2")·숫자를 0 이상 정수로 읽는다. 읽지 못하면 undefined */
+function readNonNegativeIntegerLike(value: unknown): number | undefined {
+  if (typeof value === 'number') return readNonNegativeInteger(value)
+  if (typeof value !== 'string' || !/^\d+$/.test(value.trim())) return undefined
+  return readNonNegativeInteger(Number(value.trim()))
+}
+
+/**
+ * 401 MFA_VERIFICATION_FAILED `error.details` — 서버는 문자열로 준다(예: "2", "5").
+ * 변환하지 못한 값은 undefined로 두어 화면 표시를 갱신하지 않게 한다.
+ */
+export function parseMfaFailedAttemptDetails(details: unknown): {
+  failedAttemptCount?: number
+  maxFailedAttempts?: number
+} {
+  if (!details || typeof details !== 'object') return {}
+  const record = details as Record<string, unknown>
+  return {
+    failedAttemptCount: readNonNegativeIntegerLike(record.failedAttemptCount),
+    maxFailedAttempts: readNonNegativeIntegerLike(record.maxFailedAttempts),
   }
 }
 
@@ -147,7 +176,8 @@ export function mapMfaVerifyError(
       message: `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`,
     }
   }
-  if (code === 'MFA_CHALLENGE_INVALID' || code === 'MFA_CHALLENGE_EXPIRED') {
+  // 재로그인 등으로 이전 challenge가 무효가 된 경우(기존 처리 유지)
+  if (code === 'MFA_CHALLENGE_INVALID') {
     return {
       kind: 'challenge',
       message: '인증 시간이 만료되었습니다. 로그인부터 다시 시도하세요.',
@@ -159,7 +189,8 @@ export function mapMfaVerifyError(
       message: 'MFA가 설정되지 않았습니다. 로그인부터 다시 시도하세요.',
     }
   }
-  if (code === 'MFA_VERIFICATION_FAILED') {
+  // MFA_CHALLENGE_EXPIRED — 서버는 더 이상 보내지 않는다(BE R3). 배포 전 응답은 잘못된 코드와 같게 본다
+  if (code === 'MFA_VERIFICATION_FAILED' || code === 'MFA_CHALLENGE_EXPIRED') {
     return { kind: 'otp', message: '인증번호가 올바르지 않습니다.' }
   }
   if (httpStatus === 429 || code === 'MFA_RATE_LIMITED') {

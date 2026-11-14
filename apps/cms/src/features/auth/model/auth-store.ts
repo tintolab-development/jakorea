@@ -135,6 +135,9 @@ interface AuthState {
     mfaMethod?: string
     expiresAt?: string
     mfaSetupRequired?: boolean
+    /** SSO 로그인 소비 응답의 서버 누적 MFA 실패 횟수 */
+    failedAttemptCount?: number
+    maxFailedAttempts?: number
   }) => void
   clearPasswordChangeRequired: () => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
@@ -430,7 +433,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           isVerified: false,
           accountLabel: '관리자',
           lastSentAt: null,
-          failedAttempts: 0,
+          failedAttempts: input.failedAttemptCount ?? 0,
+          maxFailedAttempts: input.maxFailedAttempts,
           isLocked: false,
           lockUntil: null,
           challengeUuid: input.challengeUuid,

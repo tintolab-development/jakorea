@@ -20,8 +20,10 @@ export interface MfaState {
   accountLabel: string
   /** 마지막 OTP 발송 시간 — TOTP에서는 미사용(null) */
   lastSentAt: string | null
-  /** 실패 시도 횟수 */
+  /** 실패 시도 횟수 — 실 API는 challenge 응답 `failedAttemptCount`(서버 누적값) */
   failedAttempts: number
+  /** 잠금 전까지 허용되는 연속 실패 횟수 — 실 API challenge 응답 `maxFailedAttempts` */
+  maxFailedAttempts?: number
   /** 잠금 여부 */
   isLocked: boolean
   /** 잠금 해제 시간 */
@@ -79,6 +81,10 @@ export interface OtpVerifyResponse {
   lockUntil: string | null
   /** BE AuthException code (예: MFA_VERIFICATION_FAILED, ACCOUNT_LOCKED) */
   errorCode?: string
+  /** 401 MFA_VERIFICATION_FAILED `error.details.failedAttemptCount`(서버 누적값). 숫자로 읽지 못하면 없음 */
+  serverFailedAttemptCount?: number
+  /** 401 MFA_VERIFICATION_FAILED `error.details.maxFailedAttempts` */
+  serverMaxFailedAttempts?: number
 }
 
 /** TOTP 검증 요청 (이메일로 Mock 시크릿 조회 · 실 API는 challengeUuid) */
