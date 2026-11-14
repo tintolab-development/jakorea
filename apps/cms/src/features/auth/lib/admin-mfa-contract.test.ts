@@ -100,6 +100,11 @@ describe('mapMfaVerifyError', () => {
     // BE R3 — 만료 코드는 오지 않는다. 배포 전 응답은 잘못된 코드와 같게 본다
     expect(mapMfaVerifyError('MFA_CHALLENGE_EXPIRED').kind).toBe('otp')
     expect(mapMfaVerifyError('MFA_CHALLENGE_INVALID').kind).toBe('challenge')
+    // 이전 인증 요청 무효 — 「만료」 표현 없이 안내(기획 확정 2026-11-14)
+    expect(mapMfaVerifyError('MFA_CHALLENGE_INVALID').message).toBe(
+      '인증 요청이 유효하지 않습니다. 로그인부터 다시 시도해 주세요.'
+    )
+    expect(mapMfaVerifyError('MFA_CHALLENGE_INVALID').message).not.toContain('만료')
     expect(mapMfaVerifyError('MFA_VERIFICATION_FAILED').kind).toBe('otp')
     expect(mapMfaVerifyError('MFA_NOT_CONFIGURED').kind).toBe('not-configured')
     expect(mapMfaVerifyError('ACCOUNT_LOCKED').kind).toBe('lock')

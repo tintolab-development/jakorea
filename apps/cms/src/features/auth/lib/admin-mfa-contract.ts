@@ -157,6 +157,10 @@ export function parseAdminMfaSetupResult(payload: unknown): AdminMfaSetupResult 
   }
 }
 
+/** 401 MFA_CHALLENGE_INVALID — 다시 로그인해 이전 인증 요청이 무효가 된 경우(만료 케이스 아님, BE R3) */
+export const MFA_CHALLENGE_INVALID_MESSAGE =
+  '인증 요청이 유효하지 않습니다. 로그인부터 다시 시도해 주세요.'
+
 export type MfaVerifyErrorKind =
   | 'lock'
   | 'challenge'
@@ -176,11 +180,11 @@ export function mapMfaVerifyError(
       message: `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`,
     }
   }
-  // 재로그인 등으로 이전 challenge가 무효가 된 경우(기존 처리 유지)
+  // 재로그인 등으로 이전 challenge가 무효가 된 경우(처리 유지, 문구만 「만료」 표현 제거 — 기획 확정 2026-11-14)
   if (code === 'MFA_CHALLENGE_INVALID') {
     return {
       kind: 'challenge',
-      message: '인증 시간이 만료되었습니다. 로그인부터 다시 시도하세요.',
+      message: MFA_CHALLENGE_INVALID_MESSAGE,
     }
   }
   if (code === 'MFA_NOT_CONFIGURED') {
