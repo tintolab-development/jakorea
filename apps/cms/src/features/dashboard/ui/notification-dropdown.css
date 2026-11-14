@@ -93,8 +93,11 @@
   margin-top: 16px;
   overflow-y: auto;
   overflow-x: hidden;
-  /* 스크롤바 표시 여부에 따라 가로 폭이 바뀌는 현상 방지 */
-  scrollbar-gutter: stable;
+  /*
+   * 스크롤바 표시 여부에 따라 가로 폭이 바뀌는 현상 방지.
+   * both-edges — 거터를 좌우에 같은 폭으로 잡아 좌우 시각 여백을 맞춘다.
+   */
+  scrollbar-gutter: stable both-edges;
   min-height: 0;
   background: transparent;
   padding: 0 16px;
