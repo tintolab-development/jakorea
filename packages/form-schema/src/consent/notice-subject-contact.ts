@@ -54,10 +54,11 @@ export function isConsentPhoneFormatInvalid(raw: string): boolean {
   return !isValidKoreanPhoneNumber(raw)
 }
 
+/**
+ * 행정정보 대상자 본인 입력 보정 — 전화번호만 형식을 맞춘다.
+ * 생년월일은 QA 2026-11-14 결정으로 형식 제한 없이 입력값 그대로 둔다(예: 2000.09.15, 000915, 2000년 9월 15일).
+ */
 export function applyConsentShortEssayItemInput(itemId: string, raw: string): string {
-  if (itemId === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth) {
-    return formatConsentBirthDateInput(raw)
-  }
   if (itemId === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone) {
     return formatConsentPhoneInput(raw)
   }
@@ -74,14 +75,10 @@ function readNoticeSubjectItem(draft: WritingFormDraft, itemId: string): string 
   return subject.items?.find(item => item.id === itemId)?.bodyText ?? ''
 }
 
-/** 작성완료 — 행정정보 대상자 본인 생년월일·전화번호 형식 오류 메시지 */
+/** 작성완료 — 행정정보 대상자 본인 전화번호 형식 오류 메시지 (생년월일은 형식 제한 없음, QA 2026-11-14) */
 export function getMemberConsentInvalidNoticeSubjectContactAlertMessage(
   draft: WritingFormDraft
 ): string | null {
-  const birth = readNoticeSubjectItem(draft, AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth)
-  if (isConsentBirthDateFormatInvalid(birth)) {
-    return NOTICE_SUBJECT_BIRTH_INVALID_ALERT_MESSAGE
-  }
   const phone = readNoticeSubjectItem(draft, AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone)
   if (isConsentPhoneFormatInvalid(phone)) {
     return NOTICE_SUBJECT_PHONE_INVALID_ALERT_MESSAGE
