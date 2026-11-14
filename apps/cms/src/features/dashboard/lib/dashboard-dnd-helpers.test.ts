@@ -76,42 +76,78 @@ describe('computeDragEndResult', () => {
     ).toBeNull()
   })
 
-  it('100% 위에 드롭·중앙이면 분할 없이 해당 인덱스', () => {
-    const ordered = ['drag', 'target']
+  it('경우 ①: 1단 위젯을 1단 위젯 위에 놓으면 2단 한 줄, 끌고 온 위젯이 오른쪽(아래→위)', () => {
+    const ordered = ['target', 'middle', 'drag']
     const slots: SlotRect[] = [{ id: 'target', rect: rect(0, 0, 100, 50) }]
-    const centerX = 50
     const r = computeDragEndResult(
       ordered,
       'drag',
       'target',
-      { x: centerX, y: 25 },
+      { x: 50, y: 25 },
       slots,
       alwaysFull,
       resizable
     )
-    expect(r).not.toBeNull()
-    expect(r!.operation).toBe('swap')
-    expect(r!.swapTargetId).toBe('target')
-    expect(r!.shouldSplit).toBe(false)
+    expect(r!.pairRowWithTargetId).toBe('target')
+    expect(r!.operation).toBe('move')
+    expect(r!.swapTargetId).toBeNull()
+    // arrayMove(ordered, 2, newIndex) → [target, drag, middle]
     expect(r!.newIndex).toBe(1)
   })
 
-  it('100% 위에 드롭·좌측 치우침이어도 위젯 위 드롭이면 swap', () => {
-    const ordered = ['drag', 'target']
-    const slots: SlotRect[] = [{ id: 'target', rect: rect(0, 0, 100, 50) }]
+  it('경우 ①: 위에서 아래 1단 위젯으로 끌어도 [대상][끌고 온 위젯] 순서', () => {
+    const ordered = ['drag', 'middle', 'target']
     const r = computeDragEndResult(
       ordered,
       'drag',
       'target',
       { x: 5, y: 25 },
-      slots,
+      [],
       alwaysFull,
       resizable
     )
+    expect(r!.pairRowWithTargetId).toBe('target')
+    // arrayMove(ordered, 0, newIndex) → [middle, target, drag]
+    expect(r!.newIndex).toBe(2)
+  })
+
+  it('50%를 지원하지 않는 위젯이 끼면 1단 → 1단이어도 기존처럼 1:1 교환', () => {
+    const notKpi = (id: string) => id !== 'kpi'
+    const r = computeDragEndResult(['drag', 'kpi'], 'drag', 'kpi', { x: 0, y: 0 }, [], alwaysFull, notKpi)
+    expect(r!.pairRowWithTargetId).toBeNull()
+    expect(r!.operation).toBe('swap')
+    expect(r!.swapTargetId).toBe('kpi')
+  })
+
+  it('대상 앞에 짝 없는 2단 위젯이 있어 한 줄로 서지 못하면 기존처럼 1:1 교환', () => {
+    const span = (id: string) => (id === 'lone-half' ? COL_SPAN_HALF : COL_SPAN_FULL) as 12 | 24
+    const r = computeDragEndResult(
+      ['lone-half', 'target', 'drag'],
+      'drag',
+      'target',
+      { x: 0, y: 0 },
+      [],
+      span,
+      resizable
+    )
+    expect(r!.pairRowWithTargetId).toBeNull()
+    expect(r!.operation).toBe('swap')
+  })
+
+  it('2단 위젯을 끌었을 때는 기존 동작(1:1 교환, 폭 변경 없음) 유지', () => {
+    const span = (id: string) => (id === 'drag' ? COL_SPAN_HALF : COL_SPAN_FULL) as 12 | 24
+    const r = computeDragEndResult(
+      ['target', 'drag', 'other-half'],
+      'drag',
+      'target',
+      { x: 0, y: 0 },
+      [],
+      span,
+      resizable
+    )
+    expect(r!.pairRowWithTargetId).toBeNull()
     expect(r!.operation).toBe('swap')
     expect(r!.swapTargetId).toBe('target')
-    expect(r!.shouldSplit).toBe(false)
-    expect(r!.splitTargetId).toBeNull()
   })
 
   it('50%↔50% 같은 크기면 스왑 인덱스만', () => {
@@ -163,5 +199,6 @@ describe('computeDragEndResult', () => {
     expect(r!.swapTargetId).toBe('right')
     expect(r!.shouldSplit).toBe(false)
     expect(r!.splitTargetId).toBeNull()
+    expect(r!.pairRowWithTargetId).toBeNull()
   })
 })
