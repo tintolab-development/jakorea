@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import { readInstructorSettlementCalculation } from '../lib/instructor-settlement-calculation-preview.ts'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import {
@@ -51,5 +52,14 @@ export function useInstructorSettlementPreviewQuery(assignmentId: number | null 
   const submitBlock: InstructorPreviewSubmitBlock | null = query.isSuccess
     ? readInstructorPreviewSubmitBlock(query.data)
     : null
-  return { enabled, transportExclusion, expensePolicies, blockerCode, submitBlock }
+  const calculation = query.isSuccess ? readInstructorSettlementCalculation(query.data) : null
+  return {
+    enabled,
+    transportExclusion,
+    expensePolicies,
+    blockerCode,
+    submitBlock,
+    calculation,
+    isPending: query.isPending,
+  }
 }
