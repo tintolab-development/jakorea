@@ -72,6 +72,14 @@
   min-width: 0;
 }
 
+/*
+ * Fortune Sheet 코어는 마지막 열 뒤에 120px(maxColumnlen)을 고정으로 덧붙여 가로 스크롤 폭을 잡는다.
+ * 스크롤 내용 div를 왼쪽으로 120px 당겨(margin — transform은 스크롤 폭에 반영되지 않음) 스크롤 범위를 마지막 열까지로 줄인다(빈 칸 노출 방지).
+ */
+.tax-filing-preview-modal__sheet-host .luckysheet-scrollbar-x > div {
+  margin-left: -120px;
+}
+
 .tax-filing-preview-modal__sheet-loading {
   display: flex;
   align-items: center;

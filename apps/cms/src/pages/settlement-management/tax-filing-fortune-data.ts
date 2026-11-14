@@ -236,9 +236,31 @@ function rowCell(row: TaxReportPreviewRow, columnIndex: number): TaxReportPrevie
   return row[TAX_REPORT_PREVIEW_COLUMNS[columnIndex] as TaxReportPreviewColumn]
 }
 
+/**
+ * 열 너비(px). fitWidth(행 머리 제외 시트 영역 폭)가 열 너비 합보다 넓으면 비율대로 늘려
+ * 마지막 열 오른쪽에 빈 칸이 남지 않게 한다. 좁으면 원래 너비를 유지한다(가로 스크롤).
+ * Fortune Sheet는 열마다 경계선 1px을 더하므로 그만큼 빼고 계산한다.
+ */
+export function buildTaxFilingColumnLengths(
+  columnWidths: readonly number[],
+  fitWidth?: number
+): Record<string, number> {
+  const base = columnWidths.map(width => width * 7)
+  const baseTotal = base.reduce((sum, width) => sum + width, 0)
+  const target = fitWidth != null && Number.isFinite(fitWidth) ? Math.floor(fitWidth) - base.length : 0
+  if (target <= baseTotal) {
+    return Object.fromEntries(base.map((width, index) => [String(index), width]))
+  }
+  const scaled = base.map(width => Math.floor((width * target) / baseTotal))
+  const remainder = target - scaled.reduce((sum, width) => sum + width, 0)
+  scaled[scaled.length - 1]! += remainder
+  return Object.fromEntries(scaled.map((width, index) => [String(index), width]))
+}
+
 /** 서버 payload가 제공한 숫자·문자·병합 구조를 Fortune Sheet 셀로 변환한다. */
 export function buildTaxFilingFortuneSheet(
-  workbook: TaxReportPreviewWorkbook | null | undefined
+  workbook: TaxReportPreviewWorkbook | null | undefined,
+  options: { fitWidth?: number } = {}
 ): Sheet {
   assertTaxFilingPreviewDataAvailable(workbook)
   if (workbook.rows.length !== 24) throw new Error('tax-filing: expected 24 server data rows')
@@ -302,9 +324,7 @@ export function buildTaxFilingFortuneSheet(
     celldata,
     config: {
       merge,
-      columnlen: Object.fromEntries(
-        workbook.columnWidths.map((width, index) => [String(index), width * 7])
-      ),
+      columnlen: buildTaxFilingColumnLengths(workbook.columnWidths, options.fitWidth),
       rowlen,
       borderInfo: [
         {
