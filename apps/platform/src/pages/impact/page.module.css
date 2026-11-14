@@ -234,3 +234,10 @@
     padding-inline: 0;
   }
 }
+
+/* 시안(PC): 카테고리 탭 최소 폭 118 (`전체`·`영상` 118×60) */
+@media (--bp-pc-up) {
+  .categoryTabs button {
+    min-width: 118px;
+  }
+}

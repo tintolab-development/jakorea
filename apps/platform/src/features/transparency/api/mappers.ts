@@ -182,10 +182,10 @@ function mapExpenseGroups(
   if (otherRows.length > 0) {
     groups.push({
       id: 'indirect',
-      label: '직접사업비 이외비용',
+      label: '직접사업비 이외 비용',
       rows: toDetailRows(otherRows),
       subtotal: {
-        label: '직접사업비 이외비용 합계',
+        label: '직접사업비 이외 비용 합계',
         percent: formatPercent(summary?.otherRatio),
         amount: asAmount(summary?.otherAmount),
       },

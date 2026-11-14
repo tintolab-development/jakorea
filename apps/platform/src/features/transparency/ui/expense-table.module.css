@@ -297,9 +297,10 @@
     white-space: nowrap;
   }
 
+  /* 시안: 지출총계 행 primary/700 */
   .totalRow .cell {
     background: var(--color-neutral-cool-80);
-    color: inherit;
+    color: var(--color-primary-700);
   }
 
   .totalRow .amountValue {

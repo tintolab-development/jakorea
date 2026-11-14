@@ -137,3 +137,10 @@
     max-height: none;
   }
 }
+
+/* 시안(PC): 지도 카드 radius 24 */
+@media (--bp-pc-up) {
+  .mapFrame {
+    border-radius: var(--radius-24);
+  }
+}

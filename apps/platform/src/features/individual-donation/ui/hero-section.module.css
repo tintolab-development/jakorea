@@ -157,8 +157,17 @@
     min-height: max(800px, 100vh);
   }
 
+  /* 시안(PC 1920): 글 영역·부제 폭 590, 부제 #3d3d3d (제목 아래 간격 48은 위 pc-up 규칙) */
   .text {
+    width: 590px;
+    max-width: 590px;
     padding: 0;
     margin: 0;
+  }
+
+  .text .description {
+    width: 590px;
+    max-width: 590px;
+    color: var(--color-neutral-black);
   }
 }
