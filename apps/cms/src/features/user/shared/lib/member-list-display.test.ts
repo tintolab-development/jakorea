@@ -133,7 +133,7 @@ describe('matchesAllTabRoleFilter', () => {
     ).toBe(true)
   })
 
-  it('강사와 겸직을 구분한다', () => {
+  it('강사 필터는 순수 강사·겸직·권한 종료 강사를 모두 잡는다', () => {
     expect(
       matchesAllTabRoleFilter(
         { role: 'INSTRUCTOR', instructorMemberProfile: 'instructor_only' },
@@ -144,6 +144,56 @@ describe('matchesAllTabRoleFilter', () => {
       matchesAllTabRoleFilter(
         { role: 'INSTRUCTOR', instructorMemberProfile: 'instructor_dual' },
         'INSTRUCTOR'
+      )
+    ).toBe(true)
+    expect(
+      matchesAllTabRoleFilter(
+        {
+          role: 'INSTRUCTOR',
+          instructorMemberProfile: 'instructor_only',
+          instructorApprovalStatus: 'REVOKED',
+        },
+        'INSTRUCTOR'
+      )
+    ).toBe(true)
+    expect(
+      matchesAllTabRoleFilter(
+        {
+          role: 'INSTRUCTOR',
+          roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
+          instructorMemberProfile: 'instructor_dual',
+          instructorApprovalStatus: 'REVOKED',
+        },
+        'INSTRUCTOR'
+      )
+    ).toBe(true)
+  })
+
+  it('강사 필터는 개인·학교(교사)·관리자를 잡지 않는다', () => {
+    expect(matchesAllTabRoleFilter({ role: 'INDIVIDUAL' }, 'INSTRUCTOR')).toBe(false)
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INDIVIDUAL', instructorMemberProfile: 'school_teacher' },
+        'INSTRUCTOR'
+      )
+    ).toBe(false)
+    expect(matchesAllTabRoleFilter({ role: 'ADMIN' }, 'INSTRUCTOR')).toBe(false)
+  })
+
+  it('학교(교사) 필터는 겸직을 포함하지 않는다(현재 동작 유지)', () => {
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INSTRUCTOR', instructorMemberProfile: 'instructor_dual' },
+        'SCHOOL_TEACHER'
+      )
+    ).toBe(false)
+  })
+
+  it('겸직 값 자체는 순수 강사를 잡지 않는다', () => {
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INSTRUCTOR', instructorMemberProfile: 'instructor_only' },
+        'INSTRUCTOR_DUAL'
       )
     ).toBe(false)
     expect(
