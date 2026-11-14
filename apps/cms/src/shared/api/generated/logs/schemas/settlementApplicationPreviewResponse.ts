@@ -26,6 +26,7 @@ export interface SettlementApplicationPreviewResponse {
   withholdingTaxAmount?: number;
   netPaymentAmount?: number;
   items?: SettlementApplicationItemResponse[];
+  /** 제출 가능 상태에서는 서버가 산정한 금액과 근거를 제공한다(정산 항목 0건이어도 제공). 신청 자격 차단 시 canSubmit=false와 차단 사유가 우선이며 신규 정산 계산이나 거리 스냅샷 생성은 하지 않는다. 기존 신청이 있으면 그 신청의 저장된 금액과 계산 내역을 재계산 없이 보여준다. 기존 신청이 없는 차단 상태에서는 강사비 근거 1건만 제공할 수 있으며 그 경우 basisJsonb의 estimateOnly=true는 참고용 추정 금액이고 grossAmount/withholdingTaxAmount/netPaymentAmount는 null이다. Gemini는 추정하지 않는다. LECTURE_FEE=차시당 단가·인정 차시·교육 시간(25분/0차시/0원도 설명), TRANSPORTATION=거리 스냅샷·온라인 0km 등 지급 제외 사유, EXPENSE_ITEMS=식사비·활동비·숙박비, WITHHOLDING_TAX=과세 기준·세율, NET_PAYMENT=총액-원천징수세액. 각 basisJsonb/displayJsonb는 JSON 문자열이며 회원 주소 원문은 포함하지 않는다. 금액·산식은 서버 계산 결과가 SSOT이고 클라이언트가 재계산하지 않는다. */
   calculationDetails?: SettlementApplicationCalculationDetailResponse[];
   /** 교통비가 제외된 사유. 지도에서 출발지·도착지 주소나 경로를 찾지 못하면 ADDRESS_UNRESOLVED이고 교통비 없이 신청할 수 있다. 보완하려면 주소를 고친 뒤 반려 → 재신청한다. 제외되지 않았으면 null. 1사1교는 강사비가 거리 구간에 따라 정해지므로 이 경우 409 SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED. */
   transportationExcludedReason?: SettlementApplicationPreviewResponseTransportationExcludedReason;

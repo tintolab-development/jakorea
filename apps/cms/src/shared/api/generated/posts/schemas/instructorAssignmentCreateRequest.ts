@@ -28,4 +28,8 @@ export interface InstructorAssignmentCreateRequest {
   timing?: InstructorAssignmentCreateRequestTiming;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601. ON_ANNOUNCEMENT와 함께 보내면 400 */
   scheduledAt?: string;
+  /** CMS-FUNC-0164. 신청 없이 강사를 처음 등록할 때(instructorApplicationId 없음, 해당 프로그램에 연결된 신청 없음) 관리자가 '개인정보 수집·이용' 동의를 확인했는지 여부. true여야 등록됩니다. 같은 프로그램에 이미 연결된 신청이 있으면 무시합니다. */
+  privacyConsentConfirmed?: boolean | null;
+  /** CMS-FUNC-0164. 같은 조건에서 '개인정보 제3자 정보 제공·이용' 동의를 관리자가 확인했는지 여부. true여야 등록됩니다. */
+  thirdPartyConsentConfirmed?: boolean | null;
 }
