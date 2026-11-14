@@ -3,6 +3,10 @@
  */
 
 import { isAxiosError, type InternalAxiosRequestConfig } from 'axios'
+import {
+  AdminLoginAccountLockedError,
+  isAdminLoginAccountLockedResponse,
+} from '@/features/auth/errors/admin-login-account-locked-error'
 import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import {
@@ -37,7 +41,10 @@ export class AdminLoginApiError extends Error {
 function parseLoginError(
   payload: unknown,
   httpStatus?: number
-): AdminLoginApiError | AdminLoginApprovalPendingError {
+): AdminLoginApiError | AdminLoginApprovalPendingError | AdminLoginAccountLockedError {
+  if (isAdminLoginAccountLockedResponse(payload)) {
+    return new AdminLoginAccountLockedError()
+  }
   if (isAdminLoginApprovalPendingResponse(payload, httpStatus)) {
     return new AdminLoginApprovalPendingError(ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE)
   }
@@ -84,7 +91,13 @@ export async function fetchAdminLogin(
 
     throw parseLoginError(payload)
   } catch (err) {
-    if (err instanceof AdminLoginApiError || err instanceof AdminLoginApprovalPendingError) throw err
+    if (
+      err instanceof AdminLoginApiError ||
+      err instanceof AdminLoginApprovalPendingError ||
+      err instanceof AdminLoginAccountLockedError
+    ) {
+      throw err
+    }
     if (isAxiosError(err)) {
       throw parseLoginError(err.response?.data, err.response?.status)
     }
