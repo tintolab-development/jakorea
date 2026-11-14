@@ -11,6 +11,7 @@ import {
 } from '../lib/onboarding-step'
 import { getAdminRegisteredWizardState } from '../model/wizard-state'
 import { syncAdminRegisteredOnboardingSession } from '../lib/sync-onboarding-session'
+import { clearAdminRegisteredPasswordChangeRequired } from '../lib/admin-registered-member'
 
 function toOnboardingFlags(data: {
   email?: string
@@ -92,6 +93,10 @@ export function useAdminProvisionedOnboardingStepGuard() {
     })
 
     if (target && target !== location.pathname) {
+      // 온보딩 대상이 아니어서 위저드를 떠나면 온보딩 세션 표시를 지워 헤더가 로그인 상태로 보이게 한다.
+      if (!shouldContinueAdminProvisionedOnboarding(flags)) {
+        clearAdminRegisteredPasswordChangeRequired()
+      }
       navigate(target, { replace: true })
     }
   }, [
