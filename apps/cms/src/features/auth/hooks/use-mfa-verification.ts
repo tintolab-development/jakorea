@@ -197,9 +197,9 @@ export function useMfaVerification({
       setProvisioningError(null)
       setForceOtpOnly(false)
       setVerifyNotice(null)
-      resetRemoteLockState()
+      // 연속 실패 횟수·잠금은 팝업을 닫아도 유지한다(인증 성공 시에만 초기화)
     }
-  }, [open, showQrSetup, refreshProvisioning, resetRemoteLockState])
+  }, [open, showQrSetup, refreshProvisioning])
 
   useEffect(() => {
     if (!open) {
