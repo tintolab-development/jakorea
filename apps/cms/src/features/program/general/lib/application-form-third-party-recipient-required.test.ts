@@ -13,9 +13,11 @@ import {
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
 } from '@/features/template/model/program-application-form-economy-draft'
 import {
+  APPLICATION_FORM_THIRD_PARTY_RECIPIENT_INSTITUTION_NAME_PLACEHOLDER,
   APPLICATION_FORM_THIRD_PARTY_RECIPIENT_SEED_BY_PARAGRAPH_ID,
   hasIncompleteApplicationFormThirdPartyRecipient,
   isApplicationFormThirdPartyRecipientColumn,
+  isBlankApplicationFormThirdPartyRecipientValue,
   readApplicationFormThirdPartyRecipientValue,
   resolveThirdPartyRecipientFromFormAnswer,
 } from '@/features/template/model/application-form-third-party-recipient'
@@ -47,6 +49,7 @@ import {
   horizontalTableSetFieldCellValue,
   resolveHorizontalTableCellPlainText,
   type HorizontalTableParagraph,
+  type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   clearRegistrationWizardSessionDrafts,
@@ -237,12 +240,49 @@ describe('application form third-party recipient required', () => {
       item => item.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent
     ) as HorizontalTableParagraph | undefined
     expect(paragraph).toBeDefined()
+    // 시안대로 시드는 빈칸 — 서버 저장본처럼 값이 채워진 표로 검사한다
+    const saved = horizontalTableSetFieldCellValue(paragraph!, 0, 0, {
+      kind: 'text',
+      value: '배정된 교육 대상 학교',
+    })
     const lostFlavor = {
-      ...paragraph!,
+      ...saved,
       tableFlavor: 'text' as const,
       dataRows: [['', '', '', '']],
     }
     expect(resolveHorizontalTableCellPlainText(lostFlavor, 0, 0)).toBe('배정된 교육 대상 학교')
+  })
+
+  it('강사·봉사자·UJAT 봉사자 시드는 시안대로 「제공받는 곳」이 빈칸이고 기관명 placeholder를 쓴다', () => {
+    const seeds: Array<[string, WritingFormDraft]> = [
+      [
+        PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent,
+        createProgramApplicationFormInstructorDraft(),
+      ],
+      [
+        PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
+        createProgramApplicationFormVolunteerDraft(),
+      ],
+      [
+        UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
+        createUjatProgramApplicationFormVolunteerDraft(),
+      ],
+    ]
+    for (const [paragraphId, draft] of seeds) {
+      const table = draft.paragraphs.find(item => item.id === paragraphId) as
+        | HorizontalTableParagraph
+        | undefined
+      expect(table).toBeDefined()
+      expect(table!.columnFields?.[0]).toMatchObject({
+        placeholder: APPLICATION_FORM_THIRD_PARTY_RECIPIENT_INSTITUTION_NAME_PLACEHOLDER,
+      })
+      expect(hasIncompleteApplicationFormThirdPartyRecipient(draft)).toBe(true)
+    }
+    expect(
+      isBlankApplicationFormThirdPartyRecipientValue(
+        APPLICATION_FORM_THIRD_PARTY_RECIPIENT_INSTITUTION_NAME_PLACEHOLDER
+      )
+    ).toBe(true)
   })
 
   it('1사1교 pending — 기관 신청 시드가 비면 강사 시드가 있어도 막는다', () => {
@@ -255,7 +295,7 @@ describe('application form third-party recipient required', () => {
     )
   })
 
-  it('1사1교 — 기관 신청 session draft가 채워지면 강사 시드와 함께 통과한다', () => {
+  it('1사1교 — 기관·강사 신청 session draft의 제공받는 곳이 모두 채워져야 통과한다', () => {
     const program = {
       id: 'company-school-local-pending',
       generalParticipantTypes: ['school_institution', 'teacher_instructor'],
@@ -275,6 +315,29 @@ describe('application form third-party recipient required', () => {
         ...economy,
         paragraphs: economy.paragraphs.map(item =>
           item.id === filledParagraph.id ? filledParagraph : item
+        ),
+      },
+    })
+    // 강사 신청 시드도 시안대로 빈칸이라 아직 막는다
+    expect(describeIncompleteApplicationFormThirdPartyRecipient({ program })).toBe(
+      'application.application-instructor.thirdPartyRecipient'
+    )
+
+    const instructor = createProgramApplicationFormInstructorDraft()
+    const instructorParagraph = instructor.paragraphs.find(
+      item => item.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent
+    ) as HorizontalTableParagraph | undefined
+    expect(instructorParagraph).toBeDefined()
+    const filledInstructorParagraph = horizontalTableSetFieldCellValue(instructorParagraph!, 0, 0, {
+      kind: 'text',
+      value: '배정된 교육 대상 학교',
+    })
+    rememberRegistrationWizardSessionDraft({
+      templateCode: 'application-instructor',
+      draft: {
+        ...instructor,
+        paragraphs: instructor.paragraphs.map(item =>
+          item.id === filledInstructorParagraph.id ? filledInstructorParagraph : item
         ),
       },
     })

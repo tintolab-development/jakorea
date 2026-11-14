@@ -4,6 +4,7 @@ import type { InstructorApplicationListItemResponse } from '@/shared/api/generat
 import {
   buildCompanySchoolAssignedInstructorRows,
   buildCompanySchoolWaitingInstructorRows,
+  collectCompanySchoolAssignedInstructorSchedulePairs,
   omitCompanySchoolScheduleRoundLabels,
 } from './build-company-school-assignment-rows'
 
@@ -219,6 +220,25 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
     expect(rows[0]?.assignmentStatus).toBe('unavailable')
     expect(rows[0]?.scheduleUnresolved).toBe(true)
     expect(rows[0]?.hopeScheduleLine).toContain('일정 미생성')
+  })
+
+  it('강사 × 일정 쌍을 넘기면 배정 완료 건만 빼고 같은 강사의 다른 희망 일정은 남긴다 (QA 1사1교 #12)', () => {
+    const secondSession = { ...hopeSession, round: 2, date: '2026.11.27', classNum: '2지망', resolvedScheduleId: 9002 }
+    const pairs = collectCompanySchoolAssignedInstructorSchedulePairs(
+      [
+        { organizationApplicationId: 501, instructorMemberId: 170024, scheduleId: 9001 },
+        { organizationApplicationId: 999, instructorMemberId: 170024, scheduleId: 9002 },
+      ],
+      '501'
+    )
+    const rows = buildCompanySchoolWaitingInstructorRows({
+      schoolName: '계남중학교',
+      sessions: [hopeSession, secondSession],
+      approvedInstructors: [generalApplication],
+      assignedInstructorMemberIds: new Set(['170024']),
+      assignedInstructorSchedulePairs: pairs,
+    })
+    expect(rows.map(row => row.resolvedScheduleId)).toEqual([9002])
   })
 })
 

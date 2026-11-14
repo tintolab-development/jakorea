@@ -11,7 +11,12 @@ import {
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
   showUpdateCompletedAlert,
+  useCmsAlert,
 } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
 import { POSTS_NEW_DEFAULT_VISIBILITY } from '@/features/posts/lib/posts-public-save-confirm'
@@ -42,6 +47,7 @@ export function useFaqFormModal({
 }: FaqFormModalProps): UseFaqFormModalResult {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<FaqFormFieldValues>()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const { createMutation, updateMutation, deleteMutation } = useFaqMutations()
@@ -83,10 +89,21 @@ export function useFaqFormModal({
 
   const handleSubmit = useCallback(async () => {
     if (!canWrite) return
+    // 시안: 필수 항목이 비면 필드 아래 오류 대신 공통 「필수 항목 미입력 안내」 팝업만 띄우고 저장하지 않는다
+    const v = form.getFieldsValue(true) as Partial<FaqFormFieldValues>
+    const answer = typeof v.answer === 'string' ? v.answer.trim() : ''
+    const question = typeof v.question === 'string' ? v.question.trim() : ''
+    const category = typeof v.category === 'string' ? v.category.trim() : ''
+    const categoryMissing = category === '' || category === 'ALL' || category === '전체'
+    const visibilityMissing = v.visibility !== 'public' && v.visibility !== 'private'
+    if (categoryMissing || visibilityMissing || question === '' || answer === '') {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     try {
-      const v = await form.validateFields()
-      const answer = v.answer.trim()
-      const category = v.category.trim()
       const author = user?.name?.trim() || '관리자'
       const status = v.visibility === 'public' ? 'published' : 'draft'
 
@@ -95,7 +112,7 @@ export function useFaqFormModal({
           id: faq.id,
           patch: {
             category,
-            question: v.question.trim(),
+            question,
             answer,
             author,
             status,
@@ -107,7 +124,7 @@ export function useFaqFormModal({
       } else {
         const created = await createMutation.mutateAsync({
           category,
-          question: v.question.trim(),
+          question,
           answer,
           author,
           status,
@@ -118,9 +135,6 @@ export function useFaqFormModal({
         showRegisterCompletedAlert()
       }
     } catch (err) {
-      if (err && typeof err === 'object' && 'errorFields' in err) {
-        return
-      }
       const message = getPostsApiErrorMessage(err, '저장에 실패했습니다.')
       const field = getApiErrorField(err)
       if (field === 'answer' || field === 'inlineImages') {
@@ -140,6 +154,7 @@ export function useFaqFormModal({
     faq,
     onCancel,
     onSuccess,
+    showAlert,
     updateMutation,
     user?.name,
   ])
@@ -169,7 +184,7 @@ export function useFaqFormModal({
   }, [deleteMutation, faq, onCancel, onDeleted])
 
   const modalTitle = isEdit ? 'FAQ 수정' : 'FAQ 등록'
-  const submitLabel = isEdit ? '수정' : '등록'
+  const submitLabel = isEdit ? '저장' : '등록'
 
   return {
     form,

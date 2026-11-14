@@ -4,6 +4,13 @@
   gap: 32px;
 }
 
+/** 시안: 섹션 제목 18/Bold · 텍스트 좌측 8 (팝업 패딩 30 + 8 = 38) */
+.admin-register-modal__sections .detail-info-form > .detail-info-form__header .detail-info-form__title {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 0 8px;
+}
+
 .admin-register-modal__section--basic .detail-info-form__field {
   height: 64px;
   min-height: 64px;

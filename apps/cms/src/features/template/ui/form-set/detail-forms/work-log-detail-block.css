@@ -105,3 +105,21 @@
   padding: 0;
   background: #fff;
 }
+
+/*
+ * 템플릿 관리 > 지급조서(발급용) 편집기 — 시안 5767:46637·5767:46749
+ * 머리 54 · 본문 행 52 · 합계 머리/칸 52, 머리 글자 14/Bold, 머리 배경 rgba(231,235,239,.6)
+ * 프로그램 발급 화면·문서 PDF는 기존 치수 유지
+ */
+.work-log-detail-block--template .work-log-detail-block__th-main,
+.work-log-detail-block--template .work-log-detail-block__th-total {
+  font-size: 14px;
+  background:
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
+}
+
+.work-log-detail-block--template .work-log-detail-block__td-main,
+.work-log-detail-block--template .work-log-detail-block__th-total,
+.work-log-detail-block--template .work-log-detail-block__td-total {
+  height: 52px;
+}

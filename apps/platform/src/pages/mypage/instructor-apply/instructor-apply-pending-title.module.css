@@ -1,7 +1,10 @@
 .titleRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-24);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .titleDivider {

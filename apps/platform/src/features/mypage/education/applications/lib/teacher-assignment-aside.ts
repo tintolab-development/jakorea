@@ -1,5 +1,6 @@
 import type { SexOffenseInquiryCase } from '@jakorea/form-schema/program-application'
 import type { ProgramApplicationType } from '../api/types'
+import type { EducationDisplayStatus } from '../model/types'
 
 export type AssignedInstructorQueryView =
   | { kind: 'disabled' }
@@ -14,8 +15,18 @@ export function shouldMountTeacherEducationAssignmentAside(input: {
   isTeacher: boolean
   applicationType?: ProgramApplicationType | null
   hasTeacherAssignment: boolean
+  displayStatus?: EducationDisplayStatus | null
 }): boolean {
   if (!input.isTeacher) return false
+  if (
+    input.displayStatus === 'waiting_result' ||
+    input.displayStatus === 'document_passed' ||
+    input.displayStatus === 'rejected' ||
+    input.displayStatus === 'cancelled' ||
+    input.displayStatus === 'approval_cancelled'
+  ) {
+    return false
+  }
   if (input.applicationType === 'INDIVIDUAL' || input.applicationType === 'ORGANIZATION') {
     return true
   }

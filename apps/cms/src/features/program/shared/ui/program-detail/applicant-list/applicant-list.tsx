@@ -532,7 +532,23 @@ export function ApplicantList({
     menu === 'institutions' &&
     institutionColumnPreset === 'general-detail' &&
     !isCompanySchoolProgram(program)
-  /** 일반 프로그램(기관형) 기관·강사 신청 목록 공통 툴바 — 「총 N건」·「캘린더 뷰 보기」·「리스트 뷰 보기」 */
+  /**
+   * 1사1교 기관 신청 목록 — 반려 알림 3옵션·승인 취소 3옵션·반려 취소(팝업·완료)·알림 재발송 팝업을
+   * 일반 기관형 시안과 맞춘다(2026-11-13 요청). 서버는 같은 일반 기관 신청 API(`/api/admin/organization-applications/**`).
+   * 승인 팝업(`program-application` — 일정 배정 없음)·일괄 승인은 유형 차이로 유지.
+   */
+  const isCompanySchoolInstitutionList =
+    menu === 'institutions' &&
+    detailVariant === 'general' &&
+    isCompanySchoolProgram(program) &&
+    !isTrainedTeacherProgram
+  /** 기관 신청 팝업 문구·옵션 — 일반 기관형 시안(02~04·11) 사용 */
+  const usesGeneralOrganizationInstitutionPopupCopy =
+    isGeneralOrganizationInstitutionList || isCompanySchoolInstitutionList
+  /** 기관 신청 반려(단건·일괄) 알림 3옵션 — 교육받은 교사 반려 API도 `ApplicationRejectRequest.timing`(ON_ANNOUNCEMENT 포함)을 받는다 */
+  const usesInstitutionRejectThreeNotifyOptions =
+    usesGeneralOrganizationInstitutionPopupCopy || (menu === 'institutions' && isTrainedTeacherProgram)
+  /** 일반 프로그램(기관형) 기관·강사 신청 목록 공통 툴바 — 「총 N건」·「캘린더 뷰로 보기」·「리스트 뷰 보기」 */
   const usesGeneralOrganizationListToolbarCopy =
     detailVariant === 'general' &&
     isGeneralOrganizationProgram(program) &&
@@ -1060,7 +1076,7 @@ export function ApplicantList({
       }
       if (institutionColumnPreset === 'general-detail' || isTrainedTeacherProgram) {
         showAlert(
-          isGeneralOrganizationInstitutionList
+          isGeneralOrganizationInstitutionList || isTrainedTeacherProgram
             ? GENERAL_ORGANIZATION_INSTITUTION_BULK_APPROVE_UNAVAILABLE_ALERT
             : BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT
         )
@@ -1226,7 +1242,7 @@ export function ApplicantList({
         subjectKind: 'institution',
         approvalStatus: row.approvalStatus,
         // 일반(기관형) 시안 16253:559008 — 저장된 반려 사유가 있으면 재발송 팝업에서 사유 입력을 생략한다.
-        storedRejectionReason: isGeneralOrganizationInstitutionList
+        storedRejectionReason: usesGeneralOrganizationInstitutionPopupCopy
           ? row.participationRejectionReason?.trim() || undefined
           : undefined,
       })
@@ -1540,7 +1556,7 @@ export function ApplicantList({
         subjectName={firstSelectedInstitutionName}
         selectionCount={selectedRowKeys.length}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
-        notifyTimingOptions={isGeneralOrganizationInstitutionList ? 'three' : 'two'}
+        notifyTimingOptions={usesInstitutionRejectThreeNotifyOptions ? 'three' : 'two'}
         onCancel={() => setInstitutionBulkRejectOpen(false)}
         onConfirm={payload => {
           void (async () => {
@@ -1682,7 +1698,7 @@ export function ApplicantList({
         variant="single"
         subjectName={institutionRejectTarget?.name ?? ''}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
-        notifyTimingOptions={isGeneralOrganizationInstitutionList ? 'three' : 'two'}
+        notifyTimingOptions={usesInstitutionRejectThreeNotifyOptions ? 'three' : 'two'}
         onCancel={() => setInstitutionRejectTarget(null)}
         onConfirm={payload => {
           if (!institutionRejectTarget) return
@@ -1729,7 +1745,6 @@ export function ApplicantList({
       <InstitutionCancelApprovalModal
         open={institutionCancelApprovalTarget != null}
         institution={institutionCancelApprovalInstitution}
-        notifyTimingOptions={isCompanySchoolInstitutionApprove ? 'two' : undefined}
         onCancel={() => setInstitutionCancelApprovalTarget(null)}
         onConfirm={payload => {
           if (!institutionCancelApprovalTarget) return
@@ -1763,7 +1778,7 @@ export function ApplicantList({
       <InstitutionCancelRejectModal
         open={institutionCancelRejectTarget != null}
         institution={institutionCancelRejectInstitution}
-        copyVariant={isGeneralOrganizationInstitutionList ? 'general-organization' : 'default'}
+        copyVariant={usesGeneralOrganizationInstitutionPopupCopy ? 'general-organization' : 'default'}
         onCancel={() => setInstitutionCancelRejectTarget(null)}
         onConfirm={(payload: InstitutionCancelRejectionConfirmPayload) => {
           if (!institutionCancelRejectTarget) return
@@ -1786,7 +1801,7 @@ export function ApplicantList({
       <InstitutionCancelRejectCompleteModal
         open={institutionCancelRejectComplete != null}
         schoolName={institutionCancelRejectComplete?.schoolName ?? ''}
-        copyVariant={isGeneralOrganizationInstitutionList ? 'general-organization' : 'default'}
+        copyVariant={usesGeneralOrganizationInstitutionPopupCopy ? 'general-organization' : 'default'}
         onClose={() => setInstitutionCancelRejectComplete(null)}
       />
       <ProgramApplicationRejectModal
@@ -2318,8 +2333,11 @@ export function ApplicantList({
         approvalStatus={notificationResendTarget?.approvalStatus ?? 'approved'}
         storedRejectionReason={notificationResendTarget?.storedRejectionReason}
         copyVariant={
-          notificationResendTarget?.subjectKind === 'institution' &&
-          isGeneralOrganizationInstitutionList
+          (notificationResendTarget?.subjectKind === 'institution' &&
+            usesGeneralOrganizationInstitutionPopupCopy) ||
+          // 1사1교 강사 신청도 시안 Info 14716:4 「일반 프로그램(기관)과 동일」
+          (notificationResendTarget?.subjectKind === 'instructor' &&
+            usesGeneralOrganizationInstructorPopupCopy)
             ? 'general-organization'
             : 'default'
         }
@@ -2655,7 +2673,7 @@ export function ApplicantList({
                     variant="secondary"
                     onClick={handleViewCalendar}
                   >
-                    {usesGeneralOrganizationListToolbarCopy ? '캘린더 뷰 보기' : '캘린더 뷰로 보기'}
+                    캘린더 뷰로 보기
                   </FilterTableToolbarButton>
                 )}
                 {showApplicationListViewToggle && displayViewMode === 'calendar' && (

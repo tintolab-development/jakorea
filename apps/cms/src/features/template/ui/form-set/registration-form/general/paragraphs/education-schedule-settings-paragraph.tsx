@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -13,6 +13,7 @@ import {
 import { resolveEducationScheduleGroupTimeSlots } from '@/features/program/general/lib/education-schedule-lines-display'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
+  EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER,
   EducationSchedulePreviewLines,
 } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
@@ -34,7 +35,18 @@ import {
   shouldDisableEducationSchedulePeriodTimeInput,
   shouldLockEducationScheduleDateMode,
 } from '@/features/program/general/lib/schedule-detail-form'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './program-registration-paragraph.css'
+
+/** 시안 — 「교육 진행 일정 선택」 트리거 문구(날짜 지정 / 기간 지정) */
+const SCHEDULE_SELECTION_PLACEHOLDER = {
+  date: '날짜를 선택해 주세요',
+  period: '진행 기간을 선택해 주세요',
+} as const
+
+/** 시안 — 「교육 진행 예정일」 빈 값 안내(기간 지정은「기간」) */
+const SCHEDULE_PREVIEW_PERIOD_PLACEHOLDER =
+  '교육 진행 일정을 선택해 주세요. (해당 란에는 선택한 기간이 노출됩니다.)'
 
 const EMPTY_SCHEDULE_LINES: string[] = []
 const EMPTY_GROUP_TIMES: Record<number, Array<EducationScheduleGroupTimeSlot | null>> = {}
@@ -64,6 +76,10 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   participantOrganization = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
+  // 템플릿 관리 등록 폼 시안(12931:3911 · 12829:411618): 「교육 진행 일정 유형」 미선택 시작, 일정 선택 240.
+  // 기본값(날짜 지정)인 동안은 표시만 비우고, 고르면 그대로 보인다. 등록 위저드·상세는 기존 동작.
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const [scheduleModeTouched, setScheduleModeTouched] = useState(false)
   const lockDateMode = shouldLockEducationScheduleDateMode({
     participantOrganization,
     educationStructure: programType,
@@ -226,8 +242,15 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
             <div className="program-registration-paragraph__schedule-inline">
               <CmsRadioGroup
                 size="medium"
-                value={lockDateMode ? 'date' : scheduleMode}
+                value={
+                  isTemplateManagementScreen && !scheduleModeTouched && scheduleMode === 'date'
+                    ? ''
+                    : lockDateMode
+                      ? 'date'
+                      : scheduleMode
+                }
                 onChange={e => {
+                  setScheduleModeTouched(true)
                   const next = e.target.value as ProgramRegistrationEducationScheduleMode
                   if ((lockDateMode || disablePeriodMode) && next === 'period') return
                   applyEducationScheduleModeLineSwap({
@@ -261,10 +284,11 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
               showTimeToggle={false}
               {...scheduleSelectionPickerProps}
               suppressAutoTodayWhenEmpty
+              placeholder={SCHEDULE_SELECTION_PLACEHOLDER[scheduleMode]}
               value={scheduleMode === 'date' ? singleDate : periodDate}
               onChange={scheduleMode === 'date' ? handleDateApply : setPeriodDate}
               onRangeChange={handleScheduleRangeApply}
-              width={scheduleMode === 'date' ? 240 : 360}
+              width={scheduleMode === 'date' || isTemplateManagementScreen ? 240 : 360}
               disabledDate={disableOutsideOperation}
             />
           }
@@ -282,6 +306,11 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 lines={previewScheduleLines}
                 onRemove={removeLine}
                 lockStartedLines={false}
+                placeholder={
+                  scheduleMode === 'period'
+                    ? SCHEDULE_PREVIEW_PERIOD_PLACEHOLDER
+                    : EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER
+                }
               />
             </div>
           }

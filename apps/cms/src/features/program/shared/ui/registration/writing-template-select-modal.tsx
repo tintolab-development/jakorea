@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import type { TemplateRow } from '@/features/template/model/template.schema'
@@ -233,7 +233,7 @@ export function WritingTemplateSelectModal({
           <div className="writing-template-select-modal__search">
             <span className="writing-template-select-modal__search-input">
               <CmsInput
-                icon={<SearchOutlined />}
+                icon={<FieldSearchIcon />}
                 value={keyword}
                 onChange={event => setKeyword(event.target.value)}
                 onPressEnter={handleSearch}

@@ -87,6 +87,18 @@
   aspect-ratio: 1 / 1;
 }
 
+/* 시안 Input 크기별 달력 아이콘: medium 20 · xlarge/mobile 24 (large는 기본 22) */
+.medium .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.xlarge .icon,
+.mobile .icon {
+  width: 24px;
+  height: 24px;
+}
+
 .value {
   display: block;
   min-width: 0;

@@ -271,7 +271,7 @@ export function Interview2Section({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="봉사자 2차 면접 대상자 목록"
-        description={`${count.toLocaleString()}건`}
+        description={`총 ${count.toLocaleString()}건`}
         actions={
           <div className="ujat-volunteer-interview2__actions">
             <>
@@ -294,7 +294,7 @@ export function Interview2Section({
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar} >
-                캘린더뷰 보기
+                캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton

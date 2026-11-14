@@ -3,7 +3,13 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { ADMIN_COMMENT_SENSITIVE_INFO_NOTICE } from '@/features/user/detail/lib/admin-comment-copy'
+import './member-admin-comment-modal.css'
 
 export interface MemberAdminCommentModalProps {
   open: boolean
@@ -26,6 +32,7 @@ export function MemberAdminCommentModal({
   onCancel,
   onConfirm,
 }: MemberAdminCommentModalProps) {
+  const { showAlert } = useCmsAlert()
   const canConfirm = allowEmpty || value.trim().length > 0
   /** 모달을 열 때 첫 포커스만 커서를 기존 내용 맨 뒤로 — 이후 클릭 위치는 그대로 둔다 */
   const caretPlacedRef = useRef(false)
@@ -40,6 +47,18 @@ export function MemberAdminCommentModal({
     event.currentTarget.scrollTop = event.currentTarget.scrollHeight
   }
 
+  /** 저장은 항상 활성 — 미입력이면 필수 항목 미입력 안내 */
+  const handleConfirmClick = () => {
+    if (!canConfirm) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+    onConfirm()
+  }
+
   return (
     <ContentModal
       open={open}
@@ -48,6 +67,7 @@ export function MemberAdminCommentModal({
       titleBodyGap="section"
       width={800}
       zIndex={2600}
+      className="member-admin-comment-modal"
       footer={
         <>
           <CmsButton
@@ -63,8 +83,8 @@ export function MemberAdminCommentModal({
             variant="primary"
             size="medium"
             loading={loading}
-            disabled={!canConfirm}
-            onClick={onConfirm} >
+            disabled={loading}
+            onClick={handleConfirmClick} >
             저장
           </CmsButton>
         </>

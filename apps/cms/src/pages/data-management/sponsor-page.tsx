@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
 import { Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -54,13 +54,11 @@ import {
 } from '@/features/sponsor/lib/sponsor-detail-page-url'
 import { resolveSelectedSponsorRows } from '@/features/sponsor/lib/resolve-selected-rows'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import { getSponsorSponsorshipStatusTag } from '@/shared/lib/status-tag-specs'
 
 const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, string> = {
   corporate: '기업',
   foundation: '재단' }
-
-/** 구분 기본값 — URL에 없으면 기업(`corporate`)으로 고정 */
-const DEFAULT_SPONSOR_KIND = 'corporate'
 
 function formatProgramCount(count: number): string {
   return `${count.toLocaleString('ko-KR')}건`
@@ -75,24 +73,6 @@ export default function SponsorPage() {
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
-
-  const organizationKindParam = searchParams.get('sp_kind')
-
-  /** 최초 진입 시 `sp_kind` 없으면 기업으로 URL·조회 쿼리를 맞춘다 */
-  useEffect(() => {
-    if (organizationKindParam === 'corporate' || organizationKindParam === 'foundation') return
-    setSearchParams(
-      prev => {
-        if (prev.get('sp_kind') === 'corporate' || prev.get('sp_kind') === 'foundation') {
-          return prev
-        }
-        const next = new URLSearchParams(prev)
-        next.set('sp_kind', DEFAULT_SPONSOR_KIND)
-        return next
-      },
-      { replace: true }
-    )
-  }, [organizationKindParam, setSearchParams])
 
   const listFilterKey = serializeSponsorListFilters(searchParams)
   const {
@@ -335,7 +315,7 @@ export default function SponsorPage() {
         render: (_: unknown, r: SponsorManagementRow) =>
           ORG_LABEL[r.organizationKind ?? 'corporate'] },
       {
-        title: '후원사명',
+        title: '후원사',
         dataIndex: 'name',
         key: 'name',
         width: 200,
@@ -403,6 +383,21 @@ export default function SponsorPage() {
     [canWrite, donationColumnWidth, tableData.length, updateSponsorshipStatus]
   )
 
+  /** 엑셀: 후원 상태는 드롭다운 셀 대신 화면 표기(「후원 중」 등)로 내보낸다 */
+  const excelColumns: ColumnsType<SponsorManagementRow> = useMemo(
+    () =>
+      columns.map(column =>
+        column.key === 'sponsorshipStatus'
+          ? {
+              ...column,
+              render: (_: unknown, r: SponsorManagementRow) =>
+                getSponsorSponsorshipStatusTag(r.sponsorshipStatus ?? 'active').label,
+            }
+          : column
+      ),
+    [columns]
+  )
+
   return (
     <>
       <FilterTableLayout
@@ -436,7 +431,7 @@ export default function SponsorPage() {
         }
         excelExport={{
           accessLog: { downloadKind: 'SPONSOR_LIST_EXPORT', containedPiiTypes: ['NAME'] },
-          columns,
+          columns: excelColumns,
           data: tableData,
           selectedRowKeys,
         }}

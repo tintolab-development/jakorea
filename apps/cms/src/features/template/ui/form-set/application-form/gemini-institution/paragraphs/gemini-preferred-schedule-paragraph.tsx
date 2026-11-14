@@ -8,6 +8,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './gemini-preferred-schedule-paragraph.css'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 type ScheduleRowState = {
   date: Dayjs | null
@@ -22,9 +23,11 @@ function emptyRow(): ScheduleRowState {
 function PreferenceScheduleFields({
   row,
   onPatch,
+  timeInputWidth,
 }: {
   row: ScheduleRowState
   onPatch: (patch: Partial<ScheduleRowState>) => void
+  timeInputWidth: number
 }) {
   return (
     <DetailInfoForm.Row type="double">
@@ -56,7 +59,7 @@ function PreferenceScheduleFields({
               value={row.start}
               onChange={next => onPatch({ start: next, end: next == null ? null : row.end })}
               placeholder="수업 시작"
-              width={168}
+              width={timeInputWidth}
               showEndTimeToggle={false}
             />
             <span className="gemini-preferred-schedule-paragraph__tilde">~</span>
@@ -65,7 +68,7 @@ function PreferenceScheduleFields({
               value={row.end}
               onChange={next => onPatch({ end: next })}
               placeholder="수업 종료"
-              width={168}
+              width={timeInputWidth}
               showEndTimeToggle={false}
               disabled={row.start == null}
             />
@@ -86,9 +89,26 @@ function PreferenceDetailForm({
   row: ScheduleRowState
   onPatch: (patch: Partial<ScheduleRowState>) => void
 }) {
+  /**
+   * 템플릿 관리 시안(12875:515810) — 「■ N지망」 16px 소제목 ↔ 표 4, 시간 입력 120.
+   * 그 외 화면은 기존 DetailInfoForm 헤더·168 폭 유지.
+   */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  if (isTemplateManagementScreen) {
+    return (
+      <div className="gemini-preferred-schedule-paragraph__block--spec">
+        <div className="program-registration-curriculum__session-heading gemini-preferred-schedule-paragraph__heading--spec">
+          {title}
+        </div>
+        <DetailInfoForm title={title} hideHeader mode="edit">
+          <PreferenceScheduleFields row={row} onPatch={onPatch} timeInputWidth={120} />
+        </DetailInfoForm>
+      </div>
+    )
+  }
   return (
     <DetailInfoForm title={title} mode="edit">
-      <PreferenceScheduleFields row={row} onPatch={onPatch} />
+      <PreferenceScheduleFields row={row} onPatch={onPatch} timeInputWidth={168} />
     </DetailInfoForm>
   )
 }

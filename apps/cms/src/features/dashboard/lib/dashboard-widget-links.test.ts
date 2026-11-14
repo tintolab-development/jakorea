@@ -37,11 +37,17 @@ describe('dashboard-widget-links', () => {
     )
   })
 
-  it('문의 행은 programId를 우선해 inq_prog를 붙인다', () => {
-    expect(inquiryListPath('101', '봉사시간')).toBe('/admin/posts/inquiries?inq_prog=101')
-    expect(inquiryListPath(undefined, '봉사시간')).toBe(
-      `/admin/posts/inquiries?inq_prog=${encodeURIComponent('봉사시간')}`
-    )
+  it('문의 행은 필터 칸에 프로그램명, 조회는 프로그램 ID(inq_pid)로 넘긴다', () => {
+    const withId = new URL(inquiryListPath('101', '봉사시간'), 'http://x')
+    expect(withId.pathname).toBe('/admin/posts/inquiries')
+    expect(withId.searchParams.get('inq_prog')).toBe('봉사시간')
+    expect(withId.searchParams.get('inq_pid')).toBe('101')
+
+    const nameOnly = new URL(inquiryListPath(undefined, '봉사시간'), 'http://x')
+    expect(nameOnly.searchParams.get('inq_prog')).toBe('봉사시간')
+    expect(nameOnly.searchParams.has('inq_pid')).toBe(false)
+
+    expect(inquiryListPath()).toBe('/admin/posts/inquiries')
   })
 
   it('일정 이벤트는 유형별 프로그램 상세 쿼리다', () => {

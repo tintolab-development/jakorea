@@ -23,6 +23,7 @@ import {
 } from '@/features/mypage/education/schedules/lib/lecture-report-complete-navigation'
 import { useSettlementPreConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
 import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
+import { ReceiptGuardianGateModals } from '@/features/mypage/education/settlements/ui/receipt-guardian-gate-modals'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { PFFormPage, PFText } from '@/shared/ui'
@@ -141,7 +142,7 @@ export function MypageEducationSettlementWritePage() {
           {null}
         </PFFormPage>
         <PaymentStatementPreConsentModal
-          open
+          open={preConsent.minorGuardian.step == null}
           variant={documentKind}
           cancelLabel={returnToLectureReport ? '나중에 하기' : '취소'}
           onCancel={() =>
@@ -149,6 +150,7 @@ export function MypageEducationSettlementWritePage() {
           }
           onWriteConsent={preConsent.goToConsents}
         />
+        <ReceiptGuardianGateModals flow={preConsent.minorGuardian} />
       </>
     )
   }

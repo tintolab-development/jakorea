@@ -29,12 +29,8 @@ export function getDefaultTrainingRequestPeriodRange(
 
 function parseStatus(raw: string | null): StatusFilter {
   if (!raw || raw === 'ALL') return 'ALL'
-  if (
-    raw === 'SCHEDULED' ||
-    raw === 'IN_PROGRESS' ||
-    raw === 'ENDED' ||
-    raw === 'DRAFT'
-  ) {
+  // 미게시(DRAFT)는 상태 필터 옵션에서 제외했다 — 예전 URL 값은 전체로 되돌린다.
+  if (raw === 'SCHEDULED' || raw === 'IN_PROGRESS' || raw === 'ENDED') {
     return raw
   }
   return 'ALL'
@@ -72,7 +68,7 @@ const searchSyncRules: readonly TableSearchParamRule<GeminiRecruitmentPendingFil
 ]
 
 /**
- * QA-0103: 기본 조회는 전체 기간(연수 요청 가능기간 비움).
+ * QA-0103: 기본 조회는 전체 기간(연수 요청 가능 기간 비움).
  * 연초~오늘을 기본으로 채우면 조회 시 그 밖의 진행 중 공고가 빠진다.
  * `getDefaultTrainingRequestPeriodRange`는 dev 자동 입력 기준일 계산용으로만 남긴다.
  */

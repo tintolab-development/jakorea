@@ -38,12 +38,25 @@
   color: var(--color-status-success-light);
 }
 
-.statusAlert {
-  color: var(--color-palette-red);
+/* Figma 11005:341655 상태 글자 색 — 결석은 목록 시안이 없어 출석현황 팝업(11005:342162) 색 */
+.statusLate {
+  color: var(--color-status-error-strong);
+}
+
+.statusAbsent {
+  color: var(--color-status-error-default);
+}
+
+.statusExcused {
+  color: var(--color-element-orange);
+}
+
+.statusGiveUp {
+  color: var(--color-status-error-light);
 }
 
 .statusScheduled {
-  color: var(--color-neutral-cool-500);
+  color: var(--color-neutral-warm-500);
 }
 
 .info {
@@ -107,6 +120,11 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-8);
+}
+
+/* Figma 11005:341750 — 비활성 출석하기 라벨 warm-400 (활성은 primary-700) */
+.checkIn .checkInLabelDisabled {
+  color: var(--color-neutral-warm-400);
 }
 
 .documents {

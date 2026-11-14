@@ -241,6 +241,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
           instructorMemberId,
           maxAssignableInstructors: input.maxAssignableInstructors,
           scheduleDistances,
+          scheduleAvailability: scheduleDistances,
         }),
       }
     }
@@ -267,6 +268,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
         instructorMemberId,
         maxAssignableInstructors: input.maxAssignableInstructors,
         scheduleDistances,
+        scheduleAvailability: scheduleDistances,
       }),
     }
   }, [

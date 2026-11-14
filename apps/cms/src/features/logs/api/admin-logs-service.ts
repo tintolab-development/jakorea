@@ -8,6 +8,7 @@ import {
   mapSystemIssueDetailResponse,
 } from '@/features/logs/api/adapters/logs-adapters'
 import {
+  exportFileAccessLogsRemote,
   exportMemberLoginHistoryRemote,
   exportPrivacyAccessLogsRemote,
   exportSystemIssueLogsRemote,
@@ -20,6 +21,7 @@ import {
 } from '@/features/logs/api/logs-api-client'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { buildBugIssueHistoryExcelFilename } from '@/features/logs/lib/bug-issue-excel'
+import { buildFileDownloadHistoryExcelFilename } from '@/features/logs/lib/file-download-excel'
 import { buildMemberLoginHistoryExcelFilename } from '@/features/logs/lib/member-login-excel'
 import { buildPersonalInfoAccessHistoryExcelFilename } from '@/features/logs/lib/personal-info-access-excel'
 import { LOG_LIST_PAGE_SIZE, type LogListPage } from '@/features/logs/api/log-list-page'
@@ -50,6 +52,31 @@ export async function getFileDownloadLogsPage(
   assertLogsRemoteApiReady()
   const dto = await fetchFileAccessLogsRemote(toLogsListQueryParams(filters, page, size))
   return mapDownloadLogListPageResponse(dto)
+}
+
+export async function exportFileDownloadLogs(
+  filters: Record<string, string> = {}
+): Promise<void> {
+  assertLogsRemoteApiReady()
+  const blob = await exportFileAccessLogsRemote(filters)
+  if (blob.type.includes('json')) {
+    const text = await blob.text()
+    try {
+      const parsed = JSON.parse(text) as { message?: string; error?: { message?: string } }
+      throw new Error(
+        parsed.error?.message ?? parsed.message ?? '파일 다운로드 이력 다운로드에 실패했습니다.'
+      )
+    } catch (error) {
+      if (error instanceof Error && error.message !== 'Unexpected end of JSON input') {
+        throw error
+      }
+      throw new Error('파일 다운로드 이력 다운로드에 실패했습니다.')
+    }
+  }
+  // 서버 export가 file-access 이력을 남긴다 — client 로그 중복 방지
+  await downloadBlob(blob, `${buildFileDownloadHistoryExcelFilename()}.xlsx`, {
+    skipAccessLog: true,
+  })
 }
 
 export async function getPersonalInfoAccessLogsPage(

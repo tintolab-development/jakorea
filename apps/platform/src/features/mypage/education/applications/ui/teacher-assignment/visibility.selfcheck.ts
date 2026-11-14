@@ -38,6 +38,33 @@ assert.equal(
   }),
   false,
 )
+assert.equal(
+  shouldMountTeacherEducationAssignmentAside({
+    isTeacher: true,
+    applicationType: 'ORGANIZATION',
+    hasTeacherAssignment: true,
+    displayStatus: 'rejected',
+  }),
+  false,
+)
+assert.equal(
+  shouldMountTeacherEducationAssignmentAside({
+    isTeacher: true,
+    applicationType: 'ORGANIZATION',
+    hasTeacherAssignment: true,
+    displayStatus: 'waiting_result',
+  }),
+  false,
+)
+assert.equal(
+  shouldMountTeacherEducationAssignmentAside({
+    isTeacher: true,
+    applicationType: 'ORGANIZATION',
+    hasTeacherAssignment: true,
+    displayStatus: 'in_progress',
+  }),
+  true,
+)
 
 assert.equal(
   shouldShowTeacherAssignmentAside({

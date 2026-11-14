@@ -43,21 +43,28 @@ export type InstructorApplySubmittedSnapshot = {
   consentAgreedAt: Partial<Record<InstructorApplyConsentKey, string>>
 }
 
-function wireMonthToForm(value: string | undefined): string | null {
-  if (!value?.trim()) return null
-  const digits = value.replace(/\D/g, '')
+function asWireText(value: string | number | null | undefined): string {
+  if (value == null) return ''
+  return String(value).trim()
+}
+
+function wireMonthToForm(value: string | number | null | undefined): string | null {
+  const text = asWireText(value)
+  if (!text) return null
+  const digits = text.replace(/\D/g, '')
   if (digits.length >= 6) {
     return `${digits.slice(0, 4)}.${digits.slice(4, 6)}`
   }
   if (digits.length === 4) return digits
-  return value.trim()
+  return text
 }
 
-function wireYearToForm(value: string | undefined): string | null {
-  if (!value?.trim()) return null
-  const digits = value.replace(/\D/g, '')
+function wireYearToForm(value: string | number | null | undefined): string | null {
+  const text = asWireText(value)
+  if (!text) return null
+  const digits = text.replace(/\D/g, '')
   if (digits.length >= 4) return digits.slice(0, 4)
-  return value.trim()
+  return text
 }
 
 function mapSchoolRowToForm(
@@ -67,8 +74,8 @@ function mapSchoolRowToForm(
   return {
     schoolName: row.schoolName.trim(),
     major: row.major?.trim() ?? '',
-    admitYear: wireMonthToForm(row.admitYear),
-    gradYear: wireMonthToForm(row.gradYear),
+    admitYear: wireYearToForm(row.admitYear),
+    gradYear: wireYearToForm(row.gradYear),
   }
 }
 

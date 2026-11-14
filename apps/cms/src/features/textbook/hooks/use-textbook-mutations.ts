@@ -35,7 +35,7 @@ function listFiltersFromQueryKey(queryKey: readonly unknown[]): TextbookListFilt
 function textbookMatchesListFilter(queryKey: readonly unknown[], row: TextbookRow): boolean {
   const filters = listFiltersFromQueryKey(queryKey)
   if (!filters) return true
-  if (filters.useStatus !== row.useStatus) return false
+  if (filters.useStatus !== 'ALL' && filters.useStatus !== row.useStatus) return false
   if (filters.businessArea !== 'ALL' && filters.businessArea !== row.businessArea) return false
   if (filters.educationTarget !== 'ALL') {
     const rowTargets = parseEducationTargetLabels(row.educationTarget)

@@ -1,3 +1,7 @@
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -29,9 +33,11 @@ import {
 import {
   applyLectureEvalAnswersToDraft,
   buildLectureEvalFormDraft,
+  clearLectureEvalFormAnswers,
   canDownloadLectureEvalResults,
   canEditLectureEvalResponse,
   draftToLectureEvalPollResponse,
+  draftToLectureEvalSubmitAnswers,
   findOwnLectureEvalResponse,
   isLectureEvalResultsTabAccessible,
   LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
@@ -70,7 +76,7 @@ import {
   GENERAL_SURVEY_MENU_EMPTY_COPY,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
-  GENERAL_SURVEY_POLL_SHARE_TOAST_COPY,
+  buildGeneralSurveyPollShareToastCopy,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import type {
   RegisteredSurvey,
@@ -101,6 +107,7 @@ import {
   sortSatisfactionScheduleDisplayItemsAsc,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import {
+  isSurveyPollPeriodProgram,
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
@@ -472,8 +479,12 @@ export function GeneralSurveyManagementView({
     return last == null ? null : formatSatisfactionOnceAtEndScheduleLabel(last)
   }, [satisfactionScheduleOptionsQuery.schedules])
   const showSurveyPollScheduleSelectField = useMemo(
-    () => shouldShowSurveyPollScheduleSelectField(program),
-    [program]
+    () =>
+      shouldShowSurveyPollScheduleSelectField(program, {
+        options: surveyScheduleOptionsQuery.options,
+        isLoading: surveyScheduleOptionsQuery.isLoading,
+      }),
+    [program, surveyScheduleOptionsQuery.isLoading, surveyScheduleOptionsQuery.options]
   )
 
   useEffect(() => {
@@ -831,7 +842,8 @@ export function GeneralSurveyManagementView({
             lectureEvalSurvey.templateId,
             Math.trunc(versionId)
           )
-          if (record?.draft != null) return record.draft
+          // 저장된 응답이 없을 때 시작 상태 — 양식에 박힌 미리보기 선택(척도 「매우 그렇다」 등)을 비운다.
+          if (record?.draft != null) return clearLectureEvalFormAnswers(record.draft)
         }
         // 등록된 강의평가는 바인딩 version으로 연다(템플릿 목록 미조회 — 뷰어 403 방지).
         return buildLectureEvalFormDraft(lectureEvalSurvey.templateId, versionId)
@@ -996,9 +1008,7 @@ export function GeneralSurveyManagementView({
 
   /** 공유 링크 복사 완료 — 「설문조사 공유」·「만족도조사 공유」 안내 팝업 (시안 9767:119096 · 16057:321961) */
   const showShareCopiedAlert = useCallback(
-    (
-      copy: { title: string; line1: string; line2: string } = GENERAL_SURVEY_POLL_SHARE_TOAST_COPY
-    ) => {
+    (copy: { title: string; line1: string; line2: string }) => {
       void showAlert({ title: copy.title, content: `${copy.line1}\n${copy.line2}` })
     },
     [showAlert]
@@ -1144,6 +1154,17 @@ export function GeneralSurveyManagementView({
               return
             }
           } else {
+            // 일정 칸이 숨겨진 비기간형 = 선택 가능한 일정 없음. 일정은 있으나 모두 설문이 연결된 경우 그 사유로 안내
+            if (
+              !isSurveyPollPeriodProgram(program) &&
+              surveyScheduleOptionsQuery.options.length > 0
+            ) {
+              void showAlert({
+                title: '등록 실패',
+                content: SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
+              })
+              return
+            }
             const surveyTarget =
               await resolveSurveyPollBindingTargetWhenScheduleFieldHidden(program)
             if (surveyTarget == null) {
@@ -1304,6 +1325,7 @@ export function GeneralSurveyManagementView({
     showAlert,
     showSurveyPollScheduleSelectField,
     surveyScheduleOptionsQuery.hasSessionSchedules,
+    surveyScheduleOptionsQuery.options.length,
     surveysRemote,
     surveyTemplateOptions,
   ])
@@ -1427,7 +1449,7 @@ export function GeneralSurveyManagementView({
           queryKey: generalProgramQueryKeys.surveys(program.id),
           exact: true,
         })
-        showShareCopiedAlert()
+        showShareCopiedAlert(buildGeneralSurveyPollShareToastCopy(survey.title))
       } catch (error) {
         handleError(error, { context: 'generalSurveyShareLink' })
         showAlert({
@@ -1614,12 +1636,18 @@ export function GeneralSurveyManagementView({
     if (lectureEvalSurvey == null || lectureEvalFormDraft == null) return
     const validation = validateLectureEvalFormDraft(lectureEvalFormDraft)
     if (!validation.valid) {
-      void showAlert({ title: '입력 확인', content: validation.message })
+      // 필수 항목 미입력 — 공통 「필수 항목 미입력 안내」 모달(항목별 문구 대신, 2026-11-13 요청)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
 
     setLectureEvalFormDraft(lectureEvalFormDraft)
     const pollResponse = draftToLectureEvalPollResponse(lectureEvalFormDraft)
+    // 서버 제출용 — 설문자 정보는 단락 id 아래 객체로 묶는다(평면 키 금지)
+    const submitAnswers = draftToLectureEvalSubmitAnswers(lectureEvalFormDraft)
     const surveyVersionId = Number(lectureEvalSurvey.id)
     const templateVersionId =
       Number.isFinite(surveyVersionId) && surveyVersionId > 0
@@ -1658,7 +1686,7 @@ export function GeneralSurveyManagementView({
       try {
         if (existingResponseId != null) {
           await updateGeneralProgramFormResponse(existingResponseId, {
-            answers: pollResponse.answers,
+            answers: submitAnswers,
           })
         } else {
           const created = await submitGeneralProgramFormResponse({
@@ -1666,7 +1694,7 @@ export function GeneralSurveyManagementView({
             programId: programIdNum,
             contextType: submitContext.contextType,
             contextId: submitContext.contextId,
-            answers: pollResponse.answers,
+            answers: submitAnswers,
           })
           if (created?.formResponseId != null) {
             pollResponse.respondentId = String(created.formResponseId)
@@ -1889,6 +1917,8 @@ export function GeneralSurveyManagementView({
                   ),
                 }}
                 labels={GENERAL_SURVEY_POLL_ACTION_LABELS}
+                // 시안 — 진행 중부터 결과 다운로드 활성(응답 0건이어도 0건 상태로 내려받기)
+                downloadEnabled
                 onShareClick={() => shareRegisteredSurveyUrl(activeRegisteredSurvey)}
                 onAddClick={() => openCreateModal('survey')}
                 onOpenTemplatePreview={() =>

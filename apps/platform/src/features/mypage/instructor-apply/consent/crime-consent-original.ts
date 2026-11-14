@@ -1,19 +1,30 @@
 /**
- * 성범죄 경력 조회 동의서 원본 PDF — OpenAPI `MemberPortalFileUploadRequest.filePurpose`
- * `CRIMINAL_HISTORY_CONSENT_ORIGINAL` (PDF, 20MB) · `MemberPortalConsentCompleteRequest.evidenceFileObjectId`.
+ * 성범죄 경력 조회 동의서 원본 — OpenAPI `MemberPortalFileUploadRequest.filePurpose`
+ * `CRIMINAL_HISTORY_CONSENT_ORIGINAL` (PDF·JPG·PNG, 20MB) · `MemberPortalConsentCompleteRequest.evidenceFileObjectId`.
  */
 export const CRIME_CONSENT_ORIGINAL_FILE_PURPOSE = 'CRIMINAL_HISTORY_CONSENT_ORIGINAL'
 export const CRIME_CONSENT_ORIGINAL_CONTENT_TYPE = 'application/pdf'
 export const CRIME_CONSENT_ORIGINAL_MAX_BYTES = 20 * 1024 * 1024
-export const CRIME_CONSENT_ORIGINAL_ACCEPT = 'application/pdf,.pdf'
+export const CRIME_CONSENT_ORIGINAL_ACCEPT =
+  'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png'
+
+const CRIME_CONSENT_ALLOWED_CONTENT_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+])
 
 export const CRIME_CONSENT_ORIGINAL_UPLOAD_POLICY = {
   maxBytes: CRIME_CONSENT_ORIGINAL_MAX_BYTES,
-  allowedFileTypes: [{ extensions: ['pdf'], contentType: CRIME_CONSENT_ORIGINAL_CONTENT_TYPE }],
+  allowedFileTypes: [
+    { extensions: ['pdf'], contentType: CRIME_CONSENT_ORIGINAL_CONTENT_TYPE },
+    { extensions: ['jpg', 'jpeg'], contentType: 'image/jpeg' },
+    { extensions: ['png'], contentType: 'image/png' },
+  ],
 } as const
 
 export const CRIME_CONSENT_MESSAGES = {
-  fileType: 'PDF 파일만 업로드할 수 있습니다.',
+  fileType: 'PDF, JPG, PNG 파일만 업로드할 수 있습니다.',
   fileSize: '파일은 최대 20MB까지 업로드할 수 있습니다.',
   fileEmpty: '빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.',
   scanning: '파일 보안 검사 중입니다. 검사가 끝나면 제출할 수 있어요.',
@@ -47,15 +58,22 @@ export const CRIME_CONSENT_MESSAGES = {
 type FileLike = { name: string; type: string; size: number }
 
 /**
- * 네트워크 요청 전 차단. 확장자 `.pdf` 필수.
- * MIME은 `application/pdf`만 허용하고, 브라우저가 MIME을 비운 경우는
- * 프로젝트 정책(`resolveMemberPortalUploadContentType`)대로 확장자 기준 `application/pdf`로 본다.
- * 실제 내용 검증은 서버 보안 검사가 담당한다.
+ * 네트워크 요청 전 차단. 확장자 `.pdf` / `.jpg` / `.jpeg` / `.png`만 허용한다.
+ * MIME이 비어 있으면 확장자만 본다. 실제 내용 검증은 서버 보안 검사가 담당한다.
  */
+function expectedCrimeConsentMime(fileName: string): string | null {
+  const name = fileName.trim().toLowerCase()
+  if (name.endsWith('.pdf')) return 'application/pdf'
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg'
+  if (name.endsWith('.png')) return 'image/png'
+  return null
+}
+
 export function validateCrimeConsentOriginalFile(file: FileLike): string | null {
-  if (!/\.pdf$/i.test(file.name.trim())) return CRIME_CONSENT_MESSAGES.fileType
+  const expectedMime = expectedCrimeConsentMime(file.name)
+  if (!expectedMime) return CRIME_CONSENT_MESSAGES.fileType
   const mime = file.type.trim().toLowerCase()
-  if (mime !== '' && mime !== CRIME_CONSENT_ORIGINAL_CONTENT_TYPE) {
+  if (mime !== '' && mime !== expectedMime) {
     return CRIME_CONSENT_MESSAGES.fileType
   }
   if (!Number.isFinite(file.size) || file.size <= 0) return CRIME_CONSENT_MESSAGES.fileEmpty
@@ -111,7 +129,9 @@ export function classifyCrimeConsentOriginalFile(
   file: CrimeConsentOriginalFile,
 ): CrimeConsentOriginalFileState {
   if (upper(file.filePurpose) !== CRIME_CONSENT_ORIGINAL_FILE_PURPOSE) return 'invalid'
-  if (upper(file.contentType) !== CRIME_CONSENT_ORIGINAL_CONTENT_TYPE.toUpperCase()) return 'invalid'
+  if (!CRIME_CONSENT_ALLOWED_CONTENT_TYPES.has(file.contentType?.trim().toLowerCase() ?? '')) {
+    return 'invalid'
+  }
   const scan = upper(file.scanStatus)
   const upload = upper(file.uploadStatus)
   if (INVALID_SCAN_STATUSES.has(scan) || INVALID_UPLOAD_STATUSES.has(upload)) return 'invalid'

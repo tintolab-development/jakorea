@@ -6,7 +6,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Spin } from 'antd'
-import { EyeOutlined } from '@ant-design/icons'
+import viewIconUrl from '@/shared/assets/icons/posts/view.svg'
+import fileIconUrl from '@/shared/assets/icons/posts/file.svg'
 import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import type { ImpactStory } from '@/entities/impact-stories/model/types'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
@@ -36,7 +37,6 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 
-import attachFileMintUrl from '@/shared/ui/icons/attach-file-mint.svg'
 import fileDownloadBlackUrl from '@/shared/ui/icons/file-download-black.svg'
 
 import './detail-page.css'
@@ -358,7 +358,14 @@ function ImpactStoryDetailView({
             </div>
             <span className="admin-detail-top-actions">
               <span className="impact-story-detail-page__views">
-                <EyeOutlined className="impact-story-detail-page__views-icon" aria-hidden />
+                <img
+                  className="impact-story-detail-page__views-icon"
+                  src={viewIconUrl}
+                  alt=""
+                  width={20}
+                  height={20}
+                  aria-hidden
+                />
                 {story.viewCount.toLocaleString('ko-KR')}
               </span>
               <AdminDetailMoreMenu onEdit={onEdit} onDelete={onDelete} />
@@ -389,10 +396,10 @@ function ImpactStoryDetailView({
               <div className="impact-story-detail-page__attachments-head">
                 <img
                   className="impact-story-detail-page__clip"
-                  src={attachFileMintUrl}
+                  src={fileIconUrl}
                   alt=""
-                  width={13}
-                  height={16}
+                  width={20}
+                  height={20}
                   aria-hidden
                 />
                 <span>첨부 파일</span>

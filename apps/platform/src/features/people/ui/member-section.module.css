@@ -10,6 +10,14 @@
   margin: 0;
 }
 
+/* Figma PC: 20px / Regular / 150% · #285f74 */
+@media (--bp-pc-up) {
+  .title {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
+}
+
 .grid {
   display: grid;
   width: max-content;

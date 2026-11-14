@@ -3,11 +3,12 @@ import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 export const detailedProgramManagementFilterFields: FilterFieldConfig[] = [
   {
     key: 'usageStatus',
-    type: 'radio',
+    type: 'select',
     label: '사용 여부',
+    placeholder: '전체',
     width: '30%',
-    defaultValue: 'active',
     options: [
+      { label: '전체', value: 'ALL' },
       { label: '사용', value: 'active' },
       { label: '미사용', value: 'inactive' },
     ],

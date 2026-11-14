@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { resolveFormTemplateCatalogIds } from '@/features/template/api/admin-form-templates-service'
 import { listIncompleteApplicationFormThirdPartyRecipientKeys } from '@/features/template/model/application-form-third-party-recipient'
 import {
   RegistrationWizardValidationHighlightProvider,
@@ -131,8 +132,50 @@ export function GeneralProgramApplicationTemplateEditModal({
     remoteStrict,
   })
 
+  /**
+   * 등록된 원격 프로그램인데 이 양식의 form-binding이 없으면(생성 시 양식 적용 실패 등)
+   * 카탈로그 버전을 저장 기준으로 쓴다. 그래야 저장이 COPY → PUT → publish → binding POST를 거친다.
+   * (없으면 local draft로만 저장되고 「수정 완료」가 떠 바인딩이 계속 비어 있다.)
+   */
+  const needsCatalogFallback =
+    open &&
+    !remoteStrict &&
+    !formSource.bindingsLoading &&
+    formSource.isRemoteDataSource &&
+    formSource.unavailableReason == null &&
+    formSource.templateVersionId == null
+  const [catalogFallback, setCatalogFallback] = useState<{
+    templateCode: string
+    versionId: number | null
+  } | null>(null)
+  useEffect(() => {
+    if (!needsCatalogFallback) return
+    let cancelled = false
+    const templateCode = formSource.templateCode
+    void resolveFormTemplateCatalogIds(templateCode)
+      .catch(() => null)
+      .then(ids => {
+        if (cancelled) return
+        setCatalogFallback({ templateCode, versionId: ids?.templateVersionId ?? null })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [needsCatalogFallback, formSource.templateCode])
+  const catalogFallbackForCode =
+    catalogFallback?.templateCode === formSource.templateCode ? catalogFallback : null
+  const catalogFallbackPending = needsCatalogFallback && catalogFallbackForCode == null
+  const fallbackVersionId = needsCatalogFallback
+    ? (catalogFallbackForCode?.versionId ?? undefined)
+    : undefined
+  const editorTemplateVersionId = formSource.templateVersionId ?? fallbackVersionId
+  const editorPreferLocalDraft = fallbackVersionId != null ? false : formSource.preferLocalDraft
+
   const vm = useProgramParticipantApplicationEditor(
-    open && !formSource.bindingsLoading && formSource.unavailableReason == null,
+    open &&
+      !formSource.bindingsLoading &&
+      !catalogFallbackPending &&
+      formSource.unavailableReason == null,
     templateName,
     variant,
     {
@@ -147,8 +190,8 @@ export function GeneralProgramApplicationTemplateEditModal({
       variant === 'volunteer' ||
       variant === 'economy-application-institution' ||
       variant === 'trained-teachers-application-institution',
-    templateVersionId: formSource.templateVersionId,
-    preferLocalDraft: formSource.preferLocalDraft,
+    templateVersionId: editorTemplateVersionId,
+    preferLocalDraft: editorPreferLocalDraft,
     requireRemoteDraft: remoteStrict,
     }
   )
@@ -244,14 +287,17 @@ export function GeneralProgramApplicationTemplateEditModal({
           <div className="form-draft-unavailable" role="alert">
             {formSource.unavailableReason ?? '원격 신청 양식을 불러올 수 없습니다.'}
           </div>
-        ) : vm.isDraftLoading ? (
+        ) : vm.isDraftLoading || catalogFallbackPending ? (
           <FormDraftLoading />
         ) : (
           panels.leftContent
         )
       }
       rightNavigation={
-        formSource.unavailableReason != null || vm.remoteDraftLoadError != null || vm.isDraftLoading
+        formSource.unavailableReason != null ||
+        vm.remoteDraftLoadError != null ||
+        vm.isDraftLoading ||
+        catalogFallbackPending
           ? null
           : panels.rightNavigation
       }

@@ -25,6 +25,19 @@ export function filterField(page: Page, label: string): Locator {
     .first()
 }
 
+/** 목록 필터 선택 박스(구분·사용 여부 등)에서 옵션을 고른다 */
+export async function selectFilterOption(page: Page, label: string, optionLabel: string) {
+  const field = filterField(page, label)
+  await field.locator('.ant-select').first().click()
+  const dropdown = page.locator('.ant-select-dropdown:visible').last()
+  await dropdown.getByText(optionLabel, { exact: true }).click()
+}
+
+/** 목록 필터 선택 박스에 보이는 값 */
+export async function expectFilterSelectText(page: Page, label: string, text: string) {
+  await expect(filterField(page, label).locator('.ant-select').first()).toContainText(text)
+}
+
 export async function clickSearch(page: Page) {
   await page.getByRole('button', { name: '조회' }).first().click()
 }

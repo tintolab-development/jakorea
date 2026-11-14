@@ -30,6 +30,7 @@ export function IdTypeWithInputBody({
   isEditMode,
   documentMode = false,
   lockResidentIdType = false,
+  radioUnselectedDisplay = false,
 }: {
   paragraph: IdTypeWithInputParagraph
   onChange: (next: IdTypeWithInputParagraph) => void
@@ -38,6 +39,11 @@ export function IdTypeWithInputBody({
   documentMode?: boolean
   /** 행정정보 공동이용 — 라디오를 주민등록번호로 고정·비활성 */
   lockResidentIdType?: boolean
+  /**
+   * 템플릿 관리 작성 — 라디오 선택 표시만 비운다(저장값·입력 레이아웃·onChange 값은 그대로).
+   * 사용자 결정 2026-11-13: 템플릿 관리 화면 라디오는 모두 미선택.
+   */
+  radioUnselectedDisplay?: boolean
 }) {
   const options = paragraph.options?.length ? paragraph.options : []
   const selectedId = lockResidentIdType
@@ -172,7 +178,7 @@ export function IdTypeWithInputBody({
           .filter(Boolean)
           .join(' ')}
         size="medium"
-        value={selectedId ?? undefined}
+        value={radioUnselectedDisplay ? null : (selectedId ?? undefined)}
         onChange={e => {
           if (!isEditMode || lockResidentIdType) return
           setSelected(String(e.target.value))

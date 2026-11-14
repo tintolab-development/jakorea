@@ -46,6 +46,11 @@ import {
 } from '@/features/template/api/admin-form-templates-service'
 import { coalesceScopedFormDraftForPut } from '@/features/program/general/lib/coalesce-scoped-form-draft-for-put'
 import {
+  collectSeedPrefixes,
+  expectedSeedPrefixesForTemplateCode,
+  isForeignSeedDraft,
+} from '@/features/program/general/lib/form-seed-prefix'
+import {
   canonicalFormBindingTarget,
   resolveFormBindingTargetType,
 } from '@/features/program/general/lib/resolve-form-binding-target-type'
@@ -324,6 +329,31 @@ async function createDraftVersionOnTemplate(
   return created.templateVersionId
 }
 
+/** 사용자 문구는 기존 양식 적용 실패 문구를 그대로 쓴다(새 문구 추가 금지). */
+const FORM_APPLY_FAILED_MESSAGE = '양식 적용에 실패했습니다.'
+
+/**
+ * PUT 대상 검증 — 다른 양식의 seed 본문(draft) 또는 다른 양식의 버전(baseline)이면 PUT하지 않는다.
+ * 예: 강사 신청 draft를 참여자 신청 복사본(2726)에 보내 FOREIGN_PROTECTED_ID 409가 나는 것 사전 차단.
+ */
+function assertSeedPrefixMatchesTemplate(args: {
+  templateCode: string
+  versionId: number
+  draft: WritingFormDraft | null | undefined
+  source: 'draft' | 'baseline'
+}): void {
+  const expected = expectedSeedPrefixesForTemplateCode(args.templateCode)
+  if (!isForeignSeedDraft(args.draft, expected)) return
+  console.error('[program-form-bindings] seed 접두어 불일치 — PUT하지 않음', {
+    templateCode: args.templateCode,
+    versionId: args.versionId,
+    source: args.source,
+    expectedSeedPrefixes: [...expected],
+    actualSeedPrefixes: [...collectSeedPrefixes(args.draft)],
+  })
+  throw new Error(FORM_APPLY_FAILED_MESSAGE)
+}
+
 function isFormVersionImmutableError(error: unknown): boolean {
   const code = getApiErrorCode(error)
   return code === 'FORM_VERSION_IMMUTABLE' || code === 'FORM_CATALOG_VERSION_IMMUTABLE'
@@ -456,6 +486,15 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
       templateVersionId: catalog?.templateVersionId ?? args.versionId,
     }
   }
+  // 다른 양식 본문이면 COPY 전에 막는다 — 고아 DRAFT 복사본을 남기지 않는다.
+  if (args.reusePublished == null) {
+    assertSeedPrefixMatchesTemplate({
+      templateCode: args.templateCode,
+      versionId: args.versionId,
+      draft: args.draft,
+      source: 'draft',
+    })
+  }
   // Do this before fetching or mutating a template version. A binding PATCH
   // can be rejected after recruitment applications exist; the preflight keeps
   // that rejection from leaving a copied/published orphan version behind.
@@ -535,6 +574,13 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
 
     const putDraft = async (versionId: number) => {
       const baseline = await loadFormTemplateVersionDraftByVersionId(args.templateCode, versionId)
+      // 대상 버전이 이 templateCode의 양식인지 확인한다(다른 양식 복사본 versionId로 PUT 금지).
+      assertSeedPrefixMatchesTemplate({
+        templateCode: args.templateCode,
+        versionId,
+        draft: baseline?.draft,
+        source: 'baseline',
+      })
       const draftForPut =
         baseline?.draft != null ? coalesceScopedFormDraftForPut(baseline.draft, args.draft) : args.draft
       await saveFormTemplateVersionDraftByVersionId({

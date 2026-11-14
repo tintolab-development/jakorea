@@ -260,7 +260,7 @@ export function GeminiRecruitmentList() {
           formatPeriodCell(row.applicationPeriodStart, row.applicationPeriodEnd),
       },
       {
-        title: '연수 요청 가능기간',
+        title: '연수 요청 가능 기간',
         key: 'trainingRequestPeriod',
         className: 'gemini-recruitment-list__col-period',
         width: RECRUITMENT_COL_WIDTH.trainingRequestPeriod,

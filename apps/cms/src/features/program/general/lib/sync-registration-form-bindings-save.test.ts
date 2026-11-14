@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Program } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { queryClient } from '@/shared/lib/query-client'
+import { createProgramApplicationFormInstructorDraft } from '@/features/template/model/program-application-form-instructor-draft'
+import { createProgramParticipantApplicationDraft } from '@/features/template/model/program-application-form-individual-draft'
 
 const fetchFormTemplateVersionRemote = vi.fn()
 const copyFormTemplateVersionRemote = vi.fn()
@@ -697,6 +699,90 @@ describe('saveProgramScopedOperationalFormVersion', () => {
     await Promise.all([first, second])
     expect(copyFormTemplateVersionRemote).toHaveBeenCalledTimes(1)
     expect(publishFormTemplateVersionById).toHaveBeenCalledTimes(1)
+  })
+
+  it('다른 양식(강사) seed draft를 참여자 신청 templateCode로 보내면 COPY·PUT 없이 실패한다', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await expect(
+      saveProgramScopedOperationalFormVersion({
+        program: { id: '186576' } as Program,
+        templateCode: 'application-participant-individual',
+        versionId: 2726,
+        draft: createProgramApplicationFormInstructorDraft(),
+        ownerProgramId: 186576,
+      })
+    ).rejects.toThrow('양식 적용에 실패했습니다.')
+
+    expect(fetchFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('seed 접두어 불일치'),
+      expect.objectContaining({
+        templateCode: 'application-participant-individual',
+        versionId: 2726,
+        source: 'draft',
+      })
+    )
+    error.mockRestore()
+  })
+
+  it('대상 버전(baseline)이 다른 양식(참여자) 복사본이면 강사 draft를 PUT하지 않는다', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 2726,
+      versionStatus: 'DRAFT',
+      templateScope: 'PROGRAM',
+      ownerProgramId: 186576,
+    })
+    loadFormTemplateVersionDraftByVersionId.mockResolvedValue({
+      draft: createProgramParticipantApplicationDraft(),
+    })
+
+    await expect(
+      saveProgramScopedOperationalFormVersion({
+        program: { id: '186576' } as Program,
+        templateCode: 'application-instructor',
+        versionId: 2726,
+        draft: createProgramApplicationFormInstructorDraft(),
+        ownerProgramId: 186576,
+      })
+    ).rejects.toThrow('양식 적용에 실패했습니다.')
+
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('seed 접두어 불일치'),
+      expect.objectContaining({ templateCode: 'application-instructor', source: 'baseline' })
+    )
+    error.mockRestore()
+  })
+
+  it('같은 양식 seed draft·baseline이면 기존처럼 PUT한다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 2727,
+      versionStatus: 'DRAFT',
+      templateScope: 'PROGRAM',
+      ownerProgramId: 186576,
+    })
+    loadFormTemplateVersionDraftByVersionId.mockResolvedValue({
+      draft: createProgramApplicationFormInstructorDraft(),
+    })
+
+    await saveProgramScopedOperationalFormVersion({
+      program: { id: '186576' } as Program,
+      templateCode: 'application-instructor',
+      versionId: 2727,
+      draft: createProgramApplicationFormInstructorDraft(),
+      ownerProgramId: 186576,
+    })
+
+    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
+      expect.objectContaining({ versionId: 2727, templateCode: 'application-instructor' })
+    )
   })
 })
 

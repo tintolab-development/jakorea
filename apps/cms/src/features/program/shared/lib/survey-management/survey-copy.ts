@@ -100,12 +100,15 @@ export const GENERAL_SURVEY_POLL_ACTION_LABELS = {
   preview: '설문 양식 보기',
 } as const satisfies SurveyActionLabels
 
-/** 설문조사 공유 링크 복사 후 안내 팝업 — 문장 단위 개행 */
-export const GENERAL_SURVEY_POLL_SHARE_TOAST_COPY = {
-  title: '설문조사 공유',
-  line1: '설문 참여 링크가 복사되었습니다.',
-  line2: '참여 대상에게 복사된 링크를 공유해 주세요.',
-} as const
+/** 설문조사 공유 링크 복사 후 안내 팝업 — 문장 단위 개행 (시안: [설문조사 이름]의 참여 링크) */
+export function buildGeneralSurveyPollShareToastCopy(surveyTitle: string) {
+  const name = surveyTitle.trim() || '설문조사'
+  return {
+    title: '설문조사 공유',
+    line1: `[${name}]의 참여 링크가 복사되었습니다.`,
+    line2: '원하는 곳에 붙여넣어 설문조사를 공유해 보세요.',
+  } as const
+}
 
 /** 결과 다운로드 팝업 본문 — 시안 4197:78883 */
 const GENERAL_RESULTS_DOWNLOAD_DESCRIPTION =

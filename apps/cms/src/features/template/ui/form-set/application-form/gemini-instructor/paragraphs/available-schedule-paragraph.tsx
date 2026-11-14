@@ -5,11 +5,13 @@ import { InstructorAvailableScheduleParagraph } from '@/features/template/ui/for
 import {
   ProgramApplicationScheduleSummaryHintText,
   ProgramApplicationScheduleTemplateHintParagraph,
-  PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT,
+  GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT,
 } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph.css'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 function GeminiInstructorAvailableScheduleTemplatePlaceholder() {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const summaryHint = (
     <div className="program-application-form-instructor__field-summary-wrap">
       <ProgramApplicationScheduleSummaryHintText />
@@ -17,10 +19,19 @@ function GeminiInstructorAvailableScheduleTemplatePlaceholder() {
   )
 
   return (
-    <div className="program-application-form-instructor__available-schedule">
+    <div
+      className={[
+        'program-application-form-instructor__available-schedule',
+        // 템플릿 관리 시안(12875:515880) — 안내 박스 ↔ 요약 표 16
+        isTemplateManagementScreen &&
+          'program-application-form-instructor__available-schedule--template-spec',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="program-application-schedule-template-placeholder">
         <ProgramApplicationScheduleTemplateHintParagraph
-          hintText={PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT}
+          hintText={GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT}
         />
       </div>
       <DetailInfoForm title="" hideHeader mode="edit">

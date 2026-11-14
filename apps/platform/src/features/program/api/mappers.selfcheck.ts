@@ -401,8 +401,8 @@ assert.ok(ujatTermSchedules)
 assert.deepEqual(
   ujatTermSchedules.eventSchedules.map(schedule => `${schedule.scheduleLabel} ${schedule.name}`.trim()),
   [
-    '상반기 교육 진행',
-    '하반기 교육 진행',
+    '상반기(1학기) 교육 진행',
+    '하반기(2학기) 교육 진행',
     '봉사자 사전교육',
     '교육 진행',
     '해단식',
@@ -464,7 +464,7 @@ assert.deepEqual(
   ujatProjectedWithRuntimeSchedules.eventSchedules.map(schedule =>
     `${schedule.scheduleLabel} ${schedule.name}`.trim(),
   ),
-  ['상반기 교육 진행', '봉사자 사전교육', '해단식'],
+  ['상반기(1학기) 교육 진행', '봉사자 사전교육', '해단식'],
 )
 assert.equal(ujatProjectedWithRuntimeSchedules.educationSchedules.length, 0)
 
@@ -487,7 +487,7 @@ const ujatVolunteerProjectedWithRuntimeSchedules = mapPortalProgramDetail({
 })
 assert.ok(ujatVolunteerProjectedWithRuntimeSchedules)
 assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.detailCase, 'ujat-volunteer')
-assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.scheduleLabel, '하반기')
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.scheduleLabel, '하반기(2학기)')
 assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.name, '교육 진행')
 assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.educationSchedules.length, 0)
 
@@ -503,7 +503,7 @@ const ujatUndatedPublicSchedules = mapPortalProgramDetail({
 })
 assert.ok(ujatUndatedPublicSchedules)
 assert.equal(ujatUndatedPublicSchedules.eventSchedules.length, 1)
-assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.scheduleLabel, '상반기')
+assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.scheduleLabel, '상반기(1학기)')
 assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.name, '기관')
 assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.dateLabel, '일정 미정')
 assert.equal(ujatUndatedPublicSchedules.educationSchedules.length, 0)
@@ -526,7 +526,7 @@ const ujat186383 = mapPortalProgramDetail({
 assert.ok(ujat186383)
 assert.deepEqual(ujat186383.eventSchedules, [
   {
-    scheduleLabel: '상반기',
+    scheduleLabel: '상반기(1학기)',
     name: '기관',
     dateLabel: '일정 미정',
   },
@@ -548,7 +548,7 @@ const ujat186385 = mapPortalProgramDetail({
   ],
 })
 assert.ok(ujat186385)
-assert.equal(ujat186385.eventSchedules[0]?.scheduleLabel, '하반기')
+assert.equal(ujat186385.eventSchedules[0]?.scheduleLabel, '하반기(2학기)')
 assert.equal(ujat186385.eventSchedules[0]?.name, '기관')
 assert.equal(ujat186385.educationSchedules.length, 0)
 
@@ -2201,6 +2201,8 @@ const instructorKeepsProgramEducationTarget = mapPortalProgramDetail(
 )
 assert.ok(instructorKeepsProgramEducationTarget)
 assert.equal(instructorKeepsProgramEducationTarget.detailCase, 'instructor')
+assert.deepEqual(instructorKeepsProgramEducationTarget.categories, ['instructor'])
+assert.equal(instructorKeepsProgramEducationTarget.categoryLabel, '강사')
 assert.deepEqual(instructorKeepsProgramEducationTarget.educationTargetKeys, ['elementary'])
 assert.equal(
   instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '모집 대상')
@@ -2208,14 +2210,14 @@ assert.equal(
   '강사',
 )
 assert.equal(
-  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상')
-    ?.value,
-  '초등학교',
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상'),
+  undefined,
 )
 assert.equal(
-  instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상 상세')
-    ?.value,
-  '초등학생 4~6학년',
+  instructorKeepsProgramEducationTarget.basicInfoFields.find(
+    field => field.label === '교육 대상 상세',
+  ),
+  undefined,
 )
 
 // QA-0198: 강사 모집 상세도 봉사자처럼 모집 대상 아래에 모집 대상 상세를 보인다.

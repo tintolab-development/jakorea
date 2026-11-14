@@ -32,6 +32,7 @@ export function useFormCertificatePreviewProps(
       orgPhone: state.stringPreviewValues.orgPhone,
       orgFax: state.stringPreviewValues.orgFax,
       orgWebsite: state.stringPreviewValues.orgWebsite,
+      participantLayout: state.participantLayout,
     }
 
     const interactive: FormCertificatePreviewProps = {
@@ -55,6 +56,7 @@ export function useFormCertificatePreviewProps(
     state.chairmanSealPreviewSrc,
     state.stringPreviewValues,
     state.participantRowVisibility,
+    state.participantLayout,
     state.activeFieldName,
     state.setActiveFieldName,
     issueDate,

@@ -15,12 +15,9 @@ import { useLeaveDeletedDetail } from '@/features/posts/hooks/use-leave-deleted-
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-
-const FAQ_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('faq', 'single')
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ActionResultModal, CmsButton, showDeleteCompletedAlert } from '@/shared/ui'
-import './admin-faq-delete-btn.css'
 import './admin-faq-detail-page.css'
 
 const ADMIN_FAQ_LIST_PATH = '/admin/posts/faq'
@@ -109,7 +106,7 @@ export function AdminFaqDetailPage() {
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         preset="faq"
-        {...FAQ_SINGLE_DELETE_COPY}
+        {...resolvePostsDeleteConfirmCopy('faq', 'single', 1, [faq.question])}
       />
       <FaqFormModal
         open={editModalOpen}
@@ -183,10 +180,8 @@ export function AdminFaqDetailPage() {
             목록
           </CmsButton>
           <div className="admin-faq-detail-page__actions-right">
-            <CmsButton
-              variant="delete"
-              size="large" className="admin-faq-delete-btn"
-              onClick={handleDelete} >
+            {/* 시안: 목록·삭제·수정 모두 large(16/600) — 목록 툴바용 14px 라벨 클래스를 쓰지 않는다 */}
+            <CmsButton variant="delete" size="large" onClick={handleDelete}>
               삭제
             </CmsButton>
             <CmsButton variant="primary" size="large" adminAction="write" onClick={handleEdit}>

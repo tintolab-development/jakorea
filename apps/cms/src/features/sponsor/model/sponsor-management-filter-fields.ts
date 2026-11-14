@@ -1,14 +1,15 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 
-/** 시안: 구분(라디오) · 후원사명 · 후원 상태 · 주 담당자명 · 후원 시작일 */
+/** 시안: 구분(선택 박스) · 후원사 · 후원 상태 · 주 담당자 · 후원 시작일 — 조회 버튼까지 한 줄 */
 export const sponsorManagementFilterFields: FilterFieldConfig[] = [
   {
     key: 'organizationKind',
-    type: 'radio',
+    type: 'select',
     label: '구분',
+    placeholder: '전체',
     width: '16%',
-    defaultValue: 'corporate',
     options: [
+      { label: '전체', value: 'ALL' },
       { label: '기업', value: 'corporate' },
       { label: '재단', value: 'foundation' },
     ],
@@ -16,7 +17,7 @@ export const sponsorManagementFilterFields: FilterFieldConfig[] = [
   {
     key: 'sponsorName',
     type: 'search',
-    label: '후원사명',
+    label: '후원사',
     placeholder: '후원사명을 입력해 주세요',
     width: '20%',
   },
@@ -37,7 +38,7 @@ export const sponsorManagementFilterFields: FilterFieldConfig[] = [
   {
     key: 'managerName',
     type: 'search',
-    label: '주 담당자명',
+    label: '주 담당자',
     placeholder: '주 담당자명을 입력해 주세요',
     width: '20%',
   },

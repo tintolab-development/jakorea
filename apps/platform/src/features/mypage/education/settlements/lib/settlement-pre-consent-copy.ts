@@ -30,3 +30,6 @@ export function settlementPreConsentModalCopy(variant: SettlementDocumentKind = 
     description: RECEIPT_PRE_CONSENT_MODAL_DESCRIPTION,
   }
 }
+
+/** 제출 시 서버 RECEIPT_PRE_CONSENT_REQUIRED 또는 사전 가드 — 미작성 안내 팝업 설명문 (기획 회신 B) */
+export const RECEIPT_PRE_CONSENT_SUBMIT_BLOCKED_DESCRIPTION = '영수증 사전 동의서를 작성해 주세요.'

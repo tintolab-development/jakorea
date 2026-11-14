@@ -85,7 +85,6 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import {
   INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE,
   INSTRUCTOR_UNASSIGN_NOTIFICATION_ALREADY_SENT_MESSAGE,
@@ -106,8 +105,6 @@ import {
   PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
   participatingScheduleTableColumnLayout,
 } from '@/features/program/general/lib/participating-institutions-table'
-import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
-import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { InstitutionUnassignConfirmModal } from './institution-unassign-confirm-modal'
 import {
   ASSIGNED_INSTITUTIONS_EMPTY_COPY,
@@ -144,6 +141,8 @@ import { ParticipatingIndividualInstructorSettlementSection } from './participat
 import { ParticipatingIndividualInstructorAssignmentSection } from './participating-individual-instructor-assignment-section'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
+import { useActivityCertificateIssuePrecheck } from '@/features/program/general/hooks/use-activity-certificate-issue-precheck'
+import { CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './school-detail-fullpage-view.css'
@@ -306,11 +305,6 @@ export function ParticipatingInstructorFullpageView({
   const [selectedWaitingSchoolKeys, setSelectedWaitingSchoolKeys] = useState<Key[]>([])
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
-  const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
-    instructorNames: string[]
-    targetNames: string[]
-    reason: string
-  } | null>(null)
   const [assignGuideMode, setAssignGuideMode] = useState<'select' | 'add' | null>(null)
   const [assignGuideSchoolId, setAssignGuideSchoolId] = useState<string | null>(null)
   const [assignGuideRole, setAssignGuideRole] = useState<InstructorRoleKey>('assistant')
@@ -318,9 +312,10 @@ export function ParticipatingInstructorFullpageView({
   const [assignGuideSubmitting, setAssignGuideSubmitting] = useState(false)
   const assignGuideInFlightRef = useRef(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
-  /** 기관형 — 활동인증서 발급 사유(Figma 06-1/02) */
+  /** 활동인증서 발급 사유(Figma 06-1/02, 기능정의서: 개인·기관 공통) */
   const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
   const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
+  const precheckActivityCertificateIssue = useActivityCertificateIssuePrecheck()
   /**
    * 기관형 [선택 배정] — Figma 04-1/05-1 확인 → 선택 기관 전부 배정 → 04-2/05-2 완료.
    * 1사1교는 기존 `AssignGuideModal(select)` 흐름 유지.
@@ -361,6 +356,11 @@ export function ParticipatingInstructorFullpageView({
   const isCompanySchool = isCompanySchoolSurface || isCompanySchoolProgram(program)
   /** 일반 프로그램 기관형(개인형·1사1교 제외) — Figma 기관형 전용 흐름 분기 */
   const isInstitutionProgram = !isIndividualProgram && !isCompanySchool
+  /**
+   * 교육 배정 현황 「배정 취소」 팝업·바디·완료 안내 — 일반 기관형 시안(06-1·06-2·07)을 1사1교도 그대로 쓴다
+   * (2026-11-13 요청 — 일반 기관형 기준으로 통일, 취소 귀책 없음). 개인형은 별도 섹션.
+   */
+  const usesInstitutionUnassignFlow = !isIndividualProgram
 
   const isActivityWithdrawn = mergedInstructor.activityWithdrawn === true
 
@@ -518,11 +518,11 @@ export function ParticipatingInstructorFullpageView({
   /**
    * 기관형 배정 알림 발송 여부(BE 항목 1-A) — 배정 목록 `assignmentNotificationStatus`.
    * SENT → 「발송 후」(06-2: 사유·알림), NONE·SCHEDULED·CANCELLED → 「발송 전」(06-1: 안내만).
-   * 필드 없는 구버전 응답·1사1교·개인형은 undefined(기존 동작).
+   * 필드 없는 구버전 응답은 undefined(발송 후 시안). 1사1교도 같은 시안, 개인형은 해당 없음.
    */
   const assignmentNotificationSentById = useMemo(() => {
     const map = new Map<string, boolean | undefined>()
-    if (!isInstitutionProgram) return map
+    if (!usesInstitutionUnassignFlow) return map
     for (const item of institutionAssignment.assignments) {
       if (item.assignmentId == null) continue
       const id = String(item.assignmentId)
@@ -534,7 +534,7 @@ export function ParticipatingInstructorFullpageView({
       )
     }
     return map
-  }, [forcedSentAssignmentIds, institutionAssignment.assignments, isInstitutionProgram])
+  }, [forcedSentAssignmentIds, institutionAssignment.assignments, usesInstitutionUnassignFlow])
 
   useEffect(() => {
     setAssignedSchools(institutionAssignment.assignedSchools)
@@ -878,25 +878,8 @@ export function ParticipatingInstructorFullpageView({
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedSchoolKeys.length === 0) return
-      // 기관형(Figma 06-1·06-2)은 취소 귀책을 받지 않는다(API 선택값 — 생략 시 서버 ADMIN)
-      if (
-        !isInstitutionProgram &&
-        payload.faultParty !== 'USER' &&
-        payload.faultParty !== 'ADMIN'
-      ) {
-        return
-      }
+      // 기관형·1사1교 공통(Figma 06-1·06-2): 취소 귀책을 받지 않는다(API 선택값 — 생략 시 서버 ADMIN)
       const selectedRows = assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id))
-      const removedSchoolNames = selectedRows.map(r => r.schoolName)
-      // 기관형: 배정마다 발송 전이면 `{}`, 발송 후(·미상)면 사유·알림 시점(BE 항목 1-A)
-      const cancelBody = isInstitutionProgram
-        ? undefined
-        : toInstructorAssignmentCancelRequest({
-            reason: payload.reason,
-            notifyTiming: payload.notifyTiming,
-            manualNotifyAt: payload.manualNotifyAt,
-            faultParty: payload.faultParty as 'USER' | 'ADMIN',
-          })
 
       if (institutionAssignment.remoteEnabled) {
         let cancelledCount = 0
@@ -911,12 +894,11 @@ export function ParticipatingInstructorFullpageView({
                   ? [row.assignmentId]
                   : []
             for (const assignmentId of ids) {
-              const rowBody =
-                cancelBody ??
-                toInstructorUnassignCancelBody(
-                  payload,
-                  assignmentNotificationSentById.get(String(assignmentId))
-                )
+              // 배정마다 발송 전이면 `{}`, 발송 후(·미상)면 사유·알림 시점(BE 항목 1-A)
+              const rowBody = toInstructorUnassignCancelBody(
+                payload,
+                assignmentNotificationSentById.get(String(assignmentId))
+              )
               pendingAssignmentId = String(assignmentId)
               pendingBodyWasEmpty = Object.keys(rowBody).length === 0
               await cancelInstructorAssignmentRemote(assignmentId, rowBody)
@@ -926,19 +908,11 @@ export function ParticipatingInstructorFullpageView({
           await institutionAssignment.invalidate()
           setUnassignConfirmOpen(false)
           setSelectedAssignedSchoolKeys([])
-          if (isInstitutionProgram) {
-            showAlert({ title: '취소 완료', content: '취소되었습니다.' })
-          } else {
-            setUnassignCompleteModal({
-              instructorNames: [mergedInstructor.instructorName],
-              targetNames: removedSchoolNames,
-              reason: payload.reason,
-            })
-          }
+          // 시안 07 — 기관형·1사1교 공통 취소 완료
+          showAlert({ title: '취소 완료', content: '취소되었습니다.' })
         } catch (error) {
-          // 기관형 「발송 전」 취소 중 서버가 발송 후로 판단 → 해당 배정을 발송 후로 보고 「발송 후」 팝업으로 다시 연다
+          // 「발송 전」 취소 중 서버가 발송 후로 판단 → 해당 배정을 발송 후로 보고 「발송 후」 팝업으로 다시 연다
           if (
-            isInstitutionProgram &&
             pendingBodyWasEmpty &&
             pendingAssignmentId != null &&
             isInstructorUnassignReasonRequiredError(error)
@@ -989,8 +963,6 @@ export function ParticipatingInstructorFullpageView({
       institutionAssignment,
       instructorList,
       isInstitutionProgram,
-      mergedInstructor,
-      mergedInstructor.instructorName,
       schoolRows,
       selectedAssignedSchoolKeys,
       showAlert,
@@ -1412,7 +1384,7 @@ export function ParticipatingInstructorFullpageView({
 
   /** 선택한 배정 중 하나라도 발송 후면 「발송 후」, 모두 발송 전이면 「발송 전」, 미상이면 undefined(발송 후) */
   const unassignNotificationSent = useMemo(() => {
-    if (!isInstitutionProgram) return undefined
+    if (!usesInstitutionUnassignFlow) return undefined
     const flags = assignedSchools
       .filter(r => selectedAssignedSchoolKeys.includes(r.id))
       .flatMap(r =>
@@ -1424,7 +1396,12 @@ export function ParticipatingInstructorFullpageView({
       )
       .map(id => assignmentNotificationSentById.get(String(id)))
     return resolveInstructorUnassignNotificationSent(flags)
-  }, [assignedSchools, assignmentNotificationSentById, isInstitutionProgram, selectedAssignedSchoolKeys])
+  }, [
+    assignedSchools,
+    assignmentNotificationSentById,
+    selectedAssignedSchoolKeys,
+    usesInstitutionUnassignFlow,
+  ])
 
   const privacyMasked = !personalInfoRevealed
 
@@ -1440,13 +1417,19 @@ export function ParticipatingInstructorFullpageView({
   const qualificationCount = mergedInstructor.qualifications?.length ?? 0
 
   const handleActivityCertificateIssueClick = useCallback(() => {
-    if (isInstitutionProgram) {
+    void (async () => {
+      if (
+        !(await precheckActivityCertificateIssue(
+          mergedInstructor.id,
+          CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY
+        ))
+      ) {
+        return
+      }
       setActivityCertReasonLabel(undefined)
       setActivityCertReasonOpen(true)
-      return
-    }
-    setActivityCertPreviewOpen(true)
-  }, [isInstitutionProgram])
+    })()
+  }, [mergedInstructor.id, precheckActivityCertificateIssue])
 
   const handleActivityCertReasonIssue = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
@@ -1956,30 +1939,14 @@ export function ParticipatingInstructorFullpageView({
                 </div>
               </div>
 
-              {isInstitutionProgram ? (
-                <InstitutionUnassignConfirmModal
-                  open={unassignConfirmOpen}
-                  onCancel={() => setUnassignConfirmOpen(false)}
-                  targetNames={unassignSchoolNames}
-                  audience="instructor"
-                  notificationSent={unassignNotificationSent}
-                  onConfirm={handleUnassignConfirm}
-                />
-              ) : (
-                <SchoolDetailUnassignConfirmModal
-                  open={unassignConfirmOpen}
-                  onCancel={() => setUnassignConfirmOpen(false)}
-                  instructorNames={[d.instructorName]}
-                  targetNames={unassignSchoolNames}
-                  onConfirm={handleUnassignConfirm}
-                />
-              )}
-              <SchoolDetailUnassignCompleteModal
-                open={unassignCompleteModal != null}
-                onClose={() => setUnassignCompleteModal(null)}
-                instructorNames={unassignCompleteModal?.instructorNames ?? []}
-                targetNames={unassignCompleteModal?.targetNames ?? []}
-                reason={unassignCompleteModal?.reason ?? ''}
+              {/* 기관형·1사1교 공통 시안(06-1 발송 전·06-2 발송 후) — 취소 귀책 없음 */}
+              <InstitutionUnassignConfirmModal
+                open={unassignConfirmOpen}
+                onCancel={() => setUnassignConfirmOpen(false)}
+                targetNames={unassignSchoolNames}
+                audience="instructor"
+                notificationSent={unassignNotificationSent}
+                onConfirm={handleUnassignConfirm}
               />
 
               <AssignGuideModal
@@ -1999,7 +1966,8 @@ export function ParticipatingInstructorFullpageView({
                 onConfirm={handleAssignGuideConfirm}
                 onComplete={closeAssignGuideModal}
                 confirmLoading={assignGuideSubmitting}
-                completeVariant={isInstitutionProgram ? 'result' : 'default'}
+                // 배정 완료 — 기관형·1사1교 공통 시안(04-2 「배정 완료」)
+                completeVariant="result"
               />
               {isInstitutionProgram ? (
                 <>
@@ -2081,17 +2049,15 @@ export function ParticipatingInstructorFullpageView({
         onClose={() => setActivityCertPreviewOpen(false)}
         instructor={mergedInstructor}
         program={program}
-        issuanceReasonLabel={isInstitutionProgram ? activityCertReasonLabel : undefined}
+        issuanceReasonLabel={activityCertReasonLabel}
       />
-      {isInstitutionProgram ? (
-        <CertificateBulkIssueReasonModal
-          open={activityCertReasonOpen}
-          onCancel={() => setActivityCertReasonOpen(false)}
-          applicationIds={[mergedInstructor.id]}
-          certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
-          onIssue={handleActivityCertReasonIssue}
-        />
-      ) : null}
+      <CertificateBulkIssueReasonModal
+        open={activityCertReasonOpen}
+        onCancel={() => setActivityCertReasonOpen(false)}
+        applicationIds={[mergedInstructor.id]}
+        certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+        onIssue={handleActivityCertReasonIssue}
+      />
       <ParticipatingInstructorActivityWithdrawModal
         open={activityWithdrawModalOpen}
         instructorName={mergedInstructor.instructorName}

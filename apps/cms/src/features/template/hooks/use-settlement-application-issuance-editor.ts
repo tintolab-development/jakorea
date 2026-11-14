@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import {
+  getFormNavDisplayLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import {
@@ -145,9 +149,14 @@ export function useSettlementApplicationIssuanceEditor(
     setSingleItemListActiveItemId(null)
   }, [])
 
+  /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
     const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
-    const { titleNumbering } = draft.formSettings
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen
+    )
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
@@ -166,7 +175,7 @@ export function useSettlementApplicationIssuanceEditor(
       sortableMiddle: middle.map(line),
       pinnedBottom: bottomLines.length === 1 ? bottomLines[0]! : bottomLines,
     }
-  }, [draft])
+  }, [draft, isTemplateManagementScreen])
 
   const documentPreviewDraft = useMemo(
     () => buildSettlementApplicationDocumentPreviewDraft(),

@@ -1,7 +1,8 @@
-import { memo, useEffect, useRef, type MouseEvent } from 'react'
+import { memo, useEffect, useRef, useState, type MouseEvent } from 'react'
 import type { ScaleTypeParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { createDefaultScaleTypeItems } from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './scale-type.css'
 
 function normalizeItems(paragraph: ScaleTypeParagraph) {
@@ -43,7 +44,17 @@ function ScaleTypeInner({
   const prevCardSelectedRef = useRef(isCardSelected)
   const onSelectRef = useRef(onSelectPreviewItem)
   onSelectRef.current = onSelectPreviewItem
-  const selectedId = isBodyInteractive ? (paragraph.selectedPreviewItemId ?? null) : null
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  /** 템플릿 관리 작성 — 이번 화면에서 직접 고른 뒤에만 선택 표시 */
+  const [pickedInSession, setPickedInSession] = useState(false)
+  /**
+   * 템플릿 관리 작성 — 시드·저장 `selectedPreviewItemId`(예: 「매우 그렇다」)는 표시하지 않고 미선택으로 시작.
+   * 사용자 결정 2026-11-13. 저장값은 그대로 두며 프로그램 설문·회원 화면은 기존 동작.
+   */
+  const hideStoredSelection =
+    isTemplateManagementScreen && paragraphInteractionMode === 'authoring' && !pickedInSession
+  const selectedId =
+    isBodyInteractive && !hideStoredSelection ? (paragraph.selectedPreviewItemId ?? null) : null
   const bodyText = paragraph.bodyText?.trim() ?? ''
 
   useEffect(() => {
@@ -56,6 +67,7 @@ function ScaleTypeInner({
   const handleItemClick = (event: MouseEvent<HTMLButtonElement>, itemId: string) => {
     if (!isBodyInteractive) return
     event.stopPropagation()
+    setPickedInSession(true)
     onSelectRef.current(itemId)
   }
 

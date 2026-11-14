@@ -8,14 +8,12 @@ export const UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM: Program = {
   type: 'offline',
   format: 'course',
   category: 'school',
-  targetLevel: 'elementary',
-  targetLevels: ['elementary'],
-  district: '경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역 초등학교',
+  // 교육 대상·교육 대상 상세는 템플릿 관리에서 빈 값으로 시작(2026-11-13 요청)
   startDate: '',
   endDate: '',
   generalCommonInfo: {
+    // 공고 게시 여부는 템플릿 관리에서 미선택으로 시작
     participantRecruitmentInfo: {
-      announcementPublished: true,
       notesNotApplicable: false,
     },
   },

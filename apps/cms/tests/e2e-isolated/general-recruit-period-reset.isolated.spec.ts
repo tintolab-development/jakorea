@@ -43,7 +43,7 @@ test('기관+봉사자 — 참여자 모집 기간 선택 후에도 참여 유�
     timeout: 30_000,
   })
   await registration.fillCommonInfo()
-  const teacher = page.getByRole('checkbox', { name: '교사/강사' }).first()
+  const teacher = page.getByRole('checkbox', { name: /^강사$/ }).first()
   if ((await teacher.count()) > 0 && (await teacher.isChecked())) await teacher.click()
   await registration.goToRecruitment()
   await expect(page).toHaveURL(/generalStep=recruit-participant-school/)

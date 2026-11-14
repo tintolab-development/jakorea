@@ -5,6 +5,8 @@ export type TemplateDetailViewModeValue = {
   readOnly: boolean
   /** 「수정」 클릭 — URL mode를 `edit`로 바꾼다 */
   onRequestEdit?: () => void
+  /** true면 템플릿 관리(작성·발급 양식 탭) 화면 — Provider 안에서만 true */
+  templateManagement?: boolean
 }
 
 const DEFAULT_VALUE: TemplateDetailViewModeValue = { readOnly: false }
@@ -19,8 +21,11 @@ export function TemplateDetailViewModeProvider({
   readOnly,
   onRequestEdit,
   children,
-}: TemplateDetailViewModeValue & { children: ReactNode }) {
-  const value = useMemo(() => ({ readOnly, onRequestEdit }), [readOnly, onRequestEdit])
+}: Omit<TemplateDetailViewModeValue, 'templateManagement'> & { children: ReactNode }) {
+  const value = useMemo(
+    () => ({ readOnly, onRequestEdit, templateManagement: true }),
+    [readOnly, onRequestEdit]
+  )
   return (
     <TemplateDetailViewModeContext.Provider value={value}>
       {children}
@@ -30,4 +35,9 @@ export function TemplateDetailViewModeProvider({
 
 export function useTemplateDetailViewMode(): TemplateDetailViewModeValue {
   return useContext(TemplateDetailViewModeContext)
+}
+
+/** 템플릿 관리(작성·발급 양식 탭) 안에서 렌더 중인지 — 프로그램 등록 등 다른 화면은 false */
+export function useIsTemplateManagementScreen(): boolean {
+  return useContext(TemplateDetailViewModeContext).templateManagement === true
 }

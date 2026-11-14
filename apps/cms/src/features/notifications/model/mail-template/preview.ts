@@ -73,6 +73,14 @@ export function formatMailPreviewPerson(name: string | undefined, email: string 
   return '-'
 }
 
+/** 메일 미리보기 「보낸 사람」 — 시안 `발신자 이름<발신 메일>` (공백 없음, QA 2026-11-13) */
+export function formatMailPreviewSender(name: string | undefined, email: string | undefined): string {
+  const trimmedName = name?.trim() ?? ''
+  const trimmedEmail = email?.trim() ?? ''
+  if (trimmedName && trimmedEmail) return `${trimmedName}<${trimmedEmail}>`
+  return formatMailPreviewPerson(trimmedName, trimmedEmail)
+}
+
 export type MailPreviewRecipient = {
   name?: string
   email?: string

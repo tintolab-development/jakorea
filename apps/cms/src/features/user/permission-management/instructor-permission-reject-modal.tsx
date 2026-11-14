@@ -4,6 +4,7 @@ import type {
   PermissionApproveModalKind,
 } from '@/features/user/permission-management/instructor-permission-approve-modal'
 import { toInstructorRoleReviewScheduledAt } from '@/features/user/permission-management/lib/instructor-role-review-notify'
+import './instructor-permission-reject-modal.css'
 
 export interface InstructorPermissionRejectPayload {
   rejectionReason: string
@@ -75,6 +76,8 @@ export function InstructorPermissionRejectModal(props: InstructorPermissionRejec
       variant="reject"
       title={title}
       zIndex={zIndex}
+      className="instructor-permission-reject-modal"
+      confirmEnabledWithoutReason
       notifyTimingOptions="two"
       message={`${lead}\n${REJECT_NOTICE}`}
     />

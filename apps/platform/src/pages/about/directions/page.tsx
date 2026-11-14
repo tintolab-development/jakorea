@@ -20,7 +20,7 @@ export function DirectionsPage() {
 
       <div className={styles.content}>
         <header className={styles.hero}>
-          <PFText as="h1" typo="page-title" color="black" className={styles.title}>
+          <PFText as="h1" typo="page-title-md" color="black" className={styles.title}>
             오시는 길
           </PFText>
         </header>

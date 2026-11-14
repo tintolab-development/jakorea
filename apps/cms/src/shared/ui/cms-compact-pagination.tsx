@@ -2,6 +2,7 @@
  * CMS 공용 compact 페이지네이션 — `<` `현재 / 전체` `>` (Platform PFPagination compact 패턴)
  */
 
+import { ButtonLeftIcon, ButtonRightIcon } from './icons'
 import './cms-compact-pagination.css'
 
 export type CmsCompactPaginationVariant = 'default' | 'modal'
@@ -16,31 +17,22 @@ export interface CmsCompactPaginationProps {
   ariaLabel?: string
 }
 
+/** 기본형 이전/다음 — 시안 `Icon / Button / w20` left·right (비활성은 연한 색) */
 function ChevronLeftIcon({ muted }: { muted?: boolean }) {
   return (
-    <svg width="8" height="12" viewBox="0 0 8 12" fill="none" aria-hidden>
-      <path
-        d="M6.5 1L1.5 6L6.5 11"
-        stroke={muted ? '#C5CCD0' : '#3D3D3D'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <ButtonLeftIcon
+      className="cms-compact-pagination__icon"
+      style={{ color: muted ? '#C5CCD0' : '#3D3D3D' }}
+    />
   )
 }
 
 function ChevronRightIcon({ muted }: { muted?: boolean }) {
   return (
-    <svg width="8" height="12" viewBox="0 0 8 12" fill="none" aria-hidden>
-      <path
-        d="M1.5 1L6.5 6L1.5 11"
-        stroke={muted ? '#C5CCD0' : '#3D3D3D'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <ButtonRightIcon
+      className="cms-compact-pagination__icon"
+      style={{ color: muted ? '#C5CCD0' : '#3D3D3D' }}
+    />
   )
 }
 

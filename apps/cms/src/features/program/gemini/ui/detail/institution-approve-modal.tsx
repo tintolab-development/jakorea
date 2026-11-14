@@ -9,6 +9,7 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import { buildInstitutionApplicationBulkApproveCopy } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-modal'
 import '@/features/program/shared/ui/detail-modal/components/institution-approve-modal.css'
 
 export type GeminiInstitutionApproveConfirmPayload = PermissionModalPayload
@@ -25,12 +26,20 @@ export function buildGeminiInstitutionApproveMessage(
 ): string {
   const name = resolveSubjectName(subjectName)
   if (selectionCount > 1) {
-    return `**[${name}] 외 ${selectionCount - 1}개**의 프로그램 신청을 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
+    // 일반 기관형 일괄 승인과 같은 문구(`InstitutionBulkApproveModal`)
+    return buildInstitutionApplicationBulkApproveCopy({ subjectName: name, selectionCount }).message
   }
   if (withScheduleAssignment) {
     return `**[${name}]**의 프로그램 신청을 승인하시겠습니까?\n승인 시 선택한 일정으로 교육이 배정되며, 담당 교사에게 승인 알림이 발송됩니다.`
   }
   return `**[${name}]**의 프로그램 신청을 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
+}
+
+/** 단건 「프로그램 신청 승인 안내」 · 일괄은 일반 기관형과 같은 「프로그램 신청 일괄 승인 안내」 */
+export function resolveGeminiInstitutionApproveTitle(selectionCount = 1): string {
+  return selectionCount > 1
+    ? buildInstitutionApplicationBulkApproveCopy({ subjectName: '', selectionCount }).title
+    : '프로그램 신청 승인 안내'
 }
 
 export function GeminiInstitutionApproveModal({
@@ -70,7 +79,7 @@ export function GeminiInstitutionApproveModal({
       open={open}
       variant="approve"
       className="institution-approve-modal"
-      title="프로그램 신청 승인 안내"
+      title={resolveGeminiInstitutionApproveTitle(selectionCount)}
       confirmLabel="승인"
       confirmLoading={confirmLoading}
       notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}

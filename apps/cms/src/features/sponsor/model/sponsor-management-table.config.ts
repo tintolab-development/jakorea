@@ -2,12 +2,13 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
+import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { parseSponsorSponsorshipStatusFilter } from '@/features/sponsor/model/sponsorship-status'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import {
   filterSponsorsBySponsorshipStartDateRange,
+  parseSponsorOrganizationKindFilter,
   writeSponsorshipStartDateRangeToSearchParams,
 } from '@/features/sponsor/api/sponsor-filter-params'
 import type {
@@ -16,11 +17,6 @@ import type {
   SponsorManagementRow,
   SponsorManagementTableContext,
 } from './sponsor-management.types'
-
-function parseKind(raw: string | null): SponsorOrganizationKind {
-  if (raw === 'foundation') return 'foundation'
-  return 'corporate'
-}
 
 function parseStatus(raw: string | null): 'ALL' | SponsorSponsorshipStatus {
   return parseSponsorSponsorshipStatusFilter(raw)
@@ -71,7 +67,7 @@ const searchSyncRules: readonly TableSearchParamRule<SponsorManagementPendingFil
     kind: 'param',
     filterKey: 'organizationKind',
     paramKey: 'sp_kind',
-    condition: () => true,
+    condition: f => f.organizationKind !== 'ALL',
     transform: v => String(v),
   },
   {
@@ -119,7 +115,7 @@ export const sponsorManagementTablePageConfig: TablePageConfig<
 
   filters: {
     initialPending: {
-      organizationKind: 'corporate',
+      organizationKind: 'ALL',
       sponsorName: '',
       managerName: '',
       sponsorshipStatus: 'ALL',
@@ -127,7 +123,7 @@ export const sponsorManagementTablePageConfig: TablePageConfig<
     },
 
     syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
-      const organizationKind = parseKind(searchParams.get('sp_kind'))
+      const organizationKind = parseSponsorOrganizationKindFilter(searchParams.get('sp_kind'))
       const sponsorName = searchParams.get('sp_name') ?? ''
       const managerName = searchParams.get('sp_mgr') ?? ''
       const sponsorshipStatus = parseStatus(searchParams.get('sp_st'))
@@ -163,11 +159,19 @@ export const sponsorManagementTablePageConfig: TablePageConfig<
       if (key === 'sponsorshipStartDateRange') {
         return { ...prev, sponsorshipStartDateRange: normalizeDateRangePickerValue(value) }
       }
+      if (key === 'organizationKind') {
+        return {
+          ...prev,
+          organizationKind: parseSponsorOrganizationKindFilter(
+            typeof value === 'string' ? value : null
+          ),
+        }
+      }
       return { ...prev, [key]: value }
     },
 
     hasActiveFilters: ({ searchParams }) => {
-      if (parseKind(searchParams.get('sp_kind')) !== 'corporate') return true
+      if (parseSponsorOrganizationKindFilter(searchParams.get('sp_kind')) !== 'ALL') return true
       if ((searchParams.get('sp_name') ?? '').trim()) return true
       if ((searchParams.get('sp_mgr') ?? '').trim()) return true
       if (parseStatus(searchParams.get('sp_st')) !== 'ALL') return true

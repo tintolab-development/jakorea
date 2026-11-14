@@ -14,7 +14,7 @@ import {
   type Ref,
   type RefAttributes,
 } from 'react'
-import { CalendarOutlined } from '@ant-design/icons'
+import { FieldCalendarIcon } from '@jakorea/admin-ui/field'
 import { DatePicker } from 'antd'
 import type { DatePickerProps } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -93,9 +93,7 @@ const AppDatePickerRender: ForwardRefRenderFunction<AppDatePickerRef, AppDatePic
         variant="borderless"
         className={pickerCn}
         format={formatProp ?? formatAppDatepickerDisplay}
-        prefix={
-          prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
-        }
+        prefix={prefix ?? <FieldCalendarIcon className="app-datepicker__calendar-icon" />}
         suffixIcon={suffixIcon ?? null}
         inputReadOnly={inputReadOnly ?? true}
         placeholder={placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER}
@@ -222,9 +220,7 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
           variant="borderless"
           className={pickerCn}
           format={fmt}
-          prefix={
-            prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
-          }
+          prefix={prefix ?? <FieldCalendarIcon className="app-datepicker__calendar-icon" />}
           suffixIcon={suffixIcon ?? null}
           inputReadOnly={inputReadOnly ?? true}
           value={start}
@@ -247,9 +243,7 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
           variant="borderless"
           className={pickerCn}
           format={fmt}
-          prefix={
-            prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
-          }
+          prefix={prefix ?? <FieldCalendarIcon className="app-datepicker__calendar-icon" />}
           suffixIcon={suffixIcon ?? null}
           inputReadOnly={inputReadOnly ?? true}
           value={end}

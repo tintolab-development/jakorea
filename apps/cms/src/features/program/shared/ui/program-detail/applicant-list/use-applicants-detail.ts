@@ -469,8 +469,11 @@ export function useApplicantsDetail({
                 ...notify,
               })
             } else {
+              // 교육받은 교사 반려 — `ApplicationRejectRequest`도 timing·scheduledAt(ON_ANNOUNCEMENT 포함)을 받는다.
+              // 팝업에서 고른 알림 시점을 버리지 않고 함께 보낸다(생략 시 서버 IMMEDIATE).
               await institutionApplicationsRemote.rejectOrganization(id, {
                 reason: rejectReason,
+                ...notify,
               })
             }
           }
@@ -2068,6 +2071,10 @@ export function useApplicantsDetail({
     if (listTitle) return listTitle
     switch (menu) {
       case 'institutions':
+        // 1사1교·교육받은 교사 — 「기관 신청 목록」(QA 2026-11-13 1사1교 #7, 교육받은 교사 #13)
+        if (institutionColumnPreset === 'company-school' || isTrainedTeachersSurface) {
+          return '기관 신청 목록'
+        }
         return '교육 신청 기관 목록'
       case 'instructors':
         return '교육 신청 강사 목록'
@@ -2076,7 +2083,7 @@ export function useApplicantsDetail({
       default:
         return ''
     }
-  }, [menu, listTitle])
+  }, [menu, listTitle, institutionColumnPreset, isTrainedTeachersSurface])
 
   const tableData = useMemo((): ApplicantListRow[] => {
     if (menu === 'individual-applications') {

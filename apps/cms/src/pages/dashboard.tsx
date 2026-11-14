@@ -11,7 +11,7 @@ import { Row } from 'antd'
 import { DndContext, DragOverlay, MeasuringStrategy, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSwappingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getDashboardWidgetsForUser, isWidgetResizable } from '@/shared/config/dashboard-config'
+import { isWidgetResizable } from '@/shared/config/dashboard-config'
 import { canAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import {
@@ -23,8 +23,6 @@ import {
   DashboardToolbar,
   DashboardWidgetRenderer,
   type DashboardWidgetRendererProps,
-  useOverallStatistics,
-  useInstructorActivity,
   useDashboardDnd,
   getSlotHeight,
   useDashboardHome,
@@ -146,26 +144,9 @@ export function Dashboard() {
   )
   const userRole = user?.role ?? null
 
-  const instructorCount = null
   const activeProgramsCount = isAdmin
     ? (dashboardHome?.programCount ?? null)
     : mockActiveProgramCount
-
-  const isInstructorOrIndividual =
-    (user?.role === 'INSTRUCTOR' || user?.role === 'INDIVIDUAL') && !!user?.instructorId
-
-  /** 역할 위젯에 overall-statistics가 있을 때만 조회 (관리자 홈 기본 구성에는 없음) */
-  const needsOverallStatistics = useMemo(() => {
-    if (!isAdmin || !user) return false
-    return getDashboardWidgetsForUser(user).some(w => w.type === 'overall-statistics-cards')
-  }, [isAdmin, user])
-
-  const { data: overallStatistics, loading: statisticsLoading } =
-    useOverallStatistics(needsOverallStatistics)
-  const { data: instructorActivity, loading: instructorActivityLoading } = useInstructorActivity(
-    !!isInstructorOrIndividual,
-    user?.instructorId
-  )
 
   const {
     displayOrder,
@@ -219,21 +200,9 @@ export function Dashboard() {
 
   const widgetRendererProps = useMemo(
     () => ({
-      overallStatistics,
-      statisticsLoading,
-      instructorActivity,
-      instructorActivityLoading,
-      instructorCount,
       user: user ?? undefined,
     }),
-    [
-      overallStatistics,
-      statisticsLoading,
-      instructorActivity,
-      instructorActivityLoading,
-      instructorCount,
-      user,
-    ]
+    [user]
   )
 
   return (

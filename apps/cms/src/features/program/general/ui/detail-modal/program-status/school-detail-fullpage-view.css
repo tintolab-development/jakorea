@@ -333,6 +333,15 @@
   margin-bottom: var(--spacing-16);
 }
 
+/* 시안 — 「배정된 강사 목록」 등 섹션 제목 18px, 건수 14px */
+.school-detail-fullpage-view__instructor-tab .table-header-title--wrapper .table-title {
+  font-size: 18px;
+}
+
+.school-detail-fullpage-view__instructor-tab .table-header-title--wrapper .table-description {
+  font-size: 14px;
+}
+
 .school-detail-fullpage-view__instructor-section {
   width: 100%;
 }

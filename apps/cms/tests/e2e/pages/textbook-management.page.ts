@@ -1,7 +1,7 @@
 /**
  * 교재 관리 POM — `/textbook`
  *
- * 기본 필터 `tb_use=USED`. 사업 분야 관리 버튼은 FE에 없다.
+ * 기본 필터 사용 여부 전체(`tb_use` 없음).
  */
 
 import { type Locator, type Page, expect } from '@playwright/test'
@@ -9,9 +9,11 @@ import { expectAuthenticatedShell } from '../helpers/authenticated-shell'
 import {
   clickSearch,
   expectColumnTitles,
+  expectFilterSelectText,
   fillTypedDeleteConfirm,
   filterField,
   isAdminMutation,
+  selectFilterOption,
   selectRowCheckbox,
   tableRows,
   tryFindRow,
@@ -23,7 +25,7 @@ import { detailInfoField, selectByPlaceholder } from './form-helpers'
 const LIST_COLUMNS = [
   'No.',
   '사용 여부',
-  '교재명',
+  '교재',
   '사업 분야',
   '교육 대상',
   '대상 학년',
@@ -105,7 +107,7 @@ export class TextbookManagementPage {
     const row = modal.locator('tr.ant-table-row').filter({ hasText: name }).first()
     await expect(row).toBeVisible({ timeout: 15_000 })
 
-    const blocked = this.page.getByRole('dialog').filter({ hasText: '사업 분야 삭제 불가' })
+    const blocked = this.page.getByRole('dialog').filter({ hasText: '사업 분야 삭제 불가 안내' })
     const deletePromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'DELETE', /\/api\/admin\/textbook-business-areas\/[^/]+\/?$/),
       { timeout: 20_000 }
@@ -136,21 +138,17 @@ export class TextbookManagementPage {
     await expect(modal.locator('tr.ant-table-row').filter({ hasText: name })).toHaveCount(0, {
       timeout: 15_000,
     })
-    await modal.getByRole('button', { name: '닫기' }).click()
+    await modal.getByRole('button', { name: '취소', exact: true }).click()
     await expect(modal).toBeHidden({ timeout: 10_000 })
   }
 
-  async expectDefaultUseUsed() {
-    await expect(this.page).toHaveURL(/tb_use=USED/, { timeout: 15_000 })
-    await expect(
-      filterField(this.page, '사용 여부').getByRole('radio', { name: '사용' })
-    ).toBeChecked()
+  async expectDefaultUseAll() {
+    await expect(this.page).not.toHaveURL(/tb_use=/, { timeout: 15_000 })
+    await expectFilterSelectText(this.page, '사용 여부', '전체')
   }
 
-  async selectUseStatus(label: '사용' | '미사용') {
-    await filterField(this.page, '사용 여부')
-      .getByRole('radio', { name: label })
-      .check({ force: true })
+  async selectUseStatus(label: '전체' | '사용' | '미사용') {
+    await selectFilterOption(this.page, '사용 여부', label)
   }
 
   async fillTextbookName(name: string) {
@@ -240,25 +238,25 @@ export class TextbookManagementPage {
 
   async selectRegisterBusinessArea() {
     try {
-      await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요.', '경제금융')
+      await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요', '경제금융')
       return
     } catch {
       // 마스터 API 시드명이 다르면 첫 옵션
     }
-    await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요.')
+    await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요')
   }
 
   async registerTextbook() {
     await this.page.getByRole('button', { name: '교재 등록' }).click()
-    const modal = this.page.getByRole('dialog').filter({ hasText: '교재 등록' })
+    const modal = this.page.getByRole('dialog').filter({ hasText: '교재 신규 등록' })
     await expect(modal).toBeVisible()
     await modal.getByRole('radio', { name: '사용' }).check({ force: true })
     const nameInputs = modal.getByPlaceholder('교재명을 입력해 주세요.')
     await nameInputs.nth(0).fill(this.uniqueName)
     await nameInputs.nth(1).fill(`${this.uniqueName} EN`)
     await this.selectRegisterBusinessArea()
-    await selectByPlaceholder(this.page, '교육 대상을 선택해 주세요.', '초등학교')
-    await selectByPlaceholder(this.page, '대상 학년을 선택해 주세요.', '전학년')
+    await selectByPlaceholder(this.page, '교육 대상을 선택해 주세요', '초등학교')
+    await selectByPlaceholder(this.page, '대상 학년을 선택해 주세요', '전학년')
 
     const createPromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'POST', /\/api\/admin\/textbooks\/?$/),
@@ -340,26 +338,29 @@ export class TextbookManagementPage {
     const modal = this.kitModal()
     await expect(modal).toBeVisible({ timeout: 15_000 })
     await expect(modal.getByText('유아')).toBeVisible()
-    await expect(modal.getByText('초등')).toBeVisible()
-    await expect(modal.getByText('중등')).toBeVisible()
-    await expect(modal.getByText('고등')).toBeVisible()
-    await expect(modal.getByText('대학')).toBeVisible()
+    await expect(modal.getByText('초등학교')).toBeVisible()
+    await expect(modal.getByText('중학교')).toBeVisible()
+    await expect(modal.getByText('고등학교')).toBeVisible()
+    await expect(modal.getByText('대학교')).toBeVisible()
   }
 
   kitModal(): Locator {
     return this.page.getByRole('dialog').filter({ hasText: '키트 수량 관리' })
   }
 
-  async readKitQuantity(level: '유아' | '초등' | '중등' | '고등' | '대학') {
+  async readKitQuantity(level: '유아' | '초등학교' | '중학교' | '고등학교' | '대학교') {
     return this.kitModal().getByLabel(`${level} 키트 수량`).inputValue()
   }
 
-  async setKitQuantity(level: '유아' | '초등' | '중등' | '고등' | '대학', value: string) {
+  async setKitQuantity(
+    level: '유아' | '초등학교' | '중학교' | '고등학교' | '대학교',
+    value: string
+  ) {
     await this.kitModal().getByLabel(`${level} 키트 수량`).fill(value)
   }
 
   async confirmKitModal() {
-    await this.kitModal().getByRole('button', { name: '확인' }).click()
+    await this.kitModal().getByRole('button', { name: '설정', exact: true }).click()
   }
 
   async expectKitChangeNotice() {

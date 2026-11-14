@@ -89,6 +89,13 @@
   background: var(--main-WT, #fff);
 }
 
+/* 시안 Calendar / Miniview: Icon / Button / w20 left·right */
+.calendar-nav .calendar-nav-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 .calendar-nav .calendar-nav-btn:hover {
   border-color: #d9d9d9;
   color: var(--color-text-label);

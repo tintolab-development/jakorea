@@ -89,7 +89,7 @@ export function ResultDetailPage() {
               {detail.categoryName}
             </PFCategoryBadge>
 
-            <PFText as="h1" typo="hd-lg" color="black" className={styles.title}>
+            <PFText as="h1" typo="page-title-md" color="black" className={styles.title}>
               {detail.title}
             </PFText>
 

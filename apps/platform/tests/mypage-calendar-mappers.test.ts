@@ -110,14 +110,14 @@ describe('portal calendar time display', () => {
     ).toEqual({ time: '14:00', allDayTimeConflict: false })
   })
 
-  it('records allDay vs clock conflict and still shows the server clock', () => {
+  it('records allDay vs clock conflict and still shows 종일', () => {
     expect(
       formatPortalCalendarTimeRange({
         allDay: true,
         startAt: '2026-11-05T09:00:00+09:00',
         endAt: '2026-11-05T10:00:00+09:00',
       }),
-    ).toEqual({ time: '09:00~10:00', allDayTimeConflict: true })
+    ).toEqual({ time: '종일', allDayTimeConflict: true })
   })
 })
 

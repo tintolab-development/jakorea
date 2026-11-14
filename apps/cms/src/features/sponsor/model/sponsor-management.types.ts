@@ -39,9 +39,12 @@ export type SponsorManagementDateRange =
   | [Dayjs | null, Dayjs | null]
   | null
 
+/** 목록 구분 필터 값 — `ALL`이면 구분 조건 없이 조회 */
+export type SponsorOrganizationKindFilter = 'ALL' | SponsorOrganizationKind
+
 export type SponsorManagementPendingFilters = {
-  /** 전체 없음 — 기업/재단 라디오만 */
-  organizationKind: SponsorOrganizationKind
+  /** 구분 선택 박스 — 전체(`ALL`, 기본) / 기업 / 재단 */
+  organizationKind: SponsorOrganizationKindFilter
   sponsorName: string
   managerName: string
   sponsorshipStatus: 'ALL' | SponsorSponsorshipStatus

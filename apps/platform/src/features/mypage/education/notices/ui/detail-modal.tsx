@@ -195,8 +195,6 @@ export function EducationInProgressNoticeDetailModal({
       ? MOCK_MYPAGE_USER_NAME
       : ''
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null)
-  /** 댓글 입력창에서 고른 반응 — 전송 시 반영 (CMS comment-composer 와 동일) */
-  const [draftEmojiIndex, setDraftEmojiIndex] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isContentImagesLoading, setIsContentImagesLoading] = useState(false)
 
@@ -237,7 +235,6 @@ export function EducationInProgressNoticeDetailModal({
     setReactionPanel(null)
     setIsCommentListOpen(false)
     setCommentToDeleteId(null)
-    setDraftEmojiIndex(null)
     if (!open) {
       setComment('')
       setIsAuthorMenuOpen(false)
@@ -407,10 +404,20 @@ export function EducationInProgressNoticeDetailModal({
     })
   }
 
+  /** 반응은 고르는 즉시 저장 — 같은 반응을 다시 고르면 취소, 다른 반응이면 교체 (1인 1반응) */
   const handleReactionEmojiSelect = (index: number) => {
-    if (!getPlatformReactionEmojiTypeForIndex(index)) return
-    setDraftEmojiIndex(prev => (prev === index ? null : index))
+    const emojiType = getPlatformReactionEmojiTypeForIndex(index)
+    if (!emojiType) return
     setReactionPanel(null)
+    if (!isRemote || toggleReactionMutation.isPending) return
+    toggleReactionMutation.mutate(
+      {
+        postId: notice.id,
+        reactionType: emojiType,
+        myReactionTypes: remoteReactions.myReactionTypes,
+      },
+      { onError: () => setActionErrorMessage('반응을 저장하지 못했습니다.') }
+    )
   }
 
   const handleReactionListToggle = () => {
@@ -422,44 +429,25 @@ export function EducationInProgressNoticeDetailModal({
     setIsCommentListOpen(open => !open)
   }
 
-  /** 같은 반응을 다시 보내면 취소, 다른 반응이면 교체 (1인 1반응) */
   const handleCommentSubmit = () => {
     const content = comment.trim()
-    const emojiType =
-      draftEmojiIndex != null ? getPlatformReactionEmojiTypeForIndex(draftEmojiIndex) : undefined
-    if (!content && !emojiType) return
+    if (!content) return
     if (isSubmitting) return
 
     const finish = () => {
       setComment('')
-      setDraftEmojiIndex(null)
-      if (content) setIsCommentListOpen(true)
+      setIsCommentListOpen(true)
     }
 
     if (isRemote) {
       setIsSubmitting(true)
       void (async () => {
         try {
-          if (emojiType) {
-            try {
-              await toggleReactionMutation.mutateAsync({
-                postId: notice.id,
-                reactionType: emojiType,
-                myReactionTypes: remoteReactions.myReactionTypes,
-              })
-            } catch {
-              setActionErrorMessage('반응을 저장하지 못했습니다.')
-              return
-            }
-          }
-          if (content) {
-            try {
-              await commentMutations.create.mutateAsync({ postId: notice.id, content })
-            } catch {
-              setDraftEmojiIndex(null)
-              setActionErrorMessage('댓글을 등록하지 못했습니다.')
-              return
-            }
+          try {
+            await commentMutations.create.mutateAsync({ postId: notice.id, content })
+          } catch {
+            setActionErrorMessage('댓글을 등록하지 못했습니다.')
+            return
           }
           finish()
         } finally {
@@ -495,10 +483,10 @@ export function EducationInProgressNoticeDetailModal({
     setCommentToDeleteId(null)
   }
 
-  const canSubmitComment =
-    (comment.trim().length > 0 || draftEmojiIndex != null) && !isSubmitting
-  const draftEmojiItem =
-    draftEmojiIndex != null ? PLATFORM_REACTION_EMOJI_ITEMS[draftEmojiIndex] : undefined
+  const canSubmitComment = comment.trim().length > 0 && !isSubmitting
+  /** 입력창 옆 이모지 버튼 — 저장된 내 반응을 보여 준다(새로고침 후에도 유지) */
+  const myReactionEmojiItem =
+    selectedEmojiIndex != null ? PLATFORM_REACTION_EMOJI_ITEMS[selectedEmojiIndex] : undefined
 
   return (
     <>
@@ -507,6 +495,7 @@ export function EducationInProgressNoticeDetailModal({
         onClose={onClose}
         size="lg"
         mobilePlacement="full"
+        showCloseButton={false}
         className={styles.modal}
         ariaLabelledBy="education-notice-detail-author"
       >
@@ -528,6 +517,27 @@ export function EducationInProgressNoticeDetailModal({
         />
 
         <div className={styles.shell}>
+          <div className={styles.mobileNav}>
+            <button type="button" className={styles.mobileNavButton} onClick={onClose}>
+              닫기
+            </button>
+            <button
+              type="button"
+              className={styles.mobileNavButton}
+              disabled={!canGoPrev}
+              onClick={handlePrev}
+            >
+              이전 안내사항
+            </button>
+            <button
+              type="button"
+              className={styles.mobileNavButton}
+              disabled={!canGoNext}
+              onClick={handleNext}
+            >
+              다음 안내사항
+            </button>
+          </div>
           <div className={styles.body}>
             <div className={styles.stickyTop}>
               <header className={styles.header}>
@@ -595,7 +605,7 @@ export function EducationInProgressNoticeDetailModal({
                   <button
                     type="button"
                     className={styles.iconButton}
-                    aria-label="닫기"
+                    aria-label="안내사항 닫기"
                     onClick={onClose}
                   >
                     <img
@@ -819,9 +829,9 @@ export function EducationInProgressNoticeDetailModal({
                   aria-expanded={reactionPanel === 'picker'}
                   onClick={() => setReactionPanel(panel => (panel === 'picker' ? null : 'picker'))}
                 >
-                  {draftEmojiItem ? (
+                  {myReactionEmojiItem ? (
                     <span className={styles.emojiPreview} aria-hidden="true">
-                      {draftEmojiItem.renderIcon(`${emojiPreviewClipId}-draft`)}
+                      {myReactionEmojiItem.renderIcon(`${emojiPreviewClipId}-mine`)}
                     </span>
                   ) : (
                     <img
@@ -842,7 +852,7 @@ export function EducationInProgressNoticeDetailModal({
                         style={pickerPopoverStyle}
                       >
                         <EducationNoticeReactionEmojiPicker
-                          selectedIndex={draftEmojiIndex ?? selectedEmojiIndex}
+                          selectedIndex={selectedEmojiIndex}
                           onSelect={handleReactionEmojiSelect}
                         />
                       </div>,

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { collectChangedSchoolDetailAttendances } from '../../../api/school-detail-attendance-api'
 import { SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES } from '@/features/program/general/lib/school-detail-attendance'
+import { ATTENDANCE_CORRECTION_NOT_OPEN_ALERT } from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   attendanceStudentRowsEqual,
   cloneAttendanceStudentRows,
@@ -105,6 +106,11 @@ export function SchoolDetailAttendanceSessionPanel({
       })
       return
     }
+    // 진행 예정 차시는 출결 정정 불가 — 저장 요청 전에 안내한다(서버 409와 같은 문구).
+    if (!session.attendanceRecordingOpen) {
+      showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+      return
+    }
     if (changedRows.length === 0) {
       showAlert({ title: '안내', content: '변경된 출석 정보가 없습니다.' })
       return
@@ -126,6 +132,7 @@ export function SchoolDetailAttendanceSessionPanel({
     onSave,
     saving,
     scopeBlocked,
+    session.attendanceRecordingOpen,
     session.id,
     session.scheduleId,
     session.scheduleIdUnresolved,

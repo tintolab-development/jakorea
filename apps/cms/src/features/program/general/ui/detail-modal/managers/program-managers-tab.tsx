@@ -16,7 +16,10 @@ import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/f
 import { ActionResultModal, DeleteBlockedGuideModal, FilterTableToolbarButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
-import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import {
+  displayServerPhoneWithHyphens,
+  displayServerPiiAsIs,
+} from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -83,7 +86,7 @@ interface ProgramManagersTabProps {
   blockLastManagerDelete?: boolean
   /**
    * `general`: 일반 프로그램 시안 — 「선택 삭제」 라벨, 권한 열 180·나머지 균등 폭,
-   * 선택 없이 삭제 시 「항목 선택 안내」, 담당자 추가 팝업 권한 기본 미선택.
+   * 선택 없이 삭제 시 「항목 미선택 안내」, 담당자 추가 팝업 권한 기본 미선택.
    * 생략(`default`) 시 기존 동작 유지 — UJAT·1사1교·Gemini 호출부.
    */
   variant?: 'default' | 'general'
@@ -375,7 +378,7 @@ export function ProgramManagersTab({
         // 일반 시안: 담당자명·연락처·이메일·등록일시가 남은 폭을 균등 분배
         width: isGeneralVariant ? undefined : 246,
         align: 'center',
-        render: (phone: string) => displayServerPiiAsIs(phone),
+        render: (phone: string) => displayServerPhoneWithHyphens(phone),
       },
       {
         title: '이메일',
@@ -418,7 +421,7 @@ export function ProgramManagersTab({
         title: '연락처',
         dataIndex: 'phone',
         key: 'phone',
-        render: (phone: string) => displayServerPiiAsIs(phone),
+        render: (phone: string) => displayServerPhoneWithHyphens(phone),
       },
       {
         title: '이메일',

@@ -23,7 +23,7 @@ import type { SettlementConfigResponse } from '@/shared/api/generated/settlement
 
 const SETTLEMENT_CONFIG_ITEM_KIND_LOCKED = 'SETTLEMENT_CONFIG_ITEM_KIND_LOCKED'
 const SETTLEMENT_CONFIG_ITEM_NOT_FOUND = 'SETTLEMENT_CONFIG_ITEM_NOT_FOUND'
-export const SETTLEMENT_CONFIG_ITEM_KIND_LOCKED_MESSAGE = '임금/공제 항목은 복제·삭제할 수 없습니다'
+export const SETTLEMENT_CONFIG_ITEM_KIND_LOCKED_MESSAGE = '임금/공제 항목은 복사·삭제할 수 없습니다'
 const SETTLEMENT_CONFIG_ITEM_NOT_FOUND_MESSAGE =
   '현재 정산 설정에서 대상 지급 항목을 찾을 수 없습니다.'
 

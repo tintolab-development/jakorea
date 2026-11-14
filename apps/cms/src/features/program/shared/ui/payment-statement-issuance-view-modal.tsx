@@ -15,7 +15,7 @@ import {
   getA4DocumentTitle,
   getA4PreviewParagraphs,
 } from '@/features/template/lib/a4-document-preview'
-import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
+import { createPaymentStatementIssuanceDocumentDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import {
   getPaymentStatementA4ParagraphGap,
   PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
@@ -116,7 +116,7 @@ export function PaymentStatementIssuanceViewModal({
   const pdfLoading = downloadLoadingProp
 
   const draft = useMemo(
-    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDraft()),
+    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDocumentDraft()),
     []
   )
 

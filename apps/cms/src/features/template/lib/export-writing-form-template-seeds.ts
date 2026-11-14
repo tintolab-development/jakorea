@@ -41,6 +41,8 @@ import {
   createAgreementPortraitDraft,
   createDefaultSurveyDraft,
   createEducatorFacilitatorPledgeDraft,
+  createSurveyDefaultTemplateDraft,
+  createSurveyStudentTemplateDraft,
   createLectureReportIssuanceDraft,
   createUjatEducationJournalIssuanceDraft,
   createUjatEducationPlanIssuanceDraft,
@@ -234,12 +236,12 @@ const WRITING_FORM_SEED_SPECS: WritingFormSeedSpec[] = [
   {
     templateCode: 'survey-default',
     payload: 'A',
-    createDraft: () => createDefaultSurveyDraft(),
+    createDraft: () => createSurveyDefaultTemplateDraft(),
   },
   {
     templateCode: 'survey-student',
     payload: 'A',
-    createDraft: () => createDefaultSurveyDraft(),
+    createDraft: () => createSurveyStudentTemplateDraft(),
   },
   {
     templateCode: 'survey-teacher',

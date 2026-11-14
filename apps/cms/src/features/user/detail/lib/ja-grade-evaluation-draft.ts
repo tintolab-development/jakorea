@@ -14,7 +14,8 @@ import type { JaGradeEvaluationRecord } from '@/features/user/detail/lib/ja-grad
 function createJaGradeScaleItems(): ScaleTypeItem[] {
   return [1, 2, 3, 4, 5].map(score => ({
     id: `ja-scale-${score}`,
-    label: String(score),
+    /** 시안: 점수 버튼 「1점」~「5점」 */
+    label: `${score}점`,
   }))
 }
 

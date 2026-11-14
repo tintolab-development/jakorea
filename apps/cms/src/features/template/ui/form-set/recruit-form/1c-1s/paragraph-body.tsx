@@ -4,11 +4,10 @@ import { ECONOMY_RECRUIT_FORM_INSTITUTION_IDS } from '@/features/template/model/
 import { ApplicantRecruitParticipantInfoParagraph } from '@/features/template/ui/form-set/recruit-form/institution/paragraphs/applicant-recruit-participant-info-paragraph'
 import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-paragraph'
 
+/** 배정 가능 최대 강사 수·신청 가능 최대 학급 수는 기본값 없이 빈 칸으로 시작한다(템플릿 관리). */
 const ECONOMY_RECRUIT_DEFAULTS = {
   studentListRequired: 'none' as const,
   preguidanceRequired: 'need' as const,
-  maxAssignableInstructors: 2,
-  maxClassCount: 4,
 }
 
 /** 템플릿 편집기 — 1사1교_참여 기관 모집 폼 시드 단락 본문 */

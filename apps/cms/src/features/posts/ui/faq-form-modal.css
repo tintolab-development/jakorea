@@ -41,6 +41,11 @@
   max-height: min(960px, calc(100dvh - 32px));
 }
 
+/* 시안: 팝업 높이 598 (기존 607) — 고정 높이 대신 하단 padding 34 → 25로 맞춘다 */
+.content-modal.teal-header-modal.ant-modal.faq-form-modal.teal-header-modal--large .ant-modal-content {
+  padding-bottom: 25px;
+}
+
 .content-modal.faq-form-modal .ant-modal-body {
   flex: 1 1 auto;
   min-height: 0;

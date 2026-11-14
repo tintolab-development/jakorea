@@ -1,0 +1,20 @@
+/**
+ * 학교 신규 등록 모달 — 시안 기준 섹션 제목·필수 표시
+ */
+
+/** 시안: 섹션 제목 18/Bold · 텍스트 좌측 8 (팝업 패딩 30 + 8 = 38) */
+.school-register-modal .detail-info-form > .detail-info-form__header .detail-info-form__title {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 0 8px;
+}
+
+/** 시안: 필수 표시 `*` 16/Bold */
+.school-register-modal .detail-info-form__field-required {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.school-register-modal__address-row {
+  width: auto;
+}

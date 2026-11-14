@@ -40,14 +40,15 @@ export function readPortalDashboard(payload: unknown): PortalDashboardResponse {
 /**
  * dashboard.applications 집계. 나의 홈 카드는 USER-FUNC-0237에 맞춰
  * `fetchMypageProgramStatsFromApplications`가 정본이다.
- * 신청=submitted+approved(승인 전 구간), 종료=ended.
+ * 신청=submitted(결과 대기·서류 합격·승인 대기), 진행중=inProgress, 종료=ended.
+ * approved는 승인 원본 상태 기준이라 inProgress·ended와 겹치므로 더하지 않는다.
  */
 export function mapPortalDashboardStats(
   summary: PortalApplicationSummary | undefined,
 ): MypageProgramStats {
   if (!summary) return EMPTY_STATS
   return {
-    applied: count(summary.submitted) + count(summary.approved),
+    applied: count(summary.submitted),
     inProgress: count(summary.inProgress),
     completed: count(summary.ended),
   }

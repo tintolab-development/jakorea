@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import { readJwtSidClaim } from '@jakorea/domain/session'
+import { bumpAuthGeneration } from '@/features/auth/lib/auth-generation'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import {
@@ -29,8 +30,8 @@ import {
   RELOAD_RESTORE_NOTICE_DELAY_MS,
   RELOAD_RESTORE_SILENT_RETRY_DELAY_MS,
   SESSION_ENDED_NOTICE,
-  markSessionEndedNotice,
 } from '@/features/auth/lib/session-restore-notice'
+import { confirmSessionEnded } from '@/features/auth/lib/session-ended-confirm'
 import { cmsAlertModal, isCmsAlertModalReady } from '@/shared/ui/cms-alert-modal-api'
 import {
   clearRefreshCredential,
@@ -112,7 +113,11 @@ interface AuthState {
     options?: LoginOptions
   ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
   /** `preserveReturnPath: false` — 사용자가 직접 로그아웃 (로그인 후 원래 화면 복귀 안 함) */
-  logout: (options?: { preserveReturnPath?: boolean }) => void
+  /**
+   * skipRemote: 서버 logout(본문·쿠키)을 보내지 않고 로컬만 정리한다.
+   * 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있는 경우(409 ROTATED 무효, 다른 계정 로그인 감지)에 쓴다.
+   */
+  logout: (options?: { preserveReturnPath?: boolean; skipRemote?: boolean }) => void
   /** silentRetry: 새로고침 복원 refresh가 네트워크·서버 오류면 한 번 조용히 다시 시도 (기본 true) */
   checkAuth: (options?: { silentRetry?: boolean }) => Promise<void>
   /** 새로고침 복원 안내의 [다시 시도] — 진행 중 refresh가 있으면 합류하고, 없으면 탭 간 잠금 아래 1회 시작 */
@@ -134,6 +139,8 @@ interface AuthState {
   clearPasswordChangeRequired: () => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
   refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
+  /** refresh 결과 종류까지 돌려준다 — transient(5xx·네트워크)는 로그아웃 근거가 아니다 */
+  refreshSession: () => Promise<RefreshSessionOutcome>
   checkSessionExpiry: () => boolean // Phase 0.5: 세션 만료 확인
 }
 
@@ -349,6 +356,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     completeAdminAuth: (tokens: AuthTokenResponse) => {
       const state = get()
       if (!state.user) return
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
 
       const normalizedUser = applyAccessTokenRoleToSessionUser(state.user, tokens.accessToken)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
@@ -433,6 +442,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     applySocialAuthTokens: (tokens: AuthTokenResponse) => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const placeholderUser: Omit<User, 'password'> = {
         id: 'social-sso-pending',
         email: '',
@@ -470,6 +481,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     logout: options => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const refreshToken =
         typeof window !== 'undefined' && window.localStorage
           ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
@@ -480,11 +493,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // Authorization 없이 refreshToken body만으로 서버 세션 무효화 (로컬 clear 전에 요청 시작)
       // TODO(QA-0137 인프라 전환 후 삭제): 저장된 refreshToken이 사라지면 본문 logout 분기를 지운다.
       let remoteLogout: Promise<void> | undefined
-      if (isRealApiModuleEnabled('adminAuth') && refreshToken) {
+      const remoteAllowed = isRealApiModuleEnabled('adminAuth') && options?.skipRemote !== true
+      if (remoteAllowed && refreshToken) {
         remoteLogout = fetchAdminAuthLogout({ refreshToken })
       }
       // QA-0137: HttpOnly refresh 쿠키 폐기·삭제. best effort — 실패해도 로컬 로그아웃은 그대로 진행한다.
-      if (isRealApiModuleEnabled('adminAuth') && hadSession) {
+      if (remoteAllowed && hadSession) {
         void fetchAdminAuthRefreshCookieLogout()
       }
 
@@ -628,7 +642,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             } else {
               const refreshed = await get().refreshToken()
               if (!refreshed) {
-                if (isStoredUserUnchanged() && isSameLoginToken(tokenAtStart)) get().logout()
+                // 저장소의 refresh 수단은 다른 탭의 새 로그인 값일 수 있다 — 서버 logout으로 그 세션을 끊지 않고 로컬만 정리한다
+                if (isStoredUserUnchanged() && isSameLoginToken(tokenAtStart)) get().logout({ skipRemote: true })
                 return
               }
             }
@@ -768,6 +783,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     // Phase 0.1.3: 인증 상태 직접 설정 (휴대폰/소셜 로그인용)
     setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => {
+      // F5: 로그인 세대가 바뀌면 진행 중이던 이전 세션의 refresh 응답은 저장되지 않는다
+      bumpAuthGeneration()
       const normalizedUser = withSessionAdminRole(authData.user)
       persistAccessTokenSession(authData.expiresAt)
       persistSessionUser(normalizedUser)
@@ -820,6 +837,15 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
     },
 
+    refreshSession: async (): Promise<RefreshSessionOutcome> => {
+      if (!get().user) return 'no-credential'
+      if (isRealApiModuleEnabled('adminAuth')) {
+        // 실패 종류(invalid/transient)를 보존해, 일시 오류로 로그아웃하지 않게 한다
+        return refreshAccessTokenSessionOutcome()
+      }
+      return (await get().refreshToken()) ? 'ok' : 'invalid'
+    },
+
     /**
      * 세션 keep-alive 점검 (AuthProvider가 60초마다 호출). 만료만 보고 바로 logout하지 않는다.
      * 1) access 만료 임박(30초 버퍼): refresh를 먼저 시도하고, 실패할 때만 logout.
@@ -854,7 +880,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // QA-0137: 저장된 refreshToken이 없어도 HttpOnly 쿠키 세션이면 refresh를 시도한다
       if (!refreshToken && !hasRefreshCredential()) {
         if (nearExpiry) {
-          get().logout()
+          endExpiredSession()
           return true
         }
         return false
@@ -863,9 +889,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const accessAtRefreshStart = state.token
       const refreshAtRefreshStart = refreshToken
       void get()
-        .refreshToken()
-        .then(ok => {
-          if (ok || !nearExpiry) return
+        .refreshSession()
+        .then(outcome => {
+          if (outcome === 'ok' || !nearExpiry) return
+          // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 다음 점검이나 요청의 401 처리에 맡긴다.
+          if (outcome === 'transient') return
           const current = get()
           // Another tab or login may have rotated the session while this refresh
           // was in flight. Never revoke that replacement because of an old failure.
@@ -873,7 +901,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           if (current.isAuthenticated &&
               current.token === accessAtRefreshStart &&
               storedRefresh === refreshAtRefreshStart) {
-            current.logout()
+            endExpiredSession()
           }
         })
       return false
@@ -903,21 +931,35 @@ async function restoreAccessTokenAfterReload(options: {
 
 /**
  * ① 세션 종료 안내 + 로그아웃.
- * 보호 화면이면 로그아웃이 로그인 화면으로 전체 이동하므로 표시를 남겨 로그인 화면이 띄운다.
- * 이미 로그인 화면 등 공개 화면이면([닫기] 뒤 늦은 거절) 이동이 없으니 바로 띄운다.
+ * 보호 화면: 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고, [확인](또는 닫기) 때 로그아웃해 로그인 화면으로 간다.
+ *   로그인 후 원래 화면으로 돌아오도록 redirect 파라미터를 넘긴다. 공통 Alert를 쓸 수 없으면 로그인 화면이 안내한다.
+ * 이미 로그인 화면 등 공개 화면이면([닫기] 뒤 늦은 거절) 이동할 곳이 없으니 바로 로그아웃하고 안내만 띄운다.
  */
 function endSessionWithNotice(logout: () => void): void {
   const onPublicPage =
     typeof window !== 'undefined' && isCmsLoggedOutPublicPath(window.location.pathname)
-  if (!onPublicPage) {
-    markSessionEndedNotice()
+  if (onPublicPage) {
+    logout()
+    if (isCmsAlertModalReady()) {
+      cmsAlertModal.show({ title: SESSION_ENDED_NOTICE.title, content: SESSION_ENDED_NOTICE.content })
+    }
+    return
+  }
+  confirmSessionEnded(() => {
     nextLogoutReturnParam = 'redirect'
-  }
-  logout()
-  nextLogoutReturnParam = undefined
-  if (onPublicPage && isCmsAlertModalReady()) {
-    cmsAlertModal.show({ title: SESSION_ENDED_NOTICE.title, content: SESSION_ENDED_NOTICE.content })
-  }
+    logout()
+    nextLogoutReturnParam = undefined
+  })
+}
+
+/**
+ * 서버가 세션 무효를 확정했을 때(유휴·절대 만료, refresh 거절, Activity 401 등) 공통 종료 처리.
+ * 지금 화면에서 안내를 띄우고 [확인] 때 로그아웃한다. skipRemote는 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있을 때.
+ */
+export function endExpiredSession(options?: { skipRemote?: boolean }): void {
+  endSessionWithNotice(() =>
+    useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined)
+  )
 }
 
 export async function refreshAdminSessionFromMe(): Promise<void> {

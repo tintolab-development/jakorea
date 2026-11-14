@@ -29,6 +29,7 @@ import {
 import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { useCmsAlert } from '@/shared/ui'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   isOutsideInclusiveLocalDayRange,
   normalizeRangeSealToLocalDayBounds,
@@ -232,10 +233,14 @@ function VolunteerInterviewScheduleBlock({
   const [interviewTimeRange, setInterviewTimeRange] = useVolunteerInterviewOverlayKv<
     [Dayjs, Dayjs] | null
   >(overlayStore, 'interviewTimeRange', initialTimeRange, overlayNamespace)
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  /** 템플릿 관리 모집 폼 시안(5767:39903) — 시간 단위 기본 15분. 그 외 화면은 30분 */
+  const defaultTimeUnit: InterviewTimeUnit =
+    isTemplateManagementScreen && overlayStore === 'recruit' ? '15' : '30'
   const [timeUnit, setTimeUnit] = useVolunteerInterviewOverlayKv<InterviewTimeUnit>(
     overlayStore,
     'timeUnit',
-    seed?.timeUnit ?? '30',
+    seed?.timeUnit ?? defaultTimeUnit,
     overlayNamespace
   )
   const [selectedSlotKeys] = useVolunteerInterviewOverlayKv<string[]>(
@@ -292,8 +297,13 @@ function VolunteerInterviewScheduleBlock({
     timeUnit,
     typedTemplateAuthoring,
   ])
-  // 일반 프로그램 등록 위저드만 시안 문구(진행 불가일 선택 팝업) — UJAT·신청 폼·템플릿 관리는 기존 유지
+  // 일반 프로그램 등록 위저드만 시안 문구(진행 불가일 선택 팝업) — UJAT·신청 폼은 기존 유지
   const isGeneralWizard = useIsGeneralRegistrationWizard()
+  /**
+   * 템플릿 관리 봉사자 모집 폼 — 진행 불가일 선택 팝업 시안(5767:40137) 제목·안내 문구,
+   * 면접 진행 가능 일정 단락 시안(5767:39903·UJAT 5800:158529) 시간 입력 폭·빈 상태 박스
+   */
+  const isTemplateRecruitInterviewModalSpec = isTemplateManagementScreen && overlayStore === 'recruit'
   const interviewTimeSlots = useMemo(
     () => buildInterviewTimeSlots(normalizedInterviewTimeRange, timeUnit),
     [normalizedInterviewTimeRange, timeUnit]
@@ -363,7 +373,13 @@ function VolunteerInterviewScheduleBlock({
   }
 
   return (
-    <div className="volunteer-interview-available-schedule__schedule-block">
+    <div
+      className={
+        isTemplateRecruitInterviewModalSpec
+          ? 'volunteer-interview-available-schedule__schedule-block volunteer-interview-available-schedule__schedule-block--spec'
+          : 'volunteer-interview-available-schedule__schedule-block'
+      }
+    >
       {title ? (
         <div className="detail-info-form--text-bold volunteer-interview-available-schedule__block-title">
           {title}
@@ -378,13 +394,19 @@ function VolunteerInterviewScheduleBlock({
               fullRow
               edit={
                 <UnavailableDatesBulkExclusionsRow
+                  modalTitle={isTemplateRecruitInterviewModalSpec ? '진행 불가일 선택' : undefined}
+                  // 시안 5767:40137 「2026년 03월 24일(화)」·5767:39903 버튼 h36
+                  dateLabelFormat={isTemplateRecruitInterviewModalSpec ? 'korean-full' : undefined}
+                  addButtonSize={isTemplateRecruitInterviewModalSpec ? 'h36' : undefined}
                   modalUnavailableDescriptionLead={
-                    isGeneralWizard
-                      ? '면접 진행이 불가한 날짜를 모두 선택해 주세요'
-                      : '면접 진행 불가한 날짜를 모두 선택해 주세요.'
+                    isTemplateRecruitInterviewModalSpec
+                      ? '면접 진행이 불가한 날짜를 모두 선택해 주세요.'
+                      : isGeneralWizard
+                        ? '면접 진행이 불가한 날짜를 모두 선택해 주세요'
+                        : '면접 진행 불가한 날짜를 모두 선택해 주세요.'
                   }
                   modalUnavailableDescriptionSecond={
-                    isGeneralWizard
+                    isGeneralWizard || isTemplateRecruitInterviewModalSpec
                       ? '선택된 날짜는 사용자가 신청 불가합니다.'
                       : applyInterviewPeriodConstraint
                         ? '2차 면접 기간(봉사자 모집 정보) 안의 날짜만 선택할 수 있습니다. 선택된 날짜는 면접 일정으로 신청할 수 없습니다. 오른쪽 칩(토·일·공휴일 제외)은 요일·공휴일 전체 제외이며, 달력에서 해당 날짜는 클릭할 수 없습니다.'
@@ -463,7 +485,7 @@ function VolunteerInterviewScheduleBlock({
                   onChange={setInterviewTime}
                   onTimeRangeChange={setInterviewTimeRange}
                   initialTimeRange={normalizedInterviewTimeRange ?? initialTimeRange}
-                  width={240}
+                  width={isTemplateRecruitInterviewModalSpec ? 200 : 240}
                   placeholder="시간을 선택해 주세요"
                   endTimeAlwaysOn
                   defaultStartTime={INTERVIEW_TIME_DEFAULT_START}
@@ -493,29 +515,36 @@ function VolunteerInterviewScheduleBlock({
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
-      <div className="volunteer-interview-available-schedule__summary">
-        <span className="volunteer-interview-available-schedule__summary-hint">
-          진행 가능한 시간대를 선택해 주세요. 미선택 된 시간은 사용자가 신청 불가합니다.
-        </span>
-        {interviewTimeSlots.length > 0 ? (
-          <div className="volunteer-interview-available-schedule__time-slots">
-            {interviewTimeSlots.map(slot => (
-              <ParagraphChip
-                key={slot.key}
-                className="volunteer-interview-available-schedule__time-slot"
-                selected={selectedSlotKeys.includes(slot.key)}
-                onClick={() => toggleTimeSlot(slot.key)}
-              >
-                {slot.label}
-              </ParagraphChip>
-            ))}
-          </div>
-        ) : (
-          <div className="volunteer-interview-available-schedule__empty">
-            설정된 면접 시간이 없습니다. 면접 시간을 설정해 주세요.
-          </div>
-        )}
-      </div>
+      {isTemplateRecruitInterviewModalSpec && interviewTimeSlots.length === 0 ? (
+        /* 시안 빈 상태 — 테두리 박스 하나, 안내 문구 없음 */
+        <div className="volunteer-interview-available-schedule__empty volunteer-interview-available-schedule__empty--spec">
+          설정된 면접 시간이 없습니다. 면접 시간을 설정해 주세요.
+        </div>
+      ) : (
+        <div className="volunteer-interview-available-schedule__summary">
+          <span className="volunteer-interview-available-schedule__summary-hint">
+            진행 가능한 시간대를 선택해 주세요. 미선택 된 시간은 사용자가 신청 불가합니다.
+          </span>
+          {interviewTimeSlots.length > 0 ? (
+            <div className="volunteer-interview-available-schedule__time-slots">
+              {interviewTimeSlots.map(slot => (
+                <ParagraphChip
+                  key={slot.key}
+                  className="volunteer-interview-available-schedule__time-slot"
+                  selected={selectedSlotKeys.includes(slot.key)}
+                  onClick={() => toggleTimeSlot(slot.key)}
+                >
+                  {slot.label}
+                </ParagraphChip>
+              ))}
+            </div>
+          ) : (
+            <div className="volunteer-interview-available-schedule__empty">
+              설정된 면접 시간이 없습니다. 면접 시간을 설정해 주세요.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

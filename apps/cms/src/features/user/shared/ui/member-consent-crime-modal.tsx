@@ -4,8 +4,9 @@ import { type ChangeEvent, useCallback, useEffect, useId, useRef, useState } fro
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
 import {
   AGREEMENT_CRIME_TEMPLATE_CODE,
-  CRIME_CONSENT_UPLOAD_ACCEPT,
-  isCrimeConsentUploadFile,
+  isMemberCrimeConsentEvidenceUploadFile,
+  MEMBER_CRIME_CONSENT_EVIDENCE_MAX_BYTES,
+  MEMBER_CRIME_CONSENT_EVIDENCE_UPLOAD_ACCEPT,
   parseAgreementCrimeConsentSettings,
   readImageFileAsDataUrl,
 } from '@/features/template/lib/agreement-crime-consent-settings'
@@ -26,9 +27,10 @@ import { openFilePicker } from '@/shared/lib/open-file-picker'
 import '@/shared/ui/file-upload-picker.css'
 import {
   CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE,
-  CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
+  MEMBER_CRIME_CONSENT_EVIDENCE_FILE_SIZE_ALERT_MESSAGE,
+  MEMBER_CRIME_CONSENT_EVIDENCE_FILE_TYPE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
-import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { ButtonAddIcon, ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal.css'
 import './member-consent-crime-modal.css'
 
@@ -109,10 +111,17 @@ export function MemberConsentCrimeModal({
       const file = e.target.files?.[0]
       e.target.value = ''
       if (!file) return
-      if (!isCrimeConsentUploadFile(file)) {
+      if (!isMemberCrimeConsentEvidenceUploadFile(file)) {
         showAlert({
           title: '안내',
-          content: CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
+          content: MEMBER_CRIME_CONSENT_EVIDENCE_FILE_TYPE_ALERT_MESSAGE,
+        })
+        return
+      }
+      if (file.size > MEMBER_CRIME_CONSENT_EVIDENCE_MAX_BYTES) {
+        showAlert({
+          title: '안내',
+          content: MEMBER_CRIME_CONSENT_EVIDENCE_FILE_SIZE_ALERT_MESSAGE,
         })
         return
       }
@@ -259,23 +268,28 @@ export function MemberConsentCrimeModal({
 
         <div className="crime-consent-doc-modal__body">
           <div className="crime-consent-doc-modal__toolbar">
-            <div className="crime-consent-doc-modal__notice-wrap">
+            {/* 시안 6647:36345 안내 문구 2줄 */}
+            <div className="crime-consent-doc-modal__notice-wrap member-consent-crime-modal__notice-wrap">
               <p className="crime-consent-doc-modal__notice">
-                동의서 문서를 업로드한 후 제출해 주세요. 제출까지 완료되어야 동의된 것으로
-                간주됩니다.
+                ※ 양식을 다운로드하여 작성 후 업로드해 주세요. 제출 완료 시 동의된 것으로
+                간주합니다.
+              </p>
+              <p className="crime-consent-doc-modal__notice">
+                ※ 파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.
               </p>
             </div>
             <div className="crime-consent-doc-modal__actions member-consent-crime-modal__actions">
+              {/* 시안 6647:36345 — 버튼 h44, 닫기(회색 외곽)·문서 다운로드·동의서 업로드(민트 외곽+아이콘)·동의서 제출 */}
               <CmsButton
-                variant="secondary"
-                size="medium"
+                variant="cancel"
+                size="large"
                 onClick={onClose}
                 disabled={isSubmitting} >
                 닫기
               </CmsButton>
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="large"
                 icon={<ButtonDownloadIcon />}
                 onClick={handleDownload}
                 disabled={isSubmitting} >
@@ -285,28 +299,29 @@ export function MemberConsentCrimeModal({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={CRIME_CONSENT_UPLOAD_ACCEPT}
+                  accept={MEMBER_CRIME_CONSENT_EVIDENCE_UPLOAD_ACCEPT}
                   className="file-upload-picker__input"
                   disabled={isSubmitting}
                   onChange={handleFileChange}
                   aria-label="동의서 문서 파일 선택"
                 />
                 <CmsButton
-                  variant="primary"
-                  size="medium"
+                  variant="secondary"
+                  size="large"
+                  icon={<ButtonAddIcon />}
                   tabIndex={isSubmitting ? undefined : -1}
                   onClick={handlePickDocument}
                   disabled={isSubmitting} >
-                  문서 업로드
+                  동의서 업로드
                 </CmsButton>
               </span>
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 onClick={() => void handleSubmit()}
                 disabled={isSubmitting}
                 loading={isSubmitting} >
-                제출
+                동의서 제출
               </CmsButton>
             </div>
           </div>

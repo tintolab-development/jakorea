@@ -131,6 +131,37 @@
   background: var(--color-neutral-black-10);
 }
 
+/*
+ * PC — Figma 11018:18121(안내사항 있음)·11018:18326(없음)·UJAT 11005:341397
+ * 영역 높이 600 · 카드 간격 24 · 검색→파일 24 · 파일→버튼 24 · 버튼 구분선 20 · 빈 상태 일러스트→문구 8
+ * 모바일 시안 값은 따로 확인하지 않아 기존 값을 유지한다.
+ */
+@media (--bp-pc-up) {
+  .shell {
+    min-height: 600px;
+  }
+
+  .illustration {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .noticeList {
+    gap: var(--spacing-24);
+  }
+
+  .search {
+    margin-bottom: var(--spacing-24);
+  }
+
+  .footer {
+    margin-top: var(--spacing-24);
+  }
+
+  .actionDivider {
+    height: 20px;
+  }
+}
+
 @media (--bp-pc-full-up) {
   .noticeEmpty {
     padding: 0 20px;

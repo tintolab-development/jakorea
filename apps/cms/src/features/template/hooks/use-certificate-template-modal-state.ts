@@ -10,6 +10,7 @@ import {
   useFormTemplateCertificateModalState,
   type CertificateModalInitialHydration,
 } from '@/pages/templates/use-form-template-certificate-modal-state'
+import { resolveCertificateParticipantLayout } from '@/features/template/lib/certificate-participant-layout'
 
 export type UseCertificateTemplateModalStateArgs = {
   open: boolean
@@ -91,10 +92,13 @@ export function useCertificateTemplateModalState(args: UseCertificateTemplateMod
     [hydratedSettings?.logoUploadResults]
   )
 
+  const participantLayout = resolveCertificateParticipantLayout(templateCode)
+
   const modalState = useFormTemplateCertificateModalState(
     open,
     resolvedStringPreviewValues,
-    initialHydration
+    initialHydration,
+    participantLayout
   )
 
   return {

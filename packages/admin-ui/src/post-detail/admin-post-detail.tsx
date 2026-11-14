@@ -3,7 +3,7 @@
  * - AdminDetailBackLink: 카드 위 `< 목록으로`
  * - AdminDetailMoreMenu: 조회수 옆 ⋮ → 삭제 / 수정 (하단 버튼과 같은 핸들러를 연결)
  */
-import { MoreOutlined } from '@ant-design/icons'
+import moreVertUrl from '../icons/assets/more-vert-30.svg'
 import { Dropdown, type MenuProps } from 'antd'
 import chevronBackwardUrl from '../icons/assets/chevron-backward-default.svg'
 import { joinClassNames } from '../lib/join-class-names.js'
@@ -82,7 +82,7 @@ export function AdminDetailMoreMenu({
         aria-haspopup="menu"
         disabled={disabled}
       >
-        <MoreOutlined />
+        <img src={moreVertUrl} width={30} height={30} alt="" aria-hidden draggable={false} />
       </button>
     </Dropdown>
   )

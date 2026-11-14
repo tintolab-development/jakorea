@@ -78,6 +78,90 @@
   line-height: 150%; /* 27px */
 }
 
+/* 템플릿 관리 모집 폼 — 시안 5767:39903 (표 ↔ 빈 상태 16, 빈 상태 테두리 박스 232) */
+.volunteer-interview-available-schedule__schedule-block--spec {
+  gap: 16px;
+}
+
+.volunteer-interview-available-schedule__empty--spec {
+  box-sizing: border-box;
+  min-height: 232px;
+  padding: 1px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+/*
+ * 템플릿 관리 모집 폼 — 면접 불가일 설정 시 시안(12875:503259)
+ * - 진행 불가일 칩: 높이 28·모서리 6·글자 14·삭제 아이콘 20·간격 4, 버튼 줄과 칩 줄 12
+ * - 시간대 박스: 안내 문구 ↔ 칩 12, 칩 6열 간격 12·높이 52·글자 14
+ */
+.volunteer-interview-available-schedule__schedule-block--spec
+  .direct-unavailable-date-add-button__selected-date-chips {
+  margin-top: 12px;
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .direct-unavailable-date-add-button__selected-date-chip {
+  height: 28px;
+  gap: 4px;
+  border-radius: var(--radius-6, 6px);
+  font-size: 14px;
+  line-height: 130%;
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .direct-unavailable-date-add-button__selected-date-remove,
+.volunteer-interview-available-schedule__schedule-block--spec
+  .direct-unavailable-date-add-button__selected-date-remove
+  svg {
+  width: 20px;
+  height: 20px;
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .volunteer-interview-available-schedule__summary {
+  gap: 12px;
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .volunteer-interview-available-schedule__summary-hint {
+  padding-bottom: 0;
+  padding-left: 8px;
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .volunteer-interview-available-schedule__time-slots {
+  gap: 12px;
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .volunteer-interview-available-schedule__time-slot.paragraph-chip {
+  min-height: 52px;
+  height: 52px;
+  padding: 10px 16px;
+  border-color: rgba(61, 61, 61, 0.16);
+  font-size: 14px;
+  line-height: 125%;
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .volunteer-interview-available-schedule__time-slot.paragraph-chip--interactive:hover {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .volunteer-interview-available-schedule__time-slot.paragraph-chip:not(.paragraph-chip--selected) {
+  color: rgba(61, 61, 61, 0.8);
+}
+
+.volunteer-interview-available-schedule__schedule-block--spec
+  .volunteer-interview-available-schedule__time-slot.paragraph-chip--selected {
+  border-color: var(--color-mint-01, #01a1af);
+  font-size: 14px;
+  line-height: 125%;
+}
+
 .volunteer-interview-available-schedule__time-slots {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

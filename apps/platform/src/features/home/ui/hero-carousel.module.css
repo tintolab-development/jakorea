@@ -1,8 +1,8 @@
 .hero {
   position: relative;
   width: 100%;
-  /* 모바일: 헤더가 히어로 밖(불투명) — 뷰포트에서 띠배너·헤더 제외 */
-  height: clamp(420px, calc(100svh - 168px), 560px);
+  /* 모바일 시안: 375×460 (헤더는 히어로 밖) */
+  height: 460px;
   overflow: hidden;
 }
 
@@ -33,12 +33,24 @@
 .scrim {
   position: absolute;
   inset: 0;
+  /* 모바일 시안 scrim: #232323 10% → 55% → 96% */
   background: linear-gradient(
     180deg,
-    rgba(10, 26, 32, 0.45) 0%,
-    rgba(10, 26, 32, 0.15) 40%,
-    rgba(10, 26, 32, 0.5) 100%
+    rgba(35, 35, 35, 0.1) 0%,
+    rgba(35, 35, 35, 0.55) 55%,
+    rgba(35, 35, 35, 0.96) 100%
   );
+}
+
+@media (--bp-pc-up) {
+  .scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(10, 26, 32, 0.45) 0%,
+      rgba(10, 26, 32, 0.15) 40%,
+      rgba(10, 26, 32, 0.5) 100%
+    );
+  }
 }
 
 /*
@@ -68,7 +80,8 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: var(--spacing-32);
+  /* 모바일 시안: 카피 ↔ 컨트롤 28 */
+  gap: var(--spacing-28);
   box-sizing: border-box;
 }
 
@@ -102,7 +115,7 @@
   font-style: normal;
   font-weight: 300;
   line-height: 140%;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.32px;
   text-transform: uppercase;
   white-space: pre-line;
   text-align: left;
@@ -111,15 +124,16 @@
 
 .title {
   display: block;
-  margin: 0 0 var(--spacing-12);
+  margin: 0 0 var(--spacing-16);
   color: var(--color-neutral-white);
   font-family: var(--font-family-base);
   font-size: 26px;
   font-style: normal;
   font-weight: 700;
-  line-height: 136%;
-  letter-spacing: -0.56px;
+  line-height: 132%;
+  letter-spacing: -0.78px;
   white-space: pre-line;
+  word-break: keep-all;
   text-align: left;
   width: 100%;
 }
@@ -152,7 +166,14 @@
 .controlsMeta {
   display: flex;
   align-items: center;
-  gap: var(--spacing-4);
+  /* 모바일 시안: 카운터 ↔ 진행 바 12 */
+  gap: var(--spacing-12);
+}
+
+@media (--bp-pc-up) {
+  .controlsMeta {
+    gap: var(--spacing-4);
+  }
 }
 
 .playToggle {
@@ -195,12 +216,13 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-4);
-  color: rgba(255, 255, 255, 0.55);
+  /* 모바일 시안: 13 / SemiBold · 흰색 */
+  color: var(--color-neutral-white);
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 13px;
   font-style: normal;
-  font-weight: 400;
-  line-height: 160%;
+  font-weight: 600;
+  line-height: normal;
 }
 
 .counterCurrent {
@@ -209,12 +231,15 @@
 
 .counterDivider,
 .counterTotal {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--color-neutral-white);
 }
 
 @media (--bp-pc-up) {
   .counter {
     color: var(--color-neutral-warm-600);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 160%;
   }
 
   .counterDivider,
@@ -226,13 +251,14 @@
 .progressTrack {
   position: relative;
   display: block;
-  width: min(120px, 32vw);
+  /* 모바일 시안: 100×2 · 흰색 30% 트랙 + 흰색 채움 */
+  width: 100px;
   max-width: 100%;
-  height: 4px;
+  height: 2px;
   flex-shrink: 0;
   overflow: hidden;
-  /* #E7EBEF · opacity 0.3 — 요소 opacity 대신 배경에만 적용해 fill이 함께 흐려지지 않게 함 */
-  background: rgba(231, 235, 239, 0.3);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .progressFill {
@@ -240,8 +266,23 @@
   top: 0;
   bottom: 0;
   left: 0;
-  background: var(--color-neutral-white-60);
+  border-radius: 2px;
+  background: var(--color-neutral-white);
   transition: width 400ms ease;
+}
+
+@media (--bp-pc-up) {
+  .progressTrack {
+    height: 4px;
+    border-radius: 0;
+    /* #E7EBEF · opacity 0.3 — 요소 opacity 대신 배경에만 적용해 fill이 함께 흐려지지 않게 함 */
+    background: rgba(231, 235, 239, 0.3);
+  }
+
+  .progressFill {
+    border-radius: 0;
+    background: var(--color-neutral-white-60);
+  }
 }
 
 /* PC · 공통 타이포 (compact/full) */

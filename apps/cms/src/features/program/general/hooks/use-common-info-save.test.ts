@@ -41,6 +41,9 @@ vi.mock('@/features/program/shared/lib/program-wage-payment-item-helpers', async
 vi.mock('@/shared/ui', () => ({
   showUpdateCompletedAlert: vi.fn(),
 }))
+vi.mock('@/features/program/general/lib/show-common-info-change-completed-alert', () => ({
+  showCommonInfoChangeCompletedAlert: vi.fn(),
+}))
 vi.mock('@/features/program/trained-teachers/lib/is-trained-teachers-detail-program', () => ({
   isTrainedTeachersDetailProgram: vi.fn(() => false),
 }))

@@ -61,7 +61,7 @@ export function UjatAttendanceDetailModal({
   const dateLabel = item?.heldAt ? formatUjatAttendanceRosterDate(item.heldAt) : null
 
   return (
-    <PFModal open={open} onClose={onClose} title="출석 현황 보기" size="lg">
+    <PFModal open={open} onClose={onClose} title="출석현황 보기" size="lg">
       <div className={styles.body}>
         {!canViewAttendance ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -81,15 +81,20 @@ export function UjatAttendanceDetailModal({
         ) : roster ? (
           <>
             <div className={styles.toolbar}>
-              <PFText as="p" typo="bd-md-bd" color="primary-500" className={styles.date}>
+              {/* Figma 11005:342162 — 날짜 18 SemiBold 검정 */}
+              <PFText as="p" typo="bd-lg-sb" color="black" className={styles.date}>
                 {dateLabel || '-'}
               </PFText>
               <span className={styles.meta}>
-                <PFText as="span" typo="bd-sm-md" color="neutral-cool-600">
-                  출석 담당자 {roster.managerName}
+                {/* Figma 11005:342162 — 16px · 「출석 담당자」 Regular cool-600 · 이름 SemiBold primary-700 */}
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
+                  출석 담당자{' '}
+                  <PFText as="span" typo="bd-md-sb" color="primary-700">
+                    {roster.managerName}
+                  </PFText>
                 </PFText>
                 <span className={styles.metaDivider} aria-hidden="true" />
-                <PFText as="span" typo="bd-sm-md" color="neutral-cool-600">
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
                   {roster.classCountLabel}
                 </PFText>
               </span>

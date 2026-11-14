@@ -34,7 +34,7 @@ export type BuildVolunteerParticipantRegisterRequestInput = {
 
 export type BuildVolunteerParticipantRegisterRequestResult =
   | { ok: true; request: VolunteerParticipantRegisterRequest }
-  /** required = 필수 항목 미입력(공통 「필수 항목 입력 안내」), invalid = 형식·길이 오류 */
+  /** required = 필수 항목 미입력(공통 「필수 항목 미입력 안내」), invalid = 형식·길이 오류 */
   | { ok: false; kind: 'required' | 'invalid'; message: string }
 
 function resolveConsentAgreed(

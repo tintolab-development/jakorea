@@ -1,10 +1,12 @@
 import { Controller } from 'react-hook-form'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   formatDateRange,
   formatTargetLevelsLabel,
+  TARGET_LEVEL_LABEL,
   getParticipantRecruitmentStatus,
   getParticipantRecruitmentLifecycle,
   getRecruitmentStatusLabelForStatus,
@@ -30,6 +32,11 @@ import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segm
 import {
   UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS,
   UJAT_RECRUIT_PROGRESS_HINT,
+  UJAT_TEMPLATE_CONTACT_INPUTS_SPEC_CLASS,
+  UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER,
+  UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER,
+  UJAT_TEMPLATE_NOTES_PLACEHOLDER,
+  UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER,
   UjatRecruitFormDateMethodRow,
   UjatRecruitFormPeriodDatePicker,
   UjatRecruitParticipantNotesField,
@@ -61,15 +68,19 @@ function resolveParticipantNotesDisplay(program: Program): string {
   return (program.oneLineIntroduction ?? '').trim() || '-'
 }
 
+const UJAT_TEMPLATE_TARGET_LEVEL_LABEL: Record<string, string> = {
+  ...TARGET_LEVEL_LABEL,
+  elementary: '초등학교',
+}
+
 function resolveEducationTargetLabel(program: Program, isTemplateAuthoring: boolean): string {
-  const fromLevels = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
+  // 양식 작성(템플릿) 화면 — UJAT 교육 대상은 학교 단위 「초등학교」로 표기 (QA 261113 #59)
+  const fromLevels = formatTargetLevelsLabel(
+    resolveProgramTargetLevels(program),
+    isTemplateAuthoring ? UJAT_TEMPLATE_TARGET_LEVEL_LABEL : undefined
+  )
   if (fromLevels !== '-') return fromLevels
-  if (!isTemplateAuthoring) return '-'
-  const nested =
-    program.generalCommonInfo?.participantRecruitmentInfo?.educationTarget?.trim() ||
-    program.generalCommonInfo?.participantRecruitmentInfo?.recruitmentTarget?.trim()
-  if (nested) return nested
-  return '초등학교'
+  return isTemplateAuthoring ? UJAT_TEMPLATE_TARGET_LEVEL_LABEL.elementary : '-'
 }
 
 export function UjatRecruitParticipantInfoProgramView({
@@ -92,6 +103,8 @@ export function UjatRecruitParticipantInfoProgramView({
   /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
   isTemplateAuthoring?: boolean
 }) {
+  /** 템플릿 관리 화면 — 시안 치수 수식 클래스(문의처·발표 방법·면접 유형·활동 기수) */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const lifecycle = getParticipantRecruitmentLifecycle(
     program,
     isEdit && form
@@ -186,7 +199,11 @@ export function UjatRecruitParticipantInfoProgramView({
                       value={field.value ?? (isTemplateAuthoring ? '' : '')}
                       inputSize="small"
                       width="100%"
-                      placeholder="공고용 프로그램명"
+                      placeholder={
+                        isTemplateAuthoring
+                          ? UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER
+                          : '공고용 프로그램명'
+                      }
                     />
                   )}
                 />
@@ -269,7 +286,11 @@ export function UjatRecruitParticipantInfoProgramView({
                       value={field.value ?? ''}
                       inputSize="small"
                       width="100%"
-                      placeholder="교육 대상 상세"
+                      placeholder={
+                        isTemplateManagementScreen
+                          ? '상세 교육 대상을 입력해 주세요'
+                          : '교육 대상 상세'
+                      }
                     />
                   )}
                 />
@@ -290,7 +311,11 @@ export function UjatRecruitParticipantInfoProgramView({
                     form={form}
                     startName="applicationStartDate"
                     endName="applicationEndDate"
-                    placeholder="참여자 모집 기간을 선택해 주세요"
+                    placeholder={
+                      isTemplateAuthoring
+                        ? UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER
+                        : '참여자 모집 기간을 선택해 주세요'
+                    }
                     dateOnly
                   />
                 </div>
@@ -310,7 +335,9 @@ export function UjatRecruitParticipantInfoProgramView({
                   form={form}
                   dateName="resultAnnouncementDate"
                   methodName="resultAnnouncementMethod"
-                  datePlaceholder="합격자 발표일"
+                  datePlaceholder={
+                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
+                  }
                   methodPlaceholder="발표 방법 안내"
                 />
               ) : undefined
@@ -337,7 +364,14 @@ export function UjatRecruitParticipantInfoProgramView({
             }
             edit={
               isEdit && form ? (
-                <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
+                <div
+                  className={[
+                    'program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even',
+                    isTemplateManagementScreen && UJAT_TEMPLATE_CONTACT_INPUTS_SPEC_CLASS,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
                   <div className="program-detail-info-tab__contact-group">
                     <span className="program-detail-info-tab__contact-label">문의처</span>
                     <Controller
@@ -406,7 +440,16 @@ export function UjatRecruitParticipantInfoProgramView({
             validationKey="recruit.institution.notes"
             fullRow
             view={notes}
-            edit={isEdit && form ? <UjatRecruitParticipantNotesField form={form} /> : undefined}
+            edit={
+              isEdit && form ? (
+                <UjatRecruitParticipantNotesField
+                  form={form}
+                  placeholder={
+                    isTemplateAuthoring ? UJAT_TEMPLATE_NOTES_PLACEHOLDER : undefined
+                  }
+                />
+              ) : undefined
+            }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

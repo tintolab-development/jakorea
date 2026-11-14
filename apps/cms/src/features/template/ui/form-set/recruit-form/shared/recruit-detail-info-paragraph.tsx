@@ -4,9 +4,11 @@ import { RichTextEditor } from '@/shared/rich-text'
 import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   getRecruitDetailInfoRecord,
   getRecruitDetailInfoScope,
@@ -20,6 +22,11 @@ import {
   RECRUIT_DETAIL_FILE_MAX_BYTES,
   RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_MAX_COUNT,
+  GENERAL_RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
   isRecruitDetailContentPersistSuppressed,
@@ -62,6 +69,23 @@ import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-detail-info-paragraph.css'
 
 const DEFAULT_OVERLAY_KEY_PREFIX = 'recruit.detailInfo'
+/**
+ * 템플릿 관리 모집 폼 상세 정보 시안(5767:39783 등) — 썸네일 62, 에디터 행 상하 12·본문 최소 70+16×2.
+ * UJAT 템플릿 편집기(`DetailInfoSection`)도 같은 클래스로 감싼다. CSS: `recruit-detail-info-paragraph.css`
+ */
+export const RECRUIT_DETAIL_TEMPLATE_SPEC_CLASS = 'recruit-detail-template-spec'
+
+/** 템플릿 관리 UJAT 모집 폼 상세 정보(`DetailInfoSection`) — 시안 placeholder(5800:157724·158529) */
+export const RECRUIT_TEMPLATE_DETAIL_PLACEHOLDERS = {
+  description: '프로그램 설명을 작성해 주세요',
+  recruitmentGuide: '모집 안내를 작성해 주세요',
+  applicationMethod: '지원 방법을 작성해 주세요',
+  learningSupportContent: '학습 지원 내용을 작성해 주세요',
+  additionalContent: '내용을 작성해 주세요',
+  otherNotes: '기타 안내 사항을 작성해 주세요',
+} as const
+/** 템플릿 관리 UJAT 모집 폼 상세 정보 — 썸네일 버튼 시안 문구(5800:157724·158529). 다른 모집 폼 시안은 「파일 추가」 */
+export const RECRUIT_TEMPLATE_UJAT_THUMBNAIL_BUTTON_LABEL = '파일 선택'
 const DETAIL_INFO_WYSIWYG_OPTIONS = {
   placeholder: '내용을 작성하세요',
   contentFormat: 'html' as const,
@@ -329,13 +353,18 @@ export function RecruitDetailInfoParagraph({
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
   textFieldControl = 'input',
 }: RecruitDetailInfoParagraphProps) {
-  // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교·Gemini·UJAT·교육받은 교사·템플릿 관리는 기존 문구
+  // 시안 플레이스홀더(「…작성해 주세요」) — 일반 등록 위저드 + 템플릿 관리 모집 폼 전체.
+  // 1사1교·Gemini·UJAT·교육받은 교사 등록·상세 화면은 기존 문구
   const isGeneralWizard = useIsGeneralRegistrationWizard()
-  const resolvedTextFields = isGeneralWizard
+  /** 썸네일·첨부 안내 시안 문구 — 일반 등록 위저드 + 템플릿 관리 모집 폼 전체 (QA 261113 #57) */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const showSpecAttachmentGuide = isGeneralWizard || isTemplateManagementScreen
+  const showSpecPlaceholder = isGeneralWizard || isTemplateManagementScreen
+  const resolvedTextFields = showSpecPlaceholder
     ? textFields.map(field => ({ ...field, placeholder: toGeneralWizardPlaceholder(field.placeholder) }))
     : textFields
   const resolvedAfterEditorFields =
-    isGeneralWizard && afterEditorFields != null
+    showSpecPlaceholder && afterEditorFields != null
       ? afterEditorFields.map(field => ({
           ...field,
           placeholder: toGeneralWizardPlaceholder(field.placeholder),
@@ -520,6 +549,17 @@ export function RecruitDetailInfoParagraph({
       if (files.length === 0) return
       const incomingNames = files.map(file => file.name)
       const previousCount = Array.isArray(attachmentFileNames) ? attachmentFileNames.length : 0
+      // 일반 등록 위저드 — 상세 모집 정보와 같은 최대 10개 제한
+      if (
+        isGeneralWizard &&
+        previousCount + files.length > GENERAL_RECRUIT_DETAIL_ATTACHMENT_MAX_COUNT
+      ) {
+        cmsAlertModal.show({
+          title: '안내',
+          content: GENERAL_RECRUIT_DETAIL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE,
+        })
+        return
+      }
       // 업로드 완료 전에 단계를 바꿔도 파일명이 남도록 먼저 기록한다.
       updateRecruitDetailInfoKey<string[]>(attachmentFileNamesKey, prev => [
         ...(prev ?? []),
@@ -575,6 +615,7 @@ export function RecruitDetailInfoParagraph({
       attachmentFileNames,
       attachmentFileNamesKey,
       attachmentFileObjectIdsKey,
+      isGeneralWizard,
       overlayKeyPrefix,
       overlayScope,
     ]
@@ -596,7 +637,13 @@ export function RecruitDetailInfoParagraph({
   const thumbnailPreviewUrl = livePreviewUrl ?? storedPreviewUrl
 
   return (
-    <div className="recruit-detail-info-paragraph__forms">
+    <div
+      className={
+        isTemplateManagementScreen
+          ? `recruit-detail-info-paragraph__forms ${RECRUIT_DETAIL_TEMPLATE_SPEC_CLASS}`
+          : 'recruit-detail-info-paragraph__forms'
+      }
+    >
       <DetailInfoForm title="상세 정보" hideHeader mode="edit">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
@@ -606,7 +653,11 @@ export function RecruitDetailInfoParagraph({
               <ThumbnailUploadField
                 previewUrl={thumbnailPreviewUrl}
                 fileName={thumbFileName}
-                guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
+                guideLines={
+                  showSpecAttachmentGuide
+                    ? GENERAL_RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
+                    : RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
+                }
                 maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
                 sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 uploading={uploadingThumbnail}
@@ -638,7 +689,7 @@ export function RecruitDetailInfoParagraph({
                 wysiwygResetKey={editorResetKey}
                 additionalContentKey={additionalContentKey}
                 placeholder={
-                  isGeneralWizard ? GENERAL_WIZARD_ADDITIONAL_CONTENT_PLACEHOLDER : undefined
+                  showSpecPlaceholder ? GENERAL_WIZARD_ADDITIONAL_CONTENT_PLACEHOLDER : undefined
                 }
               />
             }
@@ -661,8 +712,14 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <ParagraphFileUpload
-                accept={attachmentAccept}
-                guideLines={attachmentGuideLines}
+                accept={
+                  showSpecAttachmentGuide ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_ACCEPT : attachmentAccept
+                }
+                guideLines={
+                  showSpecAttachmentGuide
+                    ? GENERAL_RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES
+                    : attachmentGuideLines
+                }
                 multiple
                 fileNames={attachmentFileNames}
                 maxTotalBytes={0}

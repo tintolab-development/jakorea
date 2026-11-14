@@ -68,7 +68,7 @@ function resolveConfirmNotifyLine(
 /**
  * 재발송 팝업 문구 분기.
  * - `default`: 기존 문구(1사1교 기관·강사·개인 등)
- * - `general-organization`: 일반 프로그램(기관형) 기관 신청 시안 11(9756:62347)·16253:559008
+ * - `general-organization`: 일반 프로그램(기관형) 기관·강사 신청 시안 11(9756:62347)·16253:559008
  */
 export type ApplicantNotificationResendCopyVariant = 'default' | 'general-organization'
 
@@ -81,7 +81,11 @@ export function buildApplicantNotificationResendMessage(
   approvalStatus: ApplicantNotificationResendApprovalStatus,
   copyVariant: ApplicantNotificationResendCopyVariant = 'default'
 ): string {
-  if (copyVariant === 'general-organization' && subjectKind === 'institution') {
+  // 일반 프로그램(기관형) 기관·강사 — 시안 「프로그램 승인 알림을 재발송하시겠습니까?」
+  if (
+    copyVariant === 'general-organization' &&
+    (subjectKind === 'institution' || subjectKind === 'instructor')
+  ) {
     const question =
       approvalStatus === 'rejected'
         ? '프로그램 반려 알림을 재발송하시겠습니까?'

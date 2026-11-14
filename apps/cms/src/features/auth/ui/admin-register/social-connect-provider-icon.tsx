@@ -19,15 +19,15 @@ export function SocialConnectProviderIcon({ provider, className }: SocialConnect
         src={googleLogoImage}
         alt=""
         className={iconClassName}
-        width={40}
-        height={40}
+        width={48}
+        height={48}
       />
     )
   }
 
   if (provider === 'naver') {
-    return <NaverSocialLoginIcon className={iconClassName} width={40} height={40} />
+    return <NaverSocialLoginIcon className={iconClassName} width={48} height={48} />
   }
 
-  return <KakaoSocialLoginIcon className={iconClassName} width={40} height={40} />
+  return <KakaoSocialLoginIcon className={iconClassName} width={48} height={48} />
 }

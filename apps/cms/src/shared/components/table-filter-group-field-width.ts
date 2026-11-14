@@ -19,14 +19,14 @@ export const FILTER_CONTROL_MIN_WIDTH_PX = 240
 
 /**
  * 단일 검색·셀렉트 기본 폭 — `filter-controls-common.css`
- * `--filter-control-width`·`--filter-control-max-width` 와 동일(260px)
+ * `--filter-control-width`·`--filter-control-max-width` 와 동일(245px, 시안 2026-11 QA)
  */
-export const FILTER_CONTROL_MAX_WIDTH_PX = 260
+export const FILTER_CONTROL_MAX_WIDTH_PX = 245
 
-/** 분리형 `dateRange` 각 칸 폭 — 디자인 가이드 Field / Sorting 기간(240) · `--filter-control-range-segment-width` */
-export const FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX = 240
+/** 분리형 `dateRange` 각 칸 폭 — 시안 2026-11 QA 기간 칸(180) · `--filter-control-range-segment-width` */
+export const FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX = 180
 
-/** 분리형 `dateRange` 열: 2×240 + 구분자(~ 좌우 6px 포함 20px) = 500 */
+/** 분리형 `dateRange` 열: 2×180 + 구분자(~ 좌우 6px 포함 20px) = 380 */
 export const FILTER_CONTROL_WIDE_FIELD_WIDTH_PX =
   FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX * 2 + 20
 

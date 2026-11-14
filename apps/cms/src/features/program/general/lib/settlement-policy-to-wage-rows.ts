@@ -171,9 +171,14 @@ export function applySettlementPolicyToCommonInfo(
     ? mapSettlementPaymentItemsToLabel(settlementPolicy.paymentItems)
     : undefined
   const overlayPaymentItems = normalizedCommon?.paymentItems?.trim() || undefined
+  // 「해당없음」 저장 시 BE는 settlementPolicy.paymentItems=[]로 주고 serviceDetailJson 원문을 유지한다.
+  const overlayPaymentItemsNone =
+    overlayPaymentItems?.replace(/\s+/g, '') === PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
   // 구조화 배열이 있으면(빈 배열 포함) overlay 라벨보다 우선한다. null/누락은 overlay 유지.
+  // 단, 빈 배열 + overlay 「해당없음」이면 「해당없음」을 남긴다(편집 재진입 복원).
   const paymentItems = policyPaymentItemsPresent
-    ? paymentItemsFromPolicy || undefined
+    ? paymentItemsFromPolicy ||
+      (overlayPaymentItemsNone ? PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL : undefined)
     : overlayPaymentItems
   const deductionItems =
     mapSettlementDeductionTypeToLabel(settlementPolicy.deductionType) ??

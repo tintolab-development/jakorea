@@ -78,10 +78,15 @@
   color: var(--color-neutral-warm-600);
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: -0.13px;
 }
 
 .requiredMark {
   flex-shrink: 0;
+  color: #c32f4a;
 }
 
 .control {

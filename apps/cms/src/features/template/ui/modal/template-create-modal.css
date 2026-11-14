@@ -5,13 +5,19 @@
 }
 
 .template-create-modal__label {
-  color: var(--main-BK, #3d3d3d);
+  /* 시안: 라벨 14/Medium #525252 (QA 261113 CSS #2) */
+  color: var(--Content-secondary, #525252);
   font-family: Pretendard;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 21px */
   margin-top: 14px;
+}
+
+.template-create-modal__required {
+  margin-left: 2px;
+  color: var(--color-required-mark, var(--color-red, #ff4d4f));
 }
 
 .template-create-modal__select-wrapper {

@@ -1,4 +1,4 @@
-/** JABACK `MemberNotificationCategory` 순서·코드·라벨과 동일하게 유지한다. */
+/** USER-FUNC-0038 · 이용 가이드 슬라이드 31 — 8탭. 코드는 포털 category 쿼리와 맞춘다. */
 export const NOTIFICATION_CATEGORY_ALL = 'ALL'
 
 export const NOTIFICATION_CATEGORY_TABS = [
@@ -8,7 +8,8 @@ export const NOTIFICATION_CATEGORY_TABS = [
   { key: 'PROGRAM_PROGRESS', label: '프로그램 진행' },
   { key: 'SETTLEMENT', label: '정산' },
   { key: 'UPDATE', label: '업데이트' },
-  { key: 'INQUIRY_SYSTEM', label: '문의·시스템' },
+  { key: 'INQUIRY', label: '문의' },
+  { key: 'SYSTEM', label: '시스템' },
 ] as const
 
 export type NotificationCategoryTabKey = (typeof NOTIFICATION_CATEGORY_TABS)[number]['key']

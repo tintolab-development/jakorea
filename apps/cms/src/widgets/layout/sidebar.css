@@ -162,21 +162,12 @@
   color: var(--color-sidebar-text) !important;
 }
 
-/* 시안: 1뎁스 아이콘 24×24 프레임 안에 글리프 20(일부 18) 중앙 → 라벨 시작 x = 20 + 24 + 8 = 52 */
-.sidebar-menu.ant-menu > li.ant-menu-item > svg:first-child,
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-submenu-title > svg:first-child {
-  flex-shrink: 0;
-  margin-inline: 2px;
-}
-
-.sidebar-menu.ant-menu > li.ant-menu-item > svg[width='18']:first-child,
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-submenu-title > svg[width='18']:first-child {
-  margin-inline: 3px;
-}
-
 /* 시안: 비선택 1뎁스 행 opacity 0.8 (행 배경·호버 면은 유지, 내용만) */
 .sidebar-menu.ant-menu > li.ant-menu-item:not(.ant-menu-item-selected) > *,
-.sidebar-menu.ant-menu > li.ant-menu-submenu:not(.ant-menu-submenu-selected) > .ant-menu-submenu-title > * {
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu:not(.ant-menu-submenu-selected)
+  > .ant-menu-submenu-title
+  > * {
   opacity: 0.8;
 }
 
@@ -355,8 +346,7 @@
 
 .sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected:hover {
   background:
-    var(--sidebar-hover-overlay),
-    linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
+    var(--sidebar-hover-overlay), linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
 }
 
 /* 2뎁스 리프(자식 없는 메뉴) 선택 배경 명시 적용 */
@@ -426,7 +416,7 @@
   opacity: 1 !important;
 }
 
-/* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 높이 44px, 세로 패딩 12px, 좌 38px, 우 18px */
+/* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 높이 44px, 세로 패딩 12px, 좌 24px, 우 18px */
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
@@ -445,74 +435,17 @@
   padding: 0 18px 0 66px !important;
 }
 
-/* ---- 아이콘(기본 20px, 일부 18px) ---- */
+/* ---- 1뎁스 아이콘: 시안 Icon / LNB / w24 원본(24 프레임) → 라벨 시작 x = 20 + 24 + 8 = 52 ---- */
 .sidebar-menu .ant-menu-item-icon,
 .sidebar-menu .ant-menu-submenu-title .ant-menu-item-icon {
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
-  font-size: 20px !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  font-size: 24px !important;
   line-height: 1 !important;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
   color: var(--color-sidebar-text) !important;
   flex-shrink: 0;
-}
-
-.sidebar-menu .ant-menu-item-icon svg,
-.sidebar-menu .ant-menu-submenu-title .ant-menu-item-icon svg {
-  width: 20px !important;
-  height: 20px !important;
-}
-
-.sidebar-menu .ant-menu-item-icon .anticon,
-.sidebar-menu .ant-menu-submenu-title .ant-menu-item-icon .anticon {
-  font-size: 20px !important;
-  width: 1em !important;
-  height: 1em !important;
-  color: var(--color-sidebar-text) !important;
-}
-
-.sidebar-menu.ant-menu .ant-menu-submenu-title > .anticon:first-child,
-.sidebar-menu.ant-menu .ant-menu-item .anticon:not(.ant-menu-submenu-arrow) {
-  width: 20px !important;
-  height: 20px !important;
-  font-size: 20px !important;
-  color: var(--color-sidebar-text) !important;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-menu.ant-menu .ant-menu-submenu-title .anticon svg,
-.sidebar-menu.ant-menu .ant-menu-item .anticon svg {
-  width: 20px !important;
-  height: 20px !important;
-}
-
-.sidebar-menu li.ant-menu-item[data-menu-id$='-/'] .ant-menu-item-icon,
-.sidebar-menu li.ant-menu-item[data-menu-id$='-/education-records'] .ant-menu-item-icon,
-.sidebar-menu .ant-menu-submenu-title[data-menu-id$='-logs-group'] .ant-menu-item-icon {
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  min-height: 18px !important;
-  font-size: 18px !important;
-}
-
-.sidebar-menu li.ant-menu-item[data-menu-id$='-/'] .ant-menu-item-icon svg,
-.sidebar-menu li.ant-menu-item[data-menu-id$='-/education-records'] .ant-menu-item-icon svg,
-.sidebar-menu .ant-menu-submenu-title[data-menu-id$='-logs-group'] .ant-menu-item-icon svg {
-  width: 18px !important;
-  height: 18px !important;
-}
-
-.sidebar-menu li.ant-menu-item[data-menu-id$='-/'] .ant-menu-item-icon .anticon,
-.sidebar-menu li.ant-menu-item[data-menu-id$='-/education-records'] .ant-menu-item-icon .anticon,
-.sidebar-menu .ant-menu-submenu-title[data-menu-id$='-logs-group'] .ant-menu-item-icon .anticon {
-  font-size: 18px !important;
 }
 
 /* ---- 드롭다운 쉐브론 (시안: 20×20 / aspect-ratio 1/1 / 행 세로 중앙) ---- */
@@ -559,108 +492,32 @@
   transform: translateY(-50%) !important;
 }
 
-/* ---- 2뎁스(루트 바로 하위)만: 불릿↔텍스트 8px, 닷 3x3 ---- */
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  > li.ant-menu-submenu
-  > .ant-menu-submenu-title,
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  > li.ant-menu-submenu
-  > .ant-menu-submenu-title
-  > .ant-menu-title-content {
-  gap: 8px !important;
-}
-
 /*
- * 불릿 실제 DOM: menu-config `BulletIcon` = `<span aria-hidden>•</span>` (antd가 .ant-menu-item-icon 클래스를 붙이지 않아
- * 기존 .ant-menu-item-icon 셀렉터가 적용되지 않던 것 → 실제 span 기준으로 보정, 3×3 닷 + 텍스트 gap 8)
- * 2-depth 텍스트 시작 x=48 (어드민 시안과 동일): row pl 24 + ml 13 + 닷 3 + gap 8
+ * 2·3뎁스 불릿: 시안 LNB(12543:26382 · UJAT 13196:143782) — 라벨 앞 불릿(disc)
+ * 2뎁스 라벨 시작 x = 48 (행 왼쪽 24 + 불릿 앞 13 + 닷 3 + 간격 8)
+ * 3뎁스 라벨 시작 x = 72 (행 왼쪽 48 + 불릿 앞 13 + 닷 3 + 간격 8)
  */
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item .ant-menu-item-icon,
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  > li.ant-menu-submenu
-  > .ant-menu-submenu-title
-  .ant-menu-item-icon,
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item > span[aria-hidden='true']:first-child,
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  > li.ant-menu-submenu
-  > .ant-menu-submenu-title
-  > span[aria-hidden='true']:first-child {
-  display: block !important;
-  border-radius: 50%;
-  background-color: var(--color-sidebar-text);
-  color: transparent !important;
-  overflow: hidden;
-  width: 3px !important;
-  min-width: 3px !important;
-  max-width: 3px !important;
-  height: 3px !important;
-  min-height: 3px !important;
-  max-height: 3px !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  flex-shrink: 0;
-  padding: 0 !important;
-  margin-left: 13px !important;
-  margin-right: 0 !important;
-  transform: translateY(1px);
-}
-
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub
   > .ant-menu-item
-  .ant-menu-item-icon
-  > span,
+  > .ant-menu-title-content::before,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub
   > li.ant-menu-submenu
   > .ant-menu-submenu-title
-  .ant-menu-item-icon
-  > span {
-  display: block;
-  box-sizing: border-box;
-  width: 3px !important;
-  height: 3px !important;
-  min-width: 3px !important;
-  min-height: 3px !important;
+  > .ant-menu-title-content::before,
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item > .ant-menu-title-content::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin: 0 8px 0 13px;
   border-radius: 50%;
-  background-color: var(--color-sidebar-text);
-  color: transparent !important;
-  overflow: hidden;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  margin: 0 !important;
-}
-
-/* 3뎁스: 불릿 아이콘 제거 (스크린샷 기준) */
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  .ant-menu-sub
-  .ant-menu-item
-  .ant-menu-item-icon,
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  .ant-menu-sub
-  > li.ant-menu-submenu
-  > .ant-menu-submenu-title
-  .ant-menu-item-icon,
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub .ant-menu-sub .ant-menu-item-icon {
-  display: none !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  margin: 0 !important;
+  background-color: currentColor;
+  vertical-align: middle;
+  transform: translateY(-1px);
 }
 
 /* ---- 포커스: 브라우저·Ant 기본 outline / 포커스 링 제거 (사이드바 영역 한정) ---- */

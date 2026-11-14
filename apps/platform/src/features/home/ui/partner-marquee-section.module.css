@@ -3,7 +3,8 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  padding-top: var(--spacing-48);
+  /* 모바일 시안: 성과 ↔ 후원사 60 */
+  padding-top: var(--spacing-60);
   flex-direction: column;
   gap: 0;
   /* 홈 achievements 밴드 배경이 비치도록 투명 */
@@ -31,20 +32,18 @@
   min-width: 0;
   padding-inline: var(--spacing-20);
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   /* eyebrow ↔ title */
   gap: var(--spacing-8);
   /* 헤더 ↔ 로고 */
   margin-bottom: var(--spacing-32);
-  text-align: left;
+  text-align: center;
 }
 
 @media (--bp-pc-up) {
   .header {
-    align-items: center;
     gap: var(--spacing-16);
     margin-bottom: var(--spacing-80);
-    text-align: center;
   }
 }
 
@@ -52,15 +51,16 @@
   margin: 0;
   color: var(--color-primary-600);
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 500;
-  line-height: 144%;
-  letter-spacing: 0.02em;
+  line-height: 140%;
+  letter-spacing: 0.12em;
 }
 
 @media (--bp-pc-up) {
   .eyebrow {
+    line-height: 144%;
     font-size: 26px;
     letter-spacing: -0.52px;
   }
@@ -70,15 +70,16 @@
   margin: 0;
   color: var(--color-neutral-cool-80);
   font-family: var(--font-family-base);
-  font-size: 22px;
+  font-size: 24px;
   font-style: normal;
   font-weight: 600;
-  line-height: 144%;
-  letter-spacing: -0.44px;
+  line-height: 140%;
+  letter-spacing: -0.48px;
 }
 
 @media (--bp-pc-up) {
   .title {
+    line-height: 144%;
     font-size: 46px;
     letter-spacing: -0.92px;
   }
@@ -170,7 +171,7 @@
 
 .logoGridEmpty {
   min-width: 0;
-  height: 72px;
+  height: 64px;
   list-style: none;
 }
 
@@ -179,7 +180,9 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 72px;
+  /* 모바일 시안: 160×64 · 안쪽 12/16 (로고 124×32) */
+  height: 64px;
+  padding: var(--spacing-12) var(--spacing-16);
   flex-shrink: 0;
   justify-content: center;
   align-items: center;
@@ -191,6 +194,7 @@
   .logoChip {
     width: 300px;
     height: 110px;
+    padding: 0;
   }
 }
 
@@ -238,9 +242,10 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  margin-top: var(--spacing-48);
+  /* 모바일 시안: 후원사 ↔ 문구 60 · 하단 56 */
+  margin-top: var(--spacing-60);
   padding-top: 0;
-  padding-bottom: var(--spacing-64);
+  padding-bottom: var(--spacing-56);
   flex-direction: column;
   justify-content: center;
   /* 밴드 하단 포토 영역이 비치도록 투명 */
@@ -286,13 +291,14 @@
   font-size: 20px;
   font-style: normal;
   font-weight: 600;
-  line-height: 144%;
-  letter-spacing: -0.4px;
-  text-align: left;
+  line-height: 150%;
+  letter-spacing: 0;
+  text-align: center;
 }
 
 @media (--bp-pc-up) {
   .ctaCopy {
+    line-height: 144%;
     font-size: 36px;
     letter-spacing: -0.72px;
     text-align: left;
@@ -354,17 +360,23 @@
   background: #defafd;
 }
 
+/* 모바일 시안: 18 / SemiBold / 150% */
 .ctaLabel {
   display: block;
   width: auto;
   flex: 1 1 auto;
   min-width: 0;
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: -0.18px;
 }
 
 @media (--bp-pc-up) {
   .ctaLabel {
     width: 200px;
     flex: 0 0 200px;
+    font-size: 24px;
+    letter-spacing: -0.24px;
   }
 }
 

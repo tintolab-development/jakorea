@@ -54,7 +54,7 @@ const values = {
 const body = mapInstructorApplyFormToCreateRequest(values)
 
 assert.equal(body.name, '홍길동')
-assert.equal(body.gender, 'M')
+assert.equal(body.gender, 'MALE')
 assert.equal(body.birthDate, '1990-05-01')
 assert.equal(body.phone, '010-1234-5678')
 assert.equal(

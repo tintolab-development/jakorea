@@ -63,6 +63,35 @@ function parseFormApplyError(error: unknown): FormApplyServerError {
   return { message: '양식 적용에 실패했습니다.' }
 }
 
+/**
+ * 409 FORM_SCHEMA_IMMUTABLE 등 `error.details`의 reason·paragraphId를 개발자 콘솔에 남긴다.
+ * 사용자 문구는 BE message 그대로 두고, 원인 추적용 정보만 출력한다.
+ */
+function logFormApplyErrorDetails(
+  error: unknown,
+  context: { templateCode: string; recruitmentId?: number; versionId?: number }
+): void {
+  if (error == null || typeof error !== 'object') return
+  const data = (
+    error as {
+      response?: { data?: { error?: { code?: string; details?: Record<string, unknown> | null } } }
+    }
+  ).response?.data?.error
+  const details = data?.details
+  if (details == null || typeof details !== 'object') return
+  const reason = details.reason
+  const paragraphId = details.paragraphId
+  if (reason == null && paragraphId == null) return
+  console.warn('[registration-form-apply] 양식 적용 실패 상세', {
+    ...context,
+    code: data?.code,
+    reason,
+    paragraphId,
+    path: details.path,
+    templateScope: details.templateScope,
+  })
+}
+
 function recruitmentAudienceLabel(templateCode: string): string {
   const spec = getOperationalFormSpec(templateCode) ?? getRegistrationFormSpec(templateCode)
   if (spec?.targetRole === 'INSTRUCTOR') return '강사'
@@ -261,6 +290,11 @@ export async function applyRegistrationFormsAfterCreate(args: {
         ) {
           continue
         }
+        logFormApplyErrorDetails(error, {
+          templateCode: item.templateCode,
+          recruitmentId: target.recruitmentId,
+          versionId: target.versionId,
+        })
         result.failed.push({
           templateCode: item.templateCode,
           recruitmentId: target.recruitmentId,

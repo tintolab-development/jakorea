@@ -1,4 +1,7 @@
-import { formatDisplayDateTime } from '../../../shared/lib/format-display-date.ts'
+import {
+  formatDisplayDateRange,
+  formatDisplayDateTime,
+} from '../../../shared/lib/format-display-date.ts'
 import type { OneToOneInquiryItem, OneToOneInquiryStatus } from '../model/types'
 import type { PortalInquiryDetail, PortalInquiryListItem } from './client'
 
@@ -30,7 +33,10 @@ export function mapInquiryListItem(
     category: item.category?.trim() || '기타',
     title: item.title?.trim() || '문의',
     status: mapInquiryStatus(item.status, item.displayStatus),
-    createdAt: formatInquiryTimestamp(item.inquiredAt),
+    createdAt: formatDisplayDateRange(item.inquiredAt, item.inquiredAt, {
+      weekday: false,
+      empty: '',
+    }),
     answeredAt: formatInquiryTimestamp(item.answeredAt) || undefined,
     programName: item.programName?.trim() || '해당 없음',
     question: '',

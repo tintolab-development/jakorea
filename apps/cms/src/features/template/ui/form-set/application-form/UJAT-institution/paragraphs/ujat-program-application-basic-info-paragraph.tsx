@@ -9,7 +9,7 @@ import { CmsTextArea } from '@/shared/ui/cms-textarea'
 const PREVIEW_AUTO_USER_INFO_SAMPLE = {
   institutionName: '신청 기관명',
   institutionAddress: '기관 소재지',
-  teacherName: '담당 교사',
+  teacherName: '담당 교사명',
   tel: '',
   mobile: '',
   email: '',
@@ -83,7 +83,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
       <CmsInput
         inputSize="small"
         width={240}
-        placeholder="담당 교사의 내선 번호(직통 번호)"
+        placeholder="담당 교사의 내선(직통 번호)"
         value={teacherTel}
         onChange={e => setTeacherTel(e.target.value)}
       />
@@ -161,7 +161,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
                 <CmsTextArea
                   inputSize="small"
                   rows={1}
-                  placeholder="기타 요청사항을 입력해 주세요."
+                  placeholder="기타 요청사항을 입력해 주세요"
                   width="100%"
                   value={otherRequests}
                   onChange={e => setOtherRequests(e.target.value)}

@@ -208,6 +208,7 @@ function satisfactionSurveyMeta(
   | 'targetScopeLabel'
   | 'displayDeadlineAt'
   | 'submissionEndAt'
+  | 'submissionOpenEnded'
   | 'resultDownloadable'
   | 'satisfactionRunMode'
   | 'satisfactionWindowDays'
@@ -220,7 +221,9 @@ function satisfactionSurveyMeta(
     targetScopeId: binding.targetScopeId ?? null,
     targetScopeLabel: binding.targetScopeLabel ?? null,
     displayDeadlineAt: extra.displayDeadlineAt,
-    ...(binding.submissionEndAt ? { submissionEndAt: binding.submissionEndAt } : {}),
+    ...(binding.submissionEndAt
+      ? { submissionEndAt: binding.submissionEndAt }
+      : { submissionOpenEnded: true }),
     resultDownloadable: extra.resultDownloadable,
     satisfactionRunMode: extra.satisfactionRunMode ?? null,
     satisfactionWindowDays: extra.satisfactionWindowDays ?? null,

@@ -1,9 +1,10 @@
-import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { formatDateDot } from '@/shared/utils/date'
 import './survey-period-readonly.css'
 
+/** 시안 1141:268259 — 「설문 기간 : 2026.09.15 ~ 2026.10.05」(요일 없음) */
 function formatSurveyPeriodDate(isoDate: string | null | undefined): string {
   if (isoDate == null || isoDate === '') return '—'
-  const label = formatDateDotWithWeekday(isoDate)
+  const label = formatDateDot(isoDate)
   return label === '-' ? '—' : label
 }
 

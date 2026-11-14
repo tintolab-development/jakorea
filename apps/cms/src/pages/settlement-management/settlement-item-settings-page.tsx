@@ -40,7 +40,7 @@ import './settlement-item-settings-page.css'
 
 const cardOptionMenuItems: MenuProps['items'] = [
   { key: 'delete', label: '삭제', danger: true },
-  { key: 'duplicate', label: '복제' },
+  { key: 'duplicate', label: '복사' },
 ]
 
 export default function SettlementItemSettingsPage() {
@@ -91,7 +91,7 @@ export default function SettlementItemSettingsPage() {
     if (duplicatedItemId == null || !itemById.has(`p-${duplicatedItemId}`)) return
     if (notifiedDuplicatedItemIdRef.current === duplicatedItemId) return
     notifiedDuplicatedItemIdRef.current = duplicatedItemId
-    void message.success('지급 항목이 복제되었습니다.')
+    void message.success('지급 항목이 복사되었습니다.')
   }, [duplicatedItemId, itemById, message])
 
   const deleteRemotePaymentItem = useCallback(
@@ -147,7 +147,7 @@ export default function SettlementItemSettingsPage() {
       if (settlementConfigsRemote) {
         if (sectionKind !== 'payment' || item.apiItemId == null) {
           void showAlert({
-            title: '복제 불가',
+            title: '복사 불가',
             content: SETTLEMENT_CONFIG_ITEM_KIND_LOCKED_MESSAGE,
           })
           return
@@ -155,7 +155,7 @@ export default function SettlementItemSettingsPage() {
         const currentConfig = configQuery.data?.config
         if (!currentConfig) {
           void showAlert({
-            title: '복제 실패',
+            title: '복사 실패',
             content: '현재 정산 설정을 확인할 수 없습니다.',
           })
           return
@@ -168,7 +168,7 @@ export default function SettlementItemSettingsPage() {
             },
             onError: error => {
               void showAlert({
-                title: '복제 실패',
+                title: '복사 실패',
                 content: resolveSettlementConfigMutationError(error),
               })
             },

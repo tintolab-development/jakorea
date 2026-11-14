@@ -20,3 +20,14 @@ export const ShowParagraphActiveOutlineContext = createContext(false)
 export function useShowParagraphActiveOutline(): boolean {
   return useContext(ShowParagraphActiveOutlineContext)
 }
+
+/**
+ * true면 단락 카드 헤더(제목·설명)를 읽기 전용으로 고정하고, 비었거나 placeholder인 설명은 숨긴다.
+ * 프로그램 등록 위저드 「등록폼」 단계처럼 템플릿을 고치지 않고 내용만 작성하는 사용 모드용.
+ * 기본 false — 템플릿 편집·다른 위저드 단계는 기존 동작 유지.
+ */
+export const LockParagraphHeadingContext = createContext(false)
+
+export function useLockParagraphHeading(): boolean {
+  return useContext(LockParagraphHeadingContext)
+}

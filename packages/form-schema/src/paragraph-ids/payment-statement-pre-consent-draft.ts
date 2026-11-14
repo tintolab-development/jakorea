@@ -40,7 +40,7 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_REMOVED_SEED_PARAGRAPH_IDS = new Set<
 ])
 
 const P1_BOTTOM =
-  '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 기관 사업에 필요한 업무처리에 제약이 발생할 수 있습니다.'
+  '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 강사 신청과 강사비·영수증 금액 지급이 제한됩니다.'
 
 const P2_BOTTOM =
   '주민등록번호는 「소득세법」에 따라 원천징수 및 지급명세서 제출을 위해 수집하는 정보로, 동의 대상이 아닙니다. 제공하지 않으면 활동비지급 및 세금신고 등 업무처리가 어렵습니다.'
@@ -238,14 +238,15 @@ const intro: AgreementExplanationTextParagraph = {
   id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
-  requiredMark: true,
+  // 시안: 서문 카드 `*` 없음
+  requiredMark: false,
   paragraphTitle: '개인정보 수집‧이용 및 제공 동의서',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
     'JA KOREA (이하 “기관”이라 함)는 「개인정보 보호법」제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며, 개인정보 제공자가 동의한 이용목적(법령에 따라 처리하는 정보는 해당 법령에서 정한 목적) 외의 용도로는 이용․제공되지 않습니다.\n제공된 개인정보는 개인정보 보호책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
-  answerRequired: true,
+  answerRequired: false,
 }
 
 const midConsentLine: AgreementExplanationTextParagraph = {
@@ -291,7 +292,9 @@ const paymentRecord = normalizeVerticalTableParagraph({
   verticalTableFlavor: 'text',
   requiredMark: true,
   paragraphTitle: '지급조서',
-  paragraphDescription: '',
+  // 시안 5767:42072 · 6130:133665 — 단락 설명(Platform `PAYMENT_RECORD_WRITE_DESCRIPTION`과 같은 문구)
+  paragraphDescription:
+    '영문 성명·주민등록번호·정산 계좌 외의 기본 정보는 마이페이지에 등록된 정보를 불러옵니다. 수정이 필요하면 마이페이지에서 변경해 주세요.',
   participatesInTitleNumbering: true,
   rows: [{ stageCount: 1, headers: [''], cells: [''], stageKinds: ['text'] }],
   bottomText: '',

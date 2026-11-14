@@ -96,6 +96,19 @@ export async function fetchFileAccessLogsRemote(
   )
 }
 
+/** 파일 다운로드 이력 — 조회 조건 전체 엑셀 (서버 생성, 다른 로그 export와 같은 방식) */
+export async function exportFileAccessLogsRemote(
+  filters: Record<string, string>
+): Promise<Blob> {
+  const query = toLogsQueryParams(filters)
+  return customInstance<Blob>({
+    url: '/api/admin/logs/file-access/export',
+    method: 'GET',
+    params: query,
+    responseType: 'blob',
+  })
+}
+
 export async function fetchPrivacyAccessLogsRemote(
   params: Record<string, string>
 ): Promise<LogListPageResponsePersonalInfoAccessLogFrontendResponse> {

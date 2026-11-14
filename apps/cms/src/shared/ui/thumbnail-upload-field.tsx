@@ -32,6 +32,8 @@ export interface ThumbnailUploadFieldProps {
   accept?: string
   /** 버튼 비활성 + X 미표시 (보기 모드) */
   disabled?: boolean
+  /** 읽기 화면 — 썸네일·파일명만 노출(「파일 추가」 버튼·안내 숨김) */
+  readOnly?: boolean
   /** 업로드 중이면 화면 전체 스피너를 띄우고 필드를 막는다 */
   uploading?: boolean
   buttonLabel?: string
@@ -50,6 +52,7 @@ export function ThumbnailUploadField({
   guideLines,
   accept = THUMBNAIL_UPLOAD_ACCEPT,
   disabled = false,
+  readOnly = false,
   uploading = false,
   buttonLabel = '파일 추가',
   previewAlt = '',
@@ -68,7 +71,7 @@ export function ThumbnailUploadField({
 
   const name = fileName?.trim() ?? ''
   const hasFile = name !== '' || Boolean(previewUrl?.trim())
-  const locked = disabled || uploading
+  const locked = disabled || readOnly || uploading
   const canSelect = !locked && !hasFile && typeof onSelectFile === 'function'
   const canRemove = !locked && hasFile && typeof onRemove === 'function'
 
@@ -112,30 +115,33 @@ export function ThumbnailUploadField({
           <FileAttachmentEmpty />
         )}
 
-        <div className="file-upload-actions">
-          <span className="file-upload-picker">
-            {canSelect ? (
-              <input
-                ref={inputRef}
-                type="file"
-                accept={accept}
-                className="file-upload-picker__input"
-                aria-label={buttonLabel}
-                onChange={handleChange}
-              />
-            ) : null}
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="h32"
-              disabled={!canSelect}
-              tabIndex={canSelect ? -1 : undefined}
-              onClick={() => openFilePicker(inputRef.current)} >
-              {uploading ? '업로드 중…' : buttonLabel}
-            </CmsButton>
-          </span>
-          <FileUploadGuide lines={guideLines} />
-        </div>
+        {readOnly ? null : (
+          <div className="file-upload-actions">
+            <span className="file-upload-picker">
+              {canSelect ? (
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept={accept}
+                  className="file-upload-picker__input"
+                  aria-label={buttonLabel}
+                  onChange={handleChange}
+                />
+              ) : null}
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="h32"
+                disabled={!canSelect}
+                tabIndex={canSelect ? -1 : undefined}
+                onClick={() => openFilePicker(inputRef.current)}
+              >
+                {uploading ? '업로드 중…' : buttonLabel}
+              </CmsButton>
+            </span>
+            <FileUploadGuide lines={guideLines} />
+          </div>
+        )}
       </div>
     </div>
   )

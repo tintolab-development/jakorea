@@ -90,7 +90,7 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel |
   }
 
   if (isImpactStoriesPath(pathname)) {
-    return '임팩트 스토리'
+    return '임팩트'
   }
 
   if (pathname.startsWith('/support/')) {

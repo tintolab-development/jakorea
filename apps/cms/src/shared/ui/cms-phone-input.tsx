@@ -57,7 +57,7 @@ export const CmsPhoneInput = forwardRef<InputRef, CmsInputProps>(function CmsPho
       ref={innerRef}
       type="tel"
       inputMode="numeric"
-      autoComplete="tel"
+      autoComplete="off"
       value={formatted}
       defaultValue={
         defaultValue === undefined ? undefined : formatKoreanPhoneNumber(String(defaultValue))

@@ -1,38 +1,16 @@
 /**
- * `/` 인덱스: ADMIN은 대시보드, 그 외 역할은 역할별 기본 경로로 즉시 이동(LNB가 비어도 홈·로그인 동선 유지).
+ * `/` 인덱스: 관리자는 대시보드. CMS는 관리자 전용이라 그 외 역할은 다른 주소로 보내지 않고 접근 불가 안내만 보여 준다
+ * (로그인 화면으로 보내면 로그인 후 이동과 서로 오가며 반복될 수 있다).
  */
 
-import { useEffect } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { Dashboard } from '@/pages/dashboard'
-import { Spin } from 'antd'
+import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 export function IndexPage() {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const user = useAuthStore(state => state.user)
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!isAuthenticated || !user) return
-
-    if (user.role !== 'ADMIN') {
-      switch (user.role) {
-        case 'INSTRUCTOR':
-          navigate('/instructor/schedule', { replace: true })
-          break
-        case 'INDIVIDUAL':
-          navigate('/schedules/my', { replace: true })
-          break
-        case 'SCHOOL':
-          navigate('/school/my-learning', { replace: true })
-          break
-        default:
-          navigate('/login', { replace: true })
-          break
-      }
-    }
-  }, [isAuthenticated, user, navigate])
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />
@@ -43,15 +21,9 @@ export function IndexPage() {
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-      }}
-    >
-      <Spin size="large" />
-    </div>
+    <ComingSoonPage
+      title="접근 권한이 없습니다"
+      description="이 페이지에 접근할 권한이 없습니다."
+    />
   )
 }

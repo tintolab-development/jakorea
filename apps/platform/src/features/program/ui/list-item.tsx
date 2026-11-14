@@ -32,7 +32,17 @@ function RecruitmentPeriodValue({ value }: { value: string }) {
 export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListItemRowProps) {
   const tabs =
     activeTab && activeTab !== 'all' ? [activeTab] : program.categories
-  const categoryLine = tabs.map(tab => PROGRAM_TAB_LABEL[tab]).join(' • ')
+  const recruitmentRole = programListRecruitmentRoleLabel(program.recruitmentType)
+  const categoryLine =
+    activeTab && activeTab !== 'all'
+      ? PROGRAM_TAB_LABEL[activeTab]
+      : recruitmentRole === '강사'
+        ? PROGRAM_TAB_LABEL.instructor
+        : recruitmentRole === '기관'
+          ? PROGRAM_TAB_LABEL.institution
+          : recruitmentRole === '봉사자'
+            ? PROGRAM_TAB_LABEL.youth
+            : tabs.map(tab => PROGRAM_TAB_LABEL[tab]).join(' • ')
   const isClosed = program.recruitmentStatus === 'closed'
 
   return (
@@ -95,7 +105,7 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
             />
             <p className={styles.recruitmentPeriod}>
               <PFText as="span" typo="bd-sm-md" color="neutral-cool-600" className={styles.recruitmentPeriodText}>
-                모집기간 : <RecruitmentPeriodValue value={program.recruitmentPeriodLabel} />
+                모집 기간 : <RecruitmentPeriodValue value={program.recruitmentPeriodLabel} />
               </PFText>
             </p>
           </div>
@@ -107,7 +117,7 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
           <div className={styles.asideScheduleGroup}>
             <div className={styles.recruitment}>
               <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                모집기간
+                모집 기간
               </PFText>
               <PFText
                 as="span"

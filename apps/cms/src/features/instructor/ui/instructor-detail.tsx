@@ -587,6 +587,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
       <Modal
         title="정산 상세"
         open={drawerOpen}
+        maskClosable={false}
         onCancel={() => {
           setDrawerOpen(false)
           setSelectedSettlement(null)

@@ -13,6 +13,7 @@ import {
   detailAddressView,
   genderBirthView,
   instructorApplicationTypeLine,
+  instructorBankView,
   instructorCareerYearsLine,
   instructorFeeGradeLine,
   oneLineIntroLine,
@@ -204,7 +205,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         : undefined
 
   const genderRadioValue =
-    toApiGender(d?.gender) === 'M' ? 'male' : toApiGender(d?.gender) === 'F' ? 'female' : undefined
+    toApiGender(d?.gender) === 'MALE' ? 'male' : toApiGender(d?.gender) === 'FEMALE' ? 'female' : undefined
 
   const businessIncomeField = (
     <EditableField
@@ -414,10 +415,11 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         </EditableRow>
       )}
 
-      <EditableRow type="single">
+      {/* 시안: 강사 신청 상세는 「자택 주소지 | 정산 계좌 정보(은행명/계좌번호 ㅣ 예금주)」 한 행 */}
+      <EditableRow type={isInstructorPermissionDetail ? 'double' : 'single'}>
         <EditableField
           label="자택 주소지"
-          fullRow
+          fullRow={!isInstructorPermissionDetail}
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
@@ -430,6 +432,13 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
             />
           }
         />
+        {isInstructorPermissionDetail ? (
+          <EditableField
+            label="정산 계좌 정보"
+            readOnlyDisplay
+            view={<span>{instructorBankView(user, personalInfoRevealed)}</span>}
+          />
+        ) : null}
       </EditableRow>
 
       {useCompactBasicInfo ? (

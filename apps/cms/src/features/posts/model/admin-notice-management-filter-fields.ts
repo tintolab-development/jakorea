@@ -1,4 +1,8 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+} from '@/shared/components/table-filter-group-field-width'
 import type { Notice } from '@/features/posts/model/notice'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
 
@@ -35,7 +39,8 @@ export function createInitialNoticeCategoryRows(): NoticeCategoryRow[] {
 }
 
 /**
- * TableFilterGroup `width` % — 합 100%. 작성일시(기간)는 두 입력·구분자가 들어가므로 비중 확대.
+ * 시안: 공개 여부·카테고리·제목·작성자·작성일 + 조회를 한 줄 — 공통 픽셀 폭(단일 칸 `FILTER_CONTROL_MAX_WIDTH_PX`,
+ * 기간 `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`). `%` 폭은 행 전체 stretch라 쓰지 않는다(filter-area-layout).
  * `categoryLabels`: 카테고리 관리 모달과 동기화된 라벨 목록
  */
 export function buildAdminNoticeManagementFilterFields(
@@ -52,7 +57,7 @@ export function buildAdminNoticeManagementFilterFields(
       type: 'select',
       label: '공개 여부',
       placeholder: '전체',
-      width: '14%',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
       defaultValue: 'ALL',
       options: [
         { label: '전체', value: 'ALL' },
@@ -65,7 +70,7 @@ export function buildAdminNoticeManagementFilterFields(
       type: 'select',
       label: '카테고리',
       placeholder: '전체',
-      width: '14%',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
       options: categoryOptions,
     },
     {
@@ -73,21 +78,21 @@ export function buildAdminNoticeManagementFilterFields(
       type: 'search',
       label: '제목',
       placeholder: '제목을 입력해 주세요',
-      width: '22%',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
       key: 'author',
       type: 'search',
       label: '작성자',
       placeholder: '작성자명을 입력해 주세요',
-      width: '18%',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
       key: 'dateRange',
       type: 'dateRange',
       label: '작성일',
       defaultValue: null,
-      width: '32%',
+      width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
     },
   ]
 }

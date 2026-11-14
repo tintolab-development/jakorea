@@ -55,19 +55,12 @@ import {
   type ProgramProgressHistoryDeleteDomain,
   FilterTableToolbarButton,
 } from '@/shared/ui'
-import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
-import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
-import {
-  hasFileDownloadPermission,
-  saveLectureReportBulkDownloadJob,
-} from '@/shared/lib/lecture-report-bulk-download'
 import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
 
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
-import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
   return (
@@ -125,8 +118,7 @@ export interface MemberProgramLectureHistoryProps {
 /** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
 const SHOW_PROGRAM_HISTORY_DELETE = false
 
-const DEFAULT_FOOTNOTE =
-  '* 활동보고서는 개인정보 보관 만료 전(회원가입일로부터 5년)까지 자유롭게 발급이 가능합니다.'
+const DEFAULT_FOOTNOTE = '활동인증서는 프로그램 참여 동의일로부터 3년간 다운로드할 수 있습니다.'
 
 function businessAreaFromRecord(record: Application): string {
   const raw = record.customFields?.businessArea
@@ -273,7 +265,6 @@ export function MemberProgramLectureHistory({
     }
     action()
   }
-  const [allLectureReportsDownloading, setAllLectureReportsDownloading] = useState(false)
   const [lectureReportHistoryModalOpen, setLectureReportHistoryModalOpen] = useState(false)
   const [lectureReportHistoryTarget, setLectureReportHistoryTarget] = useState<Application | null>(
     null
@@ -304,28 +295,6 @@ export function MemberProgramLectureHistory({
     [tableData]
   )
 
-  const canBulkDownloadFiles = hasFileDownloadPermission()
-
-  const handleDownloadAllLectureReports = useCallback(async () => {
-    if (memberId == null || allLectureReportsDownloading) return
-    // 권한 설정 V1.2: 버튼은 노출하고 다운로드 권한이 없으면 접근 불가 안내
-    if (!canBulkDownloadFiles) {
-      showAdminAccessDeniedAlert()
-      return
-    }
-    setAllLectureReportsDownloading(true)
-    try {
-      const job = await downloadAllMemberLectureReportsRemote(memberId)
-      await saveLectureReportBulkDownloadJob(job, 'lecture-reports-all')
-    } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getMemberApiErrorMessage(error, '강의보고서 일괄 다운로드에 실패했습니다.'),
-      })
-    } finally {
-      setAllLectureReportsDownloading(false)
-    }
-  }, [allLectureReportsDownloading, canBulkDownloadFiles, memberId, showAlert])
 
   const historyDeleteGuide = useMemo(() => {
     if (selectedRowKeys.length === 0) return null
@@ -650,7 +619,12 @@ export function MemberProgramLectureHistory({
     <>
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
-        className="member-program-lecture-history"
+        className={[
+          'member-program-lecture-history',
+          mode === 'instructorLecture' ? 'member-program-lecture-history--instructor-lecture' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -726,8 +700,9 @@ export function MemberProgramLectureHistory({
               )}
               {mode === 'instructorLecture' && showCertificateBulkIssue && (
                 <FilterTableToolbarButton
-                  variant="secondary"
+                  variant="primary"
                   icon={<ButtonDownloadIcon />}
+                  className="member-program-lecture-history__activity-certificate-btn"
                   onClick={() =>
                     withSelection(() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
@@ -735,22 +710,6 @@ export function MemberProgramLectureHistory({
                   }
                 >
                   활동인증서 발급
-                </FilterTableToolbarButton>
-              )}
-              {mode === 'instructorLecture' &&
-                memberId != null &&
-                isMembersRemoteEnabled() && (
-                <FilterTableToolbarButton
-                  variant="secondary"
-                  icon={<ButtonDownloadIcon />}
-                  className="member-program-lecture-history__bulk-lecture-report-download"
-                  loading={allLectureReportsDownloading}
-                  disabled={allLectureReportsDownloading}
-                  onClick={() => {
-                    void handleDownloadAllLectureReports()
-                  }}
-                >
-                  전체 강의보고서 일괄 다운로드
                 </FilterTableToolbarButton>
               )}
             </div>

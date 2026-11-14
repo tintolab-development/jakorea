@@ -276,10 +276,11 @@ export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchool
     grade3Fee: null,
     grade3DistanceFee: null,
     paymentItemValues: resolveCompanySchoolWageDefaultPaymentItemIds(),
+    // 단원명·교육 내용은 빈 값으로 시작한다(차시 라벨만 고정)
     curriculumSessions: COMPANY_SCHOOL_FIXED_CURRICULUM_SESSIONS.map(session => ({
       sessionLabel: session.sessionLabel,
-      title: session.title,
-      description: session.description,
+      title: '',
+      description: '',
     })),
     educationScheduleRange: null,
     educationScheduleMode: 'period',

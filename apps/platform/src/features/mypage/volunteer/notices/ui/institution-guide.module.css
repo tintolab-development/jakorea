@@ -19,9 +19,10 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-12);
-  padding: var(--spacing-16) var(--spacing-20);
+  /* Figma 14019:99022 — 상하 16 · 좌 28 · 우 24 · radius 24 */
+  padding: var(--spacing-16) var(--spacing-24) var(--spacing-16) var(--spacing-28, 28px);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-24);
   background: var(--color-neutral-white);
   cursor: pointer;
   text-align: left;
@@ -56,8 +57,8 @@
 
 .chevron {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 32px; /* Figma 14019:99026 Icon / Textfield 32 */
+  height: 32px;
   flex-shrink: 0;
 }
 
@@ -67,4 +68,17 @@
   right: 0;
   left: 0;
   z-index: 2;
+}
+
+/* 모바일 시안 미확인 — 기존 값 유지 */
+@media (--bp-below-pc) {
+  .trigger {
+    padding: var(--spacing-16) var(--spacing-20);
+    border-radius: var(--radius-16);
+  }
+
+  .chevron {
+    width: 20px;
+    height: 20px;
+  }
 }

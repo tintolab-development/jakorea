@@ -1,7 +1,7 @@
 /**
  * 후원사 관리 POM — `/sponsor`
  *
- * 기본 목록 필터는 기업(`sp_kind=corporate`). 재단 시드(제이에이코리아)는 구분=재단 조회 후 연다.
+ * 기본 목록 필터는 구분 전체(`sp_kind` 없음). 재단 시드(제이에이코리아)는 구분=재단 조회 후 연다.
  */
 
 import { type Locator, type Page, expect } from '@playwright/test'
@@ -11,22 +11,24 @@ import {
   DELETE_TYPED_PLACEHOLDER,
   dismissVisibleDialog,
   expectColumnTitles,
+  expectFilterSelectText,
   expectNoColumnTitle,
   fillTypedDeleteConfirm,
   filterField,
   isAdminMutation,
+  selectFilterOption,
   selectRowCheckbox,
   tableRows,
   tryFindRow,
   waitForAdminGet,
 } from './data-management-helpers'
 import { DATA_MANAGEMENT_NAME_PREFIX } from './data-management-seed-titles'
-import { fillByPlaceholder, selectByPlaceholder } from './form-helpers'
+import { fillByPlaceholder } from './form-helpers'
 
 const LIST_COLUMNS = [
   'No.',
   '구분',
-  '후원사명',
+  '후원사',
   '프로그램 진행 수',
   '누적 후원금',
   '누적 수혜자',
@@ -92,13 +94,13 @@ export class SponsorManagementPage {
     await expectNoColumnTitle(this.page, '주 담당자 연락처')
   }
 
-  async expectDefaultKindCorporate() {
-    await expect(this.page).toHaveURL(/sp_kind=corporate/, { timeout: 15_000 })
-    await expect(filterField(this.page, '구분').getByRole('radio', { name: '기업' })).toBeChecked()
+  async expectDefaultKindAll() {
+    await expect(this.page).not.toHaveURL(/sp_kind=/, { timeout: 15_000 })
+    await expectFilterSelectText(this.page, '구분', '전체')
   }
 
-  async selectKind(kind: '기업' | '재단') {
-    await filterField(this.page, '구분').getByRole('radio', { name: kind }).check({ force: true })
+  async selectKind(kind: '전체' | '기업' | '재단') {
+    await selectFilterOption(this.page, '구분', kind)
   }
 
   async fillListName(name: string) {
@@ -110,7 +112,7 @@ export class SponsorManagementPage {
   }
 
   async selectSponsorshipStatus(label: string) {
-    await selectByPlaceholder(this.page, '전체', label)
+    await selectFilterOption(this.page, '후원 상태', label)
   }
 
   async expectDateRangeFilter() {
@@ -368,9 +370,9 @@ export class SponsorManagementPage {
   async deleteFromDetailTyped() {
     const dialog = this.detailDialog()
     await dialog.getByRole('button', { name: '후원사 삭제' }).click()
-    const guide = this.page.getByRole('dialog').filter({ hasText: '후원사 삭제' }).last()
+    const guide = this.page.getByRole('dialog').filter({ hasText: '후원사 삭제 안내' }).last()
     await expect(guide).toBeVisible()
-    const confirmBtn = guide.getByRole('button', { name: '후원사 삭제' })
+    const confirmBtn = guide.getByRole('button', { name: '삭제', exact: true })
     await expect(confirmBtn).toBeDisabled()
     await fillTypedDeleteConfirm(guide)
     await expect(confirmBtn).toBeEnabled()
@@ -424,7 +426,7 @@ export class SponsorManagementPage {
   }) {
     const dialog = this.detailDialog()
     await dialog.getByRole('button', { name: '담당자 등록' }).click()
-    const modal = this.page.getByRole('dialog').filter({ hasText: '담당자 등록' })
+    const modal = this.page.getByRole('dialog').filter({ hasText: '후원사 담당자 신규 등록' })
     await expect(modal).toBeVisible()
     const typeLabel = opts.type === 'lead' ? '주 담당자' : '담당자'
     await modal.getByRole('radio', { name: typeLabel, exact: true }).check({ force: true })
@@ -441,14 +443,14 @@ export class SponsorManagementPage {
       res => isAdminMutation(res, 'POST', /\/api\/admin\/sponsors\/[^/]+\/contacts\/?$/),
       { timeout: 60_000 }
     )
-    await modal.getByRole('button', { name: '등록' }).click()
+    await modal.getByRole('button', { name: '신규 등록', exact: true }).click()
     const post = await postPromise
     if (!post.ok()) {
       const body = await post.text().catch(() => '')
       throw new Error(`담당자 등록 API 실패: HTTP ${post.status()} ${body.slice(0, 400)}`)
     }
     await expect(modal).toBeHidden({ timeout: 15_000 })
-    const done = this.page.getByRole('dialog').filter({ hasText: '담당자 등록 완료' })
+    const done = this.page.getByRole('dialog').filter({ hasText: '등록 완료' })
     if (await done.isVisible().catch(() => false)) {
       await done.getByRole('button', { name: '확인' }).click()
       await expect(done).toBeHidden({ timeout: 10_000 })

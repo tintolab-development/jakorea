@@ -62,7 +62,6 @@ import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type TextbookFilters = TextbookListFilters
 
-const DEFAULT_TB_USE = 'USED' as const
 const TB_USE_PARAM = 'tb_use'
 
 const TEXTBOOK_TABLE_SCROLL_X = 1260
@@ -78,7 +77,7 @@ const TEXTBOOK_COL_WIDTH = {
 } as const
 
 const INITIAL_FILTERS: TextbookFilters = {
-  useStatus: DEFAULT_TB_USE,
+  useStatus: 'ALL',
   textbookName: '',
   businessArea: 'ALL',
   educationTarget: 'ALL',
@@ -127,19 +126,6 @@ export default function TextbookPage() {
   const [pendingKitQuantities, setPendingKitQuantities] =
     useState<TextbookKitQuantityValues | null>(null)
   const [kitSaveError, setKitSaveError] = useState<string | null>(null)
-  /** 최초 진입 시 `tb_use` 없으면 사용(USED)으로 URL 고정 */
-  useEffect(() => {
-    if (tbUseParam === 'USED' || tbUseParam === 'UNUSED') return
-    setSearchParams(
-      prev => {
-        if (prev.get(TB_USE_PARAM) === 'USED' || prev.get(TB_USE_PARAM) === 'UNUSED') return prev
-        const next = new URLSearchParams(prev)
-        next.set(TB_USE_PARAM, DEFAULT_TB_USE)
-        return next
-      },
-      { replace: true }
-    )
-  }, [tbUseParam, setSearchParams])
 
   useEffect(() => {
     const useStatus = parseTextbookUseStatus(tbUseParam)
@@ -182,11 +168,12 @@ export default function TextbookPage() {
     () => [
       {
         key: 'useStatus',
-        type: 'radio',
+        type: 'select',
         label: '사용 여부',
+        placeholder: '전체',
         width: '16%',
-        defaultValue: DEFAULT_TB_USE,
         options: [
+          { label: '전체', value: 'ALL' },
           { label: '사용', value: 'USED' },
           { label: '미사용', value: 'UNUSED' },
         ],
@@ -271,8 +258,7 @@ export default function TextbookPage() {
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => {
       if (key === 'useStatus') {
-        const useStatus = value === 'UNUSED' ? 'UNUSED' : 'USED'
-        return { ...prev, useStatus }
+        return { ...prev, useStatus: parseTextbookUseStatus(typeof value === 'string' ? value : null) }
       }
       const nextValue = (value ?? (key === 'textbookName' ? '' : 'ALL')) as string
       if (key === 'educationTarget') {
@@ -306,7 +292,8 @@ export default function TextbookPage() {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev)
-        next.set(TB_USE_PARAM, pendingFilters.useStatus)
+        if (pendingFilters.useStatus === 'ALL') next.delete(TB_USE_PARAM)
+        else next.set(TB_USE_PARAM, pendingFilters.useStatus)
         return next
       },
       { replace: true }
@@ -392,12 +379,10 @@ export default function TextbookPage() {
   }, [kitQuantitiesMutation, kitQuantitiesQuery, pendingKitQuantities, remoteKitEnabled])
 
   const deleteConfirmCopy = useMemo(() => {
-    const n = selectedRowKeys.length
-    if (n <= 1) {
-      return resolveTextbookDeleteConfirmCopy('single')
-    }
-    return resolveTextbookDeleteConfirmCopy('bulk', n)
-  }, [selectedRowKeys.length])
+    const rowById = new Map(rows.map(row => [row.id, row]))
+    const names = selectedRowKeys.map(key => rowById.get(String(key))?.textbookName ?? '')
+    return resolveTextbookDeleteConfirmCopy(names, selectedRowKeys.length)
+  }, [rows, selectedRowKeys])
 
   const deleteBlockedCopy = useMemo(
     () =>
@@ -430,7 +415,7 @@ export default function TextbookPage() {
         render: (status: TextbookRow['useStatus']) => (status === 'USED' ? '사용' : '미사용'),
       },
       {
-        title: '교재명',
+        title: '교재',
         dataIndex: 'textbookName',
         key: 'textbookName',
         width: TEXTBOOK_COL_WIDTH.textbookName,

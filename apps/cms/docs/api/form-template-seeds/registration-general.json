@@ -71,7 +71,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "임금 정보",
-        "paragraphDescription": "해당 프로그램 내에서 각 등급별로 지급할 강사비를 책정해 주세요.",
+        "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [
@@ -127,7 +127,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "교육 진행 (커리큘럼)",
-        "paragraphDescription": "차시 별 정보를 입력해 주세요",
+        "paragraphDescription": "차시 별 정보를 입력해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

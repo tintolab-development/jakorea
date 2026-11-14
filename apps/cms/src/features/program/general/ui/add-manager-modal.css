@@ -53,17 +53,21 @@
   display: none !important;
 }
 
-/* 담당자 선택 — showSearch 없이 드롭다운 + 좌측 돋보기(장식) */
+/*
+ * 담당자 선택 — showSearch 없이 드롭다운 + 좌측 돋보기(장식).
+ * 셀렉트가 inputSize="medium"이라 admin-ui `.cms-control--medium` 치수(높이 40, 아이콘 20, 라벨 14px)에
+ * 맞춘다. large 값(44·22·15px)이면 돋보기가 아래로 어긋난다. 좌측 여백 16은 기존 유지.
+ */
 .add-manager-modal__field--manager-select {
-  --cms-control-h: 44px;
+  --cms-control-h: 40px;
   --cms-control-pl: 16px;
   --cms-control-gap: 8px;
-  --cms-icon-size: 22px;
-  --cms-label-font: 15px;
+  --cms-icon-size: 20px;
+  --cms-label-font: 14px;
   --add-manager-select-leading: calc(
     var(--cms-control-pl) + var(--cms-icon-size) + var(--cms-control-gap)
   );
-  /* 라벨(15px × 140% + padding-bottom 2px) + 필드 gap 6px */
+  /* 라벨(14px × 140% + padding-bottom 2px) + 필드 gap 6px */
   --add-manager-select-label-block: calc((var(--cms-label-font) * 1.4) + 2px + 6px);
 }
 

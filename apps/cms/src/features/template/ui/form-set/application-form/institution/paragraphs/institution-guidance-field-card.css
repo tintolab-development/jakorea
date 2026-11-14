@@ -79,3 +79,32 @@
 .institution-guidance-field-card .cms-textarea__control {
   background: var(--main-WT, #fff);
 }
+
+/* 템플릿 관리 시안(12875:513810 「안내 사항」·1사1교 16268:599820) */
+.institution-guidance-fields:has(> .institution-guidance-field-card--spec) {
+  gap: 20px;
+}
+
+.institution-guidance-field-card.institution-guidance-field-card--spec {
+  border-color: var(--table-line, #e0e0e0);
+  border-radius: var(--12, 12px);
+}
+
+.institution-guidance-field-card--spec .institution-guidance-field-card__header {
+  min-height: 48px;
+  align-items: center;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.institution-guidance-field-card--spec .institution-guidance-field-card__label-row {
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.institution-guidance-field-card--spec .institution-guidance-field-card__body {
+  padding: 12px;
+}
+
+.institution-guidance-field-card--spec .cms-textarea__control {
+  min-height: 40px;
+}

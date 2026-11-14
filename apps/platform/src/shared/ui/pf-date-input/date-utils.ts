@@ -101,9 +101,9 @@ export function parseIsoDate(value: string): Date | null {
   return startOfDay(date)
 }
 
-/** `YYYY` */
+/** `YYYY` — `YYYY.MM` / `YYYY-MM` 저장값도 연도 피커에 올린다. */
 export function parseYear(value: string): number | null {
-  const match = /^(\d{4})$/.exec(value.trim())
+  const match = /^(\d{4})(?:[.\-/]\d{1,2}(?:[.\-/]\d{1,2})?)?$/.exec(value.trim())
   if (!match) return null
   const year = Number(match[1])
   if (year < 1000 || year > 9999) return null
@@ -119,9 +119,9 @@ export function formatDisplayYear(value: string): string {
   return year == null ? '' : String(year)
 }
 
-/** `YYYY-MM` */
+/** `YYYY-MM` — `YYYY.MM` / `YYYY-M` 저장값도 월 피커에 올린다. */
 export function parseYearMonth(value: string): { year: number; month: number } | null {
-  const match = /^(\d{4})-(\d{2})$/.exec(value.trim())
+  const match = /^(\d{4})[.\-/](\d{1,2})(?:[.\-/]\d{1,2})?$/.exec(value.trim())
   if (!match) return null
   const year = Number(match[1])
   const month = Number(match[2])

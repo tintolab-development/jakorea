@@ -28,6 +28,9 @@ import {
   LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE,
 } from '@/shared/lib/lecture-report-bulk-download'
 
+/** BE가 code별 구체 메시지 대신 쓰는 공통 409 문구 */
+const GENERIC_SERVER_CONFLICT_MESSAGE_PREFIX = '현재 데이터 또는 처리 상태와 충돌하여'
+
 const BUSINESS_START_LOCK_PATTERN =
   /business_start_date|schedule lock|only be modified before/i
 
@@ -359,7 +362,8 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   }
   if (code && INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]) {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
-    if (raw && raw !== code) return raw
+    // 서버가 원인 없이 공통 충돌 문구만 주면 코드별 FE 안내를 쓴다.
+    if (raw && raw !== code && !raw.startsWith(GENERIC_SERVER_CONFLICT_MESSAGE_PREFIX)) return raw
     return INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]
   }
   if (code && PROGRESS_INSTRUCTOR_ERROR_MESSAGES[code]) {
@@ -382,7 +386,10 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   }
   if (raw?.trim()) {
     // CONFLICT: prefix 제거
-    return raw.replace(/^CONFLICT:\s*/i, '').trim() || fallback
+    const stripped = raw.replace(/^CONFLICT:\s*/i, '').trim()
+    // 문구 매핑이 없는 코드(예: INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT — 기획 문구 미확정)는 코드 문자열을 노출하지 않는다
+    if (code && stripped === code) return fallback
+    return stripped || fallback
   }
   return fallback
 }
