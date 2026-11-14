@@ -279,9 +279,9 @@ export function FindPasswordPage() {
         {view === 'notFound' ? (
           <FindEmailNotFoundView
             onRetry={() => {
-              // 서버 nextAction `REENTER_EMAIL` — 이메일 입력 단계로 돌아간다
-              clearEmailError()
-              setView('form')
+              // [이메일 다시 찾기] — 이메일 찾기 페이지로 이동(기획 확정 2026-11-14, 시안 「이메일 찾기 실패」).
+              // 뒤로가기는 [로그인 화면 돌아가기]와 같게 replace로 이동한다
+              navigate('/find-email', { replace: true })
             }}
             onGoLogin={() => {
               navigate('/login', { replace: true })
