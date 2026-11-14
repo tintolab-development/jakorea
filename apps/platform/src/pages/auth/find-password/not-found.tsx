@@ -6,8 +6,8 @@ import styles from './not-found.module.css'
 
 /**
  * 비밀번호 찾기 — 본인인증 후 eligibility=false (입력 이메일과 인증 정보가 같은 계정 없음).
- * Figma 2777-84927. 버튼 이동 대상은 기획 결정 대기 — 현재는 이메일 재입력(BE nextAction
- * REENTER_EMAIL)과 로그인 화면.
+ * Figma 2777-84927. [이메일 다시 찾기] → 이메일 찾기, [로그인 화면 돌아가기] → 로그인
+ * (기획 2026-11-14). 두 버튼 모두 history에 쌓아 뒤로가기로 이 화면에 돌아올 수 있다.
  */
 export function FindPasswordNotFoundPage() {
   const navigate = useNavigate()
@@ -38,7 +38,7 @@ export function FindPasswordNotFoundPage() {
         <PFButton
           size="xlarge"
           width="100%"
-          onClick={() => navigate('/auth/find-password', { replace: true })}
+          onClick={() => navigate('/auth/find-email')}
         >
           이메일 다시 찾기
         </PFButton>
