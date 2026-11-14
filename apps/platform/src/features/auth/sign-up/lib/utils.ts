@@ -164,8 +164,11 @@ export function buildConfirmationRows(input: {
   affiliationName?: string
   employmentStatus?: EmploymentStatus | null
 }): ConfirmationRow[] {
-  const shared: ConfirmationRow[] = [
-    { label: '회원유형', value: getMemberTypeLabel(input.selectedType) },
+  const memberTypeRow: ConfirmationRow = {
+    label: '회원유형',
+    value: getMemberTypeLabel(input.selectedType),
+  }
+  const identityRows: ConfirmationRow[] = [
     { label: '이름', value: input.name?.trim() || '-' },
     {
       label: '휴대폰 번호',
@@ -177,7 +180,8 @@ export function buildConfirmationRows(input: {
 
   if (input.selectedType === 'teacher') {
     return [
-      ...shared,
+      memberTypeRow,
+      ...identityRows,
       {
         label: '소속/학교',
         value: formatTeacherAffiliation(input.schoolName ?? '', input.schoolAddress ?? ''),
@@ -188,15 +192,16 @@ export function buildConfirmationRows(input: {
   }
 
   const affiliationName = input.affiliationName?.trim() ?? ''
-
+  // 일반회원(14세 이상) — 이메일 ID는 회원유형 바로 다음 (Figma 2516-3293)
   return [
-    ...shared,
+    memberTypeRow,
+    { label: '이메일 ID', value: input.email },
+    ...identityRows,
     { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },
     ...(input.schoolStatus === 'none'
       ? [{ label: '소속 기관명', value: affiliationName || '소속 없음' }]
       : []),
     { label: '자택 주소', value: formatHomeAddress(input.address, input.addressDetail) },
-    { label: '이메일 ID', value: input.email },
     { label: '1365 ID', value: input.volunteerId.trim() || '-' },
   ]
 }
