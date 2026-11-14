@@ -731,6 +731,13 @@ export async function giveUpGeneralVolunteerApplication(
   })
 }
 
+function isSameInstant(left: string | null | undefined, right: string | null | undefined): boolean {
+  const leftMs = Date.parse(left?.trim() ?? '')
+  const rightMs = Date.parse(right?.trim() ?? '')
+  if (Number.isFinite(leftMs) && Number.isFinite(rightMs)) return leftMs === rightMs
+  return (left ?? '') === (right ?? '')
+}
+
 /**
  * 동일 일시 슬롯이 있으면 재사용, 없으면 생성.
  */
@@ -745,12 +752,13 @@ async function resolveInterviewSlotId(params: {
     from: params.slotDate,
     to: params.slotDate,
   })
+  // 시각은 문자열이 아니라 instant로 비교한다 — FE `toISOString()`(…000Z)과 BE(…Z) 표기가 달라 같은 슬롯을 못 찾고 매번 새로 만들던 문제
   const matched = existing.find(
     row =>
       row.interviewSlotId != null &&
       row.slotDate === params.slotDate &&
-      row.startAt === params.startAt &&
-      row.endAt === params.endAt
+      isSameInstant(row.startAt, params.startAt) &&
+      isSameInstant(row.endAt, params.endAt)
   )
   if (matched?.interviewSlotId != null) {
     return matched.interviewSlotId
