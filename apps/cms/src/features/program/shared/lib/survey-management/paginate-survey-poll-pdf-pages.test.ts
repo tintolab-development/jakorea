@@ -69,7 +69,7 @@ describe('paginateSurveyPollPdfSectionsByHeight', () => {
     expect(pages[0][1].key).not.toEqual(pages[1][0].key)
   })
 
-  it('uses the taller continuation capacity from the second page (summary only on page 1)', () => {
+  it('uses the taller continuation capacity from the second page (header·summary only on page 1)', () => {
     const pages = paginateSurveyPollPdfSectionsByHeight(
       [scale('s1'), scale('s2'), scale('s3'), scale('s4'), scale('s5')],
       {

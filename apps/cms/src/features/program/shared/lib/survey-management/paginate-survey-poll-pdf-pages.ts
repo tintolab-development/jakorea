@@ -45,7 +45,7 @@ export function paginateSurveyPollPdfSections(
 export type SurveyPollPdfMeasurements = {
   /** 첫 쪽에서 머리말·요약(총 N명 응답)을 뺀 문항 영역 높이 */
   pageContentHeight: number
-  /** 2쪽부터의 문항 영역 높이 — 요약은 첫 쪽에만 그리므로 머리말만 뺀다. 생략 시 첫 쪽과 같다. */
+  /** 2쪽부터의 문항 영역 높이 — 머리말·요약은 첫 쪽에만 그리므로 쪽 여백만 뺀다. 생략 시 첫 쪽과 같다. */
   continuationPageContentHeight?: number
   /** 문항 카드 사이 간격 */
   sectionGap: number

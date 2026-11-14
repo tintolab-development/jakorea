@@ -68,15 +68,14 @@ function measureSurveyPollPdfLayout(measurePage: HTMLElement, sections: readonly
 
   const pageStyle = getComputedStyle(measurePage)
   const pageGap = toPx(pageStyle.rowGap)
-  // 요약(총 N명 응답)은 첫 쪽에만 그리므로 2쪽부터는 요약 높이·간격만큼 문항 영역이 넓다.
+  // 머리말(JA Korea·제목)과 요약(총 N명 응답)은 첫 쪽에만 그리므로 2쪽부터는 문항만 채운다.
   const continuationPageContentHeight =
-    SURVEY_POLL_PDF_PAGE_HEIGHT -
-    toPx(pageStyle.paddingTop) -
-    toPx(pageStyle.paddingBottom) -
-    header.getBoundingClientRect().height -
-    pageGap
+    SURVEY_POLL_PDF_PAGE_HEIGHT - toPx(pageStyle.paddingTop) - toPx(pageStyle.paddingBottom)
   const pageContentHeight =
-    continuationPageContentHeight - summary.getBoundingClientRect().height - pageGap
+    continuationPageContentHeight -
+    header.getBoundingClientRect().height -
+    summary.getBoundingClientRect().height -
+    pageGap * 2
 
   return {
     pageContentHeight,
@@ -262,15 +261,17 @@ export function SurveyPollResultsView({
             className="ujat-survey-poll-results__pdf-page"
             data-form-document-pdf-page
           >
-            <div className="ujat-survey-poll-results__pdf-header">
-              <p className="ujat-survey-poll-results__pdf-kicker">JA Korea</p>
-              <h2 className="ujat-survey-poll-results__pdf-title">{pdfTitle}</h2>
-            </div>
-            {/* 요약(총 N명 응답)은 첫 쪽에만 — 쪽마다 반복하면 머리말 아래에 같은 내용이 겹쳐 보인다. */}
+            {/* 머리말·요약(총 N명 응답)은 첫 쪽에만 — 2쪽부터는 문항만 이어서 그린다. */}
             {pageIndex === 0 ? (
-              <div className="ujat-survey-poll-results__summary ujat-survey-poll-results__pdf-summary">
-                {summary}
-              </div>
+              <>
+                <div className="ujat-survey-poll-results__pdf-header">
+                  <p className="ujat-survey-poll-results__pdf-kicker">JA Korea</p>
+                  <h2 className="ujat-survey-poll-results__pdf-title">{pdfTitle}</h2>
+                </div>
+                <div className="ujat-survey-poll-results__summary ujat-survey-poll-results__pdf-summary">
+                  {summary}
+                </div>
+              </>
             ) : null}
 
             <div className="ujat-survey-poll-results__pdf-sections">
