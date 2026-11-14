@@ -24,6 +24,19 @@ function extractErrorCode(data: unknown): string | undefined {
   return undefined
 }
 
+/** 최근 사용한 비밀번호 재사용 — 화면에서 「사용할 수 없는 비밀번호예요.」 팝업으로 안내한다 */
+export const PASSWORD_RECENTLY_USED_ERROR_CODE = 'PASSWORD_RECENTLY_USED'
+
+/** 포털 인증 API 오류 코드 (`error.code` 또는 `code`). 없으면 undefined */
+export function readPortalAuthApiErrorCode(error: unknown): string | undefined {
+  if (!isAxiosError(error)) return undefined
+  return extractErrorCode(error.response?.data)
+}
+
+export function isPasswordRecentlyUsedApiError(error: unknown): boolean {
+  return readPortalAuthApiErrorCode(error)?.toUpperCase() === PASSWORD_RECENTLY_USED_ERROR_CODE
+}
+
 export function isLoginApprovalPendingApiError(error: unknown): boolean {
   if (!isAxiosError(error)) return false
   if (error.response?.status === 423) return true
