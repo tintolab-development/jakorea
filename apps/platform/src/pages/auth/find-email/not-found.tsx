@@ -1,27 +1,49 @@
-import { PFButton, PFText } from '@/shared/ui'
-import styles from './not-found.module.css'
-import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import { useNavigate } from 'react-router-dom'
+import illustSearchUrl from '@/shared/assets/illustration/graphic-84-08.png'
+import { PFButton, PFText } from '@/shared/ui'
+import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import styles from './not-found.module.css'
 
+/**
+ * 이메일 찾기 — 본인인증 정보와 일치하는 가입 계정 없음.
+ * Figma 2777-84927 (비밀번호 찾기 '가입 정보 없음'과 같은 화면).
+ * [이메일 다시 찾기] → 이메일 찾기, [로그인 화면 돌아가기] → 로그인
+ */
 export function FindEmailNotFoundPage() {
   const navigate = useNavigate()
 
   return (
-    <section className={styles.root}>
-      <div className={styles.body}>
-        <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title')}>
-          가입된 이메일 정보가 없어요
+    <section>
+      <div className={styles.intro}>
+        <img className={styles.illustration} src={illustSearchUrl} alt="" aria-hidden="true" />
+        <PFText
+          as="h1"
+          typo="hd-sm"
+          color="black"
+          className={authPageCopyClass('title', authPageCopy.titleAfterMedia)}
+        >
+          일치하는 가입 정보가 없어요.
         </PFText>
-        <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
-          JA Korea 계정을 찾을 수 없어요.
+        <PFText
+          as="p"
+          typo="bd-lg-rg"
+          color="primary-800"
+          className={authPageCopyClass('description')}
+        >
+          입력 정보를 다시 확인해 주세요.
         </PFText>
       </div>
 
       <div className={styles.actions}>
-        <PFButton size="xlarge" width="100%" onClick={() => navigate('/auth/sign-up')}>
-          회원가입 하기
+        <PFButton size="xlarge" width="100%" onClick={() => navigate('/auth/find-email')}>
+          이메일 다시 찾기
         </PFButton>
-        <PFButton size="xlarge" variant="tertiary" width="100%" onClick={() => navigate('/auth/sign-in')}>
+        <PFButton
+          size="xlarge"
+          variant="tertiary"
+          width="100%"
+          onClick={() => navigate('/auth/sign-in')}
+        >
           로그인 화면 돌아가기
         </PFButton>
       </div>
