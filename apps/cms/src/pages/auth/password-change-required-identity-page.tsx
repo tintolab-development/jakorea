@@ -10,11 +10,18 @@ import { useNavigate } from 'react-router-dom'
 
 import { confirmAdminIdentity } from '@/features/auth/api/admin-identity-confirm'
 import {
+  ADMIN_IDENTITY_DUPLICATE_NOTICE_CLOSE_LABEL,
+  ADMIN_IDENTITY_DUPLICATE_NOTICE_CONTENT,
+  ADMIN_IDENTITY_DUPLICATE_NOTICE_LOGIN_LABEL,
+  ADMIN_IDENTITY_DUPLICATE_NOTICE_TITLE,
+} from '@/features/auth/lib/admin-identity-duplicate-notice'
+import {
   usePasswordChangeRequiredIdentityVerification,
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
+  clearPasswordChangeRequiredWizardState,
   getPasswordChangeRequiredWizardState,
   hasPasswordChangeRequiredComplete,
   updatePasswordChangeRequiredWizardState,
@@ -24,6 +31,7 @@ import { AdminRegisterStepIdentity } from '@/features/auth/ui/admin-register/adm
 import { showIdentityVerificationFailedAlert } from '@/features/auth/ui/admin-register/show-identity-failed-alert'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { showGlobalApiErrorAlert } from '@/shared/lib/show-global-api-error-alert'
+import { ConfirmModal } from '@/shared/ui'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
 import './register-page.css'
@@ -35,8 +43,11 @@ export function PasswordChangeRequiredIdentityPage() {
   const setIdentityVerificationRequired = useAuthStore(
     state => state.setIdentityVerificationRequired
   )
+  const logout = useAuthStore(state => state.logout)
   const wizardState = getPasswordChangeRequiredWizardState()
   const [isConfirming, setIsConfirming] = useState(false)
+  /** 409 ADMIN_IDENTITY_ALREADY_VERIFIED_BY_OTHER — 「중복 가입 안내」 */
+  const [duplicateNoticeOpen, setDuplicateNoticeOpen] = useState(false)
 
   useEffect(() => {
     if (hasPasswordChangeRequiredComplete()) {
@@ -83,7 +94,8 @@ export function PasswordChangeRequiredIdentityPage() {
             showIdentityVerificationFailedAlert()
             return
           case 'verified_by_other':
-            // 「인증 불가」 시안 미확인 — 안내 없이 이 단계에 머문다(보고 항목)
+            // 확인 요청은 전역 오류 알럿을 끄고 보내므로(skipGlobalErrorAlert) 이 팝업만 뜬다
+            setDuplicateNoticeOpen(true)
             return
           case 'reverify':
             return
@@ -108,6 +120,14 @@ export function PasswordChangeRequiredIdentityPage() {
     [confirmAndContinue, goToChangePassword]
   )
 
+  /** [로그인 하기] — 첫 로그인 완료 화면과 같은 방식으로 임시 비밀번호 세션을 정리하고 로그인 화면으로 */
+  const handleDuplicateNoticeGoLogin = useCallback(() => {
+    setDuplicateNoticeOpen(false)
+    clearPasswordChangeRequiredWizardState()
+    logout()
+    navigate('/login', { replace: true })
+  }, [logout, navigate])
+
   const { verify, status, isVerifying, errorMessage } =
     usePasswordChangeRequiredIdentityVerification({
       onSuccess: handleSuccess,
@@ -126,6 +146,16 @@ export function PasswordChangeRequiredIdentityPage() {
         errorMessage={errorMessage}
         verifiedName={wizardState?.verifiedName}
         verifiedPhone={wizardState?.verifiedPhone}
+      />
+      <ConfirmModal
+        open={duplicateNoticeOpen}
+        title={ADMIN_IDENTITY_DUPLICATE_NOTICE_TITLE}
+        content={ADMIN_IDENTITY_DUPLICATE_NOTICE_CONTENT}
+        cancelText={ADMIN_IDENTITY_DUPLICATE_NOTICE_CLOSE_LABEL}
+        confirmText={ADMIN_IDENTITY_DUPLICATE_NOTICE_LOGIN_LABEL}
+        // [확인]·X — 팝업만 닫고 본인인증 단계에 머문다
+        onCancel={() => setDuplicateNoticeOpen(false)}
+        onConfirm={handleDuplicateNoticeGoLogin}
       />
     </AuthPageShell>
   )
