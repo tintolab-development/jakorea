@@ -412,7 +412,7 @@ function TypedEventRangeField({
           dates: next[0] ? [next[0].format('YYYY-MM-DD')] : [],
         } : item)
       })}
-      placeholder={['교육 진행 일정을 선택해 주세요', '교육 진행 일정을 선택해 주세요']}
+      placeholder={['일정을 선택해 주세요', '일정을 선택해 주세요']}
       className="half-education-schedule__range-picker"
     />
   )

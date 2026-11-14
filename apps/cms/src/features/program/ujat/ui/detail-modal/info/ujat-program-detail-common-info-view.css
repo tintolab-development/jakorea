@@ -77,6 +77,11 @@
   outline-offset: 2px;
 }
 
+/* 상·하반기 교육 일정 조회 — 지역별 일정 여러 줄 세로 유지 */
+.ujat-half-education-schedule-readonly__schedule-text {
+  white-space: pre-line;
+}
+
 /* 지역 별 교육 진행 가능 학급 수 — 학기별 2행×4지역(라벨|값×8열 그리드) */
 .ujat-region-capacity-readonly__title {
   margin-bottom: 10px;
