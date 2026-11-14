@@ -4,6 +4,7 @@ export const signupPaths = {
   emailAvailability: () => '/api/portal/auth/signup/email-availability',
   terms: () => '/api/portal/auth/signup/terms',
   flowOptions: () => '/api/portal/auth/signup/flow-options',
+  identityPrecheck: () => '/api/portal/auth/signup/identity-precheck',
   signupGeneral: () => '/api/portal/auth/signup/general',
   signupTeacher: () => '/api/portal/auth/signup/teacher',
   schools: () => '/api/portal/organizations/schools',
