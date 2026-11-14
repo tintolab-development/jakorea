@@ -3,7 +3,7 @@ import {
   IDENTITY_MODULE_IDLE_TITLE,
 } from '@jakorea/domain/shared/identity-module-copy'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'
@@ -45,7 +45,7 @@ export function IdentityStep({ signUp }: IdentityStepProps) {
               <br />
               {IDENTITY_MODULE_IDLE_DESCRIPTION}
             </PFText>
-            {identity.errorMessage ? (
+            {identity.errorMessage && !identity.isProfileMismatch ? (
               <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
                 {identity.errorMessage}
               </PFText>
@@ -53,6 +53,13 @@ export function IdentityStep({ signUp }: IdentityStepProps) {
           </div>
         </div>
       </SignUpStepLayout>
+      {/* 생년월일·성별 불일치 — 인증 실패 팝업 (Figma 2761-76846) */}
+      <PFAlertModal
+        open={identity.isProfileMismatch}
+        title="본인인증을 완료하지 못했어요."
+        description="정보를 확인한 뒤 다시 시도해 주세요."
+        onConfirm={identity.dismissError}
+      />
     </SignUpLayout>
   )
 }

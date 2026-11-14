@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { IDENTITY_EXPECTED_PROFILE_MISMATCH } from '@jakorea/identity-verification'
 import type {
   AgreementKey,
   AgreementState,
@@ -848,6 +849,8 @@ export function useSignUp() {
     verify: verifyMemberIdentity,
     isVerifying: isMemberIdentityVerifying,
     errorMessage: memberIdentityErrorMessage,
+    errorCode: memberIdentityErrorCode,
+    resetError: resetMemberIdentityError,
   } = useSignupIdentityVerification({
     birthDate,
     gender,
@@ -1515,6 +1518,9 @@ export function useSignUp() {
       verify: verifyMemberIdentity,
       isVerifying: isMemberIdentityVerifying,
       errorMessage: memberIdentityErrorMessage,
+      /** 회원가입은 생년월일·성별만 기대값으로 보내므로, 이 코드는 생년월일·성별 불일치다 */
+      isProfileMismatch: memberIdentityErrorCode === IDENTITY_EXPECTED_PROFILE_MISMATCH,
+      dismissError: resetMemberIdentityError,
       tryAdminRegisteredRedirect: () => {
         if (isMockAdminRegisteredIdentityMatch(birthDate)) {
           if (!gender) {
