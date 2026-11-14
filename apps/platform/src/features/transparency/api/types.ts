@@ -54,7 +54,7 @@ export type PublicReportResponse = {
   id?: number
   reportType?: PublicReportType
   title?: string
-  thumbnailUrl?: string | null
+  thumbnailUrl?: string
   attachmentFileName?: string
   downloadUrl?: string
   downloadCount?: number
