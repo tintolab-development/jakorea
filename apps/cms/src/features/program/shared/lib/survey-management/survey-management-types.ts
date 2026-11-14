@@ -20,6 +20,8 @@ export type RegisteredSurvey = {
   displayDeadlineAt?: string | null
   /** form-binding `submissionEndAt` — 강의평가 답변 수정 기한 */
   submissionEndAt?: string | null
+  /** form-binding에 마감일(`submissionEndAt`)이 없음 — 「마감 없음」 설문. 바인딩을 받았을 때만 true */
+  submissionOpenEnded?: boolean
   resultDownloadable?: boolean | null
   satisfactionRunMode?: 'PER_SCHEDULE' | 'ONCE_AT_END' | null
   satisfactionWindowDays?: number | null

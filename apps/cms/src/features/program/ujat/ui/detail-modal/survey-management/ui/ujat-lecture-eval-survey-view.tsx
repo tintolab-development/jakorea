@@ -81,8 +81,11 @@ export function UjatLectureEvalSurveyView({
 
   const trailingActions =
     activeTab === 'eval' && showForm && !submitted ? (
-      <CmsButton className="ujat-lecture-eval-survey__submit-trailing"
-        onClick={onSubmitClick} >
+      <CmsButton
+        className="ujat-lecture-eval-survey__submit-trailing"
+        size="large"
+        onClick={onSubmitClick}
+      >
         {UJAT_LECTURE_EVAL_ACTION_LABELS.submit}
       </CmsButton>
     ) : activeTab === 'results' && resultsAccessible ? (
