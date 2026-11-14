@@ -157,6 +157,7 @@ export function TemplatePreviewModal({
   const {
     pages: pagedParagraphs,
     overflowParagraphIds,
+    waitForPagesReady,
     measureLayer,
   } = useA4ParagraphPages({
     allParagraphs: previewParagraphs,
@@ -256,6 +257,7 @@ export function TemplatePreviewModal({
     if (root == null || pdfLoading) return
     setPdfLoading(true)
     try {
+      await waitForPagesReady()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(a4DocumentTitle))
     } catch (error) {
@@ -267,7 +269,7 @@ export function TemplatePreviewModal({
     } finally {
       setPdfLoading(false)
     }
-  }, [a4DocumentTitle, pdfLoading, showAlert])
+  }, [a4DocumentTitle, pdfLoading, showAlert, waitForPagesReady])
 
   if (isAgreementPreviewLayout && previewLayout !== 'a4-document') {
     return (

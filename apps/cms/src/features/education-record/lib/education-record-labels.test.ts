@@ -22,6 +22,21 @@ describe('education-record-labels', () => {
     expect(formatEducationRecordInstitutionType('other')).toBe('기타')
   })
 
+  it('keeps server-provided 기관 안/밖 labels as-is', () => {
+    expect(formatEducationRecordInstitutionType('기관 안')).toBe('기관 안')
+    expect(formatEducationRecordInstitutionType('기관 밖')).toBe('기관 밖')
+    expect(formatEducationRecordInstitutionType(' 기관 안 ')).toBe('기관 안')
+  })
+
+  it('shows unknown institution type values verbatim instead of hiding them', () => {
+    expect(formatEducationRecordInstitutionType('SCHOOL')).toBe('SCHOOL')
+  })
+
+  it('shows "-" when institution type is missing', () => {
+    expect(formatEducationRecordInstitutionType(undefined)).toBe('-')
+    expect(formatEducationRecordInstitutionType('')).toBe('-')
+  })
+
   it('maps education type hybrid aliases', () => {
     expect(formatEducationRecordEducationType('hybrid')).toBe('온/오프라인')
     expect(formatEducationRecordEducationType('HYBRID')).toBe('온/오프라인')

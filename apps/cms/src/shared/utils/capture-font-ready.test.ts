@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { collectCaptureFontShorthands } from './wait-for-certificate-preview-capture-ready'
+import { collectCaptureFontShorthands } from './capture-font-ready'
 
 describe('collectCaptureFontShorthands', () => {
   it('includes the rendered weight and the 400 weight html2canvas uses to measure the baseline', () => {

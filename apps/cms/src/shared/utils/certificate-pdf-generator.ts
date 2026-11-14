@@ -7,28 +7,7 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { CertificateTextField } from '@/types/template'
 import { unknownErrorText } from '@/shared/utils/error-handler'
-import { collectCaptureFontShorthands } from '@/pages/templates/wait-for-certificate-preview-capture-ready'
-
-/**
- * html2canvas는 대상 문서를 iframe으로 복제한 뒤 그 안에서 글자 배치를 다시 계산한다. 복제 문서의 웹폰트가
- * 아직 로드되지 않았으면(새로고침 직후 첫 다운로드 등) 대체 폰트 기준으로 배치되어, 실제 폰트로 그린 글자가
- * 미리보기보다 위·아래로 밀린다(예: 제목 Source Han Serif K가 로고 쪽으로 약 28px 올라감).
- * 복제 문서에서 원본 캡처 영역이 쓰는 폰트를 직접 로드하고 기다린 뒤 배치를 계산하게 한다.
- */
-export async function waitForClonedDocumentFonts(
-  clonedDoc: Document,
-  sourceElement: HTMLElement
-): Promise<void> {
-  const fontSet = clonedDoc.fonts
-  if (!fontSet || typeof fontSet.load !== 'function') return
-  const sample = (sourceElement.textContent ?? '').replace(/\s+/g, '').slice(0, 200) || '가A1'
-  await Promise.all(
-    collectCaptureFontShorthands(sourceElement).map(font =>
-      fontSet.load(font, sample).catch(() => [])
-    )
-  )
-  await fontSet.ready
-}
+import { waitForClonedDocumentFonts } from '@/shared/utils/capture-font-ready'
 
 /**
  * 이미지 로드 헬퍼
@@ -272,15 +251,4 @@ export async function generatePdfBlobFromHtmlElement(
 
   pdf.addImage(imgData, 'PNG', x, y, drawW, drawH, undefined, 'SLOW')
   return pdf.output('blob')
-}
-
-/**
- * HTML 요소 ID로 PDF Blob 생성 (`generatePdfBlobFromHtmlElement` 위임)
- */
-export async function generatePdfFromElement(elementId: string): Promise<Blob> {
-  const element = document.getElementById(elementId)
-  if (!element) {
-    throw new Error(`요소를 찾을 수 없습니다: ${elementId}`)
-  }
-  return generatePdfBlobFromHtmlElement(element)
 }
