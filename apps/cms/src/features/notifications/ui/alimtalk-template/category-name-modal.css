@@ -1,5 +1,6 @@
 .category-name-modal__content {
-  padding-top: 18px;
+  /* 시안 카테고리 추가 342·수정 286 — QA 2026-11-15 알림 메시지 관리 행 20·21 (18 → 14) */
+  padding-top: 14px;
 }
 
 .category-name-modal .content-modal__footer-actions {

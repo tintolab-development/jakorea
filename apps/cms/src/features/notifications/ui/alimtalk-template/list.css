@@ -12,7 +12,8 @@
   max-height: 640px;
   overflow: auto;
   margin: 0;
-  padding: 16px;
+  /* 시안 안쪽 16은 테두리 1px 포함 — 항목 268x34 (QA 2026-11-15 알림 메시지 관리 행 6) */
+  padding: 15px;
   list-style: none;
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 8px;

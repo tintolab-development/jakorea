@@ -490,7 +490,7 @@ export function FormModal({
                       {form.showAttachments ? (
                         <DetailInfoForm.Row type="single">
                           <DetailInfoForm.Field
-                            label="첨부파일"
+                            label="첨부 파일"
                             fullRow
                             view=""
                             edit={

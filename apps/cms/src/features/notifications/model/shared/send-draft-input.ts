@@ -5,11 +5,12 @@
  * 템플릿 목록 「템플릿 사용」으로 미리 지정된 템플릿)은 사용자 입력으로 보지 않는다.
  */
 
+/** 시안 11. 팝업 케이스 공통 「작성 취소 안내」 (14426:561616, QA 2026-11-15 알림톡 텍스트 1-0 20번) */
 export const NOTIFICATION_SEND_DISCARD_CONFIRM = {
-  title: '발송 취소',
-  content: '작성 중인 내용이 사라집니다.\n발송 화면을 닫으시겠습니까?',
+  title: '작성 취소 안내',
+  content: '작성을 취소하면 작성 중인 내용이 사라집니다.',
   confirmText: '닫기',
-  cancelText: '계속 작성',
+  cancelText: '돌아가기',
 } as const
 
 export type NotificationSendDraftInputState = {

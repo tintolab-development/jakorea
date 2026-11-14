@@ -9,6 +9,11 @@
   flex-shrink: 0;
 }
 
+/* 시안: 타이틀 ↔ 검색 줄 16 (공통 always 12) — QA 2026-11-15 알림 메시지 관리 행 16-1 */
+.send-recipient-select-modal.content-modal.teal-header-modal .teal-header-modal__body {
+  padding-top: 16px;
+}
+
 .send-recipient-select-modal__body {
   display: flex;
   flex-direction: column;
@@ -39,8 +44,9 @@
   font-weight: 500;
   line-height: 150%;
   flex-shrink: 0;
-  margin: 0;
-  padding: 8px 8px 0 8px;
+  /* 시안: 건수 줄 24, 표 앞 간격 8 (body gap 16 - 8) — QA 행 16-1 */
+  margin: 0 0 -8px;
+  padding: 0 8px;
 }
 
 .send-recipient-select-modal__table-wrap {
