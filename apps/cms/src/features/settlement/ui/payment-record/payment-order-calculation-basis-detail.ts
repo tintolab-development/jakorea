@@ -1066,12 +1066,25 @@ function enrichLectureFeeBasisDetailFromContext(
       next = { ...next, tier: resolveLectureFeeTier(categoryLabel) }
     }
   }
-  if (amountWon != null && amountWon > 0) {
-    if (next.layout === 'lectureFeeGemini') {
-      next = { ...next, feeAssessmentWon: amountWon }
-    } else {
-      next = { ...next, feeAssessmentWon: amountWon, totalWon: amountWon }
-    }
+  return applyLectureFeeAmounts(next, amountWon, row.amount)
+}
+
+/**
+ * 「강사비 책정」= 책정 단가(context 정본), 「합계」= 서버가 준 강사비 행 금액.
+ * 2차시 이상이면 단가 ≠ 합계이므로 합계를 단가로 덮지 않는다. 금액은 재계산하지 않는다.
+ */
+function applyLectureFeeAmounts<
+  T extends
+    | PaymentOrderCalculationBasisDetailLectureFeeTier
+    | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+    | PaymentOrderCalculationBasisDetailLectureFeeGemini,
+>(detail: T, standardAmountWon: number | null | undefined, rowAmountWon: number): T {
+  let next = detail
+  if (standardAmountWon != null && standardAmountWon > 0) {
+    next = { ...next, feeAssessmentWon: standardAmountWon }
+  }
+  if (next.layout !== 'lectureFeeGemini' && Number.isFinite(rowAmountWon) && rowAmountWon > 0) {
+    next = { ...next, totalWon: rowAmountWon }
   }
   return next
 }
@@ -1099,10 +1112,14 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
         sourceLayout === 'lectureFeeSpecial' ||
         sourceLayout === 'lectureFeeGemini')
     ) {
-      return buildLectureFeeBasisDetailFromStandardTitle(
-        resolveLectureFeeStandardTitleForRow(row, context),
-        context?.lectureFeeStandardAmountWon ?? row.amount,
-        resolveLectureTimeDisplayForRow(row)
+      return applyLectureFeeAmounts(
+        buildLectureFeeBasisDetailFromStandardTitle(
+          resolveLectureFeeStandardTitleForRow(row, context),
+          row.amount,
+          resolveLectureTimeDisplayForRow(row)
+        ),
+        context?.lectureFeeStandardAmountWon,
+        row.amount
       )
     }
     return row.basisDetail

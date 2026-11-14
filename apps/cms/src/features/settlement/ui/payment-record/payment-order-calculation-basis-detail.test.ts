@@ -337,6 +337,68 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail.lectureTimeDisplay).toBe('-')
   })
 
+  it('2차시 이상: 강사비 책정=책정 단가, 합계=서버 강사비 행 금액 (합계를 단가로 덮지 않는다)', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '강사비',
+        amount: 340000,
+        lineId: 'lecture-two-sessions',
+        lectureSessionDisplay: '2차시',
+        basisDetail: {
+          layout: 'lectureFeeTier',
+          tier: '1',
+          categoryLabel: '-',
+          feeAssessmentWon: 340000,
+          lectureTimeDisplay: '2026-11-10 10:00~12:00',
+          totalWon: 340000,
+        },
+      },
+      {
+        lectureFeeStandardTitle: '1급 강사비 · 차시당',
+        lectureFeeStandardAmountWon: 170000,
+        remoteData: true,
+      }
+    )
+
+    expect(detail?.layout).toBe('lectureFeeTier')
+    if (detail?.layout !== 'lectureFeeTier') return
+    expect(detail.feeAssessmentWon).toBe(170000)
+    expect(detail.totalWon).toBe(340000)
+    expect(detail.lectureTimeDisplay).toBe('2026-11-10 10:00~12:00')
+  })
+
+  it('remote lectureFeeTier 합성도 합계는 강사비 행 금액을 쓴다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '1급 강사비',
+        amount: 240000,
+        lineId: 'lecture-remote-two-sessions',
+        lectureSessionDisplay: '2차시',
+        basisDetail: {
+          layout: 'remote',
+          sourceLayout: 'lectureFeeTier',
+          title: '강사비 산정 기준 상세',
+          lineLabels: [],
+          formulaLines: [],
+          summaryLabels: [],
+          resultAmount: 240000,
+        },
+      },
+      {
+        lectureFeeStandardTitle: '1급 강사비',
+        lectureFeeStandardAmountWon: 120000,
+        remoteData: true,
+      }
+    )
+
+    expect(detail?.layout).toBe('lectureFeeTier')
+    if (detail?.layout !== 'lectureFeeTier') return
+    expect(detail.feeAssessmentWon).toBe(120000)
+    expect(detail.totalWon).toBe(240000)
+  })
+
   it('context.sessionOrdinal·lectureSessionDisplay로 모달 강의 시간을 채우지 않는다', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
