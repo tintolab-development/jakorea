@@ -55,20 +55,28 @@
 }
 
 .colProgram {
-  width: 28%;
+  width: 26%;
   text-align: left;
 }
 
 .colOrg {
-  width: 18%;
+  width: 15%;
 }
 
 .colDate {
-  width: 34%;
+  width: 29%;
 }
 
 .colStatus {
-  width: 16%;
+  width: 15%;
+}
+
+.colAmount {
+  width: 15%;
+}
+
+.supersededAmount {
+  text-decoration: line-through;
 }
 
 .ellipsis {

@@ -1,4 +1,5 @@
 import { PFEmptyState, PFText } from '@/shared/ui'
+import { formatWonAmount } from '../lib/format-amount'
 import { formatSettlementHeldAt } from '../lib/format-held-at'
 import { withListNumbers } from '../lib/filter-items'
 import { formatMonthHeadingTitle } from '../lib/date-keys'
@@ -16,6 +17,11 @@ function formatEducationDateCell(item: SettlementOverviewItem) {
   const session = item.sessionLabel.trim()
   if (!session) return heldAt
   return `${heldAt} | ${session}`
+}
+
+/** 정산 신청 금액 — 0원은 '0원', 금액 없음(미설정)은 '-' (USER-FUNC-0276·0277) */
+function formatAppliedAmountCell(amount: number | null) {
+  return amount == null ? '-' : formatWonAmount(amount)
 }
 
 export function SettlementListView({ month, items }: SettlementListViewProps) {
@@ -57,6 +63,9 @@ export function SettlementListView({ month, items }: SettlementListViewProps) {
                 <th scope="col" className={styles.colStatus}>
                   정산 현황
                 </th>
+                <th scope="col" className={styles.colAmount}>
+                  정산 신청 금액
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -70,16 +79,28 @@ export function SettlementListView({ month, items }: SettlementListViewProps) {
                   </td>
                   <td className={styles.colOrg}>{item.organizationName || '-'}</td>
                   <td className={styles.colDate}>{formatEducationDateCell(item)}</td>
-                  {/* 대체된 이전 신청은 원래 결과 상태로 표시. supersededReason이 없는 옛 데이터만 '-' */}
+                  {/* 대체된 이전 신청은 원래 결과 상태로 표시. supersededReason이 없는 옛 데이터·정산 대상 상태가 없는 행(제미나이 0원·미설정)은 '-' */}
                   <td
                     className={styles.colStatus}
                     style={
-                      item.supersededStatusUnknown
+                      item.supersededStatusUnknown || item.statusUnavailable
                         ? undefined
                         : { color: SETTLEMENT_STATUS_LIST_COLOR[item.status] }
                     }
                   >
-                    {item.supersededStatusUnknown ? '-' : settlementStatusListLabel(item)}
+                    {item.supersededStatusUnknown || item.statusUnavailable
+                      ? '-'
+                      : settlementStatusListLabel(item)}
+                  </td>
+                  {/* 대체된 이전 신청 금액은 취소선 (합계 제외) */}
+                  <td
+                    className={
+                      item.superseded
+                        ? `${styles.colAmount} ${styles.supersededAmount}`
+                        : styles.colAmount
+                    }
+                  >
+                    {formatAppliedAmountCell(item.appliedAmount)}
                   </td>
                 </tr>
               ))}
