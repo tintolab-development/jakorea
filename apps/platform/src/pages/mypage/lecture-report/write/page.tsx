@@ -232,16 +232,8 @@ export function MypageLectureReportWritePage() {
         throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
       }
 
-      const assignments = await getAllLectureReportAssignments(state.programId)
-      const assignment = assignments.find(item => item.assignmentId === assignmentId)
-      if (!assignment) throw new Error('강의보고서 일정 정보를 찾을 수 없습니다.')
-      if (
-        assignment.programId !== state.programId ||
-        assignment.scheduleId !== state.programScheduleId
-      ) {
-        throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
-      }
-
+      // 제출 가능 여부를 목록 조회보다 먼저 본다. 일정 미정 배정은 목록에 없으므로
+      // 순서가 반대면 「일정 정보를 찾을 수 없습니다」로 막힌다.
       if (state.reportStatus === 'SUBMITTED') {
         throw new Error('이미 제출된 강의보고서입니다. 확인하기를 이용해 주세요.')
       }
@@ -254,6 +246,16 @@ export function MypageLectureReportWritePage() {
       }
       if (state.bindingId == null || state.templateVersionId == null) {
         throw new Error(LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE)
+      }
+
+      const assignments = await getAllLectureReportAssignments(state.programId)
+      const assignment = assignments.find(item => item.assignmentId === assignmentId)
+      if (!assignment) throw new Error('강의보고서 일정 정보를 찾을 수 없습니다.')
+      if (
+        assignment.programId !== state.programId ||
+        assignment.scheduleId !== state.programScheduleId
+      ) {
+        throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
       }
 
       const binding = await getLectureReportBinding(assignmentId)
