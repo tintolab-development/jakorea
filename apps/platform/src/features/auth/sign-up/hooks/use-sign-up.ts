@@ -13,11 +13,17 @@ import type {
 } from '../model/sign-up.types'
 import {
   memberTypeOptions,
+  schoolGradeOptions,
   SIGN_IN_PATH,
   SIGN_UP_COMPLETE_PATH,
   SIGN_UP_TOTAL_STEPS,
   SIGN_UP_UNDER_AGE_TOTAL_STEPS,
 } from '../lib/constants'
+import {
+  getSchoolGradeOptions,
+  isGradeInSchoolLevel,
+  type SchoolLevel,
+} from '../lib/school-grade'
 import { signupGenderFromVerifiedIdentity } from '../lib/helpers/verified-identity-gender'
 import { isPortraitConsentDraftReadyForSubmit } from '../lib/map-portrait-consent-filled-document'
 import { signupBirthDateFromVerified } from '../lib/helpers/verified-birth-date'
@@ -262,6 +268,8 @@ export function useSignUp() {
   const [schoolEducationOfficeCode, setSchoolEducationOfficeCode] = useState<string | null>(null)
   const [schoolSource, setSchoolSource] = useState<'neis' | 'careerNet' | null>(null)
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(null)
+  /** 검색으로 고른 학교의 학교급 — 학년 옵션 범위. 모르면 null(기존 1~12학년) */
+  const [schoolLevel, setSchoolLevel] = useState<SchoolLevel | null>(null)
   const [grade, setGrade] = useState('')
   const [affiliationName, setAffiliationName] = useState('')
   const [employmentStatus, setEmploymentStatus] = useState<EmploymentStatus | null>('employed')
@@ -401,6 +409,7 @@ export function useSignUp() {
     setSchoolEducationOfficeCode(null)
     setSchoolSource(null)
     setSchoolOrganizationId(null)
+    setSchoolLevel(null)
     setGrade('')
     setAffiliationName('')
     setEmploymentStatus('employed')
@@ -1135,6 +1144,7 @@ export function useSignUp() {
       setSchoolEducationOfficeCode(null)
       setSchoolSource(null)
       setSchoolOrganizationId(null)
+      setSchoolLevel(null)
       setGrade('')
     } else {
       setAffiliationName('')
@@ -1148,9 +1158,16 @@ export function useSignUp() {
     setSchoolEducationOfficeCode(null)
     setSchoolSource(null)
     setSchoolOrganizationId(null)
+    setSchoolLevel(null)
   }
 
   const handleSchoolSelect = (school: SelectedSchool) => {
+    const nextSchoolLevel = school.schoolLevel ?? null
+    setSchoolLevel(nextSchoolLevel)
+    // 학교를 바꿔 이미 고른 학년이 새 학교급 범위 밖이면 학년 선택을 비운다
+    if (!isGradeInSchoolLevel(grade, nextSchoolLevel, schoolGradeOptions)) {
+      setGrade('')
+    }
     setSchoolName(school.name)
     setSchoolAddress(school.address?.trim() ?? '')
     setSchoolNeisCode(school.neisCode?.trim() || null)
@@ -1588,6 +1605,8 @@ export function useSignUp() {
       selectSchool: handleSchoolSelect,
       grade,
       setGrade,
+      /** 고른 학교의 학교급에 맞는 학년 옵션 (학교급을 모르면 1~12학년) */
+      gradeOptions: getSchoolGradeOptions(schoolLevel, schoolGradeOptions),
       affiliationName,
       setAffiliationName,
       employmentStatus,

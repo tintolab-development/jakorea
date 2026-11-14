@@ -1,7 +1,6 @@
 import {
   AddressSearchModal,
   SchoolSearchModal,
-  schoolGradeOptions,
   type UseSignUpReturn,
 } from '@/features/auth/sign-up'
 import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
@@ -86,7 +85,7 @@ function MinorEnrolledSchoolFields({
         placeholder="학년을 선택해 주세요"
         value={profile.grade}
         onValueChange={profile.setGrade}
-        options={schoolGradeOptions.map(option => ({
+        options={profile.gradeOptions.map(option => ({
           value: option,
           label: option,
         }))}
@@ -133,7 +132,7 @@ function AdultEnrolledSchoolFields({
         placeholder="학년을 선택해 주세요"
         value={profile.grade}
         onValueChange={profile.setGrade}
-        options={schoolGradeOptions.map(option => ({
+        options={profile.gradeOptions.map(option => ({
           value: option,
           label: option,
         }))}

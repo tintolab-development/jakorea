@@ -280,7 +280,7 @@ export function SchoolSearchModal({
   }
 
   const handleSelectResult = (result: SchoolSearchResultItem) => {
-    const selected = mapSearchResultToSelectedSchool(result)
+    const selected = mapSearchResultToSelectedSchool(result, effectiveSchoolLevel)
     if (!selected) {
       setSelectError(SCHOOL_SELECTION_INCOMPLETE_MESSAGE)
       return
