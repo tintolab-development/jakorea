@@ -8,11 +8,16 @@ import {
   networkAwareAlertTitle,
   readApiErrorAlertMessage,
 } from '@/shared/lib/extract-api-error-message'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  downloadIndividualSettlementDocumentRemote,
   individualSettlementReviewDetailQueryOptions,
   isIndividualSettlementReviewRemoteEnabled,
 } from '@/features/program/general/api/individual-settlement-review-remote'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { useIndividualSettlementReviewMutations } from '@/features/program/general/hooks/use-individual-settlement-review-mutations'
 import {
   canApproveIndividualSettlement,
@@ -115,6 +120,30 @@ export function IndividualSettlementReviewDetailModal({
 }: IndividualSettlementReviewDetailModalProps) {
   const { showAlert } = useCmsAlert()
   const remoteEnabled = isIndividualSettlementReviewRemoteEnabled()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
+
+  // 산출 내역서 「지급조서 발급」: 승인 건 서버 PDF를 다운로드 비밀번호로 받는다(강사 지급조서 다운로드와 같은 흐름).
+  // 발급 가능 여부(확인 완료·계좌 지급 완료)는 표가 paymentStatementIssueDisabled로 먼저 막는다.
+  const handleDownloadPaymentStatement = useCallback(() => {
+    if (settlementApplicationId == null) return
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      zIndex: INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX + 20,
+      download: async password => {
+        try {
+          await downloadIndividualSettlementDocumentRemote(settlementApplicationId, { password })
+        } catch (error) {
+          if (!isFileDownloadPasswordApiError(error)) {
+            showAlert({
+              title: networkAwareAlertTitle(error, '안내'),
+              content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+            })
+          }
+          throw error
+        }
+      },
+    })
+  }, [runProtectedDownload, settlementApplicationId, showAlert])
   const queryEnabled = Boolean(open && remoteEnabled && settlementApplicationId != null)
 
   const detailQuery = useQuery({
@@ -299,6 +328,7 @@ export function IndividualSettlementReviewDetailModal({
                 )
               }
               onBasisDetailClick={handleBasisDetailClick}
+              onDownloadPaymentStatement={handleDownloadPaymentStatement}
               headerActions={
                 isStatementActionLocked ? null : (
                   <>
@@ -367,6 +397,7 @@ export function IndividualSettlementReviewDetailModal({
         detail={selectedBasisDetail}
         zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
       />
+      {filePasswordModal}
     </>
   )
 }

@@ -5,6 +5,8 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { customInstance } from '@/shared/api/orval-mutator'
+import { postEncryptedAdminFile } from '@/shared/lib/post-encrypted-admin-file'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 import type { ApiResponseIndividualSettlementReviewDecision } from '@/shared/api/generated/dashboard/schemas/apiResponseIndividualSettlementReviewDecision'
 import type { ApiResponseIndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/apiResponseIndividualSettlementReviewDetail'
 import type { IndividualSettlementReviewDecision } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDecision'
@@ -31,6 +33,38 @@ export function individualSettlementReviewApproveUrl(settlementApplicationId: nu
 
 export function individualSettlementReviewRejectUrl(settlementApplicationId: number): string {
   return `${individualSettlementReviewDetailUrl(settlementApplicationId)}/reject`
+}
+
+/** 승인 건 서버 PDF(정산 신청서) 암호화 단건 다운로드 */
+export function individualSettlementDocumentDownloadUrl(settlementApplicationId: number): string {
+  return `${individualSettlementReviewDetailUrl(settlementApplicationId)}/application-document/download`
+}
+
+/** 승인 건 서버 PDF 일괄 암호화 ZIP — 한 건이라도 범위 밖·미승인이면 서버가 요청 전체를 거부한다 */
+export const INDIVIDUAL_SETTLEMENT_DOCUMENT_BULK_DOWNLOAD_URL = `${INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL}/application-document/bulk-download`
+
+export async function downloadIndividualSettlementDocumentRemote(
+  settlementApplicationId: number,
+  options: { password: string }
+): Promise<void> {
+  await postEncryptedAdminFile({
+    url: individualSettlementDocumentDownloadUrl(settlementApplicationId),
+    password: options.password,
+    // 서버 Content-Disposition을 우선 쓴다. 헤더를 못 읽을 때만 사용.
+    fallbackFileName: `[JA Korea] 정산 신청서_${settlementApplicationId}_${formatAsiaSeoulYymmdd()}.pdf`,
+  })
+}
+
+export async function bulkDownloadIndividualSettlementDocumentsRemote(body: {
+  settlementApplicationIds: number[]
+  password: string
+}): Promise<void> {
+  await postEncryptedAdminFile({
+    url: INDIVIDUAL_SETTLEMENT_DOCUMENT_BULK_DOWNLOAD_URL,
+    password: body.password,
+    extraBody: { settlementApplicationIds: body.settlementApplicationIds },
+    fallbackFileName: `[JA Korea] 정산 신청서_일괄_${formatAsiaSeoulYymmdd()}.zip`,
+  })
 }
 
 export function parseIndividualSettlementNumericId(
