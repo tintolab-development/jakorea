@@ -499,7 +499,12 @@ export function UserDetailFullpageBasicTabContent({
   return (
     <Space direction="vertical" size={32} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
-        <UserDetailAdminCommentSection user={userForAdminComment} />
+        <UserDetailAdminCommentSection
+          user={userForAdminComment}
+          instructorOrPermissionNotice={
+            mode === 'permission' || basicInfoEntrySource === 'instructor'
+          }
+        />
       ) : null}
       <UserBasicInfoSection
         user={user}
@@ -556,7 +561,12 @@ export function UserDetailFullpageBasicTabContent({
         />
       ) : null}
       {instructorResumeApplicantRow ? (
-        <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+        <InstructorResumeDetailForms
+          instructor={instructorResumeApplicantRow}
+          variant={
+            mode !== 'permission' && consentPreset === 'instructor_dual' ? 'teacher' : 'instructor'
+          }
+        />
       ) : null}
       {basicTab.showSchoolAffiliatedTeachers ? (
         <>

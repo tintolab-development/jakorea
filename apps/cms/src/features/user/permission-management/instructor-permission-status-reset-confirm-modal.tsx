@@ -63,7 +63,7 @@ export function InstructorPermissionStatusResetConfirmModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title={`${permissionLabel} 권한 ${actionLabel}`}
+      title={`${permissionLabel} 권한 ${actionLabel} 안내`}
       width={600}
       zIndex={zIndex}
       className="instructor-permission-approve-modal"
@@ -82,6 +82,7 @@ export function InstructorPermissionStatusResetConfirmModal({
         </div>
       }
     >
+      {/* 시안 4427:127147: 제목 「… 안내」, 취소 사유* → 알림 발송* 순서, placeholder 마침표 없음 */}
       <div className="instructor-permission-approve-modal__content">
         <p className="instructor-permission-approve-modal__lead">
           <strong>[{normalizedName}]</strong> {permissionLabel}님의 {permissionLabel} 권한{' '}
@@ -94,9 +95,35 @@ export function InstructorPermissionStatusResetConfirmModal({
         </p>
 
         <div className="instructor-permission-approve-modal__field">
-          <span className="instructor-permission-approve-modal__label">알림 발송</span>
+          <span className="instructor-permission-approve-modal__label">
+            취소 사유
+            <span className="instructor-permission-approve-modal__required">*</span>
+          </span>
+          <CmsInput
+            inputSize="medium"
+            width="100%"
+            value={cancellationReason}
+            onChange={e => {
+              setCancellationReason(e.target.value)
+              if (reasonError) setReasonError('')
+            }}
+            placeholder="취소 사유를 입력해 주세요"
+            maxLength={500}
+          />
+          {reasonError ? (
+            <span className="instructor-permission-approve-modal__field-error" role="alert">
+              {reasonError}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="instructor-permission-approve-modal__field">
+          <span className="instructor-permission-approve-modal__label">
+            알림 발송
+            <span className="instructor-permission-approve-modal__required">*</span>
+          </span>
           <CmsRadio.Group
-            size="large"
+            size="medium"
             value={notifyTiming}
             onChange={e =>
               setNotifyTiming(e.target.value as InstructorPermissionApproveNotifyTiming)
@@ -105,26 +132,6 @@ export function InstructorPermissionStatusResetConfirmModal({
             <CmsRadio value="immediate">즉시</CmsRadio>
             <CmsRadio value="manual">직접 설정</CmsRadio>
           </CmsRadio.Group>
-        </div>
-
-        <div className="instructor-permission-approve-modal__field">
-          <span className="instructor-permission-approve-modal__label">취소 사유</span>
-          <CmsInput
-            inputSize="large"
-            width="100%"
-            value={cancellationReason}
-            onChange={e => {
-              setCancellationReason(e.target.value)
-              if (reasonError) setReasonError('')
-            }}
-            placeholder="취소 사유를 입력해 주세요."
-            maxLength={500}
-          />
-          {reasonError ? (
-            <span className="instructor-permission-approve-modal__field-error" role="alert">
-              {reasonError}
-            </span>
-          ) : null}
         </div>
       </div>
     </ContentModal>

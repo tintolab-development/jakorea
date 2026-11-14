@@ -49,6 +49,15 @@
   scrollbar-width: thin;
 }
 
+/*
+ * Figma Tab / Line 묶음 — 탭 사이 gap 4 · 좌우 inset 8 (QA 2026-11-15 권한 승인·관리자/담당자 권한 설정, 사용자 확정 공통 적용).
+ * 볼드 폭 예약으로 탭 자체가 넓어 탭 글자 간 거리는 시안과 같다.
+ */
+.cms-text-tabs__list {
+  gap: 4px;
+  padding: 0 8px;
+}
+
 .cms-text-tabs__list--wrap,
 .program-detail-fullpage-modal__tabs.cms-text-tabs__list--wrap {
   flex-wrap: wrap;

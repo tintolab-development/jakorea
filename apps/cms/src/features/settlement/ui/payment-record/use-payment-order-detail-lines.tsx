@@ -71,6 +71,7 @@ import {
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -381,9 +382,8 @@ export function usePaymentOrderDetailLinesController(
       })
       .catch(error => {
         showAlert({
-          title: '안내',
-          content: getSettlementApiErrorMessage(
-            error,
+          title: networkAwareAlertTitle(error, '안내'),
+          content: getSettlementApiErrorMessage(error,
             '지급 현황 상세 목록을 불러오지 못했습니다.'
           ),
         })
@@ -458,7 +458,7 @@ export function usePaymentOrderDetailLinesController(
           })
           .catch(async error => {
             showAlert({
-              title: '안내',
+              title: networkAwareAlertTitle(error, '안내'),
               content: getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'),
             })
             // 사전 동의 미완료(Gemini)도 상태 충돌처럼 목록을 다시 받아 확인 불가 행을 반영한다(일괄 확인은 전체 롤백됨)
@@ -691,9 +691,8 @@ export function usePaymentOrderDetailLinesController(
         setIssuanceViewOpen(true)
       } catch (error) {
         showAlert({
-          title: '안내',
-          content: getSettlementApiErrorMessage(
-            error,
+          title: networkAwareAlertTitle(error, '안내'),
+          content: getSettlementApiErrorMessage(error,
             '지급조서 발급 미리보기를 불러오지 못했습니다.'
           ),
         })

@@ -2,7 +2,7 @@
  * 학교 상세 — 기본 정보 하단 소속 교사 목록
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { AffiliatedTeacherLinkTarget, SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { CmsButton } from '@/shared/ui'
@@ -20,11 +20,14 @@ import {
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
-import { getEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
+import { getCompactEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './school-affiliated-teachers-section.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+
+/** 시안 4427:46312: 소속 교사 표 체크박스 열 60 (회원 목록과 같음) */
+const AFFILIATED_TEACHERS_SELECTION_COLUMN_WIDTH = 60
 
 const SCHOOL_AFFILIATED_TEACHER_EMPLOYMENT_COLUMN_WIDTH = 160
 
@@ -155,7 +158,7 @@ export function SchoolAffiliatedTeachersSection({
           <StatusDropdownCell<SchoolTeacherEmploymentStatus>
             status={record.employmentStatus}
             statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-            getTag={getEmploymentStatusTag}
+            getTag={getCompactEmploymentStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={next => handleEmploymentStatusChange(record.id, next)}
             isOpen={openEmploymentDropdownId === record.id}
@@ -188,7 +191,7 @@ export function SchoolAffiliatedTeachersSection({
     columns as ColumnsType<unknown>,
     {
       includeSelection: true,
-      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+      selectionWidth: AFFILIATED_TEACHERS_SELECTION_COLUMN_WIDTH,
     }
   )
 
@@ -229,11 +232,19 @@ export function SchoolAffiliatedTeachersSection({
       </header>
       <DetailInfoForm title="소속 교사 목록" hideHeader className="school-affiliated-teachers-section__form">
         <DetailInfoForm.Row type="custom">
-          <div ref={tableWrapRef} className="school-affiliated-teachers-section__body cms-data-table-fit-scroll-wrap">
+          <div
+            ref={tableWrapRef}
+            className="school-affiliated-teachers-section__body cms-data-table-fit-scroll-wrap"
+            style={
+              {
+                '--table-selection-column-width': `${AFFILIATED_TEACHERS_SELECTION_COLUMN_WIDTH}px`,
+              } as CSSProperties
+            }
+          >
             <CmsDataTable
               className="cms-data-table cms-data-table--fit-scroll school-affiliated-teachers-section__table"
               rowSelection={{
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                columnWidth: AFFILIATED_TEACHERS_SELECTION_COLUMN_WIDTH,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
                 getCheckboxProps: record => ({

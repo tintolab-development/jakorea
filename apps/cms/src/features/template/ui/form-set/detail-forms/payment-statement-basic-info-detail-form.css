@@ -199,3 +199,8 @@
   > .address-search__trigger-wrap {
   flex: 0 0 auto;
 }
+
+/* 템플릿 관리 사전 동의서 — 값 없는 서식 화면이라 주민등록번호 뒷자리 보기 버튼을 두지 않는다(시안 5767:42072) */
+.payment-statement-basic-info-detail-form--pre-consent-template .cms-resident-back-input__toggle {
+  display: none;
+}

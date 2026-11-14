@@ -34,7 +34,7 @@ export const ADMIN_PERMISSION_CATEGORIES: AdminPermissionCategoryDef[] = [
       { id: 'crud_textbook_business_field', label: '교재 사업 분야 관리' },
       { id: 'crud_detailed_program_register_edit_delete', label: '세부 프로그램 등록·수정·삭제' },
       { id: 'crud_template_register_edit', label: '템플릿 등록·수정' },
-      { id: 'crud_alimtalk_template_register_delete', label: '알림톡 템플릿 등록·수정·삭제' },
+      { id: 'crud_alimtalk_template_register_delete', label: '알림톡 템플릿 등록·삭제' },
       { id: 'crud_mail_template_register_edit_delete', label: '메일 템플릿 등록·수정·삭제' },
       { id: 'crud_sms_template_register_edit_delete', label: '문자 템플릿 등록·수정·삭제' },
       { id: 'crud_notification_template_category', label: '알림 메시지 템플릿 카테고리 관리' },

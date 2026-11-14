@@ -160,6 +160,11 @@ export function getAdminPermissionTag(variant: AdminPermissionTagVariant): Statu
   return { label: ADMIN_PERMISSION_TAG_LABEL[variant], tone: ADMIN_PERMISSION_TONE[variant] }
 }
 
+/** 관리자 회원 목록 권한 유형 — 시안 4427:77793 태그 140×32 고정 (상세·권한 승인 상세는 기본 폭) */
+export function getAdminListPermissionTag(variant: AdminPermissionTagVariant): StatusTagSpec {
+  return { ...getAdminPermissionTag(variant), width: 'fixed140' }
+}
+
 /** UJAT 봉사자 회차 역할 — 출결 담당 blue · 해당 없음 gray */
 export function getUjatVolunteerScheduleRoleTag(role: UjatVolunteerScheduleRole): StatusTagSpec {
   return {
@@ -179,6 +184,11 @@ export function getSponsorContactTypeTag(type: SponsorContactType): StatusTagSpe
 /** 재직 현황 */
 export function getEmploymentStatusTag(status: SchoolTeacherEmploymentStatus): StatusTagSpec {
   return { label: SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL[status], tone: getEmploymentBadgeTone(status) }
+}
+
+/** 회원 관리 재직 현황(학교 상세 소속 교사 표·교사 상세) — 시안 80×32 (프로그램 신청 상세는 기본 폭) */
+export function getCompactEmploymentStatusTag(status: SchoolTeacherEmploymentStatus): StatusTagSpec {
+  return { ...getEmploymentStatusTag(status), width: 'compact' }
 }
 
 export function getSponsorSponsorshipStatusTag(status: SponsorSponsorshipStatus): StatusTagSpec {

@@ -59,6 +59,8 @@ import {
   INSTRUCTOR_FREE_WRITE_ITEMS,
   MEMBER_TYPE_OPTIONS,
   TERMS_CONSENT_LABEL_WIDTH,
+  INSTRUCTOR_REGISTER_CONSENT_DESCRIPTION,
+  INSTRUCTOR_REGISTER_CONSENT_DOCUMENT_LABELS,
   type ConsentValue,
   type InstructorProfileFormValues,
 } from './instructor-profile-form-model'
@@ -120,14 +122,14 @@ function InstructorCareerRowEdit({
           <CmsInput
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.companyName}
             inputSize="small"
-            width={220}
+            width={200}
           />
         </Form.Item>
         <Form.Item name={[field.name, 'roleName']} noStyle>
           <CmsInput
             placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.roleName}
             inputSize="small"
-            width={160}
+            width={200}
           />
         </Form.Item>
         <Form.Item
@@ -171,9 +173,7 @@ function ConsentDocumentFieldEdit({
       <span className="instructor-register-modal__consent-status">
         {value === 'agree' ? '동의' : '미동의'}
       </span>
-      <span className="instructor-register-modal__consent-sep" aria-hidden>
-        |
-      </span>
+      <DetailInfoForm.InputsSeparator />
       <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
         {value === 'agree' ? '동의서 보기' : '동의서 작성'}
       </CmsButton>
@@ -239,6 +239,8 @@ export function InstructorProfileFormBody({
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
+  /** 시안(8288:257987) 신규 등록 — 성명·생년월일·연락처·이메일·강사 경력 입력창 200 고정. 상세 수정은 기존 fill 유지 */
+  const textInputWidth = isDetailEdit ? '100%' : 200
   const consentSurface = isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister'
   const formLayout = getInstructorFormLayout(consentSurface)
   const consentDocumentGroups = getInstructorConsentDocumentGroups(consentSurface)
@@ -410,6 +412,8 @@ export function InstructorProfileFormBody({
           disabled={affiliationNone}
         />
       </Form.Item>
+      {/* 시안(8288:257987) 신규 등록: 소속 입력창 │ 소속 없음 (앞뒤 16) */}
+      {!isDetailEdit ? <DetailInfoForm.InputsSeparator /> : null}
       <Form.Item
         name="affiliationNone"
         valuePropName="checked"
@@ -432,13 +436,13 @@ export function InstructorProfileFormBody({
       <CmsInput
         placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
         inputSize="small"
-        width="100%"
+        width={textInputWidth}
       />
     </Form.Item>
   )
 
   const homeAddressFieldEdit = (
-    <Space.Compact style={{ width: 480 }}>
+    <Space.Compact>
       <Form.Item name="homeAddress" noStyle>
         <AddressSearch
           value={homeAddress}
@@ -524,7 +528,7 @@ export function InstructorProfileFormBody({
               <CmsInput
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.name}
                 inputSize="small"
-                width="100%"
+                width={textInputWidth}
               />
             </Form.Item>
           }
@@ -540,7 +544,11 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.InputsSeparator />
               <Form.Item
                 name="birthDate"
-                style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
+                style={
+                  isDetailEdit
+                    ? { ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }
+                    : { ...FORM_ITEM_STYLE, width: 200, flex: '0 0 auto' }
+                }
                 trigger="onValueChange"
                 getValueFromEvent={(value: string) => value}
               >
@@ -548,7 +556,7 @@ export function InstructorProfileFormBody({
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.birthDate}
                   maxLength={10}
                   inputSize="small"
-                  width="100%"
+                  width={textInputWidth}
                 />
               </Form.Item>
             </span>
@@ -564,7 +572,7 @@ export function InstructorProfileFormBody({
               <CmsPhoneInput
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact}
                 inputSize="small"
-                width="100%"
+                width={textInputWidth}
               />
             </Form.Item>
           }
@@ -577,7 +585,7 @@ export function InstructorProfileFormBody({
               <CmsInput
                 placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.email}
                 inputSize="small"
-                width="100%"
+                width={textInputWidth}
               />
             </Form.Item>
           }
@@ -769,7 +777,7 @@ export function InstructorProfileFormBody({
           <DetailInfoForm
             title={formLayout.consent.title}
             mode="edit"
-            description={formLayout.consent.description}
+            description={INSTRUCTOR_REGISTER_CONSENT_DESCRIPTION}
             className="instructor-register-modal__consent-heading"
           >
             <div className="instructor-register-modal__consent-form-stack">
@@ -781,7 +789,7 @@ export function InstructorProfileFormBody({
               >
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="서비스 이용약관"
+                    label="서비스 이용약관 동의"
                     required={!isDetailEdit}
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
@@ -863,7 +871,7 @@ export function InstructorProfileFormBody({
                           {row.map(item => (
                             <DetailInfoForm.Field
                               key={item.key}
-                              label={item.label}
+                              label={INSTRUCTOR_REGISTER_CONSENT_DOCUMENT_LABELS[item.key] ?? item.label}
                               labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                               view="-"
                               edit={
@@ -892,7 +900,6 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="경력 구분"
-                  labelWidth={200}
                   fullRow
                   view="-"
                   edit={
@@ -906,8 +913,7 @@ export function InstructorProfileFormBody({
                 <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
                   <DetailInfoForm.Field
                     label="경력 사항"
-                    labelWidth={200}
-                    fullRow
+                      fullRow
                     view="-"
                     edit={
                       <div className="instructor-register-modal__field-stack">
@@ -942,7 +948,6 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
                 <DetailInfoForm.Field
                   label="활동 이력"
-                  labelWidth={200}
                   fullRow
                   view="-"
                   edit={
@@ -982,14 +987,14 @@ export function InstructorProfileFormBody({
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaProgramName}
                                       inputSize="small"
-                                      width={220}
+                                      width={200}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'note']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaNote}
                                       inputSize="small"
-                                      width={160}
+                                      width={200}
                                     />
                                   </Form.Item>
                                   {index === 0 ? (
@@ -1023,7 +1028,6 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
                 <DetailInfoForm.Field
                   label="자격 및 면허 내역"
-                  labelWidth={200}
                   fullRow
                   view="-"
                   edit={
@@ -1051,14 +1055,14 @@ export function InstructorProfileFormBody({
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseTitle}
                                       inputSize="small"
-                                      width={220}
+                                      width={200}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'issuer']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
                                       inputSize="small"
-                                      width={160}
+                                      width={200}
                                     />
                                   </Form.Item>
                                   {index === 0 ? (
@@ -1092,7 +1096,6 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
                 <DetailInfoForm.Field
                   label="수상 및 수료 내역"
-                  labelWidth={200}
                   fullRow
                   view="-"
                   edit={
@@ -1120,14 +1123,14 @@ export function InstructorProfileFormBody({
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardTitle}
                                       inputSize="small"
-                                      width={220}
+                                      width={200}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'issuer']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
                                       inputSize="small"
-                                      width={160}
+                                      width={200}
                                     />
                                   </Form.Item>
                                   {index === 0 ? (

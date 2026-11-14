@@ -512,9 +512,44 @@
 }
 
 /*
- * 2·3뎁스 불릿 없음 — 시안 전체 회원(1142:84965) LNB 라벨 시작 x = 행 padding-left (2뎁스 24 · 3뎁스 48)
- * (2026-11-14 전체 회원 CSS 검수)
+ * 2뎁스 불릿(•) — 시안 전체 회원(1142:84965): 점 중심 x36 · 글자 x48 (행 padding-left 24 + 점 앞뒤 10)
+ * 3뎁스는 불릿 없음(글자 x48 = 행 padding-left). (2026-11-15 QA 재검증: 2뎁스 점이 빠진 회귀 복원)
  */
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title
+  > .ant-menu-title-content::before,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > .ant-menu-item
+  > .ant-menu-title-content::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 10px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: middle;
+}
+
+/* 시안: 비선택 2뎁스 행 내용 opacity 0.8 (예: 회원 권한 관리) */
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu:not(.ant-menu-submenu-selected)
+  > .ant-menu-submenu-title
+  > *,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > .ant-menu-item:not(.ant-menu-item-selected)
+  > * {
+  opacity: 0.8;
+}
 
 /* ---- 포커스: 브라우저·Ant 기본 outline / 포커스 링 제거 (사이드바 영역 한정) ---- */
 .sidebar-container .sidebar-header :focus,
@@ -559,4 +594,48 @@
   display: flex;
   align-items: center;
   margin-bottom: var(--spacing-4);
+}
+
+/*
+ * 작은 화면(1439px 이하) — LNB 270→240, 항목은 fill, 메뉴명은 단어 단위 2줄
+ * (QA 2026-11-15 작은화면 대응 5절, 사용자 확정). `--sidebar-width`는 본문 margin·헤더 left도 같이 따라간다.
+ * `line-height: 120%`가 없으면 높이 auto에서 1뎁스 줄 간격 40px을 받아 항목이 61로 늘어난다.
+ */
+@media (max-width: 1439px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+
+  .sidebar-menu.ant-menu .ant-menu-item,
+  .sidebar-menu.ant-menu .ant-menu-submenu-title {
+    height: auto !important;
+    min-height: 54px;
+  }
+
+  .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
+  .sidebar-menu.ant-menu
+    > li.ant-menu-submenu
+    > .ant-menu-sub
+    > li.ant-menu-submenu
+    > .ant-menu-submenu-title {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 44px !important;
+  }
+
+  .sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item {
+    height: auto !important;
+    min-height: 42px;
+  }
+
+  .sidebar-menu .ant-menu-item .ant-menu-title-content,
+  .sidebar-menu .ant-menu-submenu-title .ant-menu-title-content {
+    min-width: 0;
+    overflow: visible !important;
+    line-height: 120%;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
 }

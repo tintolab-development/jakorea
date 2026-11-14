@@ -96,6 +96,7 @@ import {
   ButtonListIcon,
 } from '@/shared/ui/icons/ButtonIcons'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */
 const BulkTransferPreviewModal = lazy(async () => {
@@ -626,7 +627,7 @@ export default function AccountPaymentsPage() {
       title:
         getSettlementApiErrorCode(error) === TAX_REPORT_NO_ELIGIBLE_SELECTION
           ? TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE
-          : '발급 불가',
+          : networkAwareAlertTitle(error, '발급 불가'),
       content: getSettlementApiErrorMessage(error, fallback),
     })
   }, [])
@@ -928,7 +929,7 @@ export default function AccountPaymentsPage() {
         if (requestId !== accountPayConfirmRequestRef.current) return
         if (isGlobalApiErrorAlertShown(error)) return
         cmsAlertModal.show({
-          title: '안내',
+          title: networkAwareAlertTitle(error, '안내'),
           content: getSettlementApiErrorMessage(error, '계좌 지급 정보를 불러오지 못했습니다.'),
         })
       })

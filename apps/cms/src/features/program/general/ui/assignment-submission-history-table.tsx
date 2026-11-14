@@ -225,7 +225,8 @@ export function AssignmentSubmissionHistoryTable({
     <div className="assignment-submission-modal__table-outer">
       <CmsDataTable<AssignmentSubmissionHistoryTableRow>
         rowKey="id"
-        className="cms-data-table"
+        /* 시안 4427:28184: No. 열 없음 — 공통 「첫 열 80」 규칙 제외(역할 120부터 시안 열 폭 그대로) */
+        className="cms-data-table cms-data-table--skip-auto-no-col"
         columns={columns}
         dataSource={rows}
         loading={loading}

@@ -45,6 +45,8 @@ export type AddressRegionFilterSubConfig = {
   getSigunguOptions: (sido: string | undefined | null) => Array<{ label: string; value: string }>
   sidoPlaceholder?: string
   sigunguPlaceholder?: string
+  /** 시/도·시/군/구 사이 gap(px). 기본 `FILTER_ADDRESS_REGION_PAIR_GAP_PX`(6) */
+  pairGapPx?: number
 }
 
 export type SelectPairLegSubConfig = {

@@ -163,14 +163,9 @@ function buildProgramsItem(
   user: SidebarUser,
   role: UserRole | undefined
 ): DetailModalSidebarNavItem {
+  /** 시안 4427:53835 등: 강사·교사 겸 강사도 「프로그램 참여 이력」 */
   let programsLabel = '프로그램 참여 이력'
-  if (role === 'INSTRUCTOR') {
-    const instructorProfile = user ? resolveInstructorMemberProfile(user) : null
-    programsLabel =
-      instructorProfile === 'school_teacher' || instructorProfile === 'instructor_dual'
-        ? '프로그램 참여 이력'
-        : '프로젝트 참여 이력'
-  } else if (role === 'ADMIN') {
+  if (role === 'ADMIN') {
     programsLabel = '프로그램 담당 이력'
   }
   const programsIcon = LNB_ICONS.programs

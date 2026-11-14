@@ -1,0 +1,27 @@
+/* 동의 양식 작성 화면 좌측 — 레이아웃에 끼지 않는 범위 지정용 래퍼 */
+.agreement-writing-form-left {
+  display: contents;
+}
+
+/*
+ * 템플릿 관리 시스템 동의 양식 — 단락 이동 불가(QA 261113 #16).
+ * 이동할 수 없는 카드에 비활성 이동 아이콘(=)을 남기지 않는다(시안 5767:42072·16046:109928).
+ */
+.agreement-writing-form-left--structure-control-locked
+  .paragraph-card__drag-handle--non-interactive {
+  display: none;
+}
+
+.agreement-writing-form-left--structure-control-locked
+  .paragraph-card__action-slot-wrap:has(> .paragraph-card__drag-handle--non-interactive) {
+  display: none;
+}
+
+/* 핸들이 없으니 설명 시작선도 타이틀과 같은 위치로 */
+.agreement-writing-form-left--structure-control-locked
+  .paragraph-card__header:has(.paragraph-card__drag-handle--non-interactive)
+  .paragraph-card__description-block {
+  margin-left: 0;
+  width: 100%;
+  max-width: 100%;
+}

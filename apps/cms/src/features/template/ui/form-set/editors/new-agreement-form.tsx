@@ -16,6 +16,8 @@ import {
   shouldUseFormsSurveysRemoteApi,
 } from '@/features/template/api/admin-form-templates-service'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
+import './new-agreement-form.css'
+import '@/features/template/ui/form-set/payment-statement-pre-consent/template-management-sheet.css'
 import {
   buildTemplateManagementNavLine,
   resolveNavTitleNumberingStyle,
@@ -121,6 +123,11 @@ export type AgreementWritingFormShellProps = {
   /** 단락 본문 옵션 */
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   /**
+   * 우측 「커스텀 필드」 목록에서 뺄 단락 id. 생략 시 `paragraphBodyOptions.hiddenParagraphIds`.
+   * 템플릿 관리 지급조서·영수증 사전 동의서는 캔버스에 날짜·서명·귀하 카드를 보이되 목록에서는 뺀다(시안 5767:42072·16046:109928).
+   */
+  navHiddenParagraphIds?: ReadonlySet<string>
+  /**
    * 템플릿 편집·A4 미리보기 하단 귀하·작성완료.
    * 시안에 없으면 `showRecipient: false`, 작성완료는 항상 false(회원 fill만 버튼).
    */
@@ -219,12 +226,14 @@ function preserveUnlockedAgreementConfirmBodyOptions(
   if (options == null) return undefined
   if (
     options.agreementAdminProxyConfirm !== true &&
+    options.paymentPreConsentSheetLayout !== true &&
     (options.hiddenParagraphIds == null || options.hiddenParagraphIds.size === 0)
   ) {
     return undefined
   }
   return {
     agreementAdminProxyConfirm: options.agreementAdminProxyConfirm,
+    paymentPreConsentSheetLayout: options.paymentPreConsentSheetLayout,
     hiddenParagraphIds: options.hiddenParagraphIds,
     agreementSystemParticipantName: options.agreementSystemParticipantName,
     agreementSystemNow: options.agreementSystemNow,
@@ -248,6 +257,7 @@ export function AgreementWritingFormShell({
   a4RenderMode,
   a4ParagraphGapPx,
   paragraphBodyOptions,
+  navHiddenParagraphIds: navHiddenParagraphIdsProp,
   agreementClosingFooter,
   templateCode,
   enableCreateOnSave = false,
@@ -442,7 +452,8 @@ export function AgreementWritingFormShell({
   }, [])
 
   /** 좌측 캔버스에서 숨긴 단락(대리 확인 카드에 합친 날짜·서명, 「JA KOREA 귀하」 등)은 우측 목록에서도 뺀다 — 시안 5767:42072·16046:109928 */
-  const navHiddenParagraphIds = effectiveParagraphBodyOptions?.hiddenParagraphIds
+  const navHiddenParagraphIds =
+    navHiddenParagraphIdsProp ?? effectiveParagraphBodyOptions?.hiddenParagraphIds
   /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
   const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
@@ -669,6 +680,19 @@ export function AgreementWritingFormShell({
         onDownloadDocument={isTemplateManagementSave ? documentPdf.download : undefined}
         downloadDocumentLoading={documentPdf.loading}
         leftContent={
+          <div
+            className={[
+              'agreement-writing-form-left',
+              structureControlLockedParagraphIds != null
+                ? 'agreement-writing-form-left--structure-control-locked'
+                : '',
+              leftPanelParagraphBodyOptions?.paymentPreConsentSheetLayout === true
+                ? 'agreement-writing-form-left--pre-consent-sheet'
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
           <FormEditorLeftPanel
             paragraphs={draft.paragraphs}
             titleNumbering={draft.formSettings.titleNumbering}
@@ -694,6 +718,7 @@ export function AgreementWritingFormShell({
               leftPanelStructureLockedParagraphIds != null ? undefined : middleParagraphActions
             }
           />
+          </div>
         }
         rightNavigation={
           <FormEditorFieldNav

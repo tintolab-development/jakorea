@@ -93,6 +93,8 @@
 .content-modal.teal-header-modal--bounded .teal-header-modal__body {
   --content-modal-scroll-gutter: 18px;
 
+  /* 공통 `width: 100%`가 남아 있으면 음수 마진이 박스를 못 늘리고 우측 패딩만 남아 본문이 18px 좁아진다. */
+  width: calc(100% + var(--content-modal-scroll-gutter));
   margin-right: calc(-1 * var(--content-modal-scroll-gutter)) !important;
   padding-right: var(--content-modal-scroll-gutter) !important;
 }

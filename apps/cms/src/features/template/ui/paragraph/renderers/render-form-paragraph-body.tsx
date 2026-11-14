@@ -16,6 +16,8 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
+import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
+import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import {
   getStructureLockedPartialLockedBodyColumnIndexes,
@@ -150,6 +152,12 @@ export type RenderFormParagraphBodyOptions = {
    * `agreementSystemParticipantName`과 함께 쓰며, 날짜·서명 단락은 `hiddenParagraphIds`로 숨긴다.
    */
   agreementAdminProxyConfirm?: boolean
+  /**
+   * 템플릿 관리 > 지급조서·영수증 사전 동의서 작성 화면 — 시안 5767:42072·16046:109928.
+   * 확인 문구는 흰 문구 카드(카드 선택 시 문구 수정), 날짜·서명·「JA KOREA 귀하」는 회색 고정 카드로 따로 그린다.
+   * 회원 대리 동의(`agreementAdminProxyConfirm`)와 함께 쓰지 않는다.
+   */
+  paymentPreConsentSheetLayout?: boolean
   /**
    * 기본 authoring.
    * - user: 카드 선택은 유지(우측 패널 등)하되, 본문 입력은 카드 비선택에서도 가능(`isBodyInteractive`).
@@ -471,6 +479,40 @@ export function renderFormParagraphBody(
                 : undefined
             }
           />
+        )
+      }
+      if (
+        options?.paymentPreConsentSheetLayout === true &&
+        options.agreementAdminProxyConfirm !== true &&
+        isAgreementAdminProxyConfirmHostId(p.id)
+      ) {
+        /** 템플릿 관리 지급조서·영수증 사전 동의서 — 흰 문구 카드, 카드 선택 시 문구 수정 (시안 5767:42072·16046:109928) */
+        const consentText = 'bodyText' in p ? String(p.bodyText ?? '') : ''
+        const consentAuthoring = paragraphInteractionMode === 'authoring' && !isPreviewReadonly
+        return (
+          <PaymentPreConsentFixedBlock tone="white" className="payment-pre-consent-fixed-block--consent-line">
+            {consentAuthoring ? (
+              <ParagraphInput
+                type="description"
+                className="paragraph-input--explanation-body payment-pre-consent-fixed-block__consent-input"
+                isEditMode={isBodyInteractive}
+                value={consentText}
+                placeholder="텍스트를 작성해 주세요"
+                onChange={
+                  isBodyInteractive
+                    ? next =>
+                        updateParagraph(p.id, cur =>
+                          cur.kind === 'single_item' && cur.variant === 'agreement_explanation_text'
+                            ? { ...cur, bodyText: next }
+                            : cur
+                        )
+                    : undefined
+                }
+              />
+            ) : (
+              consentText
+            )}
+          </PaymentPreConsentFixedBlock>
         )
       }
       const isPaymentPreConsentIntro =
@@ -797,6 +839,16 @@ export function renderFormParagraphBody(
             now={options.agreementSystemNow}
           />
         )
+      }
+      if (
+        options?.paymentPreConsentSheetLayout === true &&
+        p.kind === 'description' &&
+        p.variant === 'closing' &&
+        (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.closingRecipient)
+      ) {
+        /** 「JA KOREA 귀하」 — 날짜·서명과 같은 회색 고정 카드 (시안 5767:42072·16046:109928) */
+        return <PaymentPreConsentFixedBlock tone="disabled">{p.body}</PaymentPreConsentFixedBlock>
       }
       return null
     }

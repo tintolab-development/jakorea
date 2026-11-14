@@ -12,6 +12,7 @@ import {
   SETTLEMENT_FORM_DOWNLOAD_REASON,
   type SettlementFormExportKind,
 } from '@/features/settlement-management/api/account-payments/settlement-form-download'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 export async function downloadIssuedSettlementExportFile(input: {
   serverExport: SettlementExportResponse
@@ -69,7 +70,7 @@ export function notifySettlementExportDownloadError(input: {
     return
   }
   cmsAlertModal.show({
-    title: '다운로드 불가',
+    title: networkAwareAlertTitle(input.error, '다운로드 불가'),
     content: getSettlementApiErrorMessage(input.error, input.fallback),
   })
 }

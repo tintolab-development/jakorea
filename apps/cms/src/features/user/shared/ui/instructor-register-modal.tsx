@@ -231,6 +231,7 @@ export function InstructorRegisterModal({
       title="강사 신규 등록"
       width={1200}
       className="instructor-register-modal"
+      titleBodyGap="section"
       footer={
         <>
           <CmsButton
@@ -239,7 +240,7 @@ export function InstructorRegisterModal({
             type="button"
             onClick={onClose}
             disabled={loading} >
-            닫기
+            취소
           </CmsButton>
           <CmsButton
             variant="primary"
