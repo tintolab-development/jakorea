@@ -329,3 +329,17 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   display: flex;
   gap: 16px;
 }
+
+/*
+ * CMS 전역: 브라우저 자동입력(autofill) 시 Chrome이 덧씌우는 파란 배경·글자색 제거.
+ * 배경은 긴 transition 으로 원래 배경을 유지하고, 글자색은 입력 기본색으로 고정한다.
+ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  transition: background-color 999999s ease-in-out 0s;
+  -webkit-text-fill-color: var(--Netural-black, #3d3d3d);
+  caret-color: var(--Netural-black, #3d3d3d);
+}
