@@ -255,10 +255,14 @@ function AdminFAQPage() {
     [totalElements]
   )
 
-  const bulkDeleteCopy = useMemo(
-    () => resolvePostsDeleteConfirmCopy('faq', 'bulk', selectedRowKeys.length),
-    [selectedRowKeys.length]
-  )
+  // 시안: 단건 `[질문] FAQ를…` / 일괄 `[첫 질문] 외 N개의 FAQ를…` (목록 순서 기준 첫 행)
+  const bulkDeleteCopy = useMemo(() => {
+    const selected = new Set(selectedRowKeys.map(String))
+    const questions = tableData
+      .filter(row => selected.has(String(row.id)))
+      .map(row => row.question)
+    return resolvePostsDeleteConfirmCopy('faq', 'bulk', selectedRowKeys.length, questions)
+  }, [selectedRowKeys, tableData])
 
   return (
     <div className="admin-faq-list-page">

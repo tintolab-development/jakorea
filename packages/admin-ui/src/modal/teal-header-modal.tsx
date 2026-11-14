@@ -25,6 +25,8 @@ export interface AdminTealHeaderModalProps {
   rootClassName?: string
   styles?: ModalProps['styles']
   afterOpenChange?: (open: boolean) => void
+  /** 딤 영역 클릭으로 닫기 (기본 true). CMS 는 래퍼에서 false 로 고정한다. */
+  maskClosable?: boolean
 }
 
 export function AdminTealHeaderModal({
@@ -46,6 +48,7 @@ export function AdminTealHeaderModal({
   rootClassName,
   styles,
   afterOpenChange,
+  maskClosable = true,
 }: AdminTealHeaderModalProps) {
   const width = widthProp ?? ADMIN_MODAL_SIZE_WIDTH[size]
   const isFull = size === 'full'
@@ -74,7 +77,7 @@ export function AdminTealHeaderModal({
       styles={styles}
       aria-labelledby={hideHeader ? undefined : titleId}
       destroyOnHidden
-      maskClosable
+      maskClosable={maskClosable}
       centered={false}
       zIndex={zIndex}
       afterOpenChange={afterOpenChange}

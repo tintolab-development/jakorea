@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CloseOutlined } from '@ant-design/icons'
+import fieldDeleteUrl from '@/shared/assets/icons/inputs/delete-20-default.svg'
 import type { Dayjs } from 'dayjs'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
@@ -241,7 +241,7 @@ export function UjatVolunteerInterviewAssignModal({
         aria-label="선택한 면접 일정 지우기"
         onClick={handleClearSelectedSchedule}
       >
-        <CloseOutlined aria-hidden />
+        <img src={fieldDeleteUrl} width={20} height={20} alt="" aria-hidden draggable={false} />
       </button>
     </span>
   ) : (

@@ -239,8 +239,9 @@
 }
 
 .instructor-lecture-assign-modal__assigned-tag-remove-icon {
-  width: 15.833px;
-  height: 15.833px;
+  /* 시안 Icon / Field / w20 delete 프레임 */
+  width: 20px;
+  height: 20px;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
 }

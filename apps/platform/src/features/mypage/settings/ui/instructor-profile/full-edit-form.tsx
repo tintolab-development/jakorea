@@ -79,8 +79,8 @@ function validateInstructorFullEdit(values: InstructorSharedProfileFormValues): 
     {},
     {
       requiredConsentAgreeKeys: [],
-      requireEducation: true,
-      requireCareer: true,
+      requireEducation: false,
+      requireCareer: false,
       requireFreeWrite: false,
     }
   )

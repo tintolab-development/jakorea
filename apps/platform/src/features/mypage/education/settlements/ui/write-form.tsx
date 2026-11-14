@@ -47,7 +47,10 @@ import {
 import { paymentItemLimitError } from '../lib/payment-item-limit'
 import { instructorTransportExclusionNotice } from '../lib/instructor-transport-exclusion'
 import { DEFAULT_INSTRUCTOR_EXPENSE_POLICIES } from '../lib/instructor-expense-items'
-import { SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE } from '../lib/instructor-settlement-contract'
+import {
+  INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE,
+  SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE,
+} from '../lib/instructor-settlement-contract'
 import { useInstructorSettlementPreviewQuery } from '../api/use-instructor-settlement-preview-query'
 import {
   RECEIPT_UPLOAD_ACCEPT,
@@ -100,6 +103,7 @@ import {
 import {
   PFAlertModal,
   PFButton,
+  PFEmptyState,
   PFFormControlCluster,
   PFFormField,
   PFFormFieldRow,
@@ -734,12 +738,31 @@ export function EducationSettlementWriteForm({
     : instructorTransportExclusionNotice(instructorSettlementPreview.transportExclusion)
   /**
    * 강사 식사비·활동비 정책(미리보기 payableItems, K14): 한도는 CMS 설정 maxLimitWon(고정 3만원 아님),
-   * 영수증 필요 여부는 evidenceRequired, 프로그램에서 끈 항목은 검증·송신에서 뺀다.
-   * TODO(K14 시안 대기): 끈 항목의 입력 칸 숨김, 식사비 하단 안내의 '최대 3만원' 문구를 한도에 맞추기
+   * 영수증 필요 여부는 evidenceRequired, 프로그램에서 끈 항목은 입력 칸을 숨기고 검증·송신에서 뺀다.
+   * TODO(K14 시안 대기): 식사비 하단 안내의 '최대 3만원' 문구를 한도에 맞추기
    */
   const expensePolicies = isReceipt
     ? DEFAULT_INSTRUCTOR_EXPENSE_POLICIES
     : instructorSettlementPreview.expensePolicies
+  /** 미리보기 payableItems에 없는 실비 항목은 입력 칸을 숨긴다. 받기 전·오류면 기존처럼 보인다 */
+  const showInstructorMeal = !isReceipt && (!expensePolicies.loaded || expensePolicies.meal.allowed)
+  const showInstructorActivity =
+    !isReceipt && (!expensePolicies.loaded || expensePolicies.activity.allowed)
+
+  const settlementApplicationIdForSubmit =
+    session?.settlementApplicationId ?? matchedIndividual?.settlementApplicationId ?? undefined
+  const resubmitRequested =
+    session?.canResubmitReceipt === true ||
+    matchedIndividual?.canResubmit === true ||
+    session?.status === 'rejected'
+  /**
+   * 강사 최초 제출만 미리보기 canSubmit=false(지급 항목 0건 등)로 막는다 — blockerMessage 그대로.
+   * 반려 후 재제출은 기존 신청서 경로라 미리보기 차단(ACTIVE_APPLICATION_EXISTS)을 적용하지 않는다.
+   */
+  const previewSubmitBlock =
+    !isReceipt && !(resubmitRequested && settlementApplicationIdForSubmit != null)
+      ? instructorSettlementPreview.submitBlock
+      : null
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -778,7 +801,7 @@ export function EducationSettlementWriteForm({
       return
     }
     if (lectureFeeBlocked) {
-      showAlert(lectureFeeBlockerMessage ?? '지금은 정산을 신청할 수 없습니다.')
+      showAlert(lectureFeeBlockerMessage ?? INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE)
       return
     }
     // 사업 운영 종료 후 최초 제출 차단(A1) — 서버 409와 같은 문구
@@ -799,16 +822,10 @@ export function EducationSettlementWriteForm({
       isInstructor,
       documentKind,
       programTitle,
-      settlementApplicationId:
-        session?.settlementApplicationId ??
-        matchedIndividual?.settlementApplicationId ??
-        undefined,
+      settlementApplicationId: settlementApplicationIdForSubmit,
       currentRevisionNo:
         session?.currentRevisionNo ?? matchedIndividual?.currentRevisionNo ?? undefined,
-      resubmit:
-        session?.canResubmitReceipt === true ||
-        matchedIndividual?.canResubmit === true ||
-        session?.status === 'rejected',
+      resubmit: resubmitRequested,
       idempotencyKey: hydrated?.idempotencyKey,
       expenseDate: toSeoulIsoDate(session?.heldAt),
       enabledItemTypes: payableItems.map(item => item.itemType),
@@ -898,9 +915,28 @@ export function EducationSettlementWriteForm({
   const wageSectionNos = wageExtras.map(() => sectionNo++)
   const transportSectionNo = showTransportSection ? sectionNo++ : null
   const restSectionNos = restExtras.map(() => sectionNo++)
-  const mealSectionNo = !isReceipt ? sectionNo++ : null
-  const activitySectionNo = !isReceipt ? sectionNo++ : null
+  const mealSectionNo = showInstructorMeal ? sectionNo++ : null
+  const activitySectionNo = showInstructorActivity ? sectionNo++ : null
   const lodgingSectionNo = showCompanySchoolLodging ? sectionNo++ : null
+
+  // 미리보기 canSubmit=false(지급 항목 0건 등) — 입력 폼·신청 버튼 없이 회차 배너 + 서버 사유만 보인다.
+  // 입력 섹션과 같은 흰 카드 + 인라인 빈 상태(일러스트 없음) — 목록형 빈 상태보다 가볍게
+  if (previewSubmitBlock) {
+    return (
+      <div className={styles.form}>
+        <EducationSettlementSessionBanner
+          programTitle={programTitle}
+          session={session}
+          institutionTitle={!isReceipt}
+        />
+        <PFEmptyState
+          variant="inline"
+          className={styles['blocked-state']}
+          title={previewSubmitBlock.message}
+        />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -1195,77 +1231,81 @@ export function EducationSettlementWriteForm({
 
         {!isReceipt ? (
           <>
-            <PFFormSection
-              id="settlement-meal"
-              title={`${mealSectionNo}. 식사비 신청`}
-              description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
-              footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다."
-            >
-              <PFFormFieldTable>
-                <PFFormFieldRow type="single">
-                  <PFFormField label="식사비">
-                    <AmountWithWon
-                      value={mealAmount}
-                      onChange={setMealAmount}
-                      ariaLabel="식사비"
-                      maxWon={expensePolicies.meal.maxLimitWon}
-                    />
-                  </PFFormField>
-                </PFFormFieldRow>
-                <PFFormFieldRow type="single">
-                  <PFFormField label="영수증 제출">
-                    <ReceiptUpload
-                      fileNames={mealFiles}
-                      onFileNamesChange={setMealFiles}
-                      attachments={mealAttachments}
-                      onAttachmentsChange={next => {
-                        setMealAttachments(next)
-                        setMealFiles(next.map(file => file.fileName))
-                      }}
-                      uploadEnabled
-                      ariaLabel="식사비 영수증 제출"
-                      onError={showAlert}
-                    />
-                  </PFFormField>
-                </PFFormFieldRow>
-              </PFFormFieldTable>
-            </PFFormSection>
+            {showInstructorMeal ? (
+              <PFFormSection
+                id="settlement-meal"
+                title={`${mealSectionNo}. 식사비 신청`}
+                description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
+                footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다."
+              >
+                <PFFormFieldTable>
+                  <PFFormFieldRow type="single">
+                    <PFFormField label="식사비">
+                      <AmountWithWon
+                        value={mealAmount}
+                        onChange={setMealAmount}
+                        ariaLabel="식사비"
+                        maxWon={expensePolicies.meal.maxLimitWon}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                  <PFFormFieldRow type="single">
+                    <PFFormField label="영수증 제출">
+                      <ReceiptUpload
+                        fileNames={mealFiles}
+                        onFileNamesChange={setMealFiles}
+                        attachments={mealAttachments}
+                        onAttachmentsChange={next => {
+                          setMealAttachments(next)
+                          setMealFiles(next.map(file => file.fileName))
+                        }}
+                        uploadEnabled
+                        ariaLabel="식사비 영수증 제출"
+                        onError={showAlert}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                </PFFormFieldTable>
+              </PFFormSection>
+            ) : null}
 
-            <PFFormSection
-              id="settlement-activity"
-              title={`${activitySectionNo}. 활동비 신청`}
-              description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
-              footer="사용한 금액의 영수증을 제출해 주세요."
-            >
-              <PFFormFieldTable>
-                <PFFormFieldRow type="single">
-                  <PFFormField label="활동비">
-                    <AmountWithWon
-                      value={activityAmount}
-                      onChange={setActivityAmount}
-                      ariaLabel="활동비"
-                      maxWon={expensePolicies.activity.maxLimitWon}
-                    />
-                  </PFFormField>
-                </PFFormFieldRow>
-                <PFFormFieldRow type="single">
-                  <PFFormField label="영수증 제출">
-                    <ReceiptUpload
-                      fileNames={activityFiles}
-                      onFileNamesChange={setActivityFiles}
-                      attachments={activityAttachments}
-                      onAttachmentsChange={next => {
-                        setActivityAttachments(next)
-                        setActivityFiles(next.map(file => file.fileName))
-                      }}
-                      uploadEnabled
-                      ariaLabel="활동비 영수증 제출"
-                      onError={showAlert}
-                    />
-                  </PFFormField>
-                </PFFormFieldRow>
-              </PFFormFieldTable>
-            </PFFormSection>
+            {showInstructorActivity ? (
+              <PFFormSection
+                id="settlement-activity"
+                title={`${activitySectionNo}. 활동비 신청`}
+                description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
+                footer="사용한 금액의 영수증을 제출해 주세요."
+              >
+                <PFFormFieldTable>
+                  <PFFormFieldRow type="single">
+                    <PFFormField label="활동비">
+                      <AmountWithWon
+                        value={activityAmount}
+                        onChange={setActivityAmount}
+                        ariaLabel="활동비"
+                        maxWon={expensePolicies.activity.maxLimitWon}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                  <PFFormFieldRow type="single">
+                    <PFFormField label="영수증 제출">
+                      <ReceiptUpload
+                        fileNames={activityFiles}
+                        onFileNamesChange={setActivityFiles}
+                        attachments={activityAttachments}
+                        onAttachmentsChange={next => {
+                          setActivityAttachments(next)
+                          setActivityFiles(next.map(file => file.fileName))
+                        }}
+                        uploadEnabled
+                        ariaLabel="활동비 영수증 제출"
+                        onError={showAlert}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                </PFFormFieldTable>
+              </PFFormSection>
+            ) : null}
 
             {showCompanySchoolLodging ? (
               <PFFormSection

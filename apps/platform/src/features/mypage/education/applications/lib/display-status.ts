@@ -19,10 +19,10 @@ export const EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, stri
   approval_cancelled: '신청 반려',
 }
 
-/** 교육현황 표시 라벨 — 승인 전 구간은 「승인 대기」로 통일 (봉사·강의현황 general과 구분) */
+/** 교사 교육현황 표시 라벨 — 승인 전 구간도 「결과 대기」(교사 교육현황 시안). */
 export const TEACHER_EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, string> = {
-  waiting_result: '승인 대기',
-  document_passed: '승인 대기',
+  waiting_result: '결과 대기',
+  document_passed: '서류 합격',
   in_progress: '진행중',
   completed: '진행 완료',
   withdrawn: '활동 포기',
@@ -107,6 +107,17 @@ export function getEducationDisplayStatusTone(
  */
 export function canCancelEducationApplication(status: EducationDisplayStatus): boolean {
   return status === 'waiting_result' || status === 'document_passed'
+}
+
+/**
+ * 신청 취소 CTA — 결과 대기·서류 합격만.
+ * `cancellable === true`여도 반려·진행중·완료·포기에서는 노출하지 않는다.
+ */
+export function shouldShowEducationApplicationCancelCta(
+  status: EducationDisplayStatus,
+  _cancellable?: boolean | null,
+): boolean {
+  return canCancelEducationApplication(status)
 }
 
 /**

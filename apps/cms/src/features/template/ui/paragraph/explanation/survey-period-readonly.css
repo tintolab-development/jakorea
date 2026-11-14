@@ -1,5 +1,6 @@
+/* 시안 1141:268259 — 제목과의 간격 16은 카드 슬롯(margin-top 16)이 맡고, 좌우 8만 둔다 */
 .explanation-survey-period-readonly {
-  margin: 16px 8px 0;
+  margin: 0 8px;
   overflow: hidden;
   color: var(--main-BK, #3d3d3d);
   text-overflow: ellipsis;

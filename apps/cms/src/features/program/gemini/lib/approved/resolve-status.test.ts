@@ -79,7 +79,7 @@ describe('resolveApprovedTrainingStatus (Primary Case)', () => {
     ).toBe('SCHEDULED')
   })
 
-  it('미지정이면 연수 요청 가능기간이 남아도 희망 연수 일정이 지났으면 미진행', () => {
+  it('미지정이면 연수 요청 가능 기간이 남아도 희망 연수 일정이 지났으면 미진행', () => {
     expect(
       resolveApprovedTrainingStatus(
         {

@@ -9,7 +9,7 @@ export const SETTLEMENT_CONFIG_DUPLICATE_RESPONSE_INVALID =
 export class SettlementConfigDuplicateResponseError extends Error {
   readonly code = SETTLEMENT_CONFIG_DUPLICATE_RESPONSE_INVALID
 
-  constructor(message = '복제 결과에 신규 지급 항목이 포함되지 않았습니다.') {
+  constructor(message = '복사 결과에 신규 지급 항목이 포함되지 않았습니다.') {
     super(message)
     this.name = 'SettlementConfigDuplicateResponseError'
   }
@@ -33,7 +33,7 @@ export function resolveDuplicatedPaymentItem(
   const source = (before.paymentItems ?? []).find(item => item.id === sourceItemId)
   if (!source) {
     throw new SettlementConfigDuplicateResponseError(
-      '복제할 지급 항목의 기존 상태를 확인할 수 없습니다.'
+      '복사할 지급 항목의 기존 상태를 확인할 수 없습니다.'
     )
   }
 
@@ -56,7 +56,7 @@ export function resolveDuplicatedPaymentItem(
     duplicated.useYn !== source.useYn
   ) {
     throw new SettlementConfigDuplicateResponseError(
-      '복제 결과가 지급 항목 복제 계약과 일치하지 않습니다.'
+      '복사 결과가 지급 항목 복사 계약과 일치하지 않습니다.'
     )
   }
 

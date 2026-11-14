@@ -1,4 +1,5 @@
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import type { ProgramRegistrationIpsCategory } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import {
   PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS,
@@ -35,6 +36,10 @@ export function ProgramRegistrationIpsTypeFields({
   className,
   layout = 'default',
 }: ProgramRegistrationIpsTypeFieldsProps) {
+  // 템플릿 관리 등록 폼 시안(12931:3867 등): 1차 120 · 2차 240. 등록 위저드·상세는 기존 160 · 360
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const primaryWidth = isTemplateManagementScreen ? 120 : 160
+  const secondaryWidth = isTemplateManagementScreen ? 240 : 360
   const { category, detail } = value
 
   const handleCategoryChange = (v: unknown) => {
@@ -80,6 +85,9 @@ export function ProgramRegistrationIpsTypeFields({
     'detail-info-form-inputs-wrapper',
     isInlineLayout && 'program-registration-paragraph__schedule-detail-row',
     isInlineLayout && 'program-registration-ips-type-fields--inline',
+    isInlineLayout &&
+      isTemplateManagementScreen &&
+      'program-registration-ips-type-fields--template',
     className,
   ]
     .filter(Boolean)
@@ -92,7 +100,7 @@ export function ProgramRegistrationIpsTypeFields({
         withAllOption={false}
         placeholder={firstSelectPlaceholder}
         // inline(회차 반쪽 칸)은 width 고정(minWidth+flex-shrink:0)이면 2차가 잘린다.
-        width={isInlineLayout ? undefined : 160}
+        width={isInlineLayout ? undefined : primaryWidth}
         options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
         value={category || undefined}
         disabled={primaryDisabled}
@@ -102,7 +110,7 @@ export function ProgramRegistrationIpsTypeFields({
         inputSize="small"
         withAllOption={false}
         placeholder={secondaryPlaceholder}
-        width={isInlineLayout ? undefined : 360}
+        width={isInlineLayout ? undefined : secondaryWidth}
         options={secondaryOptions}
         value={secondaryValue}
         disabled={secondarySelectDisabled}

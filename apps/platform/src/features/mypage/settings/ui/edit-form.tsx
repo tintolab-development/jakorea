@@ -536,7 +536,7 @@ export function SettingsEditForm({
                 <>
                   <div className={styles.addressField}>
                     <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-                      소속/학교명 <span className={styles.inlineRequiredMark}>*</span>
+                      소속/학교 <span className={styles.inlineRequiredMark}>*</span>
                     </PFText>
                     <div className={styles.inlineRow}>
                       <PFTextInput
@@ -676,7 +676,7 @@ export function SettingsEditForm({
 
             <PFTextInput
               size="xlarge"
-              label="가입자의 관계"
+              label="가입자와의 관계"
               placeholder="예: 부, 모, 법정대리인"
               value={guardianRelationship}
               required

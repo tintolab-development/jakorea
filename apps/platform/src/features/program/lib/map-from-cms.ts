@@ -29,6 +29,7 @@ import type {
   CmsTargetLevel,
 } from '../model/cms-program.types'
 import {
+  isOrganizationParticipantProgram,
   recruitmentGuideSectionTitle,
   recruitmentPeriodPhaseLabel,
   recruitmentPhaseGroupLabel,
@@ -322,7 +323,8 @@ export function mapBasicInfoFields(
     case 'instructor':
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
-        { label: '대상', value: volunteerTarget || args.educationTargetGroupLabel },
+        { label: '모집 대상', value: volunteerTarget || args.educationTargetGroupLabel },
+        { label: '모집 대상 상세', value: volunteerTarget || args.educationTargetDetailLabel },
         { label: '모집 지역', value: args.educationVenueLabel },
         ...(affiliation ? [{ label: '모집 소속', value: affiliation }] : []),
       ]
@@ -330,9 +332,10 @@ export function mapBasicInfoFields(
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
         {
-          label: '대상',
+          label: '모집 대상',
           value: volunteerTarget || args.educationTargetDetailLabel,
         },
+        { label: '모집 대상 상세', value: volunteerTarget || args.educationTargetDetailLabel },
         { label: '교육 형태', value: args.educationFormLabel },
         { label: '교육 장소', value: args.educationVenueLabel },
       ]
@@ -340,24 +343,26 @@ export function mapBasicInfoFields(
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
         {
-          label: '대상',
-          value: volunteerTarget || '대학(원)생',
+          label: '모집 대상',
+          value: volunteerTarget || args.educationTargetGroupLabel,
         },
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
         {
-          label: '교육 지역',
-          value: args.educationVenueLabel,
+          label: '교육 대상 상세',
+          value: args.educationTargetDetailLabel,
         },
-        ...(affiliation ? [{ label: '모집 소속', value: affiliation }] : []),
+        { label: '교육 장소', value: args.educationVenueLabel },
       ]
     case 'ujat-participant':
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
-        {
-          label: '대상',
-          value: args.educationTargetDetailLabel || '초등학교',
-        },
-        { label: '교육 지역', value: args.educationVenueLabel },
         { label: '교육 형태', value: args.educationFormLabel },
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
+        {
+          label: '교육 대상 상세',
+          value: args.educationTargetDetailLabel,
+        },
+        { label: '교육 장소', value: args.educationVenueLabel },
       ]
     case 'gemini':
       return [
@@ -533,8 +538,8 @@ const UJAT_SCHEDULE_KIND_LABEL: Record<string, string> = {
 }
 
 const UJAT_TERM_LABEL: Record<string, string> = {
-  FIRST_HALF: '상반기',
-  SECOND_HALF: '하반기',
+  FIRST_HALF: '상반기(1학기)',
+  SECOND_HALF: '하반기(2학기)',
 }
 
 const UJAT_KIND_ORDER: Record<string, number> = {
@@ -643,7 +648,10 @@ function mapRecruitmentPhases(
   appStart: Date | null,
   appEnd: Date | null
 ): ProgramLabeledValue[] {
-  const periodLabel = recruitmentPeriodPhaseLabel(detailCase)
+  const periodLabel = recruitmentPeriodPhaseLabel(detailCase, {
+    registrationKind: program.registrationKind,
+    organizationParticipant: isOrganizationParticipantProgram(program),
+  })
   const phases: ProgramLabeledValue[] = [
     {
       label: periodLabel,

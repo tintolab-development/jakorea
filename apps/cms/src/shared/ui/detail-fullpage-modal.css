@@ -193,10 +193,10 @@
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
-.detail-fullpage-breadcrumb__separator svg {
+.detail-fullpage-breadcrumb__separator-icon {
   display: block;
-  width: 6px;
-  height: 9px;
+  width: 20px;
+  height: 20px;
 }
 
 .detail-fullpage-modal__close {
@@ -446,9 +446,10 @@
 }
 
 .detail-fullpage-modal__lnb-icon {
+  /* 시안 Icon / LNB / w24 원본 프레임(여백 포함)을 아이콘 칸(24)에 그대로 */
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   color: inherit;
   box-sizing: border-box;

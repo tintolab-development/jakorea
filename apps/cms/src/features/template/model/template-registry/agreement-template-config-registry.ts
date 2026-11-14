@@ -59,7 +59,7 @@ import { AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/
 import { EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-expense/paragraph-config'
 import type { AgreementWritingFormShellProps } from '@/features/template/ui/form-set/editors/new-agreement-form'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
-import { TEMPLATE_FORM_MODAL_DESCRIPTION } from './template-registry'
+import { AGREEMENT_MODAL_DESCRIPTION, DIRECT_AGREEMENT_MODAL_DESCRIPTION } from './template-registry'
 import { DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-direct/paragraph-config'
 
 export type AgreementTemplateConfigKey =
@@ -80,15 +80,17 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
   () => AgreementWritingFormConfig
 > = {
   'agreement-expense': () => {
-    const title = resolveRowTitle('agreement-expense', 'JA Korea 교육진행자 서약서(안)')
+    const title = resolveRowTitle('agreement-expense', 'JA Korea 교육진행자 서약서')
     return {
       initialDraft: createEducatorFacilitatorPledgeDraft,
       defaultActiveParagraphId: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title,
       modalTitle: title,
-      modalDescription: TEMPLATE_FORM_MODAL_DESCRIPTION,
+      modalDescription: AGREEMENT_MODAL_DESCRIPTION,
       writingPreviewHeaderTitle: title,
       structureLockedParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
       hideDragHandleForParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS,
+      /** 템플릿 관리 — 시스템 동의 양식은 단락·항목 추가·삭제·이동 불가, 문구만 수정 (QA 261113 #16) */
+      authoringStructureControlLockedParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
       previewLayout: 'a4-document',
       a4HiddenParagraphIds: AGREEMENT_EXPENSE_A4_HIDDEN_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly',
@@ -104,10 +106,12 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       initialDraft: createAgreementNoticeDraft,
       defaultActiveParagraphId: AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
       modalTitle: title,
-      modalDescription: TEMPLATE_FORM_MODAL_DESCRIPTION,
+      modalDescription: AGREEMENT_MODAL_DESCRIPTION,
       writingPreviewHeaderTitle: title,
       structureLockedParagraphIds: AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
       hideDragHandleForParagraphIds: AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS,
+      /** 템플릿 관리 — 시스템 동의 양식은 단락·항목 추가·삭제·이동 불가, 문구만 수정 (QA 261113 #16) */
+      authoringStructureControlLockedParagraphIds: AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
       previewLayout: 'a4-document',
       a4HiddenParagraphIds: AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly',
@@ -117,15 +121,17 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
     }
   },
   'agreement-portrait': () => {
-    const title = resolveRowTitle('agreement-portrait', '초상권 수집·이용 동의')
+    const title = resolveRowTitle('agreement-portrait', '초상권 수집·이용 동의서')
     return {
       initialDraft: createAgreementPortraitDraft,
       defaultActiveParagraphId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,
       modalTitle: title,
-      modalDescription: TEMPLATE_FORM_MODAL_DESCRIPTION,
+      modalDescription: AGREEMENT_MODAL_DESCRIPTION,
       writingPreviewHeaderTitle: title,
       structureLockedParagraphIds: AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
       hideDragHandleForParagraphIds: AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS,
+      /** 템플릿 관리 — 시스템 동의 양식은 단락·항목 추가·삭제·이동 불가, 문구만 수정 (QA 261113 #16) */
+      authoringStructureControlLockedParagraphIds: AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
       previewLayout: 'a4-document',
       a4HiddenParagraphIds: AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly',
@@ -140,10 +146,12 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       initialDraft: createPaymentStatementPreConsentDraft,
       defaultActiveParagraphId: PAYMENT_STATEMENT_PRE_CONSENT_IDS.title,
       modalTitle: title,
-      modalDescription: TEMPLATE_FORM_MODAL_DESCRIPTION,
+      modalDescription: AGREEMENT_MODAL_DESCRIPTION,
       writingPreviewHeaderTitle: title,
       structureLockedParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
       hideDragHandleForParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
+      /** 템플릿 관리 — 시스템 동의 양식은 단락·항목 추가·삭제·이동 불가, 문구만 수정 (QA 261113 #16) */
+      authoringStructureControlLockedParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
       previewLayout: 'a4-document',
       a4HiddenParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
       a4PageBreakBeforeParagraphIds:
@@ -156,12 +164,12 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
     }
   },
   'agreement-receipt-pre-consent': () => {
-    const title = resolveRowTitle('agreement-receipt-pre-consent', '영수증 발급 사전 동의서')
+    const title = resolveRowTitle('agreement-receipt-pre-consent', '영수증 사전 동의서')
     return {
       initialDraft: createReceiptPreConsentDraft,
       defaultActiveParagraphId: RECEIPT_PRE_CONSENT_IDS.title,
       modalTitle: title,
-      modalDescription: TEMPLATE_FORM_MODAL_DESCRIPTION,
+      modalDescription: AGREEMENT_MODAL_DESCRIPTION,
       writingPreviewHeaderTitle: title,
       structureLockedParagraphIds: RECEIPT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
       hideDragHandleForParagraphIds: RECEIPT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
@@ -222,8 +230,7 @@ export function createDirectAgreementWritingFormConfig(
     initialDraft: createDefaultDirectAgreementDraft,
     defaultActiveParagraphId: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title,
     modalTitle,
-    modalDescription:
-      '* 등록 시 최소 1개의 단락은 존재해야 하며, 제목, 마무리글, 날짜, 서명란을 제외하고 최소 1개의 단락은 존재해야합니다.',
+    modalDescription: DIRECT_AGREEMENT_MODAL_DESCRIPTION,
     writingPreviewHeaderTitle: modalTitle,
     paragraphBodyOptions: DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS,
   }

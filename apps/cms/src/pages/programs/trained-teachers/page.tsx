@@ -491,7 +491,8 @@ function TrainedTeachersProgramPageContent() {
 
   const programListToolbarActionsAfterExcel = (
     <FilterTableToolbarButton variant="primary" onClick={handleProgramCreateClick}>
-      신규 등록
+      {/* 시안: 「프로그램 신규 등록」 — 캘린더·리스트 뷰 공통 (QA 2026-11-13 교육받은 교사 #14) */}
+      프로그램 신규 등록
     </FilterTableToolbarButton>
   )
 

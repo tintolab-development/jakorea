@@ -6,7 +6,6 @@
  */
 
 import { Layout, Space, Typography, Dropdown } from 'antd'
-import { BellOutlined, BellFilled } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -16,6 +15,7 @@ import { useDashboardNotificationCount } from '@/features/dashboard/hooks/use-da
 import { formatDashboardCountLabel } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import { getRoleLabel, AppBreadcrumb, ProfileEditModal } from '@/shared/ui'
+import { GnbAlarmIcon } from '@/shared/ui/icons'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
@@ -139,19 +139,6 @@ export function MainHeader() {
       const first = segments[0]
       if (first && !programsReserved.includes(first)) {
         return segments[1] === 'edit' ? '프로그램 수정' : '프로그램 상세'
-      }
-    }
-
-    // 내 학습 관리 리다이렉트 경로 우선 확인 (권한별 렌더링 확실히)
-    // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, 헤더 타이틀은 "내 학습 관리"로 통일
-    if (user?.role && user.role !== 'ADMIN') {
-      const normalizedPath = location.pathname === '/' ? '/' : location.pathname.replace(/\/$/, '')
-      if (
-        (user.role === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
-        (user.role === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
-        (user.role === 'SCHOOL' && normalizedPath === '/school/my-learning')
-      ) {
-        return '내 학습 관리'
       }
     }
 
@@ -283,11 +270,10 @@ export function MainHeader() {
               )}
             >
               <div className="main-header-notification-badge" role="button" tabIndex={0}>
-                {typeof unreadCount === 'number' && unreadCount > 0 ? (
-                  <BellFilled className="main-header-notification-icon" />
-                ) : (
-                  <BellOutlined className="main-header-notification-icon" />
-                )}
+                <GnbAlarmIcon
+                  className="main-header-notification-icon"
+                  active={typeof unreadCount === 'number' && unreadCount > 0}
+                />
                 <Text className="main-header-notification-count">
                   {formatDashboardCountLabel(unreadCount)}
                 </Text>

@@ -226,3 +226,26 @@
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
+
+/* 템플릿 관리 신청 폼 시안(12875:514537·515880·514060) — 안내 박스 ↔ 요약 표 16, 요약 안내 #85969d */
+.program-application-form-instructor__available-schedule.program-application-form-instructor__available-schedule--template-spec {
+  gap: 16px;
+}
+
+.program-application-form-instructor__available-schedule--template-spec
+  .program-application-form-instructor__field-summary-wrap
+  > .form-editor-template-field-hint-text {
+  color: var(--gray-85969-d, #85969d);
+}
+
+/* 템플릿 관리 시안(12875:514566) — 목록 위아래 빈 줄 27(18px × 1.5), 항목 사이 간격 없음 */
+.program-application-form-instructor__crime-guide--spec .program-application-form-instructor__crime-guide-list {
+  margin: 27px 0;
+}
+
+.program-application-form-instructor__crime-guide--spec
+  .program-application-form-instructor__crime-guide-list
+  > li
+  + li {
+  margin-top: 0;
+}

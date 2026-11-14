@@ -52,6 +52,9 @@ vi.mock('@/shared/ui', async importOriginal => {
     showUpdateCompletedAlert: vi.fn(),
   }
 })
+vi.mock('@/features/program/general/lib/show-common-info-change-completed-alert', () => ({
+  showCommonInfoChangeCompletedAlert: vi.fn(),
+}))
 vi.mock('@/features/program/general/lib/registration-required-fields', () => ({
   listIncompleteGeneralProgramRegistrationRequiredFields: () => [],
   hasCurriculumMultiDateScheduleCountMismatch: () => false,

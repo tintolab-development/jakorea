@@ -32,6 +32,10 @@ import {
   type WaitingOrganizationDistance,
   type WaitingScheduleDistance,
 } from './assignment-waiting-distance'
+import {
+  isWaitingScheduleUnavailableByServer,
+  type WaitingScheduleAvailability,
+} from './assignment-waiting-availability'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
@@ -631,6 +635,8 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
   maxAssignableInstructors?: number | null
   /** education-scope `schedules[]` — scheduleId별 거리(서버값). 없으면 '-' */
   scheduleDistances?: WaitingScheduleDistance[]
+  /** education-scope `schedules[]` — 서버 배정 불가(이미 배정된 다른 일정과 시간 겹침, 맞닿음 포함). 없으면 판단하지 않음 */
+  scheduleAvailability?: WaitingScheduleAvailability[]
 }): ParticipatingIndividualInstructorWaitingScheduleRow[] {
   const maxAssignableInstructors = normalizeMaxAssignableInstructors(input.maxAssignableInstructors)
   const ownScheduleIds = new Set<string>()
@@ -666,6 +672,10 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
       [label?.date, label?.time, label?.session].filter(Boolean).join(' | ') || '-'
     const assignedCount = instructorsBySchedule.get(scheduleKey)?.size ?? 0
     const atCap = maxAssignableInstructors != null && assignedCount >= maxAssignableInstructors
+    const unavailableByServer = isWaitingScheduleUnavailableByServer(
+      input.scheduleAvailability,
+      schedule.id
+    )
     return {
       id: `schedule-${scheduleKey}`,
       no: index + 1,
@@ -676,7 +686,7 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
       scheduleLabel,
       assignmentStatus: ownCancelledScheduleIds.has(scheduleKey)
         ? 'assignment_cancelled'
-        : atCap
+        : atCap || unavailableByServer
           ? 'unavailable'
           : 'waiting',
       assignedInstructorCountLabel: '-',

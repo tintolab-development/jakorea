@@ -8,9 +8,3 @@ export {
   SESSION_POLICY_DISPLAY,
   SESSION_WARNING_LEAD_MS,
 } from '@jakorea/domain/session'
-
-export const SESSION_POLICY = {
-  maxIdleMinutes: 30,
-  absoluteMaxMinutes: 12 * 60,
-  warningBeforeExpireMinutes: 5,
-} as const

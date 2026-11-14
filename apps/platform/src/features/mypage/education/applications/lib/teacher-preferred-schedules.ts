@@ -99,12 +99,7 @@ function formatTrainedTeacherPreferredBlock(
     Array.isArray(block.sessionTimes) ? block.sessionTimes : Array.isArray(block.times) ? block.times : []
   ).filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object')
   const sessionCount = readPositiveInt(block.sessionCount) ?? (sessions.length > 0 ? sessions.length : null)
-  const rank = readPositiveInt(block.preferenceRank)
-  const value = [
-    rank != null ? `${rank}지망` : '',
-    dateLabel,
-    sessionCount != null ? `${sessionCount}차시` : '',
-  ]
+  const value = [dateLabel, sessionCount != null ? `${sessionCount}차시` : '']
     .filter(Boolean)
     .join(' | ')
   const sessionLines = sessions.flatMap((row, index) => {

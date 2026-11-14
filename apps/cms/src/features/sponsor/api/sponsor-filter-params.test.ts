@@ -45,12 +45,12 @@ describe('serializeSponsorListFilters', () => {
     expect(serializeSponsorListFilters(withOverlay)).toBe(serializeSponsorListFilters(filtersOnly))
   })
 
-  it('keeps filter params in a stable order and defaults missing kind to corporate', () => {
+  it('keeps filter params in a stable order and omits kind when 전체', () => {
     const shuffled = new URLSearchParams('sp_st=ended&sp_mgr=김&sp_name=우리&sp_kind=foundation')
     expect(serializeSponsorListFilters(shuffled)).toBe(
       'sp_kind=foundation&sp_name=%EC%9A%B0%EB%A6%AC&sp_mgr=%EA%B9%80&sp_st=ended'
     )
-    expect(serializeSponsorListFilters(new URLSearchParams())).toBe('sp_kind=corporate')
+    expect(serializeSponsorListFilters(new URLSearchParams())).toBe('')
   })
 
   it('includes sponsorship start date range', () => {
@@ -61,19 +61,19 @@ describe('serializeSponsorListFilters', () => {
     ).toBe('sp_kind=corporate&sp_from=2025-09-15&sp_to=2026-01-30')
   })
 
-  it('omits empty name/status but keeps default kind', () => {
-    expect(serializeSponsorListFilters(new URLSearchParams('sponsorId=sp-1'))).toBe(
-      'sp_kind=corporate'
-    )
-    expect(serializeSponsorListFilters(new URLSearchParams('sp_kind=ALL&sp_name=%20'))).toBe(
-      'sp_kind=corporate'
-    )
+  it('omits empty name/status and 전체 kind', () => {
+    expect(serializeSponsorListFilters(new URLSearchParams('sponsorId=sp-1'))).toBe('')
+    expect(serializeSponsorListFilters(new URLSearchParams('sp_kind=ALL&sp_name=%20'))).toBe('')
   })
 })
 
 describe('sponsorsParamsFromSearchParams', () => {
-  it('always sends organizationKind and optional date range', () => {
+  it('omits organizationKind for 전체 and sends optional date range', () => {
     expect(sponsorsParamsFromSearchParams(new URLSearchParams())).toEqual({
+      page: 0,
+      size: 20,
+    })
+    expect(sponsorsParamsFromSearchParams(new URLSearchParams('sp_kind=corporate'))).toEqual({
       organizationKind: 'corporate',
       page: 0,
       size: 20,

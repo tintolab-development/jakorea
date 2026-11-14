@@ -35,12 +35,14 @@
   align-items: center;
   gap: var(--spacing-8);
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 @media (--bp-below-pc) {
   .value {
     justify-content: flex-end;
     text-align: right;
+    overflow: visible;
   }
 }

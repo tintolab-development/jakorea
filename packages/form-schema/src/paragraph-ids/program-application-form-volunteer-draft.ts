@@ -65,12 +65,15 @@ const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
   '위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
 const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 
-/** Figma 수집·이용 목적 — 「및」 뒤 줄바꿈 */
+/** Figma 수집·이용 목적 — 제3자 제공 표는 「및」 뒤 줄바꿈 */
 const VOLUNTEER_COLLECTION_PURPOSE_CELL =
   'JA 프로그램 봉사활동 안내 및\n진행에 필요한 정보 안내'
+
+/** 봉사자 신청 폼 시안(12875:514060) — 개인정보 수집·이용 표는 한 줄 */
+const VOLUNTEER_PERSONAL_INFO_PURPOSE_CELL = 'JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내'
 
 /** 객관식 항목 에디터(라디오 개별 선택)를 쓰지 않는 시드 */
 export function isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(
@@ -92,7 +95,7 @@ function createVolunteerPersonalInfoHorizontalTable(): HorizontalTableParagraph 
     },
     {
       kind: 'text' as const,
-      value: VOLUNTEER_COLLECTION_PURPOSE_CELL,
+      value: VOLUNTEER_PERSONAL_INFO_PURPOSE_CELL,
     },
     {
       kind: 'text' as const,
@@ -123,13 +126,14 @@ function createVolunteerPersonalInfoHorizontalTable(): HorizontalTableParagraph 
 function createVolunteerThirdPartyHorizontalTable(): HorizontalTableParagraph {
   const colCount = 4
   const columnFields = [
-    { kind: 'text' as const, placeholder: '제공받는 곳을 입력해 주세요' },
+    /** Figma 시안: 빈칸 + 「제공받는 기관명…」 (`APPLICATION_FORM_THIRD_PARTY_RECIPIENT_INSTITUTION_NAME_PLACEHOLDER`) */
+    { kind: 'text' as const, placeholder: '제공받는 기관명을 입력해 주세요' },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
   ]
   const bodyRow = [
-    { kind: 'text' as const, value: '배정된 교육 대상 학교' },
+    { kind: 'text' as const, value: '' },
     {
       kind: 'text' as const,
       value: '이름, 연락처, 성별, 학년, 이메일, 소속(학교)',
@@ -213,7 +217,7 @@ function createVolunteerFreeTextItemsPlaceholderTable(): HorizontalTableParagrap
     variant: 'horizontal_table',
     requiredMark: true,
     paragraphTitle: '자유 작성 항목',
-    paragraphDescription: '1~3번 문항은 자유롭게 작성 가능합니다.',
+    paragraphDescription: '1~4번 문항은 자유롭게 작성 가능합니다.',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],
@@ -260,7 +264,7 @@ function createVolunteerInterviewSchedulePlaceholderTable(): HorizontalTablePara
     requiredMark: true,
     paragraphTitle: '면접 진행 가능 일정',
     paragraphDescription:
-      '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요',
+      '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요.',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['면접 진행 가능일', ''],

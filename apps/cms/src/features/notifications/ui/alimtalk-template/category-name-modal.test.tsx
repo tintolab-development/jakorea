@@ -42,10 +42,10 @@ describe('CategoryNameModal', () => {
     const input = screen.getByPlaceholderText('카테고리명을 입력해 주세요')
 
     fireEvent.change(input, { target: { value: '안내 공지!' } })
-    expect(input).toHaveValue('안내 공지')
+    expect(input).toHaveValue('안내공지')
 
     fireEvent.click(screen.getByRole('button', { name: '수정' }))
-    expect(onSubmit).toHaveBeenCalledWith('안내 공지')
+    expect(onSubmit).toHaveBeenCalledWith('안내공지')
   })
 
   it('추가 모드는 상위 카테고리·카테고리명에 필수 표시를 한다', () => {

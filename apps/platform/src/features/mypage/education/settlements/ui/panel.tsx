@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useSettlementPreConsent } from '../hooks/use-receipt-payment-statement-consent'
 import { PaymentStatementPreConsentModal } from './payment-statement-pre-consent-modal'
+import { ReceiptGuardianGateModals } from './receipt-guardian-gate-modals'
 import { resolveSettlementAreaFromPathname } from '../lib/write-path'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
@@ -277,6 +278,7 @@ export function EducationSettlementPanel({
         onCancel={preConsent.closeModal}
         onWriteConsent={preConsent.goToConsents}
       />
+      <ReceiptGuardianGateModals flow={preConsent.minorGuardian} />
     </div>
   )
 }

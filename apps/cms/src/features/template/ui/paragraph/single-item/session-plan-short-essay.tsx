@@ -6,7 +6,11 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
 import { useDeferredFieldCommit } from '@/features/template/ui/shared/use-deferred-field-commit'
 import { SessionPlanItemTitle } from '@/features/template/ui/paragraph/single-item/session-plan-item-title'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './session-plan-short-essay.css'
+
+/** UJAT 교육계획서·교육일지 N차시 단락 — 시안 5767:44097·5767:44785 항목 머리 「・도입」 */
+const UJAT_EDUCATION_SESSION_PARAGRAPH_ID_RE = /^ujat-edu-(?:plan|journal)-session-\d+$/
 
 function SessionPlanDeferredBodyField({
   itemId,
@@ -102,6 +106,9 @@ export function SessionPlanShortEssay({
   activeItemId?: string | null
   onSelectItem?: (itemId: string | null) => void
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const showItemBullet =
+    isTemplateManagementScreen && UJAT_EDUCATION_SESSION_PARAGRAPH_ID_RE.test(paragraph.id)
   const paragraphRef = useRef(paragraph)
   paragraphRef.current = paragraph
 
@@ -257,6 +264,7 @@ export function SessionPlanShortEssay({
                 itemId={item.id}
                 label={titleText}
                 titleHint={item.titleHint}
+                bullet={showItemBullet}
               />
               {isBodyInteractive && isCardSelected && index > 0 ? (
                 <ItemDeleteButton

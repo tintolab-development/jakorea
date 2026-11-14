@@ -10,7 +10,7 @@ Homepage Admin과 **치수·필터 URL 의도·테이블 셸**을 같이 쓴다.
 
 | 공유 룰 | 용도 |
 |---------|------|
-| [filter-area-dimensions](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc) | 필터 260 · 높이 40 · gap 12 · 기간 500 · 조회 h40 |
+| [filter-area-dimensions](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc) | 필터 245 · 높이 40 · gap 12 · 기간 380 · 조회 h40 |
 | [list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc) | draft + searchParams |
 | [list-table-shell](../../../../.cursor/rules/cms-admin-ui/list-table-shell.mdc) | 카드·툴바 갭 |
 | [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc) | 툴바 h40 · 테이블 셀 h32 · 모달 푸터 |

@@ -154,6 +154,8 @@ type InstructorApproveModalState =
       userIds: string[]
       requestIds?: number[]
       memberCount: number
+      /** 강사 일괄 승인 — 대표(첫) 회원명 `[이름] 님 외 N명` */
+      displayName?: string
       source: 'list'
     }
 
@@ -1343,6 +1345,7 @@ export function PermissionRequestListPage() {
                     userIds: payload.userIds,
                     requestIds: payload.requestIds,
                     memberCount: payload.memberCount,
+                    displayName: payload.displayName,
                     source: 'list',
                   }
             )
@@ -1455,6 +1458,7 @@ export function PermissionRequestListPage() {
             : {
                 variant: 'bulk' as const,
                 memberCount: instructorApproveModal.memberCount,
+                userDisplayName: instructorApproveModal.displayName,
               })}
         />
       ) : null}

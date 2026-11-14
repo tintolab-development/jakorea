@@ -3,7 +3,8 @@ import type { GeminiInstructorApplicationApprovalStatus } from '../model/approve
 
 /** 기관 승인과 강사 승인은 서로 다른 업무축. 현행 문구·승인색 차이를 명시적으로 보존한다. */
 export const GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL: Record<GeminiInstitutionApprovalStatus, string> = {
-  PENDING: '승인 대기', APPROVED: '승인', REJECTED: '신청 반려',
+  // QA 2026-11-13 Gemini #15 — 기관 신청 목록 승인 상태 「승인 완료」
+  PENDING: '승인 대기', APPROVED: '승인 완료', REJECTED: '신청 반려',
 }
 export const GEMINI_INSTRUCTOR_APPROVAL_STATUS_LABEL: Record<GeminiInstructorApplicationApprovalStatus, string> = {
   PENDING: '승인 대기', APPROVED: '승인 완료', REJECTED: '신청 반려', UNKNOWN: '상태 확인 필요',

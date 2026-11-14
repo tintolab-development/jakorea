@@ -3,8 +3,11 @@ import {
   isKnownGnbGroupCode,
   isKnownGnbMenuCode,
   GNB_MENU_ROUTES,
+  GNB_DESIGN_CHILD_ORDER,
   GNB_DESIGN_GROUP_LABEL_OVERRIDES,
   GNB_DESIGN_LABEL_OVERRIDES,
+  GNB_MEGA_HIDDEN_MENU_CODES,
+  type GnbGroupCode,
   type GnbNavGroup,
   type GnbNavItem,
 } from './menu-routes.ts'
@@ -61,19 +64,22 @@ function overlayMenu(menuCode: string, label: string): GnbNavItem | null {
 }
 
 function applyDesignMenuOrder(groupCode: string, children: GnbNavItem[]): GnbNavItem[] {
-  if (groupCode !== 'JA_KOREA') return children
+  const visible = children.filter(item => !GNB_MEGA_HIDDEN_MENU_CODES.has(item.menuCode))
+  const order = isKnownGnbGroupCode(groupCode)
+    ? GNB_DESIGN_CHILD_ORDER[groupCode as GnbGroupCode]
+    : undefined
+  if (!order || order.length === 0) return visible
 
-  const historyIndex = children.findIndex(item => item.menuCode === 'JA_HISTORY')
-  if (historyIndex < 0) return children
-
-  const orderedChildren = children.filter(item => item.menuCode !== 'JA_HISTORY')
-  const organizationIndex = orderedChildren.findIndex(
-    item => item.menuCode === 'JA_ORGANIZATION',
-  )
-  if (organizationIndex < 0) return children
-
-  orderedChildren.splice(organizationIndex + 1, 0, children[historyIndex]!)
-  return orderedChildren
+  const byCode = new Map(visible.map(item => [item.menuCode, item]))
+  const ordered: GnbNavItem[] = []
+  for (const menuCode of order) {
+    const item = byCode.get(menuCode)
+    if (item) ordered.push(item)
+  }
+  for (const item of visible) {
+    if (!order.includes(item.menuCode)) ordered.push(item)
+  }
+  return ordered
 }
 
 /**

@@ -20,7 +20,7 @@ export function MemberSection({ section }: MemberSectionProps) {
         as="h2"
         id={`people-section-${section.id}`}
         typo="bd-md-rg"
-        color="neutral-cool-500"
+        color="primary-700"
         className={styles.title}
       >
         {section.title}

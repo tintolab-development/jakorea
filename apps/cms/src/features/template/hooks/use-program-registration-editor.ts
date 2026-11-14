@@ -12,7 +12,11 @@ import {
   shouldResetParticipationScheduleDetailForAudience,
 } from '@/features/program/general/lib/participant-audience-selection'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import {
+  getFormNavDisplayLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   createProgramRegistrationDraft,
   getProgramRegistrationSeedParagraphIds,
@@ -249,6 +253,31 @@ const GENERAL_CURRICULUM_REGISTRATION_DESCRIPTION_BY_LEGACY: Readonly<Record<str
     PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.registrationDescriptionMultiRound,
 }
 
+/** 1사1교·교육받은 교사 커리큘럼 카드 설명 — 시안(5767:191506 · 5767:196354) 마침표 포함 */
+const ECONOMY_TT_CURRICULUM_REGISTRATION_DESCRIPTION =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.registrationDescription
+
+/** 1사1교 임금 정보 — 이전 시드 설명(일반과 동일). 시안(5767:191506 · 9899:215345)은 설명 없음 */
+const ECONOMY_WAGE_INFO_LEGACY_DESCRIPTION =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription
+
+function withRegistrationWageInfoDescriptionForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant
+): WritingFormDraft {
+  if (variant !== 'economy') return draft
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.id !== PROGRAM_REGISTRATION_IDS.wageInfo) return paragraph
+    if (paragraph.paragraphDescription.trim() !== ECONOMY_WAGE_INFO_LEGACY_DESCRIPTION) {
+      return paragraph
+    }
+    changed = true
+    return { ...paragraph, paragraphDescription: '' }
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 const GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION =
   PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.registrationDescription
 
@@ -275,20 +304,11 @@ function withRegistrationBasicInfoDescriptionForVariant(
       changed = true
       return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_LOCK_NOTICE }
     }
-    // 교육받은 교사 등록 위저드 — 시안(9899:221372) 기본 정보 설명. 위저드 밖(양식 편집 등)은 기존처럼 비움
-    if (variant === 'trainedTeachers' && registrationWizard) {
-      if (current !== '' && current !== GENERAL_BASIC_INFO_LOCK_NOTICE) return paragraph
-      changed = true
-      return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_REGISTRATION_DESCRIPTION }
-    }
-    if (
-      current !== GENERAL_BASIC_INFO_LOCK_NOTICE &&
-      current !== GENERAL_BASIC_INFO_REGISTRATION_DESCRIPTION
-    ) {
-      return paragraph
-    }
+    // 1사1교·교육받은 교사 — 등록 위저드(9899:215345 · 9899:221372)와 템플릿 관리 등록 폼
+    // (5767:191506 · 5767:196354) 시안 모두 기본 정보 설명을 둔다. 빈 값·이전 기본값만 치환
+    if (current !== '' && current !== GENERAL_BASIC_INFO_LOCK_NOTICE) return paragraph
     changed = true
-    return { ...paragraph, paragraphDescription: '' }
+    return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_REGISTRATION_DESCRIPTION }
   })
   return changed ? { ...draft, paragraphs } : draft
 }
@@ -320,13 +340,18 @@ function withRegistrationCurriculumDescriptionForVariant(
   variant: ProgramRegistrationFormVariant,
   registrationWizard: boolean
 ): WritingFormDraft {
-  if (variant !== 'general' || !registrationWizard) return draft
+  // 1사1교·교육받은 교사: 위저드·템플릿 관리 모두 시안 문구(마침표 포함)로 맞춘다
+  const economyOrTrainedTeachers = variant === 'economy' || variant === 'trainedTeachers'
+  if (!economyOrTrainedTeachers && (variant !== 'general' || !registrationWizard)) return draft
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
     if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return paragraph
-    const next = GENERAL_CURRICULUM_REGISTRATION_DESCRIPTION_BY_LEGACY[
-      paragraph.paragraphDescription.trim()
-    ]
+    const current = paragraph.paragraphDescription.trim()
+    const next = economyOrTrainedTeachers
+      ? current === PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescription
+        ? ECONOMY_TT_CURRICULUM_REGISTRATION_DESCRIPTION
+        : undefined
+      : GENERAL_CURRICULUM_REGISTRATION_DESCRIPTION_BY_LEGACY[current]
     if (next == null) return paragraph
     changed = true
     return { ...paragraph, paragraphDescription: next }
@@ -338,7 +363,9 @@ function filterProgramRegistrationDraftForVariant(
   draft: WritingFormDraft,
   variant: ProgramRegistrationFormVariant,
   /** 프로그램 등록 위저드(`registrationWizardProgramType`) — 일반 등록 시안 카드 설명 적용 */
-  registrationWizard = false
+  registrationWizard = false,
+  /** 템플릿 관리 — 기본 정보 설명을 등록 시안 문구로 (미리보기 시안 5767:49788, 2026-11-13) */
+  templateManagement = false
 ): WritingFormDraft {
   const filtered =
     variant !== 'trainedTeachers'
@@ -352,13 +379,18 @@ function filterProgramRegistrationDraftForVariant(
   const withBasicInfo = withRegistrationBasicInfoDescriptionForVariant(
     filtered,
     variant,
-    registrationWizard
+    registrationWizard || templateManagement
   )
   const withSchedule = withRegistrationEducationScheduleSettingsDescriptionForVariant(
     withBasicInfo,
     variant
   )
-  return withRegistrationCurriculumDescriptionForVariant(withSchedule, variant, registrationWizard)
+  const withCurriculum = withRegistrationCurriculumDescriptionForVariant(
+    withSchedule,
+    variant,
+    registrationWizard
+  )
+  return withRegistrationWageInfoDescriptionForVariant(withCurriculum, variant)
 }
 
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
@@ -442,6 +474,8 @@ export function useProgramRegistrationEditor(
 ) {
   const restrictCurriculumSessionStructure =
     editorOptions?.restrictCurriculumSessionStructure === true
+  /** 템플릿 관리 화면 — 기본 정보 설명 시안 문구 적용 (`filterProgramRegistrationDraftForVariant`) */
+  const isTemplateManagementBasicInfoCopy = useIsTemplateManagementScreen()
   const programRegistrationFormVariant: ProgramRegistrationFormVariant =
     editorOptions?.programRegistrationFormVariant ?? 'general'
   const onRegistrationSaved = editorOptions?.onRegistrationSaved
@@ -843,7 +877,8 @@ export function useProgramRegistrationEditor(
     const seeded = filterProgramRegistrationDraftForVariant(
       normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
       programRegistrationFormVariant,
-      usesRegistrationWizardDraft
+      usesRegistrationWizardDraft,
+      isTemplateManagementBasicInfoCopy
     )
     const next =
       programRegistrationFormVariant === 'economy'
@@ -879,6 +914,7 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant,
     seedParagraphIds,
     usesRegistrationWizardDraft,
+    isTemplateManagementBasicInfoCopy,
   ])
 
   // hydrate는 active·복원 옵션·유형이 바뀔 때만. 콜백/Set identity 변경으로
@@ -932,7 +968,8 @@ export function useProgramRegistrationEditor(
             const normalizedBase = filterProgramRegistrationDraftForVariant(
               normalizeWritingFormDraft(saved.draft),
               variant,
-              usesRegistrationWizardDraft
+              usesRegistrationWizardDraft,
+              isTemplateManagementBasicInfoCopy
             )
             const normalized =
               variant === 'economy'
@@ -1092,6 +1129,7 @@ export function useProgramRegistrationEditor(
     localOnlyDraftPersistence,
     registrationWizardProgramType,
     usesRegistrationWizardDraft,
+    isTemplateManagementBasicInfoCopy,
   ])
 
   useEffect(() => {
@@ -1544,7 +1582,7 @@ export function useProgramRegistrationEditor(
                 })
               : programRegistrationFormVariant === 'general'
                 ? resolveProgramRegistrationCurriculumRegistrationDescription(sessionRoundType)
-                : '차시 별 정보를 입력해 주세요',
+                : ECONOMY_TT_CURRICULUM_REGISTRATION_DESCRIPTION,
         })
       )
     },
@@ -1715,8 +1753,13 @@ export function useProgramRegistrationEditor(
     ]
   )
 
+  /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const { titleNumbering } = draft.formSettings
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen
+    )
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
@@ -1726,7 +1769,7 @@ export function useProgramRegistrationEditor(
       sortableMiddle: draft.paragraphs.map(line),
       pinnedBottom: null as ReturnType<typeof line> | ReturnType<typeof line>[] | null,
     }
-  }, [draft])
+  }, [draft, isTemplateManagementScreen])
 
   const writingPreviewSession = useMemo(
     () => ({
@@ -2112,7 +2155,7 @@ export function useProgramRegistrationEditor(
                 })
               : programRegistrationFormVariant === 'general'
                 ? resolveProgramRegistrationCurriculumRegistrationDescription(typeSettings.sessionRoundType)
-                : '차시 별 정보를 입력해 주세요',
+                : ECONOMY_TT_CURRICULUM_REGISTRATION_DESCRIPTION,
         })
       )
       if (programRegistrationFormVariant === 'general') {

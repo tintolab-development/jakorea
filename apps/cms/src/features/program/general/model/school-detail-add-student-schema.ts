@@ -1,7 +1,7 @@
 /**
  * 학생 등록 모달 폼 스키마
- * 필수: 학생명, 성별, 생년월일(8자리), 학급, 연락처, 이메일 / 선택: 비고 (react-hook-form)
- * 필수 항목은 `StudentRosterRowRequest` required와 동일.
+ * 필수: 학생명, 성별, 생년월일(8자리), 학급 / 선택: 연락처, 이메일, 비고 (react-hook-form)
+ * 연락처·이메일 선택은 시안 기준 — 서버 `StudentRosterRowRequest`는 신규 행에 phone·email을 요구한다(BE 요청).
  */
 
 import type { DefaultValues } from 'react-hook-form'
@@ -30,20 +30,25 @@ export const addStudentFormSchema = z.object({
   gradeClass: z
     .string()
     .trim()
-    .min(1, '학급을 입력해주세요')
+    .min(1, '학급을 선택해주세요')
     .max(50, '학급은 50자 이내로 입력해주세요'),
+  // 시안 — 연락처·이메일은 선택 입력. 입력했을 때만 형식을 검사한다.
   contact: z
     .string()
     .trim()
-    .min(1, '연락처를 입력해주세요')
     .max(20, '연락처는 20자 이내로 입력해주세요')
-    .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
+    .refine(
+      v => v === '' || isValidKoreanPhoneNumber(v),
+      '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+    ),
   email: z
     .string()
     .trim()
-    .min(1, '이메일을 입력해주세요')
     .max(255, '이메일은 255자 이내로 입력해주세요')
-    .refine(v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), '올바른 이메일 형식을 입력해주세요'),
+    .refine(
+      v => v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      '올바른 이메일 형식을 입력해주세요'
+    ),
   notes: z.union([
     z.string().trim().max(200, '비고는 200자 이내로 입력해주세요'),
     z.literal(''),

@@ -1,7 +1,13 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import type { TemplateWritingUserPreviewSession } from '@/features/template/context/template-writing-preview-context'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import {
+  buildTemplateManagementNavLine,
+  getFormNavDisplayLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
+import { titleWithPeriodPlaceholder } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import {
@@ -55,7 +61,14 @@ export type UseWritingFormEditorWithUserPreviewOptions = {
   onSave?: () => void
 }
 
-export type FormEditorNavLine = { id: string; displayLine: string }
+export type FormEditorNavLine = {
+  id: string
+  displayLine: string
+  /** 템플릿 관리 전용 — `FormEditorFieldNav` 회색 안내 줄 */
+  placeholder?: boolean
+  /** 템플릿 관리 전용 — `FormEditorFieldNav` 핸들 없는 고정 행 */
+  pinned?: boolean
+}
 
 export type WritingFormEditorWithUserPreviewResult = {
   headerTitle: string
@@ -230,16 +243,31 @@ export function useWritingFormEditorWithUserPreview(
     }))
   }, [])
 
+  /** 템플릿 관리 설문 목록만 시안 우측 목록 표시(회색 안내·제목·마무리글 고정). 프로그램 설문 편집은 기존 그대로 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const { titleNumbering } = draft.formSettings
-    const line = (p: WritingFormParagraph) => ({
+    // 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호, 설문은 Q 번호여도 목록만 숫자(시안)
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen,
+      { survey: editorKind === 'survey' }
+    )
+    const line = (p: WritingFormParagraph): FormEditorNavLine => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
     if (editorKind === 'survey') {
+      // 시안 5767:42989·5767:43362·5767:43694 — 빈 설문 제목 「설문 제목 입력」 회색, 마무리글 회색, 두 행 핸들 없음
+      const surveyLine = (p: WritingFormParagraph): FormEditorNavLine =>
+        isTemplateManagementScreen
+          ? buildTemplateManagementNavLine(draft.paragraphs, p, titleNumbering, {
+              titlePlaceholder: titleWithPeriodPlaceholder('survey'),
+              closingPlaceholder: true,
+            })
+          : line(p)
       return {
         pinnedTop: null as ReturnType<typeof line> | null,
-        sortableMiddle: draft.paragraphs.map(line),
+        sortableMiddle: draft.paragraphs.map(surveyLine),
         pinnedBottom: null as ReturnType<typeof line> | ReturnType<typeof line>[] | null,
       }
     }
@@ -259,7 +287,7 @@ export function useWritingFormEditorWithUserPreview(
       pinnedBottom:
         bottomLines.length === 1 ? bottomLines[0]! : bottomLines.length > 1 ? bottomLines : null,
     }
-  }, [draft, editorKind])
+  }, [draft, editorKind, isTemplateManagementScreen])
 
   const handlePreview = useCallback(() => {
     openWritingUserPreview(writingPreviewSession)

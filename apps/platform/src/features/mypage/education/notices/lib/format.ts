@@ -42,9 +42,15 @@ const HTML_ENTITIES: Record<string, string> = {
   '&#39;': "'",
 }
 
+/** 마크다운 백슬래시 이스케이프(`\[`, `\*` 등) — CMS 에디터가 `[E2E]`를 `\[E2E\]`로 저장한다 */
+const MARKDOWN_ESCAPE = /\\([\\`*_{}[\]()#+\-.!|~<>])/g
+const ESCAPED_CHAR_TOKEN = /\uE000(\d+)\uE001/g
+
 /** CMS 본문(마크다운 + 인라인 HTML)을 카드·제목용 텍스트로 — 이미지·태그·마크다운 기호 제거 */
 export function toEducationNoticePlainText(value: string): string {
   return value
+    // 이스케이프된 글자는 아래 마크다운 기호 제거에 걸리지 않게 잠시 토큰으로 바꿔 두고 마지막에 글자로 되돌린다
+    .replace(MARKDOWN_ESCAPE, (_, char: string) => `\uE000${char.codePointAt(0)}\uE001`)
     .replace(/<img\b[^>]*>/gi, '')
     .replace(/!\[[^\]]*]\([^)]*\)/g, '')
     .replace(/<br\s*\/?>/gi, '\n')
@@ -56,14 +62,20 @@ export function toEducationNoticePlainText(value: string): string {
     .replace(/^[ \t]{0,3}(#{1,6}|>|[-*+]|\d+\.)[ \t]+/gm, '')
     .replace(/(\*\*|__|~~|`)/g, '')
     .replace(/&(nbsp|amp|lt|gt|quot|#39);/g, entity => HTML_ENTITIES[entity] ?? entity)
+    .replace(ESCAPED_CHAR_TOKEN, (_, code: string) => String.fromCodePoint(Number(code)))
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
 
+/**
+ * 카드 제목 — 본문 첫 줄을 우선한다.
+ * 서버 제목은 CMS·홈페이지 모두 본문에서 만들어 저장하는 값인데, 예전 CMS는 기호를 글자 단위로 지워
+ * `[E2E]`(본문 `\[E2E\]`)가 `\E2E\`처럼 망가진 제목으로 저장돼 있다. 본문이 비었을 때만 서버 제목을 쓴다.
+ */
 export function resolveEducationNoticeTitle(title: string, content: string): string {
-  const trimmedTitle = toEducationNoticePlainText(title).split(/\n/)[0]?.trim() ?? ''
-  if (trimmedTitle.length > 0) return trimmedTitle
   const firstLine = toEducationNoticePlainText(content).split(/\n/)[0]?.trim() ?? ''
-  return firstLine || '-'
+  if (firstLine.length > 0) return firstLine
+  const trimmedTitle = toEducationNoticePlainText(title).split(/\n/)[0]?.trim() ?? ''
+  return trimmedTitle || '-'
 }

@@ -55,6 +55,7 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
 import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/shared/ui/program-registration-curriculum-title-actions'
+import { EducationScheduleChangeInertButton } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-change-inert-button'
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { isApplicationScheduleDefaultParagraphDescription } from '@jakorea/form-schema/program-application'
@@ -168,6 +169,30 @@ export function withoutPlaceholderDescriptionInPreview<
   return next
 }
 
+const noopHeadingChange = () => {}
+
+/**
+ * 사용 모드(프로그램 등록 위저드 「등록폼」 등, `LockParagraphHeadingContext`):
+ * 카드 선택과 무관하게 제목·설명을 view로 고정하고, 비었거나 placeholder인 설명은 숨긴다.
+ * 모든 `with*` 헤딩 보정이 끝난 뒤 마지막에 적용한다(등록 전용 설명 치환 등 유지).
+ */
+export function withReadOnlyHeadingInUserMode(
+  heading: ParagraphCardEditableHeading,
+  enabled: boolean
+): ParagraphCardEditableHeading {
+  if (!enabled) return heading
+  const readOnly: ParagraphCardEditableHeading = {
+    ...heading,
+    isEditMode: false,
+    titleIsEditMode: false,
+    descriptionIsEditMode: false,
+    onTitleChange: noopHeadingChange,
+    onDescriptionChange: noopHeadingChange,
+  }
+  if (readOnly.descriptionViewContent != null) return readOnly
+  return withoutPlaceholderDescriptionInPreview(readOnly, true) ?? readOnly
+}
+
 function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
   return (
     PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
@@ -265,11 +290,15 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   }
 }
 
-/** 일반 프로그램 등록 — 교육 진행 일정 설정: 등록 위저드 카드 설명(상세 수정 안내 문구와 분리) */
+/**
+ * 일반 프로그램 등록 — 교육 진행 일정 설정: 등록 위저드 카드 설명(상세 수정 안내 문구와 분리).
+ * 템플릿 관리 화면(`templateManagementScreen`)이면 시안 02-x·03-x 카드 제목 줄 우측 「일정 변경」(동작 없음)을 붙인다.
+ */
 export function withProgramRegistrationEducationScheduleSettingsRegistrationDescription(
   heading: ParagraphCardEditableHeading,
   paragraph: WritingFormParagraph,
-  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions,
+  templateManagementScreen = false
 ): ParagraphCardEditableHeading {
   const pr = paragraphBodyOptions?.programRegistration
   if (
@@ -283,6 +312,7 @@ export function withProgramRegistrationEducationScheduleSettingsRegistrationDesc
     ...heading,
     descriptionValue:
       PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.registrationDescription,
+    ...(templateManagementScreen ? { titleTrailing: <EducationScheduleChangeInertButton /> } : {}),
   }
 }
 

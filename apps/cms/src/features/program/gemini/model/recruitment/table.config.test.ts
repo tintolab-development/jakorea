@@ -42,7 +42,7 @@ describe('geminiRecruitmentTablePageConfig.filterFn', () => {
 })
 
 describe('geminiRecruitmentTablePageConfig 기본 조회 조건 (QA-0103)', () => {
-  it('기본 연수 요청 가능기간은 비어 있다(전체 기간)', () => {
+  it('기본 연수 요청 가능 기간은 비어 있다(전체 기간)', () => {
     expect(geminiRecruitmentTablePageConfig.filters.initialPending.trainingRequestPeriodRange).toBeNull()
   })
 

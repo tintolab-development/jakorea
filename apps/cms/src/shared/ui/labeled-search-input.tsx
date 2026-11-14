@@ -3,9 +3,9 @@
  * 모든 검색 필터를 통일된 UI로 제공
  */
 
-import { SearchOutlined } from '@ant-design/icons'
 import './labeled-search-input.css'
 import { CmsInput } from './cms-input'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 
 export interface LabeledSearchInputProps {
   /** 레이블 텍스트 */
@@ -98,7 +98,7 @@ export function LabeledSearchInput({
         width={width}
         disabled={disabled}
         icon={
-          showPrefixIcon ? <SearchOutlined className="labeled-search-input__icon" /> : undefined
+          showPrefixIcon ? <FieldSearchIcon /> : undefined
         }
       />
     </div>

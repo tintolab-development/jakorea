@@ -164,3 +164,107 @@
   ) !important;
   opacity: 1;
 }
+
+/*
+ * 템플릿 관리 편집기(강의보고서 프로그램 진행 정보) — 시안 5767:44423
+ * 헤더 180·8×16, 본문 셀 12 패딩, 입력 h36·14px·좌우 14, 폭 240/200/120(프로그램명·기관 소재지는 남은 폭)
+ */
+.lecture-report-prog-info--template .form-editor-vertical-table__th {
+  width: 180px;
+  min-width: 180px;
+  min-height: 52px;
+  padding: 8px 16px;
+}
+
+.lecture-report-prog-info--template .form-editor-vertical-table__td {
+  min-height: 52px;
+  padding: 12px;
+}
+
+.lecture-report-prog-info--template .form-editor-vertical-table__cell-input-shell {
+  min-height: 36px;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__field-wrap,
+.lecture-report-prog-info--template .lecture-report-prog-info__session-wrap,
+.lecture-report-prog-info--template .lecture-report-prog-info__count-wrap,
+.lecture-report-prog-info--template .lecture-report-prog-info__split-wrap,
+.lecture-report-prog-info--template .lecture-report-prog-info__class-wrap {
+  height: 36px;
+  padding: 0 14px;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__w240,
+.lecture-report-prog-info--template .lecture-report-prog-info__w200,
+.lecture-report-prog-info--template .lecture-report-prog-info__w120 {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__w240 {
+  width: 240px;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__w200 {
+  width: 200px;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__w120 {
+  width: 120px;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__time-session-row {
+  width: auto;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__session-input.ant-input,
+.lecture-report-prog-info--template .lecture-report-prog-info__session-input .ant-input,
+.lecture-report-prog-info--template .ant-picker .ant-picker-input > input {
+  font-size: 14px !important;
+  line-height: 140% !important;
+}
+
+.lecture-report-prog-info--template
+  .lecture-report-prog-info__session-input.ant-input:disabled::placeholder,
+.lecture-report-prog-info--template
+  .lecture-report-prog-info__session-input.ant-input[disabled]::placeholder,
+.lecture-report-prog-info--template
+  .lecture-report-prog-info__session-input.cms-input
+  .cms-input__control--disabled
+  .cms-input__inner
+  .ant-input::placeholder,
+.lecture-report-prog-info--template
+  .lecture-report-prog-info__picker--disabled.ant-picker.ant-picker-disabled
+  .ant-picker-input
+  > input::placeholder {
+  font-size: 14px;
+  line-height: 140%;
+}
+
+.lecture-report-prog-info--template
+  .lecture-report-prog-info__dt-picker.form-editor-vertical-table__field-box.form-editor-vertical-table__field-box--picker.ant-picker,
+.lecture-report-prog-info--template
+  .lecture-report-prog-info__time-picker.form-editor-vertical-table__field-box.form-editor-vertical-table__field-box--picker.ant-picker {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 14px 0 10px;
+}
+
+.lecture-report-prog-info--template
+  .lecture-report-prog-info__dt-picker.form-editor-vertical-table__dt-picker--full {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__time-picker.ant-picker {
+  width: 100%;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__divider {
+  margin: 0;
+}
+
+.lecture-report-prog-info--template .lecture-report-prog-info__time-session-row {
+  gap: 16px;
+}

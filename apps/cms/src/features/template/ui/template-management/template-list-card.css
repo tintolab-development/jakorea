@@ -15,6 +15,23 @@
   align-items: flex-end;
 }
 
+.template-list-card__count,
+.template-list-card__divider {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.template-list-card__divider {
+  opacity: 0.6;
+}
+
+.template-list-card__header:not(.template-list-card__header--inline) .template-list-card__count,
+.template-list-card__header:not(.template-list-card__header--inline) .template-list-card__divider {
+  padding-right: 8px;
+}
+
 .template-list-card__header--inline {
   flex-direction: row;
   align-items: center;

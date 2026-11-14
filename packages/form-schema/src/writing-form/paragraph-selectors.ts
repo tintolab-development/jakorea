@@ -47,7 +47,7 @@ export const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; l
   { value: 'file_attachment', label: '파일 첨부형' },
 ]
 export const DESCRIPTION_DETAIL_OPTIONS: { value: DescriptionDetailSelectValue; label: string }[] = [
-  { value: 'title', label: '제목형' },
+  { value: 'title', label: '설문 제목형' },
   { value: 'text', label: '텍스트형' },
   { value: 'closing', label: '마무리글형' },
 ]

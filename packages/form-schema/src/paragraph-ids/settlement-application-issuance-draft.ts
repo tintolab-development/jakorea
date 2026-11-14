@@ -88,6 +88,9 @@ const tableBasic = htText(
   ]
 )
 
+/** 정산 신청서 — 강사비 산출 내역 단락 설명 (시안 5767:44580) */
+export const SETTLEMENT_CALC_INFO_PARAGRAPH_DESCRIPTION = '강사비는 사전에 책정된 금액으로 지급됩니다.'
+
 const tableCalcInfo = htText(
   SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableCalcInfo,
   '강사비 산출 내역',
@@ -98,7 +101,8 @@ const tableCalcInfo = htText(
     ['사업소득자 여부', ''],
     ['교육 진행 차시', ''],
     ['총 강사비', ''],
-  ]
+  ],
+  { paragraphDescription: SETTLEMENT_CALC_INFO_PARAGRAPH_DESCRIPTION }
 )
 
 /** 정산 신청서 — 교통비 신청 단락 설명·하단 안내 (스크린샷 SSOT) */
@@ -142,7 +146,8 @@ const tableAccommodation = htText(
 export function createSettlementApplicationIssuanceDraft(): WritingFormDraft {
   return normalizeWritingFormDraft({
     schemaVersion: 1,
-    formSettings: { titleNumbering: 'numeric' },
+    /** 시안 5767:44580 — 타이틀 번호 「미선택」(카드 제목에 번호 없음) */
+    formSettings: { titleNumbering: 'none' },
     paragraphs: [seedTitle, tableBasic, tableCalcInfo, tableTransport, tableAccommodation],
   })
 }

@@ -22,10 +22,16 @@ export function inquiriesParamsFromSearchParams(
   const category = searchParams.get('inq_cat')?.trim()
   if (category && category !== 'ALL') params.category = category
 
+  /* 대시보드에서 온 프로그램 ID가 있으면 ID로만 조회한다(이름 조건을 같이 걸면 스냅샷 이름과 달라 0건이 될 수 있다). */
+  const programId = searchParams.get('inq_pid')?.trim()
   const program = searchParams.get('inq_prog')?.trim()
-  if (program) {
+  if (programId && /^\d+$/.test(programId)) {
+    params.programId = Number(programId)
+  } else if (program && /^\d+$/.test(program)) {
+    /* 이전 대시보드 링크(inq_prog=ID) 호환 */
+    params.programId = Number(program)
+  } else if (program) {
     params.programName = program
-    if (/^\d+$/.test(program)) params.programId = Number(program)
   }
 
   const title = searchParams.get('inq_title')?.trim()

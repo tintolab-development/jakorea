@@ -79,6 +79,9 @@ export function EducationListContent({
               item={item}
               statusAudience={statusAudience}
               isTeacher={isTeacher}
+              recruitmentRoleLabel="수강자"
+              badgeSize="regular"
+              categoryLabelOverride="수강자"
               onClick={() =>
                 navigate(educationApplicationDetailPath(item.id, item.applicationType), {
                   state: {

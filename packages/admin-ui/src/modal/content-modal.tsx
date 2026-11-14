@@ -53,6 +53,8 @@ export interface AdminContentModalProps {
   rootClassName?: string
   modalStyles?: ModalProps['styles']
   afterOpenChange?: (open: boolean) => void
+  /** 딤 영역 클릭으로 닫기 — `AdminTealHeaderModal` 로 전달 */
+  maskClosable?: boolean
 }
 
 export function AdminContentModal({
@@ -75,6 +77,7 @@ export function AdminContentModal({
   rootClassName,
   modalStyles,
   afterOpenChange,
+  maskClosable,
 }: AdminContentModalProps) {
   const resolvedClassName = [
     'content-modal',
@@ -108,6 +111,7 @@ export function AdminContentModal({
       rootClassName={rootClassName}
       styles={modalStyles}
       afterOpenChange={afterOpenChange}
+      maskClosable={maskClosable}
     >
       {description != null && description !== '' ? (
         <div className="content-modal__description">

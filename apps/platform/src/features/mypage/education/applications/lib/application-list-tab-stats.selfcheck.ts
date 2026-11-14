@@ -29,6 +29,16 @@ const items: EducationApplicationListItem[] = [
 const stats = summarizeMypageProgramStatsFromApplications(items)
 assert.equal(stats.applied, 2)
 assert.equal(stats.inProgress, 1)
-assert.equal(stats.completed, 2)
+assert.equal(stats.completed, 1)
+
+const withDuplicateAndCancelled = summarizeMypageProgramStatsFromApplications([
+  ...items,
+  row('3', 'in_progress'),
+  row('6', 'cancelled'),
+  row('7', 'approval_cancelled'),
+])
+assert.equal(withDuplicateAndCancelled.applied, 2)
+assert.equal(withDuplicateAndCancelled.inProgress, 1)
+assert.equal(withDuplicateAndCancelled.completed, 1)
 
 console.log('application-list-tab-stats.selfcheck: ok')

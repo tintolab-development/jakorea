@@ -14,7 +14,6 @@ import {
   type Ref,
   type RefAttributes,
 } from 'react'
-import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import type { DatePickerProps } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -26,7 +25,12 @@ import {
   formatYmdHmWithKoreanWeekday,
   formatYmdWithKoreanWeekday,
 } from '@/shared/lib/format-date-korean-weekday'
+import { ButtonLeftIcon, ButtonRightIcon, FieldCalendarIcon } from './icons'
 import './app-datepicker.css'
+
+/** 날짜 선택 패널 이전/다음 달 — 시안 `Icon / Button / w20` left·right */
+const PANEL_PREV_ICON = <ButtonLeftIcon className="app-datepicker__panel-nav-icon" />
+const PANEL_NEXT_ICON = <ButtonRightIcon className="app-datepicker__panel-nav-icon" />
 
 /** DatePicker ref 공개 형태(선언 파일에 rc-picker 경로가 새지 않도록 명시) */
 export type AppDatePickerRef = {
@@ -101,9 +105,11 @@ const AppDatePickerRender: ForwardRefRenderFunction<AppDatePickerRef, AppDatePic
         className={pickerCn}
         format={formatProp ?? formatAppDatepickerDisplay}
         prefix={
-          prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
+          prefix ?? <FieldCalendarIcon className="app-datepicker__calendar-icon" />
         }
         suffixIcon={suffixIcon ?? null}
+        prevIcon={PANEL_PREV_ICON}
+        nextIcon={PANEL_NEXT_ICON}
         inputReadOnly={inputReadOnly ?? true}
         placeholder={placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER}
         {...pickerRest}
@@ -230,9 +236,11 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
           className={pickerCn}
           format={fmt}
           prefix={
-            prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
+            prefix ?? <FieldCalendarIcon className="app-datepicker__calendar-icon" />
           }
           suffixIcon={suffixIcon ?? null}
+          prevIcon={PANEL_PREV_ICON}
+          nextIcon={PANEL_NEXT_ICON}
           inputReadOnly={inputReadOnly ?? true}
           value={start}
           onChange={handleStartChange}
@@ -255,9 +263,11 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
           className={pickerCn}
           format={fmt}
           prefix={
-            prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
+            prefix ?? <FieldCalendarIcon className="app-datepicker__calendar-icon" />
           }
           suffixIcon={suffixIcon ?? null}
+          prevIcon={PANEL_PREV_ICON}
+          nextIcon={PANEL_NEXT_ICON}
           inputReadOnly={inputReadOnly ?? true}
           value={end}
           onChange={handleEndChange}

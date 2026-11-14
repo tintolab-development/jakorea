@@ -13,6 +13,7 @@ import {
   type PFAccordionListItem,
 } from '@/shared/ui'
 import { FilterBar } from '@/widgets/search-list-layout'
+import { stripFaqMarkdown } from '../lib/strip-faq-markdown'
 import styles from './faq-tab-content.module.css'
 
 type FaqTabContentProps = {
@@ -38,8 +39,8 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
     id: item.id,
     categoryLabel: item.category,
     title: item.title,
-    question: item.question,
-    answer: item.answer,
+    question: stripFaqMarkdown(item.question),
+    answer: stripFaqMarkdown(item.answer),
   }))
 
   const categoryOptions = useMemo(() => {
@@ -88,6 +89,7 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
         onExpandedChange={setExpandedId}
         loading={remoteFaqs.isLoading}
         emptyMessage="선택한 카테고리에 등록된 FAQ가 없습니다."
+        hideCategoryBadge
       />
 
       {filteredFaqs.length > 0 ? (

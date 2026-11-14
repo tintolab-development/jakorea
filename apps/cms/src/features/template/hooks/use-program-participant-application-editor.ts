@@ -20,7 +20,11 @@ const INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS: RenderFormParagraphBodyOptions
   structureLockedAuthoringChoicePreview: true,
 }
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import {
+  getFormNavDisplayLine,
+  resolveNavTitleNumberingStyle,
+} from '@/features/template/lib/form-title-numbering'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   createAgreementExplanationTextParagraphForInsert,
   duplicateMiddleParagraph,
@@ -1914,8 +1918,13 @@ export function useProgramParticipantApplicationEditor(
     ]
   )
 
+  /** 템플릿 관리 화면에서 「미선택」이어도 우측 목록만 `1. 2. 3.` 번호 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const { titleNumbering } = draft.formSettings
+    const titleNumbering = resolveNavTitleNumberingStyle(
+      draft.formSettings.titleNumbering,
+      isTemplateManagementScreen
+    )
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
@@ -1925,7 +1934,7 @@ export function useProgramParticipantApplicationEditor(
       sortableMiddle: draft.paragraphs.map(line),
       pinnedBottom: null as ReturnType<typeof line> | ReturnType<typeof line>[] | null,
     }
-  }, [draft.formSettings.titleNumbering, draft.paragraphs])
+  }, [draft.formSettings.titleNumbering, draft.paragraphs, isTemplateManagementScreen])
 
   const programLinkedPreview = editorOptions?.programLinkedApplicationFormPreview === true
   const linkedProgram = editorOptions?.program ?? null

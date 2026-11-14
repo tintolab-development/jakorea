@@ -43,7 +43,7 @@ import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { canAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 import {
@@ -251,6 +251,10 @@ function SponsorDetailFullPageModalInner({
   const handleToggleBasicInfoClick = useCallback((): void => {
     void (async () => {
       const result = await handleToggleBasicInfoEdit(canManageSponsor)
+      if (result === 'saved') {
+        showUpdateCompletedAlert()
+        return
+      }
       if (result === 'invalid') {
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,

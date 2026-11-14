@@ -130,7 +130,17 @@ export function UjatJournalEducationInfo({
   }
 
   return (
-    <div className="form-editor-body form-editor-vertical-table-wrap ujat-journal-edu-info">
+    <div
+      className={[
+        'form-editor-body',
+        'form-editor-vertical-table-wrap',
+        'ujat-journal-edu-info',
+        // 템플릿 관리 편집기 — 시안 5767:44886 표 셀·입력 치수(h36·14px·고정 폭)
+        isTemplateAuthoringMode ? 'ujat-journal-edu-info--template' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="form-editor-vertical-table" role="grid">
         <div className="form-editor-vertical-table__row" role="row">
           <div className="form-editor-vertical-table__stage">
@@ -161,7 +171,7 @@ export function UjatJournalEducationInfo({
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
                 <div className="ujat-journal-edu-info__grade-class-row">
                   <CmsSelect
-                    inputSize="medium"
+                    inputSize={isTemplateAuthoringMode ? 'small' : 'medium'}
                     width={120}
                     withAllOption={false}
                     placeholder="학년"

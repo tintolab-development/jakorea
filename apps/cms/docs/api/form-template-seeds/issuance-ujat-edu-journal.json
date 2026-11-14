@@ -20,13 +20,13 @@
         "surveyTitle": "JA KOREA 대학생경제교육봉사단(UJAT) 교육일지",
         "surveyDescription": "",
         "periodMode": "custom",
-        "startPeriodMode": "immediate",
+        "startPeriodMode": "custom",
         "endPeriodMode": "custom",
         "startAt": null,
         "endAt": null,
         "endPeriodPresetLabel": "활동일 다음주 목요일 (24:00)",
         "showWritingPeriodOnForm": true,
-        "startPeriodPresetLabel": null
+        "startPeriodPresetLabel": "활동일"
       },
       {
         "id": "ujat-edu-journal-explanation-text",
@@ -145,7 +145,7 @@
         "variant": "session_plan_short_essay",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "1차시 교육 일지",
+        "paragraphTitle": "1차시 교육 내용 및 역할",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "showItemTitle": true,
@@ -178,7 +178,7 @@
         "variant": "session_plan_short_essay",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "2차시 교육 일지",
+        "paragraphTitle": "2차시 교육 내용 및 역할",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "showItemTitle": true,
@@ -211,7 +211,7 @@
         "variant": "session_plan_short_essay",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "3차시 교육 일지",
+        "paragraphTitle": "3차시 교육 내용 및 역할",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "showItemTitle": true,
@@ -244,7 +244,7 @@
         "variant": "session_plan_short_essay",
         "answerRequired": true,
         "requiredMark": true,
-        "paragraphTitle": "4차시 교육 일지",
+        "paragraphTitle": "4차시 교육 내용 및 역할",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "showItemTitle": true,
@@ -278,7 +278,7 @@
         "answerRequired": true,
         "requiredMark": true,
         "paragraphTitle": "교육 내용 피드백",
-        "paragraphDescription": "잘된 점과 어려웠던 점, 기타 사항을 작성해 주세요",
+        "paragraphDescription": "잘된 점과 어려웠던 점, 기타 사항을 작성해 주세요.",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
         "items": [
@@ -300,7 +300,7 @@
         "answerRequired": true,
         "requiredMark": true,
         "paragraphTitle": "교육 사진",
-        "paragraphDescription": "교육 당일 사진을 2장 이상 첨부해 주세요",
+        "paragraphDescription": "교육 당일 사진을 2장 이상 첨부해 주세요.",
         "participatesInTitleNumbering": true
       }
     ]

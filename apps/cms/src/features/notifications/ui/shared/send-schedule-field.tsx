@@ -1,5 +1,5 @@
+import { FieldCalendarIcon } from '@/shared/ui/icons'
 import { useEffect, useRef, useState } from 'react'
-import { CalendarOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX } from '@/shared/constants/modal-z-index'
@@ -111,7 +111,7 @@ export function SendScheduleField({
             disabled={!scheduled}
             placeholder="날짜를 선택해 주세요"
             value={scheduled ? displayValue : ''}
-            icon={<CalendarOutlined />}
+            icon={<FieldCalendarIcon />}
           />
         </span>
       </div>

@@ -2,6 +2,10 @@
  * 일반 프로그램 상세 — 참여자 모집 정보 (등록 양식·스크린샷 2블록 레이아웃)
  */
 
+import {
+  formatTrainedTeachersRecruitmentPeriodLabel,
+  formatTrainedTeachersStudentListLabel,
+} from '@/features/program/trained-teachers/lib/recruitment-display-labels'
 import { useEffect } from 'react'
 import { Controller } from 'react-hook-form'
 import {
@@ -230,7 +234,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
     <DetailInfoForm.Field
       label="학생 명단 제출 여부"
       validationKey={`${recruitKeyPrefix}.studentListRequired`}
-      view={display.studentListLabel}
+      view={
+        isTrainedTeachers
+          ? formatTrainedTeachersStudentListLabel(display.studentListLabel)
+          : display.studentListLabel
+      }
       edit={
         isEdit && form ? (
           <Controller
@@ -375,7 +383,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
     <DetailInfoForm.Field
       label="참여자 모집 기간"
       validationKey={`${recruitKeyPrefix}.recruitRangeSeal`}
-      view={display.recruitmentPeriodLabel}
+      view={
+        isTrainedTeachers
+          ? formatTrainedTeachersRecruitmentPeriodLabel(display.recruitmentPeriodLabel)
+          : display.recruitmentPeriodLabel
+      }
       edit={
         isEdit && form ? (
           <Controller

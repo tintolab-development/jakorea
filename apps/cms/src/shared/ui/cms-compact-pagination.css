@@ -75,6 +75,13 @@
   border-color: var(--color-mint-01, #01a1af);
 }
 
+/* 기본형 꺾쇠 — 시안 20 프레임 */
+.cms-compact-pagination__icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 .cms-compact-pagination--modal .cms-compact-pagination__modal-icon {
   width: 6px;
   height: 9px;

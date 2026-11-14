@@ -123,7 +123,7 @@ export function BusinessAreaManagementModal({
         type="button"
         onClick={ctrl.handleClose}
         disabled={ctrl.saving || ctrl.loading} >
-        닫기
+        취소
       </CmsButton>
       <CmsButton
         variant="secondary"

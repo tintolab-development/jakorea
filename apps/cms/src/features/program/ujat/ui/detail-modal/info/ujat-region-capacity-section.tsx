@@ -20,6 +20,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { cloneUjatRegionCapacityState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph.css'
 
 function RegionCapacityView({
@@ -204,9 +205,17 @@ export function UjatRegionCapacitySection({
 }) {
   const { labels } = useUjatEducationRegions()
   const regionRows = useMemo(() => buildUjatRegionCapacityPairRows(), [labels])
+  // 템플릿 관리 시안(5767:194428) 표 머리 180·14px, 칸 여백 12, 단위 14px — 프로그램 상세는 기존 스타일 유지
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
 
   return (
-    <div className="ujat-education-class-capacity">
+    <div
+      className={
+        isTemplateManagementScreen
+          ? 'ujat-education-class-capacity ujat-education-class-capacity--template'
+          : 'ujat-education-class-capacity'
+      }
+    >
       <SemesterRegionCapacityTableConnected
         half="h1"
         mode={mode}

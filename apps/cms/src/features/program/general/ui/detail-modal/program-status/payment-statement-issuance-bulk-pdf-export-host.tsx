@@ -10,7 +10,7 @@ import {
   collectFormDocumentPdfPageElements,
   generateFormDocumentPdfBlobFromPageElements,
 } from '@/features/template/lib/generate-form-document-pdf'
-import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
+import { createPaymentStatementIssuanceDocumentDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import {
   getPaymentStatementA4ParagraphGap,
   PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
@@ -39,7 +39,7 @@ export function PaymentStatementIssuanceBulkPdfExportHost({
   const completedRef = useRef(false)
 
   const draft = useMemo(
-    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDraft()),
+    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDocumentDraft()),
     []
   )
   const fileName = useMemo(() => buildPaymentStatementIssuancePreviewFileName(context), [context])

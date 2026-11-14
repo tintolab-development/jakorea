@@ -9,7 +9,7 @@ import {
   buildTeacherInProgressDetailTabItems,
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
-  canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
@@ -560,6 +560,7 @@ export function MypageEducationDetailPage() {
   useEffect(() => {
     if (isStudentDocumentPolicyPending) return
     if (isWithdrawnDuring) {
+      if (withdrawnDuringKeys.length === 0) return
       const fallback = withdrawnDuringKeys[0] ?? 'schedule'
       if (!isActivitySection(section) || !withdrawnDuringKeys.includes(section)) {
         setSection(fallback)
@@ -570,6 +571,7 @@ export function MypageEducationDetailPage() {
       return
     }
     if (isActivityStatus) {
+      if (inProgressKeys.length === 0) return
       const fallback = inProgressKeys[0] ?? 'notice'
       if (!isActivitySection(section) || !inProgressKeys.includes(section)) {
         setSection(fallback)
@@ -697,13 +699,16 @@ export function MypageEducationDetailPage() {
         }
       : {}),
   }
-  const showCancelCta =
-    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
+  const showCancelCta = shouldShowEducationApplicationCancelCta(
+    application.displayStatus,
+    application.cancellable,
+  )
   const showTeacherAssignment = shouldMountTeacherEducationAssignmentAside({
     isTeacher,
     applicationType:
       application.applicationType ?? routeApplicationType ?? resolvedApplicationType,
     hasTeacherAssignment: Boolean(application.teacherAssignment),
+    displayStatus: application.displayStatus,
   })
   const showPersonalCertificatePanel =
     !isProgramApplicationStatus &&
@@ -936,7 +941,8 @@ export function MypageEducationDetailPage() {
             educationTargetLabel={program.educationTargetLabel}
             educationForm={program.educationForm}
             educationFormLabel={program.educationFormLabel}
-            statusAudience="teacher"
+            statusAudience={isTeacher ? 'teacher' : 'general'}
+            participationRoleLabel="수강자"
           />
         }
         aside={

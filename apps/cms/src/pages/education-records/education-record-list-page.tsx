@@ -142,7 +142,7 @@ export function EducationRecordListPage() {
   const { exportExcel: handleExportExcel, isExporting } = useTableExcelExport({
     columns: antdColumns,
     data: tableData,
-    filename: '실적데이터',
+    filename: '실적 데이터',
     exporter: exportOfficialPerformance,
     alertOnEmpty: false,
     errorAlertContent: getPerformanceExportErrorMessage,

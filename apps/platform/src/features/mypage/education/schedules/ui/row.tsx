@@ -74,7 +74,9 @@ export function EducationScheduleRow({
     : undefined
   // TT 기관 운영일 — Figma 13843:112603: 일시 옆에 `N차시`만. 지망 순위는 카드에 쓰지 않는다.
   const subtitle = showCurriculumSessions
-    ? sessionSummary || '전 차시'
+    ? item.dateLabelOverride?.trim()
+      ? item.recognizedClassCountLabel?.trim() || item.rowLabel?.trim() || sessionSummary || '전 차시'
+      : sessionSummary || '전 차시'
     : item.operationalDayView === true
       ? item.durationLabel?.trim() || '-'
       : item.recognizedClassCountLabel?.trim() || item.rowLabel?.trim() || '-'
@@ -184,9 +186,19 @@ export function EducationScheduleRow({
               const label = session.sessionLabel?.trim()
               const title = session.title?.trim()
               const content = session.content?.trim()
+              const periodSession = Boolean(label && /교시$/u.test(label) && title)
               return (
                 <li key={`${session.sessionNo}-${label ?? title ?? ''}`} className={styles.session}>
-                  {label || title ? (
+                  {periodSession ? (
+                    <>
+                      <PFText as="p" typo="bd-lg-sb" color="black" className={styles.sessionHeading}>
+                        {label}
+                      </PFText>
+                      <PFText as="p" typo="bd-lg-rg" color="black" className={styles.sessionTime}>
+                        {title}
+                      </PFText>
+                    </>
+                  ) : label || title ? (
                     <PFText as="p" typo="bd-lg-sb" color="black" className={styles.sessionHeading}>
                       {[label, title].filter(Boolean).join(' · ')}
                     </PFText>

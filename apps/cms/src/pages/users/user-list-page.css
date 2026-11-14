@@ -42,3 +42,17 @@
   font-size: var(--font-size-13, 13px);
   color: var(--color-text-secondary, #666);
 }
+
+/** 시안: 학교(교사) 목록 · 기관 소재지 — 시/도·시/군/구 placeholder 모두 #85969d (시/군/구 비활성 포함) */
+.user-list-page--institutions
+  .table-filter-group__address-region-selects
+  .cms-select--disabled
+  .ant-select-selection-placeholder {
+  color: var(--Content-tertiary, #85969d) !important;
+}
+
+/** 시안: 학교 삭제·일괄 삭제 안내 본문 #3d3d3d */
+.delete-guide-modal--school .delete-guide-modal__body,
+.delete-guide-modal--school .delete-guide-modal__line {
+  color: var(--default-BK, #3d3d3d);
+}

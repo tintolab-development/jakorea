@@ -36,7 +36,7 @@ import {
 } from '../lib/consent-withdraw'
 import {
   buildConsentItemsFromSummaries,
-  formatConsentDate,
+  formatConsentAgreedAt,
   SETTINGS_CONSENT_TYPE_BY_ID,
 } from '../lib/map-consents'
 import {
@@ -142,7 +142,7 @@ const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy
       '동의하지 않은 상태에서는 정산 신청 및 지급이 제한돼요.',
     ].join('\n'),
     completeTitle: '지급조서 사전 동의가 철회되었어요.',
-    completeGuide: '정산 신청을 원하시면 [내 정보 수정]에서 다시 동의해 주세요.',
+    completeGuide: '정산 신청을 원하시면 [약관 및 정책 동의 관리]에서 다시 동의해 주세요.',
   },
   educatorPledge: {
     title: '교육진행자 서약을 철회할까요?',
@@ -190,7 +190,7 @@ const BASIC_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> 
     title: '만 14세 미만 아동 개인정보 수집·이용 동의를 철회할까요?',
     description: '철회 시 선택 항목으로 수집된 아동 개인정보를 더 이상 이용하지 않습니다.',
     completeTitle: '만 14세 미만 아동 개인정보 수집·이용 동의가 철회되었어요.',
-    completeGuide: '다시 동의를 원하시면 [내 정보 수정]에서 동의해 주세요.',
+    completeGuide: '다시 동의를 원하시면 [약관 및 정책 동의 관리]에서 동의해 주세요.',
   },
   marketing: {
     title: '마케팅 정보 수신 동의를 철회할까요?',
@@ -199,7 +199,7 @@ const BASIC_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> 
       '신청 내역, 계정 보안 등 서비스 이용에 필요한 안내는 계속 받을 수 있어요.',
     ].join('\n'),
     completeTitle: '마케팅 정보 수신 동의가 철회되었어요.',
-    completeGuide: '홍보 안내를 받으시려면 [내 정보 수정]에서 다시 동의해 주세요.',
+    completeGuide: '홍보 안내를 받으시려면 [약관 및 정책 동의 관리]에서 다시 동의해 주세요.',
   },
 }
 
@@ -207,7 +207,9 @@ function formatWithdrawnDate(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  return `${y}.${m}.${d}`
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${y}.${m}.${d} ${hh}:${mm}`
 }
 
 function ConsentRequirementLabel({ required }: { required: boolean }) {
@@ -626,7 +628,7 @@ export function SettingsConsentsView() {
   const showWithdrawComplete = (id: SettingsConsentItemId, changedAt?: string | null) => {
     setWithdrawComplete({
       id,
-      withdrawnAt: formatConsentDate(changedAt) ?? formatWithdrawnDate(new Date()),
+      withdrawnAt: formatConsentAgreedAt(changedAt) ?? formatWithdrawnDate(new Date()),
     })
   }
 
@@ -703,7 +705,7 @@ export function SettingsConsentsView() {
     const result = await saveMarketingConsent(true)
     setMarketingAgreeOpen(false)
     if (result.ok) {
-      setMarketingAgreedAt(formatConsentDate(result.agreedAt) ?? formatWithdrawnDate(new Date()))
+      setMarketingAgreedAt(formatConsentAgreedAt(result.agreedAt) ?? formatWithdrawnDate(new Date()))
     }
   }
 
@@ -776,7 +778,7 @@ export function SettingsConsentsView() {
   return (
     <div className={styles.page}>
       <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.pageLead}>
-        서비스 이용에 필요한 약관·동의 현황을 확인하고 관리할 수 있습니다.
+        초상권 수집·이용 항목 미동의 시 프로그램 신청·참여가 제한돼요.
       </PFText>
       <section className={styles.section}>
         <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
@@ -853,7 +855,7 @@ export function SettingsConsentsView() {
         title={completeCopy?.completeTitle}
         description={
           completeCopy && withdrawComplete
-            ? `동의 철회 일자: ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
+            ? `동의 철회일시: ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
             : null
         }
         onClose={() => setWithdrawComplete(null)}
@@ -876,7 +878,7 @@ export function SettingsConsentsView() {
         title={MARKETING_AGREE_COPY.completeTitle}
         description={
           marketingAgreedAt
-            ? `동의 일자: ${marketingAgreedAt}\n${MARKETING_AGREE_COPY.completeGuide}`
+            ? `동의일시: ${marketingAgreedAt}\n${MARKETING_AGREE_COPY.completeGuide}`
             : null
         }
         onClose={() => setMarketingAgreedAt(null)}

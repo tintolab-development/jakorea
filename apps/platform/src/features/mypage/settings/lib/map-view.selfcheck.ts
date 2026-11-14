@@ -27,7 +27,9 @@ assert.equal(formatSettingsGrade('2학년'), '2학년')
 
 const view = mapPortalProfileToSettingsView(MOCK_SETTINGS_PROFILE, MOCK_SETTINGS_GUARDIAN)
 assert.equal(view.basicRows[0]?.value, '2026년 09월 15일')
-assert.equal(view.basicRows[6]?.value, '재희 고등학교')
+assert.equal(view.basicRows[1]?.label, '이메일 ID')
+assert.equal(view.basicRows[7]?.label, '소속/학교')
+assert.equal(view.basicRows[7]?.value, '재희 고등학교')
 assert.equal(view.basicRows[10]?.value, '-')
 assert.equal(view.basicRows[10]?.action, '1365-shortcut')
 assert.equal(view.guardian?.relationship, '아빠')
@@ -60,23 +62,23 @@ const remoteWithoutGuardian = mapPortalProfileToSettingsView({
   email: 'member@example.com',
 })
 assert.equal(remoteWithoutGuardian.guardian, null)
-assert.equal(remoteWithoutGuardian.basicRows[1]?.value, '김회원')
+assert.equal(remoteWithoutGuardian.basicRows[2]?.value, '김회원')
 
 const notEnrolledView = mapPortalProfileToSettingsView({
   schoolEnrollmentStatus: 'NOT_ENROLLED',
   affiliationName: '지역아동센터',
   grade: '2',
 })
-assert.equal(notEnrolledView.basicRows[6]?.label, '소속 기관명')
-assert.equal(notEnrolledView.basicRows[6]?.value, '지역아동센터')
+assert.equal(notEnrolledView.basicRows[7]?.label, '소속 기관명')
+assert.equal(notEnrolledView.basicRows[7]?.value, '지역아동센터')
 assert.equal(notEnrolledView.basicRows.some(row => row.label === '학년'), false)
 assert.equal(notEnrolledView.basicRows.some(row => row.label === '소속/학교명'), false)
 
 const notEnrolledEmptyAffiliation = mapPortalProfileToSettingsView({
   schoolEnrollmentStatus: 'NOT_ENROLLED',
 })
-assert.equal(notEnrolledEmptyAffiliation.basicRows[6]?.label, '소속 기관명')
-assert.equal(notEnrolledEmptyAffiliation.basicRows[6]?.value, '소속 없음')
+assert.equal(notEnrolledEmptyAffiliation.basicRows[7]?.label, '소속 기관명')
+assert.equal(notEnrolledEmptyAffiliation.basicRows[7]?.value, '소속 없음')
 
 assert.equal(formatSettingsEmployment('ACTIVE'), '재직 중')
 assert.equal(formatSettingsEmployment('ON_LEAVE'), '휴직 중')
@@ -85,10 +87,12 @@ assert.equal(formatSettingsEmployment('TRANSFERRED'), '-')
 const teacherView = mapPortalProfileToSettingsView(MOCK_TEACHER_SETTINGS_PROFILE, null, {
   variant: 'teacher',
 })
-assert.equal(teacherView.basicRows[5]?.label, '소속/학교')
-assert.equal(teacherView.basicRows[5]?.value, '서울초등학교')
-assert.equal(teacherView.basicRows[6]?.label, '재직 현황')
-assert.equal(teacherView.basicRows[6]?.value, '재직 중')
+assert.equal(teacherView.basicRows[1]?.label, '이메일 ID')
+assert.equal(teacherView.basicRows[2]?.label, '이름')
+assert.equal(teacherView.basicRows[6]?.label, '소속/학교')
+assert.equal(teacherView.basicRows[6]?.value, '서울초등학교')
+assert.equal(teacherView.basicRows[7]?.label, '재직 현황')
+assert.equal(teacherView.basicRows[7]?.value, '재직 중')
 assert.equal(teacherView.guardian, null)
 
 const mappedGuardian = mapPortalGuardianToSettingsView({

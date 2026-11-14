@@ -13,7 +13,11 @@ import { createPortal } from 'react-dom'
 import { PFOptionList, type PFOptionListOption } from '../pf-option-list'
 import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
+import chevronDownCompleted20Url from './icons/chevron-down-completed-20.svg'
+import chevronDownCompleted24Url from './icons/chevron-down-completed-24.svg'
 import chevronDownBlackUrl from './icons/chevron-down-completed.svg'
+import chevronDownDefault20Url from './icons/chevron-down-default-20.svg'
+import chevronDownDefault24Url from './icons/chevron-down-default-24.svg'
 import chevronDownGrayUrl from './icons/chevron-down-default.svg'
 import styles from './pf-select.module.css'
 
@@ -84,6 +88,14 @@ function computeListboxStyle(field: HTMLElement): CSSProperties {
     maxHeight,
     zIndex: 1100,
   }
+}
+
+/** 시안 Input 크기별 펼침 아이콘(medium 20 · large 22 · xlarge/mobile 24) — [기본, 값 있음] */
+const CHEVRON_ICON_BY_SIZE: Record<PFSelectSize, readonly [string, string]> = {
+  medium: [chevronDownDefault20Url, chevronDownCompleted20Url],
+  large: [chevronDownGrayUrl, chevronDownBlackUrl],
+  xlarge: [chevronDownDefault24Url, chevronDownCompleted24Url],
+  mobile: [chevronDownDefault24Url, chevronDownCompleted24Url],
 }
 
 export function PFSelect({
@@ -326,7 +338,7 @@ export function PFSelect({
             <span className={styles.chevronButton} aria-hidden="true">
               <img
                 className={styles.chevron}
-                src={hasValue ? chevronDownBlackUrl : chevronDownGrayUrl}
+                src={CHEVRON_ICON_BY_SIZE[size][hasValue ? 1 : 0]}
                 alt=""
               />
             </span>

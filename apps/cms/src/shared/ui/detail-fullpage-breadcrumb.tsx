@@ -1,4 +1,5 @@
 import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
+import { ButtonRightIcon } from './icons'
 
 export type DetailFullpageBreadcrumbTarget = {
   pathname: string
@@ -18,15 +19,11 @@ interface DetailFullpageBreadcrumbProps {
   className?: string
 }
 
+/** 시안 GNB / Breadcrumb: Icon / Button / w20 right (disabled 색) */
 function DetailFullpageBreadcrumbSeparator() {
   return (
     <span className="detail-fullpage-breadcrumb__separator" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg" width="6" height="9" viewBox="0 0 6 9" fill="none">
-        <path
-          d="M3.57542 4.45354L0.181042 1.05938C0.0657639 0.943959 0.00673616 0.798889 0.00395838 0.624167C0.0013195 0.449584 0.0603473 0.301875 0.181042 0.181042C0.301875 0.0603473 0.448264 0 0.620208 0C0.792153 0 0.938541 0.0603473 1.05937 0.181042L4.80458 3.92625C4.8825 4.00431 4.9375 4.0866 4.96958 4.17313C5.00167 4.25965 5.01771 4.35313 5.01771 4.45354C5.01771 4.55396 5.00167 4.64743 4.96958 4.73396C4.9375 4.82049 4.8825 4.90278 4.80458 4.98083L1.05937 8.72604C0.943958 8.84132 0.798889 8.90035 0.624166 8.90313C0.449583 8.90576 0.301875 8.84674 0.181042 8.72604C0.0603473 8.60521 0 8.45882 0 8.28688C0 8.11493 0.0603473 7.96854 0.181042 7.84771L3.57542 4.45354Z"
-          fill="currentColor"
-        />
-      </svg>
+      <ButtonRightIcon className="detail-fullpage-breadcrumb__separator-icon" />
     </span>
   )
 }

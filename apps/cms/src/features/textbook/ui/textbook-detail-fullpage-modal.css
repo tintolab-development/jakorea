@@ -18,6 +18,8 @@
   display: inline-flex;
   align-items: center;
   min-height: 24px;
+  /* 시안: 등록일 | 등록자명 한 줄 */
+  white-space: nowrap;
 }
 
 .textbook-detail-fullpage-modal__registered-divider {

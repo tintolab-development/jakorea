@@ -299,3 +299,56 @@
   align-items: center;
   gap: 6px;
 }
+
+/* 후원사 담당자 — 후원사 선택 전(비활성)에도 placeholder는 시안 #85969d
+ * (공통 `.cms-select--disabled` 규칙보다 우선하도록 클래스를 겹쳐 쓴다) */
+.program-registration-sponsor-manager-select.program-registration-sponsor-manager-select
+  .cms-select-multi__trigger-text--placeholder {
+  color: var(--Content-tertiary, #85969d);
+}
+
+/* 1사1교 템플릿 관리(시안 5767:191506) — 참여자 유형 고정 선택(학교/기관·강사)을 활성 선택 모양으로 */
+.program-registration-paragraph__locked-checked.cms-checkbox-group
+  .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked {
+  color: var(--Netural-black, #3d3d3d);
+}
+
+.program-registration-paragraph__locked-checked.cms-checkbox-group
+  .ant-checkbox-disabled.ant-checkbox-checked
+  .ant-checkbox-inner {
+  border: 1px solid var(--Border-alpha-10, rgba(61, 61, 61, 0.1));
+  background: var(--Brand-500, #00a0af);
+}
+
+.program-registration-paragraph__locked-checked.cms-checkbox-group
+  .ant-checkbox-disabled.ant-checkbox-checked
+  .ant-checkbox-inner::after {
+  border-color: #fff;
+  opacity: 1;
+}
+
+/* 1사1교 템플릿 관리(시안 5767:191506) — 후원사 선택 전 담당자 셀렉트도 기본 칸 모양(흰 배경·#e0e0e0) */
+.program-registration-sponsor-manager-select--template-idle
+  .cms-select-multi__trigger.cms-field__box--disabled {
+  border-color: var(--Border-default, #e0e0e0);
+  background: var(--White, #fff);
+}
+
+/* 템플릿 관리 등록 폼 시안 — 임금 정보 「1시간당 [직접 입력] 원 (최대 …)」 간격 6 */
+.detail-info-form-inputs-wrapper.program-registration-paragraph__fee-group {
+  gap: 6px;
+}
+
+/* 템플릿 관리 등록 폼 시안(14858:594034 등) — 「일정 별 상이」 안내: #3d3d3d 50%, 14px/125% */
+.program-registration-paragraph__schedule-hint.program-registration-paragraph__schedule-hint--template {
+  color: rgba(61, 61, 61, 0.5);
+  line-height: 125%;
+}
+
+/* 템플릿 관리 등록 폼 시안(14858:593951 · 12800:301096) — 회차·사전 교육 반쪽 칸 IPS 2차 셀렉트 240 고정(1차 120) */
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-ips-type-fields--inline.program-registration-ips-type-fields--template
+  > .cms-select.cms-field__box:last-child {
+  flex: 0 1 240px;
+  width: 240px;
+}

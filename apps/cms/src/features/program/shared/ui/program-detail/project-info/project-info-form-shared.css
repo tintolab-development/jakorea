@@ -881,3 +881,18 @@
   margin: 0.5em 0;
   padding-left: 1.2em;
 }
+
+/*
+ * 상세 정보 섹션 제목 18/Bold (시안 — 전역 `detail-info-form__title` 20px 대신)
+ * 일반 공통·모집·신청 정보 상세, 1사1교 상세 공통 정보, 교육받은 교사 공통 정보, Gemini 승인 연수 상세
+ */
+.detail-common-info-view .detail-info-form__title,
+.program-common-info-edit .detail-info-form__title,
+.recruitment-view .detail-info-form__title,
+.application-view .form-paragraph-section-header .detail-info-form__title,
+.project-info-detail__info-tab .detail-info-form__title,
+.trained-teachers-common-info__section .detail-info-form__title,
+.gemini-approved-training-detail-info .detail-info-form__title {
+  font-size: 18px;
+  font-weight: 700;
+}

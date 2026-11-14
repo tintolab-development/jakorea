@@ -35,10 +35,13 @@ import {
   type TemplatePreviewControllerParams,
 } from '@/features/template/hooks/use-template-preview-controller'
 import {
-  createDefaultSurveyDraft,
+  createSurveyTemplateSeedDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+
+/** 시안(5767:42989·5767:43362)에서 설문 제목이 빈 칸(「설문 제목 입력」)인 카탈로그 설문 */
+const SURVEY_SEED_EMPTY_TITLE_TEMPLATE_CODES = new Set<string>(['survey-default', 'survey-student'])
 
 export type CatalogOriginalSaveRestrictionNotice = { title: string; content: string }
 
@@ -159,6 +162,8 @@ function TemplatePreviewModalShell({
       onDelete={onDelete}
       deleteLoading={deleteLoading}
       registrationUserMode={registrationUserMode}
+      // 템플릿 관리 편집기: 상단 「닫기」 없이 미리보기·저장, 닫기는 우측 상단 X (QA 261113 #11·#44)
+      showHeaderCloseButton={registrationUserMode}
       footerAction={footerAction}
       leftContent={isDraftLoading ? <FormDraftLoading /> : leftContent}
       rightNavigation={isDraftLoading ? null : rightNavigation}
@@ -448,8 +453,10 @@ function SurveyTemplatePreviewEditor({
   previewControllerBase,
   ...shellProps
 }: TemplatePreviewModalEditorProps & { registryEntry: TemplateRegistryDefinition }) {
+  const surveySeedTemplateCode = registryEntry.id ?? templateId
   const getSurveyListInitialDraft = useCallback((): WritingFormDraft => {
-    const base = createDefaultSurveyDraft()
+    const base = createSurveyTemplateSeedDraft(surveySeedTemplateCode)
+    if (SURVEY_SEED_EMPTY_TITLE_TEMPLATE_CODES.has(surveySeedTemplateCode ?? '')) return base
     const name = templateName?.trim()
     if (name == null || name === '') return base
     return {
@@ -458,7 +465,7 @@ function SurveyTemplatePreviewEditor({
         p.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title ? { ...p, surveyTitle: name } : p
       ),
     }
-  }, [templateName])
+  }, [templateName, surveySeedTemplateCode])
 
   const getSurveyListDefaultParagraphId = useCallback((_draft: WritingFormDraft) => {
     return DEFAULT_SURVEY_PARAGRAPH_IDS.title

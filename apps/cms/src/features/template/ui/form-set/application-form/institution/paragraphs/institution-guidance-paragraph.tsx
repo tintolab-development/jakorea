@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import {
+  isInstitutionApplicationBridgeTemplateAuthoring,
   shouldShowInstitutionApplicationGuidanceParagraph,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
@@ -118,7 +119,11 @@ export function ProgramApplicationFormInstitutionGuidanceParagraph({
   onParagraphChange?: (next: HorizontalTableParagraph) => void
 }) {
   const bridge = useInstitutionApplicationProgramBridge()
-  if (!shouldShowInstitutionApplicationGuidanceParagraph(bridge)) {
+  // 템플릿 편집기는 항상 노출, 실사용(등록·상세)은 모집 폼 사전 안내사항 「작성」일 때만 (QA 261113 #61)
+  if (
+    !isInstitutionApplicationBridgeTemplateAuthoring(bridge) &&
+    !shouldShowInstitutionApplicationGuidanceParagraph(bridge)
+  ) {
     return null
   }
   return (

@@ -1,7 +1,7 @@
 /**
- * FAQ 목록·상세 —「FAQ 삭제」/「삭제」버튼 라벨 텍스트 스펙
+ * FAQ 목록 —「FAQ 삭제」툴바 버튼 라벨 텍스트 스펙 (상세 「삭제」는 large 16/600 그대로)
  * color: #C32F4A; text-align: center; font-family: Pretendard; font-size: 14px;
- * font-style: normal; font-weight: 600; line-height: 150%; /* 21px */
+ * font-style: normal; font-weight: 600; line-height: 150% (21px)
  *
  * `cms-button--h44`+antd가 버튼 루트에 16px를 두고 ·ant ·span 규칙이 있어
  * 단순 .cms-button__label 선언이 밀릴 수 있어 구체성·!important로 고정

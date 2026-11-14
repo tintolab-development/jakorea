@@ -4,6 +4,9 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './user-info.css'
 
 const DEFAULT_USER_INFO_FIELDS = DEFAULT_USER_INFO_FIELD_CATALOG
@@ -41,6 +44,79 @@ function previewSampleForKey(key: string): string {
 
 type UserInfoFieldEntry = { key: string; label: string }
 
+/** 설문자 정보 「성별」 — 셀렉트 선택지, 서버 값은 MALE/FEMALE (2026-11-13 요청) */
+export const USER_INFO_GENDER_FIELD_KEY = 'gender'
+export const USER_INFO_GENDER_OPTIONS = [
+  { label: '남자', value: 'MALE' },
+  { label: '여자', value: 'FEMALE' },
+] as const
+
+/** 예전 직접 입력값(남·남자·여·여자)도 MALE/FEMALE로 읽는다. 그 밖의 값은 그대로 */
+export function normalizeUserInfoGenderValue(value: string | null | undefined): string {
+  const v = (value ?? '').trim()
+  if (v === '') return ''
+  const upper = v.toUpperCase()
+  if (upper === 'MALE' || v === '남' || v === '남자') return 'MALE'
+  if (upper === 'FEMALE' || v === '여' || v === '여자') return 'FEMALE'
+  return v
+}
+
+/** 화면 표시 — MALE/FEMALE → 남자/여자 */
+export function userInfoAnswerDisplayValue(key: string, value: string): string {
+  if (key !== USER_INFO_GENDER_FIELD_KEY) return value
+  const normalized = normalizeUserInfoGenderValue(value)
+  return USER_INFO_GENDER_OPTIONS.find(o => o.value === normalized)?.label ?? value
+}
+
+/** 설문자 정보 연락처 키 — 입력 시 하이픈 자동·최대 11자리(`CmsPhoneInput`) */
+const USER_INFO_PHONE_FIELD_KEY = 'phone'
+
+/** 설문자 정보 답변 입력 — 성별은 셀렉트, 연락처는 전화번호 입력, 나머지는 텍스트 입력 */
+function UserInfoAnswerControl({
+  field,
+  value,
+  onChange,
+}: {
+  field: { key: string; label: string }
+  value: string
+  onChange: (key: string, value: string) => void
+}) {
+  if (field.key === USER_INFO_GENDER_FIELD_KEY) {
+    const normalized = normalizeUserInfoGenderValue(value)
+    return (
+      <CmsSelect
+        inputSize="small"
+        width="100%"
+        withAllOption={false}
+        placeholder={`${field.label}을 선택해 주세요`}
+        options={USER_INFO_GENDER_OPTIONS.map(o => ({ label: o.label, value: o.value }))}
+        value={normalized === '' ? undefined : normalized}
+        onChange={next => onChange(field.key, String(next ?? ''))}
+      />
+    )
+  }
+  if (field.key === USER_INFO_PHONE_FIELD_KEY) {
+    return (
+      <CmsPhoneInput
+        inputSize="small"
+        value={value}
+        onChange={event => onChange(field.key, event.target.value)}
+        placeholder="010-1234-5678"
+        width="100%"
+      />
+    )
+  }
+  return (
+    <CmsInput
+      inputSize="small"
+      value={value}
+      onChange={event => onChange(field.key, event.target.value)}
+      placeholder={`${field.label}을 입력해 주세요`}
+      width="100%"
+    />
+  )
+}
+
 export type UserInfoPreviewTableSkin = 'surface' | 'a4Document'
 export type UserInfoPreviewValues = Record<string, string>
 
@@ -52,16 +128,15 @@ function renderUserInfoPreviewValue(
 ) {
   if (onFieldAnswerChange) {
     return (
-      <CmsInput
-        inputSize="small"
+      <UserInfoAnswerControl
+        field={field}
         value={previewValues?.[field.key] ?? ''}
-        onChange={event => onFieldAnswerChange(field.key, event.target.value)}
-        placeholder={`${field.label}을 입력해 주세요`}
-        width="100%"
+        onChange={onFieldAnswerChange}
       />
     )
   }
-  return previewValues?.[field.key] ?? previewSampleForKey(field.key)
+  const answered = previewValues?.[field.key]
+  return answered != null ? userInfoAnswerDisplayValue(field.key, answered) : previewSampleForKey(field.key)
 }
 
 export function UserInfoPreviewTable({
@@ -87,9 +162,7 @@ export function UserInfoPreviewTable({
     return (
       <p
         className={
-          isA4
-            ? 'form-document-preview-paragraph__body-text'
-            : 'user-info-preview-table__empty'
+          isA4 ? 'form-document-preview-paragraph__body-text' : 'user-info-preview-table__empty'
         }
         role="status"
       >
@@ -186,10 +259,85 @@ export function UserInfoPreviewTable({
 }
 
 /** A4 `FormDocumentPreviewParagraph`와 측정 레이어에서 동일 엔트리 집합을 쓰기 위함 */
-export function getUserInfoPreviewSelectedEntries(paragraph: UserInfoParagraph): UserInfoFieldEntry[] {
+export function getUserInfoPreviewSelectedEntries(
+  paragraph: UserInfoParagraph
+): UserInfoFieldEntry[] {
   const fields = normalizeFields(paragraph)
   const selected = new Set(paragraph.selectedUserFieldKeys ?? [])
   return fields.filter(f => selected.has(f.key))
+}
+
+/**
+ * 설문자 정보 미리보기 — 공통 상세 정보 폼(DetailInfoForm) 규격.
+ * 값이 없으면 「설문자 {항목명}」 예시 문구로 통일한다(2026-11-13 요청).
+ * 항목 4개 이상이면 한 행에 두 항목씩. 강의평가(`pairAll`)는 시안 1141:268259대로 항상 한 행에 두 항목.
+ * `onFieldAnswerChange`가 있으면(강의평가 작성) 값 칸에 입력 — 제출 검증·응답 `answers`에 들어가는 값이다.
+ */
+export const SURVEY_RESPONDENT_PREVIEW_VALUE_PREFIX = '설문자'
+
+function SurveyRespondentDetailInfoPreview({
+  selectedEntries,
+  previewValues,
+  pairAll = false,
+  onFieldAnswerChange,
+}: {
+  selectedEntries: UserInfoFieldEntry[]
+  previewValues?: UserInfoPreviewValues
+  pairAll?: boolean
+  onFieldAnswerChange?: (key: string, value: string) => void
+}) {
+  if (selectedEntries.length === 0) {
+    return (
+      <p className="user-info-preview-table__empty" role="status">
+        선택된 항목이 없습니다.
+      </p>
+    )
+  }
+  const valueFor = (field: UserInfoFieldEntry) => {
+    const v = previewValues?.[field.key]?.trim()
+    return v
+      ? userInfoAnswerDisplayValue(field.key, v)
+      : `${SURVEY_RESPONDENT_PREVIEW_VALUE_PREFIX} ${field.label}`
+  }
+  const editable = onFieldAnswerChange != null
+  const paired = pairAll ? selectedEntries.length >= 2 : selectedEntries.length >= 4
+  const rows: UserInfoFieldEntry[][] = []
+  for (let i = 0; i < selectedEntries.length; i += paired ? 2 : 1) {
+    rows.push(selectedEntries.slice(i, i + (paired ? 2 : 1)))
+  }
+  return (
+    <DetailInfoForm
+      title="설문자 정보"
+      hideHeader
+      mode={editable ? 'edit' : 'view'}
+      className="user-info-respondent-detail-info"
+    >
+      {rows.map(row => (
+        <DetailInfoForm.Row
+          key={row.map(f => f.key).join('-')}
+          type={row.length === 2 ? 'double' : 'single'}
+        >
+          {row.map(field => (
+            <DetailInfoForm.Field
+              key={field.key}
+              label={field.label}
+              view={<span className="user-info-respondent-preview__value">{valueFor(field)}</span>}
+              edit={
+                editable ? (
+                  <UserInfoAnswerControl
+                    field={field}
+                    value={previewValues?.[field.key] ?? ''}
+                    onChange={onFieldAnswerChange}
+                  />
+                ) : undefined
+              }
+              fullRow={row.length === 1}
+            />
+          ))}
+        </DetailInfoForm.Row>
+      ))}
+    </DetailInfoForm>
+  )
 }
 
 export type UserInfoLayout = 'chips' | 'previewTable'
@@ -203,6 +351,8 @@ export function UserInfo({
   previewValues,
   forceTwoColumnRow = false,
   answerEditable = false,
+  surveyRespondentPreview = false,
+  lectureEvalRespondentDetailInfo = false,
 }: {
   paragraph: UserInfoParagraph
   onChange?: (next: UserInfoParagraph) => void
@@ -211,6 +361,10 @@ export function UserInfo({
   previewValues?: UserInfoPreviewValues
   forceTwoColumnRow?: boolean
   answerEditable?: boolean
+  /** 설문 단락의 설문자 정보 — 미리보기를 DetailInfoForm 규격·「설문자 OO」 예시 값으로 */
+  surveyRespondentPreview?: boolean
+  /** 강의평가 작성·미리보기 — 한 행 두 항목, 작성 시 DetailInfoForm 값 칸에 입력 */
+  lectureEvalRespondentDetailInfo?: boolean
 }) {
   const fields = normalizeFields(paragraph)
   const selected = new Set(paragraph.selectedUserFieldKeys ?? [])
@@ -225,6 +379,34 @@ export function UserInfo({
       userFields: fields,
       selectedUserFieldKeys: [...next],
     })
+  }
+
+  if (layout === 'previewTable' && surveyRespondentPreview && lectureEvalRespondentDetailInfo) {
+    return (
+      <SurveyRespondentDetailInfoPreview
+        selectedEntries={getUserInfoPreviewSelectedEntries(paragraph)}
+        previewValues={previewValues ?? paragraph.fieldAnswers}
+        pairAll
+        onFieldAnswerChange={
+          answerEditable && onChange
+            ? (key, value) =>
+                onChange({
+                  ...paragraph,
+                  fieldAnswers: { ...(paragraph.fieldAnswers ?? {}), [key]: value },
+                })
+            : undefined
+        }
+      />
+    )
+  }
+
+  if (layout === 'previewTable' && surveyRespondentPreview && !answerEditable) {
+    return (
+      <SurveyRespondentDetailInfoPreview
+        selectedEntries={getUserInfoPreviewSelectedEntries(paragraph)}
+        previewValues={previewValues ?? paragraph.fieldAnswers}
+      />
+    )
   }
 
   if (layout === 'previewTable') {

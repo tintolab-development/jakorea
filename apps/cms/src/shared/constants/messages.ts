@@ -4,7 +4,7 @@
  */
 
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 제목 (회원 신규 등록과 동일) */
-export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 입력 안내'
+export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력 안내'
 
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (`*` 빨간색). 필드명 미안내 */
 export {
@@ -24,6 +24,14 @@ export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE = '동의서 파
 
 /** 성범죄 경력조회 동의서 — PDF 외 파일 선택 시 AlertModal 본문 */
 export const CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE = 'PDF 파일만 업로드할 수 있습니다.'
+
+/** 회원 화면 성범죄 동의서 업로드 — PDF·JPG·PNG 외 파일 선택 시 AlertModal 본문 */
+export const MEMBER_CRIME_CONSENT_EVIDENCE_FILE_TYPE_ALERT_MESSAGE =
+  'PDF, JPG, PNG 파일만 업로드할 수 있습니다.'
+
+/** 회원 화면 성범죄 동의서 업로드 — 20MB 초과 시 AlertModal 본문 */
+export const MEMBER_CRIME_CONSENT_EVIDENCE_FILE_SIZE_ALERT_MESSAGE =
+  '파일은 최대 20MB까지 첨부할 수 있습니다.'
 
 /** 개인 재학 소속 — 검색 미선택·불완전 선택(학교명만) 시 AlertModal 본문 */
 export const INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE =
@@ -85,13 +93,13 @@ export const PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE =
 export const GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_TITLE = '등록 완료'
 export const GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_MESSAGE = '등록되었습니다.'
 
-/** 참여 봉사자 목록 — 활동확인서 발급: 미선택 시 AlertModal 본문 */
+/** 참여 봉사자 목록 — 활동인증서 발급: 미선택 시 AlertModal 본문 */
 export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE =
   '발급할 봉사자를 1명 선택해 주세요.'
 
-/** 참여 봉사자 목록 — 활동확인서 발급: 다수 선택 시 AlertModal 본문 */
+/** 참여 봉사자 목록 — 활동인증서 발급: 다수 선택 시 AlertModal 본문 */
 export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE =
-  '활동확인서는 한 번에 1명만 발급할 수 있습니다.\n봉사자 1명만 선택한 뒤 다시 시도해 주세요.'
+  '활동인증서는 한 번에 1명만 발급할 수 있습니다.\n봉사자 1명만 선택한 뒤 다시 시도해 주세요.'
 
 
 /** 참여 봉사자 목록 — 봉사자 추가 등록: 등록 완료 시 AlertModal 본문 */

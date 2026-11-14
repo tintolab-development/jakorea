@@ -123,3 +123,8 @@
   font-size: 15px;
   color: var(--gray-85969-d, #85969d);
 }
+
+/* 설문자 정보 미리보기 값 — 회색(Content/tertiary, 2026-11-13 요청) */
+.user-info-respondent-preview__value {
+  color: var(--Content-tertiary, #85969d);
+}

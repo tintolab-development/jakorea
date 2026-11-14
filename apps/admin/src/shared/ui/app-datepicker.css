@@ -55,8 +55,10 @@
 }
 
 .app-datepicker__calendar-icon {
+  /* 시안 Icon / Field / w22 calendar */
+  width: 22px;
+  height: 22px;
   color: #444;
-  font-size: 16px;
 }
 
 .app-datepicker.app-datepicker--filter {

@@ -2,11 +2,16 @@ import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { GeminiRecruitmentInstitutionFields } from '@/features/program/gemini/ui/recruitment/gemini-recruitment-institution-fields'
+import {
+  RECRUIT_TEMPLATE_INQUIRY_INPUT_WIDTH,
+  RECRUIT_TEMPLATE_INQUIRY_LABEL_GAP,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import type { GeminiRecruitmentFormFieldValues } from '@/features/program/gemini/lib/recruitment/format-recruitment-fields'
 import type { GeminiRecruitmentEducationForm } from '@/features/program/gemini/lib/recruitment/add-form-options'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { GEMINI_RECRUITMENT_VALIDATION_KEYS } from '@/features/program/gemini/lib/recruitment/validation-keys'
 import {
   GEMINI_RECRUIT_FIELD_KEYS,
@@ -34,6 +39,22 @@ function serializePeriodToOverlay(period: [Dayjs | null, Dayjs | null] | null): 
   }
 }
 
+/** Gemini 찾아가는 연수 모집 폼 — 교육 대상 고정 문구 */
+const GEMINI_TEMPLATE_FIXED_EDUCATION_TARGET_LABEL = '대학(원)생, 성인'
+
+/** 시안(5798:96247) 문의처 — 입력 200·라벨 간격 6 */
+const GEMINI_TEMPLATE_INQUIRY_INPUT_LAYOUT = {
+  inputWidth: RECRUIT_TEMPLATE_INQUIRY_INPUT_WIDTH,
+  labelGap: RECRUIT_TEMPLATE_INQUIRY_LABEL_GAP,
+}
+
+/** Gemini 찾아가는 연수 모집 폼 — 시안(5798:96247) placeholder */
+const GEMINI_TEMPLATE_PLACEHOLDERS = {
+  title: '대표 프로그램명(국문)을 입력해 주세요',
+  applicationPeriod: '모집 기간을 선택해 주세요',
+  trainingRequestPeriod: '프로그램 운영 기간을 선택해 주세요',
+} as const
+
 /** Gemini 찾아가는 연수 모집 폼 — 참여 기관 모집 정보 단락 */
 export function GeminiRecruitInstitutionInfoParagraph() {
   const [title, setTitle] = useGeminiRecruitField(GEMINI_RECRUIT_FIELD_KEYS.title, '')
@@ -48,9 +69,10 @@ export function GeminiRecruitInstitutionInfoParagraph() {
     GEMINI_RECRUIT_FIELD_KEYS.educationTargetDetail,
     ''
   )
-  const [applicationPeriodStart, setApplicationPeriodStart] = useGeminiRecruitField<
-    string | null
-  >(GEMINI_RECRUIT_FIELD_KEYS.applicationPeriodStart, null)
+  const [applicationPeriodStart, setApplicationPeriodStart] = useGeminiRecruitField<string | null>(
+    GEMINI_RECRUIT_FIELD_KEYS.applicationPeriodStart,
+    null
+  )
   const [applicationPeriodEnd, setApplicationPeriodEnd] = useGeminiRecruitField<string | null>(
     GEMINI_RECRUIT_FIELD_KEYS.applicationPeriodEnd,
     null
@@ -65,10 +87,11 @@ export function GeminiRecruitInstitutionInfoParagraph() {
     GEMINI_RECRUIT_FIELD_KEYS.minStudentCount,
     15
   )
-  const [educationForm, setEducationForm] = useGeminiRecruitField<GeminiRecruitmentEducationForm>(
-    GEMINI_RECRUIT_FIELD_KEYS.educationForm,
-    'online'
-  )
+  // 템플릿 관리 모집 폼은 라디오를 미선택으로 시작한다(그 외 화면은 기존 기본값 「온라인」).
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const [educationForm, setEducationForm] = useGeminiRecruitField<
+    GeminiRecruitmentEducationForm | ''
+  >(GEMINI_RECRUIT_FIELD_KEYS.educationForm, isTemplateManagementScreen ? '' : 'online')
   const [inquiryContactName, setInquiryContactName] = useGeminiRecruitField(
     GEMINI_RECRUIT_FIELD_KEYS.inquiryContactName,
     ''
@@ -98,7 +121,8 @@ export function GeminiRecruitInstitutionInfoParagraph() {
       trainingRequestPeriodStart,
       trainingRequestPeriodEnd,
       minStudentCount,
-      educationForm,
+      // 미선택('')은 라디오 그룹이 아무것도 선택하지 않은 상태로 그린다
+      educationForm: educationForm as GeminiRecruitmentEducationForm,
       inquiryContactName,
       inquiryTel,
       inquiryEmail,
@@ -166,9 +190,12 @@ export function GeminiRecruitInstitutionInfoParagraph() {
 
   const handleChange = (patch: Partial<GeminiRecruitmentFormFieldValues>) => {
     if (patch.title !== undefined) setTitle(patch.title)
-    if (patch.announcementPublished !== undefined) setAnnouncementPublished(patch.announcementPublished)
-    if (patch.educationTargetLevels !== undefined) setEducationTargetLevels(patch.educationTargetLevels)
-    if (patch.educationTargetDetail !== undefined) setEducationTargetDetail(patch.educationTargetDetail)
+    if (patch.announcementPublished !== undefined)
+      setAnnouncementPublished(patch.announcementPublished)
+    if (patch.educationTargetLevels !== undefined)
+      setEducationTargetLevels(patch.educationTargetLevels)
+    if (patch.educationTargetDetail !== undefined)
+      setEducationTargetDetail(patch.educationTargetDetail)
     if (patch.educationForm !== undefined) {
       setEducationForm(patch.educationForm as GeminiRecruitmentEducationForm)
     }
@@ -208,6 +235,10 @@ export function GeminiRecruitInstitutionInfoParagraph() {
           onTrainingRequestPeriodChange={handleTrainingRequestPeriodChange}
           onMinStudentCountChange={handleMinStudentCountChange}
           onChange={handleChange}
+          // 템플릿 Gemini 모집 폼 — 교육 대상 고정 (QA 261113 #60)
+          fixedEducationTargetLabel={GEMINI_TEMPLATE_FIXED_EDUCATION_TARGET_LABEL}
+          placeholderOverrides={GEMINI_TEMPLATE_PLACEHOLDERS}
+          inquiryInputLayout={GEMINI_TEMPLATE_INQUIRY_INPUT_LAYOUT}
         />
       </DetailInfoForm>
     </div>

@@ -28,7 +28,7 @@
   color: var(--color-red);
   text-overflow: ellipsis;
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 500;
   line-height: 160%;
@@ -202,6 +202,21 @@
   height: 22px;
 }
 
+/* 시안 Input 크기별 펼침 아이콘: medium 20 · xlarge/mobile 24 (large는 기본 22) */
+.medium .chevronButton,
+.medium .chevron {
+  width: 20px;
+  height: 20px;
+}
+
+.xlarge .chevronButton,
+.xlarge .chevron,
+.mobile .chevronButton,
+.mobile .chevron {
+  width: 24px;
+  height: 24px;
+}
+
 .message {
   margin: 0;
   padding-left: var(--spacing-8);
@@ -215,6 +230,7 @@
 
 .messageNeutral {
   color: var(--color-neutral-warm-500);
+  font-weight: 400;
 }
 
 .messageSuccess {

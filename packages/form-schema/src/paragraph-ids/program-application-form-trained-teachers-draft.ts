@@ -43,7 +43,7 @@ function createTrainedTeachersPersonalInfoHorizontalTable(): HorizontalTablePara
     {
       kind: 'text' as const,
       value:
-        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 동의일로부터 3년 보관 후 폐기',
+        '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기',
     },
   ]
 
@@ -86,7 +86,7 @@ function createTrainedTeachersThirdPartyHorizontalTable(): HorizontalTableParagr
       kind: 'text' as const,
       value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text' as const, value: '동의일로부터 3년 보관 후 폐기' },
+    { kind: 'text' as const, value: '동의일로부터 3년 보관 후 파기' },
   ]
 
   return normalizeHorizontalTableParagraph({

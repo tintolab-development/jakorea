@@ -22,7 +22,7 @@ function createAvailableSchedulePlaceholderTable(): HorizontalTableParagraph {
     variant: 'horizontal_table',
     requiredMark: true,
     paragraphTitle: '강의 진행 가능 일정',
-    paragraphDescription: '강의 진행이 가능한 일정을 모두 선택해 주세요.',
+    paragraphDescription: '강의 진행이 가능한 일정을 1개 선택해 주세요.',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['강의 진행 가능일', ''],
@@ -45,7 +45,7 @@ function createOfficialDocumentPlaceholderTable(): HorizontalTableParagraph {
     requiredMark: true,
     paragraphTitle: '연수 공문',
     paragraphDescription:
-      '공문이 필요할 경우, 공문 내에 반드시 포함되어야 하는 정보를 작성해주세요.',
+      '공문이 필요할 경우, 공문 내에 반드시 포함되어야 하는 정보를 작성해 주세요',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],

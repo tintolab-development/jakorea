@@ -159,6 +159,11 @@
   background: rgba(61, 61, 61, 0.5);
 }
 
+.main-header-user-name,
+.main-header-user-name strong {
+  font-weight: 700;
+}
+
 .main-header-user-name {
   /* 시안: 이름 ↔ 설정 아이콘 20px (gap 12 + 8) — 프로필 아바타 미노출 */
   margin-right: 8px;
@@ -177,9 +182,10 @@
 
 .main-header-account-dropdown {
   display: inline-flex;
-  width: 100px;
+  /* 시안: 92×68 · 항목 84×30 (테두리 1 + 패딩 3) */
+  width: 92px;
   height: auto;
-  padding: 4px;
+  padding: 3px;
   flex-direction: column;
   align-items: flex-start;
   border-radius: var(--6, 6px);
@@ -226,9 +232,9 @@
 /* 알림 드롭다운 오버레이 루트 — 너비 고정으로 카테고리 전환 시 시프트 방지 */
 .main-header-notification-dropdown {
   box-sizing: border-box;
-  width: 406px;
-  min-width: 406px;
-  max-width: 406px;
+  width: 420px;
+  min-width: 420px;
+  max-width: 420px;
   padding-top: 1px;
 }
 
@@ -267,11 +273,11 @@
   align-items: center;
   justify-content: center;
   vertical-align: middle;
-  /* 시안 notice: pl10 pr12 py6 · gap 3 · radius 50 · border rgba(1,161,175,0.06) */
+  /* 시안 notice: 높이 33(py5) · pl10 pr12 · gap 3 · radius 50 · border rgba(1,161,175,0.06) · 폭 가변 */
   gap: 3px;
   box-sizing: border-box;
   height: auto;
-  padding: 6px 12px 6px 10px;
+  padding: 5px 12px 5px 10px;
   background: var(--color-bg-accent);
   border-radius: 50px;
   cursor: pointer;
@@ -284,13 +290,9 @@
   background: var(--color-bg-accent-hover);
 }
 
+/* 시안: Icon / Etc / Toggle alarm 원본(20 프레임), 민트 */
 .main-header-notification-icon {
-  font-size: var(--font-size-14);
   color: var(--color-brand-primary);
-  display: flex;
-  align-items: center;
-  /* 시안: 아이콘 박스 20×20 (글리프 크기는 유지) */
-  justify-content: center;
   width: 20px;
   height: 20px;
 }

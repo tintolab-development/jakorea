@@ -9,11 +9,11 @@ const COPY: Record<
   { title: string; description: string }
 > = {
   survey: {
-    title: '진행 중인 설문조사가 없어요',
+    title: '아직 진행할 설문조사가 없어요',
     description: '참여할 프로그램의 설문조사가 생기면 이곳에서 확인할 수 있어요',
   },
   satisfaction: {
-    title: '진행 중인 만족도조사가 없어요',
+    title: '아직 진행할 만족도조사가 없어요',
     description: '참여할 프로그램의 만족도조사가 생기면 이곳에서 확인할 수 있어요',
   },
 }

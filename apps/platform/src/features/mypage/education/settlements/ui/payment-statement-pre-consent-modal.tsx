@@ -9,6 +9,8 @@ type PaymentStatementPreConsentModalProps = {
   onCancel: () => void
   onWriteConsent: () => void
   cancelLabel?: string
+  /** 설명문 덮어쓰기 — 기본값: variant별 미작성 안내. 제출 시 서버 RECEIPT_PRE_CONSENT_REQUIRED 재사용 등 */
+  description?: string
 }
 
 export {
@@ -25,6 +27,7 @@ export function PaymentStatementPreConsentModal({
   onCancel,
   onWriteConsent,
   cancelLabel = '취소',
+  description,
 }: PaymentStatementPreConsentModalProps) {
   const copy = settlementPreConsentModalCopy(variant)
   return (
@@ -41,7 +44,7 @@ export function PaymentStatementPreConsentModal({
             {copy.title}
           </PFText>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
-            {copy.description}
+            {description ?? copy.description}
           </PFText>
         </div>
         <div className={styles.actions}>

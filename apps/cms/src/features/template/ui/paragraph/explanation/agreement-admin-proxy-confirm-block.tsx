@@ -2,7 +2,7 @@ import './agreement-admin-proxy-confirm-block.css'
 import { AGREEMENT_USER_MODE_AUTHOR_PLACEHOLDER } from '@/features/template/lib/extract-agreement-draft-author-name'
 
 export const AGREEMENT_ADMIN_PROXY_CONFIRM_GUIDANCE =
-  '* 당사자의 서면 동의를 바탕으로 관리자가 동의 확인 처리합니다.'
+  '※ 당사자의 서면 동의를 바탕으로 관리자가 동의 확인 처리합니다.'
 
 function formatKoreanFullDate(d: Date): string {
   const y = d.getFullYear()

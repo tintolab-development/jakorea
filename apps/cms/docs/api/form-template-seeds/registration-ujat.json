@@ -101,7 +101,7 @@
         "answerRequired": true,
         "participatesInTitleNumbering": true,
         "paragraphTitle": "상반기 교육 일정",
-        "paragraphDescription": "행사 일정 별 정보를 입력해 주세요",
+        "paragraphDescription": "행사 일정 별 정보를 입력해 주세요.",
         "tableFlavor": "text",
         "columnHeaders": [
           "항목",
@@ -129,7 +129,7 @@
         "answerRequired": true,
         "participatesInTitleNumbering": true,
         "paragraphTitle": "하반기 교육 일정",
-        "paragraphDescription": "행사 일정 별 정보를 입력해 주세요",
+        "paragraphDescription": "행사 일정 별 정보를 입력해 주세요.",
         "tableFlavor": "text",
         "columnHeaders": [
           "항목",
@@ -157,7 +157,7 @@
         "answerRequired": true,
         "participatesInTitleNumbering": true,
         "paragraphTitle": "교육 진행 일정 설정",
-        "paragraphDescription": "교육이 진행되는 일정을 설정해 주세요.",
+        "paragraphDescription": "교육이 실행되는 일정을 설정해 주세요.",
         "tableFlavor": "text",
         "columnHeaders": [
           "항목",

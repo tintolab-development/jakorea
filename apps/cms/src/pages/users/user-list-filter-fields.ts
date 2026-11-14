@@ -58,7 +58,7 @@ const INSTITUTION_FIELDS: FilterFieldConfig[] = [
   dateRangeField('등록 시기'),
 ]
 
-/** 강사 회원 — 강사명 · JA 평가 등급 · 정산 현황 · 가입 시기 */
+/** 강사 회원 — 강사명 · JA 평가 등급 · 정산 현황 · 가입일 */
 const INSTRUCTOR_FIELDS: FilterFieldConfig[] = [
   searchField('강사명', '강사명을 입력해 주세요'),
   {
@@ -77,7 +77,7 @@ const INSTRUCTOR_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: INSTRUCTOR_SETTLEMENT_FILTER_OPTIONS,
   },
-  dateRangeField('가입 시기'),
+  dateRangeField('가입일'),
 ]
 
 const ADMIN_FIELDS: FilterFieldConfig[] = [
@@ -90,7 +90,7 @@ const ADMIN_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: ADMIN_PERMISSION_FILTER_OPTIONS,
   },
-  dateRangeField('가입 시기'),
+  dateRangeField('가입일'),
 ]
 
 /** 전체·개인 등 일반 회원 목록 (회원 유형 셀렉트 + 가입일) */

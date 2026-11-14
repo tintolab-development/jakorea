@@ -56,7 +56,7 @@ function createPersonalInfoHorizontalTable(): HorizontalTableParagraph {
     {
       kind: 'text',
       value:
-        '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기',
+        '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기',
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -98,7 +98,7 @@ function createThirdPartyHorizontalTable(): HorizontalTableParagraph {
       kind: 'text',
       value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text', value: '동의일로부터 3년 보관 후 폐기' },
+    { kind: 'text', value: '동의일로부터 3년 보관 후 파기' },
   ]
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent,
@@ -147,7 +147,7 @@ function createTeamInfoPlaceholderTable(): HorizontalTableParagraph {
     requiredMark: true,
     paragraphTitle: '팀 정보',
     paragraphDescription:
-      '팀원 모두 ★반드시 개별로 신청서 작성★하여 제출해야 합니다. (팀장은 신청 시 팀원 중 한 명만 선택해 주세요)',
+      '※ 팀원 모두 ★반드시 개별로 신청서 작성★하여 제출해야 합니다. (팀장은 신청 시 팀원 중 한 명만 선택해 주세요)',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],

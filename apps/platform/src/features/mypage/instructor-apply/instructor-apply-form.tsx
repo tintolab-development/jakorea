@@ -721,7 +721,7 @@ export function InstructorApplyForm({
 
         <div className={styles.actions}>
           <PFButton size="xlarge" width={240} type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '신청 중…' : '강사 신청하기'}
+            {isSubmitting ? '신청 중…' : '신청하기'}
           </PFButton>
         </div>
       </form>

@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useMemo, type ReactNode } from 'react'
 import { Button } from 'antd'
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -205,14 +205,14 @@ function CalendarHeader({
           <Button
             type="text"
             size="small"
-            icon={<LeftOutlined />}
+            icon={<ButtonLeftIcon className="calendar-nav-icon" />}
             className="calendar-nav-btn"
             onClick={onPrev}
           />
           <Button
             type="text"
             size="small"
-            icon={<RightOutlined />}
+            icon={<ButtonRightIcon className="calendar-nav-icon" />}
             className="calendar-nav-btn"
             onClick={onNext}
           />

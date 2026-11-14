@@ -13,7 +13,13 @@ import type {
   SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { DateValue } from '@/types'
-import { CmsButton, CmsInput, CmsNumericInput, ExcelButton } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsInput,
+  CmsNumericInput,
+  ExcelButton,
+  showUpdateCompletedAlert,
+} from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
@@ -92,6 +98,7 @@ export function YearlyBusinessPanel({
         queryClient.setQueryData(yearlyKey, draftRows)
       }
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       console.debug(
         'sponsor yearly business save failed',

@@ -75,8 +75,6 @@ export type FileTypeIconProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'>
 
 export function FileTypeIcon({ fileName, type, size = 20, style, ...props }: FileTypeIconProps) {
   const resolved = type ?? resolveFileTypeIconType(fileName)
-  /** clip 원본은 8×13 viewBox — 20 기준 높이 13이 되도록 여백 */
-  const padding = resolved === 'clip' ? (size * 3.5) / 20 : 0
   return (
     <img
       src={FILE_TYPE_ICON_URL[resolved]}
@@ -87,8 +85,6 @@ export function FileTypeIcon({ fileName, type, size = 20, style, ...props }: Fil
       draggable={false}
       style={{
         flexShrink: 0,
-        boxSizing: 'border-box',
-        padding,
         objectFit: 'contain',
         ...style,
       }}

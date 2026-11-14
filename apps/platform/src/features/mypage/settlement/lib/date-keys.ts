@@ -57,10 +57,14 @@ export function monthNumberFromKey(monthKey: string) {
   return parsed.getMonth() + 1
 }
 
-export function formatMonthHeading(monthKey: string, count: number) {
+export function formatMonthHeadingTitle(monthKey: string) {
   const parsed = parseMonthKey(monthKey)
-  if (!parsed) return `정산 현황 ${count}건`
-  return `${parsed.getFullYear()}년 ${parsed.getMonth() + 1}월 정산 현황 ${count}건`
+  if (!parsed) return '정산 현황'
+  return `${parsed.getFullYear()}년 ${parsed.getMonth() + 1}월 정산 현황`
+}
+
+export function formatMonthHeading(monthKey: string, count: number) {
+  return `${formatMonthHeadingTitle(monthKey)} ${count}건`
 }
 
 export function formatMonthPaidLabel(monthKey: string) {

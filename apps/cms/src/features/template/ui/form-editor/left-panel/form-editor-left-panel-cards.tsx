@@ -31,6 +31,7 @@ import {
   withSurveyWriteTitleNumbering,
   withoutPlaceholderDescriptionInPreview,
   withoutTitleRequired,
+  withReadOnlyHeadingInUserMode,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
 import {
   modalCardFooterActions,
@@ -39,8 +40,10 @@ import {
 import { useRegistrationWizardValidationHighlight } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import {
   useHideParagraphSelectionChrome,
+  useLockParagraphHeading,
   useShowParagraphActiveOutline,
 } from '@/features/template/context/paragraph-selection-chrome-context'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 function isAgreementAdminProxyConfirmCard(
   paragraph: WritingFormParagraph,
@@ -161,7 +164,9 @@ function PinnedFormCardInner({
     ),
     !showEditorChrome
   )
-  const editableHeading = withAgreementAdminProxyConfirmHeading(
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const lockHeading = useLockParagraphHeading()
+  const editableHeadingResolved = withAgreementAdminProxyConfirmHeading(
     withProgramApplicationFixedScheduleHeading(
       withInstitutionApplicationPreferredScheduleHeading(
         withProgramApplicationFormVolunteerTitleTrailing(
@@ -174,7 +179,8 @@ function PinnedFormCardInner({
                   paragraphBodyOptions
                 ),
                 paragraph,
-                paragraphBodyOptions
+                paragraphBodyOptions,
+                isTemplateManagementScreen
               ),
               paragraph,
               paragraphBodyOptions
@@ -194,6 +200,7 @@ function PinnedFormCardInner({
     paragraph,
     paragraphBodyOptions
   )
+  const editableHeading = withReadOnlyHeadingInUserMode(editableHeadingResolved, lockHeading)
   const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
   const seedFillLocked =
     paragraphBodyOptions?.seedApplicantFillLocked === true &&
@@ -237,7 +244,8 @@ function PinnedFormCardInner({
               updateParagraph,
               structureLockedParagraphIds,
               hideParagraphRequiredChrome,
-              paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn
+              paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn,
+              editorKind === 'survey' ? '설문 기간' : undefined
             )
           : undefined
       }
@@ -366,7 +374,9 @@ function SortableMiddleFormCardInner({
     ),
     !showEditorChrome
   )
-  const editableHeading = withAgreementAdminProxyConfirmHeading(
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const lockHeading = useLockParagraphHeading()
+  const editableHeadingResolved = withAgreementAdminProxyConfirmHeading(
     withProgramApplicationFixedScheduleHeading(
       withInstitutionApplicationPreferredScheduleHeading(
         withProgramApplicationFormVolunteerTitleTrailing(
@@ -379,7 +389,8 @@ function SortableMiddleFormCardInner({
                   paragraphBodyOptions
                 ),
                 paragraph,
-                paragraphBodyOptions
+                paragraphBodyOptions,
+                isTemplateManagementScreen
               ),
               paragraph,
               paragraphBodyOptions
@@ -399,6 +410,7 @@ function SortableMiddleFormCardInner({
     paragraph,
     paragraphBodyOptions
   )
+  const editableHeading = withReadOnlyHeadingInUserMode(editableHeadingResolved, lockHeading)
   const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
   const seedFillLocked =
     paragraphBodyOptions?.seedApplicantFillLocked === true &&
@@ -473,7 +485,8 @@ function SortableMiddleFormCardInner({
                 updateParagraph,
                 structureLockedParagraphIds,
                 hideParagraphRequiredChrome,
-                paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn
+                paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn,
+                editorKind === 'survey' ? '설문 기간' : undefined
               )
             : undefined
         }

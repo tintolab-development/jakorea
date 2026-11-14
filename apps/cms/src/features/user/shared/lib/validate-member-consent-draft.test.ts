@@ -331,7 +331,7 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     ).toBe(true)
     expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([
       '아동·청소년 보호 및 법령 준수',
-      '종교적 정치적 중립성 유지',
+      '종교적·정치적 중립성 유지',
       '개인정보 보호',
       '품위 유지 및 성실한 교육 수행',
     ])
@@ -340,7 +340,7 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
         collectMemberConsentUnagreedRequiredLabels(draft),
       ),
     ).toBe(
-      '아동·청소년 보호 및 법령 준수, 종교적 정치적 중립성 유지, 개인정보 보호, 품위 유지 및 성실한 교육 수행에 동의해 주세요.',
+      '아동·청소년 보호 및 법령 준수, 종교적·정치적 중립성 유지, 개인정보 보호, 품위 유지 및 성실한 교육 수행에 동의해 주세요.',
     )
   })
 

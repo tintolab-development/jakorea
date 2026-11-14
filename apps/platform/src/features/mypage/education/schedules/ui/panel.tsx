@@ -46,7 +46,7 @@ type EducationSchedulePanelProps = {
  */
 export function EducationSchedulePanel({
   lastParticipatedSession,
-  listTitle = '교육일정',
+  listTitle = '교육 일정',
   applicationType,
   applicationId,
   absenceReasonEnabled = true,
@@ -157,13 +157,13 @@ export function EducationSchedulePanel({
 
   const emptyMessage = sourceEnabled
     ? useGeminiLectureSchedules
-      ? listTitle === '배정현황'
+      ? listTitle === '배정 현황' || listTitle === '배정현황'
         ? '등록된 배정 일정이 없어요'
-        : '등록된 교육일정이 없어요'
+        : '등록된 교육 일정이 없어요'
       : resolveEducationScheduleEmptyMessage(remoteSchedules.scopeStatus, listTitle)
-    : listTitle === '배정현황'
+    : listTitle === '배정 현황' || listTitle === '배정현황'
       ? '등록된 배정 일정이 없어요'
-      : '등록된 교육일정이 없어요'
+      : '등록된 교육 일정이 없어요'
 
   return (
     <>
@@ -175,7 +175,7 @@ export function EducationSchedulePanel({
         onPageChange={setPage}
         emptyMessage={emptyMessage}
         emptyDescription={
-          listTitle === '배정현황'
+          listTitle === '배정 현황' || listTitle === '배정현황'
             ? '배정된 일정이 생기면 이곳에서 확인할 수 있어요.'
             : '교육 일정이 생기면 이곳에서 확인할 수 있어요.'
         }

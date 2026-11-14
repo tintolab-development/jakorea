@@ -26,6 +26,7 @@ import {
   ApplicantRecruitTargetLevelDetailField,
   ApplicantRecruitTargetLevelsField,
 } from '@/features/template/ui/form-set/recruit-form/institution/paragraphs/applicant-recruit-participant-info-overlay-fields'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './applicant-recruit-participant-info-paragraph.css'
 
@@ -74,8 +75,16 @@ export function ApplicantRecruitParticipantInfoParagraph({
     return resolveInstitutionApplicationRecruitLimitsVisibilityBridge(institutionApplicationBridge)
   }, [institutionApplicationBridge, recruitLimitVisibility])
   const isTrainedTeachers = layoutVariant === 'trainedTeachers'
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  /**
+   * 교육받은 교사 — 템플릿 관리 편집기에서도 일반 모집 폼처럼 모집 제한 3항목 노출 (QA 261113 #58).
+   * 등록 위저드·상세는 기존 조건 그대로.
+   */
+  const trainedTeachersTemplateLimitsPreview = isTrainedTeachers && isTemplateManagementScreen
   /** 등록 위저드는 `recruitLimitVisibility`로 판단 — 양식 관리(미연동)만 authoring 상시 노출 */
-  const templateAuthoringLimitsPreview = isTemplateAuthoringMode && recruitLimitVisibility == null
+  const templateAuthoringLimitsPreview =
+    (isTemplateAuthoringMode || trainedTeachersTemplateLimitsPreview) &&
+    recruitLimitVisibility == null
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
     (templateAuthoringLimitsPreview ||
@@ -91,6 +100,8 @@ export function ApplicantRecruitParticipantInfoParagraph({
         : shouldShowInstitutionApplicationMaxSessionsPerDayField(recruitLimitsVisibilityBridge)))
 
   const limitDefaults = defaults
+  /** 교육받은 교사 등록·상세는 배정 강사 수 미노출 — 템플릿 관리 편집기만 노출 */
+  const hideMaxInstructorsField = isTrainedTeachers && !trainedTeachersTemplateLimitsPreview
 
   if (layoutVariant === 'economy') {
     return (
@@ -157,15 +168,15 @@ export function ApplicantRecruitParticipantInfoParagraph({
 
         {showInstitutionApplicationLimits ? (
           <>
-            <DetailInfoForm.Row type={isTrainedTeachers ? 'single' : 'double'}>
-              {isTrainedTeachers ? null : (
+            <DetailInfoForm.Row type={hideMaxInstructorsField ? 'single' : 'double'}>
+              {hideMaxInstructorsField ? null : (
                 <ApplicantRecruitMaxInstructorsField
                   defaultValue={limitDefaults?.maxAssignableInstructors}
                 />
               )}
               <ApplicantRecruitMaxClassCountField
                 defaultValue={limitDefaults?.maxClassCount}
-                fullRow={isTrainedTeachers}
+                fullRow={hideMaxInstructorsField}
               />
             </DetailInfoForm.Row>
 

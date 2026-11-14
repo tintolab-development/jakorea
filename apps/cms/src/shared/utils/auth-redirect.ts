@@ -1,5 +1,5 @@
 /**
- * 로그인 직후·리다이렉트 파라미터 없을 때 기본 경로. 비관리자는 `IndexPage`가 동일 경로로 다시 보냄.
+ * 로그인 직후·리다이렉트 파라미터 없을 때 기본 경로.
  */
 import { canAccessPath } from '@/shared/config/menu-config'
 import { sanitizeLoginRedirectPath } from '@/shared/utils/post-auth-redirect'
@@ -9,19 +9,8 @@ export function getRedirectPathByRole(user: Omit<User, 'password'> | null): stri
   if (!user) {
     return '/login'
   }
-
-  switch (user.role) {
-    case 'ADMIN':
-      return '/'
-    case 'INSTRUCTOR':
-      return '/instructor/schedule'
-    case 'INDIVIDUAL':
-      return '/schedules/my'
-    case 'SCHOOL':
-      return '/school/my-learning'
-    default:
-      return '/'
-  }
+  // CMS는 관리자 전용 — 그 외 역할도 홈으로 보내고, 홈(`IndexPage`)이 접근 불가 안내를 보여 준다.
+  return '/'
 }
 
 /**

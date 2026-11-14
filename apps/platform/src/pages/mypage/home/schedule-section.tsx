@@ -3,12 +3,16 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   getMypageScheduleEventsOnDate,
+  isInstructorMypageProfile,
   resolveMypageScheduleEventDetailPath,
   syncSelectedDateToMonth,
   type MypageScheduleEvent,
+  type PlatformMemberProfile,
 } from '@/features/mypage'
 import { SkeletonBlock } from '@/shared/ui/skeleton-block'
 import {
+  GENERAL_CALENDAR_LEGEND_ITEMS,
+  INSTRUCTOR_CALENDAR_LEGEND_ITEMS,
   resolveCalendarEventColors,
   PFCalendar,
   PFEmptyState,
@@ -44,6 +48,7 @@ function toDayStart(date: Date): Date {
 type ScheduleSectionProps = {
   events?: readonly MypageScheduleEvent[]
   eventsLoading?: boolean
+  profile?: PlatformMemberProfile
   /** true면 mock 데모 월(2026-01)로 시작 — API 세션에서는 false */
   useMockDemoMonth?: boolean
   /** 보이는 달이 바뀌면 캘린더 API 조회 범위를 맞춘다 */
@@ -53,9 +58,11 @@ type ScheduleSectionProps = {
 export function ScheduleSection({
   events = [],
   eventsLoading = false,
+  profile,
   useMockDemoMonth = false,
   onViewMonthChange,
 }: ScheduleSectionProps) {
+  const isInstructor = profile != null && isInstructorMypageProfile(profile)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [selectedDate, setSelectedDate] = useState(() =>
@@ -65,7 +72,10 @@ export function ScheduleSection({
     useMockDemoMonth ? MOCK_DEMO_MONTH : toMonthStart(new Date()),
   )
 
-  const scheduleEvents = useMemo(() => [...events], [events])
+  const scheduleEvents = useMemo(() => {
+    if (isInstructor) return [...events]
+    return events.filter(event => event.type !== 'lecture_report_deadline')
+  }, [events, isInstructor])
 
   const calendarEvents = useMemo(() => toCalendarEvents(scheduleEvents), [scheduleEvents])
 
@@ -104,6 +114,9 @@ export function ScheduleSection({
         value={selectedDate}
         month={viewMonth}
         events={calendarEvents}
+        legendItems={
+          isInstructor ? INSTRUCTOR_CALENDAR_LEGEND_ITEMS : GENERAL_CALENDAR_LEGEND_ITEMS
+        }
         onChange={handleDateChange}
         onMonthChange={handleMonthChange}
       />
@@ -138,11 +151,7 @@ export function ScheduleSection({
                     <button
                       type="button"
                       className={styles.listItemButton}
-                      style={{
-                        borderColor: colors.accent,
-                        borderLeftWidth: 6,
-                        backgroundColor: colors.background,
-                      }}
+                      style={{ borderLeftColor: colors.accent }}
                       disabled={!isNavigable}
                       aria-label={`${event.programName} ${event.title} 일정 상세`}
                       onClick={() => handleScheduleClick(event)}

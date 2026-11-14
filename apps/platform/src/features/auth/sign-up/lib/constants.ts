@@ -95,7 +95,7 @@ export const guardianAgreementItems: GuardianAgreementItem[] = [
   {
     key: 'guardianLegal',
     required: true,
-    label: '만 14세 미만 아동 회원가입 및 개인정보 수집·이용에 대한 법정대리인 동의',
+    label: '만 14세 미만 아동의 개인정보 수집 및 이용에 대한 법정대리인 동의',
   },
   { key: 'marketing', required: false, label: '마케팅 정보 수신 동의' },
   {

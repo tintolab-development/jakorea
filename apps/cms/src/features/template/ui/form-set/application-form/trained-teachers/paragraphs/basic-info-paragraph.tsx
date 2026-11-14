@@ -14,6 +14,7 @@ import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
@@ -40,6 +41,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
+  /** 템플릿 관리 시안(12875:515926) — 라디오 미선택, 신청 학년 셀렉트 120·「신청 학년」, 교육 장소 구분선 양옆 16 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const bridge = useInstitutionApplicationProgramBridge()
   const classCountOptions = useMemo(
     () =>
@@ -61,11 +64,11 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
   )
   const [educationFormat, setEducationFormat] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.educationFormat',
-    'online'
+    isTemplateManagementScreen ? '' : 'online'
   )
   const [educationPlace, setEducationPlace] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.educationPlace',
-    'inside'
+    isTemplateManagementScreen ? '' : 'inside'
   )
   const [detailAddress, setDetailAddress] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.detailAddress',
@@ -112,7 +115,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       inputSize="small"
       width="100%"
       value=""
-      placeholder="로그인 교사의 소속 학교"
+      placeholder="신청 기관명"
       disabled
       readOnly
     />
@@ -123,7 +126,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       inputSize="small"
       width="100%"
       value=""
-      placeholder="기관 등록 주소"
+      placeholder="기관 소재지"
       disabled
       readOnly
     />
@@ -136,7 +139,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
         inputSize="small"
         width={120}
         value=""
-        placeholder="교사명"
+        placeholder="담당 교사명"
         disabled
         readOnly
       />
@@ -145,7 +148,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       <CmsPhoneInput
         inputSize="small"
         width={240}
-        placeholder="담당 교사의 내선 번호(직통 번호)"
+        placeholder="담당 교사의 내선(직통 번호)"
         value={teacherTel}
         onChange={e => setTeacherTel(e.target.value)}
       />
@@ -183,9 +186,9 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           edit={
             <CmsSelect
               inputSize="small"
-              width={140}
+              width={isTemplateManagementScreen ? 120 : 140}
               withAllOption={false}
-              placeholder="학년 선택"
+              placeholder={isTemplateManagementScreen ? '신청 학년' : '학년 선택'}
               value={applicationGrade === '' ? undefined : applicationGrade}
               onChange={value => setApplicationGrade(String(value ?? ''))}
               options={APPLICATION_GRADE_OPTIONS}
@@ -252,7 +255,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
             edit={
               <CmsRadioGroup
                 size="medium"
-                value={educationFormat}
+                value={educationFormat === '' ? undefined : educationFormat}
                 onChange={event => setEducationFormat(event.target.value)}
                 style={inlineChoiceStyle}
               >
@@ -280,11 +283,17 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           edit={
             <div
               className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
-              style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%' }}
+              style={{
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                // 시안 간격 16 = gap 4 + 구분선 좌우 margin 12
+                gap: isTemplateManagementScreen ? 4 : 8,
+                width: '100%',
+              }}
             >
               <CmsRadioGroup
                 size="medium"
-                value={educationPlace}
+                value={educationPlace === '' ? undefined : educationPlace}
                 onChange={event => setEducationPlace(event.target.value)}
                 style={inlineChoiceStyle}
               >
@@ -320,7 +329,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           edit={
             <CmsInput
               inputSize="small"
-              placeholder="신청 사유를 입력해 주세요."
+              placeholder="신청 사유를 입력해 주세요"
               width="100%"
               value={applicationReason}
               onChange={e => setApplicationReason(e.target.value)}
@@ -337,7 +346,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           edit={
             <CmsInput
               inputSize="small"
-              placeholder="기타 요청사항을 입력해 주세요."
+              placeholder="기타 요청사항을 입력해 주세요"
               width="100%"
               value={otherRequests}
               onChange={e => setOtherRequests(e.target.value)}

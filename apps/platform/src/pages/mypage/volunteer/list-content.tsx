@@ -45,6 +45,9 @@ export function VolunteerListContent({ params, onParamsChange }: VolunteerListCo
             <EducationApplicationListItemRow
               key={`${item.applicationType ?? 'application'}:${item.id}`}
               item={item}
+              recruitmentRoleLabel="봉사자"
+              badgeSize="regular"
+              categoryLabelOverride="봉사자"
               onClick={() =>
                 navigate(volunteerApplicationDetailPath(item.id, item.applicationType), {
                   state: {

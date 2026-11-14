@@ -180,7 +180,8 @@ export function DocScreeningSection({
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}
-          title={`봉사자 신청 목록 (${count.toLocaleString()})`}
+          title="봉사자 신청 목록"
+          description={`총 ${count.toLocaleString()}건`}
           actions={
             <div className="ujat-volunteer-doc-screening__actions program-application-list-toolbar">
               <>

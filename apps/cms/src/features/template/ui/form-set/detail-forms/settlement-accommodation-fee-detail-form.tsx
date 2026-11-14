@@ -14,16 +14,26 @@ import {
   buildAdminFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import './settlement-accommodation-fee-detail-form.css'
+import './issuance-detail-form-template.css'
 
 const INPUT_W = 244
+/** 템플릿 관리 > 발급 양식 편집기 — 시안 5767:44580 표 입력 폭 140 */
+const TEMPLATE_INPUT_W = 140
 
 const ACCOMMODATION_RECEIPT_ACCEPT =
   '.jpg,.jpeg,.png,.xls,.xlsx,.pdf,.doc,.docx'
 
+/** 정산 신청서 영수증 첨부 안내 (QA 261113 #52) */
 const ACCOMMODATION_RECEIPT_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 파일은 PDF, JPG, PNG, Excel, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+]
+
+/** 템플릿 관리 편집기 — 시안 5767:44580 영수증 안내 2줄(특수문자 안내 포함) */
+const ACCOMMODATION_RECEIPT_TEMPLATE_GUIDE_LINES = [
+  ...ACCOMMODATION_RECEIPT_GUIDE_LINES,
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 export type SettlementAccommodationFeeAutofillValues = {
@@ -52,9 +62,11 @@ export function SettlementAccommodationFeeDetailForm({
   className,
   displayMode = 'editor',
 }: SettlementAccommodationFeeDetailFormProps) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
   const disabled = isDocumentMode
+  const issuanceTemplate = isTemplateManagementScreen && !isDocumentMode
   const [receiptFileNames, setReceiptFileNames] = useState<string[]>([])
 
   return (
@@ -62,7 +74,13 @@ export function SettlementAccommodationFeeDetailForm({
       title="숙박비 신청"
       hideHeader
       mode={isDocumentMode ? 'view' : 'edit'}
-      className={['settlement-accommodation-fee-detail-form', className].filter(Boolean).join(' ')}
+      className={[
+        'settlement-accommodation-fee-detail-form',
+        issuanceTemplate ? 'issuance-detail-form--template' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
@@ -76,7 +94,7 @@ export function SettlementAccommodationFeeDetailForm({
                 inputSize="small"
                 placeholder="직접 입력"
                 value={v.accommodationFee}
-                width={INPUT_W}
+                width={issuanceTemplate ? TEMPLATE_INPUT_W : INPUT_W}
                 aria-label="숙박비"
               />
               <span className="settlement-accommodation-fee-detail-form__suffix">원</span>
@@ -94,7 +112,11 @@ export function SettlementAccommodationFeeDetailForm({
             <ParagraphFileUpload
               disabled={disabled}
               accept={ACCOMMODATION_RECEIPT_ACCEPT}
-              guideLines={ACCOMMODATION_RECEIPT_GUIDE_LINES}
+              guideLines={
+                issuanceTemplate
+                  ? ACCOMMODATION_RECEIPT_TEMPLATE_GUIDE_LINES
+                  : ACCOMMODATION_RECEIPT_GUIDE_LINES
+              }
               fileNames={receiptFileNames}
               onFilesChange={files => {
                 setReceiptFileNames(prev => [...prev, ...files.map(file => file.name)])

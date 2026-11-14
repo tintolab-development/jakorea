@@ -399,7 +399,7 @@ export function EducationSettlementRow({
           date={headline}
           subtitle={
             sessionSubtitle ? (
-              <PFText as="span" typo="bd-lg-rg">
+              <PFText as="span" typo="bd-lg-rg" color="black">
                 {sessionSubtitle}
               </PFText>
             ) : undefined

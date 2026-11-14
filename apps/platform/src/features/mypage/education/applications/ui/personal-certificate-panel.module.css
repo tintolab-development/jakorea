@@ -20,3 +20,52 @@
   height: 48px;
   flex-shrink: 0;
 }
+
+.issueDialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.issueNotice {
+  margin: 0;
+}
+
+.reasonList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.reasonItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  cursor: pointer;
+}
+
+.issueActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+}
+
+.issueActions > * {
+  flex: 1 1 140px;
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

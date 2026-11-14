@@ -6,6 +6,7 @@ import {
   PRIVACY_ADDRESS_BE_MASK_RUN,
   PRIVACY_ADDRESS_BLUR_TOKEN,
   displayServerPiiAsIs,
+  displayServerPhoneWithHyphens,
   isPrivacyAddressBlurToken,
   PrivacyHomeAddressDisplay,
 } from './program-pii-display'
@@ -105,5 +106,14 @@ describe('program-pii-display', () => {
       })
     )
     expect(container.querySelector('.program-pii-address-blur')?.textContent).toBe('*****')
+  })
+
+  it('formats server phone with hyphens and keeps masking', () => {
+    expect(displayServerPhoneWithHyphens('01012345678')).toBe('010-1234-5678')
+    expect(displayServerPhoneWithHyphens('010****5678')).toBe('010-****-5678')
+    expect(displayServerPhoneWithHyphens('010-****-5678')).toBe('010-****-5678')
+    expect(displayServerPhoneWithHyphens('02****5678')).toBe('02-****-5678')
+    expect(displayServerPhoneWithHyphens('')).toBe('-')
+    expect(displayServerPhoneWithHyphens(null)).toBe('-')
   })
 })

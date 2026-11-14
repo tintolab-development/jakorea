@@ -39,9 +39,9 @@ const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
 const PERSONAL_INFO_PURPOSE_CELL =
   'JA 프로그램의 참가자 선발 및 프로그램 진행에 필요한 정보 안내'
 const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
 /** 일반 참여기관 신청 폼과 동일 — 보유기간 열 고정 문구 */
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 /** 1사1교 시안(9899:216613) — 수집·이용 / 제3자 제공 표 공통 수집 항목 */
 const ECONOMY_COLLECTION_ITEMS_CELL = '이름, 학교명, 학교주소, 개인 연락처, e-mail'
 const THIRD_PARTY_ITEMS_CELL = ECONOMY_COLLECTION_ITEMS_CELL

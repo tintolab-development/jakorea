@@ -101,6 +101,7 @@ import './template-form-tab.css'
 import { handleError } from '@/shared/utils/error-handler'
 import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
+import { ISSUANCE_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import {
   findIssuanceTemplateRowById,
   LECTURE_REPORT_TEMPLATE_CODE,
@@ -112,9 +113,9 @@ import {
   SETTLEMENT_APPLICATION_TEMPLATE_CODE,
   SETTLEMENT_APPLICATION_TEMPLATE_NAME,
   type IssuanceTemplateRow,
-  UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE,
+  isUjatEducationJournalTemplate,
+  isUjatEducationPlanTemplate,
   UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME,
-  UJAT_EDUCATION_PLAN_TEMPLATE_CODE,
   UJAT_EDUCATION_PLAN_TEMPLATE_NAME,
 } from '@/features/template/model/issuance-form.schema'
 
@@ -126,11 +127,11 @@ const UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES: Record<
   journal: UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS }
 const MULTI_PAGE_ISSUANCE_PREVIEW_TEMPLATE_NAMES = new Set(['결과보고서'])
 
-function getIssuanceUserPreviewDraft(templateName?: string): WritingFormDraft {
-  if (templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME) {
+function getIssuanceUserPreviewDraft(templateName?: string, templateCode?: string): WritingFormDraft {
+  if (isUjatEducationPlanTemplate({ templateCode, templateName })) {
     return createUjatEducationPlanIssuanceDraft()
   }
-  if (templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME) {
+  if (isUjatEducationJournalTemplate({ templateCode, templateName })) {
     return createUjatEducationJournalIssuanceDraft()
   }
   if (templateName === LECTURE_REPORT_TEMPLATE_NAME) {
@@ -222,11 +223,17 @@ function IssuanceFormTabContent() {
     selectedTemplate?.id === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE ||
     selectedTemplate?.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
   const isUjatEducationPlan =
-    selectedTemplate?.id === UJAT_EDUCATION_PLAN_TEMPLATE_CODE ||
-    selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
+    selectedTemplate != null &&
+    isUjatEducationPlanTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
   const isUjatEducationJournal =
-    selectedTemplate?.id === UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE ||
-    selectedTemplate?.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+    selectedTemplate != null &&
+    isUjatEducationJournalTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
   const ujatStructuredIssuanceVariant: UjatEducationIssuanceVariant | null = isUjatEducationPlan
     ? 'plan'
     : isUjatEducationJournal
@@ -341,7 +348,8 @@ function IssuanceFormTabContent() {
   })
 
   const settlementPdfHostRef = useRef<HTMLDivElement>(null)
-  const [settlementPdfLoading, setSettlementPdfLoading] = useState(false)
+  // 정산 신청서는 편집기 문서 다운로드 미제공 (QA 261113 #43) — 미리보기 PDF host만 유지
+  const [settlementPdfLoading] = useState(false)
   const settlementDocumentPreviewDraft = useMemo(
     () => buildSettlementApplicationDocumentPreviewDraft(),
     []
@@ -522,8 +530,12 @@ function IssuanceFormTabContent() {
       templateCode: selectedTemplate.id,
       templateName: selectedTemplate.templateName,
     })
-    const isUjatPlanPreview = selectedTemplate.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
-    const isJournalPreview = selectedTemplate.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+    const ujatTemplateRef = {
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    }
+    const isUjatPlanPreview = isUjatEducationPlanTemplate(ujatTemplateRef)
+    const isJournalPreview = isUjatEducationJournalTemplate(ujatTemplateRef)
     const ujatPreviewVariant: UjatEducationIssuanceVariant | null = isUjatPlanPreview
       ? 'plan'
       : isJournalPreview
@@ -553,7 +565,7 @@ function IssuanceFormTabContent() {
           ? PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
           : undefined)
     openWritingUserPreview({
-      draft: getIssuanceUserPreviewDraft(selectedTemplate.templateName),
+      draft: getIssuanceUserPreviewDraft(selectedTemplate.templateName, selectedTemplate.id),
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate.templateName ?? '발급 양식 미리보기',
       editorKind: previewEditorKind,
@@ -689,20 +701,6 @@ function IssuanceFormTabContent() {
     }
   }, [paymentStatementPreConsentA4Title])
 
-  const handleDownloadSettlementApplicationDocument = useCallback(async () => {
-    const root = settlementPdfHostRef.current
-    if (root == null) return
-    setSettlementPdfLoading(true)
-    try {
-      const pageEls = collectFormDocumentPdfPageElements(root)
-      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(settlementA4Title))
-    } catch (e) {
-      handleError(e, { context: 'issuanceFormTab.downloadSettlementApplicationPdf' })
-    } finally {
-      setSettlementPdfLoading(false)
-    }
-  }, [settlementA4Title])
-
   const handleDownloadLectureReportDocument = useCallback(async () => {
     const root = lectureReportPdfHostRef.current
     if (root == null) return
@@ -766,21 +764,25 @@ function IssuanceFormTabContent() {
             <TemplateListCard
               title={reportSection?.title ?? '보고 양식'}
               description={reportSection?.description ?? ''}
+              totalCount={reportSection?.rows.length ?? 0}
               headerInline
             >
               <TemplateTable
                 rows={reportSection?.rows ?? []}
                 onPreview={openTemplatePreview}
+                actionLabel="양식 상세보기"
               />
             </TemplateListCard>
             <TemplateListCard
               title={documentSection?.title ?? '서류 양식'}
               description={documentSection?.description ?? ''}
+              totalCount={documentSection?.rows.length ?? 0}
               headerInline
             >
               <TemplateTable
                 rows={documentSection?.rows ?? []}
                 onPreview={openTemplatePreview}
+                actionLabel="양식 상세보기"
               />
             </TemplateListCard>
           </>
@@ -796,7 +798,7 @@ function IssuanceFormTabContent() {
         open={isPreviewOpen && selectedTemplate != null && !isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={issuanceModalTitle}
-        description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+        description={ISSUANCE_MODAL_DESCRIPTION}
         templateTabType="issuance"
         onPreview={handleModalPreview}
         onTitleCommit={handleIssuanceTitleCommit}
@@ -818,8 +820,9 @@ function IssuanceFormTabContent() {
             ? () => void handleDownloadPaymentStatementDocument()
             : isPaymentStatementPreConsent
               ? () => void handleDownloadPaymentStatementPreConsentDocument()
-            : isSettlementApplicationIssuance
-              ? () => void handleDownloadSettlementApplicationDocument()
+            : // 정산 신청서 — 상단 버튼은 미리보기·저장만 (QA 261113 #43)
+              isSettlementApplicationIssuance
+              ? undefined
               : isLectureReportIssuance
                 ? () => void handleDownloadLectureReportDocument()
                 : isUjatStructuredIssuance
@@ -867,7 +870,8 @@ function IssuanceFormTabContent() {
               editorKind="survey"
               singleItemListActiveItemId={ujatStructuredIssuanceVm.singleItemListActiveItemId}
               onSelectSingleItemListItem={ujatStructuredIssuanceVm.onSelectSingleItemListItem}
-              middleParagraphActions={ujatStructuredIssuanceVm.middleParagraphActions}
+              // 보고 양식 — 단락 추가·복제·삭제 미노출 (QA 261113 #45)
+              middleParagraphActions={undefined}
               structureLockedParagraphIds={ujatStructuredIssuanceVm.structureLockedParagraphIds}
               hideDragHandleForParagraphIds={
                 UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES[ujatStructuredIssuanceVariant ?? 'plan']
@@ -885,7 +889,8 @@ function IssuanceFormTabContent() {
               editorKind="survey"
               singleItemListActiveItemId={lectureReportVm.singleItemListActiveItemId}
               onSelectSingleItemListItem={lectureReportVm.onSelectSingleItemListItem}
-              middleParagraphActions={lectureReportVm.middleParagraphActions}
+              // 보고 양식 — 단락 추가·복제·삭제 미노출 (QA 261113 #45)
+              middleParagraphActions={undefined}
               structureLockedParagraphIds={lectureReportVm.structureLockedParagraphIds}
               hideDragHandleForParagraphIds={LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS}
               headingDescriptionExtraClassName="paragraph-input-explanation-title"

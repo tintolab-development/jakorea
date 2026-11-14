@@ -20,6 +20,7 @@ export function EducationSessionCardHeader({
 }: EducationSessionCardHeaderProps) {
   return (
     <div className={[styles.top, mobileStack ? styles.mobileStack : undefined].filter(Boolean).join(' ')}>
+      {/* Figma 11001:285665 — 상태 배지 · 일자 · 일시/차시가 한 줄 (일시는 일자 오른쪽) */}
       <div className={styles.meta}>
         {badge}
         <PFText as="span" typo="hd-sm" color="black" className={styles.date}>

@@ -1,4 +1,4 @@
-import { isValidPassword } from '@/features/auth/sign-up'
+import { ADMIN_REGISTERED_PASSWORD_HELP_TEXT, isValidPassword } from '@/features/auth/sign-up'
 
 export type AdminRegisteredChangePasswordField = 'current' | 'new' | 'confirm'
 
@@ -59,7 +59,7 @@ export function validateAdminRegisteredChangePassword(input: {
   if (!isValidPassword(newPassword)) {
     return {
       field: 'new',
-      message: '영문, 숫자, 특수문자를 조합해 12자 이상 입력해 주세요.',
+      message: ADMIN_REGISTERED_PASSWORD_HELP_TEXT,
     }
   }
 

@@ -28,21 +28,21 @@ describe('canUseNotificationSendTemplateForProgram (메일·문자·알림톡 �
     },
   ]
 
-  it('FE-VAR-14 프로그램 미지정에서 requiresProgram 변수는 false', () => {
+  it('프로그램 미지정에서는 등록된 변수 템플릿을 막지 않는다 (수신자별 직접 입력)', () => {
     expect(
       canUseNotificationSendTemplateForProgram({
         texts: ['#{교육 진행 수업 시간}'],
         catalog,
         programNumericId: undefined,
       })
-    ).toBe(false)
+    ).toBe(true)
     expect(
       canUseNotificationSendTemplateForProgram({
         texts: ['#{배정 기관명}'],
         catalog,
         programNumericId: undefined,
       })
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('FE-VAR-02 수신자 전·프로그램 선택 시 공통 변수 템플릿은 활성', () => {
@@ -164,14 +164,14 @@ describe('listNotificationSendTemplateDisabledKeysForProgram', () => {
     ).toEqual(['배정 기관명', '커스텀'])
   })
 
-  it('프로그램 미선택에서는 requiresProgram·미등록 키를 나열한다', () => {
+  it('프로그램 미선택에서는 미등록 키만 나열한다', () => {
     expect(
       listNotificationSendTemplateDisabledKeysForProgram({
-        texts: ['#{교육 진행 수업 시간} #{커스텀}'],
+        texts: ['#{교육 진행 수업 시간} #{배정 기관명} #{커스텀}'],
         catalog,
         programNumericId: undefined,
       })
-    ).toEqual(['교육 진행 수업 시간', '커스텀'])
+    ).toEqual(['커스텀'])
   })
 
   it('formats warning copy with keys preserved', () => {
@@ -238,14 +238,14 @@ describe('템플릿 선택 단계 — 수신자 유형 미정 변수', () => {
     ).toBe(false)
   })
 
-  it('프로그램을 고르지 않았으면 계속 막는다', () => {
+  it('프로그램을 고르지 않았으면 변수로 막지 않는다', () => {
     expect(
       canUseNotificationSendTemplateForProgram({
-        texts,
+        texts: [...texts, '#{꺼진 변수}'],
         catalog,
         programNumericId: null,
         recipientTypeScope: {},
       })
-    ).toBe(false)
+    ).toBe(true)
   })
 })

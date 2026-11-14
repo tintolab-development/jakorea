@@ -21,6 +21,7 @@ type StudentsPanelStepRosterProps = {
   certificateButtonEnabled: boolean
   isDownloadingTemplate: boolean
   isImporting: boolean
+  rosterUploadBlockedMessage?: string | null
   onDownloadTemplate: () => void
   onImportFile: (file: File) => void
   onCertificateIssue: () => void
@@ -33,6 +34,7 @@ export function StudentsPanelStepRoster({
   certificateButtonEnabled,
   isDownloadingTemplate,
   isImporting,
+  rosterUploadBlockedMessage,
   onDownloadTemplate,
   onImportFile,
   onCertificateIssue,
@@ -43,6 +45,10 @@ export function StudentsPanelStepRoster({
   const isCertificateDisabled = !certificateButtonEnabled
 
   const handlePickExcel = () => {
+    if (rosterUploadBlockedMessage) {
+      setAlertMessage(rosterUploadBlockedMessage)
+      return
+    }
     fileInputRef.current?.click()
   }
 
@@ -76,6 +82,11 @@ export function StudentsPanelStepRoster({
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.uploadHint}>
           {STUDENT_ROSTER_UPLOAD_HINT}
         </PFText>
+        {rosterUploadBlockedMessage ? (
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            {rosterUploadBlockedMessage}
+          </PFText>
+        ) : null}
       </div>
 
       <div className={styles.rosterActionRow}>
@@ -96,7 +107,7 @@ export function StudentsPanelStepRoster({
             type="button"
             size="large"
             variant="tertiary"
-            disabled={isImporting}
+            disabled={isImporting || Boolean(rosterUploadBlockedMessage)}
             onClick={handlePickExcel}
           >
             <span className={styles.buttonInner}>

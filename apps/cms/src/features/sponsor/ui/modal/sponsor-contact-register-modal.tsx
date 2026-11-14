@@ -132,8 +132,8 @@ export function SponsorContactRegisterModal({
       open={open}
       onCancel={handleCancel}
       className="sponsor-contact-register-modal"
-      title="후원사 담당자 등록"
-      width={720}
+      title="후원사 담당자 신규 등록"
+      width={600}
       footer={
         <>
           <CmsButton variant="secondary" size="large" onClick={handleCancel} disabled={submitting}>
@@ -144,7 +144,7 @@ export function SponsorContactRegisterModal({
             size="large"
             loading={submitting}
             onClick={() => handleSubmit(handleValidSubmit, handleInvalidSubmit)()} >
-            등록
+            신규 등록
           </CmsButton>
         </>
       }

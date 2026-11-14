@@ -4,7 +4,7 @@ import loadingStatusStyles from './loading-status.module.css'
 import styles from './volunteer-assignment-panel-skeleton.module.css'
 
 export function VolunteerAssignmentPanelSkeleton({
-  statusMessage = '배정현황을 불러오는 중입니다.',
+  statusMessage = '배정 현황을 불러오는 중입니다.',
 }: {
   statusMessage?: string
 }) {

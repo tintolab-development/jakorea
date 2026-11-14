@@ -127,9 +127,13 @@ function buildEconomyCurriculumSessions(
 ): Array<{ sessionLabel: string; title: string; description: string }> {
   return DEFAULT_CURRICULUM_SESSIONS.map((fallback, index) => {
     const n = index + 1
-    const title = overlayString(overlay, `${CURRICULUM}.session${n}.title`) || fallback.title
-    const description =
-      overlayString(overlay, `${CURRICULUM}.session${n}.description`) || fallback.description
+    const titleKey = `${CURRICULUM}.session${n}.title`
+    const descriptionKey = `${CURRICULUM}.session${n}.description`
+    // 키가 있으면 빈 값도 입력값으로 본다 — 비워 둔 단원명에 기본 문구를 다시 채우지 않는다
+    const title = overlayHasOwn(overlay, titleKey) ? overlayString(overlay, titleKey) : fallback.title
+    const description = overlayHasOwn(overlay, descriptionKey)
+      ? overlayString(overlay, descriptionKey)
+      : fallback.description
     return { sessionLabel: fallback.sessionLabel, title, description }
   })
 }

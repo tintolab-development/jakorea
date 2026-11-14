@@ -8,6 +8,7 @@ import {
 } from './portal-application-hidden-paragraph-ids.ts'
 import {
   confirmOsaScheduleOptionValue,
+  filterCompanySchoolInstructorScheduleSlots,
   hasStaleSelectedSlotIds,
   isGeneralOrganizationProgram,
   pruneSelectedSlotIdsToCurrentOptions,
@@ -46,6 +47,36 @@ assert.equal(
     applyCase: 'instructor-gemini',
   }),
   false,
+)
+
+// 1사1교 강사 — 승인 기관 희망 일정만 (QA 2026-11-13 1사1교 #10)
+assert.equal(
+  usesConfirmedOsaAvailableSchedule({
+    program: { programType: 'COMPANY_SCHOOL' },
+    applyCase: 'instructor',
+  }),
+  true,
+)
+assert.equal(
+  usesConfirmedOsaAvailableSchedule({
+    program: { programType: 'COMPANY_SCHOOL' },
+    applyCase: 'institution-economy',
+  }),
+  false,
+)
+assert.deepEqual(
+  filterCompanySchoolInstructorScheduleSlots(
+    [{ id: 'schedule:1:organization-application:2' }, { id: 'program:9:education-period:0' }],
+    { program: { programType: 'COMPANY_SCHOOL' }, applyCase: 'instructor' },
+  ).map(slot => slot.id),
+  ['schedule:1:organization-application:2'],
+)
+assert.equal(
+  filterCompanySchoolInstructorScheduleSlots([{ id: 'program:9:education-period:0' }], {
+    program: { programType: 'GENERAL_ORGANIZATION' },
+    applyCase: 'instructor',
+  }).length,
+  1,
 )
 
 const optionA = confirmOsaScheduleOptionValue(186691, 1691277)

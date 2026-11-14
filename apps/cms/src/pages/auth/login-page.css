@@ -54,20 +54,21 @@
   margin-bottom: 16px;
 }
 
-.login-form .ant-form-item:has(+ .login-admin-approval-pending-notice) {
+.login-form .ant-form-item:has(+ .login-inline-alert) {
   margin-bottom: 0;
 }
 
-.login-admin-approval-pending-notice {
+.login-inline-alert {
   display: flex;
   padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px);
   align-items: center;
   gap: var(--Spacing-4, 4px);
   align-self: stretch;
   margin-top: 40px;
-  margin-bottom: 8px;
+  /* 시안: Alert ↔ [로그인하기] 16px */
+  margin-bottom: 16px;
   border-radius: var(--Radius-8, 8px);
-  border: 1px solid var(--Status-red-bg, #fff);
+  border: 1px solid var(--Status-red-bg, #fbf3f4);
   background: var(
     --Status-red-bg-strong,
     linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
@@ -75,24 +76,26 @@
   );
 }
 
-.login-admin-approval-pending-notice + .login-submit-actions .login-submit-btn {
+.login-inline-alert + .login-submit-actions .login-submit-btn {
   margin-top: 0;
 }
 
-.login-admin-approval-pending-notice__icon {
-  width: 15.167px;
-  height: 15.167px;
+.login-inline-alert__icon {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   aspect-ratio: 1 / 1;
 }
 
-.login-admin-approval-pending-notice__text {
+.login-inline-alert__text {
   margin: 0;
   flex: 1;
   overflow: hidden;
   color: var(--Status-red-main, #c32f4a);
-  font-family: '42dot Sans';
+  font-family: Pretendard, sans-serif;
   font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-style: normal;
   font-weight: 500;
   line-height: 140%; /* 18.2px */

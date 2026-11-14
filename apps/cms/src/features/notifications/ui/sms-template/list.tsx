@@ -8,7 +8,9 @@ import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   CmsButton, CmsModal, ConfirmModal, useCmsAlert,
-  FilterTableToolbarButton
+  FilterTableToolbarButton,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
 } from '@/shared/ui'
 import {
   SMS_ROOT_CATEGORY_ID,
@@ -683,6 +685,9 @@ export function SmsTemplateList({
           }
         }
         handleCloseForm()
+        // 공통 완료 팝업 (QA 2026-11-13) — 폼을 닫고 목록 위에 띄운다
+        if (formMode === 'create') showRegisterCompletedAlert()
+        else showUpdateCompletedAlert()
       } catch (error) {
         offerSyncOnError('저장 실패', error, '템플릿 저장에 실패했습니다. 다시 시도해 주세요.')
       }
@@ -924,21 +929,9 @@ export function SmsTemplateList({
       />
       <PreviewModal
         open={previewOpen && previewTemplate != null}
-        templateName={previewTemplate?.templateName ?? ''}
-        senderPhone={previewTemplate?.senderPhone ?? ''}
         messageType={previewTemplate?.messageType ?? 'SMS'}
         subject={previewTemplate?.subject ?? ''}
         bodyText={previewTemplate?.bodyText ?? ''}
-        attachments={
-          previewTemplate?.attachments?.map(item => ({
-            name: item.fileName,
-            sizeBytes: item.byteSize,
-          })) ??
-          previewTemplate?.attachmentFileNames.map(name => ({
-            name,
-          }))
-        }
-        previewAt={new Date().toISOString()}
         onClose={() => setPreviewOpen(false)}
         onEdit={handlePreviewEdit}
         onDelete={handlePreviewDelete}

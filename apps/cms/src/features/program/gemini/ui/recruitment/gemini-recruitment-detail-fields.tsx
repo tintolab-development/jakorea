@@ -29,7 +29,6 @@ import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
 import {
   RECRUIT_DETAIL_FILE_MAX_BYTES,
   RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
-  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import { useCmsAlert } from '@/shared/ui'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
@@ -44,16 +43,29 @@ import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './gemini-recruitment-detail-fields.css'
 
-const THUMBNAIL_GUIDE_LINES = RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
+const SPECIAL_CHARACTER_GUIDE_LINE =
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.'
+
+/** 시안 — 썸네일 안내 (QA 2026-11-13 Gemini #9) */
+const THUMBNAIL_GUIDE_LINES = [
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
+  SPECIAL_CHARACTER_GUIDE_LINE,
+]
 
 function revokeBlobUrl(url: string | null) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
 
+/** 시안 — 첨부 안내·허용 형식·상한 (QA 2026-11-13 Gemini #10, 등록·상세 공통) */
 const ATTACHMENT_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG, PDF, HWP 형식만 등록 가능합니다.',
-  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 파일은 JPG, PNG, HWP, Excel, PDF, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+  SPECIAL_CHARACTER_GUIDE_LINE,
 ]
+const ATTACHMENT_ACCEPT = '.jpg,.jpeg,.png,.hwp,.hwpx,.xls,.xlsx,.pdf,.doc,.docx'
+const ATTACHMENT_MAX_COUNT = 10
+const ATTACHMENT_MAX_TOTAL_BYTES = 100 * 1024 * 1024
+const ATTACHMENT_COUNT_EXCEEDED_MESSAGE = '첨부 파일은 최대 10개까지 등록할 수 있습니다.'
+const ATTACHMENT_TOTAL_EXCEEDED_MESSAGE = '첨부 파일은 총 100MB까지 업로드 가능합니다.'
 
 const HTML_TAG_RE = /<\/?[a-z][^>]*>/i
 
@@ -302,7 +314,7 @@ export function GeminiRecruitmentDetailFields({
           fullRow
           view={
             <ParagraphFileUpload
-              accept=".jpg,.jpeg,.png,.pdf,.hwp,.hwpx"
+              accept={ATTACHMENT_ACCEPT}
               multiple
               disabled
               fileNames={values.attachmentFileNames}
@@ -312,15 +324,26 @@ export function GeminiRecruitmentDetailFields({
           edit={
             isEdit ? (
               <ParagraphFileUpload
-                accept=".jpg,.jpeg,.png,.pdf,.hwp,.hwpx"
+                accept={ATTACHMENT_ACCEPT}
                 multiple
                 disabled={readOnlyUpload || uploadingAttachments}
                 guideLines={ATTACHMENT_GUIDE_LINES}
-                maxTotalBytes={0}
+                maxTotalBytes={ATTACHMENT_MAX_TOTAL_BYTES}
                 maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
-                sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
+                sizeExceededMessage={file =>
+                  file != null
+                    ? RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE
+                    : ATTACHMENT_TOTAL_EXCEEDED_MESSAGE
+                }
                 fileNames={values.attachmentFileNames}
                 onFilesChange={files => {
+                  if (
+                    latestValuesRef.current.attachmentFileNames.length + files.length >
+                    ATTACHMENT_MAX_COUNT
+                  ) {
+                    showAlert({ title: '안내', content: ATTACHMENT_COUNT_EXCEEDED_MESSAGE })
+                    return
+                  }
                   // 업로드 확정 fileObjectId를 파일명과 함께 보관 — 저장 시 PUT /programs/{id}/attachments.
                   const owner = programDetailAttachmentOwner(programNumericId)
                   setUploadingAttachments(true)

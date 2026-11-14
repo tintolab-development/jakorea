@@ -12,11 +12,26 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { INTERVIEW_METHOD_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '../recruit-paragraph-views/volunteer-info-program.css'
 export const UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 export const UJAT_RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
+/** 템플릿 관리 UJAT 모집 폼 시안(5800:157724·158529) 플레이스홀더 — 프로그램 상세·등록은 기존 문구 */
+export const UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER = '모집 시 노출될 프로그램명을 입력해 주세요'
+export const UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER = '모집 기간을 선택해 주세요'
+export const UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER = '합격자 발표일을 선택해 주세요'
+export const UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER = '발표 방법 안내'
+export const UJAT_TEMPLATE_NOTES_PLACEHOLDER = '비고를 입력해 주세요'
+const UJAT_RECRUIT_NOTES_PLACEHOLDER = '비고란을 작성하세요'
+/**
+ * 템플릿 관리 UJAT 모집 폼 시안(5800:157724·158529) 치수 수식 클래스 — `volunteer-info-program.css`.
+ * 발표 방법 안내는 남은 폭, 2차 면접 기간은 날짜 남은 폭 + 면접 유형 120, 문의처 입력 200·h36.
+ */
+export const UJAT_TEMPLATE_RESULT_ROW_SPEC_CLASS = 'ujat-recruit-inline-result-row--template-spec'
+export const UJAT_TEMPLATE_CONTACT_INPUTS_SPEC_CLASS =
+  'program-detail-info-tab__contact-inputs--template-spec'
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
   minWidth: 0,
@@ -195,8 +210,16 @@ export function UjatRecruitFormDateMethodRow({
   datePlaceholder?: string
   methodPlaceholder?: string
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
-    <div className="program-detail-info-tab__result-row ujat-recruit-inline-result-row">
+    <div
+      className={[
+        'program-detail-info-tab__result-row ujat-recruit-inline-result-row',
+        isTemplateManagementScreen && UJAT_TEMPLATE_RESULT_ROW_SPEC_CLASS,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <UjatRecruitFormSingleDatePicker
         form={form}
         name={dateName}
@@ -245,8 +268,16 @@ export function UjatRecruitFormInterviewPeriodRow({
   methodPlaceholder?: string
   clearToUndefined?: boolean
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   return (
-    <div className="program-detail-info-tab__result-row ujat-recruit-inline-result-row">
+    <div
+      className={[
+        'program-detail-info-tab__result-row ujat-recruit-inline-result-row',
+        isTemplateManagementScreen && UJAT_TEMPLATE_RESULT_ROW_SPEC_CLASS,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="ujat-recruit-inline-result-row__period">
         <UjatRecruitFormPeriodDatePicker
           form={form}
@@ -278,8 +309,10 @@ export function UjatRecruitFormInterviewPeriodRow({
 
 export function UjatRecruitVolunteerNotesField({
   form,
+  placeholder = UJAT_RECRUIT_NOTES_PLACEHOLDER,
 }: {
   form: UseFormReturn<ProgramDetailEditFormValues>
+  placeholder?: string
 }) {
   const notApplicable = form.watch('volunteerRecruitmentNotesNotApplicable') === 'not_applicable'
 
@@ -316,7 +349,7 @@ export function UjatRecruitVolunteerNotesField({
             inputSize="small"
             width="100%"
             style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
-            placeholder="비고란을 작성하세요"
+            placeholder={placeholder}
           />
         )}
       />
@@ -326,8 +359,10 @@ export function UjatRecruitVolunteerNotesField({
 
 export function UjatRecruitParticipantNotesField({
   form,
+  placeholder = UJAT_RECRUIT_NOTES_PLACEHOLDER,
 }: {
   form: UseFormReturn<ProgramDetailEditFormValues>
+  placeholder?: string
 }) {
   const notApplicable = form.watch('participantRecruitmentNotesNotApplicable') === 'not_applicable'
 
@@ -364,7 +399,7 @@ export function UjatRecruitParticipantNotesField({
             inputSize="small"
             width="100%"
             style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
-            placeholder="비고란을 작성하세요"
+            placeholder={placeholder}
           />
         )}
       />

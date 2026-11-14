@@ -1,7 +1,7 @@
 import { useMemo, type CSSProperties } from 'react'
 import { Calendar } from 'antd'
 import enUS from 'antd/es/calendar/locale/en_US'
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import updateLocale from 'dayjs/plugin/updateLocale'
@@ -119,11 +119,11 @@ function InterviewAssignCalendarMiniCore({
     <div className="calendar-mini" style={miniStyle} data-week-rows={weekRows}>
       <div className="calendar-mini-header">
         <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
-          <LeftOutlined />
+          <ButtonLeftIcon style={{ display: 'block', width: 20, height: 20 }} />
         </button>
         <span className="calendar-mini-title">{currentMonth.format('YYYY.MM')}</span>
         <button type="button" className="calendar-mini-nav-btn" onClick={handleNextMonth}>
-          <RightOutlined />
+          <ButtonRightIcon style={{ display: 'block', width: 20, height: 20 }} />
         </button>
       </div>
       <Calendar

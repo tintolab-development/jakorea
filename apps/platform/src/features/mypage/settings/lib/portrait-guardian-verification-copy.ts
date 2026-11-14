@@ -3,7 +3,7 @@
 /** 미성년 회원 초상권 카드 — 미동의(만료 포함) 상태 */
 export const PORTRAIT_GUARDIAN_CARD_COPY = {
   writeLabel: '보호자 본인인증',
-  notAgreedHint: '만 14세 미만 회원은 보호자 본인인증 이후 동의서 작성이 가능해요.',
+  notAgreedHint: '만 14세 미만 회원은 보호자 본인인증 후 동의서 작성이 가능해요.',
 } as const
 
 export const PORTRAIT_GUARDIAN_CONFIRM_COPY = {

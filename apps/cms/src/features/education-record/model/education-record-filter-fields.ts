@@ -1,9 +1,9 @@
 /**
  * 실적 관리 목록 필터 필드 정의 (TableFilterGroup용)
  * - 년도/분기는 한 항목(`selectPair` compact)으로 묶어 레이블 1개 + 셀렉트 2개로 렌더
- *   기관 소재지와 동일: 열 235.5px · 하위 50:50(각 114.75px) · gap 6px
+ *   다른 필터와 같은 폭(FILTER_CONTROL_MAX_WIDTH_PX) · 하위 50:50 · gap 6px (QA 2026-11 실적 CSS #2)
  * - 기관 소재지(시/도·시/군/구)도 한 항목(`addressRegion`)으로 묶음
- * - 단일 검색: 공통 260px 규격 — `flex: 1 1 0` 금지(Col만 늘고 컨트롤 260px 고정 시 갭 과다)
+ * - 단일 검색: 공통 245px 규격 — `flex: 1 1 0` 금지(Col만 늘고 컨트롤 245px 고정 시 갭 과다)
  */
 
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -76,7 +76,7 @@ export function createEducationRecordFilterFields({
       type: 'selectPair',
       label: '년도/분기',
       allowClear: true,
-      width: FILTER_ADDRESS_REGION_FIELD_WIDTH_PX,
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
       selectPair: {
         compact: true,
         primary: {

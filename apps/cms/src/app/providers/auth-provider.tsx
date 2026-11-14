@@ -11,7 +11,10 @@ import {
   isAdminAuthUnauthorizedError,
   isAdminAuthForbiddenError,
 } from '@/features/auth/api/admin-session-fetcher'
-import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
+import {
+  notifyServerActivityRecorded,
+  startUserActivityTracking,
+} from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
 import { AuthContextProvider } from '@/shared/lib/auth/auth-context'
@@ -76,17 +79,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const initial = useAuthStore.getState()
       if (!initial.isAuthenticated || !initial.token) return
       const requestedToken = initial.token
-      void postAdminAuthActivity().catch(error => {
-        const current = useAuthStore.getState()
-        // A delayed 401 from the previous access token must not end a refreshed login.
-        if (!current.isAuthenticated || current.token !== requestedToken) return
-        if (isAdminAuthUnauthorizedError(error)) {
-          current.logout()
-        } else if (isAdminAuthForbiddenError(error)) {
-          // Permission/account-type mismatch is not token expiration.
-          console.warn('[ADMIN_SESSION] Activity was denied (403); verify ADMIN JWT and sid.')
-        }
-      })
+      void postAdminAuthActivity()
+        .then(result => {
+          const current = useAuthStore.getState()
+          if (!current.isAuthenticated || current.token !== requestedToken) return
+          // 서버 유휴 기한이 바뀌었으면 세션 경고 타이머가 새 기한을 다시 읽는다.
+          if (result?.updated) notifyServerActivityRecorded()
+        })
+        .catch(error => {
+          const current = useAuthStore.getState()
+          // A delayed 401 from the previous access token must not end a refreshed login.
+          if (!current.isAuthenticated || current.token !== requestedToken) return
+          if (isAdminAuthUnauthorizedError(error)) {
+            current.logout()
+          } else if (isAdminAuthForbiddenError(error)) {
+            // Permission/account-type mismatch is not token expiration.
+            console.warn('[ADMIN_SESSION] Activity was denied (403); verify ADMIN JWT and sid.')
+          }
+        })
     })
 
     // 만료만 보고 바로 logout하지 않는다: refresh-first, 실패 시에만 logout (store.checkSessionExpiry)

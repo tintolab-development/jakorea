@@ -1,12 +1,15 @@
-const SPONSOR_LOGO_MAX_COUNT = 20
+/** 안내 문구와 같은 기준: 최대 10개, 파일당 20MB, 총 100MB (QA 2026-11-13 데이터 관리 #4) */
+const SPONSOR_LOGO_MAX_COUNT = 10
 const SPONSOR_LOGO_MAX_BYTES_PER_FILE = 20 * 1024 * 1024
+/** 이미 등록된 로고는 응답에 용량이 없어, 이번에 고른 파일 합계만 검사한다 */
+const SPONSOR_LOGO_MAX_TOTAL_BYTES = 100 * 1024 * 1024
 
 const SPONSOR_LOGO_ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'ai', 'eps', 'svg'])
 
 export const SPONSOR_LOGO_ACCEPT = '.jpg,.jpeg,.png,.ai,.eps,.svg'
 
 export const SPONSOR_LOGO_GUIDE_LINES = [
-  '- 파일당 최대 20MB, JPG/PNG/AI/EPS/SVG 형식, 최대 20개까지 등록 가능합니다.',
+  '- 파일은 JPG, PNG, AI, EPS, SVG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
@@ -40,6 +43,10 @@ export function validateSponsorLogoSelection(files: ReadonlyArray<File>): string
     if (file.size < 1) {
       return '업로드할 파일이 비어 있습니다.'
     }
+  }
+  const totalBytes = files.reduce((sum, file) => sum + file.size, 0)
+  if (totalBytes > SPONSOR_LOGO_MAX_TOTAL_BYTES) {
+    return '첨부 파일은 총 100MB까지 등록할 수 있습니다.'
   }
   return null
 }

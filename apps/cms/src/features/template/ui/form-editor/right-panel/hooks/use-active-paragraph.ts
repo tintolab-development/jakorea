@@ -9,10 +9,18 @@ import {
   paragraphKindLabel,
 } from '@/features/template/model/writing-form/paragraph-labels'
 import { paragraphVariantLabel } from '@/features/template/ui/form-editor/right-panel/config/paragraph-editor.registry'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import {
   paragraphDetailSelectValue,
   paragraphKindSelectValue,
 } from '@/features/template/model/writing-form/paragraph-selectors'
+
+/** 템플릿 관리 우측 패널 — 제목형(설문 제목형) 단락 섹션 타이틀 (시안 5767:41434·5767:42989 등) */
+export const TEMPLATE_TITLE_PARAGRAPH_SECTION_TITLE = '제목 없음'
+
+export function isTitleWithPeriodSectionParagraph(p: WritingFormParagraph): boolean {
+  return p.kind === 'description' && p.variant === 'survey_title_with_period'
+}
 
 export function useActiveParagraphState({
   draft,
@@ -26,6 +34,7 @@ export function useActiveParagraphState({
   activeParagraph?: WritingFormParagraph | null
   structureLockedParagraphIds?: ReadonlySet<string>
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const draftActiveParagraph =
     activeParagraphProp === undefined
       ? draft.paragraphs.find(paragraph => paragraph.id === activeParagraphId) ?? null
@@ -40,9 +49,11 @@ export function useActiveParagraphState({
     const outline =
       active && active.kind === 'description' && active.variant === 'closing'
         ? `${paragraphKindLabel(active)}_${paragraphVariantLabel(active)}`
-        : active
-          ? formEditorRightPanelSectionTitle(active)
-          : ''
+        : active && isTemplateManagementScreen && isTitleWithPeriodSectionParagraph(active)
+          ? TEMPLATE_TITLE_PARAGRAPH_SECTION_TITLE
+          : active
+            ? formEditorRightPanelSectionTitle(active)
+            : ''
 
     const activeKindValue = active ? paragraphKindSelectValue(active) : null
     const activeDetailValue = active ? paragraphDetailSelectValue(active) : null
@@ -56,5 +67,11 @@ export function useActiveParagraphState({
       activeDetailValue,
       activeKindLocked,
     }
-  }, [activeParagraphId, activeParagraphProp, structureLockedParagraphIds, draftActiveParagraph])
+  }, [
+    activeParagraphId,
+    activeParagraphProp,
+    structureLockedParagraphIds,
+    draftActiveParagraph,
+    isTemplateManagementScreen,
+  ])
 }

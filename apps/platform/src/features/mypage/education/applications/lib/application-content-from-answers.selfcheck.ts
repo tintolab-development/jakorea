@@ -35,6 +35,21 @@ const volunteer = resolveApplicationContentFromAnswers({
 assert.equal(volunteer.selfIntroMotivation, '봉사 자기소개')
 assert.ok(volunteer.preferredEducationScheduleLabel?.includes('2026년'))
 assert.ok(volunteer.preferredEducationScheduleLabel?.includes('09:30') || volunteer.preferredEducationScheduleLabel?.includes('9:30'))
+assert.ok(volunteer.preferredEducationScheduleLabel?.includes('1차시'))
+
+const rankedPreferred = resolveApplicationContentFromAnswers({
+  preferredScheduleBlocks: [
+    {
+      date: '2026-11-05',
+      preferenceRank: 1,
+      sessionCount: 1,
+    },
+  ],
+})
+assert.equal(
+  rankedPreferred.preferredEducationScheduleLabel,
+  '1지망 | 2026년 11월 5일(목) | 1차시',
+)
 
 const interview = formatInterviewAtLabel('2026-03-15T09:00:00+09:00')
 assert.equal(interview, '2026년 3월 15일(일) 09:00')

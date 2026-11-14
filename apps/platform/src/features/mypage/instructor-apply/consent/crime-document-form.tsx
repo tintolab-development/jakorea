@@ -42,12 +42,8 @@ import {
 } from '../api/member-file-upload'
 import styles from './consent-form.module.css'
 
-/**
- * 시안(P6·C08)은 `PDF, JPG, PNG`이지만 `CRIMINAL_HISTORY_CONSENT_ORIGINAL`의 JPG/PNG 수용이
- * API 계약(OpenAPI filePurpose 설명)에 없어 실제 허용·안내는 PDF 유지 — BE 확인 후 확장.
- */
 const CRIME_CONSENT_UPLOAD_HINTS = [
-  formatSingleFileUploadHint('PDF'),
+  formatSingleFileUploadHint('PDF, JPG, PNG'),
   '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 

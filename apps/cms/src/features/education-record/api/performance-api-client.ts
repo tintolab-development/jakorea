@@ -204,7 +204,7 @@ export const PERFORMANCE_EXPORT_DOWNLOAD_REASON = '실적 데이터 엑셀 다�
 /** 공식 BE export API를 통해 현재 필터 전체를 XLSX로 생성·다운로드한다. */
 export async function exportPerformanceRecordsRemote(
   params: ExportRecordsParams,
-  filenamePrefix = '실적데이터'
+  filenamePrefix = '실적 데이터'
 ): Promise<void> {
   if (!canStartPerformanceExport()) {
     showAdminAccessDeniedAlert()
@@ -220,7 +220,7 @@ export async function exportPerformanceRecordsRemote(
     skipGlobalErrorAlert: true,
   } as AxiosRequestConfig & { skipGlobalErrorAlert: boolean })
 
-  // 서버가 영문 이름(performance_…xlsx)을 보내면 규칙 이름([JA Korea] CMS 어드민_실적데이터_YYMMDD.xlsx)으로 저장한다.
+  // 서버가 영문 이름(performance_…xlsx)을 보내면 규칙 이름([JA Korea] CMS 어드민_실적 데이터_YYMMDD.xlsx)으로 저장한다.
   const filename = ruleFileNameFromContentDisposition(
     readHeader(response.headers, 'content-disposition'),
     fallbackFilename

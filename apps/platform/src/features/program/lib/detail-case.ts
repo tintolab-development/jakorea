@@ -76,8 +76,32 @@ export function recruitmentRoleLabelForCase(detailCase: ProgramDetailCase): stri
   return DETAIL_CASE_ROLE_LABEL[detailCase]
 }
 
+export function isOrganizationParticipantProgram(
+  program: Pick<
+    CmsProgramLike,
+    'registrationKind' | 'generalProgramAudience' | 'generalParticipantTypes' | 'category'
+  >,
+): boolean {
+  if (program.registrationKind === 'economy') return true
+  if (program.generalProgramAudience === 'organization') return true
+  if ((program.generalParticipantTypes ?? []).includes('school_institution')) return true
+  return program.category === 'school'
+}
+
 /** phase 카드의 1차 모집 기간 라벨 */
-export function recruitmentPeriodPhaseLabel(detailCase: ProgramDetailCase): string {
+export function recruitmentPeriodPhaseLabel(
+  detailCase: ProgramDetailCase,
+  options?: {
+    registrationKind?: CmsProgramLike['registrationKind']
+    organizationParticipant?: boolean
+  },
+): string {
+  if (
+    options?.registrationKind === 'economy' ||
+    (options?.organizationParticipant === true && detailCase === 'general')
+  ) {
+    return '참여 기관 모집 기간'
+  }
   switch (detailCase) {
     case 'instructor':
       return '강사 모집 기간'
@@ -103,10 +127,10 @@ export function recruitmentPhaseGroupLabel(detailCase: ProgramDetailCase): strin
     case 'gemini':
       return '모집 및 선별 기간'
     case 'ujat-volunteer':
+    case 'ujat-participant':
+      return '모집 및 선별 기간'
     case 'volunteer':
       return '모집 및 선발 일정'
-    case 'ujat-participant':
-      return '기관 모집 일정'
     case 'instructor':
       return '모집 및 선발 일정'
     default:

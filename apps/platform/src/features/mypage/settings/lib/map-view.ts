@@ -172,13 +172,13 @@ export function mapPortalProfileToSettingsView(
     return {
       basicRows: [
         { label: '가입일', value: formatSettingsJoinedAt(profile.joinedAt) },
+        { label: '이메일 ID', value: formatSettingsText(profile.email) },
         { label: '이름', value: formatSettingsText(profile.name) },
         { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },
         { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
         { label: '성별', value: formatSettingsGender(profile.gender) },
         { label: '소속/학교', value: formatSettingsText(affiliation) },
         { label: '재직 현황', value: formatSettingsEmployment(profile.teacherEmploymentStatus) },
-        { label: 'Email', value: formatSettingsText(profile.email) },
       ],
       guardian: null,
     }
@@ -189,7 +189,7 @@ export function mapPortalProfileToSettingsView(
     enrollment === '해당 없음'
       ? [{ label: '소속 기관명', value: profile.affiliationName?.trim() || '소속 없음' }]
       : [
-          { label: '소속/학교명', value: formatSettingsText(affiliation) },
+          { label: '소속/학교', value: formatSettingsText(affiliation) },
           { label: '학년', value: formatSettingsGrade(profile.grade) },
         ]
   const hideMemberPhone = isMinorSettingsMember(profile)
@@ -200,6 +200,7 @@ export function mapPortalProfileToSettingsView(
   return {
     basicRows: [
       { label: '가입일', value: formatSettingsJoinedAt(profile.joinedAt) },
+      { label: '이메일 ID', value: formatSettingsText(profile.email) },
       { label: '이름', value: formatSettingsText(profile.name) },
       ...phoneRows,
       { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
@@ -207,7 +208,6 @@ export function mapPortalProfileToSettingsView(
       { label: '재학유무', value: enrollment },
       ...schoolRows,
       { label: '자택 주소', value: address || EMPTY_SETTINGS_VALUE },
-      { label: 'Email', value: formatSettingsText(profile.email) },
       { label: '1365 ID', value: volunteerId, action: '1365-shortcut' },
     ],
     guardian: guardian ?? null,

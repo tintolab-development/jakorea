@@ -325,14 +325,23 @@ export type RefreshSessionOutcome = 'ok' | 'invalid' | 'transient' | 'no-credent
 /** 서버가 refresh 수단을 거절했다고 보는 상태 코드 — 이 셋만 세션 종료(invalid) */
 const REFRESH_REJECTED_STATUSES = new Set([400, 401, 403])
 
+/** 서버가 이미 rotate한 refresh token을 받았다는 409 코드 */
+const REFRESH_TOKEN_ALREADY_ROTATED = 'REFRESH_TOKEN_ALREADY_ROTATED'
+
 /**
  * refresh 실패 분류.
  * - invalid: 400·401·403 — 서버가 refresh 수단을 거절했다.
- * - transient: 그 밖 전부(404·409·기타 4xx·5xx·응답 없음·타임아웃·중단·응답 본문 이상) — 세션 종료의 근거가 아니다.
+ *   409 REFRESH_TOKEN_ALREADY_ROTATED도 invalid — 다시 보낼 새 값이 없어 여기까지 왔다(refreshWithLatestCredential이
+ *   새 값이 있으면 이미 재시도함). 같은 값을 10초 뒤 다시 보내면 서버 재사용 탐지로 계정 전체 세션이 폐기되므로
+ *   [다시 시도] 대상이 아니다.
+ * - transient: 그 밖 전부(404·다른 409·기타 4xx·5xx·응답 없음·타임아웃·중단·응답 본문 이상) — 세션 종료의 근거가 아니다.
  */
 export function classifyRefreshFailure(error: unknown): 'invalid' | 'transient' {
   if (!axios.isAxiosError(error)) return 'transient'
   const status = error.response?.status
+  if (status === 409 && getErrorCode(error.response?.data) === REFRESH_TOKEN_ALREADY_ROTATED) {
+    return 'invalid'
+  }
   return status != null && REFRESH_REJECTED_STATUSES.has(status) ? 'invalid' : 'transient'
 }
 
@@ -462,6 +471,13 @@ axiosClient.interceptors.response.use(
       const rotatedInAnotherTab = Boolean(storedRefresh && storedRefresh !== refreshToken)
       if (newerAccessToken || rotatedInAnotherTab) {
         // A stale failed Refresh must not logout/revoke a newer access/refresh session.
+        return Promise.reject(err)
+      }
+      if (classifyRefreshFailure(err) === 'transient') {
+        // 5xx·네트워크·타임아웃은 세션 폐기의 근거가 아니다 — 로그아웃하지 않고 원 요청 실패로 돌려준다.
+        if (axios.isAxiosError(err) && !isRequestCanceledError(err)) {
+          showGlobalApiErrorAlert(err, originalRequest)
+        }
         return Promise.reject(err)
       }
       handleAuthFailure()
