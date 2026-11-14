@@ -20,6 +20,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { withdrawAdminSelfRemote } from '@/features/user/api/members-api-client'
 import { fetchAdminMe, updateAdminMarketingConsent } from '@/features/auth/api/fetch-admin-me'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
+import { completeAdminIdentityReverification } from '@/features/auth/api/admin-identity-contact'
 import { fetchCurrentTermsDocumentMeta } from '@/features/user/api/fetch-current-terms-document'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
@@ -307,14 +308,8 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const handleIdentitySuccess = useCallback(
     (result: IdentityChallengeCompleteResult) => {
       identityVerifyAttemptRef.current = false
-      const nextPhone = result.verifiedPhone?.trim()
-      updateUser({
-        ...(nextPhone ? { phone: nextPhone } : {}),
-      })
-      showAlert({
-        title: '인증 완료',
-        content: '본인인증 재인증이 완료되었습니다.',
-      })
+      // 서버 반영·유지 정보 불일치 판정은 onSuccess 안에서 일어나므로 실패 팝업도 여기서 직접 띄운다.
+      void completeAdminIdentityReverification(result, { updateUser, showAlert })
     },
     [showAlert, updateUser]
   )

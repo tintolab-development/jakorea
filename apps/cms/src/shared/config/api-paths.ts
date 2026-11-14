@@ -35,3 +35,5 @@ export const adminAuthPaths = {
 
 /** GNB 계정 — `GET /api/admin/me` */
 export const adminMePath = () => '/api/admin/me'
+/** 내 정보 확인 — 본인인증 재인증 후 휴대폰 번호 반영 (`PATCH`) */
+export const adminMeIdentityContactPath = () => '/api/admin/me/identity-contact'
