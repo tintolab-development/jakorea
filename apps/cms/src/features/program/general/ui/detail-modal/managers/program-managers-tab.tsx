@@ -16,7 +16,10 @@ import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/f
 import { ActionResultModal, DeleteBlockedGuideModal, FilterTableToolbarButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
-import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import {
+  displayServerPhoneWithHyphens,
+  displayServerPiiAsIs,
+} from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -375,7 +378,7 @@ export function ProgramManagersTab({
         // 일반 시안: 담당자명·연락처·이메일·등록일시가 남은 폭을 균등 분배
         width: isGeneralVariant ? undefined : 246,
         align: 'center',
-        render: (phone: string) => displayServerPiiAsIs(phone),
+        render: (phone: string) => displayServerPhoneWithHyphens(phone),
       },
       {
         title: '이메일',
@@ -418,7 +421,7 @@ export function ProgramManagersTab({
         title: '연락처',
         dataIndex: 'phone',
         key: 'phone',
-        render: (phone: string) => displayServerPiiAsIs(phone),
+        render: (phone: string) => displayServerPhoneWithHyphens(phone),
       },
       {
         title: '이메일',
