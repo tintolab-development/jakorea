@@ -20,10 +20,10 @@ import { toSchoolEnrollmentStatusLabelOrRaw } from './map-school-enrollment-stat
 
 describe('map-member-gender-birth', () => {
   it('성별을 API 코드로 변환한다', () => {
-    expect(toApiGender('male')).toBe('M')
-    expect(toApiGender('여성')).toBe('F')
-    expect(toApiGender('F')).toBe('F')
-    expect(toApiGender('MALE')).toBe('M')
+    expect(toApiGender('male')).toBe('MALE')
+    expect(toApiGender('여성')).toBe('FEMALE')
+    expect(toApiGender('F')).toBe('FEMALE')
+    expect(toApiGender('MALE')).toBe('MALE')
     expect(toApiGender('')).toBeUndefined()
   })
 
@@ -43,6 +43,7 @@ describe('map-member-gender-birth', () => {
     expect(toDisplayGender('2')).toBe('여성')
     expect(toDisplayGender('남자')).toBe('남성')
     expect(toDisplayGender(undefined)).toBe('-')
+    expect(toDisplayGender('OTHER')).toBe('기타')
     expect(toDisplayGender('unknown')).toBe('-')
     expect(toDisplayGender('**')).toBe('**')
     expect(toDisplayGender('***')).toBe('**')
@@ -54,7 +55,8 @@ describe('map-member-gender-birth', () => {
     expect(toGenderLabelOrRaw('MALE')).toBe('남성')
     expect(toGenderLabelOrRaw('FEMALE')).toBe('여성')
     expect(toGenderLabelOrRaw('여성')).toBe('여성')
-    expect(toGenderLabelOrRaw('OTHER')).toBe('OTHER')
+    expect(toGenderLabelOrRaw('OTHER')).toBe('기타')
+    expect(toGenderLabelOrRaw('LEGACY_X')).toBe('LEGACY_X')
     expect(toGenderLabelOrRaw('  ')).toBeUndefined()
     expect(toGenderLabelOrRaw(null)).toBeUndefined()
   })
@@ -82,7 +84,7 @@ describe('mapCreateUserRequestToPreRegister', () => {
       isActive: true,
     })
 
-    expect(body.gender).toBe('M')
+    expect(body.gender).toBe('MALE')
     expect(body.birthDate).toBe('1990-01-15')
   })
 })
@@ -111,7 +113,7 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
 
     expect(body.email).toBe('a@test.com')
     expect(body.rawPassword).toBe('a@test.com')
-    expect(body.gender).toBe('M')
+    expect(body.gender).toBe('MALE')
     expect(body.birthDate).toBe('1990-01-15')
     expect(body.address).toBe('서울시 강서구 화곡동')
     expect(body.addressDetail).toBe('101호')

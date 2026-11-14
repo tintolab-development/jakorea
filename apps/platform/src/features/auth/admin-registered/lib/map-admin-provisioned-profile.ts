@@ -8,10 +8,10 @@ export function toAdminProvisionedApiBirthDate(birthDate: string): string {
   return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
 }
 
-/** UI male/female → API `M`/`F` */
+/** UI male/female → API `MALE`/`FEMALE` */
 export function toAdminProvisionedApiGender(gender: GenderType): string {
-  if (gender === 'female') return 'F'
-  if (gender === 'male') return 'M'
+  if (gender === 'female') return 'FEMALE'
+  if (gender === 'male') return 'MALE'
   return ''
 }
 

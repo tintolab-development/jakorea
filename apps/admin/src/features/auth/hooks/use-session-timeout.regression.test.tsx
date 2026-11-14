@@ -202,17 +202,80 @@ describe('Homepage Admin: Session GET and Activity race protections', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-11-06T09:00:00Z'))
     sessionRequest.mockReset()
+    const idleSoon = currentStatus({
+      idlePolicyEnforced: true,
+      idleExpiresAt: new Date(Date.now() + 1000).toISOString(),
+    })
     sessionRequest
-      .mockResolvedValueOnce(currentStatus({
-        idlePolicyEnforced: true,
-        idleExpiresAt: new Date(Date.now() + 1000).toISOString(),
-      }))
-      .mockRejectedValueOnce(fail(401))
+      .mockResolvedValueOnce(idleSoon) // 최초 조회
+      .mockResolvedValueOnce(idleSoon) // 유휴 경고 진입 직전 재확인 — 연장되지 않음
+      .mockRejectedValueOnce(fail(401)) // 유휴 기한 경과 후 재확인
     renderHook(() => useSessionTimeout())
     await flush()
     await act(async () => { await vi.advanceTimersByTimeAsync(2300) })
-    expect(sessionRequest).toHaveBeenCalledTimes(2)
+    expect(sessionRequest).toHaveBeenCalledTimes(3)
     expect(logout).toHaveBeenCalledTimes(1)
+  })
+
+  it('정책 ON: 유휴 경고 진입 직전 서버가 이미 연장했으면 경고를 띄우지 않는다', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-06T09:00:00Z'))
+    sessionRequest.mockReset()
+    sessionRequest
+      .mockResolvedValueOnce(currentStatus({
+        idlePolicyEnforced: true,
+        idleExpiresAt: new Date(Date.now() + 4 * 60_000).toISOString(),
+      }))
+      .mockResolvedValue(currentStatus({
+        idlePolicyEnforced: true,
+        idleExpiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      }))
+    const { result } = renderHook(() => useSessionTimeout())
+    await flush()
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000) })
+    expect(sessionRequest).toHaveBeenCalledTimes(2)
+    expect(result.current.showWarning).toBe(false)
+  })
+
+  it('정책 ON: 전역 입력 Activity가 기록되면 Session을 다시 읽고, 정책 OFF면 읽지 않는다', async () => {
+    const { notifyAdminActivityRecorded } = await import('@/features/auth/lib/admin-activity-signal')
+    sessionRequest.mockResolvedValue(currentStatus({
+      idlePolicyEnforced: true,
+      idleExpiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+    }))
+    renderHook(() => useSessionTimeout())
+    await flush()
+    expect(sessionRequest).toHaveBeenCalledTimes(1)
+    await act(async () => { notifyAdminActivityRecorded() })
+    await flush()
+    expect(sessionRequest).toHaveBeenCalledTimes(2)
+    cleanup()
+
+    sessionRequest.mockClear()
+    sessionRequest.mockResolvedValue(currentStatus())
+    renderHook(() => useSessionTimeout())
+    await flush()
+    expect(sessionRequest).toHaveBeenCalledTimes(1)
+    await act(async () => { notifyAdminActivityRecorded() })
+    await flush()
+    expect(sessionRequest).toHaveBeenCalledTimes(1)
+  })
+
+  it('같은 로그인에서 Session 재조회가 5xx로 실패해도 떠 있던 경고를 유지한다', async () => {
+    sessionRequest.mockReset()
+    sessionRequest
+      .mockResolvedValueOnce(currentStatus({ absoluteExpiresAt: new Date(Date.now() + 3 * 60_000).toISOString() }))
+      .mockRejectedValueOnce(fail(503))
+    const { result } = renderHook(() => useSessionTimeout())
+    await flush()
+    expect(result.current.showWarning).toBe(true)
+    expect(result.current.warningKind).toBe('absolute')
+
+    await act(async () => { await result.current.syncSession() })
+    await flush()
+    expect(sessionRequest).toHaveBeenCalledTimes(2)
+    expect(logout).not.toHaveBeenCalled()
+    expect(result.current.showWarning).toBe(true)
   })
 
   it('a client countdown expiration rechecks the server before ending login', async () => {

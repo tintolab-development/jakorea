@@ -128,6 +128,7 @@ function toDisplayGender(gender: string | undefined): string {
   const upper = raw.toUpperCase()
   if (upper === 'M' || upper === 'MALE' || raw === '남성' || raw === '남') return '남성'
   if (upper === 'F' || upper === 'FEMALE' || raw === '여성' || raw === '여') return '여성'
+  if (upper === 'OTHER') return '기타'
   return raw
 }
 

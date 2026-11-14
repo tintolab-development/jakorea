@@ -6,6 +6,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 /** Gemini 찾아가는 연수 참여 기관 신청 폼 — 시드 단락 ID */
 export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS = {
@@ -50,9 +54,6 @@ const THIRD_PARTY_BOTTOM =
 const PORTRAIT_BOTTOM =
   '동의하지 않을 권리가 있으며, 동의하지 않을 시 본 프로그램 참여가 불가능합니다.'
 
-const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
-
 function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
@@ -83,7 +84,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value: PERSONAL_INFO_RETENTION_CELL,
+          value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
         },
       ],
     ],
@@ -125,7 +126,7 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
           kind: 'text',
           value: 'Gemini Academy 연수 참가자 공유 및\n프로그램 진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: '동의일로부터 3년 보관 후 파기' },
+        { kind: 'text', value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
       ],
     ],
     bottomText: THIRD_PARTY_BOTTOM,
@@ -281,7 +282,7 @@ export function migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(
         next.kind === 'single_item' &&
         next.variant === 'horizontal_table'
       ) {
-        next = patchHorizontalTableTextCell(next, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+        next = patchHorizontalTableTextCell(next, 0, 2, APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL)
       }
     } else if (
       paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent

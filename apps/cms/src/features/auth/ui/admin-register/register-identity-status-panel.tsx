@@ -72,15 +72,7 @@ export function RegisterIdentityStatusPanel({
     )
   }
 
-  if (status === 'completing' || status === 'popup_open') {
-    return (
-      <div className={rootClass} role="region" aria-label="본인인증 진행 중">
-        <p className="register-identity-module__title">본인인증을 진행하고 있어요</p>
-        <p className="register-identity-module__meta">인증 창에서 절차를 완료해 주세요.</p>
-      </div>
-    )
-  }
-
+  // 인증 창이 열려 있거나(popup_open) 결과를 처리 중(completing)이어도 안내 문구는 idle과 동일하게 유지한다.
   return (
     <div className={rootClass} role="region" aria-label="통신사 본인인증 안내">
       <p className="register-identity-module__title">{idleTitle}</p>

@@ -14,6 +14,8 @@ type EducationSessionGuideBlockProps = {
   children?: ReactNode
   /** PC 미만에서 문구·버튼을 세로로 쌓고 버튼을 꽉 채움 (opt-in, 기본 off) */
   mobileStack?: boolean
+  /** 화면별 보정(예: UJAT 문서 칸 radius 12) */
+  className?: string
 }
 
 export function EducationSessionGuideBlock({
@@ -26,12 +28,14 @@ export function EducationSessionGuideBlock({
   actions,
   children,
   mobileStack = false,
+  className,
 }: EducationSessionGuideBlockProps) {
   const blockClassName = [
     styles.block,
     variant === 'submitted' ? styles.submitted : undefined,
     variant === 'feedback' ? styles.feedback : undefined,
     mobileStack ? styles.mobileStack : undefined,
+    className,
   ]
     .filter(Boolean)
     .join(' ')

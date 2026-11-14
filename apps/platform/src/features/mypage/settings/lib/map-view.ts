@@ -93,6 +93,7 @@ export function formatSettingsGender(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase()
   if (normalized === 'M' || normalized === 'MALE' || normalized === '남성') return '남성'
   if (normalized === 'F' || normalized === 'FEMALE' || normalized === '여성') return '여성'
+  if (normalized === 'OTHER') return '기타'
   return EMPTY_SETTINGS_VALUE
 }
 

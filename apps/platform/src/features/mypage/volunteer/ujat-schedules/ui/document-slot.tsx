@@ -50,7 +50,9 @@ export function UjatEducationDocumentSlotBlock({
 
   return (
     <EducationSessionGuideBlock
-      variant={submitted ? 'submitted' : 'default'}
+      // Figma 11005:341931 — 피드백이 있으면 연분홍(status/error/bg) 배경
+      variant={canFeedback ? 'feedback' : submitted ? 'submitted' : 'default'}
+      className={styles.block}
       statusLabel={guide.statusLabel}
       statusTone={guide.statusTone}
       message={guide.message}

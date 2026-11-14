@@ -29,6 +29,17 @@ describe('mapSchoolOrganizationToUser', () => {
     expect(user.listMetrics?.institutionProgramApplicationCount).toBe(10)
     expect(user.listMetrics?.institutionProgramAttendanceCount).toBe(4)
   })
+
+  it('registeredByAdmin을 그대로 넘겨 관리자 직접 등록 학교를 구분한다', () => {
+    const base = { organizationId: 12, name: '테스트고' }
+    expect(mapSchoolOrganizationToUser({ ...base, registeredByAdmin: true }).registeredByAdmin).toBe(
+      true
+    )
+    expect(
+      mapSchoolOrganizationToUser({ ...base, registeredByAdmin: false }).registeredByAdmin
+    ).toBe(false)
+    expect(mapSchoolOrganizationToUser(base).registeredByAdmin).toBeUndefined()
+  })
 })
 
 describe('parseOrganizationIdFromUserId', () => {
