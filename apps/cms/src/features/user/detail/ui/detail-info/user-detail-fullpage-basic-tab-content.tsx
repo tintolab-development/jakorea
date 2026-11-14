@@ -161,7 +161,10 @@ export function UserDetailFullpageBasicTabContent({
           : INDIVIDUAL_CONSENT_CAPTION
         : consentPreset === 'school_teacher' || consentPreset === 'instructor_dual'
           ? INDIVIDUAL_CONSENT_CAPTION
-          : undefined
+          : /* 강사 상세(4427:53835, 관리자 등록 강사): 서면 동의 처리 안내 — 그 외는 기본 안내 유지 */
+            consentPreset === 'instructor_only' && shouldShowAdminRegisteredMemberDetailCaption(user)
+            ? INDIVIDUAL_ADMIN_REGISTERED_CONSENT_CAPTION
+            : undefined
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 

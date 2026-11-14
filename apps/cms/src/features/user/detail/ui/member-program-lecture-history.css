@@ -162,6 +162,38 @@
   }
 }
 
+/**
+ * 시안 4427:28004 수강 이력 · 4427:28498 봉사 이력 열 너비 (QA 2026-11-15 전체 회원 md 0-6 H)
+ * — 프로그램명은 남는 폭, 진행년도부터 끝 열까지 160 고정
+ * (수강 60/80/604/160×5, 봉사 60/80/924/160×3). 좁은 화면에서 프로그램명이 찌그러지지 않게 넓은 화면에서만 고정한다.
+ * 체크박스 열 유무에 따라 열 순번이 하나 밀린다.
+ */
+@media (min-width: 1600px) {
+  :is(
+      .member-program-lecture-history--student-enrollment,
+      .member-program-lecture-history--volunteer
+    )
+    .ant-table-wrapper.cms-data-table
+    table {
+    table-layout: fixed;
+  }
+
+  :is(
+      .member-program-lecture-history--student-enrollment,
+      .member-program-lecture-history--volunteer
+    )
+    .ant-table-wrapper.cms-data-table:not(:has(th.ant-table-selection-column))
+    :is(th, td):nth-child(n + 3),
+  :is(
+      .member-program-lecture-history--student-enrollment,
+      .member-program-lecture-history--volunteer
+    )
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):nth-child(n + 4) {
+    width: 160px;
+  }
+}
+
 /** 시안: 강사 > 프로그램 강의 이력 「엑셀 다운로드」 140 */
 .member-program-lecture-history--instructor-lecture .excel-button {
   width: 140px;

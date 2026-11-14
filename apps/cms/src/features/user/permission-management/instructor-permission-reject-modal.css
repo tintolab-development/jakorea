@@ -75,3 +75,18 @@
   --cms-control-font: 15px;
   --cms-control-lh: 145%;
 }
+
+/*
+ * 알림 발송 라디오 선택 점 — 디자인 시스템 Radio(603:107589, size 18) 선택 시 안쪽 점 10×10.
+ * 공용 medium 라디오는 inset 4(점 8)이라 이 팝업들에서만 3으로 맞춘다 (QA 2026-11-15 권한관리 md 1-I).
+ */
+:is(
+    .instructor-permission-reject-modal,
+    .instructor-permission-cancel-approval-modal,
+    .permission-notification-resend-modal
+  )
+  .permission-modal__field
+  .app-radio-group
+  .ant-radio-inner {
+  --app-radio-dot-inset: 3px !important;
+}

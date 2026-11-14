@@ -616,6 +616,8 @@ export function MemberProgramLectureHistory({
         className={[
           'member-program-lecture-history',
           mode === 'instructorLecture' ? 'member-program-lecture-history--instructor-lecture' : '',
+          mode === 'studentEnrollment' ? 'member-program-lecture-history--student-enrollment' : '',
+          mode === 'volunteerProgram' ? 'member-program-lecture-history--volunteer' : '',
           mode === 'schoolProgramParticipation'
             ? 'member-program-lecture-history--school-participation'
             : '',

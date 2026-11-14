@@ -1,5 +1,5 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
-import { Spin } from 'antd'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { resolveAgreementA4DocumentHiddenParagraphIds } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { AGREEMENT_CRIME_TEMPLATE_CODE } from '@/features/template/lib/agreement-crime-consent-settings'
@@ -205,23 +205,22 @@ function MemberConsentCrimeDocumentView({
                   닫기
                 </CmsButton>
                 {canDownloadFile ? (
-                <CmsButton
-                  variant="secondary"
-                  icon={<ButtonDownloadIcon />}
-                  onClick={handleDownload}
-                  size="medium"
-                  disabled={!displaySrc} >
-                  문서 다운로드
-                </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    icon={<ButtonDownloadIcon />}
+                    onClick={handleDownload}
+                    size="medium"
+                    disabled={!displaySrc}
+                  >
+                    문서 다운로드
+                  </CmsButton>
                 ) : null}
               </div>
             </div>
           )}
 
           {isLoading ? (
-            <div className="member-consent-agreement-modal__loading">
-              <Spin tip="동의서를 불러오는 중입니다." />
-            </div>
+            <FullscreenSpinner />
           ) : showEmpty ? (
             <p className="member-consent-agreement-modal__error">
               {CRIME_SNAPSHOT_UNAVAILABLE_MESSAGE}
@@ -307,7 +306,9 @@ function MemberConsentAgreementDocumentView({
     return {
       ...withCommon,
       agreementAdminProxyConfirm: false,
-      hiddenParagraphIds: resolveAgreementA4DocumentHiddenParagraphIds(withCommon.hiddenParagraphIds),
+      hiddenParagraphIds: resolveAgreementA4DocumentHiddenParagraphIds(
+        withCommon.hiddenParagraphIds
+      ),
       agreementSystemDisplayMode: 'document' as const,
       ...(signatureSrc ? { agreementSystemSignatureImageSrc: signatureSrc } : {}),
       ...(savedAt ? { agreementSystemNow: new Date(savedAt) } : {}),
@@ -346,9 +347,7 @@ function MemberConsentAgreementDocumentView({
         zIndex={MEMBER_CONSENT_VIEW_MODAL_Z_INDEX}
         className="full-page-modal member-consent-agreement-modal member-consent-document-view-modal"
       >
-        <div className="member-consent-agreement-modal__loading">
-          <Spin tip="동의서를 불러오는 중입니다." />
-        </div>
+        <FullscreenSpinner />
       </TealHeaderModal>
     )
   }
@@ -484,11 +483,11 @@ export function MemberConsentDocumentViewModal({
   )
   const canFetchCrimeOriginal = Boolean(
     isCrime &&
-      membersRemote &&
-      open &&
-      memberId != null &&
-      Boolean(consentType?.trim()) &&
-      (useSubmittedPath || documentAgreed)
+    membersRemote &&
+    open &&
+    memberId != null &&
+    Boolean(consentType?.trim()) &&
+    (useSubmittedPath || documentAgreed)
   )
 
   const loadFilledDocument = useCallback(
@@ -798,7 +797,8 @@ export function MemberConsentDocumentViewModal({
   const handleNoticeProtectedDownload = useCallback(() => {
     if (!canDownloadSensitiveFile || filled == null) return
     const filename =
-      filled.evidenceOriginalFileName?.trim() || `${modalTitle.trim() || '행정정보_공동이용_동의서'}.pdf`
+      filled.evidenceOriginalFileName?.trim() ||
+      `${modalTitle.trim() || '행정정보_공동이용_동의서'}.pdf`
     runProtectedDownload({
       kind: 'ADMINISTRATIVE_INFO_CONSENT',
       zIndex: REVEAL_REASON_MODAL_Z_INDEX + 20,
@@ -837,8 +837,16 @@ export function MemberConsentDocumentViewModal({
         ? syntheticLoading
         : false
   const remoteUnavailable = canFetchCrimeOriginal
-    ? requiresPrivacyReveal && !reasonOpen && !crimeLoading && evidenceObjectUrl == null && !loadFailed
-    : canFetchRemote && requiresPrivacyReveal && !reasonOpen && !mutation.isPending && filled == null
+    ? requiresPrivacyReveal &&
+      !reasonOpen &&
+      !crimeLoading &&
+      evidenceObjectUrl == null &&
+      !loadFailed
+    : canFetchRemote &&
+      requiresPrivacyReveal &&
+      !reasonOpen &&
+      !mutation.isPending &&
+      filled == null
 
   if (isCrime) {
     return (

@@ -1,5 +1,5 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
-import { Spin } from 'antd'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   buildAgreementConsentFillParagraphBodyOptions,
@@ -119,9 +119,7 @@ export function MemberConsentAgreementModal({
     if (savedSnapshot?.draft) {
       const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
       /** 이전 작성본 복원 — 응답 필드를 비우지 않는다 (normalizeMemberConsentWriteDraft 금지) */
-      setDraft(
-        normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
-      )
+      setDraft(normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft)))
       setPaymentBasicInfo(
         overlayPaymentStatementProfileLinkedValues(
           templateId === 'agreement-receipt-pre-consent'
@@ -205,7 +203,9 @@ export function MemberConsentAgreementModal({
       templateId,
       paymentStatementBasicInfo: paymentBasicInfo ?? undefined,
       receiptPreConsentBasicInfo:
-        templateId === 'agreement-receipt-pre-consent' ? paymentBasicInfo ?? undefined : undefined,
+        templateId === 'agreement-receipt-pre-consent'
+          ? (paymentBasicInfo ?? undefined)
+          : undefined,
     }
 
     if (hasMemberConsentIncompleteRequiredFields(draft, consentOptions)) {
@@ -337,7 +337,8 @@ export function MemberConsentAgreementModal({
                 variant="primary"
                 size="medium"
                 disabled={isDraftLoading || draft == null}
-                onClick={handleSubmit} >
+                onClick={handleSubmit}
+              >
                 작성완료
               </CmsButton>
             </div>
@@ -345,9 +346,7 @@ export function MemberConsentAgreementModal({
 
           <div className="member-consent-agreement-modal__workspace">
             {isDraftLoading ? (
-              <div className="member-consent-agreement-modal__loading">
-                <Spin tip="동의서 양식을 불러오는 중입니다." />
-              </div>
+              <FullscreenSpinner />
             ) : draft != null ? (
               <div className="member-consent-agreement-modal__form-panel">
                 <FormEditorLeftPanel
