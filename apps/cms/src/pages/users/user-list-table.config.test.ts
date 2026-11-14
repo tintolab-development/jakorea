@@ -77,20 +77,10 @@ describe('buildListQueryApiFilters', () => {
     expect(api.createdAtTo).toBe('2026-03-31')
   })
 
-  it('전체 탭 — 학교(교사)·겸직·권한 종료·관리자 유형을 allTabRoleFilter로 넣는다', () => {
+  it('전체 탭 — 학교(교사)·관리자 유형을 allTabRoleFilter로 넣는다', () => {
     expect(buildListQueryApiFilters({ kind: 'all', role: 'SCHOOL_TEACHER' })).toMatchObject({
       listAllAccounts: true,
       allTabRoleFilter: 'SCHOOL_TEACHER',
-      accountType: 'MEMBER',
-    })
-    expect(buildListQueryApiFilters({ kind: 'all', role: 'INSTRUCTOR_DUAL' })).toMatchObject({
-      listAllAccounts: true,
-      allTabRoleFilter: 'INSTRUCTOR_DUAL',
-      accountType: 'MEMBER',
-    })
-    expect(buildListQueryApiFilters({ kind: 'all', role: 'INSTRUCTOR_REVOKED' })).toMatchObject({
-      listAllAccounts: true,
-      allTabRoleFilter: 'INSTRUCTOR_REVOKED',
       accountType: 'MEMBER',
     })
     expect(buildListQueryApiFilters({ kind: 'all', role: 'ADMIN' })).toMatchObject({
@@ -98,6 +88,15 @@ describe('buildListQueryApiFilters', () => {
       allTabRoleFilter: 'ADMIN',
       accountType: 'ADMIN_ACCOUNT',
     })
+  })
+
+  it('전체 탭 — 옵션에서 뺀 겸직·권한 종료 값은 전체로 조회한다', () => {
+    for (const role of ['INSTRUCTOR_DUAL', 'INSTRUCTOR_REVOKED'] as const) {
+      const api = buildListQueryApiFilters({ kind: 'all', role })
+      expect(api.listAllAccounts).toBe(true)
+      expect(api.allTabRoleFilter).toBe('ALL')
+      expect(api.accountType).toBeUndefined()
+    }
   })
 })
 
@@ -107,10 +106,11 @@ describe('pendingRoleFromParams', () => {
     expect(pendingRoleFromParams({ kind: 'all', role: 'INDIVIDUAL' })).toBe('INDIVIDUAL')
     expect(pendingRoleFromParams({ kind: 'all', role: 'ADMIN' })).toBe('ADMIN')
     expect(pendingRoleFromParams({ kind: 'all', role: 'SCHOOL_TEACHER' })).toBe('SCHOOL_TEACHER')
-    expect(pendingRoleFromParams({ kind: 'all', role: 'INSTRUCTOR_DUAL' })).toBe('INSTRUCTOR_DUAL')
-    expect(pendingRoleFromParams({ kind: 'all', role: 'INSTRUCTOR_REVOKED' })).toBe(
-      'INSTRUCTOR_REVOKED'
-    )
+  })
+
+  it('셀렉트 옵션에서 뺀 겸직·권한 종료 값이 URL에 남아 있으면 전체로 본다', () => {
+    expect(pendingRoleFromParams({ kind: 'all', role: 'INSTRUCTOR_DUAL' })).toBe('ALL')
+    expect(pendingRoleFromParams({ kind: 'all', role: 'INSTRUCTOR_REVOKED' })).toBe('ALL')
   })
 
   it('전용 탭은 kind가 회원 유형을 결정한다', () => {

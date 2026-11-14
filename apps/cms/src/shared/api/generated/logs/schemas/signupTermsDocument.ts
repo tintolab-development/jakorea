@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberPortalConsentFormTemplateVersion } from './memberPortalConsentFormTemplateVersion';
 import type { SignupTermsAgreementPayload } from './signupTermsAgreementPayload';
 
 /**
@@ -33,4 +34,6 @@ export interface SignupTermsDocument {
   retentionPolicy?: string;
   /** 가입 요청 termsAgreements에 그대로 넣을 수 있는 payload */
   agreementPayload?: SignupTermsAgreementPayload;
+  /** 작성형 동의서(PORTRAIT_RIGHTS 등)의 현재 PUBLISHED CMS 양식 템플릿. 마이페이지 DRAFT 응답의 formTemplateVersion과 같은 구조이며, 작성 화면은 schemaJson으로 그리고 filledDocument.templateVersionId에 templateVersionId를 그대로 보낸다. 작성형이 아니거나 게시된 양식이 없으면 null. */
+  formTemplateVersion?: MemberPortalConsentFormTemplateVersion | null;
 }

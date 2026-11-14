@@ -23,6 +23,8 @@
 .notice-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
 .notice-form-modal.content-modal .teal-header-modal__body {
   --notice-form-modal-side-pad: 30px;
+  /* 공용 ContentModal 스크롤 거터(content-modal.css)와 같은 폭으로 맞춘다 */
+  --content-modal-scroll-gutter: var(--notice-form-modal-side-pad);
 
   padding-top: 24px !important;
   padding-right: var(--notice-form-modal-side-pad) !important;
@@ -134,7 +136,8 @@
   overflow: visible;
 }
 
-.notice-form-modal.content-modal .teal-header-modal__body:has(.rich-text-editor[data-resized='true']) {
+.notice-form-modal.content-modal
+  .teal-header-modal__body:has(.rich-text-editor[data-resized='true']) {
   overflow-x: hidden;
   overflow-y: auto;
 }

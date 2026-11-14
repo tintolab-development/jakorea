@@ -36,9 +36,13 @@ describe('uploadConsentEvidenceFile', () => {
     expect(vi.mocked(customInstance).mock.calls[0]?.[0]?.url).toContain('CRIMINAL_HISTORY')
   })
 
-  it('files 모듈 활성 시 upload-requests를 호출한다', async () => {
+  it('files 모듈 활성 시 약관 문서 id owner로 서명 원본 upload-requests를 호출한다', async () => {
     vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'files')
     vi.mocked(customInstance)
+      .mockResolvedValueOnce({
+        success: true,
+        data: { id: 88, version: '1.0' },
+      })
       .mockResolvedValueOnce({
         success: true,
         data: {
@@ -59,17 +63,20 @@ describe('uploadConsentEvidenceFile', () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
 
     const file = new File(['xy'], 'crime.png', { type: 'image/png' })
-    const id = await uploadConsentEvidenceFile({ file, memberId: 1001 })
+    const id = await uploadConsentEvidenceFile({ file })
 
     expect(id).toBe(501)
-    expect(customInstance).toHaveBeenCalledTimes(3)
-    const prepareCall = vi.mocked(customInstance).mock.calls[0]?.[0]
+    expect(customInstance).toHaveBeenCalledTimes(4)
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0]?.url).toContain(
+      'CRIMINAL_HISTORY_CHECK_CONSENT'
+    )
+    const prepareCall = vi.mocked(customInstance).mock.calls[1]?.[0]
     expect(prepareCall?.url).toBe('/api/admin/files/upload-requests')
     expect(prepareCall?.data).toMatchObject({
-      ownerId: 1001,
+      ownerId: 88,
       ownerDomain: 'MEMBER',
       ownerType: 'CONSENT',
-      filePurpose: 'CRIMINAL_HISTORY_EVIDENCE',
+      filePurpose: 'CRIMINAL_HISTORY_CONSENT_ORIGINAL',
     })
     expect(typeof prepareCall?.data?.checksumSha256).toBe('string')
     expect(prepareCall?.data?.checksumSha256).toMatch(/^[a-f0-9]{64}$/)
@@ -78,8 +85,8 @@ describe('uploadConsentEvidenceFile', () => {
     expect(vi.mocked(fetch).mock.calls[0]?.[1]).toEqual(
       expect.objectContaining({ method: 'PUT', credentials: 'omit' })
     )
-    expect(vi.mocked(customInstance).mock.calls[1]?.[0]?.url).toBe('/api/admin/files/501/confirm')
-    expect(vi.mocked(customInstance).mock.calls[2]?.[0]?.url).toBe('/api/admin/files/501')
+    expect(vi.mocked(customInstance).mock.calls[2]?.[0]?.url).toBe('/api/admin/files/501/confirm')
+    expect(vi.mocked(customInstance).mock.calls[3]?.[0]?.url).toBe('/api/admin/files/501')
   })
 
   it('members 모듈만 활성해도 실 upload-requests를 호출한다', async () => {

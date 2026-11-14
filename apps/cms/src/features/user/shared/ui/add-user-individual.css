@@ -19,15 +19,36 @@
   box-sizing: border-box;
 }
 
+/** 시안: 입력 셀 padding 12 (라디오 셀은 공통 16 유지 — 시안과 이미 같은 위치) */
+.add-user-individual__section--basic .detail-info-form__field-content:not(:has(.ant-radio-group)) {
+  padding: 12px;
+}
+
+/** 시안: 성별|생년월일 · 주소|상세 주소 · 학교명|학년 — 구분선 양옆 gap 16 */
+.add-user-individual__section--basic .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
+/** 시안: 소속 학교명·자택 주소 검색 돋보기 16×16 (small 공통 아이콘 18은 유지) */
+.add-user-individual__section--basic .address-search__trigger-wrap .cms-field__icon,
+.add-user-individual__section--basic .school-search__trigger-wrap .cms-field__icon {
+  --cms-icon-size: 16px;
+}
+
 /** 시안: 섹션 제목 18/Bold · 텍스트 좌측 8 (팝업 패딩 30 + 8 = 38) */
-.add-user-individual__sections .detail-info-form > .detail-info-form__header .detail-info-form__title {
+.add-user-individual__sections
+  .detail-info-form
+  > .detail-info-form__header
+  .detail-info-form__title {
   font-size: 18px;
   font-weight: 700;
   padding: 0 8px;
 }
 
 /** 시안: 약관 안내 문구 14/Medium 50% */
-.add-user-individual__terms-consent-heading > .detail-info-form__header .detail-info-form__description {
+.add-user-individual__terms-consent-heading
+  > .detail-info-form__header
+  .detail-info-form__description {
   font-size: 14px;
   font-weight: 500;
   opacity: 0.5;
@@ -40,22 +61,27 @@
 }
 
 /** 시안: 학년 셀렉트 w120 고정 (flex 축소 방지) */
-.add-user-individual__section--basic .detail-info-form-inputs-wrapper > .cms-select {
+.add-user-individual__section--basic .detail-info-form-inputs-wrapper-no-gap > .cms-select {
   flex: 0 0 120px;
 }
 
+/**
+ * 시안 약관 표 1140×108(행 52+56) · 1140×112(56+56) — 표 테두리(Inside)와 행 구분선이
+ * 행 높이 안에 포함되므로 셀 높이에서 테두리 몫을 뺀다.
+ * 라디오 행 51(+구분선 1) · 동의서 행 55(+구분선 1) / 마지막 행 54(+표 테두리 상하 2)
+ */
 .add-user-individual__section--terms .detail-info-form__field {
-  min-height: 52px;
+  min-height: 51px;
 }
 
 .add-user-individual__section--terms .detail-info-form__field-label,
 .add-user-individual__section--terms .detail-info-form__field-content {
-  min-height: 52px;
+  min-height: 51px;
   box-sizing: border-box;
   padding-block: 5px;
 }
 
-/** 동의서 작성(상태 + 버튼 h32) 셀 — 시안 상하 12px */
+/** 동의서 작성(상태 + 버튼 h32) 셀 */
 .add-user-individual__section--terms
   .detail-info-form__field:has(.add-user-individual__consent-document) {
   min-height: auto;
@@ -68,7 +94,18 @@
   .detail-info-form__field:has(.add-user-individual__consent-document)
   .detail-info-form__field-content {
   min-height: auto;
-  padding-block: 12px;
+  padding-block: 12px 11px;
+}
+
+.add-user-individual__section--terms
+  .detail-info-form__row:last-child
+  .detail-info-form__field:has(.add-user-individual__consent-document)
+  .detail-info-form__field-label,
+.add-user-individual__section--terms
+  .detail-info-form__row:last-child
+  .detail-info-form__field:has(.add-user-individual__consent-document)
+  .detail-info-form__field-content {
+  padding-block: 11px;
 }
 
 .add-user-individual__terms-consent-heading.detail-info-form > .detail-info-form__body {
@@ -98,11 +135,16 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0 16px;
+  gap: 0;
 }
 
-/** 시안: 동의서 작성 버튼 100×32 */
-.add-user-individual__consent-write-btn {
+/** 시안: 동의 상태 | 구분선 | [동의서 작성] — 구분선 양옆 gap 16 */
+.add-user-individual__consent-document > .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
+/** 시안: 동의서 작성 버튼 100×32 — 공통 `.cms-button.ant-btn{width:max-content}`·h32 min-width 80보다 우선 */
+.add-user-individual__consent-document .cms-button.ant-btn.add-user-individual__consent-write-btn {
   width: 100px;
   min-width: 100px;
 }

@@ -23,6 +23,8 @@ import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/app
 import {
   isPortalSocialAuthLoginRemoteEnabled,
   platformSocialAuthClient,
+  readRecentSocialLoginProvider,
+  RecentSocialLoginTooltip,
   resolveBackendApiOrigin,
 } from '@/features/auth/social-auth'
 import { portalSocialAuthPaths } from '@/features/auth/social-auth/paths'
@@ -83,6 +85,8 @@ export function SignInPage() {
     return socialError
   })
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
+  // 이 브라우저에서 최근 소셜 로그인에 성공한 수단 — 읽지 못하면 null(툴팁 없음)
+  const [recentSocialProvider] = useState(readRecentSocialLoginProvider)
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   const remoteApi = isRemoteApiConfigured()
   const loginMutation = usePortalLoginMutation()
@@ -230,12 +234,12 @@ export function SignInPage() {
           color="gradient-primary-01"
           className={authPageCopyClass('title', authPageCopy.titleAfterMedia)}
         >
-          다시 만나서 반가워요
+          다시 만나서 반가워요.
         </PFText>
         <PFText
           as="p"
           typo="bd-lg-rg"
-          color="primary-700"
+          color="primary-800"
           className={authPageCopyClass('description', authPageCopy.descriptionTight)}
         >
           이메일과 비밀번호로 로그인 해주세요.
@@ -326,16 +330,18 @@ export function SignInPage() {
 
         <div className={styles.socialIcons}>
           {socialLoginItems.map(({ provider, label, icon }) => (
-            <button
-              className={styles.socialButton}
-              type="button"
-              aria-label={label}
-              key={provider}
-              disabled={isSubmitting}
-              onClick={() => handleSocialLogin(provider)}
-            >
-              {icon}
-            </button>
+            <span className={styles.socialButtonItem} key={provider}>
+              <button
+                className={styles.socialButton}
+                type="button"
+                aria-label={label}
+                disabled={isSubmitting}
+                onClick={() => handleSocialLogin(provider)}
+              >
+                {icon}
+              </button>
+              {recentSocialProvider === provider ? <RecentSocialLoginTooltip /> : null}
+            </span>
           ))}
         </div>
       </div>

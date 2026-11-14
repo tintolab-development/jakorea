@@ -15,7 +15,7 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="회원 유형을 선택해 주세요"
+        title="회원 유형을 선택해 주세요."
         description="회원가입을 진행할 유형을 선택해 주세요."
         actions={
           <PFButton

@@ -14,7 +14,7 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="교사 회원 정보를 입력해 주세요"
+        title="교사 회원 정보를 입력해 주세요."
         description="교육 활동에 필요한 선생님 정보를 확인할게요."
         actionsVariant="terms"
         actions={

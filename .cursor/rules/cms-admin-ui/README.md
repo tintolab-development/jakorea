@@ -9,7 +9,7 @@
 | [filter-area-dimensions.mdc](./filter-area-dimensions.mdc) | 필터 칸 240 · gap 12 · 조회 160×44 · dateRange 500 |
 | [list-filter-url-sync.mdc](./list-filter-url-sync.mdc) | draft + 조회 · `searchParams` 단일 소스 |
 | [list-table-shell.mdc](./list-table-shell.mdc) | 목록 카드 padding 20 · 툴바 gap 16 · 액션 8 |
-| [cms-button-action-sizes.mdc](./cms-button-action-sizes.mdc) | 툴바 **large 140×44** · 모달 푸터 **140×40** · FileSelect medium |
+| [cms-button-action-sizes.mdc](./cms-button-action-sizes.mdc) | 툴바 **medium h40 (min 120)** · CMS 엑셀 다운로드 **140×40** · 모달 푸터 h40 · FileSelect medium |
 | [file-select-detail-form.mdc](./file-select-detail-form.mdc) | FileSelectField + DetailInfoForm 첨부 레이아웃 |
 | [cms-data-table.mdc](./cms-data-table.mdc) | `cms-data-table` th/td 패딩·높이 |
 | [table-th.mdc](./table-th.mdc) | th `--BG-header` · `--table-line` |

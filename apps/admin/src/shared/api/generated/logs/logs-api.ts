@@ -8,6 +8,7 @@
 import type {
   AdminAccountActionCreateRequest,
   AdminAccountActionsParams,
+  ClientErrorReportRequest,
   ExportAdminAccountActionsParams,
   ExportFileDownloadsParams,
   ExportMemberLoginsParams,
@@ -79,6 +80,21 @@ const createMemberLogin = (
       {url: `/api/admin/logs/member-logins`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: memberLoginCreateRequest
+    },
+      options);
+    }
+
+/**
+ * Admin Error Boundary report. Any signed-in Homepage administrator may call it; the reporter comes from the token. Tokens, e-mail, phone numbers and input values are masked before insert. Stored in the bug/issue history with source=CLIENT. appCode must be ADMIN. More than 20 per administrator or 300 overall per minute returns 429 TOO_MANY_REQUESTS.
+ * @summary Report a Homepage Admin screen error
+ */
+const reportClientError = (
+    clientErrorReportRequest: ClientErrorReportRequest,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/logs/client-errors`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: clientErrorReportRequest
     },
       options);
     }
@@ -178,11 +194,12 @@ const exportAdminAccountActions = (
       options);
     }
 
-return {systemIssues,createSystemIssue,memberLogins,createMemberLogin,adminAccountActions,createAdminAccountAction,exportSystemIssues,privacyAccess,exportPrivacyAccess,exportMemberLogins,fileDownloads,exportFileDownloads,exportAdminAccountActions}};
+return {systemIssues,createSystemIssue,memberLogins,createMemberLogin,reportClientError,adminAccountActions,createAdminAccountAction,exportSystemIssues,privacyAccess,exportPrivacyAccess,exportMemberLogins,fileDownloads,exportFileDownloads,exportAdminAccountActions}};
 export type SystemIssuesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['systemIssues']>>>
 export type CreateSystemIssueResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['createSystemIssue']>>>
 export type MemberLoginsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['memberLogins']>>>
 export type CreateMemberLoginResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['createMemberLogin']>>>
+export type ReportClientErrorResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['reportClientError']>>>
 export type AdminAccountActionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['adminAccountActions']>>>
 export type CreateAdminAccountActionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['createAdminAccountAction']>>>
 export type ExportSystemIssuesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPILogsSubset>['exportSystemIssues']>>>

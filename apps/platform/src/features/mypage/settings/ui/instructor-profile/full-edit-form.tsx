@@ -20,7 +20,13 @@ import {
 } from '@/features/mypage/instructor-apply/instructor-profile-fields'
 import { toInstructorFormEmploymentStatus } from '@/features/mypage/instructor-apply/map-locked-basic-info'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import {
+  PFAlertModal,
+  PFButton,
+  PFRequiredFieldsIncompleteDescription,
+  PFText,
+} from '@/shared/ui'
 import {
   INSTRUCTOR_SETTINGS_ESSAY_SECTIONS,
   type InstructorSettingsSectionId,
@@ -355,8 +361,14 @@ export function SettingsInstructorFullEditForm({
 
       <PFAlertModal
         open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? undefined}
+        title={alertMessage === REQUIRED_INCOMPLETE ? PLATFORM_REQUIRED_NOT_FILLED_TITLE : '안내'}
+        description={
+          alertMessage === REQUIRED_INCOMPLETE ? (
+            <PFRequiredFieldsIncompleteDescription />
+          ) : (
+            (alertMessage ?? undefined)
+          )
+        }
         onConfirm={() => setAlertMessage(null)}
       />
 

@@ -1,5 +1,5 @@
 /**
- * 대시보드 - 프로그램 일정 위젯 (일반 / 1사1교 / UJAT / Gemini)
+ * 대시보드 - 프로그램 일정 위젯 (일반 / 1사1교 / UJAT / Gemini / 교육받은 교사)
  * - 월간/주간 탭 전환, 상단 헤더 공유, 하위 캘린더 형식만 전환
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
@@ -29,7 +29,10 @@ import { filterProgramsByACL } from '@/features/permission-request/lib/program-a
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import { useDashboardProgramSchedules } from '../hooks/use-dashboard-program-schedules'
 import { useDashboardProgramOptions } from '../hooks/use-dashboard-program-options'
-import type { ProgramScheduleKind } from '@/features/dashboard/model/program-schedule-keys'
+import {
+  programScheduleKindToApiProgramType,
+  type ProgramScheduleKind,
+} from '@/features/dashboard/model/program-schedule-keys'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import type { DashboardScheduleEventType } from '../lib/schedule-event-detail-label'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
@@ -37,7 +40,15 @@ import { useCompanySchoolPrograms } from '@/features/program/1c-1s/api/hooks'
 
 /** 피그마: 2단(반폭)은 한 글자, 1단(전폭)은 '일요일' 형태 */
 const WEEKDAY_LABELS_SHORT = ['일', '월', '화', '수', '목', '금', '토'] as const
-const WEEKDAY_LABELS_LONG = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'] as const
+const WEEKDAY_LABELS_LONG = [
+  '일요일',
+  '월요일',
+  '화요일',
+  '수요일',
+  '목요일',
+  '금요일',
+  '토요일',
+] as const
 
 /** 월간 헤더로 월을 바꾼 뒤 선택일: 이번 달(년·월)이면 오늘, 그 밖이면 해당 월 1일 */
 function selectedDateAfterMonthNavigation(visibleMonth: Dayjs): Dayjs {
@@ -75,7 +86,10 @@ function getEventTypeLabel(event: Pick<ScheduleEvent, 'type' | 'eventLabel'>) {
   }
 }
 
-function resolveWidgetProgram(_programId: string, _variant: ProgramScheduleKind): Program | undefined {
+function resolveWidgetProgram(
+  _programId: string,
+  _variant: ProgramScheduleKind
+): Program | undefined {
   void _programId
   void _variant
   return undefined
@@ -383,7 +397,10 @@ export function ProgramScheduleWidget({
   const useCompanySchoolProgramsRemote =
     !useRemoteSchedules && variant === 'company_school' && shouldUseCompanySchoolRemoteApi()
   const companySchoolProgramsQuery = useCompanySchoolPrograms({}, useCompanySchoolProgramsRemote)
-  const { data: remoteProgramOptions = [] } = useDashboardProgramOptions(widgetKey, useRemoteSchedules)
+  const { data: remoteProgramOptions = [] } = useDashboardProgramOptions(
+    widgetKey,
+    useRemoteSchedules
+  )
 
   const categoryProgramIdSet = useMemo(() => {
     if (useRemoteSchedules) {
@@ -439,13 +456,14 @@ export function ProgramScheduleWidget({
 
   const scheduleDateFrom = visibleDateRange[0]?.format('YYYY-MM-DD')
   const scheduleDateTo = visibleDateRange[visibleDateRange.length - 1]?.format('YYYY-MM-DD')
-  const { data: remoteScheduleEvents = [], isError: scheduleQueryError } = useDashboardProgramSchedules({
-    programIds: selectedMockProgramIds,
-    dateFrom: scheduleDateFrom,
-    dateTo: scheduleDateTo,
-    programType: variant,
-    enabled: useRemoteSchedules,
-  })
+  const { data: remoteScheduleEvents = [], isError: scheduleQueryError } =
+    useDashboardProgramSchedules({
+      programIds: selectedMockProgramIds,
+      dateFrom: scheduleDateFrom,
+      dateTo: scheduleDateTo,
+      programType: programScheduleKindToApiProgramType(variant),
+      enabled: useRemoteSchedules,
+    })
 
   const schedulesByDate = useMemo(() => {
     if (useRemoteSchedules) {
@@ -453,7 +471,11 @@ export function ProgramScheduleWidget({
     }
     const grouped: Record<string, Schedule[]> = {}
     const visibleKeys = visibleDateRange.map(d => d.format('YYYY-MM-DD'))
-    const schedules = buildDynamicSchedulesForVisibleRange(variant, visibleKeys, allowedProgramIdSet)
+    const schedules = buildDynamicSchedulesForVisibleRange(
+      variant,
+      visibleKeys,
+      allowedProgramIdSet
+    )
 
     schedules.forEach(schedule => {
       const dateKey = dayjs(schedule.date).format('YYYY-MM-DD')
@@ -815,9 +837,16 @@ export function ProgramScheduleWidget({
                               }}
                             >
                               <div className="program-schedule-widget__week-event-head">
-                                <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
-                                <span className="program-schedule-widget__week-event-divider" aria-hidden />
-                                <div className="program-schedule-widget__week-event-time">{ev.time}</div>
+                                <div className="program-schedule-widget__week-event-title">
+                                  {ev.programTitle}
+                                </div>
+                                <span
+                                  className="program-schedule-widget__week-event-divider"
+                                  aria-hidden
+                                />
+                                <div className="program-schedule-widget__week-event-time">
+                                  {ev.time}
+                                </div>
                               </div>
                               <div className="program-schedule-widget__week-event-desc">
                                 {ev.detailLabel ?? getEventTypeLabel(ev)}
@@ -917,7 +946,8 @@ export function ProgramScheduleWidget({
                   <div className="program-schedule-widget__event-title">{event.title}</div>
                   <div className="program-schedule-widget__event-desc">
                     <span>{getEventTypeLabel(event)}</span>
-                    <span> | {event.time}</span>
+                    <span className="program-schedule-widget__event-desc-divider" aria-hidden />
+                    <span>{event.time}</span>
                   </div>
                 </div>
               </List.Item>
@@ -1002,16 +1032,12 @@ export function ProgramScheduleWidget({
         <div className="program-schedule-widget__content">
           {viewMode === 'month' ? (
             <div className="program-schedule-widget__body program-schedule-widget__body--month">
-              <div className="program-schedule-widget__calendar-main">
-                {renderMonthGrid()}
-              </div>
+              <div className="program-schedule-widget__calendar-main">{renderMonthGrid()}</div>
               {eventListSection}
             </div>
           ) : (
             <div className="program-schedule-widget__body program-schedule-widget__body--week">
-              <div className="program-schedule-widget__calendar-main">
-                {renderWeekView()}
-              </div>
+              <div className="program-schedule-widget__calendar-main">{renderWeekView()}</div>
             </div>
           )}
         </div>

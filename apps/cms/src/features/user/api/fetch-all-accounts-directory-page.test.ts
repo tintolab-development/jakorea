@@ -54,6 +54,29 @@ describe('fetchAllAccountsDirectoryPage', () => {
     expect(result.hasMore).toBe(false)
   })
 
+  it('강사 필터는 순수 강사·겸직·권한 종료 강사를 모두 남긴다', async () => {
+    fetchAllCmsMembersAndAdminsPageRemote.mockResolvedValueOnce({
+      items: [
+        memberItem(1, ['INDIVIDUAL'], '개인'),
+        memberItem(2, ['INSTRUCTOR'], '강사'),
+        memberItem(3, ['SCHOOL_TEACHER'], '교사'),
+        memberItem(4, ['SCHOOL_TEACHER', 'INSTRUCTOR'], '겸직'),
+        memberItem(5, ['INSTRUCTOR_REVOKED'], '권한종료'),
+        memberItem(6, ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'], '겸직권한종료'),
+      ],
+      totalElements: 6,
+      totalPages: 1,
+    })
+
+    const result = await fetchAllAccountsDirectoryPage(
+      { accountType: 'MEMBER', allTabRoleFilter: 'INSTRUCTOR' },
+      0,
+      20
+    )
+
+    expect(result.users.map(u => u.name)).toEqual(['강사', '겸직', '권한종료', '겸직권한종료'])
+  })
+
   it('개인 필터는 디렉터리 혼합 목록에서 INDIVIDUAL만 남긴다', async () => {
     fetchAllCmsMembersAndAdminsPageRemote.mockResolvedValueOnce({
       items: [

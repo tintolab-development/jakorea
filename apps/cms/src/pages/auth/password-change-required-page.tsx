@@ -16,7 +16,8 @@ import './password-change-required-page.css'
 
 export function PasswordChangeRequiredPage() {
   const navigate = useNavigate()
-  const { isAuthenticated, passwordChangeRequired, user } = useAuthStore()
+  const { isAuthenticated, passwordChangeRequired, identityVerificationRequired, user } =
+    useAuthStore()
 
   useEffect(() => {
     if (hasPasswordChangeRequiredComplete()) {
@@ -37,7 +38,12 @@ export function PasswordChangeRequiredPage() {
       return
     }
     initPasswordChangeRequiredWizardState(user.email)
-    navigate(passwordChangeRequiredPaths.identity)
+    // 서버가 본인인증 확정이 필요 없다고 한 계정(이미 확정)은 바로 비밀번호 변경으로 간다(BE R1)
+    navigate(
+      identityVerificationRequired === false
+        ? passwordChangeRequiredPaths.changePassword
+        : passwordChangeRequiredPaths.identity
+    )
   }
 
   if (!isAuthenticated || !passwordChangeRequired) {

@@ -158,6 +158,10 @@ export interface SocialLoginMfaChallenge {
   totpSecret?: string
   otpauthUri?: string
   qrDataUrl?: string
+  /** 계정 단위 MFA 연속 실패 횟수(서버 누적값) */
+  failedAttemptCount?: number
+  /** 잠금 전까지 허용되는 MFA 연속 실패 횟수 */
+  maxFailedAttempts?: number
 }
 
 export type OAuthCallbackOutcome =
@@ -177,6 +181,8 @@ export type OAuthCallbackOutcome =
       mfaMethod?: string
       expiresAt?: string
       mfaSetupRequired?: boolean
+      failedAttemptCount?: number
+      maxFailedAttempts?: number
       totpSecret?: string
       otpauthUri?: string
       qrDataUrl?: string

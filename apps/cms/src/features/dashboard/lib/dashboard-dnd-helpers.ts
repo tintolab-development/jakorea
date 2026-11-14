@@ -30,6 +30,30 @@ export interface DragEndComputed {
   splitTargetId: string | null
   droppedInEmptySpace: boolean
   skipShrinkActive: boolean
+  /**
+   * 1단(24) 위젯을 1단 위젯 위에 놓음 — 둘 다 2단(12)으로 바꿔 한 줄로 둔다. 순서는 [대상][끌고 온 위젯].
+   * 값은 대상 위젯 id. 이때 operation은 'move', newIndex는 대상 바로 뒤 자리다.
+   */
+  pairRowWithTargetId: string | null
+}
+
+/**
+ * Row/Col 순차 배치(24칸)에서 index 위치 위젯이 새 줄의 시작인지.
+ * 앞쪽에 짝 없는 2단(12) 위젯이 남아 있으면 false — 그 자리에 2단 쌍을 두면 한 줄로 서지 않는다.
+ */
+export function isRowStartAt(
+  ids: readonly string[],
+  index: number,
+  getColSpan: (id: string) => 12 | 24
+): boolean {
+  let used = 0
+  for (let i = 0; i < index; i++) {
+    const span = getColSpan(ids[i])
+    if (used + span > COL_SPAN_FULL) used = 0
+    used += span
+    if (used === COL_SPAN_FULL) used = 0
+  }
+  return used === 0
 }
 
 /** 포인터가 100% 슬롯 중앙 밴드 안에 있는지 (분할하지 않음) */
@@ -66,6 +90,7 @@ export function computeDragEndResult(
   let splitTargetId: string | null = null
   let droppedInEmptySpace = false
   let skipShrinkActive = false
+  let pairRowWithTargetId: string | null = null
 
   if (effectiveOverId) {
     const overIdStr = effectiveOverId
@@ -79,7 +104,20 @@ export function computeDragEndResult(
     operation = 'swap'
     swapTargetId = overIdStr
 
-    if (isTargetFullWidth) {
+    if (isTargetFullWidth && activeColSpan === COL_SPAN_FULL) {
+      // 1단 → 1단: 둘 다 2단으로 한 줄([대상][끌고 온 위젯]) — 기획 확정 2026-11-14.
+      // 대상 앞에 짝 없는 2단 위젯이 있어 한 줄로 서지 못하면 기존처럼 1:1 교환한다.
+      const idsWithoutActive = orderedIds.filter(id => id !== activeIdStr)
+      const targetIndexWithoutActive = idsWithoutActive.indexOf(overIdStr)
+      if (isRowStartAt(idsWithoutActive, targetIndexWithoutActive, getEffectiveColSpan)) {
+        operation = 'move'
+        swapTargetId = null
+        pairRowWithTargetId = overIdStr
+        newIndex = oldIndex < overIndex ? overIndex : overIndex + 1
+      } else {
+        newIndex = overIndex
+      }
+    } else if (isTargetFullWidth) {
       newIndex = overIndex
       // 위젯 위 드롭은 사용자 의도를 1:1 교환으로 해석한다.
       // 분할(50/50)은 over가 없는 빈 공간 드롭 경로에서만 판정한다.
@@ -140,6 +178,7 @@ export function computeDragEndResult(
     splitTargetId: shouldSplit ? splitTargetId : null,
     droppedInEmptySpace,
     skipShrinkActive,
+    pairRowWithTargetId,
   }
 }
 

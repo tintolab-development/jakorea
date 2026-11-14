@@ -1,3 +1,6 @@
+/** NICE 콜백 errorCode — nice/start 기대 프로필(생년월일·성별 등)과 인증 결과가 다름 */
+export const IDENTITY_EXPECTED_PROFILE_MISMATCH = 'EXPECTED_PROFILE_MISMATCH'
+
 export class IdentityVerificationApiError extends Error {
   readonly code: string
 

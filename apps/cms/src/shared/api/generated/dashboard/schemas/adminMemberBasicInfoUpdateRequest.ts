@@ -42,6 +42,7 @@ export interface AdminMemberBasicInfoUpdateRequest {
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
   /**
+     * CMS 회원정보 수정으로는 약관·동의 상태를 바꾸지 않습니다(CMS_MEMBER_TERMS_NOT_EDITABLE, 409). 예외: 성범죄 경력 조회 동의서 서명 원본 연결 요청 1건(termsType=CRIMINAL_HISTORY_CHECK_CONSENT, agreed=true, evidenceFileObjectId 필수, filledDocument 없음). ① 유효한 동의가 있고 version이 그 동의의 version이며 원본이 없거나 같은 파일이면 원본만 연결합니다. 동의 일시·만료일은 바뀌지 않고, 같은 파일 재전송은 200(멱등)입니다. ② 그 밖의 경우(동의 없음·철회·만료, 이미 다른 원본이 연결된 동의에 새 원본을 보내는 재업로드, version이 다름)는 재동의로 처리합니다. 새 동의 이력을 만들어 동의 일시=요청 시각, 만료일=동의일로부터 1년으로 기록하고 새 원본을 연결하며, 이전 동의 이력과 원본은 그대로 보존합니다. 재동의 version은 현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 version이어야 하며, 다르면 409 CMS_TERMS_VERSION_STALE입니다. 원본 연결·재업로드·재동의 모두 현재 게시된 약관 version을 보내면 됩니다.
      * @minItems 0
      * @maxItems 20
      */

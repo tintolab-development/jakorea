@@ -49,6 +49,8 @@ export interface UserBasicInfoSectionProps {
   /** profile 전체 수정 | instructor_fee_ja 강사비 등급만 (조회 레이아웃 유지) */
   memberInfoEditScope?: 'profile' | 'instructor_fee_ja'
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  /** 관리자 상세 이메일 입력란 서버 에러 문구 */
+  memberInfoEmailError?: string | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
@@ -72,6 +74,7 @@ export function UserBasicInfoSection({
   memberInfoEditing = false,
   memberInfoEditScope = 'profile',
   memberInfoDraft,
+  memberInfoEmailError = null,
   onMemberInfoDraftChange,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
@@ -127,7 +130,8 @@ export function UserBasicInfoSection({
 
   return (
     <div className="user-detail-modal__basic-inner">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+      {/* 시안 4427:23703: 기본 정보 표 ↔ 보호자 정보 섹션 32px (다른 섹션 간격과 같음) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
         {bodyKey === 'admin' ? (
           <AdminBasicInfoSection
             user={user}
@@ -136,6 +140,7 @@ export function UserBasicInfoSection({
             personalInfoRevealed={personalInfoRevealed}
             isAdminPermissionDetail={isAdminPermissionDetail}
             memberInfoDraft={memberInfoDraft}
+            emailError={memberInfoEmailError}
             onMemberInfoDraftChange={onMemberInfoDraftChange}
             adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
             adminPermissionVariantPatching={adminPermissionVariantPatching}

@@ -271,7 +271,7 @@ export function getUserInfoPreviewSelectedEntries(
  * 설문자 정보 미리보기 — 공통 상세 정보 폼(DetailInfoForm) 규격.
  * 값이 없으면 「설문자 {항목명}」 예시 문구로 통일한다(2026-11-13 요청).
  * 항목 4개 이상이면 한 행에 두 항목씩. 강의평가(`pairAll`)는 시안 1141:268259대로 항상 한 행에 두 항목.
- * `onFieldAnswerChange`가 있으면(강의평가 작성) 값 칸에 입력 — 제출 검증·응답 `answers`에 들어가는 값이다.
+ * 강의평가 작성 화면도 입력 칸 없이 같은 「설문자 {항목명}」 글자로 보여 준다(2026-11-14 요청).
  */
 export const SURVEY_RESPONDENT_PREVIEW_VALUE_PREFIX = '설문자'
 
@@ -279,12 +279,10 @@ function SurveyRespondentDetailInfoPreview({
   selectedEntries,
   previewValues,
   pairAll = false,
-  onFieldAnswerChange,
 }: {
   selectedEntries: UserInfoFieldEntry[]
   previewValues?: UserInfoPreviewValues
   pairAll?: boolean
-  onFieldAnswerChange?: (key: string, value: string) => void
 }) {
   if (selectedEntries.length === 0) {
     return (
@@ -299,7 +297,6 @@ function SurveyRespondentDetailInfoPreview({
       ? userInfoAnswerDisplayValue(field.key, v)
       : `${SURVEY_RESPONDENT_PREVIEW_VALUE_PREFIX} ${field.label}`
   }
-  const editable = onFieldAnswerChange != null
   const paired = pairAll ? selectedEntries.length >= 2 : selectedEntries.length >= 4
   const rows: UserInfoFieldEntry[][] = []
   for (let i = 0; i < selectedEntries.length; i += paired ? 2 : 1) {
@@ -309,7 +306,7 @@ function SurveyRespondentDetailInfoPreview({
     <DetailInfoForm
       title="설문자 정보"
       hideHeader
-      mode={editable ? 'edit' : 'view'}
+      mode="view"
       className="user-info-respondent-detail-info"
     >
       {rows.map(row => (
@@ -322,15 +319,6 @@ function SurveyRespondentDetailInfoPreview({
               key={field.key}
               label={field.label}
               view={<span className="user-info-respondent-preview__value">{valueFor(field)}</span>}
-              edit={
-                editable ? (
-                  <UserInfoAnswerControl
-                    field={field}
-                    value={previewValues?.[field.key] ?? ''}
-                    onChange={onFieldAnswerChange}
-                  />
-                ) : undefined
-              }
               fullRow={row.length === 1}
             />
           ))}
@@ -363,7 +351,7 @@ export function UserInfo({
   answerEditable?: boolean
   /** 설문 단락의 설문자 정보 — 미리보기를 DetailInfoForm 규격·「설문자 OO」 예시 값으로 */
   surveyRespondentPreview?: boolean
-  /** 강의평가 작성·미리보기 — 한 행 두 항목, 작성 시 DetailInfoForm 값 칸에 입력 */
+  /** 강의평가 작성·미리보기 — 한 행 두 항목, 작성 화면도 입력 없이 「설문자 OO」 글자 */
   lectureEvalRespondentDetailInfo?: boolean
 }) {
   const fields = normalizeFields(paragraph)
@@ -387,15 +375,6 @@ export function UserInfo({
         selectedEntries={getUserInfoPreviewSelectedEntries(paragraph)}
         previewValues={previewValues ?? paragraph.fieldAnswers}
         pairAll
-        onFieldAnswerChange={
-          answerEditable && onChange
-            ? (key, value) =>
-                onChange({
-                  ...paragraph,
-                  fieldAnswers: { ...(paragraph.fieldAnswers ?? {}), [key]: value },
-                })
-            : undefined
-        }
       />
     )
   }

@@ -1,4 +1,5 @@
 import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 일반 프로그램 > 진행 현황 > 참여 기관 상세 (풀페이지 인라인)
@@ -994,8 +995,12 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       }))
   }, [assignmentBoard, assignmentBoardRemoteEnabled, row.organizationApplicationId])
 
+  /** 중단 기준 일정은 시작 전 일정만 (QA-03, 2026-11-14) */
   const activityWithdrawScheduleOptions = useMemo(
-    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, participantSessions),
+    () =>
+      getParticipatingInstitutionActivityWithdrawScheduleOptions(program, participantSessions, [], {
+        nowMs: Date.now(),
+      }),
     [program, participantSessions]
   )
 
@@ -1451,8 +1456,22 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       return
     }
     if (!canRequestActivityWithdraw || isApplicationInfoEditing) return
+    // 선택지가 없으면 빈 모달 대신 안내 (참여자 상세와 같은 문구)
+    if (activityWithdrawScheduleOptions.length === 0) {
+      showAlert({
+        title: '안내',
+        content: '활동 포기 처리할 수 있는 교육 일정이 없습니다.',
+      })
+      return
+    }
     setActivityWithdrawModalOpen(true)
-  }, [canRequestActivityWithdraw, isActivityWithdrawn, isApplicationInfoEditing, showAlert])
+  }, [
+    activityWithdrawScheduleOptions.length,
+    canRequestActivityWithdraw,
+    isActivityWithdrawn,
+    isApplicationInfoEditing,
+    showAlert,
+  ])
 
   const handleCancelActivityWithdraw = useCallback(() => {
     if (activityWithdrawSubmitting) return
@@ -1492,10 +1511,11 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             content: `${mergedDetail.schoolName} 기관이 활동 포기 처리되었습니다.`,
           })
         } catch (error) {
-          const message =
-            error instanceof Error && error.message.trim()
-              ? error.message
-              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          // 서버 안내(한국어)를 쓴다 — axios 기본 메시지(Request failed with status code …) 노출 금지
+          const message = readApiErrorAlertMessage(
+            error,
+            '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          )
           showAlert({
             title: '활동 포기 실패',
             content: message,

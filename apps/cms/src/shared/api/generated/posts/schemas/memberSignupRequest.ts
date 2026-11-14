@@ -32,7 +32,7 @@ export interface MemberSignupRequest {
   phone?: string;
   /** 생년월일 */
   birthDate?: string;
-  /** 성별 코드 */
+  /** 성별 코드. MALE, FEMALE, OTHER 권장. M/F·남/여 별칭도 허용하며 서버가 MALE/FEMALE/OTHER로 정규화해 저장한다. 그 외 값은 400 GENDER_INVALID. */
   gender?: string;
   /** 만 14세 미만 여부. 서버는 이 값을 신뢰하지 않고 본인/보호자 인증 세션으로 재판정합니다. */
   under14?: boolean;

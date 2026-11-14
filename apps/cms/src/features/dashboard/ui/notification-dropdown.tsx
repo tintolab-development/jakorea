@@ -6,8 +6,8 @@
 import { Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
-import { hasAdminNotificationNavigation } from '../lib/admin-notification-navigation'
-import { formatNotificationDateTime } from '../lib/notification-inbox-display'
+import { useDragScroll } from '../hooks/use-drag-scroll'
+import { formatNotificationDate } from '../lib/notification-inbox-display'
 import { EmptyState } from '@/shared/ui'
 import './notification-dropdown.css'
 
@@ -51,9 +51,9 @@ function byNewest(a: Notification, b: Notification): number {
 export interface NotificationDropdownProps {
   notifications: Notification[]
   unreadCount: number | null
+  /** 항목 클릭 — 읽음 처리·안내 팝업은 호출부(헤더)가 담당. 드롭다운은 닫지 않는다 */
   onNotificationClick: (notification: Notification) => void | Promise<void>
   onConfirm?: (notification: Notification) => void
-  onClose?: () => void
   hasNextPage?: boolean
   isFetchingNextPage?: boolean
   fetchNextPage?: () => void
@@ -95,7 +95,6 @@ function NotificationRow({
     >
       <div className="notification-dropdown-item-main">
         <div className="notification-dropdown-item-title-row">
-          {read ? null : <span className="notification-dropdown-item-unread-dot" aria-hidden />}
           <Text className="notification-dropdown-item-tag">
             [{getCategoryLabel(notification.type)}]
           </Text>
@@ -109,7 +108,7 @@ function NotificationRow({
         ) : null}
       </div>
       <Text className="notification-dropdown-item-date">
-        {formatNotificationDateTime(notification.createdAt)}
+        {formatNotificationDate(notification.createdAt)}
       </Text>
     </div>
   )
@@ -119,7 +118,6 @@ export function NotificationDropdown({
   notifications,
   unreadCount,
   onNotificationClick,
-  onClose,
   hasNextPage = false,
   isFetchingNextPage = false,
   fetchNextPage,
@@ -127,6 +125,9 @@ export function NotificationDropdown({
   const [category, setCategory] = useState<NotificationCategoryKey>('all')
   const bodyRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
+  // 카테고리 탭 — 마우스로 누른 채 끌어 가로 스크롤(끈 경우 탭 선택 안 함)
+  const { containerRef: tabsRef, dragScrollHandlers: tabsDragScrollHandlers } =
+    useDragScroll<HTMLDivElement>()
 
   const filtered = useMemo(() => {
     // 문의·프로그램 진행: 매핑되는 알림 타입 없음 → 빈 목록
@@ -135,14 +136,8 @@ export function NotificationDropdown({
     return notifications.filter(n => n.type === category)
   }, [notifications, category])
 
-  const unreadItems = useMemo(
-    () => filtered.filter(item => !item.read).sort(byNewest),
-    [filtered]
-  )
-  const readItems = useMemo(
-    () => filtered.filter(item => item.read).sort(byNewest),
-    [filtered]
-  )
+  const unreadItems = useMemo(() => filtered.filter(item => !item.read).sort(byNewest), [filtered])
+  const readItems = useMemo(() => filtered.filter(item => item.read).sort(byNewest), [filtered])
 
   useEffect(() => {
     if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return
@@ -165,16 +160,15 @@ export function NotificationDropdown({
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, filtered.length])
 
-  const handleItemClick = async (notification: Notification) => {
-    await onNotificationClick(notification)
-    if (hasAdminNotificationNavigation(notification)) onClose?.()
+  const handleItemClick = (notification: Notification) => {
+    void onNotificationClick(notification)
   }
 
   const isEmpty = filtered.length === 0 && !hasNextPage && !isFetchingNextPage
 
   return (
     <div className="notification-dropdown-panel">
-      <div className="notification-dropdown-header">
+      <div ref={tabsRef} className="notification-dropdown-header" {...tabsDragScrollHandlers}>
         {CATEGORIES.map(({ key, label }) => (
           <button
             key={key}
@@ -218,7 +212,6 @@ export function NotificationDropdown({
             ) : null}
             {readItems.length > 0 ? (
               <div className="notification-dropdown-section">
-                <Text className="notification-dropdown-section-label">읽음</Text>
                 {readItems.map(notification => (
                   <NotificationRow
                     key={notification.id}

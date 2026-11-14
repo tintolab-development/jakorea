@@ -28,7 +28,7 @@ export interface FileUploadPrepareRequest {
      */
   ownerId?: number;
   /**
-     * 파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다.
+     * 파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다. CRIMINAL_HISTORY_CONSENT_ORIGINAL은 CMS가 받은 성범죄 경력 조회 동의서 서명 원본입니다: ownerDomain=MEMBER, ownerType=CONSENT, ownerId=현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 문서 id(회원 상세·신규 등록 공통, memberId 아님), PDF/JPG/JPEG/PNG 20MB, PRIVATE_SENSITIVE, SIGNED_CONSENT_EVIDENCE_RESTRICTED_3Y, SERVER_RELAY. 성범죄 경력 조회 결과·증빙(CRIMINAL_HISTORY_EVIDENCE)은 관리자 업로드를 허용하지 않습니다.
      * @minLength 0
      * @maxLength 80
      */

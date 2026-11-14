@@ -4,13 +4,20 @@
  * CSS 공통 토큰: `@jakorea/admin-ui/styles`. 앱 종속: `./theme-provider.css`.
  */
 
-import { adminConfigProviderWave, mergeAdminTheme } from '@jakorea/admin-ui'
+import {
+  adminConfigProviderWave,
+  installScrollbarModeClass,
+  mergeAdminTheme,
+} from '@jakorea/admin-ui'
 import '@jakorea/admin-ui/styles'
 import { ConfigProvider } from 'antd'
 import type { ReactNode } from 'react'
 import { domainColorsHex } from '@/shared/constants/colors'
 import './theme-provider.css'
 import './ant-modal-motion-disable.css'
+
+// 고정형 스크롤바 환경(Windows 등)에만 <html>.scrollbar-classic — 전역 4px 시안 스크롤바(admin-ui styles/scrollbar.css)
+installScrollbarModeClass()
 
 interface ThemeProviderProps {
   children: ReactNode

@@ -1,4 +1,5 @@
 import { isAxiosError } from 'axios'
+import { isAdminLoginAccountLockedResponse } from './admin-login-account-locked-error'
 
 /** 로그인 423·승인 대기 계정 — 사용자 노출 문구 (백엔드 영문 메시지 대신 고정) */
 export const ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE =
@@ -37,6 +38,8 @@ export function isAdminLoginApprovalPendingResponse(
   payload: unknown,
   httpStatus?: number
 ): boolean {
+  // 계정 잠금도 423 으로 온다 — 잠금이면 승인 대기로 보지 않는다
+  if (isAdminLoginAccountLockedResponse(payload)) return false
   if (httpStatus === 423) return true
   const code = extractAdminLoginErrorCode(payload)
   return Boolean(code && isAdminLoginApprovalPendingCode(code))

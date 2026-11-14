@@ -3,6 +3,7 @@
  * 선택 단계 UI = GeneralParticipantAddAssignModal (Figma CMS 9760:8214 ‘기관 추가 배정 안내’)
  * 이후 기관 선택 배정 안내(알림 예약) → 배정 완료 안내 단계는 기존 그대로
  */
+import type { AddAssignSelectionMode } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { useCmsAlert } from '@/shared/ui'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { useEffect, useState } from 'react'
@@ -45,6 +46,11 @@ export interface AssignGuideModalProps {
   confirmLoading?: boolean
   /** 배정 완료 모달 문구 — 생략 시 기존(`default`). 일반 기관형은 `result`(Figma 04-2) */
   completeVariant?: InstitutionAssignCompleteVariant
+  /**
+   * 교육 배정일 선택 방식 — 기본 `multiple`.
+   * 1사1교는 기관 신청이 지망별 일정이라 한 기관에 지망 하나만 배정되도록 `single`(2026-11-14 요청).
+   */
+  sessionSelectionMode?: AddAssignSelectionMode
 }
 
 export function AssignGuideModal({
@@ -65,6 +71,7 @@ export function AssignGuideModal({
   onComplete,
   confirmLoading = false,
   completeVariant = 'default',
+  sessionSelectionMode = 'multiple',
 }: AssignGuideModalProps) {
   const { showAlert } = useCmsAlert()
   const [step, setStep] = useState<AssignmentModalStep>('select')
@@ -144,7 +151,7 @@ export function AssignGuideModal({
           options: sessionOptions,
           value: selectedSessionIds,
           onChange: onSessionIdsChange,
-          selectionMode: 'multiple',
+          selectionMode: sessionSelectionMode,
         }}
       />
 

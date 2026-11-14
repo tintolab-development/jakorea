@@ -273,6 +273,18 @@ export function ProgramApplyCompleteModal({
 
 export const programApplyGateMemberSettingsPath = MYPAGE_SETTINGS_PATH
 export const programApplyGateConsentsPath = `${MYPAGE_SETTINGS_PATH}?tab=consents`
+
+/**
+ * 필수 동의 게이트 → 동의 관리. 빠진 항목을 `required`로 넘겨, 작성 전(목록 미노출) 동의서·서약서 카드도 보이게 한다.
+ * 쿼리 키는 마이페이지 `APPLY_GATE_REQUIRED_CONSENTS_PARAM`('required')과 같다.
+ */
+export function programApplyGateConsentsPathFor(
+  missingConsentTypes: readonly RequiredApplyConsentType[],
+): string {
+  if (missingConsentTypes.length === 0) return programApplyGateConsentsPath
+  const params = new URLSearchParams({ tab: 'consents', required: missingConsentTypes.join(',') })
+  return `${MYPAGE_SETTINGS_PATH}?${params.toString()}`
+}
 export const programApplyGateApplicationsPath = MYPAGE_EDUCATION_PATH
 
 /** 신청 유형에 맞는 마이페이지 신청 목록으로 이동한다. */

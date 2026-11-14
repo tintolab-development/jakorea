@@ -90,6 +90,8 @@ export interface UserDetailFullpageBasicTabContentProps {
   /** profile = 전체 기본정보, instructor_fee_ja = 강사비 등급만 */
   memberInfoEditScope?: 'profile' | 'instructor_fee_ja'
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  /** 관리자 상세 이메일 입력란 서버 에러 문구 */
+  memberInfoEmailError?: string | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
@@ -118,6 +120,7 @@ export function UserDetailFullpageBasicTabContent({
   memberInfoEditing = false,
   memberInfoEditScope = 'profile',
   memberInfoDraft,
+  memberInfoEmailError = null,
   onMemberInfoDraftChange,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
@@ -509,6 +512,7 @@ export function UserDetailFullpageBasicTabContent({
         memberInfoEditing={memberInfoEditing}
         memberInfoEditScope={memberInfoEditScope}
         memberInfoDraft={memberInfoDraft}
+        memberInfoEmailError={memberInfoEmailError}
         onMemberInfoDraftChange={onMemberInfoDraftChange}
         adminPermissionVariantPatching={adminPermissionVariantPatching}
         onPatchAdminPermissionVariantFromDetailView={

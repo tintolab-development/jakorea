@@ -66,6 +66,7 @@ import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-p
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { handleError } from '@/shared/utils/error-handler'
+import { showIdentityAlreadyRegisteredAlertIfNeeded } from '@/features/user/shared/lib/identity-already-registered-alert'
 import {
   DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
   FilterTableToolbarButton, showRegisterCompletedAlert,
@@ -165,6 +166,7 @@ function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string 
 
 export function UserListPage() {
   const { showAlert } = useCmsAlert()
+
   const { params, setParams } = useQueryParams<UserListQueryParams>()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
@@ -935,6 +937,7 @@ export function UserListPage() {
       closeCreateModal()
       invalidateList()
     } catch (error) {
+      showIdentityAlreadyRegisteredAlertIfNeeded(error, showAlert)
       handleError(error, { defaultMessage: '회원 추가에 실패했습니다.' })
       throw error
     }
@@ -993,6 +996,7 @@ export function UserListPage() {
       closeAdminRegisterModal()
       showRegisterCompletedAlert()
     } catch (error) {
+      showIdentityAlreadyRegisteredAlertIfNeeded(error, showAlert)
       handleError(error, { defaultMessage: '관리자 등록에 실패했습니다.' })
       throw error
     }
@@ -1075,6 +1079,7 @@ export function UserListPage() {
       )
       closeInstructorRegisterModal()
     } catch (error) {
+      showIdentityAlreadyRegisteredAlertIfNeeded(error, showAlert)
       handleError(error, { defaultMessage: '강사 등록에 실패했습니다.' })
       throw error
     }

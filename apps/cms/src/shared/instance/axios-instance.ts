@@ -305,6 +305,10 @@ async function postRefreshAndPersist(refreshToken: string | null, generation: nu
 
   persistAccessToken(parsed.accessToken, expiresAtIsoFromExpiresInSeconds(parsed.expiresInSeconds))
   persistRefreshToken(parsed.refreshToken)
+  // 새로고침·재진입 — 첫 로그인 본인인증 확정 단계를 서버 값으로 복원한다(BE R1)
+  if (parsed.identityVerificationRequired !== undefined) {
+    useAuthStore.getState().setIdentityVerificationRequired(parsed.identityVerificationRequired)
+  }
 
   return parsed.accessToken
 }

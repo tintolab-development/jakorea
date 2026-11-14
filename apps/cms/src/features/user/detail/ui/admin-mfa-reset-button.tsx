@@ -21,10 +21,10 @@ import {
 } from '@/features/user/detail/lib/can-show-admin-mfa-reset'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
+import { showRateLimitedAlert } from '@/shared/ui/show-rate-limited-alert'
 
-const OTHER_SUCCESS_MESSAGE =
-  'MFA 재발급이 완료되었습니다.\n대상 관리자는 다시 로그인한 뒤 새 QR로 등록해 주세요.'
-
+/** 본인 재발급 — 시안에 별도 문구가 없어 기존 안내 유지(재로그인 필요) */
 const SELF_SUCCESS_MESSAGE =
   'MFA 재발급이 완료되었습니다.\n다시 로그인한 뒤 새 QR로 등록해 주세요.'
 
@@ -106,11 +106,18 @@ export function AdminMfaResetButton({ target }: { target: Omit<User, 'password'>
       await queryClient.invalidateQueries({
         queryKey: memberQueryKeys.adminApprovalRequests.detail(adminAccountId),
       })
-      showResult(OTHER_SUCCESS_MESSAGE, false)
+      // 시안(16909-166394) 공통 「발급 완료」
+      showIssueCompletedAlert()
     } catch (error: unknown) {
       const code = error instanceof AdminMfaApiError ? error.code : 'UNKNOWN'
       const status = error instanceof AdminMfaApiError ? error.httpStatus : undefined
-      showResult(mapMfaResetError(code, status).message, false)
+      const mapped = mapMfaResetError(code, status)
+      // 429·MFA_RESET_RATE_LIMITED — 시안(16909-166437) 공통 「처리 제한 안내」. 계정 잠금은 기존 안내 유지
+      if (mapped.action === 'rate-limited' && code !== 'ACCOUNT_LOCKED') {
+        showRateLimitedAlert()
+        return
+      }
+      showResult(mapped.message, false)
     } finally {
       proofRef.current = null
       submittingRef.current = false

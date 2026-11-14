@@ -4,9 +4,11 @@ import {
   parseSettlementAmount,
 } from './format-write-draft.ts'
 import { readTripLegAttachments, readTripLegFileNames } from './empty-trip-leg.ts'
+import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '../../../../../shared/lib/platform-alert-copy.ts'
 
 export const SETTLEMENT_WRITE_ALERT_TITLE = '안내'
-export const SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력 안내'
+/** 시안 「공통 제한 안내 / 필수 항목 미입력」(사용자 플랫폼 14491-2657) — 설명은 화면에서 빨간 `*` 문구로 보여 준다 */
+export const SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = PLATFORM_REQUIRED_NOT_FILLED_TITLE
 export const SETTLEMENT_RECEIPT_REQUIRED_ALERT_TITLE = '영수증 제출 안내'
 export const SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 export const SETTLEMENT_MIN_EXPENSE_ITEM_MESSAGE =

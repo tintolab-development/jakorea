@@ -1,8 +1,14 @@
+import { isAxiosError } from 'axios'
 import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
 import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
+
+/** 응답이 없는 오류(서버 미응답·연결 끊김 등) 안내 — 시안 「네트워크 오류 안내」(16898-166096) */
+export const NETWORK_ERROR_ALERT_TITLE = '네트워크 오류 안내'
+export const NETWORK_ERROR_ALERT_CONTENT =
+  '일시적인 네트워크 오류가 발생하였습니다.\n잠시 후 다시 시도해 주세요.'
 
 /** 백엔드 공통 에러 envelope (`success: false`, RFC7807식 `detail` 포함) */
 export type ApiErrorEnvelope = {
@@ -309,6 +315,8 @@ export function readApiErrorAlertMessage(error: unknown, fallback: string): stri
       })
     }
   }
+  // 응답 없는 요청 오류 — axios 개발 문구(`Network Error` 등)를 화면에 쓰지 않는다
+  if (isAxiosError(error) && !error.response) return NETWORK_ERROR_ALERT_CONTENT
   if (error instanceof Error && error.message.trim()) return error.message
   return fallback
 }

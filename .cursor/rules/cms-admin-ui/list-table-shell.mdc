@@ -20,7 +20,7 @@ alwaysApply: false
 | 툴바 → 테이블 margin/gap | **16px** |
 | 제목 ↔ 건수 gap | **10px** |
 | 액션 버튼 간 gap | **8px** |
-| 툴바 CmsButton | **medium h40 (min 120)** · 엑셀 등 아이콘 버튼도 h40 — [cms-button-action-sizes](./cms-button-action-sizes.mdc) |
+| 툴바 CmsButton | **medium h40 (min 120)** · 엑셀 등 아이콘 버튼도 h40 (CMS 엑셀 다운로드는 140×40) — [cms-button-action-sizes](./cms-button-action-sizes.mdc) |
 
 ## 권장 마크업 역할
 

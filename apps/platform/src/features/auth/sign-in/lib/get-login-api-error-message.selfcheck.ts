@@ -51,7 +51,33 @@ assert.equal(
 )
 
 assert.equal(getLoginApiErrorMessage(new Error('network'), fallback), 'network')
+
+// 서버 메시지 없는 axios 오류(예: 502 프록시 HTML) — axios 원문 대신 기본 문구
+assert.equal(
+  getLoginApiErrorMessage(
+    new AxiosError('Request failed with status code 502', undefined, undefined, undefined, {
+      status: 502,
+      data: '<html>Bad Gateway</html>',
+      statusText: 'Bad Gateway',
+      headers: {},
+      config: {} as never,
+    }),
+    fallback,
+  ),
+  fallback,
+)
+assert.equal(getLoginApiErrorMessage(new AxiosError('Network Error'), fallback), fallback)
 assert.equal(getLoginApiErrorMessage(undefined, fallback), fallback)
+
+// 로그인이 아닌 화면 — 비활성 계정은 서버 메시지를 그대로 쓴다
+assert.equal(
+  getLoginApiErrorMessage(
+    axiosErr(403, { error: { code: 'ACCOUNT_INACTIVE', message: '사용할 수 없는 계정입니다.' } }),
+    fallback,
+    { overrideApprovalPending: false },
+  ),
+  '사용할 수 없는 계정입니다.',
+)
 
 assert.equal(
   formatPortalProfileUpdateError(

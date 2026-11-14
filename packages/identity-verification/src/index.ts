@@ -7,7 +7,11 @@ export type { ProcessIdentityCallbackOptions } from './callback'
 export { createIdentityVerificationState } from './state'
 export type { CreateIdentityVerificationStateOptions, IdentityVerificationState } from './state'
 
-export { IdentityVerificationApiError, parseIdentityVerificationApiError } from './errors'
+export {
+  IDENTITY_EXPECTED_PROFILE_MISMATCH,
+  IdentityVerificationApiError,
+  parseIdentityVerificationApiError,
+} from './errors'
 
 export {
   normalizeBirthDateDigits,

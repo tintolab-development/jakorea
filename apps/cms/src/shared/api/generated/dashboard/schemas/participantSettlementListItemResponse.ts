@@ -16,7 +16,7 @@ export interface ParticipantSettlementListItemResponse {
   latestRevision?: boolean;
   /** 신청(제출) 일시 */
   submittedAt?: string;
-  /** 항목 요약 라벨(학생 교통비·참여자 활동비·식사비) */
+  /** 항목 요약 라벨(학생 교통비·활동비·식사비) */
   itemSummary?: string;
   /** settlementFrontend.items[].type 호환: transportation|activity|meal */
   itemType?: string;

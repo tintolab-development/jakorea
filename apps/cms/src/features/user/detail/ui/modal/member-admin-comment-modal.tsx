@@ -98,7 +98,7 @@ export function MemberAdminCommentModal({
             fullRow
             view={value}
             edit={
-              <CmsTextArea inputSize="small"
+              <CmsTextArea inputSize="medium"
                 value={value}
                 onChange={event => onChange(event.target.value)}
                 placeholder={ADMIN_COMMENT_SENSITIVE_INFO_NOTICE}

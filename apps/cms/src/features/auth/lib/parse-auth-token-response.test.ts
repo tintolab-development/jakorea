@@ -44,6 +44,18 @@ describe('parseAuthTokenResponse', () => {
     expect(parseAuthTokenResponse({ accessToken: 'a' })?.refreshToken).toBeUndefined()
   })
 
+  it('BE R1: identityVerificationRequired를 boolean·null 그대로 읽고, 없으면 undefined', () => {
+    expect(
+      parseAuthTokenResponse({ accessToken: 'a', identityVerificationRequired: true })
+        ?.identityVerificationRequired
+    ).toBe(true)
+    expect(
+      parseAuthTokenResponse({ accessToken: 'a', identityVerificationRequired: null })
+        ?.identityVerificationRequired
+    ).toBeNull()
+    expect(parseAuthTokenResponse({ accessToken: 'a' })?.identityVerificationRequired).toBeUndefined()
+  })
+
   it('accessToken 없으면 null', () => {
     expect(parseAuthTokenResponse({ refreshToken: 'r' })).toBeNull()
   })

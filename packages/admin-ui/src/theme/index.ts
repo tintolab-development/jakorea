@@ -7,3 +7,8 @@ export {
   adminTheme,
   mergeAdminTheme,
 } from './admin-theme.js'
+export {
+  SCROLLBAR_CLASSIC_CLASS,
+  installScrollbarModeClass,
+  measureScrollbarWidth,
+} from './scrollbar-mode.js'

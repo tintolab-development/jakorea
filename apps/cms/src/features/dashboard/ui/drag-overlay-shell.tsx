@@ -10,6 +10,7 @@ const OVERLAY_TITLE_BY_WIDGET_ID: Record<string, string> = {
   'program-schedule-company-school-widget': '프로그램 일정',
   'program-schedule-ujat-widget': '프로그램 일정',
   'program-schedule-gemini-widget': '프로그램 일정',
+  'program-schedule-trained-teacher-widget': '프로그램 일정',
   'recruitment-status-widget': '모집 신청 현황',
   'customer-inquiry-status-widget': '프로그램 별 문의 현황',
   'kpi-achievement-widget': '사업 별 KPI 대비 달성률',

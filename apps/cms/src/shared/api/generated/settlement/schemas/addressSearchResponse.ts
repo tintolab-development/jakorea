@@ -13,4 +13,6 @@ export interface AddressSearchResponse {
   size?: number;
   totalElements?: number;
   source?: string;
+  /** QA 2026-11-14 BP6: 행안부 주소 API가 검색어를 거절했을 때의 원본 오류 코드(E0005 검색어 없음, E0006 상세 주소 필요, E0008 한 글자, E0009 숫자·특수문자만, E0010 페이지 범위, E0011·E0015 결과 과다, E0012·E0013 사용할 수 없는 문자). 이때 content는 빈 배열이고 HTTP 200이다. 정상 검색이면 null. */
+  inputErrorCode?: string | null;
 }

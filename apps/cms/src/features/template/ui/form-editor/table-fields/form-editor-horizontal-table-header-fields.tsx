@@ -21,13 +21,17 @@ export function FormEditorHorizontalTableHeaderFields({
   paragraph,
   paragraphId,
   updateParagraph,
+  structureControlLocked = false,
 }: {
   paragraph: HorizontalTableParagraph
   paragraphId: string
   updateParagraph: FormUpdateParagraph
+  /** 구조 조작 전용 잠금 — 열 삭제 버튼·안내 숨김, 항목명은 편집 */
+  structureControlLocked?: boolean
 }) {
   const pNorm = normalizeHorizontalTableParagraph(paragraph)
   const colCount = Math.max(1, pNorm.columnHeaders.length)
+  const canRemoveColumn = !structureControlLocked && colCount > HORIZONTAL_TABLE_MIN_COLUMN_COUNT
 
   const removeCol = (columnIndex: number) => {
     updateParagraph(paragraphId, cur => {
@@ -45,22 +49,24 @@ export function FormEditorHorizontalTableHeaderFields({
       className="form-editor-horizontal-table-header-fields"
       titleClassName="form-editor-horizontal-table-header-fields__title"
       hint={
-        <FormEditorFieldHint tone="header">
-          <FormEditorFieldHintLine tone="header">
-            <span>항목 옆</span>
-            <FormEditorFieldHintXInline tone="header">
-              <ItemDeleteButton
-                className="item-delete-button form-editor-horizontal-table-hint-button"
-                aria-label="동일 열 삭제 예시"
-                disabled
-              />
-            </FormEditorFieldHintXInline>
-            <span>아이콘 선택 시 해당 항목과 동일한 열의 항목이</span>
-          </FormEditorFieldHintLine>
-          <FormEditorFieldHintLine tone="header" second>
-            일괄 삭제됩니다. 헤더는 최소 1개 이상의 항목이 필수입니다.
-          </FormEditorFieldHintLine>
-        </FormEditorFieldHint>
+        structureControlLocked ? null : (
+          <FormEditorFieldHint tone="header">
+            <FormEditorFieldHintLine tone="header">
+              <span>항목 옆</span>
+              <FormEditorFieldHintXInline tone="header">
+                <ItemDeleteButton
+                  className="item-delete-button form-editor-horizontal-table-hint-button"
+                  aria-label="동일 열 삭제 예시"
+                  disabled
+                />
+              </FormEditorFieldHintXInline>
+              <span>아이콘 선택 시 해당 항목과 동일한 열의 항목이</span>
+            </FormEditorFieldHintLine>
+            <FormEditorFieldHintLine tone="header" second>
+              일괄 삭제됩니다. 헤더는 최소 1개 이상의 항목이 필수입니다.
+            </FormEditorFieldHintLine>
+          </FormEditorFieldHint>
+        )
       }
     >
       <FormEditorFieldList className="form-editor-horizontal-table-header-fields__list">
@@ -93,7 +99,7 @@ export function FormEditorHorizontalTableHeaderFields({
                     placeholder="항목명을 입력해 주세요"
                   />
                 </div>
-                {colCount > HORIZONTAL_TABLE_MIN_COLUMN_COUNT ? (
+                {canRemoveColumn ? (
                   <ItemDeleteButton
                     className="item-delete-button form-editor-horizontal-table-header-fields__delete"
                     aria-label={`${i + 1}열 삭제`}

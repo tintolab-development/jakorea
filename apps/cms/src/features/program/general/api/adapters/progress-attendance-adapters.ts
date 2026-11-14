@@ -29,7 +29,7 @@ import {
 } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
 import { mapApiGenderToStudentGenderKey } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { STUDENT_GENDER_LABELS } from '@/features/program/general/model/school-detail-types'
-import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { isGeneralProgressAttendanceSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
 import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
@@ -116,7 +116,7 @@ function formatDateLabel(value: string | null | undefined, pattern: string): str
 function mapGenderLabel(gender?: string | null): string {
   const key = mapApiGenderToStudentGenderKey(gender)
   if (key) return STUDENT_GENDER_LABELS[key]
-  return toDisplayGender(gender)
+  return toGenderLabelOrRaw(gender) ?? '-'
 }
 
 function mapBirthLabel(birthDate?: string | null, age?: number | null): string {

@@ -8,6 +8,7 @@ import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/ge
 import { fetchGeneralOrganizationApplicationsPage } from '@/features/program/general/api/admin-applications-service'
 import { fetchInstructorApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import {
   buildIndividualLectureAssignSlotsFromScheduleSlots,
   getApplicantPreferredDateKeys,
@@ -56,6 +57,33 @@ export function countOrganizationsWithAssignedSessions(
   rows: ApplicantSchoolRow[] | undefined
 ): number {
   return (rows ?? []).filter(row => (row.confirmedListAssignmentSessions?.length ?? 0) > 0).length
+}
+
+/**
+ * 1사1교 — 기관 승인은 OSA(`sessions[]` TEMP_ASSIGNED/CONFIRMED)를 만들지 않고 승인 기관의 희망 일정을
+ * program_schedule로 확정한다. 그래서 배정 후보는 승인 기관 희망 일정 중 일정 ID가 확정된 것이다.
+ */
+export function countCompanySchoolOrganizationsWithResolvedSchedules(
+  rows: ApplicantSchoolRow[] | undefined
+): number {
+  return (rows ?? []).filter(row =>
+    (row.sessions ?? []).some(
+      session =>
+        session.resolvedScheduleId != null &&
+        Number.isFinite(session.resolvedScheduleId) &&
+        session.resolvedScheduleId > 0
+    )
+  ).length
+}
+
+/** 강사 배정 후보가 있는 승인 기관 수 — 1사1교는 확정 희망 일정, 그 외 기관형은 OSA 배정 일정 기준. */
+export function countOrganizationsAssignableForInstructor(
+  rows: ApplicantSchoolRow[] | undefined,
+  options: { companySchool: boolean }
+): number {
+  return options.companySchool
+    ? countCompanySchoolOrganizationsWithResolvedSchedules(rows)
+    : countOrganizationsWithAssignedSessions(rows)
 }
 
 export type OrganizationInstructorApprovalStart =
@@ -156,6 +184,7 @@ export function useInstructorLectureAssignModal(params: {
   } = params
 
   const isIndividual = variant === 'individual'
+  const companySchool = !isIndividual && isCompanySchoolProgram(program)
   const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
   const queryClient = useQueryClient()
 
@@ -171,10 +200,16 @@ export function useInstructorLectureAssignModal(params: {
     () =>
       !isIndividual && organizationRemoteEnabled && organizationApplicationsQuery.data
         ? parseInstructorLectureAssignScheduleFromInstitutions(organizationApplicationsQuery.data, {
-            sessionSource: 'assigned',
+            sessionSource: companySchool ? 'hope' : 'assigned',
           })
         : parseInstructorLectureAssignSchedule(programId),
-    [isIndividual, organizationApplicationsQuery.data, organizationRemoteEnabled, programId]
+    [
+      companySchool,
+      isIndividual,
+      organizationApplicationsQuery.data,
+      organizationRemoteEnabled,
+      programId,
+    ]
   )
 
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => schedule.scheduleMonth)
@@ -261,8 +296,9 @@ export function useInstructorLectureAssignModal(params: {
       isIndividual,
       organizationRemoteEnabled,
       organizationApplicationsSuccess: organizationApplicationsQuery.isSuccess,
-      approvedOrganizationCount: countOrganizationsWithAssignedSessions(
-        organizationApplicationsQuery.data
+      approvedOrganizationCount: countOrganizationsAssignableForInstructor(
+        organizationApplicationsQuery.data,
+        { companySchool }
       ),
       instructorDetailReady: useAvailableScheduleSlotsUi,
     })

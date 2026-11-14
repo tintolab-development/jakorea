@@ -78,7 +78,8 @@ async function processRemoteCallback(
 
   if (queryError) {
     const message = queryMessage ?? '본인인증에 실패했습니다.'
-    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
+    const errorCode = params.get('errorCode')?.trim() || undefined
+    const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message, errorCode })
     return failOutcome(message, cancelled, posted)
   }
 

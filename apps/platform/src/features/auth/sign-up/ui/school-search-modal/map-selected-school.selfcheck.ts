@@ -62,6 +62,24 @@ const neisSelected = mapSearchResultToSelectedSchool({
 assert.equal(neisSelected?.source, 'neis')
 assert.equal(neisSelected?.neisCode, '7581089')
 assert.equal(neisSelected?.educationOfficeCode, 'B10')
+// 학교급 — NEIS는 학교종류명, 알 수 없는 종류(특수학교 등)는 없음
+assert.equal(neisSelected?.schoolLevel, '초등학교')
+assert.equal(
+  mapSearchResultToSelectedSchool({
+    source: 'neis',
+    item: neisSchool({ schulKndScNm: '특수학교' }),
+  })?.schoolLevel,
+  undefined,
+)
+// 커리어넷은 검색 모달에서 고른 학교급(대학교·전문대학)만, 미선택이면 없음
+assert.equal(careerNetSelected?.schoolLevel, undefined)
+assert.equal(
+  mapSearchResultToSelectedSchool(
+    { source: 'careerNet', item: careerNetUniversity() },
+    '전문대학',
+  )?.schoolLevel,
+  '전문대학',
+)
 
 assert.equal(
   mapSearchResultToSelectedSchool({

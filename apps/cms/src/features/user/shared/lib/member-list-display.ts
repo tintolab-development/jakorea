@@ -71,12 +71,22 @@ export function getAllMemberListRoleTypeLabel(
 
 type AllTabRoleFilterRecord = Parameters<typeof getAllMemberListRoleTypeLabel>[0]
 
-/** 전체 회원 유형 필터 — 목록 유형 열과 동일 기준 */
+/**
+ * 전체 회원 유형 필터 — 목록 유형 열과 동일 기준.
+ * 「강사」는 순수 강사 + 겸직(학교(교사), 강사) + 권한 종료 강사를 모두 포함한다(기획 확정 2026-11-14).
+ */
 export function matchesAllTabRoleFilter(
   record: AllTabRoleFilterRecord,
   filter: keyof typeof ALL_MEMBER_LIST_ROLE_TYPE_LABELS | 'ALL'
 ): boolean {
   if (filter === 'ALL') return true
+  if (filter === 'INSTRUCTOR') {
+    return (
+      getAllMemberListRoleTypeLabel(record) === ALL_MEMBER_LIST_ROLE_TYPE_LABELS.INSTRUCTOR ||
+      matchesAllTabRoleFilter(record, 'INSTRUCTOR_DUAL') ||
+      matchesAllTabRoleFilter(record, 'INSTRUCTOR_REVOKED')
+    )
+  }
   if (filter === 'INSTRUCTOR_REVOKED') {
     if (!isInstructorPermissionRevoked(record)) return false
     const profile = resolveListInstructorProfile(record)

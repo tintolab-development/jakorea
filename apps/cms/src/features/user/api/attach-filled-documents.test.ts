@@ -3,6 +3,7 @@ import {
   attachFilledDocumentsToTermsAgreements,
   mapAgreementSnapshotToFilledDocument,
   mapPaymentBasicInfo,
+  splitCrimeConsentOriginalLinkForPatch,
 } from './attach-filled-documents'
 import {
   createAgreementNoticeDraft,
@@ -11,6 +12,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { ADMIN_PRE_REGISTER_TERMS_VERSION } from './build-pre-register-terms-agreements'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 
 vi.mock('@/shared/lib/admin-file-upload', async importOriginal => {
   const mod = await importOriginal<typeof import('@/shared/lib/admin-file-upload')>()
@@ -429,5 +431,45 @@ describe('attachFilledDocumentsToTermsAgreements', () => {
       evidenceFileObjectId: 55,
       evidenceOriginalFileName: 'crime-uploaded.png',
     })
+  })
+})
+
+describe('splitCrimeConsentOriginalLinkForPatch', () => {
+  it('성범죄 원본 연결 1건을 filledDocument 없는 단독 행으로 분리하고 나머지를 남긴다', () => {
+    const split = splitCrimeConsentOriginalLinkForPatch([
+      { termsType: 'MARKETING', version: 'v1', agreed: true },
+      {
+        termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+        version: 'v-latest',
+        required: false,
+        agreed: true,
+        evidenceFileObjectId: 321,
+        evidenceOriginalFileName: 'signed.png',
+      },
+    ])
+    expect(split.crimeOriginalLink).toEqual({
+      termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+      version: 'v-latest',
+      agreed: true,
+      evidenceFileObjectId: 321,
+    })
+    expect(split.rest).toEqual([{ termsType: 'MARKETING', version: 'v1', agreed: true }])
+  })
+
+  it('원본 파일 id가 없거나 미동의면 연결로 보지 않는다', () => {
+    const rows: TermsAgreementRequest[] = [
+      { termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', version: 'v1', agreed: true },
+      { termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', version: 'v1', agreed: false, evidenceFileObjectId: 5 },
+    ]
+    const split = splitCrimeConsentOriginalLinkForPatch(rows)
+    expect(split.crimeOriginalLink).toBeNull()
+    expect(split.rest).toEqual(rows)
+  })
+
+  it('성범죄 연결만 있으면 rest는 undefined', () => {
+    const split = splitCrimeConsentOriginalLinkForPatch([
+      { termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', version: 'v1', agreed: true, evidenceFileObjectId: 9 },
+    ])
+    expect(split.rest).toBeUndefined()
   })
 })

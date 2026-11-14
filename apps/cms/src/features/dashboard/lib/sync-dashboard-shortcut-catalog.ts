@@ -3,6 +3,7 @@ import {
   restrictShortcutVisibilityToCatalog,
 } from '@/features/dashboard/model/dashboard-shortcut-contract'
 import { useDashboardSettingsStore } from '@/features/dashboard/model/dashboard-settings-store'
+import { sessionDashboardShortcutOptions } from '@/features/dashboard/lib/dashboard-shortcut-master'
 
 /** GET /api/admin/dashboard/shortcuts 수신 후 catalog·visibility 동기화 */
 export function syncDashboardShortcutCatalogFromApi(items: DashboardShortcutItem[]): void {
@@ -10,6 +11,10 @@ export function syncDashboardShortcutCatalogFromApi(items: DashboardShortcutItem
   const catalogKeys = activeItems.map(item => item.id)
   useDashboardSettingsStore.setState(state => ({
     shortcutCatalogKeys: catalogKeys,
-    shortcutEnabled: restrictShortcutVisibilityToCatalog(state.shortcutEnabled, catalogKeys),
+    shortcutEnabled: restrictShortcutVisibilityToCatalog(
+      state.shortcutEnabled,
+      catalogKeys,
+      sessionDashboardShortcutOptions()
+    ),
   }))
 }

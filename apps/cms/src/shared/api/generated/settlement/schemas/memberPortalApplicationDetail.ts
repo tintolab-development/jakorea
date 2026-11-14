@@ -8,6 +8,7 @@
 import type { ApplicationCapabilities } from './applicationCapabilities';
 import type { EducationScreenSummary } from './educationScreenSummary';
 import type { MemberPortalApplicationDetailAnswers } from './memberPortalApplicationDetailAnswers';
+import type { MemberPortalApplicationDetailApplicationSource } from './memberPortalApplicationDetailApplicationSource';
 import type { MemberPortalApplicationDetailDisplayStatus } from './memberPortalApplicationDetailDisplayStatus';
 import type { MemberPortalApplicationDetailRecruitTerm } from './memberPortalApplicationDetailRecruitTerm';
 import type { MemberPortalOrganizationApplicationSnapshot } from './memberPortalOrganizationApplicationSnapshot';
@@ -65,4 +66,6 @@ export interface MemberPortalApplicationDetail {
   organizationApplication?: MemberPortalOrganizationApplicationSnapshot | null;
   /** 신청 recruitmentId 모집 행 대표 이미지 file_object id. program.thumbnailFileObjectId와 목록 thumbnailFileObjectId와 같은 값. 없으면 null. */
   thumbnailFileObjectId?: number | null;
+  /** 강사(INSTRUCTOR) 신청의 출처. MEMBER_SUBMITTED=회원이 직접 신청, ADMIN_REGISTERED=CMS 관리자가 참여 강사로 직접 등록(신청 행 자동 생성). ADMIN_REGISTERED이면 FE는 안내사항 [신청 정보] 버튼을 숨긴다(USER-FUNC-0252). 승인 완료 상태라 '신청 내용' 탭은 노출되지 않으며, 기관별 강의 가능 일정에 '-' 같은 대체 표시나 별도 문구를 만들지 않는다. 강사 외 신청 유형은 null. */
+  applicationSource?: MemberPortalApplicationDetailApplicationSource;
 }

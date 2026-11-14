@@ -68,6 +68,8 @@ export function applyLockedBasicToInstructorForm(
 export type InstructorApplyLockedBasicInfo = {
   name: string
   gender: Gender | ''
+  /** 포털 프로필 성별 원문(원격 조회일 때만). 신청 API gender는 폼 라디오가 아니라 이 값으로 보낸다. */
+  profileGender?: string
   birthDate: string
   contact: string
   email: string
@@ -125,6 +127,7 @@ export function mapPortalProfileToLockedBasicInfo(
     return {
       name: profile?.name?.trim() ?? '',
       gender: toInstructorFormGender(profile?.gender),
+      profileGender: profile?.gender?.trim() ?? '',
       birthDate: toInstructorFormBirthDate(profile?.birthDate),
       contact: profile?.phone?.trim() ?? '',
       email: profile?.email?.trim() ?? '',
@@ -142,6 +145,7 @@ export function mapPortalProfileToLockedBasicInfo(
   return {
     name: profile?.name?.trim() ?? '',
     gender: toInstructorFormGender(profile?.gender),
+    profileGender: profile?.gender?.trim() ?? '',
     birthDate: toInstructorFormBirthDate(profile?.birthDate),
     contact: profile?.phone?.trim() ?? '',
     email: profile?.email?.trim() ?? '',

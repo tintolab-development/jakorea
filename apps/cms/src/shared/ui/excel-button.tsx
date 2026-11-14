@@ -1,9 +1,10 @@
 /**
- * 엑셀 다운로드 공통 버튼 — primary + 아이콘. 기본 h40.
+ * 엑셀 다운로드 공통 버튼 — primary + 아이콘. 기본 h40 · 폭 140 (excel-button.css).
  */
 
 import { forwardRef } from 'react'
 import { CmsButton, type CmsButtonProps } from './cms-button'
+import './excel-button.css'
 
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 

@@ -31,4 +31,6 @@ export interface AuthTokenResponse {
   identitySelfSignupCompletedAfterAdminRegistration?: boolean;
   /** 회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null. */
   ageGroup?: AuthTokenResponseAgeGroup;
+  /** 관리자 전용. MASTER가 등록한 관리자 계정이 임시 비밀번호 변경 전에 POST /api/admin/auth/identity/confirm 으로 본인인증을 확정해야 하면 true. true인 동안 POST /api/admin/auth/password/change는 409 ADMIN_IDENTITY_NOT_VERIFIED. 회원 토큰 응답은 null. */
+  identityVerificationRequired?: boolean | null;
 }
