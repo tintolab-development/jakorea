@@ -549,7 +549,7 @@ export function ProgramScheduleWidget({
     return eventsByDate[dateKey] ?? []
   }, [selectedDate, eventsByDate])
 
-  /** 표시 기간(월간 35일 / 주간 7일) 전체 이벤트 기준 — 셀·팝오버·선택일 목록 공유 */
+  /** 표시 기간(월간 35일 또는 42일 / 주간 7일) 전체 이벤트 기준 — 셀·팝오버·선택일 목록 공유 */
   const scheduleColorMap = useMemo(
     () =>
       buildScheduleColorMapForWidgetEvents(

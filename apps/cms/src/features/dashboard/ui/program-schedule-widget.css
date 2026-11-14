@@ -334,18 +334,31 @@
   border-top-right-radius: var(--radius-8, 8px);
 }
 
+/* 하단 모서리: 5행·6행 달 모두 마지막 행 기준 (칸 수가 35 또는 42라 고정 인덱스를 쓰지 않는다) */
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid--cells
-  > .program-schedule-widget__month-grid-slot:nth-child(29)
+  > .program-schedule-widget__month-grid-slot:nth-last-child(7)
   .program-calendar-cell {
   border-bottom-left-radius: var(--radius-8, 8px);
 }
 
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid--cells
-  > .program-schedule-widget__month-grid-slot:nth-child(35)
+  > .program-schedule-widget__month-grid-slot:last-child
   .program-calendar-cell {
   border-bottom-right-radius: var(--radius-8, 8px);
+}
+
+/*
+ * 6주에 걸치는 달(42칸): 슬롯 고정 높이(100% 376px·50% 400px)에서 행이 약 39px·43px로 줄어
+ * 날짜 원(36px·34px)+상하 패딩 8px이 잘린다. 날짜는 세로 가운데 정렬이므로 상하 패딩만 0으로 둔다.
+ */
+.program-schedule-widget.program-schedule-widget
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells:has(> :nth-child(42))
+  .program-calendar-cell {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .program-schedule-widget__body--month
