@@ -16,6 +16,7 @@ import type { AdminIdentityContactUpdateRequest } from '@/shared/api/generated/m
 import { adminMeIdentityContactPath } from '@/shared/config/api-paths'
 import { extractApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
+import { IDENTITY_CONTACT_MISMATCH_CODES } from '@/shared/lib/screen-owned-api-errors'
 
 export const IDENTITY_REVERIFY_SUCCESS_ALERT = {
   title: '인증 완료',
@@ -24,12 +25,7 @@ export const IDENTITY_REVERIFY_SUCCESS_ALERT = {
 
 export const IDENTITY_REVERIFY_FAILURE_ALERT_TITLE = '본인인증 실패'
 
-/** 이름·생년월일·성별이 가입 정보와 다를 때 서버 거절 코드 */
-export const IDENTITY_CONTACT_MISMATCH_CODES: ReadonlySet<string> = new Set([
-  'IDENTITY_VERIFICATION_NAME_MISMATCH',
-  'IDENTITY_VERIFICATION_BIRTH_DATE_MISMATCH',
-  'IDENTITY_VERIFICATION_GENDER_MISMATCH',
-])
+export { IDENTITY_CONTACT_MISMATCH_CODES }
 
 export async function updateAdminIdentityContact(
   body: AdminIdentityContactUpdateRequest

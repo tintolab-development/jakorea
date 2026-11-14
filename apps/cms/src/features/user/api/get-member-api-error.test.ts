@@ -5,6 +5,30 @@ import {
 } from './get-member-api-error'
 
 describe('getMemberApiErrorMessage', () => {
+  it('성범죄 동의서 원본 연결 오류는 서버 포털 문구 대신 관리자 안내 문구를 쓴다', () => {
+    const notReady = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: '본인이 업로드하고 검사를 마친 동의서 원본 PDF만 연결할 수 있습니다.',
+          error: { code: 'CONSENT_ORIGINAL_FILE_NOT_READY', field: 'evidenceFileObjectId' },
+        },
+      },
+    }
+    expect(getMemberApiErrorMessage(notReady, 'fallback')).toBe(
+      '첨부한 동의서 파일을 아직 사용할 수 없습니다. 잠시 후 다시 등록하거나 동의서 파일을 다시 첨부해 주세요.'
+    )
+    const notAllowed = {
+      response: { status: 400, data: { success: false, error: { code: 'CONSENT_EVIDENCE_FILE_NOT_ALLOWED' } } },
+    }
+    expect(getMemberApiErrorMessage(notAllowed, 'fallback')).toContain('원본 파일만')
+    const alreadyUsed = {
+      response: { status: 409, data: { success: false, error: { code: 'CONSENT_ORIGINAL_FILE_ALREADY_USED' } } },
+    }
+    expect(getMemberApiErrorMessage(alreadyUsed, 'fallback')).toContain('이미 다른 동의서')
+  })
+
   it('maps PORTRAIT_CONSENT_CONTENT_UNAVAILABLE from a 410 response', () => {
     const message = getMemberApiErrorMessage(
       {

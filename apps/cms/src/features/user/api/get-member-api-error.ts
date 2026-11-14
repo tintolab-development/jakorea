@@ -55,6 +55,26 @@ const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
     '본인확인을 완료한 회원의 본인 소유 개인정보는 CMS에서 수정할 수 없습니다.',
 }
 
+/**
+ * 성범죄 경력 조회 동의서 서명 원본 연결 실패 (회원/강사 등록 termsAgreements, BE 2026-11-14).
+ * 서버 기본 문구(포털 회원 기준 「본인이 업로드한 … PDF만」)는 관리자 화면에 맞지 않아 코드별 FE 문구로 덮어쓴다.
+ * `CONSENT_ORIGINAL_FILE_ALREADY_LINKED`는 회원 상세 PATCH에서 재동의로 처리되어 더 이상 나오지 않으므로 매핑하지 않는다.
+ */
+const CRIME_CONSENT_ORIGINAL_ERROR_MESSAGES: Record<string, string> = {
+  CONSENT_EVIDENCE_FILE_NOT_ALLOWED:
+    '성범죄 경력 조회 동의서 원본 파일만 첨부할 수 있습니다. 동의서 파일을 다시 첨부해 주세요.',
+  CONSENT_ORIGINAL_FILE_NOT_READY:
+    '첨부한 동의서 파일을 아직 사용할 수 없습니다. 잠시 후 다시 등록하거나 동의서 파일을 다시 첨부해 주세요.',
+  CONSENT_ORIGINAL_FILE_ALREADY_USED:
+    '이미 다른 동의서에 연결된 파일입니다. 동의서 파일을 다시 첨부해 주세요.',
+}
+
+/** 성범죄 동의서 원본 연결 오류면 FE 안내 문구, 아니면 null */
+export function getCrimeConsentOriginalErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== 'object' || !('response' in error)) return null
+  const code = extractApiErrorCode((error as { response?: { data?: unknown } }).response?.data)
+  return (code && CRIME_CONSENT_ORIGINAL_ERROR_MESSAGES[code]) || null
+}
 
 export function isMemberDeleteCurrentPasswordInvalidError(error: unknown): boolean {
   if (error && typeof error === 'object' && 'response' in error) {
@@ -103,6 +123,8 @@ export function getMemberApiErrorMessage(error: unknown, fallback: string): stri
     if (code === MEMBER_DELETE_CURRENT_PASSWORD_INVALID_CODE) {
       return MEMBER_DELETE_CURRENT_PASSWORD_INVALID_ALERT_CONTENT
     }
+    const crimeConsentOriginalMessage = getCrimeConsentOriginalErrorMessage(error)
+    if (crimeConsentOriginalMessage) return crimeConsentOriginalMessage
     if (code === 'PORTRAIT_CONSENT_CONTENT_UNAVAILABLE') {
       return '초상권 동의 상태는 유지되지만 보존 정책 또는 작성 내용 부재로 제출 작성본을 조회할 수 없습니다.'
     }
