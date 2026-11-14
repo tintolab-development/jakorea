@@ -321,3 +321,51 @@ describe('showGlobalApiErrorAlert 응답 없는 오류', () => {
     })
   })
 })
+
+function registerConflict(url: string, code: string, message: string): AxiosError {
+  return {
+    isAxiosError: true,
+    message,
+    name: 'AxiosError',
+    toJSON: () => ({}),
+    response: {
+      status: 409,
+      data: { success: false, data: null, message, error: { code, message, field: null } },
+    },
+    config: { method: 'post', url },
+  } as AxiosError
+}
+
+describe('showGlobalApiErrorAlert — 회원 정보 중복(R7)', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+  })
+
+  it.each([
+    '/api/admin/admin-accounts',
+    '/api/admin/users/pre-register/individual',
+    '/api/admin/users/pre-register/instructor',
+  ])('%s 409 본인 정보 중복은 전역 알럿을 띄우지 않는다(화면 안내 1회)', url => {
+    const error = registerConflict(
+      url,
+      'ADMIN_IDENTITY_ALREADY_REGISTERED',
+      '이미 관리자 계정으로 등록된 본인인증 정보입니다.'
+    )
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(isGlobalApiErrorAlertShown(error)).toBe(false)
+  })
+
+  it.each([
+    ['/api/admin/admin-accounts', 'ADMIN_EMAIL_ALREADY_EXISTS', '관리자 이메일이 이미 사용 중입니다.'],
+    ['/api/admin/users/pre-register/individual', 'EMAIL_ALREADY_EXISTS', '이미 사용 중인 이메일입니다.'],
+  ])('%s 이메일 중복(%s)은 지금처럼 전역 알럿에 서버 문구를 띄운다', (url, code, message) => {
+    const error = registerConflict(url, code, message)
+    expect(showGlobalApiErrorAlert(error)).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledTimes(1)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining(message) })
+    )
+  })
+})

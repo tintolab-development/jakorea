@@ -66,10 +66,7 @@ import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-p
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { handleError } from '@/shared/utils/error-handler'
-import {
-  isMemberPreRegisterIdentityDuplicateError,
-  PRE_REGISTER_IDENTITY_DUPLICATE_ALERT,
-} from '@/features/user/api/pre-register-identity-duplicate-error'
+import { showIdentityAlreadyRegisteredAlertIfNeeded } from '@/features/user/shared/lib/identity-already-registered-alert'
 import {
   DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
   FilterTableToolbarButton, showRegisterCompletedAlert,
@@ -170,11 +167,6 @@ function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string 
 export function UserListPage() {
   const { showAlert } = useCmsAlert()
 
-  /** 사전등록 본인 정보 중복(409) — 전역 알럿 대신 회원용 안내. 모달·입력값은 유지된다. */
-  const showPreRegisterIdentityDuplicateAlertIfNeeded = (error: unknown) => {
-    if (!isMemberPreRegisterIdentityDuplicateError(error)) return
-    showAlert({ ...PRE_REGISTER_IDENTITY_DUPLICATE_ALERT })
-  }
   const { params, setParams } = useQueryParams<UserListQueryParams>()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
@@ -945,7 +937,7 @@ export function UserListPage() {
       closeCreateModal()
       invalidateList()
     } catch (error) {
-      showPreRegisterIdentityDuplicateAlertIfNeeded(error)
+      showIdentityAlreadyRegisteredAlertIfNeeded(error, showAlert)
       handleError(error, { defaultMessage: '회원 추가에 실패했습니다.' })
       throw error
     }
@@ -1004,6 +996,7 @@ export function UserListPage() {
       closeAdminRegisterModal()
       showRegisterCompletedAlert()
     } catch (error) {
+      showIdentityAlreadyRegisteredAlertIfNeeded(error, showAlert)
       handleError(error, { defaultMessage: '관리자 등록에 실패했습니다.' })
       throw error
     }
@@ -1086,7 +1079,7 @@ export function UserListPage() {
       )
       closeInstructorRegisterModal()
     } catch (error) {
-      showPreRegisterIdentityDuplicateAlertIfNeeded(error)
+      showIdentityAlreadyRegisteredAlertIfNeeded(error, showAlert)
       handleError(error, { defaultMessage: '강사 등록에 실패했습니다.' })
       throw error
     }

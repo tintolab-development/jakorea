@@ -5,9 +5,10 @@
 
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import {
+  IdentityAlreadyRegisteredError,
+  isAdminIdentityAlreadyRegisteredApiError,
   isPreRegisterIdentityDuplicateApiError,
-  MemberPreRegisterIdentityDuplicateError,
-} from '@/features/user/api/pre-register-identity-duplicate-error'
+} from '@/features/user/api/identity-already-registered-error'
 import {
   getAdminPermissionVariant,
   isAdminPermissionTagVariant,
@@ -1424,12 +1425,15 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         registeredByAdmin: true,
       }
     } catch (error) {
-      // 개인·강사 사전등록 본인 정보 중복(409) — 관리자 등록(같은 코드)은 서버 문구를 그대로 쓴다.
+      // 본인 정보 중복(409) — 화면이 「회원 정보 중복 안내」를 띄운다(관리자 등록·개인·강사 사전등록).
+      if (request.role === 'ADMIN' && isAdminIdentityAlreadyRegisteredApiError(error)) {
+        throw new IdentityAlreadyRegisteredError('admin')
+      }
       if (
         (request.role === 'INDIVIDUAL' || request.role === 'INSTRUCTOR') &&
         isPreRegisterIdentityDuplicateApiError(error)
       ) {
-        throw new MemberPreRegisterIdentityDuplicateError()
+        throw new IdentityAlreadyRegisteredError('pre-register')
       }
       throw new Error(getMemberApiErrorMessage(error, '회원 사전 등록에 실패했습니다.'))
     }

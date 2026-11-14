@@ -10,11 +10,18 @@ export const IDENTITY_CONTACT_MISMATCH_CODES: ReadonlySet<string> = new Set([
   'IDENTITY_VERIFICATION_GENDER_MISMATCH',
 ])
 
-/** 회원 사전등록(개인·강사) — 이름·생년월일·휴대폰이 같은 회원이 이미 있을 때 (관리자 등록 R7과 같은 코드) */
-export const PRE_REGISTER_IDENTITY_DUPLICATE_CODE = 'ADMIN_IDENTITY_ALREADY_REGISTERED'
+/** 관리자 등록(R7) — 이름·생년월일·휴대폰이 같은 회원이 이미 있을 때 */
+export const ADMIN_IDENTITY_ALREADY_REGISTERED_CODE = 'ADMIN_IDENTITY_ALREADY_REGISTERED'
+
+/**
+ * 회원 사전등록(개인·강사) — 같은 조건의 중복 코드.
+ * BE 회신 대기 — 코드명 확정 시 교체 (관리자 등록 코드와 같다고 가정, BE는 사전 등록 경로에 아직 미적용).
+ */
+export const PRE_REGISTER_IDENTITY_DUPLICATE_CODE = ADMIN_IDENTITY_ALREADY_REGISTERED_CODE
 
 const IDENTITY_CONTACT_PATH = /\/api\/admin\/me\/identity-contact(?:$|[?#])/
 const ADMIN_ACCOUNT_BASIC_INFO_PATH = /\/api\/admin\/admin-accounts\/\d+\/basic-info(?:$|[?#])/
+const ADMIN_ACCOUNT_CREATE_PATH = /\/api\/admin\/admin-accounts(?:$|[?#])/
 const MEMBER_PRE_REGISTER_PATH =
   /\/api\/admin\/users\/pre-register\/(?:individual|instructor)(?:$|[?#])/
 
@@ -37,7 +44,13 @@ export function isScreenOwnedApiError(input: {
   if (input.field === 'email' && ADMIN_ACCOUNT_BASIC_INFO_PATH.test(url)) {
     return true
   }
-  // 사전등록 본인 정보 중복은 서버 기본 문구가 관리자용이라 화면이 회원용 안내를 띄운다.
+  // 본인 정보 중복 — 화면이 「회원 정보 중복 안내」를 띄운다(관리자 등록·사전등록).
+  if (
+    input.code === ADMIN_IDENTITY_ALREADY_REGISTERED_CODE &&
+    ADMIN_ACCOUNT_CREATE_PATH.test(url)
+  ) {
+    return true
+  }
   if (input.code === PRE_REGISTER_IDENTITY_DUPLICATE_CODE && MEMBER_PRE_REGISTER_PATH.test(url)) {
     return true
   }
