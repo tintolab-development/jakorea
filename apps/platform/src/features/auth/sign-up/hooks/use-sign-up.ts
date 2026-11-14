@@ -251,7 +251,8 @@ export function useSignUp() {
   const [isEmailChecking, setIsEmailChecking] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>('none')
+  // 14세 이상 일반회원의 재학 여부는 기본 미선택(null). 미성년은 생년월일 단계에서 'enrolled'로 둔다.
+  const [schoolStatus, setSchoolStatus] = useState<SchoolStatus | null>(null)
   const [schoolName, setSchoolName] = useState('')
   const [schoolAddress, setSchoolAddress] = useState('')
   const [schoolNeisCode, setSchoolNeisCode] = useState<string | null>(null)
@@ -390,7 +391,7 @@ export function useSignUp() {
     setIsEmailChecking(false)
     setPassword('')
     setPasswordConfirm('')
-    setSchoolStatus('none')
+    setSchoolStatus(null)
     setSchoolName('')
     setSchoolAddress('')
     setSchoolNeisCode(null)
@@ -555,6 +556,9 @@ export function useSignUp() {
           schoolOrganizationId,
           schoolNeisCode,
         }) && (!isUnderAgeSignup || isMinorMemberNameValid(memberProfileName))
+  // 일반회원은 프로필 단계 필수 검증(isStepSixValid)을 통과해야 확인·제출로 가므로 여기서는 선택값이 있다.
+  // 교사회원은 재학 여부를 쓰지 않는다(요청·확인 화면 모두 무시).
+  const submittedSchoolStatus: SchoolStatus = schoolStatus ?? 'none'
   const isGuardianProfileValidState = isGuardianProfileValid({
     name: guardianVerifiedName,
     phone: guardianVerifiedPhone,
@@ -1336,7 +1340,7 @@ export function useSignUp() {
       identityVerificationSessionId,
       guardianVerificationSessionId: underAgeSessions.guardianVerificationSessionId,
       signupIntentId: underAgeSessions.signupIntentId,
-      schoolStatus,
+      schoolStatus: submittedSchoolStatus,
       schoolName,
       schoolOrganizationId: teacherSchoolOrganizationId,
       schoolNeisCode,
@@ -1395,7 +1399,7 @@ export function useSignUp() {
     ? buildUnderAgeConfirmationRows({
         birthDate: signupMemberBirthDate,
         gender,
-        schoolStatus,
+        schoolStatus: submittedSchoolStatus,
         address,
         addressDetail,
         email,
@@ -1412,7 +1416,7 @@ export function useSignUp() {
         selectedType,
         birthDate,
         gender,
-        schoolStatus,
+        schoolStatus: submittedSchoolStatus,
         address,
         addressDetail,
         email,

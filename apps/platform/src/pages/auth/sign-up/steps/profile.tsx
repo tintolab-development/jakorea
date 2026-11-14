@@ -32,7 +32,7 @@ function SchoolEnrollmentToggle({
   schoolStatus,
   setSchoolStatus,
 }: {
-  schoolStatus: 'enrolled' | 'none'
+  schoolStatus: 'enrolled' | 'none' | null
   setSchoolStatus: (status: 'enrolled' | 'none') => void
 }) {
   return (
@@ -230,7 +230,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
             ) : (
               <AdultEnrolledSchoolFields profile={profile} />
             )
-          ) : (
+          ) : profile.schoolStatus === 'none' ? (
             <PFTextInput
               size="xlarge"
               label="소속 기관명"
@@ -239,7 +239,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
               onValueChange={profile.setAffiliationName}
               message="소속된 기관이 없으신 경우 비워두셔도 괜찮아요"
             />
-          )}
+          ) : null}
 
           <HomeAddressFields profile={profile} />
 
