@@ -55,7 +55,7 @@ import type {
   PortalSchoolSelectionRequest,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
-import type { AdminAccountBasicInfoUpdateRequestWithEmail } from '@/features/user/api/map-patch-user-basic-info'
+import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequestWithAddress } from '@/features/user/api/map-patch-user-basic-info'
 import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
@@ -1089,7 +1089,7 @@ export async function fetchAdminAccountDetailRemote(
 /** Swagger `updateAdminBasicInfo` — `PATCH /api/admin/admin-accounts/{adminId}/basic-info` */
 export async function updateAdminBasicInfoRemote(
   adminId: number,
-  body: AdminAccountBasicInfoUpdateRequestWithEmail
+  body: AdminAccountBasicInfoUpdateRequest
 ): Promise<AdminAccountResponse> {
   return unwrapApiBody(await membersApi.updateAdminBasicInfo(adminId, body))
 }
