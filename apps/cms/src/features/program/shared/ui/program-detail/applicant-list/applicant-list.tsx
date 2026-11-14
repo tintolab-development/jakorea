@@ -1094,6 +1094,11 @@ export function ApplicantList({
         setParticipantApproveTarget({ id: single.id, name: single.applicantName })
         return
       }
+      // 면접 있음 1차 서류 탭 — 교육 배정(최종 승인)이 아니라 서류 결과(document-result)로 처리 (상세 [서류 승인]과 동일)
+      if (isIndividualDoc1Screening) {
+        setParticipantBulkApproveOpen(true)
+        return
+      }
       if (allowsScheduleMultiBulkApprove) {
         setParticipantScopeBulkOpen(true)
         return
@@ -1839,7 +1844,11 @@ export function ApplicantList({
         }}
       />
       <IndividualApproveScopeModal
-        open={requiresIndividualApprovalScope && participantApproveTarget != null}
+        open={
+          requiresIndividualApprovalScope &&
+          !isIndividualDoc1Screening &&
+          participantApproveTarget != null
+        }
         participantName={participantApproveTarget?.name ?? ''}
         programId={programId}
         program={program}
@@ -1912,7 +1921,10 @@ export function ApplicantList({
         }}
       />
       <ParticipantApproveModal
-        open={!requiresIndividualApprovalScope && participantApproveTarget != null}
+        open={
+          (!requiresIndividualApprovalScope || isIndividualDoc1Screening) &&
+          participantApproveTarget != null
+        }
         participantName={participantApproveTarget?.name ?? ''}
         onCancel={() => setParticipantApproveTarget(null)}
         onConfirm={payload => {
