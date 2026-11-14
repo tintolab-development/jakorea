@@ -23,6 +23,7 @@ import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
+import { LoginInlineAlert } from '@/features/auth/ui/login-inline-alert'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { resolveLoginRedirectTarget } from '@/shared/utils/auth-redirect'
@@ -302,6 +303,8 @@ export function LoginPage() {
                     layout="vertical"
                     requiredMark={false}
                     className="login-form"
+                    // 입력 중 실시간 검증 안내를 띄우지 않고 [로그인하기] 클릭 시에만 노출한다
+                    validateTrigger={[]}
                     onValuesChange={() => {
                       resetLoginCredentialFeedback(form, clearError, setShowAdminApprovalPending)
                     }}
@@ -366,13 +369,9 @@ export function LoginPage() {
                     {!isLocked &&
                       failedAttempts > 0 &&
                       failedAttempts < LOGIN_POLICY.maxFailedAttempts && (
-                        <Alert
-                          type="warning"
-                          message={`로그인 실패: ${failedAttempts}회`}
-                          description={`${LOGIN_POLICY.maxFailedAttempts - failedAttempts}회 더 실패하면 계정이 ${LOGIN_POLICY.lockoutDurationMinutes}분간 잠깁니다.`}
-                          showIcon
-                          className="login-alert"
-                        />
+                        <LoginInlineAlert>
+                          {`로그인에 실패했습니다. ${LOGIN_POLICY.maxFailedAttempts}회 연속 실패 시 ${LOGIN_POLICY.lockoutDurationMinutes}분간 로그인이 제한됩니다. (${failedAttempts}/${LOGIN_POLICY.maxFailedAttempts}회)`}
+                        </LoginInlineAlert>
                       )}
 
                     <Form.Item className="login-submit-actions">
