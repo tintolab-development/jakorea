@@ -333,6 +333,7 @@ export function mapInstructorApplyFormToCreateRequest(
     phone: formatKoreanPhoneNumber(values.contact.trim()),
     email: values.email.trim(),
     profile: mapInstructorFormValuesToCmsProfile(values),
+    settlement: { businessIncome: values.isBusinessIncome === 'yes' },
     termsAgreements: mapTermsAgreements(values),
   }
 }
