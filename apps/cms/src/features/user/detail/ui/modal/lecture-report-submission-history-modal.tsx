@@ -13,6 +13,7 @@ import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { mapMemberLectureReportsToTableRows } from '@/features/user/api/map-member-lecture-reports'
 import type { MemberLectureReportTableRow } from '@/features/user/api/map-member-lecture-reports'
 import { resolveMemberApplicationIdFromApplication } from '@/features/user/api/member-program-history-ids'
+import { resolveMemberLectureReportFiles } from '@/features/user/api/resolve-member-lecture-report-files'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
 import {
@@ -118,16 +119,22 @@ export function LectureReportSubmissionHistoryModal({
 
   const handleViewReport = useCallback(
     async (record: MemberLectureReportTableRow) => {
-      const fileObjectIds = record.reportFileIds ?? []
-      if (!record.canViewReport || fileObjectIds.length === 0) return
+      if (!record.canViewReport) return
       setReportDownloadingId(record.id)
       try {
-        // 서버 reportFileIds = file_object id → 파일 객체 다운로드 API(`/api/admin/files/{id}/download`)
+        const files = await resolveMemberLectureReportFiles(record)
+        if (files.length === 0) {
+          showAlert({ title: '안내', content: LECTURE_REPORT_NO_ATTACHMENT_CTA })
+          return
+        }
         const prefix = `강의보고서_${record.reportId ?? record.id}`
-        for (const [index, fileObjectId] of fileObjectIds.entries()) {
+        for (const [index, file] of files.entries()) {
+          // 업로드한 원본 파일명을 그대로 쓴다. 없을 때만 보고서 id 규칙으로 되돌아간다.
           await downloadAdminFile({
-            fileObjectId,
-            fileName: fileObjectIds.length > 1 ? `${prefix}_${index + 1}` : prefix,
+            fileObjectId: file.fileObjectId,
+            fileName:
+              file.originalFileName ??
+              (files.length > 1 ? `${prefix}_${index + 1}` : prefix),
           })
         }
       } catch (error) {

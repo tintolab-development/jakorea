@@ -227,16 +227,14 @@
 }
 
 /**
- * 시안 4427:28004 · 4427:28498 (수강·봉사 이력): 체크박스 열 60, 본문 행 56, 필터 구분선 ↔ 목록 제목 24
- * 강사 > 프로그램 강의 이력(`--instructor-lecture`)은 별도 시안이라 제외
+ * 시안 4427:28004 · 4427:28498 (수강·봉사 이력)·4427:60361 (강사 강의 이력): 체크박스 열 60, 본문 행 56
  */
-.detail-fullpage-modal.user-detail-fullpage-modal
-  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture) {
+.detail-fullpage-modal.user-detail-fullpage-modal .member-program-lecture-history {
   --table-selection-column-width: 60px;
 }
 
 .detail-fullpage-modal.user-detail-fullpage-modal
-  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture)
+  .member-program-lecture-history
   .filter-table-layout__table
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
@@ -246,16 +244,87 @@
   height: 56px !important;
 }
 
-.detail-fullpage-modal.user-detail-fullpage-modal
-  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture)
-  .filter-table-layout__divider {
+/** 시안: 회원 상세 이력 목록(수강·봉사·강의·참여·담당·정산) 필터 구분선 ↔ 목록 제목 24 */
+.detail-fullpage-modal.user-detail-fullpage-modal .filter-table-layout__divider {
   padding-bottom: 24px;
 }
 
-/** 시안: 수강·봉사 이력 필터 셀렉트「전체」는 선택 값과 같은 #3D3D3D (placeholder 회색 아님) */
+/** 시안: 회원 상세 이력 필터 셀렉트「전체」 글자·화살표는 선택 값과 같은 #3D3D3D (placeholder 회색 아님) */
 .detail-fullpage-modal.user-detail-fullpage-modal
-  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture)
   .table-filter-group
   .ant-select-selection-placeholder {
   color: var(--default-BK, #3d3d3d);
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .table-filter-group
+  .cms-select__chevron
+  .cms-mask-icon {
+  background-color: var(--default-BK, #3d3d3d);
+}
+
+/**
+ * 상세 Full Page LNB — 시안 12360:344356 (회원 상세, QA 2026-11-15 전체 회원 md 0-4)
+ * 하위 메뉴 프레임 padding 2/16/6 · 항목 간격 0 · 앞 구분선, 점 x50 · 글자 x64,
+ * 비활성 1·2뎁스 opacity 0.8(2뎁스 글자 #22404D), 오른쪽 테두리 1px #E0E0E0.
+ * 공통 `detail-fullpage-modal.css`는 교재·후원사·정산 상세도 쓰므로 회원 상세 범위로 한정한다.
+ */
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__lnb {
+  /* border는 폭을 줄이므로 inset 그림자로 그린다 */
+  box-shadow: inset -1px 0 0 var(--Border-default, #e0e0e0);
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__lnb-children-wrap--open {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .detail-fullpage-modal__lnb-children-wrap--open
+  .detail-fullpage-modal__lnb-children {
+  margin-top: 0;
+  padding: 2px 16px 6px;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__lnb-children > li,
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__lnb-children > li:last-child {
+  margin-bottom: 0;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__lnb-child-dot {
+  margin-left: 10px;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__lnb-child-label {
+  margin-left: 1px;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .detail-fullpage-modal__lnb-child:not(.detail-fullpage-modal__lnb-child--active):not(
+    .detail-fullpage-modal__lnb-child--selected
+  ):not(:hover) {
+  color: #22404d;
+  opacity: 0.8;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .detail-fullpage-modal__lnb-child:not(.detail-fullpage-modal__lnb-child--active):not(
+    .detail-fullpage-modal__lnb-child--selected
+  ):not(:hover)
+  .detail-fullpage-modal__lnb-child-dot {
+  background-color: #22404d;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .detail-fullpage-modal__lnb-item:not(.detail-fullpage-modal__lnb-item--active) {
+  opacity: 0.8;
+}
+
+/**
+ * 권한 승인 신청 상세 — 시안 4427:116816 · 4427:121150: 상단 버튼 줄 컨테이너 좌우 32 → 버튼 오른쪽 끝 x1888
+ * (본문 패딩 52보다 20 오른쪽). 버튼 줄만 옮기고 본문은 그대로 둔다. (사용자 확정 2026-11-15)
+ */
+.detail-fullpage-modal.user-detail-fullpage-modal--permission-request
+  .detail-fullpage-modal__content-actions {
+  width: calc(100% + 20px);
+  margin-right: -20px;
 }

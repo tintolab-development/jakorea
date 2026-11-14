@@ -5,6 +5,12 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import {
+  ProgramDetailTdSegmentWrap,
+  renderDetailInfoPipeSeparated,
+  splitPipeSeparatedText,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import { getInstructorSettlementInvoiceStatusPresentation } from '@/shared/constants/instructor-settlement-status'
 import type {
   InstructorSettlementInvoiceLineItem,
@@ -45,7 +51,9 @@ import {
 import { mapSettlementDetailToInstructorInvoice } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import './instructor-invoice-modal.css'
 
 function buildBasisDetailTableRow(input: {
@@ -82,6 +90,20 @@ export interface InstructorInvoiceModalProps {
   row: InstructorSettlementListRow | null
   instructorNameKo?: string
   onSettlementUpdated?: () => void
+}
+
+/**
+ * 교육 진행 일자 셀 `날짜 | 시간 · 회차` — 문자 `|` 대신 구분선(16/16).
+ * 1439px 이하에서는 CSS가 구분선을 숨기고 두 줄로 쌓는다(사용자 결정 2026-11-15).
+ */
+function renderInvoiceLectureDateSessions(value: string | undefined) {
+  const parts = splitPipeSeparatedText(value)
+  if (parts.length <= 1) return value?.trim() || '-'
+  return (
+    <ProgramDetailTdSegmentWrap className="instructor-invoice-modal__lecture-date-sessions">
+      {withProgramDetailTdDivider(parts)}
+    </ProgramDetailTdSegmentWrap>
+  )
 }
 
 export function InstructorInvoiceModal({
@@ -230,7 +252,7 @@ export function InstructorInvoiceModal({
       onSettlementUpdated?.()
     } catch (error) {
       showAlert({
-        title: '안내',
+        title: networkAwareAlertTitle(error, '안내'),
         content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
       })
     }
@@ -258,7 +280,7 @@ export function InstructorInvoiceModal({
       onSettlementUpdated?.()
     } catch (error) {
       showAlert({
-        title: '안내',
+        title: networkAwareAlertTitle(error, '안내'),
         content: getSettlementApiErrorMessage(error, '지급조서 반려 처리에 실패했습니다.'),
       })
     }
@@ -276,7 +298,7 @@ export function InstructorInvoiceModal({
         } catch (error) {
           if (!isFileDownloadPasswordApiError(error)) {
             showAlert({
-              title: '안내',
+              title: networkAwareAlertTitle(error, '안내'),
               content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
             })
           }
@@ -313,15 +335,29 @@ export function InstructorInvoiceModal({
           ) : (
             <>
               <section>
-                <div className="instructor-invoice-modal__basic-group">
+                {/* 시안 4427:75991: 표1 프로그램명(한 행 전체 폭) + 표2 3행, 사이 16 · 라벨 180 */}
+                <div className="applicant-instructor-basic-info instructor-invoice-modal__basic-group">
                   <DetailInfoForm
                     title="기본 정보"
                     className="instructor-invoice-modal__detail-form-card"
                   >
-                    <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Row type="single">
                       <DetailInfoForm.Field
                         label="프로그램명"
+                        fullRow
                         view={<span>{effectiveRow.invoice.programName}</span>}
+                      />
+                    </DetailInfoForm.Row>
+                  </DetailInfoForm>
+                  <DetailInfoForm
+                    title="기본 정보"
+                    hideHeader
+                    className="instructor-invoice-modal__detail-form-card"
+                  >
+                    <DetailInfoForm.Row type="double">
+                      <DetailInfoForm.Field
+                        label="프로그램 진행 회차"
+                        view={<span>{effectiveRow.invoice.sessionProgress}</span>}
                       />
                       <DetailInfoForm.Field
                         label="사업 운영 기간"
@@ -329,10 +365,6 @@ export function InstructorInvoiceModal({
                       />
                     </DetailInfoForm.Row>
                     <DetailInfoForm.Row type="double">
-                      <DetailInfoForm.Field
-                        label="프로그램 진행 회차"
-                        view={<span>{effectiveRow.invoice.sessionProgress}</span>}
-                      />
                       <DetailInfoForm.Field
                         label="지급조서 처리 현황"
                         view={
@@ -357,18 +389,16 @@ export function InstructorInvoiceModal({
                           </span>
                         }
                       />
-                    </DetailInfoForm.Row>
-                    <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="이체 예정일"
                         view={<span>{effectiveRow.invoice.expectedTransferDate}</span>}
                       />
+                    </DetailInfoForm.Row>
+                    <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="강사비 책정 기준"
-                        view={<span>{effectiveRow.invoice.lectureFeeBasis}</span>}
+                        view={renderDetailInfoPipeSeparated(effectiveRow.invoice.lectureFeeBasis)}
                       />
-                    </DetailInfoForm.Row>
-                    <DetailInfoForm.Row type="single">
                       <DetailInfoForm.Field
                         label="사업소득자 여부"
                         view={<span>{effectiveRow.invoice.businessIncomeEarner}</span>}
@@ -383,7 +413,7 @@ export function InstructorInvoiceModal({
                   <div>
                     <span className="info-section-title">산출 내역 상세</span>
                     <span className="info-section-description">
-                      교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.
+                      교통비 및 숙박비는 강사가 지급 신청한 경우에만 항목 노출됩니다.
                     </span>
                   </div>
                   {showLineActions && !hideStatementActionButtons ? (
@@ -417,12 +447,13 @@ export function InstructorInvoiceModal({
                   <table className="instructor-invoice-modal__detail-table">
                     <thead>
                       <tr>
-                        <th style={{ width: '14%' }}>참여 기관명</th>
-                        <th style={{ width: '18%' }}>강의 진행 일자</th>
-                        <th style={{ width: '10%' }}>산정 항목</th>
-                        <th style={{ width: '22%' }}>항목 설명</th>
-                        <th style={{ width: '12%' }}>정산 금액</th>
-                        <th style={{ width: '14%' }}>산정 기준 상세</th>
+                        {/* 시안 4427:75991: 180/260/140/400/180/180 (1340 기준 %) — 좁은 화면에서도 같이 줄도록 % */}
+                        <th style={{ width: '13.43%' }}>참여 기관명</th>
+                        <th style={{ width: '19.4%' }}>교육 진행 일자</th>
+                        <th style={{ width: '10.45%' }}>산정 항목</th>
+                        <th style={{ width: '29.85%' }}>항목 설명</th>
+                        <th style={{ width: '13.43%' }}>정산 금액</th>
+                        <th style={{ width: '13.43%' }}>산정 기준 상세</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -443,7 +474,9 @@ export function InstructorInvoiceModal({
                               ) : null}
                               {idx === 0 ? (
                                 <td rowSpan={effectiveRow.invoice.lineItems.length + 1}>
-                                  {effectiveRow.invoice.lectureDateSessions}
+                                  {renderInvoiceLectureDateSessions(
+                                    effectiveRow.invoice.lectureDateSessions
+                                  )}
                                 </td>
                               ) : null}
                               <td>{item.산정항목}</td>
@@ -616,9 +649,8 @@ export function InstructorInvoiceModal({
               })
               .catch(error => {
                 showAlert({
-                  title: '알림 재발송 실패',
-                  content: getSettlementApiErrorMessage(
-                    error,
+                  title: networkAwareAlertTitle(error, '알림 재발송 실패'),
+                  content: getSettlementApiErrorMessage(error,
                     '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
                   ),
                 })

@@ -15,6 +15,14 @@
   min-width: 0;
 }
 
+/* 강사(4427:53835)·관리자(4427:84432) 상세는 두 표 사이 16px (일반 회원 15518:306279는 10px 유지) */
+.user-basic-info-section__split-cards:has(
+    .user-basic-info-section--instructor-profile-card,
+    .user-basic-info-section__admin-permission-inline
+  ) {
+  gap: 16px;
+}
+
 /* 시안 4427:22524: 성별 | 생년월일, 소속 | 학년 — 구분선 양쪽 16px */
 .user-basic-info-section__inline-segments {
   display: inline-flex;
@@ -25,6 +33,11 @@
 
 .user-basic-info-section__inline-segments .detail-info-form-inputs-separator {
   margin: 0;
+}
+
+/* 시안 4427:48695: 교사 상세 성별 │ 생년월일 등 값 사이 구분선 양쪽 16px (공통 기본 12) */
+.user-basic-info-section .detail-info-form-inputs-wrapper-no-gap > .detail-info-form-inputs-separator {
+  margin: 0 16px;
 }
 
 /*
@@ -88,7 +101,10 @@
   min-width: 0;
 }
 
-/* 권한 상태색은 MemberPermissionStatusText 공통 표현에서 공급한다. */
+/*
+ * 권한 상태색은 MemberPermissionStatusText 공통 표현에서 공급한다.
+ * 시안: `승인 완료 │ [알림 재발송]`·`A등급 │ [등급 평가]` 구분선 양쪽 16px
+ */
 .user-basic-info-section__permission-approval-meta {
   display: inline-flex;
   align-items: center;
@@ -99,7 +115,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -121,6 +137,22 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+}
+
+/*
+ * 시안 4427:22524: 1365 ID 행 52 — 셀 52 고정에 버튼 32가 세로 중앙(위아래 10).
+ * 공통 값 셀 padding 12 + 버튼 32면 56이 되므로 이 셀만 10으로 줄인다.
+ */
+.detail-info-form__field-content:has(> .user-basic-info-section__id1365-cell) {
+  padding-block: 10px;
+}
+
+/*
+ * 시안 4427:22524 (221743): 일정 변경&취소 배지 134×23 — 테두리 1px이 밖으로 더해져 25가 되던 것
+ * 공통 배지는 프로그램 화면도 쓰므로 회원 상세 범위만 맞춘다.
+ */
+.user-detail-fullpage-modal .schedule-change-history-badge {
+  padding: 2px 8px 1px;
 }
 
 /* 시안 4427:22524: ID | [1365 바로가기] — 구분선 양쪽 16px, 버튼 100×32 */
@@ -226,6 +258,17 @@
   overflow: visible;
 }
 
+/* 시안 4427:84432: `Master │ [MFA 재발급]` 구분선 양쪽 16px */
+.user-basic-info-section__admin-permission-inline > .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
+/* 권한 태그 드롭다운 트리거는 틀만큼 margin -8px이라 구분선 왼쪽을 8 더 줘야 시각 16이 된다 */
+.user-basic-info-section__admin-permission-inline:has(.status-dropdown-cell__status-trigger)
+  > .detail-info-form-inputs-separator {
+  margin-left: 24px;
+}
+
 /* 관리자 담당 프로그램 수 — `DetailInfoForm.Separator` 포함 한 줄 정렬 */
 .user-basic-info-section__admin-managed-programs {
   display: inline-flex;
@@ -233,7 +276,17 @@
   flex-wrap: wrap;
 }
 
+/* 시안: `진행 중 : n건 │ 전체 : n건` 구분선 양쪽 16px */
+.user-basic-info-section__admin-managed-programs .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
 /* 일반 회원 수정 — 주소 검색 시안 고정 폭(242): 공통 trigger-wrap flex-grow 해제 */
 .user-basic-info-section__address--fixed > .address-search__trigger-wrap {
   flex: 0 0 auto;
+}
+
+/* 시안 15520:103404: 학교 상세 수정 — 기관명(학교 검색) 입력 셀 padding 12 (공통 수정 셀 12/16 대비) */
+.user-basic-info-section .detail-info-form__field-content--edit:has(.school-search__trigger-wrap) {
+  padding: 12px;
 }

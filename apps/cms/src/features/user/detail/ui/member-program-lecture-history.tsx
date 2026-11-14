@@ -60,7 +60,6 @@ import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-
 import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
 
-import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
@@ -542,31 +541,24 @@ export function MemberProgramLectureHistory({
         key: 'lectureReport',
         align: 'center',
         render: (_: unknown, record: Application) => {
-          const displayStatus = resolveApplicationEnrollmentDisplayStatus(record)
-          const ended = displayStatus === 'PROGRAM_ENDED'
-          const canView =
-            ended &&
-            (isMembersRemoteEnabled()
-              ? record.hasLectureReportSubmission === true
-              : (record.hasLectureReportSubmission ?? true))
+          // 시안 4427:60361: 강의보고서를 제출하지 않았으면 비활성(클릭 불가·안내 팝업 없음), 제출했으면 활성.
+          // 활성 조건은 응답 `hasLectureReportSubmission`(memberEnrollmentSummary) — mock만 종료 여부로 보완
+          const canView = isMembersRemoteEnabled()
+            ? record.hasLectureReportSubmission === true
+            : resolveApplicationEnrollmentDisplayStatus(record) === 'PROGRAM_ENDED' &&
+              (record.hasLectureReportSubmission ?? true)
           return (
             <span
               className="member-program-lecture-history__action-cell"
               onClick={e => e.stopPropagation()}
             >
+              {/* 시안 4427:60361: 중립(흰 배경·회색 테두리) 버튼, 칼럼 폭 fill */}
               <CmsButton
-                variant="secondary"
+                variant="default"
                 size="small"
+                className="member-program-lecture-history__history-view-btn"
+                disabled={!canView}
                 onClick={() => {
-                  if (!canView) {
-                    showAlert({
-                      title: '안내',
-                      content: ended
-                        ? '제출된 강의보고서가 없습니다.'
-                        : '프로그램이 종료된 후 강의보고서 제출 내역을 확인할 수 있습니다.',
-                    })
-                    return
-                  }
                   if (onViewLectureReport) onViewLectureReport(record)
                   setLectureReportHistoryTarget(record)
                   setLectureReportHistoryModalOpen(true)
@@ -588,7 +580,6 @@ export function MemberProgramLectureHistory({
     onOpenAssignment,
     onDownloadCertificate,
     onVolunteerCertificateDownload,
-    showAlert,
   ])
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -622,6 +613,9 @@ export function MemberProgramLectureHistory({
         className={[
           'member-program-lecture-history',
           mode === 'instructorLecture' ? 'member-program-lecture-history--instructor-lecture' : '',
+          mode === 'schoolProgramParticipation'
+            ? 'member-program-lecture-history--school-participation'
+            : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -688,9 +682,9 @@ export function MemberProgramLectureHistory({
                 </FilterTableToolbarButton>
               )}
               {mode === 'instructorLecture' && showCertificateBulkIssue && (
+                /* 시안 4427:60361: 아이콘 없이 텍스트만 160×40 */
                 <FilterTableToolbarButton
                   variant="primary"
-                  icon={<ButtonDownloadIcon />}
                   className="member-program-lecture-history__activity-certificate-btn"
                   onClick={() =>
                     withSelection(() =>
