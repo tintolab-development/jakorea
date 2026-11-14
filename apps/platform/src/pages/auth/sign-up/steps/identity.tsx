@@ -3,6 +3,7 @@ import {
   IDENTITY_MODULE_IDLE_TITLE,
 } from '@jakorea/domain/shared/identity-module-copy'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
@@ -59,6 +60,17 @@ export function IdentityStep({ signUp }: IdentityStepProps) {
         title="본인인증을 완료하지 못했어요."
         description="정보를 확인한 뒤 다시 시도해 주세요."
         onConfirm={identity.dismissError}
+      />
+      {/* 이미 가입된 회원 — 시안 「중복 가입 시」(14502-51088): [확인] + [로그인하기] */}
+      <PFAlertModal
+        open={identity.duplicateMemberNotice.open}
+        title={PLATFORM_ALERT_COPY.duplicateMember.title}
+        description={PLATFORM_ALERT_COPY.duplicateMember.description}
+        cancelLabel="확인"
+        onCancel={identity.duplicateMemberNotice.close}
+        confirmLabel="로그인하기"
+        confirmVariant="primary"
+        onConfirm={identity.duplicateMemberNotice.goSignIn}
       />
     </SignUpLayout>
   )

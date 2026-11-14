@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { IDENTITY_EXPECTED_PROFILE_MISMATCH } from '@jakorea/identity-verification'
+import { lookupFindEmail } from '@/features/auth/find-email'
 import type {
   AgreementKey,
   AgreementState,
@@ -173,6 +174,10 @@ export function useSignUp() {
   const pendingWizardFormResetRef = useRef(false)
   /** [가입 완료하기] 중복 제출 방지 — state 반영 전 연속 클릭도 막는다 */
   const signupSubmitInFlightRef = useRef(false)
+  /** 본인인증 직후 이미 가입된 회원인지 확인 중 */
+  const [isCheckingDuplicateMember, setIsCheckingDuplicateMember] = useState(false)
+  /** 시안 「중복 가입 시」(14502-51088) 팝업 */
+  const [isDuplicateMemberNoticeOpen, setIsDuplicateMemberNoticeOpen] = useState(false)
   const guardianFinalConsentInFlightRef = useRef(false)
   const guardianFinalConsentDoneRef = useRef(false)
 
@@ -840,10 +845,32 @@ export function useSignUp() {
   }
 
   const handleIdentitySuccess = useCallback(
-    (result: IdentityChallengeCompleteResult) => {
+    async (result: IdentityChallengeCompleteResult) => {
       if (isUnderAgeSignupRef.current || readMinorMemberBirthDate() != null) {
         return
       }
+
+      // 본인인증 직후 이미 가입된 회원이면 다음 단계로 넘기지 않고 바로 안내한다.
+      // 확인 API(이메일 찾기 조회)가 실패하면 기존대로 진행하고, 최종 가입 요청에서 중복을 막는다.
+      const profileToken = result.profileToken?.trim()
+      if (remoteApi && profileToken) {
+        setIsCheckingDuplicateMember(true)
+        try {
+          const lookup = await lookupFindEmail({
+            identityVerificationSessionId: result.sessionId,
+            profileToken,
+          })
+          if (lookup.kind === 'found') {
+            setIsDuplicateMemberNoticeOpen(true)
+            return
+          }
+        } catch {
+          // 확인 실패 — 가입 흐름을 막지 않는다
+        } finally {
+          setIsCheckingDuplicateMember(false)
+        }
+      }
+
       setIdentityVerificationSessionId(result.sessionId)
       applyVerifiedIdentityFields({ ...result, syncGender: true })
       persistMemberVerifiedIdentity(result)
@@ -1535,8 +1562,17 @@ export function useSignUp() {
       sessionId: identityVerificationSessionId,
       complete: handleIdentitySuccess,
       verify: verifyMemberIdentity,
-      isVerifying: isMemberIdentityVerifying,
+      isVerifying: isMemberIdentityVerifying || isCheckingDuplicateMember,
       errorMessage: memberIdentityErrorMessage,
+      /** 이미 가입된 회원 안내 팝업 — [확인]은 닫기, [로그인하기]는 로그인 화면 */
+      duplicateMemberNotice: {
+        open: isDuplicateMemberNoticeOpen,
+        close: () => setIsDuplicateMemberNoticeOpen(false),
+        goSignIn: () => {
+          setIsDuplicateMemberNoticeOpen(false)
+          navigate(SIGN_IN_PATH)
+        },
+      },
       /** 회원가입은 생년월일·성별만 기대값으로 보내므로, 이 코드는 생년월일·성별 불일치다 */
       isProfileMismatch: memberIdentityErrorCode === IDENTITY_EXPECTED_PROFILE_MISMATCH,
       dismissError: resetMemberIdentityError,
