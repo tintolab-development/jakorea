@@ -10,6 +10,8 @@ import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
+  ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
+  ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants'
@@ -230,10 +232,14 @@ export function UjatEducationProgressVolunteersSection({
   }, [half, program.id, selectedVolunteerDetail, showAlert])
 
   const handleActivityCertificateIssueClick = useCallback(() => {
+    // 일반 참여 봉사자 목록과 같은 안내 — 미선택 / 2명 이상 선택 문구를 나눈다
     if (selectedRowKeys.length !== 1) {
       showAlert({
         title: '안내',
-        content: '활동인증서를 발급할 봉사자를 1명 선택해 주세요.',
+        content:
+          selectedRowKeys.length === 0
+            ? ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE
+            : ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
       })
       return
     }
