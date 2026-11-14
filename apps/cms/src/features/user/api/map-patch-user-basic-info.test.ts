@@ -6,6 +6,7 @@ import {
 import {
   applyJaEvaluationGradeToInstructorDraft,
   applyInstructorFeeGradeToInstructorDraft,
+  draftToAdminAccountBasicInfoPatch,
   draftToAdminProvisionedIndividualBasicInfoPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToInstructorFeeAndJaGradePatch,
@@ -477,5 +478,40 @@ describe('mapPatchUserBasicInfoToAdminAccountApiRequest', () => {
       reason: '회원 정보 수정',
     })
     expect('termsAgreements' in body).toBe(false)
+  })
+})
+
+describe('관리자 계정 이메일 수정 (관리자 등록·본인인증 전)', () => {
+  it('바뀐 이메일은 관리자 계정 PATCH body에 담는다', () => {
+    const patch = draftToAdminAccountBasicInfoPatch(
+      instructorDraft({ email: 'new@jakorea.org', emailOriginal: 'old@jakorea.org' })
+    )
+    expect(patch.email).toBe('new@jakorea.org')
+    expect(mapPatchUserBasicInfoToAdminAccountApiRequest(patch)).toMatchObject({
+      email: 'new@jakorea.org',
+      reason: '회원 정보 수정',
+    })
+  })
+
+  it('이메일이 그대로면(대소문자·공백 차이 포함) 보내지 않는다', () => {
+    const patch = draftToAdminAccountBasicInfoPatch(
+      instructorDraft({ email: ' Old@JAKorea.org ', emailOriginal: 'old@jakorea.org' })
+    )
+    expect('email' in patch).toBe(false)
+    expect('email' in mapPatchUserBasicInfoToAdminAccountApiRequest(patch)).toBe(false)
+  })
+
+  it('이메일을 비우면 보내지 않는다', () => {
+    const patch = draftToAdminAccountBasicInfoPatch(
+      instructorDraft({ email: '', emailOriginal: 'old@jakorea.org' })
+    )
+    expect('email' in patch).toBe(false)
+  })
+
+  it('바뀐 이메일은 서버 저장 규칙에 맞춰 소문자로 보낸다', () => {
+    const patch = draftToAdminAccountBasicInfoPatch(
+      instructorDraft({ email: ' New.Admin@JAKorea.org ', emailOriginal: 'old@jakorea.org' })
+    )
+    expect(patch.email).toBe('new.admin@jakorea.org')
   })
 })

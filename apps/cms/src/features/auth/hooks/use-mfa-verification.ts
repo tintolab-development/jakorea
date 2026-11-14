@@ -12,7 +12,13 @@ import { getTotpProvisioning, verifyTotp } from '@/entities/user/api/mfa-service
 import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import { OTP_LENGTH, OTP_POLICY, clampMfaFailedAttempts, isAdminLocalTestMfa } from '@/shared/constants/mfa-policy'
 import { unknownErrorText } from '@/shared/utils/error-handler'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { TotpProvisioning } from '@/types/mfa'
+
+/** 코드 불일치가 아닌 일시 오류(네트워크·서버 등) — 2단계 인증 팝업 위 알럿 */
+export const MFA_TEMPORARY_FAILURE_ALERT_TITLE = 'MFA 인증 실패 안내'
+export const MFA_TEMPORARY_FAILURE_ALERT_CONTENT =
+  '일시적인 오류로 MFA 인증에 실패하였습니다.\n잠시 후 다시 시도해 주세요.'
 
 interface UseMfaVerificationOptions {
   open: boolean
@@ -66,6 +72,7 @@ export function useMfaVerification({
   /** <Form form={form}> 가 한 번이라도 마운트됐는지. 모달 body는 최초 open 전까지 렌더되지 않는다. */
   const formConnectedRef = useRef(false)
   const isBusy = verifying || remoteVerifying
+  const { showAlert } = useCmsAlert()
 
   useEffect(() => {
     if (open) formConnectedRef.current = true
@@ -127,6 +134,19 @@ export function useMfaVerification({
     clearOtpInput()
   }, [clearOtpInput, remoteIsLocked, applyRemoteAccountLock])
 
+  /**
+   * 일시 오류 — 실패 횟수에 넣지 않고 상단 안내도 띄우지 않는다.
+   * 입력을 비운 뒤(첫 칸 포커스) 알럿을 띄우므로, 알럿을 닫으면 팝업이 처음 열린 상태로 남는다.
+   */
+  const handleTemporaryVerifyFailure = useCallback(() => {
+    setVerifyNotice(null)
+    clearOtpInput()
+    showAlert({
+      title: MFA_TEMPORARY_FAILURE_ALERT_TITLE,
+      content: MFA_TEMPORARY_FAILURE_ALERT_CONTENT,
+    })
+  }, [clearOtpInput, showAlert])
+
   const ensureRemoteNotLocked = useCallback((): boolean => {
     if (!remoteIsLocked || !remoteLockUntil) return true
     const lockTime = new Date(remoteLockUntil)
@@ -177,9 +197,9 @@ export function useMfaVerification({
       setProvisioningError(null)
       setForceOtpOnly(false)
       setVerifyNotice(null)
-      resetRemoteLockState()
+      // 연속 실패 횟수·잠금은 팝업을 닫아도 유지한다(인증 성공 시에만 초기화)
     }
-  }, [open, showQrSetup, refreshProvisioning, resetRemoteLockState])
+  }, [open, showQrSetup, refreshProvisioning])
 
   useEffect(() => {
     if (!open) {
@@ -263,10 +283,16 @@ export function useMfaVerification({
                 return
               }
 
-              setVerifyNotice(response.detail)
-              registerRemoteFailure()
+              if (response.errorCode === 'MFA_VERIFICATION_FAILED') {
+                // 코드 불일치 — 입력칸 아래 「잘못된 코드를 입력하였습니다. (실패 횟수 n / 5)」만 노출.
+                registerRemoteFailure()
+                return
+              }
+
+              // 그 밖의 실패(네트워크·서버 오류 등) — 「MFA 인증 실패 안내」 알럿
+              handleTemporaryVerifyFailure()
             } catch {
-              registerRemoteFailure()
+              handleTemporaryVerifyFailure()
             } finally {
               setRemoteVerifying(false)
             }
@@ -312,6 +338,7 @@ export function useMfaVerification({
       registerRemoteFailure,
       resetRemoteLockState,
       applyRemoteAccountLock,
+      handleTemporaryVerifyFailure,
     ]
   )
 

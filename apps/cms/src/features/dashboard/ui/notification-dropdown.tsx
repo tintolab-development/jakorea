@@ -6,6 +6,7 @@
 import { Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
+import { useDragScroll } from '../hooks/use-drag-scroll'
 import { hasAdminNotificationNavigation } from '../lib/admin-notification-navigation'
 import { formatNotificationDateTime } from '../lib/notification-inbox-display'
 import { EmptyState } from '@/shared/ui'
@@ -127,6 +128,9 @@ export function NotificationDropdown({
   const [category, setCategory] = useState<NotificationCategoryKey>('all')
   const bodyRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
+  // 카테고리 탭 — 마우스로 누른 채 끌어 가로 스크롤(끈 경우 탭 선택 안 함)
+  const { containerRef: tabsRef, dragScrollHandlers: tabsDragScrollHandlers } =
+    useDragScroll<HTMLDivElement>()
 
   const filtered = useMemo(() => {
     // 문의·프로그램 진행: 매핑되는 알림 타입 없음 → 빈 목록
@@ -174,7 +178,7 @@ export function NotificationDropdown({
 
   return (
     <div className="notification-dropdown-panel">
-      <div className="notification-dropdown-header">
+      <div ref={tabsRef} className="notification-dropdown-header" {...tabsDragScrollHandlers}>
         {CATEGORIES.map(({ key, label }) => (
           <button
             key={key}

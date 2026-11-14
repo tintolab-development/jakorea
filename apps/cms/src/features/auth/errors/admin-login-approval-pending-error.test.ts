@@ -54,3 +54,21 @@ describe('isAdminLoginApprovalPendingError', () => {
     )
   })
 })
+
+describe('계정 잠금 — 423 이어도 승인 대기로 보지 않는다', () => {
+  const lockedDetail = {
+    detail:
+      '로그인에 여러 번 실패하여 계정이 30분간 잠겼습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
+  }
+
+  it('detail 문구가 잠금이면 승인 대기가 아니다', () => {
+    expect(isAdminLoginApprovalPendingResponse(lockedDetail, 423)).toBe(false)
+    expect(isAdminLoginApprovalPendingError(createAxiosError(423, lockedDetail))).toBe(false)
+  })
+
+  it('ACCOUNT_LOCKED 코드면 승인 대기가 아니다', () => {
+    expect(
+      isAdminLoginApprovalPendingResponse({ error: { code: 'ACCOUNT_LOCKED' } }, 423)
+    ).toBe(false)
+  })
+})

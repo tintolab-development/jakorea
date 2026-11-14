@@ -42,7 +42,10 @@ export interface DashboardWidgetConfig {
 /** colSpan 12일 때 모든 위젯 슬롯 기본 높이 (SortableWidgetSlot) */
 export const DASHBOARD_SLOT_HEIGHT_HALF_PX = 400 as const
 
-/** 메뉴 바로가기 100% 슬롯 높이 — CSS `.menu-shortcut-widget` 슬롯 규칙과 동기화 */
+/**
+ * 메뉴 바로가기 로딩(Suspense) 자리 높이.
+ * 100% 슬롯 자체는 고정 높이 없이 콘텐츠 높이(hug)를 따른다.
+ */
 export const MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX = 352 as const
 
 /** 프로그램 일정 위젯 100% 너비(colSpan 24) 슬롯 높이 */
@@ -75,11 +78,10 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
   const orderAfterSchedules = 1 + scheduleKinds.length
   return [
     {
+      // 100%: 고정 높이 없이 hug · 50%: SortableWidgetSlot 기본 400px(같은 줄 높이 정렬)
       type: 'menu-shortcut-widget',
       colSpan: 24,
       order: 0,
-      height: MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX,
-      slotHeightPx: { 24: MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX },
     },
     ...scheduleWidgets,
     { type: 'recruitment-status-widget', colSpan: 24, order: orderAfterSchedules, height: 400 },
@@ -89,7 +91,8 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
       order: orderAfterSchedules + 1,
       height: 400,
     },
-    { type: 'kpi-achievement-widget', colSpan: 24, order: orderAfterSchedules + 2, height: 372 },
+    // 100%: 고정 높이 없이 hug(KPI 항목 전체 노출) · 50%: SortableWidgetSlot 기본 400px
+    { type: 'kpi-achievement-widget', colSpan: 24, order: orderAfterSchedules + 2 },
   ]
 }
 

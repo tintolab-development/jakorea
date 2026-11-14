@@ -1,6 +1,7 @@
 import { messageForProtectedDownloadErrorCode } from '@jakorea/domain/shared/file-download-password'
 import {
   extractApiErrorCode,
+  extractApiErrorField,
   extractApiErrorMessage,
   readApiErrorEnvelopeText,
 } from '@/shared/lib/extract-api-error-message'
@@ -131,4 +132,16 @@ export function getMemberApiErrorMessage(error: unknown, fallback: string): stri
     return error.message
   }
   return fallback
+}
+
+/**
+ * 회원·관리자 기본정보 저장 — 서버 `error.field === 'email'`이면 이메일 입력란에 보일 문구(서버 message 그대로).
+ * 예: `EMAIL_ALREADY_EXISTS`·`INVALID_EMAIL`·`EMAIL_CHANGE_NOT_ALLOWED`. 이메일 필드 에러가 아니면 null.
+ */
+export function getMemberApiEmailFieldErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== 'object' || !('response' in error)) return null
+  const response = (error as { response?: { status?: number; data?: unknown } }).response
+  if (extractApiErrorField(response?.data) !== 'email') return null
+  const message = readApiErrorEnvelopeText(response?.data)?.trim()
+  return message || null
 }

@@ -4,8 +4,9 @@ import {
   ADMIN_ACCESS_DENIED_ALERT_TITLE,
 } from '@/shared/lib/admin-role-policy'
 import {
-  extractApiErrorMessage,
   formatApiErrorAlertContent,
+  NETWORK_ERROR_ALERT_CONTENT,
+  NETWORK_ERROR_ALERT_TITLE,
 } from '@/shared/lib/extract-api-error-message'
 import {
   getMemberDeleteCurrentPasswordInvalidAlertOptions,
@@ -54,7 +55,7 @@ function isGlobalErrorAlertEnabled(): boolean {
 }
 
 function resolveAlertTitle(httpStatus: number | null | undefined): string {
-  if (httpStatus == null) return '네트워크 오류'
+  if (httpStatus == null) return NETWORK_ERROR_ALERT_TITLE
   if (httpStatus === 400) return '요청 오류'
   if (httpStatus === 404) return '찾을 수 없음'
   if (httpStatus === 409) return '처리 불가'
@@ -195,13 +196,11 @@ export function showGlobalApiErrorAlert(
   const method = (config?.method ?? error.config?.method ?? 'GET').toUpperCase()
   const url = config?.url ?? error.config?.url ?? ''
 
+  // 응답이 없는 오류는 axios 개발 문구(error.message)를 쓰지 않고 시안 문구로 안내한다
   const content =
     error.response != null
       ? formatApiErrorAlertContent(error.response.data, { httpStatus })
-      : extractApiErrorMessage(undefined, {
-          httpStatus: null,
-          fallback: error.message?.trim() || '서버에 연결할 수 없습니다.',
-        })
+      : NETWORK_ERROR_ALERT_CONTENT
 
   const key = dedupeKey(method, url, content, httpStatus)
   const windowMs = httpStatus == null ? NETWORK_DEDUPE_MS : DEDUPE_MS

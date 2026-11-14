@@ -12,6 +12,8 @@ import { axiosClient } from '@/shared/api'
 import type {
   PasswordResetConfirmRequest,
   PasswordResetConfirmResponse,
+  PasswordResetEligibilityRequest,
+  PasswordResetEligibilityResponse,
 } from '@/shared/api/generated/members/schemas'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -19,6 +21,9 @@ import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 const VERIFICATION_TTL_MS = 10 * 60 * 1000
 
 export type FindPasswordEmailVerifyResult = { kind: 'found' } | { kind: 'not_found' }
+
+/** 본인인증 후 계정 확인 — `not_eligible`이면 「일치하는 가입 정보 없음」 */
+export type PasswordResetEligibilityResult = { kind: 'eligible' } | { kind: 'not_eligible' }
 
 export type ChangePasswordAfterResetResult =
   | { kind: 'success' }
@@ -58,6 +63,21 @@ function unwrapPasswordResetConfirm(payload: unknown): PasswordResetConfirmRespo
   return o as PasswordResetConfirmResponse
 }
 
+function unwrapPasswordResetEligibility(payload: unknown): PasswordResetEligibilityResponse {
+  if (!payload || typeof payload !== 'object') {
+    throw parseAdminRegisterApiError(payload)
+  }
+
+  const o = payload as Record<string, unknown>
+  if (o.success === false) {
+    throw parseAdminRegisterApiError(payload)
+  }
+  if (o.data && typeof o.data === 'object') {
+    return o.data as PasswordResetEligibilityResponse
+  }
+  return o as PasswordResetEligibilityResponse
+}
+
 async function verifyFindPasswordEmailMock(email: string): Promise<FindPasswordEmailVerifyResult> {
   await delay(200)
 
@@ -81,6 +101,32 @@ export async function verifyFindPasswordEmail(
   }
 
   return verifyFindPasswordEmailMock(email.trim())
+}
+
+/**
+ * `POST /api/admin/auth/password-reset/eligibility` — 본인인증 성공 직후 호출.
+ * eligible=false(nextAction `REENTER_EMAIL`)면 새 비밀번호 단계로 가지 않는다.
+ * 요청 실패는 호출부로 던진다(공통 오류 알럿).
+ */
+export async function verifyPasswordResetEligibility(
+  input: PasswordResetEligibilityRequest
+): Promise<PasswordResetEligibilityResult> {
+  if (!isFindPasswordRemoteEnabled()) {
+    await delay(200)
+    return { kind: 'eligible' }
+  }
+
+  const body: PasswordResetEligibilityRequest = {
+    email: input.email.trim(),
+    identityVerificationSessionId: input.identityVerificationSessionId,
+    profileToken: input.profileToken,
+  }
+  const { data: payload } = await axiosClient.post<unknown>(
+    adminAuthPaths.passwordResetEligibility(),
+    body
+  )
+  const result = unwrapPasswordResetEligibility(payload)
+  return result.eligible === true ? { kind: 'eligible' } : { kind: 'not_eligible' }
 }
 
 async function changePasswordAfterResetMock(

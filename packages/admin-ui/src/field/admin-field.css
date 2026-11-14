@@ -310,10 +310,10 @@
   color: #9fafb5;
 }
 
+/* 열림 시 회전만 하고 회전 모션(transition)은 두지 않는다 */
 .cms-field__chevron .cms-mask-icon {
   width: 100%;
   height: 100%;
-  transition: transform 0.15s ease;
 }
 
 .cms-field__box--filled .cms-field__chevron {

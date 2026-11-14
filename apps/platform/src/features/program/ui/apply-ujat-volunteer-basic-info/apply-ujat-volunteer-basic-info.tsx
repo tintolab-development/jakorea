@@ -74,6 +74,36 @@ export function findIncompleteUjatVolunteerBasicInfoMessage(
   return null
 }
 
+/** 누락 안내 → 신청서 안 입력 위치(`data-field`). 제출 시 해당 항목으로 스크롤·포커스한다. */
+export type UjatVolunteerBasicInfoField =
+  | 'universityName'
+  | 'grade'
+  | 'major'
+  | 'applicationRoute'
+  | 'applicationRouteOther'
+  | 'applicationType'
+
+export function findIncompleteUjatVolunteerBasicInfoField(
+  values: ApplyUjatVolunteerBasicInfoValues,
+): { message: string; field: UjatVolunteerBasicInfoField } | null {
+  const message = findIncompleteUjatVolunteerBasicInfoMessage(values)
+  if (!message) return null
+  // findIncompleteUjatVolunteerBasicInfoMessage 와 같은 순서
+  const field: UjatVolunteerBasicInfoField = !values.universityName.trim()
+    ? 'universityName'
+    : !values.grade
+      ? 'grade'
+      : !values.major.trim()
+        ? 'major'
+        : !values.applicationRoute
+          ? 'applicationRoute'
+          : values.applicationRoute === UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OTHER_VALUE &&
+              !values.applicationRouteOther.trim()
+            ? 'applicationRouteOther'
+            : 'applicationType'
+  return { message, field }
+}
+
 export function ujatVolunteerBasicInfoAnswerFromValues(
   values: ApplyUjatVolunteerBasicInfoValues,
 ): Record<string, unknown> {
@@ -144,38 +174,44 @@ export function ApplyUjatVolunteerBasicInfo({ value, onChange }: ApplyUjatVolunt
         <PFFormField label="대학교 및 학년">
           <PFFormInlineRow>
             <PFFormInlineSegment>
-              <EducationSchoolNameField
-                detailKey="college4"
-                value={value.universityName}
-                modalTitle="대학교 검색"
-                placeholder="학교명을 입력해 보세요"
-                ariaLabel="대학교 검색"
-                onChange={universityName => patch({ universityName })}
-              />
+              <span data-field="universityName" className={styles.fieldAnchor}>
+                <EducationSchoolNameField
+                  detailKey="college4"
+                  value={value.universityName}
+                  modalTitle="대학교 검색"
+                  placeholder="학교명을 검색해 주세요"
+                  ariaLabel="대학교 검색"
+                  onChange={universityName => patch({ universityName })}
+                />
+              </span>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment>
-              <PFSelect
-                variant="formPage"
-                size="large"
-                width={120}
-                placeholder="학년 선택"
-                options={GRADE_SELECT_OPTIONS}
-                value={value.grade || undefined}
-                onValueChange={next => patch({ grade: next })}
-              />
+              <span data-field="grade" className={styles.fieldAnchor}>
+                <PFSelect
+                  variant="formPage"
+                  size="large"
+                  width={120}
+                  placeholder="학년 선택"
+                  options={GRADE_SELECT_OPTIONS}
+                  value={value.grade || undefined}
+                  onValueChange={next => patch({ grade: next })}
+                />
+              </span>
             </PFFormInlineSegment>
           </PFFormInlineRow>
         </PFFormField>
         <PFFormField label="대학 전공">
-          <PFTextInput
-            variant="formPage"
-            size="large"
-            width="100%"
-            placeholder="복수전공이나 부전공이 있을 경우, 함께 기재해 주세요"
-            value={value.major}
-            onValueChange={next => patch({ major: next })}
-          />
+          <span data-field="major" className={styles.fieldAnchor}>
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              width="100%"
+              placeholder="복수전공이나 부전공이 있을 경우, 함께 기재해 주세요"
+              value={value.major}
+              onValueChange={next => patch({ major: next })}
+            />
+          </span>
         </PFFormField>
       </PFFormFieldRow>
 
@@ -183,39 +219,45 @@ export function ApplyUjatVolunteerBasicInfo({ value, onChange }: ApplyUjatVolunt
         <PFFormField label="지원 경로">
           <PFFormInlineRow>
             <PFFormInlineSegment>
-              <PFSelect
-                variant="formPage"
-                size="large"
-                width={160}
-                placeholder="지원 경로"
-                options={ROUTE_SELECT_OPTIONS}
-                value={value.applicationRoute || undefined}
-                onValueChange={next => patch({ applicationRoute: next })}
-              />
+              <span data-field="applicationRoute" className={styles.fieldAnchor}>
+                <PFSelect
+                  variant="formPage"
+                  size="large"
+                  width={160}
+                  placeholder="지원 경로"
+                  options={ROUTE_SELECT_OPTIONS}
+                  value={value.applicationRoute || undefined}
+                  onValueChange={next => patch({ applicationRoute: next })}
+                />
+              </span>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment className={styles.growSegment}>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width="100%"
-                placeholder="직접 입력"
-                disabled={!isOtherRoute}
-                value={value.applicationRouteOther}
-                onValueChange={next => patch({ applicationRouteOther: next })}
-              />
+              <span data-field="applicationRouteOther" className={styles.fieldAnchor}>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width="100%"
+                  placeholder="직접 입력"
+                  disabled={!isOtherRoute}
+                  value={value.applicationRouteOther}
+                  onValueChange={next => patch({ applicationRouteOther: next })}
+                />
+              </span>
             </PFFormInlineSegment>
           </PFFormInlineRow>
         </PFFormField>
         <PFFormField label="지원 형태">
-          <ApplyFormRadioGroup
-            name="apply-ujat-volunteer-application-type"
-            value={value.applicationType}
-            options={UJAT_PROGRAM_APPLICATION_VOLUNTEER_APPLICATION_TYPE_OPTIONS}
-            onChange={next =>
-              patch({ applicationType: next as UjatProgramApplicationVolunteerApplicationType })
-            }
-          />
+          <span data-field="applicationType" className={styles.fieldAnchor}>
+            <ApplyFormRadioGroup
+              name="apply-ujat-volunteer-application-type"
+              value={value.applicationType}
+              options={UJAT_PROGRAM_APPLICATION_VOLUNTEER_APPLICATION_TYPE_OPTIONS}
+              onChange={next =>
+                patch({ applicationType: next as UjatProgramApplicationVolunteerApplicationType })
+              }
+            />
+          </span>
         </PFFormField>
       </PFFormFieldRow>
     </PFFormFieldTable>

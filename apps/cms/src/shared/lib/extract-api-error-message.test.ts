@@ -5,6 +5,8 @@ import {
   getApiErrorCode,
   getApiErrorHttpStatus,
   isApiWorkflowConflictError,
+  NETWORK_ERROR_ALERT_CONTENT,
+  readApiErrorAlertMessage,
 } from './extract-api-error-message'
 
 describe('extractApiErrorMessage', () => {
@@ -336,5 +338,16 @@ describe('schedule line error codes', () => {
         error: { code: 'GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED' },
       })
     ).toContain('유효한 교육 일정이 필요합니다')
+  })
+})
+
+describe('readApiErrorAlertMessage', () => {
+  it('응답 없는 axios 오류는 error.message 대신 네트워크 오류 안내 문구를 쓴다', () => {
+    const error = Object.assign(new Error('Network Error'), { isAxiosError: true })
+    expect(readApiErrorAlertMessage(error, '저장에 실패했습니다.')).toBe(NETWORK_ERROR_ALERT_CONTENT)
+  })
+
+  it('axios 오류가 아닌 Error는 기존대로 message를 쓴다', () => {
+    expect(readApiErrorAlertMessage(new Error('직접 만든 안내'), '실패')).toBe('직접 만든 안내')
   })
 })

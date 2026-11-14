@@ -343,3 +343,10 @@ select:-webkit-autofill {
   -webkit-text-fill-color: var(--Netural-black, #3d3d3d);
   caret-color: var(--Netural-black, #3d3d3d);
 }
+
+/* 자동완성 텍스트 글꼴 — Chrome UA 글꼴 강제를 `::first-line`으로만 되돌릴 수 있다. 사이즈는 입력 요소 설정값을 따른다. */
+input:-webkit-autofill::first-line,
+textarea:-webkit-autofill::first-line {
+  font-family: inherit;
+  font-size: inherit;
+}

@@ -73,7 +73,7 @@
 /* 가로 스크롤 영역: 카드 행 — 가로 스크롤바 UI는 유지(다른 위젯과 달리 숨기지 않음) */
 .kpi-achievement-widget__scroll {
   display: flex;
-  /* 슬롯 고정 높이(372) 안에서 카드가 남는 높이를 채우고(최대 280) 잘리지 않게 */
+  /* 카드 높이를 같은 줄에서 맞춘다. 50% 슬롯은 카드 최대 280, 100% 슬롯은 hug(dashboard-widget-slot.css) */
   align-items: stretch;
   gap: var(--spacing-16);
   flex: 1 1 auto;

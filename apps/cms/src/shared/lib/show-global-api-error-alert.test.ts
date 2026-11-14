@@ -7,6 +7,10 @@ import {
 } from '@/shared/lib/admin-role-policy'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import {
+  NETWORK_ERROR_ALERT_CONTENT,
+  NETWORK_ERROR_ALERT_TITLE,
+} from '@/shared/lib/extract-api-error-message'
+import {
   clearForbiddenApiErrorAlertDedupe,
   isGlobalApiErrorAlertShown,
   showGlobalApiErrorAlert,
@@ -292,5 +296,28 @@ describe('showGlobalApiErrorAlert EXTERNAL_1365_ID_REQUIRED', () => {
     expect(showGlobalApiErrorAlert(error)).toBe(false)
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
     expect(isGlobalApiErrorAlertShown(error)).toBe(false)
+  })
+})
+
+describe('showGlobalApiErrorAlert 응답 없는 오류', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+  })
+
+  it('axios 개발 문구 대신 네트워크 오류 안내 시안 문구를 띄운다', () => {
+    const error = {
+      isAxiosError: true,
+      message: 'Network Error',
+      name: 'AxiosError',
+      toJSON: () => ({}),
+      config: { method: 'get', url: '/api/admin/network-error-case' },
+    } as AxiosError
+
+    expect(showGlobalApiErrorAlert(error)).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: NETWORK_ERROR_ALERT_TITLE,
+      content: NETWORK_ERROR_ALERT_CONTENT,
+    })
   })
 })
