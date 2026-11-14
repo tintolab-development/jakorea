@@ -411,7 +411,7 @@ async function handleAuthFailure(ctx: AuthFailureContext, options: { redirect?: 
     })
     return
   }
-  // 사용 중 세션 종료: 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면 이동.
+  // 사용 중 세션 종료: 지금 화면에 머문 채 「자동으로 로그아웃되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면 이동.
   showSessionExpiredNotice(() => {
     void logoutPortalSession({
       serverLogout: ctx.serverLogout,
