@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import { AxiosError } from 'axios'
 import { platformQueryKeys } from '../../../../shared/api/query-keys.ts'
 import {
+  ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CONSENT_TYPES,
   canWithdrawConsent,
+  CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY,
   CONSENT_DOCUMENT_NOT_FOUND_MESSAGE,
   CONSENT_DRAFT_DOCUMENT_NOT_WITHDRAWABLE_MESSAGE,
   CONSENT_TYPE_INVALID_MESSAGE,
@@ -142,20 +144,35 @@ const conflict = parseConsentWithdrawError(
 assert.equal(conflict.refetch, true)
 assert.equal(conflict.message, CONSENT_WITHDRAW_CONFLICT_MESSAGE)
 
-const portraitRegression = parseConsentWithdrawError(
-  axiosError(
-    409,
+// 진행 중·승인 대기 프로그램 — 4종은 철회 불가 안내 팝업 (서버 판정)
+for (const consentType of ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CONSENT_TYPES) {
+  for (const code of [
+    'PORTAL_CONSENT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS',
     'PORTAL_PORTRAIT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS',
-    '진행 중인 프로그램 참여가 있어 초상권 동의만 단독으로 철회할 수 없습니다. 먼저 해당 프로그램의 활동 포기를 진행해 주세요.',
-  ),
-  'PORTRAIT_RIGHTS',
-)
-assert.equal(portraitRegression.backendRegression, true)
-assert.equal(portraitRegression.message, CONSENT_WITHDRAW_FAILED_MESSAGE)
+  ]) {
+    const blocked = parseConsentWithdrawError(axiosError(409, code, '서버 원문'), consentType)
+    assert.equal(blocked.activeProgramBlocked, true, `${consentType} ${code}`)
+    assert.equal(blocked.backendRegression, false)
+    assert.equal(blocked.refetch, false)
+    assert.equal(blocked.message, CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY.description)
+  }
+}
+assert.equal(CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY.title, '지금은 동의를 철회할 수 없어요.')
 assert.equal(
-  portraitRegression.message.includes('활동 포기'),
+  ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CONSENT_TYPES.includes(
+    'PAYMENT_STATEMENT_CONSENT' as (typeof ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CONSENT_TYPES)[number],
+  ),
   false,
 )
+
+// 지급조서 사전 동의는 진행 중 차단 대상이 아님 — 같은 코드가 오면 서버 회귀로 본다
+const paymentActiveProgram = parseConsentWithdrawError(
+  axiosError(409, 'PORTAL_CONSENT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS'),
+  'PAYMENT_STATEMENT_CONSENT',
+)
+assert.equal(paymentActiveProgram.activeProgramBlocked, false)
+assert.equal(paymentActiveProgram.backendRegression, true)
+assert.equal(paymentActiveProgram.message, CONSENT_WITHDRAW_FAILED_MESSAGE)
 
 assert.deepEqual(platformQueryKeys.mypage.consents(), ['platform', 'mypage', 'consents'])
 assert.deepEqual(platformQueryKeys.mypage.consent('FACILITATOR_PLEDGE'), [

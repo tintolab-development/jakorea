@@ -34,6 +34,7 @@ import {
 } from '../lib/consent-visibility'
 import {
   canWithdrawConsent,
+  CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY,
   CONSENT_WITHDRAW_CONFLICT_MESSAGE,
   CONSENT_WITHDRAW_FAILED_MESSAGE,
   logConsentWithdrawBackendRegression,
@@ -803,6 +804,11 @@ export function SettingsConsentsView() {
       })
     } catch (error) {
       const parsed = parseConsentWithdrawError(error, consentType)
+      if (parsed.activeProgramBlocked) {
+        closeWithdrawConfirm()
+        setNotice({ ...CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY })
+        return
+      }
       if (parsed.backendRegression) {
         logConsentWithdrawBackendRegression(parsed.code, consentType)
       }
