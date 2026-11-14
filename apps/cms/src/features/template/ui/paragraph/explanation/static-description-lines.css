@@ -15,3 +15,18 @@
   font-weight: 500;
   line-height: 150%; /* 30px */
 }
+
+/* 템플릿 관리 작성 — 줄 문구 편집(줄 추가·삭제는 없음) */
+.static-description-lines__line-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.static-description-lines__line-input .paragraph-input__view-text,
+.static-description-lines__line-input textarea,
+.static-description-lines__line-input input {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 150%;
+}
