@@ -118,7 +118,10 @@ import { SchoolDetailAttendanceSection } from '@/features/program/general/ui/det
 import { SchoolDetailStudentListSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-student-list-section'
 import { isParticipatingInstitutionStudentListApplicable } from '@/features/program/general/lib/participating-institution-detail-tabs'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
-import type { SchoolDetailFullpageViewProps } from '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view'
+import {
+  GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION,
+  type SchoolDetailFullpageViewProps,
+} from '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view'
 import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
 import '@/features/program/general/ui/detail-modal/program-status/participating-institutions-section.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
@@ -678,7 +681,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           setActivityWithdrawModalOpen(false)
           void showAlert({
             title: '활동 포기',
-            content: `${mergedDetail.schoolName ?? '기관'}이 활동 포기 처리되었습니다.`,
+            // 일반 기관형 참여 기관 상세와 같은 완료 문구
+            content: `${mergedDetail.schoolName ? `${mergedDetail.schoolName} ` : ''}기관이 활동 포기 처리되었습니다.`,
           })
         } catch (error) {
           const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
@@ -1151,6 +1155,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 program.generalSurveyMenuKeys ?? []
               ).includes('satisfaction')}
               readOnly={false}
+              // 학생 추가 등록 팝업(시안 05-1)·등록 완료 안내(05-2) — 일반 기관형과 같은 문구
+              showAddStudentCompletedAlert
+              addStudentModalDescription={GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION}
               rosterDependentQueryKeys={rosterDependentQueryKeys}
               onViewDetail={() => {}}
               onSaveEdit={() => {}}

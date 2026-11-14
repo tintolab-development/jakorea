@@ -469,8 +469,11 @@ export function useApplicantsDetail({
                 ...notify,
               })
             } else {
+              // 교육받은 교사 반려 — `ApplicationRejectRequest`도 timing·scheduledAt(ON_ANNOUNCEMENT 포함)을 받는다.
+              // 팝업에서 고른 알림 시점을 버리지 않고 함께 보낸다(생략 시 서버 IMMEDIATE).
               await institutionApplicationsRemote.rejectOrganization(id, {
                 reason: rejectReason,
+                ...notify,
               })
             }
           }
