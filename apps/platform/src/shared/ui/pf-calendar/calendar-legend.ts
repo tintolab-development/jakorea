@@ -13,11 +13,11 @@ export type CalendarScheduleEventKey =
   | 'education'
   | 'lecture_report_deadline'
 
-/** 일반·교사·아동 — 이용 가이드 슬라이드 28 범례 5종. 강의보고서는 강사 홈만. */
+/** 일반·교사·아동 — 이용 가이드 슬라이드 28 범례 5종(순서는 나의 홈 시안: 과제→만족도→설문→영수증→프로그램). 강의보고서는 강사 홈만. */
 export const GENERAL_CALENDAR_LEGEND_ITEMS: CalendarLegendItem[] = [
   { key: 'assignment', label: '과제 제출', color: '#F5CC00' },
-  { key: 'survey', label: '설문조사', color: '#FA8484' },
   { key: 'satisfaction', label: '만족도조사', color: '#557BFA' },
+  { key: 'survey', label: '설문조사', color: '#FA8484' },
   { key: 'receipt', label: '영수증 신청 마감', color: '#9EE9F7' },
   { key: 'education', label: '프로그램 일정', color: '#9FE35B' },
 ]

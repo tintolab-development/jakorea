@@ -338,14 +338,14 @@ export function Footer() {
               <span className={styles.infoDetail}>팩스 : {footer.fax}</span>
               <span className={styles.infoDetail}>이메일 : {footer.email}</span>
               <span className={[styles.infoDetail, styles.copyright].join(' ')}>
-                ©JA Korea, {copyrightYear}
+                ⓒJA Korea,{copyrightYear}
               </span>
             </p>
           </div>
 
           <div className={styles.metaRow}>
             <p className={[styles.infoDetail, styles.copyright].join(' ')}>
-              ©JA Korea, {copyrightYear}
+              ⓒJA Korea,{copyrightYear}
             </p>
           </div>
         </div>

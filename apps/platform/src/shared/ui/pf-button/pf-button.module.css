@@ -28,7 +28,7 @@
 
 .small {
   height: 30px;
-  padding: 6px 20px;
+  padding: 6px 19px;
   border-radius: var(--radius-8);
 }
 
@@ -60,7 +60,7 @@
   min-width: 160px;
   height: 53px;
   padding: 13px var(--spacing-28);
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-12);
 }
 
 .primary {
