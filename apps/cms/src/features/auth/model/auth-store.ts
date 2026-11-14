@@ -117,12 +117,12 @@ interface AuthState {
     request: LoginRequest,
     options?: LoginOptions
   ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
-  /** `preserveReturnPath: false` — 사용자가 직접 로그아웃 (로그인 후 원래 화면 복귀 안 함) */
   /**
+   * 직접 로그아웃·자동 로그아웃·세션 만료 모두 로그인 화면으로만 보낸다 (다시 로그인하면 기본 첫 화면, 이전 화면 복귀 없음).
    * skipRemote: 서버 logout(본문·쿠키)을 보내지 않고 로컬만 정리한다.
    * 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있는 경우(409 ROTATED 무효, 다른 계정 로그인 감지)에 쓴다.
    */
-  logout: (options?: { preserveReturnPath?: boolean; skipRemote?: boolean }) => void
+  logout: (options?: { skipRemote?: boolean }) => void
   /** silentRetry: 새로고침 복원 refresh가 네트워크·서버 오류면 한 번 조용히 다시 시도 (기본 true) */
   checkAuth: (options?: { silentRetry?: boolean }) => Promise<void>
   /** 새로고침 복원 안내의 [다시 시도] — 진행 중 refresh가 있으면 합류하고, 없으면 탭 간 잠금 아래 1회 시작 */
@@ -262,9 +262,6 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
 
 // 초기 상태를 즉시 로드
 const initialState = loadAuthFromStorage()
-
-/** 다음 logout 한 번만 로그인 화면 이동에 쓸 돌아올 경로 파라미터 (endSessionWithNotice 전용) */
-let nextLogoutReturnParam: 'redirect' | undefined
 
 /** 저장된 세션은 있지만 메모리에 access token이 없으면, refresh 결과 전까지 보호 화면을 그리지 않는다. */
 const initialIsBootstrapping = !!initialState.isAuthenticated && !initialState.token
@@ -564,14 +561,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPerformanceQueryCache()
       clearProgramQueryCache()
       clearNotificationsQueryCache()
-      // 새로고침 복원 ① 안내는 로그인 화면의 기존 `redirect` 파라미터로 원래 화면을 넘긴다 (한 번만)
-      const returnParam = nextLogoutReturnParam
-      nextLogoutReturnParam = undefined
-      if (options?.preserveReturnPath === false) {
-        assignLoginAfterSessionEnd({ preserveReturnPath: false })
-      } else {
-        assignLoginAfterSessionEnd(returnParam ? { returnParam } : undefined)
-      }
+      // 로그아웃·자동 로그아웃·세션 만료 — 돌아올 경로 없이 로그인 화면으로 (다시 로그인하면 기본 첫 화면)
+      assignLoginAfterSessionEnd()
     },
 
     checkAuth: async (options?: { silentRetry?: boolean }) => {
@@ -950,7 +941,7 @@ async function restoreAccessTokenAfterReload(options: {
 /**
  * ① 세션 종료 안내 + 로그아웃.
  * 보호 화면: 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고, [확인](또는 닫기) 때 로그아웃해 로그인 화면으로 간다.
- *   로그인 후 원래 화면으로 돌아오도록 redirect 파라미터를 넘긴다. 공통 Alert를 쓸 수 없으면 로그인 화면이 안내한다.
+ *   다시 로그인하면 기본 첫 화면으로 간다(이전 화면 복귀 없음). 공통 Alert를 쓸 수 없으면 로그인 화면이 안내한다.
  * 이미 로그인 화면 등 공개 화면이면([닫기] 뒤 늦은 거절) 이동할 곳이 없으니 바로 로그아웃하고 안내만 띄운다.
  */
 function endSessionWithNotice(logout: () => void): void {
@@ -963,11 +954,7 @@ function endSessionWithNotice(logout: () => void): void {
     }
     return
   }
-  confirmSessionEnded(() => {
-    nextLogoutReturnParam = 'redirect'
-    logout()
-    nextLogoutReturnParam = undefined
-  })
+  confirmSessionEnded(logout)
 }
 
 /**

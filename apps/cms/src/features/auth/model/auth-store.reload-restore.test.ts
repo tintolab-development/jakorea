@@ -356,7 +356,7 @@ describe('새로고침 세션 복원 안내', () => {
     expect(consumeSessionEndedNotice()).toBe(false)
   })
 
-  it('① 로그아웃은 로그인 화면의 기존 redirect 파라미터로 이동한다 (로그인 뒤 원래 화면으로)', async () => {
+  it('① 로그아웃은 redirect 없이 로그인 화면으로 이동한다 (다시 로그인하면 기본 첫 화면)', async () => {
     seedReloadRestore()
     useAuthStore.setState({ logout: originalLogout })
     refreshOutcomeMock.mockResolvedValue('invalid')
@@ -364,15 +364,15 @@ describe('새로고침 세션 복원 안내', () => {
     await runCheckAuth()
 
     expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledTimes(1)
-    expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledWith({ returnParam: 'redirect' })
+    expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledWith()
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(localStorage.getItem('auth_refresh_token')).toBeNull()
     expect(consumeSessionEndedNotice()).toBe(true)
 
-    // 일반 로그아웃은 기존 동작(next 파라미터) 그대로
+    // 직접 로그아웃도 같은 이동 (돌아올 경로 없음)
     assignLoginAfterSessionEndSpy.mockClear()
     useAuthStore.getState().logout()
-    expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledWith(undefined)
+    expect(assignLoginAfterSessionEndSpy).toHaveBeenCalledWith()
   })
 
   it('refresh 수단이 그 사이 사라졌으면(다른 탭 로그아웃 등) 안내 없이 로그아웃만 한다', async () => {

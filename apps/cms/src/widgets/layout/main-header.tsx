@@ -178,7 +178,7 @@ export function MainHeader() {
   }, [location.pathname, location.search, user])
 
   const handleLogout = () => {
-    logout({ preserveReturnPath: false })
+    logout()
     navigate('/login')
   }
 
