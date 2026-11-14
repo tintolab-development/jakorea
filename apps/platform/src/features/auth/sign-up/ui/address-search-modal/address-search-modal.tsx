@@ -252,7 +252,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
               {isEmptySearchResult ? (
                 <div className={styles.addressResultNotice}>
                   <PFText as="p" typo="bd-md-sb" color="black">
-                    검색 결과가 없습니다.
+                    검색 결과가 없어요
                   </PFText>
                   <PFText as="p" typo="label-md" color="black">
                     <PFText typo="label-md" color="primary-500">
