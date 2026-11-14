@@ -29,6 +29,8 @@ import {
   normalizeShortcutVisibilityForSave,
 } from '../model/dashboard-settings-store'
 import { isDashboardShortcutSettingsDisabled } from '../model/dashboard-shortcut-contract'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
+import { isCmsMasterAdminRole } from '@/shared/lib/cms-global-role-code'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import { useSyncDashboardShortcutCatalog } from '../hooks/use-sync-dashboard-shortcut-catalog'
 import { mapDashboardShortcutSettingsCatalogItems } from '../lib/resolve-dashboard-shortcut-items'
@@ -109,6 +111,9 @@ function setWidgetTitleGroup(
 
 export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
   const user = useAuthStore(s => s.user)
+  // 마스터는 설정 불가 6건도 설정 가능 — 활성 여부는 BE permissionAllowed로만 판정
+  const isMasterSession = isCmsMasterAdminRole(useSessionAdminRoleCode())
+  const shortcutSession = useMemo(() => ({ isMaster: isMasterSession }), [isMasterSession])
   const assignedProgramTypes = useDashboardSettingsStore(s => s.assignedProgramTypes)
   const { mutateAsync: persistPreferences, isPending: isSavingRemote } =
     useSaveDashboardPreferences()
@@ -172,8 +177,8 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   ])
 
   const shortcutCatalogItems = useMemo(
-    () => mapDashboardShortcutSettingsCatalogItems(shortcutsQuery.data),
-    [shortcutsQuery.data]
+    () => mapDashboardShortcutSettingsCatalogItems(shortcutsQuery.data, shortcutSession),
+    [shortcutSession, shortcutsQuery.data]
   )
 
   const unifiedRows = useMemo(() => {
@@ -224,7 +229,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const setDraftShortcut = useCallback(
     (id: string, enabled: boolean) => {
-      if (isDashboardShortcutSettingsDisabled(id)) return
+      if (isDashboardShortcutSettingsDisabled(id, shortcutSession)) return
       const catalogItem = shortcutCatalogItems.find(item => item.id === id)
       if (catalogItem != null && !catalogItem.permissionAllowed) return
       setDraftShortcutEnabled(prev => {
@@ -232,7 +237,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         return { ...base, [id]: enabled }
       })
     },
-    [shortcutCatalogItems]
+    [shortcutCatalogItems, shortcutSession]
   )
 
   const selectableCatalogItems = useMemo(
@@ -385,7 +390,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     const catalogKeys =
       shortcutCatalogKeys ??
       (shortcutCatalogItems.length > 0 ? shortcutCatalogItems.map(item => item.id) : null)
-    const nextShortcut = normalizeShortcutVisibilityForSave(raw, catalogKeys)
+    const nextShortcut = normalizeShortcutVisibilityForSave(raw, catalogKeys, shortcutSession)
     const nextWidgetIds = draftWidgetProgramIds ?? s.widgetProgramIds
     const prevShortcut = { ...s.shortcutEnabled }
     const prevWidgetIds = cloneWidgetProgramIds(s.widgetProgramIds)
@@ -419,6 +424,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     persistPreferences,
     shortcutCatalogItems,
     shortcutCatalogKeys,
+    shortcutSession,
     useRemote,
   ])
 
