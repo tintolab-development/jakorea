@@ -1047,8 +1047,8 @@ export function useSignUp() {
 
       // 본인인증 직후 사전 검사(세션을 소비하지 않음).
       // 관리자 등록 회원 → 「관리자 등록 회원 안내」, 이미 가입 → 「중복 가입 시」 팝업, 둘 다 아니면 계속.
-      // 400·401은 본인인증부터 다시, 그 밖의 오류(429 포함)는 기존처럼 서버 message를 보여 준다.
-      // 응답 본문이 없는 오류(네트워크 등)는 가입을 막지 않고 최종 가입 요청에서 중복을 막는다.
+      // 400·401은 본인인증부터 다시, 429는 서버 message를 보여 주고 멈춘다.
+      // 그 밖의 오류(404·5xx·네트워크)는 가입을 막지 않고 최종 가입 요청(409)에서 중복을 막는다.
       const profileToken = result.profileToken?.trim()
       if (remoteApi && profileToken) {
         setIsCheckingDuplicateMember(true)
@@ -1070,8 +1070,10 @@ export function useSignUp() {
         } catch (error) {
           const detail = readSignupApiErrorDetail(error)
           // 400·401: 이번 인증 결과로는 진행할 수 없으니 본인인증 단계에 머물러 다시 인증받는다.
-          // 429 등 코드가 있는 오류: 공통 처리처럼 서버 message를 보여 주고 멈춘다.
-          if (detail?.httpStatus === 400 || detail?.httpStatus === 401 || detail?.code) {
+          // 429: 공통 처리처럼 서버 message를 보여 주고 멈춘다.
+          // 그 밖(404 — 사전 검사 API가 아직 없는 서버, 5xx, 네트워크)은 막지 않고 최종 가입 가드에 맡긴다.
+          const status = detail?.httpStatus
+          if (status === 400 || status === 401 || status === 429) {
             setIdentityRestartMessage(
               getSignupApiErrorMessage(error, SIGNUP_IDENTITY_REQUIRED_MESSAGE),
             )
