@@ -9,6 +9,7 @@ import {
   PortraitVerticalTableBottom,
   PortraitVerticalTableMobileBody,
 } from './portrait-vertical-table-mobile'
+import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
 
 /** 초상권 2·3번 표 — 읽기 전용 본문 + 하단 동의 */
@@ -22,11 +23,22 @@ export function PlatformPortraitLockedVerticalTable({
   documentPreview?: boolean
 }) {
   // A4 is a fixed document canvas, not the responsive/interactive write screen.
+  // 하단 안내·동의 라디오는 런타임(antd) 대신 Platform 비활성 라디오로 그린다 (1번 표와 동일).
   if (documentPreview) {
     return (
-      <FormTemplateHost surface="cmsAdmin">
-        <VerticalTablePreviewBody paragraph={paragraph} interactionMode="preview" />
-      </FormTemplateHost>
+      <div className={previewTypography.portraitLockedTableBlock}>
+        <FormTemplateHost surface="cmsAdmin">
+          <VerticalTablePreviewBody
+            paragraph={{ ...paragraph, showBottomText: false, showBottomConsent: false }}
+            interactionMode="preview"
+          />
+        </FormTemplateHost>
+        <PortraitVerticalTableBottom
+          paragraph={paragraph}
+          onUpdateParagraph={onUpdateParagraph}
+          documentPreview
+        />
+      </div>
     )
   }
 

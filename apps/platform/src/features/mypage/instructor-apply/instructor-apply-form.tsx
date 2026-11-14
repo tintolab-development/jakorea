@@ -16,10 +16,7 @@ import {
   INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
 } from '@jakorea/domain/instructor/form-copy'
 import { GENDER_OPTIONS, type Gender } from '@jakorea/domain/instructor/gender'
-import {
-  INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
-  type InstructorSharedProfileFormValues,
-} from '@jakorea/domain/instructor/profile-form-values'
+import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
@@ -64,7 +61,11 @@ import {
 } from './consent/catalog'
 import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
 import { instructorApplyPath } from '../lib/constants'
-import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
+import {
+  INSTRUCTOR_APPLY_INITIAL_FORM_VALUES,
+  loadInstructorApplyFormDraft,
+  saveInstructorApplyFormDraft,
+} from './consent/form-persist'
 import { clearInstructorApplySessionCache } from './lib/instructor-apply-session-cache'
 import { resolveInstructorApplySubmittedSnapshot } from './lib/resolve-submitted-snapshot'
 import { useCurrentInstructorRoleRequestDetailQuery } from './api/use-current-instructor-role-request-detail-query'
@@ -257,7 +258,7 @@ export function InstructorApplyForm({
       employmentTouchedRef.current = true
     }
     return applyLockedBasicToInstructorForm(
-      draft ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
+      draft ?? INSTRUCTOR_APPLY_INITIAL_FORM_VALUES,
       lockedBasic,
       preserveEmploymentStatus,
     )
@@ -578,20 +579,23 @@ export function InstructorApplyForm({
                       value={values.affiliationName}
                       onValueChange={value => patch('affiliationName', value)}
                     />
-                    <PFCheckbox
-                      size="large"
-                      checked={values.affiliationNone}
-                      disabled
-                      onCheckedChange={checked => {
-                        setValues(prev => ({
-                          ...prev,
-                          affiliationNone: checked,
-                          affiliationName: checked ? '' : prev.affiliationName,
-                        }))
-                      }}
-                    >
-                      소속 없음
-                    </PFCheckbox>
+                    {/* 회원정보로 소속이 채워져 있으면 「소속 없음」은 숨긴다 */}
+                    {values.affiliationName.trim() ? null : (
+                      <PFCheckbox
+                        size="large"
+                        checked={values.affiliationNone}
+                        disabled
+                        onCheckedChange={checked => {
+                          setValues(prev => ({
+                            ...prev,
+                            affiliationNone: checked,
+                            affiliationName: checked ? '' : prev.affiliationName,
+                          }))
+                        }}
+                      >
+                        소속 없음
+                      </PFCheckbox>
+                    )}
                   </PFFormInlineSeparatedFields>
                 )}
               </PFFormField>

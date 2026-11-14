@@ -34,7 +34,8 @@
   cursor: not-allowed;
 }
 
+/* 주민등록번호 보기/끄기 아이콘 22px (QA 2026-11-14) */
 .toggleIcon {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }

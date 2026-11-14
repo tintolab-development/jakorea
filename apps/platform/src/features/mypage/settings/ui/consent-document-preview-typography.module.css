@@ -94,6 +94,15 @@
   gap: 16px;
 }
 
+/* 초상권 2·3번 표 미리보기 — 표 + 하단 안내·비활성 동의 라디오 (런타임 wrap gap과 동일) */
+.portraitLockedTableBlock {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  gap: 16px;
+}
+
 .bodyPortrait :global(.form-template-vertical-table-wrap) {
   gap: 16px;
 }

@@ -84,6 +84,7 @@ export function MypagePortraitConsentWriteForm({
   return (
     <PortraitConsentWriteForm
       verifiedName={displayName}
+      lockPrefilledName
       serverDraft={serverDraft}
       serverDraftPending={serverDraftPending}
       serverDraftUnavailable={serverDraftUnavailable}
