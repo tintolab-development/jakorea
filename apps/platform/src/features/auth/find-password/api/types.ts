@@ -12,6 +12,19 @@ export type AccountEmailCheckResponse = {
   nextAction?: string
 }
 
+export type PasswordResetEligibilityRequest = {
+  email: string
+  identityVerificationSessionId: number
+  profileToken: string
+}
+
+/** nextAction: eligible=false → 'REENTER_EMAIL', eligible=true → 'SET_NEW_PASSWORD' */
+export type PasswordResetEligibilityResponse = {
+  eligible: boolean
+  message?: string
+  nextAction?: string
+}
+
 export type PasswordResetConfirmRequest = {
   email: string
   identityVerificationSessionId: number
