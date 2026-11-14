@@ -84,7 +84,11 @@ export const SHORTCUT_ITEMS: ShortcutItemDef[] = [
     settingsDisabled: true,
     defaultEnabled: false,
   },
-  { id: 'settlement-payment-orders', label: '지급조서 확인', path: '/settlement-management/payment-orders' },
+  {
+    id: 'settlement-payment-orders',
+    label: '지급조서 확인',
+    path: '/settlement-management/payment-orders',
+  },
   {
     id: 'settlement-account-payments',
     label: '계좌 지급 확인',
@@ -192,9 +196,7 @@ type PersistedDashboardSettingsSlice = {
   inquiryNotificationReadProgramKeys?: Record<string, boolean>
 }
 
-function normalizePersistedDashboardSettingsSlice(
-  slice: PersistedDashboardSettingsSlice
-): {
+function normalizePersistedDashboardSettingsSlice(slice: PersistedDashboardSettingsSlice): {
   shortcutBadgeCounts: Record<string, number>
   widgetProgramIds: Record<string, string[]>
   inquiryNotificationReadProgramKeys: Record<string, boolean>
@@ -206,12 +208,13 @@ function normalizePersistedDashboardSettingsSlice(
   }
 }
 
-/** 위젯별 프로그램 설정용 위젯 키 (7개: 일정 4 + 기타) */
+/** 위젯별 프로그램 설정용 위젯 키 (8개: 일정 5 + 기타) */
 export const WIDGET_PROGRAM_KEYS = [
   { key: 'program-schedule-general-widget', label: '일반 프로그램 일정' },
   { key: 'program-schedule-company-school-widget', label: '1사1교 프로그램 일정' },
   { key: 'program-schedule-ujat-widget', label: 'UJAT 프로그램 일정' },
   { key: 'program-schedule-gemini-widget', label: 'Gemini 프로그램 일정' },
+  { key: 'program-schedule-trained-teacher-widget', label: '교육받은 교사 프로그램 일정' },
   { key: 'recruitment-status-widget', label: '모집 신청 현황' },
   { key: 'customer-inquiry-status-widget', label: '프로그램 별 문의 현황' },
   { key: 'kpi-achievement-widget', label: '사업 별 KPI 대비 달성률' },
@@ -250,7 +253,6 @@ export interface DashboardSettingsState {
   assignedProgramTypes: ProgramScheduleKind[] | null
   setAssignedProgramTypes: (kinds: ProgramScheduleKind[] | null) => void
 }
-
 
 export const useDashboardSettingsStore = create<DashboardSettingsState>()(
   persist(
@@ -332,8 +334,7 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
         }
         if (version < 2 && p.widgetProgramIds?.['program-schedule-economy-widget']) {
           const next = { ...p.widgetProgramIds }
-          next['program-schedule-company-school-widget'] =
-            next['program-schedule-economy-widget']
+          next['program-schedule-company-school-widget'] = next['program-schedule-economy-widget']
           delete next['program-schedule-economy-widget']
           p.widgetProgramIds = next
         }
