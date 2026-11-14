@@ -525,12 +525,22 @@
   justify-content: center;
 }
 
+/*
+ * 템플릿 관리 지급조서·영수증 사전 동의서(`--pre-consent-sheet`)는 TextArea autoSize 높이를 그대로 써서
+ * 셀 문구를 줄바꿈해 전부 보인다(시안 5767:42072·16046:109928). 그 밖의 표는 기존처럼 auto 고정.
+ */
+.form-editor-horizontal-table__cell-input-shell
+  .ant-input:not(.agreement-writing-form-left--pre-consent-sheet *),
+.form-editor-horizontal-table__cell-input-shell
+  textarea.ant-input:not(.agreement-writing-form-left--pre-consent-sheet *) {
+  height: auto !important;
+}
+
 .form-editor-horizontal-table__cell-input-shell .ant-input,
 .form-editor-horizontal-table__cell-input-shell textarea.ant-input {
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
-  height: auto !important;
   min-height: 0;
   padding: 0;
   margin: 0;
@@ -609,7 +619,9 @@
  * height:auto + stretch 조합이면 autosize가 셀 전체 높이로 커지고 글자가 상단에 붙음.
  */
 .form-editor-horizontal-table__cell-input-shell
-  .form-editor-horizontal-table__cell-textarea.ant-input {
+  .form-editor-horizontal-table__cell-textarea.ant-input:not(
+    .agreement-writing-form-left--pre-consent-sheet *
+  ) {
   flex: 0 1 auto !important;
   align-self: center !important;
   width: 100%;
