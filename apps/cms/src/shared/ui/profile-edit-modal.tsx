@@ -231,11 +231,13 @@ function ProfileFieldWithAction({
       <span className="profile-edit-modal__value-with-action-text">{value}</span>
       <CmsButton
         variant="secondary"
-        size="h32" className="profile-edit-modal__field-action-btn"
+        size="h32"
+        className="profile-edit-modal__field-action-btn"
         type="button"
         disabled={actionDisabled}
         loading={actionLoading}
-        onClick={onAction} >
+        onClick={onAction}
+      >
         {actionLabel}
       </CmsButton>
     </span>
@@ -298,7 +300,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const [marketingConsentUpdating, setMarketingConsentUpdating] = useState(false)
   const [marketingWithdrawConfirmOpen, setMarketingWithdrawConfirmOpen] = useState(false)
   /** 철회 성공 후 안내 팝업이 닫힌 뒤 띄울 완료 안내(withdrawnAt) — 팝업 전환 겹침 방지 */
-  const pendingWithdrawDoneRef = useRef<{ withdrawnAt?: string } | null>(null)
+  const pendingWithdrawDoneRef = useRef<{ withdrawnAt?: string; commit: () => void } | null>(null)
   /** 약관 표시용 — GET /api/admin/me 응답을 정본으로 사용 */
   const [profileTermsAgreements, setProfileTermsAgreements] = useState<
     TermsAgreementRow[] | undefined
@@ -446,14 +448,17 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     await verify()
   }
 
-  /** 성공 시 `{ agreedAt, withdrawnAt }`(완료 안내용), 실패·무시 시 null */
+  /**
+   * 마케팅 동의 변경 API 호출. 성공 시 `{ agreedAt, withdrawnAt, commit }`, 실패·무시 시 null.
+   * 화면 상태(동의 여부·동의일·약관 목록)는 `commit()`을 부를 때 반영한다 —
+   * 완료 안내 팝업이 닫힌 뒤에 바뀐 값이 보이도록 호출부가 시점을 정한다.
+   */
   const applyMarketingConsentChange = async (
     next: MarketingConsentValue
-  ): Promise<{ agreedAt?: string; withdrawnAt?: string } | null> => {
+  ): Promise<{ agreedAt?: string; withdrawnAt?: string; commit: () => void } | null> => {
     if (!user || next === marketingConsent || marketingConsentUpdating) return null
     if (!isMembersRemoteEnabled()) {
-      setMarketingConsent(next)
-      return {}
+      return { commit: () => setMarketingConsent(next) }
     }
 
     setMarketingConsentUpdating(true)
@@ -486,11 +491,13 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
           )
         : [...previousTerms, marketingRow]
 
-      setMarketingConsent(agreed ? 'agree' : 'disagree')
-      setMarketingAgreedAt(agreedAtDisplay)
-      setProfileTermsAgreements(nextTerms)
-      updateUser({ termsAgreements: nextTerms })
-      return { agreedAt: response.agreedAt, withdrawnAt: response.withdrawnAt }
+      const commit = () => {
+        setMarketingConsent(agreed ? 'agree' : 'disagree')
+        setMarketingAgreedAt(agreedAtDisplay)
+        setProfileTermsAgreements(nextTerms)
+        updateUser({ termsAgreements: nextTerms })
+      }
+      return { agreedAt: response.agreedAt, withdrawnAt: response.withdrawnAt, commit }
     } catch (error) {
       showAlert({
         title: '마케팅 동의 변경 실패',
@@ -510,10 +517,17 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     }
     void (async () => {
       const result = await applyMarketingConsentChange(next)
-      if (!result || next !== 'agree') return
+      if (!result) return
+      if (next !== 'agree') {
+        result.commit()
+        return
+      }
+      // 완료 팝업 뒤에서 값이 먼저 바뀌어 보이지 않도록, 팝업을 닫을 때(확인·X) 반영
       showAlert({
         title: ADMIN_MARKETING_CONSENT_AGREE_DONE_TITLE,
         content: buildMarketingAgreeDoneContent(result.agreedAt),
+        onConfirm: result.commit,
+        onDismiss: result.commit,
       })
     })()
   }
@@ -535,6 +549,8 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     showAlert({
       title: ADMIN_MARKETING_CONSENT_WITHDRAW_DONE_TITLE,
       content: buildMarketingWithdrawDoneContent(pending.withdrawnAt),
+      onConfirm: pending.commit,
+      onDismiss: pending.commit,
     })
   }
 
@@ -576,7 +592,8 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
             size="medium"
             type="button"
             className="profile-edit-modal__password-change-btn"
-            onClick={handleOpenPasswordChangeModal} >
+            onClick={handleOpenPasswordChangeModal}
+          >
             비밀번호 변경
           </CmsButton>
         ) : null}
