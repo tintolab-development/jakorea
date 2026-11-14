@@ -40,8 +40,10 @@ export function ConsentWithdrawConfirm({
       showCloseButton={false}
       open={open}
       size="md"
-      onClose={onCancel}
-      closeOnBackdropClick={!confirmLoading}
+      onClose={() => {
+        if (confirmLoading) return
+        onCancel()
+      }}
       mobilePlacement={mobileFullPage ? 'full' : undefined}
     >
       <div
@@ -58,12 +60,15 @@ export function ConsentWithdrawConfirm({
           </PFText>
         </div>
         <div className={styles.actions}>
+          {/* 처리 중에도 버튼 문구·모양은 그대로 두고 클릭만 막는다 (완료 전 화면 변화 없음) */}
           <PFButton
             type="button"
             variant={isAgree ? 'tertiary' : 'primary'}
             size="xlarge"
-            disabled={confirmLoading}
-            onClick={onCancel}
+            onClick={() => {
+              if (confirmLoading) return
+              onCancel()
+            }}
           >
             {cancelLabel}
           </PFButton>
@@ -71,10 +76,13 @@ export function ConsentWithdrawConfirm({
             type="button"
             variant={isAgree ? 'primary' : 'tertiary'}
             size="xlarge"
-            disabled={confirmLoading}
-            onClick={onConfirm}
+            aria-busy={confirmLoading || undefined}
+            onClick={() => {
+              if (confirmLoading) return
+              onConfirm()
+            }}
           >
-            {confirmLoading ? '처리 중…' : (confirmLabel ?? (isAgree ? '동의하기' : '철회하기'))}
+            {confirmLabel ?? (isAgree ? '동의하기' : '철회하기')}
           </PFButton>
         </div>
       </div>
@@ -109,7 +117,6 @@ export function ConsentWithdrawComplete({
       open={open}
       size="md"
       onClose={onClose}
-      closeOnBackdropClick
       showCloseButton={showCloseButton}
     >
       <div className={styles.content}>

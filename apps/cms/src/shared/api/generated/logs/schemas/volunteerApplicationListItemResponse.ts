@@ -86,8 +86,17 @@ export interface VolunteerApplicationListItemResponse {
   preferredRegionCode?: string | null;
   /** UJAT 교육 진행 경험. 미응답·판별 불가면 null. false로 채우지 않음 */
   hasEducationExperience?: boolean | null;
-  /** UJAT 봉사자 생년월일. 없으면 null. 다른 프로그램 목록은 null */
+  /**
+     * 항상 null(2026-11-12 정책 §4-1: 목록은 생년월일을 원문으로 주지 않는다). 타입(LocalDate)은 호환을 위해 유지. 표시값은 maskedBirthDate·birthYear·age, 원문은 상세 unmask(사유 입력 + 조회 기록)만
+     * @deprecated
+     */
   birthDate?: string | null;
+  /** UJAT 봉사자 생년월일 마스킹 값(yyyy-**-**, 연도만). 없으면 null. 다른 프로그램 목록은 null */
+  maskedBirthDate?: string | null;
+  /** UJAT 봉사자 출생연도. 없으면 null. 다른 프로그램 목록은 null */
+  birthYear?: number | null;
+  /** UJAT 봉사자 만 나이(조회일 기준). 없으면 null. 다른 프로그램 목록은 null */
+  age?: number | null;
   /** UJAT 1365 ID 마스킹 값. 없으면 null. 원문은 상세 unmask profile.external1365Id */
   id1365?: string | null;
   /** UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음 */

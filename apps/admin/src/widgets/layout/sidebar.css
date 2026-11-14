@@ -55,20 +55,18 @@
   color: var(--color-sidebar-text) !important;
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar {
-  width: var(--spacing-6);
+/* 어두운 배경 — 전역 스크롤바(admin-ui styles/scrollbar.css) 썸 색만 LNB 토큰으로. 두께·동작은 전역 규칙 */
+@supports not selector(::-webkit-scrollbar) {
+  .sidebar-menu-wrapper {
+    scrollbar-color: var(--color-sidebar-scrollbar-thumb) transparent;
+  }
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar-track {
-  background: var(--color-sidebar-bg);
-}
-
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb {
+:where(.scrollbar-classic) .sidebar-menu-wrapper::-webkit-scrollbar-thumb {
   background: var(--color-sidebar-scrollbar-thumb);
-  border-radius: var(--radius-3);
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
+:where(.scrollbar-classic) .sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--color-sidebar-scrollbar-thumb-hover);
 }
 
@@ -347,8 +345,7 @@
 
 .sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected:hover {
   background:
-    var(--sidebar-hover-overlay),
-    linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
+    var(--sidebar-hover-overlay), linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
 }
 
 /* 2뎁스 리프(자식 없는 메뉴) 선택 배경 명시 적용 */
@@ -391,8 +388,15 @@
 
 /* 시안: 비활성 1·2뎁스 행 opacity 0.8 (행 배경·호버 면은 유지, 내용만) */
 .sidebar-menu.ant-menu > li.ant-menu-item:not(.ant-menu-item-selected) > *,
-.sidebar-menu.ant-menu > li.ant-menu-submenu:not(.ant-menu-submenu-selected) > .ant-menu-submenu-title > *,
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item:not(.ant-menu-item-selected) > *,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu:not(.ant-menu-submenu-selected)
+  > .ant-menu-submenu-title
+  > *,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > .ant-menu-item:not(.ant-menu-item-selected)
+  > *,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub
@@ -627,7 +631,11 @@
  * 불릿 실제 DOM: menu-config `BulletIcon` = `<span aria-hidden>•</span>` (antd가 .ant-menu-item-icon 클래스를 붙이지 않음)
  * 시안(list-disc ms-24): 2뎁스 텍스트 시작 x=48, 불릿은 텍스트 왼쪽 / 3뎁스는 불릿 없이 pl48
  */
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item > span[aria-hidden='true']:first-child,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > .ant-menu-item
+  > span[aria-hidden='true']:first-child,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub

@@ -8,6 +8,8 @@ import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { PFPagination, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { fetchPortalConsentDocument } from '../api/consents'
+import { fetchSubmittedCrimeConsentOriginal } from '../lib/download-submitted-crime-consent'
+import { renderCrimeConsentPdfToPageObjectUrls } from '../lib/render-crime-consent-preview-pages'
 import {
   buildConsentDocumentPreviewHeaderTitle,
   resolveConsentDocumentA4Title,
@@ -37,6 +39,10 @@ const PREVIEW_NOTICE = '현재 화면은 미리보기 화면입니다.'
 
 function revokePreviewObjectUrl(url: string | undefined) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+}
+
+function revokePreviewObjectUrls(urls: readonly string[]) {
+  urls.forEach(revokePreviewObjectUrl)
 }
 
 export type ConsentDocumentPreviewTarget = SettingsConsentItem
@@ -110,7 +116,8 @@ export function ConsentDocumentPreviewOverlay({
   const [isLoading, setIsLoading] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
-  const [crimeImageSrc, setCrimeImageSrc] = useState<string | null>(null)
+  /** 성범죄 동의서 — 제출 원본(PDF는 페이지별 이미지) */
+  const [crimePageSrcs, setCrimePageSrcs] = useState<string[]>([])
   const [loadFailedMessage, setLoadFailedMessage] = useState(LOAD_FAILED_MESSAGE)
   const [submittedAtRaw, setSubmittedAtRaw] = useState<string | undefined>()
   const [paymentBasicInfo, setPaymentBasicInfo] = useState<
@@ -140,7 +147,10 @@ export function ConsentDocumentPreviewOverlay({
   useEffect(() => {
     if (!open || item == null || previewConfig == null) {
       setDraft(null)
-      setCrimeImageSrc(null)
+      setCrimePageSrcs(previous => {
+        revokePreviewObjectUrls(previous)
+        return []
+      })
       setSubmittedAtRaw(undefined)
       setPaymentBasicInfo(undefined)
       setSignatureDisplayName('')
@@ -163,7 +173,10 @@ export function ConsentDocumentPreviewOverlay({
       setLoadFailed(false)
       setLoadFailedMessage(LOAD_FAILED_MESSAGE)
       setDraft(null)
-      setCrimeImageSrc(null)
+      setCrimePageSrcs(previous => {
+        revokePreviewObjectUrls(previous)
+        return []
+      })
       setSubmittedAtRaw(item.agreedAt)
       setPaymentBasicInfo(undefined)
       setSignatureDisplayName('')
@@ -222,12 +235,32 @@ export function ConsentDocumentPreviewOverlay({
         const previewTemplateId = resolveConsentPreviewTemplateId(detail, templateId)
 
         if (isCrimeConsentTemplate(previewTemplateId)) {
-          const content = detail?.content?.trim()
-          if (content && (content.startsWith('http') || content.startsWith('data:'))) {
-            setCrimeImageSrc(content)
+          // 제출 원본은 GET .../content로 받는다. detail.content는 약관 본문이라 주소로 쓰지 않는다.
+          let crimePages: string[] = []
+          if (isRemoteSession && item.documentId != null) {
+            const original = await fetchSubmittedCrimeConsentOriginal(item.documentId)
+            crimePages =
+              original.kind === 'pdf'
+                ? await renderCrimeConsentPdfToPageObjectUrls(original.blob)
+                : [URL.createObjectURL(original.blob)]
           } else {
-            setLoadFailed(true)
+            const content = detail?.content?.trim()
+            if (content && (content.startsWith('http') || content.startsWith('data:'))) {
+              crimePages = [content]
+            }
           }
+          if (cancelled) {
+            revokePreviewObjectUrls(crimePages)
+            return
+          }
+          if (crimePages.length === 0) {
+            setLoadFailed(true)
+            return
+          }
+          setCrimePageSrcs(previous => {
+            revokePreviewObjectUrls(previous)
+            return crimePages
+          })
           return
         }
 
@@ -277,7 +310,7 @@ export function ConsentDocumentPreviewOverlay({
   }, [draft, previewConfig])
 
   const allPageParagraphs = useMemo(() => pages.flat(), [pages])
-  const totalPages = Math.max(1, pages.length)
+  const totalPages = Math.max(1, crimePageSrcs.length > 0 ? crimePageSrcs.length : pages.length)
   const safePage = Math.min(Math.max(1, currentPage), totalPages)
   const activeParagraphs = pages[safePage - 1] ?? []
   const pageDraft =
@@ -318,9 +351,13 @@ export function ConsentDocumentPreviewOverlay({
           </PFText>
         ) : null}
 
-        {!isLoading && !loadFailed && crimeImageSrc ? (
-          <ConsentDocumentA4Page title={documentTitle} pageIndex={0}>
-            <img className={styles.crimeImage} src={crimeImageSrc} alt={documentTitle} />
+        {!isLoading && !loadFailed && crimePageSrcs.length > 0 ? (
+          <ConsentDocumentA4Page title={documentTitle} pageIndex={safePage - 1}>
+            <img
+              className={styles.crimeImage}
+              src={crimePageSrcs[safePage - 1] ?? crimePageSrcs[0]}
+              alt={documentTitle}
+            />
           </ConsentDocumentA4Page>
         ) : null}
 

@@ -7,13 +7,22 @@
  * - POST `/api/admin/auth/logout` → RefreshTokenRequest (access 만료여도 revoke 가능)
  */
 
+import type {
+  AdminMfaChallengeResponse as GeneratedAdminMfaChallengeResponse,
+  AuthTokenResponse as GeneratedAuthTokenResponse,
+} from '@/shared/api/generated/members/schemas'
+
 export interface AdminLoginRequestBody {
   email: string
   password: string
 }
 
-/** POST /api/admin/auth/login 200. QR/Secret은 포함하지 않는다. */
-export interface AdminMfaChallengeResponse {
+/**
+ * POST /api/admin/auth/login 200. QR/Secret은 포함하지 않는다.
+ * 실패 횟수 필드는 생성 스키마(BE R4)를 그대로 쓴다.
+ */
+export interface AdminMfaChallengeResponse
+  extends Pick<GeneratedAdminMfaChallengeResponse, 'failedAttemptCount' | 'maxFailedAttempts'> {
   requiresMfa?: boolean
   challengeUuid: string
   mfaMethod: string
@@ -47,8 +56,9 @@ export interface AdminMfaVerifyRequestBody {
   verificationCode: string
 }
 
-/** POST /api/admin/auth/mfa/verify · refresh 200 */
-export interface AuthTokenResponse {
+/** POST /api/admin/auth/mfa/verify · refresh 200. 본인인증 확정 필드는 생성 스키마(BE R1)를 그대로 쓴다 */
+export interface AuthTokenResponse
+  extends Pick<GeneratedAuthTokenResponse, 'identityVerificationRequired'> {
   accessToken: string
   /** QA-0137: 전환기에만 본문에 온다. 없으면 HttpOnly 쿠키(`JA_ADMIN_RT`)로만 refresh */
   refreshToken?: string

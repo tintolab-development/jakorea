@@ -1,6 +1,6 @@
 import {
-  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  SCHOOL_DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   SELF_WITHDRAW_PASSWORD_CONFIRM_PLACEHOLDER,
   WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
@@ -50,7 +50,7 @@ function resolveGuide(props: MemberWithdrawGuideModalProps): {
       lines: buildSchoolDeleteMessageLines({ displayName }),
       confirmText: confirmTextOverride ?? '삭제',
       requiredConfirmInput: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-      confirmInputPlaceholder: DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+      confirmInputPlaceholder: SCHOOL_DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
       confirmInputMode: 'phrase',
     }
   }
@@ -98,7 +98,6 @@ export function MemberWithdrawGuideModal(props: MemberWithdrawGuideModalProps) {
       hideConfirmInputLabel={guide.hideConfirmInputLabel}
       confirmLoading={confirmLoading}
       zIndex={zIndex}
-      className={props.variant === 'self_withdraw' ? 'delete-guide-modal--self-withdraw' : undefined}
     />
   )
 }

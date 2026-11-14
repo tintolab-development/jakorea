@@ -1,0 +1,163 @@
+/*
+ * 템플릿 관리 > 지급조서·영수증 사전 동의서 작성 화면 — 시안 5767:42072·16046:109928.
+ * 범위: `.agreement-writing-form-left--pre-consent-sheet` (템플릿 관리 전용 옵션 `paymentPreConsentSheetLayout`).
+ * 회원 작성 팝업·A4 미리보기는 기존 스타일을 그대로 쓴다.
+ */
+
+/* 서문 본문 18/500, 줄 높이 1.5 */
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='payment-statement-pre-consent-seed-intro'],
+    [data-paragraph-id='receipt-pre-consent-seed-intro']
+  )
+  .paragraph-card__slot
+  :is(.paragraph-input__view-text, textarea, input) {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* 확인 문구·날짜·서명·귀하 — 영수증도 지급조서와 같이 카드 테두리 없이 고정 블록만 보인다 */
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='receipt-pre-consent-seed-mid-consent-line'],
+    [data-paragraph-id='receipt-pre-consent-seed-mid-date'],
+    [data-paragraph-id='receipt-pre-consent-seed-mid-signature'],
+    [data-paragraph-id='receipt-pre-consent-seed-final-confirm'],
+    [data-paragraph-id='receipt-pre-consent-seed-tail-date'],
+    [data-paragraph-id='receipt-pre-consent-seed-tail-signature'],
+    [data-paragraph-id='receipt-pre-consent-seed-closing-recipient']
+  ).form-editor-card {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='receipt-pre-consent-seed-mid-consent-line'],
+    [data-paragraph-id='receipt-pre-consent-seed-mid-date'],
+    [data-paragraph-id='receipt-pre-consent-seed-mid-signature'],
+    [data-paragraph-id='receipt-pre-consent-seed-final-confirm'],
+    [data-paragraph-id='receipt-pre-consent-seed-tail-date'],
+    [data-paragraph-id='receipt-pre-consent-seed-tail-signature'],
+    [data-paragraph-id='receipt-pre-consent-seed-closing-recipient']
+  ).form-editor-card
+  :is(.paragraph-card__header, .paragraph-card__footer) {
+  display: none;
+}
+
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='receipt-pre-consent-seed-mid-consent-line'],
+    [data-paragraph-id='receipt-pre-consent-seed-mid-date'],
+    [data-paragraph-id='receipt-pre-consent-seed-mid-signature'],
+    [data-paragraph-id='receipt-pre-consent-seed-final-confirm'],
+    [data-paragraph-id='receipt-pre-consent-seed-tail-date'],
+    [data-paragraph-id='receipt-pre-consent-seed-tail-signature'],
+    [data-paragraph-id='receipt-pre-consent-seed-closing-recipient']
+  ).form-editor-card
+  .paragraph-card__slot {
+  margin-top: 0;
+  gap: 0;
+}
+
+/* 「JA KOREA 귀하」 — 작성 화면에서도 회색 고정 카드로 보인다(기본 규칙은 숨김) */
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'],
+    [data-paragraph-id='receipt-pre-consent-seed-closing-recipient']
+  ).form-editor-card {
+  display: flex;
+  /* 카드 목록 맨 아래(마지막 날짜·서명 뒤) — 시안 순서 */
+  order: 1;
+}
+
+/* 확인 문구 카드 — 선택 시 입력창도 카드 문구와 같은 24/700 */
+.agreement-writing-form-left--pre-consent-sheet
+  .payment-pre-consent-fixed-block--consent-line
+  .payment-pre-consent-fixed-block__consent-input {
+  width: 100%;
+}
+
+.agreement-writing-form-left--pre-consent-sheet
+  .payment-pre-consent-fixed-block--consent-line
+  .payment-pre-consent-fixed-block__consent-input
+  :is(.paragraph-input__view-text, textarea, input) {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* 표 — 헤더 14/700, 본문 17/700, 항목 나열 칸 14/500, 셀 문구는 줄바꿈해 전부 보인다 */
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='payment-statement-pre-consent-seed-p1-collection'],
+    [data-paragraph-id='payment-statement-pre-consent-seed-p2-rrn-collection'],
+    [data-paragraph-id='payment-statement-pre-consent-seed-p3-third-party'],
+    [data-paragraph-id='payment-statement-pre-consent-seed-p4-rrn-third-party'],
+    [data-paragraph-id='receipt-pre-consent-seed-p1-collection'],
+    [data-paragraph-id='receipt-pre-consent-seed-p2-third-party']
+  ) {
+  --pre-consent-sheet-cell-size: 17px;
+  --pre-consent-sheet-cell-weight: 700;
+}
+
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='payment-statement-pre-consent-seed-p1-collection'],
+    [data-paragraph-id='receipt-pre-consent-seed-p1-collection']
+  )
+  .form-editor-horizontal-table__td--field:nth-child(1),
+.agreement-writing-form-left--pre-consent-sheet
+  :is(
+    [data-paragraph-id='payment-statement-pre-consent-seed-p2-rrn-collection'],
+    [data-paragraph-id='payment-statement-pre-consent-seed-p3-third-party'],
+    [data-paragraph-id='receipt-pre-consent-seed-p2-third-party']
+  )
+  .form-editor-horizontal-table__td--field:nth-child(2) {
+  --pre-consent-sheet-cell-size: 14px;
+  --pre-consent-sheet-cell-weight: 500;
+}
+
+.agreement-writing-form-left--pre-consent-sheet
+  [data-paragraph-id*='pre-consent-seed-p']
+  .form-editor-horizontal-table__th
+  :is(.form-editor-horizontal-table__cell-text, textarea, input) {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.agreement-writing-form-left--pre-consent-sheet
+  [data-paragraph-id*='pre-consent-seed-p']
+  .form-editor-horizontal-table__td--field
+  :is(
+    .form-editor-horizontal-table__cell-text--body,
+    .form-editor-horizontal-table__cell-textarea
+  ) {
+  color: var(--main-BK, #3d3d3d);
+  font-size: var(--pre-consent-sheet-cell-size, 17px);
+  font-weight: var(--pre-consent-sheet-cell-weight, 700);
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+/* 하단 안내 16/500 */
+.agreement-writing-form-left--pre-consent-sheet
+  [data-paragraph-id*='pre-consent-seed-p']
+  .form-editor-horizontal-table__bottom
+  :is(
+    .form-editor-horizontal-table__bottom-static,
+    .form-editor-horizontal-table__bottom-input,
+    .form-editor-horizontal-table__bottom-input textarea
+  ) {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}

@@ -10,7 +10,7 @@ import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragr
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
 import { useDeferredFieldCommit } from '@/features/template/ui/shared/use-deferred-field-commit'
-import { CmsDateTextInput, CmsInput, CmsPhoneInput } from '@/shared/ui'
+import { CmsInput, CmsPhoneInput } from '@/shared/ui'
 import './short-essay.css'
 
 function ShortEssayItemBody({
@@ -77,33 +77,17 @@ function ShortEssayItemBody({
           </span>
         ) : null}
         <div className="short-essay-item-row__control">
-          {isName ? (
+          {isName || isBirth ? (
             <CmsInput
               id={`short-essay-${itemId}`}
               inputSize="large"
               width="100%"
               value={editValue}
-              placeholder={placeholder || '성명을 입력해 주세요'}
+              placeholder={placeholder || (isBirth ? undefined : '성명을 입력해 주세요')}
               readOnly={!isBodyInteractive}
               onChange={
                 isBodyInteractive
                   ? e => setEditValue(applyConsentShortEssayItemInput(itemId, e.target.value))
-                  : undefined
-              }
-              onBlur={isBodyInteractive ? () => commitFormatted(editValue) : undefined}
-            />
-          ) : isBirth ? (
-            <CmsDateTextInput
-              id={`short-essay-${itemId}`}
-              inputSize="large"
-              width="100%"
-              value={editValue}
-              placeholder={placeholder || '1991.01.01'}
-              maxLength={10}
-              readOnly={!isBodyInteractive}
-              onValueChange={
-                isBodyInteractive
-                  ? value => setEditValue(applyConsentShortEssayItemInput(itemId, value))
                   : undefined
               }
               onBlur={isBodyInteractive ? () => commitFormatted(editValue) : undefined}
@@ -178,29 +162,16 @@ function ShortEssayItemBody({
       }
       onBlur={isBodyInteractive ? () => flushEditValue() : undefined}
       control={
-        isName ? (
+        isName || isBirth ? (
           <CmsInput
             id={`short-essay-${itemId}`}
             inputSize="large"
             width="100%"
             value={editValue}
-            placeholder={placeholder || '성명을 입력해 주세요'}
+            placeholder={placeholder || (isBirth ? undefined : '성명을 입력해 주세요')}
             readOnly={!isBodyInteractive}
             tabIndex={isBodyInteractive ? undefined : -1}
             onChange={isBodyInteractive ? e => setEditValue(e.target.value) : undefined}
-            onBlur={isBodyInteractive ? flushEditValue : undefined}
-          />
-        ) : isBirth ? (
-          <CmsDateTextInput
-            id={`short-essay-${itemId}`}
-            inputSize="large"
-            width="100%"
-            value={editValue}
-            placeholder={placeholder || '1991.01.01'}
-            maxLength={10}
-            readOnly={!isBodyInteractive}
-            tabIndex={isBodyInteractive ? undefined : -1}
-            onValueChange={isBodyInteractive ? value => setEditValue(value) : undefined}
             onBlur={isBodyInteractive ? flushEditValue : undefined}
           />
         ) : isPhone ? (

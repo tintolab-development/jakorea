@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
 import { StatusTag } from '@/shared/components/status-tag'
-import { getEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
+import { getCompactEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
 import {
   canAdminAction,
   guardAdminAction,
@@ -68,7 +68,7 @@ export function SchoolTeacherEmploymentStatusBadge({
 }: {
   status: SchoolTeacherEmploymentStatus
 }) {
-  return <StatusTag {...getEmploymentStatusTag(status)} />
+  return <StatusTag {...getCompactEmploymentStatusTag(status)} />
 }
 
 /** 재직 현황 태그 드롭다운 — 교사 상세·교사 겸 강사 「재직 현황」 필드 공통 */
@@ -131,7 +131,7 @@ export function SchoolTeacherEmploymentStatusDropdown({
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
         status={employmentStatus}
         statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-        getTag={getEmploymentStatusTag}
+        getTag={getCompactEmploymentStatusTag}
         isItemDisabled={(cur, opt) => cur === opt}
         onChange={handleEmploymentStatusChange}
         isUpdating={isUpdating}

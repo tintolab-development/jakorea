@@ -5,5 +5,6 @@ export {
   programApplyGateApplicationsPath,
   programApplyGateApplicationsPathForType,
   programApplyGateConsentsPath,
+  programApplyGateConsentsPathFor,
   programApplyGateMemberSettingsPath,
 } from './program-apply-gate-modals'

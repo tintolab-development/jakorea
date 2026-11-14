@@ -2,3 +2,9 @@
 .user-detail-fullpage-header-actions__personal-info.cms-button.ant-btn.cms-button--h44 {
   min-width: 180px;
 }
+
+/* 권한 승인 신청 상세 헤더 「개인정보 상세보기」 — 시안(4427:116816 · 4427:121150) 160×44, p8/20 (글자 폭 hug 154 대비) */
+.permission-header-actions__personal-info.cms-button.ant-btn.cms-button--h44 {
+  width: 160px;
+  min-width: 160px;
+}

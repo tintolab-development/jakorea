@@ -37,7 +37,7 @@ const ujat = [
 ]
 assert.deepEqual(resolveRequiredApplyConsentTypes({ programType: 'UJAT' }), ujat)
 assert.deepEqual(resolveRequiredApplyConsentTypes({ programType: ' ujat_program ' }), ujat)
-// 교육진행자 서약서는 강사·봉사 신청만 — 교사 기관 신청은 서약서 없이 2종
+// 교육진행자 서약서·성범죄경력 조회 동의서는 강사·봉사 신청만 — 교사 기관 신청은 초상권만
 assert.deepEqual(
   resolveRequiredApplyConsentTypes({ programType: 'UJAT', applicationType: 'VOLUNTEER' }),
   ujat,
@@ -48,7 +48,7 @@ assert.deepEqual(
 )
 assert.deepEqual(
   resolveRequiredApplyConsentTypes({ programType: 'UJAT', applicationType: 'ORGANIZATION' }),
-  ['CRIMINAL_HISTORY_CHECK_CONSENT', 'PORTRAIT_RIGHTS'],
+  ['PORTRAIT_RIGHTS'],
 )
 assert.deepEqual(
   resolveRequiredApplyConsentTypes({ programType: 'GENERAL', applicationType: 'ORGANIZATION' }),

@@ -3,3 +3,19 @@
   font-size: 16px;
   font-weight: 700;
 }
+
+/** 시안 4427:23521: 라벨 칸 180×122 padding 4/12, 입력 칸 560×122 padding 10 */
+.member-admin-comment-modal .detail-info-form__field-label {
+  padding: 4px 12px;
+}
+
+.member-admin-comment-modal .detail-info-form__field-content {
+  padding: 10px;
+}
+
+/** 시안: 입력 박스 540×102, 안쪽 padding 16, Medium 15 / 145% (medium 사이즈) */
+.member-admin-comment-modal .cms-textarea__inner textarea.ant-input {
+  height: 100px;
+  min-height: 100px;
+  padding: 16px !important;
+}

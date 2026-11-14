@@ -9,6 +9,8 @@ import { UjatRegionCapacitySection } from '@/features/program/ujat/ui/detail-mod
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
+import { UjatRegionCapacityReadonly } from './ujat-region-capacity-readonly'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph.css'
 
 export function UjatRegionCapacityProgramView({
@@ -33,27 +35,29 @@ export function UjatRegionCapacityProgramView({
     h2ValuesInput ??
     canonical?.h2 ??
     resolveUjatRegionCapacitySemesterValues('h2', program.ujatRegistrationOverlay ?? {})
-  const mode = isEdit && form != null ? 'edit' : 'view'
+  const { labels: regionLabels } = useUjatEducationRegions()
+  const isFormEdit = isEdit && form != null
+
+  // 조회: 상세 시안(4082:89939) 한 줄 4지역 · 학급 수만 / 수정: 등록 양식과 동일(학급·봉사자 수)
+  if (!isFormEdit) {
+    return (
+      <section className="program-detail-fullpage-modal__info-tab-block">
+        <UjatRegionCapacityReadonly regionLabels={regionLabels} h1Values={h1Values} h2Values={h2Values} />
+      </section>
+    )
+  }
 
   return (
     <section className="ujat-region-capacity-program-view program-detail-fullpage-modal__info-tab-block">
-      {isEdit ? (
-        <FormParagraphSectionHeader
-          title={UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.title}
-          description={UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.description}
-          surface="responseEntry"
-          titleAligned
-          required
-          highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[6]}
-        />
-      ) : (
-        <div className="ujat-region-capacity-program-view__header">
-          <h3 className="ujat-region-capacity-program-view__title">
-            지역 별 교육 진행 가능 학급 및 봉사단 수
-          </h3>
-        </div>
-      )}
-      <UjatRegionCapacitySection mode={mode} h1Values={h1Values} h2Values={h2Values} form={form} />
+      <FormParagraphSectionHeader
+        title={UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.title}
+        description={UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.description}
+        surface="responseEntry"
+        titleAligned
+        required
+        highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[6]}
+      />
+      <UjatRegionCapacitySection mode="edit" h1Values={h1Values} h2Values={h2Values} form={form} />
     </section>
   )
 }

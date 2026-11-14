@@ -9,8 +9,8 @@ import type { GlobalValueUpdateItem } from './globalValueUpdateItem';
 
 export interface GlobalValueBulkRequest {
   /**
-     * @minItems 5
-     * @maxItems 5
+     * @minItems 6
+     * @maxItems 6
      */
   items: GlobalValueUpdateItem[];
 }

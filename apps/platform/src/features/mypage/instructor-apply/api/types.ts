@@ -131,8 +131,12 @@ export type InstructorRoleRequestCreateRequest = {
   phone: string
   email: string
   profile: InstructorRoleRequestProfile
-  /** 생략. 계좌 원장은 지급조서 사전 동의서에서만 갱신된다. */
-  settlement?: InstructorRoleRequestSettlement
+  /**
+   * 사업소득 여부만 보낸다. 계좌(은행·계좌번호·예금주·목록)는 지급조서 사전 동의서에서만 갱신되며
+   * 서버가 거부한다(SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY).
+   * 생략하면 서버가 정산 스냅숏을 JSON null로 저장하려다 객체 CHECK 제약에 걸려 409(CONSTRAINT_VIOLATION)가 난다.
+   */
+  settlement: Pick<InstructorRoleRequestSettlement, 'businessIncome'>
   termsAgreements: InstructorRoleRequestTermsAgreement[]
 }
 

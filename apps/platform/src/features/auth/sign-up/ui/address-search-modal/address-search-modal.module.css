@@ -1,4 +1,6 @@
 .addressModalSearchArea {
+  --address-modal-search-button-width: 160px;
+
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
@@ -7,13 +9,13 @@
 .addressModalSearchRow {
   display: grid;
   width: 100%;
-  grid-template-columns: 1fr 160px;
+  grid-template-columns: 1fr var(--address-modal-search-button-width);
   gap: var(--spacing-12);
   margin-top: 28px;
 }
 
 .addressModalSearchButton {
-  width: 160px;
+  width: var(--address-modal-search-button-width);
 }
 
 .addressModalMain {
@@ -26,6 +28,12 @@
   min-height: 513px;
   flex: 1 0 auto;
   box-sizing: border-box;
+}
+
+/* 검색 결과가 없을 때는 고정 높이 없이 내용 높이에 맞춘다 (Figma 4758-55936) */
+.addressModalMainEmpty {
+  min-height: 0;
+  flex: 0 0 auto;
 }
 
 .addressModalBody {
@@ -61,7 +69,7 @@
 .addressModalTipList {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-28);
+  gap: var(--spacing-24);
   margin-top: var(--spacing-28);
 }
 
@@ -75,12 +83,9 @@
   position: absolute;
   top: calc(100% + var(--spacing-8));
   left: 0;
-  width: 100%;
+  /* 검색 입력 칸과 같은 너비 — 검색 버튼 제외 (Figma 3873-83135) */
+  width: calc(100% - var(--address-modal-search-button-width) - var(--spacing-12));
   z-index: 3;
-}
-
-.addressSuggestError {
-  padding: var(--spacing-12) var(--spacing-8);
 }
 
 .addressSuggestList {
@@ -94,8 +99,10 @@
   background: var(--Color-netural-white, #fff);
 
   display: flex;
-  width: 412px;
+  width: 100%;
   max-height: 316px;
+  box-sizing: border-box;
+  box-shadow: 0 4px 12px 0 rgb(34 64 77 / 10%);
 
   padding: var(--Spacing-12, 12px) var(--Spacing-8, 8px);
   flex-direction: column;
@@ -261,8 +268,11 @@
     margin-top: var(--spacing-28);
   }
 
-  .addressSuggestList {
+  .addressSuggestOverlay {
     width: 100%;
+  }
+
+  .addressSuggestList {
     max-height: min(316px, 40vh);
   }
 

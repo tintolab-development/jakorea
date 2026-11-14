@@ -156,4 +156,35 @@ const now = Date.parse('2026-10-21T00:00:00.000Z')
   assert.equal(consentPosts, 1)
 }
 
+// 최종 동의 409 GUARDIAN_RELATION_INVALID — 다시 시도하지 않고 서버 message·코드를 돌려준다
+{
+  let consentPosts = 0
+  let challenges = 0
+  const result = await completeGuardianAfterNice({
+    termsVersion: 'v1',
+    guardianRelation: '이웃',
+    nowMs: now,
+    client: {
+      getStatus: async () => ({ status: 'PENDING', identityVerified: true }),
+      issueFinalConsentChallenge: async () => {
+        challenges += 1
+        return { challengeToken: 'tok' }
+      },
+      postFinalConsent: async () => {
+        consentPosts += 1
+        throw bridgeError('GUARDIAN_RELATION_INVALID', '서버 관계 문구', 409)
+      },
+      createIdempotencyKey: () => 'final-relation',
+    },
+  })
+  assert.deepEqual(result, {
+    kind: 'error',
+    message: '서버 관계 문구',
+    action: 'show_message',
+    code: 'GUARDIAN_RELATION_INVALID',
+  })
+  assert.equal(challenges, 1)
+  assert.equal(consentPosts, 1)
+}
+
 console.log('complete-guardian-after-nice.selfcheck: ok')

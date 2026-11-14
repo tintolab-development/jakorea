@@ -80,7 +80,8 @@
 }
 
 .signFontMark {
-  color: var(--color-neutral-cool-400, #9aa3a7);
+  /* 서명란에 그린 서명은 검정 — 서명 생성 색(create-font-panel·draw-canvas-panel #1a1a1a)과 같게 */
+  color: #1a1a1a;
   font-size: 28px;
   font-weight: 400;
   line-height: 1;
@@ -89,7 +90,8 @@
 .signImage {
   display: block;
   width: auto;
-  height: 36px;
+  max-width: 200px;
+  height: 40px;
   object-fit: contain;
 }
 

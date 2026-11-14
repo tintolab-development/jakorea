@@ -31,7 +31,7 @@ const socialLoginItems: Array<{
 function resolveErrorCopy(reason: string | null): { title: string; description: string } {
   if (reason === 'already-linked') {
     return {
-      title: '이미 연결된 소셜 계정이에요',
+      title: '이미 연결된 소셜 계정이에요.',
       description: '이 소셜 계정은 다른 JA Korea 계정에 연결되어 있어요.',
     }
   }
@@ -91,7 +91,7 @@ export function SocialErrorPage() {
         <PFText
           as="p"
           typo="bd-lg-rg"
-          color="primary-700"
+          color="primary-800"
           className={authPageCopyClass('description')}
         >
           {copy.description}
@@ -108,7 +108,7 @@ export function SocialErrorPage() {
 
       <div className={styles.actions}>
         <PFButton size="xlarge" className={styles.actionButton} onClick={handleSignIn}>
-          이메일로 로그인하기
+          이메일로 로그인
         </PFButton>
         <PFButton
           size="xlarge"
@@ -124,7 +124,7 @@ export function SocialErrorPage() {
         <div className={styles.socialDivider}>
           <span className={styles.socialDividerLine} />
           <PFText typo="caption-rg" color="neutral-cool-500">
-            다른 소셜 계정으로 시도
+            다른 소셜 계정으로 로그인
           </PFText>
           <span className={styles.socialDividerLine} />
         </div>

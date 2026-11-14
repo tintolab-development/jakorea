@@ -28,25 +28,18 @@
   min-height: 0;
 }
 
-.program-progress-posts-section
-  .enrollment-program-detail-modal__posts-tab-column--left,
-.program-progress-posts-section
-  .enrollment-program-detail-modal__posts-tab-column--right {
+.program-progress-posts-section .enrollment-program-detail-modal__posts-tab-column--left,
+.program-progress-posts-section .enrollment-program-detail-modal__posts-tab-column--right {
   align-self: stretch;
   height: auto;
   min-height: 0;
 }
 
+/* 목록 스크롤바: 전역 규칙(admin-ui styles/scrollbar.css). 상위 모달의 숨김(display:none)만 되돌린다 */
 .program-progress-posts-section .enrollment-program-detail-modal__posts-list {
   scrollbar-width: thin;
 }
 
 .program-progress-posts-section .enrollment-program-detail-modal__posts-list::-webkit-scrollbar {
   display: block;
-  width: 6px;
-}
-
-.program-progress-posts-section .enrollment-program-detail-modal__posts-list::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.2);
 }

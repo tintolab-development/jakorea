@@ -23,7 +23,7 @@ export interface AdminAccountCreateRequest {
   phone?: string;
   gender?: string;
   birthDate?: string;
-  /** CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 생략 시 PROGRAM_VIEWER. */
+  /** CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 필수이며 비어 있으면 400 ADMIN_ROLE_CODE_REQUIRED. */
   roleCode?: string;
   reason?: string;
   /**

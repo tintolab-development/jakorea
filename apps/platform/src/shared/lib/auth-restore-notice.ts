@@ -45,7 +45,7 @@ export function showAuthRestoreNotice(next: AuthRestoreNotice): void {
 }
 
 /**
- * 사용 중 세션 종료: 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고, [확인] 때 onConfirm(로그아웃·이동)을 실행한다.
+ * 사용 중 세션 종료: 지금 화면에 머문 채 「자동으로 로그아웃되었어요.」를 띄우고, [확인] 때 onConfirm(로그아웃·이동)을 실행한다.
  * 여러 요청·경로가 동시에 알려도 안내는 하나, onConfirm도 처음 것 한 번만 실행한다.
  */
 export function showSessionExpiredNotice(onConfirm: () => void): void {

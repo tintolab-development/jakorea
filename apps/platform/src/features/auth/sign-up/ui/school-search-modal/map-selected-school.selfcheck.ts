@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict'
 import type { CareerNetUniversityItem } from '@jakorea/location/career-net'
 import type { NeisSchoolItem } from '@jakorea/location/neis'
-import { mapSearchResultToSelectedSchool } from './map-selected-school.ts'
+import { mapSearchResultToSelectedSchool, toCareerNetSchoolLevel } from './map-selected-school.ts'
 
 function careerNetUniversity(overrides: Partial<CareerNetUniversityItem> = {}): CareerNetUniversityItem {
   return {
@@ -62,6 +62,42 @@ const neisSelected = mapSearchResultToSelectedSchool({
 assert.equal(neisSelected?.source, 'neis')
 assert.equal(neisSelected?.neisCode, '7581089')
 assert.equal(neisSelected?.educationOfficeCode, 'B10')
+// 학교급 — NEIS는 학교종류명, 알 수 없는 종류(특수학교 등)는 없음
+assert.equal(neisSelected?.schoolLevel, '초등학교')
+assert.equal(
+  mapSearchResultToSelectedSchool({
+    source: 'neis',
+    item: neisSchool({ schulKndScNm: '특수학교' }),
+  })?.schoolLevel,
+  undefined,
+)
+// 커리어넷 — 학교급 '전체'로 고른 경우 결과의 학교 구분값으로 정한다
+assert.equal(careerNetSelected?.schoolLevel, '대학교')
+assert.equal(
+  mapSearchResultToSelectedSchool({
+    source: 'careerNet',
+    item: careerNetUniversity({ schoolGubun: '전문대학', schoolType: '전문대학' }),
+  })?.schoolLevel,
+  '전문대학',
+)
+// 매핑할 수 없는 구분값은 학교급 없음(학년 1~12)
+assert.equal(
+  mapSearchResultToSelectedSchool({
+    source: 'careerNet',
+    item: careerNetUniversity({ schoolGubun: '대학원', schoolType: '대학원' }),
+  })?.schoolLevel,
+  undefined,
+)
+assert.equal(toCareerNetSchoolLevel({ schoolGubun: '', schoolType: '' }), undefined)
+assert.equal(toCareerNetSchoolLevel({ schoolGubun: '', schoolType: '전문대학' }), '전문대학')
+// 학교급을 골라 검색했으면 그 값을 쓴다
+assert.equal(
+  mapSearchResultToSelectedSchool(
+    { source: 'careerNet', item: careerNetUniversity() },
+    '전문대학',
+  )?.schoolLevel,
+  '전문대학',
+)
 
 assert.equal(
   mapSearchResultToSelectedSchool({

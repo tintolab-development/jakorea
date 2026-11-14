@@ -1,0 +1,7 @@
+/**
+ * 엑셀 다운로드 버튼 폭 — 시안 140×40 (padding 6/16/6/12 · gap 4는 cms-button--h40 has-icon 공통값)
+ * 시안 2026-11-14 전체 회원 CSS 검수. 호출부에서 폭을 지정하지 않는다.
+ */
+.cms-button.ant-btn.cms-button--h40.excel-button {
+  min-width: 140px;
+}

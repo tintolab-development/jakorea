@@ -36,4 +36,10 @@ export interface CertificateEligibilityResponse {
   certificatePeriodEndDate?: string;
   /** PDF와 동일한 한글 기간 라벨 */
   certificatePeriodLabel?: string;
+  /** 활동인증서(INSTRUCTOR_ACTIVITY·VOLUNTEER_ACTIVITY)의 활동시수(분). 진행 완료 일정의 시간을 겹침 없이 합산하며 해당 일정이 없으면 0. 다른 증명서 유형은 null. */
+  activityMinutes?: number | null;
+  /** 활동인증서 참여기간 시작일(yyyy-MM-dd, Asia/Seoul). 본인의 진행 완료된 첫 일정일. 일정이 없거나 활동인증서가 아니면 null. */
+  participationStartDate?: string | null;
+  /** 활동인증서 참여기간 종료일(yyyy-MM-dd, Asia/Seoul). 본인의 진행 완료된 마지막 일정일(활동 포기 시 포기 전 마지막 일정). 일정이 없거나 활동인증서가 아니면 null. 시작일과 같으면 하루 참여. */
+  participationEndDate?: string | null;
 }

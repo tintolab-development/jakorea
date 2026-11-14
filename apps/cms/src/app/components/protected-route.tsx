@@ -17,6 +17,7 @@ import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   PASSWORD_CHANGE_REQUIRED_PATH,
   buildLoginPathWithRedirect,
+  isLoginReturnPathSuppressed,
   passwordChangeRequiredPaths,
 } from '@/shared/utils/post-auth-redirect'
 import type { UserRole } from '@/types/user'
@@ -65,8 +66,11 @@ export function ProtectedRoute({
     )
   }
 
-  // 로그인 후 원래 화면으로 돌아오도록 현재 경로를 redirect로 넘긴다.
-  const loginPath = buildLoginPathWithRedirect(`${location.pathname}${location.search}`)
+  // 비로그인으로 보호 화면을 연 경우(직접 URL 접근 등)만 로그인 후 그 화면으로 가도록 redirect를 넘긴다.
+  // 이 페이지에서 로그아웃·세션 종료로 로그인 이동 중이면 붙이지 않는다 (다시 로그인하면 기본 첫 화면).
+  const loginPath = isLoginReturnPathSuppressed()
+    ? '/login'
+    : buildLoginPathWithRedirect(`${location.pathname}${location.search}`)
 
   if (requireAuth && !isAuthenticated) {
     return <Navigate to={loginPath} replace />

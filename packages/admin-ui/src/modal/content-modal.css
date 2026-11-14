@@ -56,7 +56,14 @@
   min-width: 0;
 }
 
+/*
+ * 닫기(X) — 디자인 가이드 05 Popup: 24×24 아이콘이 셸 오른쪽 끝(패딩 30 안쪽)에 붙는다.
+ * 공통 버튼(32×32)에 24 아이콘을 가운데 두면 X가 4px 왼쪽으로 들어가므로 버튼을 아이콘 크기로 맞춘다.
+ * 헤더(높이 36)가 세로 가운데 정렬이라 세로 위치는 그대로다.
+ */
 .content-modal .teal-header-modal__close {
+  width: 24px;
+  height: 24px;
   color: var(--color-text-secondary, #8c8c8c);
 }
 
@@ -69,6 +76,27 @@
   align-items: stretch;
   margin-top: 0;
   padding: 0;
+}
+
+/*
+ * 본문 스크롤바 위치 — 셸 패딩(30)은 .ant-modal-content에 있고 스크롤은 본문(__body)이 하므로,
+ * 그대로 두면 스크롤바가 콘텐츠 오른쪽 끝에 붙어 겹친다. 스크롤 영역을 우측 여백으로
+ * `--content-modal-scroll-gutter`(기본 18px)만큼 넓히고 같은 값을 안쪽 여백으로 돌려줘
+ * 콘텐츠 폭·위치는 그대로, 스크롤바만 콘텐츠 밖 여백(테두리에서 12px 안쪽)에 그려진다.
+ * 본문에 자체 우측 패딩을 두는 모달은 변수를 그 패딩값(또는 0)으로 맞춘다.
+ * `!important`는 앱별 `padding: 0` 리셋이 우측만 되돌려 콘텐츠가 여백으로 밀리는 것을 막는다.
+ */
+.content-modal.teal-header-modal--bounded .ant-modal-body {
+  overflow: visible;
+}
+
+.content-modal.teal-header-modal--bounded .teal-header-modal__body {
+  --content-modal-scroll-gutter: 18px;
+
+  /* 공통 `width: 100%`가 남아 있으면 음수 마진이 박스를 못 늘리고 우측 패딩만 남아 본문이 18px 좁아진다. */
+  width: calc(100% + var(--content-modal-scroll-gutter));
+  margin-right: calc(-1 * var(--content-modal-scroll-gutter)) !important;
+  padding-right: var(--content-modal-scroll-gutter) !important;
 }
 
 /*
@@ -193,8 +221,10 @@
   padding-inline: calc(var(--Spacing-12, 12px) - 1px) calc(var(--Spacing-16, 16px) - 1px) !important;
 }
 
-.content-modal__footer-actions .cms-button.ant-btn.cms-button--h44.cms-button--has-icon.cms-button--icon-end,
-.teal-header-modal__footer .cms-button.ant-btn.cms-button--h44.cms-button--has-icon.cms-button--icon-end {
+.content-modal__footer-actions
+  .cms-button.ant-btn.cms-button--h44.cms-button--has-icon.cms-button--icon-end,
+.teal-header-modal__footer
+  .cms-button.ant-btn.cms-button--h44.cms-button--has-icon.cms-button--icon-end {
   padding-inline: calc(var(--Spacing-16, 16px) - 1px) calc(var(--Spacing-12, 12px) - 1px) !important;
 }
 

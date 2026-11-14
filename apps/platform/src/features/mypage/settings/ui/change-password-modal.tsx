@@ -1,6 +1,11 @@
 import { useCallback, useId, useState } from 'react'
-import { getLoginApiErrorMessage, usePortalPasswordChangeMutation } from '@/features/auth/sign-in'
+import {
+  getLoginApiErrorMessage,
+  isPasswordRecentlyUsedApiError,
+  usePortalPasswordChangeMutation,
+} from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
 import { PFAlertModal, PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
 import { validateSettingsChangePassword } from '../lib/change-password'
 import styles from './change-password-modal.module.css'
@@ -26,6 +31,8 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
   const [newPasswordError, setNewPasswordError] = useState<string>()
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>()
   const [successOpen, setSuccessOpen] = useState(false)
+  /** 최근 사용한 비밀번호 재사용 — 시안 「비밀번호 재사용 시」 팝업 */
+  const [passwordReusedOpen, setPasswordReusedOpen] = useState(false)
 
   const isBusy = passwordChangeMutation.isPending
 
@@ -80,6 +87,10 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
           newPassword: newPassword.trim(),
         })
       } catch (error) {
+        if (isPasswordRecentlyUsedApiError(error)) {
+          setPasswordReusedOpen(true)
+          return
+        }
         setCurrentPasswordError(getLoginApiErrorMessage(error, '비밀번호를 변경하지 못했습니다.'))
         return
       }
@@ -184,8 +195,15 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
       </PFModal>
       <PFAlertModal
         open={successOpen}
-        title="비밀번호가 변경 되었어요."
+        title={PLATFORM_ALERT_COPY.passwordChanged.title}
+        description={PLATFORM_ALERT_COPY.passwordChanged.description}
         onConfirm={() => setSuccessOpen(false)}
+      />
+      <PFAlertModal
+        open={passwordReusedOpen}
+        title={PLATFORM_ALERT_COPY.passwordRecentlyUsed.title}
+        description={PLATFORM_ALERT_COPY.passwordRecentlyUsed.description}
+        onConfirm={() => setPasswordReusedOpen(false)}
       />
     </>
   )

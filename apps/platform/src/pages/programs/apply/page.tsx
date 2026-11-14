@@ -25,7 +25,7 @@ import {
   ProgramApplyCompleteModal,
   ProgramApplyGateModals,
   programApplyGateApplicationsPathForType,
-  programApplyGateConsentsPath,
+  programApplyGateConsentsPathFor,
   programApplyGateMemberSettingsPath,
   shouldHideApplyPageBlockedBanner,
   useProgramApplyGate,
@@ -330,7 +330,7 @@ import {
 import {
   ApplyUjatVolunteerBasicInfo,
   emptyUjatVolunteerBasicInfo,
-  findIncompleteUjatVolunteerBasicInfoMessage,
+  findIncompleteUjatVolunteerBasicInfoField,
   ujatVolunteerBasicInfoAnswerFromValues,
   ujatVolunteerBasicInfoValuesFromDraftAnswer,
   type ApplyUjatVolunteerBasicInfoValues,
@@ -3442,9 +3442,16 @@ export function ProgramApplyPage() {
       }
       const ujatBasicInfoParagraph = visibleDraftParagraph(isUjatVolunteerBasicInfoParagraphId)
       if (ujatBasicInfoParagraph && isRequiredParagraph(ujatBasicInfoParagraph)) {
-        const ujatBasicError = findIncompleteUjatVolunteerBasicInfoMessage(ujatVolunteerBasicInfo)
-        if (ujatBasicError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+        const ujatBasicIncomplete = findIncompleteUjatVolunteerBasicInfoField(ujatVolunteerBasicInfo)
+        if (ujatBasicIncomplete) {
+          // 누락 항목 안내 + 알럿 닫힘 시 해당 항목으로 이동·강조 (기관 기본정보와 같은 방식)
+          pendingApplyIncompleteRef.current = {
+            message: ujatBasicIncomplete.message,
+            paragraphId: ujatBasicInfoParagraph.id,
+            field: ujatBasicIncomplete.field,
+          }
+          setSubmitErrorField(ujatBasicInfoParagraph.id)
+          setSubmitAlert({ description: ujatBasicIncomplete.message })
           return
         }
       }
@@ -4051,7 +4058,7 @@ export function ProgramApplyPage() {
         notEligibleVariant={notEligibleVariant}
         onOpenConsents={() => {
           closeGateModal()
-          navigate(programApplyGateConsentsPath)
+          navigate(programApplyGateConsentsPathFor(missingConsents))
         }}
         onEditMemberInfo={() => {
           closeGateModal()

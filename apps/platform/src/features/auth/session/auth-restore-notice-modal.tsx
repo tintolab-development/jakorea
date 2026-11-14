@@ -1,13 +1,13 @@
 import { useId, useState, useSyncExternalStore } from 'react'
 import { retryPortalAccessTokenRestore } from '@/shared/api/axios-instance'
 import {
-  buildSignInPathWithRedirect,
   confirmAuthRestoreNotice,
   getAuthRestoreNotice,
   resolveAuthRestoreNoticeActions,
   subscribeAuthRestoreNotice,
   type AuthRestoreNoticeAction,
 } from '@/shared/lib/auth-restore-notice'
+import { SIGN_IN_PATH } from '@/shared/lib/login-redirect'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
 import { PLATFORM_AUTH_RESTORE_NOTICE_DISPLAY } from './auth-restore-notice-display'
 import styles from './session-warning-modal.module.css'
@@ -46,7 +46,7 @@ export function PlatformAuthRestoreNoticeModal({
   const copy = PLATFORM_AUTH_RESTORE_NOTICE_DISPLAY
   const pathname = currentPath.split('?')[0] ?? currentPath
   const actions = resolveAuthRestoreNoticeActions(notice, pathname)
-  // 사용 중 세션 종료(session-expired)도 같은 「로그인이 종료되었어요.」 문구를 쓴다
+  // 사용 중 세션 종료(session-expired)도 같은 「자동으로 로그아웃되었어요.」 문구를 쓴다
   const isSessionEnded = notice === 'session-ended' || notice === 'session-expired'
 
   const handleRetry = async () => {
@@ -66,8 +66,9 @@ export function PlatformAuthRestoreNoticeModal({
         confirmAuthRestoreNotice()
         return
       case 'sign-in':
+        // 세션이 끝난 뒤 다시 로그인하면 이전 이용 화면이 아니라 기본 첫 화면으로 간다 (돌아올 경로 없음)
         confirmAuthRestoreNotice()
-        navigate(buildSignInPathWithRedirect(currentPath))
+        navigate(SIGN_IN_PATH)
         return
       case 'retry':
         void handleRetry()

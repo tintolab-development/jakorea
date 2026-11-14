@@ -1,12 +1,18 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { portalAuthPaths } from '@/features/auth/sign-in'
-import { parseAccountEmailCheckResponse, parsePasswordResetConfirmResponse } from './parse'
+import {
+  parseAccountEmailCheckResponse,
+  parsePasswordResetConfirmResponse,
+  parsePasswordResetEligibilityResponse,
+} from './parse'
 import type {
   AccountEmailCheckRequest,
   AccountEmailCheckResponse,
   PasswordResetConfirmRequest,
   PasswordResetConfirmResponse,
+  PasswordResetEligibilityRequest,
+  PasswordResetEligibilityResponse,
 } from './types'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
@@ -23,6 +29,17 @@ export async function postPortalEmailCheck(
     skipRefresh: true,
   } as SkipAuthConfig)
   return parseAccountEmailCheckResponse(data)
+}
+
+/** POST /api/portal/auth/password-reset/eligibility — PUBLIC */
+export async function postPortalPasswordResetEligibility(
+  body: PasswordResetEligibilityRequest,
+): Promise<PasswordResetEligibilityResponse> {
+  const { data } = await axiosClient.post<unknown>(portalAuthPaths.passwordResetEligibility(), body, {
+    skipAuth: true,
+    skipRefresh: true,
+  } as SkipAuthConfig)
+  return parsePasswordResetEligibilityResponse(data)
 }
 
 /** POST /api/portal/auth/password-reset/confirm — PUBLIC */

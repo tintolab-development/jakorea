@@ -17,6 +17,12 @@ export type PFAlertModalProps = {
   confirmLabel?: string
   /** 확인 버튼 variant. 기본 tertiary */
   confirmVariant?: PFAlertConfirmVariant
+  /**
+   * 확인 버튼 왼쪽 보조 버튼(예: 「확인」+「로그인하기」). 지정하면 두 버튼을 가로로 나란히 둔다.
+   * 보조 버튼은 tertiary. Escape는 onDismiss → onCancel → onConfirm 순으로 쓴다.
+   */
+  cancelLabel?: string
+  onCancel?: () => void
   confirmLoading?: boolean
   confirmDisabled?: boolean
   /** description 아래·확인 버튼 위 추가 컨텐츠 (예: 비밀번호 입력) */
@@ -35,6 +41,8 @@ export function PFAlertModal({
   description,
   confirmLabel = '확인',
   confirmVariant = 'tertiary',
+  cancelLabel,
+  onCancel,
   confirmLoading = false,
   confirmDisabled = false,
   children,
@@ -49,12 +57,14 @@ export function PFAlertModal({
   const wasOpenRef = useRef(false)
   const onConfirmRef = useRef(onConfirm)
   const onDismissRef = useRef(onDismiss)
+  const onCancelRef = useRef(onCancel)
   const titleId = ariaLabelledBy ?? fallbackTitleId
   const descriptionId = ariaDescribedBy ?? (description ? fallbackDescriptionId : undefined)
   const isConfirmBlocked = confirmLoading || confirmDisabled
 
   onConfirmRef.current = onConfirm
   onDismissRef.current = onDismiss
+  onCancelRef.current = onCancel
 
   useLayoutEffect(() => {
     if (!open) {
@@ -66,7 +76,7 @@ export function PFAlertModal({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !confirmLoading) {
-        ;(onDismissRef.current ?? onConfirmRef.current)()
+        ;(onDismissRef.current ?? onCancelRef.current ?? onConfirmRef.current)()
       }
     }
 
@@ -117,16 +127,30 @@ export function PFAlertModal({
           {children ? <div className={styles.extra}>{children}</div> : null}
         </div>
 
-        <PFButton
-          className={styles.confirmButton}
-          variant={confirmVariant}
-          size="xlarge"
-          width="100%"
-          disabled={isConfirmBlocked}
-          onClick={() => onConfirmRef.current()}
-        >
-          {confirmLoading ? '처리 중…' : confirmLabel}
-        </PFButton>
+        <div className={cancelLabel ? styles.actions : undefined}>
+          {cancelLabel ? (
+            <PFButton
+              className={styles.confirmButton}
+              variant="tertiary"
+              size="xlarge"
+              width="100%"
+              disabled={confirmLoading}
+              onClick={() => (onCancelRef.current ?? onConfirmRef.current)()}
+            >
+              {cancelLabel}
+            </PFButton>
+          ) : null}
+          <PFButton
+            className={styles.confirmButton}
+            variant={confirmVariant}
+            size="xlarge"
+            width="100%"
+            disabled={isConfirmBlocked}
+            onClick={() => onConfirmRef.current()}
+          >
+            {confirmLoading ? '처리 중…' : confirmLabel}
+          </PFButton>
+        </div>
       </div>
     </div>,
     document.body

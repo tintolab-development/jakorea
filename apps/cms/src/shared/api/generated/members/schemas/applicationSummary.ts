@@ -11,6 +11,7 @@ export interface ApplicationSummary {
   draft?: number;
   /** 표시상태가 결과 대기·서류 합격·승인 대기인 건수. 반려 취소 후 REJECTION_CANCELLED(승인 대기)를 포함하며, APPROVAL_CANCELLED는 rejected에만 넣는다. */
   submitted?: number;
+  /** 승인 원본 상태(APPROVED, APPROVAL_COMPLETED, FINAL_SELECTED) 기준 건수. 표시상태 기준이 아니므로 inProgress·ended(진행 완료 등)와 겹칠 수 있다. 홈 「신청」 카드는 submitted를 쓴다. */
   approved?: number;
   /** 표시상태가 '신청 반려'인 건수. REJECTED와 APPROVAL_CANCELLED를 포함한다. 승인 취소 라벨은 더 이상 반환하지 않으며 이중 가산하지 않는다. */
   rejected?: number;

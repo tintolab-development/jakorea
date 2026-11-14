@@ -3,6 +3,7 @@
  */
 import type { DashboardPreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesResponse'
 import type { DashboardPreferencesSaveRequest } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesSaveRequest'
+import { sessionDashboardShortcutOptions } from '@/features/dashboard/lib/dashboard-shortcut-master'
 import {
   normalizeShortcutVisibilityFromServer,
   restrictShortcutVisibilityToCatalog,
@@ -118,13 +119,15 @@ export function applyDashboardPreferencesResponse(dto: DashboardPreferencesRespo
   const settingsState = asRecord(dto.dashboardSettings?.state)
   if (settingsState) {
     useDashboardSettingsStore.setState(state => {
+      const shortcutSession = sessionDashboardShortcutOptions()
       const normalized = normalizeShortcutVisibilityFromServer(
-        asStringRecord(settingsState.shortcutEnabled)
+        asStringRecord(settingsState.shortcutEnabled),
+        shortcutSession
       )
       const catalogKeys = state.shortcutCatalogKeys
       const shortcutEnabled =
         catalogKeys != null && catalogKeys.length > 0
-          ? restrictShortcutVisibilityToCatalog(normalized, catalogKeys)
+          ? restrictShortcutVisibilityToCatalog(normalized, catalogKeys, shortcutSession)
           : normalized
       return {
       shortcutEnabled,

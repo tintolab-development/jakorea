@@ -4,7 +4,7 @@
 
 import { Form, Input } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { OTP_POLICY, OTP_LENGTH, clampMfaFailedAttempts } from '@/shared/constants/mfa-policy'
+import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
 import { CMS_ALERT_MODAL_CLOSED_EVENT } from '@/shared/ui/cms-alert-modal-api'
 import './mfa-otp-input.css'
 
@@ -13,6 +13,8 @@ interface MfaOtpInputProps {
   disabled?: boolean
   autoFocus?: boolean
   failedAttempts?: number
+  /** 잠금 전 허용 실패 횟수 — 실 API는 서버 `maxFailedAttempts` */
+  maxFailedAttempts?: number
   /** 인증 실패 등으로 값이 초기화될 때 증가 — Input.OTP 리마운트 + 첫 칸 포커스 */
   resetToken?: number
 }
@@ -44,6 +46,7 @@ export function MfaOtpInput({
   disabled,
   autoFocus = true,
   failedAttempts = 0,
+  maxFailedAttempts = OTP_POLICY.maxFailedAttempts,
   resetToken = 0,
 }: MfaOtpInputProps) {
   const boxesRef = useRef<HTMLDivElement>(null)
@@ -106,8 +109,8 @@ export function MfaOtpInput({
               </div>
               {failedAttempts > 0 && !disabled ? (
                 <p className="mfa-otp-input__failure">
-                  잘못된 코드를 입력하였습니다. (실패 횟수 {clampMfaFailedAttempts(failedAttempts)}{' '}
-                  / {OTP_POLICY.maxFailedAttempts})
+                  잘못된 코드를 입력하였습니다. (실패 횟수{' '}
+                  {Math.min(Math.floor(failedAttempts), maxFailedAttempts)} / {maxFailedAttempts})
                 </p>
               ) : null}
               {errors && errors.length > 0 && failedAttempts === 0 ? (

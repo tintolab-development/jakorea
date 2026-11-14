@@ -4,10 +4,12 @@ import {
   ADMIN_ACCESS_DENIED_ALERT_TITLE,
 } from '@/shared/lib/admin-role-policy'
 import {
-  extractApiErrorMessage,
   formatApiErrorAlertContent,
+  NETWORK_ERROR_ALERT_CONTENT,
+  NETWORK_ERROR_ALERT_TITLE,
 } from '@/shared/lib/extract-api-error-message'
 import {
+  getCrimeConsentOriginalErrorMessage,
   getMemberDeleteCurrentPasswordInvalidAlertOptions,
   isMemberDeleteCurrentPasswordInvalidError,
 } from '@/features/user/api/get-member-api-error'
@@ -23,6 +25,7 @@ import {
 import { readVolunteer1365ApprovalBlockedAlert } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
+import { isScreenOwnedApiError } from '@/shared/lib/screen-owned-api-errors'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 const DEDUPE_MS = 2_000
@@ -54,7 +57,7 @@ function isGlobalErrorAlertEnabled(): boolean {
 }
 
 function resolveAlertTitle(httpStatus: number | null | undefined): string {
-  if (httpStatus == null) return '네트워크 오류'
+  if (httpStatus == null) return NETWORK_ERROR_ALERT_TITLE
   if (httpStatus === 400) return '요청 오류'
   if (httpStatus === 404) return '찾을 수 없음'
   if (httpStatus === 409) return '처리 불가'
@@ -94,6 +97,21 @@ function shouldSkipGlobalErrorAlert(
 
   // 봉사자 1365 ID 미등록 승인 차단 — 화면에서 전용 안내를 띄운다.
   if (readVolunteer1365ApprovalBlockedAlert(error)) {
+    return true
+  }
+
+  // 재인증 불일치·관리자 이메일 입력란 오류·사전등록 본인 정보 중복 — 화면에서 직접 안내한다.
+  const field =
+    data && typeof data === 'object' && 'error' in data
+      ? (data as { error?: { field?: unknown } }).error?.field
+      : undefined
+  if (
+    isScreenOwnedApiError({
+      url: config?.url ?? error.config?.url,
+      code,
+      field: typeof field === 'string' ? field.trim() : undefined,
+    })
+  ) {
     return true
   }
 
@@ -182,6 +200,13 @@ export function showGlobalApiErrorAlert(
     return true
   }
 
+  const crimeConsentOriginalMessage = getCrimeConsentOriginalErrorMessage(error)
+  if (crimeConsentOriginalMessage) {
+    markGlobalErrorAlertShown(error)
+    cmsAlertModal.show({ title: resolveAlertTitle(httpStatus), content: crimeConsentOriginalMessage })
+    return true
+  }
+
   if (isProgramDateOutsideOpenPeriodError(error)) {
     const dateAlert = resolveProgramDateOutsideOpenPeriodAlert(error)
     markGlobalErrorAlertShown(error)
@@ -195,13 +220,11 @@ export function showGlobalApiErrorAlert(
   const method = (config?.method ?? error.config?.method ?? 'GET').toUpperCase()
   const url = config?.url ?? error.config?.url ?? ''
 
+  // 응답이 없는 오류는 axios 개발 문구(error.message)를 쓰지 않고 시안 문구로 안내한다
   const content =
     error.response != null
       ? formatApiErrorAlertContent(error.response.data, { httpStatus })
-      : extractApiErrorMessage(undefined, {
-          httpStatus: null,
-          fallback: error.message?.trim() || '서버에 연결할 수 없습니다.',
-        })
+      : NETWORK_ERROR_ALERT_CONTENT
 
   const key = dedupeKey(method, url, content, httpStatus)
   const windowMs = httpStatus == null ? NETWORK_DEDUPE_MS : DEDUPE_MS

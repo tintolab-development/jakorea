@@ -99,12 +99,7 @@ export function isValidEmail(value: string) {
   return isValidEmailId(value)
 }
 
-export {
-  ADMIN_REGISTERED_PASSWORD_HELP_TEXT,
-  isValidMemberPassword,
-  isValidPassword,
-  MEMBER_PASSWORD_HELP_TEXT,
-} from './password-policy'
+export { isValidMemberPassword, MEMBER_PASSWORD_HELP_TEXT } from './password-policy'
 
 export function getMemberTypeLabel(type: MemberType | null) {
   if (type === 'teacher') return '교사 회원'
@@ -115,6 +110,14 @@ export function getGenderLabel(value: GenderType | null) {
   if (value === 'female') return '여성'
   if (value === 'male') return '남성'
   return '-'
+}
+
+/**
+ * 확인·제출에 쓰는 재학 여부. 일반회원은 회원 정보 단계 필수 검증을 통과해야 확인·제출로 오므로
+ * 미선택(null)은 실제로 닿지 않고, 닿으면 '해당 없음'으로 본다(교사회원은 재학 여부를 쓰지 않음).
+ */
+export function resolveSubmittedSchoolStatus(value: SchoolStatus | null): SchoolStatus {
+  return value ?? 'none'
 }
 
 export function getSchoolStatusLabel(value: SchoolStatus) {
@@ -161,11 +164,15 @@ export function buildConfirmationRows(input: {
   phone?: string
   schoolName?: string
   schoolAddress?: string
+  grade?: string
   affiliationName?: string
   employmentStatus?: EmploymentStatus | null
 }): ConfirmationRow[] {
-  const shared: ConfirmationRow[] = [
-    { label: '회원유형', value: getMemberTypeLabel(input.selectedType) },
+  const memberTypeRow: ConfirmationRow = {
+    label: '회원유형',
+    value: getMemberTypeLabel(input.selectedType),
+  }
+  const identityRows: ConfirmationRow[] = [
     { label: '이름', value: input.name?.trim() || '-' },
     {
       label: '휴대폰 번호',
@@ -177,7 +184,8 @@ export function buildConfirmationRows(input: {
 
   if (input.selectedType === 'teacher') {
     return [
-      ...shared,
+      memberTypeRow,
+      ...identityRows,
       {
         label: '소속/학교',
         value: formatTeacherAffiliation(input.schoolName ?? '', input.schoolAddress ?? ''),
@@ -188,15 +196,23 @@ export function buildConfirmationRows(input: {
   }
 
   const affiliationName = input.affiliationName?.trim() ?? ''
-
+  // 일반회원(14세 이상) — 이메일 ID는 회원유형 바로 다음 (Figma 2516-3293)
   return [
-    ...shared,
+    memberTypeRow,
+    { label: '이메일 ID', value: input.email },
+    ...identityRows,
     { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },
+    // 재학 중 — 시안(2516-3293)에 행이 없어 미성년 분기와 같은 이름·위치(재학유무 바로 다음)를 쓴다
+    ...(input.schoolStatus === 'enrolled'
+      ? [
+          { label: '소속/학교명', value: input.schoolName?.trim() || '-' },
+          { label: '학년', value: input.grade?.trim() || '-' },
+        ]
+      : []),
     ...(input.schoolStatus === 'none'
       ? [{ label: '소속 기관명', value: affiliationName || '소속 없음' }]
       : []),
     { label: '자택 주소', value: formatHomeAddress(input.address, input.addressDetail) },
-    { label: '이메일 ID', value: input.email },
     { label: '1365 ID', value: input.volunteerId.trim() || '-' },
   ]
 }

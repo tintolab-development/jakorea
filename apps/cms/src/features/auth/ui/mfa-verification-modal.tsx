@@ -31,6 +31,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
     verifyNotice,
     isLocalTestMfa,
     failedAttempts,
+    maxFailedAttempts,
     isLocked,
     handleVerify,
     lockMessage,
@@ -158,6 +159,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
             onChange={onOtpCodeChange}
             disabled={isLocked}
             failedAttempts={failedAttempts}
+            maxFailedAttempts={maxFailedAttempts}
             resetToken={otpResetToken}
           />
           {failedAttempts === 0 ? <MfaOtpStatus /> : null}

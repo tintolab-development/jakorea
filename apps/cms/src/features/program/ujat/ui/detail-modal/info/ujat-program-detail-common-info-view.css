@@ -77,16 +77,25 @@
   outline-offset: 2px;
 }
 
-/* 지역 별 교육 진행 가능 학급 수 — 학기별 2행×4지역(라벨|값×8열 그리드) */
+/* 상·하반기 교육 일정 조회 — 지역별 일정 여러 줄 세로 유지 */
+.ujat-half-education-schedule-readonly__schedule-text {
+  white-space: pre-line;
+}
+
+/* 지역 별 교육 진행 가능 학급 수 — 시안 4082:89939: 한 줄 4지역, 라벨 180 | 값 (DetailInfoForm 셀과 동일 규격) */
+.ujat-region-capacity-readonly {
+  display: flex;
+  flex-direction: column;
+}
+
 .ujat-region-capacity-readonly__title {
-  margin-bottom: 10px;
-  padding: 0;
+  margin: 0 0 10px;
 }
 
 .ujat-region-capacity-readonly__semester {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .ujat-region-capacity-readonly__semester + .ujat-region-capacity-readonly__semester {
@@ -94,7 +103,8 @@
 }
 
 .ujat-region-capacity-readonly__subtitle {
-  color: var(--main-BK, #3d3d3d);
+  padding: 0 8px;
+  color: var(--Netural-black, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 700;
@@ -103,28 +113,26 @@
 
 .ujat-region-capacity-readonly__grid {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(4, 180px minmax(0, 1fr));
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--color-border, #e0e0e0);
-  border-radius: var(--radius-8, 8px);
+  border: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
+  border-radius: var(--detail-info-form-body-radius, 8px);
   overflow: hidden;
-  background: var(--color-bg-base, #fff);
+  background: #fff;
 }
 
 .ujat-region-capacity-readonly__cell {
   display: flex;
   align-items: center;
-  justify-content: center;
   min-width: 0;
-  padding: var(--spacing-12, 12px) var(--spacing-8, 8px);
+  min-height: 52px;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 150%;
-  text-align: center;
-  color: var(--default-BK, #3d3d3d);
-  border-right: 1px solid var(--color-border, #e0e0e0);
-  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  color: var(--Netural-black, #3d3d3d);
+  border-right: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
+  border-bottom: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
   box-sizing: border-box;
 }
 
@@ -137,11 +145,22 @@
 }
 
 .ujat-region-capacity-readonly__cell--label {
-  background: #f5f6f7;
+  justify-content: center;
+  padding: 8px 16px;
+  text-align: center;
   font-weight: 700;
+  background: var(
+    --Background-header,
+    var(
+      --BG-header,
+      linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+      #fff
+    )
+  );
 }
 
 .ujat-region-capacity-readonly__cell--value {
-  background: #fff;
+  padding: 12px 16px;
   font-weight: 500;
+  background: #fff;
 }

@@ -21,7 +21,7 @@ export interface GlobalValueUpdateItem {
   enabled: boolean;
   /**
      * @minimum 1
-     * @maximum 5
+     * @maximum 6
      */
   displayOrder: number;
   version: number;

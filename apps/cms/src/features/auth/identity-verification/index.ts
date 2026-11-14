@@ -5,8 +5,10 @@ import { cmsIdentityVerificationClient } from './cms-client'
 import { findEmailIdentityVerificationClient } from './find-email-client'
 import { findPasswordIdentityVerificationClient } from './find-password-client'
 import { passwordChangeRequiredIdentityClient } from './password-change-required-client'
+import { registerIdentityVerificationClient } from './register-client'
 
 export { cmsIdentityVerificationClient } from './cms-client'
+export { registerIdentityVerificationClient } from './register-client'
 export { findEmailIdentityVerificationClient } from './find-email-client'
 export { findPasswordIdentityVerificationClient } from './find-password-client'
 export { passwordChangeRequiredIdentityClient } from './password-change-required-client'
@@ -44,9 +46,10 @@ interface UseIdentityVerificationOptions {
   onSuccess: (result: IdentityChallengeCompleteResult) => void
 }
 
+/** 관리자 회원가입 본인인증 — flow `ADMIN_SIGNUP` */
 export function useIdentityVerification(options: UseIdentityVerificationOptions) {
   return useIdentityVerificationBase({
-    client: cmsIdentityVerificationClient,
+    client: registerIdentityVerificationClient,
     requireBirthGender: false,
     requireName: false,
     onSuccess: options.onSuccess,

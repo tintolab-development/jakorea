@@ -4,7 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import {
+  networkAwareAlertTitle,
+  readApiErrorAlertMessage,
+} from '@/shared/lib/extract-api-error-message'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   individualSettlementReviewDetailQueryOptions,
@@ -33,6 +36,7 @@ import {
   type PaymentOrderRejectSubmitPayload,
 } from '@/features/settlement/ui/payment-record/payment-order-payment-rejection-modal'
 import { PaymentOrderCalculationBreakdownTable } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
+import { isPaymentOrderLineEligibleForPaymentStatementIssue } from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
 import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
@@ -210,7 +214,7 @@ export function IndividualSettlementReviewDetailModal({
     } catch (error) {
       // 지급 예정일 400(SCHEDULED_PAYMENT_DATE_*)은 강사 지급조서 확인과 같은 문구로 안내한다
       showAlert({
-        title: '안내',
+        title: networkAwareAlertTitle(error, '안내'),
         content: getSettlementApiErrorMessage(error, '개인 정산 심사를 처리하지 못했습니다.'),
       })
     }
@@ -288,7 +292,12 @@ export function IndividualSettlementReviewDetailModal({
               lectureSessionSegmentLabel="round"
               tableCellSpec="cms-data-table"
               actionButtonSize="h32"
-              paymentStatementIssueDisabled
+              // 강사 산출 내역서와 같은 규칙 — 지급조서 확인 완료(승인) 전에는 발급 불가 안내
+              paymentStatementIssueDisabled={
+                !isPaymentOrderLineEligibleForPaymentStatementIssue(
+                  statementView.basic.processingStatusClass
+                )
+              }
               onBasisDetailClick={handleBasisDetailClick}
               headerActions={
                 isStatementActionLocked ? null : (

@@ -20,6 +20,7 @@ import {
   buildAdminFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import { uploadConsentEvidenceFile } from '@/features/user/api/upload-consent-evidence-file'
 
 const { TextArea } = Input
 
@@ -80,13 +81,15 @@ export function InstructorApplicationForm({
     }
 
     setValue(type, file)
-    const ownerId = resolveInstructorApplicationOwnerId()
+    if (type === 'crimeCheckConsent') {
+      // 성범죄 동의서는 서명 원본 용도·약관 문서 owner로만 올린다 (조회 결과·증빙 용도는 관리자 업로드 불가)
+      void uploadConsentEvidenceFile({ file }).catch(() => undefined)
+      return false
+    }
     const owner = buildAdminFileOwner(
       ADMIN_FILE_OWNER.INSTRUCTOR_APPLICATION,
-      ownerId,
-      type === 'resume'
-        ? ADMIN_FILE_PURPOSE.INSTRUCTOR_APPLICATION
-        : ADMIN_FILE_PURPOSE.CRIMINAL_HISTORY_EVIDENCE
+      resolveInstructorApplicationOwnerId(),
+      ADMIN_FILE_PURPOSE.INSTRUCTOR_APPLICATION
     )
     void uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
     return false // 자동 업로드 방지

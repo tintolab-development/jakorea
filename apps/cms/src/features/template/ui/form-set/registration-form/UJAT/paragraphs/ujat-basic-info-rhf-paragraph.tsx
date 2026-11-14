@@ -29,7 +29,7 @@ import {
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
-  TEMPLATE_FORM_IPS_FIELD_LABELS,
+  UJAT_FORM_IPS_FIELD_LABELS,
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -58,6 +58,9 @@ import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
+
+/** 시안(등록 폼_공통): 사업 분야·교육 과정·IP·운영 주체·IPS 유형 선택 박스는 같은 짧은 고정폭 */
+const UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH = 240
 
 const DETAILED_PROGRAM_UJAT_OPTION = {
   value: UJAT_DETAILED_PROGRAM_UJAT_VALUE,
@@ -284,372 +287,384 @@ export function UjatBasicInfoRHFParagraph({
   }
 
   return (
-    <DetailInfoForm
-      title="UJAT 기본 정보"
-      hideHeader
-      mode="edit"
-      className="program-registration-paragraph"
-    >
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="대표 프로그램명 (국문)"
-          validationKey="basicInfo.repKo"
-          edit={
-            <CmsInput
-              inputSize="small"
-              value={String(formValues.mainTitle ?? '')}
-              onChange={event => setField(infoForm, 'mainTitle', event.target.value)}
-              placeholder={`예) ${UJAT_BASIC_INFO_REP_KO_DEFAULT}`}
-              width="100%"
-            />
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="대표 프로그램명 (영문)"
-          validationKey="basicInfo.repEn"
-          edit={
-            <CmsInput
-              inputSize="small"
-              value={String(formValues.titleEn ?? '')}
-              onChange={event => setField(infoForm, 'titleEn', event.target.value)}
-              placeholder={`예) ${UJAT_BASIC_INFO_REP_EN_DEFAULT}`}
-              width="100%"
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="프로그램 관리명"
-          validationKey="basicInfo.programManagementName"
-          edit={
-            <CmsInput
-              inputSize="small"
-              value={String(formValues.title ?? '')}
-              onChange={event => setField(infoForm, 'title', event.target.value)}
-              placeholder="대표 프로그램명을 입력해 주세요"
-              width="100%"
-            />
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="세부 프로그램명"
-          validationKey="basicInfo.detailedProgramId"
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsSelect
-                withAllOption={false}
-                inputSize="small"
-                placeholder="선택해 주세요"
-                width="100%"
-                options={detailedProgramOptions}
-                value={detailedProgramSelectValue}
-                onChange={value => setDetailedProgramSelection(String(value ?? ''))}
-                onOpenChange={onSelectOpenChange}
-                disabled={lockDetailedProgramToNone}
-              />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="사업 운영 기간"
-          validationKey="basicInfo.operationRangeSeal"
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap">
-              <ParagraphDatePicker
-                inputSize="small"
-                mode="single"
-                presetMode="period"
-                value={operationAnchorDate}
-                width="100%"
-                placeholder="사업 운영 기간을 선택해 주세요"
-                preferPeriodModeInPopover
-                excludeBusinessPeriodConstraint
-                appliedSurfaceRange={operationRange}
-                appliedSurfaceWithTime={operationRangeWithTime}
-                onRangeChange={setOperationRange}
-                onChange={next => {
-                  if (next != null) setField(infoForm, 'startDate', next.format('YYYY-MM-DD'))
-                }}
-              />
-            </div>
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="프로그램 진행 현황"
-          readOnlyDisplay
-          view={
-            <span className="form-editor-template-field-hint-text">
-              {PROGRAM_PROGRESS_STATIC_VIEW}
-            </span>
-          }
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="참여자 유형"
-          validationKey="basicInfo.audience"
-          edit={
-            <div className="detail-info-form-inputs-wrapper">
-              <CmsCheckbox checkboxSize="medium" checked={individualChecked} disabled>
-                {participantTypeLabel('individual')}
-              </CmsCheckbox>
-              <CmsCheckbox checkboxSize="medium" checked={organizationChecked} disabled>
-                {participantTypeLabel('school_institution')}
-              </CmsCheckbox>
-              <CmsCheckbox checkboxSize="medium" checked={teacherChecked} disabled>
-                {participantTypeLabel('teacher_instructor')}
-              </CmsCheckbox>
-              <CmsCheckbox checkboxSize="medium" checked={volunteerChecked} disabled>
-                {participantTypeLabel('volunteer')}
-              </CmsCheckbox>
-            </div>
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="사업 분야"
-          validationKey="basicInfo.businessField"
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsSelect
-                withAllOption={false}
-                inputSize="small"
-                placeholder="선택해 주세요"
-                width="100%"
-                options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
-                value={String(formValues.businessArea ?? '')}
-                onChange={value => setField(infoForm, 'businessArea', String(value ?? ''))}
-              />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="후원사"
-          validationKey="basicInfo.sponsorId"
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsSelect
-                withAllOption={false}
-                inputSize="small"
-                placeholder="선택해 주세요"
-                width="100%"
-                options={sponsorOptions}
-                value={sponsorId}
-                loading={sponsorOptionsLoading}
-                onOpenChange={onSelectOpenChange}
-                onChange={value => {
-                  const next = String(value ?? '')
-                  setField(infoForm, 'sponsorId', next)
-                  setField(infoForm, 'sponsorManagementIds', next ? [next] : [])
-                  applySponsorContactIds([])
-                }}
-              />
-            </div>
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="후원사 담당자"
-          validationKey="basicInfo.sponsorContact"
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsSelect
-                mode="multiple"
-                withAllOption={false}
-                inputSize="small"
-                placeholder="선택해 주세요"
-                width="100%"
-                showSearch
-                optionFilterProp="label"
-                options={managerOptions}
-                value={selectedSponsorContactIds}
-                disabled={!sponsorId}
-                loading={sponsorOptionsLoading}
-                onOpenChange={onSelectOpenChange}
-                onChange={value =>
-                  applySponsorContactIds(Array.isArray(value) ? value.map(String) : [])
-                }
-              />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="교육 장소"
-          validationKey="basicInfo.educationVenueDetail"
-          fullRow
-          edit={
-            <div className="detail-info-form-inputs-wrapper">
-              <CmsRadioGroup
-                size="medium"
-                value={formValues.venueKind ?? 'inside'}
-                onChange={event =>
-                  setField(
-                    infoForm,
-                    'venueKind',
-                    event.target.value as 'inside' | 'outside' | 'other'
-                  )
-                }
-              >
-                <CmsRadio size="medium" value="inside">
-                  기관 안
-                </CmsRadio>
-                <CmsRadio size="medium" value="outside">
-                  기관 밖
-                </CmsRadio>
-                <CmsRadio size="medium" value="other">
-                  기타(직접입력)
-                </CmsRadio>
-              </CmsRadioGroup>
-              <DetailInfoForm.InputsSeparator />
+    <>
+      <DetailInfoForm
+        title="UJAT 기본 정보"
+        hideHeader
+        mode="edit"
+        className="program-registration-paragraph"
+      >
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="대표 프로그램명 (국문)"
+            validationKey="basicInfo.repKo"
+            edit={
               <CmsInput
                 inputSize="small"
-                placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                value={String(formValues.mainTitle ?? '')}
+                onChange={event => setField(infoForm, 'mainTitle', event.target.value)}
+                placeholder={`예) ${UJAT_BASIC_INFO_REP_KO_DEFAULT}`}
                 width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
-                value={String(formValues.venueDetail ?? formValues.venue ?? '')}
-                onChange={event => {
-                  setField(infoForm, 'venueDetail', event.target.value)
-                  setField(infoForm, 'venue', event.target.value)
-                }}
               />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="설문 진행 항목"
-          fullRow
-          edit={
-            <div className="detail-info-form-inputs-wrapper">
-              {UJAT_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
-                <CmsCheckbox
-                  key={id}
-                  checkboxSize="medium"
-                  checked={surveyItems[id]}
-                  onChange={toggleSurveyItem(id)}
-                >
-                  {UJAT_REGISTRATION_SURVEY_ITEM_LABELS[id]}
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="대표 프로그램명 (영문)"
+            validationKey="basicInfo.repEn"
+            edit={
+              <CmsInput
+                inputSize="small"
+                value={String(formValues.titleEn ?? '')}
+                onChange={event => setField(infoForm, 'titleEn', event.target.value)}
+                placeholder={`예) ${UJAT_BASIC_INFO_REP_EN_DEFAULT}`}
+                width="100%"
+              />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="프로그램 관리명"
+            validationKey="basicInfo.programManagementName"
+            edit={
+              <CmsInput
+                inputSize="small"
+                value={String(formValues.title ?? '')}
+                onChange={event => setField(infoForm, 'title', event.target.value)}
+                placeholder="대표 프로그램명을 입력해 주세요"
+                width="100%"
+              />
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="세부 프로그램명"
+            validationKey="basicInfo.detailedProgramId"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  withAllOption={false}
+                  inputSize="small"
+                  placeholder="선택해 주세요"
+                  width="100%"
+                  options={detailedProgramOptions}
+                  value={detailedProgramSelectValue}
+                  onChange={value => setDetailedProgramSelection(String(value ?? ''))}
+                  onOpenChange={onSelectOpenChange}
+                  disabled={lockDetailedProgramToNone}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="사업 운영 기간"
+            validationKey="basicInfo.operationRangeSeal"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <ParagraphDatePicker
+                  inputSize="small"
+                  mode="single"
+                  presetMode="period"
+                  value={operationAnchorDate}
+                  width="100%"
+                  placeholder="사업 운영 기간을 선택해 주세요"
+                  preferPeriodModeInPopover
+                  excludeBusinessPeriodConstraint
+                  appliedSurfaceRange={operationRange}
+                  appliedSurfaceWithTime={operationRangeWithTime}
+                  onRangeChange={setOperationRange}
+                  onChange={next => {
+                    if (next != null) setField(infoForm, 'startDate', next.format('YYYY-MM-DD'))
+                  }}
+                />
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="프로그램 진행 현황"
+            readOnlyDisplay
+            view={
+              <span className="form-editor-template-field-hint-text">
+                {PROGRAM_PROGRESS_STATIC_VIEW}
+              </span>
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="참여자 유형"
+            validationKey="basicInfo.audience"
+            edit={
+              <div className="detail-info-form-inputs-wrapper">
+                <CmsCheckbox checkboxSize="medium" checked={individualChecked} disabled>
+                  {participantTypeLabel('individual')}
                 </CmsCheckbox>
-              ))}
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="교육 과정"
-          validationKey="basicInfo.educationCourse"
-          edit={
-            <CmsSelect
-              withAllOption={false}
-              inputSize="small"
-              placeholder="선택해 주세요"
-              width="100%"
-              options={educationCourseSelectOptions}
-              value={String(formValues.educationProcess ?? '')}
-              onChange={value => setField(infoForm, 'educationProcess', String(value ?? ''))}
-            />
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
-          validationKey="basicInfo.ipOwned"
-          edit={
-            <CmsSelect
-              withAllOption={false}
-              inputSize="small"
-              placeholder="선택해 주세요"
-              width="100%"
-              options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
-              value={selectValue(formValues.ipOwned)}
-              onChange={value => setSelectValue('ipOwned', value)}
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
-          validationKey="basicInfo.courseDeliveredBy"
-          edit={
-            <CmsSelect
-              withAllOption={false}
-              inputSize="small"
-              placeholder="선택해 주세요"
-              width="100%"
-              options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
-              value={selectValue(formValues.courseDeliveredBy)}
-              onChange={value => setSelectValue('courseDeliveredBy', value)}
-            />
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label={TEMPLATE_FORM_IPS_FIELD_LABELS.partnerInvolvement}
-          validationKey="basicInfo.partnerInvolvement"
-          edit={
-            <CmsRadioGroup
-              size="medium"
-              value={
-                formValues.partnerInvolvement === true
-                  ? 'yes'
-                  : formValues.partnerInvolvement === false
-                    ? 'no'
-                    : undefined
-              }
-              onChange={event =>
-                setField(infoForm, 'partnerInvolvement', event.target.value === 'yes')
-              }
-            >
-              <CmsRadio size="medium" value="yes">
-                Yes
-              </CmsRadio>
-              <CmsRadio size="medium" value="no">
-                No
-              </CmsRadio>
-            </CmsRadioGroup>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="IPS 유형"
-          validationKey="basicInfo.ipsCategory"
-          fullRow
-          edit={
-            <CmsSelect
-              withAllOption={false}
-              inputSize="small"
-              placeholder="선택해 주세요"
-              width={240}
-              options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
-              value={String(formValues.ipsCategory ?? '')}
-              onChange={value => setField(infoForm, 'ipsCategory', String(value ?? ''))}
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
+                <CmsCheckbox checkboxSize="medium" checked={organizationChecked} disabled>
+                  {participantTypeLabel('school_institution')}
+                </CmsCheckbox>
+                <CmsCheckbox checkboxSize="medium" checked={teacherChecked} disabled>
+                  {participantTypeLabel('teacher_instructor')}
+                </CmsCheckbox>
+                <CmsCheckbox checkboxSize="medium" checked={volunteerChecked} disabled>
+                  {participantTypeLabel('volunteer')}
+                </CmsCheckbox>
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="사업 분야"
+            validationKey="basicInfo.businessField"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  withAllOption={false}
+                  inputSize="small"
+                  placeholder="선택해 주세요"
+                  width={UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH}
+                  options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+                  value={String(formValues.businessArea ?? '')}
+                  onChange={value => setField(infoForm, 'businessArea', String(value ?? ''))}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="후원사"
+            validationKey="basicInfo.sponsorId"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  withAllOption={false}
+                  inputSize="small"
+                  placeholder="선택해 주세요"
+                  width="100%"
+                  options={sponsorOptions}
+                  value={sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
+                  onChange={value => {
+                    const next = String(value ?? '')
+                    setField(infoForm, 'sponsorId', next)
+                    setField(infoForm, 'sponsorManagementIds', next ? [next] : [])
+                    applySponsorContactIds([])
+                  }}
+                />
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="후원사 담당자"
+            validationKey="basicInfo.sponsorContact"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  mode="multiple"
+                  withAllOption={false}
+                  inputSize="small"
+                  placeholder="후원사 담당자를 선택해 주세요"
+                  width="100%"
+                  showSearch
+                  optionFilterProp="label"
+                  options={managerOptions}
+                  value={selectedSponsorContactIds}
+                  disabled={!sponsorId}
+                  loading={sponsorOptionsLoading}
+                  onOpenChange={onSelectOpenChange}
+                  onChange={value =>
+                    applySponsorContactIds(Array.isArray(value) ? value.map(String) : [])
+                  }
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="교육 장소"
+            validationKey="basicInfo.educationVenueDetail"
+            fullRow
+            edit={
+              <div className="detail-info-form-inputs-wrapper">
+                <CmsRadioGroup
+                  size="medium"
+                  value={formValues.venueKind ?? 'inside'}
+                  onChange={event =>
+                    setField(
+                      infoForm,
+                      'venueKind',
+                      event.target.value as 'inside' | 'outside' | 'other'
+                    )
+                  }
+                >
+                  <CmsRadio size="medium" value="inside">
+                    기관 안
+                  </CmsRadio>
+                  <CmsRadio size="medium" value="outside">
+                    기관 밖
+                  </CmsRadio>
+                  <CmsRadio size="medium" value="other">
+                    기타(직접입력)
+                  </CmsRadio>
+                </CmsRadioGroup>
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="small"
+                  placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  value={String(formValues.venueDetail ?? formValues.venue ?? '')}
+                  onChange={event => {
+                    setField(infoForm, 'venueDetail', event.target.value)
+                    setField(infoForm, 'venue', event.target.value)
+                  }}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="설문 진행 항목"
+            fullRow
+            edit={
+              <div className="detail-info-form-inputs-wrapper">
+                {UJAT_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
+                  <CmsCheckbox
+                    key={id}
+                    checkboxSize="medium"
+                    checked={surveyItems[id]}
+                    onChange={toggleSurveyItem(id)}
+                  >
+                    {UJAT_REGISTRATION_SURVEY_ITEM_LABELS[id]}
+                  </CmsCheckbox>
+                ))}
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+
+      {/* 시안: 교육 과정 이하(IP·IPS)는 16px 띄운 별도 표 */}
+      <DetailInfoForm
+        title="UJAT 기본 정보 — 교육 과정 및 IPS"
+        hideHeader
+        mode="edit"
+        className="program-registration-paragraph"
+        style={{ marginTop: 16 }}
+      >
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="교육 과정"
+            validationKey="basicInfo.educationCourse"
+            edit={
+              <CmsSelect
+                withAllOption={false}
+                inputSize="small"
+                placeholder="선택해 주세요"
+                width={UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH}
+                options={educationCourseSelectOptions}
+                value={String(formValues.educationProcess ?? '')}
+                onChange={value => setField(infoForm, 'educationProcess', String(value ?? ''))}
+              />
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label={UJAT_FORM_IPS_FIELD_LABELS.ipOwned}
+            validationKey="basicInfo.ipOwned"
+            edit={
+              <CmsSelect
+                withAllOption={false}
+                inputSize="small"
+                placeholder="선택해 주세요"
+                width={UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH}
+                options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
+                value={selectValue(formValues.ipOwned)}
+                onChange={value => setSelectValue('ipOwned', value)}
+              />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label={UJAT_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
+            validationKey="basicInfo.courseDeliveredBy"
+            edit={
+              <CmsSelect
+                withAllOption={false}
+                inputSize="small"
+                placeholder="선택해 주세요"
+                width={UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH}
+                options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
+                value={selectValue(formValues.courseDeliveredBy)}
+                onChange={value => setSelectValue('courseDeliveredBy', value)}
+              />
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label={UJAT_FORM_IPS_FIELD_LABELS.partnerInvolvement}
+            validationKey="basicInfo.partnerInvolvement"
+            edit={
+              <CmsRadioGroup
+                size="medium"
+                value={
+                  formValues.partnerInvolvement === true
+                    ? 'yes'
+                    : formValues.partnerInvolvement === false
+                      ? 'no'
+                      : undefined
+                }
+                onChange={event =>
+                  setField(infoForm, 'partnerInvolvement', event.target.value === 'yes')
+                }
+              >
+                <CmsRadio size="medium" value="yes">
+                  Yes
+                </CmsRadio>
+                <CmsRadio size="medium" value="no">
+                  No
+                </CmsRadio>
+              </CmsRadioGroup>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="IPS 유형"
+            validationKey="basicInfo.ipsCategory"
+            fullRow
+            edit={
+              <CmsSelect
+                withAllOption={false}
+                inputSize="small"
+                placeholder="선택해 주세요"
+                width={UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH}
+                options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
+                value={String(formValues.ipsCategory ?? '')}
+                onChange={value => setField(infoForm, 'ipsCategory', String(value ?? ''))}
+              />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </>
   )
 }

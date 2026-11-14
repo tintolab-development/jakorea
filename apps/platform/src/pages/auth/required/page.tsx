@@ -33,9 +33,9 @@ export function RequiredPage() {
       <div className={styles.intro}>
         <img className={styles.illustration} src={illustLoginRequiredUrl} alt="" aria-hidden="true" />
         <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
-          로그인이 필요한 서비스예요
+          로그인이 필요한 서비스예요.
         </PFText>
-        <PFText as="p" typo="bd-lg-rg" color="primary-700">
+        <PFText as="p" typo="bd-lg-rg" color="primary-800">
           JA Korea 회원으로 로그인하면
           <br />
           신청과 활동 내역을 이어서 확인할 수 있어요.

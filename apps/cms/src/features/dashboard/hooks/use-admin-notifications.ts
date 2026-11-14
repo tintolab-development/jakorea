@@ -9,8 +9,17 @@ import {
 } from '@/features/dashboard/lib/admin-notification-inbox-page'
 import { mergeAdminNotificationInbox } from '@/features/dashboard/lib/merge-admin-notification-inbox'
 
-function useAdminNotificationInboxQuery(enabled: boolean, unreadOnly: boolean) {
-  const params = { size: ADMIN_NOTIFICATION_INBOX_PAGE_SIZE, unreadOnly }
+function useAdminNotificationInboxQuery(
+  enabled: boolean,
+  unreadOnly: boolean,
+  category: string | undefined
+) {
+  // 탭(category)마다 키를 나눠 캐시·무한 스크롤을 따로 이어 간다. 전체는 기존 키 그대로.
+  const params = {
+    size: ADMIN_NOTIFICATION_INBOX_PAGE_SIZE,
+    unreadOnly,
+    ...(category ? { category } : {}),
+  }
   return useInfiniteQuery({
     queryKey: dashboardQueryKeys.notifications('remote', params),
     queryFn: ({ pageParam }) =>
@@ -18,6 +27,7 @@ function useAdminNotificationInboxQuery(enabled: boolean, unreadOnly: boolean) {
         page: pageParam,
         size: params.size,
         unreadOnly: params.unreadOnly,
+        category,
       }),
     initialPageParam: 0,
     getNextPageParam: lastPage => nextAdminNotificationPageParam(lastPage),
@@ -27,10 +37,11 @@ function useAdminNotificationInboxQuery(enabled: boolean, unreadOnly: boolean) {
   })
 }
 
-export function useAdminNotifications(enabled = true) {
+/** @param category BE notificationCategory. 생략하면 전체 목록 */
+export function useAdminNotifications(enabled = true, category?: string) {
   const remoteEnabled = useDashboardRemoteQueryEnabled(enabled)
-  const unreadQuery = useAdminNotificationInboxQuery(remoteEnabled, true)
-  const inboxQuery = useAdminNotificationInboxQuery(remoteEnabled, false)
+  const unreadQuery = useAdminNotificationInboxQuery(remoteEnabled, true, category)
+  const inboxQuery = useAdminNotificationInboxQuery(remoteEnabled, false, category)
 
   const unreadNotifications = useMemo(
     () => unreadQuery.data?.pages.flatMap(page => page.items) ?? [],

@@ -73,7 +73,8 @@ export type LectureReportState = {
   assignmentId: number
   instructorApplicationId: number | null
   programId: number
-  programScheduleId: number
+  /** 일정 미정 배정(WAITING_ASSIGNMENT 등)이면 null. 이때 reportStatus UPCOMING/BUSINESS_ENDED, canSubmit false */
+  programScheduleId: number | null
   reportId: number | null
   submitted: boolean
   submittedAt: string | null

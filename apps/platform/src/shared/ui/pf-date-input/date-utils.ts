@@ -144,10 +144,10 @@ export function getDecadeStart(year: number): number {
   return Math.floor(year / 10) * 10
 }
 
-/** 연대 패널용 12개 연도: (decade-1) … (decade+10) */
+/** 연대 패널용 10개 연도: decade … (decade+9). 앞뒤 연대 연도는 넣지 않는다 (QA 2026-11-14) */
 export function getDecadePanelYears(decadeStart: number): number[] {
   const years: number[] = []
-  for (let year = decadeStart - 1; year <= decadeStart + 10; year += 1) {
+  for (let year = decadeStart; year <= decadeStart + 9; year += 1) {
     years.push(year)
   }
   return years

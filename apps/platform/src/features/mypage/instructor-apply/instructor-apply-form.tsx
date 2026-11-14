@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
@@ -15,11 +15,8 @@ import {
   INSTRUCTOR_FORM_PLACEHOLDERS as PH,
   INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
 } from '@jakorea/domain/instructor/form-copy'
-import { GENDER_OPTIONS } from '@jakorea/domain/instructor/gender'
-import {
-  INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
-  type InstructorSharedProfileFormValues,
-} from '@jakorea/domain/instructor/profile-form-values'
+import { GENDER_OPTIONS, type Gender } from '@jakorea/domain/instructor/gender'
+import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
@@ -27,8 +24,10 @@ import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
+import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
 import {
   PFAlertModal,
+  PFRequiredFieldsIncompleteDescription,
   PFButton,
   PFCheckbox,
   PFFormField,
@@ -62,7 +61,11 @@ import {
 } from './consent/catalog'
 import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
 import { instructorApplyPath } from '../lib/constants'
-import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
+import {
+  INSTRUCTOR_APPLY_INITIAL_FORM_VALUES,
+  loadInstructorApplyFormDraft,
+  saveInstructorApplyFormDraft,
+} from './consent/form-persist'
 import { clearInstructorApplySessionCache } from './lib/instructor-apply-session-cache'
 import { resolveInstructorApplySubmittedSnapshot } from './lib/resolve-submitted-snapshot'
 import { useCurrentInstructorRoleRequestDetailQuery } from './api/use-current-instructor-role-request-detail-query'
@@ -80,7 +83,6 @@ import { ConsentDocumentPreviewOverlay } from '../settings/ui/consent-document-p
 import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 
-const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
 const FORM_SURFACE = 'platformApply' as const
 /** 필수 작성 동의서 3종 — 행정정보 공동이용 동의서는 선택(스키마 `documentGroups`) */
 const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE)
@@ -133,7 +135,7 @@ function shouldPreserveEmploymentStatus(
 
 type AlertState = {
   title: string
-  description?: string
+  description?: ReactNode
 } | null
 
 function RadioGroup<T extends string>({
@@ -256,7 +258,7 @@ export function InstructorApplyForm({
       employmentTouchedRef.current = true
     }
     return applyLockedBasicToInstructorForm(
-      draft ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
+      draft ?? INSTRUCTOR_APPLY_INITIAL_FORM_VALUES,
       lockedBasic,
       preserveEmploymentStatus,
     )
@@ -405,7 +407,11 @@ export function InstructorApplyForm({
     )
 
     if (missingRequired) {
-      setAlert({ title: '안내', description: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE })
+      // 시안 「공통 제한 안내 / 필수 항목 미입력」
+      setAlert({
+        title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+        description: <PFRequiredFieldsIncompleteDescription />,
+      })
       return
     }
     if (formatMessages.length > 0) {
@@ -426,7 +432,9 @@ export function InstructorApplyForm({
 
     void (async () => {
       try {
-        const mapped = mapInstructorApplyFormToCreateRequest(values)
+        const mapped = mapInstructorApplyFormToCreateRequest(values, {
+          profileGender: lockedBasic.profileGender,
+        })
         const termsAgreements = await resolveInstructorApplyTermsAgreementVersions(
           mapped.termsAgreements,
         )
@@ -494,12 +502,17 @@ export function InstructorApplyForm({
               </PFFormField>
               <PFFormField label="성별 및 생년월일">
                 <PFFormInlineSeparatedFields>
-                  <RadioGroup
+                  {/* 원격 프로필이 있으면 프로필 성별로 표시한다 — OTHER·예전 값은 남/여 어느 쪽도 선택하지 않는다 */}
+                  <RadioGroup<Gender | ''>
                     name="gender"
-                    value={values.gender}
+                    value={
+                      lockedBasic.profileGender !== undefined ? lockedBasic.gender : values.gender
+                    }
                     options={GENDER_OPTIONS}
                     disabled
-                    onChange={value => patch('gender', value)}
+                    onChange={value => {
+                      if (value) patch('gender', value)
+                    }}
                   />
                   <PFTextInput
                     variant="formPage"
@@ -566,20 +579,23 @@ export function InstructorApplyForm({
                       value={values.affiliationName}
                       onValueChange={value => patch('affiliationName', value)}
                     />
-                    <PFCheckbox
-                      size="large"
-                      checked={values.affiliationNone}
-                      disabled
-                      onCheckedChange={checked => {
-                        setValues(prev => ({
-                          ...prev,
-                          affiliationNone: checked,
-                          affiliationName: checked ? '' : prev.affiliationName,
-                        }))
-                      }}
-                    >
-                      소속 없음
-                    </PFCheckbox>
+                    {/* 회원정보로 소속이 채워져 있으면 「소속 없음」은 숨긴다 */}
+                    {values.affiliationName.trim() ? null : (
+                      <PFCheckbox
+                        size="large"
+                        checked={values.affiliationNone}
+                        disabled
+                        onCheckedChange={checked => {
+                          setValues(prev => ({
+                            ...prev,
+                            affiliationNone: checked,
+                            affiliationName: checked ? '' : prev.affiliationName,
+                          }))
+                        }}
+                      >
+                        소속 없음
+                      </PFCheckbox>
+                    )}
                   </PFFormInlineSeparatedFields>
                 )}
               </PFFormField>

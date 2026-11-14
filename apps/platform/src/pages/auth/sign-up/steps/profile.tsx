@@ -1,7 +1,6 @@
 import {
   AddressSearchModal,
   SchoolSearchModal,
-  schoolGradeOptions,
   type UseSignUpReturn,
 } from '@/features/auth/sign-up'
 import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
@@ -32,7 +31,7 @@ function SchoolEnrollmentToggle({
   schoolStatus,
   setSchoolStatus,
 }: {
-  schoolStatus: 'enrolled' | 'none'
+  schoolStatus: 'enrolled' | 'none' | null
   setSchoolStatus: (status: 'enrolled' | 'none') => void
 }) {
   return (
@@ -86,7 +85,10 @@ function MinorEnrolledSchoolFields({
         placeholder="학년을 선택해 주세요"
         value={profile.grade}
         onValueChange={profile.setGrade}
-        options={schoolGradeOptions.map(option => ({
+        error={Boolean(profile.fieldErrors.grade)}
+        message={profile.fieldErrors.grade || undefined}
+        messageStatus={profile.fieldErrors.grade ? 'error' : undefined}
+        options={profile.gradeOptions.map(option => ({
           value: option,
           label: option,
         }))}
@@ -133,7 +135,10 @@ function AdultEnrolledSchoolFields({
         placeholder="학년을 선택해 주세요"
         value={profile.grade}
         onValueChange={profile.setGrade}
-        options={schoolGradeOptions.map(option => ({
+        error={Boolean(profile.fieldErrors.grade)}
+        message={profile.fieldErrors.grade || undefined}
+        messageStatus={profile.fieldErrors.grade ? 'error' : undefined}
+        options={profile.gradeOptions.map(option => ({
           value: option,
           label: option,
         }))}
@@ -153,6 +158,7 @@ function HomeAddressFields({ profile }: { profile: UseSignUpReturn['profile'] })
           size="xlarge"
           placeholder="주소를 검색해 주세요"
           value={profile.address}
+          error={Boolean(profile.fieldErrors.address)}
           readOnly
           onClick={profile.openAddressModal}
         />
@@ -160,6 +166,11 @@ function HomeAddressFields({ profile }: { profile: UseSignUpReturn['profile'] })
           주소 검색
         </PFButton>
       </div>
+      {profile.fieldErrors.address ? (
+        <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
+          {profile.fieldErrors.address}
+        </PFText>
+      ) : null}
       <PFTextInput
         size="xlarge"
         placeholder="상세주소를 입력해 주세요"
@@ -177,7 +188,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title={isMinorSignup ? '회원 정보를 입력해 주세요.' : '회원 정보를 입력해 주세요'}
+        title="회원 정보를 입력해 주세요."
         description={
           <>
             JA Korea 서비스를 더 편하게 이용할 수 있도록
@@ -210,6 +221,9 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
               placeholder="이름을 입력해 주세요"
               value={profile.memberName}
               onValueChange={profile.setMemberName}
+              error={Boolean(profile.fieldErrors.name)}
+              message={profile.fieldErrors.name || undefined}
+              messageStatus={profile.fieldErrors.name ? 'error' : undefined}
               required
             />
           ) : (
@@ -230,7 +244,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
             ) : (
               <AdultEnrolledSchoolFields profile={profile} />
             )
-          ) : (
+          ) : profile.schoolStatus === 'none' ? (
             <PFTextInput
               size="xlarge"
               label="소속 기관명"
@@ -239,7 +253,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
               onValueChange={profile.setAffiliationName}
               message="소속된 기관이 없으신 경우 비워두셔도 괜찮아요"
             />
-          )}
+          ) : null}
 
           <HomeAddressFields profile={profile} />
 

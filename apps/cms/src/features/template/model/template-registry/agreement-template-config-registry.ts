@@ -49,10 +49,14 @@ import {
 import {
   RECEIPT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
   RECEIPT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
+  RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+  RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
 } from '@/features/template/ui/form-set/receipt-pre-consent/paragraph-config'
 import {
   PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
   PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
+  PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+  PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
 } from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
 import { AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-portrait/paragraph-config'
 import { AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-notice/paragraph-config'
@@ -69,7 +73,16 @@ export type AgreementTemplateConfigKey =
   | 'agreement-third-party'
   | 'agreement-receipt-pre-consent'
 
-export type AgreementWritingFormConfig = Omit<AgreementWritingFormShellProps, 'onClose'>
+export type AgreementWritingFormConfig = Omit<AgreementWritingFormShellProps, 'onClose'> & {
+  /**
+   * 템플릿 관리 작성 화면(`stripAgreementWritingFormStructureLocks`)에서만 덮어쓸 값.
+   * 회원 대리 동의 fill 등 카탈로그 원본(`resolveAgreementWritingFormConfig`) 사용처에는 적용하지 않는다.
+   */
+  templateManagement?: Pick<
+    AgreementWritingFormShellProps,
+    'paragraphBodyOptions' | 'navHiddenParagraphIds' | 'agreementClosingFooter'
+  >
+}
 
 function resolveRowTitle(templateId: string, fallback: string): string {
   return findWritingTemplateRowByDefinitionId(templateId)?.templateName ?? fallback
@@ -161,6 +174,12 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
       /** 시안: 귀하만 (작성완료는 회원 fill) */
       agreementClosingFooter: { showSubmitButton: false, showRecipient: true },
+      /** 템플릿 관리 시안 5767:42072 — 문구 카드·회색 날짜·서명·「JA KOREA 귀하」 카드를 따로 보인다 */
+      templateManagement: {
+        paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
+        navHiddenParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+        agreementClosingFooter: { showSubmitButton: false, showRecipient: false },
+      },
     }
   },
   'agreement-receipt-pre-consent': () => {
@@ -182,6 +201,12 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4ParagraphGapPx: getReceiptPreConsentA4ParagraphGap,
       paragraphBodyOptions: RECEIPT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
       agreementClosingFooter: { showSubmitButton: false, showRecipient: true },
+      /** 템플릿 관리 시안 16046:109928 — 문구 카드·회색 날짜·서명·「JA KOREA 귀하」 카드를 따로 보인다 */
+      templateManagement: {
+        paragraphBodyOptions: RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
+        navHiddenParagraphIds: RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+        agreementClosingFooter: { showSubmitButton: false, showRecipient: false },
+      },
     }
   },
 }
@@ -196,9 +221,14 @@ export function stripAgreementWritingFormStructureLocks(
   const {
     structureLockedParagraphIds: _structureLockedParagraphIds,
     hideDragHandleForParagraphIds: _hideDragHandleForParagraphIds,
-    paragraphBodyOptions,
-    ...editable
+    templateManagement,
+    paragraphBodyOptions: catalogParagraphBodyOptions,
+    ...rest
   } = config
+  const { paragraphBodyOptions: templateManagementBodyOptions, ...templateManagementRest } =
+    templateManagement ?? {}
+  const editable = { ...rest, ...templateManagementRest }
+  const paragraphBodyOptions = templateManagementBodyOptions ?? catalogParagraphBodyOptions
   if (paragraphBodyOptions == null) return editable
   const {
     structureLockedAuthoringChoicePreview: _choicePreview,

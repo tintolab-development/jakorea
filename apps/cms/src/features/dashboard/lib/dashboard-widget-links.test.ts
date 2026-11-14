@@ -16,6 +16,9 @@ describe('dashboard-widget-links', () => {
     )
     expect(programScheduleMorePath('ujat')).toBe('/programs/ujat?viewMode=calendar')
     expect(programScheduleMorePath('gemini')).toBe('/programs/gemini/visiting-training')
+    expect(programScheduleMorePath('trained_teacher')).toBe(
+      '/programs/trained-teachers?viewMode=calendar'
+    )
   })
 
   it('모집 더보기는 일반 프로그램 리스트뷰다', () => {
@@ -27,6 +30,9 @@ describe('dashboard-widget-links', () => {
     )
     expect(recruitmentProgramDetailPath('12', 'gemini')).toBe(
       '/programs/gemini/visiting-training?programId=12'
+    )
+    expect(recruitmentProgramDetailPath('12', 'TRAINED_TEACHER')).toBe(
+      '/programs/trained-teachers?programId=12'
     )
   })
 
@@ -53,6 +59,9 @@ describe('dashboard-widget-links', () => {
   it('일정 이벤트는 유형별 프로그램 상세 쿼리다', () => {
     expect(programScheduleEventPath('gemini', '9')).toBe(
       '/programs/gemini/visiting-training?programId=9'
+    )
+    expect(programScheduleEventPath('trained_teacher', '9')).toBe(
+      '/programs/trained-teachers?programId=9'
     )
   })
 })

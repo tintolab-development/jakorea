@@ -16,7 +16,10 @@ import {
   fetchAdminMfaVerify,
   AdminMfaApiError,
 } from '@/features/auth/api/admin-auth-fetcher'
-import { buildAdminMfaEnrollmentRequest } from '@/features/auth/lib/admin-mfa-contract'
+import {
+  buildAdminMfaEnrollmentRequest,
+  parseMfaFailedAttemptDetails,
+} from '@/features/auth/lib/admin-mfa-contract'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
 
 export interface GetTotpProvisioningOptions {
@@ -70,6 +73,7 @@ export async function verifyTotp(
     } catch (error) {
       if (error instanceof AdminMfaApiError) {
         const locked = error.code === 'ACCOUNT_LOCKED'
+        const serverAttempts = parseMfaFailedAttemptDetails(error.details)
         return {
           success: false,
           detail: error.message,
@@ -78,6 +82,8 @@ export async function verifyTotp(
           isLocked: locked,
           lockUntil: null,
           errorCode: error.code,
+          serverFailedAttemptCount: serverAttempts.failedAttemptCount,
+          serverMaxFailedAttempts: serverAttempts.maxFailedAttempts,
         }
       }
       const message = error instanceof Error ? error.message : 'MFA 인증에 실패했습니다.'

@@ -54,6 +54,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   gender: string
   /** 수정 진입 시점 성별 라벨(''=미등록·마스킹). 같으면 저장 payload에서 성별을 빼 기존 값을 덮어쓰지 않는다. */
   genderOriginal?: string
+  /** 수정 진입 시점 이메일. 관리자 계정 저장에서 같으면 payload에서 뺀다(로그인 식별자 불필요 변경 방지). */
+  emailOriginal?: string
   birthDate: string
   socialAccount: string
   adminComment: string
@@ -302,6 +304,7 @@ export function userToAdminProvisionedBasicDraft(
     name: user.name ?? '',
     phone: user.phone ?? '',
     email: user.email ?? '',
+    emailOriginal: user.email ?? '',
     detailAddress: user.detailAddress ?? '',
     affiliationInstitution,
     affiliationGrade,
@@ -526,12 +529,19 @@ export function draftToAdminProvisionedIndividualBasicInfoPatch(
 export function draftToAdminAccountBasicInfoPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
 ): PatchUserBasicInfoInput {
-  const base = draftToBasicInfoPatch(draft)
+  const { email, ...base } = draftToBasicInfoPatch(draft)
+  // 관리자 등록 회원은 최초 로그인·본인인증 전까지 이메일도 수정한다([정보 수정] 게이트가 그 조건).
+  // 로그인 식별자라 바뀐 경우에만 보낸다. 서버는 소문자로 저장하므로 화면 반영값도 소문자로 맞춘다.
+  const emailChanged =
+    email !== undefined &&
+    email !== '' &&
+    email.toLowerCase() !== (draft.emailOriginal ?? '').trim().toLowerCase()
   const termsAgreements = filterEditableTermsAgreementsForAdminAccountBasicInfoPatch(
     draft.termsAgreements
   )
   return {
     ...base,
+    ...(emailChanged ? { email: email.toLowerCase() } : {}),
     ...draftToIndividualAffiliationPatch(draft),
     ...(termsAgreements ? { termsAgreements } : {}),
     ...(draft.consentWriteSnapshots

@@ -6,7 +6,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { UserRole } from '@/types/user'
-import type { DashboardWidgetConfig, DashboardWidgetSlotHeightPx } from '@/shared/config/dashboard-config'
+import type {
+  DashboardWidgetConfig,
+  DashboardWidgetSlotHeightPx,
+} from '@/shared/config/dashboard-config'
 
 /**
  * 내장 드래그 핸들(WidgetTitleWithHandle)이 **없는** 위젯 목록.
@@ -16,7 +19,7 @@ import type { DashboardWidgetConfig, DashboardWidgetSlotHeightPx } from '@/share
 export const WIDGET_IDS_WITHOUT_BUILT_IN_HANDLE: readonly string[] = [] as const
 
 const STORAGE_KEY = 'dashboard-widget-order'
-const PERSIST_VERSION = 6
+const PERSIST_VERSION = 7
 
 /** 백엔드에서 홈 위젯/API가 제거된 id (FE `log-alerts-widget`, BE `log-alert-widget`) */
 const REMOVED_DASHBOARD_WIDGET_IDS = new Set(['log-alerts-widget', 'log-alert-widget'])
@@ -27,6 +30,20 @@ const HIDDEN_ADMIN_SCHEDULE_WIDGET_IDS = [
   'program-schedule-ujat-widget',
   'program-schedule-gemini-widget',
 ] as const
+
+const TRAINED_TEACHER_SCHEDULE_WIDGET_ID = 'program-schedule-trained-teacher-widget'
+
+/** `program-schedule-*` 중 마지막 항목 뒤에 삽입. 일정 위젯이 없으면 그대로 둔다(기본 병합이 뒤에 붙임) */
+export function insertAfterLastScheduleWidget(ids: string[], id: string): string[] {
+  let lastIdx = -1
+  ids.forEach((current, index) => {
+    if (current.startsWith('program-schedule-')) lastIdx = index
+  })
+  if (lastIdx === -1) return ids
+  const next = [...ids]
+  next.splice(lastIdx + 1, 0, id)
+  return next
+}
 
 function stripHiddenAdminScheduleWidgets(ids: string[]): string[] {
   const hidden = new Set<string>(HIDDEN_ADMIN_SCHEDULE_WIDGET_IDS)
@@ -201,6 +218,17 @@ function migrateLayoutState(persisted: unknown, version: number): PersistedLayou
         widthByRole = nextWidths
       }
 
+      if (version < 7) {
+        // 교육받은 교사 일정 위젯 신설 — 저장된 순서가 있으면 맨 뒤가 아니라 마지막 일정 위젯 바로 뒤에 둔다
+        const adminOrder = orderByRole['ADMIN']
+        if (adminOrder && !adminOrder.includes(TRAINED_TEACHER_SCHEDULE_WIDGET_ID)) {
+          orderByRole = {
+            ...orderByRole,
+            ADMIN: insertAfterLastScheduleWidget(adminOrder, TRAINED_TEACHER_SCHEDULE_WIDGET_ID),
+          }
+        }
+      }
+
       return { orderByRole, widthByRole }
     }
   }
@@ -245,7 +273,10 @@ export function buildDisplayItemsMeta(widgets: DashboardWidgetConfig[]): Display
  * - 새로 생긴 위젯은 `defaultIds` 순서대로 뒤에 붙음
  * - 사용자가 맞춰 둔 상대 순서는 유지
  */
-export function mergeOrderedIdsWithDefaults(saved: string[] | undefined, defaultIds: string[]): string[] {
+export function mergeOrderedIdsWithDefaults(
+  saved: string[] | undefined,
+  defaultIds: string[]
+): string[] {
   if (defaultIds.length === 0) return []
   if (!saved?.length) return defaultIds
   const valid = new Set(defaultIds)
@@ -267,10 +298,7 @@ export function mergeOrderedIdsWithDefaults(saved: string[] | undefined, default
  * 상단 빈 영역 방지: 첫 번째가 50%(12), 두 번째가 100%(24)이면 서로 바꾼다.
  * Row에서 50% 다음에 100%가 오면 100%가 다음 줄로 내려가 첫 줄 오른쪽이 비므로, 100%를 앞으로 보낸다.
  */
-export function reorderToAvoidTopGap(
-  ids: string[],
-  getColSpan: (id: string) => 12 | 24
-): string[] {
+export function reorderToAvoidTopGap(ids: string[], getColSpan: (id: string) => 12 | 24): string[] {
   if (ids.length < 2) return ids
   const a = getColSpan(ids[0])
   const b = getColSpan(ids[1])

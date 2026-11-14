@@ -116,7 +116,7 @@
 }
 
 .text:hover:not(:disabled) {
-  background: var(--color-element-hover);
+  /* 텍스트 버튼은 hover해도 배경을 보이지 않는다 — 글자색 변화와 focus-visible 표시는 유지 */
   color: var(--color-primary-500);
 }
 

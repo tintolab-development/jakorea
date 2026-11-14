@@ -154,7 +154,7 @@ export function DeleteGuideModal({
         <div className="delete-guide-modal__confirm-input-wrap">
           <CmsInput
             width={'100%'}
-            inputSize="large"
+            inputSize="medium"
             type={isPasswordMode ? 'password' : 'text'}
             label={isPasswordMode && !hideConfirmInputLabel ? '비밀번호' : undefined}
             placeholder={

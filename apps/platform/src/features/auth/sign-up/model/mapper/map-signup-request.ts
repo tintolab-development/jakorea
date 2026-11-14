@@ -12,6 +12,7 @@ import { buildTermsAgreementsFromCatalog } from './map-terms-agreements'
 import { resolveSignupSchoolAttachment } from '../../lib/signup-school-attachment'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { attachPortraitFilledDocumentToTermsAgreements } from '../../lib/map-portrait-consent-filled-document'
+import { pickSignupPortraitTermsDocument } from '../../lib/pick-signup-portrait-terms'
 import type {
   HomepageGeneralSignupRequest,
   HomepageTeacherSignupRequest,
@@ -92,7 +93,8 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
       guardianAgreements: input.guardianAgreements,
       isUnderAge: input.isUnderAgeSignup,
     }),
-    input.portraitConsentDraft
+    input.portraitConsentDraft,
+    pickSignupPortraitTermsDocument(input.termsCatalog)?.formTemplateVersion,
   )
 
   const memberPhone = input.isUnderAgeSignup ? undefined : toApiSignupPhone(input.phone)

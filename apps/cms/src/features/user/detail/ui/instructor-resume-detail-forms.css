@@ -18,10 +18,11 @@
   border-radius: 8px;
 }
 
+/* 시안 4427:53835: 이력 카드 날짜 Medium 16 #3D3D3D 불투명 (QA 2026-11-15) */
 .instructor-resume-detail-forms__form .instructor-resume-row-left {
   width: 180px;
   min-width: 180px;
-  color: rgba(61, 61, 61, 0.5);
+  color: var(--default-BK, #3d3d3d);
 }
 
 /* resume.css 연도형(--single-year) min-width 40 !important 보다 우선 */
@@ -39,7 +40,34 @@
   font-weight: 500;
 }
 
+/* 시안(강사 권한 승인 상세 4427:116816 등): 자기소개 문항 제목 Bold 18 · 140% (공통 info-section-title 20) */
+.instructor-resume-detail-forms__free-writing .instructor-resume-section--free-writing .info-section-title {
+  font-size: 18px;
+  line-height: 140%;
+}
+
 .instructor-resume-detail-forms__free-writing .instructor-resume-free-writing-text {
   font-size: 16px;
   color: #3d3d3d;
+}
+
+/*
+ * 소속 구분선 `**대학교 │ 경제학과` — 직군별 시안 (구분선 점검 2026-11-15 #10·#11)
+ * 강사·권한 승인 상세 1×13 · 앞뒤 8 / 교사 겸 강사 1×12 · 앞뒤 12. 부가 문구 앞 여백(4)은 없앤다.
+ */
+.instructor-resume-detail-forms__form .instructor-resume-row-right--with-divider .instructor-resume-role {
+  margin-left: 0;
+}
+
+.instructor-resume-detail-forms__form--instructor
+  .instructor-resume-row-right--with-divider
+  .program-detail-td-divider {
+  margin: 0 8px;
+}
+
+.instructor-resume-detail-forms__form--teacher
+  .instructor-resume-row-right--with-divider
+  .program-detail-td-divider {
+  height: 12px;
+  margin: 0 12px;
 }

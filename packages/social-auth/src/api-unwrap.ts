@@ -31,7 +31,13 @@ export function readSocialLoginMfaChallenge(payload: unknown): SocialLoginMfaCha
     mfaMethod: readOptionalString(o.mfaMethod),
     expiresAt: readOptionalString(o.expiresAt),
     mfaSetupRequired: typeof o.mfaSetupRequired === 'boolean' ? o.mfaSetupRequired : undefined,
+    failedAttemptCount: readNonNegativeInteger(o.failedAttemptCount),
+    maxFailedAttempts: readNonNegativeInteger(o.maxFailedAttempts),
   }
+}
+
+function readNonNegativeInteger(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined
 }
 
 function messageLooksLikeAccountNotLinked(message: string): boolean {

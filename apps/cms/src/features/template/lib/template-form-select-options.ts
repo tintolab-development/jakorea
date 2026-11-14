@@ -85,6 +85,12 @@ export const TEMPLATE_FORM_IPS_FIELD_LABELS = {
   partnerInvolvement: '파트너 참여 여부',
 } as const
 
+/** UJAT 등록·수정 기본 정보 — 시안(등록 폼_공통)과 상세 조회 화면은 영문 라벨을 쓴다. */
+export const UJAT_FORM_IPS_FIELD_LABELS = {
+  ipOwned: 'IP Owned',
+  courseDeliveredBy: 'Course Delivered By',
+  partnerInvolvement: 'Partner Involvement',
+} as const
 
 export const TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS = [
   { value: 'traditional_paper', label: 'Traditional (Paper)' },

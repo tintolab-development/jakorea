@@ -70,7 +70,6 @@ export function LectureReportPreviewModal({
       onClose={onClose}
       mobilePlacement="full"
       className={styles.modal}
-      closeOnBackdropClick
       ariaLabelledBy="lecture-report-preview-modal-title"
     >
       <div className={styles.shell}>

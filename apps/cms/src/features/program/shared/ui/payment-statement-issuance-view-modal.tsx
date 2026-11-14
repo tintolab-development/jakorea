@@ -30,6 +30,7 @@ import {
   getSettlementApiErrorMessage,
   isFileDownloadPasswordApiError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal.css'
 
@@ -188,7 +189,7 @@ export function PaymentStatementIssuanceViewModal({
           } catch (error) {
             if (!isFileDownloadPasswordApiError(error)) {
               showAlert({
-                title: '안내',
+                title: networkAwareAlertTitle(error, '안내'),
                 content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
               })
             }

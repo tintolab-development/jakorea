@@ -29,6 +29,13 @@ function readHttpUrl(value: unknown): string | null {
   return url
 }
 
+/** 로컬 시드 자리표시 아이콘은 index.html의 CMS와 같은 파비콘을 덮지 않는다. */
+function readFaviconUrl(value: unknown): string | null {
+  const url = readHttpUrl(value)
+  if (!url || url.includes('site-favicon-placeholder')) return null
+  return url
+}
+
 /** 객체가 아니면 null. siteName이 비면 타이틀은 `JA Korea`. */
 export function mapPublicSettings(remote: unknown): SiteSettingsView | null {
   const body = unwrapPayload(remote)
@@ -39,7 +46,7 @@ export function mapPublicSettings(remote: unknown): SiteSettingsView | null {
     title: siteName || 'JA Korea',
     description: readText(body.seoMetaDescription),
     ogImageUrl: readHttpUrl(body.ogImageUrl),
-    faviconUrl: readHttpUrl(body.faviconUrl),
+    faviconUrl: readFaviconUrl(body.faviconUrl),
   }
 }
 

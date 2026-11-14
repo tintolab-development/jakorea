@@ -16,10 +16,25 @@ interface AdminRegisterStepTermsProps {
   onBack: () => void
 }
 
-const DEFAULT_CONSENT: ConsentFormData = {
-  termsOfService: false,
-  privacyPolicy: false,
-  marketingConsent: false,
+/** 약관별 동의 상태 — true 동의 · false 동의하지 않음 · null 미선택 */
+type TermsConsentChoices = Record<TermsViewType, boolean | null>
+
+/** 처음 진입 시 아무것도 선택하지 않는다. 이전 단계에서 돌아오면 동의한 항목만 복원한다. */
+function choicesFromInitialValues(
+  initialValues?: Partial<AdminRegisterStep3Data>
+): TermsConsentChoices {
+  return {
+    termsOfService: initialValues?.termsOfService ? true : null,
+    privacyPolicy: initialValues?.privacyPolicy ? true : null,
+    marketingConsent: initialValues?.marketingConsent ? true : null,
+    mfaSetup: initialValues?.mfaSetupAgreed ? true : null,
+  }
+}
+
+/** 체크박스 해제는 「동의」만 거둔다(미선택). 「동의하지 않음」은 팝업 라디오로만 고른다. */
+function applyCheckedToChoice(previous: boolean | null, checked: boolean): boolean | null {
+  if (checked) return true
+  return previous === true ? null : previous
 }
 
 export function AdminRegisterStepTerms({
@@ -27,39 +42,43 @@ export function AdminRegisterStepTerms({
   onNext,
   onBack,
 }: AdminRegisterStepTermsProps) {
-  const [consent, setConsent] = useState<ConsentFormData>({
-    ...DEFAULT_CONSENT,
-    ...initialValues,
-  })
-  const [mfaSetupAgreed, setMfaSetupAgreed] = useState(initialValues?.mfaSetupAgreed ?? false)
+  const [choices, setChoices] = useState<TermsConsentChoices>(() =>
+    choicesFromInitialValues(initialValues)
+  )
   const { openType, isOpen, open, close } = useTermsViewModal()
 
   useEffect(() => {
-    setConsent({
-      ...DEFAULT_CONSENT,
-      ...initialValues,
-    })
-    setMfaSetupAgreed(initialValues?.mfaSetupAgreed ?? false)
+    setChoices(choicesFromInitialValues(initialValues))
   }, [initialValues])
+
+  // 미선택은 다음 단계 판정에서 「동의하지 않음」과 같다.
+  const consent: ConsentFormData = {
+    termsOfService: choices.termsOfService === true,
+    privacyPolicy: choices.privacyPolicy === true,
+    marketingConsent: choices.marketingConsent === true,
+  }
+  const mfaSetupAgreed = choices.mfaSetup === true
 
   const isValid = consent.termsOfService && consent.privacyPolicy && mfaSetupAgreed
 
-  const getAgreedForType = useCallback(
-    (type: TermsViewType) => {
-      if (type === 'mfaSetup') {
-        return mfaSetupAgreed
-      }
-      return consent[type]
-    },
-    [consent, mfaSetupAgreed]
-  )
+  const handleConsentCheckChange = useCallback((next: ConsentFormData) => {
+    setChoices(previous => ({
+      ...previous,
+      termsOfService: applyCheckedToChoice(previous.termsOfService, next.termsOfService),
+      privacyPolicy: applyCheckedToChoice(previous.privacyPolicy, next.privacyPolicy),
+      marketingConsent: applyCheckedToChoice(previous.marketingConsent, next.marketingConsent),
+    }))
+  }, [])
+
+  const handleMfaSetupCheckChange = useCallback((checked: boolean) => {
+    setChoices(previous => ({
+      ...previous,
+      mfaSetup: applyCheckedToChoice(previous.mfaSetup, checked),
+    }))
+  }, [])
 
   const handleAgreedChange = useCallback((type: TermsViewType, agreed: boolean) => {
-    if (type === 'mfaSetup') {
-      setMfaSetupAgreed(agreed)
-      return
-    }
-    setConsent(previous => ({ ...previous, [type]: agreed }))
+    setChoices(previous => ({ ...previous, [type]: agreed }))
   }, [])
 
   const handleContinue = () => {
@@ -88,9 +107,9 @@ export function AdminRegisterStepTerms({
       <div style={{ marginTop: '40px' }}>
         <RegisterTermsAgreement
           value={consent}
-          onChange={setConsent}
+          onChange={handleConsentCheckChange}
           mfaSetupAgreed={mfaSetupAgreed}
-          onMfaSetupAgreedChange={setMfaSetupAgreed}
+          onMfaSetupAgreedChange={handleMfaSetupCheckChange}
           onViewTerm={open}
         />
         <div className="auth-actions">
@@ -111,7 +130,7 @@ export function AdminRegisterStepTerms({
         <TermsViewModal
           open={isOpen}
           type={openType}
-          agreed={getAgreedForType(openType)}
+          agreed={choices[openType]}
           onAgreedChange={agreed => handleAgreedChange(openType, agreed)}
           onClose={close}
         />

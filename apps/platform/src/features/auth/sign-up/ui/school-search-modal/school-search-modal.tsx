@@ -207,6 +207,7 @@ export function SchoolSearchModal({
         : combineSearchErrors(shouldSearchCareerNet, neisError, careerNetError),
     [hasResults, shouldSearchCareerNet, neisError, careerNetError],
   )
+  const isEmptySearchResult = hasSearched && !loading && !combinedError && !hasResults
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -279,7 +280,7 @@ export function SchoolSearchModal({
   }
 
   const handleSelectResult = (result: SchoolSearchResultItem) => {
-    const selected = mapSearchResultToSelectedSchool(result)
+    const selected = mapSearchResultToSelectedSchool(result, effectiveSchoolLevel)
     if (!selected) {
       setSelectError(SCHOOL_SELECTION_INCOMPLETE_MESSAGE)
       return
@@ -303,6 +304,7 @@ export function SchoolSearchModal({
         className={[
           styles.schoolModalMain,
           hasSearched ? styles.schoolModalMainActive : undefined,
+          isEmptySearchResult ? styles.schoolModalMainEmpty : undefined,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -411,10 +413,10 @@ export function SchoolSearchModal({
                 </PFText>
               </div>
             ) : null}
-            {!loading && !combinedError && !hasResults ? (
+            {isEmptySearchResult ? (
               <div className={styles.schoolResultNotice}>
                 <PFText as="p" typo="bd-md-sb" color="black">
-                  검색 결과가 없습니다.
+                  검색 결과가 없어요
                 </PFText>
                 <PFText as="p" typo="label-md" color="black">
                   학교명을 다시 확인하거나 시/군/구를 변경해 보세요.

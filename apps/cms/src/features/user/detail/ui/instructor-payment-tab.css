@@ -1,4 +1,7 @@
 .instructor-payment-tab {
+  /* 시안 4427:72292: 체크박스 열 60 */
+  --table-selection-column-width: 60px;
+
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -37,17 +40,27 @@
 .instructor-payment-tab__month-nav {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-/** 시안: 월 표시 `2026.11` 20/Bold */
+/** 시안 4427:72292: 월 표시 `2026.11` Medium 24 · 130% · #3D3D3D */
 .instructor-payment-tab__month-label {
-  color: #0a0a0a;
-  font-family: Outfit;
-  font-size: 20px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
   font-style: normal;
-  font-weight: 700;
-  line-height: 130%; /* 31.2px */
+  font-weight: 500;
+  line-height: 130%;
+}
+
+/** 시안: 월 이동 버튼 34×34 · radius 8 · padding 6 · 아이콘 24 */
+.instructor-payment-tab__month-nav .calendar-nav .calendar-nav-btn.ant-btn {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 6px;
+  border-radius: 8px;
 }
 
 .instructor-payment-tab__toolbar-actions {
@@ -72,8 +85,8 @@
 .instructor-payment-tab__summary-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 17px;
+  gap: 24px;
+  margin-top: 16px;
 }
 
 .instructor-payment-tab__summary-card {
@@ -81,7 +94,7 @@
   min-width: 130px;
   padding: 26px 30px;
   border-radius: 12px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--table-line, #e0e0e0);
   background: #fff;
   box-sizing: border-box;
 }
@@ -103,6 +116,11 @@
   font-weight: 700;
   line-height: normal;
 }
+/* 시안: 3번째 카드(지급 예정 등) 라벨도 민트 */
+.instructor-payment-tab__summary-card:nth-child(3) .instructor-payment-tab__summary-label {
+  color: #00a0af;
+}
+
 .instructor-payment-tab__summary-value--mint {
   color: var(--JA-mint-01, #01a1af);
 }
@@ -147,6 +165,28 @@
   justify-content: center;
   align-items: center;
   width: 100%;
+}
+
+/**
+ * 시안 4427:72292: [상세 보기]는 칼럼 폭 fill(열 160 − 셀 좌우 12 = 136).
+ * 공통 `calculation-detail-view-button`(정산 관리 156 고정, !important)은 그대로 두고 이 표에서만 덮어쓴다.
+ */
+.instructor-payment-tab__detail-action-cell
+  .calculation-detail-view-button.cms-button.ant-btn.cms-button--h32 {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* 시안: 본문 행 56 */
+.instructor-payment-tab
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  height: 56px !important;
+  min-height: 56px !important;
 }
 
 .instructor-payment-tab__row--inactive > td {
@@ -202,4 +242,31 @@
 /** 시안: 강사 정산 현황 캘린더 월 제목 24/Medium */
 .instructor-payment-tab__calendar-view-container .calendar-header-title {
   font-weight: 500;
+}
+
+/** 시안 4427:72829: 우측 패널 400 (공통 변수 394) */
+.instructor-payment-tab__calendar-view-container .calendar-set {
+  --calendar-sub-right-list-max-width: 400px;
+}
+
+/** 시안: 이전·다음 달 날짜 글자 50% */
+.instructor-payment-tab__calendar-view-container
+  .ant-picker-cell:not(.ant-picker-cell-in-view)
+  .calendar-cell-date {
+  opacity: 0.5;
+}
+
+/**
+ * 시안 4427:72829 캘린더 카드 1126×742 — page-scroll 셸에서 표 위아래 테두리 겹침 1px 보정,
+ * 카드 안쪽 상하 19 (테두리 1 포함 20)
+ */
+.instructor-payment-tab__calendar-view-container .calendar-set--page-scroll .ant-picker-content tbody {
+  margin: -1px 0;
+}
+
+.instructor-payment-tab__calendar-view-container
+  .calendar-set--page-scroll
+  > .calendar-main-container
+  > .calendar-main {
+  padding: 19px 20px;
 }

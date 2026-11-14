@@ -50,9 +50,9 @@ describe('학생 명단 성별', () => {
     expect(formatStudentGenderLabel(row.gender, row.genderMask)).toBe('**')
   })
 
-  it('알 수 없는 코드는 "-"', () => {
-    expect(genderLabel('OTHER')).toBe('-')
-    expect(genderLabel('X')).toBe('-')
+  it('OTHER는 기타, 알 수 없는 값은 원문(숨기지 않음)', () => {
+    expect(genderLabel('OTHER')).toBe('기타')
+    expect(genderLabel('X')).toBe('X')
   })
 })
 

@@ -143,4 +143,21 @@ describe('mapIndividualSettlementReviewToCalculationStatement', () => {
     expect(mapIndividualSettlementItemKind('TRANSPORT')).toBe('travel')
     expect(mapIndividualSettlementItemKind('WITHHOLDING')).toBe('withholding')
   })
+
+  it('이체 예정일은 승인 후 받은 scheduledPaymentDate를 요일과 함께 보이고, 없으면 비워 화면에 -로 둔다', () => {
+    const approved = mapIndividualSettlementReviewToCalculationStatement({
+      ...detail,
+      status: 'APPROVED',
+      revisions: detail.revisions?.map(r => ({ ...r, status: 'APPROVED' })),
+      scheduledPaymentDate: '2026-11-20',
+    })
+    expect(approved.basic.processingStatusClass).toBe('confirmed')
+    expect(approved.basic.lectureFeePaymentScheduledDateDisplay).toBe('2026.11.20(금)')
+
+    const submitted = mapIndividualSettlementReviewToCalculationStatement({
+      ...detail,
+      scheduledPaymentDate: null,
+    })
+    expect(submitted.basic.lectureFeePaymentScheduledDateDisplay).toBeUndefined()
+  })
 })

@@ -19,19 +19,26 @@ import { parseAuthTokenResponse } from '@/features/auth/lib/parse-auth-token-res
 export class AdminMfaApiError extends Error {
   readonly code: string
   readonly httpStatus?: number
+  /** 서버 `error.details` (예: MFA_VERIFICATION_FAILED의 failedAttemptCount·maxFailedAttempts 문자열) */
+  readonly details?: Record<string, unknown>
 
-  constructor(code: string, message: string, httpStatus?: number) {
+  constructor(code: string, message: string, httpStatus?: number, details?: Record<string, unknown>) {
     super(message)
     this.name = 'AdminMfaApiError'
     this.code = code
     this.httpStatus = httpStatus
+    this.details = details
   }
 }
 
+/**
+ * 본문 `error.code` 를 우선한다. 423 은 잠금 외에 ACCOUNT_INACTIVE·LOGIN_DISABLED 등에도 쓰이므로
+ * 본문에 코드가 없을 때(`UNKNOWN`)만 ACCOUNT_LOCKED 로 추정한다.
+ */
 function resolveAuthErrorCode(code: string, httpStatus?: number): string {
   if (code !== 'UNKNOWN' && code !== 'MFA_FAILED') return code
   if (httpStatus === 429) return 'MFA_RATE_LIMITED'
-  if (httpStatus === 423) return 'ACCOUNT_LOCKED'
+  if (httpStatus === 423 && code === 'UNKNOWN') return 'ACCOUNT_LOCKED'
   if (httpStatus === 400) return 'VALIDATION_ERROR'
   return code
 }
@@ -48,7 +55,13 @@ function humanizeAuthErrorMessage(code: string, message: string, fallback: strin
 function parseAuthError(payload: unknown, fallback: string, httpStatus?: number): AdminMfaApiError {
   if (payload && typeof payload === 'object') {
     const record = payload as Record<string, unknown>
-    const wrapped = record.error as { code?: string; message?: string } | undefined
+    const wrapped = record.error as
+      | { code?: string; message?: string; details?: unknown }
+      | undefined
+    const details =
+      wrapped?.details && typeof wrapped.details === 'object'
+        ? (wrapped.details as Record<string, unknown>)
+        : undefined
     const rawMessage =
       wrapped?.message ??
       (typeof record.message === 'string' ? record.message : fallback)
@@ -70,7 +83,8 @@ function parseAuthError(payload: unknown, fallback: string, httpStatus?: number)
     return new AdminMfaApiError(
       code,
       humanizeAuthErrorMessage(code, rawMessage, fallback, httpStatus),
-      httpStatus
+      httpStatus,
+      details
     )
   }
   const code = resolveAuthErrorCode('UNKNOWN', httpStatus)

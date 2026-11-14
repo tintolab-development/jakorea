@@ -175,7 +175,6 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
         open={pendingDeleteId !== null}
         size="sm"
         onClose={handleCancelDelete}
-        closeOnBackdropClick={!deletingId}
         showCloseButton={false}
       >
         <div className={cancelConfirmStyles.content}>

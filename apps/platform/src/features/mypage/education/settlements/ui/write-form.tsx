@@ -3,7 +3,7 @@ import {
   formatCompanySchoolLodgingFixedAmountNotice,
   isCompanySchoolSettlementProgram,
 } from '../lib/company-school-lodging'
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { EducationSettlementItem } from '../model/types'
 import type {
@@ -115,6 +115,7 @@ import {
   PFFormResidentNumberInput,
   PFFormSection,
   PFItemDeleteButton,
+  PFRequiredFieldsIncompleteDescription,
   PFSelect,
   PFText,
   PFTextInput,
@@ -636,7 +637,7 @@ export function EducationSettlementWriteForm({
   )
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState(SETTLEMENT_WRITE_ALERT_TITLE)
-  const [alertMessage, setAlertMessage] = useState('')
+  const [alertMessage, setAlertMessage] = useState<ReactNode>('')
   const prefilledFromDetail = useRef(Boolean(hydrated))
 
   const name = composedBasic.name
@@ -704,7 +705,7 @@ export function EducationSettlementWriteForm({
     return depart + back
   }, [departAmount, returnAmount, tripType])
 
-  const showAlert = (message: string, title = SETTLEMENT_WRITE_ALERT_TITLE) => {
+  const showAlert = (message: ReactNode, title = SETTLEMENT_WRITE_ALERT_TITLE) => {
     setAlertTitle(title)
     setAlertMessage(message)
     setAlertOpen(true)
@@ -891,7 +892,15 @@ export function EducationSettlementWriteForm({
     const validationError = validateSettlementWriteDraft(draft)
     if (validationError) {
       const alert = resolveSettlementWriteValidationAlert(validationError, documentKind)
-      showAlert(alert.description, alert.title)
+      // 필수 항목 미입력 — 시안 설명(빨간 `*`)으로 보여 준다
+      showAlert(
+        validationError === 'required_incomplete' ? (
+          <PFRequiredFieldsIncompleteDescription />
+        ) : (
+          alert.description
+        ),
+        alert.title,
+      )
       return
     }
 

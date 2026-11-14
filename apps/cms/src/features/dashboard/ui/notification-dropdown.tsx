@@ -4,23 +4,20 @@
  */
 
 import { Typography } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
-import { hasAdminNotificationNavigation } from '../lib/admin-notification-navigation'
-import { formatNotificationDateTime } from '../lib/notification-inbox-display'
+import { useDragScroll } from '../hooks/use-drag-scroll'
+import { formatNotificationDate } from '../lib/notification-inbox-display'
+import {
+  resolveNotificationServerCategory,
+  type NotificationTabKey,
+} from '../lib/notification-tab-category'
 import { EmptyState } from '@/shared/ui'
 import './notification-dropdown.css'
 
 const { Text } = Typography
 
-export type NotificationCategoryKey =
-  | 'all'
-  | 'matching'
-  | 'progress'
-  | 'settlement'
-  | 'inquiry'
-  | 'schedule'
-  | 'system'
+export type NotificationCategoryKey = NotificationTabKey
 
 const CATEGORIES: { key: NotificationCategoryKey; label: string }[] = [
   { key: 'all', label: '전체' },
@@ -33,9 +30,11 @@ const CATEGORIES: { key: NotificationCategoryKey; label: string }[] = [
 ]
 
 const TYPE_TO_CATEGORY: Record<NotificationType, NotificationCategoryKey> = {
-  schedule: 'schedule',
   matching: 'matching',
+  progress: 'progress',
   settlement: 'settlement',
+  inquiry: 'inquiry',
+  schedule: 'schedule',
   system: 'system',
 }
 
@@ -51,9 +50,14 @@ function byNewest(a: Notification, b: Notification): number {
 export interface NotificationDropdownProps {
   notifications: Notification[]
   unreadCount: number | null
+  /** 선택 탭 — 탭별 서버 조회(`?category=`)를 위해 호출부(헤더)가 가진다 */
+  category: NotificationCategoryKey
+  onCategoryChange: (category: NotificationCategoryKey) => void
+  /** 선택 탭 첫 조회 중 — 빈 목록 안내를 미룬다 */
+  loading?: boolean
+  /** 항목 클릭 — 읽음 처리·안내 팝업은 호출부(헤더)가 담당. 드롭다운은 닫지 않는다 */
   onNotificationClick: (notification: Notification) => void | Promise<void>
   onConfirm?: (notification: Notification) => void
-  onClose?: () => void
   hasNextPage?: boolean
   isFetchingNextPage?: boolean
   fetchNextPage?: () => void
@@ -95,7 +99,6 @@ function NotificationRow({
     >
       <div className="notification-dropdown-item-main">
         <div className="notification-dropdown-item-title-row">
-          {read ? null : <span className="notification-dropdown-item-unread-dot" aria-hidden />}
           <Text className="notification-dropdown-item-tag">
             [{getCategoryLabel(notification.type)}]
           </Text>
@@ -109,7 +112,7 @@ function NotificationRow({
         ) : null}
       </div>
       <Text className="notification-dropdown-item-date">
-        {formatNotificationDateTime(notification.createdAt)}
+        {formatNotificationDate(notification.createdAt)}
       </Text>
     </div>
   )
@@ -118,36 +121,41 @@ function NotificationRow({
 export function NotificationDropdown({
   notifications,
   unreadCount,
+  category,
+  onCategoryChange,
+  loading = false,
   onNotificationClick,
-  onClose,
   hasNextPage = false,
   isFetchingNextPage = false,
   fetchNextPage,
 }: NotificationDropdownProps) {
-  const [category, setCategory] = useState<NotificationCategoryKey>('all')
+  // 서버가 category로 걸러 준 탭은 전체 미읽음 수와 비교하지 않는다(끝 페이지까지 불러오게 됨)
+  const serverFiltered = resolveNotificationServerCategory(category) != null
   const bodyRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
+  // 카테고리 탭 — 마우스로 누른 채 끌어 가로 스크롤(끈 경우 탭 선택 안 함)
+  const { containerRef: tabsRef, dragScrollHandlers: tabsDragScrollHandlers } =
+    useDragScroll<HTMLDivElement>()
 
   const filtered = useMemo(() => {
-    // 문의·프로그램 진행: 매핑되는 알림 타입 없음 → 빈 목록
-    if (category === 'inquiry' || category === 'progress') return []
     if (category === 'all') return notifications
     return notifications.filter(n => n.type === category)
   }, [notifications, category])
 
-  const unreadItems = useMemo(
-    () => filtered.filter(item => !item.read).sort(byNewest),
-    [filtered]
-  )
-  const readItems = useMemo(
-    () => filtered.filter(item => item.read).sort(byNewest),
-    [filtered]
-  )
+  const unreadItems = useMemo(() => filtered.filter(item => !item.read).sort(byNewest), [filtered])
+  const readItems = useMemo(() => filtered.filter(item => item.read).sort(byNewest), [filtered])
 
   useEffect(() => {
-    if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return
+    if (serverFiltered || !fetchNextPage || !hasNextPage || isFetchingNextPage) return
     if (typeof unreadCount === 'number' && unreadCount > unreadItems.length) fetchNextPage()
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, unreadCount, unreadItems.length])
+  }, [
+    serverFiltered,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    unreadCount,
+    unreadItems.length,
+  ])
 
   useEffect(() => {
     const root = bodyRef.current
@@ -165,16 +173,15 @@ export function NotificationDropdown({
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, filtered.length])
 
-  const handleItemClick = async (notification: Notification) => {
-    await onNotificationClick(notification)
-    if (hasAdminNotificationNavigation(notification)) onClose?.()
+  const handleItemClick = (notification: Notification) => {
+    void onNotificationClick(notification)
   }
 
-  const isEmpty = filtered.length === 0 && !hasNextPage && !isFetchingNextPage
+  const isEmpty = filtered.length === 0 && !loading && !hasNextPage && !isFetchingNextPage
 
   return (
     <div className="notification-dropdown-panel">
-      <div className="notification-dropdown-header">
+      <div ref={tabsRef} className="notification-dropdown-header" {...tabsDragScrollHandlers}>
         {CATEGORIES.map(({ key, label }) => (
           <button
             key={key}
@@ -185,7 +192,7 @@ export function NotificationDropdown({
               key === category ? ' notification-dropdown-tab--active' : ''
             }`}
             onClick={event => {
-              setCategory(key)
+              onCategoryChange(key)
               // 가로 스크롤 탭 — 선택한 탭이 잘리지 않도록 보이는 영역으로 이동
               event.currentTarget.scrollIntoView({
                 block: 'nearest',
@@ -218,7 +225,6 @@ export function NotificationDropdown({
             ) : null}
             {readItems.length > 0 ? (
               <div className="notification-dropdown-section">
-                <Text className="notification-dropdown-section-label">읽음</Text>
                 {readItems.map(notification => (
                   <NotificationRow
                     key={notification.id}

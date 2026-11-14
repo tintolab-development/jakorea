@@ -57,12 +57,6 @@ function isSameLoginSession(a: string | null, b: string | null): boolean {
   return sidA != null && sidA === readJwtSidClaim(b)
 }
 
-function signInRedirectPath(): string {
-  if (typeof window === 'undefined') return SIGN_IN_PATH
-  const current = `${window.location.pathname}${window.location.search}`
-  return `${SIGN_IN_PATH}?redirect=${encodeURIComponent(current)}`
-}
-
 /**
  * 포털 MEMBER 세션 경고 상태.
  * - 서버 `GET /api/portal/auth/session`이 정본. 로그인 직후·Refresh 후·다른 탭 교체·탭 복귀·새로고침 시 재조회
@@ -110,12 +104,13 @@ export function usePortalSessionTimeout() {
 
   /**
    * 서버 401로 세션 무효가 확정됐을 때만 호출한다.
-   * 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면으로 이동한다.
+   * 지금 화면에 머문 채 「자동으로 로그아웃되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면으로 이동한다.
+   * 돌아올 경로는 넘기지 않는다 — 다시 로그인하면 이전 이용 화면이 아니라 기본 첫 화면으로 간다.
    */
   const endInvalidSession = useCallback(() => {
     setVisibleKind(null)
     showSessionExpiredNotice(() => {
-      void logoutPortalSession({ redirectTo: signInRedirectPath() })
+      void logoutPortalSession({ redirectTo: SIGN_IN_PATH })
     })
   }, [])
 

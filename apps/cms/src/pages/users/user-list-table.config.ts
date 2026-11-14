@@ -25,6 +25,7 @@ import {
   rolesExactAnyOfForAllTabRoleFilter,
   type AllTabRoleFilterValue,
 } from '@/features/user/api/map-roles-exact-any-of'
+import { ALL_TAB_ROLE_SELECT_VALUES } from './user-list-filter-fields'
 import {
   INSTITUTION_SIDO_VALUES,
   LEGACY_INSTITUTION_LOCATION_TO_SIDO_SIGUNGU,
@@ -190,6 +191,14 @@ export function parseInstitutionRegionFromUserListParams(params: UserListQueryPa
   return { institutionSido: '', institutionSigungu: '' }
 }
 
+/** 회원 유형 셀렉트 옵션에 없는 값(URL에 남은 겸직·권한 종료 등)은 「전체」로 본다 */
+const ALL_TAB_ROLE_SELECT_VALUE_SET = new Set<string>(ALL_TAB_ROLE_SELECT_VALUES)
+
+function parseAllTabRoleSelectParam(raw?: string): AllTabRoleFilterValue | 'ALL' {
+  const key = parseAllTabRoleFilterParam(raw)
+  return key !== 'ALL' && ALL_TAB_ROLE_SELECT_VALUE_SET.has(key) ? key : 'ALL'
+}
+
 export function pendingRoleFromParams(
   params: UserListQueryParams
 ): AllTabRoleFilterValue | UserRole | 'ALL' {
@@ -199,7 +208,7 @@ export function pendingRoleFromParams(
       : DEFAULT_MEMBER_LIST_KIND
 
   if (kind === 'all') {
-    return parseAllTabRoleFilterParam(params.role)
+    return parseAllTabRoleSelectParam(params.role)
   }
 
   return memberListKindToPendingRole(kind)
@@ -276,7 +285,7 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
   }
   if (kind === 'all') {
     api.listAllAccounts = true
-    const allTabRole = parseAllTabRoleFilterParam(params.role)
+    const allTabRole = parseAllTabRoleSelectParam(params.role)
     api.allTabRoleFilter = allTabRole
     const accountType = accountTypeForDirectoryRoleFilter(allTabRole)
     if (accountType) api.accountType = accountType

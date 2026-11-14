@@ -1,13 +1,20 @@
-export { postPortalEmailCheck, postPortalPasswordResetConfirm } from './api'
+export {
+  postPortalEmailCheck,
+  postPortalPasswordResetConfirm,
+  postPortalPasswordResetEligibility,
+} from './api'
 export type {
   AccountEmailCheckPurpose,
   AccountEmailCheckRequest,
   AccountEmailCheckResponse,
   PasswordResetConfirmRequest,
   PasswordResetConfirmResponse,
+  PasswordResetEligibilityRequest,
+  PasswordResetEligibilityResponse,
 } from './api'
 export { usePortalEmailCheckMutation } from './hooks/use-email-check-mutation'
 export { usePortalPasswordResetConfirmMutation } from './hooks/use-password-reset-confirm-mutation'
+export { usePortalPasswordResetEligibilityMutation } from './hooks/use-password-reset-eligibility-mutation'
 export { isEmailRegisteredForPasswordReset } from './lib/is-email-registered'
 export {
   FIND_PASSWORD_VERIFICATION_TTL_MS,
@@ -17,3 +24,11 @@ export {
   setFindPasswordRecoveryState,
 } from './lib/recovery-state'
 export type { FindPasswordRecoveryState } from './lib/recovery-state'
+export {
+  readFindPasswordReturnState,
+  resolvePasswordResetApiError,
+} from './lib/password-reset-errors'
+export type {
+  FindPasswordReturnState,
+  PasswordResetErrorResolution,
+} from './lib/password-reset-errors'

@@ -2,7 +2,8 @@
  * 대시보드 DnD(드래그 앤 드롭) 로직 훅
  * 비즈니스 로직: orderedIds 변경 시 setOrderedIds(role, next) 호출 — 동일 유지
  *
- * - 100% 위젯 오른쪽 드롭 시 50% 분할 및 나머지 위젯 재정렬
+ * - 1단(100%) 위젯을 1단 위젯 위에 놓으면 둘 다 2단(50%)으로 한 줄([대상][끌고 온 위젯])
+ * - 그 밖의 위젯 위 드롭은 1:1 교환(폭 유지)
  * - 빈 공간 드롭: over가 없을 때 포인터 위치로 삽입 인덱스 계산
  *
  * 순수 계산은 lib/dashboard-dnd-helpers.ts
@@ -23,6 +24,7 @@ import type { DisplayItemMeta } from '@/features/dashboard/model/dashboard-widge
 import { isWidgetResizable } from '@/shared/config/dashboard-config'
 import {
   COL_SPAN_FULL,
+  COL_SPAN_HALF,
   areWidgetIdListsEqual,
   computeDragEndResult,
   type SlotRect,
@@ -65,6 +67,7 @@ export function useDashboardDnd({
   userRole,
   roleWidths,
   displayItemsMeta,
+  setWidgetWidth,
   getSlotRects,
   onLayoutSaved,
 }: UseDashboardDndParams) {
@@ -163,17 +166,26 @@ export function useDashboardDnd({
           ? swapArrayItems(orderedIds, oldIndex, orderedIds.indexOf(computed.swapTargetId))
           : arrayMove(orderedIds, oldIndex, computed.newIndex)
 
+      if (computed.pairRowWithTargetId) {
+        // 1단 → 1단: 리사이즈 핸들과 같은 역할별 폭 설정으로 저장한다
+        setWidgetWidth(userRole, computed.pairRowWithTargetId, COL_SPAN_HALF)
+        setWidgetWidth(userRole, activeIdStr, COL_SPAN_HALF)
+        setOrderedIds(userRole, next)
+        onLayoutSaved?.()
+        return
+      }
+
       if (areWidgetIdListsEqual(orderedIds, next)) return
 
       setOrderedIds(userRole, next)
 
-      // QA 중 UI 안정성을 위해 DnD는 순서 이동만 처리하고,
-      // 위젯 너비(12/24)는 리사이즈 핸들에서만 변경한다.
+      // 그 밖의 드롭은 순서 이동만 처리하고, 위젯 너비(12/24)는 리사이즈 핸들에서만 변경한다.
       onLayoutSaved?.()
     },
     [
       orderedIds,
       setOrderedIds,
+      setWidgetWidth,
       userRole,
       getEffectiveColSpan,
       getSlotRects,

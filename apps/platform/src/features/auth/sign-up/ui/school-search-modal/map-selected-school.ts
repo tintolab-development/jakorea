@@ -1,3 +1,4 @@
+import { toSchoolLevel, type SchoolLevel } from '../../lib/school-grade.ts'
 import {
   getResultLocation,
   toCareerNetDisplayName,
@@ -14,6 +15,11 @@ export type SelectedSchool = {
   /** NEIS 소재지 도로명 주소 — 확인 화면 소속/학교 표시용 */
   address?: string
   source?: 'neis' | 'careerNet'
+  /**
+   * 학교급 — 학년 옵션 범위에 쓴다. NEIS는 학교종류명(schulKndScNm),
+   * 커리어넷은 검색 모달에서 고른 학교급(대학교·전문대학), '전체'면 결과의 학교 구분값. 알 수 없으면 없음.
+   */
+  schoolLevel?: SchoolLevel
 }
 
 export const SCHOOL_SELECTION_INCOMPLETE_MESSAGE =
@@ -21,6 +27,8 @@ export const SCHOOL_SELECTION_INCOMPLETE_MESSAGE =
 
 export function mapSearchResultToSelectedSchool(
   result: SchoolSearchResultItem,
+  /** 검색 모달에서 고른(또는 고정된) 학교급 — 커리어넷 결과의 학교급 */
+  searchedSchoolLevel?: string,
 ): SelectedSchool | null {
   if (result.source === 'neis') {
     const school = result.item
@@ -34,6 +42,7 @@ export function mapSearchResultToSelectedSchool(
       educationOfficeCode: school.atptOfcdcScCode?.trim() || undefined,
       address: school.orgRdnma?.trim() || undefined,
       source: 'neis',
+      schoolLevel: toSchoolLevel(school.schulKndScNm),
     }
   }
 
@@ -43,10 +52,35 @@ export function mapSearchResultToSelectedSchool(
   if (!name || !seq) return null
 
   const location = getResultLocation(result)
+  const careerNetLevel = toSchoolLevel(searchedSchoolLevel)
   return {
     name,
     neisCode: seq,
     address: location !== '-' ? location : undefined,
     source: 'careerNet',
+    // 학교급을 골라 검색했으면 그 값, '전체'로 검색했으면 결과의 학교 구분값으로 정한다
+    schoolLevel:
+      careerNetLevel === '대학교' || careerNetLevel === '전문대학'
+        ? careerNetLevel
+        : toCareerNetSchoolLevel(university),
   }
+}
+
+/**
+ * 커리어넷 학교 구분값(`schoolGubun`, 없으면 `schoolType`) → 학교급.
+ * - 「전문대학」 → 전문대학 (sch1 100322)
+ * - 「대학(4년제)」 등 4년제 → 대학교 (sch1 100323)
+ * - 그 밖의 값(대학원 등)은 매핑하지 않는다 → 학교급 없음(학년 1~12)
+ */
+export function toCareerNetSchoolLevel(item: {
+  schoolGubun?: string
+  schoolType?: string
+}): '대학교' | '전문대학' | undefined {
+  const values = [item.schoolGubun, item.schoolType].map(value => value?.trim() ?? '')
+  for (const value of values) {
+    if (!value) continue
+    if (value.includes('전문대학')) return '전문대학'
+    if (value.includes('4년제')) return '대학교'
+  }
+  return undefined
 }

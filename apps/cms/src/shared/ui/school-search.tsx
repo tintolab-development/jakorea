@@ -355,7 +355,7 @@ export function SchoolSearch({
       title: '학교급',
       dataIndex: 'schulKndScNm',
       key: 'schulKndScNm',
-      width: 100,
+      width: 120,
       ellipsis: true,
       render: (text: string) => text || '-',
     },
@@ -363,7 +363,7 @@ export function SchoolSearch({
       title: '학교명',
       dataIndex: 'schulNm',
       key: 'schulNm',
-      width: 220,
+      width: 200,
       ellipsis: true,
       render: (text: string) => highlightKeyword(text, keyword),
     },
@@ -490,7 +490,8 @@ export function SchoolSearch({
         <div className="school-search__body">
           <p className="school-search__guide">{GUIDE_TEXT}</p>
 
-          <Flex className="school-search__filter-row" gap={16} align="center" wrap="wrap">
+          {/* 시안 4718:38736: 선택창 3개 + 검색어 228 + [검색]이 한 줄, 칸 사이 8 */}
+          <Flex className="school-search__filter-row" gap={8} align="center" wrap="nowrap">
             <CmsSelect
               placeholder="학교급"
               value={schoolLevel || undefined}
@@ -537,8 +538,8 @@ export function SchoolSearch({
                 placeholder={MODAL_KEYWORD_PLACEHOLDER}
                 inputSize="medium"
                 width="100%"
+                // 시안 — 검색어 미입력은 필드 아래 문구 없이 error 테두리만 표시
                 error={Boolean(keywordValidationError)}
-                message={keywordValidationError ?? undefined}
               />
             </span>
             <CmsButton
@@ -594,6 +595,7 @@ export function SchoolSearch({
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
                       ariaLabel="학교 검색 페이지 이동"
+                      variant="modal"
                     />
                   </div>
                 </>
@@ -616,6 +618,7 @@ export function SchoolSearch({
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
                       ariaLabel="학교 검색 페이지 이동"
+                      variant="modal"
                     />
                   </div>
                 </>

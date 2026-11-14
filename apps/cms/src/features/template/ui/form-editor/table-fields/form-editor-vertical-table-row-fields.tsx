@@ -43,6 +43,8 @@ type FormEditorVerticalTableRowFieldsProps = {
   rowIndex: number
   updateParagraph: FormUpdateParagraph
   onBodyRowDeleted?: (nextRowIndex: number) => void
+  /** 구조 조작 전용 잠금 — 행 삭제·1단/2단·셀 유형 변경 막음, 항목명·내용·안내 텍스트는 편집 */
+  structureControlLocked?: boolean
 }
 
 export function FormEditorVerticalTableRowFields({
@@ -51,6 +53,7 @@ export function FormEditorVerticalTableRowFields({
   rowIndex,
   updateParagraph,
   onBodyRowDeleted,
+  structureControlLocked = false,
 }: FormEditorVerticalTableRowFieldsProps) {
   const p = normalizeVerticalTableParagraph(paragraph)
   const rowCount = Math.max(1, p.rows.length)
@@ -62,6 +65,7 @@ export function FormEditorVerticalTableRowFields({
       rowIndex={rowIndex}
       updateParagraph={updateParagraph}
       onBodyRowDeleted={onBodyRowDeleted}
+      structureControlLocked={structureControlLocked}
     />
   )
 }
@@ -72,11 +76,12 @@ function FormEditorVerticalTableRowFieldsBody({
   rowIndex,
   updateParagraph,
   onBodyRowDeleted,
+  structureControlLocked = false,
 }: FormEditorVerticalTableRowFieldsProps) {
   const p = normalizeVerticalTableParagraph(paragraph)
   const row = p.rows[rowIndex]!
   const rowCount = Math.max(1, p.rows.length)
-  const canDeleteRow = rowCount > 1
+  const canDeleteRow = !structureControlLocked && rowCount > 1
   const stageCount: 1 | 2 = row.stageCount === 2 ? 2 : 1
   const stages = stageCount === 1 ? [0] : [0, 1]
   const {
@@ -105,6 +110,7 @@ function FormEditorVerticalTableRowFieldsBody({
             className="form-editor-vertical-table-row-fields__structure-radios"
             size="medium"
             value={stageCount}
+            disabled={structureControlLocked}
             onChange={e => setStageCount(Number(e.target.value) as 1 | 2)}
           >
             <CmsRadio value={1} size="medium">
@@ -151,7 +157,11 @@ function FormEditorVerticalTableRowFieldsBody({
                     value={stageKind === 'date_time' ? 'date' : stageKind}
                     options={VERTICAL_TABLE_CELL_KIND_OPTIONS}
                     allowClear={false}
-                    onChange={v => setStageKind(si, v as VerticalTableStageKind)}
+                    disabled={structureControlLocked}
+                    onChange={v => {
+                      if (structureControlLocked) return
+                      setStageKind(si, v as VerticalTableStageKind)
+                    }}
                     withAllOption={false}
                   />
                 </FormEditorFieldTypeRow>

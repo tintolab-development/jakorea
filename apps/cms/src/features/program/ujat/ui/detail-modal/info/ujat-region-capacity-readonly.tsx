@@ -1,88 +1,78 @@
-/** UJAT 공통 정보 — 지역 별 교육 진행 가능 학급 수 (학기별 2행×4지역, 8열 그리드) */
+/** UJAT 공통 정보 — 지역 별 교육 진행 가능 학급 수 조회 (시안 4082:89939, 한 줄 4지역 · 라벨|값 8열) */
 
+import type { UjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-types'
+import { UJAT_REGION_CAPACITY_SEMESTER_LABEL } from '@/features/program/ujat/lib/ujat-region-capacity-types'
+import { formatUjatRegionCapacityClassView } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './ujat-program-detail-common-info-view.css'
 
-export type UjatRegionCapacityCell = {
-  region: string
-  classes: string
-}
-
-export type UjatRegionCapacitySemesterBlock = {
-  subtitle: string
-  rows: readonly [readonly UjatRegionCapacityCell[], readonly UjatRegionCapacityCell[]]
-}
-
-const REGION_CAPACITY_ROW_1: readonly UjatRegionCapacityCell[] = [
-  { region: '서울', classes: '50개 학급' },
-  { region: '경기(남부)', classes: '60개 학급' },
-  { region: '인천', classes: '40개 학급' },
-  { region: '대전', classes: '46개 학급' },
-]
-
-const REGION_CAPACITY_ROW_2: readonly UjatRegionCapacityCell[] = [
-  { region: '대구', classes: '52개 학급' },
-  { region: '부산', classes: '54개 학급' },
-  { region: '광주', classes: '46개 학급' },
-  { region: '전북(전주)', classes: '44개 학급' },
-]
-
-export const UJAT_REGION_CAPACITY_SEMESTERS: readonly UjatRegionCapacitySemesterBlock[] = [
-  {
-    subtitle: '■ 상반기 (1학기)',
-    rows: [REGION_CAPACITY_ROW_1, REGION_CAPACITY_ROW_2],
-  },
-  {
-    subtitle: '■ 하반기 (2학기)',
-    rows: [REGION_CAPACITY_ROW_1, REGION_CAPACITY_ROW_2],
-  },
-]
+const REGIONS_PER_ROW = 4
 
 function RegionCapacityGrid({
-  rows,
+  regionLabels,
+  values,
+  ariaLabel,
 }: {
-  rows: readonly [readonly UjatRegionCapacityCell[], readonly UjatRegionCapacityCell[]]
+  regionLabels: readonly string[]
+  values: UjatRegionCapacitySemesterValues
+  ariaLabel: string
 }) {
-  const cells = rows.flatMap(row =>
-    row.flatMap(cell => [
-      { key: `${cell.region}-label`, kind: 'label' as const, text: cell.region },
-      { key: `${cell.region}-value`, kind: 'value' as const, text: cell.classes },
-    ])
-  )
+  // 마지막 줄이 4지역보다 적으면 빈 칸으로 채워 표 테두리를 유지한다.
+  const rowCount = Math.max(1, Math.ceil(regionLabels.length / REGIONS_PER_ROW))
+  const slots = Array.from({ length: rowCount * REGIONS_PER_ROW }, (_, index) => regionLabels[index] ?? null)
 
   return (
-    <div
-      className="ujat-region-capacity-readonly__grid"
-      role="table"
-      aria-label="지역 별 교육 진행 가능 학급 수"
-    >
-      {cells.map(cell => (
+    <div className="ujat-region-capacity-readonly__grid" role="table" aria-label={ariaLabel}>
+      {slots.flatMap((region, index) => [
         <div
-          key={cell.key}
-          role={cell.kind === 'label' ? 'rowheader' : 'cell'}
-          className={`ujat-region-capacity-readonly__cell ujat-region-capacity-readonly__cell--${cell.kind}`}
+          key={`${index}-label`}
+          role={region ? 'rowheader' : undefined}
+          className="ujat-region-capacity-readonly__cell ujat-region-capacity-readonly__cell--label"
         >
-          {cell.text}
-        </div>
-      ))}
+          {region ?? ''}
+        </div>,
+        <div
+          key={`${index}-value`}
+          role={region ? 'cell' : undefined}
+          className="ujat-region-capacity-readonly__cell ujat-region-capacity-readonly__cell--value"
+        >
+          {region ? formatUjatRegionCapacityClassView(values[region]?.classCount) : ''}
+        </div>,
+      ])}
     </div>
   )
 }
 
+/** 봉사자 수는 시안에 없어 조회에서 제외(값은 수정 모드·서버에 그대로 유지) */
 export function UjatRegionCapacityReadonly({
-  semesters = UJAT_REGION_CAPACITY_SEMESTERS,
+  regionLabels,
+  h1Values,
+  h2Values,
 }: {
-  semesters?: readonly UjatRegionCapacitySemesterBlock[]
+  regionLabels: readonly string[]
+  h1Values: UjatRegionCapacitySemesterValues
+  h2Values: UjatRegionCapacitySemesterValues
 }) {
+  const semesters = [
+    { key: 'h1', values: h1Values },
+    { key: 'h2', values: h2Values },
+  ] as const
+
   return (
-    <div className="program-detail-fullpage-modal__info-tab-block ujat-region-capacity-readonly">
+    <div className="ujat-region-capacity-readonly">
       <h2 className="detail-info-form__title ujat-region-capacity-readonly__title">
         지역 별 교육 진행 가능 학급 수
       </h2>
       {semesters.map(semester => (
-        <div key={semester.subtitle} className="ujat-region-capacity-readonly__semester">
-          <div className="ujat-region-capacity-readonly__subtitle">{semester.subtitle}</div>
-          <RegionCapacityGrid rows={semester.rows} />
+        <div key={semester.key} className="ujat-region-capacity-readonly__semester">
+          <div className="ujat-region-capacity-readonly__subtitle">
+            {UJAT_REGION_CAPACITY_SEMESTER_LABEL[semester.key]}
+          </div>
+          <RegionCapacityGrid
+            regionLabels={regionLabels}
+            values={semester.values}
+            ariaLabel={`${UJAT_REGION_CAPACITY_SEMESTER_LABEL[semester.key]} 지역 별 교육 진행 가능 학급 수`}
+          />
         </div>
       ))}
     </div>

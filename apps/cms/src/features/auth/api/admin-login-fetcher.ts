@@ -3,6 +3,10 @@
  */
 
 import { isAxiosError, type InternalAxiosRequestConfig } from 'axios'
+import {
+  AdminLoginAccountLockedError,
+  isAdminLoginAccountLockedResponse,
+} from '@/features/auth/errors/admin-login-account-locked-error'
 import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import {
@@ -34,10 +38,23 @@ export class AdminLoginApiError extends Error {
   }
 }
 
+/** 423 사용 불가 계정 — 승인 대기·잠금이 아니며 서버 `message` 를 그대로 보여 준다 */
+const ADMIN_LOGIN_ACCOUNT_UNAVAILABLE_CODES = new Set(['ACCOUNT_INACTIVE', 'LOGIN_DISABLED'])
+
+export function isAdminLoginAccountUnavailableError(error: unknown): error is AdminLoginApiError {
+  return (
+    error instanceof AdminLoginApiError &&
+    ADMIN_LOGIN_ACCOUNT_UNAVAILABLE_CODES.has(error.code.toUpperCase())
+  )
+}
+
 function parseLoginError(
   payload: unknown,
   httpStatus?: number
-): AdminLoginApiError | AdminLoginApprovalPendingError {
+): AdminLoginApiError | AdminLoginApprovalPendingError | AdminLoginAccountLockedError {
+  if (isAdminLoginAccountLockedResponse(payload)) {
+    return new AdminLoginAccountLockedError()
+  }
   if (isAdminLoginApprovalPendingResponse(payload, httpStatus)) {
     return new AdminLoginApprovalPendingError(ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE)
   }
@@ -84,7 +101,13 @@ export async function fetchAdminLogin(
 
     throw parseLoginError(payload)
   } catch (err) {
-    if (err instanceof AdminLoginApiError || err instanceof AdminLoginApprovalPendingError) throw err
+    if (
+      err instanceof AdminLoginApiError ||
+      err instanceof AdminLoginApprovalPendingError ||
+      err instanceof AdminLoginAccountLockedError
+    ) {
+      throw err
+    }
     if (isAxiosError(err)) {
       throw parseLoginError(err.response?.data, err.response?.status)
     }

@@ -19,14 +19,14 @@ export const FILTER_CONTROL_MIN_WIDTH_PX = 240
 
 /**
  * 단일 검색·셀렉트 기본 폭 — `filter-controls-common.css`
- * `--filter-control-width`·`--filter-control-max-width` 와 동일(245px, 시안 2026-11 QA)
+ * `--filter-control-width`·`--filter-control-max-width` 와 동일(260px, 시안 2026-11-14 전체 회원 CSS 검수)
  */
-export const FILTER_CONTROL_MAX_WIDTH_PX = 245
+export const FILTER_CONTROL_MAX_WIDTH_PX = 260
 
-/** 분리형 `dateRange` 각 칸 폭 — 시안 2026-11 QA 기간 칸(180) · `--filter-control-range-segment-width` */
-export const FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX = 180
+/** 분리형 `dateRange` 각 칸 폭 — 디자인 가이드 Field / Sorting 기간(240) · `--filter-control-range-segment-width` */
+export const FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX = 240
 
-/** 분리형 `dateRange` 열: 2×180 + 구분자(~ 좌우 6px 포함 20px) = 380 */
+/** 분리형 `dateRange` 열: 2×240 + 구분자(~ 좌우 6px 포함 20px) = 500 */
 export const FILTER_CONTROL_WIDE_FIELD_WIDTH_PX =
   FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX * 2 + 20
 
@@ -40,6 +40,9 @@ export function isAddressRegionLayoutField(field: FilterFieldConfig): boolean {
 }
 
 export function resolveFilterFieldPairGapPx(field: FilterFieldConfig): number {
+  if (field.type === 'addressRegion' && field.addressRegion?.pairGapPx != null) {
+    return field.addressRegion.pairGapPx
+  }
   if (isAddressRegionLayoutField(field)) return FILTER_ADDRESS_REGION_PAIR_GAP_PX
   if (field.type === 'selectPair') return FILTER_FIELD_PAIR_GAP_PX
   return FILTER_FIELD_PAIR_GAP_PX
@@ -55,7 +58,7 @@ export function resolveFilterFieldWidthCss(field: FilterFieldConfig): string | u
 export function resolveFilterFieldPairSegmentWidthCss(field: FilterFieldConfig): string | undefined {
   if (isAddressRegionLayoutField(field)) {
     if (typeof field.width === 'number') {
-      const gap = FILTER_ADDRESS_REGION_PAIR_GAP_PX
+      const gap = resolveFilterFieldPairGapPx(field)
       return `${Math.max(0, (field.width - gap) / 2)}px`
     }
     return `${FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX}px`

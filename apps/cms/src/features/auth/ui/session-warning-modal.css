@@ -1,11 +1,11 @@
+/**
+ * 세션 종료 예정 안내 모달 — 공통 안내 모달(AlertModal) 본문 규격을 따른다.
+ * 본문 16px / 500 / 150% / #3D3D3D, margin 0 (antd Paragraph 기본 14px·하단 1em 여백 금지)
+ */
+
 .session-warning-modal-wrap .ant-modal-content,
 .session-warning-modal-root .ant-modal-content {
   border-radius: 16px;
-}
-
-.session-warning-modal-wrap .ant-modal-body,
-.session-warning-modal-root .ant-modal-body {
-  white-space: pre-line;
 }
 
 .session-warning-modal-wrap .ant-modal-footer,
@@ -13,4 +13,24 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.session-warning-modal__body {
+  margin: 0;
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+}
+
+/* 연장 실패 사유 — 공통 확인 모달 경고 문구(confirm-modal__warning)와 동일 */
+.session-warning-modal__error {
+  margin: 12px 0 0;
+  color: var(--color-error, #ff4d4f);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 150%;
 }

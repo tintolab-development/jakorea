@@ -3,6 +3,7 @@
  *
  * 크기: 높이 32 · 최소 너비 100 · 최대 너비 없음(텍스트 길이에 따름) · padding 6/10 · 12px/600/110%.
  * 색: `tone` 프리셋 또는 `accentColor`(prop)로만 지정한다.
+ * 폭 예외: `width` prop의 `compact`(최소 80)·`fixed140`(140 고정)만 쓴다.
  * 화면별 CSS로 이 태그의 크기·색·폰트를 덮어쓰지 않는다.
  */
 
@@ -32,6 +33,18 @@
   white-space: nowrap;
   vertical-align: middle;
   transition: none;
+}
+
+/* ----- 폭 변형 (StatusTag `width` prop으로만) ----- */
+
+.status-tag.status-tag--compact {
+  --status-tag-min-width: 80px;
+}
+
+.status-tag.status-tag--fixed-140 {
+  --status-tag-min-width: 140px;
+
+  width: 140px;
 }
 
 .status-tag__label--muted {

@@ -65,6 +65,8 @@ export interface UserDetailFullpageShellValue {
   basicInfoEditing: boolean
   basicInfoEditScope: BasicInfoEditScope
   basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null
+  /** 관리자 상세 이메일 입력란 서버 에러 문구 */
+  basicInfoEmailError: string | null
   basicInfoSaveLoading: boolean
   /** 코멘트 모달 — 저장된 코멘트가 있으면 비워 저장(삭제) 허용 */
   adminCommentAllowEmpty: boolean

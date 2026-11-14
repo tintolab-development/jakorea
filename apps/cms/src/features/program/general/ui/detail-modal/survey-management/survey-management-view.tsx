@@ -8,6 +8,11 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  matchesDeleteGuideTypedConfirm,
+} from '@/shared/constants/delete-guide-modal'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { handleError } from '@/shared/utils/error-handler'
@@ -398,8 +403,7 @@ export function GeneralSurveyManagementView({
   /** 설문 진행 기간 — 시안 13609:155708: 기본 미선택. 종료 시 1회 진행은 기간 선택이 없어 기본 일수로 마감을 잡는다 */
   const [satisfactionWindowDays, setSatisfactionWindowDays] =
     useState<SatisfactionWindowDays | null>(null)
-  const effectiveSatisfactionWindowDays =
-    satisfactionWindowDays ?? DEFAULT_SATISFACTION_WINDOW_DAYS
+  const effectiveSatisfactionWindowDays = satisfactionWindowDays ?? DEFAULT_SATISFACTION_WINDOW_DAYS
   const [activeSatisfactionAudience, setActiveSatisfactionAudience] = useState(() =>
     getDefaultGeneralSatisfactionAudience(program)
   )
@@ -608,18 +612,17 @@ export function GeneralSurveyManagementView({
     detailPolicy: 'public-text-only',
     bindingId: satisfactionBindingId,
   })
-  const {
-    pollResponses: remoteLectureResponses,
-    isRemoteDataSource: lectureResponsesRemote,
-  } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId, {
-    bindingId: lectureBindingId,
-  })
-  const {
-    totalResponseCount: remotePollSummaryCount,
-    questionSummaries: pollQuestionSummaries,
-  } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
-  const { questionSummaries: satisfactionSingleQuestionSummaries } =
-    useGeneralProgramSurveySummary(program.id, satisfactionResponseVersionId, satisfactionBindingId)
+  const { pollResponses: remoteLectureResponses, isRemoteDataSource: lectureResponsesRemote } =
+    useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId, {
+      bindingId: lectureBindingId,
+    })
+  const { totalResponseCount: remotePollSummaryCount, questionSummaries: pollQuestionSummaries } =
+    useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
+  const { questionSummaries: satisfactionSingleQuestionSummaries } = useGeneralProgramSurveySummary(
+    program.id,
+    satisfactionResponseVersionId,
+    satisfactionBindingId
+  )
   const {
     pollResponses: remoteSatisfactionAllResponses,
     questionSummaries: satisfactionAllQuestionSummaries,
@@ -796,7 +799,9 @@ export function GeneralSurveyManagementView({
   useEffect(() => {
     if (!lectureResponsesRemote || remoteLectureResponses == null) return
     setLectureEvalResponses(remoteLectureResponses)
-    setLectureEvalSubmitted(findOwnLectureEvalResponse(remoteLectureResponses, adminAccountId) != null)
+    setLectureEvalSubmitted(
+      findOwnLectureEvalResponse(remoteLectureResponses, adminAccountId) != null
+    )
   }, [adminAccountId, lectureResponsesRemote, remoteLectureResponses])
 
   const ownLectureEvalResponse = useMemo(
@@ -2099,7 +2104,10 @@ export function GeneralSurveyManagementView({
         ) : (
           <LectureEvalSurveyView
             survey={lectureEvalSurveyForView}
-            resultsTemplateVersionId={toRemoteSurveyVersionId(lectureEvalSurveyForView, surveysRemote)}
+            resultsTemplateVersionId={toRemoteSurveyVersionId(
+              lectureEvalSurveyForView,
+              surveysRemote
+            )}
             submitted={lectureEvalSubmitted}
             formDraft={lectureEvalFormDraft}
             pollResponses={lectureEvalResponses}
@@ -2277,7 +2285,12 @@ export function GeneralSurveyManagementView({
               variant="delete"
               size="medium"
               type="button"
-              disabled={deleteConfirmWord.trim() !== '삭제' || bindingMutating}
+              disabled={
+                !matchesDeleteGuideTypedConfirm(
+                  deleteConfirmWord,
+                  DELETE_GUIDE_TYPED_CONFIRM_VALUE
+                ) || bindingMutating
+              }
               loading={bindingMutating}
               onClick={() => {
                 void confirmDelete()
@@ -2291,7 +2304,7 @@ export function GeneralSurveyManagementView({
         <div className="survey-management-delete-modal__field">
           <CmsInput
             width="100%"
-            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요"
+            placeholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
             value={deleteConfirmWord}
             onChange={e => setDeleteConfirmWord(e.target.value)}
           />

@@ -43,6 +43,11 @@
   min-height: 513px;
 }
 
+/* 검색 결과가 없을 때는 고정 높이 없이 내용 높이에 맞춘다 */
+.schoolModalMainEmpty {
+  min-height: 0;
+}
+
 .schoolModalResults {
   display: flex;
   width: 100%;

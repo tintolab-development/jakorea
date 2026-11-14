@@ -19,3 +19,35 @@
   min-height: 40px !important;
   max-height: 40px !important;
 }
+
+/* 시안 4427:28184: 본문 행 56, 진행 예정 행 opacity 0.4 */
+.assignment-submission-modal
+  .assignment-submission-modal__table-outer
+  .ant-table-wrapper.cms-data-table.cms-data-table--skip-auto-no-col
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  box-sizing: border-box;
+  height: 56px;
+}
+
+.assignment-submission-modal__table-outer
+  .ant-table-tbody
+  > tr.assignment-submission-history-table__row--scheduled
+  > td {
+  opacity: 0.4;
+}
+
+/*
+ * 시안 4427:28184: 본문 행 56 — 공통 `.filter-table-layout … td{height:52px !important}`(선택자 7단)보다 구체적으로 확정.
+ * 파일이 2줄인 행은 내용 높이만큼 늘어난다(min-height).
+ */
+.assignment-submission-modal
+  .assignment-submission-modal__table-outer
+  .ant-table-wrapper.cms-data-table.cms-data-table--skip-auto-no-col
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  height: 56px !important;
+  min-height: 56px !important;
+}

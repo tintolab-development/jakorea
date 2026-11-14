@@ -10,7 +10,7 @@ export function memberShowsProgramHistoryCertificateBulkIssue(
   return resolveInstructorMemberProfile(user) !== 'school_teacher'
 }
 
-/** 봉사 프로그램 참여 이력 — 교사(겸직x) 포함 전 회원 유형 동일 툴바(활동·수료증 일괄 발급) */
+/** 봉사 프로그램 참여 이력 — 교사(겸직x) 포함 전 회원 유형 동일 툴바(시안 4427:28498: 활동인증서 일괄 발급만) */
 export function memberShowsVolunteerHistoryCertificateBulkIssue(
   user: Pick<User, 'role'>
 ): boolean {

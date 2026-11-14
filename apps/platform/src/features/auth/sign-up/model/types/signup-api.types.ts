@@ -31,6 +31,31 @@ export type SignupTermsDocument = {
   notAgreedRestriction?: string
   retentionPolicy?: string
   agreementPayload?: SignupTermsAgreementPayload
+  /** 작성형 동의서(PORTRAIT_RIGHTS 등)만 값이 있고 나머지는 null */
+  formTemplateVersion?: SignupTermsFormTemplateVersion | null
+}
+
+/** OpenAPI MemberPortalConsentFormTemplateVersion — 작성형 동의서의 게시 양식 */
+export type SignupTermsFormTemplateVersion = {
+  templateVersionId?: number
+  templateCode?: string
+  versionNo?: number
+  schemaJson?: unknown
+  extensionJson?: unknown
+  settingsJson?: unknown
+}
+
+/** OpenAPI PortalSignupIdentityPrecheckRequest */
+export type PortalSignupIdentityPrecheckRequest = {
+  identityVerificationSessionId: number
+  profileToken: string
+}
+
+/** OpenAPI PortalSignupIdentityPrecheckResponse — 세션을 소비하지 않는 사전 검사 */
+export type PortalSignupIdentityPrecheckResponse = {
+  alreadyRegistered?: boolean
+  registeredByAdmin?: boolean
+  maskedEmail?: string | null
 }
 
 export type SignupTermsCatalogResponse = {

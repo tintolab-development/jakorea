@@ -18,6 +18,11 @@ import {
 } from '@/features/auth/model/admin-register-api.types'
 import { checkEmailAvailability, register } from '@/entities/user/api/register-service'
 import type { AdminRegisterWizardData } from '@/types/admin-register'
+import type {
+  AdminSignupIdentityPrecheckRequest,
+  AdminSignupIdentityPrecheckResponse,
+} from '@/shared/api/generated/members/schemas'
+import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 
 export interface AdminRegisterCompleteResult {
   adminId?: number
@@ -131,6 +136,52 @@ export async function completeAdminSignup(
     return completeAdminSignupRemote(formData)
   }
   return completeAdminSignupMock(formData)
+}
+
+/** 회원가입 본인인증 직후 사전 검사 결과 */
+export type AdminSignupIdentityPrecheckResult =
+  | { kind: 'continue' }
+  /** MASTER가 등록한 관리자 계정 — 「관리자 등록 회원 안내」 */
+  | { kind: 'registered_by_admin'; maskedEmail: string | null }
+  /** 직접 가입한 관리자 계정 — 「가입한 이메일 안내」 */
+  | { kind: 'already_registered'; maskedEmail: string | null }
+  /** 400 IDENTITY_VERIFICATION_REQUIRED · 401 — 본인인증부터 다시 */
+  | { kind: 'reverify' }
+
+const PRECHECK_REVERIFY_CODES = new Set(['IDENTITY_VERIFICATION_REQUIRED'])
+
+/**
+ * `POST /api/admin/auth/signup/identity-precheck` (BE R2). 인증 계열이라 성공 응답은 최상위 JSON이다.
+ * 본인인증부터 다시 할 오류 외에는 그대로 던진다(호출부에서 공통 오류 처리).
+ */
+export async function precheckAdminSignupIdentity(
+  body: AdminSignupIdentityPrecheckRequest
+): Promise<AdminSignupIdentityPrecheckResult> {
+  if (!isAdminRegisterRemoteEnabled()) {
+    return { kind: 'continue' }
+  }
+  try {
+    const { data: payload } = await axiosClient.post<unknown>(
+      adminAuthPaths.signupIdentityPrecheck(),
+      body,
+      // 토큰 불필요 — 오류 안내는 호출부에서(본인인증 재시도 / 공통 오류 알럿)
+      { skipAuth: true, skipRefresh: true, skipGlobalErrorAlert: true } as Parameters<
+        typeof axiosClient.post
+      >[2]
+    )
+    const result = unwrapApiData<AdminSignupIdentityPrecheckResponse>(payload)
+    if (result.alreadyRegistered !== true) return { kind: 'continue' }
+    const maskedEmail = result.maskedEmail?.trim() || null
+    return result.registeredByAdmin === true
+      ? { kind: 'registered_by_admin', maskedEmail }
+      : { kind: 'already_registered', maskedEmail }
+  } catch (error) {
+    const code = getApiErrorCode(error)
+    if (getApiErrorHttpStatus(error) === 401 || (code && PRECHECK_REVERIFY_CODES.has(code))) {
+      return { kind: 'reverify' }
+    }
+    throw error
+  }
 }
 
 async function checkAdminRegisterEmailAvailabilityRemote(email: string): Promise<boolean> {

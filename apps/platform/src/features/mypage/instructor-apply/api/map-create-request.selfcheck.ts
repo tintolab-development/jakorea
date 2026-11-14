@@ -72,7 +72,12 @@ assert.equal(body.profile.career.rows[0]?.companyName, 'ABC')
 assert.equal(body.profile.essays.freeWrite1, '소개')
 assert.equal(body.profile.oneLineIntro, '한줄')
 
-assert.equal('settlement' in body, false)
+/* 정산: 사업소득 여부만 — 계좌 필드는 보내지 않는다(지급조서 사전 동의서 전용) */
+assert.deepEqual(body.settlement, { businessIncome: false })
+assert.deepEqual(
+  mapInstructorApplyFormToCreateRequest({ ...values, isBusinessIncome: 'yes' }).settlement,
+  { businessIncome: true },
+)
 
 assert.equal(body.termsAgreements[0]?.termsType, 'PAYMENT_STATEMENT_PRE_CONSENT')
 /** 동기 매핑 fallback — 원격 제출 시 resolveInstructorApplyTermsAgreementVersions로 교체 */
@@ -93,5 +98,15 @@ const serialized = JSON.stringify(body)
 assert.equal(serialized.includes('SnapshotJson'), false)
 assert.equal(serialized.includes('nameSnapshot'), false)
 assert.equal(serialized.includes('careerTextSnapshot'), false)
+
+// 프로필 성별이 있으면 폼 라디오(male) 대신 프로필 값을 보낸다 — OTHER를 MALE로 바꾸지 않는다
+const withProfileGender = (profileGender: string) =>
+  mapInstructorApplyFormToCreateRequest(values, { profileGender }).gender
+assert.equal(withProfileGender('OTHER'), 'OTHER')
+assert.equal(withProfileGender('FEMALE'), 'FEMALE')
+assert.equal(withProfileGender('f'), 'FEMALE')
+assert.equal(withProfileGender('MALE'), 'MALE')
+assert.equal(withProfileGender(' 기타 '), '기타')
+assert.equal(withProfileGender(''), '')
 
 console.log('map-create-request.selfcheck: ok')

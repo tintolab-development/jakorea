@@ -35,6 +35,7 @@ import {
 import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
+  readApiErrorAlertMessage,
 } from '@/shared/lib/extract-api-error-message'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { EDIT_MODE_REVEAL, type PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
@@ -332,8 +333,15 @@ export function ParticipatingParticipantFullpageView({
     sessions,
   ])
 
+  /** 중단 기준 일정은 시작 전 일정만 (QA-03, 2026-11-14) */
   const activityWithdrawScheduleOptions = useMemo(
-    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, activityWithdrawSessions),
+    () =>
+      getParticipatingInstitutionActivityWithdrawScheduleOptions(
+        program,
+        activityWithdrawSessions,
+        [],
+        { nowMs: Date.now() }
+      ),
     [program, activityWithdrawSessions]
   )
 
@@ -595,10 +603,11 @@ export function ParticipatingParticipantFullpageView({
             ),
           })
         } catch (error) {
-          const message =
-            error instanceof Error && error.message.trim()
-              ? error.message
-              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          // 서버 안내(한국어)를 쓴다 — axios 기본 메시지(Request failed with status code …) 노출 금지
+          const message = readApiErrorAlertMessage(
+            error,
+            '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          )
           showAlert({
             title: '활동 포기 실패',
             content: message,

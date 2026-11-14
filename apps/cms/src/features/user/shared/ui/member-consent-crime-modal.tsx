@@ -38,8 +38,6 @@ const MEMBER_CONSENT_MODAL_Z_INDEX = 1200
 
 export interface MemberConsentCrimeModalProps {
   open: boolean
-  /** 상세 수정 등 — 이미 회원이 있으면 prepare ownerId로 사용 */
-  memberId?: number
   savedSnapshot?: MemberConsentCrimeDraftSnapshot | null
   onSnapshotSave?: (snapshot: MemberConsentCrimeDraftSnapshot) => void
   onClose: () => void
@@ -48,7 +46,6 @@ export interface MemberConsentCrimeModalProps {
 
 export function MemberConsentCrimeModal({
   open,
-  memberId,
   savedSnapshot,
   onSnapshotSave,
   onClose,
@@ -173,7 +170,6 @@ export function MemberConsentCrimeModal({
         fileObjectId = await uploadConsentEvidenceFile({
           file: fileForUpload,
           originalFileName,
-          memberId,
         })
         setEvidenceFileObjectId(fileObjectId)
       } catch (error) {
@@ -201,7 +197,6 @@ export function MemberConsentCrimeModal({
     displaySrc,
     evidenceFileObjectId,
     hasUploadedDocument,
-    memberId,
     onComplete,
     onSnapshotSave,
     replacementFileName,

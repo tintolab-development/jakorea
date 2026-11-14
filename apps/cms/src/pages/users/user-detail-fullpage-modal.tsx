@@ -294,6 +294,7 @@ export function UserDetailFullPageModal({
       basicInfoEditing: state.basicInfoEditing,
       basicInfoEditScope: state.basicInfoEditScope,
       basicInfoDraft: state.basicInfoDraft,
+      basicInfoEmailError: state.basicInfoEmailError,
       basicInfoSaveLoading: state.basicInfoSaveLoading,
       adminCommentAllowEmpty: state.adminCommentAllowEmpty,
       adminPermissionVariantPatching: state.adminPermissionVariantPatching,
@@ -337,6 +338,7 @@ export function UserDetailFullPageModal({
     state.basicInfoEditing,
     state.basicInfoEditScope,
     state.basicInfoDraft,
+    state.basicInfoEmailError,
     state.basicInfoSaveLoading,
     state.adminCommentAllowEmpty,
     state.adminPermissionVariantPatching,
@@ -502,6 +504,7 @@ export function UserDetailFullPageModal({
         onClose={onClose}
         title={title}
         loading={shell == null}
+        permissionRequest={permissionRole != null}
         headerTrailing={
           shell ? <DetailFullpageBreadcrumb items={headerBreadcrumbItems} /> : undefined
         }
