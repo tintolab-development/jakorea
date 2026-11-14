@@ -405,9 +405,7 @@ function ConsentValueDisplay({ value }: { value: ReactNode }) {
   return (
     <span className="user-consent-agreement-section__value-inner">
       <span className="user-consent-agreement-section__value-status">{status}</span>
-      <span className="user-consent-agreement-section__value-sep" aria-hidden>
-        |
-      </span>
+      <DetailInfoForm.TdDivider />
       <span className="user-consent-agreement-section__value-datetime">{datetime}</span>
     </span>
   )
@@ -470,9 +468,7 @@ function ConsentDocumentRow({
       {/* 시안: 미동의는 상태 문구만 — 구분선·동의서 보기 없음 */}
       {agreed ? (
         <>
-          <span className="user-consent-agreement-section__value-sep" aria-hidden>
-            |
-          </span>
+          <DetailInfoForm.TdDivider />
           <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>

@@ -25,13 +25,13 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
+  MEMBER_REGISTER_REQUIRED_CONSENT_DISAGREE_ALERT_MESSAGE,
+  MEMBER_REGISTER_REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
 import {
-  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
-  buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
   hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
@@ -125,15 +125,23 @@ const FIELD_LABEL_WIDTH = 180 as const
 const FIELD_INPUT_WIDTH = 200 as const
 const ADDRESS_INPUT_WIDTH = 240 as const
 
+/**
+ * 동의서 상태 + [동의서 작성]. 숨김 Form.Item은 이 span 안에 둔다 —
+ * 셀 직계 자식이면 `.detail-info-form__field-content--edit > * { display:flex }`가
+ * antd `ant-form-item-hidden`을 이겨 빈 flex 항목 + gap 16만큼 「미동의」가 밀린다.
+ */
 function ConsentDocumentFieldEdit({
+  name,
   value,
   onWrite,
 }: {
+  name: MemberConsentFieldKey
   value: ConsentFieldValue
   onWrite: () => void
 }) {
   return (
     <span className="add-user-individual__consent-document">
+      <Form.Item name={name} hidden preserve />
       <span className="add-user-individual__consent-status">
         {value === 'agree' ? '동의' : '미동의'}
       </span>
@@ -294,7 +302,6 @@ export function AddUserIndividual({
     | SchoolEnrollmentStatus
     | undefined
   const isEnrolled = schoolEnrollmentStatus === 'enrolled'
-  const isEnrollmentUnselected = schoolEnrollmentStatus == null
 
   const activeConsentEntry =
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
@@ -419,8 +426,8 @@ export function AddUserIndividual({
     ])
     if (disagreedRequiredLabels.length > 0) {
       showAlert({
-        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
-        content: buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
+        title: MEMBER_REGISTER_REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        content: MEMBER_REGISTER_REQUIRED_CONSENT_DISAGREE_ALERT_MESSAGE,
       })
       return
     }
@@ -562,7 +569,11 @@ export function AddUserIndividual({
                 view="-"
                 edit={
                   <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                    <CmsPhoneInput placeholder="연락처" inputSize="small" width={FIELD_INPUT_WIDTH} />
+                    <CmsPhoneInput
+                      placeholder="연락처"
+                      inputSize="small"
+                      width={FIELD_INPUT_WIDTH}
+                    />
                   </Form.Item>
                 }
               />
@@ -598,7 +609,7 @@ export function AddUserIndividual({
                 view="-"
                 edit={
                   isEnrolled ? (
-                    <div className="detail-info-form-inputs-wrapper">
+                    <div className="detail-info-form-inputs-wrapper-no-gap">
                       <div style={{ width: FIELD_INPUT_WIDTH, minWidth: 0 }}>
                         <Form.Item name="schoolName" noStyle>
                           <SchoolSearch
@@ -633,6 +644,7 @@ export function AddUserIndividual({
                       <Form.Item name="schoolRegionSido" hidden preserve />
                       <Form.Item name="schoolRegionSigungu" hidden preserve />
                       <Form.Item name="schoolOrganizationId" hidden preserve />
+                      <DetailInfoForm.InputsSeparator />
                       <Form.Item name="grade" noStyle>
                         <CmsSelect
                           placeholder="학년"
@@ -649,12 +661,7 @@ export function AddUserIndividual({
                         name="affiliationOrganization"
                         style={{ ...FORM_ITEM_STYLE, width: FIELD_INPUT_WIDTH }}
                       >
-                        <CmsInput
-                          placeholder="소속 기관명"
-                          inputSize="small"
-                          width="100%"
-                          disabled={isEnrollmentUnselected}
-                        />
+                        <CmsInput placeholder="소속 기관명" inputSize="small" width="100%" />
                       </Form.Item>
                     </div>
                   )
@@ -682,7 +689,11 @@ export function AddUserIndividual({
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item name="detailAddress" noStyle>
-                      <CmsInput placeholder="상세 주소" inputSize="small" width={ADDRESS_INPUT_WIDTH} />
+                      <CmsInput
+                        placeholder="상세 주소"
+                        inputSize="small"
+                        width={ADDRESS_INPUT_WIDTH}
+                      />
                     </Form.Item>
                   </div>
                 }
@@ -748,11 +759,7 @@ export function AddUserIndividual({
                     view="-"
                     edit={
                       <Form.Item name="consentMarketing" noStyle>
-                        <CmsRadioGroup
-                          options={CONSENT_RADIO_OPTIONS}
-                          size="medium"
-                          disabled
-                        />
+                        <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="medium" disabled />
                       </Form.Item>
                     }
                   />
@@ -761,13 +768,11 @@ export function AddUserIndividual({
                     labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <>
-                        <Form.Item name="consentPortrait" hidden preserve />
-                        <ConsentDocumentFieldEdit
-                          value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
-                          onWrite={() => handleConsentWrite('consentPortrait')}
-                        />
-                      </>
+                      <ConsentDocumentFieldEdit
+                        name="consentPortrait"
+                        value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
+                        onWrite={() => handleConsentWrite('consentPortrait')}
+                      />
                     }
                   />
                 </DetailInfoForm.Row>
@@ -785,15 +790,13 @@ export function AddUserIndividual({
                     labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <>
-                        <Form.Item name="consentWithholdingTax" hidden preserve />
-                        <ConsentDocumentFieldEdit
-                          value={
-                            allValues?.consentWithholdingTax ?? INITIAL_VALUES.consentWithholdingTax
-                          }
-                          onWrite={() => handleConsentWrite('consentWithholdingTax')}
-                        />
-                      </>
+                      <ConsentDocumentFieldEdit
+                        name="consentWithholdingTax"
+                        value={
+                          allValues?.consentWithholdingTax ?? INITIAL_VALUES.consentWithholdingTax
+                        }
+                        onWrite={() => handleConsentWrite('consentWithholdingTax')}
+                      />
                     }
                   />
                   <DetailInfoForm.Field
@@ -801,16 +804,14 @@ export function AddUserIndividual({
                     labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <>
-                        <Form.Item name="consentFacilitatorPledge" hidden preserve />
-                        <ConsentDocumentFieldEdit
-                          value={
-                            allValues?.consentFacilitatorPledge ??
-                            INITIAL_VALUES.consentFacilitatorPledge
-                          }
-                          onWrite={() => handleConsentWrite('consentFacilitatorPledge')}
-                        />
-                      </>
+                      <ConsentDocumentFieldEdit
+                        name="consentFacilitatorPledge"
+                        value={
+                          allValues?.consentFacilitatorPledge ??
+                          INITIAL_VALUES.consentFacilitatorPledge
+                        }
+                        onWrite={() => handleConsentWrite('consentFacilitatorPledge')}
+                      />
                     }
                   />
                 </DetailInfoForm.Row>
@@ -820,16 +821,13 @@ export function AddUserIndividual({
                     labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <>
-                        <Form.Item name="consentSexOffenseCheck" hidden preserve />
-                        <ConsentDocumentFieldEdit
-                          value={
-                            allValues?.consentSexOffenseCheck ??
-                            INITIAL_VALUES.consentSexOffenseCheck
-                          }
-                          onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
-                        />
-                      </>
+                      <ConsentDocumentFieldEdit
+                        name="consentSexOffenseCheck"
+                        value={
+                          allValues?.consentSexOffenseCheck ?? INITIAL_VALUES.consentSexOffenseCheck
+                        }
+                        onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
+                      />
                     }
                   />
                   <DetailInfoForm.Field
@@ -837,16 +835,14 @@ export function AddUserIndividual({
                     labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <>
-                        <Form.Item name="consentAdministrativeJoint" hidden preserve />
-                        <ConsentDocumentFieldEdit
-                          value={
-                            allValues?.consentAdministrativeJoint ??
-                            INITIAL_VALUES.consentAdministrativeJoint
-                          }
-                          onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
-                        />
-                      </>
+                      <ConsentDocumentFieldEdit
+                        name="consentAdministrativeJoint"
+                        value={
+                          allValues?.consentAdministrativeJoint ??
+                          INITIAL_VALUES.consentAdministrativeJoint
+                        }
+                        onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
+                      />
                     }
                   />
                 </DetailInfoForm.Row>
@@ -862,7 +858,8 @@ export function AddUserIndividual({
               size="medium"
               type="button"
               onClick={onCancel}
-              disabled={loading} >
+              disabled={loading}
+            >
               닫기
             </CmsButton>
             <CmsButton variant="primary" size="medium" type="submit" disabled={loading}>
