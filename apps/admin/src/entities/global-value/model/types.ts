@@ -1,9 +1,16 @@
 /**
  * JA Global Value 도메인 타입
- * 관리 항목은 고정 5종 — 신규 추가/삭제 없음
+ * 관리 항목은 고정 6종(시안 02. JA Global Value 관리) — 신규 추가/삭제 없음
+ * value_6 = 다양성 항목(시안 5번째). 노출 순서는 sortOrder가 정한다.
  */
 
-export type GlobalValueKey = 'value_1' | 'value_2' | 'value_3' | 'value_4' | 'value_5'
+export type GlobalValueKey =
+  | 'value_1'
+  | 'value_2'
+  | 'value_3'
+  | 'value_4'
+  | 'value_5'
+  | 'value_6'
 
 export type GlobalValue = {
   id: string

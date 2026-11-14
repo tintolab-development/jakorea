@@ -7,8 +7,8 @@ import {
   type HeroPhase,
 } from './hero-phase.ts'
 
-/** Admin 고정 5항목. 응답 길이가 달라도 accordion 분모로 사용 */
-export const DEFAULT_GLOBAL_VALUE_COUNT = 5
+/** JA Global Value 6항목(시안). 항목 수가 0일 때 accordion 분모 대체값 */
+export const DEFAULT_GLOBAL_VALUE_COUNT = 6
 
 /**
  * Desktop 기관소개 sticky track 단일 오케스트레이션.
@@ -22,14 +22,15 @@ export const DEFAULT_GLOBAL_VALUE_COUNT = 5
  * 4) end hold + JA Worldwide reveal (frontier=마지막, panel translateY로 Worldwide 노출)
  *
  * track 높이 비율:
- * Hero 680vh + Push 100vh + Value accordion 500vh + hold/reveal 200vh
+ * Hero 680vh + Push 100vh + Value accordion 600vh(항목당 100vh × 6) + hold/reveal 200vh
+ * (CSS `.root.isMotionTrack` height와 합계 일치 — introduction-scroll.module.css)
  */
 export const INTRODUCTION_HERO_VH = 680
 /** Mission → Value Push/Up 전용 스크롤 (CSS 600ms와 별개로 accordion과 구간 분리) */
 export const INTRODUCTION_PUSH_VH = 100
-export const INTRODUCTION_VALUE_VH = 500
+export const INTRODUCTION_VALUE_VH = 600
 /**
- * 05 Active 안착 후 JA Worldwide를 sticky viewport 안으로 끌어올리는 구간.
+ * 마지막(06) Active 안착 후 JA Worldwide를 sticky viewport 안으로 끌어올리는 구간.
  * (list·Worldwide 동일 panel 형제 — overflow frame 안에서 translate로 연속 노출)
  */
 export const INTRODUCTION_VALUE_HOLD_VH = 200

@@ -100,6 +100,7 @@ export function BaseDetailDrawer({
     <Drawer
       open={open}
       onClose={onClose}
+      maskClosable={false}
       title={title}
       width={width}
       placement={placement}

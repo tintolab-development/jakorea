@@ -151,3 +151,11 @@
   background: var(--color-neutral-white);
   box-shadow: var(--shadow-card-lg);
 }
+
+.calculationPreview {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}

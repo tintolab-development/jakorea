@@ -3,6 +3,10 @@
  * 일반 프로그램과 동일 remote form-binding 계약. LNB 4탭 URL은 유지.
  */
 
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
@@ -54,7 +58,9 @@ import type { UjatSurveyPollRawResponse } from '@/features/program/ujat/model/uj
 import {
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
+  clearLectureEvalFormAnswers,
   draftToLectureEvalPollResponse,
+  draftToLectureEvalSubmitAnswers,
   UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
   UJAT_LECTURE_EVAL_TEMPLATE_ID,
   isLectureEvalResultsTabAccessible,
@@ -1168,7 +1174,8 @@ export function UjatSurveyManagementView({
           templateId,
           Math.trunc(versionId)
         )
-        if (record?.draft != null) return record.draft
+        // 저장된 응답이 없을 때 시작 상태 — 양식에 박힌 미리보기 선택(척도 「매우 그렇다」 등)을 비운다.
+        if (record?.draft != null) return clearLectureEvalFormAnswers(record.draft)
       }
       // 등록된 강의평가는 바인딩 version으로 연다(템플릿 목록 미조회 — 뷰어 403 방지).
       return buildLectureEvalFormDraft(templateId, versionId)
@@ -1463,12 +1470,18 @@ export function UjatSurveyManagementView({
     if (lectureEvalSurvey == null || lectureEvalFormDraft == null) return
     const validation = validateLectureEvalFormDraft(lectureEvalFormDraft)
     if (!validation.valid) {
-      void showAlert({ title: '입력 확인', content: validation.message })
+      // 필수 항목 미입력 — 공통 「필수 항목 미입력 안내」 모달(항목별 문구 대신, 2026-11-13 요청)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
 
     setLectureEvalFormDraft(lectureEvalFormDraft)
     const pollResponse = draftToLectureEvalPollResponse(lectureEvalFormDraft)
+    // 서버 제출용 — 설문자 정보는 단락 id 아래 객체로 묶는다(평면 키 금지)
+    const submitAnswers = draftToLectureEvalSubmitAnswers(lectureEvalFormDraft)
     const surveyVersionId = Number(lectureEvalSurvey.id)
     const templateVersionId =
       Number.isFinite(surveyVersionId) && surveyVersionId > 0
@@ -1513,7 +1526,7 @@ export function UjatSurveyManagementView({
     try {
       if (existingResponseId != null) {
         await updateGeneralProgramFormResponse(existingResponseId, {
-          answers: pollResponse.answers,
+          answers: submitAnswers,
         })
       } else {
         const created = await submitGeneralProgramFormResponse({
@@ -1521,7 +1534,7 @@ export function UjatSurveyManagementView({
           programId: programIdNum,
           contextType: submitContext.contextType,
           contextId: submitContext.contextId,
-          answers: pollResponse.answers,
+          answers: submitAnswers,
         })
         if (created?.formResponseId != null) {
           pollResponse.respondentId = String(created.formResponseId)
@@ -1811,7 +1824,7 @@ export function UjatSurveyManagementView({
           content: { minHeight: 310 },
         }}
         className="ujat-survey-delete-modal"
-        description={`**[${activeRegisteredSurvey?.title ?? '설문조사'}]** 설문조사를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        description={`**[${activeRegisteredSurvey?.title ?? '설문조사'}]** 설문을 삭제하시겠습니까?\n삭제 시 설문 결과를 포함한 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.`}
         footer={
           <>
             <CmsButton
@@ -1827,7 +1840,7 @@ export function UjatSurveyManagementView({
               type="button"
               disabled={surveyDeleteConfirmWord.trim() !== '삭제'}
               onClick={handleConfirmSurveyDelete} >
-              설문 삭제
+              삭제
             </CmsButton>
           </>
         }
@@ -1835,7 +1848,7 @@ export function UjatSurveyManagementView({
         <div className="ujat-survey-delete-modal__field">
           <CmsInput
             width="100%"
-            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요"
             value={surveyDeleteConfirmWord}
             onChange={e => setSurveyDeleteConfirmWord(e.target.value)}
           />
@@ -1850,7 +1863,7 @@ export function UjatSurveyManagementView({
           content: { minHeight: 310 },
         }}
         className="ujat-survey-delete-modal"
-        description={`**[${lectureEvalSurvey?.title ?? '강의평가'}]** 강의평가를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        description={`**[${lectureEvalSurvey?.title ?? '강의평가'}]** 설문을 삭제하시겠습니까?\n삭제 시 설문 결과를 포함한 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.`}
         footer={
           <>
             <CmsButton
@@ -1866,7 +1879,7 @@ export function UjatSurveyManagementView({
               type="button"
               disabled={lectureEvalDeleteConfirmWord.trim() !== '삭제'}
               onClick={handleConfirmLectureEvalDelete} >
-              설문 삭제
+              삭제
             </CmsButton>
           </>
         }
@@ -1874,7 +1887,7 @@ export function UjatSurveyManagementView({
         <div className="ujat-survey-delete-modal__field">
           <CmsInput
             width="100%"
-            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요"
             value={lectureEvalDeleteConfirmWord}
             onChange={e => setLectureEvalDeleteConfirmWord(e.target.value)}
           />
@@ -1908,13 +1921,13 @@ export function UjatSurveyManagementView({
       <ContentModal
         open={satisfactionDeleteModalOpen}
         onCancel={handleCloseSatisfactionDeleteModal}
-        title="만족도조사 삭제 안내"
+        title={`${getSatisfactionDeleteModalSubject(activeSatisfactionAudience)} 삭제 안내`}
         width={600}
         modalStyles={{
           content: { minHeight: 310 },
         }}
         className="ujat-survey-delete-modal"
-        description={`**[${getSatisfactionDeleteModalSubject(activeSatisfactionAudience)}]** 만족도조사를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        description={`**[${getSatisfactionDeleteModalSubject(activeSatisfactionAudience)}]** 설문을 삭제하시겠습니까?\n삭제 시 설문 결과를 포함한 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.`}
         footer={
           <>
             <CmsButton
@@ -1930,7 +1943,7 @@ export function UjatSurveyManagementView({
               type="button"
               disabled={satisfactionDeleteConfirmWord.trim() !== '삭제'}
               onClick={handleConfirmSatisfactionDelete} >
-              만족도조사 삭제
+              삭제
             </CmsButton>
           </>
         }
@@ -1938,7 +1951,7 @@ export function UjatSurveyManagementView({
         <div className="ujat-survey-delete-modal__field">
           <CmsInput
             width="100%"
-            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요"
             value={satisfactionDeleteConfirmWord}
             onChange={e => setSatisfactionDeleteConfirmWord(e.target.value)}
           />

@@ -1,3 +1,7 @@
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -29,9 +33,11 @@ import {
 import {
   applyLectureEvalAnswersToDraft,
   buildLectureEvalFormDraft,
+  clearLectureEvalFormAnswers,
   canDownloadLectureEvalResults,
   canEditLectureEvalResponse,
   draftToLectureEvalPollResponse,
+  draftToLectureEvalSubmitAnswers,
   findOwnLectureEvalResponse,
   isLectureEvalResultsTabAccessible,
   LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
@@ -836,7 +842,8 @@ export function GeneralSurveyManagementView({
             lectureEvalSurvey.templateId,
             Math.trunc(versionId)
           )
-          if (record?.draft != null) return record.draft
+          // 저장된 응답이 없을 때 시작 상태 — 양식에 박힌 미리보기 선택(척도 「매우 그렇다」 등)을 비운다.
+          if (record?.draft != null) return clearLectureEvalFormAnswers(record.draft)
         }
         // 등록된 강의평가는 바인딩 version으로 연다(템플릿 목록 미조회 — 뷰어 403 방지).
         return buildLectureEvalFormDraft(lectureEvalSurvey.templateId, versionId)
@@ -1629,12 +1636,18 @@ export function GeneralSurveyManagementView({
     if (lectureEvalSurvey == null || lectureEvalFormDraft == null) return
     const validation = validateLectureEvalFormDraft(lectureEvalFormDraft)
     if (!validation.valid) {
-      void showAlert({ title: '입력 확인', content: validation.message })
+      // 필수 항목 미입력 — 공통 「필수 항목 미입력 안내」 모달(항목별 문구 대신, 2026-11-13 요청)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
 
     setLectureEvalFormDraft(lectureEvalFormDraft)
     const pollResponse = draftToLectureEvalPollResponse(lectureEvalFormDraft)
+    // 서버 제출용 — 설문자 정보는 단락 id 아래 객체로 묶는다(평면 키 금지)
+    const submitAnswers = draftToLectureEvalSubmitAnswers(lectureEvalFormDraft)
     const surveyVersionId = Number(lectureEvalSurvey.id)
     const templateVersionId =
       Number.isFinite(surveyVersionId) && surveyVersionId > 0
@@ -1673,7 +1686,7 @@ export function GeneralSurveyManagementView({
       try {
         if (existingResponseId != null) {
           await updateGeneralProgramFormResponse(existingResponseId, {
-            answers: pollResponse.answers,
+            answers: submitAnswers,
           })
         } else {
           const created = await submitGeneralProgramFormResponse({
@@ -1681,7 +1694,7 @@ export function GeneralSurveyManagementView({
             programId: programIdNum,
             contextType: submitContext.contextType,
             contextId: submitContext.contextId,
-            answers: pollResponse.answers,
+            answers: submitAnswers,
           })
           if (created?.formResponseId != null) {
             pollResponse.respondentId = String(created.formResponseId)

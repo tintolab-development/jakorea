@@ -16,8 +16,7 @@
   width: 100%;
 }
 
-.participating-instructor-settlement-section__application-actions {
-  display: flex;
+/* 정산 내역 표 — 「교육 진행 일정」 등 `|` 구분 값도 칸 가운데 정렬(감싸개 flex가 왼쪽으로 붙던 문제) */
+.participating-instructor-settlement-section .ant-table-tbody .program-detail-td-segment-wrap {
   justify-content: center;
-  gap: 8px;
 }

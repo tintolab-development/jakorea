@@ -74,7 +74,7 @@ export function UjatAddVolunteerModal({
       footer={footer}
       className="ujat-add-volunteer-modal"
       description={
-        '프로그램에 추가할 봉사자를 선택해 주세요\n등록된 회원 정보가 없는 경우, **[전체 회원]**에서 회원 정보를 먼저 등록해 주세요.'
+        '프로그램에 추가할 봉사자를 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[전체 회원]**에서 회원 정보를 먼저 등록해 주세요.'
       }
     >
       <div className="ujat-add-volunteer-modal__body">
@@ -114,7 +114,7 @@ export function UjatAddVolunteerModal({
                 label: m.volunteerName,
               }))}
               notFoundContent={
-                memberOptions.length === 0 ? '추가 등록 가능한 봉사자가 없습니다' : undefined
+                memberOptions.length === 0 ? '추가 등록 가능한 회원이 없습니다' : undefined
               }
               getPopupContainer={() => document.body}
             />

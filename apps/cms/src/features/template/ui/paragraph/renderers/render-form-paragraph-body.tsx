@@ -296,8 +296,13 @@ export type RenderFormParagraphBodyOptions = {
   institutionApplicationProgramBridge?: InstitutionApplicationProgramBridge
   /** 카탈로그 snapshot — 일정 단락을 schema `items` 객관식으로 표시. 프로그램 상세 연동 미리보기에서는 끄고 공통정보 일정을 쓴다 */
   applicationFormSchemaSnapshotPreview?: boolean
-  /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
+  /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트(「설문 기간 : 시작 ~ 종료」)로 표시 */
   surveyPeriodReadonly?: boolean
+  /**
+   * 강의평가 작성·미리보기 — 설문자 정보를 상세 정보 폼 규격(라벨 200 · 한 줄 두 항목)으로 표시.
+   * 작성(user)에서는 값 칸에 입력을 둔다(제출 검증·응답 `answers`에 들어가는 값).
+   */
+  lectureEvalRespondentDetailInfo?: boolean
   /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
   lectureReportProgramLinkedPreview?: boolean
   /** 개인형 강의보고서 — 기관명·기관 소재지 숨김 */
@@ -391,7 +396,6 @@ export function renderFormParagraphBody(
             endAt={p.endAt}
             startFallback={titlePeriodStartDisplayText(p)}
             endFallback={titlePeriodEndDisplayText(p)}
-            periodLabel="작성 기간"
           />
         )
       }
@@ -1006,6 +1010,7 @@ export function renderFormParagraphBody(
             p.id !== UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo &&
             p.id !== LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID
           }
+          lectureEvalRespondentDetailInfo={options?.lectureEvalRespondentDetailInfo === true}
         />
       )
     case 'file_attachment':

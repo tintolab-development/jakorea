@@ -42,7 +42,9 @@ function ValueItem({
       <div className={styles.contentLeft}>
         <span className={styles.number}>{item.number}</span>
         <h3 className={styles.english}>
-          <EnglishLines lines={item.englishTitleLines} />
+          <span className={styles.englishInner}>
+            <EnglishLines lines={item.englishTitleLines} />
+          </span>
         </h3>
       </div>
       <div className={styles.contentRight}>

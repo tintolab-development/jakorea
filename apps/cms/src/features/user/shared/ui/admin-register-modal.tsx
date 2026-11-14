@@ -16,6 +16,7 @@ import {
 } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
+import { JAKOREA_EMAIL_DOMAIN, isValidJakoreaEmail } from '@/features/auth/lib/jakorea-email'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -98,6 +99,16 @@ const ADMIN_REGISTER_REQUIRED_CONSENT_SELECTION_KEYS = [
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/** 관리자 계정은 JA Korea 이메일(@jakorea.org)만 등록 가능 — 관리자 서비스 이용약관 제4조 */
+const ADMIN_EMAIL_DOMAIN_ALERT_TITLE = '이메일 재확인 안내'
+const ADMIN_EMAIL_DOMAIN_ALERT_CONTENT = (
+  <>
+    관리자 계정은 <strong>{JAKOREA_EMAIL_DOMAIN}</strong> 형식의 이메일만 등록 가능합니다.
+    <br />
+    이메일 형식을 다시 확인해 주세요.
+  </>
+)
+
 const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
 
 const ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS = [
@@ -122,9 +133,12 @@ function normalizeSubmitValues(values: AdminRegisterModalFormValues): AdminRegis
 
 export function collectAdminRegisterValidation(values: AdminRegisterModalFormValues): {
   missingRequired: boolean
+  /** 이메일 형식은 맞지만 `@jakorea.org` 도메인이 아님 — 이메일 재확인 안내 */
+  emailDomainInvalid: boolean
   formatMessages: string[]
 } {
   let missingRequired = false
+  let emailDomainInvalid = false
   const formatMessages: string[] = []
 
   if (!values.name?.trim()) {
@@ -154,13 +168,15 @@ export function collectAdminRegisterValidation(values: AdminRegisterModalFormVal
     missingRequired = true
   } else if (!EMAIL_PATTERN.test(email)) {
     formatMessages.push('올바른 이메일 형식이 아닙니다')
+  } else if (!isValidJakoreaEmail(email)) {
+    emailDomainInvalid = true
   }
 
   if (!isAdminPermissionTagVariant(values.permissionType)) {
     missingRequired = true
   }
 
-  return { missingRequired, formatMessages }
+  return { missingRequired, emailDomainInvalid, formatMessages }
 }
 
 export function AdminRegisterModal({
@@ -215,11 +231,19 @@ export function AdminRegisterModal({
       return
     }
 
-    const { missingRequired, formatMessages } = collectAdminRegisterValidation(values)
+    const { missingRequired, emailDomainInvalid, formatMessages } =
+      collectAdminRegisterValidation(values)
     if (missingRequired) {
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+    if (emailDomainInvalid) {
+      showAlert({
+        title: ADMIN_EMAIL_DOMAIN_ALERT_TITLE,
+        content: ADMIN_EMAIL_DOMAIN_ALERT_CONTENT,
       })
       return
     }
@@ -345,10 +369,10 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="permissionType" style={FORM_ITEM_STYLE}>
-                    {/* 선택지·라벨은 권한 승인 화면과 같은 목록 */}
+                    {/* 선택지·라벨은 권한 승인 화면과 같은 목록. 선택 값 길이와 무관하게 200px 고정 */}
                     <CmsSelect
                       inputSize="small"
-                      width="100%"
+                      width={200}
                       placeholder="승인 권한을 선택해 주세요"
                       withAllOption={false}
                       options={ADMIN_PERMISSION_SELECT_OPTIONS}

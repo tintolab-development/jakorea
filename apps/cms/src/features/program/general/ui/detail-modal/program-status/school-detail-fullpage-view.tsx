@@ -135,7 +135,6 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import {
   formatInstructorAssignmentAnnouncementDateMessage,
   INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE,
@@ -156,7 +155,6 @@ import { SchoolDetailStudentListSection } from './school-detail-student-list-sec
 import { SchoolDetailAttendanceSection } from './school-detail-attendance-section'
 import { SchoolDetailAddInstructorAssignModal } from './school-detail-add-instructor-assign-modal'
 import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-assign-confirm-modal'
-import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
@@ -479,7 +477,7 @@ function formatWaitingInstructorHopeScheduleExport(row: WaitingInstructorRow): s
 }
 
 /** 시안 05-1 — 일반 기관형 학생 추가 등록 팝업 설명 */
-const GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION =
+export const GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION =
   '프로그램에 추가로 참여할 학생의 정보를 입력해 주세요.\n해당 학생의 초상권 동의서는 담당 교사에게 별도 요청이 필요합니다.'
 
 /** 시안 15 — 대표 강사 → 일반 강사 직접 전환 차단 안내 (일반 기관형) */
@@ -609,8 +607,6 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const [addModalOpenedFromOverflow, setAddModalOpenedFromOverflow] = useState(false)
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const pendingAssignNotifyRef = useRef<PermissionModalPayload | null>(null)
-  const [addAssignNotifyOpen, setAddAssignNotifyOpen] = useState(false)
-  const [addAssignNotifyInstructorName, setAddAssignNotifyInstructorName] = useState('')
   const [assignSubmitting, setAssignSubmitting] = useState(false)
   const assignInFlightRef = useRef(false)
   const pendingAddAssignRef = useRef<{
@@ -620,11 +616,6 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   } | null>(null)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
   const [unassignSubmitting, setUnassignSubmitting] = useState(false)
-  const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
-    instructorNames: string[]
-    targetNames: string[]
-    reason: string
-  } | null>(null)
   const [selectAssignOverflowOpen, setSelectAssignOverflowOpen] = useState(false)
   /** 일반 기관형 「승인 및 배정」 — guide(09-2·11-2) → fee(11-3) → (인원 초과 시) overflow */
   const [approveAssignStep, setApproveAssignStep] = useState<'guide' | 'fee' | 'overflow' | null>(
@@ -1853,9 +1844,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             if (scheduleUnresolved) {
               showAlert({
                 title: '안내',
-                content: isCompanySchool
-                  ? `희망일에 대응하는 program schedule이 없습니다. (일정 미생성) — ${waitingRow.instructorName}`
-                  : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
+                // 일반 기관형·1사1교 공통 안내 문구
+                content: ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
               })
               return
             }
@@ -1874,9 +1864,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             if (scheduleTarget == null) {
               showAlert({
                 title: '안내',
-                content: isCompanySchool
-                  ? '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.'
-                  : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
+                // 일반 기관형·1사1교 공통 안내 문구
+                content: ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
               })
               return
             }
@@ -2348,9 +2337,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           if (session.scheduleUnresolved) {
             showAlert({
               title: '안내',
-              content: isCompanySchool
-                ? `희망일에 대응하는 program schedule이 없습니다. (일정 미생성)`
-                : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
+              // 일반 기관형·1사1교 공통 안내 문구
+              content: ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
             })
             return
           }
@@ -2368,9 +2356,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           if (scheduleTarget == null) {
             showAlert({
               title: '안내',
-              content: isCompanySchool
-                ? '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.'
-                : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
+              // 일반 기관형·1사1교 공통 안내 문구
+              content: ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
             })
             return
           }
@@ -2387,8 +2374,6 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         }
         await invalidateAssignmentBoard()
         pendingAddAssignRef.current = null
-        setAddAssignNotifyInstructorName('')
-        setAddAssignNotifyOpen(false)
         setAddAssignModalOpen(false)
         setAddModalOpenedFromOverflow(false)
         setAssignCompleteModal({
@@ -2431,6 +2416,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       currentAssignedCount,
       instructorAssignScheduleSessions,
       invalidateAssignmentBoard,
+      isCompanySchool,
       programId,
       row.id,
       row.organizationApplicationId,
@@ -2447,13 +2433,13 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     () => new Set()
   )
   /**
-   * 배정 알림 발송 여부(BE 항목 1-A) — 일반 기관형만. 강사 배정 목록 `assignmentNotificationStatus`.
+   * 배정 알림 발송 여부(BE 항목 1-A) — 일반 기관형·1사1교 공통. 강사 배정 목록 `assignmentNotificationStatus`.
    * SENT → 「발송 후」(12-2: 사유 + 알림), NONE·SCHEDULED·CANCELLED → 「발송 전」(12-1: 안내만).
-   * 필드 없는 구버전 응답·1사1교는 undefined(기존처럼 발송 후 시안).
+   * 필드 없는 구버전 응답은 undefined(발송 후 시안). 1사1교도 같은 시안(2026-11-13 요청 — 취소 귀책 없음).
    */
   const assignmentNotificationSentById = useMemo(() => {
     const map = new Map<string, boolean | undefined>()
-    if (isCompanySchool || !assignmentBoard) return map
+    if (!assignmentBoard) return map
     for (const assignment of assignmentBoard.assignments) {
       if (assignment.assignmentId == null) continue
       const id = String(assignment.assignmentId)
@@ -2465,14 +2451,13 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       )
     }
     return map
-  }, [assignmentBoard, forcedSentAssignmentIds, isCompanySchool])
+  }, [assignmentBoard, forcedSentAssignmentIds])
   const unassignNotificationSent: boolean | undefined = useMemo(() => {
-    if (isCompanySchool) return undefined
     const flags = assignedRows
       .filter(r => selectedAssignedKeys.includes(r.id))
       .map(r => assignmentNotificationSentById.get(String(r.assignmentId ?? r.id)))
     return resolveInstructorUnassignNotificationSent(flags)
-  }, [assignedRows, assignmentNotificationSentById, isCompanySchool, selectedAssignedKeys])
+  }, [assignedRows, assignmentNotificationSentById, selectedAssignedKeys])
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
@@ -2538,18 +2523,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
-      // 1사1교: 기존대로 취소 귀책 필수. 일반 기관형: 시안대로 귀책 미입력(API 선택값 — 생략 시 서버 ADMIN)
-      if (isCompanySchool && payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
+      // 일반 기관형·1사1교 공통: 시안대로 귀책 미입력(API 선택값 — 생략 시 서버 ADMIN)
       const removedRows = assignedRows.filter(r => selectedAssignedKeys.includes(r.id))
-      const removedInstructorNames = removedRows.map(r => r.instructorName)
-      const cancelBody = isCompanySchool
-        ? toInstructorAssignmentCancelRequest({
-            reason: payload.reason,
-            notifyTiming: payload.notifyTiming,
-            manualNotifyAt: payload.manualNotifyAt,
-            faultParty: payload.faultParty as 'USER' | 'ADMIN',
-          })
-        : undefined
 
       if (assignmentBoardRemoteEnabled) {
         if (unassignSubmitting) return
@@ -2563,9 +2538,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             const assignmentId = removed.assignmentId ?? removed.id
             if (!assignmentId) continue
             // 일반 기관형: 배정마다 발송 전이면 `{}`, 발송 후(·미상)면 사유·알림 시점
-            const rowBody =
-              cancelBody ??
-              toInstructorUnassignCancelBody(
+            const rowBody = toInstructorUnassignCancelBody(
                 payload,
                 assignmentNotificationSentById.get(String(assignmentId))
               )
@@ -2580,7 +2553,6 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           if (cancelledNames.length > 0) await invalidateAssignmentBoard()
           // 일반 기관형 「발송 전」 취소 중 서버가 발송 후로 판단 → 재조회 후 「발송 후」 팝업으로 다시 연다
           if (
-            !isCompanySchool &&
             pendingBodyWasEmpty &&
             pendingAssignmentId != null &&
             isInstructorUnassignReasonRequiredError(error)
@@ -2651,16 +2623,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       })
       setUnassignConfirmOpen(false)
       setSelectedAssignedKeys([])
-      if (!isCompanySchool) {
-        // 시안 13 — 일반 기관형 취소 완료
-        showAlert({ title: '취소 완료', content: '취소되었습니다.' })
-        return
-      }
-      setUnassignCompleteModal({
-        instructorNames: removedInstructorNames,
-        targetNames: [row.schoolName],
-        reason: payload.reason,
-      })
+      // 시안 13 — 일반 기관형·1사1교 공통 취소 완료
+      showAlert({ title: '취소 완료', content: '취소되었습니다.' })
     },
     [
       assignmentNotificationSentById,
@@ -2670,7 +2634,6 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       instructors,
       detail.id,
       onSaveInstructorInfo,
-      row.schoolName,
       isCompanySchool,
       assignmentBoardRemoteEnabled,
       invalidateAssignmentBoard,
@@ -2765,9 +2728,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const handleRoleChange = useCallback(
     (instructorId: string, newRole: InstructorRoleKey) => {
       const roleSource = assignmentBoardRemoteEnabled ? assignedRows : instructors
-      // 일반 기관형: 대표 강사는 반드시 1명 — 대표 → 일반 직접 전환은 막고 안내만 띄운다 (1사1교 기존 동작 유지)
+      // 일반 기관형·1사1교 공통(시안 15): 대표 강사는 반드시 1명 — 대표 → 일반 직접 전환은 막고 안내만 띄운다
       if (
-        !isCompanySchool &&
         newRole !== 'lead' &&
         roleSource.find(inv => inv.id === instructorId)?.role === 'lead'
       ) {
@@ -2792,7 +2754,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       }
       void applyRoleChange(instructorId, newRole)
     },
-    [instructors, assignedRows, assignmentBoardRemoteEnabled, applyRoleChange, isCompanySchool, showAlert]
+    [instructors, assignedRows, assignmentBoardRemoteEnabled, applyRoleChange, showAlert]
   )
 
   const assignedInstructorColumns: ColumnsType<AssignedInstructorDisplayRow> = useMemo(
@@ -3467,11 +3429,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 program.generalSurveyMenuKeys ?? []
               ).includes('satisfaction')}
               readOnly={false}
-              showAddStudentCompletedAlert={!isCompanySchool}
+              // 학생 추가 등록 팝업(시안 05-1)·등록 완료 안내(05-2) — 일반 기관형·1사1교 공통
+              showAddStudentCompletedAlert
               hideExcelInEditMode={!isCompanySchool}
-              addStudentModalDescription={
-                isCompanySchool ? undefined : GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION
-              }
+              addStudentModalDescription={GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION}
               onAddStudent={() => {
                 // 참여 기관 목록 「총 학생 수」 등 기관 단위 집계 갱신
                 void queryClient.invalidateQueries({
@@ -3600,7 +3561,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               }}
             />
             <SchoolDetailAddInstructorAssignModal
-              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
+              copyVariant="general-institution"
               open={addAssignModalOpen}
               onCancel={() => {
                 setAddAssignModalOpen(false)
@@ -3661,14 +3622,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                     }
 
                     pendingAddAssignRef.current = { role, option, meta: _meta }
-                    if (!isCompanySchool) {
-                      // 일반 기관형 시안 08-1 → 10: 별도 알림 발송 선택 없이 바로 배정(즉시 발송)
-                      void executeRemoteAddAssign({ reason: '', notifyTiming: 'immediate' })
-                      return
-                    }
-                    setAddAssignNotifyInstructorName(option.label)
-                    setAddAssignModalOpen(false)
-                    setAddAssignNotifyOpen(true)
+                    // 일반 기관형·1사1교 공통 시안 08-1 → 10: 별도 알림 발송 선택 없이 바로 배정(즉시 발송)
+                    void executeRemoteAddAssign({ reason: '', notifyTiming: 'immediate' })
                     return
                   }
 
@@ -3745,7 +3700,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             />
             <SchoolDetailSelectAssignConfirmModal
               open={selectAssignConfirmOpen}
-              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
+              copyVariant="general-institution"
               onCancel={() => {
                 pendingAssignNotifyRef.current = null
                 setSelectAssignConfirmOpen(false)
@@ -3763,24 +3718,6 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 } else {
                   handleSelectAssignConfirm()
                 }
-              }}
-            />
-            <SchoolDetailSelectAssignConfirmModal
-              open={addAssignNotifyOpen}
-              allowOnAnnouncement={!isCompanySchool}
-              onCancel={() => {
-                if (assignSubmitting) return
-                pendingAddAssignRef.current = null
-                setAddAssignNotifyInstructorName('')
-                setAddAssignNotifyOpen(false)
-              }}
-              schoolName={row.schoolName}
-              instructorNames={addAssignNotifyInstructorName ? [addAssignNotifyInstructorName] : []}
-              currentCount={currentAssignedCount}
-              requiredCount={requiredInstructorCount}
-              confirmLoading={assignSubmitting}
-              onConfirm={payload => {
-                void executeRemoteAddAssign(payload)
               }}
             />
             <SchoolDetailNewAssignGuideModal
@@ -3895,7 +3832,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               currentCount={assignCompleteModal?.currentCount ?? 0}
               requiredCount={requiredInstructorCount}
               showApprovalAlarmSection={assignCompleteModal?.showApprovalAlarmSection ?? false}
-              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
+              copyVariant="general-institution"
               instructorNames={assignCompleteModal?.instructorName.split(', ')}
             />
             <SchoolDetailUnassignConfirmModal
@@ -3908,22 +3845,15 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 .filter(r => selectedAssignedKeys.includes(r.id))
                 .map(r => r.instructorName)}
               targetNames={[row.schoolName]}
-              variant={isCompanySchool ? 'default' : 'institution-detail'}
+              variant="institution-detail"
               notificationSent={unassignNotificationSent}
               confirmLoading={unassignSubmitting}
               onConfirm={payload => {
                 void handleUnassignConfirm(payload)
               }}
             />
-            <SchoolDetailUnassignCompleteModal
-              open={unassignCompleteModal != null}
-              onClose={() => setUnassignCompleteModal(null)}
-              instructorNames={unassignCompleteModal?.instructorNames ?? []}
-              targetNames={unassignCompleteModal?.targetNames ?? []}
-              reason={unassignCompleteModal?.reason ?? ''}
-            />
             <SchoolDetailLeadInstructorConfirmModal
-              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
+              copyVariant="general-institution"
               open={leadRoleChangeConfirm != null}
               onCancel={() => setLeadRoleChangeConfirm(null)}
               onConfirm={() => {
@@ -3951,7 +3881,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         {activeTab === 'posts' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__posts-tab-wrap">
             <EnrollmentProgramDetailPostsTab
-              deleteGuideWithPostPreview={!isCompanySchool}
+              deleteGuideWithPostPreview
               program={program}
               schoolId={
                 row.organizationApplicationId?.trim() || detail.id
@@ -4032,7 +3962,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         subjectKind="institution"
         subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
         approvalStatus={applicationApprovalStatus === 'rejected' ? 'rejected' : 'approved'}
-        copyVariant={isCompanySchool ? 'default' : 'general-organization'}
+        copyVariant="general-organization"
         confirmLoading={notificationResendSubmitting}
         zIndex={2600}
         onCancel={() => {

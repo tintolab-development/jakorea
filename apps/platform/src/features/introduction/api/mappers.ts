@@ -5,7 +5,10 @@
  */
 
 import type { AchievementRecordItem, HistoryYearData } from '../lib/achievement-data.ts'
-import type { GlobalValueItem } from '../lib/global-value-data.ts'
+import {
+  GLOBAL_VALUE_HARDCODED_ROWS,
+  type GlobalValueItem,
+} from '../lib/global-value-data.ts'
 import {
   JA_WORLDWIDE_GLOBAL_LINK,
   JA_WORLDWIDE_REGION_LAYOUT,
@@ -30,20 +33,17 @@ import type {
   PublicWorldwideResponse,
 } from './types.ts'
 
-export type GlobalValueItemCode =
-  | 'VALUE_1'
-  | 'VALUE_2'
-  | 'VALUE_3'
-  | 'VALUE_4'
-  | 'VALUE_5'
-
-const ITEM_CODE_ORDER: readonly GlobalValueItemCode[] = [
+/** itemCode 목록 — itemCode가 없을 때 index 순서 대체값으로도 쓴다. */
+export const GLOBAL_VALUE_ITEM_CODES = [
   'VALUE_1',
   'VALUE_2',
   'VALUE_3',
   'VALUE_4',
   'VALUE_5',
-]
+  'VALUE_6',
+] as const
+
+export type GlobalValueItemCode = (typeof GLOBAL_VALUE_ITEM_CODES)[number]
 
 const LINK_CODE_TO_REGION: Record<string, JaWorldwideRegionId> = {
   JA_AMERICAS: 'americas',
@@ -107,19 +107,12 @@ export function resolveGlobalValueItemCode(
   index: number,
 ): GlobalValueItemCode {
   const code = asText(row.itemCode).toUpperCase()
-  if (
-    code === 'VALUE_1' ||
-    code === 'VALUE_2' ||
-    code === 'VALUE_3' ||
-    code === 'VALUE_4' ||
-    code === 'VALUE_5'
-  ) {
-    return code
-  }
-  return ITEM_CODE_ORDER[index] ?? 'VALUE_1'
+  const known = GLOBAL_VALUE_ITEM_CODES.find(itemCode => itemCode === code)
+  if (known) return known
+  return GLOBAL_VALUE_ITEM_CODES[index] ?? 'VALUE_1'
 }
 
-function mapGlobalValues(rows: PublicGlobalValueResponse[] | undefined): GlobalValueItem[] {
+function mapGlobalValues(rows: readonly PublicGlobalValueResponse[] | undefined): GlobalValueItem[] {
   const list = [...(rows ?? [])].sort(
     (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
   )
@@ -272,7 +265,11 @@ export function mapPublicOrganization(
 ): IntroductionPageContent {
   return {
     hero: mapHero(response.introduction),
-    globalValues: mapGlobalValues(response.globalValues),
+    /**
+     * 홈페이지 Admin 항목 관리 연동 전까지 FE 하드코딩 6항목.
+     * 연동 시 `mapGlobalValues(response.globalValues)`로 교체한다.
+     */
+    globalValues: mapGlobalValues(GLOBAL_VALUE_HARDCODED_ROWS),
     worldwide: mapWorldwide(response.worldwide),
     historyByYear: mapHistoryByYear(response.history),
     awards: mapAwards(response.awards),
@@ -281,7 +278,10 @@ export function mapPublicOrganization(
   }
 }
 
-/** 소개·밸류·연혁·수상·인증·BI 중 하나라도 있으면 본문을 그린다. */
+/**
+ * 소개·Worldwide·연혁·수상·인증·BI 중 하나라도 있으면 본문을 그린다.
+ * Global Value는 FE 하드코딩이라 서버 콘텐츠 유무 판단에서 뺀다(Admin 연동 시 다시 포함).
+ */
 export function hasOrganizationContent(
   content: IntroductionPageContent | null | undefined,
 ): boolean {
@@ -298,7 +298,6 @@ export function hasOrganizationContent(
   )
   return Boolean(
     hasHero ||
-      content.globalValues.length ||
       content.worldwide.description ||
       Object.keys(content.historyByYear).length ||
       content.awards.length ||

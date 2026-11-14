@@ -95,8 +95,27 @@ const mapped = mapPublicOrganization({
 
 assert.equal(mapped.hero.introLines.length, 2)
 assert.equal(mapped.hero.introMobile, 'JA Korea는 청소년의 무한한 가능성을 믿습니다')
-assert.equal(mapped.globalValues.length, 2)
+/* Global Value: Admin 연동 전까지 응답(2건)과 무관하게 FE 하드코딩 6항목 */
+assert.equal(mapped.globalValues.length, 6)
+assert.deepEqual(
+  mapped.globalValues.map(item => item.number),
+  ['01', '02', '03', '04', '05', '06'],
+)
+assert.deepEqual(
+  mapped.globalValues.map(item => item.iconUrl),
+  ['VALUE_1', 'VALUE_2', 'VALUE_3', 'VALUE_4', 'VALUE_6', 'VALUE_5'],
+)
 assert.equal(mapped.globalValues[0]?.koreanTitle, '청소년의 무한한 잠재력에 대한 믿음')
+assert.deepEqual(mapped.globalValues[0]?.englishTitleLines, [
+  'BELIEVE IN THE BOUNDLESS',
+  'POTENTIAL OF YOUNG PEOPLE',
+])
+assert.equal(mapped.globalValues[4]?.englishTitleLines.length, 1)
+assert.equal(
+  mapped.globalValues[4]?.koreanTitle,
+  '우리가 활동하는 지역사회의 다양성을 반영하기 위해,\n임직원·봉사자·이사회에 다양한 배경, 관점, 재능 확보',
+)
+assert.equal(mapped.globalValues[5]?.koreanTitle, '파트너십과 협업을 통한 영향력 확대')
 assert.equal(mapped.worldwide.globalLinkHref, 'https://www.jaworldwide.org/')
 assert.equal(
   mapped.worldwide.regions.find(r => r.id === 'americas')?.href,

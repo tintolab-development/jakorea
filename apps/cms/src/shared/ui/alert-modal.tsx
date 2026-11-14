@@ -5,7 +5,12 @@ import { CMS_ALERT_MODAL_CLOSED_EVENT } from './cms-alert-modal-api'
 
 export type AlertModalProps = AdminAlertModalProps
 
-export function AlertModal({ zIndex = CMS_ALERT_MODAL_Z_INDEX, ...props }: AlertModalProps) {
+/** CMS 공통: 딤 영역 클릭으로 닫히지 않는다 (maskClosable 기본 false). */
+export function AlertModal({
+  zIndex = CMS_ALERT_MODAL_Z_INDEX,
+  maskClosable = false,
+  ...props
+}: AlertModalProps) {
   const wasOpenRef = useRef(false)
   useEffect(() => {
     if (wasOpenRef.current && !props.open) {
@@ -14,5 +19,12 @@ export function AlertModal({ zIndex = CMS_ALERT_MODAL_Z_INDEX, ...props }: Alert
     wasOpenRef.current = props.open
   }, [props.open])
 
-  return <AdminAlertModal {...props} zIndex={zIndex} footerButtonSize={props.footerButtonSize ?? 'medium'} />
+  return (
+    <AdminAlertModal
+      {...props}
+      zIndex={zIndex}
+      maskClosable={maskClosable}
+      footerButtonSize={props.footerButtonSize ?? 'medium'}
+    />
+  )
 }

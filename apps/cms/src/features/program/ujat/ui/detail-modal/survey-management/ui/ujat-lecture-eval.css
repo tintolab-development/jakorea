@@ -5,6 +5,12 @@
   position: relative;
 }
 
+/* 탭 줄 우측 「강의평가 제출하기」 — 시안 h44 · w160 */
+.ujat-lecture-eval-survey__submit-trailing.cms-button.ant-btn {
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
 .ujat-lecture-eval-survey__download-trailing.cms-button.ant-btn.cms-button--h44 {
   height: 44px;
   flex-shrink: 0;
@@ -244,32 +250,140 @@
   line-height: 120%;
 }
 
+/* 강의평가 진행 중 — 시안 1141:268259: 바탕 #eeeff1, 여백 52, 본문 1404 가운데, 카드 간격 32 */
 .ujat-lecture-eval-form {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  background: #f4f6f6;
+  background: #eeeff1;
+  /* 시안: 회색 영역이 탭 줄 아래부터 왼쪽 메뉴 경계·오른쪽 끝·아래 끝까지 꽉 참 → 상세 본문 좌우 여백(52)만큼 바깥으로 */
+  margin-inline: calc(var(--detail-fullpage-padding-x, 52px) * -1);
+}
+
+/* 강의평가 작성 중에는 회색 영역이 아래 끝까지 닿도록 바깥 하단 여백 제거 */
+.detail-fullpage-modal__content:has(.ujat-lecture-eval-form) {
+  padding-bottom: 0;
+}
+
+.ujat-lecture-eval-survey:has(.ujat-lecture-eval-form) {
+  flex: 1 0 auto;
+  padding-bottom: 0;
 }
 
 .ujat-lecture-eval-form__scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 16px 0 24px;
+  padding: 52px;
 }
 
 .ujat-lecture-eval-form__scroll .form-editor-left {
-  max-width: 1400px;
+  width: 100%;
+  max-width: 1404px;
   margin: 0 auto;
-  padding: 0 24px;
-  gap: 16px;
+  padding: 0;
+  gap: 32px;
+  /* 스크롤은 바깥 __scroll이 맡는다 — 공용 overflow·scrollbar-gutter가 폭 1404를 줄이거나 카드 그림자를 자르지 않게 */
+  overflow: visible;
+  scrollbar-gutter: auto;
+}
+
+/*
+ * 카드 본문 — 시안 Table / Short Contents (14931:707128~707134)
+ * 템플릿 공용 카드·인풋은 그대로 두고 강의평가 화면(.ujat-lecture-eval-form) 안에서만 맞춘다.
+ */
+
+/* 제목 줄(Title / Form): 좌우 8 · 제목↔설명 4 · 높이는 글자 높이만(공용 34px 최소 높이 해제) */
+.ujat-lecture-eval-form .form-editor-card .paragraph-card__header {
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.ujat-lecture-eval-form .form-editor-card .paragraph-input--title .paragraph-input__row {
+  min-height: 0;
+  gap: 2px;
+}
+
+/* 필수 * — #c32f4a 18px, 제목과 간격 2 · 폭 10 가운데 */
+.ujat-lecture-eval-form .form-editor-card .paragraph-input--title .paragraph-input__required {
+  width: 10px;
+  margin-left: 2px;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* 설문 제목·마무리 카드는 필수 * 없음 */
+.ujat-lecture-eval-form .paragraph-card--survey-title-with-period .paragraph-input__required,
+.ujat-lecture-eval-form .paragraph-input--closing-body .paragraph-input__required {
+  display: none;
+}
+
+/* 마무리 문구 — 24px Bold #3d3d3d (공용 비활성 회색·opacity 0.6 해제) */
+.ujat-lecture-eval-form
+  .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
+  :is(.paragraph-input__view-text, .paragraph-input__placeholder) {
+  color: var(--main-BK, #3d3d3d) !important;
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+  opacity: 1 !important;
+}
+
+.ujat-lecture-eval-form
+  .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
+  .paragraph-input__leading {
+  color: var(--main-BK, #3d3d3d);
+  opacity: 1;
+}
+
+/* Q1 설문자 정보 — 라벨 칸 200 · 높이 52, 입력은 값 칸 안에서 52를 넘지 않게 */
+.ujat-lecture-eval-form .user-info-respondent-detail-info {
+  --detail-info-label-w: 200px;
+}
+
+.ujat-lecture-eval-form .user-info-respondent-detail-info .detail-info-form__field-content--edit {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.ujat-lecture-eval-form
+  .user-info-respondent-detail-info
+  .detail-info-form__field-content--edit
+  > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 점수 선택형 — 버튼 200×54 고정, 바깥 모서리 8, 제목과 간격 16 + 위아래 4 */
+.ujat-lecture-eval-form .scale-type {
+  padding: 4px 0;
+}
+
+.ujat-lecture-eval-form .scale-type-item:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.ujat-lecture-eval-form .scale-type-item:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* 주관식 — 입력 칸 h44 · 좌우 16 (테두리 1 포함), 줄바꿈해도 한 줄 높이 24 유지 */
+.ujat-lecture-eval-form
+  .short-essay-items
+  .cms-textarea--rows-1
+  .cms-textarea__inner
+  textarea.ant-input {
+  height: auto;
+  min-height: 42px;
+  padding: 9px 16px !important;
+  line-height: 150%;
 }
 
 .ujat-lecture-eval-form__footer {
   flex-shrink: 0;
-  padding: 16px 24px 24px;
-  background: #f4f6f6;
+  padding: 0 52px 52px;
+  background: #eeeff1;
 }
 
 .ujat-lecture-eval-form__submit-button.cms-button.ant-btn.cms-button--h44 {
