@@ -54,7 +54,8 @@ export function useAdminProvisionedOnboardingStepGuard() {
   const remote = isRemoteApiConfigured()
   const hasToken = Boolean(getAccessToken())
   const pageStep = resolveAdminProvisionedStepFromPathname(location.pathname)
-  const enabled = remote && hasToken && pageStep != null
+  // 완료 화면은 GET /me로 정렬하지 않는다 (진입 시 세션 종료)
+  const enabled = remote && hasToken && pageStep != null && pageStep !== 'DONE'
 
   const meQuery = usePortalMeQuery({ enabled })
   const me = meQuery.data
@@ -70,6 +71,8 @@ export function useAdminProvisionedOnboardingStepGuard() {
 
   useEffect(() => {
     if (!remote) return
+    // 완료 화면은 진입 시 세션을 끝낸다 — 토큰·Wizard가 없어도 로그인 화면으로 보내지 않는다.
+    if (pageStep === 'DONE') return
     if (isChecking) return
 
     if (!hasToken && !hasWizard) {
@@ -108,6 +111,7 @@ export function useAdminProvisionedOnboardingStepGuard() {
     me,
     meQuery.isError,
     navigate,
+    pageStep,
     remote,
   ])
 
