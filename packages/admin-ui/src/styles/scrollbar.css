@@ -1,0 +1,65 @@
+/**
+ * 전역 스크롤바 (CMS·Admin 공통) — 시안: 썸 4px · radius 20 · #3D3D3D 10% · 트랙 투명
+ *
+ * 원칙
+ * - 스크롤바는 콘텐츠 폭을 차지하지 않고 스크롤할 때만 보이는 것이 목표(오버레이).
+ *   macOS 오버레이 스크롤바는 OS가 그리므로 `::-webkit-scrollbar`로 건드리지 않는다
+ *   (Chrome은 그 스타일이 있으면 항상 보이는 고정 바로 바꾼다). 표준 속성만 쓴다.
+ * - 고정형 스크롤바 환경(Windows 등)은 `installScrollbarModeClass()`가 <html>에
+ *   `.scrollbar-classic`을 붙이고, 그때만 `::-webkit-scrollbar`로 4px 시안 바를 그린다.
+ *   Chrome은 `scrollbar-width/color`가 auto가 아니면 `::-webkit-scrollbar`를 무시하므로 함께 되돌린다.
+ * - 개별 화면에서 숨김(`scrollbar-width: none` / `::-webkit-scrollbar { display: none }`)은
+ *   클래스 선택자라 여기(0 특이성)보다 우선해 그대로 유지된다.
+ * - 스크롤바를 콘텐츠 밖 여백에 두려면 스크롤 컨테이너에 `.scroll-gutter` + `--scroll-gutter`.
+ */
+
+:root {
+  --scrollbar-size: 4px;
+  --scrollbar-thumb: rgba(61, 61, 61, 0.1);
+  --scrollbar-thumb-radius: 20px;
+}
+
+:where(*) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  :where(.scrollbar-classic),
+  :where(.scrollbar-classic) :where(*) {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  :where(.scrollbar-classic)::-webkit-scrollbar,
+  :where(.scrollbar-classic) :where(*)::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+
+  :where(.scrollbar-classic)::-webkit-scrollbar-track,
+  :where(.scrollbar-classic) :where(*)::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  :where(.scrollbar-classic)::-webkit-scrollbar-thumb,
+  :where(.scrollbar-classic) :where(*)::-webkit-scrollbar-thumb {
+    border-radius: var(--scrollbar-thumb-radius);
+    background: var(--scrollbar-thumb);
+  }
+
+  :where(.scrollbar-classic)::-webkit-scrollbar-corner,
+  :where(.scrollbar-classic) :where(*)::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/*
+ * 스크롤 영역을 우측 여백으로 넓히고 같은 값을 padding으로 돌려줘 콘텐츠 폭은 그대로,
+ * 스크롤바만 콘텐츠 밖 여백에 놓는다. 부모가 overflow로 잘라내지 않아야 한다.
+ * 사용: `.scroll-gutter { --scroll-gutter: 18px }` (모달 우측 패딩 30px이면 18 권장 — 바가 테두리에 붙지 않게)
+ */
+.scroll-gutter {
+  margin-right: calc(-1 * var(--scroll-gutter, 0px));
+  padding-right: var(--scroll-gutter, 0px);
+}

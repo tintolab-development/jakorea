@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildShortcutVisibilityForSave,
+  DASHBOARD_SETTINGS_DISABLED_SHORTCUT_KEYS,
+  isDashboardShortcutSettingsDisabled,
   normalizeShortcutVisibilityFromServer,
   restrictShortcutVisibilityToCatalog,
 } from './dashboard-shortcut-contract'
@@ -76,5 +78,38 @@ describe('dashboard shortcut contract', () => {
     expect(out['member-login-history']).toBe(false)
     expect(out.notices).toBe(true)
     expect(out['programs-general-education']).toBe(false)
+  })
+
+  describe('마스터 세션은 설정 불가 6건도 설정 가능(기획 확정 2026-11-14)', () => {
+    const MASTER = { isMaster: true }
+
+    it('6건 모두 마스터에서는 설정 가능, 그 밖의 세션에서는 설정 불가', () => {
+      for (const key of DASHBOARD_SETTINGS_DISABLED_SHORTCUT_KEYS) {
+        expect(isDashboardShortcutSettingsDisabled(key, MASTER)).toBe(false)
+        expect(isDashboardShortcutSettingsDisabled(key, { isMaster: false })).toBe(true)
+        expect(isDashboardShortcutSettingsDisabled(key)).toBe(true)
+      }
+    })
+
+    it('마스터는 서버 값·저장 값을 그대로 쓴다', () => {
+      expect(
+        normalizeShortcutVisibilityFromServer(
+          { 'admin-permission-settings': true, 'member-login-history': false },
+          MASTER
+        )
+      ).toEqual({ 'admin-permission-settings': true, 'member-login-history': false })
+      expect(
+        restrictShortcutVisibilityToCatalog({ 'admin-permission-settings': true }, CATALOG, MASTER)[
+          'admin-permission-settings'
+        ]
+      ).toBe(true)
+      const saved = buildShortcutVisibilityForSave(
+        { 'admin-permission-settings': true, 'member-login-history': true },
+        CATALOG,
+        MASTER
+      )
+      expect(saved['admin-permission-settings']).toBe(true)
+      expect(saved['member-login-history']).toBe(true)
+    })
   })
 })

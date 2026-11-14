@@ -55,20 +55,18 @@
   color: var(--color-sidebar-text) !important;
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar {
-  width: var(--spacing-6);
+/* 어두운 배경 — 전역 스크롤바(admin-ui styles/scrollbar.css) 썸 색만 LNB 토큰으로. 두께·동작은 전역 규칙 */
+@supports not selector(::-webkit-scrollbar) {
+  .sidebar-menu-wrapper {
+    scrollbar-color: var(--color-sidebar-scrollbar-thumb) transparent;
+  }
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar-track {
-  background: var(--color-sidebar-bg);
-}
-
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb {
+:where(.scrollbar-classic) .sidebar-menu-wrapper::-webkit-scrollbar-thumb {
   background: var(--color-sidebar-scrollbar-thumb);
-  border-radius: var(--radius-3);
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
+:where(.scrollbar-classic) .sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--color-sidebar-scrollbar-thumb-hover);
 }
 

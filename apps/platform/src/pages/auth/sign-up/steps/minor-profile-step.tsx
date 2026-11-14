@@ -1,7 +1,6 @@
 import {
   AddressSearchModal,
   SchoolSearchModal,
-  schoolGradeOptions,
   type UseSignUpReturn,
 } from '@/features/auth/sign-up'
 import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
@@ -121,13 +120,13 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
                 placeholder="학년을 선택해 주세요"
                 value={profile.grade}
                 onValueChange={profile.setGrade}
-                options={schoolGradeOptions.map(option => ({
+                options={profile.gradeOptions.map(option => ({
                   value: option,
                   label: option,
                 }))}
               />
             </>
-          ) : (
+          ) : profile.schoolStatus === 'none' ? (
             <PFTextInput
               size="xlarge"
               label="소속 기관명"
@@ -136,7 +135,7 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
               onValueChange={profile.setAffiliationName}
               message="소속된 기관이 없으신 경우 비워두셔도 괜찮아요"
             />
-          )}
+          ) : null}
 
           <div className={styles.addressField}>
             <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>

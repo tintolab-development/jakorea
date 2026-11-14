@@ -24,6 +24,19 @@ function extractErrorCode(data: unknown): string | undefined {
   return undefined
 }
 
+/** 최근 사용한 비밀번호 재사용 — 화면에서 「사용할 수 없는 비밀번호예요.」 팝업으로 안내한다 */
+export const PASSWORD_RECENTLY_USED_ERROR_CODE = 'PASSWORD_RECENTLY_USED'
+
+/** 포털 인증 API 오류 코드 (`error.code` 또는 `code`). 없으면 undefined */
+export function readPortalAuthApiErrorCode(error: unknown): string | undefined {
+  if (!isAxiosError(error)) return undefined
+  return extractErrorCode(error.response?.data)
+}
+
+export function isPasswordRecentlyUsedApiError(error: unknown): boolean {
+  return readPortalAuthApiErrorCode(error)?.toUpperCase() === PASSWORD_RECENTLY_USED_ERROR_CODE
+}
+
 export function isLoginApprovalPendingApiError(error: unknown): boolean {
   if (!isAxiosError(error)) return false
   if (error.response?.status === 423) return true
@@ -31,8 +44,21 @@ export function isLoginApprovalPendingApiError(error: unknown): boolean {
   return Boolean(code && LOGIN_APPROVAL_PENDING_CODES.has(code.toUpperCase()))
 }
 
-export function getLoginApiErrorMessage(error: unknown, fallback: string): string {
-  if (isLoginApprovalPendingApiError(error)) {
+export type LoginApiErrorMessageOptions = {
+  /**
+   * 승인 대기·비활성 계정(423, ACCOUNT_INACTIVE 등)을 로그인 승인 대기 문구로 바꿀지. 기본 true.
+   * 로그인이 아닌 화면(예: 비밀번호 재설정)은 false로 두고 서버 메시지를 그대로 쓴다.
+   */
+  overrideApprovalPending?: boolean
+}
+
+export function getLoginApiErrorMessage(
+  error: unknown,
+  fallback: string,
+  options: LoginApiErrorMessageOptions = {},
+): string {
+  const { overrideApprovalPending = true } = options
+  if (overrideApprovalPending && isLoginApprovalPendingApiError(error)) {
     return LOGIN_APPROVAL_PENDING_MESSAGE
   }
 
@@ -67,9 +93,8 @@ export function getLoginApiErrorMessage(error: unknown, fallback: string): strin
         return message.trim()
       }
     }
-    if (typeof error.message === 'string' && error.message.trim()) {
-      return error.message.trim()
-    }
+    // axios 원문('Request failed with status code …', 'Network Error')은 화면에 쓰지 않는다
+    return fallback
   }
 
   if (error instanceof Error && error.message.trim()) {

@@ -6,6 +6,7 @@ import {
   isEmailRegisteredForPasswordReset,
   setFindPasswordRecoveryState,
   usePortalEmailCheckMutation,
+  usePortalPasswordResetEligibilityMutation,
 } from '@/features/auth/find-password'
 import {
   useFindPasswordIdentityVerification,
@@ -25,13 +26,15 @@ export function FindPasswordPage() {
   const navigate = useNavigate()
   const remoteApi = isRemoteApiConfigured()
   const emailCheckMutation = usePortalEmailCheckMutation()
+  const eligibilityMutation = usePortalPasswordResetEligibilityMutation()
+  const eligibilityMutateAsync = eligibilityMutation.mutateAsync
   const pendingEmailRef = useRef('')
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
   const [identityError, setIdentityError] = useState<string | null>(null)
 
   const handleIdentitySuccess = useCallback(
-    (result: IdentityChallengeCompleteResult) => {
+    async (result: IdentityChallengeCompleteResult) => {
       const verifiedEmail = pendingEmailRef.current
       if (!verifiedEmail) {
         setIdentityError('이메일 정보가 없습니다. 처음부터 다시 진행해 주세요.')
@@ -44,6 +47,24 @@ export function FindPasswordPage() {
         return
       }
 
+      // 본인인증 직후 계정 확인 — eligible=true일 때만 새 비밀번호 단계로 간다
+      if (remoteApi) {
+        try {
+          const eligibility = await eligibilityMutateAsync({
+            email: verifiedEmail,
+            identityVerificationSessionId: result.sessionId,
+            profileToken,
+          })
+          if (!eligibility.eligible) {
+            navigate('/auth/find-password/not-found')
+            return
+          }
+        } catch (error) {
+          setIdentityError(getLoginApiErrorMessage(error, IDENTITY_MISMATCH_MESSAGE))
+          return
+        }
+      }
+
       setFindPasswordRecoveryState({
         email: verifiedEmail,
         identityVerificationSessionId: result.sessionId,
@@ -52,7 +73,7 @@ export function FindPasswordPage() {
       })
       navigate('/auth/find-password/reset')
     },
-    [navigate, remoteApi]
+    [eligibilityMutateAsync, navigate, remoteApi]
   )
 
   const { verify, isVerifying, errorMessage, resetError } = useFindPasswordIdentityVerification({
@@ -114,7 +135,7 @@ export function FindPasswordPage() {
   }
 
   const displayError = emailError ?? identityError ?? errorMessage
-  const busy = isVerifying || emailCheckMutation.isPending
+  const busy = isVerifying || emailCheckMutation.isPending || eligibilityMutation.isPending
 
   return (
     <section>

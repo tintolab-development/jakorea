@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ApplicationListItemResponseApplicationSource } from './applicationListItemResponseApplicationSource';
 import type { ApplicationListItemResponseDisplayStatus } from './applicationListItemResponseDisplayStatus';
 import type { ApplicationListItemResponseEducationForm } from './applicationListItemResponseEducationForm';
 import type { ApplicationListItemResponseEducationFormScheduleDetail } from './applicationListItemResponseEducationFormScheduleDetail';
@@ -53,4 +54,6 @@ export interface ApplicationListItemResponse {
   educationFormLabel?: string | null;
   /** 교육형태 일정 공통/일정 별 상이. 프로그램 상세 educationFormScheduleDetail과 같은 값. */
   educationFormScheduleDetail?: ApplicationListItemResponseEducationFormScheduleDetail;
+  /** 강사(INSTRUCTOR) 신청의 출처. MEMBER_SUBMITTED=회원이 직접 신청, ADMIN_REGISTERED=CMS 관리자가 참여 강사로 직접 등록(신청 행 자동 생성). ADMIN_REGISTERED이면 FE는 안내사항 [신청 정보] 버튼을 숨긴다(USER-FUNC-0252). 승인 완료 상태라 '신청 내용' 탭은 노출되지 않으며, 기관별 강의 가능 일정에 '-' 같은 대체 표시나 별도 문구를 만들지 않는다. 강사 외 신청 유형은 null. */
+  applicationSource?: ApplicationListItemResponseApplicationSource;
 }

@@ -14,7 +14,9 @@ import {
   buildShortcutVisibilityForSave,
   isDashboardShortcutSettingsDisabled,
   normalizeShortcutVisibilityFromServer,
+  type DashboardShortcutSessionOptions,
 } from '@/features/dashboard/model/dashboard-shortcut-contract'
+import { sessionDashboardShortcutOptions } from '@/features/dashboard/lib/dashboard-shortcut-master'
 
 /** 대시보드 홈(임시 미구현 라우트 대체) */
 export const DASHBOARD_HOME_PATH = '/'
@@ -34,6 +36,7 @@ export interface ShortcutItemDef {
 
 export { isShortcutItemEnabled } from '@/features/dashboard/model/dashboard-shortcut-contract'
 
+/** 마스터가 아닌 세션 기준(정적 목록) — 마스터 여부가 필요하면 isDashboardShortcutSettingsDisabled에 옵션을 넘긴다 */
 export const isShortcutSettingsDisabled = (id: string): boolean =>
   isDashboardShortcutSettingsDisabled(id)
 
@@ -169,15 +172,16 @@ export function normalizeShortcutEnabled(
   return next
 }
 
-/** PUT payload용 — catalogKeys 없으면 disabled 6만 정규화 */
+/** PUT payload용 — catalogKeys 없으면 disabled 6만 정규화(마스터는 6건도 그대로 저장) */
 export function normalizeShortcutVisibilityForSave(
   shortcutEnabled: Record<string, boolean>,
-  catalogKeys: readonly string[] | null
+  catalogKeys: readonly string[] | null,
+  options: DashboardShortcutSessionOptions = sessionDashboardShortcutOptions()
 ): Record<string, boolean> {
   if (catalogKeys != null && catalogKeys.length > 0) {
-    return buildShortcutVisibilityForSave(shortcutEnabled, catalogKeys)
+    return buildShortcutVisibilityForSave(shortcutEnabled, catalogKeys, options)
   }
-  return normalizeShortcutVisibilityFromServer(shortcutEnabled)
+  return normalizeShortcutVisibilityFromServer(shortcutEnabled, options)
 }
 
 export const DASHBOARD_SETTINGS_STORAGE_KEY = 'dashboard-settings'
@@ -257,7 +261,7 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
       widgetProgramIds: {},
 
       setShortcutEnabled: (id, enabled) => {
-        if (isShortcutSettingsDisabled(id)) return
+        if (isDashboardShortcutSettingsDisabled(id, sessionDashboardShortcutOptions())) return
         set(state => ({
           shortcutEnabled: { ...state.shortcutEnabled, [id]: enabled },
         }))

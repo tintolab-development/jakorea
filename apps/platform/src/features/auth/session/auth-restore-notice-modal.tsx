@@ -46,7 +46,7 @@ export function PlatformAuthRestoreNoticeModal({
   const copy = PLATFORM_AUTH_RESTORE_NOTICE_DISPLAY
   const pathname = currentPath.split('?')[0] ?? currentPath
   const actions = resolveAuthRestoreNoticeActions(notice, pathname)
-  // 사용 중 세션 종료(session-expired)도 같은 「로그인이 종료되었어요.」 문구를 쓴다
+  // 사용 중 세션 종료(session-expired)도 같은 「자동으로 로그아웃되었어요.」 문구를 쓴다
   const isSessionEnded = notice === 'session-ended' || notice === 'session-expired'
 
   const handleRetry = async () => {

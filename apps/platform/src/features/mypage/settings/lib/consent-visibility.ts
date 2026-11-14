@@ -6,6 +6,7 @@ import {
   type SettingsConsentItem,
   type SettingsConsentItemId,
 } from './consent-catalog.ts'
+import { SETTINGS_CONSENT_TYPE_BY_ID } from './map-consents.ts'
 import { ensurePinnedPaymentStatementConsentItem } from './payment-statement-consent-status.ts'
 
 /** 교사(비겸직) · 교사 겸직 강사 — 교사 전용 약관 노출 */
@@ -89,12 +90,66 @@ export function ensureInstructorDocumentConsentItems(
   return merged
 }
 
+/**
+ * 프로그램 신청 필수 동의 게이트 → 동의 관리 이동 시 빠진 항목(서버 consentType, 쉼표 구분).
+ * 예: `?tab=consents&required=FACILITATOR_PLEDGE,CRIMINAL_HISTORY_CHECK_CONSENT`
+ */
+export const APPLY_GATE_REQUIRED_CONSENTS_PARAM = 'required'
+
+const SETTINGS_CONSENT_ID_BY_TYPE = new Map<string, SettingsConsentItemId>(
+  (Object.entries(SETTINGS_CONSENT_TYPE_BY_ID) as [SettingsConsentItemId, string][]).map(
+    ([id, type]) => [type, id],
+  ),
+)
+
+/** `required` 쿼리 값 → 동의서·서약서 카드 id. 모르는 값은 버린다. */
+export function parseApplyGateRequiredConsentItemIds(
+  raw: string | null | undefined,
+): ReadonlySet<SettingsConsentItemId> {
+  const ids = new Set<SettingsConsentItemId>()
+  for (const token of (raw ?? '').split(',')) {
+    const id = SETTINGS_CONSENT_ID_BY_TYPE.get(token.trim().toUpperCase())
+    if (id) ids.add(id)
+  }
+  return ids
+}
+
+/**
+ * 신청 게이트가 요구한 동의서·서약서가 목록 데이터에 없으면 카탈로그 행을 보강한다.
+ * (작성 전 비강사 회원 — 서버 요약 행이 빠진 경우에도 작성 진입 카드가 있어야 한다.)
+ */
+export function ensureApplyGateRequiredDocumentConsentItems(
+  documentItems: readonly SettingsConsentItem[],
+  requiredIds: ReadonlySet<SettingsConsentItemId>,
+): SettingsConsentItem[] {
+  const merged = [...documentItems]
+  if (requiredIds.size === 0) return merged
+  const seen = new Set(merged.map(item => item.id))
+  for (const id of requiredIds) {
+    if (seen.has(id)) continue
+    const catalog = DOCUMENT_CONSENT_ITEMS.find(item => item.id === id)
+    if (!catalog) continue
+    merged.push({ ...catalog })
+    seen.add(id)
+  }
+  return merged
+}
+
+/**
+ * @param options.requiredIds 신청 게이트에서 넘어온 빠진 항목 — 작성 전(`listed` 아님)이어도 카드를 보여준다.
+ *   (QA-02: 비강사 UJAT 봉사자가 [서약 및 동의하기]로 왔는데 작성할 카드가 없던 문제, 2026-11-14)
+ */
 export function filterListedDocumentConsentItems(
   items: SettingsConsentItem[],
-  options: { isRemoteSession: boolean; isInstructor: boolean },
+  options: {
+    isRemoteSession: boolean
+    isInstructor: boolean
+    requiredIds?: ReadonlySet<SettingsConsentItemId>
+  },
 ): SettingsConsentItem[] {
   return items.filter(item => {
     if (item.id === 'paymentStatement' && !options.isInstructor) return false
+    if (options.requiredIds?.has(item.id as SettingsConsentItemId)) return true
     if (
       options.isInstructor &&
       INSTRUCTOR_EDUCATOR_DOCUMENT_IDS.has(item.id as SettingsConsentItemId)

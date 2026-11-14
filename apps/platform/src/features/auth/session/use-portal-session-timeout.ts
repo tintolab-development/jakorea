@@ -110,7 +110,7 @@ export function usePortalSessionTimeout() {
 
   /**
    * 서버 401로 세션 무효가 확정됐을 때만 호출한다.
-   * 지금 화면에 머문 채 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면으로 이동한다.
+   * 지금 화면에 머문 채 「자동으로 로그아웃되었어요.」를 띄우고 [확인] 때 로그아웃·로그인 화면으로 이동한다.
    */
   const endInvalidSession = useCallback(() => {
     setVisibleKind(null)

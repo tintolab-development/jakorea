@@ -127,13 +127,17 @@
 }
 
 /* 기본정보: 주민등록번호 인풋만 164.5px */
-.add-instructor-modal__section--basic .add-instructor-modal__resident-registration-row .ant-form-item {
+.add-instructor-modal__section--basic
+  .add-instructor-modal__resident-registration-row
+  .ant-form-item {
   flex: 0 0 164.5px;
   width: 164.5px;
   min-width: 164.5px;
 }
 
-.add-instructor-modal__section--basic .add-instructor-modal__basic-table-cell--input > .add-instructor-modal__native-select {
+.add-instructor-modal__section--basic
+  .add-instructor-modal__basic-table-cell--input
+  > .add-instructor-modal__native-select {
   width: 220px;
 }
 
@@ -425,7 +429,6 @@
   text-align: left;
 }
 
-
 /* 값/입력 셀: 흰 배경 (assignment-submission-modal, applicant-instructor-detail-modal 스펙) */
 .add-instructor-modal__basic-table-cell--input {
   background: var(--color-bg-base);
@@ -466,7 +469,8 @@
   max-width: 215px;
 }
 
-.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap.ant-form-item {
+.add-instructor-modal__gender-military-row
+  .add-instructor-modal__gender-military-input-wrap.ant-form-item {
   display: flex !important;
   flex-direction: column;
   align-items: stretch;
@@ -475,14 +479,18 @@
   max-width: 100% !important;
 }
 
-.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap .ant-form-item-control-input-content {
+.add-instructor-modal__gender-military-row
+  .add-instructor-modal__gender-military-input-wrap
+  .ant-form-item-control-input-content {
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
   display: flex !important;
 }
 
-.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap .ant-select {
+.add-instructor-modal__gender-military-row
+  .add-instructor-modal__gender-military-input-wrap
+  .ant-select {
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
@@ -490,7 +498,10 @@
   min-height: 40px !important;
 }
 
-.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap .ant-select .ant-select-selector {
+.add-instructor-modal__gender-military-row
+  .add-instructor-modal__gender-military-input-wrap
+  .ant-select
+  .ant-select-selector {
   width: 100% !important;
   height: 40px !important;
   min-height: 40px !important;
@@ -938,7 +949,6 @@
 
 .add-instructor-content-modal .teal-header-modal__body {
   overflow-y: auto;
-  padding-right: 4px;
 }
 
 .add-instructor-content-modal .teal-header-modal__title {
@@ -984,7 +994,10 @@
   box-sizing: border-box;
 }
 
-.add-instructor-modal__consent-table tbody tr:first-child > td.add-instructor-modal__basic-table-cell--input {
+.add-instructor-modal__consent-table
+  tbody
+  tr:first-child
+  > td.add-instructor-modal__basic-table-cell--input {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
@@ -1050,7 +1063,6 @@
 .add-instructor-modal__consent-complete--disabled {
   color: var(--color-text-tertiary);
 }
-
 
 /* 경력 상세 테이블: 최종 학력과 동일 스타일 */
 .add-instructor-modal__career-table-wrap {
@@ -1145,11 +1157,15 @@
   overflow: hidden;
 }
 
-.add-instructor-modal__career-row-inputs .add-instructor-modal__career-check-wrap .ant-form-item-control-input {
+.add-instructor-modal__career-row-inputs
+  .add-instructor-modal__career-check-wrap
+  .ant-form-item-control-input {
   min-width: 0;
 }
 
-.add-instructor-modal__career-row-inputs .add-instructor-modal__career-check-wrap .ant-checkbox-wrapper {
+.add-instructor-modal__career-row-inputs
+  .add-instructor-modal__career-check-wrap
+  .ant-checkbox-wrapper {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1169,7 +1185,11 @@
 }
 
 .add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-input,
-.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-picker .ant-picker-input > input {
+.add-instructor-modal__career-row-inputs
+  .add-instructor-modal__career-input-wrap
+  .ant-picker
+  .ant-picker-input
+  > input {
   font-family: 'Pretendard', sans-serif !important;
   font-size: 15px !important;
   font-weight: 500 !important;
@@ -1177,8 +1197,13 @@
   color: var(--color-input-placeholder) !important;
 }
 
-.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-input::placeholder,
-.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-picker .ant-picker-input::placeholder {
+.add-instructor-modal__career-row-inputs
+  .add-instructor-modal__career-input-wrap
+  .ant-input::placeholder,
+.add-instructor-modal__career-row-inputs
+  .add-instructor-modal__career-input-wrap
+  .ant-picker
+  .ant-picker-input::placeholder {
   color: var(--color-input-placeholder) !important;
 }
 
@@ -1292,7 +1317,9 @@
   min-height: 40px !important;
 }
 
-.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker {
+.add-instructor-modal__qualification-row-inputs
+  .add-instructor-modal__qualification-input-wrap
+  .ant-picker {
   width: 190px !important;
   min-width: 190px !important;
   max-width: 190px !important;
@@ -1301,8 +1328,14 @@
   box-shadow: none !important;
 }
 
-.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker .ant-picker-input > input,
-.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-input {
+.add-instructor-modal__qualification-row-inputs
+  .add-instructor-modal__qualification-input-wrap
+  .ant-picker
+  .ant-picker-input
+  > input,
+.add-instructor-modal__qualification-row-inputs
+  .add-instructor-modal__qualification-input-wrap
+  .ant-input {
   font-family: 'Pretendard', sans-serif !important;
   font-size: 15px !important;
   font-weight: 500 !important;
@@ -1310,8 +1343,13 @@
   color: var(--color-input-placeholder) !important;
 }
 
-.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-input::placeholder,
-.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker .ant-picker-input::placeholder {
+.add-instructor-modal__qualification-row-inputs
+  .add-instructor-modal__qualification-input-wrap
+  .ant-input::placeholder,
+.add-instructor-modal__qualification-row-inputs
+  .add-instructor-modal__qualification-input-wrap
+  .ant-picker
+  .ant-picker-input::placeholder {
   color: var(--color-input-placeholder) !important;
 }
 
@@ -1408,7 +1446,9 @@
   min-height: 40px !important;
 }
 
-.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker {
+.add-instructor-modal__ja-activity-row-inputs
+  .add-instructor-modal__ja-activity-input-wrap
+  .ant-picker {
   width: 190px !important;
   min-width: 190px !important;
   max-width: 190px !important;
@@ -1417,8 +1457,14 @@
   box-shadow: none !important;
 }
 
-.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker .ant-picker-input > input,
-.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-input {
+.add-instructor-modal__ja-activity-row-inputs
+  .add-instructor-modal__ja-activity-input-wrap
+  .ant-picker
+  .ant-picker-input
+  > input,
+.add-instructor-modal__ja-activity-row-inputs
+  .add-instructor-modal__ja-activity-input-wrap
+  .ant-input {
   font-family: 'Pretendard', sans-serif !important;
   font-size: 15px !important;
   font-weight: 500 !important;
@@ -1426,8 +1472,13 @@
   color: var(--color-input-placeholder) !important;
 }
 
-.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-input::placeholder,
-.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker .ant-picker-input::placeholder {
+.add-instructor-modal__ja-activity-row-inputs
+  .add-instructor-modal__ja-activity-input-wrap
+  .ant-input::placeholder,
+.add-instructor-modal__ja-activity-row-inputs
+  .add-instructor-modal__ja-activity-input-wrap
+  .ant-picker
+  .ant-picker-input::placeholder {
   color: var(--color-input-placeholder) !important;
 }
 
@@ -1543,7 +1594,11 @@
   box-shadow: none !important;
 }
 
-.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker .ant-picker-input > input,
+.add-instructor-modal__award-row-inputs
+  .add-instructor-modal__award-input-wrap
+  .ant-picker
+  .ant-picker-input
+  > input,
 .add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-input {
   font-family: 'Pretendard', sans-serif !important;
   font-size: 15px !important;
@@ -1552,8 +1607,13 @@
   color: var(--color-input-placeholder) !important;
 }
 
-.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-input::placeholder,
-.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker .ant-picker-input::placeholder {
+.add-instructor-modal__award-row-inputs
+  .add-instructor-modal__award-input-wrap
+  .ant-input::placeholder,
+.add-instructor-modal__award-row-inputs
+  .add-instructor-modal__award-input-wrap
+  .ant-picker
+  .ant-picker-input::placeholder {
   color: var(--color-input-placeholder) !important;
 }
 
@@ -1881,30 +1941,6 @@
   flex-shrink: 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* 세로 디바이더: margin 0 (양옆 12px는 행 flex gap 등으로 확보), 주민번호 구간 `-`는 제외 */
 .add-instructor-modal__divider,
 .add-instructor-modal__gender-military-divider,
@@ -1922,4 +1958,3 @@
 .add-instructor-modal__resident-registration-divider {
   margin: 0 !important;
 }
-

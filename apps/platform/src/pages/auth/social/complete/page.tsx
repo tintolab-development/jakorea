@@ -10,6 +10,8 @@ import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/app
 import {
   isPortalSocialAuthLoginRemoteEnabled,
   platformSocialAuthClient,
+  rememberRecentSocialLoginProvider,
+  resolveSocialProviderParam,
 } from '@/features/auth/social-auth'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
@@ -95,6 +97,11 @@ export function SocialLoginCompletePage() {
             expiresAt: expiresAtFromExpiresInSeconds(outcome.tokens.expiresInSeconds),
           })
           applyAuthTokenAgeGroupToMeCache(outcome.tokens.ageGroup)
+          // 로그인 화면 「최근 로그인한 방법이에요」 안내용 — provider 키만 이 브라우저에 저장한다
+          const recentProvider = resolveSocialProviderParam(params.get('provider'))
+          if (recentProvider) {
+            rememberRecentSocialLoginProvider(recentProvider)
+          }
           setDevMemberProfile('individual')
           setDevAuthLoggedIn(false)
           const nextPath = await resolvePostLoginPath(redirectAfterLogin())

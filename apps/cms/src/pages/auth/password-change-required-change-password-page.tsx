@@ -7,7 +7,9 @@ import { Form } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import { fetchAdminPasswordChange } from '@/features/auth/api/admin-password-change-fetcher'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   getPasswordChangeRequiredWizardState,
   hasIdentityVerified,
@@ -34,8 +36,16 @@ export function PasswordChangeRequiredChangePasswordPage() {
   const [form] = Form.useForm<FormValues>()
   const [submitting, setSubmitting] = useState(false)
   const { isReady } = usePasswordChangeRequiredGuard()
+  const identityVerificationRequired = useAuthStore(state => state.identityVerificationRequired)
+  const setIdentityVerificationRequired = useAuthStore(
+    state => state.setIdentityVerificationRequired
+  )
   const wizardState = getPasswordChangeRequiredWizardState()
-  const identityReady = hasIdentityVerified(wizardState)
+  // 서버 값이 있으면 그 값으로(BE R1), 없으면(배포 전) 기존처럼 이 탭의 본인인증 완료 여부로 판단한다
+  const identityReady =
+    identityVerificationRequired === null
+      ? hasIdentityVerified(wizardState)
+      : identityVerificationRequired === false
   const email = wizardState?.email?.trim() ?? ''
 
   useEffect(() => {
@@ -76,6 +86,12 @@ export function PasswordChangeRequiredChangePasswordPage() {
       markPasswordChangeRequiredComplete()
       navigate(passwordChangeRequiredPaths.complete, { replace: true })
     } catch (error) {
+      // 방어 — 본인인증 확정 전이면 본인인증 단계로 되돌린다
+      if (error instanceof AdminMfaApiError && error.code === 'ADMIN_IDENTITY_NOT_VERIFIED') {
+        setIdentityVerificationRequired(true)
+        navigate(passwordChangeRequiredPaths.identity, { replace: true })
+        return
+      }
       const message =
         error instanceof Error ? error.message : '비밀번호 변경에 실패했습니다. 다시 시도해 주세요.'
       form.setFields([{ name: 'newPassword', errors: [message] }])

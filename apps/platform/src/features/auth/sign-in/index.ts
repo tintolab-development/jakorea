@@ -30,7 +30,11 @@ export type {
   PortalWithdrawalResponse,
   UpdatePortalProfileRequest,
 } from './api'
-export { formatPortalProfileUpdateError, getLoginApiErrorMessage } from './lib'
+export {
+  formatPortalProfileUpdateError,
+  getLoginApiErrorMessage,
+  isPasswordRecentlyUsedApiError,
+} from './lib'
 export {
   usePortalLoginMutation,
   usePortalMeQuery,

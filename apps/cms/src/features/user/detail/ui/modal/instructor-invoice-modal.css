@@ -22,9 +22,13 @@
   box-sizing: border-box;
 }
 
-/* 본문: 좌우 30px, 섹션 간 30px — 상단은 헤더 하단과 맞춤 */
+/* 본문: 좌우 30px, 섹션 간 30px — 상단은 헤더 하단과 맞춤.
+ * 우측 패딩이 본문에 있어 스크롤바가 이미 여백 위 → 공용 스크롤 거터 확장은 0 */
 .instructor-invoice-modal.content-modal .teal-header-modal__body {
+  --content-modal-scroll-gutter: 0px;
+
   padding: 0 30px 0;
+  padding-right: 30px !important;
   gap: 30px;
 }
 
@@ -130,7 +134,9 @@
   background: #fff;
 }
 
-.instructor-invoice-modal .instructor-invoice-modal__detail-table td.instructor-invoice-modal__detail-action-cell {
+.instructor-invoice-modal
+  .instructor-invoice-modal__detail-table
+  td.instructor-invoice-modal__detail-action-cell {
   display: flex;
   justify-content: center;
   align-items: center;

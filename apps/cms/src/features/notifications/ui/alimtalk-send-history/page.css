@@ -33,24 +33,7 @@
   overflow-x: auto;
 }
 
-/* 시안 가로 스크롤 바 — 두께 4 · thumb #e0e0e0 · radius 40 · 트랙 투명 */
-.alimtalk-send-history-page__table .ant-table-content {
-  scrollbar-width: thin;
-  scrollbar-color: var(--Border-default, #e0e0e0) transparent;
-}
-
-.alimtalk-send-history-page__table .ant-table-content::-webkit-scrollbar {
-  height: 4px;
-}
-
-.alimtalk-send-history-page__table .ant-table-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.alimtalk-send-history-page__table .ant-table-content::-webkit-scrollbar-thumb {
-  border-radius: 40px;
-  background: var(--Border-default, #e0e0e0);
-}
+/* 가로 스크롤 바: 전역 규칙(admin-ui styles/scrollbar.css — 4px · #3D3D3D 10% · radius 20) */
 
 .alimtalk-send-history-page__table .ant-table-container,
 .alimtalk-send-history-page__table .ant-table-content,
@@ -79,4 +62,3 @@
   > td {
   background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
 }
-

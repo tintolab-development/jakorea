@@ -13,4 +13,8 @@ export interface ScheduleEnrich {
   distanceKm?: number;
   longDistance?: boolean;
   assignedVolunteerCount?: number;
+  /** GENERAL_INDIVIDUAL 강사 배정 대기 상태. AVAILABLE(배정 대기) 또는 UNAVAILABLE(배정 불가). 그 외 대상은 null. */
+  availabilityStatus?: string | null;
+  /** UNAVAILABLE일 때 사유 코드. 같은 강사가 이미 배정된 다른 일정과 시간이 겹치면(끝 시각 = 시작 시각 포함) INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT. */
+  unavailableReason?: string | null;
 }

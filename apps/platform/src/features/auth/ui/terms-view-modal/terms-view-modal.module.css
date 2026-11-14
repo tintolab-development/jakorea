@@ -3,7 +3,8 @@
 
   display: flex;
   width: min(1000px, calc(100vw - 32px));
-  height: min(880px, calc(100vh - 48px));
+  /* 최대 높이만 두고, 내용이 짧으면 내용 높이에 맞춘다 (Figma 12639-47939) */
+  max-height: min(880px, calc(100vh - 48px));
   padding: 44px 50px 34px;
   flex-direction: column;
   align-items: center;

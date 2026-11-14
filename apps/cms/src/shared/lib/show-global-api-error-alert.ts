@@ -9,6 +9,7 @@ import {
   NETWORK_ERROR_ALERT_TITLE,
 } from '@/shared/lib/extract-api-error-message'
 import {
+  getCrimeConsentOriginalErrorMessage,
   getMemberDeleteCurrentPasswordInvalidAlertOptions,
   isMemberDeleteCurrentPasswordInvalidError,
 } from '@/features/user/api/get-member-api-error'
@@ -24,6 +25,7 @@ import {
 import { readVolunteer1365ApprovalBlockedAlert } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
+import { isScreenOwnedApiError } from '@/shared/lib/screen-owned-api-errors'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 const DEDUPE_MS = 2_000
@@ -95,6 +97,21 @@ function shouldSkipGlobalErrorAlert(
 
   // 봉사자 1365 ID 미등록 승인 차단 — 화면에서 전용 안내를 띄운다.
   if (readVolunteer1365ApprovalBlockedAlert(error)) {
+    return true
+  }
+
+  // 재인증 불일치·관리자 이메일 입력란 오류·사전등록 본인 정보 중복 — 화면에서 직접 안내한다.
+  const field =
+    data && typeof data === 'object' && 'error' in data
+      ? (data as { error?: { field?: unknown } }).error?.field
+      : undefined
+  if (
+    isScreenOwnedApiError({
+      url: config?.url ?? error.config?.url,
+      code,
+      field: typeof field === 'string' ? field.trim() : undefined,
+    })
+  ) {
     return true
   }
 
@@ -180,6 +197,13 @@ export function showGlobalApiErrorAlert(
   if (isMemberDeleteCurrentPasswordInvalidError(error)) {
     markGlobalErrorAlertShown(error)
     cmsAlertModal.show(getMemberDeleteCurrentPasswordInvalidAlertOptions())
+    return true
+  }
+
+  const crimeConsentOriginalMessage = getCrimeConsentOriginalErrorMessage(error)
+  if (crimeConsentOriginalMessage) {
+    markGlobalErrorAlertShown(error)
+    cmsAlertModal.show({ title: resolveAlertTitle(httpStatus), content: crimeConsentOriginalMessage })
     return true
   }
 

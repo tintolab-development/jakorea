@@ -17,7 +17,7 @@ export interface GuardianConsentEvidenceRequest {
      * @minLength 0
      * @maxLength 255
      */
-  guardianRelation: string;
+  guardianRelation?: string;
   /**
      * @minLength 0
      * @maxLength 256

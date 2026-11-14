@@ -5,7 +5,7 @@ import {
   PROGRAMS_PATH,
   ProgramApplyGateModals,
   programApplyGateApplicationsPathForType,
-  programApplyGateConsentsPath,
+  programApplyGateConsentsPathFor,
   programApplyGateMemberSettingsPath,
   resolveProgramApplyGateModal,
   readPortalRecruitmentFocus,
@@ -176,7 +176,7 @@ export function ProgramDetailPage() {
         notEligibleVariant={notEligibleVariant}
         onOpenConsents={() => {
           closeGateModal()
-          navigate(programApplyGateConsentsPath)
+          navigate(programApplyGateConsentsPathFor(missingConsents))
         }}
         onEditMemberInfo={() => {
           closeGateModal()

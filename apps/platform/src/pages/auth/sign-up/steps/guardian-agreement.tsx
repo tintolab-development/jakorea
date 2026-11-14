@@ -22,7 +22,7 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title={'보호자님의 동의가 완료되면\n가입을 계속할 수 있어요'}
+        title={'보호자님의 동의가 완료되면\n가입을 계속할 수 있어요.'}
         description="필수 항목인 서비스 이용과 개인정보 동의 내용을 확인해 주세요."
         actionsVariant="terms"
         actions={

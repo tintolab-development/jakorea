@@ -4,6 +4,7 @@
 import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
 import { parseAssignedProgramTypes } from '@/features/dashboard/model/program-schedule-keys'
+import { sessionDashboardShortcutOptions } from '@/features/dashboard/lib/dashboard-shortcut-master'
 import {
   normalizeShortcutVisibilityFromServer,
   restrictShortcutVisibilityToCatalog,
@@ -159,11 +160,12 @@ export function applyMeDashboardPreferencesResponse(
   if (applySettings && settings) {
     const serverShortcutVisibility = asBooleanRecord(settings.shortcutVisibility)
     useDashboardSettingsStore.setState(state => {
-      const normalized = normalizeShortcutVisibilityFromServer(serverShortcutVisibility)
+      const shortcutSession = sessionDashboardShortcutOptions()
+      const normalized = normalizeShortcutVisibilityFromServer(serverShortcutVisibility, shortcutSession)
       const catalogKeys = state.shortcutCatalogKeys
       const shortcutEnabled =
         catalogKeys != null && catalogKeys.length > 0
-          ? restrictShortcutVisibilityToCatalog(normalized, catalogKeys)
+          ? restrictShortcutVisibilityToCatalog(normalized, catalogKeys, shortcutSession)
           : normalized
       return {
         shortcutEnabled,

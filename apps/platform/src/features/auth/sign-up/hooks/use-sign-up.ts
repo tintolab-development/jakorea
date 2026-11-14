@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { IDENTITY_EXPECTED_PROFILE_MISMATCH } from '@jakorea/identity-verification'
+import { lookupFindEmail } from '@/features/auth/find-email'
 import type {
   AgreementKey,
   AgreementState,
@@ -12,11 +14,17 @@ import type {
 } from '../model/sign-up.types'
 import {
   memberTypeOptions,
+  schoolGradeOptions,
   SIGN_IN_PATH,
   SIGN_UP_COMPLETE_PATH,
   SIGN_UP_TOTAL_STEPS,
   SIGN_UP_UNDER_AGE_TOTAL_STEPS,
 } from '../lib/constants'
+import {
+  getSchoolGradeOptions,
+  isGradeInSchoolLevel,
+  type SchoolLevel,
+} from '../lib/school-grade'
 import { signupGenderFromVerifiedIdentity } from '../lib/helpers/verified-identity-gender'
 import { isPortraitConsentDraftReadyForSubmit } from '../lib/map-portrait-consent-filled-document'
 import { signupBirthDateFromVerified } from '../lib/helpers/verified-birth-date'
@@ -40,6 +48,7 @@ import {
   buildUnderAgeConfirmationRows,
   formatBirthDateInput,
   getBirthDateRangeMessage,
+  resolveSubmittedSchoolStatus,
 } from '../lib/utils'
 import {
   createInitialAgreementState,
@@ -163,6 +172,12 @@ export function useSignUp() {
   const wizardPathname = location.pathname
   const freshEntryHandledKeyRef = useRef<string | null>(null)
   const pendingWizardFormResetRef = useRef(false)
+  /** [가입 완료하기] 중복 제출 방지 — state 반영 전 연속 클릭도 막는다 */
+  const signupSubmitInFlightRef = useRef(false)
+  /** 본인인증 직후 이미 가입된 회원인지 확인 중 */
+  const [isCheckingDuplicateMember, setIsCheckingDuplicateMember] = useState(false)
+  /** 시안 「중복 가입 시」(14502-51088) 팝업 */
+  const [isDuplicateMemberNoticeOpen, setIsDuplicateMemberNoticeOpen] = useState(false)
   const guardianFinalConsentInFlightRef = useRef(false)
   const guardianFinalConsentDoneRef = useRef(false)
 
@@ -251,13 +266,16 @@ export function useSignUp() {
   const [isEmailChecking, setIsEmailChecking] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>('none')
+  // 14세 이상 일반회원의 재학 여부는 기본 미선택(null). 미성년은 생년월일 단계에서 'enrolled'로 둔다.
+  const [schoolStatus, setSchoolStatus] = useState<SchoolStatus | null>(null)
   const [schoolName, setSchoolName] = useState('')
   const [schoolAddress, setSchoolAddress] = useState('')
   const [schoolNeisCode, setSchoolNeisCode] = useState<string | null>(null)
   const [schoolEducationOfficeCode, setSchoolEducationOfficeCode] = useState<string | null>(null)
   const [schoolSource, setSchoolSource] = useState<'neis' | 'careerNet' | null>(null)
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(null)
+  /** 검색으로 고른 학교의 학교급 — 학년 옵션 범위. 모르면 null(기존 1~12학년) */
+  const [schoolLevel, setSchoolLevel] = useState<SchoolLevel | null>(null)
   const [grade, setGrade] = useState('')
   const [affiliationName, setAffiliationName] = useState('')
   const [employmentStatus, setEmploymentStatus] = useState<EmploymentStatus | null>('employed')
@@ -390,13 +408,14 @@ export function useSignUp() {
     setIsEmailChecking(false)
     setPassword('')
     setPasswordConfirm('')
-    setSchoolStatus('none')
+    setSchoolStatus(null)
     setSchoolName('')
     setSchoolAddress('')
     setSchoolNeisCode(null)
     setSchoolEducationOfficeCode(null)
     setSchoolSource(null)
     setSchoolOrganizationId(null)
+    setSchoolLevel(null)
     setGrade('')
     setAffiliationName('')
     setEmploymentStatus('employed')
@@ -555,6 +574,9 @@ export function useSignUp() {
           schoolOrganizationId,
           schoolNeisCode,
         }) && (!isUnderAgeSignup || isMinorMemberNameValid(memberProfileName))
+  // 일반회원은 프로필 단계 필수 검증(isStepSixValid)을 통과해야 확인·제출로 가므로 여기서는 선택값이 있다.
+  // 교사회원은 재학 여부를 쓰지 않는다(요청·확인 화면 모두 무시).
+  const submittedSchoolStatus = resolveSubmittedSchoolStatus(schoolStatus)
   const isGuardianProfileValidState = isGuardianProfileValid({
     name: guardianVerifiedName,
     phone: guardianVerifiedPhone,
@@ -631,6 +653,9 @@ export function useSignUp() {
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
     resetGuardianBridgeSession()
+    // 회원 유형 선택(1단계)으로 돌아가 일반회원이 선택된 상태로 둔다.
+    // 교사용 생년월일 화면을 history에서 바꿔, 뒤로가기로 다시 열리지 않게 한다.
+    replaceWizard(1)
   }
 
   const applyPreviousStepProgrammatically = () => {
@@ -820,10 +845,32 @@ export function useSignUp() {
   }
 
   const handleIdentitySuccess = useCallback(
-    (result: IdentityChallengeCompleteResult) => {
+    async (result: IdentityChallengeCompleteResult) => {
       if (isUnderAgeSignupRef.current || readMinorMemberBirthDate() != null) {
         return
       }
+
+      // 본인인증 직후 이미 가입된 회원이면 다음 단계로 넘기지 않고 바로 안내한다.
+      // 확인 API(이메일 찾기 조회)가 실패하면 기존대로 진행하고, 최종 가입 요청에서 중복을 막는다.
+      const profileToken = result.profileToken?.trim()
+      if (remoteApi && profileToken) {
+        setIsCheckingDuplicateMember(true)
+        try {
+          const lookup = await lookupFindEmail({
+            identityVerificationSessionId: result.sessionId,
+            profileToken,
+          })
+          if (lookup.kind === 'found') {
+            setIsDuplicateMemberNoticeOpen(true)
+            return
+          }
+        } catch {
+          // 확인 실패 — 가입 흐름을 막지 않는다
+        } finally {
+          setIsCheckingDuplicateMember(false)
+        }
+      }
+
       setIdentityVerificationSessionId(result.sessionId)
       applyVerifiedIdentityFields({ ...result, syncGender: true })
       persistMemberVerifiedIdentity(result)
@@ -839,6 +886,8 @@ export function useSignUp() {
     verify: verifyMemberIdentity,
     isVerifying: isMemberIdentityVerifying,
     errorMessage: memberIdentityErrorMessage,
+    errorCode: memberIdentityErrorCode,
+    resetError: resetMemberIdentityError,
   } = useSignupIdentityVerification({
     birthDate,
     gender,
@@ -1123,6 +1172,7 @@ export function useSignUp() {
       setSchoolEducationOfficeCode(null)
       setSchoolSource(null)
       setSchoolOrganizationId(null)
+      setSchoolLevel(null)
       setGrade('')
     } else {
       setAffiliationName('')
@@ -1136,9 +1186,16 @@ export function useSignUp() {
     setSchoolEducationOfficeCode(null)
     setSchoolSource(null)
     setSchoolOrganizationId(null)
+    setSchoolLevel(null)
   }
 
   const handleSchoolSelect = (school: SelectedSchool) => {
+    const nextSchoolLevel = school.schoolLevel ?? null
+    setSchoolLevel(nextSchoolLevel)
+    // 학교를 바꿔 이미 고른 학년이 새 학교급 범위 밖이면 학년 선택을 비운다
+    if (!isGradeInSchoolLevel(grade, nextSchoolLevel, schoolGradeOptions)) {
+      setGrade('')
+    }
     setSchoolName(school.name)
     setSchoolAddress(school.address?.trim() ?? '')
     setSchoolNeisCode(school.neisCode?.trim() || null)
@@ -1225,9 +1282,26 @@ export function useSignUp() {
   }
 
   const handleSignupComplete = async () => {
-    setSubmitMessage('')
+    if (signupSubmitInFlightRef.current) return
+    signupSubmitInFlightRef.current = true
+    // 교사회원 학교 기관 ID 조회(resolvePortalSchoolOrganizationId)보다 먼저 제출 중으로 둔다
+    setIsSubmitting(true)
 
+    try {
+      await submitSignup()
+    } finally {
+      signupSubmitInFlightRef.current = false
+      setIsSubmitting(false)
+    }
+  }
+
+  /**
+   * 가입 제출 본문. 에러 문구는 클릭 즉시 지우지 않고,
+   * 새 결과(성공 또는 새 실패)가 확정될 때 바꾼다.
+   */
+  const submitSignup = async () => {
     if (!remoteApi) {
+      setSubmitMessage('')
       clearPortraitConsentSession()
       navigate(SIGN_UP_COMPLETE_PATH, {
         replace: true,
@@ -1333,7 +1407,7 @@ export function useSignUp() {
       identityVerificationSessionId,
       guardianVerificationSessionId: underAgeSessions.guardianVerificationSessionId,
       signupIntentId: underAgeSessions.signupIntentId,
-      schoolStatus,
+      schoolStatus: submittedSchoolStatus,
       schoolName,
       schoolOrganizationId: teacherSchoolOrganizationId,
       schoolNeisCode,
@@ -1357,8 +1431,6 @@ export function useSignUp() {
       portraitConsentDraft,
     }
 
-    setIsSubmitting(true)
-
     try {
       if (selectedType === 'teacher') {
         const body = mapSignUpToTeacherRequest(mapInput)
@@ -1371,6 +1443,7 @@ export function useSignUp() {
         await postGeneralSignup(mapSignUpToGeneralRequest(mapInput))
       }
 
+      setSubmitMessage('')
       clearPortraitConsentSession()
       navigate(SIGN_UP_COMPLETE_PATH, {
         replace: true,
@@ -1383,8 +1456,6 @@ export function useSignUp() {
           '가입에 실패했어요. 입력 정보를 확인한 뒤 다시 시도해 주세요.'
         )
       )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -1392,7 +1463,7 @@ export function useSignUp() {
     ? buildUnderAgeConfirmationRows({
         birthDate: signupMemberBirthDate,
         gender,
-        schoolStatus,
+        schoolStatus: submittedSchoolStatus,
         address,
         addressDetail,
         email,
@@ -1409,7 +1480,7 @@ export function useSignUp() {
         selectedType,
         birthDate,
         gender,
-        schoolStatus,
+        schoolStatus: submittedSchoolStatus,
         address,
         addressDetail,
         email,
@@ -1418,6 +1489,7 @@ export function useSignUp() {
         phone: signupMemberPhone,
         schoolName,
         schoolAddress,
+        grade,
         affiliationName,
         employmentStatus,
       })
@@ -1490,8 +1562,20 @@ export function useSignUp() {
       sessionId: identityVerificationSessionId,
       complete: handleIdentitySuccess,
       verify: verifyMemberIdentity,
-      isVerifying: isMemberIdentityVerifying,
+      isVerifying: isMemberIdentityVerifying || isCheckingDuplicateMember,
       errorMessage: memberIdentityErrorMessage,
+      /** 이미 가입된 회원 안내 팝업 — [확인]은 닫기, [로그인하기]는 로그인 화면 */
+      duplicateMemberNotice: {
+        open: isDuplicateMemberNoticeOpen,
+        close: () => setIsDuplicateMemberNoticeOpen(false),
+        goSignIn: () => {
+          setIsDuplicateMemberNoticeOpen(false)
+          navigate(SIGN_IN_PATH)
+        },
+      },
+      /** 회원가입은 생년월일·성별만 기대값으로 보내므로, 이 코드는 생년월일·성별 불일치다 */
+      isProfileMismatch: memberIdentityErrorCode === IDENTITY_EXPECTED_PROFILE_MISMATCH,
+      dismissError: resetMemberIdentityError,
       tryAdminRegisteredRedirect: () => {
         if (isMockAdminRegisteredIdentityMatch(birthDate)) {
           if (!gender) {
@@ -1544,6 +1628,7 @@ export function useSignUp() {
       confirm: passwordConfirm,
       setConfirm: setPasswordConfirm,
       isMismatch: passwordDerived.isMismatch,
+      isPolicyUnmet: passwordDerived.isPolicyUnmet,
       isValid: passwordDerived.isValid,
       continue: handlePasswordContinue,
     },
@@ -1558,6 +1643,8 @@ export function useSignUp() {
       selectSchool: handleSchoolSelect,
       grade,
       setGrade,
+      /** 고른 학교의 학교급에 맞는 학년 옵션 (학교급을 모르면 1~12학년) */
+      gradeOptions: getSchoolGradeOptions(schoolLevel, schoolGradeOptions),
       affiliationName,
       setAffiliationName,
       employmentStatus,

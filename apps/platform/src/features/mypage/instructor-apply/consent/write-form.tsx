@@ -7,7 +7,6 @@ import {
   formatMemberConsentDisagreedRequiredAlertMessage,
   formatMemberConsentIncompleteRequiredAlertMessage,
   getMemberConsentInvalidNoticeSubjectContactAlertMessage,
-  MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE,
   hasMemberConsentIncompleteRequiredFields,
   hasMemberConsentInvalidResidentNumberFormat,
   isCrimeConsentTemplate,
@@ -37,8 +36,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isAxiosError } from 'axios'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
+import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
 import {
   PFAlertModal,
+  PFRequiredFieldsIncompleteDescription,
   PFButton,
   PFFormDraftSignatureProvider,
   PFFormDraftSignatureTitleAsideBridge,
@@ -61,7 +62,6 @@ import { resolvePortalConsentCreateType } from '../../settings/lib/settings-cons
 import type { PortalConsentDocumentDetail } from '../../settings/api/portal-consent-documents.types'
 import type { DocumentConsentWriteKey } from './catalog'
 import {
-  CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE,
   isInstructorApplyConsentKey,
   RECEIPT_PRE_CONSENT_WRITE_KEY,
 } from './catalog'
@@ -248,8 +248,8 @@ export function SchemaConsentWriteForm({
   }, [lockedBasic, templateId])
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState('안내')
-  const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
-  const openAlert = useCallback((message: string, title = '안내') => {
+  const [alertMessage, setAlertMessage] = useState<ReactNode>(null)
+  const openAlert = useCallback((message: ReactNode, title = '안내') => {
     setAlertTitle(title)
     setAlertMessage(message)
     setAlertOpen(true)
@@ -414,14 +414,18 @@ export function SchemaConsentWriteForm({
     if (incomplete) {
       const unagreedLabels = collectMemberConsentUnagreedRequiredLabels(state.draft)
       if (unagreedLabels.length > 0) {
+        // 시안 「필수 항목 미동의」 제목 — 본문은 미동의 항목명을 그대로 안내한다
         openAlert(
           formatMemberConsentDisagreedRequiredAlertMessage(unagreedLabels),
-          MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE,
+          PLATFORM_ALERT_COPY.requiredNotAgreed.title,
         )
       } else {
+        // 시안 「필수 항목 미입력」 제목 — 빠진 항목명을 알 수 있으면 그대로, 없으면 시안 설명
         openAlert(
-          formatMemberConsentIncompleteRequiredAlertMessage(incompleteRequiredFields) ||
-            CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE,
+          formatMemberConsentIncompleteRequiredAlertMessage(incompleteRequiredFields) || (
+            <PFRequiredFieldsIncompleteDescription />
+          ),
+          PLATFORM_REQUIRED_NOT_FILLED_TITLE,
         )
       }
       return

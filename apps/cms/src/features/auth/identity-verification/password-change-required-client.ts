@@ -5,7 +5,7 @@ import { axiosClient } from '@/shared/api'
 import { identityVerificationPaths } from '@/shared/config/identity-verification-paths'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
-/** 최초 로그인 passwordChangeRequired NICE 본인인증 클라이언트 */
+/** 최초 로그인 passwordChangeRequired NICE 본인인증 클라이언트 — flow `ADMIN_SIGNUP` (BE R1 /identity/confirm 대상) */
 export const passwordChangeRequiredIdentityClient = createIdentityVerificationClient({
   http: {
     post: (url, body) => axiosClient.post(url, body),
@@ -16,7 +16,7 @@ export const passwordChangeRequiredIdentityClient = createIdentityVerificationCl
     callbackPath: passwordChangeRequiredPaths.identityCallback,
     mockPath: passwordChangeRequiredPaths.identityMock,
   },
-  flow: 'MEMBER_SIGNUP',
+  flow: 'ADMIN_SIGNUP',
   isRemoteEnabled: isIdentityVerificationRemoteEnabled,
   storagePrefix: 'password_change_required_identity',
 })

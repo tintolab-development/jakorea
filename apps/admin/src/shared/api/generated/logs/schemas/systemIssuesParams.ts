@@ -8,6 +8,7 @@
 
 export type SystemIssuesParams = {
 userName?: string;
+source?: string;
 from?: string;
 to?: string;
 page?: number;

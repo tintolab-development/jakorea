@@ -83,6 +83,11 @@
   gap: var(--spacing-16);
 }
 
+.socialButtonItem {
+  position: relative;
+  display: inline-flex;
+}
+
 .socialButton {
   display: inline-flex;
   width: 54px;

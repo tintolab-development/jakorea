@@ -7,7 +7,7 @@ import { createFormSignatureValue } from '../pf-form-signature-block/normalize-f
 import type { FormSignatureValue } from '../pf-form-signature-block/types'
 import { PFFormDraftSignatureContext } from './context'
 
-const MODAL_TITLE_CREATE = '전자서명 만들기'
+const MODAL_TITLE_CREATE = '전자서명하기'
 const MODAL_TITLE_EDIT = '전자서명 수정하기'
 
 function cloneProfileForApply(profile: FormSignatureValue): FormSignatureValue {

@@ -16,4 +16,6 @@ export interface Revision {
   reviewedAt?: string;
   reviewedByAdminId?: number;
   items?: Item[];
+  /** 이 Revision 제출 시점의 참여 기관명(document_context_snapshot.institutionName). 정산 목록 기관명과 같은 기준(배정 기관 → 일정 단일 기관 → 일정 장소명)으로 제출 때 저장한 값이다. 개인형(GENERAL_INDIVIDUAL) 프로그램은 항상 null, 기관형에서 저장된 값이 없으면 null. */
+  institutionName?: string | null;
 }

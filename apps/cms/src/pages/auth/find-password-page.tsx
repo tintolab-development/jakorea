@@ -23,6 +23,7 @@ import {
 } from '@/features/auth/ui/find-password/form'
 import { isValidJakoreaEmail } from '@/features/auth/lib/jakorea-email'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
+import { REGISTER_PASSWORD_MISMATCH_MESSAGE } from '@/features/auth/lib/validate-register-password'
 
 import './find-password-page.css'
 // 「일치하는 가입 정보 없음」 화면(FindEmailNotFoundView) 스타일 — 이메일 찾기와 같은 화면을 재사용
@@ -69,6 +70,22 @@ export function FindPasswordPage() {
     setVerificationExpiresAt(null)
   }, [])
 
+  /**
+   * 이메일 입력 단계로 되돌린다 — 본인인증부터 다시 진행한다.
+   * 401 PASSWORD_RESET_ACCOUNT_MISMATCH면 이메일 칸에 서버 message를 표시한다.
+   */
+  const returnToEmailStep = useCallback(
+    (emailMessage?: string) => {
+      resetVerificationTimer()
+      setIdentityVerificationSessionId(null)
+      setProfileToken('')
+      setPasswordSubmitError(null)
+      setEmailError(emailMessage?.trim() ? emailMessage.trim() : null)
+      setView('form')
+    },
+    [resetVerificationTimer]
+  )
+
   const goToChangePassword = useCallback(
     (input: {
       verifiedEmail: string
@@ -101,6 +118,14 @@ export function FindPasswordPage() {
           setView('notFound')
           return
         }
+        if (eligibility.kind === 'account_mismatch') {
+          returnToEmailStep(eligibility.message)
+          return
+        }
+        if (eligibility.kind === 'identity_required') {
+          returnToEmailStep()
+          return
+        }
         goToChangePassword(input)
       } catch {
         // 요청 실패 — 공통 오류 알럿이 안내하고 이메일 입력 화면에 머문다
@@ -109,7 +134,7 @@ export function FindPasswordPage() {
         setIsEligibilityChecking(false)
       }
     },
-    [goToChangePassword, resetVerificationTimer]
+    [goToChangePassword, resetVerificationTimer, returnToEmailStep]
   )
 
   const handleIdentitySuccess = useCallback(
@@ -242,11 +267,31 @@ export function FindPasswordPage() {
         return
       }
 
+      // 401 PASSWORD_RESET_CONFIRM_MISMATCH(field newPasswordConfirm) — 확인값 칸 오류
+      if (result.kind === 'confirm_mismatch') {
+        passwordForm.setFields([
+          { name: 'newPasswordConfirm', errors: [REGISTER_PASSWORD_MISMATCH_MESSAGE] },
+        ])
+        return
+      }
+
+      // 401 PASSWORD_RESET_ACCOUNT_MISMATCH(field email) — 이메일 입력 단계로, 이메일 칸에 서버 message
+      if (result.kind === 'account_mismatch') {
+        returnToEmailStep(result.message)
+        return
+      }
+
+      // 401 IDENTITY_VERIFICATION_SESSION_REQUIRED — 본인인증부터 다시
+      if (result.kind === 'identity_required') {
+        returnToEmailStep()
+        return
+      }
+
       setView('complete')
     } finally {
       setIsPasswordSubmitting(false)
     }
-  }, [email, identityVerificationSessionId, passwordForm, profileToken])
+  }, [email, identityVerificationSessionId, passwordForm, profileToken, returnToEmailStep])
 
   const cardClassName =
     view === 'complete'
@@ -279,9 +324,9 @@ export function FindPasswordPage() {
         {view === 'notFound' ? (
           <FindEmailNotFoundView
             onRetry={() => {
-              // 서버 nextAction `REENTER_EMAIL` — 이메일 입력 단계로 돌아간다
-              clearEmailError()
-              setView('form')
+              // [이메일 다시 찾기] — 이메일 찾기 페이지로 이동(기획 확정 2026-11-14, 시안 「이메일 찾기 실패」).
+              // 뒤로가기는 [로그인 화면 돌아가기]와 같게 replace로 이동한다
+              navigate('/find-email', { replace: true })
             }}
             onGoLogin={() => {
               navigate('/login', { replace: true })

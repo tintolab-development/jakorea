@@ -16,7 +16,7 @@ export interface AdminMfaChallengeResponse {
   challengeUuid?: string;
   /** MFA 방식 */
   mfaMethod?: string;
-  /** challenge 만료 시각 */
+  /** challenge 발급 기준 참고 시각(발급 후 3분). 검증은 이 시각이 지나도 만료로 거부하지 않으므로 화면에서 만료 처리·카운트다운에 쓰지 않는다. */
   expiresAt?: string;
   /** MFA 앱 등록 정보가 필요한지 여부 */
   mfaSetupRequired?: boolean;
@@ -40,4 +40,8 @@ export interface AdminMfaChallengeResponse {
   qrCodeImageUrl?: string;
   /** 로컬 프로필 전용 MFA 통과 코드 */
   verificationCodeHint?: string;
+  /** 계정 단위 MFA 연속 실패 횟수. 인증에 성공해야만 0으로 초기화된다. */
+  failedAttemptCount?: number;
+  /** 잠금 전까지 허용되는 MFA 연속 실패 횟수 */
+  maxFailedAttempts?: number;
 }

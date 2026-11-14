@@ -49,7 +49,6 @@ export type AttachFilledDocumentsMode = 'create' | 'patch'
 export type AttachFilledDocumentsOptions = {
   mode: AttachFilledDocumentsMode
   snapshots?: MemberRegisterConsentWriteSnapshots
-  memberId?: number
   uploadCrimeEvidence?: (file: File, originalFileName: string) => Promise<number>
 }
 
@@ -160,7 +159,7 @@ function missingDocumentMessage(termsType: string): string {
   return '작성된 동의서 본문을 찾을 수 없습니다. 동의서를 다시 작성해 주세요.'
 }
 
-/** pre-register `CONSENT_EVIDENCE_FILE_NOT_READY_OR_NOT_OWNED` 방지 */
+/** pre-register `CONSENT_ORIGINAL_FILE_NOT_READY` 방지 — CLEAN+AVAILABLE 뒤에만 연결된다 */
 async function ensureCrimeEvidenceFileReady(fileObjectId: number): Promise<void> {
   if (shouldMockAdminFileUpload()) return
   const current = await getFileStatus(fileObjectId)
@@ -188,11 +187,7 @@ export async function attachFilledDocumentsToTermsAgreements(
   const uploadCrime =
     options.uploadCrimeEvidence ??
     ((file: File, originalFileName: string) =>
-      uploadConsentEvidenceFile({
-        file,
-        originalFileName,
-        memberId: options.memberId,
-      }))
+      uploadConsentEvidenceFile({ file, originalFileName }))
 
   const next: TermsAgreementRequest[] = []
   for (const row of rows) {
@@ -256,4 +251,45 @@ export async function attachFilledDocumentsToTermsAgreements(
 
   if (options.mode === 'patch' && next.length === 0) return undefined
   return next
+}
+
+export type CrimeConsentOriginalLinkSplit = {
+  /** 회원 상세 단독 PATCH로 보낼 성범죄 원본 연결 1건 (없으면 null) */
+  crimeOriginalLink: TermsAgreementRequest | null
+  /** 나머지 termsAgreements (없으면 undefined — 프로필 PATCH에 termsAgreements를 싣지 않는다) */
+  rest: TermsAgreementRequest[] | undefined
+}
+
+/**
+ * 회원 상세 PATCH — 성범죄 동의서 서명 원본 연결·재업로드·재동의는 BE 예외 형식(단독 PATCH, termsAgreements 1건,
+ * filledDocument 없음, 현재 게시된 약관 version)으로만 받는다 (BE 2026-11-14).
+ * 프로필 필드·다른 동의와 섞으면 409 `CMS_MEMBER_TERMS_NOT_EDITABLE`이므로 분리한다.
+ */
+export function splitCrimeConsentOriginalLinkForPatch(
+  rows: TermsAgreementRequest[] | undefined
+): CrimeConsentOriginalLinkSplit {
+  if (!rows?.length) return { crimeOriginalLink: null, rest: rows }
+  let crimeOriginalLink: TermsAgreementRequest | null = null
+  const rest: TermsAgreementRequest[] = []
+  for (const row of rows) {
+    const evidenceFileObjectId = row.evidenceFileObjectId
+    const isCrimeOriginalLink =
+      crimeOriginalLink == null &&
+      CRIME_TERMS_TYPES.has(row.termsType?.trim() ?? '') &&
+      row.agreed === true &&
+      evidenceFileObjectId != null &&
+      Number.isFinite(evidenceFileObjectId) &&
+      evidenceFileObjectId >= 1
+    if (isCrimeOriginalLink) {
+      crimeOriginalLink = {
+        termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+        version: row.version,
+        agreed: true,
+        evidenceFileObjectId,
+      }
+      continue
+    }
+    rest.push(row)
+  }
+  return { crimeOriginalLink, rest: rest.length > 0 ? rest : undefined }
 }

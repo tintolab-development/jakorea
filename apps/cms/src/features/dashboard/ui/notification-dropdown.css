@@ -14,9 +14,7 @@
   padding: 0 0 16px 0;
   border-radius: 16px;
   border: 1px solid #e0e0e0;
-  background:
-    linear-gradient(rgba(231, 235, 239, 0.6), rgba(231, 235, 239, 0.6)),
-    #fff;
+  background: linear-gradient(rgba(231, 235, 239, 0.6), rgba(231, 235, 239, 0.6)), #fff;
   box-shadow: 0 4px 24px 0 rgba(32, 32, 33, 0.16);
   display: flex;
   flex-direction: column;
@@ -119,15 +117,6 @@
   gap: 12px;
 }
 
-.notification-dropdown-section-label {
-  display: block;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 150%;
-  opacity: 0.7;
-}
-
 .notification-dropdown-item {
   box-sizing: border-box;
   width: 100%;
@@ -149,30 +138,14 @@
 }
 
 /*
- * 읽은 카드 — 그림자 대신 alpha-10 보더 · 회색 배경 · 제목 Medium.
- * 카드 전체 opacity는 본문 대비를 떨어뜨려(QA-0293) 쓰지 않는다. 구분은 배경·굵기·배지·점으로 한다.
+ * 읽은 카드 — 시안(1142:74736): 그림자 대신 alpha-10 보더 · 흰 배경 · 카드 전체 50% 불투명도.
+ * 제목은 읽음 여부와 무관하게 Bold. (QA-0293의 불투명도 금지는 시안 확정으로 해제 — 2026-11-14)
  */
 .notification-dropdown-item--read {
   border-color: rgba(61, 61, 61, 0.1);
-  background: #f7f8f9;
+  background: #fff;
   box-shadow: none;
-}
-
-.notification-dropdown-item--read .notification-dropdown-item-tag {
-  color: #5c6b70;
-}
-
-.notification-dropdown-item--read .notification-dropdown-item-message {
-  font-weight: 500;
-}
-
-/* 안읽음 점 — 카드 좌상단, 배지와 함께 상태를 색 외 형태로도 구분 */
-.notification-dropdown-item-unread-dot {
-  flex-shrink: 0;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #00a0af;
+  opacity: 0.5;
 }
 
 .notification-dropdown-item:focus-visible {
@@ -275,7 +248,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.75;
+  opacity: 0.6;
 }
 
 /* 날짜 — 시안 #3d3d3d 불투명도 30% */

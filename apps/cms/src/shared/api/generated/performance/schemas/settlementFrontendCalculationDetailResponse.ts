@@ -10,6 +10,7 @@ import type { SettlementFrontendCalculationDetailResponseLayout } from './settle
 export interface SettlementFrontendCalculationDetailResponse {
   /** CMS 산정 기준 상세 viewer layout. FE가 렌더할 수 있는 값만 반환한다. 미지원 지급 항목은 remote. */
   layout?: SettlementFrontendCalculationDetailResponseLayout;
+  /** 정산 시점 계산 근거 JSON snapshot. 강사비 최소 키: layout, itemType=LECTURE_FEE, wageItemType, categoryLabel, feeAssessmentWon|amount, sessionOrdinal, lectureTimeDisplay(canonical 차시/회차만). 원천징수 최소 키: layout=withholding, taxIncomeType, taxableAmount, rate|combinedTaxRate, incomeTax|incomeTaxAmount, localTax|localIncomeTaxAmount, withholdingTaxAmount, smallAmountExemptionApplied, appliedRule(NONE|TAXABLE_MINIMUM|SMALL_AMOUNT_EXEMPTION), appliedRuleThreshold(적용 기준값, NONE이면 null). 적용 안내는 BE가 소득 유형별 기준(기타소득 125,000 / 상금 250,000 / 면접비·지원금·경품 50,000 / 사업소득은 과세최저한 없이 소액부징수만)으로 판정하며 FE는 그대로 표시한다. 저장·동결된 과거 basis에도 응답 단계에서 채운다. dailyIncomeThreshold·earnedIncomeDeduction 등 일용근로 필드는 표시하지 않는다. */
   basisJson?: string;
   resultAmount?: number;
   title?: string;

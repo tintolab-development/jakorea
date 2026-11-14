@@ -4151,6 +4151,14 @@
             }
           },
           {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "from",
             "in": "query",
             "required": false,
@@ -4331,6 +4339,31 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/MemberLoginCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/logs/client-errors": {
+      "post": {
+        "tags": [
+          "homepage-client-error-report-controller"
+        ],
+        "summary": "Report a Homepage Admin screen error",
+        "description": "Admin Error Boundary report. Any signed-in Homepage administrator may call it; the reporter comes from the token. Tokens, e-mail, phone numbers and input values are masked before insert. Stored in the bug/issue history with source=CLIENT. appCode must be ADMIN. More than 20 per administrator or 300 overall per minute returns 429 TOO_MANY_REQUESTS.",
+        "operationId": "reportClientError",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientErrorReportRequest"
               }
             }
           },
@@ -13102,8 +13135,8 @@
             "items": {
               "$ref": "#/components/schemas/GlobalValueUpdateItem"
             },
-            "maxItems": 5,
-            "minItems": 5
+            "maxItems": 6,
+            "minItems": 6
           }
         },
         "required": [
@@ -13133,7 +13166,7 @@
           "displayOrder": {
             "type": "integer",
             "format": "int32",
-            "maximum": 5,
+            "maximum": 6,
             "minimum": 1
           },
           "version": {
@@ -15504,6 +15537,45 @@
           "audience",
           "loginId",
           "name"
+        ]
+      },
+      "ClientErrorReportRequest": {
+        "type": "object",
+        "properties": {
+          "appCode": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 0
+          },
+          "screenPath": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "stack": {
+            "type": "string",
+            "maxLength": 16000,
+            "minLength": 0
+          },
+          "userAgent": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "appCode",
+          "message",
+          "screenPath"
         ]
       },
       "AdminAccountActionCreateRequest": {
@@ -18077,6 +18149,20 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "thumbnailUrlW233": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교재 목록 카드용 233×320 썸네일 URL(QA-0495). 원본을 가운데 기준으로 잘라 만든 축소본. 아직 없으면 null이며 thumbnailUrl을 쓴다."
+          },
+          "thumbnailUrlW466": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교재 목록 카드용 2배(466×640) 썸네일 URL(QA-0495). 아직 없으면 null이며 thumbnailUrl을 쓴다."
           }
         }
       },
@@ -19422,6 +19508,12 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "source": {
+            "type": "string"
+          },
+          "screenPath": {
+            "type": "string"
           }
         }
       },

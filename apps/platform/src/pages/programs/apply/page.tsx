@@ -25,7 +25,7 @@ import {
   ProgramApplyCompleteModal,
   ProgramApplyGateModals,
   programApplyGateApplicationsPathForType,
-  programApplyGateConsentsPath,
+  programApplyGateConsentsPathFor,
   programApplyGateMemberSettingsPath,
   shouldHideApplyPageBlockedBanner,
   useProgramApplyGate,
@@ -4058,7 +4058,7 @@ export function ProgramApplyPage() {
         notEligibleVariant={notEligibleVariant}
         onOpenConsents={() => {
           closeGateModal()
-          navigate(programApplyGateConsentsPath)
+          navigate(programApplyGateConsentsPathFor(missingConsents))
         }}
         onEditMemberInfo={() => {
           closeGateModal()

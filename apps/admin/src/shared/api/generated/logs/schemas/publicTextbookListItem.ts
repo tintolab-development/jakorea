@@ -19,4 +19,8 @@ export interface PublicTextbookListItem {
   unitCount?: number;
   sessionDescription?: string;
   createdAt?: string;
+  /** 교재 목록 카드용 233×320 썸네일 URL(QA-0495). 원본을 가운데 기준으로 잘라 만든 축소본. 아직 없으면 null이며 thumbnailUrl을 쓴다. */
+  thumbnailUrlW233?: string | null;
+  /** 교재 목록 카드용 2배(466×640) 썸네일 URL(QA-0495). 아직 없으면 null이며 thumbnailUrl을 쓴다. */
+  thumbnailUrlW466?: string | null;
 }

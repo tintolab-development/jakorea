@@ -490,14 +490,7 @@ export function validateLectureEvalFormDraft(draft: WritingFormDraft): LectureEv
       }
     }
 
-    if (isUserInfoParagraph(paragraph) && paragraph.answerRequired !== false) {
-      const entries = getUserInfoSelectedEntries(paragraph)
-      for (const field of entries) {
-        if ((paragraph.fieldAnswers?.[field.key] ?? '').trim() === '') {
-          return { valid: false, message: `${field.label}을 입력해 주세요.` }
-        }
-      }
-    }
+    // 설문자 정보는 강의평가 작성 화면에서 입력하지 않는다(「설문자 OO」 글자, 2026-11-14 요청) — 필수 검사 제외
   }
 
   return { valid: true }

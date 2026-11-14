@@ -3235,8 +3235,8 @@
             "items": {
               "$ref": "#/components/schemas/GlobalValueUpdateItem"
             },
-            "maxItems": 5,
-            "minItems": 5
+            "maxItems": 6,
+            "minItems": 6
           }
         },
         "required": [
@@ -3266,7 +3266,7 @@
           "displayOrder": {
             "type": "integer",
             "format": "int32",
-            "maximum": 5,
+            "maximum": 6,
             "minimum": 1
           },
           "version": {
@@ -5593,6 +5593,45 @@
           "audience",
           "loginId",
           "name"
+        ]
+      },
+      "ClientErrorReportRequest": {
+        "type": "object",
+        "properties": {
+          "appCode": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 0
+          },
+          "screenPath": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "stack": {
+            "type": "string",
+            "maxLength": 16000,
+            "minLength": 0
+          },
+          "userAgent": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "appCode",
+          "message",
+          "screenPath"
         ]
       },
       "AdminAccountActionCreateRequest": {
@@ -8130,6 +8169,16 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "thumbnailUrlW233": {
+            "type": "string",
+            "description": "교재 목록 카드용 233×320 썸네일 URL(QA-0495). 원본을 가운데 기준으로 잘라 만든 축소본. 아직 없으면 null이며 thumbnailUrl을 쓴다.",
+            "nullable": true
+          },
+          "thumbnailUrlW466": {
+            "type": "string",
+            "description": "교재 목록 카드용 2배(466×640) 썸네일 URL(QA-0495). 아직 없으면 null이며 thumbnailUrl을 쓴다.",
+            "nullable": true
           }
         }
       },
@@ -9443,6 +9492,12 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "source": {
+            "type": "string"
+          },
+          "screenPath": {
+            "type": "string"
           }
         }
       },

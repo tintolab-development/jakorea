@@ -19,3 +19,8 @@
   flex-direction: column;
   gap: var(--spacing-20);
 }
+
+/* 네트워크 오류 안내 본문의 줄바꿈(\n)을 그대로 보여 준다 */
+.submitError {
+  white-space: pre-line;
+}
