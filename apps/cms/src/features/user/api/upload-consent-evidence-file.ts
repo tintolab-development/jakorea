@@ -16,8 +16,6 @@ const CRIME_TERMS_TYPE = 'CRIMINAL_HISTORY_CHECK_CONSENT'
 export type UploadConsentEvidenceFileInput = {
   file: File
   originalFileName?: string
-  /** 상세 PATCH 등 회원이 이미 있을 때 */
-  memberId?: number
 }
 
 function rethrowCrimeTermsDocumentError(error: unknown): never {
@@ -72,10 +70,11 @@ export function dataUrlToFile(dataUrl: string, filename: string): File | null {
 }
 
 /**
- * 성범죄 경력조회 동의서 첨부 → object storage 업로드 → fileObjectId.
+ * 성범죄 경력조회 동의서 서명 원본 → object storage 업로드 → fileObjectId.
+ * owner는 회원 상세·신규 등록 모두 MEMBER/CONSENT/(게시 중인 성범죄 동의 약관 문서 id)다.
+ * memberId를 ownerId로 쓰면 비마스터 403·연결 시 `CONSENT_ORIGINAL_FILE_NOT_READY`가 된다 (BE 2026-11-14).
  * presigned PUT은 스토리지 직접 호출이라 axios Bearer를 붙이지 않는다.
- * pre-register는 `CONSENT_EVIDENCE_FILE_NOT_READY_OR_NOT_OWNED`로
- * CLEAN+AVAILABLE(및 업로더 소유)을 요구하므로 confirm 후 상태 폴링까지 한다.
+ * pre-register 연결은 CLEAN+AVAILABLE(및 같은 관리자 업로드)을 요구하므로 confirm 후 상태 폴링까지 한다.
  */
 export async function uploadConsentEvidenceFile(
   input: UploadConsentEvidenceFileInput
@@ -87,7 +86,7 @@ export async function uploadConsentEvidenceFile(
     throw new Error('성범죄 동의서 파일이 비어 있습니다.')
   }
 
-  const ownerId = input.memberId ?? (await fetchCrimeTermsDocumentId())
+  const ownerId = await fetchCrimeTermsDocumentId()
   if (ownerId == null) {
     throw new Error('성범죄 동의서 파일을 업로드할 수 없습니다. 약관 문서 ID를 확인하세요.')
   }
@@ -102,7 +101,7 @@ export async function uploadConsentEvidenceFile(
     owner: buildAdminFileOwner(
       ADMIN_FILE_OWNER.MEMBER_CONSENT,
       ownerId,
-      ADMIN_FILE_PURPOSE.CRIMINAL_HISTORY_EVIDENCE
+      ADMIN_FILE_PURPOSE.CRIMINAL_HISTORY_CONSENT_ORIGINAL
     ),
     waitUntilAvailable: true,
     // 배포 스캐너·프로모션이 느릴 수 있음 (기본 30×2s=60s → 90×2s=3분)

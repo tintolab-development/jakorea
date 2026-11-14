@@ -33,6 +33,10 @@ import {
 } from './user-detail-fullpage-helpers'
 import { buildUserDetailSidebarItems } from '../ui/detail-info/user-detail-fullpage-sidebar-items'
 import { fetchMemberDetailBasicTabResources } from './fetch-member-detail-basic-tab-resources'
+import {
+  fetchMemberConsentRecordsQuery,
+  fetchMemberConsentSummariesQuery,
+} from '@/features/user/api/hooks/use-member-detail-query'
 import { fetchMemberDetailSettlementTabResources } from './fetch-member-detail-settlement-tab-resources'
 import { resolveUserDetailBasicTabFetchSections } from './resolve-user-detail-basic-tab-sections'
 import { useUserDetailApplications } from './use-user-detail-applications'
@@ -1390,6 +1394,12 @@ export function useUserDetailController({
           void queryClient.invalidateQueries({
             queryKey: memberQueryKeys.consentSummaries(displayUser.memberId),
           })
+        }
+        if (membersRemote && patch.termsAgreements?.length) {
+          // 동의를 바꾼 저장(성범죄 원본 재동의 등) — 동의 일시·만료일은 서버 값으로 다시 받는다.
+          // 동의 쿼리는 manualFetch(enabled=false)라 invalidate만으로는 다시 GET하지 않는다.
+          void fetchMemberConsentSummariesQuery(queryClient, displayUser.memberId).catch(() => undefined)
+          void fetchMemberConsentRecordsQuery(queryClient, displayUser.memberId).catch(() => undefined)
         }
       }
       if (basicInfoEditScope === 'profile') {
