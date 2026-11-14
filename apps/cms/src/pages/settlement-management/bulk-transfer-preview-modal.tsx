@@ -109,7 +109,8 @@ export function BulkTransferPreviewModal({
             password,
           })
         }
-        showIssueCompletedAlert()
+        // 「발급 완료」 안내를 닫으면(확인·X·Esc) 미리보기도 닫는다 — 발급 파일은 1회만 받을 수 있다.
+        showIssueCompletedAlert({ onConfirm: onCancel, onDismiss: onCancel })
         return
       }
       if (shouldUseSettlementRemote('accountPayments')) {
@@ -123,7 +124,7 @@ export function BulkTransferPreviewModal({
       const { exportBulkTransferExcel } =
         await import('@/pages/settlement-management/bulk-transfer-excel')
       await exportBulkTransferExcel(previewRows, { password })
-      showIssueCompletedAlert()
+      showIssueCompletedAlert({ onConfirm: onCancel, onDismiss: onCancel })
     } catch (error) {
       notifySettlementExportDownloadError({
         error,
