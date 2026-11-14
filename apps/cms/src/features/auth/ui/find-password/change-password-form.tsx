@@ -1,9 +1,9 @@
 import { Form } from 'antd'
+import type { FormInstance } from 'antd'
 
 import {
   isValidRegisterPassword,
   REGISTER_PASSWORD_HELP_TEXT,
-  REGISTER_PASSWORD_MIN_LENGTH,
   REGISTER_PASSWORD_MISMATCH_MESSAGE,
 } from '@/features/auth/lib/validate-register-password'
 import { CmsButton, CmsInput } from '@/shared/ui'
@@ -22,6 +22,14 @@ interface FindPasswordChangeFormProps {
   onSubmit: () => void
 }
 
+/** 로그인 화면과 같은 기준 — 입력을 바꾸면 [비밀번호 변경하기]로 띄운 필드 에러를 지운다 */
+function clearChangePasswordFieldErrors(form: FormInstance<FindPasswordChangeFormValues>): void {
+  form.setFields([
+    { name: 'newPassword', errors: [] },
+    { name: 'newPasswordConfirm', errors: [] },
+  ])
+}
+
 export function FindPasswordChangeForm({
   form,
   isSubmitting,
@@ -29,25 +37,10 @@ export function FindPasswordChangeForm({
   onPasswordChange,
   onSubmit,
 }: FindPasswordChangeFormProps) {
-  const newPassword = Form.useWatch('newPassword', form) ?? ''
-  const newPasswordConfirm = Form.useWatch('newPasswordConfirm', form) ?? ''
-
-  const isNewPasswordValid = isValidRegisterPassword(newPassword)
-  const isNewPasswordConditionError =
-    Boolean(newPassword) &&
-    !isNewPasswordValid &&
-    (newPassword.length >= REGISTER_PASSWORD_MIN_LENGTH || Boolean(newPasswordConfirm))
-  const isConfirmMismatch =
-    Boolean(newPasswordConfirm) &&
-    newPassword !== newPasswordConfirm &&
-    !isNewPasswordConditionError
-
-  const canSubmit = isNewPasswordValid && Boolean(newPasswordConfirm) && !isConfirmMismatch
-
   return (
     <div className="find-password-change-step">
       <RegisterStepHeader
-        title="새 비밀번호를 입력해 주세요"
+        title="새 비밀번호를 입력해 주세요."
         description={
           <>
             안전한 계정 이용을 위해
@@ -62,14 +55,25 @@ export function FindPasswordChangeForm({
         layout="vertical"
         requiredMark={false}
         className="auth-form find-password-change-step__form"
+        // 입력 중 실시간 검증 안내를 띄우지 않고 [비밀번호 변경하기] 클릭 시에만 노출한다
+        validateTrigger={[]}
         onFinish={onSubmit}
         onValuesChange={() => {
+          clearChangePasswordFieldErrors(form)
           onPasswordChange?.()
         }}
       >
         <Form.Item
           name="newPassword"
-          rules={[{ required: true, message: '새 비밀번호를 입력해 주세요.' }]}
+          rules={[
+            { required: true, message: '새 비밀번호를 입력해 주세요.' },
+            {
+              validator: (_, value: string | undefined) =>
+                !value || isValidRegisterPassword(value)
+                  ? Promise.resolve()
+                  : Promise.reject(new Error(REGISTER_PASSWORD_HELP_TEXT)),
+            },
+          ]}
         >
           <CmsInput
             label="새 비밀번호"
@@ -79,16 +83,22 @@ export function FindPasswordChangeForm({
             width="100%"
             placeholder="새 비밀번호를 입력해 주세요"
             autoComplete="new-password"
-            error={isNewPasswordConditionError || Boolean(submitError)}
-            message={
-              submitError ?? (isNewPasswordConditionError ? undefined : REGISTER_PASSWORD_HELP_TEXT)
-            }
+            error={Boolean(submitError)}
+            message={submitError ?? undefined}
           />
         </Form.Item>
 
         <Form.Item
           name="newPasswordConfirm"
-          rules={[{ required: true, message: '비밀번호를 한 번 더 입력해 주세요.' }]}
+          rules={[
+            { required: true, message: '비밀번호를 한 번 더 입력해 주세요.' },
+            ({ getFieldValue }) => ({
+              validator: (_, value: string | undefined) =>
+                !value || value === getFieldValue('newPassword')
+                  ? Promise.resolve()
+                  : Promise.reject(new Error(REGISTER_PASSWORD_MISMATCH_MESSAGE)),
+            }),
+          ]}
         >
           <CmsInput
             label="새 비밀번호 확인"
@@ -98,18 +108,11 @@ export function FindPasswordChangeForm({
             width="100%"
             placeholder="비밀번호를 한 번 더 입력해 주세요"
             autoComplete="new-password"
-            error={isConfirmMismatch}
-            message={isConfirmMismatch ? REGISTER_PASSWORD_MISMATCH_MESSAGE : undefined}
           />
         </Form.Item>
 
         <div className="auth-actions find-password-change-step__actions">
-          <CmsButton
-            variant="primary"
-            size="h52"
-            type="submit"
-            loading={isSubmitting}
-            disabled={!canSubmit} >
+          <CmsButton variant="primary" size="h52" type="submit" loading={isSubmitting}>
             비밀번호 변경하기
           </CmsButton>
         </div>
