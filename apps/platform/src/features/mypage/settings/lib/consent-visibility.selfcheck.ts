@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import {
   filterBasicConsentItemsByAudience,
+  ensureApplyGateRequiredDocumentConsentItems,
   filterListedDocumentConsentItems,
+  parseApplyGateRequiredConsentItemIds,
   isMinorSettingsMember,
   isTeacherSettingsProfile,
   isUnder14FromBirthDate,
@@ -73,6 +75,33 @@ assert.equal(
 assert.equal(
   filterListedDocumentConsentItems(allListed, { isRemoteSession: true, isInstructor: false }).length,
   allListed.length - 1,
+)
+
+// 신청 게이트에서 넘어온 빠진 항목 — 비강사·작성 전(listed 아님)이어도 카드 노출
+const gateRequired = parseApplyGateRequiredConsentItemIds(
+  ' facilitator_pledge,CRIMINAL_HISTORY_CHECK_CONSENT,UNKNOWN ',
+)
+assert.deepEqual([...gateRequired].sort(), ['educatorPledge', 'sexOffenseCheck'])
+const unlisted = DOCUMENT_CONSENT_ITEMS.map(item => ({ ...item, listed: false }))
+assert.deepEqual(
+  filterListedDocumentConsentItems(unlisted, {
+    isRemoteSession: true,
+    isInstructor: false,
+    requiredIds: gateRequired,
+  })
+    .map(item => item.id)
+    .sort(),
+  ['educatorPledge', 'sexOffenseCheck'],
+)
+assert.equal(
+  filterListedDocumentConsentItems(unlisted, { isRemoteSession: true, isInstructor: false }).length,
+  0,
+)
+assert.deepEqual(
+  ensureApplyGateRequiredDocumentConsentItems([], gateRequired)
+    .map(item => item.id)
+    .sort(),
+  ['educatorPledge', 'sexOffenseCheck'],
 )
 
 console.log('consent-visibility.selfcheck: ok')

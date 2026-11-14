@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import { settingsConsentWritePath } from '@/features/mypage'
@@ -25,7 +25,12 @@ import {
 import { useSettingsConsents } from '../hooks/use-settings-consents'
 import { useSettingsView } from '../hooks/use-settings-view'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
-import { filterListedDocumentConsentItems } from '../lib/consent-visibility'
+import {
+  APPLY_GATE_REQUIRED_CONSENTS_PARAM,
+  ensureApplyGateRequiredDocumentConsentItems,
+  filterListedDocumentConsentItems,
+  parseApplyGateRequiredConsentItemIds,
+} from '../lib/consent-visibility'
 import {
   canWithdrawConsent,
   CONSENT_WITHDRAW_CONFLICT_MESSAGE,
@@ -452,6 +457,9 @@ function ConsentCard({
 
 export function SettingsConsentsView() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  /** 프로그램 신청 필수 동의 게이트에서 넘어온 빠진 동의서·서약서 — 작성 전이어도 카드 노출 */
+  const applyGateRequiredRaw = searchParams.get(APPLY_GATE_REQUIRED_CONSENTS_PARAM)
   const terms = useTermsViewModal()
   const queryClient = useQueryClient()
   const consents = useSettingsConsents()
@@ -657,9 +665,17 @@ export function SettingsConsentsView() {
   }
 
   const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
+  const applyGateRequiredIds = parseApplyGateRequiredConsentItemIds(applyGateRequiredRaw)
   const documentItems = filterListedDocumentConsentItems(
-    applyLocalWithdrawn(consents.documentItems, withdrawnIds),
-    { isRemoteSession: consents.isRemoteSession, isInstructor: consents.isInstructor },
+    applyLocalWithdrawn(
+      ensureApplyGateRequiredDocumentConsentItems(consents.documentItems, applyGateRequiredIds),
+      withdrawnIds,
+    ),
+    {
+      isRemoteSession: consents.isRemoteSession,
+      isInstructor: consents.isInstructor,
+      requiredIds: applyGateRequiredIds,
+    },
   )
 
   /** 원격 세션: PUT 후 목록 재조회. 성공 시 철회 일시 반환, 409는 안내 후 동기화 */
