@@ -33,6 +33,17 @@ function isLikelyMaskedPii(value?: string | null): boolean {
   return /[*•]/.test(value)
 }
 
+/**
+ * 남/여로 매칭되지 않는 성별의 표시값 — 마스킹 값은 원문, OTHER는 `기타`, 그 밖의 값(예전 자유 텍스트)은 원문.
+ * 빈 값은 undefined(미기재).
+ */
+export function mapUnmatchedStudentGenderDisplay(gender?: string | null): string | undefined {
+  const raw = (gender ?? '').trim()
+  if (!raw) return undefined
+  if (raw.toUpperCase() === 'OTHER') return '기타'
+  return raw
+}
+
 export function mapApiGenderToStudentGenderKey(
   gender?: string | null
 ): StudentGenderKey | undefined {
@@ -58,8 +69,8 @@ export function mapApiGenderToStudentGenderKey(
 }
 
 export function mapStudentGenderKeyToApi(gender?: StudentGenderKey | null): string | undefined {
-  if (gender === 'male') return 'male'
-  if (gender === 'female') return 'female'
+  if (gender === 'male') return 'MALE'
+  if (gender === 'female') return 'FEMALE'
   return undefined
 }
 
@@ -138,7 +149,7 @@ export function mapStudentRosterItemToRow(
   const rawEmail = item.email?.trim() ?? ''
   const rawGender = item.gender?.trim() ?? ''
   const gender = mapApiGenderToStudentGenderKey(rawGender)
-  const genderMask = !gender && rawGender && /[*•]/.test(rawGender) ? rawGender : undefined
+  const genderMask = gender ? undefined : mapUnmatchedStudentGenderDisplay(rawGender)
   return {
     id: serverRosterId != null ? String(serverRosterId) : `roster-row-${index + 1}`,
     serverRosterId,
