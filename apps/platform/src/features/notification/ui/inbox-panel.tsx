@@ -6,7 +6,7 @@ import {
   useMarkMyNotificationClickedMutation,
   useMyNotificationsInfiniteQuery,
 } from '../api/hooks'
-import { formatNotificationDate } from '../lib/format'
+import { formatNotificationBodyFirstLine, formatNotificationDate } from '../lib/format'
 import { resolvePortalNotificationPath } from '../lib/resolve-portal-notification-path'
 import {
   NOTIFICATION_CATEGORY_ALL,
@@ -59,6 +59,14 @@ function NotificationInboxItem({
             >
               {item.title?.trim() || '-'}
             </PFText>
+            <PFText
+              as="span"
+              typo="bd-sm-sb"
+              color={isRead ? 'neutral-cool-700' : 'primary-500'}
+              className={styles.readStatus}
+            >
+              {isRead ? '읽음' : '안읽음'}
+            </PFText>
           </span>
           <PFText
             as="span"
@@ -66,13 +74,12 @@ function NotificationInboxItem({
             color="neutral-cool-500"
             className={styles.ellipsis}
           >
-            {item.message?.trim() || '-'}
+            {formatNotificationBodyFirstLine(item.message)}
           </PFText>
         </span>
         <PFText as="span" typo="label-md" color="neutral-cool-500">
           {formatNotificationDate(item.createdAt)}
         </PFText>
-        {isRead ? null : <span className={styles.srOnly}>읽지 않음</span>}
       </button>
     </li>
   )
@@ -198,6 +205,7 @@ export function NotificationInboxPanel({
           underlineStyle="isolated"
           size="small"
           ariaLabel="알림 카테고리"
+          dragScroll
         />
       </div>
       <div ref={listRef} className={styles.list} role="tabpanel">
