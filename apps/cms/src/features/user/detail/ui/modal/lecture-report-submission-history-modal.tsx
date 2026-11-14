@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
@@ -30,11 +30,16 @@ import {
   getLectureReportSubmissionAccent,
 } from '@/features/program/shared/lib/lecture-report-status-presentation'
 import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
+import { fetchLectureReportPreviewContentByReportId } from '@/features/program/general/api/admin-program-progress-service'
+import { LectureReportIssuancePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal'
+import type { LectureReportPreviewContext } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 
 interface LectureReportSubmissionHistoryModalProps {
   open: boolean
   application: Application | null
   memberId?: number
+  /** 미리보기 「강사 정보 > 이름」에 쓴다. */
+  instructorName?: string
   onCancel: () => void
 }
 
@@ -42,6 +47,7 @@ function renderReportCell(
   record: MemberLectureReportTableRow,
   options: {
     reportDownloadingId: string | null
+    previewLoadingId: string | null
     onViewReport: (record: MemberLectureReportTableRow) => void
   }
 ) {
@@ -51,7 +57,7 @@ function renderReportCell(
 
   return (
     <AssignmentSubmissionCellActionButton
-      loading={options.reportDownloadingId === record.id}
+      loading={options.reportDownloadingId === record.id || options.previewLoadingId === record.id}
       onClick={() => options.onViewReport(record)}
     >
       강의보고서 보기
@@ -63,11 +69,13 @@ export function LectureReportSubmissionHistoryModal({
   open,
   application,
   memberId,
+  instructorName,
   onCancel,
 }: LectureReportSubmissionHistoryModalProps) {
   const { showAlert } = useCmsAlert()
   const [bulkDownloading, setBulkDownloading] = useState(false)
   const [reportDownloadingId, setReportDownloadingId] = useState<string | null>(null)
+  const [previewRow, setPreviewRow] = useState<MemberLectureReportTableRow | null>(null)
   const applicationId =
     application != null ? resolveMemberApplicationIdFromApplication(application) : undefined
 
@@ -88,6 +96,47 @@ export function LectureReportSubmissionHistoryModal({
     if (typeof fromApi === 'string' && fromApi.trim()) return fromApi.trim()
     return '프로그램'
   }, [application])
+
+  // 프로그램 상세와 같은 「강의보고서 미리보기」 — 보고서 id만 있으면 본문을 읽을 수 있다
+  const previewQuery = useQuery({
+    queryKey: ['member-lecture-report-preview', previewRow?.reportId],
+    enabled: open && previewRow?.reportId != null && previewRow.reportId > 0,
+    queryFn: () => fetchLectureReportPreviewContentByReportId(previewRow!.reportId!),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (previewQuery.error == null) return
+    showAlert({
+      title: '안내',
+      content: getMemberApiErrorMessage(
+        previewQuery.error,
+        '강의보고서 내용을 불러오지 못했습니다.'
+      ),
+    })
+    setPreviewRow(null)
+  }, [previewQuery.error, showAlert])
+
+  const previewContext = useMemo<LectureReportPreviewContext | null>(() => {
+    if (previewRow == null || previewQuery.data == null) return null
+    return {
+      instructor: { instructorName: instructorName?.trim() || '-' },
+      program: { mainTitle: programTitle },
+      row: {
+        id: previewRow.id,
+        no: rows.findIndex(row => row.id === previewRow.id) + 1,
+        reportId: previewRow.reportId,
+        schoolName: previewRow.institutionName ?? '',
+        educationGrade: previewRow.educationGrade ?? '',
+        educationScheduleLabel: previewRow.educationDateLabel,
+        lectureDate: previewRow.lectureStartAt,
+      },
+      content: previewQuery.data,
+      // 회원 목록 응답에는 프로그램 유형이 없다 — 기관 칸은 제출 답변대로 둔다
+      hideInstitutionFields: false,
+    }
+  }, [instructorName, previewQuery.data, previewRow, programTitle, rows])
 
   const hasZipTargets = rows.some(row => (row.reportFileIds?.length ?? 0) > 0)
   const canBulkDownloadFiles = hasFileDownloadPermission()
@@ -120,6 +169,10 @@ export function LectureReportSubmissionHistoryModal({
   const handleViewReport = useCallback(
     async (record: MemberLectureReportTableRow) => {
       if (!record.canViewReport) return
+      if (record.reportId != null && record.reportId > 0) {
+        setPreviewRow(record)
+        return
+      }
       setReportDownloadingId(record.id)
       try {
         const files = await resolveMemberLectureReportFiles(record)
@@ -205,14 +258,22 @@ export function LectureReportSubmissionHistoryModal({
         render: (_: unknown, record) =>
           renderReportCell(record, {
             reportDownloadingId,
+            previewLoadingId: previewQuery.isFetching ? (previewRow?.id ?? null) : null,
             onViewReport: record => void handleViewReport(record),
           }),
       },
     ],
-    [handleViewReport, reportDownloadingId]
+    [handleViewReport, previewQuery.isFetching, previewRow?.id, reportDownloadingId]
   )
 
   return (
+    <>
+    <LectureReportIssuancePreviewModal
+      open={previewContext != null}
+      context={previewContext}
+      headerVariant="institution"
+      onClose={() => setPreviewRow(null)}
+    />
     <ContentModal
       open={open}
       onCancel={onCancel}
@@ -271,5 +332,6 @@ export function LectureReportSubmissionHistoryModal({
         </FilterTableLayout>
       </div>
     </ContentModal>
+    </>
   )
 }

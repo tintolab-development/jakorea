@@ -113,6 +113,8 @@ export interface MemberProgramLectureHistoryProps {
   ) => void | Promise<void>
   /** remote API memberId — 강의보고서 모달 등 */
   memberId?: number
+  /** 강의보고서 미리보기 「강사 정보 > 이름」 */
+  memberName?: string
 }
 
 /** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
@@ -164,6 +166,7 @@ export function MemberProgramLectureHistory({
   onCertificateIssue,
   onStudentCertificateIssue,
   memberId,
+  memberName,
 }: MemberProgramLectureHistoryProps) {
   const historyDeleteDomain = useMemo(() => programHistoryDeleteDomainForMode(mode), [mode])
 
@@ -775,6 +778,7 @@ export function MemberProgramLectureHistory({
         open={lectureReportHistoryModalOpen}
         application={lectureReportHistoryTarget}
         memberId={memberId}
+        instructorName={memberName}
         onCancel={() => {
           setLectureReportHistoryModalOpen(false)
           setLectureReportHistoryTarget(null)
