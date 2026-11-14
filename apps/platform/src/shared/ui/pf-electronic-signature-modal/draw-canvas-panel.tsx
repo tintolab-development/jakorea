@@ -52,7 +52,8 @@ export function DrawCanvasPanel({
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
     ctx.strokeStyle = '#1a1a1a'
-    ctx.lineWidth = 2.5
+    // 서명란에서는 그린 영역만 잘라 40px 높이로 줄여 보이므로 선이 너무 가늘어지지 않게 한다
+    ctx.lineWidth = 5
   }, [canvasRef])
 
   useEffect(() => {
@@ -170,4 +171,42 @@ export function DrawCanvasPanel({
       </div>
     </div>
   )
+}
+
+/** 그린 부분(투명이 아닌 픽셀)만 여백을 두고 잘라 PNG로 만든다. 그린 부분이 없으면 null */
+export function exportDrawnSignatureDataUrl(canvas: HTMLCanvasElement): string | null {
+  const ctx = canvas.getContext('2d')
+  const { width, height } = canvas
+  if (!ctx || width === 0 || height === 0) return null
+
+  const { data } = ctx.getImageData(0, 0, width, height)
+  let minX = width
+  let minY = height
+  let maxX = -1
+  let maxY = -1
+  for (let y = 0; y < height; y += 1) {
+    const row = y * width * 4
+    for (let x = 0; x < width; x += 1) {
+      if (data[row + x * 4 + 3] === 0) continue
+      if (x < minX) minX = x
+      if (x > maxX) maxX = x
+      if (y < minY) minY = y
+      if (y > maxY) maxY = y
+    }
+  }
+  if (maxX < 0) return null
+
+  const padding = Math.round(8 * (window.devicePixelRatio || 1))
+  const left = Math.max(0, minX - padding)
+  const top = Math.max(0, minY - padding)
+  const cropWidth = Math.min(width, maxX + padding + 1) - left
+  const cropHeight = Math.min(height, maxY + padding + 1) - top
+
+  const output = document.createElement('canvas')
+  output.width = cropWidth
+  output.height = cropHeight
+  const outputCtx = output.getContext('2d')
+  if (!outputCtx) return null
+  outputCtx.drawImage(canvas, left, top, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
+  return output.toDataURL('image/png')
 }

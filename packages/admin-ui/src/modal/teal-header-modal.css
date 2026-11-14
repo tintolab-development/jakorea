@@ -69,6 +69,21 @@
   background: rgba(0, 0, 0, 0.3) !important;
 }
 
+/*
+ * 모달 위에 모달(안내 Alert 등)이 겹쳐 뜰 때 딤은 한 겹만 — 0.3 두 겹이 쌓여 뒤 화면이 더 어두워지는 것을 막는다.
+ * 앞서 열린(보이는 mask가 있는) 모달 포털 뒤에 오는 포털의 mask는 투명으로 둔다(클릭 차단은 그대로).
+ * 풀페이지 모달(상세 등)은 화면을 덮어 자기 mask가 보이지 않으므로, 그 위에 뜬 모달은 자기 딤을 유지한다.
+ */
+body
+  > div:has(> .ant-modal-root > .ant-modal-mask:not(.ant-modal-mask-hidden)):not(
+    :has(.teal-header-modal--full)
+  )
+  ~ div
+  > .ant-modal-root
+  > .ant-modal-mask {
+  background: transparent !important;
+}
+
 /* 모달 래퍼: 화면 정중앙 — 풀페이지는 :has(.teal-header-modal--full) 블록이 stretch를 담당 (이 규칙이 덮어쓰면 좌우 여백만 남음)
  * open=false 시 Ant inline `display: none`을 flex !important가 덮으면 닫힘 순간에 레이아웃이 밀림 */
 .ant-modal-wrap:has(.teal-header-modal):not(:has(.teal-header-modal--full)):not(

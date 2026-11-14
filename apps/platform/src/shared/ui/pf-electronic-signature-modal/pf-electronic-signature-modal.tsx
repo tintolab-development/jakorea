@@ -3,7 +3,7 @@ import { PFButton } from '../pf-button'
 import { PFModal } from '../pf-modal'
 import { PFTabs } from '../pf-tabs'
 import { CreateFontPanel, renderCreateSignatureDataUrl } from './create-font-panel'
-import { DrawCanvasPanel } from './draw-canvas-panel'
+import { DrawCanvasPanel, exportDrawnSignatureDataUrl } from './draw-canvas-panel'
 import styles from './pf-electronic-signature-modal.module.css'
 import type {
   ElectronicSignatureMode,
@@ -53,9 +53,11 @@ export function PFElectronicSignatureModal({
     if (mode === 'draw') {
       const canvas = canvasRef.current
       if (!canvas) return
+      const dataUrl = exportDrawnSignatureDataUrl(canvas)
+      if (!dataUrl) return
       onSign({
         mode: 'draw',
-        dataUrl: canvas.toDataURL('image/png'),
+        dataUrl,
       })
       onClose()
       return

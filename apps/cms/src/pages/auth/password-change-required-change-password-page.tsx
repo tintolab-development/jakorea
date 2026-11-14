@@ -11,6 +11,9 @@ import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import { fetchAdminPasswordChange } from '@/features/auth/api/admin-password-change-fetcher'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
+  PASSWORD_CHANGE_REQUIRED_STEP_CHANGE_PASSWORD,
+  PASSWORD_CHANGE_REQUIRED_STEP_PROGRESS_LABEL,
+  PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS,
   getPasswordChangeRequiredWizardState,
   hasIdentityVerified,
   hasPasswordChangeRequiredComplete,
@@ -19,6 +22,7 @@ import {
   validatePasswordChangeRequiredForm,
 } from '@/features/auth/password-change-required'
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
+import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register-step-progress'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { CmsButton, CmsInput } from '@/shared/ui'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
@@ -109,7 +113,12 @@ export function PasswordChangeRequiredChangePasswordPage() {
       showLogo={false}
       cardClassName="register-card auth-card--password-change-required-change"
     >
-      <div>
+      <div className="register-page-content">
+        <RegisterStepProgress
+          currentStep={PASSWORD_CHANGE_REQUIRED_STEP_CHANGE_PASSWORD}
+          totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS}
+          ariaLabel={PASSWORD_CHANGE_REQUIRED_STEP_PROGRESS_LABEL}
+        />
         <RegisterStepHeader
           title="비밀번호를 입력해 주세요."
           description="안전한 계정 이용을 위해 주기적으로 변경해 주세요."

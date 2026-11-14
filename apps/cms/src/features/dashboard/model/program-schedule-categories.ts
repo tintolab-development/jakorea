@@ -10,6 +10,7 @@ const SCHEDULE_KIND_ORDER: readonly ProgramScheduleKind[] = [
   'company_school',
   'ujat',
   'gemini',
+  'trained_teacher',
 ]
 
 export type { ProgramScheduleKind }

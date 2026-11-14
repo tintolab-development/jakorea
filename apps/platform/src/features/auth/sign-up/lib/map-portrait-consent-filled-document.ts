@@ -35,14 +35,21 @@ export function isPortraitConsentDraftReadyForSubmit(draft: WritingFormDraft): b
   return !hasMemberConsentIncompleteRequiredFields(draft, { templateId: PORTRAIT_TEMPLATE_ID })
 }
 
-/** `agreed: true`인 초상권 약관 행에 CMS와 동일한 `filledDocument`를 붙인다. */
+/**
+ * `agreed: true`인 초상권 약관 행에 CMS와 동일한 `filledDocument`를 붙인다.
+ * `identifiers`는 가입 약관의 `formTemplateVersion`(templateVersionId·templateCode) — 마이페이지 제출과 같은 형식.
+ */
 export function attachPortraitFilledDocumentToTermsAgreements(
   rows: TermsAgreementRequest[],
-  portraitDraft: WritingFormDraft | null | undefined
+  portraitDraft: WritingFormDraft | null | undefined,
+  identifiers?: {
+    templateVersionId?: number | null
+    templateCode?: string | null
+  } | null,
 ): TermsAgreementRequest[] {
   if (portraitDraft == null) return rows
 
-  const filledDocument = buildPortraitFilledDocument(portraitDraft)
+  const filledDocument = buildPortraitFilledDocument(portraitDraft, identifiers ?? undefined)
 
   return rows.map(row => {
     const termsType = row.termsType?.trim().toUpperCase() ?? ''

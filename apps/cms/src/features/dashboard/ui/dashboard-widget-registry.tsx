@@ -110,6 +110,18 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
       />
     </LazyWidget>
   ),
+  'program-schedule-trained-teacher-widget': p => (
+    <LazyWidget height={PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX}>
+      <ProgramScheduleWidget
+        variant="trained_teacher"
+        widgetKey="program-schedule-trained-teacher-widget"
+        title="교육받은 교사 프로그램 일정"
+        viewAllPath={programScheduleMorePath('trained_teacher')}
+        user={p.user}
+        isHalfColumn={p.isHalfColumn}
+      />
+    </LazyWidget>
+  ),
   'menu-shortcut-widget': () => (
     <LazyWidget height={MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX}>
       <MenuShortcutWidget />

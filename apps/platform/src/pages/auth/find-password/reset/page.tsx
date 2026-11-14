@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import {
   getFindPasswordRecoveryState,
   clearFindPasswordRecoveryState,
+  resolvePasswordResetApiError,
   usePortalPasswordResetConfirmMutation,
+  type FindPasswordReturnState,
 } from '@/features/auth/find-password'
 import { isValidMemberPassword, MEMBER_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
 import { getLoginApiErrorMessage, isPasswordRecentlyUsedApiError } from '@/features/auth/sign-in'
@@ -26,6 +28,8 @@ export function FindPasswordResetPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
+  /** PASSWORD_RESET_CONFIRM_MISMATCH — 확인값 칸에 서버 message */
+  const [confirmServerError, setConfirmServerError] = useState<string | null>(null)
   /** 최근 사용한 비밀번호 재사용 — 시안 「비밀번호 재사용 시」 팝업 */
   const [passwordReusedOpen, setPasswordReusedOpen] = useState(false)
 
@@ -76,6 +80,23 @@ export function FindPasswordResetPage() {
           setPasswordReusedOpen(true)
           return
         }
+        const resolved = resolvePasswordResetApiError(error)
+        if (resolved?.kind === 'confirm') {
+          setConfirmServerError(resolved.message)
+          return
+        }
+        if (resolved) {
+          // 계정 불일치 → 이메일 입력 단계 이메일 칸, 본인인증 세션 없음 → 첫 단계에서 본인인증부터 다시
+          clearFindPasswordRecoveryState()
+          const state: FindPasswordReturnState = {
+            findPasswordError: {
+              field: resolved.kind === 'email' ? 'email' : 'identity',
+              message: resolved.message,
+            },
+          }
+          navigate('/auth/find-password', { replace: true, state })
+          return
+        }
         // 비밀번호 재설정은 로그인이 아니므로 ACCOUNT_INACTIVE 등은 서버 메시지를 그대로 쓴다.
         // 응답 본문이 없는 오류(502 등)는 네트워크 오류 안내를 쓴다(인라인 문구라 제목·본문 두 줄).
         setSubmitError(
@@ -120,6 +141,7 @@ export function FindPasswordResetPage() {
             onValueChange={value => {
               setNewPassword(value)
               setSubmitError(null)
+              setConfirmServerError(null)
             }}
             message={PASSWORD_HELP_TEXT}
           />
@@ -134,10 +156,11 @@ export function FindPasswordResetPage() {
             onValueChange={value => {
               setConfirmPassword(value)
               setSubmitError(null)
+              setConfirmServerError(null)
             }}
-            message={isMismatch ? PASSWORD_MISMATCH_MESSAGE : undefined}
+            message={isMismatch ? PASSWORD_MISMATCH_MESSAGE : (confirmServerError ?? undefined)}
             messageStatus="error"
-            error={isMismatch}
+            error={isMismatch || Boolean(confirmServerError)}
           />
         </div>
 

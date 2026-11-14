@@ -61,6 +61,9 @@ export function PaymentBasicInfoFields({
   const profileLocked = lockProfileFields && !isReceipt
   const receiptNameLocked = isReceipt && receiptLockedMember != null
   const receiptAddressLocked = isReceipt && receiptLockedMember?.lockAddress === true
+  /** 회원정보로 소속이 채워져 있으면(잠금·값 있음) 「소속 없음」은 숨긴다 */
+  const affiliationPrefilled =
+    profileLocked && !linked.noAffiliation && linked.affiliation.trim() !== ''
 
   const patch = <K extends keyof PaymentStatementBasicInfoValues>(
     key: K,
@@ -152,20 +155,22 @@ export function PaymentBasicInfoFields({
               value={linked.noAffiliation ? '' : linked.affiliation}
               onValueChange={value => patch('affiliation', value)}
             />
-            <PFCheckbox
-              disabled={profileLocked}
-              checked={linked.noAffiliation}
-              onCheckedChange={checked => {
-                if (profileLocked) return
-                onChange({
-                  ...linked,
-                  noAffiliation: checked,
-                  affiliation: checked ? '' : linked.affiliation,
-                })
-              }}
-            >
-              소속 없음
-            </PFCheckbox>
+            {affiliationPrefilled ? null : (
+              <PFCheckbox
+                disabled={profileLocked}
+                checked={linked.noAffiliation}
+                onCheckedChange={checked => {
+                  if (profileLocked) return
+                  onChange({
+                    ...linked,
+                    noAffiliation: checked,
+                    affiliation: checked ? '' : linked.affiliation,
+                  })
+                }}
+              >
+                소속 없음
+              </PFCheckbox>
+            )}
           </PFFormInlineSeparatedFields>
         </PFFormField>
       </PFFormFieldRow>

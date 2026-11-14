@@ -20,7 +20,8 @@
   );
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  /* 시안 4427:22524 (221743): 134×23, Medium 12 / 150% */
+  font-size: 12px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;

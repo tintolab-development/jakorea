@@ -236,7 +236,6 @@ export function EducationProgramNoticeWriteModal({
         size="lg"
         mobilePlacement="full"
         className={styles.modal}
-        closeOnBackdropClick={!submitting}
       >
         <div className={styles.body}>
           {!editing ? (

@@ -130,7 +130,8 @@ export function UserBasicInfoSection({
 
   return (
     <div className="user-detail-modal__basic-inner">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+      {/* 시안 4427:23703: 기본 정보 표 ↔ 보호자 정보 섹션 32px (다른 섹션 간격과 같음) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
         {bodyKey === 'admin' ? (
           <AdminBasicInfoSection
             user={user}

@@ -51,6 +51,9 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
             placeholder="이름을 입력해 주세요"
             value={profile.memberName}
             onValueChange={profile.setMemberName}
+            error={Boolean(profile.fieldErrors.name)}
+            message={profile.fieldErrors.name || undefined}
+            messageStatus={profile.fieldErrors.name ? 'error' : undefined}
             required
           />
 
@@ -120,6 +123,9 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
                 placeholder="학년을 선택해 주세요"
                 value={profile.grade}
                 onValueChange={profile.setGrade}
+                error={Boolean(profile.fieldErrors.grade)}
+                message={profile.fieldErrors.grade || undefined}
+                messageStatus={profile.fieldErrors.grade ? 'error' : undefined}
                 options={profile.gradeOptions.map(option => ({
                   value: option,
                   label: option,
@@ -146,6 +152,7 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
                 size="xlarge"
                 placeholder="주소를 검색해 주세요"
                 value={profile.address}
+                error={Boolean(profile.fieldErrors.address)}
                 readOnly
                 onClick={profile.openAddressModal}
               />
@@ -153,6 +160,11 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
                 주소 검색
               </PFButton>
             </div>
+            {profile.fieldErrors.address ? (
+              <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
+                {profile.fieldErrors.address}
+              </PFText>
+            ) : null}
             <PFTextInput
               size="xlarge"
               placeholder="상세주소를 입력해 주세요"

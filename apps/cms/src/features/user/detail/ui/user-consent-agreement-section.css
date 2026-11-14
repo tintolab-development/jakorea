@@ -3,10 +3,11 @@
   min-width: 0;
 }
 
+/* 시안 15518:306295 → 306298: 동의 표 사이 16px */
 .user-consent-agreement-section__forms {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .user-consent-agreement-section__form.detail-info-form {
@@ -59,12 +60,16 @@
   white-space: nowrap;
 }
 
-/* 동의 | 일시 — 스크린샷: flex 정렬, 구분자·날짜시간 구분 */
+/* 동의 | 일시, 동의 | [동의서 보기] 일시 — 시안 15518:306296: 공통 구분선(1×13 #3D3D3D 50%) 양쪽 16px */
 .user-consent-agreement-section__value-inner {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0 8px;
+  gap: 0 16px;
+}
+
+.user-consent-agreement-section__value-inner > .detail-info-form-inputs-separator {
+  margin: 0;
 }
 
 .user-consent-agreement-section__document-edit {
@@ -89,14 +94,6 @@
 /* 시안(12239:235392) 「동의서 작성」 h32 버튼 폭 100 — 공통 h32 min-width 80 대비 */
 .user-consent-agreement-section__document-edit > .cms-button.ant-btn.cms-button--h32 {
   min-width: 100px;
-}
-
-.user-consent-agreement-section__value-sep {
-  flex-shrink: 0;
-  color: #d0d0d0;
-  font-weight: 400;
-  padding: 0 2px;
-  user-select: none;
 }
 
 .user-consent-agreement-section__value-datetime {

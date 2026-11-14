@@ -24,6 +24,7 @@ import {
   resolvePlatformConsentSectionRequired,
   resolvePlatformConsentSectionTitle,
 } from './platform-consent-paragraph-body'
+import type { PortraitPersonalConsentPrefillLock } from './portrait-prefill-lock'
 import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
 
@@ -34,6 +35,8 @@ export type PlatformConsentFormBodyProps = {
   fillOptions?: PlatformConsentFillOptions
   /** 행정정보 공동이용 — 대상자 본인 성명(포털 로그인 회원명) */
   lockedNoticeSubjectMemberName?: string
+  /** 초상권 1번 표 — 회원정보로 채운 성명·소속 잠금 */
+  portraitPrefillLock?: PortraitPersonalConsentPrefillLock
   renderParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
   /** 단락 섹션 카드 바로 다음(별도 카드 등) — 행정정보 대상자 본인 전자서명 */
   renderAfterParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
@@ -191,6 +194,7 @@ export function PlatformConsentFormBody({
   onUpdateParagraph,
   fillOptions,
   lockedNoticeSubjectMemberName,
+  portraitPrefillLock,
   renderParagraphSlot,
   renderAfterParagraphSlot,
   documentPreview = false,
@@ -291,6 +295,7 @@ export function PlatformConsentFormBody({
                       onUpdateParagraph={onUpdateParagraph}
                       fillOptions={fillOptions}
                       lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
+                      portraitPrefillLock={portraitPrefillLock}
                       documentPreview={documentPreview}
                     />
                   )

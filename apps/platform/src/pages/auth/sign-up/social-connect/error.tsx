@@ -50,7 +50,7 @@ export function SignUpSocialConnectErrorPage() {
         <PFText
           as="p"
           typo="bd-md-rg"
-          color="neutral-cool-500"
+          color="primary-800"
           className={authPageCopyClass('description')}
         >
           {isAlreadyLinked
@@ -66,7 +66,7 @@ export function SignUpSocialConnectErrorPage() {
               다른 소셜 계정 연결하기
             </PFButton>
             <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handleSignIn}>
-              이메일로 로그인하기
+              이메일로 로그인
             </PFButton>
           </>
         ) : (

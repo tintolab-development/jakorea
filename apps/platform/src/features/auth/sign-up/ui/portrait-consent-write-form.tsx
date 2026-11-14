@@ -97,6 +97,7 @@ const SERVER_DRAFT_UNAVAILABLE_ALERT_MESSAGE =
 export function PortraitConsentWriteForm({
   onComplete,
   verifiedName: verifiedNameProp,
+  lockPrefilledName = false,
   saveDraftState,
   onSubmitAsync,
   onTitleAside,
@@ -115,6 +116,8 @@ export function PortraitConsentWriteForm({
   onComplete: () => void
   /** 가입 bridge 없을 때(마이페이지) 성명 prefill */
   verifiedName?: string
+  /** true면 회원정보로 채운 성명을 비활성으로 고정한다(마이페이지). 기본 false — 가입 화면 동작 유지 */
+  lockPrefilledName?: boolean
   saveDraftState?: (state: PortraitConsentWriteState) => void
   onSubmitAsync?: (state: PortraitConsentWriteState) => Promise<void>
   onTitleAside?: (aside: ReactNode | null) => void
@@ -313,6 +316,9 @@ export function PortraitConsentWriteForm({
             hiddenParagraphIds={hiddenParagraphIds}
             onUpdateParagraph={updateParagraph}
             fillOptions={{ consentFillReadOnlyBody: true }}
+            portraitPrefillLock={
+              lockPrefilledName && verifiedName ? { name: true } : undefined
+            }
             renderParagraphSlot={renderParagraphSlot}
           />
         </fieldset>

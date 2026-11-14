@@ -9,7 +9,10 @@ type GuardianProfileStepProps = {
   signUp: UseSignUpReturn
 }
 
-/** Challenge 생성 전 보호자 이름·연락처·관계 (BE 안 A) */
+/**
+ * 보호자 본인인증 뒤 정보 확인 (Figma 2750-73961).
+ * 이름·휴대폰은 NICE 결과(signup-status)를 자동 입력하고 비활성화한다. 관계만 입력한다.
+ */
 export function GuardianProfileStep({ signUp }: GuardianProfileStepProps) {
   const { step, guardian } = signUp
   const { profile } = guardian
@@ -17,8 +20,8 @@ export function GuardianProfileStep({ signUp }: GuardianProfileStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="보호자 정보를 입력해 주세요."
-        description="법정대리인 확인과 동의 기록에 사용돼요. 본인인증 전에 입력해 주세요."
+        title="보호자 동의에 필요한 정보만 확인해요."
+        description="입력한 정보는 보호자 본인인증과 동의 확인에만 사용돼요."
         actionsVariant="terms"
         actions={
           <>
@@ -30,7 +33,7 @@ export function GuardianProfileStep({ signUp }: GuardianProfileStepProps) {
                 void profile.submit()
               }}
             >
-              {profile.isSubmitting ? '확인 중…' : '입력 완료하고 본인인증하기'}
+              {profile.isSubmitting ? '확인 중…' : '확인하고 계속하기'}
             </PFButton>
             <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
               이전
@@ -42,30 +45,26 @@ export function GuardianProfileStep({ signUp }: GuardianProfileStepProps) {
           <PFTextInput
             size="xlarge"
             label="보호자님 이름"
-            placeholder="보호자님 이름을 입력해 주세요"
             value={profile.name}
-            required
-            onValueChange={profile.setName}
+            disabled
           />
           <PFTextInput
             size="xlarge"
             label="보호자님 휴대폰 번호"
-            placeholder="숫자만 입력해 주세요"
             value={formatKoreanPhoneNumber(profile.phone)}
-            required
             type="tel"
-            inputMode="numeric"
-            autoComplete="tel"
-            maxLength={13}
-            onValueChange={next => profile.setPhone(formatKoreanPhoneNumber(next))}
+            disabled
           />
           <PFTextInput
             size="xlarge"
             label="가입자와의 관계"
-            placeholder="예: 부, 모, 법정대리인"
+            placeholder="가입자와의 관계를 입력해 주세요"
             required
             value={profile.relationship}
             onValueChange={profile.setRelationship}
+            error={Boolean(profile.relationshipError)}
+            message={profile.relationshipError || undefined}
+            messageStatus={profile.relationshipError ? 'error' : undefined}
           />
           {profile.submitError ? (
             <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>

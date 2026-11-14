@@ -195,7 +195,7 @@ export function SignUpSocialConnectPage() {
         <PFText
           as="p"
           typo="bd-md-rg"
-          color="neutral-cool-500"
+          color="primary-800"
           className={authPageCopyClass('description')}
         >
           다음부터 이메일과 비밀번호 없이 로그인할 수 있어요.

@@ -123,17 +123,11 @@ export function useAssignmentSubmissionHistoryColumns(options: {
 
   return useMemo(
     () => [
-      {
-        title: 'No.',
-        dataIndex: 'no',
-        key: 'no',
-        width: 80,
-        align: 'center',
-      },
+      // 시안 4427:28184: No. 열 없음 — 역할120 / 팀명180 / 일정320 / 기간260 / 파일320 / 현황140
       {
         title: '역할',
         key: 'teamRole',
-        width: 140,
+        width: 120,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (_value, record) => {
@@ -163,7 +157,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         title: '팀명',
         dataIndex: 'teamName',
         key: 'teamName',
-        width: 140,
+        width: 180,
         align: 'center',
         render: (value: string) => value?.trim() || '-',
       },
@@ -171,7 +165,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         title: '교육 진행 일정',
         dataIndex: 'educationDateLabel',
         key: 'educationDateLabel',
-        width: 300,
+        width: 320,
         align: 'center',
         render: (value: string | undefined) =>
           renderProgramDetailPipeSeparated(value ? formatCmsScheduleDisplayLabel(value) : value),
@@ -180,7 +174,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         title: '과제 제출 기간',
         dataIndex: 'assignmentPeriodLabel',
         key: 'assignmentPeriodLabel',
-        width: 300,
+        width: 260,
         align: 'center',
         render: (value: string | undefined) =>
           value?.trim() ? formatCmsScheduleDisplayLabel(value) : '-',
@@ -188,7 +182,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
       {
         title: '제출 파일',
         key: 'submission',
-        width: 300,
+        width: 320,
         align: 'center',
         onHeaderCell: () => ({ className: CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS }),
         onCell: () => ({ className: CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS }),
@@ -198,7 +192,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
       {
         title: '교육 진행 현황',
         key: 'educationProgress',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (_value, record) => (
           <span className={lectureProgressClass(record.lectureProgress)}>
@@ -237,7 +231,13 @@ export function AssignmentSubmissionHistoryTable({
         loading={loading}
         pagination={false}
         tableLayout="fixed"
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1340 }}
+        rowClassName={record =>
+          // 시안 4427:28184: 교육 진행 현황「진행 예정」행은 행 전체 40%
+          record.lectureProgress === 'scheduled'
+            ? 'assignment-submission-history-table__row--scheduled'
+            : ''
+        }
       />
     </div>
   )

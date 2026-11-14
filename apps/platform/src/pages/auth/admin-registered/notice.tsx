@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   clearAdminRegisteredPasswordChangeRequired,
   getAdminRegisteredSignUpChangePasswordPath,
@@ -10,6 +10,7 @@ import {
   syncAdminRegisteredOnboardingSession,
 } from '@/features/auth/admin-registered'
 import { usePortalMeQuery } from '@/features/auth/sign-in'
+import { SIGN_IN_PATH } from '@/features/auth/sign-up'
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured } from '@/shared/lib'
@@ -140,11 +141,16 @@ function AdminRegisteredFirstLoginNotice() {
   )
 }
 
+/**
+ * 회원가입 본인인증 사전 검사에서 관리자 등록 회원으로 확인된 경우 (Figma 4557-49640).
+ * 비로그인 상태라 온보딩 라우트로 갈 수 없으므로, CMS와 같게 로그인 화면으로 보낸다.
+ */
 function AdminRegisteredSignUpNotice() {
   const navigate = useNavigate()
 
   const handleChangePassword = () => {
-    navigate(getAdminRegisteredSignUpChangePasswordPath())
+    // 목업 모드는 기존처럼 온보딩 화면으로 간다
+    navigate(isRemoteApiConfigured() ? SIGN_IN_PATH : getAdminRegisteredSignUpChangePasswordPath())
   }
 
   const handleFindEmail = () => {
@@ -153,21 +159,15 @@ function AdminRegisteredSignUpNotice() {
 
   return (
     <>
-      <PFText as="p" typo="bd-lg-rg" color="primary-800">
+      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
         안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
+        <br />
+        이메일이 기억나지 않는 경우, 이메일 찾기를 먼저 진행해 주세요.
       </PFText>
-
-      <div className={styles.infoBox}>
-        <PFText typo="bd-lg-sb" color="primary-800">
-          현재 비밀번호는 가입된 이메일 주소와 동일합니다.
-          <br />
-          이메일이 기억나지 않는 경우, 이메일 찾기를 진행해 주세요.
-        </PFText>
-      </div>
 
       <div className={styles.actionsGroup}>
         <PFButton size="xlarge" width="100%" onClick={handleChangePassword}>
-          비밀번호 변경하기
+          본인인증 후 비밀번호 변경하기
         </PFButton>
         <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handleFindEmail}>
           이메일 찾기
@@ -177,8 +177,18 @@ function AdminRegisteredSignUpNotice() {
   )
 }
 
+function isSignUpPrecheckEntry(state: unknown) {
+  return Boolean(
+    state &&
+      typeof state === 'object' &&
+      (state as { adminRegisteredEntry?: unknown }).adminRegisteredEntry === 'sign-up',
+  )
+}
+
 export function AdminRegisteredNoticePage() {
-  const isSignUpEntry = isAdminRegisteredSignUpEntry()
+  const location = useLocation()
+  // 목업: 위저드 상태의 entrySource, 원격: 회원가입 사전 검사가 넘긴 라우터 state(개인정보 없음)
+  const isSignUpEntry = isAdminRegisteredSignUpEntry() || isSignUpPrecheckEntry(location.state)
 
   if (!isSignUpEntry) {
     return <AdminRegisteredFirstLoginNotice />
@@ -189,7 +199,7 @@ export function AdminRegisteredNoticePage() {
       <div className={styles.intro}>
         <img className={styles.illustration} src={illustExclamationUrl} alt="" aria-hidden="true" />
         <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title')}>
-          관리자가 등록한 계정이에요.
+          관리자에 의해 가입된 회원이에요.
         </PFText>
         <AdminRegisteredSignUpNotice />
       </div>

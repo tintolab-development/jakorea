@@ -71,6 +71,7 @@ export function UserPersonalInfoRevealConfirmModal({
           id="privacy-reveal-reason"
           value={reason}
           onChange={e => setReason(e.target.value)}
+          inputSize="medium"
           width={'100%'}
           placeholder="열람 사유를 입력해 주세요"
         />

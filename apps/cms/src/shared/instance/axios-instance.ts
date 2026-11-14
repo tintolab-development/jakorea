@@ -262,14 +262,12 @@ function logoutAfterAuthFailure(options?: { skipRemote?: boolean }) {
   const complete =
     typeof window !== 'undefined' ? hasPasswordChangeRequiredComplete() : false
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
-  const search = typeof window !== 'undefined' ? window.location.search : ''
 
   useAuthStore.getState().logout(options?.skipRemote ? { skipRemote: true } : undefined)
   if (typeof window === 'undefined') return
 
   const target = resolveSessionAuthFailureRedirect({
     pathname,
-    search,
     complete,
   })
   if (target == null) return

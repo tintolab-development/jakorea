@@ -1,24 +1,26 @@
+/* 시안 4427:22524: 성명 ↔ 일정 변경 배지 8px — 배지 자체 margin-left 8 만 쓴다 */
 .user-basic-info-section__name-with-badge {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--spacing-8, 8px);
+  gap: 0;
 }
 
-/* 교사/강사: 가입일 카드 + 성명 카드 — 16px 간격, 각각 독립 `detail-info-form__body`(둥근 테두리) */
+/* 가입일 카드 + 성명 카드 — 시안 15518:306279: 10px 간격, 각각 독립 `detail-info-form__body`(둥근 테두리) */
 .user-basic-info-section__split-cards {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   width: 100%;
   min-width: 0;
 }
 
+/* 시안 4427:22524: 성별 | 생년월일, 소속 | 학년 — 구분선 양쪽 16px */
 .user-basic-info-section__inline-segments {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
 }
 
 .user-basic-info-section__inline-segments .detail-info-form-inputs-separator {
@@ -121,11 +123,21 @@
   line-height: 150%;
 }
 
+/* 시안 4427:22524: ID | [1365 바로가기] — 구분선 양쪽 16px, 버튼 100×32 */
 .user-basic-info-section__id1365-cell {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--spacing-8, 8px);
+  gap: 16px;
+}
+
+.user-basic-info-section__id1365-cell .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.user-basic-info-section__id1365-cell .cms-button.ant-btn.cms-button--h32 {
+  width: 100px;
+  min-width: 100px;
 }
 
 .user-basic-info-section__text-blue {

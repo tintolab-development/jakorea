@@ -28,6 +28,12 @@ import {
 } from '@/shared/lib'
 import { PFAlertModal, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 
+const INSTRUCTOR_APPLY_SUCCESS_TITLE = '신청이 완료되었어요.'
+const INSTRUCTOR_APPLY_SUCCESS_DESCRIPTION = [
+  '승인 상태는 나의 홈에서 확인할 수 있어요.',
+  '승인이 완료되면, 강사 프로그램 신청이 가능해요.',
+].join('\n')
+
 export function MypageInstructorApplyPage() {
   useInstructorApplySessionCacheOnLeave()
   const navigate = useNavigate()
@@ -49,10 +55,17 @@ export function MypageInstructorApplyPage() {
     currentRequestQuery.data,
     submitContext,
   )
+  /**
+   * 신청 완료 팝업이 떠 있는 동안에는 뒤 화면(신청 폼·제목)을 그대로 둔다.
+   * 신청 상태 재조회로 「승인 대기」 화면이 팝업 뒤에서 먼저 바뀌지 않게, 팝업을 닫은 뒤에 반영한다.
+   */
+  const holdSubmittedForm = successOpen
   const isPendingReview =
-    remoteSession && isInstructorRoleRequestPendingReview(currentRequestQuery.data)
+    !holdSubmittedForm &&
+    remoteSession &&
+    isInstructorRoleRequestPendingReview(currentRequestQuery.data)
   const isRejected =
-    remoteSession && isInstructorRoleRequestRejected(currentRequestQuery.data)
+    !holdSubmittedForm && remoteSession && isInstructorRoleRequestRejected(currentRequestQuery.data)
 
   useEffect(() => {
     if (reapplyFromQuery) {
@@ -77,6 +90,15 @@ export function MypageInstructorApplyPage() {
   if (!isAuthReady || isChecking || isRedirecting) {
     return null
   }
+
+  const applyForm = (
+    <InstructorApplyForm
+      lockedBasic={lockedBasic}
+      seedFromSubmittedRequest={reapplyAfterReject}
+      rejectedSummary={reapplyAfterReject ? currentRequestQuery.data : undefined}
+      onSubmitSuccess={() => setSuccessOpen(true)}
+    />
+  )
 
   const isPageLoading =
     isLoading ||
@@ -104,7 +126,9 @@ export function MypageInstructorApplyPage() {
           )
         }
       >
-        {isPageLoading ? (
+        {holdSubmittedForm ? (
+          applyForm
+        ) : isPageLoading ? (
           <PFLoadingSpinner centered label="회원 정보를 불러오는 중" />
         ) : isError ? (
           <PFText as="p" typo="bd-md-rg" color="error">
@@ -136,19 +160,14 @@ export function MypageInstructorApplyPage() {
             {statusMessage}
           </PFText>
         ) : (
-          <InstructorApplyForm
-            lockedBasic={lockedBasic}
-            seedFromSubmittedRequest={reapplyAfterReject}
-            rejectedSummary={reapplyAfterReject ? currentRequestQuery.data : undefined}
-            onSubmitSuccess={() => setSuccessOpen(true)}
-          />
+          applyForm
         )}
       </PFFormPage>
 
       <PFAlertModal
         open={successOpen}
-        title="신청 완료"
-        description="강사 신청이 접수되었습니다."
+        title={INSTRUCTOR_APPLY_SUCCESS_TITLE}
+        description={INSTRUCTOR_APPLY_SUCCESS_DESCRIPTION}
         onConfirm={() => {
           setSuccessOpen(false)
           navigate(MYPAGE_PATH)

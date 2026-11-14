@@ -17,8 +17,8 @@
   left: var(--sidebar-width);
   right: 0;
   z-index: 99;
-  /* 시안: drop-shadow 0 4px 6px rgba(0,0,0,0.04) */
-  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.04);
+  /* 시안: drop-shadow 0 4px 12px rgba(0,0,0,0.04) (2026-11-14 전체 회원 CSS 검수) */
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
 }
 
 .main-header-content {

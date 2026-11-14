@@ -16,24 +16,36 @@ import {
 } from './portrait-vertical-table-mobile'
 import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
+import {
+  isPortraitAffiliationPrefillLocked,
+  type PortraitPersonalConsentPrefillLock,
+} from './portrait-prefill-lock'
 
 /** 초상권 1번 표 — 성명·소속(+소속 없음) 입력 + 나머지 행(읽기 전용)·하단 동의 */
 export function PlatformPortraitPersonalConsentTable({
   paragraph,
   onUpdateParagraph,
   readOnly = false,
+  prefillLock,
 }: {
   paragraph: VerticalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
   readOnly?: boolean
+  prefillLock?: PortraitPersonalConsentPrefillLock
 }) {
   const nameRaw = paragraph.rows[0]?.cells[0] ?? ''
   const affiliationRaw = paragraph.rows[0]?.cells[1] ?? ''
   const name = portraitPersonalConsentNameValue(nameRaw)
   const { noAffiliation, affiliation } = portraitPersonalConsentAffiliationState(affiliationRaw)
   const restRows = paragraph.rows.slice(1)
+  const nameLocked = prefillLock?.name === true && name.trim() !== ''
+  const affiliationLocked = isPortraitAffiliationPrefillLocked(prefillLock, {
+    noAffiliation,
+    affiliation,
+  })
 
   const patchName = (value: string) => {
+    if (nameLocked) return
     onUpdateParagraph(paragraph.id, current =>
       current.kind === 'single_item' && current.variant === 'vertical_table'
         ? patchVerticalTableCell(current, 0, 0, value)
@@ -42,6 +54,7 @@ export function PlatformPortraitPersonalConsentTable({
   }
 
   const patchAffiliation = (value: string) => {
+    if (affiliationLocked) return
     onUpdateParagraph(paragraph.id, current =>
       current.kind === 'single_item' && current.variant === 'vertical_table'
         ? patchVerticalTableCell(current, 0, 1, value)
@@ -76,6 +89,7 @@ export function PlatformPortraitPersonalConsentTable({
                         value={name}
                         placeholder="한글 성명"
                         aria-label="성명"
+                        disabled={nameLocked}
                         onValueChange={patchName}
                       />
                     )}
@@ -97,22 +111,24 @@ export function PlatformPortraitPersonalConsentTable({
                         size="large"
                         value={noAffiliation ? '' : affiliation}
                         placeholder="소속"
-                        disabled={noAffiliation}
+                        disabled={noAffiliation || affiliationLocked}
                         aria-label="소속"
                         onValueChange={value => {
                           if (noAffiliation) return
                           patchAffiliation(value)
                         }}
                       />
-                      <PFCheckbox
-                        size="large"
-                        checked={noAffiliation}
-                        onCheckedChange={checked => {
-                          patchAffiliation(checked ? PORTRAIT_NO_AFFILIATION : '')
-                        }}
-                      >
-                        {PORTRAIT_NO_AFFILIATION}
-                      </PFCheckbox>
+                      {affiliationLocked ? null : (
+                        <PFCheckbox
+                          size="large"
+                          checked={noAffiliation}
+                          onCheckedChange={checked => {
+                            patchAffiliation(checked ? PORTRAIT_NO_AFFILIATION : '')
+                          }}
+                        >
+                          {PORTRAIT_NO_AFFILIATION}
+                        </PFCheckbox>
+                      )}
                     </PFFormControlCluster>
                     )}
                   </div>
@@ -157,6 +173,7 @@ export function PlatformPortraitPersonalConsentTable({
             paragraph={paragraph}
             onUpdateParagraph={onUpdateParagraph}
             editableFirstRow
+            prefillLock={prefillLock}
           />
         </div>
       ) : null}

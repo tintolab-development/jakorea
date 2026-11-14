@@ -17,6 +17,7 @@ export type DashboardWidgetType =
   | 'program-schedule-company-school-widget' // 1사1교 프로그램 일정
   | 'program-schedule-ujat-widget' // UJAT 프로그램 일정
   | 'program-schedule-gemini-widget' // Gemini 프로그램 일정
+  | 'program-schedule-trained-teacher-widget' // 교육받은 교사 프로그램 일정
   | 'recruitment-status-widget' // 모집 신청 현황 위젯
   | 'customer-inquiry-status-widget' // 고객 문의 현황 위젯
   | 'kpi-achievement-widget' // 사업 별 KPI 대비 달성률 위젯
@@ -63,11 +64,15 @@ function programScheduleKindToWidgetType(kind: ProgramScheduleKind): DashboardWi
       return 'program-schedule-ujat-widget'
     case 'gemini':
       return 'program-schedule-gemini-widget'
+    case 'trained_teacher':
+      return 'program-schedule-trained-teacher-widget'
   }
 }
 
 /** 관리자 홈: 메뉴 바로가기 + (ACL별) 프로그램 일정 + 하단 위젯 */
-export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[]): DashboardWidgetConfig[] {
+export function buildAdminDashboardWidgets(
+  scheduleKinds: ProgramScheduleKind[]
+): DashboardWidgetConfig[] {
   const scheduleWidgets: DashboardWidgetConfig[] = scheduleKinds.map((kind, index) => ({
     type: programScheduleKindToWidgetType(kind),
     colSpan: 24,
@@ -123,9 +128,7 @@ export function getDashboardWidgetsForUser(
     return []
   }
   const kinds =
-    assignedProgramTypes != null
-      ? assignedProgramTypes
-      : getProgramScheduleKindsForAdminUser(user)
+    assignedProgramTypes != null ? assignedProgramTypes : getProgramScheduleKindsForAdminUser(user)
   return buildAdminDashboardWidgets(kinds).sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 

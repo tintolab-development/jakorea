@@ -3,6 +3,7 @@ export {
   getEmailAvailability,
   getSignupTerms,
   postGeneralSignup,
+  postSignupIdentityPrecheck,
   postTeacherSignup,
   searchHomepageSchools,
 } from './client'

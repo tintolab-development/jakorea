@@ -85,6 +85,9 @@ function MinorEnrolledSchoolFields({
         placeholder="학년을 선택해 주세요"
         value={profile.grade}
         onValueChange={profile.setGrade}
+        error={Boolean(profile.fieldErrors.grade)}
+        message={profile.fieldErrors.grade || undefined}
+        messageStatus={profile.fieldErrors.grade ? 'error' : undefined}
         options={profile.gradeOptions.map(option => ({
           value: option,
           label: option,
@@ -132,6 +135,9 @@ function AdultEnrolledSchoolFields({
         placeholder="학년을 선택해 주세요"
         value={profile.grade}
         onValueChange={profile.setGrade}
+        error={Boolean(profile.fieldErrors.grade)}
+        message={profile.fieldErrors.grade || undefined}
+        messageStatus={profile.fieldErrors.grade ? 'error' : undefined}
         options={profile.gradeOptions.map(option => ({
           value: option,
           label: option,
@@ -152,6 +158,7 @@ function HomeAddressFields({ profile }: { profile: UseSignUpReturn['profile'] })
           size="xlarge"
           placeholder="주소를 검색해 주세요"
           value={profile.address}
+          error={Boolean(profile.fieldErrors.address)}
           readOnly
           onClick={profile.openAddressModal}
         />
@@ -159,6 +166,11 @@ function HomeAddressFields({ profile }: { profile: UseSignUpReturn['profile'] })
           주소 검색
         </PFButton>
       </div>
+      {profile.fieldErrors.address ? (
+        <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
+          {profile.fieldErrors.address}
+        </PFText>
+      ) : null}
       <PFTextInput
         size="xlarge"
         placeholder="상세주소를 입력해 주세요"
@@ -209,6 +221,9 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
               placeholder="이름을 입력해 주세요"
               value={profile.memberName}
               onValueChange={profile.setMemberName}
+              error={Boolean(profile.fieldErrors.name)}
+              message={profile.fieldErrors.name || undefined}
+              messageStatus={profile.fieldErrors.name ? 'error' : undefined}
               required
             />
           ) : (

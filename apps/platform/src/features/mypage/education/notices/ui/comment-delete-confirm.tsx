@@ -13,7 +13,7 @@ export function EducationNoticeCommentDeleteConfirm({
   onConfirm,
 }: EducationNoticeCommentDeleteConfirmProps) {
   return (
-    <PFModal open={open} size="sm" onClose={onCancel} closeOnBackdropClick showCloseButton={false}>
+    <PFModal open={open} size="sm" onClose={onCancel} showCloseButton={false}>
       <div className={styles.content}>
         <div className={styles.textBlock}>
           <PFText as="div" typo="hl-lg" color="black" className={styles.title}>

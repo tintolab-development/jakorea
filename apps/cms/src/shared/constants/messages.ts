@@ -12,6 +12,14 @@ export {
   buildRequiredFieldsIncompleteAlertContent,
 } from './required-fields-incomplete-alert-message'
 
+/**
+ * CMS 회원 신규 등록 — 필수 동의 항목 미동의 시 AlertModal (시안 8821:83785).
+ * 공통 `필수 동의 항목 안내`(항목명 나열)와 다른 이 화면 전용 예외 — `terms-and-consent-policy.mdc`
+ */
+export const MEMBER_REGISTER_REQUIRED_CONSENT_DISAGREE_ALERT_TITLE = '필수 항목 미동의 안내'
+export const MEMBER_REGISTER_REQUIRED_CONSENT_DISAGREE_ALERT_MESSAGE =
+  '모든 필수 항목에 동의 완료 시에만 제출이 가능합니다.\n동의하지 않은 항목을 확인 후 다시 제출해 주세요.'
+
 /** 회원 신규 등록 — 약관·동의 미완료 시 AlertModal 본문 */
 export const REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE = '필수 약관에 동의해주세요'
 

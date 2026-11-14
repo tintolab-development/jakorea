@@ -9,7 +9,8 @@
 
 .user-personal-info-reveal-confirm-modal__label {
   display: block;
-  margin-bottom: 8px;
+  /* 시안 8276:252690: 라벨 22 + gap 6 + 입력 40 */
+  margin-bottom: 6px;
   font-size: 14px;
   line-height: 150%;
   color: var(--Content-secondary, #525252);

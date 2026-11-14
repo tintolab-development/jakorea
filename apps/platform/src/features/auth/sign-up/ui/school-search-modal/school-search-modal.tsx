@@ -416,7 +416,7 @@ export function SchoolSearchModal({
             {isEmptySearchResult ? (
               <div className={styles.schoolResultNotice}>
                 <PFText as="p" typo="bd-md-sb" color="black">
-                  검색 결과가 없습니다.
+                  검색 결과가 없어요
                 </PFText>
                 <PFText as="p" typo="label-md" color="black">
                   학교명을 다시 확인하거나 시/군/구를 변경해 보세요.

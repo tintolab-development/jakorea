@@ -99,12 +99,7 @@ export function isValidEmail(value: string) {
   return isValidEmailId(value)
 }
 
-export {
-  ADMIN_REGISTERED_PASSWORD_HELP_TEXT,
-  isValidMemberPassword,
-  isValidPassword,
-  MEMBER_PASSWORD_HELP_TEXT,
-} from './password-policy'
+export { isValidMemberPassword, MEMBER_PASSWORD_HELP_TEXT } from './password-policy'
 
 export function getMemberTypeLabel(type: MemberType | null) {
   if (type === 'teacher') return '교사 회원'

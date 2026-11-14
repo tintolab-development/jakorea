@@ -28,7 +28,6 @@ export function SocialConnectConsentModal({
   return (
     <PFModal
       showCloseButton={false}
-      closeOnBackdropClick={!confirmLoading}
       closeOnEscape={!confirmLoading}
       open={open}
       onClose={onCancel}

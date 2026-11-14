@@ -210,3 +210,52 @@
   width: 140px;
   min-width: 140px;
 }
+
+/**
+ * 시안 15518:306257 · 4427:22524: 회원 상세 섹션 설명(관리자 코멘트·기본 정보·약관 및 동의) Medium 14 / 150% / #3D3D3D 50%
+ * (공통 DetailInfoForm 설명 16px 을 회원 상세 풀페이지에서만 덮어쓴다)
+ */
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-info-form__description {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/** 시안: 상단 버튼 줄 바로 아래(y128)에서 본문 첫 섹션 시작 — 공통 상단 액션↔본문 gap 10 제거 */
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__content-actions-wrapper {
+  gap: 0;
+}
+
+/**
+ * 시안 4427:28004 · 4427:28498 (수강·봉사 이력): 체크박스 열 60, 본문 행 56, 필터 구분선 ↔ 목록 제목 24
+ * 강사 > 프로그램 강의 이력(`--instructor-lecture`)은 별도 시안이라 제외
+ */
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture) {
+  --table-selection-column-width: 60px;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture)
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  min-height: 56px !important;
+  height: 56px !important;
+}
+
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture)
+  .filter-table-layout__divider {
+  padding-bottom: 24px;
+}
+
+/** 시안: 수강·봉사 이력 필터 셀렉트「전체」는 선택 값과 같은 #3D3D3D (placeholder 회색 아님) */
+.detail-fullpage-modal.user-detail-fullpage-modal
+  .member-program-lecture-history:not(.member-program-lecture-history--instructor-lecture)
+  .table-filter-group
+  .ant-select-selection-placeholder {
+  color: var(--default-BK, #3d3d3d);
+}

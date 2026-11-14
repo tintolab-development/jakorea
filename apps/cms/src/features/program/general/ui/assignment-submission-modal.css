@@ -17,11 +17,13 @@
   font-weight: 700;
 }
 
+/* 시안 4427:28184: 설명 문구 ↔ 「과제 및 설문 제출 목록」 30px (공통 설명 아래 16 + 14) */
 .assignment-submission-modal__body {
   display: flex;
   flex-direction: column;
   gap: 0;
   min-width: 0;
+  margin-top: 14px;
 }
 
 /* 모달 본문 — FilterTableLayout 카드 shell 제거 */
@@ -33,15 +35,23 @@
   background: transparent;
 }
 
+/* 시안: 제목 ↔ 표 10px */
 .assignment-submission-modal__table-layout.filter-table-layout--without-filter
   .filter-table-layout__toolbar {
-  margin-bottom: var(--spacing-16, 16px);
+  margin-bottom: 10px;
 }
 
+/* 시안: 「과제 및 설문 제출 목록」 Bold 18 / 140% */
 .assignment-submission-modal__table-layout .filter-table-layout__title {
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 700;
   line-height: 140%;
   padding-left: 8px;
+}
+
+/* 시안: 「총 N건」 Medium 16 / 150%, #3D3D3D 60% */
+.assignment-submission-modal__table-layout .filter-table-layout__description {
+  color: rgba(61, 61, 61, 0.6);
 }
 
 /* 읽기 전용 역할 태그 — 드롭다운 트리거(테두리 1 + padding 7)와 같은 바깥 여백 */
@@ -87,4 +97,13 @@
   height: 40px !important;
   min-height: 40px !important;
   max-height: 40px !important;
+}
+
+/* 시안 4427:28184: [과제 일괄 다운로드] 160×40, padding 6 16 6 12 */
+.assignment-submission-modal
+  .content-modal__footer-actions
+  .assignment-submission-modal__footer-btn--bulk.cms-button.ant-btn {
+  width: 160px;
+  min-width: 160px;
+  padding: 6px 16px 6px 12px;
 }

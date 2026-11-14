@@ -63,6 +63,18 @@
   min-width: 160px;
 }
 
+/** 시안 4427:28004: 「수료증/참가인증서 발급」 청록 채움 180×40 */
+.member-program-lecture-history__completion-certificate-btn.cms-button.ant-btn {
+  width: 180px;
+  min-width: 180px;
+}
+
+/** 시안 4427:28004: 과제 제출 내역 [내역 보기] 136×32 (셀 폭) — default(회색)·disabled 는 공통 variant */
+.member-program-lecture-history__action-cell .member-program-lecture-history__history-view-btn.cms-button.ant-btn.cms-button--h32 {
+  width: 136px;
+  min-width: 136px;
+}
+
 /** 시안: 강사 > 프로그램 강의 이력 「엑셀 다운로드」 140 */
 .member-program-lecture-history--instructor-lecture .excel-button {
   width: 140px;
