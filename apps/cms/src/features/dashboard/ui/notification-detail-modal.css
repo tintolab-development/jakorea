@@ -32,6 +32,12 @@
   overflow-wrap: anywhere;
 }
 
+/* 시안: 「N명」 Pretendard Bold, 같은 색 */
+.notification-detail-modal__emphasis {
+  color: var(--main-BK, #3d3d3d);
+  font-weight: 700;
+}
+
 .notification-detail-modal.content-modal .teal-header-modal__footer {
   gap: 8px;
 }

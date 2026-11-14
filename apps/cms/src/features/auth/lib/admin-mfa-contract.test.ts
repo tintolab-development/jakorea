@@ -111,6 +111,12 @@ describe('mapMfaVerifyError', () => {
     expect(mapMfaVerifyError('UNKNOWN', 429).kind).toBe('rate')
     expect(mapMfaVerifyError('UNKNOWN', 400).kind).toBe('validation')
   })
+
+  it('423 이어도 잠금 코드가 아니면 잠금 문구로 바꾸지 않는다', () => {
+    expect(mapMfaVerifyError('ACCOUNT_LOCKED', 423).kind).toBe('lock')
+    expect(mapMfaVerifyError('ACCOUNT_INACTIVE', 423).kind).toBe('other')
+    expect(mapMfaVerifyError('LOGIN_DISABLED', 423).kind).toBe('other')
+  })
 })
 
 describe('buildMfaResetRequest', () => {

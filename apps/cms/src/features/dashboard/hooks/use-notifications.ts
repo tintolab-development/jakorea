@@ -36,7 +36,8 @@ interface UseNotificationsResult {
   markAllAsRead: () => Promise<void>
 }
 
-export function useNotifications(): UseNotificationsResult {
+/** @param category BE notificationCategory (원격 목록만). 생략하면 전체 */
+export function useNotifications(category?: string): UseNotificationsResult {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const useRemoteList = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
@@ -57,7 +58,7 @@ export function useNotifications(): UseNotificationsResult {
     hasNextPage: remoteHasNextPage,
     isFetchingNextPage: remoteFetchingNextPage,
     fetchNextPage: fetchRemoteNextPage,
-  } = useAdminNotifications(useRemoteList)
+  } = useAdminNotifications(useRemoteList, category)
 
   const invalidateUnreadCount = () =>
     queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.notificationCount('remote') })

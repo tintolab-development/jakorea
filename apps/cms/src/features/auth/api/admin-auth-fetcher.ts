@@ -31,10 +31,14 @@ export class AdminMfaApiError extends Error {
   }
 }
 
+/**
+ * 본문 `error.code` 를 우선한다. 423 은 잠금 외에 ACCOUNT_INACTIVE·LOGIN_DISABLED 등에도 쓰이므로
+ * 본문에 코드가 없을 때(`UNKNOWN`)만 ACCOUNT_LOCKED 로 추정한다.
+ */
 function resolveAuthErrorCode(code: string, httpStatus?: number): string {
   if (code !== 'UNKNOWN' && code !== 'MFA_FAILED') return code
   if (httpStatus === 429) return 'MFA_RATE_LIMITED'
-  if (httpStatus === 423) return 'ACCOUNT_LOCKED'
+  if (httpStatus === 423 && code === 'UNKNOWN') return 'ACCOUNT_LOCKED'
   if (httpStatus === 400) return 'VALIDATION_ERROR'
   return code
 }
