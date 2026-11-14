@@ -37,6 +37,20 @@ export function isPasswordRecentlyUsedApiError(error: unknown): boolean {
   return readPortalAuthApiErrorCode(error)?.toUpperCase() === PASSWORD_RECENTLY_USED_ERROR_CODE
 }
 
+/**
+ * 이메일·비밀번호 불일치. BE는 계정 없음·비밀번호 틀림을 같은 코드로 내려 어느 칸인지 구분하지 않는다.
+ * 로그인 화면은 시안(14474-43444)대로 두 칸 아래에 각각 안내 문구를 띄운다.
+ */
+export const LOGIN_INVALID_CREDENTIALS_ERROR_CODE = 'INVALID_CREDENTIALS'
+export const LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES = {
+  email: '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.',
+  password: '비밀번호가 일치하지 않아요. 다시 한번 확인해 주세요.',
+} as const
+
+export function isLoginInvalidCredentialsApiError(error: unknown): boolean {
+  return readPortalAuthApiErrorCode(error)?.toUpperCase() === LOGIN_INVALID_CREDENTIALS_ERROR_CODE
+}
+
 export function isLoginApprovalPendingApiError(error: unknown): boolean {
   if (!isAxiosError(error)) return false
   if (error.response?.status === 423) return true

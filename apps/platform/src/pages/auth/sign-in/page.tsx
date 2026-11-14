@@ -17,7 +17,9 @@ import {
 import {
   expiresAtFromExpiresInSeconds,
   getLoginApiErrorMessage,
+  isLoginInvalidCredentialsApiError,
   isLoginNetworkError,
+  LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
 import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/apply-auth-token-age-group'
@@ -103,6 +105,10 @@ export function SignInPage() {
     if (emailError) {
       setEmailError(null)
     }
+    // 불일치 안내는 두 칸 한 쌍 — 한쪽을 고치면 함께 지운다
+    if (passwordError === LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.password) {
+      setPasswordError(null)
+    }
     if (formError) {
       setFormError(null)
     }
@@ -183,6 +189,12 @@ export function SignInPage() {
       setDevAuthLoggedIn(false)
       if (isLoginNetworkError(error)) {
         setNetworkErrorOpen(true)
+        return
+      }
+      // 시안 14474-43444 — 불일치는 하단 통합 문구 대신 두 칸 아래에 각각 안내 (BE가 어느 칸인지 구분하지 않음)
+      if (isLoginInvalidCredentialsApiError(error)) {
+        setEmailError(LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.email)
+        setPasswordError(LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.password)
         return
       }
       setFormError(
@@ -281,6 +293,7 @@ export function SignInPage() {
             onValueChange={next => {
               setPassword(next)
               if (passwordError) setPasswordError(null)
+              if (emailError === LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.email) setEmailError(null)
               if (formError) setFormError(null)
             }}
             error={Boolean(passwordError)}

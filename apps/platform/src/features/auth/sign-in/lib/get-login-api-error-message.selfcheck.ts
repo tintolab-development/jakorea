@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict'
 import { AxiosError } from 'axios'
 import {
+  isLoginInvalidCredentialsApiError,
   isLoginNetworkError,
   formatPortalProfileUpdateError,
   getLoginApiErrorMessage,
@@ -116,5 +117,19 @@ assert.equal(isLoginNetworkError(axiosErr(503, { error: { code: 'X' } })), true)
 assert.equal(isLoginNetworkError(axiosErr(500, { error: { message: '서버 오류' } })), false)
 assert.equal(isLoginNetworkError(axiosErr(401, '')), false)
 assert.equal(isLoginNetworkError(new Error('x')), false)
+
+
+// 이메일·비밀번호 불일치 — 칸별 안내 대상
+assert.equal(
+  isLoginInvalidCredentialsApiError(
+    axiosErr(401, { error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' } }),
+  ),
+  true,
+)
+assert.equal(
+  isLoginInvalidCredentialsApiError(axiosErr(423, { error: { code: 'ACCOUNT_INACTIVE' } })),
+  false,
+)
+assert.equal(isLoginInvalidCredentialsApiError(new Error('x')), false)
 
 console.log('get-login-api-error-message.selfcheck: ok')

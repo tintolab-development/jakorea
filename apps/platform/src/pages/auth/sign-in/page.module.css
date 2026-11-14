@@ -48,17 +48,54 @@
   align-items: center;
 }
 
-/* 시안(PC): 이메일 찾기·비밀번호 찾기·회원가입 하기 링크 12 SemiBold */
+/*
+ * 시안(PC) 4088:18500 — 헤더↔입력 56 · 입력 간 20 · 입력↔로그인 40 · 로그인↔링크 16 ·
+ * 링크↔소셜 72 · 위아래 여백은 인증 셸(100)만 쓴다
+ */
 @media (--bp-pc-up) {
-  .accountLinkItem .accountLinkButton {
-    font-size: 12px;
-    font-weight: 600;
+  .form {
+    gap: var(--spacing-40);
+    margin-top: var(--spacing-56);
   }
 
-  /* 시안(PC): 또는 소셜 로그인 13 Medium */
+  .inputGroup {
+    gap: var(--spacing-20);
+  }
+
+  /* 이메일 찾기·비밀번호 찾기·회원가입 하기 — 12 SemiBold, 높이 40, 항목·구분선 간격 24 */
+  .accountLinks {
+    gap: var(--spacing-24);
+    margin-top: var(--spacing-16);
+  }
+
+  .accountLinkItem {
+    gap: var(--spacing-24);
+  }
+
+  .accountLinkItem .accountLinkButton {
+    height: 40px;
+    padding: var(--spacing-8) 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 140%;
+  }
+
+  .socialSection {
+    margin-top: var(--spacing-72);
+  }
+
+  .socialDivider {
+    gap: var(--spacing-8);
+  }
+
+  /* 또는 소셜 로그인 13 Medium */
   .socialDivider .socialDividerLabel {
     font-size: 13px;
     font-weight: 500;
+  }
+
+  .socialIcons {
+    gap: var(--spacing-24);
   }
 }
 
