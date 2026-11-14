@@ -5,7 +5,10 @@ export {
   ADMIN_THEME_RADIUS,
   adminConfigProviderWave,
   adminTheme,
+  installScrollbarModeClass,
+  measureScrollbarWidth,
   mergeAdminTheme,
+  SCROLLBAR_CLASSIC_CLASS,
 } from './theme/index.js'
 
 export {
