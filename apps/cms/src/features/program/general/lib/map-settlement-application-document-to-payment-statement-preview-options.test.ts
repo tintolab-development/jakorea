@@ -111,6 +111,79 @@ describe('buildPaymentStatementPreviewOptionsFromApplicationDocument', () => {
     expect(formatEducationTimeRange(null, '2026-11-07T14:00:00Z')).toBe('')
   })
 
+  it('calculationDetail 없는 행은 basisDetail을 만들지 않는다', () => {
+    const lines = options.paymentStatementCalculationLines?.blocks[0]?.lines ?? []
+    expect(lines.every(line => line.basisDetail === undefined)).toBe(true)
+  })
+
+  it('id=23: BE line.calculationDetail을 산정 기준 상세 basisDetail로 연결한다', () => {
+    const next = buildPaymentStatementPreviewOptionsFromApplicationDocument({
+      document: {
+        ...document14,
+        lines: [
+          { direction: 'PAYMENT', category: '강사비', amount: 500000, calculationDetail: null },
+          {
+            direction: 'PAYMENT',
+            category: '활동비',
+            amount: 23000,
+            calculationDetail: {
+              layout: 'activity',
+              basisJson:
+                '{"layout":"activity","itemType":"ACTIVITY","categoryLabel":"활동비","activityFee":{"amountWon":23000},"totalWon":23000}',
+              resultAmount: 23000,
+            },
+          },
+          {
+            direction: 'PAYMENT',
+            category: '식사비',
+            amount: 30000,
+            calculationDetail: {
+              layout: 'meal',
+              basisJson:
+                '{"layout":"meal","itemType":"MEAL","categoryLabel":"식사비","mealFee":{"amountWon":30000,"receiptFileName":"식사 영수증.jpg","receiptFileObjectId":901},"totalWon":30000}',
+              resultAmount: 30000,
+            },
+          },
+          {
+            direction: 'DEDUCTION',
+            category: '원천징수',
+            amount: -16500,
+            calculationDetail: {
+              layout: 'withholding',
+              basisJson:
+                '{"taxIncomeType":"BUSINESS_INCOME","rate":0.033,"grossAmount":553000,"taxableAmount":500000,"smallTaxExemptionThreshold":1000,"withholdingTaxAmount":16500}',
+              resultAmount: 16500,
+              title: '원천세 산출 내역',
+              formulaText: '원천징수액 = 과세대상금액 x 세율(0.033), 원 단위 절삭',
+            },
+          },
+        ],
+      },
+      settlementApplicationId: 23,
+    })
+    const lines = next.paymentStatementCalculationLines?.blocks[0]?.lines ?? []
+    expect(lines[0]?.basisDetail).toBeUndefined()
+    expect(lines[1]?.basisDetail).toMatchObject({
+      layout: 'activity',
+      activityFee: { amountWon: 23000 },
+      totalWon: 23000,
+    })
+    expect(lines[2]?.basisDetail).toMatchObject({
+      layout: 'meal',
+      mealFee: { amountWon: 30000, receiptFileName: '식사 영수증.jpg', receiptFileObjectId: 901 },
+      totalWon: 30000,
+    })
+    expect(lines[3]?.basisDetail).toMatchObject({
+      layout: 'withholdingRate',
+      taxIncomeTypeLabel: '사업소득',
+      ratePercent: 3.3,
+      taxableAmountWon: 500000,
+      withholdingTaxAmountWon: 16500,
+    })
+    // 금액은 서버 값 그대로
+    expect(lines.map(line => line.amount)).toEqual([500000, 23000, 30000, -16500])
+  })
+
   it('calcInfo null(영수증 등)이어도 예외 없이 값 없음', () => {
     const next = buildPaymentStatementPreviewOptionsFromApplicationDocument({
       document: { ...document14, calcInfo: null as unknown as undefined },

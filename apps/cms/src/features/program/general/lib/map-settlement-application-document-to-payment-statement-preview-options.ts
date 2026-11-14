@@ -15,6 +15,7 @@ import type {
   Line,
   SettlementApplicationDocumentResponse,
 } from '@/shared/api/generated/settlement/schemas'
+import { mapCalculationDetailToBasisDetail } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import type { PaymentOrderCalculationLineKind } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
@@ -155,13 +156,18 @@ function buildCalculationLines(
         institutionName: text(first?.institutionName),
         lectureDateDisplay: educationTime || text(first?.educationDate),
         lectureSessionDisplay: text(first?.sessionLabel),
-        lines: lines.map((line, index) => ({
-          id: `settlement-application-${applicationId}-line-${index}`,
-          itemLabel: text(line.category),
-          description: text(line.description),
-          amount: line.amount ?? 0,
-          kind: resolveLineKind(line),
-        })),
+        lines: lines.map((line, index) => {
+          // BE 제출 revision 근거(정산 상세 calculationDetail과 같은 스키마). 없으면 FE가 근거를 만들지 않는다.
+          const basisDetail = mapCalculationDetailToBasisDetail(line.calculationDetail)
+          return {
+            id: `settlement-application-${applicationId}-line-${index}`,
+            itemLabel: text(line.category),
+            description: text(line.description),
+            amount: line.amount ?? 0,
+            kind: resolveLineKind(line),
+            ...(basisDetail ? { basisDetail } : {}),
+          }
+        }),
       },
     ],
     formulaLabel: text(document.total?.formulaLabel),
