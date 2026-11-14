@@ -1,4 +1,5 @@
 import type { TrainedTeacherPerformanceSummaryView } from '../../api/performance-summary-adapters'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import './performance-summary-strip.css'
 
 type Metric = {
@@ -58,7 +59,7 @@ export function TrainedTeachersPerformanceSummaryStrip({
             {summary.educationJournalEnabled ? '교육일지 ON' : '교육일지 OFF'}
           </span>
         ) : (
-          <span className="trained-teachers-performance-summary-strip__flags">불러오는 중…</span>
+          <FullscreenSpinner />
         )}
       </div>
       {metrics.length > 0 ? (
