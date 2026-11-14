@@ -1022,6 +1022,43 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
     expect(mapped.participantCapacity).toBe(15)
   })
 
+  it('목록 최종 파견 학교 수는 ujatConfirmedSchoolCount를 쓰고, 없으면 승인 기준으로 대체한다', () => {
+    const mapped = fromListItem({
+      id: 186495,
+      title: 'UJAT',
+      participatingSchoolCount: 12,
+      participatingOrganizationCount: 12,
+      ujatConfirmedSchoolCount: 8,
+    })
+    expect(mapped.participatingSchoolCount).toBe(8)
+
+    const legacy = fromListItem({ id: 186495, title: 'UJAT', participatingSchoolCount: 12 })
+    expect(legacy.participatingSchoolCount).toBe(12)
+
+    const empty = fromListItem({ id: 186496, title: 'UJAT' })
+    expect(empty.participatingSchoolCount).toBe(0)
+  })
+
+  it('목록 상·하반기 봉사자 정원·모집된 인원은 새 응답 필드만 쓴다', () => {
+    const mapped = fromListItem({
+      id: 186495,
+      title: 'UJAT',
+      participantCapacity: 16,
+      volunteerRecruitmentCount: 64,
+      ujatFirstHalfVolunteerCapacity: 64,
+      ujatSecondHalfVolunteerCapacity: null,
+      ujatFirstHalfVolunteerSelectedCount: 0,
+      ujatSecondHalfVolunteerSelectedCount: 8,
+    })
+    expect(mapped.ujatFirstHalfVolunteerCapacity).toBe(64)
+    expect(mapped.ujatSecondHalfVolunteerCapacity).toBeNull()
+    expect(mapped.ujatFirstHalfVolunteerSelectedCount).toBe(0)
+    expect(mapped.ujatSecondHalfVolunteerSelectedCount).toBe(8)
+    // 등록·수정용 정원 필드와 섞지 않는다
+    expect(mapped.ujatFirstHalfVolunteerCount).toBeUndefined()
+    expect(mapped.ujatSecondHalfVolunteerCount).toBeUndefined()
+  })
+
   it('목록 진행 현황은 canonical 응답 필드만 사용한다', () => {
     const mapped = fromListItem({
       id: 182102,

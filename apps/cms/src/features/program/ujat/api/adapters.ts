@@ -861,7 +861,17 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     }),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount ?? 0,
     ...mapListParticipantRecruitment(dto),
-    participatingSchoolCount: dto.organizationApplicationCount ?? 0,
+    // 최종 파견 학교 수 — 기관 확정 기준 `ujatConfirmedSchoolCount` 우선, 구버전 응답이면 승인 기준으로 대체
+    participatingSchoolCount:
+      dto.ujatConfirmedSchoolCount ??
+      dto.participatingSchoolCount ??
+      dto.participatingOrganizationCount ??
+      0,
+    // 상·하반기 봉사자 정원(null = 미입력)과 모집된 인원(최종 합격) — 등록·수정용 ujat*VolunteerCount와 별개
+    ujatFirstHalfVolunteerCapacity: dto.ujatFirstHalfVolunteerCapacity ?? null,
+    ujatSecondHalfVolunteerCapacity: dto.ujatSecondHalfVolunteerCapacity ?? null,
+    ujatFirstHalfVolunteerSelectedCount: dto.ujatFirstHalfVolunteerSelectedCount ?? 0,
+    ujatSecondHalfVolunteerSelectedCount: dto.ujatSecondHalfVolunteerSelectedCount ?? 0,
     instructors: instructorCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,

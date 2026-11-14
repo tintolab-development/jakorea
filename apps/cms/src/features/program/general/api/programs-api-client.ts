@@ -99,6 +99,16 @@ export interface AdminProgramListItemDto {
   participatingOrganizationCount?: number | null
   participatingSchoolCount?: number | null
   participatingStudentCount?: number | null
+  /** UJAT 목록 — 상반기 봉사자 모집 정원(FIRST_HALF VOLUNTEER max_count). null = 정원 미입력 */
+  ujatFirstHalfVolunteerCapacity?: number | null
+  /** UJAT 목록 — 하반기 봉사자 모집 정원(SECOND_HALF). null = 정원 미입력, 상반기 값으로 채우지 않음 */
+  ujatSecondHalfVolunteerCapacity?: number | null
+  /** UJAT 목록 — 상반기 봉사자 최종 합격(PASS) 회원 수. 포기·취소·예비 제외 */
+  ujatFirstHalfVolunteerSelectedCount?: number | null
+  /** UJAT 목록 — 하반기 봉사자 최종 합격(PASS) 회원 수 */
+  ujatSecondHalfVolunteerSelectedCount?: number | null
+  /** UJAT 목록 — 최종 파견 학교 수(승인 + 기관 확정, organization_id 중복 제거) */
+  ujatConfirmedSchoolCount?: number | null
   createdAt?: string
   updatedAt?: string
   createdByName?: string | null
