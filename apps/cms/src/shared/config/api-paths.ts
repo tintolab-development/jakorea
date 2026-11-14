@@ -27,6 +27,8 @@ export const adminAuthPaths = {
   signupComplete: () => `${adminAuthPaths.prefix}/signup/complete`,
   /** POST — 회원가입 본인인증 직후 같은 본인정보 관리자 계정 사전 검사(토큰 불필요, 세션 미소비) */
   signupIdentityPrecheck: () => `${adminAuthPaths.prefix}/signup/identity-precheck`,
+  /** POST — 관리자 등록 계정 첫 로그인 본인인증 확정(Bearer, 임시 비밀번호 상태 허용) */
+  identityConfirm: () => `${adminAuthPaths.prefix}/identity/confirm`,
   emailCheck: () => `${adminAuthPaths.prefix}/email/check`,
   emailRecoveryLookup: () => `${adminAuthPaths.prefix}/email-recovery/lookup`,
   /** POST — 본인인증 후 입력 이메일·인증 정보가 같은 관리자 계정인지 확인 */

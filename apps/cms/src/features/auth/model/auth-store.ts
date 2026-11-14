@@ -88,6 +88,11 @@ interface AuthState {
   requiresMfa: boolean // Phase 0.5.1: MFA 필요 여부
   /** MFA verify 등에서 내려온 임시 비밀번호 변경 필요 플래그 */
   passwordChangeRequired: boolean
+  /**
+   * 관리자 등록 계정 — 비밀번호 변경 전 `/identity/confirm` 본인인증 확정 필요(BE R1).
+   * mfa/verify·refresh 응답 값. null = 서버가 값을 주지 않음(배포 전 등)·아직 모름
+   */
+  identityVerificationRequired: boolean | null
   /** GET /api/admin/me 동기화 중 — 역할 가드 보류 */
   adminSessionSyncPending: boolean
   /** 부트 시 메모리에 access token이 없어 서버 갱신(refresh) 결과를 기다리는 중 */
@@ -140,6 +145,8 @@ interface AuthState {
     maxFailedAttempts?: number
   }) => void
   clearPasswordChangeRequired: () => void
+  /** refresh 응답·본인인증 확정 결과로 갱신 */
+  setIdentityVerificationRequired: (value: boolean | null) => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
   refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
   /** refresh 결과 종류까지 돌려준다 — transient(5xx·네트워크)는 로그아웃 근거가 아니다 */
@@ -273,6 +280,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     mfaState: null, // Phase 0.5.1: MFA 상태
     requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
     passwordChangeRequired: initialState.passwordChangeRequired ?? false,
+    identityVerificationRequired: null,
     adminSessionSyncPending: false,
     isBootstrapping: initialIsBootstrapping,
     restoreFailure: null,
@@ -387,6 +395,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           : null,
         requiresMfa: false,
         passwordChangeRequired,
+        identityVerificationRequired: tokens.identityVerificationRequired ?? null,
       })
 
       clearDashboardQueryCache()
@@ -407,6 +416,10 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
       }
       set({ passwordChangeRequired: false })
+    },
+
+    setIdentityVerificationRequired: value => {
+      set({ identityVerificationRequired: value })
     },
 
     beginAdminMfaChallenge: input => {
@@ -518,6 +531,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearTokenIssuedAt()
       set({
         passwordChangeRequired: false,
+        identityVerificationRequired: null,
         user: null,
         token: null,
         expiresAt: null,
