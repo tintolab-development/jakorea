@@ -1171,6 +1171,8 @@ export * from './portalProfileResponseAgeGroup';
 export * from './portalScheduleItem';
 export * from './portalScheduleItemEventType';
 export * from './portalSchoolSelectionRequest';
+export * from './portalSignupIdentityPrecheckRequest';
+export * from './portalSignupIdentityPrecheckResponse';
 export * from './portalStatus';
 export * from './portalTeacherOrganizationResponse';
 export * from './portalWithdrawalRequest';

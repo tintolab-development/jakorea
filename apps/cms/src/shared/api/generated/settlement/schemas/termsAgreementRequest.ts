@@ -35,7 +35,7 @@ export interface TermsAgreementRequest {
   termsSnapshotJson?: string;
   /** 선택 동의서 4종(PORTRAIT/PAYMENT/FACILITATOR/ADMINISTRATIVE)의 작성 완료 WritingFormDraft. 해당 termsType에서 agreed=true이면 필수이고 agreed=false이면 생략합니다. */
   filledDocument?: FilledDocumentRequest;
-  /** 호환 입력 필드입니다. 성범죄 경력 조회 결과/증빙 파일은 저장하지 않으므로 신규 요청에서는 사용하지 않습니다. */
+  /** CRIMINAL_HISTORY_CHECK_CONSENT 전용. agreed=true일 때 선택으로 성범죄 경력 조회 동의서 서명 원본 파일 ID를 연결합니다. 파일은 filePurpose=CRIMINAL_HISTORY_CONSENT_ORIGINAL, MEMBER/CONSENT/약관 문서 id owner, 요청한 관리자가 업로드, scanStatus=CLEAN·uploadStatus=AVAILABLE이어야 합니다. 다른 용도 파일은 400 CONSENT_EVIDENCE_FILE_NOT_ALLOWED, 준비되지 않은 원본은 409 CONSENT_ORIGINAL_FILE_NOT_READY, 다른 동의에 연결된 원본은 409 CONSENT_ORIGINAL_FILE_ALREADY_USED, CMS 회원 상세 PATCH에서 이미 다른 원본이 연결된 동의에 새 원본을 보내면 재동의로 처리합니다(AdminMemberBasicInfoUpdateRequest.termsAgreements 참고). 성범죄 경력 조회 결과·증빙 파일은 연결하지 않으며, 다른 termsType이나 회원포탈 경로에서는 사용하지 않습니다. */
   evidenceFileObjectId?: number;
   /**
      * 호환용 원본 파일명. 서버는 file_object 메타데이터를 우선합니다.

@@ -14,4 +14,8 @@ export interface AddressSearchItem {
   buildingName?: string;
   sido?: string;
   sigungu?: string;
+  /** 읍면동명(행안부 emdNm) */
+  emdName?: string | null;
+  /** 도로명(행안부 rn) */
+  roadName?: string | null;
 }

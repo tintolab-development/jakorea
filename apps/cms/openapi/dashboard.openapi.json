@@ -12741,7 +12741,7 @@
           "evidenceFileObjectId": {
             "type": "integer",
             "format": "int64",
-            "description": "호환 입력 필드입니다. 성범죄 경력 조회 결과/증빙 파일은 저장하지 않으므로 신규 요청에서는 사용하지 않습니다."
+            "description": "CRIMINAL_HISTORY_CHECK_CONSENT 전용. agreed=true일 때 선택으로 성범죄 경력 조회 동의서 서명 원본 파일 ID를 연결합니다. 파일은 filePurpose=CRIMINAL_HISTORY_CONSENT_ORIGINAL, MEMBER/CONSENT/약관 문서 id owner, 요청한 관리자가 업로드, scanStatus=CLEAN·uploadStatus=AVAILABLE이어야 합니다. 다른 용도 파일은 400 CONSENT_EVIDENCE_FILE_NOT_ALLOWED, 준비되지 않은 원본은 409 CONSENT_ORIGINAL_FILE_NOT_READY, 다른 동의에 연결된 원본은 409 CONSENT_ORIGINAL_FILE_ALREADY_USED, CMS 회원 상세 PATCH에서 이미 다른 원본이 연결된 동의에 새 원본을 보내면 재동의로 처리합니다(AdminMemberBasicInfoUpdateRequest.termsAgreements 참고). 성범죄 경력 조회 결과·증빙 파일은 연결하지 않으며, 다른 termsType이나 회원포탈 경로에서는 사용하지 않습니다."
           },
           "evidenceOriginalFileName": {
             "type": "string",
@@ -12956,7 +12956,7 @@
           },
           "payableItems": {
             "type": "array",
-            "description": "강사가 신청할 수 있는 실비 항목(프로그램에서 켠 항목만). 숙박비(LODGING, 1사1교 제외)·활동비(ACTIVITY)·식사비(MEAL). maxLimitWon은 CMS 정산 항목 설정의 신청 1건 기준 최대 한도(없으면 null), evidenceRequired는 영수증 필요 여부(미설정이면 null). 넘으면 400 PAYMENT_ITEM_LIMIT_EXCEEDED. 교통비·1사1교 숙박비는 별도 필드로 다룬다.",
+            "description": "강사가 신청할 수 있는 실비 항목(프로그램에서 켠 항목만). 숙박비(LODGING, 1사1교 제외)·활동비(ACTIVITY)·식사비(MEAL). maxLimitWon은 CMS 정산 항목 설정의 신청 1건 기준 최대 한도(없으면 null), evidenceRequired는 영수증 필요 여부(미설정이면 null이며 서버는 필수로 처리). false인 항목은 증빙 없이 제출할 수 있고, 증빙을 붙이면 선택 증빙으로 저장한다. 한도를 넘으면 400 PAYMENT_ITEM_LIMIT_EXCEEDED. 교통비·1사1교 숙박비는 별도 필드로 다룬다.",
             "items": {
               "$ref": "#/components/schemas/InstructorPayableItem"
             }
@@ -14568,6 +14568,48 @@
           "memberType"
         ]
       },
+      "PortalSignupIdentityPrecheckRequest": {
+        "type": "object",
+        "description": "회원 포탈 회원가입 본인인증 직후 사전 검사 요청. 본인인증 세션은 소비하지 않는다.",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "NICE 본인인증 세션 ID",
+            "example": 90001
+          },
+          "profileToken": {
+            "type": "string",
+            "description": "본인인증 완료 시 발급된 profileToken",
+            "maxLength": 512,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "PortalSignupIdentityPrecheckResponse": {
+        "type": "object",
+        "description": "회원 포탈 회원가입 본인인증 사전 검사 결과. 판정 기준은 POST /api/portal/auth/signup/general·/teacher의 409 PHONE_ALREADY_REGISTERED(휴대폰 숫자만 비교)·IDENTITY_ALREADY_LINKED(CI/DI)와 같다.",
+        "properties": {
+          "alreadyRegistered": {
+            "type": "boolean",
+            "description": "같은 휴대폰 번호(숫자만 비교) 또는 같은 CI/DI로 가입된 회원이 있으면 true. true면 최종 가입은 409가 된다."
+          },
+          "registeredByAdmin": {
+            "type": "boolean",
+            "description": "일치한 회원이 관리자가 등록한(또는 사전 등록된) 회원이고 이름·생년월일·휴대폰이 본인인증 결과와 같으면 true(관리자 등록 회원 안내 화면). alreadyRegistered=false면 false."
+          },
+          "maskedEmail": {
+            "type": "string",
+            "description": "안내 화면용 마스킹 이메일. registeredByAdmin=true면 관리자 등록 회원의 이메일. alreadyRegistered=false면 null.",
+            "example": "ho***@example.com",
+            "nullable": true
+          }
+        }
+      },
       "HomepageGeneralSignupRequest": {
         "type": "object",
         "description": "회원 포탈 일반회원 가입 요청",
@@ -14668,7 +14710,7 @@
             "description": "새 비밀번호. 실제 값을 문서나 로그에 남기지 않습니다.",
             "example": "new-sample-password",
             "maxLength": 200,
-            "minLength": 12
+            "minLength": 0
           }
         },
         "required": [
@@ -14764,12 +14806,12 @@
           "newPassword": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12
+            "minLength": 0
           },
           "newPasswordConfirm": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12
+            "minLength": 0
           }
         },
         "required": [
@@ -15222,7 +15264,6 @@
         },
         "required": [
           "agreed",
-          "guardianRelation",
           "termsVersion"
         ]
       },
@@ -19008,10 +19049,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -30869,7 +30910,7 @@
           },
           "filePurpose": {
             "type": "string",
-            "description": "파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다.",
+            "description": "파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다. CRIMINAL_HISTORY_CONSENT_ORIGINAL은 CMS가 받은 성범죄 경력 조회 동의서 서명 원본입니다: ownerDomain=MEMBER, ownerType=CONSENT, ownerId=현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 문서 id(회원 상세·신규 등록 공통, memberId 아님), PDF/JPG/JPEG/PNG 20MB, PRIVATE_SENSITIVE, SIGNED_CONSENT_EVIDENCE_RESTRICTED_3Y, SERVER_RELAY. 성범죄 경력 조회 결과·증빙(CRIMINAL_HISTORY_EVIDENCE)은 관리자 업로드를 허용하지 않습니다.",
             "example": "STUDENT_ROSTER",
             "maxLength": 80,
             "minLength": 0
@@ -33598,6 +33639,7 @@
           },
           "termsAgreements": {
             "type": "array",
+            "description": "CMS 회원정보 수정으로는 약관·동의 상태를 바꾸지 않습니다(CMS_MEMBER_TERMS_NOT_EDITABLE, 409). 예외: 성범죄 경력 조회 동의서 서명 원본 연결 요청 1건(termsType=CRIMINAL_HISTORY_CHECK_CONSENT, agreed=true, evidenceFileObjectId 필수, filledDocument 없음). ① 유효한 동의가 있고 version이 그 동의의 version이며 원본이 없거나 같은 파일이면 원본만 연결합니다. 동의 일시·만료일은 바뀌지 않고, 같은 파일 재전송은 200(멱등)입니다. ② 그 밖의 경우(동의 없음·철회·만료, 이미 다른 원본이 연결된 동의에 새 원본을 보내는 재업로드, version이 다름)는 재동의로 처리합니다. 새 동의 이력을 만들어 동의 일시=요청 시각, 만료일=동의일로부터 1년으로 기록하고 새 원본을 연결하며, 이전 동의 이력과 원본은 그대로 보존합니다. 재동의 version은 현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 version이어야 하며, 다르면 409 CMS_TERMS_VERSION_STALE입니다. 원본 연결·재업로드·재동의 모두 현재 게시된 약관 version을 보내면 됩니다.",
             "items": {
               "$ref": "#/components/schemas/TermsAgreementRequest"
             },
@@ -37339,6 +37381,18 @@
           },
           "sigungu": {
             "type": "string"
+          },
+          "emdName": {
+            "type": "string",
+            "description": "읍면동명(행안부 emdNm)",
+            "example": "세종로",
+            "nullable": true
+          },
+          "roadName": {
+            "type": "string",
+            "description": "도로명(행안부 rn)",
+            "example": "세종대로",
+            "nullable": true
           }
         }
       },
@@ -37365,6 +37419,12 @@
           },
           "source": {
             "type": "string"
+          },
+          "inputErrorCode": {
+            "type": "string",
+            "description": "QA 2026-11-14 BP6: 행안부 주소 API가 검색어를 거절했을 때의 원본 오류 코드(E0005 검색어 없음, E0006 상세 주소 필요, E0008 한 글자, E0009 숫자·특수문자만, E0010 페이지 범위, E0011·E0015 결과 과다, E0012·E0013 사용할 수 없는 문자). 이때 content는 빈 배열이고 HTTP 200이다. 정상 검색이면 null.",
+            "example": "E0006",
+            "nullable": true
           }
         }
       },
@@ -44154,6 +44214,17 @@
           "agreementPayload": {
             "$ref": "#/components/schemas/SignupTermsAgreementPayload",
             "description": "가입 요청 termsAgreements에 그대로 넣을 수 있는 payload"
+          },
+          "formTemplateVersion": {
+            "description": "작성형 동의서(PORTRAIT_RIGHTS 등)의 현재 PUBLISHED CMS 양식 템플릿. 마이페이지 DRAFT 응답의 formTemplateVersion과 같은 구조이며, 작성 화면은 schemaJson으로 그리고 filledDocument.templateVersionId에 templateVersionId를 그대로 보낸다. 작성형이 아니거나 게시된 양식이 없으면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MemberPortalConsentFormTemplateVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -44474,6 +44545,21 @@
           "usedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "verifiedGuardianName": {
+            "type": "string",
+            "description": "QA 2026-11-14 BP8: NICE로 확인된 보호자 이름. 마스킹하지 않는다. identityVerified=false면 null.",
+            "nullable": true
+          },
+          "verifiedGuardianPhone": {
+            "type": "string",
+            "description": "QA 2026-11-14 BP8: NICE로 확인된 보호자 휴대폰. 숫자만(하이픈 없음, 예: 01012345678). 마스킹하지 않는다. identityVerified=false면 null.",
+            "nullable": true
+          },
+          "guardianRelation": {
+            "type": "string",
+            "description": "저장된 보호자 관계. 최종 동의 전이면 null.",
+            "nullable": true
           }
         }
       },
