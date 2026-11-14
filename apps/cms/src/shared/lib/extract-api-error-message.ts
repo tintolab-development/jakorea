@@ -320,3 +320,16 @@ export function readApiErrorAlertMessage(error: unknown, fallback: string): stri
   if (error instanceof Error && error.message.trim()) return error.message
   return fallback
 }
+
+/** 응답이 없는 오류(서버 미응답·연결 끊김·CORS·타임아웃) — axios 개발 문구를 화면에 쓰지 않는다 */
+export function isNoResponseApiError(error: unknown): boolean {
+  return isAxiosError(error) && !error.response
+}
+
+/**
+ * 응답이 없는 오류면 화면별 제목 대신 시안 「네트워크 오류 안내」 제목을 쓴다.
+ * 본문은 각 도메인 메시지 함수가 `NETWORK_ERROR_ALERT_CONTENT`로 돌려준다. (16898-166096)
+ */
+export function networkAwareAlertTitle(error: unknown, title: string): string {
+  return isNoResponseApiError(error) ? NETWORK_ERROR_ALERT_TITLE : title
+}

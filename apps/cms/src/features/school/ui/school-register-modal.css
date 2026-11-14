@@ -18,3 +18,19 @@
 .school-register-modal__address-row {
   width: auto;
 }
+
+/**
+ * 시안 4427:30322 — 표 라벨 140 · 입력 셀 padding 10(입력 36 → 행 56) · 주소 구분선 16/16
+ * DetailInfoForm `labelWidth`는 180~240만 받으므로 필드에서 변수를 덮어쓴다.
+ */
+.school-register-modal .detail-info-form__field {
+  --detail-info-label-w: 140px;
+}
+
+.school-register-modal .detail-info-form__field-content--edit {
+  padding: var(--Spacing-10, 10px);
+}
+
+.school-register-modal__address-row > .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}

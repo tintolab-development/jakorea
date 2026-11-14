@@ -1,5 +1,17 @@
 .ja-grade-evaluation-modal .full-page-modal__topbar {
+  /* 시안(8301:274527): 상단 바 1920×64 · padding 16 52 */
+  height: 64px;
+  padding: 0 52px;
   background: var(--color-mint-01, #01a1af);
+}
+
+.ja-grade-evaluation-modal .full-page-modal__title-text {
+  line-height: 1.2;
+}
+
+/* 시안: 페이지 배경 #F2F3F5 (양식 풀페이지 공통 #F4F6F6과 다름) */
+.ja-grade-evaluation-modal .full-page-modal__layout {
+  background: #f2f3f5;
 }
 
 .ja-grade-evaluation-modal .full-page-modal__title-text,
@@ -21,7 +33,7 @@
   min-height: 0;
   flex: 1 1 auto;
   overflow: auto;
-  padding: 24px 52px 0;
+  padding: 20px 52px 0;
   box-sizing: border-box;
 }
 
@@ -41,7 +53,9 @@
 }
 
 .ja-grade-evaluation-modal__form-panel {
-  width: 1400px;
+  /* 시안 카드 1404 — 좁은 화면에서는 가로 스크롤 없이 줄어든다 */
+  width: 100%;
+  max-width: 1404px;
   margin: 0 auto;
   padding-bottom: 24px;
 }
@@ -63,11 +77,12 @@
   width: 100%;
   padding: 16px 52px 32px;
   box-sizing: border-box;
-  background: #f4f6f6;
+  background: #f2f3f5;
 }
 
 .ja-grade-evaluation-modal__footer-inner {
-  width: 1400px;
+  width: 100%;
+  max-width: 1404px;
 }
 
 .ja-grade-evaluation-modal__submit {
@@ -75,12 +90,10 @@
   display: block;
 }
 
-.ja-grade-evaluation-modal__submit.cms-button.ant-btn {
+/* 시안: 1404×52 · radius 12 · SemiBold 18 (크기는 CmsButton h52, 하단 고정 노출 유지) */
+.ja-grade-evaluation-modal .ja-grade-evaluation-modal__submit.cms-button.ant-btn {
   width: 100%;
-  height: 56px;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 700;
+  border-radius: 12px;
 }
 
 .ja-grade-evaluation-intro__grade-range {
@@ -92,31 +105,78 @@
   word-break: break-word;
 }
 
-.ja-grade-evaluation-modal .static-description-lines__line {
-  font-size: 16px;
+/** 시안: Q5 평가 내용 Medium 18 · 150%, 줄 사이 간격 없음(빈 줄은 한 줄 높이) */
+.ja-grade-evaluation-modal .static-description-lines {
+  gap: 0;
+}
+
+.ja-grade-evaluation-modal .static-description-lines .static-description-lines__line {
+  font-size: 18px;
   font-weight: 500;
   line-height: 150%;
 }
 
-/** 시안: 상단 안내 18 · #3d3d3d */
-.ja-grade-evaluation-modal
-  .paragraph-card--survey-title-with-period
-  .paragraph-input--description
-  .paragraph-input__view-text {
-  font-size: 18px;
-  color: var(--default-BK, #3d3d3d);
-  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
-  opacity: 1;
+.ja-grade-evaluation-modal .static-description-lines .static-description-lines__line:empty {
+  height: 27px;
 }
 
-/** 시안: 문항별 점수 환산 안내 #3d3d3d */
+/**
+ * 시안: 설명 문구(도입 안내 18 · 문항 점수 환산 안내 16)는 #3D3D3D 60%.
+ * 공통 설명 규칙이 `--ps-desc-*` 변수 + !important라 변수만 바꾼다(opacity 0.6 유지).
+ */
+.ja-grade-evaluation-modal .paragraph-input--description:not(.paragraph-input--explanation-body) {
+  --ps-desc-text: var(--default-BK, #3d3d3d);
+}
+
 .ja-grade-evaluation-modal
-  .paragraph-card--scale-type
-  .paragraph-card__description-block
-  .paragraph-input__view-text {
-  color: var(--default-BK, #3d3d3d);
-  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
-  opacity: 1;
+  .paragraph-card--survey-title-with-period
+  .paragraph-input--description:not(.paragraph-input--explanation-body) {
+  --ps-desc-size: 18px;
+}
+
+/** 시안: 문항 제목 옆 필수 * Bold 18 · 120% */
+.ja-grade-evaluation-modal .paragraph-card__title-main .paragraph-input--title .paragraph-input__required {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+/** 시안: 카드 안 내용 좌우 8 들여쓰기(카드 padding 20 + 8) */
+.ja-grade-evaluation-modal :is(.paragraph-card__header, .scale-type__body-text, .form-editor-body) {
+  padding-left: 8px;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+/** 시안: 「Q1.」 번호 ↔ 제목 한 줄 28 */
+.ja-grade-evaluation-modal .paragraph-card:has(.paragraph-input__leading) .paragraph-input--title,
+.ja-grade-evaluation-modal .paragraph-card:has(.paragraph-input__leading) .paragraph-input__leading {
+  line-height: 28px;
+}
+
+.ja-grade-evaluation-modal
+  .paragraph-card:has(.paragraph-input__leading)
+  .paragraph-input--title
+  .paragraph-input__row {
+  min-height: 28px;
+  gap: 2px;
+}
+
+.ja-grade-evaluation-modal .paragraph-card--scale-type .scale-type {
+  padding: 0 0 4px;
+  gap: 20px;
+}
+
+/** 시안: 5칸 점수 선택 외곽 한 줄 테두리 r8 (칸별 라운드 없음) · 바 폭 1000 */
+.ja-grade-evaluation-modal .scale-type-bar {
+  width: fit-content;
+  border-radius: 8px;
+  overflow: hidden;
+  outline: 1px solid var(--table-line, #e0e0e0);
+  outline-offset: -1px;
+}
+
+.ja-grade-evaluation-modal .scale-type-bar .scale-type-item {
+  border-radius: 0;
 }
 
 /** 시안: 제목 「JA 등급 평가지」 필수 표시(*) 없음 — 설문 제목 단락은 스키마상 requiredMark 고정이라 화면에서만 숨김 */

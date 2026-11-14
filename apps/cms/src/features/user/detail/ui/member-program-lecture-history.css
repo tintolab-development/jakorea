@@ -69,10 +69,97 @@
   min-width: 180px;
 }
 
-/** 시안 4427:28004: 과제 제출 내역 [내역 보기] 136×32 (셀 폭) — default(회색)·disabled 는 공통 variant */
-.member-program-lecture-history__action-cell .member-program-lecture-history__history-view-btn.cms-button.ant-btn.cms-button--h32 {
-  width: 136px;
-  min-width: 136px;
+/**
+ * 시안 4427:28004 · 4427:60361: 표 셀 [내역 보기]는 칼럼 폭에 맞춘 fill(열 160 − 셀 좌우 12 = 136)
+ * — default(회색)·disabled 는 공통 variant
+ */
+.member-program-lecture-history__action-cell
+  .member-program-lecture-history__history-view-btn.cms-button.ant-btn.cms-button--h32 {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+/**
+ * 시안 4427:60361 강사 > 프로그램 강의 이력 열 너비 — 체크 60 · No. 80 · 프로그램명(남는 폭) ·
+ * 진행년도 120 · 진행 현황·강의보고서·담당자 180. 1280 등 좁은 화면에서 프로그램명이 찌그러지지 않게 넓은 화면에서만 고정.
+ */
+@media (min-width: 1600px) {
+  .member-program-lecture-history--instructor-lecture
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    table {
+    table-layout: fixed;
+  }
+
+  .member-program-lecture-history--instructor-lecture
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):nth-child(4) {
+    width: 120px;
+  }
+
+  .member-program-lecture-history--instructor-lecture
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):is(:nth-child(5), :nth-child(6), :nth-child(7)) {
+    width: 180px;
+  }
+}
+
+/**
+ * 시안 4427:46994 학교 상세 > 프로그램 참여 이력 열 너비 — No. 80 · 프로그램명(남는 폭) · 진행년도 130 ·
+ * 진행 현황 180 · 사업 분야 158 · 교육 학년 134 · 담당자 157 (합 839 + 프로그램명).
+ * 1280(본문 약 904)에서는 프로그램명이 65px로 찌그러지므로 강의 이력과 같이 넓은 화면에서만 고정한다.
+ * 체크박스 열 유무에 따라 열 순번이 하나 밀린다.
+ */
+@media (min-width: 1600px) {
+  .member-program-lecture-history--school-participation .ant-table-wrapper.cms-data-table table {
+    table-layout: fixed;
+  }
+
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:not(:has(th.ant-table-selection-column))
+    :is(th, td):nth-child(3),
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):nth-child(4) {
+    width: 130px;
+  }
+
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:not(:has(th.ant-table-selection-column))
+    :is(th, td):nth-child(4),
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):nth-child(5) {
+    width: 180px;
+  }
+
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:not(:has(th.ant-table-selection-column))
+    :is(th, td):nth-child(5),
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):nth-child(6) {
+    width: 158px;
+  }
+
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:not(:has(th.ant-table-selection-column))
+    :is(th, td):nth-child(6),
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):nth-child(7) {
+    width: 134px;
+  }
+
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:not(:has(th.ant-table-selection-column))
+    :is(th, td):nth-child(7),
+  .member-program-lecture-history--school-participation
+    .ant-table-wrapper.cms-data-table:has(th.ant-table-selection-column)
+    :is(th, td):nth-child(8) {
+    width: 157px;
+  }
 }
 
 /** 시안: 강사 > 프로그램 강의 이력 「엑셀 다운로드」 140 */

@@ -8,7 +8,11 @@ import {
   isFileDownloadPasswordErrorCode,
   messageForProtectedDownloadErrorCode,
 } from '@jakorea/domain/shared/file-download-password'
-import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import {
+  extractApiErrorMessage,
+  isNoResponseApiError,
+  NETWORK_ERROR_ALERT_CONTENT,
+} from '@/shared/lib/extract-api-error-message'
 import { getFileDownloadPasswordFormError as getSharedFileDownloadPasswordFormError } from '@/shared/lib/file-download-password-api-error'
 
 const PAYMENT_STATEMENT_STATUS_CONFLICT = 'PAYMENT_STATEMENT_STATUS_CONFLICT'
@@ -299,6 +303,8 @@ export function getSettlementApiErrorMessage(error: unknown, fallback: string): 
     })
   }
 
+  // 응답 없는 요청 오류 — axios 개발 문구(`Network Error` 등)를 화면에 쓰지 않는다
+  if (isNoResponseApiError(error)) return NETWORK_ERROR_ALERT_CONTENT
   if (error instanceof Error && error.message.trim()) {
     return error.message
   }

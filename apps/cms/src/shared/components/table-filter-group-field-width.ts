@@ -40,6 +40,9 @@ export function isAddressRegionLayoutField(field: FilterFieldConfig): boolean {
 }
 
 export function resolveFilterFieldPairGapPx(field: FilterFieldConfig): number {
+  if (field.type === 'addressRegion' && field.addressRegion?.pairGapPx != null) {
+    return field.addressRegion.pairGapPx
+  }
   if (isAddressRegionLayoutField(field)) return FILTER_ADDRESS_REGION_PAIR_GAP_PX
   if (field.type === 'selectPair') return FILTER_FIELD_PAIR_GAP_PX
   return FILTER_FIELD_PAIR_GAP_PX
@@ -55,7 +58,7 @@ export function resolveFilterFieldWidthCss(field: FilterFieldConfig): string | u
 export function resolveFilterFieldPairSegmentWidthCss(field: FilterFieldConfig): string | undefined {
   if (isAddressRegionLayoutField(field)) {
     if (typeof field.width === 'number') {
-      const gap = FILTER_ADDRESS_REGION_PAIR_GAP_PX
+      const gap = resolveFilterFieldPairGapPx(field)
       return `${Math.max(0, (field.width - gap) / 2)}px`
     }
     return `${FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX}px`

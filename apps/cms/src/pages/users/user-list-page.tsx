@@ -51,6 +51,7 @@ import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-u
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  SCHOOL_DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
   WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
@@ -81,6 +82,7 @@ import {
 } from '@/shared/config/member-list-kinds'
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
+import '@/features/user/shared/ui/member-management-small-screen.css'
 import { getUserListFilterFields } from './user-list-filter-fields'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
@@ -374,7 +376,11 @@ export function UserListPage() {
       lines,
       confirmText,
       requiredConfirmInput: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-      confirmInputPlaceholder: DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+      // 학교 삭제·일괄 삭제(시안 4427:30639·8248:143163)는 끝 마침표 없음
+      confirmInputPlaceholder:
+        resolvedMemberListKind === 'institutions'
+          ? SCHOOL_DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER
+          : DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
     }
   }, [deleteTargets, resolvedMemberListKind])
 
@@ -1266,9 +1272,16 @@ export function UserListPage() {
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
         bordered={false}
-        className={
-          resolvedMemberListKind === 'institutions' ? 'user-list-page--institutions' : undefined
-        }
+        className={[
+          'member-list-filter-layout',
+          resolvedMemberListKind === 'institutions'
+            ? 'user-list-page--institutions'
+            : isAdminMemberList
+              ? 'user-list-page--admins'
+              : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
         toolbarAdminAction={isAdminMemberList ? 'adminAccountManage' : 'write'}
         fields={userListFilterFields}
         filters={

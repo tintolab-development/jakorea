@@ -50,7 +50,14 @@ export const EMPLOYMENT_STATUS_OPTIONS = SCHOOL_TEACHER_EMPLOYMENT_STATUS_FORM_O
   }),
 )
 
-export const INSTRUCTOR_FREE_WRITE_ITEMS = DOMAIN_FREE_WRITE_ITEMS
+/**
+ * CMS 자유 작성 문항 — 시안(14661:55226)·강사 상세 문항과 같은 띄어쓰기(「작성해 주세요」「공유해 주세요」).
+ * domain 원문은 Platform 신청서와 공유하므로 CMS 표시 문구만 맞춘다.
+ */
+export const INSTRUCTOR_FREE_WRITE_ITEMS = DOMAIN_FREE_WRITE_ITEMS.map(item => ({
+  ...item,
+  label: item.label.replace(/작성해주세요/g, '작성해 주세요').replace(/공유해주세요/g, '공유해 주세요'),
+}))
 
 export const CONSENT_RADIO_OPTIONS = DOMAIN_CONSENT_RADIO_OPTIONS.map(option => ({
   label: option.label,
@@ -59,7 +66,17 @@ export const CONSENT_RADIO_OPTIONS = DOMAIN_CONSENT_RADIO_OPTIONS.map(option => 
 
 export const TERMS_CONSENT_DESCRIPTION = DOMAIN_TERMS_CONSENT_DESCRIPTION
 
-export const TERMS_CONSENT_LABEL_WIDTH = 240 as const
+/** 시안(8288:257987) CMS 강사 신규 등록 — 약관 및 동의 안내(관리자가 서면 동의 확인 후 처리) */
+export const INSTRUCTOR_REGISTER_CONSENT_DESCRIPTION =
+  '당사자의 서면 동의를 확인한 후 동의 항목을 처리해 주세요.'
+
+/** 시안(8288:257987) 약관 표 라벨 셀 180 */
+export const TERMS_CONSENT_LABEL_WIDTH = 180 as const
+
+/** CMS 신규 등록 동의서 라벨 — 시안 표기(domain 원문은 Platform과 공유) */
+export const INSTRUCTOR_REGISTER_CONSENT_DOCUMENT_LABELS: Partial<Record<string, string>> = {
+  consentPaymentStatement: '지급조서 사전동의서',
+}
 
 export const BUSINESS_INCOME_OPTIONS = DOMAIN_BUSINESS_INCOME_OPTIONS.map(option => ({
   label: option.label,

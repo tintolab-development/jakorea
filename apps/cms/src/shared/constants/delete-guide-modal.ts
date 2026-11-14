@@ -12,6 +12,10 @@ export const DELETE_GUIDE_TYPED_CONFIRM_VALUE = '삭제'
 export const DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER =
   '삭제하시려면 해당란에 [삭제]를 입력해 주세요.'
 
+/** 학교 삭제·일괄 삭제 안내 — 시안(4427:30639·8248:143163)은 끝 마침표 없음 */
+export const SCHOOL_DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER =
+  '삭제하시려면 해당란에 [삭제]를 입력해 주세요'
+
 /** 회원 탈퇴 안내 모달 — `requiredConfirmInput` 값 */
 export const WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE = '탈퇴'
 

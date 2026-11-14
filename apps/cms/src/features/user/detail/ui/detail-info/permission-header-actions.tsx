@@ -16,6 +16,7 @@ import {
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import type { PermissionHeaderActionsProps } from './user-detail-fullpage-header-actions'
+import './user-detail-fullpage-header-actions.css'
 
 type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED'
 
@@ -144,6 +145,7 @@ export function PermissionHeaderActions({
           revealed={personalInfoRevealed}
           cmsVariant={personalInfoButton.variant}
           cmsSize="large"
+          className="permission-header-actions__personal-info"
           onClick={personalInfoButton.onClick} />
       ) : null}
     </div>

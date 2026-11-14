@@ -10,14 +10,31 @@
   padding: 0 8px;
 }
 
-/** 시안: 학력사항 안내 14/Medium 50% */
-.instructor-register-modal
-  .instructor-register-education
-  > .detail-info-form__header
-  .detail-info-form__description {
+/** 시안(8288:257987): 섹션 제목 옆 안내(약관 및 동의·학력사항 등) Medium 14 · 150% · 50% */
+.instructor-register-modal .detail-info-form > .detail-info-form__header .detail-info-form__description {
   font-size: 14px;
   font-weight: 500;
+  line-height: 150%;
   opacity: 0.5;
+}
+
+/** 시안: 팝업 안 입력칸 사이 구분선 앞뒤 16 (공통 기본 12) */
+.instructor-register-modal .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
+/** 신규 등록 소속 행: 간격은 구분선 마진(16)만 — 체크박스 x1385 */
+.instructor-register-modal .instructor-register-modal__affiliation-row {
+  gap: 0;
+}
+
+/**
+ * 시안: 입력창이 있는 값 셀 안쪽 여백 12 (공통 12/16) — 입력창 시작 x582.
+ * 라디오가 있는 셀(성별·회원 유형·사업소득자·동의)은 시안도 기본 여백이라 제외.
+ */
+.instructor-register-modal
+  .detail-info-form__field-content--edit:has(.cms-field, .cms-select):not(:has(.ant-radio-group)) {
+  padding: 12px;
 }
 
 .instructor-register-modal__stack {
@@ -80,9 +97,9 @@
 }
 
 .instructor-register-modal__fee-grade-select {
-  flex: 1 1 0;
+  flex: 0 0 240px;
   min-width: 0;
-  width: 100%;
+  width: 240px;
 }
 
 .instructor-register-modal__fee-grade-select .cms-select {
@@ -126,12 +143,13 @@
 }
 
 .instructor-register-modal__consent-block .detail-info-form__field {
-  min-height: 50px;
+  min-height: 52px;
 }
 
+/** 시안: 약관 행 52 · [동의서 작성] 행 56 */
 .instructor-register-modal__consent-block .detail-info-form__field-label,
 .instructor-register-modal__consent-block .detail-info-form__field-content {
-  min-height: 50px;
+  min-height: 52px;
   box-sizing: border-box;
   padding-block: 5px;
 }
@@ -160,7 +178,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0 8px;
+  gap: 0;
 }
 
 .instructor-register-modal__consent-status {
@@ -168,14 +186,6 @@
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
-}
-
-.instructor-register-modal__consent-sep {
-  flex-shrink: 0;
-  color: #d0d0d0;
-  font-weight: 400;
-  padding: 0 2px;
-  user-select: none;
 }
 
 /** 경력·활동·자격·수상 — 라벨 1칸 통합 + 스택 행 */
@@ -196,7 +206,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
+  padding: 0 6px;
   color: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
 }
@@ -204,7 +214,7 @@
 .instructor-register-modal__inline-group {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex: 0 0 auto;
   min-width: 0;
 }
@@ -212,7 +222,7 @@
 .instructor-register-modal__multi-row
   > .detail-info-form__field
   > .detail-info-form__field-content--edit {
-  padding: 0;
+  padding: 12px;
   align-items: stretch;
 }
 
@@ -228,19 +238,14 @@
   width: 100%;
   min-width: 0;
   margin-block: 0;
+  /* 시안(14661:55226): 행 추가 시 같은 셀 안에서 12 간격으로 쌓고 행 사이 선은 없음 */
+  gap: 12px;
 }
 
 .instructor-register-modal__field-stack-row {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
-  padding: 12px 16px;
   box-sizing: border-box;
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
-}
-
-.instructor-register-modal__field-stack-row:last-child {
-  border-bottom: none;
 }
 
 /** 연도 단독 피커(자격·수상)도 줄어들지 않도록 */

@@ -7,6 +7,7 @@ import {
   INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_TITLE,
   buildInstructorPermissionCancelApprovalMessage,
 } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-copy'
+import './instructor-permission-reject-modal.css'
 
 export interface InstructorPermissionCancelApprovalPayload {
   cancellationReason: string
@@ -51,6 +52,7 @@ export function InstructorPermissionCancelApprovalModal({
       variant="reject"
       title={INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_TITLE}
       zIndex={zIndex}
+      className="instructor-permission-cancel-approval-modal"
       width={600}
       notifyTimingOptions="two"
       reasonLabel="취소 사유"

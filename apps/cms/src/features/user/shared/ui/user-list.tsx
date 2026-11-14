@@ -32,7 +32,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { getAdminPermissionTag } from '@/shared/lib/status-tag-specs'
+import { getAdminListPermissionTag } from '@/shared/lib/status-tag-specs'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { getSessionAdminRoleCode } from '@/shared/lib/session-admin-role'
 
@@ -146,7 +146,7 @@ function AdminPermissionDropdownCell({
     <StatusDropdownCell<AdminPermissionTagVariant>
       status={current}
       statusOptions={ADMIN_PERMISSION_OPTIONS.map(option => option.value)}
-      getTag={getAdminPermissionTag}
+      getTag={getAdminListPermissionTag}
       isItemDisabled={(cur, option) => cur === option}
       onChange={
         onChange

@@ -31,6 +31,19 @@ export interface StatusTagSpec {
    * `accentColor` 필수. 그 외 값 태그는 공통 크기(32·최소 100)를 쓴다.
    */
   shape?: 'value' | 'outline'
+  /**
+   * 폭 변형 — 화면별 CSS 대신 정본에서만 고른다(사용자 확정 2026-11-15).
+   * - `auto`(기본): 최소 100, 텍스트 길이에 따름
+   * - `compact`: 최소 80 (시안 재직 현황 태그 80×32 — 학교 상세 소속 교사 표·교사 상세)
+   * - `fixed140`: 140 고정 (시안 관리자 목록 권한 유형 태그 140×32)
+   */
+  width?: 'auto' | 'compact' | 'fixed140'
+}
+
+const WIDTH_CLASS: Record<NonNullable<StatusTagSpec['width']>, string> = {
+  auto: '',
+  compact: ' status-tag--compact',
+  fixed140: ' status-tag--fixed-140',
 }
 
 const TONE_CLASS: Record<StatusTagTone, string> = {
@@ -50,6 +63,7 @@ export function StatusTag({
   accentColor,
   mutedLabel = false,
   shape = 'value',
+  width = 'auto',
 }: StatusTagSpec) {
   if (shape === 'outline' && accentColor) {
     return <StatusOutlineTag label={label} accentColor={accentColor} />
@@ -59,7 +73,7 @@ export function StatusTag({
     ? ({ ['--status-tag-accent' as string]: accentColor } as CSSProperties)
     : undefined
   return (
-    <span className={`status-tag ${toneClass}`} style={style}>
+    <span className={`status-tag ${toneClass}${WIDTH_CLASS[width]}`} style={style}>
       {mutedLabel ? <span className="status-tag__label--muted">{label}</span> : label}
     </span>
   )

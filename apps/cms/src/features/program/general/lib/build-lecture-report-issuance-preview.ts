@@ -56,9 +56,23 @@ export interface LectureReportPreviewContent {
   submittedAt?: string | null
 }
 
+/**
+ * 미리보기가 실제로 읽는 값만 받는다 — `ParticipatingInstructorRow`·`Program` 전체를 만들 수 없는
+ * 화면(회원 상세 > 강의보고서 제출 내역 등)에서도 같은 미리보기를 쓰기 위해서다.
+ */
+export interface LectureReportPreviewInstructor {
+  instructorName: string
+}
+
+export interface LectureReportPreviewProgram {
+  mainTitle?: string
+  title?: string
+  textbookName?: string
+}
+
 export interface LectureReportPreviewContext {
-  instructor: ParticipatingInstructorRow
-  program?: Program | null
+  instructor: LectureReportPreviewInstructor
+  program?: LectureReportPreviewProgram | null
   row: LectureReportPreviewRowContext
   content?: LectureReportPreviewContent | null
   hideInstitutionFields: boolean
@@ -105,7 +119,7 @@ const LECTURE_REPORT_PROGRESS_KEYS = [
   'studentCount',
 ] as const
 
-function resolveProgramTitle(program?: Program | null): string {
+function resolveProgramTitle(program?: LectureReportPreviewProgram | null): string {
   return program?.mainTitle?.trim() || program?.title?.trim() || ''
 }
 
@@ -213,8 +227,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
+/**
+ * 제출 답변 키 — Platform(`resolveApplicationAnswerKey`)과 같은 순서로 찾는다.
+ * `id`만 보면 `questionKey`로 저장된 답변을 CMS에서만 놓쳐 미리보기가 비어 보인다.
+ */
+function resolveAnswerKey(paragraph: WritingFormParagraph): string {
+  const row = paragraph as unknown as Record<string, unknown>
+  for (const name of ['questionKey', 'fieldKey', 'key', 'name', 'id'] as const) {
+    const value = row[name]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
 function readAnswer(answers: Record<string, unknown> | undefined, key: string): unknown {
-  return answers != null && key in answers ? answers[key] : undefined
+  return answers != null && key !== '' && key in answers ? answers[key] : undefined
 }
 
 function answerText(value: unknown): string | undefined {
@@ -232,6 +259,8 @@ function applyShortEssayAnswer(
 ): WritingFormParagraph {
   const record = isRecord(value) ? value : undefined
   const answerItems = Array.isArray(record?.items) ? record.items : []
+  // Platform은 답변이 문자열 하나면 첫 항목에 넣는다 — 같은 양식이 같게 보이도록 맞춘다.
+  const plainText = typeof value === 'string' ? value : undefined
   const items = paragraph.items?.map((item, index) => {
     const directValue = readAnswer(answers, item.id)
     const answerItem =
@@ -239,7 +268,8 @@ function applyShortEssayAnswer(
       answerItems[index]
     const itemValue =
       answerText(directValue) ??
-      (isRecord(answerItem) ? answerText(answerItem.bodyText) : undefined)
+      (isRecord(answerItem) ? answerText(answerItem.bodyText) : undefined) ??
+      (index === 0 ? plainText : undefined)
     return itemValue != null ? { ...item, bodyText: itemValue } : item
   })
   const bodyText = answerText(value) ?? (record ? answerText(record.bodyText) : undefined)
@@ -255,7 +285,7 @@ function applyLectureReportAnswer(
   answers: Record<string, unknown> | undefined
 ): WritingFormParagraph {
   if (paragraph.kind !== 'single_item') return paragraph
-  const value = readAnswer(answers, paragraph.id)
+  const value = readAnswer(answers, resolveAnswerKey(paragraph))
 
   if (paragraph.variant === 'lecture_report_program_progress' && isRecord(value)) {
     return {

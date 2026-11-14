@@ -11,27 +11,54 @@
   padding: 0 8px;
 }
 
+/** 시안 4427:78084: 섹션 제목 뒤 필수 `*` (제목 padding-right 8을 당겨 글자 바로 뒤 2px) */
+.admin-register-modal__title-required {
+  margin-left: -6px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--Status-red-main, #c32f4a);
+}
+
+/** 시안 4427:78084: 기본 정보 행 60 */
 .admin-register-modal__section--basic .detail-info-form__field {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
 }
 
 .admin-register-modal__section--basic .detail-info-form__field-label,
 .admin-register-modal__section--basic .detail-info-form__field-content {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
   box-sizing: border-box;
 }
 
+/** 시안: 입력 칸 padding 12 — 입력창 시작 = 값 칸 + 12 (라디오 칸은 공통 유지, 회원 신규 등록과 같은 규칙) */
+.admin-register-modal__section--basic .detail-info-form__field-content:not(:has(.ant-radio-group)) {
+  padding: 12px;
+}
+
+/** 시안: 성별 │ 생년월일 구분선 양쪽 16 (공통 12) */
+.admin-register-modal__section .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
+/** 시안: 약관 및 동의 제목 옆 안내 Medium 14 / 150% */
+.admin-register-modal__section .detail-info-form__description {
+  font-size: 14px;
+  line-height: 150%;
+}
+
+/* 시안 4427:78084: 약관 행 52 (행 구분선 포함 — 표 테두리는 공통 outline·::after) */
 .admin-register-modal__section--terms .detail-info-form__field {
-  min-height: 50px;
+  min-height: 52px;
 }
 
 .admin-register-modal__section--terms .detail-info-form__field-label,
 .admin-register-modal__section--terms .detail-info-form__field-content {
-  min-height: 50px;
+  min-height: 52px;
   box-sizing: border-box;
   padding-block: 5px;
 }

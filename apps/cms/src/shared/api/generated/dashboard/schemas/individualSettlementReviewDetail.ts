@@ -32,4 +32,9 @@ export interface IndividualSettlementReviewDetail {
   applicationType?: IndividualSettlementReviewDetailApplicationType;
   /** VOLUNTEER 신청의 program_volunteer_application.id. INDIVIDUAL 신청은 null. */
   volunteerApplicationId?: number | null;
+  /**
+   * 승인 때 만든 계좌 지급 건의 현재 이체 예정일(YYYY-MM-DD). 계좌 지급 화면에서 바꾸면 바뀐 값이 온다.
+   * 승인 전(SUBMITTED)·반려(REJECTED) 등 계좌 지급 건이 없으면 null.
+   */
+  scheduledPaymentDate?: string | null;
 }
