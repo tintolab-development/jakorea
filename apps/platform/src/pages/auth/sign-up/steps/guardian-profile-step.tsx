@@ -24,21 +24,17 @@ export function GuardianProfileStep({ signUp }: GuardianProfileStepProps) {
         description="입력한 정보는 보호자 본인인증과 동의 확인에만 사용돼요."
         actionsVariant="terms"
         actions={
-          <>
-            <PFButton
-              size="xlarge"
-              width="100%"
-              disabled={!profile.isValid || profile.isSubmitting}
-              onClick={() => {
-                void profile.submit()
-              }}
-            >
-              {profile.isSubmitting ? '확인 중…' : '확인하고 계속하기'}
-            </PFButton>
-            <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
-              이전
-            </PFButton>
-          </>
+          // 시안 2750-73961 — 보호자 본인인증을 마친 뒤라 「이전」 없이 확인 버튼만 둔다
+          <PFButton
+            size="xlarge"
+            width="100%"
+            disabled={!profile.isValid || profile.isSubmitting}
+            onClick={() => {
+              void profile.submit()
+            }}
+          >
+            {profile.isSubmitting ? '확인 중…' : '확인하고 계속하기'}
+          </PFButton>
         }
       >
         <div className={styles.guardianConfirmContent}>
