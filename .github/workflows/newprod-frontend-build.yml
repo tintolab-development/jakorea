@@ -24,7 +24,6 @@ env:
   AWS_REGION: ap-northeast-2
   AWS_ACCOUNT_ID: "264015108093"
   AWS_ROLE_ARN: arn:aws:iam::264015108093:role/ja-newprod-frontend-github-deploy
-  VITE_API_BASE_URL: https://d2yfe3hmramof9.cloudfront.net
   VITE_OAUTH_BACKEND_ORIGIN: https://d2yfe3hmramof9.cloudfront.net
   VITE_JUSO_ADDRESS_API_URL: https://business.juso.go.kr/addrlink/addrLinkApi.do
   NODE_OPTIONS: --max-old-space-size=5120
@@ -128,13 +127,21 @@ jobs:
         shell: bash
         env:
           HOMEPAGE_API: ${{ inputs.homepage_api_base_url }}
+          APP: ${{ matrix.app }}
           BUCKET: ${{ matrix.bucket_name }}
           DISTRIBUTION_ID: ${{ matrix.distribution_id }}
         run: |
           set -euo pipefail
           test "$(aws sts get-caller-identity --query Account --output text)" = "$AWS_ACCOUNT_ID"
-          CMS_ORIGIN="https://d3i2bbwk7uctkw.cloudfront.net"
-          PLATFORM_ORIGIN="https://d1bbeh5w17qesi.cloudfront.net"
+          CMS_ORIGIN="https://cms.jakorea.org"
+          ADMIN_ORIGIN="https://admin.jakorea.org"
+          PLATFORM_ORIGIN="https://jakorea.org"
+          case "$APP" in
+            cms) APP_ORIGIN="$CMS_ORIGIN" ;;
+            admin) APP_ORIGIN="$ADMIN_ORIGIN" ;;
+            platform) APP_ORIGIN="$PLATFORM_ORIGIN" ;;
+            *) echo "UNKNOWN_APP=$APP"; exit 1 ;;
+          esac
           test -n "$BUCKET"
           test -n "$DISTRIBUTION_ID"
           {
@@ -142,11 +149,13 @@ jobs:
             echo "DISTRIBUTION_ID=$DISTRIBUTION_ID"
             echo "CMS_ORIGIN=$CMS_ORIGIN"
             echo "PLATFORM_ORIGIN=$PLATFORM_ORIGIN"
+            echo "APP_ORIGIN=$APP_ORIGIN"
             echo "HOMEPAGE_API=$HOMEPAGE_API"
           } >> "$GITHUB_ENV"
           {
             echo "cms_origin=$CMS_ORIGIN"
             echo "platform_origin=$PLATFORM_ORIGIN"
+            echo "app_origin=$APP_ORIGIN"
           } >> "$GITHUB_OUTPUT"
           echo "NEWPROD_AWS_TARGETS=PASS"
       - name: Build CMS
@@ -156,6 +165,7 @@ jobs:
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
           VITE_NAVER_CLIENT_ID: ${{ secrets.VITE_NAVER_CLIENT_ID }}
+          VITE_API_BASE_URL: ${{ steps.targets.outputs.app_origin }}
           VITE_PLATFORM_PUBLIC_ORIGIN: ${{ steps.targets.outputs.platform_origin }}
         run: pnpm --filter cms build
       - name: Build Platform
@@ -165,7 +175,8 @@ jobs:
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
           VITE_PLATFORM_NAVER_CLIENT_ID: ${{ secrets.VITE_PLATFORM_NAVER_CLIENT_ID }}
-          VITE_HOMEPAGE_API_BASE_URL: ${{ inputs.homepage_api_base_url }}
+          VITE_API_BASE_URL: ${{ steps.targets.outputs.app_origin }}
+          VITE_HOMEPAGE_API_BASE_URL: ${{ steps.targets.outputs.app_origin }}
         run: pnpm --filter platform build
       - name: Inject site OG tags into Platform index.html
         if: matrix.app == 'platform' && inputs.homepage_api_base_url != ''
@@ -176,7 +187,8 @@ jobs:
       - name: Build Homepage Admin
         if: matrix.app == 'admin' && inputs.homepage_api_base_url != ''
         env:
-          VITE_HOMEPAGE_API_BASE_URL: ${{ inputs.homepage_api_base_url }}
+          VITE_API_BASE_URL: ${{ steps.targets.outputs.app_origin }}
+          VITE_HOMEPAGE_API_BASE_URL: ${{ steps.targets.outputs.app_origin }}
           VITE_CMS_ORIGIN: ${{ steps.targets.outputs.cms_origin }}
           VITE_ADMIN_AUTH_API_PREFIX: /api/admin/auth
         run: pnpm --filter admin build
@@ -190,9 +202,8 @@ jobs:
           set -euo pipefail
           test -s "$APP_OUTPUT/index.html"
           test -d "$APP_OUTPUT/assets"
-          if [[ "$APP" == "platform" || "$APP" == "admin" ]]; then
-            grep -RqlF "$HOMEPAGE_API" "$APP_OUTPUT/assets"
-          fi
+          test -n "$APP_ORIGIN"
+          grep -RqlF "$APP_ORIGIN" "$APP_OUTPUT/assets"
           echo "APP_BUILD_AND_ORIGIN_CHECK=$APP:PASS"
       - name: Upload assets before index.html
         if: matrix.app == 'cms' || inputs.homepage_api_base_url != ''
