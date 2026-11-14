@@ -253,6 +253,24 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     [applicationDetailId, programId]
   )
 
+  /**
+   * 활동 포기 기준 일정 — 시작 전·활성·학생 교육 일정이고, 이 기관에 배정된 일정이 있으면 그중에서만.
+   * (BE TrainedTeacherActivityBoundaryPolicy가 거부하는 일정은 선택지에 두지 않는다.)
+   */
+  const activityWithdrawScheduleOptions = useMemo(() => {
+    if (!activityWithdrawModalOpen) return []
+    const assignedScheduleIds = new Set<number>()
+    for (const session of applicationDetailQuery.data?.educationScheduleSessions ?? []) {
+      const id = session.resolvedScheduleId
+      if (typeof id === 'number' && Number.isFinite(id) && id > 0) assignedScheduleIds.add(id)
+    }
+    return buildTrainedTeacherActivityWithdrawScheduleOptions(programSchedulesQuery.data ?? [], {
+      nowMs: Date.now(),
+      assignedScheduleIds,
+    })
+    // 모달을 열 때마다 기준 시각(Date.now)을 다시 잡는다.
+  }, [activityWithdrawModalOpen, applicationDetailQuery.data, programSchedulesQuery.data])
+
   useEffect(() => {
     if (!activityWithdrawModalOpen || !ttRemoteEnabled) return
     if (programSchedulesQuery.isLoading || programSchedulesQuery.isFetching) return
@@ -264,15 +282,19 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       setActivityWithdrawModalOpen(false)
       return
     }
-    if (programSchedulesQuery.isSuccess && (programSchedulesQuery.data?.length ?? 0) === 0) {
+    if (programSchedulesQuery.isSuccess && activityWithdrawScheduleOptions.length === 0) {
       void showAlert({
         title: '안내',
-        content: '활동 포기에 사용할 프로그램 일정이 없습니다.',
+        content:
+          (programSchedulesQuery.data?.length ?? 0) === 0
+            ? '활동 포기에 사용할 프로그램 일정이 없습니다.'
+            : '활동 포기 기준으로 선택할 수 있는 시작 전 교육 일정이 없습니다.',
       })
       setActivityWithdrawModalOpen(false)
     }
   }, [
     activityWithdrawModalOpen,
+    activityWithdrawScheduleOptions.length,
     programSchedulesQuery.data?.length,
     programSchedulesQuery.isError,
     programSchedulesQuery.isFetching,
@@ -315,11 +337,6 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       availableActions:
         applicationDetailQuery.data?.availableActions ?? row.availableActions,
     })
-
-  const activityWithdrawScheduleOptions = useMemo(
-    () => buildTrainedTeacherActivityWithdrawScheduleOptions(programSchedulesQuery.data ?? []),
-    [programSchedulesQuery.data]
-  )
 
   /** 열람 해제 함수(아래 usePersonalInfoReveal)를 저장 콜백에서 동기 호출하기 위한 참조 */
   const remaskAfterSaveRef = useRef<() => void>(() => {})
