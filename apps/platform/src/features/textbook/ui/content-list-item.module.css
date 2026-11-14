@@ -17,7 +17,7 @@
 }
 
 .thumbnailWrap {
-  width: 176px;
+  width: 160px;
   height: 220px;
   flex-shrink: 0;
   aspect-ratio: 4 / 5;

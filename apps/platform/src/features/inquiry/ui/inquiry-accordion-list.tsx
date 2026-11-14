@@ -22,6 +22,28 @@ const STATUS_LABEL: Record<OneToOneInquiryStatus, string> = {
   answered: '답변완료',
 }
 
+/** 프로그램을 고르지 않은 문의 — 목록 API 매핑과 같은 표기 */
+const INQUIRY_NO_PROGRAM_LABEL = '해당 없음'
+
+type InquiryMetaDateProps = {
+  label: string
+  value?: string
+}
+
+/** 시안: `문의일시 : 2026년 5월 8일(금) 09:15` · 값이 없으면 `-` */
+function InquiryMetaDate({ label, value }: InquiryMetaDateProps) {
+  return (
+    <span className={styles.metaDate}>
+      <PFText as="span" typo="bd-md-rg" color="neutral-cool-600" className={styles.metaLabel}>
+        {`${label} :`}
+      </PFText>
+      <PFText as="span" typo="bd-md-rg" color="neutral-cool-600" className={styles.date}>
+        {value || '-'}
+      </PFText>
+    </span>
+  )
+}
+
 export function InquiryAccordionList({
   items,
   expandedId = null,
@@ -96,14 +118,9 @@ export function InquiryAccordionList({
                   </div>
 
                   <div className={styles.rowMeta}>
-                    <PFText
-                      as="span"
-                      typo="bd-md-rg"
-                      color="neutral-cool-600"
-                      className={styles.date}
-                    >
-                      {item.createdAt || '-'}
-                    </PFText>
+                    <InquiryMetaDate label="문의일시" value={item.createdAt} />
+                    <span className={styles.metaDivider} aria-hidden="true" />
+                    <InquiryMetaDate label="답변일시" value={item.answeredAt} />
                     <span className={styles.metaDivider} aria-hidden="true" />
                     <PFText
                       as="span"
@@ -111,7 +128,7 @@ export function InquiryAccordionList({
                       color="neutral-cool-500"
                       className={styles.programName}
                     >
-                      {item.programName || '-'}
+                      {item.programName || INQUIRY_NO_PROGRAM_LABEL}
                     </PFText>
                   </div>
                 </div>

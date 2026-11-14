@@ -10,6 +10,7 @@ import {
   type OneToOneInquiryItem,
   type OneToOneInquiryWritePayload,
 } from '@/features/inquiry'
+import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
 import { PFButton, PFModal, PFPagination, PFText } from '@/shared/ui'
 import cancelConfirmStyles from '@/features/mypage/education/applications/ui/cancel-confirm.module.css'
 import {
@@ -25,12 +26,6 @@ type InquiryTabContentProps = {
   onParamsChange: (next: Partial<InquiryListParams>) => void
 }
 
-function formatCreatedAt(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}년 ${month}월 ${day}일`
-}
 
 function createInquiryItem(
   payload: OneToOneInquiryWritePayload,
@@ -41,7 +36,7 @@ function createInquiryItem(
     category: payload.category,
     title: payload.title,
     status: 'pending',
-    createdAt: formatCreatedAt(new Date()),
+    createdAt: formatDisplayDateTime(new Date()),
     programName: payload.programName,
     question: payload.content,
     order,
@@ -64,7 +59,11 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const items = useMemo(() => {
     const source = remoteInquiries.enabled ? remoteInquiries.items : localItems
     if (!remoteDetail.detail || !expandedId) return source
-    return source.map(item => (item.id === expandedId ? { ...item, ...remoteDetail.detail } : item))
+    // 상세에 없는 값(undefined)이 목록 값(프로그램명 '해당 없음' 등)을 지우지 않게 정의된 값만 덮는다
+    const detail = Object.fromEntries(
+      Object.entries(remoteDetail.detail).filter(([, value]) => value !== undefined)
+    ) as Partial<OneToOneInquiryItem>
+    return source.map(item => (item.id === expandedId ? { ...item, ...detail } : item))
   }, [expandedId, localItems, remoteDetail.detail, remoteInquiries.enabled, remoteInquiries.items])
 
   const sortedItems = useMemo(
@@ -182,7 +181,7 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
             <PFText as="div" typo="hl-lg" color="black" className={cancelConfirmStyles.title}>
               문의를 삭제할까요?
             </PFText>
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={cancelConfirmStyles.description}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={cancelConfirmStyles.description}>
               삭제한 문의는 되돌릴 수 없습니다.
             </PFText>
           </div>

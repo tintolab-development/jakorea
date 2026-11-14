@@ -373,6 +373,18 @@
   margin-top: 0;
 }
 
+@media (--bp-pc-up) {
+  /*
+   * 마이페이지 `프로그램 정보` — 후원사를 운영 기간 아래 줄로 (봉사현황 QA).
+   * 운영 기간·후원사 줄은 `showPeriodSponsor`(마이페이지)에서만 그려지고 참여하기 상세(participate)는 header를 쓴다.
+   */
+  .periodSponsor {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-8);
+  }
+}
+
 @media (--bp-below-pc) {
   /* 모바일은 aside가 비어 있어(포스터·신청은 detail-view header·하단 바) 간격 제거 */
   .body.participate {

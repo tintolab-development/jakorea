@@ -1,7 +1,4 @@
-import {
-  formatDisplayDateRange,
-  formatDisplayDateTime,
-} from '../../../shared/lib/format-display-date.ts'
+import { formatDisplayDateTime } from '../../../shared/lib/format-display-date.ts'
 import type { OneToOneInquiryItem, OneToOneInquiryStatus } from '../model/types'
 import type { PortalInquiryDetail, PortalInquiryListItem } from './client'
 
@@ -33,10 +30,8 @@ export function mapInquiryListItem(
     category: item.category?.trim() || '기타',
     title: item.title?.trim() || '문의',
     status: mapInquiryStatus(item.status, item.displayStatus),
-    createdAt: formatDisplayDateRange(item.inquiredAt, item.inquiredAt, {
-      weekday: false,
-      empty: '',
-    }),
+    // 시안: 접힌 행에도 「문의일시 : 2026년 5월 8일(금) 09:15」 — 상세와 같은 일시 형식
+    createdAt: formatInquiryTimestamp(item.inquiredAt),
     answeredAt: formatInquiryTimestamp(item.answeredAt) || undefined,
     programName: item.programName?.trim() || '해당 없음',
     question: '',

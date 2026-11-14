@@ -13,6 +13,9 @@ type DirectoryListItemProps = {
   onClick?: () => void
 }
 
+/** 시안: 「안내사항」 라벨 글자는 #9E9E9E (좌측 보더는 레벨 토큰 그대로) */
+const NOTICE_LABEL_COLOR = '#9e9e9e'
+
 function DotSeparator() {
   return (
     <span className={styles.dot} aria-hidden="true">
@@ -25,6 +28,7 @@ function DotSeparator() {
 
 export function DirectoryListItem({ titles, level, onClick }: DirectoryListItemProps) {
   const levelColor = getEducationLevelColor(level)
+  const labelColor = level === 'notice' ? NOTICE_LABEL_COLOR : levelColor
   const interactive = Boolean(onClick)
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -60,7 +64,7 @@ export function DirectoryListItem({ titles, level, onClick }: DirectoryListItemP
     >
       <div className={styles.titles}>{titleNodes}</div>
 
-      <span className={styles.level} style={{ color: levelColor } as CSSProperties}>
+      <span className={styles.level} style={{ color: labelColor } as CSSProperties}>
         <span className="typo-bd-md-sb">{EDUCATION_LEVEL_LABELS[level]}</span>
       </span>
     </div>
