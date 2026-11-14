@@ -25,6 +25,7 @@ import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { LoginInlineAlert } from '@/features/auth/ui/login-inline-alert'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
+import { isAdminLoginAccountUnavailableError } from '@/features/auth/api/admin-login-fetcher'
 import {
   ADMIN_LOGIN_ACCOUNT_LOCKED_MESSAGE,
   isAdminLoginAccountLockedError,
@@ -56,10 +57,12 @@ function resetLoginCredentialFeedback(
   form: FormInstance,
   clearAuthError: () => void,
   setApprovalPending: (value: boolean) => void,
-  setAccountLocked: (value: boolean) => void
+  setAccountLocked: (value: boolean) => void,
+  setAccountUnavailableMessage: (value: string | null) => void
 ) {
   setApprovalPending(false)
   setAccountLocked(false)
+  setAccountUnavailableMessage(null)
   clearAuthError()
   clearLoginFieldErrors(form)
 }
@@ -98,6 +101,8 @@ export function LoginPage() {
   const [showAdminApprovalPending, setShowAdminApprovalPending] = useState(false)
   /** 서버가 계정 잠금으로 거절 — 잠금 해제 시각은 서버가 판단하므로 화면에서 입력을 막지 않는다 */
   const [showServerAccountLocked, setShowServerAccountLocked] = useState(false)
+  /** 서버가 사용 불가 계정(ACCOUNT_INACTIVE·LOGIN_DISABLED)으로 거절 — 서버 message 를 그대로 노출 */
+  const [accountUnavailableMessage, setAccountUnavailableMessage] = useState<string | null>(null)
   const apiLoginAvailable = isRemoteApiConfigured()
 
   const {
@@ -168,6 +173,7 @@ export function LoginPage() {
     setLoginMode(mode)
     setShowAdminApprovalPending(false)
     setShowServerAccountLocked(false)
+    setAccountUnavailableMessage(null)
 
     try {
       const result = await login(values, { mode })
@@ -203,6 +209,13 @@ export function LoginPage() {
         clearError()
         clearLoginFieldErrors(form)
         setShowServerAccountLocked(true)
+        return
+      }
+
+      if (isAdminLoginAccountUnavailableError(loginError)) {
+        clearError()
+        clearLoginFieldErrors(form)
+        setAccountUnavailableMessage(loginError.message)
         return
       }
 
@@ -325,7 +338,8 @@ export function LoginPage() {
                         form,
                         clearError,
                         setShowAdminApprovalPending,
-                        setShowServerAccountLocked
+                        setShowServerAccountLocked,
+                        setAccountUnavailableMessage
                       )
                     }}
                   >
@@ -368,8 +382,13 @@ export function LoginPage() {
                       <LoginInlineAlert>{ADMIN_LOGIN_ACCOUNT_LOCKED_MESSAGE}</LoginInlineAlert>
                     )}
 
+                    {accountUnavailableMessage && (
+                      <LoginInlineAlert>{accountUnavailableMessage}</LoginInlineAlert>
+                    )}
+
                     {!isLocked &&
                       !showServerAccountLocked &&
+                      !accountUnavailableMessage &&
                       failedAttempts > 0 &&
                       failedAttempts < LOGIN_POLICY.maxFailedAttempts && (
                         <LoginInlineAlert>
