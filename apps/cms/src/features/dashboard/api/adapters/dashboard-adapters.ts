@@ -62,6 +62,8 @@ export interface DashboardScheduleEventDto {
   type: DashboardScheduleEventType
   title: string
   time: string
+  /** 끝 시각(HH:mm). 종일이거나 BE endAt이 없으면 없다 — 미리보기 「시작 ~ 끝」 표기용 */
+  endTime?: string
   /** 위젯 날짜 칸 키(YYYY-MM-DD). 종일 일정은 BE eventDate(Asia/Seoul), 그 밖은 startAt 기준 */
   dateKey: string
   /** BE eventLabel(목록 캘린더와 같은 유형 문구). 운영 시작·종료 표시에 쓴다 */
@@ -624,6 +626,7 @@ export function mapScheduleItem(
     type,
     title: toDisplayEducationScheduleName(item.scheduleName) ?? item.programNameKo ?? '일정',
     time: formatScheduleTime(item.startAt, item.allDay),
+    ...(item.allDay !== true && item.endAt ? { endTime: formatScheduleTime(item.endAt) } : {}),
     dateKey,
     ...(eventLabel ? { eventLabel } : {}),
     programId: String(item.programId),

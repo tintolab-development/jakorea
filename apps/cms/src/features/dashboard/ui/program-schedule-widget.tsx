@@ -64,6 +64,8 @@ interface ScheduleEvent {
   eventLabel?: string
   title: string
   time: string
+  /** 끝 시각(HH:mm). 있으면 호버 미리보기에 「시작 ~ 끝」으로 쓴다 */
+  endTime?: string
   programId: string
   programTitle: string
   /** 프로그램 진행 현황 태그 색상 동기화용 */
@@ -205,7 +207,6 @@ function getDisplayProgramIds(dayEvents: ScheduleEvent[], max = 2): string[] {
   return ids
 }
 
-/** program-calendar-view Popover 미리보기와 동일 마크업·클래스 (제목만 SCHEDULE_COLORS.text) */
 type CalendarDayTone = 'holiday' | 'sunday' | 'saturday'
 
 /** 날짜 글자색 구분 — 공휴일·일요일 빨강, 토요일 파랑 (토요일 공휴일은 공휴일 우선) */
@@ -220,20 +221,24 @@ function calendarDayTone(
   return null
 }
 
+/** 호버 미리보기 시각 — 끝 시각이 있으면 「시작 ~ 끝」(Figma Calendar / List / Preview) */
+function formatPreviewTime(ev: Pick<ScheduleEvent, 'time' | 'endTime'>): string {
+  if (ev.time && ev.endTime && ev.endTime !== ev.time) return `${ev.time} ~ ${ev.endTime}`
+  return ev.time
+}
+
+/** Figma `Calendar / List / Preview` — 프로그램명(민트) / 일정 문구 | 시각, 항목 사이 구분선 */
 function ScheduleWidgetWeekCellPreview({
   dayEvents,
   onEventClick,
-  scheduleColorMap,
 }: {
   dayEvents: ScheduleEvent[]
   onEventClick?: (ev: ScheduleEvent) => void
-  /** 위젯 표시 기간 전체 기준 공유 색상 맵 */
-  scheduleColorMap: Map<string, ScheduleColorPair>
 }) {
   return (
     <div className="program-calendar-cell-preview">
       {dayEvents.map(ev => {
-        const colorPair = scheduleColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
+        const timeText = formatPreviewTime(ev)
         return (
           <div
             key={ev.id}
@@ -253,14 +258,17 @@ function ScheduleWidgetWeekCellPreview({
               }
             }}
           >
-            <span
-              className="program-calendar-cell-preview__title"
-              style={{ color: colorPair.text }}
-            >
-              [{ev.programTitle}]
-            </span>
+            <span className="program-calendar-cell-preview__title">{ev.programTitle}</span>
             <span className="program-calendar-cell-preview__desc">
-              {getEventTypeLabel(ev)} | {ev.time}
+              <span className="program-calendar-cell-preview__label">
+                {ev.detailLabel ?? getEventTypeLabel(ev)}
+              </span>
+              {timeText ? (
+                <>
+                  <span className="program-calendar-cell-preview__divider" aria-hidden />
+                  <span className="program-calendar-cell-preview__time">{timeText}</span>
+                </>
+              ) : null}
             </span>
           </div>
         )
@@ -275,13 +283,11 @@ const EVENT_PREVIEW_POPOVER_CLASS =
 /** 태그(배지·일정 카드) 기준 상단 고정 미리보기 — 본문은 공통 popover 클래스로 스크롤 가능 */
 function ProgramScheduleEventPreviewPopover({
   dayEvents,
-  scheduleColorMap,
   onEventClick,
   children,
   placement = 'top',
 }: {
   dayEvents: ScheduleEvent[]
-  scheduleColorMap: Map<string, ScheduleColorPair>
   onEventClick?: (ev: ScheduleEvent) => void
   children: ReactElement
   placement?: 'top' | 'bottom'
@@ -297,11 +303,7 @@ function ProgramScheduleEventPreviewPopover({
       mouseLeaveDelay={0.08}
       getPopupContainer={() => document.body}
       content={
-        <ScheduleWidgetWeekCellPreview
-          dayEvents={dayEvents}
-          onEventClick={onEventClick}
-          scheduleColorMap={scheduleColorMap}
-        />
+        <ScheduleWidgetWeekCellPreview dayEvents={dayEvents} onEventClick={onEventClick} />
       }
     >
       {children}
@@ -521,6 +523,7 @@ export function ProgramScheduleWidget({
           eventLabel: ev.eventLabel,
           title: ev.title,
           time: ev.time,
+          ...(ev.endTime ? { endTime: ev.endTime } : {}),
           programId: ev.programId,
           programTitle: ev.programTitle,
           lifecycleStatus: ev.lifecycleStatus,
@@ -651,7 +654,6 @@ export function ProgramScheduleWidget({
             {isSingleBlock ? (
               <ProgramScheduleEventPreviewPopover
                 dayEvents={dayEvents}
-                scheduleColorMap={scheduleColorMap}
                 onEventClick={handleEventClick}
               >
                 <span className="program-schedule-widget__month-cell-badge-host">
@@ -686,7 +688,6 @@ export function ProgramScheduleWidget({
                   <ProgramScheduleEventPreviewPopover
                     key={pid}
                     dayEvents={dayEvents}
-                    scheduleColorMap={scheduleColorMap}
                     onEventClick={handleEventClick}
                   >
                     <span className="program-schedule-widget__month-cell-badge-host">
@@ -836,7 +837,6 @@ export function ProgramScheduleWidget({
                         <ProgramScheduleEventPreviewPopover
                           key={ev.id}
                           dayEvents={dayEvents}
-                          scheduleColorMap={scheduleColorMap}
                           onEventClick={handleEventClick}
                           placement="bottom"
                         >
@@ -887,7 +887,6 @@ export function ProgramScheduleWidget({
                         <ProgramScheduleEventPreviewPopover
                           key={pid}
                           dayEvents={dayEvents}
-                          scheduleColorMap={scheduleColorMap}
                           onEventClick={handleEventClick}
                           placement="bottom"
                         >
@@ -920,7 +919,6 @@ export function ProgramScheduleWidget({
                   {hiddenEventCount > 0 && (
                     <ProgramScheduleEventPreviewPopover
                       dayEvents={dayEvents}
-                      scheduleColorMap={scheduleColorMap}
                       onEventClick={handleEventClick}
                       placement="bottom"
                     >
