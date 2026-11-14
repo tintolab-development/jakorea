@@ -179,6 +179,7 @@ export function SponsorBasicInfoSection({
                 <span>{value.nameDisplayKo}</span>
               ),
               sideLabel: '구분',
+              sideRequired: true,
               side: isEditing ? (
                 <CmsRadioGroup
                   value={value.organizationKind}

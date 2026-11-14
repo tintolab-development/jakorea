@@ -26,7 +26,7 @@
  * 행 하단 border가 행 높이 52에 더해져 행마다 +1px, 바깥 테두리가 +2px 커지던 것을 막는다.
  * 바깥선은 outline(오프셋 -1), 행 구분선은 `::after`로 그린다(셀 배경에 가려지는 inset 그림자는 쓰지 않음).
  * 코멘트 박스처럼 필드가 없는 body(`.detail-info-form__body` 단독)는 제외한다.
- * 프로그램 관리 등 다른 화면은 영향이 없도록 회원 관리 셸·팝업으로 범위를 한정한다.
+ * 프로그램 관리 등 다른 화면은 영향이 없도록 회원 관리 셸·팝업(+ 게시글 문의 상세, 행 53→52)으로 범위를 한정한다.
  */
 :is(
     .user-detail-fullpage-modal,
@@ -34,7 +34,8 @@
     .instructor-register-modal,
     .admin-register-modal,
     .school-register-modal,
-    .member-admin-comment-modal
+    .member-admin-comment-modal,
+    .admin-inquiry-detail-modal
   )
   .detail-info-form__body:has(.detail-info-form__field) {
   border: 0;
@@ -48,7 +49,8 @@
     .instructor-register-modal,
     .admin-register-modal,
     .school-register-modal,
-    .member-admin-comment-modal
+    .member-admin-comment-modal,
+    .admin-inquiry-detail-modal
   )
   .detail-info-form__body:has(.detail-info-form__field)
   > .detail-info-form__row {
@@ -62,7 +64,8 @@
     .instructor-register-modal,
     .admin-register-modal,
     .school-register-modal,
-    .member-admin-comment-modal
+    .member-admin-comment-modal,
+    .admin-inquiry-detail-modal
   )
   .detail-info-form__body:has(.detail-info-form__field)
   > .detail-info-form__row:not(:last-child)::after {

@@ -59,7 +59,7 @@ export function DetailedProgramAddItemModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="세부 프로그램명 신규 등록"
+      title="세부 프로그램 신규 등록"
       width={600}
       className="detailed-program-add-item-modal"
       wrapClassName="detailed-program-add-item-modal-wrap"
@@ -79,16 +79,17 @@ export function DetailedProgramAddItemModal({
         <CmsInput
           label="세부 프로그램명"
           required
-          inputSize="large"
+          inputSize="medium"
           width="100%"
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder="세부 프로그램명을 입력해 주세요."
+          placeholder="세부 프로그램명을 입력해 주세요"
           maxLength={200}
         />
         <CmsRadioGroup
           label="사용 여부"
-          size="large"
+          required
+          size="medium"
           value={active}
           onChange={e => setActive(coerceRadioBoolean(e.target.value))}
         >

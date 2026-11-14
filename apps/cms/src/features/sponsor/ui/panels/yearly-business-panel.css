@@ -4,10 +4,11 @@
   gap: 16px;
 }
 
+/* 누적 카드 — 시안 761×124 · r16 · #E0E0E0 · padding 26/30 · 간격 24 (QA 2026-11-15 데이터 관리 C15) */
 .yearly-business-panel__summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 24px;
   width: 100%;
 }
 
@@ -16,9 +17,10 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  padding: 20px 24px;
-  border-radius: 12px;
-  border: 1px solid #d4d4d4;
+  min-height: 124px;
+  padding: 26px 30px;
+  border-radius: 16px;
+  border: 1px solid var(--Border-default, #e0e0e0);
   background: #fff;
   box-sizing: border-box;
 }
@@ -38,7 +40,7 @@
   font-size: 32px;
   font-style: normal;
   font-weight: 700;
-  line-height: normal;
+  line-height: 38px;
 }
 .yearly-business-panel__summary-value-unit {
   color: var(--default-BK, #3d3d3d);

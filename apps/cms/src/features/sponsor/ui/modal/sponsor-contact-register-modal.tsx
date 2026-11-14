@@ -165,7 +165,7 @@ export function SponsorContactRegisterModal({
               <CmsRadioGroup
                 {...field}
                 id="sponsor-contact-type"
-                size="large"
+                size="medium"
                 options={[
                   { label: '주 담당자', value: 'lead' },
                   { label: '담당자', value: 'assistant', disabled: existingContactCount === 0 },
@@ -185,7 +185,7 @@ export function SponsorContactRegisterModal({
                   {...field}
                   id="sponsor-contact-name"
                   placeholder="담당자명을 입력해 주세요"
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                 />
               )}
@@ -199,8 +199,8 @@ export function SponsorContactRegisterModal({
                 <CmsInput
                   {...field}
                   id="sponsor-contact-department"
-                  placeholder="부서를 입력해 주세요"
-                  inputSize="large"
+                  placeholder="부서명을 입력해 주세요"
+                  inputSize="medium"
                   width="100%"
                 />
               )}
@@ -218,7 +218,7 @@ export function SponsorContactRegisterModal({
                   {...field}
                   id="sponsor-contact-position"
                   placeholder="직함을 입력해 주세요"
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                 />
               )}
@@ -233,7 +233,7 @@ export function SponsorContactRegisterModal({
                   {...field}
                   id="sponsor-contact-office-phone"
                   placeholder="내선번호를 입력해 주세요"
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                 />
               )}
@@ -251,7 +251,7 @@ export function SponsorContactRegisterModal({
                   {...field}
                   id="sponsor-contact-phone"
                   placeholder="연락처를 입력해 주세요"
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                 />
               )}
@@ -266,7 +266,7 @@ export function SponsorContactRegisterModal({
                   {...field}
                   id="sponsor-contact-email"
                   placeholder="이메일을 입력해 주세요"
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                 />
               )}
@@ -283,7 +283,7 @@ export function SponsorContactRegisterModal({
                 {...field}
                 id="sponsor-contact-company-address"
                 placeholder="회사 주소를 입력해 주세요"
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
               />
             )}
@@ -299,7 +299,7 @@ export function SponsorContactRegisterModal({
                 {...field}
                 id="sponsor-contact-memo"
                 placeholder="비고를 입력해 주세요"
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
               />
             )}

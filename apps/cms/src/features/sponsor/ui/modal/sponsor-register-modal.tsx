@@ -26,6 +26,7 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
+import './sponsor-register-modal.css'
 
 export interface SponsorRegisterModalProps {
   open: boolean
@@ -123,6 +124,7 @@ export function SponsorRegisterModal({
       open={open}
       onCancel={onCancel}
       title="후원사 신규 등록"
+      className="sponsor-register-modal"
       width={LAYOUT_CONSTANTS.widths.modal.large}
       footer={
         <>
@@ -151,9 +153,9 @@ export function SponsorRegisterModal({
               <CmsInput
                 value={form.nameDisplayKo}
                 onChange={e => setField('nameDisplayKo', e.target.value)}
-                placeholder="후원사명(국문)을 입력해 주세요"
+                placeholder="후원사명 (국문)을 입력해 주세요"
                 inputSize="small"
-                width="100%"
+                width={240}
               />
             }
           />
@@ -165,9 +167,9 @@ export function SponsorRegisterModal({
               <CmsInput
                 value={form.nameDisplayEn}
                 onChange={e => setField('nameDisplayEn', e.target.value)}
-                placeholder="후원사명(영문)을 입력해 주세요"
+                placeholder="후원사명 (영문)을 입력해 주세요"
                 inputSize="small"
-                width="100%"
+                width={240}
               />
             }
           />
@@ -200,7 +202,7 @@ export function SponsorRegisterModal({
                 onChange={e => setField('businessNumber', e.target.value)}
                 placeholder="사업자번호를 입력해 주세요"
                 inputSize="small"
-                width="100%"
+                width={240}
               />
             }
           />
@@ -215,10 +217,10 @@ export function SponsorRegisterModal({
                 inputSize="small"
                 value={form.sponsorshipStartDate ? dayjs(form.sponsorshipStartDate) : null}
                 onChange={date => setField('sponsorshipStartDate', toSponsorDateOnly(date) ?? '')}
-                placeholder="후원 시작일을 입력해 주세요"
+                placeholder="후원 시작일을 선택해 주세요"
                 format="YYYY.MM.DD"
                 allowClear
-                style={{ width: '100%' }}
+                style={{ width: 240 }}
               />
             }
           />
@@ -267,15 +269,15 @@ export function SponsorRegisterModal({
                   onChange={next => setField('district', next)}
                   onSelect={() => setField('detailAddress', '')}
                   inputSize="small"
-                  width="100%"
+                  width={240}
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsInput
                   value={form.detailAddress}
                   onChange={e => setField('detailAddress', e.target.value)}
-                  placeholder="상세 주소"
+                  placeholder="상세 주소를 입력해 주세요"
                   inputSize="small"
-                  width="100%"
+                  width={240}
                 />
               </Space.Compact>
             }

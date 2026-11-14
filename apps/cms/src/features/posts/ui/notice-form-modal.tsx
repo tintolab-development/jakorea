@@ -116,7 +116,8 @@ export function NoticeFormModal({
     open,
     initialMarkdown,
     editorResetKey,
-    { fileUploadOwner: noticeInlineOwner }
+    // 시안 placeholder: 「내용을 입력해 주세요」 (기본값은 다른 화면 공용이라 여기서만 지정)
+    { fileUploadOwner: noticeInlineOwner, placeholder: '내용을 입력해 주세요' }
   )
 
   /**
@@ -355,7 +356,8 @@ export function NoticeFormModal({
   }
 
   const modalTitle = mode === 'create' ? '공지사항 등록' : '공지사항 수정'
-  const submitLabel = mode === 'create' ? '등록' : '수정'
+  /** 시안: 수정 팝업 확정 버튼은 「저장」 */
+  const submitLabel = mode === 'create' ? '등록' : '저장'
 
   if (mode === 'edit' && open && !notice) {
     return null
@@ -418,11 +420,11 @@ export function NoticeFormModal({
                 <CmsSelect
                   label="카테고리"
                   required
-                  inputSize="large"
-                  width={240}
+                  inputSize="medium"
+                  width={260}
                   withAllOption={false}
                   allowClear={false}
-                  placeholder="카테고리 선택"
+                  placeholder="전체"
                   options={categorySelectOptions}
                 />
               </Form.Item>
@@ -430,7 +432,7 @@ export function NoticeFormModal({
                 <CmsRadioGroup
                   label="공개 여부"
                   required
-                  size="large"
+                  size="medium"
                   options={[
                     { label: '공개', value: 'public' },
                     { label: '비공개', value: 'private' },
@@ -441,7 +443,7 @@ export function NoticeFormModal({
                 <CmsRadioGroup
                   label="상단 고정"
                   required
-                  size="large"
+                  size="medium"
                   options={[
                     { label: '고정 안함', value: 'off' },
                     { label: '고정', value: 'on' },
@@ -456,13 +458,13 @@ export function NoticeFormModal({
               label="제목"
               required
               placeholder="제목을 입력해 주세요"
-              inputSize="large"
+              inputSize="medium"
               width="100%"
             />
           </Form.Item>
 
           <CmsFieldFrame
-            size="large"
+            size="medium"
             label="내용"
             required
             className="notice-register-modal__section notice-register-modal__section--editor"

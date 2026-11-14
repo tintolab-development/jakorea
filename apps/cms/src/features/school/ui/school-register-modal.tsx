@@ -168,6 +168,7 @@ export function SchoolRegisterModal({
       title="학교 신규 등록"
       width={800}
       className="school-register-modal"
+      titleBodyGap="section"
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>

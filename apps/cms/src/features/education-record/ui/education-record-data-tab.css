@@ -18,6 +18,9 @@
   gap: var(--spacing-12, 12px);
   width: 100%;
   min-width: 0;
+  /* 시안: 툴바 영역 40(제목 글자 y389) — 구분선 아래 24 다음 바로 시작 (QA 2026-11-15 실적 CSS 1-2) */
+  min-height: 40px;
+  align-items: flex-end;
   margin-bottom: var(--spacing-16, 16px);
 }
 
@@ -41,7 +44,8 @@
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
+  /* 시안: 「총 N건」 #3D3D3D 50% (QA 2026-11-15 실적 CSS 1-5) */
+  opacity: 0.5;
   white-space: nowrap;
 }
 

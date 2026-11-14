@@ -1,0 +1,7 @@
+/*
+ * 후원사 신규 등록 팝업 — 시안 9270:72635 (QA 2026-11-15 데이터 관리 C7)
+ * 소재지 주소 검색 240 · 구분선 · 상세 주소 240, 구분선 양옆 16 (공통 separator 12)
+ */
+.sponsor-register-modal .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}

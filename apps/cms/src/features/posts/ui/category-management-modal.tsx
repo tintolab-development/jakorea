@@ -25,7 +25,8 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /** 모달 가로 패딩 30×2 제외한 테이블 영역 (600 − 60) */
 const TABLE_INNER_WIDTH = 540
-const NAME_COL_WIDTH = 324
+/** 시안 열 폭: 카테고리명 340 / 관리 200 */
+const NAME_COL_WIDTH = 340
 const ACTIONS_COL_WIDTH = TABLE_INNER_WIDTH - NAME_COL_WIDTH
 const CATEGORY_MODAL_Z = 1000
 const CATEGORY_SUB_MODAL_Z = 1100
@@ -89,7 +90,7 @@ export function CategoryManagementModal({
         editingId === row.id ? (
           <CmsInput
             ref={editInputRef}
-            inputSize="medium"
+            inputSize="small"
             width="100%"
             value={editDraft}
             onChange={e => setEditDraft(e.target.value)}
@@ -195,6 +196,9 @@ export function CategoryManagementModal({
               pagination={false}
               columns={columns}
               dataSource={ctrl.draftCategories}
+              rowClassName={row =>
+                row.id === editingId ? 'notice-category-management-modal__row--editing' : ''
+              }
               locale={{ emptyText: '등록된 카테고리가 없습니다.' }}
               summary={
                 ctrl.composeOpen
@@ -205,7 +209,7 @@ export function CategoryManagementModal({
                             <div className="notice-category-management-modal__compose">
                               <CmsInput
                                 ref={ctrl.newInputRef}
-                                inputSize="medium"
+                                inputSize="small"
                                 width="100%"
                                 placeholder="카테고리명을 입력해 주세요"
                                 value={ctrl.newDraft}
@@ -260,8 +264,8 @@ export function CategoryManagementModal({
 
       <ActionResultModal
         open={ctrl.settingsCompleteOpen}
-        title="카테고리 설정 완료"
-        body="카테고리 설정이 완료되었습니다."
+        title="설정 완료"
+        body="설정 완료되었습니다."
         onClose={ctrl.closeSettingsComplete}
         zIndex={CATEGORY_SUB_MODAL_Z}
       />
