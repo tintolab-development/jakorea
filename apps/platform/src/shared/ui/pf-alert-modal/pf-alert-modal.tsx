@@ -27,6 +27,8 @@ export type PFAlertModalProps = {
   confirmDisabled?: boolean
   /** description 아래·확인 버튼 위 추가 컨텐츠 (예: 비밀번호 입력) */
   children?: ReactNode
+  /** children 감싸는 영역 클래스 (간격 조정 등) */
+  extraClassName?: string
   className?: string
   backdropClassName?: string
   ariaLabelledBy?: string
@@ -46,6 +48,7 @@ export function PFAlertModal({
   confirmLoading = false,
   confirmDisabled = false,
   children,
+  extraClassName,
   className,
   backdropClassName,
   ariaLabelledBy,
@@ -124,7 +127,9 @@ export function PFAlertModal({
               {description}
             </PFText>
           ) : null}
-          {children ? <div className={styles.extra}>{children}</div> : null}
+          {children ? (
+            <div className={[styles.extra, extraClassName].filter(Boolean).join(' ')}>{children}</div>
+          ) : null}
         </div>
 
         <div className={cancelLabel ? styles.actions : undefined}>
