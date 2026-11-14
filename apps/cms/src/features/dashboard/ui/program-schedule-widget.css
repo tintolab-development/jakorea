@@ -12,7 +12,7 @@
   container-name: program-schedule;
   border-radius: 16px !important;
   border: none !important;
-  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
 .program-schedule-widget .ant-card-head {
@@ -83,10 +83,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-border-skeleton);
+  /* 시안 Button / Etc / Arrow S: stroke #E0E0E0, 아이콘 #3D3D3D (QA 2026-11-15 대시보드 F4) */
+  border: 1px solid var(--Border-default, #e0e0e0);
   border-radius: var(--radius-6);
   background: var(--color-bg-base);
-  color: var(--color-text-secondary);
+  color: var(--main-BK, #3d3d3d);
   cursor: pointer;
 }
 
@@ -117,6 +118,20 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+/*
+ * 시안 월간/주간 세그먼트 120×43 · 패딩 4 · 칸 56×35(패딩 8/14) — QA 2026-11-15 대시보드 F3.
+ * `.segmented-tab--medium`은 공용(캘린더 등)이라 대시보드 일정 위젯 안에서만 덮는다. 패딩 3 + 테두리 1 = 4.
+ */
+.program-schedule-widget__view-mode-switch .segmented-tab--medium {
+  width: 120px;
+  height: 43px;
+  padding: 3px;
+}
+
+.program-schedule-widget__view-mode-switch .segmented-tab--medium .segmented-tab__btn {
+  padding: 8px 14px;
 }
 
 /* ─── 2. 본문 레이아웃 ─── */
@@ -287,9 +302,9 @@
   cursor: pointer;
   transition: background 0.2s;
   border: none;
-  /* 리터럴 고정 — 타 라우트 calendar.css / antd #d9d9d9 캐스케이드 차단 */
-  border-right: 1px solid #f0f0f0 !important;
-  border-bottom: 1px solid #f0f0f0 !important;
+  /* 리터럴 고정 — 타 라우트 calendar.css / antd #d9d9d9 캐스케이드 차단. 시안 칸 stroke #E0E0E0 (QA F5) */
+  border-right: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -310,14 +325,14 @@
   .program-schedule-widget__body--month
   .program-schedule-widget__month-grid-slot--edge-w
   .program-calendar-cell {
-  border-left: 1px solid #f0f0f0 !important;
+  border-left: 1px solid #e0e0e0 !important;
 }
 
 .program-schedule-widget.program-schedule-widget
   .program-schedule-widget__body--month
   .program-schedule-widget__month-grid-slot--edge-t
   .program-calendar-cell {
-  border-top: 1px solid #f0f0f0 !important;
+  border-top: 1px solid #e0e0e0 !important;
 }
 
 .program-schedule-widget__body--month
@@ -351,7 +366,7 @@
 
 /*
  * 6주에 걸치는 달(42칸): 슬롯 고정 높이(100% 376px·50% 400px)에서 행이 약 39px·43px로 줄어
- * 날짜 원(36px·34px)+상하 패딩 8px이 잘린다. 날짜는 세로 가운데 정렬이므로 상하 패딩만 0으로 둔다.
+ * 날짜 원(34px)+상하 패딩 8px이 잘린다. 날짜는 세로 가운데 정렬이므로 상하 패딩만 0으로 둔다.
  */
 .program-schedule-widget.program-schedule-widget
   .program-schedule-widget__body--month
@@ -364,11 +379,12 @@
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid
   .program-calendar-cell-date {
+  /* 시안(1단 월간): 날짜 34×34 · Medium 18 / 130% (QA 2026-11-15 대시보드 F6, 2단과 같은 값) */
   display: flex;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
   padding: 0 10px;
   flex-direction: column;
   justify-content: center;
@@ -382,16 +398,35 @@
   color: var(--main-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 130%;
 }
 
+/*
+ * 이전·다음 달 날짜: 시안은 날짜 노드 opacity 0.5 (평일 #3D3D3D 50%, 일요일·공휴일 빨강 50%) — QA F7.
+ * 토요일 이전·다음 달은 시안 케이스가 없어(확인 필요) 기존 회색 표기를 유지한다.
+ */
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid
   .program-calendar-cell--other-month
   .program-calendar-cell-date {
+  opacity: 0.5;
+}
+
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--other-month:is(.program-calendar-cell--sunday, .program-calendar-cell--holiday)
+  .program-calendar-cell-date {
+  color: var(--Status-red-main, #c32f4a);
+}
+
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--other-month.program-calendar-cell--saturday
+  .program-calendar-cell-date {
   color: #bfbfbf;
+  opacity: 1;
 }
 
 /* 피그마: 일요일·공휴일 빨강, 토요일 파랑 — 다른 달 날짜(회색)·선택일(흰 글자)은 기존 표기 유지 */
@@ -418,8 +453,8 @@
   .program-calendar-cell--selected
   .program-calendar-cell-date {
   display: flex !important;
-  width: 36px !important;
-  height: 36px !important;
+  width: 34px !important;
+  height: 34px !important;
   padding: 0 10px !important;
   flex-direction: column !important;
   justify-content: center !important;
@@ -433,7 +468,7 @@
   color: var(--main-WT, #fff) !important;
   text-align: center !important;
   font-family: Pretendard, var(--font-family-primary), sans-serif !important;
-  font-size: 20px !important;
+  font-size: 18px !important;
   font-weight: 500 !important;
   line-height: 130% !important;
   align-self: flex-start !important;
@@ -1009,7 +1044,8 @@
   align-self: stretch;
   gap: 16px;
   width: 100%;
-  height: 75px;
+  /* 시안 709×68 (QA 2026-11-15 대시보드 F8) */
+  height: 68px;
   margin-block: 0;
   /* 피그마 14894:26661 Calendar / List / Item */
   padding: 12px 16px 12px 12px;

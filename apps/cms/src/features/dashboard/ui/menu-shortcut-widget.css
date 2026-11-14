@@ -1,6 +1,6 @@
 /**
  * 메뉴 바로가기 위젯
- * 항목(태그): 세로 16+24(아이콘)+16 + border 4 = 최소 60px(box-sizing: border-box 기준 56px max-height와는 병행 불가)
+ * 항목(태그): 세로 14+24(아이콘)+14 + border 4 = 56px (시안 패딩 16은 inner 2px 테두리 포함 값)
  * 전역 button { padding } 은 이 블록에서 padding !important 로 덮음
  * 태그 텍스트: Pretendard 16/600/120%, --main-BK · 아이콘 24×24, 아이콘–텍스트 갭 8px
  * 미확인 뱃지: Outfit 12px/700
@@ -13,7 +13,7 @@
   overflow: visible;
   border-radius: 16px !important;
   border: none !important;
-  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* 헤더 패딩·마진 없음(대시보드 슬롯 카드와 동일). 본문과의 간격은 body 쪽 */
@@ -54,9 +54,9 @@
   min-width: 200px !important;
   max-width: 235px !important;
   min-height: 56px !important;
-  /* 16+24+16 세로 패딩+아이콘 + 2px border×2 — 이전 max-height:56+overflow:hidden 이 패딩을 잘라냄 */
   max-height: none !important;
-  padding: 16px 18px !important;
+  /* 시안 206.6×56, 패딩 16/18 + inner 2px 테두리 — CSS 테두리는 패딩 밖에 더해지므로 2px 뺀 14/16 (QA 2026-11-15 대시보드 F1) */
+  padding: 14px 16px !important;
   align-items: center !important;
   flex: 1 0 0 !important;
   width: min(100%, 235px) !important;

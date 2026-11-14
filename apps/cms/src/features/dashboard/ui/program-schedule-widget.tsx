@@ -620,7 +620,7 @@ export function ProgramScheduleWidget({
 
   const headerTitle =
     viewMode === 'week'
-      ? `${weekDates[0].format('MM.DD')} - ${weekDates[6].format('MM.DD')}`
+      ? `${weekDates[0].format('MM.DD')} ~ ${weekDates[6].format('MM.DD')}`
       : currentMonth.format('YY.MM')
 
   const renderMonthCell = (date: Dayjs) => {
