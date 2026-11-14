@@ -134,10 +134,9 @@ export function resolveUjatHalfEducationScheduleDisplayFromTypedDetail(
   const preStage = typedStage(halfPlan, 'pre')
   const eventStage = typedStage(halfPlan, 'event')
   const closingStage = typedStage(halfPlan, 'closing')
-  const rangeStarts = eventRows.map(row => row.startDate).filter((value): value is string => Boolean(value))
-  const rangeEnds = eventRows.map(row => row.endDate).filter((value): value is string => Boolean(value))
-  const start = rangeStarts.sort()[0] ?? null
-  const end = rangeEnds.sort().at(-1) ?? null
+  // 교육 진행 기간 = MAIN rows[0](displayOrder 최소) — 「교육 진행 일정 설정」 표·BE 학교 희망 교육일 계산과 같은 기준.
+  const start = eventRow?.startDate ?? null
+  const end = eventRow?.endDate ?? null
   const textbook = preRows[0]?.textbook
   const hasPre = preRows.length > 0 || preStage != null
   const hasEvent = eventRows.length > 0 || eventStage != null

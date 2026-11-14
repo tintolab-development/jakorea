@@ -52,6 +52,42 @@ describe('UJAT typed H1/H2 schedule display', () => {
     expect(display.eventSchedule.scheduleText).toContain('2027.04.30')
   })
 
+  it('교육 진행 기간은 MAIN 행 전체 min~max가 아니라 rows[0] 기간이며 설정 표와 같다', () => {
+    const firstRow = detail.halfPlans[0].stages[0].rows[0]
+    const twoRows = {
+      ...detail,
+      halfPlans: [
+        {
+          semesterType: 'FIRST_HALF' as const,
+          stages: [
+            {
+              stage: 'MAIN_EDUCATION' as const,
+              rows: [
+                firstRow,
+                {
+                  ...firstRow,
+                  rowId: 'h1-main-2',
+                  displayOrder: 2,
+                  startDate: '2027-03-01',
+                  endDate: '2027-06-30',
+                  dates: ['2027-03-01'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    const display = resolveUjatHalfEducationScheduleDisplayFromTypedDetail(twoRows, 'h1')
+    const settings = resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail('h1', twoRows)
+
+    expect(settings.eventRange).toEqual({ start: '2027-04-01', end: '2027-04-30' })
+    expect(display.eventSchedule.scheduleText).toContain('2027.04.01')
+    expect(display.eventSchedule.scheduleText).toContain('2027.04.30')
+    expect(display.eventSchedule.scheduleText).not.toContain('2027.03.01')
+    expect(display.eventSchedule.scheduleText).not.toContain('2027.06.30')
+  })
+
   it('maps typed exclusion policy and unavailable dates to settings display', () => {
     const display = resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail('h1', detail)
 

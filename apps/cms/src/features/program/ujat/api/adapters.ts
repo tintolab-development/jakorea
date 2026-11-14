@@ -79,7 +79,11 @@ import {
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
-import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import {
+  applySettlementPolicyToCommonInfo,
+  mapSettlementDeductionTypeToLabel,
+} from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { toOperationCalendarDate } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
@@ -945,9 +949,15 @@ export function fromDetail(
           : {}),
       }
     : namedCommonInfo
+  // 공제 항목은 BE가 계산한 settlementPolicy.deductionType이 정본이다. null이면 「해당없음」.
+  const policyDeductionItems = dto.settlementPolicy
+    ? mapSettlementDeductionTypeToLabel(dto.settlementPolicy.deductionType) ??
+      PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+    : undefined
   const generalCommonInfo = generalCommonInfoBase
     ? {
         ...generalCommonInfoBase,
+        ...(policyDeductionItems ? { deductionItems: policyDeductionItems } : {}),
         kpi: responseKpi as GeneralProgramCommonInfoExtension['kpi'],
         participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
           generalCommonInfoBase.participantRecruitmentInfo,
@@ -955,6 +965,7 @@ export function fromDetail(
         ),
       }
     : {
+      ...(policyDeductionItems ? { deductionItems: policyDeductionItems } : {}),
       participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
         undefined,
         dto

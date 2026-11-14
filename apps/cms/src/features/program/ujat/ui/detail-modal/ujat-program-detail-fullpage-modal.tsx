@@ -122,7 +122,11 @@ import {
   replaceUjatRegionCapacitiesRemote,
   type UjatRegionCapacityUpsert,
 } from '@/features/program/ujat/api/region-capacities-client'
-import { ujatRegionCapacityUpsertsFromState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
+import {
+  listIncompleteUjatRegionCapacityKeys,
+  ujatRegionCapacityStateSnapshot,
+  ujatRegionCapacityUpsertsFromState,
+} from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
@@ -227,7 +231,7 @@ function buildUjatRegionCapacityUpserts(program: Program): UjatRegionCapacityUps
 }
 
 function ujatRegionCapacitySnapshot(program: Program): string {
-  return JSON.stringify(buildUjatRegionCapacityUpserts(program))
+  return ujatRegionCapacityStateSnapshot(program.ujatRegionCapacity)
 }
 
 export interface UjatProgramDetailFullPageModalProps {
@@ -1079,6 +1083,23 @@ function UjatProgramDetailFullPageModalContent({
       void showAlert({
         title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
         content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+      })
+      return
+    }
+    // 지역 정원 빈 칸은 0(배정 불가)으로 바꿔 보내지 않는다 — 활성 지역 학급·봉사자 수 모두 필수.
+    // 정원을 바꾸지 않았으면 PUT을 보내지 않으므로 검사하지 않는다(정원 미입력 기존 프로그램의 다른 항목 저장 허용).
+    const capacityState = infoValues.ujatRegionCapacity ?? displayProgram.ujatRegionCapacity
+    const capacityChanged =
+      ujatRegionCapacityStateSnapshot(capacityState) !==
+      ujatRegionCapacityStateSnapshot(displayProgram.ujatRegionCapacity)
+    const capacityIncompleteKeys = capacityChanged
+      ? listIncompleteUjatRegionCapacityKeys(capacityState)
+      : []
+    if (capacityIncompleteKeys.length > 0) {
+      detailRequiredHighlight.report(capacityIncompleteKeys)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
     }

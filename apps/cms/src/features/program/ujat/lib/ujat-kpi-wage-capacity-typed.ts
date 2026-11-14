@@ -93,28 +93,87 @@ export function ujatKpiWageCapacityFromLegacyOverlay(
   }
 }
 
-function countFromInput(raw: string | undefined): number {
-  if (raw == null || raw.trim() === '') return 0
-  const parsed = Number.parseInt(raw, 10)
-  return Number.isFinite(parsed) ? parsed : 0
+/** 빈 칸은 null — 0은 「배정 불가」로 동작하므로 빈 칸을 0으로 바꾸지 않는다. */
+function countFromInput(raw: string | undefined): number | null {
+  const trimmed = raw?.trim()
+  if (!trimmed) return null
+  const parsed = Number.parseInt(trimmed, 10)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
 }
 
+const UJAT_REGION_CAPACITY_HALVES = [
+  ['FIRST_HALF', 'h1'],
+  ['SECOND_HALF', 'h2'],
+] as const
+
+/** 활성 지역 중 학급 수 또는 봉사자 수가 비어 있는 칸 — 등록 위저드와 같은 `capacity.{half}.{지역}` 키 */
+export function listIncompleteUjatRegionCapacityKeys(
+  state: UjatRegionCapacityBySemesterState | undefined
+): string[] {
+  const values = state ?? EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER
+  const regions = listUjatEducationRegionsActive()
+  return UJAT_REGION_CAPACITY_HALVES.flatMap(([, half]) =>
+    regions
+      .filter(region => {
+        const row = values[half]?.[region.label]
+        return countFromInput(row?.classCount) == null || countFromInput(row?.volunteerCount) == null
+      })
+      .map(region => `capacity.${half}.${region.label}`)
+  )
+}
+
+export class UjatRegionCapacityIncompleteError extends Error {
+  readonly incompleteKeys: readonly string[]
+
+  constructor(incompleteKeys: readonly string[]) {
+    super('UJAT_REGION_CAPACITY_INCOMPLETE')
+    this.name = 'UjatRegionCapacityIncompleteError'
+    this.incompleteKeys = incompleteKeys
+  }
+}
+
+/**
+ * PUT region-capacities payload. PUT은 전체 교체이고 maxClassCount·maxVolunteerCount 둘 다 필수(null은 400)라서
+ * 활성 지역에 빈 칸이 하나라도 있으면 payload를 만들지 않는다.
+ */
 export function ujatRegionCapacityUpsertsFromState(
   state: UjatRegionCapacityBySemesterState | undefined
 ): UjatRegionCapacityUpsert[] {
   const values = state ?? EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER
   const regions = listUjatEducationRegionsActive()
-  const halves = [
-    ['FIRST_HALF', 'h1'],
-    ['SECOND_HALF', 'h2'],
-  ] as const
-  return halves.flatMap(([semesterType, half]) =>
-    regions.map(region => ({
-      semesterType,
-      educationRegionCode: region.key,
-      maxClassCount: countFromInput(values[half]?.[region.label]?.classCount),
-      maxVolunteerCount: countFromInput(values[half]?.[region.label]?.volunteerCount),
-    }))
+  const upserts: UjatRegionCapacityUpsert[] = []
+  const incompleteKeys: string[] = []
+  for (const [semesterType, half] of UJAT_REGION_CAPACITY_HALVES) {
+    for (const region of regions) {
+      const row = values[half]?.[region.label]
+      const maxClassCount = countFromInput(row?.classCount)
+      const maxVolunteerCount = countFromInput(row?.volunteerCount)
+      if (maxClassCount == null || maxVolunteerCount == null) {
+        incompleteKeys.push(`capacity.${half}.${region.label}`)
+        continue
+      }
+      upserts.push({ semesterType, educationRegionCode: region.key, maxClassCount, maxVolunteerCount })
+    }
+  }
+  if (incompleteKeys.length > 0) throw new UjatRegionCapacityIncompleteError(incompleteKeys)
+  return upserts
+}
+
+/** 변경 여부 비교용 — 활성 지역의 입력값만, 빈 칸은 null로 둔다(payload를 만들지 않음). */
+export function ujatRegionCapacityStateSnapshot(
+  state: UjatRegionCapacityBySemesterState | undefined
+): string {
+  const values = state ?? EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER
+  const regions = listUjatEducationRegionsActive()
+  return JSON.stringify(
+    UJAT_REGION_CAPACITY_HALVES.flatMap(([semesterType, half]) =>
+      regions.map(region => [
+        semesterType,
+        region.key,
+        countFromInput(values[half]?.[region.label]?.classCount),
+        countFromInput(values[half]?.[region.label]?.volunteerCount),
+      ])
+    )
   )
 }
 

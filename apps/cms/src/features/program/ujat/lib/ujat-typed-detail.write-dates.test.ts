@@ -258,3 +258,30 @@ describe('UJAT typed 날짜 쓰기 — 문자열만', () => {
     expect(JSON.stringify(out)).not.toContain('excludePublicHoliday')
   })
 })
+
+describe('UJAT typed-detail 쓰기 — 숨긴 교재 교육 값 보존', () => {
+  it('rows[].textbook을 빼거나 null로 덮지 않는다', () => {
+    const textbook = { provisionMethod: 'instructor_outsource', responsiblePerson: '홍길동' }
+    const plan = normalizeUjatTypedHalfPlanForWrite({
+      semesterType: 'FIRST_HALF',
+      stages: [
+        {
+          stage: 'PRE_EDUCATION',
+          rows: [
+            {
+              rowId: 'h1-pre-1',
+              displayOrder: 1,
+              educationName: '사전교육',
+              educationMethod: 'online',
+              startDate: '2026-03-17',
+              endDate: '2026-03-17',
+              dates: ['2026-03-17'],
+              textbook,
+            },
+          ],
+        },
+      ],
+    } as UjatTypedHalfPlan)
+    expect(plan.stages?.[0]?.rows?.[0]?.textbook).toEqual(textbook)
+  })
+})

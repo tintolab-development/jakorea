@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
+import {
+  PROGRAM_WAGE_DEDUCTION_LABEL,
+  PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -286,6 +290,33 @@ describe('UJAT program adapters', () => {
       },
     })
     expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비, 장거리 교통비, 숙박비')
+  })
+
+  it('공제 항목은 settlementPolicy.deductionType을 정본으로 쓰고 null이면 해당없음이다', () => {
+    const withholding = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      settlementPolicy: {
+        structuredPolicyYn: true,
+        deductionType: 'DAILY_WORKER_WITHHOLDING',
+        wagePolicies: [],
+        paymentItems: [{ id: 1999, itemType: 'TRANSPORTATION', useYn: true }],
+      },
+    })
+    expect(withholding.generalCommonInfo?.paymentItems).toBe('교통비')
+    expect(withholding.generalCommonInfo?.deductionItems).toBe(PROGRAM_WAGE_DEDUCTION_LABEL)
+
+    const none = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: { deductionItems: PROGRAM_WAGE_DEDUCTION_LABEL },
+      }),
+      settlementPolicy: { deductionType: undefined, wagePolicies: [], paymentItems: [] },
+    })
+    expect(none.generalCommonInfo?.deductionItems).toBe(PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL)
   })
 
   it('settlementPolicy.paymentItems []는 JSON overlay 지급 항목을 덮어 빈 상태로 둔다', () => {
