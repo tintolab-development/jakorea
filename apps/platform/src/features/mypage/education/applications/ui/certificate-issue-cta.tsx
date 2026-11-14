@@ -3,6 +3,7 @@ import type { PortalCertificateIssueReason } from '../api/personal-certificate-t
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
 import { PFAlertModal, PFButton, PFLoadingSpinner } from '@/shared/ui'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import {
@@ -16,6 +17,7 @@ import {
   shouldFetchIndividualCertificateAvailability,
 } from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
+import { isCertificateIssuancePeriodExpiredMessage } from '../lib/certificate-reason-messages'
 import {
   PERSONAL_CERTIFICATE_ISSUE_NOTICE,
   PERSONAL_CERTIFICATE_ISSUE_REASONS,
@@ -252,8 +254,16 @@ export function CertificateIssueCta({
 
       <PFAlertModal
         open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? ''}
+        title={
+          isCertificateIssuancePeriodExpiredMessage(alertMessage)
+            ? PLATFORM_ALERT_COPY.certificateExpired.title
+            : '안내'
+        }
+        description={
+          isCertificateIssuancePeriodExpiredMessage(alertMessage)
+            ? PLATFORM_ALERT_COPY.certificateExpired.description
+            : (alertMessage ?? '')
+        }
         onConfirm={() => setAlertMessage(null)}
       />
       {downloadMutation.isPending ? (
