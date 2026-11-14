@@ -58,7 +58,15 @@ import {
 } from '@/features/mypage/education/settlements/lib/settlement-join'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { platformQueryKeys } from '@/shared/api/query-keys'
-import { PFAlertModal, PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import {
+  PFAlertModal,
+  PFButton,
+  PFFormPage,
+  PFLoadingSpinner,
+  PFRequiredFieldsIncompleteDescription,
+  PFText,
+} from '@/shared/ui'
 import styles from './page.module.css'
 import {
   buildLectureReportPageTitle,
@@ -68,19 +76,10 @@ import { resolveEducationSurveySectionDescription } from '@/features/mypage/educ
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import { toSeoulDateOnly } from '@/shared/lib/format-display-date'
 
-const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 입력 안내'
+/** 시안 「공통 제한 안내 / 필수 항목 미입력」(사용자 플랫폼 14491-2657) */
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = PLATFORM_REQUIRED_NOT_FILLED_TITLE
 
-const REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION = (
-  <>
-    입력되지 않은 필수 항목이 있어요.
-    {'\n'}
-    &apos;
-    <PFText as="span" typo="bd-md-rg" color="error">
-      *
-    </PFText>
-    &apos; 표시된 필수 항목을 모두 작성해 주세요.
-  </>
-)
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION = <PFRequiredFieldsIncompleteDescription />
 
 const EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE = '교육 사진 첨부 안내'
 const EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION =
@@ -232,16 +231,8 @@ export function MypageLectureReportWritePage() {
         throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
       }
 
-      const assignments = await getAllLectureReportAssignments(state.programId)
-      const assignment = assignments.find(item => item.assignmentId === assignmentId)
-      if (!assignment) throw new Error('강의보고서 일정 정보를 찾을 수 없습니다.')
-      if (
-        assignment.programId !== state.programId ||
-        assignment.scheduleId !== state.programScheduleId
-      ) {
-        throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
-      }
-
+      // 제출 가능 여부를 목록 조회보다 먼저 본다. 일정 미정 배정은 목록에 없으므로
+      // 순서가 반대면 「일정 정보를 찾을 수 없습니다」로 막힌다.
       if (state.reportStatus === 'SUBMITTED') {
         throw new Error('이미 제출된 강의보고서입니다. 확인하기를 이용해 주세요.')
       }
@@ -254,6 +245,16 @@ export function MypageLectureReportWritePage() {
       }
       if (state.bindingId == null || state.templateVersionId == null) {
         throw new Error(LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE)
+      }
+
+      const assignments = await getAllLectureReportAssignments(state.programId)
+      const assignment = assignments.find(item => item.assignmentId === assignmentId)
+      if (!assignment) throw new Error('강의보고서 일정 정보를 찾을 수 없습니다.')
+      if (
+        assignment.programId !== state.programId ||
+        assignment.scheduleId !== state.programScheduleId
+      ) {
+        throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
       }
 
       const binding = await getLectureReportBinding(assignmentId)

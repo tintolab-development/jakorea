@@ -12,13 +12,17 @@ import {
   hasRefreshCredential,
 } from '@/shared/lib/auth-token'
 import { setDevAuthLoggedIn } from '@/shared/lib/dev-auth'
+import { SIGN_IN_PATH } from '@/shared/lib/login-redirect'
 
 export type LogoutPortalSessionOptions = {
   /** 서버 `POST /api/portal/auth/logout` 시도 여부. 기본 true */
   serverLogout?: boolean
   /** 서버 Logout에 쓸 Refresh 토큰. 생략하면 현재 저장값 */
   refreshToken?: string | null
-  /** 정리 후 `window.location.assign` 할 경로. `navigate`가 있으면 무시 */
+  /**
+   * 정리 후 `window.location.assign` 할 경로. `navigate`가 있으면 무시.
+   * 로그인 화면이면 돌아올 경로(`redirect`)는 버린다 — 로그아웃·자동 로그아웃·세션 만료 뒤 다시 로그인하면 기본 첫 화면.
+   */
   redirectTo?: string | null
   /** SPA 이동이 필요할 때 (헤더 로그아웃 등) */
   navigate?: () => void
@@ -81,6 +85,17 @@ async function runLogout(options: LogoutPortalSessionOptions): Promise<void> {
     return
   }
   if (options.redirectTo && typeof window !== 'undefined') {
-    window.location.assign(options.redirectTo)
+    window.location.assign(withoutSignInReturnPath(options.redirectTo))
   }
+}
+
+/** `/auth/sign-in?redirect=…` → `/auth/sign-in` (다른 쿼리는 유지). 로그인 화면이 아니면 그대로 */
+export function withoutSignInReturnPath(target: string): string {
+  const [beforeHash, hash] = target.split('#', 2)
+  const [pathname, query] = (beforeHash ?? '').split('?', 2)
+  if (pathname !== SIGN_IN_PATH || query == null) return target
+  const params = new URLSearchParams(query)
+  params.delete('redirect')
+  const rest = params.toString()
+  return `${SIGN_IN_PATH}${rest ? `?${rest}` : ''}${hash != null ? `#${hash}` : ''}`
 }

@@ -21,8 +21,13 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import { getAdminPermissionDisplayLabel } from '@/features/user/shared/lib/admin-permission-display'
 import type { Notification } from '@/features/dashboard/api/notification-service'
-import { NotificationDropdown } from '@/features/dashboard/ui/notification-dropdown'
+import {
+  NotificationDropdown,
+  type NotificationCategoryKey,
+} from '@/features/dashboard/ui/notification-dropdown'
+import { resolveNotificationServerCategory } from '@/features/dashboard/lib/notification-tab-category'
 import { NotificationSettingsModal } from '@/features/dashboard/ui/notification-settings-modal'
+import { NotificationDetailModal } from '@/features/dashboard/ui/notification-detail-modal'
 import './main-header.css'
 
 const { Header: AntHeader } = Layout
@@ -41,8 +46,11 @@ export function MainHeader() {
   const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
   const { data: remoteUnreadCount, refetch: refetchRemoteUnreadCount } =
     useDashboardNotificationCount(useRemoteNotificationCount)
+  /** 알림 드롭다운 탭 — 서버 category가 있는 탭은 탭별로 따로 조회한다 */
+  const [notificationTab, setNotificationTab] = useState<NotificationCategoryKey>('all')
   const {
     notifications: headerNotifications,
+    loading: notificationsLoading,
     unreadCount: listUnreadCount,
     markAsRead,
     removeNotification,
@@ -50,13 +58,17 @@ export function MainHeader() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useNotifications()
+  } = useNotifications(resolveNotificationServerCategory(notificationTab))
   const unreadCount = useRemoteNotificationCount
-    ? (typeof remoteUnreadCount === 'number' ? remoteUnreadCount : null)
+    ? typeof remoteUnreadCount === 'number'
+      ? remoteUnreadCount
+      : null
     : listUnreadCount
   const dropdownNotifications = headerNotifications
   const { items: breadcrumbItems } = useBreadcrumb()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  /** 알림 항목 클릭 → 읽음 처리 뒤 띄우는 안내 팝업 대상 */
+  const [detailNotification, setDetailNotification] = useState<Notification | null>(null)
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false)
   const [profileEditModalOpen, setProfileEditModalOpen] = useState(false)
@@ -166,7 +178,7 @@ export function MainHeader() {
   }, [location.pathname, location.search, user])
 
   const handleLogout = () => {
-    logout({ preserveReturnPath: false })
+    logout()
     navigate('/login')
   }
 
@@ -185,8 +197,17 @@ export function MainHeader() {
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
-      await markAsRead(notification.id)
+      try {
+        await markAsRead(notification.id)
+      } catch (error) {
+        console.error('알림 읽음 처리 실패:', error)
+      }
     }
+    setDetailNotification({ ...notification, read: true })
+  }
+
+  const handleDetailNavigate = (notification: Notification) => {
+    setDetailNotification(null)
     if (navigateToNotificationTarget(notification)) {
       setDropdownOpen(false)
     }
@@ -243,6 +264,8 @@ export function MainHeader() {
             <Dropdown
               open={dropdownOpen}
               onOpenChange={open => {
+                // 안내 팝업(body 포털) 클릭은 드롭다운 바깥 클릭으로 잡히므로 팝업이 열린 동안은 닫지 않는다
+                if (!open && detailNotification) return
                 setDropdownOpen(open)
                 if (open && useRemoteNotificationCount) {
                   void refreshNotifications()
@@ -257,9 +280,11 @@ export function MainHeader() {
                   <NotificationDropdown
                     notifications={dropdownNotifications}
                     unreadCount={unreadCount}
+                    category={notificationTab}
+                    onCategoryChange={setNotificationTab}
+                    loading={notificationsLoading}
                     onNotificationClick={handleNotificationClick}
                     onConfirm={handleConfirm}
-                    onClose={() => setDropdownOpen(false)}
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}
                     fetchNextPage={() => {
@@ -361,6 +386,11 @@ export function MainHeader() {
       <ProfileEditModal
         open={profileEditModalOpen}
         onCancel={() => setProfileEditModalOpen(false)}
+      />
+      <NotificationDetailModal
+        notification={detailNotification}
+        onClose={() => setDetailNotification(null)}
+        onNavigate={handleDetailNavigate}
       />
       {SHOW_NOTIFICATION_SETTINGS ? (
         <NotificationSettingsModal

@@ -71,13 +71,28 @@ export function formatParticipatingInstitutionActivityWithdrawScheduleOptionLabe
   return periodPart ? `${rowLabel} | ${dateTimePart} | ${periodPart}` : `${rowLabel} | ${dateTimePart}`
 }
 
-/** 활동 포기 모달 — 교육 일정 선택지 */
+/** 이미 시작한 일정인지 — 시작 시각(startAt)을 알 수 없으면 판단하지 않는다(false). */
+export function isParticipatingSchoolSessionStarted(
+  session: ParticipatingSchoolSession,
+  nowMs: number
+): boolean {
+  const startMs = Date.parse(session.startAt?.trim() ?? '')
+  return Number.isFinite(startMs) && startMs <= nowMs
+}
+
+/**
+ * 활동 포기 모달 — 교육 일정 선택지.
+ * `nowMs`를 주면 이미 시작한 일정은 중단 기준으로 고를 수 없게 뺀다(시작 전 일정만).
+ * 키는 전체 목록 인덱스로 만든 뒤 거른다 — stopScheduleId 해석(`resolve…StopScheduleId`)과 같은 키를 쓴다.
+ */
 export function getParticipatingInstitutionActivityWithdrawScheduleOptions(
   program: Program,
   sessions: ReadonlyArray<ParticipatingSchoolSession>,
-  excludedSessionKeys: ReadonlyArray<string> = []
+  excludedSessionKeys: ReadonlyArray<string> = [],
+  filter?: { nowMs?: number }
 ): ActivityWithdrawScheduleOption[] {
   const excluded = new Set(excludedSessionKeys)
+  const nowMs = filter?.nowMs
 
   return sessions
     .map((session, index) => ({
@@ -86,6 +101,9 @@ export function getParticipatingInstitutionActivityWithdrawScheduleOptions(
       key: buildParticipatingSchoolSessionKey(session, index),
     }))
     .filter(({ key }) => !excluded.has(key))
+    .filter(
+      ({ session }) => nowMs == null || !isParticipatingSchoolSessionStarted(session, nowMs)
+    )
     .map(({ session, key }) => ({
       value: key,
       label: formatParticipatingInstitutionActivityWithdrawScheduleOptionLabel(program, session),

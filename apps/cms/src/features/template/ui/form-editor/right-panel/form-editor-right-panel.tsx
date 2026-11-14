@@ -62,6 +62,7 @@ export function FormEditorRightPanel({
   verticalTableBodyRowSelection = null,
   onVerticalTableBodyRowDeleted,
   structureLockedParagraphIds,
+  structureControlLockedParagraphIds,
   hideParagraphKindOutline: hideParagraphKindOutlineProp,
   structureLockedTypeSelectPreset = 'default',
   lockSurveyWritingPeriodInput = false,
@@ -79,12 +80,18 @@ export function FormEditorRightPanel({
       structureLockedParagraphIds,
     })
 
+  /** 구조 조작 전용 잠금 — 일반 편집 패널에서 유형 변경·표 행/열 삭제만 막는다 */
+  const structureControlLockedActive =
+    activeParagraphId != null &&
+    (structureControlLockedParagraphIds?.has(activeParagraphId) ?? false)
+  const kindLocked = activeKindLocked || structureControlLockedActive
+
   /** 사용자 추가 단락: 유형 셀렉트 노출 / 시드·관리자 고정: 기본은 잠금 안내·설정 노출 */
   const hideParagraphKindOutline = hideParagraphKindOutlineProp === true
 
   const { handleKindChange, handleDetailChange } = useParagraphConversion({
     active,
-    activeKindLocked,
+    activeKindLocked: kindLocked,
     activeKindValue,
     updateParagraph,
   })
@@ -161,7 +168,7 @@ export function FormEditorRightPanel({
               outline={outline}
               activeKindValue={activeKindValue}
               activeDetailValue={activeDetailValue}
-              activeKindLocked={activeKindLocked}
+              activeKindLocked={kindLocked}
               onKindChange={handleKindChange}
               onDetailChange={handleDetailChange}
             />
@@ -184,6 +191,7 @@ export function FormEditorRightPanel({
               shortEssayShowItemTitle={shortEssayShowItemTitle}
               activeShortEssay={activeShortEssay}
               selectedShortEssayItem={selectedShortEssayItem}
+              structureControlLocked={structureControlLockedActive}
             />
           </ParagraphCustomFieldsFormShell>
         </>

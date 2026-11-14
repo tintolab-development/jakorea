@@ -6,9 +6,13 @@
  * OpenAPI spec version: v9
  */
 import type { ListItemApplicationType } from './listItemApplicationType';
+import type { ListItemLectureProgressStatus } from './listItemLectureProgressStatus';
+import type { ListItemRowType } from './listItemRowType';
+import type { ListItemScheduleKind } from './listItemScheduleKind';
 
 export interface ListItem {
-  settlementApplicationId?: number;
+  /** 개인 정산 신청 ID. rowType=NOT_APPLIED(정산 신청 전 봉사 일정) 행만 null. */
+  settlementApplicationId?: number | null;
   programId?: number;
   /** INDIVIDUAL 신청만. VOLUNTEER 신청은 null이고 volunteerApplicationId를 쓴다. */
   individualApplicationId?: number | null;
@@ -19,9 +23,12 @@ export interface ListItem {
   scheduleName?: string;
   scheduleStartAt?: string;
   scheduleEndAt?: string;
-  latestRevisionNo?: number;
-  status?: string;
-  totalAmount?: number;
+  /** rowType=NOT_APPLIED 행은 null. */
+  latestRevisionNo?: number | null;
+  /** 최신 Revision 상태. rowType=NOT_APPLIED 행은 null(화면 처리 현황 "-"). */
+  status?: string | null;
+  /** 최신 Revision 신청 금액 합계. rowType=NOT_APPLIED 행은 null(화면 금액 "-"). */
+  totalAmount?: number | null;
   submittedAt?: string;
   reviewedAt?: string;
   rejected?: boolean;
@@ -30,4 +37,10 @@ export interface ListItem {
   applicationType?: ListItemApplicationType;
   /** VOLUNTEER 신청의 program_volunteer_application.id */
   volunteerApplicationId?: number | null;
+  /** 참여 봉사자 정산 현황(programId+participantId+applicationType=VOLUNTEER)에서만 채운다. SETTLEMENT_APPLICATION=정산 신청 행, NOT_APPLIED=정산 신청 전인 배정 봉사 일정 행(settlementApplicationId·status·totalAmount·latestRevisionNo null, 상세·승인·반려 대상 아님). 다른 조회에서는 null. */
+  rowType?: ListItemRowType;
+  /** 참여 봉사자 정산 현황에서만 채우는 봉사 일정 진행 여부(강사 정산 현황 lectureProgressStatus와 같은 규칙). SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 일정. 다른 조회에서는 null. */
+  lectureProgressStatus?: ListItemLectureProgressStatus;
+  /** 일정 종류(program_schedule.schedule_kind). 강사 정산 현황 scheduleKind와 같은 값. 모든 조회에서 채우며, 값이 비어 있는 일정은 null. */
+  scheduleKind?: ListItemScheduleKind;
 }

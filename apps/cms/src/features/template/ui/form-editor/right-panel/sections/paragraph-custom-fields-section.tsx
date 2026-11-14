@@ -64,6 +64,7 @@ export function ParagraphCustomFieldsSection({
   shortEssayShowItemTitle,
   activeShortEssay,
   selectedShortEssayItem,
+  structureControlLocked = false,
 }: {
   active: WritingFormParagraph
   updateParagraph: FormEditorRightPanelProps['updateParagraph']
@@ -75,6 +76,8 @@ export function ParagraphCustomFieldsSection({
   shortEssayShowItemTitle: boolean
   activeShortEssay: ShortEssayParagraph | SessionPlanShortEssayParagraph | null
   selectedShortEssayItem: ShortEssayItemShape | null
+  /** 구조 조작 전용 잠금 — 표 행/열 삭제·셀 유형 변경 숨김, 문구는 편집 */
+  structureControlLocked?: boolean
 }) {
   const editorKey = resolveParagraphCustomEditorKey(active, selectedShortEssayItem)
 
@@ -129,6 +132,7 @@ export function ParagraphCustomFieldsSection({
         rowSelection={horizontalTableRowSelection}
         updateParagraph={updateParagraph}
         onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
+        structureControlLocked={structureControlLocked}
       />
     )
   }
@@ -141,6 +145,7 @@ export function ParagraphCustomFieldsSection({
         rowSelection={verticalTableBodyRowSelection}
         updateParagraph={updateParagraph}
         onBodyRowDeleted={onVerticalTableBodyRowDeleted}
+        structureControlLocked={structureControlLocked}
       />
     )
   }

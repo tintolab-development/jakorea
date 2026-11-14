@@ -35,6 +35,7 @@ import { ConsentShortEssayFillFields } from './consent-short-essay-fill-fields'
 import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
 import { PlatformPortraitLockedVerticalTable } from './platform-portrait-locked-vertical-table'
 import { PlatformPortraitPersonalConsentTable } from './portrait-personal-consent-table'
+import type { PortraitPersonalConsentPrefillLock } from './portrait-prefill-lock'
 import {
   resolveHorizontalTablePlatformView,
   resolvePaymentStatementWriteEmphasizedColumns,
@@ -222,12 +223,15 @@ export function PlatformConsentParagraphBody({
   onUpdateParagraph,
   fillOptions,
   lockedNoticeSubjectMemberName,
+  portraitPrefillLock,
   documentPreview = false,
 }: {
   paragraph: WritingFormParagraph
   onUpdateParagraph: FormUpdateParagraph
   fillOptions?: PlatformConsentFillOptions
   lockedNoticeSubjectMemberName?: string
+  /** 초상권 1번 표 — 회원정보로 채운 성명·소속 잠금 */
+  portraitPrefillLock?: PortraitPersonalConsentPrefillLock
   documentPreview?: boolean
 }) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
@@ -247,6 +251,7 @@ export function PlatformConsentParagraphBody({
           paragraph={paragraph}
           onUpdateParagraph={onUpdateParagraph}
           readOnly={documentPreview}
+          prefillLock={portraitPrefillLock}
         />
       )
     }

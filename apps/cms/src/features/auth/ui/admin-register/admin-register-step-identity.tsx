@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { CmsButton, cmsAlertModal } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
 
 import { RegisterIdentityStatusPanel } from './register-identity-status-panel'
 import { RegisterStepHeader } from './register-step-header'
+import { showIdentityVerificationFailedAlert } from './show-identity-failed-alert'
 
 interface AdminRegisterStepIdentityProps {
   onStartVerify: () => void
@@ -32,18 +33,7 @@ export function AdminRegisterStepIdentity({
     if (status !== 'error' || !errorMessage) {
       return
     }
-    cmsAlertModal.show({
-      title: '본인인증 실패',
-      content: (
-        <>
-          본인인증을 완료하지 못했습니다.
-          <br />
-          정보를 확인한 뒤 다시 시도해 주세요.
-        </>
-      ),
-      width: 600,
-      confirmLabel: '확인',
-    })
+    showIdentityVerificationFailedAlert()
   }, [status, errorMessage])
 
   return (

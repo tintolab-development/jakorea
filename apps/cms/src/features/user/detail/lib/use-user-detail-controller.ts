@@ -33,6 +33,10 @@ import {
 } from './user-detail-fullpage-helpers'
 import { buildUserDetailSidebarItems } from '../ui/detail-info/user-detail-fullpage-sidebar-items'
 import { fetchMemberDetailBasicTabResources } from './fetch-member-detail-basic-tab-resources'
+import {
+  fetchMemberConsentRecordsQuery,
+  fetchMemberConsentSummariesQuery,
+} from '@/features/user/api/hooks/use-member-detail-query'
 import { fetchMemberDetailSettlementTabResources } from './fetch-member-detail-settlement-tab-resources'
 import { resolveUserDetailBasicTabFetchSections } from './resolve-user-detail-basic-tab-sections'
 import { useUserDetailApplications } from './use-user-detail-applications'
@@ -159,7 +163,10 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/api/update-teacher-member-employment-status'
 import { invalidateMemberDetailHistoryQueries } from '@/features/user/api/invalidate-member-detail-history-queries'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import {
+  getMemberApiEmailFieldErrorMessage,
+  getMemberApiErrorMessage,
+} from '@/features/user/api/get-member-api-error'
 import { resolveInstructorRevokeBlockedAlert } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
@@ -170,6 +177,11 @@ import {
   buildInstructorPermissionRevokeCompleteMessage,
 } from './instructor-permission-revoke-copy'
 import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
+import { isValidJakoreaEmail } from '@/features/auth/lib/jakorea-email'
+import {
+  ADMIN_EMAIL_DOMAIN_ALERT_CONTENT,
+  ADMIN_EMAIL_DOMAIN_ALERT_TITLE,
+} from '@/features/user/shared/ui/admin-email-domain-alert'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
@@ -477,6 +489,11 @@ export function useUserDetailController({
     (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
   >(null)
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
+  /** 저장 실패 `error.field === 'email'` — 그때 보낸 이메일과 서버 문구. 입력값이 바뀌면 표시하지 않는다. */
+  const [basicInfoEmailServerError, setBasicInfoEmailServerError] = useState<{
+    email: string
+    message: string
+  } | null>(null)
   /** 코멘트 편집을 열 때 저장된 코멘트 — 있으면 비워 저장 = 삭제 (QA-0044) */
   const [adminCommentEditExisting, setAdminCommentEditExisting] = useState('')
   const [adminPermissionVariantPatching, setAdminPermissionVariantPatching] = useState(false)
@@ -956,6 +973,7 @@ export function useUserDetailController({
       const target = sourceUser ?? displayUser
       if (!target) return
       if (!shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(target)) return
+      setBasicInfoEmailServerError(null)
 
       const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
       const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, target.role)
@@ -1142,6 +1160,7 @@ export function useUserDetailController({
     setBasicInfoEditing(false)
     setBasicInfoEditScope('none')
     setBasicInfoDraft(null)
+    setBasicInfoEmailServerError(null)
     // 수정 취소 즉시 원문 폐기·재마스킹. 원문은 캐시에 쓰지 않았으므로 화면은 마스킹 GET 값으로 돌아간다.
     endPersonalInfoReveal()
   }, [endPersonalInfoReveal])
@@ -1153,6 +1172,7 @@ export function useUserDetailController({
       ? mergeInstructorDetailEditFlushIntoDraft(basicInfoDraft, flushed)
       : basicInfoDraft
     if (flushed) setBasicInfoDraft(draft)
+    setBasicInfoEmailServerError(null)
     if (basicInfoEditScope === 'comment' && displayUser.role === 'ADMIN') {
       if (!canAccessAdminCommentInAdminDetail(currentUser)) return
     }
@@ -1250,6 +1270,14 @@ export function useUserDetailController({
         patch = canEditAdminMemberInfo(currentUser, displayUser)
           ? draftToAdminAccountBasicInfoPatch(draft)
           : draftToAdminMemberRestrictedPatch(draft)
+        // 바뀐 이메일만 patch에 담긴다 — 관리자 계정은 @jakorea.org만 허용(신규 등록과 같은 안내).
+        if (patch.email && !isValidJakoreaEmail(patch.email)) {
+          showAlert({
+            title: ADMIN_EMAIL_DOMAIN_ALERT_TITLE,
+            content: ADMIN_EMAIL_DOMAIN_ALERT_CONTENT,
+          })
+          return
+        }
       } else if (displayUser.role === 'INDIVIDUAL') {
         const enrolledSchoolBlock =
           draft.schoolEnrollmentStatus === 'enrolled' &&
@@ -1367,6 +1395,12 @@ export function useUserDetailController({
             queryKey: memberQueryKeys.consentSummaries(displayUser.memberId),
           })
         }
+        if (membersRemote && patch.termsAgreements?.length) {
+          // 동의를 바꾼 저장(성범죄 원본 재동의 등) — 동의 일시·만료일은 서버 값으로 다시 받는다.
+          // 동의 쿼리는 manualFetch(enabled=false)라 invalidate만으로는 다시 GET하지 않는다.
+          void fetchMemberConsentSummariesQuery(queryClient, displayUser.memberId).catch(() => undefined)
+          void fetchMemberConsentRecordsQuery(queryClient, displayUser.memberId).catch(() => undefined)
+        }
       }
       if (basicInfoEditScope === 'profile') {
         void queryClient.invalidateQueries({
@@ -1390,6 +1424,13 @@ export function useUserDetailController({
         skipListInvalidate ? { skipListInvalidate: true } : undefined
       )
     } catch (error) {
+      // 관리자 계정 이메일 변경 실패(중복·형식·변경 불가)는 알럿 대신 이메일 입력란에 서버 문구를 표시한다.
+      const emailFieldMessage =
+        displayUser.role === 'ADMIN' ? getMemberApiEmailFieldErrorMessage(error) : null
+      if (emailFieldMessage) {
+        setBasicInfoEmailServerError({ email: draft.email.trim(), message: emailFieldMessage })
+        return
+      }
       handleError(error, {
         defaultMessage: getMemberApiErrorMessage(error, '회원 정보 저장에 실패했습니다.'),
       })
@@ -1813,6 +1854,13 @@ export function useUserDetailController({
       basicInfoEditScope,
       basicInfoDraft,
       basicInfoSaveLoading,
+      /** 관리자 상세 이메일 입력란 서버 에러 — 실패 당시 이메일과 지금 입력이 같을 때만 */
+      basicInfoEmailError:
+        basicInfoEmailServerError != null &&
+        basicInfoDraft != null &&
+        basicInfoDraft.email.trim() === basicInfoEmailServerError.email
+          ? basicInfoEmailServerError.message
+          : null,
       /** 코멘트 모달 — 저장된 코멘트가 있으면 비워 저장(삭제) 허용 */
       adminCommentAllowEmpty: adminCommentEditExisting.length > 0,
       adminPermissionVariantPatching,

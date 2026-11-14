@@ -103,7 +103,7 @@ assert.equal(
 )
 assert.equal(
   resolveSettlementWriteValidationAlert('required_incomplete').title,
-  '필수 항목 미입력 안내',
+  '입력하지 않은 필수 항목이 있어요.',
 )
 
 const instructorPaymentMissingTransit = buildSettlementWriteDraft({

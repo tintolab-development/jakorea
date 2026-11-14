@@ -28,11 +28,6 @@
   line-height: 160%;
 }
 
-.register-identity-module--verified .register-identity-module__verified-icon {
-  color: #52c41a;
-  font-size: 32px;
-}
-
 .register-identity-module--error {
   justify-content: flex-start;
   padding: 16px;

@@ -90,6 +90,7 @@ export * from './categoryUpdateRequest';
 export * from './certificationCreateRequest';
 export * from './certificationResponse';
 export * from './certificationUpdateRequest';
+export * from './clientErrorReportRequest';
 export * from './confirmRequest';
 export * from './confirmResponse';
 export * from './confirmResponseStatus';

@@ -5,7 +5,7 @@ export const CRIME_CONSENT_UPLOAD_ACCEPT = 'application/pdf,.pdf'
 
 /**
  * 회원 화면 동의서 업로드 팝업(시안 6647:36345) — 작성본 증빙 PDF·JPG·PNG, 최대 20MB.
- * 서버 `CRIMINAL_HISTORY_EVIDENCE` 허용 형식(PDF/JPG/JPEG/PNG/WEBP, 20MB) 안에서 시안 안내 문구대로 받는다.
+ * 서버 관리자 `CRIMINAL_HISTORY_CONSENT_ORIGINAL` 허용 형식(PDF/JPG/JPEG/PNG, 20MB)과 같다 (BE 2026-11-14).
  */
 export const MEMBER_CRIME_CONSENT_EVIDENCE_UPLOAD_ACCEPT =
   'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png'

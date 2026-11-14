@@ -110,8 +110,8 @@ describe('학생 추가 payload', () => {
   }
 
   it('직접 고른 성별 그대로 보낸다', () => {
-    expect(mapStudentRowToRosterRequest(newStudent('female')).gender).toBe('female')
-    expect(mapStudentRowToRosterRequest(newStudent('male')).gender).toBe('male')
+    expect(mapStudentRowToRosterRequest(newStudent('female')).gender).toBe('FEMALE')
+    expect(mapStudentRowToRosterRequest(newStudent('male')).gender).toBe('MALE')
   })
 
   it('신규 행 미선택은 빈 값으로 보내 서버 필수 검증에 맡긴다(male로 채우지 않음)', () => {

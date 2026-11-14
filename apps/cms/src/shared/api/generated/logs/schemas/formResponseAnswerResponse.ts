@@ -12,6 +12,7 @@ export interface FormResponseAnswerResponse {
   questionKeySnapshot?: string;
   questionLabelSnapshot?: string;
   questionTypeSnapshot?: string;
+  /** JSON 문자열. 기본 마스킹에서는 null일 수 있다. GET /api/admin/form-responses/{responseId}에서 본인 LECTURE_EVALUATION 설문자 정보는 제출 때와 같은 객체 JSON 문자열이다. 예: {"name":"홍길동","addressRegion":"서울","phone":"010-1234-5678"}. */
   answerValueJson?: string;
   answerDisplayText?: string;
   autoFilledYn?: boolean;

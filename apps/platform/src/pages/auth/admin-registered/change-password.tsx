@@ -7,14 +7,19 @@ import {
   resolveAdminProvisionedOnboardingPath,
   validateAdminRegisteredChangePassword,
 } from '@/features/auth/admin-registered'
-import { ADMIN_REGISTERED_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
-import { getLoginApiErrorMessage, usePortalPasswordChangeMutation } from '@/features/auth/sign-in'
+import { MEMBER_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
+import {
+  getLoginApiErrorMessage,
+  isPasswordRecentlyUsedApiError,
+  usePortalPasswordChangeMutation,
+} from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFText, PFTextInput } from '@/shared/ui'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
+import { PFAlertModal, PFButton, PFText, PFTextInput } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
-const PASSWORD_HELP_TEXT = ADMIN_REGISTERED_PASSWORD_HELP_TEXT
+const PASSWORD_HELP_TEXT = MEMBER_PASSWORD_HELP_TEXT
 
 export function AdminRegisteredChangePasswordPage() {
   const navigate = useNavigate()
@@ -30,6 +35,8 @@ export function AdminRegisteredChangePasswordPage() {
   const [newPasswordError, setNewPasswordError] = useState<string>()
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>()
   const [submitError, setSubmitError] = useState<string>()
+  /** 최근 사용한 비밀번호 재사용 — 시안 「비밀번호 재사용 시」 팝업 */
+  const [passwordReusedOpen, setPasswordReusedOpen] = useState(false)
 
   useEffect(() => {
     if (remoteApi) return
@@ -88,6 +95,10 @@ export function AdminRegisteredChangePasswordPage() {
           newPassword: nextPassword,
         })
       } catch (error) {
+        if (isPasswordRecentlyUsedApiError(error)) {
+          setPasswordReusedOpen(true)
+          return
+        }
         const message = getLoginApiErrorMessage(error, '비밀번호를 변경하지 못했습니다.')
         setCurrentPasswordError(message)
         return
@@ -207,6 +218,12 @@ export function AdminRegisteredChangePasswordPage() {
       >
         {isBusy ? '변경 중…' : '비밀번호 변경하기'}
       </PFButton>
+      <PFAlertModal
+        open={passwordReusedOpen}
+        title={PLATFORM_ALERT_COPY.passwordRecentlyUsed.title}
+        description={PLATFORM_ALERT_COPY.passwordRecentlyUsed.description}
+        onConfirm={() => setPasswordReusedOpen(false)}
+      />
     </section>
   )
 }

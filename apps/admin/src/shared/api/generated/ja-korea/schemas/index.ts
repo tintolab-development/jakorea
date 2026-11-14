@@ -93,6 +93,7 @@ export * from './certificationResponse';
 export * from './certificationsParams';
 export * from './certificationsSort';
 export * from './certificationUpdateRequest';
+export * from './clientErrorReportRequest';
 export * from './confirmRequest';
 export * from './confirmResponse';
 export * from './confirmResponseStatus';

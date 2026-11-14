@@ -82,6 +82,13 @@
   margin-top: var(--spacing-8);
 }
 
+/* PC: 마지막 메뉴 ↔ [강사 신청] 70px = .lnb gap 8 + margin 62 (Figma 12102-24568) */
+@media (--bp-pc-up) {
+  .ctaWrap {
+    margin-top: calc(70px - var(--spacing-8));
+  }
+}
+
 /* category PC: default LNB와 동일 색 (텍스트는 inherit) */
 .lnbCategory .item {
   color: var(--color-neutral-cool-600);

@@ -26,7 +26,7 @@ export function SignUpSocialConnectCompletePage() {
         <PFText
           as="p"
           typo="bd-md-rg"
-          color="neutral-cool-500"
+          color="primary-800"
           className={authPageCopyClass('description')}
         >
           다음부터 이 계정으로 간편하게 로그인할 수 있어요.

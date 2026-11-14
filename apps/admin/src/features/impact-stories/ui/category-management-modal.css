@@ -113,21 +113,7 @@
 .is-category-modal__table--scrollable .ant-table-body {
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(61, 61, 61, 0.28) transparent;
-}
-
-.is-category-modal__table--scrollable .ant-table-body::-webkit-scrollbar {
-  width: 6px;
-}
-
-.is-category-modal__table--scrollable .ant-table-body::-webkit-scrollbar-thumb {
-  background: rgba(61, 61, 61, 0.28);
-  border-radius: 4px;
-}
-
-.is-category-modal__table--scrollable .ant-table-body::-webkit-scrollbar-track {
-  background: transparent;
+  /* 스크롤바 스타일은 전역(admin-ui styles/scrollbar.css) */
 }
 
 .is-category-modal__table--scrollable .ant-table-cell-scrollbar {
@@ -285,8 +271,10 @@
 
 .is-category-modal__compose .cms-input__control,
 .is-category-modal__compose .cms-field__box,
-.is-category-modal__compose .cms-field__box:not(.cms-field__box--disabled):not(.cms-field__box--error):hover,
-.is-category-modal__compose .cms-field__box:not(.cms-field__box--disabled):not(.cms-field__box--error):focus-within {
+.is-category-modal__compose
+  .cms-field__box:not(.cms-field__box--disabled):not(.cms-field__box--error):hover,
+.is-category-modal__compose
+  .cms-field__box:not(.cms-field__box--disabled):not(.cms-field__box--error):focus-within {
   border: 1px solid var(--Border-default, #e0e0e0) !important;
   border-radius: var(--Radius-8, var(--radius-8, 8px));
   box-shadow: none !important;

@@ -16,7 +16,7 @@ export function GuardianConsentStep({ signUp }: GuardianConsentStepProps) {
       <div className={styles.intro}>
         <img className={styles.illustration} src={illustExclamationUrl} alt="" aria-hidden="true" />
         <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
-          보호자님의 확인이 필요해요
+          보호자님의 확인이 필요해요.
         </PFText>
         <PFText
           as="p"

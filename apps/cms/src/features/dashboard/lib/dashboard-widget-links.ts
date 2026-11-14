@@ -15,13 +15,12 @@ export function programScheduleMorePath(kind: ProgramScheduleKind): string {
       return '/programs/ujat?viewMode=calendar'
     case 'gemini':
       return '/programs/gemini/visiting-training'
+    case 'trained_teacher':
+      return '/programs/trained-teachers?viewMode=calendar'
   }
 }
 
-export function programScheduleEventPath(
-  kind: ProgramScheduleKind,
-  programId: string
-): string {
+export function programScheduleEventPath(kind: ProgramScheduleKind, programId: string): string {
   const encoded = encodeURIComponent(programId)
   switch (kind) {
     case 'general':
@@ -32,6 +31,8 @@ export function programScheduleEventPath(
       return `/programs/ujat?programId=${encoded}`
     case 'gemini':
       return `/programs/gemini/visiting-training?programId=${encoded}`
+    case 'trained_teacher':
+      return `/programs/trained-teachers?programId=${encoded}`
   }
 }
 
@@ -39,10 +40,7 @@ function normalizeRecruitmentProgramType(value?: string): string {
   return (value ?? '').trim().toLowerCase().replace(/-/g, '_')
 }
 
-export function recruitmentProgramDetailPath(
-  programId: string,
-  programType?: string
-): string {
+export function recruitmentProgramDetailPath(programId: string, programType?: string): string {
   const encoded = encodeURIComponent(programId)
   const type = normalizeRecruitmentProgramType(programType)
   if (type.includes('company_school') || type.includes('one_company')) {
@@ -53,6 +51,9 @@ export function recruitmentProgramDetailPath(
   }
   if (type.includes('gemini')) {
     return `/programs/gemini/visiting-training?programId=${encoded}`
+  }
+  if (type.includes('trained_teacher')) {
+    return `/programs/trained-teachers?programId=${encoded}`
   }
   return `/programs/general?programId=${encoded}`
 }

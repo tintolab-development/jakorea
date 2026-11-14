@@ -130,7 +130,7 @@ describe('student-roster-adapters', () => {
     expect(payload).toEqual({
       rosterId: 1,
       studentName: '김학생',
-      gender: 'male',
+      gender: 'MALE',
       birthDate: '2010-07-15',
       grade: '초5',
       className: '1반',
@@ -164,7 +164,7 @@ describe('student-roster-adapters', () => {
       contact: '010-****-5678',
       email: 'p***@example.com',
     })
-    expect(payload.gender).toBe('female')
+    expect(payload.gender).toBe('FEMALE')
     expect('grade' in payload).toBe(false)
     expect('phone' in payload).toBe(false)
     expect('email' in payload).toBe(false)
@@ -320,7 +320,7 @@ describe('student-roster-adapters', () => {
       grade: '1학년',
     })
     expect(body.rows[1]?.rosterId).toBeUndefined()
-    expect(body.rows[1]?.gender).toBe('female')
+    expect(body.rows[1]?.gender).toBe('FEMALE')
     expect(body.rows[1]?.birthDate).toBe('2010-04-04')
     expect(body.rows[1]?.phone).toBe('010-1111-2222')
   })

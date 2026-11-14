@@ -724,7 +724,10 @@ export function AgreementWritingFormShell({
               onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
               verticalTableBodyRowSelection={verticalTableBodyRowSelection}
               onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
-              structureLockedParagraphIds={leftPanelStructureLockedParagraphIds}
+              /* 본문 잠금(회원 fill 등)만 잠금 패널로. 템플릿 관리 구조 잠금은 일반 패널 + 구조 조작만 막아
+                 「입력창 안내 텍스트」 등 우측 문구 편집을 유지한다 (QA 261113 #16 — 문구만 수정) */
+              structureLockedParagraphIds={effectiveStructureLockedParagraphIds}
+              structureControlLockedParagraphIds={structureControlLockedParagraphIds}
             />
           </FormEditorFieldNav>
         }

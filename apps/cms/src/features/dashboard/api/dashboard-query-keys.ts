@@ -58,6 +58,9 @@ export const dashboardQueryKeys = {
     [...dashboardQueryKeys.scope(source), 'overall-statistics'] as const,
   instructorActivity: (source: DashboardQueryScope, instructorId: string | undefined) =>
     [...dashboardQueryKeys.scope(source), 'instructor-activity', instructorId ?? 'none'] as const,
+  /** GET /api/admin/calendar/korean-public-holidays — 프로그램 일정 위젯 표시 기간 */
+  koreanPublicHolidays: (source: DashboardQueryScope, params: { from: string; to: string }) =>
+    [...dashboardQueryKeys.scope(source), 'get_admin_calendar_korean-public-holidays', params] as const,
 } as const
 
 /** 뮤테이션 후 위젯 캐시 일괄 무효화 */

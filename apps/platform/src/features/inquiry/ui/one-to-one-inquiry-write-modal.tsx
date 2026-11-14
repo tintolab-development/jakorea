@@ -122,7 +122,6 @@ export function OneToOneInquiryWriteModal({
       size="md"
       title="1:1 문의 작성하기"
       mobilePlacement="full"
-      closeOnBackdropClick={!isSubmitting}
       closeOnEscape={!isSubmitting}
       onClose={handleClose}
     >

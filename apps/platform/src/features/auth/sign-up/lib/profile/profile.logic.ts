@@ -18,7 +18,8 @@ export function hasValidSchoolReference(options: {
 export function isProfileStepValid(
   address: string,
   addressDetail: string,
-  schoolStatus: 'enrolled' | 'none',
+  /** null = 재학 여부 미선택 — 필수 항목이라 다음 단계로 갈 수 없다 */
+  schoolStatus: 'enrolled' | 'none' | null,
   schoolName: string,
   grade: string,
   options?: {
@@ -35,6 +36,10 @@ export function isProfileStepValid(
   })
 
   if (!hasAddress) {
+    return false
+  }
+
+  if (schoolStatus == null) {
     return false
   }
 

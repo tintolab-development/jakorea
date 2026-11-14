@@ -246,7 +246,10 @@ export function isAdminCommentOnlyPatch(patch: PatchUserBasicInfoInput): boolean
   return keys.length === 1 && keys[0] === 'adminComment'
 }
 
-/** 관리자 계정 — `PATCH /api/admin/admin-accounts/{adminId}/basic-info` */
+/**
+ * 관리자 계정 — `PATCH /api/admin/admin-accounts/{adminId}/basic-info`
+ * `email`은 관리자 등록 계정이 본인인증 전일 때만 서버가 바꾼다(마스터 전용, @jakorea.org).
+ */
 export function mapPatchUserBasicInfoToAdminAccountApiRequest(
   patch: PatchUserBasicInfoInput
 ): AdminAccountBasicInfoUpdateRequest {
@@ -254,6 +257,9 @@ export function mapPatchUserBasicInfoToAdminAccountApiRequest(
 
   if (patch.name !== undefined) body.name = patch.name
   if (patch.phone !== undefined) body.phone = patch.phone
+  // 바뀐 이메일만 patch에 담긴다(`draftToAdminAccountBasicInfoPatch`).
+  const email = patch.email?.trim()
+  if (email) body.email = email
   if (patch.gender !== undefined) {
     body.gender = toApiGender(patch.gender) ?? patch.gender
   }

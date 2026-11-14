@@ -36,7 +36,7 @@ import type {
   ParticipatingIndividualProgressAssignmentSubmissionItem,
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import { parseParticipantSurveyViewKey } from '@/features/program/general/model/participating-individual-participants'
-import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { isGeneralProgressEducationSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
 import { resolveEducationProgressFromScheduleBounds } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
@@ -125,7 +125,7 @@ type GiveUpParticipantLookup = {
 function mapGenderLabel(gender?: string | null): string {
   const key = mapApiGenderToStudentGenderKey(gender)
   if (key) return STUDENT_GENDER_LABELS[key]
-  return toDisplayGender(gender)
+  return toGenderLabelOrRaw(gender) ?? '-'
 }
 
 function mapBirthLabel(birthDate?: string | null, age?: number | null): string {

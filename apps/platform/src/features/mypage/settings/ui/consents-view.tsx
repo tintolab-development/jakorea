@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import { settingsConsentWritePath } from '@/features/mypage'
@@ -25,7 +25,12 @@ import {
 import { useSettingsConsents } from '../hooks/use-settings-consents'
 import { useSettingsView } from '../hooks/use-settings-view'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
-import { filterListedDocumentConsentItems } from '../lib/consent-visibility'
+import {
+  APPLY_GATE_REQUIRED_CONSENTS_PARAM,
+  ensureApplyGateRequiredDocumentConsentItems,
+  filterListedDocumentConsentItems,
+  parseApplyGateRequiredConsentItemIds,
+} from '../lib/consent-visibility'
 import {
   canWithdrawConsent,
   CONSENT_WITHDRAW_CONFLICT_MESSAGE,
@@ -452,6 +457,9 @@ function ConsentCard({
 
 export function SettingsConsentsView() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  /** 프로그램 신청 필수 동의 게이트에서 넘어온 빠진 동의서·서약서 — 작성 전이어도 카드 노출 */
+  const applyGateRequiredRaw = searchParams.get(APPLY_GATE_REQUIRED_CONSENTS_PARAM)
   const terms = useTermsViewModal()
   const queryClient = useQueryClient()
   const consents = useSettingsConsents()
@@ -466,6 +474,11 @@ export function SettingsConsentsView() {
   )
   const [isWithdrawing, setIsWithdrawing] = useState(false)
   const withdrawingRef = useRef(false)
+  /**
+   * 동의·철회 성공 후 화면(목록·버튼·토글) 반영 — 완료 안내 팝업을 닫을 때 실행한다.
+   * 요청 중·완료 팝업이 떠 있는 동안 뒤 화면이 먼저 바뀌어 보이지 않게 한다.
+   */
+  const pendingCompleteCommitRef = useRef<(() => void) | null>(null)
   const [isMarketingSaving, setIsMarketingSaving] = useState(false)
   const [marketingAgreeOpen, setMarketingAgreeOpen] = useState(false)
   const [marketingAgreedAt, setMarketingAgreedAt] = useState<string | null>(null)
@@ -625,7 +638,12 @@ export function SettingsConsentsView() {
     })
   }
 
-  const showWithdrawComplete = (id: SettingsConsentItemId, changedAt?: string | null) => {
+  const showWithdrawComplete = (
+    id: SettingsConsentItemId,
+    changedAt: string | null | undefined,
+    commit: () => void,
+  ) => {
+    pendingCompleteCommitRef.current = commit
     setWithdrawComplete({
       id,
       withdrawnAt: formatConsentAgreedAt(changedAt) ?? formatWithdrawnDate(new Date()),
@@ -645,6 +663,22 @@ export function SettingsConsentsView() {
     }
   }
 
+  const flushPendingCompleteCommit = () => {
+    const commit = pendingCompleteCommitRef.current
+    pendingCompleteCommitRef.current = null
+    commit?.()
+  }
+
+  const closeWithdrawComplete = () => {
+    flushPendingCompleteCommit()
+    setWithdrawComplete(null)
+  }
+
+  const closeMarketingAgreeComplete = () => {
+    flushPendingCompleteCommit()
+    setMarketingAgreedAt(null)
+  }
+
   const openWithdrawConfirm = (item: SettingsConsentItem) => {
     if (withdrawingRef.current) return
     setWithdrawTarget(item)
@@ -657,27 +691,43 @@ export function SettingsConsentsView() {
   }
 
   const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
+  const applyGateRequiredIds = parseApplyGateRequiredConsentItemIds(applyGateRequiredRaw)
   const documentItems = filterListedDocumentConsentItems(
-    applyLocalWithdrawn(consents.documentItems, withdrawnIds),
-    { isRemoteSession: consents.isRemoteSession, isInstructor: consents.isInstructor },
+    applyLocalWithdrawn(
+      ensureApplyGateRequiredDocumentConsentItems(consents.documentItems, applyGateRequiredIds),
+      withdrawnIds,
+    ),
+    {
+      isRemoteSession: consents.isRemoteSession,
+      isInstructor: consents.isInstructor,
+      requiredIds: applyGateRequiredIds,
+    },
   )
 
-  /** 원격 세션: PUT 후 목록 재조회. 성공 시 철회 일시 반환, 409는 안내 후 동기화 */
+  /**
+   * 원격 세션: PUT 성공 시 동의·철회 일시와 `commit`(목록 재조회)을 반환한다.
+   * 토글·목록은 `commit()`을 부를 때(완료 팝업을 닫을 때) 바뀐다. 409는 안내 후 즉시 동기화.
+   */
   const saveMarketingConsent = async (
     agreed: boolean
   ): Promise<
-    { ok: true; agreedAt?: string | null; withdrawnAt?: string | null } | { ok: false }
+    | { ok: true; agreedAt?: string | null; withdrawnAt?: string | null; commit: () => void }
+    | { ok: false }
   > => {
     if (!consents.isRemoteSession) {
-      setMarketingOverride(agreed)
-      return { ok: true }
+      return { ok: true, commit: () => setMarketingOverride(agreed) }
     }
     setIsMarketingSaving(true)
-    setMarketingOverride(agreed)
     try {
       const res = await putPortalMarketingConsent({ agreed })
-      await refetchConsents()
-      return { ok: true, agreedAt: res.agreedAt, withdrawnAt: res.withdrawnAt }
+      return {
+        ok: true,
+        agreedAt: res.agreedAt,
+        withdrawnAt: res.withdrawnAt,
+        commit: () => {
+          void refetchConsents()
+        },
+      }
     } catch (error) {
       if (isConflictError(error)) {
         await refetchConsents()
@@ -687,7 +737,6 @@ export function SettingsConsentsView() {
       }
       return { ok: false }
     } finally {
-      setMarketingOverride(null)
       setIsMarketingSaving(false)
     }
   }
@@ -705,6 +754,7 @@ export function SettingsConsentsView() {
     const result = await saveMarketingConsent(true)
     setMarketingAgreeOpen(false)
     if (result.ok) {
+      pendingCompleteCommitRef.current = result.commit
       setMarketingAgreedAt(formatConsentAgreedAt(result.agreedAt) ?? formatWithdrawnDate(new Date()))
     }
   }
@@ -720,15 +770,16 @@ export function SettingsConsentsView() {
       setIsWithdrawing(false)
       withdrawingRef.current = false
       closeWithdrawConfirm()
-      if (result.ok) showWithdrawComplete(target.id, result.withdrawnAt)
+      if (result.ok) showWithdrawComplete(target.id, result.withdrawnAt, result.commit)
       return
     }
 
     if (!consents.isRemoteSession) {
-      setWithdrawnIds(prev => new Set(prev).add(target.id))
       withdrawingRef.current = false
       closeWithdrawConfirm()
-      showWithdrawComplete(target.id)
+      showWithdrawComplete(target.id, undefined, () => {
+        setWithdrawnIds(prev => new Set(prev).add(target.id))
+      })
       return
     }
 
@@ -737,9 +788,11 @@ export function SettingsConsentsView() {
     setIsWithdrawing(true)
     try {
       const res = await withdrawConsentItem(target, idempotencyKey)
-      await refetchConsents(consentType)
       closeWithdrawConfirm()
-      showWithdrawComplete(target.id, res.changedAt)
+      // 목록 재조회는 완료 팝업을 닫은 뒤 — 뒤 화면의 버튼·상태가 먼저 바뀌지 않게
+      showWithdrawComplete(target.id, res.changedAt, () => {
+        void refetchConsents(consentType)
+      })
     } catch (error) {
       const parsed = parseConsentWithdrawError(error, consentType)
       if (parsed.backendRegression) {
@@ -789,7 +842,6 @@ export function SettingsConsentsView() {
             key={item.id}
             item={item}
             marketingAgreed={marketingAgreed}
-            withdrawPending={isWithdrawing}
             onMarketingChange={handleMarketingChange}
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
@@ -813,7 +865,6 @@ export function SettingsConsentsView() {
             item={item}
             marketingAgreed={marketingAgreed}
             showRequirementLabel={false}
-            withdrawPending={isWithdrawing}
             onMarketingChange={handleMarketingChange}
             onViewTerms={next => {
               if (next.termsViewType) terms.open(next.termsViewType)
@@ -858,7 +909,7 @@ export function SettingsConsentsView() {
             ? `동의 철회일시: ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
             : null
         }
-        onClose={() => setWithdrawComplete(null)}
+        onClose={closeWithdrawComplete}
       />
 
       <ConsentWithdrawConfirm
@@ -881,7 +932,7 @@ export function SettingsConsentsView() {
             ? `동의일시: ${marketingAgreedAt}\n${MARKETING_AGREE_COPY.completeGuide}`
             : null
         }
-        onClose={() => setMarketingAgreedAt(null)}
+        onClose={closeMarketingAgreeComplete}
       />
 
       <ConsentWithdrawConfirm

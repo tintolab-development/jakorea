@@ -36,6 +36,7 @@ import {
   type MemberProgramHistoryMode,
 } from './member-program-lecture-table.config'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
@@ -190,7 +191,7 @@ export function MemberProgramLectureHistory({
         type: 'search',
         label: '프로그램명',
         placeholder: '프로그램명을 입력해 주세요',
-        width: '25%',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'year',
@@ -198,7 +199,7 @@ export function MemberProgramLectureHistory({
         label: '진행년도',
         placeholder: '전체',
         options: yearOptions,
-        width: '25%',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'enrollmentStatus',
@@ -206,14 +207,14 @@ export function MemberProgramLectureHistory({
         label: '프로그램 진행 현황',
         placeholder: '전체',
         options: enrollmentStatusOptions,
-        width: '25%',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'managerName',
         type: 'search',
         label: '담당자명',
         placeholder: '담당자명을 입력해 주세요',
-        width: '25%',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
     ]
   }, [yearOptions, enrollmentStatusOptions])
@@ -495,14 +496,13 @@ export function MemberProgramLectureHistory({
               className="member-program-lecture-history__action-cell"
               onClick={e => e.stopPropagation()}
             >
+              {/* 시안 4427:28004: 회색 136×32, 제출 내역이 없으면 비활성 */}
               <CmsButton
-                variant="secondary"
+                variant="default"
                 size="small"
+                className="member-program-lecture-history__history-view-btn"
+                disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
-                  if (!record.hasAssignmentSubmission) {
-                    showAlert({ title: '안내', content: '제출된 과제가 없습니다.' })
-                    return
-                  }
                   if (onOpenAssignment) onOpenAssignment(record)
                 }}
               >
@@ -660,9 +660,10 @@ export function MemberProgramLectureHistory({
               ) : null}
               {(mode === 'studentEnrollment' || mode === 'schoolProgramParticipation') &&
                 showCertificateBulkIssue && (
+                  /* 시안 4427:28004: 청록 채움 180×40, 아이콘 없음 */
                   <FilterTableToolbarButton
-                    variant="secondary"
-                    icon={<ButtonDownloadIcon />}
+                    variant="primary"
+                    className="member-program-lecture-history__completion-certificate-btn"
                     onClick={() =>
                       withSelection(() =>
                         openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
@@ -673,30 +674,18 @@ export function MemberProgramLectureHistory({
                   </FilterTableToolbarButton>
                 )}
               {mode === 'volunteerProgram' && showCertificateBulkIssue && (
-                <>
-                  <FilterTableToolbarButton
-                    variant="secondary"
-                    icon={<ButtonDownloadIcon />}
-                    onClick={() =>
-                      withSelection(() =>
-                        openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
-                      )
-                    }
-                  >
-                    활동인증서 발급
-                  </FilterTableToolbarButton>
-                  <FilterTableToolbarButton
-                    variant="secondary"
-                    icon={<ButtonDownloadIcon />}
-                    onClick={() =>
-                      withSelection(() =>
-                        openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
-                      )
-                    }
-                  >
-                    수료증/참가인증서 발급
-                  </FilterTableToolbarButton>
-                </>
+                /* 시안 4427:28498: [활동인증서 발급] 청록 채움 160×40, 아이콘 없음 + [엑셀 다운로드] */
+                <FilterTableToolbarButton
+                  variant="primary"
+                  className="member-program-lecture-history__activity-certificate-btn"
+                  onClick={() =>
+                    withSelection(() =>
+                      openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
+                    )
+                  }
+                >
+                  활동인증서 발급
+                </FilterTableToolbarButton>
               )}
               {mode === 'instructorLecture' && showCertificateBulkIssue && (
                 <FilterTableToolbarButton

@@ -20,8 +20,8 @@
   flex-direction: column;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
-  /* CMS 시안 LNB(13192:232238): drop-shadow 0 0 6px rgba(0,0,0,0.1) */
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  /* CMS 시안 LNB: drop-shadow 0 0 12px rgba(0,0,0,0.1) (2026-11-14 전체 회원 CSS 검수) */
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-container.ant-layout-sider > .ant-layout-sider-children {
@@ -49,26 +49,29 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  /* 서브메뉴 펼침으로 스크롤바가 생겨도 행·화살표가 좌측으로 밀리지 않도록 거터 고정 */
+  /*
+   * 서브메뉴 펼침으로 스크롤바가 생겨도 행·화살표가 좌측으로 밀리지 않도록 거터 고정.
+   * 맥 겹침형 스크롤바에서는 거터가 생기지 않는다 — QA의 우측 빈 띠(약 7px)는 전역 스크롤바 통일
+   * (admin-ui scrollbar.css) 전 LNB 전용 ::-webkit-scrollbar 6px가 고정형 바를 만든 결과.
+   * 고정형 환경(.scrollbar-classic)에서만 4px 거터가 남는다.
+   */
   scrollbar-gutter: stable;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar {
-  width: var(--spacing-6);
+/* 어두운 배경 — 전역 스크롤바(admin-ui styles/scrollbar.css) 썸 색만 LNB 토큰으로. 두께·동작은 전역 규칙 */
+@supports not selector(::-webkit-scrollbar) {
+  .sidebar-menu-wrapper {
+    scrollbar-color: var(--color-sidebar-scrollbar-thumb) transparent;
+  }
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar-track {
-  background: var(--color-sidebar-bg);
-}
-
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb {
+:where(.scrollbar-classic) .sidebar-menu-wrapper::-webkit-scrollbar-thumb {
   background: var(--color-sidebar-scrollbar-thumb);
-  border-radius: var(--radius-3);
 }
 
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
+:where(.scrollbar-classic) .sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--color-sidebar-scrollbar-thumb-hover);
 }
 
@@ -226,6 +229,15 @@
   color: var(--color-sidebar-text) !important;
 }
 
+/* 시안: 1뎁스 펼침 영역 padding 2 0 6 0 · 3뎁스 그룹 하단 6 (2026-11-14 전체 회원 CSS 검수) */
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub {
+  padding: 2px 0 6px !important;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-sub {
+  padding: 0 0 6px !important;
+}
+
 .sidebar-menu .ant-menu-sub .ant-menu-item,
 .sidebar-menu .ant-menu-sub .ant-menu-submenu-title,
 .sidebar-menu .ant-menu-sub .ant-menu-submenu {
@@ -243,6 +255,7 @@
   > .ant-menu-title-content {
   font-size: 16px !important;
   font-weight: var(--font-weight-500) !important;
+  line-height: 120% !important;
 }
 
 /* 선택된 2·3뎁스 리프: 700 (기본 500보다 구체적으로 override) */
@@ -254,7 +267,7 @@
   font-weight: var(--font-weight-700) !important;
 }
 
-/* 하위 선택 시 강조되는 서브메뉴 타이틀 행(관리자·프로그램 양식 등) */
+/* 하위 선택 시 강조되는 서브메뉴 타이틀 행(회원 목록·관리자·프로그램 양식 등) — 시안 Bold 16 · 120% */
 .sidebar-menu
   .ant-menu-sub
   > li.ant-menu-submenu.ant-menu-submenu-selected
@@ -264,7 +277,7 @@
   > li.ant-menu-submenu.ant-menu-submenu-selected
   > .ant-menu-submenu-title
   > .ant-menu-title-content {
-  font-weight: var(--font-weight-600) !important;
+  font-weight: var(--font-weight-700) !important;
 }
 
 .sidebar-menu
@@ -448,6 +461,12 @@
   flex-shrink: 0;
 }
 
+/* antd 기본 아이콘 뒤 라벨 margin-inline-start 10px 제거 — 간격은 행 gap 8px만 */
+.sidebar-menu.ant-menu .ant-menu-item-icon + span,
+.sidebar-menu.ant-menu .ant-menu-item-icon + .ant-menu-title-content {
+  margin-inline-start: 0 !important;
+}
+
 /* ---- 드롭다운 쉐브론 (시안: 20×20 / aspect-ratio 1/1 / 행 세로 중앙) ---- */
 .sidebar-menu .ant-menu-submenu-arrow {
   inset-inline-end: 18px !important;
@@ -493,32 +512,9 @@
 }
 
 /*
- * 2·3뎁스 불릿: 시안 LNB(12543:26382 · UJAT 13196:143782) — 라벨 앞 불릿(disc)
- * 2뎁스 라벨 시작 x = 48 (행 왼쪽 24 + 불릿 앞 13 + 닷 3 + 간격 8)
- * 3뎁스 라벨 시작 x = 72 (행 왼쪽 48 + 불릿 앞 13 + 닷 3 + 간격 8)
+ * 2·3뎁스 불릿 없음 — 시안 전체 회원(1142:84965) LNB 라벨 시작 x = 행 padding-left (2뎁스 24 · 3뎁스 48)
+ * (2026-11-14 전체 회원 CSS 검수)
  */
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  > .ant-menu-item
-  > .ant-menu-title-content::before,
-.sidebar-menu.ant-menu
-  > li.ant-menu-submenu
-  > .ant-menu-sub
-  > li.ant-menu-submenu
-  > .ant-menu-submenu-title
-  > .ant-menu-title-content::before,
-.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item > .ant-menu-title-content::before {
-  content: '';
-  display: inline-block;
-  width: 3px;
-  height: 3px;
-  margin: 0 8px 0 13px;
-  border-radius: 50%;
-  background-color: currentColor;
-  vertical-align: middle;
-  transform: translateY(-1px);
-}
 
 /* ---- 포커스: 브라우저·Ant 기본 outline / 포커스 링 제거 (사이드바 영역 한정) ---- */
 .sidebar-container .sidebar-header :focus,

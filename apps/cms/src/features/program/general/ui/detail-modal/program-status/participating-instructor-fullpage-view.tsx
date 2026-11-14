@@ -1968,6 +1968,8 @@ export function ParticipatingInstructorFullpageView({
                 confirmLoading={assignGuideSubmitting}
                 // 배정 완료 — 기관형·1사1교 공통 시안(04-2 「배정 완료」)
                 completeVariant="result"
+                // 1사1교: 한 기관에 지망 일정 하나만 배정(여러 지망 동시 배정 방지)
+                sessionSelectionMode={isCompanySchool ? 'single' : 'multiple'}
               />
               {isInstitutionProgram ? (
                 <>

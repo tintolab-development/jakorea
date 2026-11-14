@@ -7,14 +7,22 @@
  */
 
 /**
- * 관리자 상세 화면의 기본 정보 수정 요청입니다. 이메일은 로그인 식별자라 이 API에서 변경하지 않습니다.
+ * 관리자 상세 화면의 기본 정보 수정 요청입니다. 이메일(로그인 식별자)은 관리자 등록 계정이 본인인증 전일 때만 변경할 수 있습니다.
  */
 export interface AdminAccountBasicInfoUpdateRequest {
   /** 관리자 이름 */
   name?: string;
+  /**
+     * 변경할 관리자 로그인 이메일. 선택 항목이며 생략·공백이거나 현재 이메일과 대소문자·앞뒤 공백만 다르면 변경하지 않습니다.
+     * 관리자 등록 계정(createdByAdmin/registeredByAdmin=true)이 본인인증 전(identityVerified=false)이고 요청자가 MASTER일 때만 변경할 수 있으며,
+     * 그 외 계정은 409 EMAIL_CHANGE_NOT_ALLOWED(field=email). @jakorea.org 도메인만 허용하며 형식·도메인 오류는 400 INVALID_EMAIL(field=email),
+     * 다른 관리자·회원 계정과 중복이면 409 EMAIL_ALREADY_EXISTS(field=email).
+     * 초기 비밀번호가 이전 이메일 그대로면 새 이메일로 함께 바뀝니다.
+     */
+  email?: string | null;
   /** 관리자 연락처 */
   phone?: string;
-  /** 성별 코드 */
+  /** 성별 코드. MALE, FEMALE, OTHER 권장. M/F·남/여 별칭도 허용하며 서버가 MALE/FEMALE/OTHER로 정규화해 저장한다. 그 외 값은 400 GENDER_INVALID. */
   gender?: string;
   /** 생년월일. yyyy-MM-dd 형식 */
   birthDate?: string;

@@ -32,7 +32,7 @@ alwaysApply: false
 | **필터 조회** | medium (높이 40) | `admin-filter-area__search-button` · [filter-area-dimensions](./filter-area-dimensions.mdc) |
 | **FileSelectField** 「파일 추가」 | **medium** | `FileSelectField` 내부 고정 secondary medium |
 | **테이블 셀 버튼** (내역 보기 · 수정 등) | **small (h32)** · 주로 secondary | 디자인 가이드 Table Cell `type=button` (Medium·Small 공통) |
-| 뷰 토글·엑셀(아이콘) | medium + icon | CMS 툴바 캘린더/엑셀 |
+| 뷰 토글·엑셀(아이콘) | medium + icon | CMS 툴바 캘린더/엑셀 · **CMS 엑셀 다운로드 버튼은 140×40** (padding 6/16/6/12 · gap 4, `ExcelButton` 내부 `excel-button.css` — 호출부에서 폭 지정 금지, 시안 2026-11-14 전체 회원 CSS 검수) |
 
 ### 금지
 

@@ -15,4 +15,10 @@ export interface GuardianSignupStatusResponse {
   explicitConsentAt?: string;
   expiresAt?: string;
   usedAt?: string;
+  /** QA 2026-11-14 BP8: NICE로 확인된 보호자 이름. 마스킹하지 않는다. identityVerified=false면 null. */
+  verifiedGuardianName?: string | null;
+  /** QA 2026-11-14 BP8: NICE로 확인된 보호자 휴대폰. 숫자만(하이픈 없음, 예: 01012345678). 마스킹하지 않는다. identityVerified=false면 null. */
+  verifiedGuardianPhone?: string | null;
+  /** 저장된 보호자 관계. 최종 동의 전이면 null. */
+  guardianRelation?: string | null;
 }

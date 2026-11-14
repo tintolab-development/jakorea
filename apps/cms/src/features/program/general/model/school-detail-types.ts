@@ -144,7 +144,7 @@ export interface SchoolDetailStudentRow {
   participantId?: number
   no: number
   name: string
-  /** 성별: '남' | '여' 표시용. 마스킹 값은 `genderMask`. */
+  /** 성별: '남' | '여' 표시용. 마스킹·OTHER(`기타`)·예전 원문 등 남/여가 아닌 표시값은 `genderMask`. */
   gender?: StudentGenderKey
   /** 조회 응답 성별이 `*`처럼 마스킹된 경우 원문 그대로 */
   genderMask?: string

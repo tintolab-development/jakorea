@@ -33,6 +33,7 @@ export function UserDetailFullpageTabPanels() {
     basicInfoEditing,
     basicInfoEditScope,
     basicInfoDraft,
+    basicInfoEmailError,
     onBasicInfoDraftChange,
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
@@ -65,6 +66,7 @@ export function UserDetailFullpageTabPanels() {
             basicInfoEditScope === 'instructor_fee_ja' ? 'instructor_fee_ja' : 'profile'
           }
           memberInfoDraft={basicInfoDraft}
+          memberInfoEmailError={basicInfoEmailError}
           onMemberInfoDraftChange={onBasicInfoDraftChange}
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}

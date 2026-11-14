@@ -2,7 +2,7 @@
  * 로그인 페이지
  */
 
-import { Form, Typography, Space, Alert } from 'antd'
+import { Form, Typography, Space } from 'antd'
 import type { FormInstance } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -25,6 +25,11 @@ import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { LoginInlineAlert } from '@/features/auth/ui/login-inline-alert'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
+import { isAdminLoginAccountUnavailableError } from '@/features/auth/api/admin-login-fetcher'
+import {
+  ADMIN_LOGIN_ACCOUNT_LOCKED_MESSAGE,
+  isAdminLoginAccountLockedError,
+} from '@/features/auth/errors/admin-login-account-locked-error'
 import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { resolveLoginRedirectTarget } from '@/shared/utils/auth-redirect'
 import {
@@ -51,9 +56,13 @@ const { Text } = Typography
 function resetLoginCredentialFeedback(
   form: FormInstance,
   clearAuthError: () => void,
-  setApprovalPending: (value: boolean) => void
+  setApprovalPending: (value: boolean) => void,
+  setAccountLocked: (value: boolean) => void,
+  setAccountUnavailableMessage: (value: string | null) => void
 ) {
   setApprovalPending(false)
+  setAccountLocked(false)
+  setAccountUnavailableMessage(null)
   clearAuthError()
   clearLoginFieldErrors(form)
 }
@@ -90,6 +99,10 @@ export function LoginPage() {
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
   const [showAdminApprovalPending, setShowAdminApprovalPending] = useState(false)
+  /** 서버가 계정 잠금으로 거절 — 잠금 해제 시각은 서버가 판단하므로 화면에서 입력을 막지 않는다 */
+  const [showServerAccountLocked, setShowServerAccountLocked] = useState(false)
+  /** 서버가 사용 불가 계정(ACCOUNT_INACTIVE·LOGIN_DISABLED)으로 거절 — 서버 message 를 그대로 노출 */
+  const [accountUnavailableMessage, setAccountUnavailableMessage] = useState<string | null>(null)
   const apiLoginAvailable = isRemoteApiConfigured()
 
   const {
@@ -98,7 +111,6 @@ export function LoginPage() {
     recordFailure,
     recordSuccess,
     checkLocked,
-    getRemainingLockMinutes,
   } = useLoginAttempts()
 
   // `next`는 이전 세션 만료 링크 호환용. 안전하지 않은 값은 버린다.
@@ -160,6 +172,8 @@ export function LoginPage() {
 
     setLoginMode(mode)
     setShowAdminApprovalPending(false)
+    setShowServerAccountLocked(false)
+    setAccountUnavailableMessage(null)
 
     try {
       const result = await login(values, { mode })
@@ -188,6 +202,20 @@ export function LoginPage() {
         clearError()
         clearLoginFieldErrors(form)
         setShowAdminApprovalPending(true)
+        return
+      }
+
+      if (isAdminLoginAccountLockedError(loginError)) {
+        clearError()
+        clearLoginFieldErrors(form)
+        setShowServerAccountLocked(true)
+        return
+      }
+
+      if (isAdminLoginAccountUnavailableError(loginError)) {
+        clearError()
+        clearLoginFieldErrors(form)
+        setAccountUnavailableMessage(loginError.message)
         return
       }
 
@@ -306,7 +334,13 @@ export function LoginPage() {
                     // 입력 중 실시간 검증 안내를 띄우지 않고 [로그인하기] 클릭 시에만 노출한다
                     validateTrigger={[]}
                     onValuesChange={() => {
-                      resetLoginCredentialFeedback(form, clearError, setShowAdminApprovalPending)
+                      resetLoginCredentialFeedback(
+                        form,
+                        clearError,
+                        setShowAdminApprovalPending,
+                        setShowServerAccountLocked,
+                        setAccountUnavailableMessage
+                      )
                     }}
                   >
                     <Form.Item
@@ -344,29 +378,17 @@ export function LoginPage() {
 
                     {showAdminApprovalPending && <LoginAdminApprovalPendingNotice />}
 
-                    {isLocked && (
-                      <Alert
-                        type="error"
-                        description={
-                          <div>
-                            <Text>
-                              로그인 시도가 {LOGIN_POLICY.maxFailedAttempts}회 실패하여 계정이
-                              잠겼습니다.
-                            </Text>
-                            <br />
-                            <Text>
-                              {getRemainingLockMinutes() !== null && (
-                                <>{getRemainingLockMinutes()}분 후 다시 시도해주세요.</>
-                              )}
-                            </Text>
-                          </div>
-                        }
-                        showIcon
-                        className="login-alert"
-                      />
+                    {(isLocked || showServerAccountLocked) && (
+                      <LoginInlineAlert>{ADMIN_LOGIN_ACCOUNT_LOCKED_MESSAGE}</LoginInlineAlert>
+                    )}
+
+                    {accountUnavailableMessage && (
+                      <LoginInlineAlert>{accountUnavailableMessage}</LoginInlineAlert>
                     )}
 
                     {!isLocked &&
+                      !showServerAccountLocked &&
+                      !accountUnavailableMessage &&
                       failedAttempts > 0 &&
                       failedAttempts < LOGIN_POLICY.maxFailedAttempts && (
                         <LoginInlineAlert>

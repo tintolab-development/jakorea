@@ -6,6 +6,7 @@ import {
   mapMfaResetError,
   mapMfaVerifyError,
   parseAdminMfaChallenge,
+  parseMfaFailedAttemptDetails,
   pickEnrollmentManualKey,
   pickEnrollmentQrDataUrl,
 } from './admin-mfa-contract'
@@ -35,6 +36,18 @@ describe('parseAdminMfaChallenge', () => {
       mfaSetupRequired: true,
     })
     expect(JSON.stringify(parsed)).not.toContain('SHOULD_NOT_LEAK')
+  })
+
+  it('서버 누적 실패 횟수(failedAttemptCount·maxFailedAttempts)를 읽는다', () => {
+    const parsed = parseAdminMfaChallenge({
+      challengeUuid: 'challenge-3',
+      mfaMethod: 'TOTP',
+      expiresAt: '2026-10-20T00:00:00Z',
+      failedAttemptCount: 3,
+      maxFailedAttempts: 5,
+    })
+    expect(parsed?.failedAttemptCount).toBe(3)
+    expect(parsed?.maxFailedAttempts).toBe(5)
   })
 
   it('기등록 계정은 mfaSetupRequired false', () => {
@@ -83,14 +96,26 @@ describe('enrollment QR alias', () => {
 })
 
 describe('mapMfaVerifyError', () => {
-  it('challenge 만료, OTP 실패, 잠금, 429를 구분한다', () => {
-    expect(mapMfaVerifyError('MFA_CHALLENGE_EXPIRED').kind).toBe('challenge')
+  it('challenge 무효, OTP 실패, 잠금, 429를 구분한다', () => {
+    // BE R3 — 만료 코드는 오지 않는다. 배포 전 응답은 잘못된 코드와 같게 본다
+    expect(mapMfaVerifyError('MFA_CHALLENGE_EXPIRED').kind).toBe('otp')
     expect(mapMfaVerifyError('MFA_CHALLENGE_INVALID').kind).toBe('challenge')
+    // 이전 인증 요청 무효 — 「만료」 표현 없이 안내(기획 확정 2026-11-14)
+    expect(mapMfaVerifyError('MFA_CHALLENGE_INVALID').message).toBe(
+      '인증 요청이 유효하지 않습니다. 로그인부터 다시 시도해 주세요.'
+    )
+    expect(mapMfaVerifyError('MFA_CHALLENGE_INVALID').message).not.toContain('만료')
     expect(mapMfaVerifyError('MFA_VERIFICATION_FAILED').kind).toBe('otp')
     expect(mapMfaVerifyError('MFA_NOT_CONFIGURED').kind).toBe('not-configured')
     expect(mapMfaVerifyError('ACCOUNT_LOCKED').kind).toBe('lock')
     expect(mapMfaVerifyError('UNKNOWN', 429).kind).toBe('rate')
     expect(mapMfaVerifyError('UNKNOWN', 400).kind).toBe('validation')
+  })
+
+  it('423 이어도 잠금 코드가 아니면 잠금 문구로 바꾸지 않는다', () => {
+    expect(mapMfaVerifyError('ACCOUNT_LOCKED', 423).kind).toBe('lock')
+    expect(mapMfaVerifyError('ACCOUNT_INACTIVE', 423).kind).toBe('other')
+    expect(mapMfaVerifyError('LOGIN_DISABLED', 423).kind).toBe('other')
   })
 })
 
@@ -134,7 +159,6 @@ describe('buildMfaResetRequest', () => {
 describe('mapMfaResetError', () => {
   it('409 재등록 차단과 timeout, step-up 실패를 구분한다', () => {
     expect(mapMfaResetError('MFA_ALREADY_ENROLLED', 409).action).toBe('refresh-status')
-    expect(mapMfaResetError('MFA_RESET_ALREADY_UNENROLLED').action).toBe('refresh-status')
     expect(mapMfaResetError('MFA_RESET_OUTCOME_UNKNOWN').action).toBe('timeout')
     expect(mapMfaResetError('MFA_RESET_STEP_UP_EXPIRED', 401).action).toBe('restart-step-up')
     expect(mapMfaResetError('MFA_RESET_RATE_LIMITED', 429).action).toBe('rate-limited')
@@ -150,5 +174,22 @@ describe('mapMfaResetError', () => {
     expect(mapMfaResetError('UNAUTHORIZED', 401).action).toBe('permission')
     expect(mapMfaResetError('MFA_VERIFICATION_FAILED').action).toBe('restart-step-up')
     expect(mapMfaResetError('MFA_RESET_STEP_UP_REQUIRED', 401).message).toContain('실행자 MFA')
+  })
+})
+
+describe('parseMfaFailedAttemptDetails', () => {
+  it('error.details의 문자열 숫자를 숫자로 바꾼다', () => {
+    expect(parseMfaFailedAttemptDetails({ failedAttemptCount: '2', maxFailedAttempts: '5' })).toEqual({
+      failedAttemptCount: 2,
+      maxFailedAttempts: 5,
+    })
+  })
+
+  it('숫자로 읽지 못한 값은 undefined로 둔다', () => {
+    expect(parseMfaFailedAttemptDetails({ failedAttemptCount: 'abc', maxFailedAttempts: '' })).toEqual({
+      failedAttemptCount: undefined,
+      maxFailedAttempts: undefined,
+    })
+    expect(parseMfaFailedAttemptDetails(undefined)).toEqual({})
   })
 })

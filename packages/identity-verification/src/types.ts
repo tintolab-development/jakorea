@@ -84,6 +84,8 @@ export interface IdentityVerifiedPayload {
 export interface IdentityFailedPayload {
   type: 'IDENTITY_FAILED'
   message?: string
+  /** 서버 콜백 `errorCode` (예: EXPECTED_PROFILE_MISMATCH — 기대 프로필과 인증 결과 불일치) */
+  errorCode?: string
 }
 
 export interface IdentityCancelledPayload {

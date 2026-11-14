@@ -11870,6 +11870,53 @@
         }
       }
     },
+    "/api/portal/auth/signup/identity-precheck": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "회원 포탈 회원가입 본인인증 사전 검사",
+        "description": "### 이 API가 하는 일\n- 회원 포탈 회원가입 본인인증 사전 검사\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/auth/signup/identity-precheck`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: PUBLIC 권한 필요\n- 접근 범위: NONE 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: QA 2026-11-14 BP3 non-consuming identity precheck; same rule as final signup PHONE_ALREADY_REGISTERED/IDENTITY_ALREADY_LINKED.",
+        "operationId": "precheckPortalSignupIdentity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalSignupIdentityPrecheckRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalSignupIdentityPrecheckResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/auth/signup/general": {
       "post": {
         "tags": [
@@ -35177,6 +35224,53 @@
         }
       }
     },
+    "/api/admin/auth/signup/identity-precheck": {
+      "post": {
+        "tags": [
+          "인증/세션"
+        ],
+        "summary": "POST /api/admin/auth/signup/identity-precheck",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/auth/signup/identity-precheck\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/auth/signup/identity-precheck`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "operationId": "precheckSignupIdentity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminSignupIdentityPrecheckRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSignupIdentityPrecheckResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/auth/signup/complete": {
       "post": {
         "tags": [
@@ -35714,9 +35808,58 @@
                     "value": {
                       "challengeUuid": "mfa-challenge-sample-uuid",
                       "mfaMethod": "TOTP",
-                      "expiresAt": "2026-06-02T09:10:00Z"
+                      "expiresAt": "2026-06-02T09:10:00Z",
+                      "failedAttemptCount": 0,
+                      "maxFailedAttempts": 5
                     }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/auth/identity/confirm": {
+      "post": {
+        "tags": [
+          "인증/세션"
+        ],
+        "summary": "POST /api/admin/auth/identity/confirm",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/auth/identity/confirm\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/auth/identity/confirm`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "operationId": "confirmAdminIdentity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminIdentityConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminIdentityConfirmResponse"
                 }
               }
             }
@@ -37953,6 +38096,65 @@
         "summary": "회원/강사 부분 수정",
         "description": "### 이 API가 하는 일\n- 회원/강사 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/users/{memberId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateMemberBasicInfo",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminMemberBasicInfoUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/users/{memberId}/master-override": {
+      "patch": {
+        "tags": [
+          "회원/강사"
+        ],
+        "summary": "MASTER 회원 정보 수정",
+        "description": "### 이 API가 하는 일\n- MASTER 회원 정보 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/users/{memberId}/master-override`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: MASTER 전용. 본인인증·온보딩 완료 회원의 잠긴 기본정보도 수정하며 약관 동의는 수정하지 않는다.",
+        "operationId": "updateMemberBasicInfoAsMaster",
         "parameters": [
           {
             "name": "memberId",
@@ -70330,7 +70532,7 @@
               "string",
               "null"
             ],
-            "description": "성별. AUTO_RAW_ACCESS·RAW_POLICY_EXCEPTION: 저장 원문 코드(예: M, F, MALE, FEMALE), MASKED: **. FE는 원문 코드를 남·여로 표시한다."
+            "description": "성별. AUTO_RAW_ACCESS·RAW_POLICY_EXCEPTION: MALE/FEMALE/OTHER로 정규화한 값(저장 원문이 M, F, 남, 여 등이어도 같은 값으로 내려가며, 알 수 없는 레거시 값은 원문 그대로), MASKED: **. FE는 응답 코드를 남·여로 표시한다."
           },
           "birthDate": {
             "type": [
@@ -72688,6 +72890,20 @@
           "assignedVolunteerCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "availabilityStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "GENERAL_INDIVIDUAL 강사 배정 대기 상태. AVAILABLE(배정 대기) 또는 UNAVAILABLE(배정 불가). 그 외 대상은 null."
+          },
+          "unavailableReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UNAVAILABLE일 때 사유 코드. 같은 강사가 이미 배정된 다른 일정과 시간이 겹치면(끝 시각 = 시작 시각 포함) INSTRUCTOR_ASSIGNMENT_TIME_CONFLICT."
           }
         }
       },
@@ -77829,7 +78045,7 @@
           "evidenceFileObjectId": {
             "type": "integer",
             "format": "int64",
-            "description": "호환 입력 필드입니다. 성범죄 경력 조회 결과/증빙 파일은 저장하지 않으므로 신규 요청에서는 사용하지 않습니다."
+            "description": "CRIMINAL_HISTORY_CHECK_CONSENT 전용. agreed=true일 때 선택으로 성범죄 경력 조회 동의서 서명 원본 파일 ID를 연결합니다. 파일은 filePurpose=CRIMINAL_HISTORY_CONSENT_ORIGINAL, MEMBER/CONSENT/약관 문서 id owner, 요청한 관리자가 업로드, scanStatus=CLEAN·uploadStatus=AVAILABLE이어야 합니다. 다른 용도 파일은 400 CONSENT_EVIDENCE_FILE_NOT_ALLOWED, 준비되지 않은 원본은 409 CONSENT_ORIGINAL_FILE_NOT_READY, 다른 동의에 연결된 원본은 409 CONSENT_ORIGINAL_FILE_ALREADY_USED, CMS 회원 상세 PATCH에서 이미 다른 원본이 연결된 동의에 새 원본을 보내면 재동의로 처리합니다(AdminMemberBasicInfoUpdateRequest.termsAgreements 참고). 성범죄 경력 조회 결과·증빙 파일은 연결하지 않으며, 다른 termsType이나 회원포탈 경로에서는 사용하지 않습니다."
           },
           "evidenceOriginalFileName": {
             "type": "string",
@@ -78022,6 +78238,7 @@
           },
           "calculationDetails": {
             "type": "array",
+            "description": "제출 가능 상태에서는 서버가 산정한 금액과 근거를 제공한다(정산 항목 0건이어도 제공). 신청 자격 차단 시 canSubmit=false와 차단 사유가 우선이며 신규 정산 계산이나 거리 스냅샷 생성은 하지 않는다. 기존 신청이 있으면 그 신청의 저장된 금액과 계산 내역을 재계산 없이 보여준다. 기존 신청이 없는 차단 상태에서는 강사비 근거 1건만 제공할 수 있으며 그 경우 basisJsonb의 estimateOnly=true는 참고용 추정 금액이고 grossAmount/withholdingTaxAmount/netPaymentAmount는 null이다. Gemini는 추정하지 않는다. LECTURE_FEE=차시당 단가·인정 차시·교육 시간(25분/0차시/0원도 설명), TRANSPORTATION=거리 스냅샷·온라인 0km 등 지급 제외 사유, EXPENSE_ITEMS=식사비·활동비·숙박비, WITHHOLDING_TAX=과세 기준·세율, NET_PAYMENT=총액-원천징수세액. 각 basisJsonb/displayJsonb는 JSON 문자열이며 회원 주소 원문은 포함하지 않는다. 금액·산식은 서버 계산 결과가 SSOT이고 클라이언트가 재계산하지 않는다.",
             "items": {
               "$ref": "#/components/schemas/SettlementApplicationCalculationDetailResponse"
             }
@@ -78051,7 +78268,7 @@
           },
           "payableItems": {
             "type": "array",
-            "description": "강사가 신청할 수 있는 실비 항목(프로그램에서 켠 항목만). 숙박비(LODGING, 1사1교 제외)·활동비(ACTIVITY)·식사비(MEAL). maxLimitWon은 CMS 정산 항목 설정의 신청 1건 기준 최대 한도(없으면 null), evidenceRequired는 영수증 필요 여부(미설정이면 null). 넘으면 400 PAYMENT_ITEM_LIMIT_EXCEEDED. 교통비·1사1교 숙박비는 별도 필드로 다룬다.",
+            "description": "강사가 신청할 수 있는 실비 항목(프로그램에서 켠 항목만). 숙박비(LODGING, 1사1교 제외)·활동비(ACTIVITY)·식사비(MEAL). maxLimitWon은 CMS 정산 항목 설정의 신청 1건 기준 최대 한도(없으면 null), evidenceRequired는 영수증 필요 여부(미설정이면 null이며 서버는 필수로 처리). false인 항목은 증빙 없이 제출할 수 있고, 증빙을 붙이면 선택 증빙으로 저장한다. 한도를 넘으면 400 PAYMENT_ITEM_LIMIT_EXCEEDED. 교통비·1사1교 숙박비는 별도 필드로 다룬다.",
             "items": {
               "$ref": "#/components/schemas/InstructorPayableItem"
             }
@@ -79371,6 +79588,14 @@
               "OVER_14"
             ],
             "example": "OVER_14"
+          },
+          "identityVerificationRequired": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "관리자 전용. MASTER가 등록한 관리자 계정이 임시 비밀번호 변경 전에 POST /api/admin/auth/identity/confirm 으로 본인인증을 확정해야 하면 true. true인 동안 POST /api/admin/auth/password/change는 409 ADMIN_IDENTITY_NOT_VERIFIED. 회원 토큰 응답은 null.",
+            "example": true
           }
         }
       },
@@ -79439,8 +79664,8 @@
           },
           "gender": {
             "type": "string",
-            "description": "성별 코드",
-            "example": "F"
+            "description": "성별 코드. MALE, FEMALE, OTHER 권장. M/F·남/여 별칭도 허용하며 서버가 MALE/FEMALE/OTHER로 정규화해 저장한다. 그 외 값은 400 GENDER_INVALID.",
+            "example": "FEMALE"
           },
           "under14": {
             "type": "boolean",
@@ -79685,6 +79910,50 @@
           "memberType"
         ]
       },
+      "PortalSignupIdentityPrecheckRequest": {
+        "type": "object",
+        "description": "회원 포탈 회원가입 본인인증 직후 사전 검사 요청. 본인인증 세션은 소비하지 않는다.",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "NICE 본인인증 세션 ID",
+            "example": 90001
+          },
+          "profileToken": {
+            "type": "string",
+            "description": "본인인증 완료 시 발급된 profileToken",
+            "maxLength": 512,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "PortalSignupIdentityPrecheckResponse": {
+        "type": "object",
+        "description": "회원 포탈 회원가입 본인인증 사전 검사 결과. 판정 기준은 POST /api/portal/auth/signup/general·/teacher의 409 PHONE_ALREADY_REGISTERED(휴대폰 숫자만 비교)·IDENTITY_ALREADY_LINKED(CI/DI)와 같다.",
+        "properties": {
+          "alreadyRegistered": {
+            "type": "boolean",
+            "description": "같은 휴대폰 번호(숫자만 비교) 또는 같은 CI/DI로 가입된 회원이 있으면 true. true면 최종 가입은 409가 된다."
+          },
+          "registeredByAdmin": {
+            "type": "boolean",
+            "description": "일치한 회원이 관리자가 등록한(또는 사전 등록된) 회원이고 이름·생년월일·휴대폰이 본인인증 결과와 같으면 true(관리자 등록 회원 안내 화면). alreadyRegistered=false면 false."
+          },
+          "maskedEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "안내 화면용 마스킹 이메일. registeredByAdmin=true면 관리자 등록 회원의 이메일. alreadyRegistered=false면 null.",
+            "example": "ho***@example.com"
+          }
+        }
+      },
       "HomepageGeneralSignupRequest": {
         "type": "object",
         "description": "회원 포탈 일반회원 가입 요청",
@@ -79785,7 +80054,7 @@
             "description": "새 비밀번호. 실제 값을 문서나 로그에 남기지 않습니다.",
             "example": "new-sample-password",
             "maxLength": 200,
-            "minLength": 12
+            "minLength": 0
           }
         },
         "required": [
@@ -79881,12 +80150,12 @@
           "newPassword": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12
+            "minLength": 0
           },
           "newPasswordConfirm": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12
+            "minLength": 0
           }
         },
         "required": [
@@ -80341,7 +80610,6 @@
         },
         "required": [
           "agreed",
-          "guardianRelation",
           "termsVersion"
         ]
       },
@@ -87793,6 +88061,20 @@
             "type": "string",
             "format": "date-time",
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601. ON_ANNOUNCEMENT와 함께 보내면 400"
+          },
+          "privacyConsentConfirmed": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "CMS-FUNC-0164. 신청 없이 강사를 처음 등록할 때(instructorApplicationId 없음, 해당 프로그램에 연결된 신청 없음) 관리자가 '개인정보 수집·이용' 동의를 확인했는지 여부. true여야 등록됩니다. 같은 프로그램에 이미 연결된 신청이 있으면 무시합니다."
+          },
+          "thirdPartyConsentConfirmed": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "CMS-FUNC-0164. 같은 조건에서 '개인정보 제3자 정보 제공·이용' 동의를 관리자가 확인했는지 여부. true여야 등록됩니다."
           }
         },
         "required": [
@@ -87928,7 +88210,14 @@
               "boolean",
               "null"
             ],
-            "description": "SATISFACTION: 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다. LECTURE_EVALUATION: progressStatus=FINISHED이고 호출 관리자에게 해당 프로그램 FILE_DOWNLOAD가 있을 때만 true (프로그램 담당자 Viewer는 false). 그 외 formType은 null."
+            "description": "SATISFACTION: 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다. LECTURE_EVALUATION: 결과가 공개된 때(progressStatus=FINISHED, 또는 submissionEndAt이 없고 progressStatus=IN_PROGRESS)이고 호출 관리자에게 해당 프로그램 FILE_DOWNLOAD가 있을 때만 true(프로그램 담당자 Viewer는 false). 마감이 없으면 progressStatus는 IN_PROGRESS를 유지한다. 그 외 formType은 null."
+          },
+          "resultsAvailable": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "LECTURE_EVALUATION만. 결과 목록·단건·summary를 열 수 있으면 true. FINISHED 이거나 submissionEndAt이 없고 IN_PROGRESS일 때 true, BEFORE_START와 마감 있는 IN_PROGRESS는 false. FILE_DOWNLOAD와 무관하다. 그 외 formType은 null."
           },
           "displayDeadlineAt": {
             "type": [
@@ -96239,7 +96528,8 @@
             "type": "string"
           },
           "answerValueJson": {
-            "type": "string"
+            "type": "string",
+            "description": "JSON 문자열. 기본 마스킹에서는 null일 수 있다. GET /api/admin/form-responses/{responseId}에서 본인 LECTURE_EVALUATION 설문자 정보는 제출 때와 같은 객체 JSON 문자열이다. 예: {\"name\":\"홍길동\",\"addressRegion\":\"서울\",\"phone\":\"010-1234-5678\"}."
           },
           "answerDisplayText": {
             "type": "string"
@@ -96814,7 +97104,7 @@
           },
           "filePurpose": {
             "type": "string",
-            "description": "파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다.",
+            "description": "파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다. CRIMINAL_HISTORY_CONSENT_ORIGINAL은 CMS가 받은 성범죄 경력 조회 동의서 서명 원본입니다: ownerDomain=MEMBER, ownerType=CONSENT, ownerId=현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 문서 id(회원 상세·신규 등록 공통, memberId 아님), PDF/JPG/JPEG/PNG 20MB, PRIVATE_SENSITIVE, SIGNED_CONSENT_EVIDENCE_RESTRICTED_3Y, SERVER_RELAY. 성범죄 경력 조회 결과·증빙(CRIMINAL_HISTORY_EVIDENCE)은 관리자 업로드를 허용하지 않습니다.",
             "example": "STUDENT_ROSTER",
             "maxLength": 80,
             "minLength": 0
@@ -98056,7 +98346,7 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time",
-            "description": "challenge 만료 시각",
+            "description": "challenge 발급 기준 참고 시각(발급 후 3분). 검증은 이 시각이 지나도 만료로 거부하지 않으므로 화면에서 만료 처리·카운트다운에 쓰지 않는다.",
             "example": "2026-06-02T09:10:00Z"
           },
           "mfaSetupRequired": {
@@ -98107,6 +98397,18 @@
             "type": "string",
             "description": "로컬 프로필 전용 MFA 통과 코드",
             "example": "000000"
+          },
+          "failedAttemptCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "계정 단위 MFA 연속 실패 횟수. 인증에 성공해야만 0으로 초기화된다.",
+            "example": 2
+          },
+          "maxFailedAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "description": "잠금 전까지 허용되는 MFA 연속 실패 횟수",
+            "example": 5
           }
         }
       },
@@ -98180,6 +98482,49 @@
           "completedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AdminSignupIdentityPrecheckRequest": {
+        "type": "object",
+        "description": "관리자 회원가입 본인인증 직후 사전 검사 요청. 본인인증 세션은 소비하지 않는다.",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "NICE 본인인증 세션 ID (flow=ADMIN_SIGNUP)",
+            "example": 1001
+          },
+          "profileToken": {
+            "type": "string",
+            "description": "본인인증 완료 시 발급된 profileToken",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "AdminSignupIdentityPrecheckResponse": {
+        "type": "object",
+        "description": "관리자 회원가입 본인인증 사전 검사 결과. 판정 기준은 POST /api/admin/auth/signup/complete의 ADMIN_IDENTITY_ALREADY_REGISTERED와 같다.",
+        "properties": {
+          "alreadyRegistered": {
+            "type": "boolean",
+            "description": "같은 본인정보로 이미 등록된 관리자 계정이 있으면 true. true면 signup/complete는 409 ADMIN_IDENTITY_ALREADY_REGISTERED가 된다."
+          },
+          "registeredByAdmin": {
+            "type": "boolean",
+            "description": "일치한 계정이 MASTER가 등록한 관리자 계정이면 true(관리자 등록 회원 안내 화면). alreadyRegistered=false면 false."
+          },
+          "maskedEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "안내 화면용 마스킹 이메일. 관리자 등록 계정을 우선한다. alreadyRegistered=false면 null.",
+            "example": "ho***@jakorea.org"
           }
         }
       },
@@ -98489,6 +98834,43 @@
           "password"
         ]
       },
+      "AdminIdentityConfirmRequest": {
+        "type": "object",
+        "description": "관리자 등록 계정 최초 로그인 본인인증 확정 요청",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "NICE 본인인증 세션 ID",
+            "example": 1001
+          },
+          "profileToken": {
+            "type": "string",
+            "description": "본인인증 완료 시 발급된 profileToken",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "AdminIdentityConfirmResponse": {
+        "type": "object",
+        "description": "관리자 등록 계정 최초 로그인 본인인증 확정 결과. 성공하면 비밀번호 변경을 진행할 수 있다.",
+        "properties": {
+          "identityVerified": {
+            "type": "boolean",
+            "description": "본인인증 확정 여부",
+            "example": true
+          },
+          "identityVerifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "본인인증 확정 시각"
+          }
+        }
+      },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
         "description": "관리자 승인/반려 처리 요청. 승인 시 roleCode를 함께 보내면 신청자가 선택한 권한 유형 대신 MASTER가 최종 승인한 권한 유형으로 적용됩니다.",
@@ -98700,7 +99082,7 @@
           },
           "roleCode": {
             "type": "string",
-            "description": "CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 생략 시 PROGRAM_VIEWER."
+            "description": "CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 필수이며 비어 있으면 400 ADMIN_ROLE_CODE_REQUIRED."
           },
           "reason": {
             "type": "string"
@@ -99507,6 +99889,7 @@
           },
           "termsAgreements": {
             "type": "array",
+            "description": "CMS 회원정보 수정으로는 약관·동의 상태를 바꾸지 않습니다(CMS_MEMBER_TERMS_NOT_EDITABLE, 409). 예외: 성범죄 경력 조회 동의서 서명 원본 연결 요청 1건(termsType=CRIMINAL_HISTORY_CHECK_CONSENT, agreed=true, evidenceFileObjectId 필수, filledDocument 없음). ① 유효한 동의가 있고 version이 그 동의의 version이며 원본이 없거나 같은 파일이면 원본만 연결합니다. 동의 일시·만료일은 바뀌지 않고, 같은 파일 재전송은 200(멱등)입니다. ② 그 밖의 경우(동의 없음·철회·만료, 이미 다른 원본이 연결된 동의에 새 원본을 보내는 재업로드, version이 다름)는 재동의로 처리합니다. 새 동의 이력을 만들어 동의 일시=요청 시각, 만료일=동의일로부터 1년으로 기록하고 새 원본을 연결하며, 이전 동의 이력과 원본은 그대로 보존합니다. 재동의 version은 현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 version이어야 하며, 다르면 409 CMS_TERMS_VERSION_STALE입니다. 원본 연결·재업로드·재동의 모두 현재 게시된 약관 version을 보내면 됩니다.",
             "items": {
               "$ref": "#/components/schemas/TermsAgreementRequest"
             },
@@ -102730,11 +103113,19 @@
       },
       "AdminAccountBasicInfoUpdateRequest": {
         "type": "object",
-        "description": "관리자 상세 화면의 기본 정보 수정 요청입니다. 이메일은 로그인 식별자라 이 API에서 변경하지 않습니다.",
+        "description": "관리자 상세 화면의 기본 정보 수정 요청입니다. 이메일(로그인 식별자)은 관리자 등록 계정이 본인인증 전일 때만 변경할 수 있습니다.",
         "properties": {
           "name": {
             "type": "string",
             "description": "관리자 이름"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "변경할 관리자 로그인 이메일. 선택 항목이며 생략·공백이거나 현재 이메일과 대소문자·앞뒤 공백만 다르면 변경하지 않습니다.\n관리자 등록 계정(createdByAdmin/registeredByAdmin=true)이 본인인증 전(identityVerified=false)이고 요청자가 MASTER일 때만 변경할 수 있으며,\n그 외 계정은 409 EMAIL_CHANGE_NOT_ALLOWED(field=email). @jakorea.org 도메인만 허용하며 형식·도메인 오류는 400 INVALID_EMAIL(field=email),\n다른 관리자·회원 계정과 중복이면 409 EMAIL_ALREADY_EXISTS(field=email).\n초기 비밀번호가 이전 이메일 그대로면 새 이메일로 함께 바뀝니다.",
+            "example": "new.admin@jakorea.org"
           },
           "phone": {
             "type": "string",
@@ -102742,7 +103133,7 @@
           },
           "gender": {
             "type": "string",
-            "description": "성별 코드"
+            "description": "성별 코드. MALE, FEMALE, OTHER 권장. M/F·남/여 별칭도 허용하며 서버가 MALE/FEMALE/OTHER로 정규화해 저장한다. 그 외 값은 400 GENDER_INVALID."
           },
           "birthDate": {
             "type": "string",
@@ -103362,6 +103753,22 @@
           },
           "sigungu": {
             "type": "string"
+          },
+          "emdName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "읍면동명(행안부 emdNm)",
+            "example": "세종로"
+          },
+          "roadName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "도로명(행안부 rn)",
+            "example": "세종대로"
           }
         }
       },
@@ -103388,6 +103795,14 @@
           },
           "source": {
             "type": "string"
+          },
+          "inputErrorCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "QA 2026-11-14 BP6: 행안부 주소 API가 검색어를 거절했을 때의 원본 오류 코드(E0005 검색어 없음, E0006 상세 주소 필요, E0008 한 글자, E0009 숫자·특수문자만, E0010 페이지 범위, E0011·E0015 결과 과다, E0012·E0013 사용할 수 없는 문자). 이때 content는 빈 배열이고 HTTP 200이다. 정상 검색이면 null.",
+            "example": "E0006"
           }
         }
       },
@@ -106724,6 +107139,17 @@
               "common",
               "perSchedule"
             ]
+          },
+          "applicationSource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강사(INSTRUCTOR) 신청의 출처. MEMBER_SUBMITTED=회원이 직접 신청, ADMIN_REGISTERED=CMS 관리자가 참여 강사로 직접 등록(신청 행 자동 생성). ADMIN_REGISTERED이면 FE는 안내사항 [신청 정보] 버튼을 숨긴다(USER-FUNC-0252). 승인 완료 상태라 '신청 내용' 탭은 노출되지 않으며, 기관별 강의 가능 일정에 '-' 같은 대체 표시나 별도 문구를 만들지 않는다. 강사 외 신청 유형은 null.",
+            "enum": [
+              "MEMBER_SUBMITTED",
+              "ADMIN_REGISTERED"
+            ]
           }
         }
       },
@@ -107123,6 +107549,17 @@
             ],
             "format": "int64",
             "description": "신청 recruitmentId 모집 행 대표 이미지 file_object id. program.thumbnailFileObjectId와 목록 thumbnailFileObjectId와 같은 값. 없으면 null."
+          },
+          "applicationSource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강사(INSTRUCTOR) 신청의 출처. MEMBER_SUBMITTED=회원이 직접 신청, ADMIN_REGISTERED=CMS 관리자가 참여 강사로 직접 등록(신청 행 자동 생성). ADMIN_REGISTERED이면 FE는 안내사항 [신청 정보] 버튼을 숨긴다(USER-FUNC-0252). 승인 완료 상태라 '신청 내용' 탭은 노출되지 않으며, 기관별 강의 가능 일정에 '-' 같은 대체 표시나 별도 문구를 만들지 않는다. 강사 외 신청 유형은 null.",
+            "enum": [
+              "MEMBER_SUBMITTED",
+              "ADMIN_REGISTERED"
+            ]
           }
         }
       },
@@ -110146,7 +110583,8 @@
           },
           "approved": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "승인 원본 상태(APPROVED, APPROVAL_COMPLETED, FINAL_SELECTED) 기준 건수. 표시상태 기준이 아니므로 inProgress·ended(진행 완료 등)와 겹칠 수 있다. 홈 「신청」 카드는 submitted를 쓴다."
           },
           "rejected": {
             "type": "integer",
@@ -110816,6 +111254,17 @@
           "agreementPayload": {
             "$ref": "#/components/schemas/SignupTermsAgreementPayload",
             "description": "가입 요청 termsAgreements에 그대로 넣을 수 있는 payload"
+          },
+          "formTemplateVersion": {
+            "description": "작성형 동의서(PORTRAIT_RIGHTS 등)의 현재 PUBLISHED CMS 양식 템플릿. 마이페이지 DRAFT 응답의 formTemplateVersion과 같은 구조이며, 작성 화면은 schemaJson으로 그리고 filledDocument.templateVersionId에 templateVersionId를 그대로 보낸다. 작성형이 아니거나 게시된 양식이 없으면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MemberPortalConsentFormTemplateVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -111136,6 +111585,27 @@
           "usedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "verifiedGuardianName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "QA 2026-11-14 BP8: NICE로 확인된 보호자 이름. 마스킹하지 않는다. identityVerified=false면 null."
+          },
+          "verifiedGuardianPhone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "QA 2026-11-14 BP8: NICE로 확인된 보호자 휴대폰. 숫자만(하이픈 없음, 예: 01012345678). 마스킹하지 않는다. identityVerified=false면 null."
+          },
+          "guardianRelation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "저장된 보호자 관계. 최종 동의 전이면 null."
           }
         }
       },
@@ -112432,7 +112902,8 @@
             ]
           },
           "basisJson": {
-            "type": "string"
+            "type": "string",
+            "description": "정산 시점 계산 근거 JSON snapshot. 강사비 최소 키: layout, itemType=LECTURE_FEE, wageItemType, categoryLabel, feeAssessmentWon|amount, sessionOrdinal, lectureTimeDisplay(canonical 차시/회차만). 원천징수 최소 키: layout=withholding, taxIncomeType, taxableAmount, rate|combinedTaxRate, incomeTax|incomeTaxAmount, localTax|localIncomeTaxAmount, withholdingTaxAmount, smallAmountExemptionApplied, appliedRule(NONE|TAXABLE_MINIMUM|SMALL_AMOUNT_EXEMPTION), appliedRuleThreshold(적용 기준값, NONE이면 null). 적용 안내는 BE가 소득 유형별 기준(기타소득 125,000 / 상금 250,000 / 면접비·지원금·경품 50,000 / 사업소득은 과세최저한 없이 소액부징수만)으로 판정하며 FE는 그대로 표시한다. 저장·동결된 과거 basis에도 응답 단계에서 채운다. dailyIncomeThreshold·earnedIncomeDeduction 등 일용근로 필드는 표시하지 않는다."
           },
           "resultAmount": {
             "type": "integer",
@@ -112487,8 +112958,8 @@
           },
           "description": {
             "type": "string",
-            "nullable": true,
-            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null."
+            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null.",
+            "nullable": true
           },
           "amount": {
             "type": "integer",
@@ -114537,7 +115008,31 @@
               "null"
             ],
             "format": "date",
-            "description": "UJAT 봉사자 생년월일. 없으면 null. 다른 프로그램 목록은 null"
+            "deprecated": true,
+            "description": "항상 null(2026-11-12 정책 §4-1: 목록은 생년월일을 원문으로 주지 않는다). 타입(LocalDate)은 호환을 위해 유지. 표시값은 maskedBirthDate·birthYear·age, 원문은 상세 unmask(사유 입력 + 조회 기록)만"
+          },
+          "maskedBirthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 봉사자 생년월일 마스킹 값(yyyy-**-**, 연도만). 없으면 null. 다른 프로그램 목록은 null"
+          },
+          "birthYear": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "UJAT 봉사자 출생연도. 없으면 null. 다른 프로그램 목록은 null"
+          },
+          "age": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "UJAT 봉사자 만 나이(조회일 기준). 없으면 null. 다른 프로그램 목록은 null"
           },
           "id1365": {
             "type": [
@@ -116313,7 +116808,7 @@
           },
           "itemSummary": {
             "type": "string",
-            "description": "항목 요약 라벨(학생 교통비·참여자 활동비·식사비)"
+            "description": "항목 요약 라벨(학생 교통비·활동비·식사비)"
           },
           "itemType": {
             "type": "string",
@@ -122440,8 +122935,12 @@
         "type": "object",
         "properties": {
           "settlementApplicationId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "개인 정산 신청 ID. rowType=NOT_APPLIED(정산 신청 전 봉사 일정) 행만 null."
           },
           "programId": {
             "type": "integer",
@@ -122482,15 +122981,27 @@
             "format": "date-time"
           },
           "latestRevisionNo": {
-            "type": "integer",
-            "format": "int32"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "rowType=NOT_APPLIED 행은 null."
           },
           "status": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "최신 Revision 상태. rowType=NOT_APPLIED 행은 null(화면 처리 현황 \"-\")."
           },
           "totalAmount": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "최신 Revision 신청 금액 합계. rowType=NOT_APPLIED 행은 null(화면 금액 \"-\")."
           },
           "submittedAt": {
             "type": "string",
@@ -122521,6 +123032,42 @@
             ],
             "format": "int64",
             "description": "VOLUNTEER 신청의 program_volunteer_application.id"
+          },
+          "rowType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "참여 봉사자 정산 현황(programId+participantId+applicationType=VOLUNTEER)에서만 채운다. SETTLEMENT_APPLICATION=정산 신청 행, NOT_APPLIED=정산 신청 전인 배정 봉사 일정 행(settlementApplicationId·status·totalAmount·latestRevisionNo null, 상세·승인·반려 대상 아님). 다른 조회에서는 null.",
+            "enum": [
+              "SETTLEMENT_APPLICATION",
+              "NOT_APPLIED"
+            ]
+          },
+          "lectureProgressStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "참여 봉사자 정산 현황에서만 채우는 봉사 일정 진행 여부(강사 정산 현황 lectureProgressStatus와 같은 규칙). SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 일정. 다른 조회에서는 null.",
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "GAVE_UP"
+            ]
+          },
+          "scheduleKind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일정 종류(program_schedule.schedule_kind). 강사 정산 현황 scheduleKind와 같은 값. 모든 조회에서 채우며, 값이 비어 있는 일정은 null.",
+            "enum": [
+              "PRE_EDUCATION",
+              "EDUCATION",
+              "CLOSING",
+              "SESSION"
+            ]
           }
         }
       },
@@ -122672,6 +123219,13 @@
             ],
             "format": "int64",
             "description": "VOLUNTEER 신청의 program_volunteer_application.id"
+          },
+          "institutionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "최신 Revision 제출 시점의 참여 기관명(document_context_snapshot.institutionName). 정산 목록 기관명과 같은 기준(배정 기관 → 일정 단일 기관 → 일정 장소명)으로 제출 때 저장한 값이며 프로그램명·주소로 대신 채우지 않는다. 개인형(GENERAL_INDIVIDUAL) 프로그램은 항상 null(화면에서 열 숨김), 기관형에서 저장된 값이 없으면 null(화면 \"-\")."
           }
         }
       },
@@ -122709,6 +123263,13 @@
             "items": {
               "$ref": "#/components/schemas/Item"
             }
+          },
+          "institutionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 Revision 제출 시점의 참여 기관명(document_context_snapshot.institutionName). 정산 목록 기관명과 같은 기준(배정 기관 → 일정 단일 기관 → 일정 장소명)으로 제출 때 저장한 값이다. 개인형(GENERAL_INDIVIDUAL) 프로그램은 항상 null, 기관형에서 저장된 값이 없으면 null."
           }
         }
       },
@@ -125074,6 +125635,31 @@
             "type": "string",
             "description": "PDF와 동일한 한글 기간 라벨",
             "example": "2026년 3월 2일 ~ 2026년 3월 16일"
+          },
+          "activityMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "활동인증서(INSTRUCTOR_ACTIVITY·VOLUNTEER_ACTIVITY)의 활동시수(분). 진행 완료 일정의 시간을 겹침 없이 합산하며 해당 일정이 없으면 0. 다른 증명서 유형은 null.",
+            "example": 270
+          },
+          "participationStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "활동인증서 참여기간 시작일(yyyy-MM-dd, Asia/Seoul). 본인의 진행 완료된 첫 일정일. 일정이 없거나 활동인증서가 아니면 null.",
+            "example": "2026-11-02"
+          },
+          "participationEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "활동인증서 참여기간 종료일(yyyy-MM-dd, Asia/Seoul). 본인의 진행 완료된 마지막 일정일(활동 포기 시 포기 전 마지막 일정). 일정이 없거나 활동인증서가 아니면 null. 시작일과 같으면 하루 참여.",
+            "example": "2026-11-12"
           }
         }
       },

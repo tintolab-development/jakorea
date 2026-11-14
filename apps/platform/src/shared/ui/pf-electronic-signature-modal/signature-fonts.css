@@ -32,7 +32,8 @@
 
 @font-face {
   font-family: 'JA Signature GangwonEduAll';
-  src: url('../../../assets/fonts/autograph/GangwonEduAll-Bold.otf') format('opentype');
+  /* 원본 OTF는 CFF 글꼴 이름 공백·kern 표 오류로 브라우저(OTS)가 거부해 글리프 그대로 WOFF2로 다시 저장 */
+  src: url('../../../assets/fonts/autograph/GangwonEduAll-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;

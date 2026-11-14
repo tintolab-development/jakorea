@@ -537,8 +537,8 @@ export function SchoolSearch({
                 placeholder={MODAL_KEYWORD_PLACEHOLDER}
                 inputSize="medium"
                 width="100%"
+                // 시안 — 검색어 미입력은 필드 아래 문구 없이 error 테두리만 표시
                 error={Boolean(keywordValidationError)}
-                message={keywordValidationError ?? undefined}
               />
             </span>
             <CmsButton

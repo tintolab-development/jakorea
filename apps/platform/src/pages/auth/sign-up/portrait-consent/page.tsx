@@ -52,8 +52,10 @@ export function SignUpPortraitConsentPage() {
     enabled: bridge != null,
   })
   const portraitTerms = pickSignupPortraitTermsDocument(termsQuery.data)
+  // 작성형 동의서는 약관 본문(content, HTML)이 아니라 게시 양식 formTemplateVersion.schemaJson으로 그린다
+  // (마이페이지 작성 화면과 같은 PortraitConsentWriteForm). null이면 양식을 불러오지 못함 안내를 유지한다.
   const serverDraft = useMemo(
-    () => parseWritingFormDraftFromUnknown(portraitTerms?.content),
+    () => parseWritingFormDraftFromUnknown(portraitTerms?.formTemplateVersion?.schemaJson ?? null),
     [portraitTerms],
   )
   const remote = isRemoteApiConfigured()

@@ -4,7 +4,7 @@ import { JUSO_ADDR_LINK_API_URL } from '@jakorea/location/juso'
  * 주소·학교 검색 키 미설정 — 사용자 화면에는 일반 안내만 보여 준다 (CMS `location-env`와 같은 방식).
  * 내부 경로·환경변수 이름은 노출하지 않고, 개발 환경 콘솔에만 남긴다.
  */
-const PLATFORM_ADDRESS_SEARCH_UNAVAILABLE_MESSAGE =
+export const PLATFORM_ADDRESS_SEARCH_UNAVAILABLE_MESSAGE =
   '주소 검색을 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.'
 
 const PLATFORM_SCHOOL_SEARCH_UNAVAILABLE_MESSAGE =

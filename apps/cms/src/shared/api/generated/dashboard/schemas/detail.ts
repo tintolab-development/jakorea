@@ -29,4 +29,6 @@ export interface Detail {
   applicationType?: DetailApplicationType;
   /** VOLUNTEER 신청의 program_volunteer_application.id */
   volunteerApplicationId?: number | null;
+  /** 최신 Revision 제출 시점의 참여 기관명(document_context_snapshot.institutionName). 정산 목록 기관명과 같은 기준(배정 기관 → 일정 단일 기관 → 일정 장소명)으로 제출 때 저장한 값이며 프로그램명·주소로 대신 채우지 않는다. 개인형(GENERAL_INDIVIDUAL) 프로그램은 항상 null(화면에서 열 숨김), 기관형에서 저장된 값이 없으면 null(화면 "-"). */
+  institutionName?: string | null;
 }

@@ -582,15 +582,15 @@ describe('getMemberConsentInvalidNoticeSubjectContactAlertMessage', () => {
     ).toBeNull()
   })
 
-  it('returns birth alert when the date is invalid', () => {
-    const draft = withNoticeSubjectContact(
-      normalizeWritingFormDraft(createAgreementNoticeDraft()),
-      '1991.13.01',
-      '010-1234-5678'
-    )
-    expect(getMemberConsentInvalidNoticeSubjectContactAlertMessage(draft)).toBe(
-      '올바른 생년월일을 입력해 주세요.'
-    )
+  it('does not restrict the birth date format (QA 2026-11-14)', () => {
+    const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    for (const birth of ['1991.13.01', '000915', '2000년 9월 15일']) {
+      expect(
+        getMemberConsentInvalidNoticeSubjectContactAlertMessage(
+          withNoticeSubjectContact(base, birth, '010-1234-5678')
+        )
+      ).toBeNull()
+    }
   })
 
   it('returns phone alert when the number is invalid', () => {

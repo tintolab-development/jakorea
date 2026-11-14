@@ -4,7 +4,7 @@ import {
   type ShortEssayParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useDeferredFieldCommit } from '@/features/template/ui/shared/use-deferred-field-commit'
-import { CmsDateTextInput, CmsInput, CmsPhoneInput } from '@/shared/ui'
+import { CmsInput, CmsPhoneInput } from '@/shared/ui'
 import './agreement-notice-subject-fill-fields.css'
 
 const SUBJECT_FIELD_SPECS = [
@@ -16,8 +16,8 @@ const SUBJECT_FIELD_SPECS = [
   },
   {
     itemId: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth,
-    label: '생년월일(8자리)',
-    placeholder: '생년월일 8자리를 입력해 주세요',
+    label: '생년월일',
+    placeholder: '생년월일을 입력해 주세요',
     kind: 'birth' as const,
   },
   {
@@ -66,7 +66,7 @@ function SubjectFillField({
   }
 
   const control =
-    kind === 'name' ? (
+    kind === 'name' || kind === 'birth' ? (
       <CmsInput
         id={`notice-subject-${itemId}`}
         inputSize="large"
@@ -77,22 +77,6 @@ function SubjectFillField({
         onChange={
           isBodyInteractive
             ? e => setEditValue(applyConsentShortEssayItemInput(itemId, e.target.value))
-            : undefined
-        }
-        onBlur={isBodyInteractive ? () => commitFormatted(editValue) : undefined}
-      />
-    ) : kind === 'birth' ? (
-      <CmsDateTextInput
-        id={`notice-subject-${itemId}`}
-        inputSize="large"
-        width="100%"
-        value={editValue}
-        placeholder={placeholder}
-        maxLength={10}
-        readOnly={!isBodyInteractive}
-        onValueChange={
-          isBodyInteractive
-            ? value => setEditValue(applyConsentShortEssayItemInput(itemId, value))
             : undefined
         }
         onBlur={isBodyInteractive ? () => commitFormatted(editValue) : undefined}

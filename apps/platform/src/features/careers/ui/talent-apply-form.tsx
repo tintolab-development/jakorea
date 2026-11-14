@@ -1,15 +1,14 @@
-import { type ChangeEvent, useRef, useState } from 'react'
+import { type ChangeEvent, type ReactNode, useRef, useState } from 'react'
 import axios from 'axios'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  buildRequiredConsentDisagreeAlertMessage,
-  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
-} from '@jakorea/domain/shared/required-consent-alert'
+import { buildRequiredConsentDisagreeAlertMessage } from '@jakorea/domain/shared/required-consent-alert'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { Controller, useForm, type FieldErrors, type Resolver } from 'react-hook-form'
 import { AddressSearchModal } from '@/features/auth'
+import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
 import {
   PFAlertModal,
+  PFRequiredFieldsIncompleteDescription,
   PFAttachedFileList,
   PFButton,
   PFSelect,
@@ -21,7 +20,6 @@ import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
 import { useCreatePublicCareerTalentApplication } from '../api/hooks'
 import {
   CAREERS_TALENT_APPLY_PLACEHOLDERS as PH,
-  CAREERS_TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE,
   CAREERS_TALENT_APPLY_STEP_TITLES,
   CAREERS_TALENT_APPLY_SUBMIT_ERROR_MESSAGE,
   CAREERS_TALENT_APPLY_SUBMIT_LABEL,
@@ -47,7 +45,7 @@ import styles from './talent-apply-form.module.css'
 
 type AlertState = {
   title: string
-  description?: string
+  description?: ReactNode
 } | null
 
 function messageFromError(error: unknown): string {
@@ -210,7 +208,8 @@ export function TalentApplyForm() {
     const keys = Object.keys(mapped)
     if (keys.length === 1 && mapped.privacy) {
       setAlert({
-        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        // 시안 「필수 항목 미동의」 제목 — 본문은 미동의 항목명을 그대로 안내한다
+        title: PLATFORM_ALERT_COPY.requiredNotAgreed.title,
         description: buildRequiredConsentDisagreeAlertMessage([
           CAREERS_TALENT_PRIVACY_CONSENT_LABEL,
         ]),
@@ -218,9 +217,10 @@ export function TalentApplyForm() {
       return
     }
 
+    // 시안 「공통 제한 안내 / 필수 항목 미입력」
     setAlert({
-      title: '안내',
-      description: CAREERS_TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE,
+      title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+      description: <PFRequiredFieldsIncompleteDescription />,
     })
   }
 

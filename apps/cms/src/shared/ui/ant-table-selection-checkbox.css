@@ -20,3 +20,15 @@
   top: 50% !important;
   inset-inline-start: 50% !important;
 }
+
+/* 미선택 박스 테두리 — 시안 stroke 1px #E0E0E0 (CmsCheckbox 기본 박스와 동일). 선택·비활성은 antd/공통 스타일 유지 */
+.ant-table .ant-checkbox:not(.ant-checkbox-checked):not(.ant-checkbox-disabled) .ant-checkbox-inner {
+  border-color: var(--table-line, #e0e0e0);
+}
+
+.ant-table
+  .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
+  .ant-checkbox:not(.ant-checkbox-checked):not(.ant-checkbox-disabled)
+  .ant-checkbox-inner {
+  border-color: var(--color-mint-01, #01a1af);
+}

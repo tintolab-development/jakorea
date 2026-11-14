@@ -17,6 +17,8 @@ export type ParsedAuthTokenResponse = {
   adminProvisionedOnboardingStep?: string
   registeredByAdmin?: boolean
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  /** 관리자 등록 계정 — 비밀번호 변경 전 본인인증 확정 필요(BE R1). 회원 토큰은 null, 필드 없으면 undefined */
+  identityVerificationRequired?: boolean | null
 }
 
 function asRecord(payload: unknown): Record<string, unknown> | null {
@@ -66,6 +68,12 @@ export function parseAuthTokenResponse(payload: unknown): ParsedAuthTokenRespons
       typeof body.identitySelfSignupCompletedAfterAdminRegistration === 'boolean'
         ? body.identitySelfSignupCompletedAfterAdminRegistration
         : undefined,
+    identityVerificationRequired:
+      typeof body.identityVerificationRequired === 'boolean'
+        ? body.identityVerificationRequired
+        : body.identityVerificationRequired === null
+          ? null
+          : undefined,
   }
 }
 

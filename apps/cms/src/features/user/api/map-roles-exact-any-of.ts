@@ -31,16 +31,28 @@ export type AllTabRoleFilterValue = (typeof ALL_TAB_ROLE_FILTER_VALUES)[number]
 
 const ALL_TAB_ROLE_FILTER_SET = new Set<string>(ALL_TAB_ROLE_FILTER_VALUES)
 
-/** 전체 회원 — 유형 셀렉트 → exact set allowlist */
+const MEMBER_INSTRUCTOR_DUAL_SETS = [
+  [MEMBER_ROLE_TOKEN.schoolTeacher, MEMBER_ROLE_TOKEN.instructor],
+] as const
+const MEMBER_INSTRUCTOR_REVOKED_SETS = [
+  [MEMBER_ROLE_TOKEN.general, MEMBER_ROLE_TOKEN.instructorRevoked],
+  [MEMBER_ROLE_TOKEN.schoolTeacher, MEMBER_ROLE_TOKEN.instructorRevoked],
+] as const
+
+/**
+ * 전체 회원 — 유형 셀렉트 → exact set allowlist.
+ * 「강사」는 겸직(학교(교사)+강사)·권한 종료 강사까지 포함한다(기획 확정 2026-11-14).
+ */
 const ALL_TAB_ROLE_ALLOWLISTS: Record<AllTabRoleFilterValue, readonly (readonly string[])[]> = {
   INDIVIDUAL: [[MEMBER_ROLE_TOKEN.general]],
   SCHOOL_TEACHER: [[MEMBER_ROLE_TOKEN.schoolTeacher]],
-  INSTRUCTOR: [[MEMBER_ROLE_TOKEN.general, MEMBER_ROLE_TOKEN.instructor]],
-  INSTRUCTOR_DUAL: [[MEMBER_ROLE_TOKEN.schoolTeacher, MEMBER_ROLE_TOKEN.instructor]],
-  INSTRUCTOR_REVOKED: [
-    [MEMBER_ROLE_TOKEN.general, MEMBER_ROLE_TOKEN.instructorRevoked],
-    [MEMBER_ROLE_TOKEN.schoolTeacher, MEMBER_ROLE_TOKEN.instructorRevoked],
+  INSTRUCTOR: [
+    [MEMBER_ROLE_TOKEN.general, MEMBER_ROLE_TOKEN.instructor],
+    ...MEMBER_INSTRUCTOR_DUAL_SETS,
+    ...MEMBER_INSTRUCTOR_REVOKED_SETS,
   ],
+  INSTRUCTOR_DUAL: MEMBER_INSTRUCTOR_DUAL_SETS,
+  INSTRUCTOR_REVOKED: MEMBER_INSTRUCTOR_REVOKED_SETS,
   ADMIN: [[MEMBER_ROLE_TOKEN.admin]],
 }
 
@@ -59,19 +71,29 @@ export const DIRECTORY_ROLE_TOKEN = {
   instructorRevoked: 'INSTRUCTOR_REVOKED',
 } as const
 
+const DIRECTORY_INSTRUCTOR_DUAL_SETS = [
+  [DIRECTORY_ROLE_TOKEN.instructor, DIRECTORY_ROLE_TOKEN.schoolTeacher],
+] as const
+const DIRECTORY_INSTRUCTOR_REVOKED_SETS = [
+  [DIRECTORY_ROLE_TOKEN.instructorRevoked],
+  [DIRECTORY_ROLE_TOKEN.individual, DIRECTORY_ROLE_TOKEN.instructorRevoked],
+  [DIRECTORY_ROLE_TOKEN.schoolTeacher, DIRECTORY_ROLE_TOKEN.instructorRevoked],
+] as const
+
 const ALL_TAB_DIRECTORY_ROLE_ALLOWLISTS: Record<
   Exclude<AllTabRoleFilterValue, 'ADMIN'>,
   readonly (readonly string[])[]
 > = {
   INDIVIDUAL: [[DIRECTORY_ROLE_TOKEN.individual]],
   SCHOOL_TEACHER: [[DIRECTORY_ROLE_TOKEN.schoolTeacher]],
-  INSTRUCTOR: [[DIRECTORY_ROLE_TOKEN.instructor]],
-  INSTRUCTOR_DUAL: [[DIRECTORY_ROLE_TOKEN.instructor, DIRECTORY_ROLE_TOKEN.schoolTeacher]],
-  INSTRUCTOR_REVOKED: [
-    [DIRECTORY_ROLE_TOKEN.instructorRevoked],
-    [DIRECTORY_ROLE_TOKEN.individual, DIRECTORY_ROLE_TOKEN.instructorRevoked],
-    [DIRECTORY_ROLE_TOKEN.schoolTeacher, DIRECTORY_ROLE_TOKEN.instructorRevoked],
+  // 「강사」 — 겸직·권한 종료 포함
+  INSTRUCTOR: [
+    [DIRECTORY_ROLE_TOKEN.instructor],
+    ...DIRECTORY_INSTRUCTOR_DUAL_SETS,
+    ...DIRECTORY_INSTRUCTOR_REVOKED_SETS,
   ],
+  INSTRUCTOR_DUAL: DIRECTORY_INSTRUCTOR_DUAL_SETS,
+  INSTRUCTOR_REVOKED: DIRECTORY_INSTRUCTOR_REVOKED_SETS,
 }
 
 /** 전체 회원 목록 — 디렉터리 API용 exact-set (listMembers `general` 토큰과 다름) */
@@ -92,12 +114,11 @@ export function accountTypeForDirectoryRoleFilter(
   return 'MEMBER'
 }
 
-/** 단일 유형 — 디렉터리 `role` 쿼리 (겸직·박탈은 exact-set만 사용) */
+/** 단일 유형 — 디렉터리 `role` 쿼리 (강사·겸직·박탈은 exact-set만 사용) */
 export function directoryRoleQueryForFilter(roleFilter: string | undefined): string | undefined {
   const key = parseAllTabRoleFilterParam(roleFilter)
   if (key === 'INDIVIDUAL') return DIRECTORY_ROLE_TOKEN.individual
   if (key === 'SCHOOL_TEACHER') return DIRECTORY_ROLE_TOKEN.schoolTeacher
-  if (key === 'INSTRUCTOR') return DIRECTORY_ROLE_TOKEN.instructor
   return undefined
 }
 

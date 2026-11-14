@@ -1,0 +1,43 @@
+/**
+ * 알림 안내 팝업 — 시안 12197:393141
+ * 타이틀 ↔ 본문 16 · 프로그램명 ↔ 본문 16 · 본문 16px Medium · 프로그램명 16px Regular 80%
+ */
+
+.notification-detail-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.notification-detail-modal__program {
+  margin: 0;
+  color: rgba(61, 61, 61, 0.8);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  overflow-wrap: anywhere;
+}
+
+.notification-detail-modal__body {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 시안: 「N명」 Pretendard Bold, 같은 색 */
+.notification-detail-modal__emphasis {
+  color: var(--main-BK, #3d3d3d);
+  font-weight: 700;
+}
+
+.notification-detail-modal.content-modal .teal-header-modal__footer {
+  gap: 8px;
+}

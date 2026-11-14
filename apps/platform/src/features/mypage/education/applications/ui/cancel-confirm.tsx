@@ -28,7 +28,6 @@ export function EducationCancelConfirm({
       open={open}
       size="sm"
       onClose={onCancel}
-      closeOnBackdropClick={!pending}
       showCloseButton={false}
     >
       <div className={styles.content}>

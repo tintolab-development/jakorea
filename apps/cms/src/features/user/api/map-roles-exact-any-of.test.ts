@@ -37,7 +37,10 @@ describe('rolesExactAnyOfForAllTabRoleFilter', () => {
 
   it('표시 유형과 1:1로 exact set을 매핑한다', () => {
     expect(rolesExactAnyOfForAllTabRoleFilter('SCHOOL_TEACHER')).toBe('school_teacher')
-    expect(rolesExactAnyOfForAllTabRoleFilter('INSTRUCTOR')).toBe('general+instructor')
+    // 「강사」 — 순수 강사 + 겸직 + 권한 종료(순수·겸직)
+    expect(rolesExactAnyOfForAllTabRoleFilter('INSTRUCTOR')).toBe(
+      'general+instructor,instructor+school_teacher,general+instructor_revoked,instructor_revoked+school_teacher'
+    )
     expect(rolesExactAnyOfForAllTabRoleFilter('INSTRUCTOR_DUAL')).toBe('instructor+school_teacher')
     expect(rolesExactAnyOfForAllTabRoleFilter('INSTRUCTOR_REVOKED')).toBe(
       'general+instructor_revoked,instructor_revoked+school_teacher'
@@ -50,7 +53,9 @@ describe('directory role filter (GET /members/all)', () => {
   it('개인·강사·학교(교사)는 디렉터리 대문자 토큰을 쓴다', () => {
     expect(rolesExactAnyOfForDirectoryRoleFilter('INDIVIDUAL')).toBe('INDIVIDUAL')
     expect(rolesExactAnyOfForDirectoryRoleFilter('SCHOOL_TEACHER')).toBe('SCHOOL_TEACHER')
-    expect(rolesExactAnyOfForDirectoryRoleFilter('INSTRUCTOR')).toBe('INSTRUCTOR')
+    expect(rolesExactAnyOfForDirectoryRoleFilter('INSTRUCTOR')).toBe(
+      'INSTRUCTOR,INSTRUCTOR+SCHOOL_TEACHER,INSTRUCTOR_REVOKED,INDIVIDUAL+INSTRUCTOR_REVOKED,INSTRUCTOR_REVOKED+SCHOOL_TEACHER'
+    )
     expect(rolesExactAnyOfForDirectoryRoleFilter('INSTRUCTOR_DUAL')).toBe(
       'INSTRUCTOR+SCHOOL_TEACHER'
     )

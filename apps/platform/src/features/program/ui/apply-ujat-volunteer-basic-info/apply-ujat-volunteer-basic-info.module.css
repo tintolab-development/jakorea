@@ -6,3 +6,9 @@
   min-width: 0;
   flex: 1 1 0;
 }
+
+/* 제출 누락 안내 시 스크롤·포커스 기준(`data-field`) — 레이아웃 영향 없이 자식 폭을 그대로 쓴다 */
+.fieldAnchor {
+  display: block;
+  width: 100%;
+}

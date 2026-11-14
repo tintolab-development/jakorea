@@ -70,7 +70,9 @@ function buildMfaStateFromChallenge(
     isVerified: false,
     accountLabel: email,
     lastSentAt: null,
-    failedAttempts: 0,
+    // 서버 누적 실패 횟수 — 새로고침·재로그인 뒤에도 이어서 표시한다
+    failedAttempts: challenge.failedAttemptCount ?? 0,
+    maxFailedAttempts: challenge.maxFailedAttempts,
     isLocked: false,
     lockUntil: null,
     challengeUuid: challenge.challengeUuid,

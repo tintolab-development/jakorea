@@ -75,6 +75,8 @@ export function LoginSocialCompletePage() {
             mfaMethod: outcome.mfaMethod,
             expiresAt: outcome.expiresAt,
             mfaSetupRequired: outcome.mfaSetupRequired,
+            failedAttemptCount: outcome.failedAttemptCount,
+            maxFailedAttempts: outcome.maxFailedAttempts,
           })
           navigate('/login', { replace: true })
           return

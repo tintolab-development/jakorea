@@ -5,11 +5,13 @@ import {
   assignLoginAfterSessionEnd,
   isAdminFirstLoginOnboardingIncomplete,
   isCmsLoggedOutPublicPath,
+  isLoginReturnPathSuppressed,
   isPasswordChangeRequiredPath,
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
   resolveSessionAuthFailureRedirect,
   buildLoginPathWithRedirect,
+  resetLoginReturnPathSuppressedForTest,
   sanitizeLoginRedirectPath,
 } from './post-auth-redirect'
 
@@ -48,19 +50,16 @@ describe('resolveSessionAuthFailureRedirect', () => {
   })
 
   it('대시보드(/)면 redirect 없이 로그인으로 보낸다', () => {
-    expect(resolveSessionAuthFailureRedirect({ pathname: '/', search: '', complete: false })).toBe(
-      '/login'
-    )
+    expect(resolveSessionAuthFailureRedirect({ pathname: '/', complete: false })).toBe('/login')
   })
 
-  it('일반 경로면 쿼리까지 redirect로 붙여 로그인으로 보낸다', () => {
+  it('일반 경로여도 세션 만료 뒤에는 redirect 없이 로그인으로 보낸다 (다시 로그인하면 기본 첫 화면)', () => {
     expect(
       resolveSessionAuthFailureRedirect({
         pathname: '/settlement-management/payment-orders',
-        search: '?po_exp=instructor',
         complete: false,
       })
-    ).toBe('/login?redirect=%2Fsettlement-management%2Fpayment-orders%3Fpo_exp%3Dinstructor')
+    ).toBe('/login')
   })
 })
 
@@ -79,39 +78,32 @@ describe('assignLoginAfterSessionEnd', () => {
     expect(assign).toHaveBeenCalledWith('/login')
   })
 
-  it('세션 만료면 현재 경로를 redirect로 유지한다', () => {
+  it('로그아웃·자동 로그아웃·세션 만료면 현재 경로를 redirect로 남기지 않는다', () => {
     const assign = vi.fn()
     assignLoginAfterSessionEnd({ pathname: '/users/list', search: '?page=2', assign })
-    expect(assign).toHaveBeenCalledWith('/login?redirect=%2Fusers%2Flist%3Fpage%3D2')
-  })
-
-  it('직접 로그아웃(preserveReturnPath: false)이면 redirect를 붙이지 않는다', () => {
-    const assign = vi.fn()
-    assignLoginAfterSessionEnd({
-      pathname: '/users/list',
-      search: '?page=2',
-      preserveReturnPath: false,
-      assign,
-    })
     expect(assign).toHaveBeenCalledWith('/login')
   })
 
-  it('새로고침 복원 ① 안내는 로그인 화면의 기존 redirect 파라미터로 원래 화면을 넘긴다', () => {
+  it('최초 로그인 완료 플래그가 있으면 로그인 대신 완료 화면으로 보낸다', () => {
     const assign = vi.fn()
-    assignLoginAfterSessionEnd({
-      pathname: '/programs/general',
-      search: '?page=2',
-      complete: false,
-      assign,
-      returnParam: 'redirect',
-    })
-    expect(assign).toHaveBeenCalledWith('/login?redirect=%2Fprograms%2Fgeneral%3Fpage%3D2')
+    assignLoginAfterSessionEnd({ pathname: '/programs/general', search: '', complete: true, assign })
+    expect(assign).toHaveBeenCalledWith(passwordChangeRequiredPaths.complete)
   })
 
   it('이미 로그인 화면이면 다시 보내지 않는다', () => {
+    resetLoginReturnPathSuppressedForTest()
     const assign = vi.fn()
     assignLoginAfterSessionEnd({ pathname: '/login', search: '', complete: false, assign })
     expect(assign).not.toHaveBeenCalled()
+    expect(isLoginReturnPathSuppressed()).toBe(false)
+  })
+
+  it('로그인 이동을 시작하면 보호 화면 가드도 redirect를 붙이지 않도록 표시한다', () => {
+    resetLoginReturnPathSuppressedForTest()
+    expect(isLoginReturnPathSuppressed()).toBe(false)
+    assignLoginAfterSessionEnd({ pathname: '/users/list', search: '', assign: vi.fn() })
+    expect(isLoginReturnPathSuppressed()).toBe(true)
+    resetLoginReturnPathSuppressedForTest()
   })
 })
 

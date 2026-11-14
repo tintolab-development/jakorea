@@ -1,4 +1,4 @@
-import type { UseSignUpReturn } from '@/features/auth/sign-up'
+import { MEMBER_PASSWORD_HELP_TEXT, type UseSignUpReturn } from '@/features/auth/sign-up'
 import { PFButton, PFTextInput } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
@@ -14,7 +14,7 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="비밀번호를 입력해 주세요"
+        title="비밀번호를 입력해 주세요."
         description={
           <>
             안전한 계정 이용을 위해
@@ -48,7 +48,9 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
             required
             value={password.password}
             onValueChange={password.setPassword}
-            message="영문, 숫자, 특수문자를 조합해 8자 이상 입력해 주세요."
+            message={password.serverError || MEMBER_PASSWORD_HELP_TEXT}
+            messageStatus={password.isPolicyUnmet || password.serverError ? 'error' : 'neutral'}
+            error={password.isPolicyUnmet || Boolean(password.serverError)}
           />
           <PFTextInput
             size="xlarge"

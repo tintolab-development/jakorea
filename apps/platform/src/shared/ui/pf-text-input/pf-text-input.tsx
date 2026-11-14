@@ -1,6 +1,7 @@
 import {
   type ChangeEvent,
   type CSSProperties,
+  type FocusEvent,
   type InputHTMLAttributes,
   useId,
   useState,
@@ -66,15 +67,21 @@ export function PFTextInput({
   inputClassName,
   style,
   type,
+  onFocus,
+  onBlur,
   ...props
 }: PFTextInputProps) {
   const generatedId = useId()
   const inputId = id ?? generatedId
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState(defaultValue?.toString() ?? '')
+  const [isFocused, setIsFocused] = useState(false)
   const currentValue = isControlled ? value?.toString() ?? '' : internalValue
   const isPassword = type === 'password'
-  const shouldShowClearButton = !disabled && !isPassword && (currentValue.length > 0 || error)
+  // 비밀번호 필드는 값이 있고 선택(focus)된 상태에서만 삭제 아이콘을 보여 준다
+  const shouldShowClearButton =
+    !disabled &&
+    (isPassword ? isFocused && currentValue.length > 0 : currentValue.length > 0 || error)
   const isFormPage = variant === 'formPage'
   const rootStyle = { ...toWidthStyle(width), ...style }
 
@@ -119,6 +126,16 @@ export function PFTextInput({
     onChange?.(event)
   }
 
+  const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+    setIsFocused(true)
+    onFocus?.(event)
+  }
+
+  const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+    setIsFocused(false)
+    onBlur?.(event)
+  }
+
   const handleClear = () => {
     if (!isControlled) {
       setInternalValue('')
@@ -155,6 +172,8 @@ export function PFTextInput({
           {...props}
           value={currentValue}
           onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
         />
       ) : (
         <div className={fieldClassName}>
@@ -168,12 +187,16 @@ export function PFTextInput({
             {...props}
             value={currentValue}
             onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
           />
           {shouldShowClearButton ? (
             <button
               className={styles.clearButton}
               type="button"
               aria-label="입력 내용 지우기"
+              // 비밀번호 필드는 focus일 때만 아이콘이 보이므로, 누르는 순간 blur로 사라지지 않게 focus를 유지한다
+              onMouseDown={isPassword ? event => event.preventDefault() : undefined}
               onClick={handleClear}
             >
               <img className={styles.clearIcon} src={cancelIconUrl} alt="" aria-hidden="true" />

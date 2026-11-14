@@ -73,7 +73,7 @@
 /* 가로 스크롤 영역: 카드 행 — 가로 스크롤바 UI는 유지(다른 위젯과 달리 숨기지 않음) */
 .kpi-achievement-widget__scroll {
   display: flex;
-  /* 슬롯 고정 높이(372) 안에서 카드가 남는 높이를 채우고(최대 280) 잘리지 않게 */
+  /* 카드 높이를 같은 줄에서 맞춘다. 50% 슬롯은 카드 최대 280, 100% 슬롯은 hug(dashboard-widget-slot.css) */
   align-items: stretch;
   gap: var(--spacing-16);
   flex: 1 1 auto;
@@ -82,21 +82,7 @@
   overflow-y: hidden;
   padding-bottom: calc(var(--spacing-8) + 6px);
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-}
-
-.kpi-achievement-widget__scroll::-webkit-scrollbar {
-  height: 8px;
-}
-
-.kpi-achievement-widget__scroll::-webkit-scrollbar-track {
-  background: var(--color-bg-neutral, #fafafa);
-  border-radius: 3px;
-}
-
-.kpi-achievement-widget__scroll::-webkit-scrollbar-thumb {
-  background: var(--color-border-skeleton, #d9d9d9);
-  border-radius: 3px;
+  /* 스크롤바 스타일은 전역(admin-ui styles/scrollbar.css) */
 }
 
 /* 프로그램 카드: 가로 441px 고정, 세로는 KPI 행에 맞춤(하단 여백 없음). 긴 목록은 목록만 스크롤 */
@@ -322,4 +308,3 @@
     background-position: -200% 0;
   }
 }
-

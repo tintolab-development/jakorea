@@ -18,6 +18,7 @@ export {
 export {
   FindPasswordCompletePage,
   FindPasswordIdentityCallbackPage,
+  FindPasswordNotFoundPage,
   FindPasswordPage,
   FindPasswordResetPage,
 } from './find-password'

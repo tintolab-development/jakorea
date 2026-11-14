@@ -25,7 +25,6 @@ export function EducationSurveySubmitConfirm({
       open={open}
       size="sm"
       onClose={onCancel}
-      closeOnBackdropClick={!pending}
       closeOnEscape={!pending}
       showCloseButton={false}
     >

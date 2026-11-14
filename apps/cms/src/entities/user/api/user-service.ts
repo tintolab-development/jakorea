@@ -5,6 +5,11 @@
 
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import {
+  IdentityAlreadyRegisteredError,
+  isAdminIdentityAlreadyRegisteredApiError,
+  isPreRegisterIdentityDuplicateApiError,
+} from '@/features/user/api/identity-already-registered-error'
+import {
   getAdminPermissionVariant,
   isAdminPermissionTagVariant,
   type AdminPermissionTagVariant,
@@ -120,7 +125,10 @@ import type { InstructorCertificationUpsertRequest } from '@/shared/api/generate
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { resolvePreRegisterTermsAgreementVersions } from '@/features/user/api/resolve-pre-register-terms-agreement-versions'
-import { attachFilledDocumentsToTermsAgreements } from '@/features/user/api/attach-filled-documents'
+import {
+  attachFilledDocumentsToTermsAgreements,
+  splitCrimeConsentOriginalLinkForPatch,
+} from '@/features/user/api/attach-filled-documents'
 import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
@@ -550,7 +558,6 @@ async function patchAdminUserBasicInfoRemote(
     resolvedTerms = await attachFilledDocumentsToTermsAgreements(resolvedTerms, {
       mode: 'patch',
       snapshots: patch.consentWriteSnapshots,
-      memberId: options?.memberId ?? existing.memberId,
     })
   }
   const patchForAdminBody: PatchUserBasicInfoInput = {
@@ -672,22 +679,33 @@ async function patchUserBasicInfoRemote(
 
     const { adminComment: _adminComment, ...patchWithoutComment } = patch
     let resolvedTerms = patchWithoutComment.termsAgreements
+    /**
+     * 성범죄 동의서 서명 원본 연결·재업로드·재동의 — 프로필 PATCH와 분리해 단독 PATCH로 보낸다.
+     * version은 현재 게시된 약관 version(아래 resolve 결과)이다. 동의 없음·만료·다른 원본이면 서버가 재동의로 처리한다 (BE 2026-11-14).
+     */
+    let crimeOriginalLink: TermsAgreementRequest | null = null
     if (resolvedTerms != null && resolvedTerms.length > 0) {
       resolvedTerms = await resolvePreRegisterTermsAgreementVersions(resolvedTerms)
       resolvedTerms = await attachFilledDocumentsToTermsAgreements(resolvedTerms, {
         mode: 'patch',
         snapshots: patch.consentWriteSnapshots,
-        memberId,
       })
+      const split = splitCrimeConsentOriginalLinkForPatch(resolvedTerms)
+      resolvedTerms = split.rest
+      crimeOriginalLink = split.crimeOriginalLink
     }
     const patchWithResolvedTerms: PatchUserBasicInfoInput = {
       ...patchWithoutComment,
-      ...(resolvedTerms != null ? { termsAgreements: resolvedTerms } : {}),
+      ...(patchWithoutComment.termsAgreements != null ? { termsAgreements: resolvedTerms } : {}),
     }
     const body = mapPatchUserBasicInfoToApiRequest(patchWithResolvedTerms)
     const hasBodyFields = Object.keys(body).length > 0
+    const savedTerms =
+      resolvedTerms != null || crimeOriginalLink != null
+        ? [...(resolvedTerms ?? []), ...(crimeOriginalLink ? [crimeOriginalLink] : [])]
+        : undefined
 
-    if (!hasBodyFields && hasAdminCommentPatch(patch)) {
+    if (!hasBodyFields && !crimeOriginalLink && hasAdminCommentPatch(patch)) {
       const base = options?.baseUser ?? existingForRole ?? (await getUserById(userId))
       if (!base) {
         throw new Error('사용자를 찾을 수 없습니다.')
@@ -698,19 +716,24 @@ async function patchUserBasicInfoRemote(
       }
     }
 
-    if (!hasBodyFields) {
+    if (!hasBodyFields && !crimeOriginalLink) {
       const existing = options?.baseUser ?? existingForRole ?? (await getUserById(userId))
       if (!existing) throw new Error('사용자를 찾을 수 없습니다.')
       return existing
     }
 
-    const response = await updateMemberBasicInfoRemote(memberId, body)
+    if (hasBodyFields && crimeOriginalLink) {
+      await updateMemberBasicInfoRemote(memberId, body)
+    }
+    const response = crimeOriginalLink
+      ? await updateMemberBasicInfoRemote(memberId, { termsAgreements: [crimeOriginalLink] })
+      : await updateMemberBasicInfoRemote(memberId, body)
     return mergeUserFromApiResponse(
       userId,
       response,
       {
         ...patch,
-        ...(resolvedTerms != null ? { termsAgreements: resolvedTerms } : {}),
+        ...(savedTerms != null ? { termsAgreements: savedTerms } : {}),
       },
       options?.baseUser ?? existingForRole ?? undefined
     )
@@ -1402,6 +1425,16 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         registeredByAdmin: true,
       }
     } catch (error) {
+      // 본인 정보 중복(409) — 화면이 「회원 정보 중복 안내」를 띄운다(관리자 등록·개인·강사 사전등록).
+      if (request.role === 'ADMIN' && isAdminIdentityAlreadyRegisteredApiError(error)) {
+        throw new IdentityAlreadyRegisteredError('admin')
+      }
+      if (
+        (request.role === 'INDIVIDUAL' || request.role === 'INSTRUCTOR') &&
+        isPreRegisterIdentityDuplicateApiError(error)
+      ) {
+        throw new IdentityAlreadyRegisteredError('pre-register')
+      }
       throw new Error(getMemberApiErrorMessage(error, '회원 사전 등록에 실패했습니다.'))
     }
   }

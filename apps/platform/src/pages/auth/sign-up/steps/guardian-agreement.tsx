@@ -22,7 +22,7 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title={'보호자님의 동의가 완료되면\n가입을 계속할 수 있어요'}
+        title={'보호자님의 동의가 완료되면\n가입을 계속할 수 있어요.'}
         description="필수 항목인 서비스 이용과 개인정보 동의 내용을 확인해 주세요."
         actionsVariant="terms"
         actions={
@@ -30,10 +30,10 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
             <PFButton
               size="xlarge"
               width="100%"
-              disabled={!agreement.isRequiredAgreed}
+              disabled={!agreement.isRequiredAgreed || agreement.isSubmitting}
               onClick={agreement.continue}
             >
-              동의하고 계속하기
+              {agreement.isSubmitting ? '확인 중…' : '동의하고 계속하기'}
             </PFButton>
             <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
               이전
@@ -107,6 +107,11 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
           <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500" className={styles.optionalGuide}>
             선택 항목에 동의하지 않아도 회원가입은 가능해요.
           </PFText>
+          {agreement.submitError ? (
+            <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>
+              {agreement.submitError}
+            </PFText>
+          ) : null}
         </div>
         {openAgreementKey && terms.openType ? (
           <TermsViewModal

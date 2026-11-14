@@ -108,9 +108,17 @@ type OverlayPrefixProps = {
   trainedTeachersDefaults: boolean
 }
 
-/** 일반 프로그램 셀렉트(교육 과정·IP Owned·Course Delivered By) 플레이스홀더 — 시안 「전체」. 교육받은 교사는 기존 문구 */
-function basicInfoSelectPlaceholder(trainedTeachersDefaults: boolean): string {
-  return trainedTeachersDefaults ? '선택해 주세요' : '전체'
+/**
+ * 일반 프로그램 셀렉트(교육 과정·IP Owned·Course Delivered By) 플레이스홀더.
+ * 템플릿 관리 화면은 시안 「전체」, 실제 등록·수정 화면은 미선택이 구분되도록 「선택해 주세요」
+ * (QA-12, 2026-11-14 결정 — 「전체」가 필터의 '모두'처럼 보여 선택된 것으로 오인됨). 교육받은 교사는 기존 문구.
+ */
+function basicInfoSelectPlaceholder(
+  trainedTeachersDefaults: boolean,
+  isTemplateManagement: boolean
+): string {
+  if (trainedTeachersDefaults) return '선택해 주세요'
+  return isTemplateManagement ? '전체' : '선택해 주세요'
 }
 
 export const ProgramRegistrationBasicInfoOperationRangeField = memo(
@@ -353,6 +361,7 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
     overlayPrefix,
     trainedTeachersDefaults,
   }: OverlayPrefixProps) {
+    const isTemplateManagement = useIsTemplateManagementScreen()
     const [educationCourseRaw, setEducationCourse] = useProgramRegistrationOverlayKv(
       `${overlayPrefix}.educationCourse`,
       trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
@@ -373,7 +382,7 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
               inputSize="small"
-              placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
+              placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults, isTemplateManagement)}
               withAllOption={false}
               width={selectWidth}
               options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
@@ -394,6 +403,7 @@ export const ProgramRegistrationBasicInfoIpOwnedField = memo(
     trainedTeachersDefaults,
   }: OverlayPrefixProps) {
     const defaultValue = useTrainedTeachersTemplateSelectDefault(trainedTeachersDefaults)
+    const isTemplateManagement = useIsTemplateManagementScreen()
     const selectWidth = useGeneralTemplateSelectWidth(
       trainedTeachersDefaults,
       GENERAL_TEMPLATE_IPS_OWNER_SELECT_WIDTH
@@ -404,7 +414,7 @@ export const ProgramRegistrationBasicInfoIpOwnedField = memo(
         label={TEMPLATE_FORM_IPS_FIELD_LABELS.ipOwned}
         validationKey="basicInfo.ipOwned"
         overlayKey={`${overlayPrefix}.ipOwned`}
-        placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
+        placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults, isTemplateManagement)}
         options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
         defaultValue={defaultValue}
       />
@@ -418,6 +428,7 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
     trainedTeachersDefaults,
   }: OverlayPrefixProps) {
     const defaultValue = useTrainedTeachersTemplateSelectDefault(trainedTeachersDefaults)
+    const isTemplateManagement = useIsTemplateManagementScreen()
     const selectWidth = useGeneralTemplateSelectWidth(
       trainedTeachersDefaults,
       GENERAL_TEMPLATE_IPS_OWNER_SELECT_WIDTH
@@ -428,7 +439,7 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
         label={TEMPLATE_FORM_IPS_FIELD_LABELS.courseDeliveredBy}
         validationKey="basicInfo.courseDeliveredBy"
         overlayKey={`${overlayPrefix}.courseDeliveredBy`}
-        placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
+        placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults, isTemplateManagement)}
         options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
         defaultValue={defaultValue}
       />

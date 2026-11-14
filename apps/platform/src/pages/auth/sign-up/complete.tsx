@@ -33,7 +33,7 @@ export function SignUpCompletePage() {
         <PFText
           as="p"
           typo="bd-md-rg"
-          color="neutral-cool-500"
+          color="primary-800"
           className={authPageCopyClass('description')}
         >
           {isTeacherSignup

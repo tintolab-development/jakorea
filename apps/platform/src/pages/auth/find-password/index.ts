@@ -1,4 +1,5 @@
 export { FindPasswordCompletePage } from './complete'
+export { FindPasswordNotFoundPage } from './not-found'
 export { FindPasswordPage } from './page'
 export { FindPasswordResetPage } from './reset/page'
 export { FindPasswordIdentityCallbackPage } from './identity-callback'

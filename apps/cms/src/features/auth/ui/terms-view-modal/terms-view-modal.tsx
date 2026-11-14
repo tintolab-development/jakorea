@@ -15,7 +15,8 @@ import './terms-view-modal.css'
 type TermsViewModalProps = {
   open: boolean
   type: TermsViewType
-  agreed: boolean
+  /** true 동의 · false 동의하지 않음 · null 미선택(라디오 모두 해제) */
+  agreed: boolean | null
   onAgreedChange: (agreed: boolean) => void
   onClose: () => void
 }
@@ -29,7 +30,8 @@ export function TermsViewModal({
 }: TermsViewModalProps) {
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
-  const consentValue: TermsConsentChoice = agreed ? 'agree' : 'disagree'
+  const consentValue: TermsConsentChoice | null =
+    agreed == null ? null : agreed ? 'agree' : 'disagree'
 
   useEffect(() => {
     if (!open) return

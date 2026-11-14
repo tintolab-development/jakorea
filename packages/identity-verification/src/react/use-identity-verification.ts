@@ -83,6 +83,8 @@ export function useIdentityVerification({
 }: UseIdentityVerificationOptions) {
   const [status, setStatus] = useState<IdentityVerificationHookStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  /** 마지막 실패의 서버 코드 — 콜백 errorCode가 있을 때만 채운다 */
+  const [errorCode, setErrorCode] = useState<string | null>(null)
   const popupRef = useRef<Window | null>(null)
   const stopWatchPopupRef = useRef<(() => void) | null>(null)
   const completingRef = useRef(false)
@@ -92,6 +94,7 @@ export function useIdentityVerification({
 
   const resetError = useCallback(() => {
     setErrorMessage(null)
+    setErrorCode(null)
     if (status === 'error') {
       setStatus('idle')
     }
@@ -131,6 +134,7 @@ export function useIdentityVerification({
         completingRef.current = false
         setStatus('error')
         setErrorMessage(failedMessage)
+        setErrorCode(data.errorCode ?? null)
         return
       }
 
@@ -159,6 +163,7 @@ export function useIdentityVerification({
       client.state.clearCompletion()
       setStatus('completing')
       setErrorMessage(null)
+      setErrorCode(null)
 
       onSuccessRef.current({
         sessionId,
@@ -219,11 +224,13 @@ export function useIdentityVerification({
       if (!resolvedBirthDate || !resolvedGender) {
         setStatus('error')
         setErrorMessage(missingInputMessage)
+        setErrorCode(null)
         return
       }
     } else if (requireName && !resolvedName) {
       setStatus('error')
       setErrorMessage(missingNameMessage)
+      setErrorCode(null)
       return
     }
 
@@ -265,6 +272,7 @@ export function useIdentityVerification({
       completingRef.current = false
       setStatus('error')
       setErrorMessage(toStartChallengeErrorMessage(error))
+      setErrorCode(null)
     }
   }, [
     birthDate,
@@ -288,6 +296,7 @@ export function useIdentityVerification({
     status,
     isVerifying,
     errorMessage,
+    errorCode,
     resetError,
     cancel: handleCancel,
   }

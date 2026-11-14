@@ -570,7 +570,10 @@ export function GeneralVolunteerApplicantDetailView(
     applicant.availableActions,
     APPLICATION_ACTION_CANCEL_REJECTION
   )
-  const canDocumentApprove = canPerformApplicationAction(applicant.availableActions, 'APPROVE')
+  // 면접 있음 1차 서류 단계는 BE가 APPROVE 대신 PASS_DOCUMENT(서류 합격)를 내려준다(AvailableActions.applicationDecision)
+  const canDocumentApprove =
+    canPerformApplicationAction(applicant.availableActions, 'APPROVE') ||
+    canPerformApplicationAction(applicant.availableActions, 'PASS_DOCUMENT')
   const canDocumentReject = canPerformApplicationAction(applicant.availableActions, 'REJECT')
   const showPendingDocumentActions = canDocumentApprove || canDocumentReject
   const decisionButtonLabels = volunteerApplicationDecisionButtonLabels(interviewEnabled)

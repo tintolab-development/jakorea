@@ -26,6 +26,11 @@ export const CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE =
 export const ISSUANCE_PERIOD_EXPIRED_MESSAGE =
   '신청일로부터 3년이 지나 발급할 수 없습니다.'
 
+/** 발급 기한(신청일로부터 3년) 만료 안내인지 — 수료증 화면은 시안 「수료증 발급 기한이 만료되었어요.」 팝업으로 바꿔 보여 준다 */
+export function isCertificateIssuancePeriodExpiredMessage(message: string | null | undefined): boolean {
+  return message?.trim() === ISSUANCE_PERIOD_EXPIRED_MESSAGE
+}
+
 export const CERTIFICATE_APPLICATION_DATE_UNAVAILABLE =
   'CERTIFICATE_APPLICATION_DATE_UNAVAILABLE' as const
 

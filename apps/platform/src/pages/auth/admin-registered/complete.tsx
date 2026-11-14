@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import {
   clearAdminRegisteredWizardState,
-  finishAdminRegisteredOnboardingToSignIn,
+  endAdminRegisteredOnboardingSession,
 } from '@/features/auth/admin-registered'
 import { MYPAGE_PATH } from '@/features/mypage'
 import { isRemoteApiConfigured, setAdminOnboardingRequired } from '@/shared/lib'
@@ -15,12 +15,12 @@ export function AdminRegisteredCompletePage() {
   const navigate = useNavigate()
   useEffect(() => {
     if (isRemoteApiConfigured()) {
-      finishAdminRegisteredOnboardingToSignIn()
+      endAdminRegisteredOnboardingSession()
       return
     }
     setAdminOnboardingRequired(false)
     clearAdminRegisteredWizardState()
-  }, [navigate])
+  }, [])
 
   const handleStart = () => {
     navigate('/')

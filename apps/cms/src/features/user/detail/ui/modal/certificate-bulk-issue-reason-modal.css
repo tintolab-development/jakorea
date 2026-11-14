@@ -1,6 +1,7 @@
+/* 시안 8276:255357 · 8276:255107: 설명 문구 ↔ 「발급 사유」 30px (공통 설명 아래 여백 + 14), 팝업 322 */
 .certificate-bulk-issue-reason-modal__field {
   width: 100%;
-  margin-top: 4px;
+  margin-top: 14px;
 }
 
 .certificate-bulk-issue-reason-modal__label {

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { UserInfoParagraph } from '@/features/template/model/writing-form-draft.schema'
@@ -42,7 +42,7 @@ describe('UserInfo — 강의평가 설문자 정보 (시안 14931:707129)', () 
     expect(screen.getByText('설문자 자택 주소지')).toBeInTheDocument()
   })
 
-  it('keeps inputs while writing — values feed submit validation and answers', () => {
+  it('shows 「설문자 OO」 text without inputs while writing a lecture evaluation', () => {
     const onChange = vi.fn()
     render(
       <UserInfo
@@ -55,11 +55,9 @@ describe('UserInfo — 강의평가 설문자 정보 (시안 14931:707129)', () 
         lectureEvalRespondentDetailInfo
       />
     )
-    const nameInput = screen.getByPlaceholderText('이름을 입력해 주세요')
-    fireEvent.change(nameInput, { target: { value: '김제이' } })
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ fieldAnswers: { name: '김제이' } })
-    )
+    expect(screen.queryByPlaceholderText('이름을 입력해 주세요')).toBeNull()
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.getByText('설문자 이름')).toBeInTheDocument()
   })
 
   it('leaves other survey previews on the existing one-field-per-row layout', () => {
