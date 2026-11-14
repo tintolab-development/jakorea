@@ -1244,6 +1244,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         subjectKind="institution"
         subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
         approvalStatus={applicationApprovalStatus === 'rejected' ? 'rejected' : 'approved'}
+        // 일반 프로그램(기관형)과 같은 재발송 안내 문구(2026-11-14 요청)
+        copyVariant="general-organization"
         confirmLoading={notificationResendSubmitting}
         zIndex={2600}
         onCancel={() => {
