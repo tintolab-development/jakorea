@@ -13,6 +13,23 @@ export type GuardianBridgeErrorResolution = {
 }
 
 const LOGIN_CREDENTIALS_COPY = '이메일 또는 비밀번호'
+
+/**
+ * 서버 message가 확정 문구인 보호자 오류 코드(기획 확정 2026-11-14) — FE에서 덮어쓰지 않는다.
+ * 서버 `ClientErrorMessageResolver`의 GUARDIAN_* 9종 + 관계 입력 오류.
+ */
+const GUARDIAN_SERVER_MESSAGE_CODES: ReadonlySet<string> = new Set([
+  'GUARDIAN_STATUS_TOKEN_INVALID',
+  'GUARDIAN_SESSION_EXPIRED',
+  'GUARDIAN_INVALID_STATE',
+  'GUARDIAN_NICE_ALREADY_STARTED',
+  'GUARDIAN_NICE_START_IN_PROGRESS',
+  'GUARDIAN_NICE_START_OUTCOME_UNKNOWN',
+  'GUARDIAN_ALREADY_CONSENTED',
+  'GUARDIAN_SIGNUP_INTENT_CONFLICT',
+  'GUARDIAN_FINAL_CONSENT_CHALLENGE_INVALID',
+  'GUARDIAN_RELATION_INVALID',
+])
 const BRIDGE_DISABLED_CODE = 'GUARDIAN_SIGNUP_BRIDGE_NOT_ENABLED_PENDING_SECURITY_APPROVAL'
 
 const DEFAULT_MESSAGES: Record<GuardianBridgeErrorAction, string> = {
@@ -100,8 +117,12 @@ export function resolveGuardianBridgeError(error: unknown): GuardianBridgeErrorR
     action === 'bridge_disabled' ||
     Boolean(rawMessage?.includes(LOGIN_CREDENTIALS_COPY))
 
-  const message =
-    hideLoginCopy || !rawMessage ? DEFAULT_MESSAGES[action] : rawMessage
+  const useServerMessage = Boolean(rawMessage) && GUARDIAN_SERVER_MESSAGE_CODES.has(code)
+  const message = useServerMessage
+    ? (rawMessage as string)
+    : hideLoginCopy || !rawMessage
+      ? DEFAULT_MESSAGES[action]
+      : rawMessage
 
   return { action, message, httpStatus, code }
 }
