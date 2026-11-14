@@ -10,10 +10,12 @@ import {
   changePasswordAfterReset,
   FIND_PASSWORD_VERIFICATION_TTL_MS,
   verifyFindPasswordEmail,
+  verifyPasswordResetEligibility,
 } from '@/features/auth/api/find-password-service'
 import { useFindPasswordIdentityVerification } from '@/features/auth/identity-verification'
 import { FindPasswordChangeForm } from '@/features/auth/ui/find-password/change-password-form'
 import { FindPasswordCompleteView } from '@/features/auth/ui/find-password/complete-view'
+import { FindEmailNotFoundView } from '@/features/auth/ui/find-email/find-email-not-found-view'
 import {
   FIND_PASSWORD_EMAIL_NOT_FOUND_MESSAGE,
   FIND_PASSWORD_INVALID_EMAIL_DOMAIN_MESSAGE,
@@ -23,8 +25,10 @@ import { isValidJakoreaEmail } from '@/features/auth/lib/jakorea-email'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 
 import './find-password-page.css'
+// 「일치하는 가입 정보 없음」 화면(FindEmailNotFoundView) 스타일 — 이메일 찾기와 같은 화면을 재사용
+import './find-email-page.css'
 
-type FindPasswordView = 'form' | 'changePassword' | 'complete'
+type FindPasswordView = 'form' | 'notFound' | 'changePassword' | 'complete'
 
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase()
@@ -47,6 +51,7 @@ export function FindPasswordPage() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordSubmitError, setPasswordSubmitError] = useState<string | null>(null)
   const [isEmailChecking, setIsEmailChecking] = useState(false)
+  const [isEligibilityChecking, setIsEligibilityChecking] = useState(false)
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false)
   const [verificationStarted, setVerificationStarted] = useState(false)
   const [verificationExpiresAt, setVerificationExpiresAt] = useState<number | null>(null)
@@ -81,16 +86,42 @@ export function FindPasswordPage() {
     [passwordForm, resetVerificationTimer]
   )
 
+  /** 본인인증 성공 후 입력 이메일과 인증 정보가 같은 계정인지 서버에서 확인한다 */
+  const checkEligibilityAndContinue = useCallback(
+    async (input: { verifiedEmail: string; sessionId: number; profileToken: string }) => {
+      setIsEligibilityChecking(true)
+      try {
+        const eligibility = await verifyPasswordResetEligibility({
+          email: input.verifiedEmail,
+          identityVerificationSessionId: input.sessionId,
+          profileToken: input.profileToken,
+        })
+        if (eligibility.kind === 'not_eligible') {
+          resetVerificationTimer()
+          setView('notFound')
+          return
+        }
+        goToChangePassword(input)
+      } catch {
+        // 요청 실패 — 공통 오류 알럿이 안내하고 이메일 입력 화면에 머문다
+        resetVerificationTimer()
+      } finally {
+        setIsEligibilityChecking(false)
+      }
+    },
+    [goToChangePassword, resetVerificationTimer]
+  )
+
   const handleIdentitySuccess = useCallback(
     (result: { sessionUuid?: string; sessionId: number; profileToken?: string }) => {
       const verifiedEmail = normalizeEmail(emailForm.getFieldValue('email') ?? '')
-      goToChangePassword({
+      void checkEligibilityAndContinue({
         verifiedEmail,
         sessionId: result.sessionId,
         profileToken: result.profileToken ?? '',
       })
     },
-    [emailForm, goToChangePassword]
+    [checkEligibilityAndContinue, emailForm]
   )
 
   const { verify, isVerifying, errorMessage, resetError } = useFindPasswordIdentityVerification({
@@ -222,7 +253,9 @@ export function FindPasswordPage() {
       ? 'auth-card--find-password-complete'
       : view === 'changePassword'
         ? 'auth-card--find-password-change'
-        : 'auth-card--find-password'
+        : view === 'notFound'
+          ? 'auth-card--find-email-result'
+          : 'auth-card--find-password'
 
   const showVerificationExpired =
     view === 'form' && verificationStarted && verificationExpired && !isVerifying
@@ -234,11 +267,24 @@ export function FindPasswordPage() {
           <FindPasswordForm
             form={emailForm}
             emailError={emailError ?? errorMessage}
-            isIdentityLoading={isVerifying || isEmailChecking}
+            isIdentityLoading={isVerifying || isEmailChecking || isEligibilityChecking}
             showVerificationExpired={showVerificationExpired}
             onEmailChange={clearEmailError}
             onIdentityVerify={() => {
               void handleIdentityVerify()
+            }}
+          />
+        ) : null}
+
+        {view === 'notFound' ? (
+          <FindEmailNotFoundView
+            onRetry={() => {
+              // 서버 nextAction `REENTER_EMAIL` — 이메일 입력 단계로 돌아간다
+              clearEmailError()
+              setView('form')
+            }}
+            onGoLogin={() => {
+              navigate('/login', { replace: true })
             }}
           />
         ) : null}

@@ -27,6 +27,8 @@ export const adminAuthPaths = {
   signupComplete: () => `${adminAuthPaths.prefix}/signup/complete`,
   emailCheck: () => `${adminAuthPaths.prefix}/email/check`,
   emailRecoveryLookup: () => `${adminAuthPaths.prefix}/email-recovery/lookup`,
+  /** POST — 본인인증 후 입력 이메일·인증 정보가 같은 관리자 계정인지 확인 */
+  passwordResetEligibility: () => `${adminAuthPaths.prefix}/password-reset/eligibility`,
   passwordResetConfirm: () => `${adminAuthPaths.prefix}/password-reset/confirm`,
   passwordChange: () => `${adminAuthPaths.prefix}/password/change`,
 } as const
