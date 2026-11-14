@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
@@ -27,8 +27,10 @@ import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
+import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
 import {
   PFAlertModal,
+  PFRequiredFieldsIncompleteDescription,
   PFButton,
   PFCheckbox,
   PFFormField,
@@ -80,7 +82,6 @@ import { ConsentDocumentPreviewOverlay } from '../settings/ui/consent-document-p
 import { TeacherAffiliationDisplay } from './ui/teacher-affiliation-display'
 import styles from './instructor-apply-form.module.css'
 
-const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
 const FORM_SURFACE = 'platformApply' as const
 /** 필수 작성 동의서 3종 — 행정정보 공동이용 동의서는 선택(스키마 `documentGroups`) */
 const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE)
@@ -133,7 +134,7 @@ function shouldPreserveEmploymentStatus(
 
 type AlertState = {
   title: string
-  description?: string
+  description?: ReactNode
 } | null
 
 function RadioGroup<T extends string>({
@@ -405,7 +406,11 @@ export function InstructorApplyForm({
     )
 
     if (missingRequired) {
-      setAlert({ title: '안내', description: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE })
+      // 시안 「공통 제한 안내 / 필수 항목 미입력」
+      setAlert({
+        title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+        description: <PFRequiredFieldsIncompleteDescription />,
+      })
       return
     }
     if (formatMessages.length > 0) {

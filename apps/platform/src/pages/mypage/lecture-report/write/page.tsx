@@ -58,7 +58,15 @@ import {
 } from '@/features/mypage/education/settlements/lib/settlement-join'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { platformQueryKeys } from '@/shared/api/query-keys'
-import { PFAlertModal, PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import {
+  PFAlertModal,
+  PFButton,
+  PFFormPage,
+  PFLoadingSpinner,
+  PFRequiredFieldsIncompleteDescription,
+  PFText,
+} from '@/shared/ui'
 import styles from './page.module.css'
 import {
   buildLectureReportPageTitle,
@@ -68,19 +76,10 @@ import { resolveEducationSurveySectionDescription } from '@/features/mypage/educ
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import { toSeoulDateOnly } from '@/shared/lib/format-display-date'
 
-const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 입력 안내'
+/** 시안 「공통 제한 안내 / 필수 항목 미입력」(사용자 플랫폼 14491-2657) */
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = PLATFORM_REQUIRED_NOT_FILLED_TITLE
 
-const REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION = (
-  <>
-    입력되지 않은 필수 항목이 있어요.
-    {'\n'}
-    &apos;
-    <PFText as="span" typo="bd-md-rg" color="error">
-      *
-    </PFText>
-    &apos; 표시된 필수 항목을 모두 작성해 주세요.
-  </>
-)
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION = <PFRequiredFieldsIncompleteDescription />
 
 const EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE = '교육 사진 첨부 안내'
 const EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION =

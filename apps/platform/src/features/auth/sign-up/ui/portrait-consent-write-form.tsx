@@ -3,7 +3,6 @@ import {
   formatMemberConsentDisagreedRequiredAlertMessage,
   formatMemberConsentIncompleteRequiredAlertMessage,
   listMemberConsentIncompleteRequiredFields,
-  MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE,
   MEMBER_CONSENT_TEMPLATE_MAP,
   normalizeMemberConsentWriteDraft,
   portraitPersonalConsentNameValue,
@@ -20,8 +19,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import { ConsentSignatureStatement } from '@/features/mypage/instructor-apply/consent/signature-statement'
 import consentStyles from '@/features/mypage/instructor-apply/consent/consent-form.module.css'
+import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
 import {
   PFAlertModal,
+  PFRequiredFieldsIncompleteDescription,
   PFButton,
   PFFormDraftSignatureProvider,
   PFFormDraftSignatureTitleAsideBridge,
@@ -36,7 +37,6 @@ import {
 import { clearMypagePortraitConsentDraftState } from '@/features/mypage/settings/lib/mypage-portrait-consent-draft'
 
 const TEMPLATE_ID = MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.templateId
-const INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
 const SIGNATURE_REQUIRED_ALERT_MESSAGE = '전자서명을 완료해 주세요'
 
 type PortraitConsentWriteState = {
@@ -125,7 +125,7 @@ export function PortraitConsentWriteForm({
 
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState('안내')
-  const [alertMessage, setAlertMessage] = useState(INCOMPLETE_ALERT_MESSAGE)
+  const [alertMessage, setAlertMessage] = useState<ReactNode>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [state, setState] = useState<PortraitConsentWriteState>(() => {
     if (saveDraftState != null) {
@@ -219,13 +219,16 @@ export function PortraitConsentWriteForm({
     if (incomplete) {
       const unagreedLabels = collectMemberConsentUnagreedRequiredLabels(state.draft)
       if (unagreedLabels.length > 0) {
-        setAlertTitle(MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE)
+        // 시안 「필수 항목 미동의」 제목 — 본문은 미동의 항목명을 그대로 안내한다
+        setAlertTitle(PLATFORM_ALERT_COPY.requiredNotAgreed.title)
         setAlertMessage(formatMemberConsentDisagreedRequiredAlertMessage(unagreedLabels))
       } else {
-        setAlertTitle('안내')
+        // 시안 「필수 항목 미입력」 제목 — 빠진 항목명을 알 수 있으면 그대로, 없으면 시안 설명
+        setAlertTitle(PLATFORM_REQUIRED_NOT_FILLED_TITLE)
         setAlertMessage(
-          formatMemberConsentIncompleteRequiredAlertMessage(incompleteFields) ||
-            INCOMPLETE_ALERT_MESSAGE,
+          formatMemberConsentIncompleteRequiredAlertMessage(incompleteFields) || (
+            <PFRequiredFieldsIncompleteDescription />
+          ),
         )
       }
       setAlertOpen(true)
