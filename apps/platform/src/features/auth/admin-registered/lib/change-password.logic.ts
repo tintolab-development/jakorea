@@ -1,4 +1,5 @@
-import { ADMIN_REGISTERED_PASSWORD_HELP_TEXT, isValidPassword } from '@/features/auth/sign-up'
+// 관리자 등록 회원도 Platform 회원 — 회원 비밀번호 기준(8자)을 쓴다. 12자는 CMS 관리자 계정만이다.
+import { isValidMemberPassword, MEMBER_PASSWORD_HELP_TEXT } from '../../sign-up/lib/password-policy.ts'
 
 export type AdminRegisteredChangePasswordField = 'current' | 'new' | 'confirm'
 
@@ -56,10 +57,10 @@ export function validateAdminRegisteredChangePassword(input: {
     }
   }
 
-  if (!isValidPassword(newPassword)) {
+  if (!isValidMemberPassword(newPassword)) {
     return {
       field: 'new',
-      message: ADMIN_REGISTERED_PASSWORD_HELP_TEXT,
+      message: MEMBER_PASSWORD_HELP_TEXT,
     }
   }
 

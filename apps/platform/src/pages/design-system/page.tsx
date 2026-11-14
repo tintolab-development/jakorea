@@ -756,7 +756,7 @@ const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[
         steps: [
           '현재 비밀번호 = 로그인 이메일(초기 비밀번호)과 일치해야 함',
           '새 비밀번호 = 이메일과 동일하면 에러',
-          '새/확인 불일치, isValidPassword 미충족 시 에러',
+          '새/확인 불일치, isValidMemberPassword 미충족 시 에러',
         ],
       },
     ],

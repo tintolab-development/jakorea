@@ -41,9 +41,7 @@ export {
   getSchoolStatusLabel,
   isValidEmail,
   isValidMemberPassword,
-  isValidPassword,
   MEMBER_PASSWORD_HELP_TEXT,
-  ADMIN_REGISTERED_PASSWORD_HELP_TEXT,
   parseBirthDate,
 } from './lib/utils'
 export { isBirthStepValid, validateBirthStep } from './lib/identity/identity.logic'
