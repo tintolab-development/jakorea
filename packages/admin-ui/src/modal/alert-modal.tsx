@@ -15,6 +15,8 @@ export interface AdminAlertModalProps {
   zIndex?: number
   onConfirm?: () => void
   footerButtonSize?: AdminButtonSize
+  /** 딤 영역 클릭으로 닫기 — `AdminContentModal` 로 전달 */
+  maskClosable?: boolean
 }
 
 export function AdminAlertModal({
@@ -27,6 +29,7 @@ export function AdminAlertModal({
   zIndex,
   onConfirm,
   footerButtonSize = 'medium',
+  maskClosable,
 }: AdminAlertModalProps) {
   const handleConfirm = useCallback(() => {
     onConfirm?.()
@@ -57,6 +60,7 @@ export function AdminAlertModal({
       titleBodyGap="always"
       width={width}
       zIndex={zIndex}
+      maskClosable={maskClosable}
       className="alert-modal"
       footer={
         <AdminButton variant="secondary" size={footerButtonSize} type="button" onClick={handleConfirm}>

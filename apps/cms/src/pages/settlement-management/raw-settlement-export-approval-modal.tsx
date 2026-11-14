@@ -270,6 +270,7 @@ export function RawSettlementExportApprovalModal({
       open={open}
       title={mode === 'approve' ? '원본 양식 승인' : `${label} 원본 승인`}
       onCancel={resetAndClose}
+      maskClosable={false}
       footer={null}
       destroyOnHidden
     >
