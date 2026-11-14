@@ -635,7 +635,7 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
   maxAssignableInstructors?: number | null
   /** education-scope `schedules[]` — scheduleId별 거리(서버값). 없으면 '-' */
   scheduleDistances?: WaitingScheduleDistance[]
-  /** education-scope `schedules[]` — 서버 배정 불가(같은 날짜 다른 일정 배정 등). 없으면 판단하지 않음 */
+  /** education-scope `schedules[]` — 서버 배정 불가(이미 배정된 다른 일정과 시간 겹침, 맞닿음 포함). 없으면 판단하지 않음 */
   scheduleAvailability?: WaitingScheduleAvailability[]
 }): ParticipatingIndividualInstructorWaitingScheduleRow[] {
   const maxAssignableInstructors = normalizeMaxAssignableInstructors(input.maxAssignableInstructors)

@@ -45,10 +45,7 @@ import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
-import {
-  SETTLEMENT_APPLICATION_ACTIONS,
-  type SettlementApplicationActionKind,
-} from '@/features/program/general/api/settlement-application-actions-remote'
+import type { SettlementApplicationActionKind } from '@/features/program/general/api/settlement-application-actions-remote'
 import { useSettlementApplicationActions } from '@/features/program/general/hooks/use-settlement-application-actions'
 import { SettlementApplicationReasonModal } from './settlement-application-reason-modal'
 import './participating-instructor-settlement-section.css'
@@ -105,23 +102,6 @@ function resolvePaymentStatementExportLabel(row: ParticipatingInstructorSettleme
     return '-'
   }
   return getInstructorSettlementStatusLabel(row.paymentStatementStatus)
-}
-
-const SETTLEMENT_APPLICATION_ACTION_BUTTONS: Array<{
-  kind: SettlementApplicationActionKind
-  label: string
-  variant: 'primary' | 'default'
-}> = [
-  { kind: 'confirm', label: '승인', variant: 'primary' },
-  { kind: 'reject', label: '반려', variant: 'default' },
-  { kind: 'requestCorrection', label: '보정 요청', variant: 'default' },
-]
-
-function hasSettlementApplicationAction(
-  row: ParticipatingInstructorSettlementApiRow,
-  kind: SettlementApplicationActionKind
-): boolean {
-  return row.availableActions.includes(SETTLEMENT_APPLICATION_ACTIONS[kind])
 }
 
 function formatInstructorSessionProgress(
@@ -379,39 +359,6 @@ export function ParticipatingInstructorSettlementSection({
             </CmsButton>
           </div>
         ),
-      },
-      {
-        title: '신청서 처리',
-        key: 'settlementApplicationActions',
-        align: 'center',
-        width: 260,
-        render: (_: unknown, record) => {
-          const applicationId = record.settlementApplicationId
-          if (!record.isPendingApplication || applicationId == null) return null
-          // 진행 예정 행은 지급조서 상태를 보여 주지 않으므로 신청서 처리 버튼도 숨긴다 (기획 2026-11-12)
-          if (record.lectureProgressLabel === '진행 예정') return null
-          const buttons = SETTLEMENT_APPLICATION_ACTION_BUTTONS.filter(button =>
-            hasSettlementApplicationAction(record, button.kind)
-          )
-          if (buttons.length === 0) return null
-          return (
-            <div className="participating-instructor-settlement-section__application-actions">
-              {buttons.map(button => (
-                <CmsButton
-                  key={button.kind}
-                  variant={button.variant}
-                  size="h40"
-                  disabled={!remoteEnabled || applicationAction.isPending}
-                  onClick={() =>
-                    setPendingAction({ kind: button.kind, settlementApplicationId: applicationId })
-                  }
-                >
-                  {button.label}
-                </CmsButton>
-              ))}
-            </div>
-          )
-        },
       },
     ],
     [
