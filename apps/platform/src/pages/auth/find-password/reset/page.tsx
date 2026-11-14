@@ -8,6 +8,7 @@ import {
 import { isValidMemberPassword, MEMBER_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
 import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
+import { NETWORK_ERROR_ALERT_CONTENT } from '@/shared/lib/network-error-message'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
@@ -15,8 +16,6 @@ import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 const PASSWORD_HELP_TEXT = MEMBER_PASSWORD_HELP_TEXT
 const PASSWORD_MISMATCH_MESSAGE = '비밀번호가 서로 달라요. 다시 한 번 확인해 주세요.'
 const IDENTITY_REQUIRED_MESSAGE = '본인인증 정보가 없습니다. 처음부터 다시 진행해 주세요.'
-const IDENTITY_MISMATCH_MESSAGE =
-  '본인인증 정보가 이메일과 일치하지 않습니다. 처음부터 다시 진행해 주세요.'
 
 export function FindPasswordResetPage() {
   const navigate = useNavigate()
@@ -70,9 +69,10 @@ export function FindPasswordResetPage() {
           newPasswordConfirm: confirmPassword,
         })
       } catch (error) {
-        // 비밀번호 재설정은 로그인이 아니므로 ACCOUNT_INACTIVE 등은 서버 메시지를 그대로 쓴다
+        // 비밀번호 재설정은 로그인이 아니므로 ACCOUNT_INACTIVE 등은 서버 메시지를 그대로 쓴다.
+        // 응답 본문이 없는 오류(502 등)는 네트워크 오류 안내 본문을 쓴다(인라인 문구라 제목 없이 본문만).
         setSubmitError(
-          getLoginApiErrorMessage(error, IDENTITY_MISMATCH_MESSAGE, {
+          getLoginApiErrorMessage(error, NETWORK_ERROR_ALERT_CONTENT, {
             overrideApprovalPending: false,
           }),
         )
@@ -135,7 +135,7 @@ export function FindPasswordResetPage() {
         </div>
 
         {submitError ? (
-          <PFText as="p" typo="bd-sm-md" color="error">
+          <PFText as="p" typo="bd-sm-md" color="error" className={styles.submitError}>
             {submitError}
           </PFText>
         ) : null}
