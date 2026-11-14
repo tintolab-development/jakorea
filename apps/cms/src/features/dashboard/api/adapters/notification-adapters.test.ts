@@ -55,6 +55,51 @@ describe('mapNotificationInboxItem link target', () => {
   })
 })
 
+describe('mapNotificationInboxItem 프로그램 신규 신청자 (ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY)', () => {
+  const message =
+    '2026.11.13에 신규 접수된 신청자 수는 3명입니다.\n신청자 정보와 신청 내용을 확인해 주세요.'
+
+  it('programName·두 줄 본문·PROGRAM_APPLICATION_LIST 이동 정보를 그대로 옮긴다', () => {
+    const mapped = mapNotificationInboxItem({
+      recipientId: 101,
+      eventId: 55,
+      eventType: 'ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY',
+      notificationCategory: 'APPLICATION_MATCHING',
+      title: '프로그램 신규 신청자',
+      message,
+      sourceDomain: 'PROGRAM_APPLICATION_OWNER_DAILY_SUMMARY',
+      sourceId: 1,
+      programId: 9201,
+      programName: '경제교육 기본 과정',
+      linkType: 'PROGRAM_APPLICATION_LIST',
+      linkId: 9201,
+      readAt: null,
+      createdAt: '2026-11-14T00:00:00Z',
+    })
+    expect(mapped?.title).toBe('프로그램 신규 신청자')
+    expect(mapped?.body).toBe(message)
+    expect(mapped?.programName).toBe('경제교육 기본 과정')
+    expect(mapped?.target).toEqual({
+      eventType: 'ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY',
+      sourceDomain: 'PROGRAM_APPLICATION_OWNER_DAILY_SUMMARY',
+      linkType: 'PROGRAM_APPLICATION_LIST',
+      linkId: '9201',
+      programId: '9201',
+    })
+  })
+
+  it('title이 비면 eventType 라벨 「프로그램 신규 신청자」로 대체한다', () => {
+    const mapped = mapNotificationInboxItem({
+      recipientId: 103,
+      eventType: 'ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY',
+      title: '',
+      message,
+      createdAt: '2026-11-14T00:00:00Z',
+    })
+    expect(mapped?.title).toBe('프로그램 신규 신청자')
+  })
+})
+
 describe('mapNotificationInboxItem 탭 분류 (notificationCategory SSOT)', () => {
   const base = {
     recipientId: 201,

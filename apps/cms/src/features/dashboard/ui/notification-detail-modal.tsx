@@ -5,6 +5,7 @@
 
 import type { Notification } from '../api/notification-service'
 import { resolveAdminNotificationActionLabel } from '../lib/admin-notification-action-label'
+import { splitNotificationBodyEmphasis } from '../lib/notification-body-emphasis'
 import { CmsButton } from '@/shared/ui'
 import { ContentModal } from '@/shared/ui/content-modal'
 import './notification-detail-modal.css'
@@ -48,7 +49,19 @@ export function NotificationDetailModal({
       }
     >
       {programName ? <p className="notification-detail-modal__program">[{programName}]</p> : null}
-      <p className="notification-detail-modal__body">{notification?.body}</p>
+      <p className="notification-detail-modal__body">
+        {notification
+          ? splitNotificationBodyEmphasis(notification).map((segment, index) =>
+              segment.bold ? (
+                <strong key={index} className="notification-detail-modal__emphasis">
+                  {segment.text}
+                </strong>
+              ) : (
+                <span key={index}>{segment.text}</span>
+              )
+            )
+          : null}
+      </p>
     </ContentModal>
   )
 }
