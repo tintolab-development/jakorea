@@ -141,4 +141,27 @@ describe('computeDragEndResult', () => {
     expect(r!.operation).toBe('move')
     expect(r!.swapTargetId).toBeNull()
   })
+
+  it('경우 ②: 1단 위젯을 2단 줄의 위젯 위에 놓으면 그 위젯과 순서만 바꾸고 분할하지 않는다', () => {
+    // 2단 줄 [left | right] 아래 1단 위젯 wide — wide를 right 위에 드롭
+    const ordered = ['left', 'right', 'wide']
+    const slots: SlotRect[] = [
+      { id: 'left', rect: rect(0, 0, 100, 50) },
+      { id: 'right', rect: rect(100, 0, 100, 50) },
+    ]
+    const span = (id: string) => (id === 'wide' ? COL_SPAN_FULL : COL_SPAN_HALF) as 12 | 24
+    const r = computeDragEndResult(
+      ordered,
+      'wide',
+      'right',
+      { x: 150, y: 25 },
+      slots,
+      span,
+      resizable
+    )
+    expect(r!.operation).toBe('swap')
+    expect(r!.swapTargetId).toBe('right')
+    expect(r!.shouldSplit).toBe(false)
+    expect(r!.splitTargetId).toBeNull()
+  })
 })
