@@ -25,7 +25,7 @@ export function IdentityStep({ signUp }: IdentityStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="본인인증을 진행해 주세요"
+        title="본인인증을 진행해 주세요."
         description="안전하게 가입하기 위해 휴대폰 본인인증이 필요해요. 인증 결과는 생년월일과 함께 확인하며, 회원가입 절차에만 사용돼요."
         actions={
           <PFButton

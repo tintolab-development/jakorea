@@ -177,7 +177,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title={isMinorSignup ? '회원 정보를 입력해 주세요.' : '회원 정보를 입력해 주세요'}
+        title="회원 정보를 입력해 주세요."
         description={
           <>
             JA Korea 서비스를 더 편하게 이용할 수 있도록

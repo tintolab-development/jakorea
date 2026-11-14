@@ -189,7 +189,7 @@ export function SignUpSocialConnectPage() {
         <PFText as="div" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
           소셜 계정을 연결하면
           <br />
-          더 쉽게 로그인 할 수 있어요
+          더 쉽게 로그인 할 수 있어요.
         </PFText>
 
         <PFText

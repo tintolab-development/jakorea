@@ -41,10 +41,10 @@ export function SignUpSocialConnectErrorPage() {
             <>
               이 소셜 계정은 이미 다른
               <br />
-              JA Korea 계정에 연결되어 있어요
+              JA Korea 계정에 연결되어 있어요.
             </>
           ) : (
-            '소셜 계정을 연결하지 못했어요'
+            '소셜 계정을 연결하지 못했어요.'
           )}
         </PFText>
         <PFText

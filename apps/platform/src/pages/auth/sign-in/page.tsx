@@ -230,12 +230,12 @@ export function SignInPage() {
           color="gradient-primary-01"
           className={authPageCopyClass('title', authPageCopy.titleAfterMedia)}
         >
-          다시 만나서 반가워요
+          다시 만나서 반가워요.
         </PFText>
         <PFText
           as="p"
           typo="bd-lg-rg"
-          color="primary-700"
+          color="primary-800"
           className={authPageCopyClass('description', authPageCopy.descriptionTight)}
         >
           이메일과 비밀번호로 로그인 해주세요.

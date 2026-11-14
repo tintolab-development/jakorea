@@ -14,7 +14,7 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="비밀번호를 입력해 주세요"
+        title="비밀번호를 입력해 주세요."
         description={
           <>
             안전한 계정 이용을 위해

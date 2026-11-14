@@ -16,7 +16,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="생년월일과 성별을 알려주세요"
+        title="생년월일과 성별을 알려주세요."
         description={
           <>
             나이에 맞는 가입 절차를 안내하기 위해 필요해요.

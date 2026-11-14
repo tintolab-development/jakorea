@@ -14,7 +14,7 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="입력한 정보를 확인해 주세요"
+        title="입력한 정보를 확인해 주세요."
         description={
           <>
             정보를 확인해 주세요.
