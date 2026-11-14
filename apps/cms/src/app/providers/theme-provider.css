@@ -75,6 +75,34 @@
   font-display: swap;
 }
 
+/*
+ * Noto Sans KR — `src/assets/fonts` 로컬 TTF (수료증·활동인증서 본문, 설문 결과 등).
+ * 웹폰트로 등록하지 않으면 PC에 설치되지 않은 경우 화면은 한글 대체 폰트, html2canvas 캡처는 다른 대체 폰트로
+ * 그려져 PDF 글자가 밀린다. 서버 증명서 PDF(IssuanceFormCertificatePdfWriter)와 같은 파일(OFL, Regular·Bold)이다.
+ */
+@font-face {
+  font-family: 'Noto Sans KR';
+  src: url('../../assets/fonts/NotoSansKR-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+/* Medium(500) — 증명서 확인 문구(시안 5767:47247). notofonts/noto-cjk SubsetOTF KR, OFL(NotoSansKR-OFL.txt) */
+@font-face {
+  font-family: 'Noto Sans KR';
+  src: url('../../assets/fonts/NotoSansKR-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans KR';
+  src: url('../../assets/fonts/NotoSansKR-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-table-head-bg: #edf0f2;
   /* 캘린더 필터 체크박스 (사업분야별) */

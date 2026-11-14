@@ -7,6 +7,28 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { CertificateTextField } from '@/types/template'
 import { unknownErrorText } from '@/shared/utils/error-handler'
+import { collectCaptureFontShorthands } from '@/pages/templates/wait-for-certificate-preview-capture-ready'
+
+/**
+ * html2canvas는 대상 문서를 iframe으로 복제한 뒤 그 안에서 글자 배치를 다시 계산한다. 복제 문서의 웹폰트가
+ * 아직 로드되지 않았으면(새로고침 직후 첫 다운로드 등) 대체 폰트 기준으로 배치되어, 실제 폰트로 그린 글자가
+ * 미리보기보다 위·아래로 밀린다(예: 제목 Source Han Serif K가 로고 쪽으로 약 28px 올라감).
+ * 복제 문서에서 원본 캡처 영역이 쓰는 폰트를 직접 로드하고 기다린 뒤 배치를 계산하게 한다.
+ */
+export async function waitForClonedDocumentFonts(
+  clonedDoc: Document,
+  sourceElement: HTMLElement
+): Promise<void> {
+  const fontSet = clonedDoc.fonts
+  if (!fontSet || typeof fontSet.load !== 'function') return
+  const sample = (sourceElement.textContent ?? '').replace(/\s+/g, '').slice(0, 200) || '가A1'
+  await Promise.all(
+    collectCaptureFontShorthands(sourceElement).map(font =>
+      fontSet.load(font, sample).catch(() => [])
+    )
+  )
+  await fontSet.ready
+}
 
 /**
  * 이미지 로드 헬퍼
@@ -208,14 +230,17 @@ export async function generatePdfBlobFromHtmlElement(
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
-    onclone: clonedDoc => {
+    onclone: async clonedDoc => {
+      // html2canvas는 onclone의 Promise를 기다린 뒤 복제 문서를 그린다.
+      await waitForClonedDocumentFonts(clonedDoc, element)
       if (issuedSerialNumber == null || issuedSerialNumber === '') return
       clonedDoc
         .querySelectorAll('.form-certificate-preview__serial-text, [data-certificate-serial="text"]')
         .forEach(node => {
           if (!(node instanceof HTMLElement)) return
           node.textContent = issuedSerialNumber
-          node.style.color = '#606060'
+          // 시안 5767:47245 고유번호 색(form-certificate-preview.css와 같음)
+          node.style.color = 'rgba(61, 61, 61, 0.8)'
           node.style.fontWeight = '700'
           node.style.whiteSpace = 'nowrap'
           node.style.padding = '0'
