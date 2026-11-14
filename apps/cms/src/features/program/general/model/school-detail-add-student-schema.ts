@@ -1,7 +1,8 @@
 /**
  * 학생 등록 모달 폼 스키마
  * 필수: 학생명, 성별, 생년월일(8자리), 학급 / 선택: 연락처, 이메일, 비고 (react-hook-form)
- * 연락처·이메일 선택은 시안 기준 — 서버 `StudentRosterRowRequest`는 신규 행에 phone·email을 요구한다(BE 요청).
+ * 연락처·이메일 선택은 시안 기준 — 서버 `StudentRosterRowRequest`도 신규 행 phone·email을 선택 입력으로 받는다
+ * (JABACK 4a14caaa0). 비우면 요청에서 필드를 생략하고, 서버는 연락처·이메일 없이 저장한다.
  */
 
 import type { DefaultValues } from 'react-hook-form'

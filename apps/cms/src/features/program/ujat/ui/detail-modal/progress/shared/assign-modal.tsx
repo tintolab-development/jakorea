@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatVolunteerAssignmentAssignModalMode } from '../volunteers/detail/volunteer-assign-modal-data'
@@ -83,11 +84,11 @@ function UjatVolunteerAssignModalContent({
   const [partnerId, setPartnerId] = useState<string | undefined>(undefined)
 
   const isPartnerMode = mode === 'partner'
-  const resolvedClassValue = isPartnerMode ? fixedClassLabel ?? undefined : classValue
+  const resolvedClassValue = isPartnerMode ? (fixedClassLabel ?? undefined) : classValue
 
   useEffect(() => {
     if (!open) return
-    setClassValue(isPartnerMode ? fixedClassLabel ?? undefined : undefined)
+    setClassValue(isPartnerMode ? (fixedClassLabel ?? undefined) : undefined)
     setPartnerId(undefined)
   }, [open, isPartnerMode, fixedClassLabel])
 
@@ -106,14 +107,7 @@ function UjatVolunteerAssignModalContent({
     if (isPartnerMode) return Boolean(fixedClassLabel)
     if (!classValue) return false
     return classOptions.some(option => option.value === classValue)
-  }, [
-    classOptions,
-    classValue,
-    fixedClassLabel,
-    isPartnerMode,
-    partnerId,
-    partnerOptionsLoading,
-  ])
+  }, [classOptions, classValue, fixedClassLabel, isPartnerMode, partnerId, partnerOptionsLoading])
 
   const handleCancel = useCallback(() => {
     setClassValue(undefined)
@@ -123,7 +117,7 @@ function UjatVolunteerAssignModalContent({
 
   const handleConfirm = useCallback(() => {
     if (!canConfirm || !partnerId) return
-    const confirmedClass = isPartnerMode ? fixedClassLabel ?? '' : classValue ?? ''
+    const confirmedClass = isPartnerMode ? (fixedClassLabel ?? '') : (classValue ?? '')
     onConfirm({ classValue: confirmedClass, partnerId })
     setClassValue(undefined)
     setPartnerId(undefined)
@@ -159,16 +153,15 @@ function UjatVolunteerAssignModalContent({
 
   const secondField = (
     <AssignModalField label="파트너" required>
+      {partnerOptionsLoading ? <FullscreenSpinner /> : null}
       <CmsSelect
         inputSize="large"
         width="100%"
         withAllOption={false}
         placeholder={
-          partnerOptionsLoading
-            ? '파트너 후보를 불러오는 중…'
-            : partnerOptions.length === 0
-              ? '선택 가능한 파트너가 없습니다'
-              : '배정할 파트너를 선택해 주세요'
+          !partnerOptionsLoading && partnerOptions.length === 0
+            ? '선택 가능한 파트너가 없습니다'
+            : '배정할 파트너를 선택해 주세요'
         }
         value={partnerId}
         disabled={partnerOptionsLoading || partnerOptions.length === 0}
@@ -197,10 +190,8 @@ function UjatVolunteerAssignModalContent({
 
 function resolveRegionDirectVolunteerPlaceholder(input: {
   classSlotId: string | undefined
-  loading: boolean
 }): string {
   if (!input.classSlotId) return '교육 학급을 먼저 선택해 주세요'
-  if (input.loading) return '배정 가능한 봉사자를 불러오는 중입니다'
   return '배정할 봉사자를 선택해 주세요'
 }
 
@@ -285,13 +276,13 @@ function UjatRegionDirectAssignModalContent({
         />
       </AssignModalField>
       <AssignModalField label="봉사자" required>
+        {volunteerOptionsLoading ? <FullscreenSpinner /> : null}
         <CmsSelect
           inputSize="large"
           width="100%"
           withAllOption={false}
           placeholder={resolveRegionDirectVolunteerPlaceholder({
             classSlotId,
-            loading: volunteerOptionsLoading,
           })}
           value={volunteerId}
           disabled={!classSlotId || volunteerOptionsLoading || volunteerOptions.length === 0}
@@ -362,7 +353,8 @@ function AssignModalShell({
         size="large"
         type="button"
         disabled={!canConfirm}
-        onClick={onConfirm} >
+        onClick={onConfirm}
+      >
         {confirmLabel}
       </CmsButton>
     </div>

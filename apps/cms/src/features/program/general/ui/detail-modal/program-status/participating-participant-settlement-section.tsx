@@ -3,6 +3,7 @@
  */
 
 import { useMemo, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -176,12 +177,13 @@ export function ParticipatingParticipantSettlementSection({
 
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
+      {isLoading ? <FullscreenSpinner /> : null}
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
         <DetailInfoForm title="정산 현황" mode="view">
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="지급조서 처리 현황"
-              view={isLoading ? '불러오는 중' : summaryStatusLabel}
+              view={isLoading ? '' : summaryStatusLabel}
               readOnlyDisplay
             />
             <DetailInfoForm.Field
@@ -213,10 +215,7 @@ export function ParticipatingParticipantSettlementSection({
           >
             지급조서 일괄 다운로드
           </CmsButton>
-          <ExcelButton
-            onClick={exportExcel}
-            loading={isExcelExporting}
-          />
+          <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
         </div>
       </div>
 

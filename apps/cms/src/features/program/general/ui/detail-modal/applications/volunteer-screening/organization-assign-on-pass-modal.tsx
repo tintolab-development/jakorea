@@ -8,6 +8,7 @@
  */
 
 import { useMemo, useRef, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useQuery } from '@tanstack/react-query'
 import dayjs, { type Dayjs } from 'dayjs'
 import { fetchVolunteerAssignmentCandidatesRemote } from '@/features/program/general/api/volunteer-assignment-candidates-api-client'
@@ -96,7 +97,7 @@ export function GeneralVolunteerOrganizationAssignOnPassModal({
   useProgramRegistrationScheduleTopCalendarHeightSync(scheduleTopRef, calendarWrapRef)
 
   const slotsEmptyText = candidatesQuery.isLoading
-    ? '배정할 수 있는 기관 일정을 불러오는 중입니다.'
+    ? ''
     : candidatesQuery.isError
       ? '기관 일정을 불러오지 못했습니다. 다시 시도해 주세요.'
       : slots.length === 0
@@ -177,7 +178,7 @@ export function GeneralVolunteerOrganizationAssignOnPassModal({
           <div className="instructor-lecture-assign-modal__slots-list">
             {dateSlots.length === 0 ? (
               <div className="instructor-lecture-assign-modal__slots-empty" role="status">
-                {slotsEmptyText}
+                {candidatesQuery.isLoading ? <FullscreenSpinner /> : slotsEmptyText}
               </div>
             ) : (
               dateSlots.map(slot => {

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Alert, Checkbox, Radio, Spin, Typography } from 'antd'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
+import { Alert, Checkbox, Radio, Typography } from 'antd'
 import type { ProgramMaterialCandidateResponse } from '@/shared/api/generated/dashboard/schemas/programMaterialCandidateResponse'
 import type { ProgramMaterialResponse } from '@/shared/api/generated/dashboard/schemas/programMaterialResponse'
 import type { ProgramMaterialAssignmentStatus } from '@/features/program/general/api/program-materials-api-client'
@@ -56,10 +57,7 @@ export function ProgramMaterialsSection({
   const savedItems = materials?.items ?? []
   const itemKeys = useMemo(() => savedItems.map(logicalMaterialKey).filter(Boolean), [savedItems])
   const editor = useProgramMaterialEditorState(materials?.assignmentStatus, itemKeys)
-  const visibleCandidates = useMemo(
-    () => uniqueCandidatesByLogicalKey(candidates),
-    [candidates]
-  )
+  const visibleCandidates = useMemo(() => uniqueCandidatesByLogicalKey(candidates), [candidates])
 
   const candidateByKey = useMemo(() => {
     const map = new Map<string, ProgramMaterialCandidateResponse>()
@@ -100,9 +98,7 @@ export function ProgramMaterialsSection({
       })
       editor.reset()
     } catch (error) {
-      setSaveError(
-        extractApiErrorMessage(error, { fallback: '교재 설정 저장에 실패했습니다.' })
-      )
+      setSaveError(extractApiErrorMessage(error, { fallback: '교재 설정 저장에 실패했습니다.' }))
     }
   }
 
@@ -120,7 +116,8 @@ export function ProgramMaterialsSection({
             size="h40"
             onClick={() => void saveChanges()}
             loading={isSaving}
-            disabled={isMaterialsLoading || isCandidatesLoading} >
+            disabled={isMaterialsLoading || isCandidatesLoading}
+          >
             교재 설정 저장
           </CmsButton>
         )}
@@ -147,9 +144,7 @@ export function ProgramMaterialsSection({
       {saveError ? <Alert type="error" showIcon message={saveError} /> : null}
 
       {isMaterialsLoading ? (
-        <div className="program-materials-section__loading">
-          <Spin size="small" /> 교재 설정을 불러오는 중입니다.
-        </div>
+        <FullscreenSpinner />
       ) : (
         <>
           <div className="program-materials-section__status">
@@ -174,7 +169,7 @@ export function ProgramMaterialsSection({
             <div className="program-materials-section__candidates">
               <div className="program-materials-section__label">교재 후보</div>
               {isCandidatesLoading ? (
-                <Typography.Text type="secondary">교재 후보를 불러오는 중입니다.</Typography.Text>
+                <FullscreenSpinner />
               ) : visibleCandidates.length === 0 ? (
                 <Typography.Text type="secondary">
                   사용 가능한 교재 후보가 없습니다.
