@@ -44,6 +44,22 @@ export function isLoginApprovalPendingApiError(error: unknown): boolean {
   return Boolean(code && LOGIN_APPROVAL_PENDING_CODES.has(code.toUpperCase()))
 }
 
+/**
+ * 서버가 오류 내용을 주지 못한 경우(미응답·연결 끊김·5xx이면서 message 없음).
+ * 로그인 화면은 이때 「네트워크 오류 안내」 팝업을 띄운다(Figma 14491-2874).
+ */
+export function isLoginNetworkError(error: unknown): boolean {
+  if (!isAxiosError(error)) return false
+  const response = error.response
+  if (!response) return true
+  if (response.status < 500) return false
+  const data = response.data
+  if (!data || typeof data !== 'object') return true
+  const body = data as { message?: unknown; error?: { message?: unknown } }
+  const hasText = (value: unknown) => typeof value === 'string' && value.trim().length > 0
+  return !hasText(body.error?.message) && !hasText(body.message)
+}
+
 export type LoginApiErrorMessageOptions = {
   /**
    * 승인 대기·비활성 계정(423, ACCOUNT_INACTIVE 등)을 로그인 승인 대기 문구로 바꿀지. 기본 true.

@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict'
 import { AxiosError } from 'axios'
 import {
+  isLoginNetworkError,
   formatPortalProfileUpdateError,
   getLoginApiErrorMessage,
   LOGIN_APPROVAL_PENDING_MESSAGE,
@@ -107,5 +108,13 @@ assert.equal(
   ),
   '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
 )
+
+// 로그인 네트워크 오류 팝업: 미응답·5xx이면서 message 없음만 해당
+assert.equal(isLoginNetworkError(new AxiosError('Network Error')), true)
+assert.equal(isLoginNetworkError(axiosErr(502, '')), true)
+assert.equal(isLoginNetworkError(axiosErr(503, { error: { code: 'X' } })), true)
+assert.equal(isLoginNetworkError(axiosErr(500, { error: { message: '서버 오류' } })), false)
+assert.equal(isLoginNetworkError(axiosErr(401, '')), false)
+assert.equal(isLoginNetworkError(new Error('x')), false)
 
 console.log('get-login-api-error-message.selfcheck: ok')

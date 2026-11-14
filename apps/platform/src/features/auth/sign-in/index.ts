@@ -33,6 +33,7 @@ export type {
 export {
   formatPortalProfileUpdateError,
   getLoginApiErrorMessage,
+  isLoginNetworkError,
   isPasswordRecentlyUsedApiError,
 } from './lib'
 export {
