@@ -90,7 +90,8 @@
 .signImage {
   display: block;
   width: auto;
-  height: 36px;
+  max-width: 200px;
+  height: 40px;
   object-fit: contain;
 }
 
