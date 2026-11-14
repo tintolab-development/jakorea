@@ -19,7 +19,6 @@ export function LectureReportSubmitCompleteModal({
       open={open}
       size="sm"
       onClose={onLater}
-      closeOnBackdropClick
       showCloseButton={false}
       className={styles.panel}
     >

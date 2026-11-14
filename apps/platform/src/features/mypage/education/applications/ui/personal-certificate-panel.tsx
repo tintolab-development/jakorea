@@ -258,7 +258,6 @@ export function EducationPersonalCertificatePanel({
           if (issueMutation.isPending) return
           setIssueReasonOpen(false)
         }}
-        closeOnBackdropClick={!issueMutation.isPending}
         showCloseButton={false}
       >
         <div className={styles.issueDialog}>

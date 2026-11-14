@@ -118,7 +118,6 @@ export function StudentsPanelCertificateModal({
         mobilePlacement="full"
         title="수료증 발급하기"
         onClose={onClose}
-        closeOnBackdropClick={!isDownloading}
       >
         <div className={styles.body}>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>

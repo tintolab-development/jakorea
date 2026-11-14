@@ -235,7 +235,6 @@ export function EducationAssignmentSubmitModal({
       title={title}
       size="md"
       mobilePlacement="full"
-      closeOnBackdropClick={!submitting}
       closeOnEscape={!submitting}
       onClose={onClose}
       className={styles.modal}
