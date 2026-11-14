@@ -1,4 +1,5 @@
 import { collectTemplatePlaceholderKeys } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
+import { findNotificationCatalogEntry } from '@/features/notifications/model/shared/legacy-variable-aliases'
 import {
   canUseNotificationSendTemplateForProgram,
   listNotificationSendTemplateDisabledKeysForProgram,
@@ -58,11 +59,7 @@ function findCatalogItem(
   catalog: AlimtalkVariableCatalogEntry[],
   key: string
 ): AlimtalkVariableCatalogEntry | undefined {
-  return catalog.find(entry => {
-    if (entry.key.trim() === key) return true
-    const tokenInner = entry.token?.replace(/^#\{/, '').replace(/\}$/, '').trim()
-    return tokenInner === key
-  })
+  return findNotificationCatalogEntry(catalog, key)
 }
 
 function reasonFrom(

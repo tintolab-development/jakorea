@@ -1,6 +1,7 @@
 /**
  * 2026-10-28 GET /api/admin/notification-send-batches/template-variables (program 미선택) 평탄화.
  * + BE N2 `교육 진행 회차`(TIME) 추가분 — 104 → 105.
+ * + BE 44784cf36 개명: 담당자명 → 프로그램 담당자명, 담당자 연락처 → 프로그램 담당자 연락처(개수 그대로).
  */
 export const R7_LIVE_CATALOG_ROWS: ReadonlyArray<{
   key: string
@@ -15,7 +16,7 @@ export const R7_LIVE_CATALOG_ROWS: ReadonlyArray<{
   { key: '배정된 봉사자명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '팀 명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '소속명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: false },
-  { key: '담당자명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
+  { key: '프로그램 담당자명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '참여자 모집 문의처명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '신청 기관명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '배정 기관명', categoryCode: 'NAME', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
@@ -25,7 +26,7 @@ export const R7_LIVE_CATALOG_ROWS: ReadonlyArray<{
   { key: '참여자 모집 문의처 메일', categoryCode: 'EMAIL', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '강사 모집 문의처 메일', categoryCode: 'EMAIL', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '봉사자 모집 문의처 메일', categoryCode: 'EMAIL', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
-  { key: '담당자 연락처', categoryCode: 'PHONE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
+  { key: '프로그램 담당자 연락처', categoryCode: 'PHONE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '참여자 모집 문의처 전화번호', categoryCode: 'PHONE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '강사 모집 문의처 전화번호', categoryCode: 'PHONE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
   { key: '봉사자 모집 문의처 전화번호', categoryCode: 'PHONE', sourceMode: 'SERVER_RESOLVED', enabled: false, requiresProgram: true },
