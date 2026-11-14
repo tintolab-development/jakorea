@@ -33,6 +33,8 @@ assert.equal(
 )
 assert.equal(mapped?.link, '/ja-korea/recruit/applicants?applicationId=11')
 assert.equal(mapped?.read, false)
+assert.equal(mapped?.category, 'matching')
+assert.equal(mapped?.actionLabel, '지원 상세 보기')
 
 const posting: HomepageAdminSystemNotificationItem = {
   id: 102,
@@ -48,6 +50,8 @@ const posting: HomepageAdminSystemNotificationItem = {
 
 assert.equal(mapInboxItemToListItem(posting)?.link, '/ja-korea/recruit/postings')
 assert.equal(mapInboxItemToListItem(posting)?.read, false)
+assert.equal(mapInboxItemToListItem(posting)?.category, 'matching')
+assert.equal(mapInboxItemToListItem(posting)?.actionLabel, undefined)
 assert.equal(isInboxItemRead({ read: false, readAt: null }), false)
 assert.equal(isInboxItemRead({ read: true, readAt: null }), true)
 assert.equal(isInboxItemRead({ readAt: '2026-10-28T09:00:00+09:00' }), true)
