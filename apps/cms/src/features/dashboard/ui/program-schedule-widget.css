@@ -207,7 +207,8 @@
 .program-schedule-widget__body--month .program-schedule-widget__month-grid--cells {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(5, minmax(0, 1fr));
+  /* 행 수는 달에 따라 5 또는 6 — 셀 수만큼 자동 생성 */
+  grid-auto-rows: minmax(0, 1fr);
   width: 100%;
   max-width: 100%;
   flex: 1;

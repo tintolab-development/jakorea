@@ -449,9 +449,13 @@ export function ProgramScheduleWidget({
       const start = currentMonth.startOf('week')
       return Array.from({ length: 7 }, (_, i) => start.add(i, 'day'))
     }
-    const end = currentMonth.endOf('month')
-    const start = end.subtract(34, 'day')
-    return Array.from({ length: 35 }, (_, i) => start.add(i, 'day'))
+    // 월간: 1일이 속한 주의 일요일부터 요일 헤더에 맞춰 채운다 (말일 기준 35일은 요일과 어긋났음).
+    // 5주로 끝나는 달은 5행, 6주에 걸치는 달은 6행.
+    const monthStart = currentMonth.startOf('month')
+    const start = monthStart.startOf('week')
+    const offset = monthStart.diff(start, 'day')
+    const weeks = Math.ceil((offset + currentMonth.daysInMonth()) / 7)
+    return Array.from({ length: weeks * 7 }, (_, i) => start.add(i, 'day'))
   }, [currentMonth, viewMode])
 
   const scheduleDateFrom = visibleDateRange[0]?.format('YYYY-MM-DD')
@@ -720,7 +724,7 @@ export function ProgramScheduleWidget({
           role="grid"
           aria-label="월간 일정"
         >
-          {[0, 1, 2, 3, 4].flatMap(row =>
+          {Array.from({ length: monthDates.length / 7 }, (_, row) => row).flatMap(row =>
             [0, 1, 2, 3, 4, 5, 6].map(col => {
               const date = monthDates[row * 7 + col]
               const edgeClass = [
