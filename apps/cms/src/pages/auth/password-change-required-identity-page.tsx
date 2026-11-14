@@ -21,6 +21,9 @@ import {
 } from '@/features/auth/identity-verification'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
+  PASSWORD_CHANGE_REQUIRED_STEP_IDENTITY,
+  PASSWORD_CHANGE_REQUIRED_STEP_PROGRESS_LABEL,
+  PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS,
   clearPasswordChangeRequiredWizardState,
   getPasswordChangeRequiredWizardState,
   hasPasswordChangeRequiredComplete,
@@ -28,6 +31,7 @@ import {
   usePasswordChangeRequiredGuard,
 } from '@/features/auth/password-change-required'
 import { AdminRegisterStepIdentity } from '@/features/auth/ui/admin-register/admin-register-step-identity'
+import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register-step-progress'
 import { showIdentityVerificationFailedAlert } from '@/features/auth/ui/admin-register/show-identity-failed-alert'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { showGlobalApiErrorAlert } from '@/shared/lib/show-global-api-error-alert'
@@ -139,14 +143,22 @@ export function PasswordChangeRequiredIdentityPage() {
 
   return (
     <AuthPageShell showLogo={false} cardClassName="register-card">
-      <AdminRegisterStepIdentity
-        onStartVerify={verify}
-        status={status}
-        isVerifying={isVerifying || isConfirming}
-        errorMessage={errorMessage}
-        verifiedName={wizardState?.verifiedName}
-        verifiedPhone={wizardState?.verifiedPhone}
-      />
+      <div className="register-page-content">
+        {/* 시안 12111:298684 — 2단계 스텝퍼(본인인증 → 비밀번호 변경) */}
+        <RegisterStepProgress
+          currentStep={PASSWORD_CHANGE_REQUIRED_STEP_IDENTITY}
+          totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS}
+          ariaLabel={PASSWORD_CHANGE_REQUIRED_STEP_PROGRESS_LABEL}
+        />
+        <AdminRegisterStepIdentity
+          onStartVerify={verify}
+          status={status}
+          isVerifying={isVerifying || isConfirming}
+          errorMessage={errorMessage}
+          verifiedName={wizardState?.verifiedName}
+          verifiedPhone={wizardState?.verifiedPhone}
+        />
+      </div>
       <ConfirmModal
         open={duplicateNoticeOpen}
         title={ADMIN_IDENTITY_DUPLICATE_NOTICE_TITLE}

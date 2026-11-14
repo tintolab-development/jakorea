@@ -1,4 +1,3 @@
-import { CheckCircleFilled } from '@ant-design/icons'
 import { Alert } from 'antd'
 import type { ReactNode } from 'react'
 
@@ -65,7 +64,6 @@ export function RegisterIdentityStatusPanel({
         role="region"
         aria-label="본인인증 완료"
       >
-        <CheckCircleFilled className="register-identity-module__verified-icon" aria-hidden />
         <p className="register-identity-module__title">본인인증이 완료되었습니다</p>
         <p className="register-identity-module__meta">{meta}</p>
       </div>
