@@ -13,6 +13,7 @@ import {
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import './instructor-permission-reject-modal.css'
 
 export type PermissionNotificationResendModalProps = {
   open: boolean
@@ -52,6 +53,7 @@ export function PermissionNotificationResendModal({
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
+      className="permission-notification-resend-modal"
     />
   )
 }

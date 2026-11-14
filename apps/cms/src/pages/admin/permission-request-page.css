@@ -2,3 +2,12 @@
 .permission-request-list-page__tabs.cms-text-tabs .cms-text-tabs__row {
   padding: 0 0 16px;
 }
+
+/*
+ * 시안 1142:98797 · 4427:109955: 탭 줄 y80 · 카드 y140 — 본문 상단 여백 32 → 16 (이 페이지만, 사용자 확정)
+ * 탭 gap 4 · inset 8은 공통 `.cms-text-tabs__list`에서 처리.
+ */
+.layout-content:has(.permission-request-list-page__tabs) {
+  --cms-layout-content-padding-top: 16px;
+  padding-top: 16px;
+}

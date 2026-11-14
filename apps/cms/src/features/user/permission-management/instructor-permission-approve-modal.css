@@ -15,7 +15,7 @@
 
 .instructor-permission-approve-modal__sub {
   margin: 0;
-  color: var(--color-text-primary);
+  color: var(--main-bk, #3d3d3d);
   font-size: 16px;
   font-weight: 500;
   line-height: 24px;
@@ -34,13 +34,21 @@
   color: var(--color-red, #ff4d4f);
 }
 
-/** 시안: 라벨 14/Medium #525252 · `*` 14/Bold */
+/**
+ * 시안: 라벨 14/Medium #525252 / 140% · pb2(라벨 높이 22) · 입력·선택창까지 6
+ * 라디오 줄은 라벨 아래 4 · 높이 40(라디오 18·14px, 세로 중앙)
+ */
 .instructor-permission-approve-modal__label {
   color: var(--Content-secondary, #525252);
   font-size: 14px;
   font-weight: 500;
-  line-height: 150%;
-  margin-bottom: 8px;
+  line-height: 140%;
+  margin-bottom: 6px;
+  padding-bottom: 2px;
+}
+
+.instructor-permission-approve-modal__field:has(> .app-radio-group) > .instructor-permission-approve-modal__label {
+  margin-bottom: 4px;
 }
 
 .instructor-permission-approve-modal__required {
@@ -59,6 +67,7 @@
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  min-height: 40px;
 }
 
 .instructor-permission-approve-modal__footer {

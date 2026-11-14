@@ -185,7 +185,7 @@ export function InstructorPermissionApproveModal(
           </span>
           {isAdmin ? (
             <CmsSelect
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               placeholder="관리자 권한을 선택해 주세요"
               value={feeGrade}
@@ -196,7 +196,7 @@ export function InstructorPermissionApproveModal(
             />
           ) : (
             <CmsSelect
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               placeholder="강사비 등급을 선택해 주세요"
               value={feeGrade}
@@ -214,7 +214,7 @@ export function InstructorPermissionApproveModal(
             </span>
           </span>
           <CmsRadio.Group
-            size="large"
+            size="medium"
             value={notifyTiming}
             onChange={e =>
               handleNotifyTimingChange(e.target.value as InstructorPermissionApproveNotifyTiming)
