@@ -174,7 +174,9 @@ export function mapMfaVerifyError(
   code: string,
   httpStatus?: number
 ): { kind: MfaVerifyErrorKind; message: string } {
-  if (code === 'ACCOUNT_LOCKED' || httpStatus === 423) {
+  // 423 은 사용 불가 계정(ACCOUNT_INACTIVE 등)에도 쓰인다 — 코드로만 잠금을 판단한다.
+  // 본문에 코드가 없는 423 은 fetcher(resolveAuthErrorCode)가 ACCOUNT_LOCKED 로 바꿔 넘긴다.
+  if (code === 'ACCOUNT_LOCKED') {
     return {
       kind: 'lock',
       message: `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`,

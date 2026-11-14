@@ -68,16 +68,50 @@ function isPdfResponse(contentType: unknown, blob: Blob): boolean {
   return header.includes('application/pdf') || blob.type.toLowerCase().includes('application/pdf')
 }
 
+function contentPath(documentId: number): string {
+  return `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}/content`
+}
+
 async function downloadOriginal(documentId: number): Promise<void> {
-  const path = `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}/content`
   try {
-    const res = await axiosClient.get<Blob>(path, { responseType: 'blob' })
+    const res = await axiosClient.get<Blob>(contentPath(documentId), { responseType: 'blob' })
     const blob = res.data
     if (!(blob instanceof Blob) || blob.size === 0 || !isPdfResponse(res.headers['content-type'], blob)) {
       throw new CrimeConsentDownloadError(CRIME_CONSENT_MESSAGES.downloadFailed)
     }
     const pdf = blob.type ? blob : new Blob([blob], { type: 'application/pdf' })
     saveBlobFile(FALLBACK_FILE_NAME, pdf)
+  } catch (error) {
+    throw await toDownloadError(error)
+  }
+}
+
+export type SubmittedCrimeConsentOriginal =
+  | { kind: 'pdf'; blob: Blob }
+  | { kind: 'image'; blob: Blob }
+
+/**
+ * 미리보기용 — 제출한 원본을 같은 GET .../content로 받아 파일로 저장하지 않고 돌려준다.
+ * PDF와 이미지(JPG·PNG)를 구분한다. 그 밖의 형식이나 빈 응답은 실패로 본다.
+ */
+export async function fetchSubmittedCrimeConsentOriginal(
+  documentId: number,
+): Promise<SubmittedCrimeConsentOriginal> {
+  try {
+    const res = await axiosClient.get<Blob>(contentPath(documentId), { responseType: 'blob' })
+    const blob = res.data
+    if (!(blob instanceof Blob) || blob.size === 0) {
+      throw new CrimeConsentDownloadError(CRIME_CONSENT_MESSAGES.downloadFailed)
+    }
+    const header = String(res.headers['content-type'] ?? '').toLowerCase()
+    const type = (blob.type || header).toLowerCase()
+    if (isPdfResponse(header, blob)) {
+      return { kind: 'pdf', blob: blob.type ? blob : new Blob([blob], { type: 'application/pdf' }) }
+    }
+    if (type.includes('image/jpeg') || type.includes('image/png')) {
+      return { kind: 'image', blob }
+    }
+    throw new CrimeConsentDownloadError(CRIME_CONSENT_MESSAGES.downloadFailed)
   } catch (error) {
     throw await toDownloadError(error)
   }

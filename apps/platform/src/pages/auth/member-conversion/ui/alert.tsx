@@ -18,7 +18,7 @@ export function MemberConversionAlert({ kind, onClose, onInquiry }: MemberConver
   const hasInquiry = kind === 'under14' || kind === 'duplicate'
 
   return (
-    <PFModal open size="sm" showCloseButton={false} onClose={onClose} closeOnBackdropClick>
+    <PFModal open size="sm" showCloseButton={false} onClose={onClose}>
       <div className={styles.content}>
         <div className={styles.textBlock}>
           <PFText as="div" typo="hl-lg" color="black" className={styles.title}>

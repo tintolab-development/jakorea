@@ -20,6 +20,8 @@
   .modal.modal {
     width: 960px;
     max-width: 960px;
+    /* PFModal `.panel { max-height: 100% }`보다 우선 — 본문이 길어도 최대 880px, 넘치면 본문 스크롤 */
+    max-height: min(880px, calc(100vh - 48px));
   }
 }
 

@@ -48,9 +48,9 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
             required
             value={password.password}
             onValueChange={password.setPassword}
-            message={MEMBER_PASSWORD_HELP_TEXT}
-            messageStatus={password.isPolicyUnmet ? 'error' : 'neutral'}
-            error={password.isPolicyUnmet}
+            message={password.serverError || MEMBER_PASSWORD_HELP_TEXT}
+            messageStatus={password.isPolicyUnmet || password.serverError ? 'error' : 'neutral'}
+            error={password.isPolicyUnmet || Boolean(password.serverError)}
           />
           <PFTextInput
             size="xlarge"

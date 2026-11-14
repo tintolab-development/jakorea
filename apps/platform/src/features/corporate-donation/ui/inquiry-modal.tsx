@@ -242,7 +242,6 @@ export function CorporateDonationInquiryModal({
         title="기업후원 상담하기"
         size="md"
         mobilePlacement="full"
-        closeOnBackdropClick={!isBusy}
         closeOnEscape={!isBusy}
         className={styles.panel}
       >

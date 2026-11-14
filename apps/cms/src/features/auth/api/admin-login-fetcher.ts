@@ -38,6 +38,16 @@ export class AdminLoginApiError extends Error {
   }
 }
 
+/** 423 사용 불가 계정 — 승인 대기·잠금이 아니며 서버 `message` 를 그대로 보여 준다 */
+const ADMIN_LOGIN_ACCOUNT_UNAVAILABLE_CODES = new Set(['ACCOUNT_INACTIVE', 'LOGIN_DISABLED'])
+
+export function isAdminLoginAccountUnavailableError(error: unknown): error is AdminLoginApiError {
+  return (
+    error instanceof AdminLoginApiError &&
+    ADMIN_LOGIN_ACCOUNT_UNAVAILABLE_CODES.has(error.code.toUpperCase())
+  )
+}
+
 function parseLoginError(
   payload: unknown,
   httpStatus?: number

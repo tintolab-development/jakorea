@@ -1,9 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   FIND_PASSWORD_VERIFICATION_TTL_MS,
   MOCK_FIND_PASSWORD_NOT_FOUND_EMAIL,
   isEmailRegisteredForPasswordReset,
+  readFindPasswordReturnState,
+  resolvePasswordResetApiError,
   setFindPasswordRecoveryState,
   usePortalEmailCheckMutation,
   usePortalPasswordResetEligibilityMutation,
@@ -24,14 +26,28 @@ const IDENTITY_MISMATCH_MESSAGE = '본인인증 정보가 회원 정보와 일�
 
 export function FindPasswordPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const remoteApi = isRemoteApiConfigured()
+  /** 새 비밀번호 단계에서 돌아온 경우(계정 불일치·본인인증 세션 없음)의 서버 message */
+  const [returnError] = useState(() => readFindPasswordReturnState(location.state))
+
+  useEffect(() => {
+    // 안내는 한 번만 — 새로고침 시 같은 오류가 다시 보이지 않게 라우터 state를 비운다
+    if (readFindPasswordReturnState(location.state)) {
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.pathname, location.state, navigate])
   const emailCheckMutation = usePortalEmailCheckMutation()
   const eligibilityMutation = usePortalPasswordResetEligibilityMutation()
   const eligibilityMutateAsync = eligibilityMutation.mutateAsync
   const pendingEmailRef = useRef('')
   const [email, setEmail] = useState('')
-  const [emailError, setEmailError] = useState<string | null>(null)
-  const [identityError, setIdentityError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(
+    returnError?.field === 'email' ? returnError.message : null,
+  )
+  const [identityError, setIdentityError] = useState<string | null>(
+    returnError?.field === 'identity' ? returnError.message : null,
+  )
 
   const handleIdentitySuccess = useCallback(
     async (result: IdentityChallengeCompleteResult) => {
@@ -60,7 +76,13 @@ export function FindPasswordPage() {
             return
           }
         } catch (error) {
-          setIdentityError(getLoginApiErrorMessage(error, IDENTITY_MISMATCH_MESSAGE))
+          const resolved = resolvePasswordResetApiError(error)
+          if (resolved?.kind === 'email') {
+            setEmailError(resolved.message)
+            return
+          }
+          // IDENTITY_VERIFICATION_SESSION_REQUIRED 등 — 이 단계에서 본인인증부터 다시 진행한다
+          setIdentityError(resolved?.message ?? getLoginApiErrorMessage(error, IDENTITY_MISMATCH_MESSAGE))
           return
         }
       }

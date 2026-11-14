@@ -68,12 +68,10 @@ export function PFDatePickerYearPanel({
 
       <div className={styles.yearGrid}>
         {years.map(year => {
-          const isOutside = year < decadeStart || year > decadeStart + 9
           const isDisabled = !isYearWithinInputBounds(year)
           const isSelected = selected === year
           const yearClassName = [
             styles.yearCell,
-            isOutside ? styles.dayOutside : undefined,
             isDisabled ? styles.dayDisabled : undefined,
             isSelected ? styles.daySelected : undefined,
           ]

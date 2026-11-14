@@ -207,7 +207,8 @@
 .program-schedule-widget__body--month .program-schedule-widget__month-grid--cells {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(5, minmax(0, 1fr));
+  /* 행 수는 달에 따라 5 또는 6 — 셀 수만큼 자동 생성 */
+  grid-auto-rows: minmax(0, 1fr);
   width: 100%;
   max-width: 100%;
   flex: 1;
@@ -333,18 +334,31 @@
   border-top-right-radius: var(--radius-8, 8px);
 }
 
+/* 하단 모서리: 5행·6행 달 모두 마지막 행 기준 (칸 수가 35 또는 42라 고정 인덱스를 쓰지 않는다) */
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid--cells
-  > .program-schedule-widget__month-grid-slot:nth-child(29)
+  > .program-schedule-widget__month-grid-slot:nth-last-child(7)
   .program-calendar-cell {
   border-bottom-left-radius: var(--radius-8, 8px);
 }
 
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid--cells
-  > .program-schedule-widget__month-grid-slot:nth-child(35)
+  > .program-schedule-widget__month-grid-slot:last-child
   .program-calendar-cell {
   border-bottom-right-radius: var(--radius-8, 8px);
+}
+
+/*
+ * 6주에 걸치는 달(42칸): 슬롯 고정 높이(100% 376px·50% 400px)에서 행이 약 39px·43px로 줄어
+ * 날짜 원(36px·34px)+상하 패딩 8px이 잘린다. 날짜는 세로 가운데 정렬이므로 상하 패딩만 0으로 둔다.
+ */
+.program-schedule-widget.program-schedule-widget
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells:has(> :nth-child(42))
+  .program-calendar-cell {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .program-schedule-widget__body--month
@@ -378,6 +392,25 @@
   .program-calendar-cell--other-month
   .program-calendar-cell-date {
   color: #bfbfbf;
+}
+
+/* 피그마: 일요일·공휴일 빨강, 토요일 파랑 — 다른 달 날짜(회색)·선택일(흰 글자)은 기존 표기 유지 */
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--sunday:not(.program-calendar-cell--other-month)
+  .program-calendar-cell-date,
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--holiday:not(.program-calendar-cell--other-month)
+  .program-calendar-cell-date {
+  color: var(--Status-red-main, #c32f4a);
+}
+
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--saturday:not(.program-calendar-cell--other-month)
+  .program-calendar-cell-date {
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .program-schedule-widget__body--month
@@ -686,13 +719,14 @@
   align-self: flex-start;
 }
 
-/* 피그마: 일요일 #c32f4a, 토요일 #017eaf — 주 시작=일요일(WEEKDAY_LABELS)이라 열 위치로만 지정 */
-.program-schedule-widget .program-calendar-week-cell:nth-child(7n + 1) .program-calendar-week-cell-date {
-  color: #c32f4a;
+/* 피그마: 일요일·공휴일 빨강, 토요일 파랑 — 공휴일은 서버 공휴일 API(조회 실패 시 일·토만) */
+.program-schedule-widget .program-calendar-week-cell-date--sunday,
+.program-schedule-widget .program-calendar-week-cell-date--holiday {
+  color: var(--Status-red-main, #c32f4a);
 }
 
-.program-schedule-widget .program-calendar-week-cell:nth-child(7n) .program-calendar-week-cell-date {
-  color: #017eaf;
+.program-schedule-widget .program-calendar-week-cell-date--saturday {
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .program-schedule-widget .program-calendar-week-cell-date--selected {
@@ -757,7 +791,9 @@
 }
 
 /* 피그마 태그 테두리 통일 — 배경색만 데이터(inline) 사용 */
-.program-schedule-widget__week-event-card:not(.program-schedule-widget__week-event-card--color-only) {
+.program-schedule-widget__week-event-card:not(
+  .program-schedule-widget__week-event-card--color-only
+) {
   border: 1px solid rgba(61, 61, 61, 0.06);
 }
 
@@ -844,7 +880,9 @@
 }
 
 .program-schedule-widget.program-schedule-widget--dashboard-half
-  .program-schedule-widget__week-event-card:not(.program-schedule-widget__week-event-card--color-only) {
+  .program-schedule-widget__week-event-card:not(
+    .program-schedule-widget__week-event-card--color-only
+  ) {
   height: auto !important;
   min-height: 54px;
   max-height: none;
@@ -1044,51 +1082,45 @@
   background: currentColor;
 }
 
+/*
+ * 일정 호버 미리보기 — Figma `Calendar / List / Preview` (14894:26337)
+ * 내용 폭에 맞추고 최대 400 · 패딩 16 · 둥글기 12 · 테두리 Border/default · 그림자 0 0 16 6%
+ * 항목 사이: 간격 10 + 1px 구분선(Border/default) + 간격 10. 4건 높이까지 그대로 보이고 5건부터 스크롤한다.
+ */
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover {
-  width: min(333px, calc(100vw - 32px));
-  max-width: min(333px, calc(100vw - 32px));
-  box-sizing: border-box;
-}
-
-.program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
-  .ant-popover-container,
-.program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
-  .ant-popover-content,
-.program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
-  .ant-popover-inner {
-  width: 100%;
-  max-width: 100%;
+  max-width: min(400px, calc(100vw - 32px));
   box-sizing: border-box;
 }
 
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
   .ant-popover-inner {
-  padding: 12px 16px;
-  overflow: hidden;
+  padding: 16px;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  border-radius: 12px;
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
 }
 
+/* 4건(항목 44×4 + 구분 21×3 = 239px)까지는 잘리지 않고, 넘치면 이 영역만 세로 스크롤 */
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
   .ant-popover-inner-content {
-  width: 100%;
-  max-width: 100%;
-  max-height: 250px;
-  overflow-y: auto;
+  max-height: 239px;
   overflow-x: hidden;
+  overflow-y: auto;
   padding: 0;
-  box-sizing: border-box;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
   .program-calendar-cell-preview {
   display: flex;
-  width: 100%;
-  max-width: 100%;
   min-width: 0;
   padding: 0;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: 10px;
   box-sizing: border-box;
 }
 
@@ -1097,17 +1129,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
-  width: 100%;
-  max-width: 100%;
+  gap: 2px;
   min-width: 0;
+  max-width: 368px;
   margin: 0;
   padding: 0;
-  border: 0 none !important;
+  border: 0 none;
   outline: none;
-  box-shadow: none;
-  -webkit-appearance: none;
-  appearance: none;
   background: transparent;
   cursor: pointer;
   text-align: left;
@@ -1116,43 +1144,61 @@
   box-sizing: border-box;
 }
 
+/* 항목 사이 구분선 — 위 간격 10(부모 gap) + 선 + 아래 간격 10 */
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
-  .program-calendar-cell-preview__item + .program-calendar-cell-preview__item {
-  padding-top: 8px;
-  border-top: 1px solid var(--color-border-light, #f0f0f0) !important;
-  border-right: 0 none !important;
-  border-bottom: 0 none !important;
-  border-left: 0 none !important;
+  .program-calendar-cell-preview__item
+  + .program-calendar-cell-preview__item {
+  padding-top: 10px;
+  border-top: 1px solid var(--Border-default, #e0e0e0);
 }
 
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
   .program-calendar-cell-preview__title {
-  color: var(--JA-mint-01, #01a1af);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 130%;
   display: block;
-  width: 100%;
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
+  color: var(--Brand-500, #00a0af);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
   .program-calendar-cell-preview__desc {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 140%;
-  display: block;
-  width: 100%;
+  display: flex;
   max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
+  .program-calendar-cell-preview__label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
+  .program-calendar-cell-preview__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 12px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.4;
+}
+
+.program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover
+  .program-calendar-cell-preview__time {
+  flex-shrink: 0;
 }
 
 .program-calendar-cell-preview-popover.program-schedule-widget__event-preview-popover

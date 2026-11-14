@@ -495,6 +495,8 @@ export async function getAdminNotificationInboxPage(options?: {
   page?: number
   size?: number
   unreadOnly?: boolean
+  /** BE notificationCategory (예: APPLICATION_MATCHING). 생략하면 전체 */
+  category?: string
 }): Promise<AdminNotificationInboxPage> {
   const page = options?.page ?? 0
   const size = options?.size ?? ADMIN_NOTIFICATION_INBOX_PAGE_SIZE
@@ -505,6 +507,7 @@ export async function getAdminNotificationInboxPage(options?: {
     page,
     size,
     unreadOnly: options?.unreadOnly,
+    ...(options?.category ? { category: options.category } : {}),
   })
   return {
     items: mapNotificationInboxPage(dto.items),

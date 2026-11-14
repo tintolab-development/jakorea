@@ -117,6 +117,13 @@
   flex: 1 1 0;
 }
 
+/* 오른쪽 위 읽음 상태 태그 (안읽음/읽음) */
+.readStatus {
+  flex: 0 0 auto;
+  margin-left: var(--spacing-8);
+  white-space: nowrap;
+}
+
 .status {
   display: flex;
   flex: 1 1 auto;
@@ -132,16 +139,4 @@
   min-height: 1px;
   justify-content: center;
   padding-top: var(--spacing-12);
-}
-
-.srOnly {
-  position: absolute;
-  overflow: hidden;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }

@@ -1,3 +1,4 @@
+import { useDragScroll } from '@/shared/hooks/use-drag-scroll'
 import styles from './pf-tabs.module.css'
 
 export type PFTabsVariant = 'underline' | 'pill' | 'category'
@@ -21,6 +22,11 @@ export type PFTabsProps = {
   size?: PFTabsSize
   className?: string
   ariaLabel?: string
+  /**
+   * true면 가로 스크롤 탭을 마우스로 누른 채 끌어 스크롤한다.
+   * 임계 거리 이상 끌었으면 손을 뗄 때 탭을 선택하지 않는다.
+   */
+  dragScroll?: boolean
 }
 
 export function PFTabs({
@@ -32,7 +38,10 @@ export function PFTabs({
   size = 'large',
   className,
   ariaLabel = '탭',
+  dragScroll = false,
 }: PFTabsProps) {
+  const { containerRef, dragScrollHandlers } = useDragScroll<HTMLElement>()
+
   if (items.length === 0) return null
 
   const rootClassName = [
@@ -52,7 +61,13 @@ export function PFTabs({
   }
 
   return (
-    <nav className={rootClassName} role="tablist" aria-label={ariaLabel}>
+    <nav
+      ref={containerRef}
+      className={rootClassName}
+      role="tablist"
+      aria-label={ariaLabel}
+      {...(dragScroll ? dragScrollHandlers : undefined)}
+    >
       {items.map((item) => {
         const isActive = item.key === value
 

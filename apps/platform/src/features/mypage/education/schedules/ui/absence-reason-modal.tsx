@@ -483,7 +483,6 @@ export function EducationAbsenceReasonModal({
       ariaDescribedBy={descriptionId}
       onClose={onClose}
       mobilePlacement="full"
-      closeOnBackdropClick={!isBusy}
       closeOnEscape={!isBusy}
     >
       <div className={styles.content}>

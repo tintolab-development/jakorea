@@ -12,7 +12,6 @@ import {
   createDefaultIdTypeWithInputOptions,
 } from '@jakorea/form-schema/writing-form'
 import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
-import { formatConsentBirthDateInput } from '@jakorea/form-schema/consent'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import {
   NOTICE_CONSENT_LINES,
@@ -110,13 +109,9 @@ export function NoticeConsentForm({
               <PFTextInput
                 variant="formPage"
                 size="large"
-                placeholder="생년월일 8자리를 입력해 주세요"
-                inputMode="numeric"
-                maxLength={10}
+                placeholder="생년월일을 입력해 주세요"
                 value={draft.birthDate}
-                onValueChange={value =>
-                  patch('birthDate', formatConsentBirthDateInput(value))
-                }
+                onValueChange={value => patch('birthDate', value)}
               />
             </PFFormField>
           </PFFormFieldRow>

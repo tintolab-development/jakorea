@@ -16,6 +16,10 @@ import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
+import {
+  buildUjatEducationScheduleSettingsRows,
+  UjatEducationScheduleSettingsReadonly,
+} from './ujat-education-schedule-settings-readonly'
 
 const UJAT_SCHEDULE_CHANGE_ROWS = [
   { half: 'h1', label: '상반기' },
@@ -84,35 +88,38 @@ export function UjatEducationScheduleSettingsProgramView({
     h1DisplayInput ?? resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail('h1', typedDetail)
   const h2Display =
     h2DisplayInput ?? resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail('h2', typedDetail)
-  const mode = isEdit ? 'edit' : 'view'
+  // 조회: 상세 시안(4082:89939) 4열 표 / 수정: 등록 양식과 동일 블록
+  if (!isEdit) {
+    return (
+      <section className="program-detail-fullpage-modal__info-tab-block">
+        <UjatEducationScheduleSettingsReadonly
+          rows={buildUjatEducationScheduleSettingsRows(h1Display, h2Display)}
+        />
+      </section>
+    )
+  }
 
   return (
     <section className="ujat-education-schedule-settings-program-view program-detail-fullpage-modal__info-tab-block">
-      {isEdit ? (
-        <FormParagraphSectionHeader
-          title={UJAT_REGISTRATION_SECTION_META.educationScheduleSettings.title}
-          description={UJAT_REGISTRATION_SECTION_META.educationScheduleSettings.description}
-          titleTrailing={
-            scheduleForm ? (
-              <TypedUjatEducationScheduleChangeTitleAction
-                programId={program.id}
-                operationStart={program.startDate}
-                operationEnd={program.endDate}
-                scheduleForm={scheduleForm}
-              />
-            ) : null}
-          surface="responseEntry"
-          titleAligned
-          required
-          highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[5]}
-        />
-      ) : (
-        <div className="ujat-education-schedule-settings-program-view__header">
-          <h3 className="ujat-education-schedule-settings-program-view__title">교육 진행 일정 설정</h3>
-        </div>
-      )}
+      <FormParagraphSectionHeader
+        title={UJAT_REGISTRATION_SECTION_META.educationScheduleSettings.title}
+        description={UJAT_REGISTRATION_SECTION_META.educationScheduleSettings.description}
+        titleTrailing={
+          scheduleForm ? (
+            <TypedUjatEducationScheduleChangeTitleAction
+              programId={program.id}
+              operationStart={program.startDate}
+              operationEnd={program.endDate}
+              scheduleForm={scheduleForm}
+            />
+          ) : null}
+        surface="responseEntry"
+        titleAligned
+        required
+        highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[5]}
+      />
       <UjatEducationScheduleSettingsSection
-        mode={mode}
+        mode="edit"
         h1Display={h1Display}
         h2Display={h2Display}
         scheduleForm={scheduleForm}

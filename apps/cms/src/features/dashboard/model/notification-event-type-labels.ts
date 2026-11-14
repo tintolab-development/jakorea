@@ -67,6 +67,8 @@ export const NOTIFICATION_EVENT_TYPE_LABELS: Readonly<Record<string, string>> = 
   ADMIN_PROGRAM_NOTICE_CREATED: '신규 안내사항 안내 (관리자)',
   ADMIN_PORTRAIT_CONSENT_UNSUBMITTED: '초상권 동의서 미제출',
   ADMIN_STUDENT_ROSTER_UNSUBMITTED: '학생 명단 미제출',
+  // (프로그램 × 담당 PM)별 전날 신규 신청 합산 (매일 08:00 KST)
+  ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY: '프로그램 신규 신청자',
 } as const
 
 const FALLBACK_LABEL = '알림'

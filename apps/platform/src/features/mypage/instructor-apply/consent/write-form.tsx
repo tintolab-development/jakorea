@@ -44,6 +44,7 @@ import {
   PFFormDraftSignatureProvider,
   PFFormDraftSignatureTitleAsideBridge,
   PFFormSignatureBlock,
+  PFLoadingSpinner,
   type FormSignatureValue,
 } from '@/shared/ui'
 import {
@@ -257,7 +258,10 @@ export function SchemaConsentWriteForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const portalSubmitEnabled = isRemoteApiConfigured() && Boolean(getAccessToken())
   const serverDraftInitializedRef = useRef(false)
-  const [isServerDraftLoading, setIsServerDraftLoading] = useState(false)
+  /** 서버 양식을 받아 올 화면은 첫 렌더부터 로딩으로 둔다 — 프론트 기본 양식이 먼저 그려졌다 바뀌는 깜빡임 방지 */
+  const [isServerDraftLoading, setIsServerDraftLoading] = useState(
+    () => !readOnly && portalSubmitEnabled && !isCrimeConsentTemplate(templateId),
+  )
   const [serverDraftUnavailable, setServerDraftUnavailable] = useState(false)
 
   const [state, setState] = useState<SchemaConsentWriteState>(() => {
@@ -843,42 +847,46 @@ export function SchemaConsentWriteForm({
 
   const formBody = (
     <>
-      <form
-        className={styles.form}
-        onSubmit={event => {
-          event.preventDefault()
-          if (readOnly) return
-          handleSubmit()
-        }}
-      >
-        <fieldset
-          disabled={readOnly || isServerDraftLoading || serverDraftUnavailable}
-          className={styles.fieldset}
-          aria-busy={isServerDraftLoading || undefined}
+      {isServerDraftLoading ? (
+        <PFLoadingSpinner centered label="동의서 양식을 불러오는 중" />
+      ) : (
+        <form
+          className={styles.form}
+          onSubmit={event => {
+            event.preventDefault()
+            if (readOnly) return
+            handleSubmit()
+          }}
         >
-          <PlatformConsentFormBody
-            draft={state.draft}
-            hiddenParagraphIds={bodyHiddenParagraphIds}
-            onUpdateParagraph={readOnly ? () => undefined : updateParagraph}
-            fillOptions={fillOptions}
-            lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
-            renderParagraphSlot={renderParagraphSlot}
-            renderAfterParagraphSlot={renderAfterParagraphSlot}
-          />
-        </fieldset>
-        {readOnly ? null : (
-          <div className={styles.actions}>
-            <PFButton
-              size="xlarge"
-              width={240}
-              type="submit"
-              disabled={isSubmitting || isServerDraftLoading || serverDraftUnavailable}
-            >
-              {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성완료'}
-            </PFButton>
-          </div>
-        )}
-      </form>
+          <fieldset
+            disabled={readOnly || isServerDraftLoading || serverDraftUnavailable}
+            className={styles.fieldset}
+            aria-busy={isServerDraftLoading || undefined}
+          >
+            <PlatformConsentFormBody
+              draft={state.draft}
+              hiddenParagraphIds={bodyHiddenParagraphIds}
+              onUpdateParagraph={readOnly ? () => undefined : updateParagraph}
+              fillOptions={fillOptions}
+              lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}
+              renderParagraphSlot={renderParagraphSlot}
+              renderAfterParagraphSlot={renderAfterParagraphSlot}
+            />
+          </fieldset>
+          {readOnly ? null : (
+            <div className={styles.actions}>
+              <PFButton
+                size="xlarge"
+                width={240}
+                type="submit"
+                disabled={isSubmitting || isServerDraftLoading || serverDraftUnavailable}
+              >
+                {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성완료'}
+              </PFButton>
+            </div>
+          )}
+        </form>
+      )}
       <PFAlertModal
         open={alertOpen}
         title={alertTitle}

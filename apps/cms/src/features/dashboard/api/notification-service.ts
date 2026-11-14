@@ -6,7 +6,14 @@
 import type { UUID, DateValue } from '@/types'
 import type { UserRole } from '@/types/user'
 
-export type NotificationType = 'schedule' | 'matching' | 'settlement' | 'system'
+/** 헤더 알림 드롭다운 탭 키와 같다 (전체 탭 제외) */
+export type NotificationType =
+  | 'matching'
+  | 'progress'
+  | 'settlement'
+  | 'inquiry'
+  | 'schedule'
+  | 'system'
 
 export interface Notification {
   id: UUID

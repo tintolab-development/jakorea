@@ -31,6 +31,10 @@ export type PFModalProps = {
   mobilePlacement?: PFModalMobilePlacement
   ariaLabelledBy?: string
   ariaDescribedBy?: string
+  /**
+   * true면 바깥(딤) 클릭으로 닫음. 기본 false —
+   * 공통 팝업은 닫기 아이콘·액션 버튼으로만 닫는다 (QA 2026-11-14).
+   */
   closeOnBackdropClick?: boolean
   /** false면 Escape로 닫지 않음. 기본 true */
   closeOnEscape?: boolean
@@ -102,7 +106,7 @@ export function PFModal({
   mobilePlacement = 'center',
   ariaLabelledBy,
   ariaDescribedBy,
-  closeOnBackdropClick = true,
+  closeOnBackdropClick = false,
   closeOnEscape = true,
   showCloseButton = true,
   className,

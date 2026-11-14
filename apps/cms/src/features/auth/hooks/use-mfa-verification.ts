@@ -345,7 +345,10 @@ export function useMfaVerification({
                 response.errorCode === 'MFA_CHALLENGE_INVALID' ||
                 response.errorCode === 'MFA_NOT_CONFIGURED' ||
                 response.errorCode === 'MFA_RATE_LIMITED' ||
-                response.errorCode === 'VALIDATION_ERROR'
+                response.errorCode === 'VALIDATION_ERROR' ||
+                // 사용 불가 계정 — 서버 message 를 그대로 노출 (잠금·일시 오류 아님)
+                response.errorCode === 'ACCOUNT_INACTIVE' ||
+                response.errorCode === 'LOGIN_DISABLED'
               ) {
                 setVerifyNotice(response.detail)
                 clearOtpInput()

@@ -38,7 +38,7 @@ export function SessionWarningModal() {
               variant="secondary"
               size="medium"
               type="button"
-              onClick={() => logout({ preserveReturnPath: false })}
+              onClick={() => logout()}
             >
               {SESSION_POLICY_DISPLAY.idleLogoutLabel}
             </CmsButton>

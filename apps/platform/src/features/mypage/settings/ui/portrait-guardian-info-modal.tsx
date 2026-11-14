@@ -47,7 +47,6 @@ export function PortraitGuardianInfoModal({
       ariaDescribedBy={descriptionId}
       onClose={onCancel}
       mobilePlacement="full"
-      closeOnBackdropClick={!confirmLoading}
       closeOnEscape={!confirmLoading}
     >
       <div className={styles.content}>

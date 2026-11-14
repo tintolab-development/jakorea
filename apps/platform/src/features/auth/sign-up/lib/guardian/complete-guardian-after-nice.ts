@@ -38,7 +38,10 @@ export type CompleteGuardianAfterNiceInput = {
 
 export type CompleteGuardianAfterNiceResult =
   | { kind: 'completed' }
-  | { kind: 'error'; message: string; action: GuardianBridgeErrorAction }
+  | { kind: 'error'; message: string; action: GuardianBridgeErrorAction; code?: string }
+
+/** 최종 동의 409 — 관계 입력값이 맞지 않음(field guardianRelation). 다시 시도하지 않고 관계 칸에 표시한다. */
+export const GUARDIAN_RELATION_INVALID_CODE = 'GUARDIAN_RELATION_INVALID'
 
 function createChallengeNonceLikeKey() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -130,12 +133,15 @@ export async function completeGuardianAfterNice(
       return { kind: 'completed' }
     }
   } catch (error) {
+    const resolved = resolveGuardianBridgeError(error)
+    if (resolved.code === GUARDIAN_RELATION_INVALID_CODE) {
+      return { kind: 'error', message: resolved.message, action: 'show_message', code: resolved.code }
+    }
     if (
       !isGuardianBridgeConflict(error) &&
       !isGuardianFinalConsentChallengeInvalid(error)
     ) {
-      const resolved = resolveGuardianBridgeError(error)
-      return { kind: 'error', message: resolved.message, action: resolved.action }
+      return { kind: 'error', message: resolved.message, action: resolved.action, code: resolved.code }
     }
   }
 
@@ -163,6 +169,10 @@ export async function completeGuardianAfterNice(
         return { kind: 'completed' }
       }
     } catch (error) {
+      if (resolveGuardianBridgeError(error).code === GUARDIAN_RELATION_INVALID_CODE) {
+        const relation = resolveGuardianBridgeError(error)
+        return { kind: 'error', message: relation.message, action: 'show_message', code: relation.code }
+      }
       if (isGuardianBridgeConflict(error)) {
         const afterConflict = await client.getStatus().catch(() => null)
         if (classifyGuardianSignupStatus(afterConflict, nowMs) === 'consented') {

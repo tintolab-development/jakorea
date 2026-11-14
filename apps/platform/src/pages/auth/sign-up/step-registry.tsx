@@ -27,11 +27,12 @@ const Step3: SignUpStepComponent = ({ signUp }) => {
       return <GuardianAgreementStep signUp={signUp} />
     }
 
-    if (!signUp.guardian.isProfileCompleted) {
-      return <GuardianProfileStep signUp={signUp} />
+    // 약관 동의 → 보호자 본인인증 → 보호자 정보 확인(관계 입력)·최종 동의 (Figma 2750-73961)
+    if (!signUp.guardian.identity.isVerified) {
+      return <GuardianIdentityStep signUp={signUp} />
     }
 
-    return <GuardianIdentityStep signUp={signUp} />
+    return <GuardianProfileStep signUp={signUp} />
   }
 
   return signUp.identity.isVerified ? (

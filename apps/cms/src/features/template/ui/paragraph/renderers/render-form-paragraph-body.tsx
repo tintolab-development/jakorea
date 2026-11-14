@@ -447,11 +447,29 @@ export function renderFormParagraphBody(
         isAgreementAdminProxyConfirmHostId(p.id)
       ) {
         const consentText = 'bodyText' in p ? String(p.bodyText ?? '') : ''
+        /** 템플릿 관리 작성 — 카드 구성은 그대로 두고 동의 문구만 캔버스에서 편집 (문구 수정 전부 가능) */
+        const consentAuthoring = paragraphInteractionMode === 'authoring' && !isPreviewReadonly
         return (
           <AgreementAdminProxyConfirmBlock
             consentText={consentText}
             memberName={options.agreementSystemParticipantName ?? ''}
             now={options.agreementSystemNow}
+            editable={consentAuthoring ? isBodyInteractive : undefined}
+            consentPlaceholder={
+              consentAuthoring && 'bodyPlaceholder' in p && typeof p.bodyPlaceholder === 'string'
+                ? p.bodyPlaceholder
+                : undefined
+            }
+            onConsentTextChange={
+              consentAuthoring
+                ? next =>
+                    updateParagraph(p.id, cur =>
+                      cur.kind === 'single_item' && cur.variant === 'agreement_explanation_text'
+                        ? { ...cur, bodyText: next }
+                        : cur
+                    )
+                : undefined
+            }
           />
         )
       }
@@ -784,6 +802,16 @@ export function renderFormParagraphBody(
     }
     case 'static_description_lines':
       if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
+      /* 템플릿 관리 작성 — 줄 문구 편집(회원 화면·미리보기는 정적 표시) */
+      if (paragraphInteractionMode === 'authoring' && !isPreviewReadonly) {
+        return (
+          <StaticDescriptionLines
+            paragraph={p}
+            isEditMode={isBodyInteractive}
+            onChange={next => updateParagraph(p.id, () => next)}
+          />
+        )
+      }
       return <StaticDescriptionLines paragraph={p} />
     case 'short_essay': {
       if (p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject && paragraphInteractionMode === 'user') {

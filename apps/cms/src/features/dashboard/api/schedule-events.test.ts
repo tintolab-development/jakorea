@@ -153,3 +153,41 @@ describe('mapScheduleItem eventType (QA-0382)', () => {
     expect(mapScheduleItem({ programId: 1, startAt: '2026-11-06T01:00:00Z' })).toBeNull()
   })
 })
+
+describe('mapScheduleItem endTime (호버 미리보기 시작 ~ 끝)', () => {
+  it('시각 있는 교육 회차는 endAt을 끝 시각으로 함께 준다', () => {
+    const event = mapScheduleItem({
+      scheduleId: 12,
+      programId: 1,
+      startAt: '2026-11-06T01:00:00Z',
+      endAt: '2026-11-06T02:00:00Z',
+      allDay: false,
+      eventType: 'EDUCATION',
+      eventKey: 'EDUCATION:12',
+    })
+    expect(event?.time).toMatch(/^\d{2}:\d{2}$/)
+    expect(event?.endTime).toMatch(/^\d{2}:\d{2}$/)
+    expect(event?.endTime).not.toBe(event?.time)
+  })
+
+  it('종일 일정과 endAt 없는 일정은 끝 시각이 없다', () => {
+    const allDay = mapScheduleItem({
+      programId: 1,
+      startAt: '2026-11-02T15:00:00Z',
+      endAt: '2026-11-03T15:00:00Z',
+      allDay: true,
+      eventType: 'BUSINESS_START',
+      eventKey: 'BUSINESS_START:1',
+      eventDate: '2026-11-03',
+    })
+    const noEnd = mapScheduleItem({
+      programId: 1,
+      startAt: '2026-11-20T05:00:00Z',
+      allDay: false,
+      eventType: 'RECRUITMENT_END',
+      eventKey: 'RECRUITMENT_END:9',
+    })
+    expect(allDay?.endTime).toBeUndefined()
+    expect(noEnd?.endTime).toBeUndefined()
+  })
+})

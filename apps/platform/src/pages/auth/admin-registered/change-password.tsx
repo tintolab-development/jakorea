@@ -7,7 +7,7 @@ import {
   resolveAdminProvisionedOnboardingPath,
   validateAdminRegisteredChangePassword,
 } from '@/features/auth/admin-registered'
-import { ADMIN_REGISTERED_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
+import { MEMBER_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
 import {
   getLoginApiErrorMessage,
   isPasswordRecentlyUsedApiError,
@@ -19,7 +19,7 @@ import { PFAlertModal, PFButton, PFText, PFTextInput } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
-const PASSWORD_HELP_TEXT = ADMIN_REGISTERED_PASSWORD_HELP_TEXT
+const PASSWORD_HELP_TEXT = MEMBER_PASSWORD_HELP_TEXT
 
 export function AdminRegisteredChangePasswordPage() {
   const navigate = useNavigate()

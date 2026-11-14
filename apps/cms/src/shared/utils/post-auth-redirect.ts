@@ -33,18 +33,13 @@ export function resolvePostAuthRedirectPath(options: {
 }
 
 /**
- * access 만료·refresh 실패 시 이동 경로.
+ * 로그아웃·자동 로그아웃·세션 만료(access 만료·refresh 실패 등) 시 이동 경로.
+ * 다시 로그인하면 이전 이용 화면이 아니라 기본 첫 화면으로 가도록 돌아올 경로(`redirect`)를 붙이지 않는다.
  * 최초 로그인 완료 화면이면 로그인/대시보드로 보내지 않는다. `null`은 현재 화면 유지.
  */
 export function resolveSessionAuthFailureRedirect(options: {
   pathname: string
-  search?: string
   complete: boolean
-  /**
-   * 돌아올 경로를 싣는 로그인 화면 파라미터. 기본 `redirect`.
-   * `next`는 호환용이며, 로그인 화면은 둘 다 읽는다.
-   */
-  returnParam?: 'next' | 'redirect'
 }): string | null {
   if (options.complete) {
     return passwordChangeRequiredPaths.complete
@@ -52,17 +47,13 @@ export function resolveSessionAuthFailureRedirect(options: {
   if (isPasswordChangeRequiredPath(options.pathname)) {
     return null
   }
-  const path = `${options.pathname}${options.search ?? ''}`
-  const param = options.returnParam ?? LOGIN_REDIRECT_PARAM
-  if (param === LOGIN_REDIRECT_PARAM) {
-    return buildLoginPathWithRedirect(path)
-  }
-  const safe = sanitizeLoginRedirectPath(path)
-  if (!safe) return '/login'
-  return `/login?${param}=${encodeURIComponent(safe)}`
+  return '/login'
 }
 
-/** 로그인 후 원래 화면으로 돌아가기 위한 쿼리 키 */
+/**
+ * 로그인 후 요청한 화면으로 가기 위한 쿼리 키.
+ * 비로그인 상태로 보호 화면을 연 경우(ProtectedRoute)·가입/연동 흐름에서만 붙인다 — 세션 종료 뒤 이동에는 붙이지 않는다.
+ */
 export const LOGIN_REDIRECT_PARAM = 'redirect'
 
 /** `/login?redirect=<경로>` — 안전하지 않은 경로면 `/login`만 반환 */
@@ -100,33 +91,43 @@ export function isCmsLoggedOutPublicPath(pathname: string): boolean {
 }
 
 /**
- * 세션이 끝난 뒤 보호 화면에 남지 않도록 로그인으로 보낸다.
+ * 이 페이지에서 로그아웃·세션 종료로 로그인 화면 이동을 시작했는지.
+ * 로그아웃 직후 보호 화면 가드(ProtectedRoute)가 먼저 다시 그려져도 돌아올 경로를 붙이지 않게 한다.
+ * 로그인 화면으로 전체 이동하면 모듈이 다시 읽혀 초기화된다.
+ */
+let loginReturnPathSuppressed = false
+
+/** 보호 화면 가드용 — `true`면 `/login?redirect=…` 대신 `/login`으로 보낸다 */
+export function isLoginReturnPathSuppressed(): boolean {
+  return loginReturnPathSuppressed
+}
+
+/** @internal 테스트 전용 */
+export function resetLoginReturnPathSuppressedForTest(): void {
+  loginReturnPathSuppressed = false
+}
+
+/**
+ * 세션이 끝난 뒤(직접 로그아웃·자동 로그아웃·세션 만료) 보호 화면에 남지 않도록 로그인으로 보낸다.
+ * 돌아올 경로는 붙이지 않는다 — 다시 로그인하면 기본 첫 화면으로 간다.
  * 공개 인증 화면에 있으면 그대로 둔다.
  */
 export function assignLoginAfterSessionEnd(options?: {
   pathname?: string
   search?: string
   complete?: boolean
-  /** `false`면 원래 경로를 붙이지 않는다 (사용자가 직접 로그아웃). 기본 `true` */
-  preserveReturnPath?: boolean
   assign?: (url: string) => void
-  returnParam?: 'next' | 'redirect'
 }): void {
   if (typeof window === 'undefined' && options?.assign == null) return
   const pathname = options?.pathname ?? window.location.pathname
   const search = options?.search ?? window.location.search
   if (isCmsLoggedOutPublicPath(pathname)) return
-  const complete = options?.complete === true
-  const target =
-    options?.preserveReturnPath === false && !complete
-      ? '/login'
-      : resolveSessionAuthFailureRedirect({
-          pathname,
-          search,
-          complete,
-          returnParam: options?.returnParam,
-        })
+  const target = resolveSessionAuthFailureRedirect({
+    pathname,
+    complete: options?.complete === true,
+  })
   if (target == null) return
+  loginReturnPathSuppressed = true
   const current = `${pathname}${search}`
   if (current === target) return
   const assign = options?.assign ?? ((url: string) => window.location.assign(url))

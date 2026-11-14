@@ -24,3 +24,11 @@ export {
   setFindPasswordRecoveryState,
 } from './lib/recovery-state'
 export type { FindPasswordRecoveryState } from './lib/recovery-state'
+export {
+  readFindPasswordReturnState,
+  resolvePasswordResetApiError,
+} from './lib/password-reset-errors'
+export type {
+  FindPasswordReturnState,
+  PasswordResetErrorResolution,
+} from './lib/password-reset-errors'

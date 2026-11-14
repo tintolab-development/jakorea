@@ -60,7 +60,6 @@ export function UjatCheckInModal({
       title="출석하기"
       size="md"
       ariaDescribedBy={descriptionId}
-      closeOnBackdropClick={!checkInMutation.isPending}
       closeOnEscape={!checkInMutation.isPending}
     >
       <div className={styles.body}>
