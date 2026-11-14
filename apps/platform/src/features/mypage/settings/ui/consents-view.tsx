@@ -30,6 +30,7 @@ import {
   ensureApplyGateRequiredDocumentConsentItems,
   filterListedDocumentConsentItems,
   parseApplyGateRequiredConsentItemIds,
+  sortDocumentConsentItemsForDisplay,
 } from '../lib/consent-visibility'
 import {
   canWithdrawConsent,
@@ -136,7 +137,11 @@ type WithdrawCopy = {
   description: string
   completeTitle: string
   completeGuide: string
+  /** 완료 팝업 일시 라벨 — 기본값: `동의 철회일시` (시안: 콜론 없음) */
+  completeDateLabel?: string
 }
+
+const DEFAULT_WITHDRAW_COMPLETE_DATE_LABEL = '동의 철회일시'
 
 const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> = {
   paymentStatement: {
@@ -155,8 +160,9 @@ const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy
       '철회 시 제출하신 교육진행자 서약서를 더 이상 확인하거나 활용하지 않아요.',
       '서약하지 않은 상태에서는 교육진행자 활동이 제한돼요.',
     ].join('\n'),
-    completeTitle: '교육진행자 서약 동의가 철회되었어요.',
-    completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 서약서를 작성해 주세요.',
+    completeTitle: '교육진행자 서약이 철회되었어요.',
+    completeDateLabel: '서약 철회일시',
+    completeGuide: '교육진행자 활동을 원하시면 [약관 및 정책 동의 관리]에서 다시 서약해 주세요.',
   },
   administrativeJoint: {
     title: '행정정보 공동이용 사전동의를 철회할까요?',
@@ -692,16 +698,18 @@ export function SettingsConsentsView() {
 
   const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
   const applyGateRequiredIds = parseApplyGateRequiredConsentItemIds(applyGateRequiredRaw)
-  const documentItems = filterListedDocumentConsentItems(
-    applyLocalWithdrawn(
-      ensureApplyGateRequiredDocumentConsentItems(consents.documentItems, applyGateRequiredIds),
-      withdrawnIds,
+  const documentItems = sortDocumentConsentItemsForDisplay(
+    filterListedDocumentConsentItems(
+      applyLocalWithdrawn(
+        ensureApplyGateRequiredDocumentConsentItems(consents.documentItems, applyGateRequiredIds),
+        withdrawnIds,
+      ),
+      {
+        isRemoteSession: consents.isRemoteSession,
+        isInstructor: consents.isInstructor,
+        requiredIds: applyGateRequiredIds,
+      },
     ),
-    {
-      isRemoteSession: consents.isRemoteSession,
-      isInstructor: consents.isInstructor,
-      requiredIds: applyGateRequiredIds,
-    },
   )
 
   /**
@@ -830,8 +838,10 @@ export function SettingsConsentsView() {
 
   return (
     <div className={styles.page}>
-      <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.pageLead}>
+      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.pageLead}>
         초상권 수집·이용 항목 미동의 시 프로그램 신청·참여가 제한돼요.
+        <br />
+        마케팅 정보 수신 동의 여부는 서비스 이용과 무관해요.
       </PFText>
       <section className={styles.section}>
         <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
@@ -906,7 +916,7 @@ export function SettingsConsentsView() {
         title={completeCopy?.completeTitle}
         description={
           completeCopy && withdrawComplete
-            ? `동의 철회일시: ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
+            ? `${completeCopy.completeDateLabel ?? DEFAULT_WITHDRAW_COMPLETE_DATE_LABEL} ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
             : null
         }
         onClose={closeWithdrawComplete}

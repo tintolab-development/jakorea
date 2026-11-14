@@ -30,12 +30,13 @@
   gap: var(--spacing-8);
 }
 
+/* 시안: 탈퇴하기 텍스트·테두리 #D13235 (전역 error 토큰 #C31D20은 유지, 이 버튼만) */
 .actions .dangerButton {
-  border: 1px solid var(--color-status-error-default);
+  border: 1px solid var(--color-border-error-strong);
   background:
     linear-gradient(0deg, var(--color-status-error-bg) 0%, var(--color-status-error-bg) 100%),
     var(--color-neutral-white);
-  color: var(--color-status-error-default);
+  color: var(--color-border-error-strong);
 }
 
 .actions .dangerButton:hover:not(:disabled) {

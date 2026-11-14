@@ -185,6 +185,26 @@
   display: block;
 }
 
+/* 시안 PC: 승인 대기 박스 84 고정 · 아이콘 60 · 간격 0 · LNB 위 54 */
+@media (--bp-pc-up) {
+  /* 시안 PC: 강사 신청 카드 280×84 — 상하 18 */
+  .ctaApply {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .pendingCta {
+    height: 84px;
+    margin-top: 54px;
+    gap: 0;
+  }
+
+  .pendingIcon {
+    width: 60px;
+    height: 60px;
+  }
+}
+
 @media (--bp-below-pc) {
   /* Figma 01-4 / 01-3 · Mobile 375 */
   .cta {

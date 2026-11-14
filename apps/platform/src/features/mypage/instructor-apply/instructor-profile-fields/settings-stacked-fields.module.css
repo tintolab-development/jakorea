@@ -98,7 +98,7 @@
 
 .fieldRequired {
   flex: 0 0 auto;
-  color: var(--color-red);
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
   font-family: var(--font-family-base);
   font-size: 14px;
   font-weight: 500;

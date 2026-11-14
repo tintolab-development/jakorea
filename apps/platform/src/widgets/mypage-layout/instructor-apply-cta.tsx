@@ -78,7 +78,7 @@ export function InstructorApplyCta() {
   }
 
   const applyCta = (
-    <Link className={styles.cta} to={reviewTo}>
+    <Link className={[styles.cta, styles.ctaApply].join(' ')} to={reviewTo}>
       <img className={styles.icon} src={instructorApplyIllustrationUrl} alt="" aria-hidden="true" />
       <span className={styles.copy}>
         <PFText as="span" typo="bd-lg-sb" color="white" className={styles.title}>

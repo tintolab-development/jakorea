@@ -383,6 +383,14 @@ export function SettingsEditForm({
         </div>
 
         <div className={styles.fields}>
+          {/* 시안: 이메일 ID가 기본 정보 첫 필드 (조회 화면과 같은 라벨) */}
+          <PFTextInput
+            size="xlarge"
+            label="이메일 ID"
+            value={displayEmail === EMPTY_SETTINGS_VALUE ? '' : displayEmail}
+            disabled
+          />
+
           <PFTextInput
             size="xlarge"
             label="이름"
@@ -407,10 +415,11 @@ export function SettingsEditForm({
                   size="xlarge"
                   variant="secondary"
                   type="button"
+                  className={styles.reverifyButton}
                   disabled={isReverifying}
                   onClick={handleReverify}
                 >
-                  {isReverifying ? '본인인증 진행 중…' : '본인인증 다시하기'}
+                  {isReverifying ? '본인인증 진행 중…' : '재인증하기'}
                 </PFButton>
               </div>
               {identityError ? (
@@ -439,6 +448,11 @@ export function SettingsEditForm({
                 variant="tertiary"
                 width="100%"
                 type="button"
+                className={
+                  displayGender === 'male'
+                    ? `${styles.genderOption} ${styles.genderOptionSelected}`
+                    : styles.genderOption
+                }
                 selected={displayGender === 'male'}
                 disabled
               >
@@ -449,6 +463,11 @@ export function SettingsEditForm({
                 variant="tertiary"
                 width="100%"
                 type="button"
+                className={
+                  displayGender === 'female'
+                    ? `${styles.genderOption} ${styles.genderOptionSelected}`
+                    : styles.genderOption
+                }
                 selected={displayGender === 'female'}
                 disabled
               >
@@ -619,12 +638,6 @@ export function SettingsEditForm({
             </>
           )}
 
-          <PFTextInput
-            size="xlarge"
-            label="Email"
-            value={displayEmail === EMPTY_SETTINGS_VALUE ? '' : displayEmail}
-            disabled
-          />
         </div>
       </section>
 
@@ -661,10 +674,11 @@ export function SettingsEditForm({
                   size="xlarge"
                   variant="secondary"
                   type="button"
+                  className={styles.reverifyButton}
                   disabled={isGuardianReverifying || isReverifying}
                   onClick={handleGuardianReverify}
                 >
-                  {isGuardianReverifying ? '본인인증 진행 중…' : '본인인증 다시하기'}
+                  {isGuardianReverifying ? '본인인증 진행 중…' : '재인증하기'}
                 </PFButton>
               </div>
               {guardianError ? (

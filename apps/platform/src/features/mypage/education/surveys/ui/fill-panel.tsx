@@ -630,6 +630,7 @@ export function EducationSurveyFillPanel({
         onSidecarChange={setSidecar}
         userInfoValues={userInfoValues}
         readOnly={readOnly}
+        compactMobileSections
       />
 
       {readOnly ? null : (

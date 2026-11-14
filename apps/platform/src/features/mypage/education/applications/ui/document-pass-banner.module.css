@@ -54,3 +54,36 @@
   margin: 0;
   white-space: pre-line;
 }
+
+/* 모바일 시안: 세로 배치 · 제목 18 SemiBold · 안내 14 Regular */
+@media (--bp-below-pc) {
+  .banner {
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-8);
+    padding: var(--spacing-24) var(--spacing-20);
+  }
+
+  .headline {
+    width: 100%;
+    gap: var(--spacing-8);
+  }
+
+  .icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .title {
+    font-size: 18px;
+    font-weight: 600;
+    white-space: normal;
+  }
+
+  /* 배경 이미지(absolute) 위에 그려지도록 position: relative는 유지 */
+  .body {
+    width: 100%;
+    font-size: 14px;
+  }
+}

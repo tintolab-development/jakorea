@@ -1,4 +1,7 @@
 .section {
+  /* 정산 정보 표 행 높이 — 시안 66px(표 전체 68px) */
+  --pf-form-field-min-height: 66px;
+
   display: flex;
   width: 100%;
   min-width: 0;

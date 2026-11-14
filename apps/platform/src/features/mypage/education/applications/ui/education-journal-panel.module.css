@@ -94,6 +94,16 @@
   cursor: wait;
 }
 
+/* 시안 PC: 교육일지 제출하기 16 SemiBold */
+@media (--bp-pc-up) {
+  .submitRow .submitButton {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+}
+
 @media (--bp-below-pc) {
   .header {
     flex-direction: column;

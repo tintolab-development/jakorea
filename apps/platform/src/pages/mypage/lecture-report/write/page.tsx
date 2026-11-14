@@ -6,7 +6,6 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton, useProgramDetail } from '@/features/program'
 import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
 import { EducationSurveyFormBody } from '@/features/mypage/education/surveys/ui/survey-form-body'
-import { resolveEducationSurveyPeriodLabel } from '@/features/mypage/education/surveys/ui/survey-header'
 import {
   EMPTY_SURVEY_SIDECAR,
   type SurveySidecarState,
@@ -71,6 +70,7 @@ import styles from './page.module.css'
 import {
   buildLectureReportPageTitle,
   resolveLectureReportLectureName,
+  resolveLectureReportPeriodLabel,
 } from '@/features/mypage/education/schedules/lib/lecture-report-display'
 import { resolveEducationSurveySectionDescription } from '@/features/mypage/education/surveys/lib/survey-section-title'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
@@ -83,7 +83,7 @@ const REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION = <PFRequiredFieldsIncomplete
 
 const EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE = '교육 사진 첨부 안내'
 const EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION =
-  '교육 장면 사진을 2장 이상 첨부해 주세요'
+  '교육 당일 사진을 2장 이상 첨부해 주세요'
 
 type LoadedReport = {
   assignment: LectureReportAssignment
@@ -485,9 +485,11 @@ export function MypageLectureReportWritePage() {
   const pageTitle = buildLectureReportPageTitle(lectureName)
   const pageDescription = resolveEducationSurveySectionDescription(titleParagraph?.surveyDescription)
   const period = titleParagraph?.showWritingPeriodOnForm
-    ? resolveEducationSurveyPeriodLabel(titleParagraph, loaded?.assignment.startAt, {
-        submitDueAt: loaded?.assignment.submitDueAt ?? loaded?.state.submitDueAt,
-      })
+    ? resolveLectureReportPeriodLabel(
+        titleParagraph,
+        loaded?.assignment.startAt,
+        loaded?.assignment.submitDueAt ?? loaded?.state.submitDueAt,
+      )
     : ''
   const formProgramTitle =
     program?.title || toDisplayEducationScheduleName(loaded?.assignment.scheduleName) || '강의'

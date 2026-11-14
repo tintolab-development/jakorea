@@ -149,15 +149,22 @@ function SessionAnswer({
 
   return (
     <div className={styles.questionList}>
-      {items.map((item, index) => (
-        <article className={styles.questionCard} key={item.id}>
-          <div className={styles.questionHeader}>
-            <strong>{item.label || paragraphTitle(paragraph)}</strong>
-            {'titleHint' in item && text(item.titleHint) ? <span>{text(item.titleHint)}</span> : null}
-          </div>
-          <p className={styles.answerText}>{displayValue(itemAnswer(paragraph, item.id, index, content) || item.bodyText)}</p>
-        </article>
-      ))}
+      {items.map((item, index) => {
+        // 항목 제목이 없으면(예: 강의 종합 평가 및 개선점 — showItemTitle false·label '') 단락 제목을 한 번 더 그리지 않는다.
+        const itemTitle = paragraph.showItemTitle === false ? '' : text(item.label)
+        const titleHint = 'titleHint' in item ? text(item.titleHint) : ''
+        return (
+          <article className={styles.questionCard} key={item.id}>
+            {itemTitle || titleHint ? (
+              <div className={styles.questionHeader}>
+                {itemTitle ? <strong>{itemTitle}</strong> : null}
+                {titleHint ? <span>{titleHint}</span> : null}
+              </div>
+            ) : null}
+            <p className={styles.answerText}>{displayValue(itemAnswer(paragraph, item.id, index, content) || item.bodyText)}</p>
+          </article>
+        )
+      })}
     </div>
   )
 }

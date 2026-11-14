@@ -4,6 +4,7 @@ import { PFButton, PFMetaBadge, PFPagination, PFStateBadge, PFText } from '@/sha
 import {
   formatDisplayClock,
   formatDisplayDate,
+  formatDisplayDateRange,
   toSeoulDisplayParts,
 } from '@/shared/lib/format-display-date'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
@@ -25,6 +26,7 @@ import {
 import { LectureReportPreviewModalContainer } from './lecture-report-preview-modal-container'
 import styles from './lecture-report-panel.module.css'
 import { formatLectureReportCardTimeSubtitle } from '../lib/instructor-education-schedule-display'
+import { formatAssignmentGradeLabel } from '../lib/instructor-assignment-support'
 import { clampLectureReportPage, resolveLectureReportAction } from '../lib/lecture-report-policy'
 
 type Props = { applicationId: string; programId: number; instructorProgram: boolean }
@@ -40,8 +42,9 @@ function resolveReportStatus(state: LectureReportState | undefined, row: Lecture
   // reportStatus는 서버 값만 사용 — lectureStatus로 추정하지 않는다.
   return undefined
 }
+/** 시안 — `2026년 11월 30일까지` (요일 없음) */
 function formatDueDate(value: string | null): string {
-  const formatted = formatDisplayDate(value)
+  const formatted = formatDisplayDateRange(value, null, { weekday: false, empty: '' })
   return formatted ? `${formatted}까지` : ''
 }
 function formatTime(value: string | null): string {
@@ -195,7 +198,7 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
           <PFMetaBadge
             icon={<img src={villaIconUrl} alt="" width={20} height={20} aria-hidden="true" />}
             primary={row.institutionName || '교육 기관'}
-            secondary={row.grade || undefined}
+            secondary={row.grade ? formatAssignmentGradeLabel(row.grade) : undefined}
           />
         ) : null
         const reportMeta = statusLoaded && reportStatus !== 'UPCOMING' ? (

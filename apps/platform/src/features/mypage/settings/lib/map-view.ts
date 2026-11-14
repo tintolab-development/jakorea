@@ -81,7 +81,7 @@ export function formatSettingsJoinedAt(value: string | undefined): string {
   if (!value?.trim()) return EMPTY_SETTINGS_VALUE
   const matched = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (!matched) return EMPTY_SETTINGS_VALUE
-  return `${matched[1]}년 ${matched[2]}월 ${matched[3]}일`
+  return `${matched[1]}년 ${Number(matched[2])}월 ${Number(matched[3])}일`
 }
 
 export function formatSettingsPhone(value: string | undefined): string {

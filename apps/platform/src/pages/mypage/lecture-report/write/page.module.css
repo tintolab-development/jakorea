@@ -32,6 +32,30 @@
   padding-top: var(--spacing-16);
 }
 
+/*
+ * 강의보고서 작성 PC 시안 — 공용 PFFormSection·PFTextInput·PFTextarea 기본값은 그대로 두고 이 페이지만.
+ * - 단락 타이틀(h2: 프로그램 진행 정보·교육 내용 …) 700
+ * - 자동 입력(비활성) 칸: 16 / 500 / #999999
+ * - 직접 입력 칸·textarea: 16
+ * 공용 formPage 입력은 font-weight에 !important를 쓰므로 비활성 굵기도 !important로 덮는다.
+ */
+@media (--bp-pc-up) {
+  .page section h2 {
+    font-weight: 700;
+  }
+
+  .page input:disabled {
+    color: var(--color-neutral-warm-500);
+    font-size: 16px;
+    font-weight: 500 !important;
+  }
+
+  .page input:not(:disabled),
+  .page textarea:not(:disabled) {
+    font-size: 16px;
+  }
+}
+
 @media (--bp-below-pc) {
   .period {
     white-space: normal;

@@ -1021,7 +1021,7 @@ export function MypageEducationDetailPage() {
             value={appliedSection}
             onChange={handleSectionChange}
             variant="pill"
-            size="large"
+            size="xlarge"
             ariaLabel="교육현황 상세 탭"
           />
 
@@ -1045,7 +1045,7 @@ export function MypageEducationDetailPage() {
             value={activitySection}
             onChange={handleSectionChange}
             variant="pill"
-            size="large"
+            size="xlarge"
             ariaLabel="활동 포기 교육 상세 탭"
           />
           <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
@@ -1058,7 +1058,7 @@ export function MypageEducationDetailPage() {
             value={activitySection}
             onChange={handleSectionChange}
             variant="pill"
-            size="large"
+            size="xlarge"
             ariaLabel="진행중 교육 상세 탭"
           />
           <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>

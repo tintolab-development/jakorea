@@ -24,11 +24,11 @@ export function SettlementListView({ month, items }: SettlementListViewProps) {
   return (
     <section className={styles.section} aria-label="월별 정산 현황 목록">
       <h2 className={styles.heading}>
-        <PFText as="span" typo="bd-lg-sb" color="black">
+        <PFText as="span" typo="bd-lg-sb" color="black" className={styles.headingTitle}>
           {formatMonthHeadingTitle(month)}
         </PFText>
         <PFText as="span" typo="bd-md-rg" color="black" className={styles.headingCount}>
-          {numbered.length}건
+          {`${numbered.length}건`}
         </PFText>
       </h2>
 

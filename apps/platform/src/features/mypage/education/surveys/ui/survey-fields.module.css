@@ -230,3 +230,11 @@
     border-right: 0;
   }
 }
+
+/* 시안(PC): 척도 선택 바 높이 54(테두리 포함) */
+@media (--bp-pc-up) {
+  .scaleBar {
+    box-sizing: border-box;
+    height: 54px;
+  }
+}

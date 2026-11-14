@@ -63,10 +63,29 @@ export function formatInstructorRole(raw: unknown): string {
   return display || '-'
 }
 
-/** 자택과의 거리. 서버 값(km, 소수 둘째 자리)을 재계산하지 않고 단위만 붙인다. */
+/** 자택과의 거리. 서버 값(km, 소수 둘째 자리)을 재계산하지 않고 단위만 붙인다. 시안 `12km`(띄어쓰기 없음) */
 export function formatAssignmentDistanceKm(value: unknown): string {
   const text = asAssignmentDisplayText(value)
-  return text ? `${text} km` : '-'
+  return text ? `${text}km` : '-'
+}
+
+/**
+ * 기관 소재지 — 시안은 시·도 + 시·군·구까지만 (`서울특별시 서대문구`, `경기도 부천시`).
+ * 응답에 구조화된 시도·시군구 필드가 없어 주소 문자열 앞 두 어절에서 만든다.
+ * 둘째 어절이 시·군·구가 아니면(세종특별자치시 + 도로명 등) 첫 어절만 쓴다.
+ */
+export function formatAssignmentInstitutionRegion(value: unknown): string {
+  const tokens = asAssignmentDisplayText(value).split(/\s+/).filter(Boolean)
+  const [first, second] = tokens
+  if (!first) return '-'
+  return second && /[시군구]$/.test(second) ? `${first} ${second}` : first
+}
+
+/** 담당학년 — 숫자만 오면 `N학년` (시안 `1학년`). 이미 학년이 붙은 값·그 밖의 문자열은 그대로. */
+export function formatAssignmentGradeLabel(value: unknown): string {
+  const text = asAssignmentDisplayText(value)
+  if (!text) return '-'
+  return /^\d+$/.test(text) ? `${text}학년` : text
 }
 
 /**

@@ -3,6 +3,8 @@ import {
   asAssignmentDisplayText,
   displayAssignmentValueOrDash,
   formatAssignmentDistanceKm,
+  formatAssignmentGradeLabel,
+  formatAssignmentInstitutionRegion,
   formatAssignmentSessionLabel,
   formatAssignmentWaitingStatus,
   formatInstructorRole,
@@ -41,10 +43,22 @@ assert.equal(formatInstructorRole('GENERAL'), '일반 강사')
 assert.equal(formatInstructorRole(null), '-')
 
 // 거리: 서버 km 값 그대로 + 단위
-assert.equal(formatAssignmentDistanceKm(12.4), '12.4 km')
-assert.equal(formatAssignmentDistanceKm(0), '0 km')
-assert.equal(formatAssignmentDistanceKm('3.25'), '3.25 km')
+assert.equal(formatAssignmentDistanceKm(12.4), '12.4km')
+assert.equal(formatAssignmentDistanceKm(0), '0km')
+assert.equal(formatAssignmentDistanceKm('3.25'), '3.25km')
 assert.equal(formatAssignmentDistanceKm(null), '-')
+
+// 기관 소재지: 시·도 + 시·군·구
+assert.equal(formatAssignmentInstitutionRegion('서울특별시 서대문구 연세로 50'), '서울특별시 서대문구')
+assert.equal(formatAssignmentInstitutionRegion('경기도 부천시 길주로 210'), '경기도 부천시')
+assert.equal(formatAssignmentInstitutionRegion('세종특별자치시 한누리대로 2130'), '세종특별자치시')
+assert.equal(formatAssignmentInstitutionRegion(null), '-')
+
+// 담당학년: 숫자만 오면 N학년
+assert.equal(formatAssignmentGradeLabel('1'), '1학년')
+assert.equal(formatAssignmentGradeLabel(3), '3학년')
+assert.equal(formatAssignmentGradeLabel('2학년'), '2학년')
+assert.equal(formatAssignmentGradeLabel(null), '-')
 
 // 그룹 키 = organizationApplicationId + 역할 + 실제 배정 학년(grade). 개인형(orgAppId null) = 일정마다 한 행. 서버 순서 유지
 const ids = (groups: Array<{ items: Array<{ assignmentId: number }> }>) =>

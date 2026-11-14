@@ -35,7 +35,7 @@ export function EducationCancelConfirm({
           <PFText as="div" typo="hl-lg" color="black" className={styles.title}>
             프로그램 신청을 취소할까요?
           </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={styles.description}>
             신청을 취소하면 해당 프로그램의 신청 내역이 삭제돼요.
           </PFText>
           {errorMessage ? (
