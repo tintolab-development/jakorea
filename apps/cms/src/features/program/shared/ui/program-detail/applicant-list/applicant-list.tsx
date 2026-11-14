@@ -127,7 +127,7 @@ import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
-  countOrganizationsWithAssignedSessions,
+  countOrganizationsAssignableForInstructor,
   fetchApprovedOrganizationApplicationsForLectureAssign,
   instructorFeePolicyAssignmentCountForApproval,
   resolveOrganizationInstructorApprovalStart,
@@ -886,7 +886,9 @@ export function ApplicantList({
                 retry: false,
               })
               const start = resolveOrganizationInstructorApprovalStart(
-                countOrganizationsWithAssignedSessions(rows)
+                countOrganizationsAssignableForInstructor(rows, {
+                  companySchool: isCompanySchoolInstructorList,
+                })
               )
               if (start.step === 'fee') {
                 setInstructorApprovalTarget({
@@ -928,6 +930,7 @@ export function ApplicantList({
       })
     },
     [
+      isCompanySchoolInstructorList,
       program?.id,
       queryClient,
       setInstructorApprovalTarget,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  countOrganizationsAssignableForInstructor,
   countOrganizationsWithAssignedSessions,
   instructorFeePolicyAssignmentCountForApproval,
   resolveInstructorLectureAssignLayout,
@@ -63,6 +64,28 @@ describe('countOrganizationsWithAssignedSessions', () => {
     ] as unknown as Parameters<typeof countOrganizationsWithAssignedSessions>[0]
     expect(countOrganizationsWithAssignedSessions(rows)).toBe(1)
     expect(countOrganizationsWithAssignedSessions(undefined)).toBe(0)
+  })
+})
+
+describe('countOrganizationsAssignableForInstructor', () => {
+  const rows = [
+    // 1사1교 승인 기관 — OSA 없음, 희망 일정이 program_schedule로 확정됨
+    { sessions: [{ resolvedScheduleId: 9001 }], confirmedListAssignmentSessions: undefined },
+    // 일정 미확정 희망 일정만 있는 기관
+    { sessions: [{ resolvedScheduleId: null, scheduleUnresolved: true }] },
+    // 일반 기관형 — OSA 배정 일정
+    { sessions: [], confirmedListAssignmentSessions: [{}] },
+  ] as unknown as NonNullable<Parameters<typeof countOrganizationsAssignableForInstructor>[0]>
+
+  it('1사1교는 일정이 확정된 희망 일정이 있는 승인 기관을 센다', () => {
+    expect(countOrganizationsAssignableForInstructor(rows, { companySchool: true })).toBe(1)
+  })
+
+  it('1사1교가 아니면 기존처럼 OSA 배정 일정 기준으로 센다', () => {
+    expect(countOrganizationsAssignableForInstructor(rows, { companySchool: false })).toBe(1)
+    expect(
+      countOrganizationsAssignableForInstructor(rows.slice(0, 2), { companySchool: false })
+    ).toBe(0)
   })
 })
 
