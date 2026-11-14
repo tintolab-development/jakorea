@@ -13,7 +13,7 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
   const { step, memberType, navigation } = signUp
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title="어떤 회원으로 가입할까요?"
         description="회원 유형에 따라 필요한 정보가 조금 달라요."

@@ -17,7 +17,7 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
   const { step, profile } = signUp
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title="회원 정보를 입력해 주세요."
         description={

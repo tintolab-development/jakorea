@@ -13,7 +13,7 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
   const { step, confirmation, identity } = signUp
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title="입력한 정보를 확인해 주세요."
         description={

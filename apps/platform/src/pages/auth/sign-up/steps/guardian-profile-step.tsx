@@ -18,7 +18,7 @@ export function GuardianProfileStep({ signUp }: GuardianProfileStepProps) {
   const { profile } = guardian
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title="보호자 동의에 필요한 정보만 확인해요."
         description="입력한 정보는 보호자 본인인증과 동의 확인에만 사용돼요."

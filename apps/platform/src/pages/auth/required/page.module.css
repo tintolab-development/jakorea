@@ -19,24 +19,10 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-12);
-  margin-bottom: var(--spacing-24);
+  gap: var(--spacing-8);
+  margin-bottom: var(--spacing-8);
 }
 
 .actionButton {
   width: 100%;
-}
-
-.back {
-  display: flex;
-  width: 100%;
-  justify-content: center;
-}
-
-/* 시안(PC): 이전으로 링크 16 SemiBold */
-@media (--bp-pc-up) {
-  .back .backButton {
-    font-size: 16px;
-    font-weight: 600;
-  }
 }

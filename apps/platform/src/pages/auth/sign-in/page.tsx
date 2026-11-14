@@ -17,6 +17,7 @@ import {
 import {
   expiresAtFromExpiresInSeconds,
   getLoginApiErrorMessage,
+  isLoginNetworkError,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
 import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/apply-auth-token-age-group'
@@ -44,6 +45,7 @@ import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
   NaverSocialLoginIcon,
+  PFAlertModal,
   PFButton,
   PFText,
   PFTextInput,
@@ -52,6 +54,7 @@ import illustPeopleUrl from '@/shared/assets/illustration/graphic-84-01.png'
 import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import styles from './page.module.css'
 import { resolveLoginRedirectTarget, sanitizeLoginRedirectPath } from '@/shared/lib/login-redirect'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
 
 const accountLinkItems: Array<{ label: string; href?: string }> = [
   { label: '이메일 찾기', href: '/auth/find-email' },
@@ -85,6 +88,7 @@ export function SignInPage() {
     return socialError
   })
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
+  const [networkErrorOpen, setNetworkErrorOpen] = useState(false)
   // 이 브라우저에서 최근 소셜 로그인에 성공한 수단 — 읽지 못하면 null(툴팁 없음)
   const [recentSocialProvider] = useState(readRecentSocialLoginProvider)
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
@@ -177,6 +181,10 @@ export function SignInPage() {
     } catch (error) {
       clearAuthTokens()
       setDevAuthLoggedIn(false)
+      if (isLoginNetworkError(error)) {
+        setNetworkErrorOpen(true)
+        return
+      }
       setFormError(
         getLoginApiErrorMessage(error, '로그인에 실패했어요. 이메일과 비밀번호를 확인해 주세요.')
       )
@@ -346,6 +354,12 @@ export function SignInPage() {
           ))}
         </div>
       </div>
+      <PFAlertModal
+        open={networkErrorOpen}
+        title={PLATFORM_ALERT_COPY.networkError.title}
+        description={PLATFORM_ALERT_COPY.networkError.description}
+        onConfirm={() => setNetworkErrorOpen(false)}
+      />
     </section>
   )
 }

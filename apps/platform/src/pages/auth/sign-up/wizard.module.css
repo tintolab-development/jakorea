@@ -65,7 +65,7 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-16);
+  gap: var(--spacing-8);
   margin-bottom: var(--spacing-40);
 }
 
@@ -236,15 +236,15 @@ button.agreementCheckButton {
   color: var(--color-neutral-warm-400);
 }
 
-.agreementGuide {
-  grid-column: 1 / -1;
-  margin: var(--spacing-8) 0 0 78px;
+.agreementLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
 }
 
-@media (--bp-below-pc) {
-  .agreementGuide {
-    margin: var(--spacing-8) 0 0 64px;
-  }
+/* 미동의 안내가 붙은 행은 시안처럼 체크·[보기]를 첫 줄에 맞춘다 */
+.agreementItemWithGuide {
+  align-items: start;
 }
 
 .optionalGuide {

@@ -63,6 +63,13 @@
   border-radius: var(--radius-12);
 }
 
+/* 기본 버튼 아래 [이전으로] 같은 텍스트 액션 (시안 h52, 상하 8, 16 SemiBold) */
+.textAction {
+  height: 52px;
+  padding: var(--spacing-8) 0;
+  border-radius: 0;
+}
+
 .primary {
   border: 1px solid rgb(61 61 61 / 10%);
   background: var(--color-primary-500);
@@ -177,5 +184,10 @@
 
   .button.xlarge {
     font-size: 16px;
+  }
+
+  .button.textAction {
+    height: 42px;
+    font-size: 14px;
   }
 }
