@@ -47,6 +47,7 @@ import {
   buildUnderAgeConfirmationRows,
   formatBirthDateInput,
   getBirthDateRangeMessage,
+  resolveSubmittedSchoolStatus,
 } from '../lib/utils'
 import {
   createInitialAgreementState,
@@ -570,7 +571,7 @@ export function useSignUp() {
         }) && (!isUnderAgeSignup || isMinorMemberNameValid(memberProfileName))
   // 일반회원은 프로필 단계 필수 검증(isStepSixValid)을 통과해야 확인·제출로 가므로 여기서는 선택값이 있다.
   // 교사회원은 재학 여부를 쓰지 않는다(요청·확인 화면 모두 무시).
-  const submittedSchoolStatus: SchoolStatus = schoolStatus ?? 'none'
+  const submittedSchoolStatus = resolveSubmittedSchoolStatus(schoolStatus)
   const isGuardianProfileValidState = isGuardianProfileValid({
     name: guardianVerifiedName,
     phone: guardianVerifiedPhone,
@@ -1461,6 +1462,7 @@ export function useSignUp() {
         phone: signupMemberPhone,
         schoolName,
         schoolAddress,
+        grade,
         affiliationName,
         employmentStatus,
       })

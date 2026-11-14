@@ -117,6 +117,14 @@ export function getGenderLabel(value: GenderType | null) {
   return '-'
 }
 
+/**
+ * 확인·제출에 쓰는 재학 여부. 일반회원은 회원 정보 단계 필수 검증을 통과해야 확인·제출로 오므로
+ * 미선택(null)은 실제로 닿지 않고, 닿으면 '해당 없음'으로 본다(교사회원은 재학 여부를 쓰지 않음).
+ */
+export function resolveSubmittedSchoolStatus(value: SchoolStatus | null): SchoolStatus {
+  return value ?? 'none'
+}
+
 export function getSchoolStatusLabel(value: SchoolStatus) {
   if (value === 'enrolled') return '재학 중'
   return '해당 없음'
@@ -161,6 +169,7 @@ export function buildConfirmationRows(input: {
   phone?: string
   schoolName?: string
   schoolAddress?: string
+  grade?: string
   affiliationName?: string
   employmentStatus?: EmploymentStatus | null
 }): ConfirmationRow[] {
@@ -198,6 +207,13 @@ export function buildConfirmationRows(input: {
     { label: '이메일 ID', value: input.email },
     ...identityRows,
     { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },
+    // 재학 중 — 시안(2516-3293)에 행이 없어 미성년 분기와 같은 이름·위치(재학유무 바로 다음)를 쓴다
+    ...(input.schoolStatus === 'enrolled'
+      ? [
+          { label: '소속/학교명', value: input.schoolName?.trim() || '-' },
+          { label: '학년', value: input.grade?.trim() || '-' },
+        ]
+      : []),
     ...(input.schoolStatus === 'none'
       ? [{ label: '소속 기관명', value: affiliationName || '소속 없음' }]
       : []),
