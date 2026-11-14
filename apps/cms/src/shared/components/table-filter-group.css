@@ -497,7 +497,8 @@
   .table-filter-group__address-region-selects {
   width: 100%;
   max-width: min(100%, var(--filter-field-width));
-  gap: var(--filter-address-region-pair-gap, 6px);
+  /* 칸 인라인 `--filter-field-pair-gap`(필드 `addressRegion.pairGapPx`) 우선 */
+  gap: var(--filter-field-pair-gap, var(--filter-address-region-pair-gap, 6px));
 }
 
 .table-filter-group__fields-inner
