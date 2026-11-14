@@ -156,6 +156,14 @@ export function PortraitConsentWriteForm({
     }))
   }, [serverDraft])
 
+  // 양식을 불러오지 못하면 [작성완료]가 잠기므로, 누르기 전에도 기존 안내를 바로 보여 준다
+  useEffect(() => {
+    if (!serverDraftUnavailable) return
+    setAlertTitle('안내')
+    setAlertMessage(SERVER_DRAFT_UNAVAILABLE_ALERT_MESSAGE)
+    setAlertOpen(true)
+  }, [serverDraftUnavailable])
+
   useEffect(() => {
     if (saveDraftState) {
       saveDraftState(state)
