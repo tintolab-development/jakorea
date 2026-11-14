@@ -64,7 +64,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
                 color="neutral-warm-500"
                 className={styles.fieldLabel}
               >
-                성별
+                성별 <span className={styles.inlineRequiredMark}>*</span>
               </PFText>
               <div className={styles.genderOptions}>
                 <PFButton
