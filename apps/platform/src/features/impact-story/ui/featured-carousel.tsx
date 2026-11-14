@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useRemoteThumbnailUrl } from '@/shared/hooks'
 import { PFCarouselButton, PFCategoryBadge, PFText } from '@/shared/ui'
 import defaultThumbnailUrl from '../image/illustration/card-default.png'
 import { impactStoryDetailPath } from '../lib/constants'
@@ -13,8 +14,8 @@ export type FeaturedCarouselProps = {
 export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
   const [index, setIndex] = useState(0)
   const current = stories.length > 0 ? stories[index % stories.length] : undefined
-  // 썸네일 없음(서버 null) → 기본 썸네일
-  const remoteImageUrl = current?.featuredImageUrl || current?.imageUrl || undefined
+  // 어드민 「썸네일 없음」 표식(1×1 투명 PNG)은 이미지 없음으로 보고 기본 썸네일을 쓴다
+  const remoteImageUrl = useRemoteThumbnailUrl(current?.featuredImageUrl || current?.imageUrl)
 
   if (stories.length === 0) {
     return null
