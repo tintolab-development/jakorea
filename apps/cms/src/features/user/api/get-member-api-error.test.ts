@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { getMemberApiErrorMessage } from './get-member-api-error'
+import {
+  getMemberApiEmailFieldErrorMessage,
+  getMemberApiErrorMessage,
+} from './get-member-api-error'
 
 describe('getMemberApiErrorMessage', () => {
   it('maps PORTRAIT_CONSENT_CONTENT_UNAVAILABLE from a 410 response', () => {
@@ -212,5 +215,36 @@ describe('getMemberApiErrorMessage', () => {
       expect(message).toBe('요청한 변경이 기존 데이터와 충돌합니다.')
       expect(message).not.toContain('SCHOOL_HAS_ACTIVE_MEMBERS')
     })
+  })
+})
+
+describe('getMemberApiEmailFieldErrorMessage', () => {
+  const emailError = (status: number, code: string, message: string, field: string | null) => ({
+    response: {
+      status,
+      data: { success: false, data: null, message, error: { code, message, field } },
+    },
+  })
+
+  it('error.field가 email이면 서버 문구를 그대로 돌려준다', () => {
+    expect(
+      getMemberApiEmailFieldErrorMessage(
+        emailError(409, 'EMAIL_ALREADY_EXISTS', '이미 사용 중인 이메일입니다.', 'email')
+      )
+    ).toBe('이미 사용 중인 이메일입니다.')
+    expect(
+      getMemberApiEmailFieldErrorMessage(
+        emailError(409, 'EMAIL_CHANGE_NOT_ALLOWED', '이메일을 변경할 수 없습니다.', 'email')
+      )
+    ).toBe('이메일을 변경할 수 없습니다.')
+  })
+
+  it('이메일 필드 에러가 아니면 null', () => {
+    expect(
+      getMemberApiEmailFieldErrorMessage(
+        emailError(409, 'ADMIN_BASIC_INFO_EDIT_NOT_ALLOWED', '수정할 수 없습니다.', null)
+      )
+    ).toBeNull()
+    expect(getMemberApiEmailFieldErrorMessage(new Error('network'))).toBeNull()
   })
 })

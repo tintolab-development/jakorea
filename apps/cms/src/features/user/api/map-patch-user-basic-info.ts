@@ -246,14 +246,26 @@ export function isAdminCommentOnlyPatch(patch: PatchUserBasicInfoInput): boolean
   return keys.length === 1 && keys[0] === 'adminComment'
 }
 
+/**
+ * 관리자 계정 기본정보 수정 body.
+ * 백엔드가 `email`(선택)을 받도록 바뀌었지만(2026-11-14 전달), 이 저장소의 OpenAPI 스냅샷에는 아직 없다.
+ * `fetch:openapi` → `generate:api:members` 재생성 후 이 타입 확장을 지우고 생성 타입만 쓴다.
+ */
+export type AdminAccountBasicInfoUpdateRequestWithEmail = AdminAccountBasicInfoUpdateRequest & {
+  email?: string
+}
+
 /** 관리자 계정 — `PATCH /api/admin/admin-accounts/{adminId}/basic-info` */
 export function mapPatchUserBasicInfoToAdminAccountApiRequest(
   patch: PatchUserBasicInfoInput
-): AdminAccountBasicInfoUpdateRequest {
-  const body: AdminAccountBasicInfoUpdateRequest = {}
+): AdminAccountBasicInfoUpdateRequestWithEmail {
+  const body: AdminAccountBasicInfoUpdateRequestWithEmail = {}
 
   if (patch.name !== undefined) body.name = patch.name
   if (patch.phone !== undefined) body.phone = patch.phone
+  // 바뀐 이메일만 patch에 담긴다(`draftToAdminAccountBasicInfoPatch`).
+  const email = patch.email?.trim()
+  if (email) body.email = email
   if (patch.gender !== undefined) {
     body.gender = toApiGender(patch.gender) ?? patch.gender
   }

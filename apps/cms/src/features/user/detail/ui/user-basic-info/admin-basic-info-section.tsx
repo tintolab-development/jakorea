@@ -34,6 +34,8 @@ export type AdminBasicInfoSectionProps = {
   personalInfoRevealed?: boolean
   isAdminPermissionDetail?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  /** 저장 실패 `error.field === 'email'` 서버 문구 — 이메일 입력란에 표시 */
+  emailError?: string | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
   adminMemberProfileFieldsEditableWhenEditing?: boolean
   adminPermissionVariantPatching?: boolean
@@ -53,6 +55,7 @@ export function AdminBasicInfoSection({
   personalInfoRevealed = false,
   isAdminPermissionDetail = false,
   memberInfoDraft,
+  emailError = null,
   onMemberInfoDraftChange,
   adminMemberProfileFieldsEditableWhenEditing = true,
   adminPermissionVariantPatching = false,
@@ -249,7 +252,12 @@ export function AdminBasicInfoSection({
               profileReadOnly ? (
                 <span>{user.email ?? '-'}</span>
               ) : (
-                <Form.Item name="email" style={FORM_ITEM_STYLE}>
+                <Form.Item
+                  name="email"
+                  style={FORM_ITEM_STYLE}
+                  validateStatus={emailError ? 'error' : undefined}
+                  help={emailError ?? undefined}
+                >
                   <CmsInput placeholder="이메일" inputSize="small" width="100%" />
                 </Form.Item>
               )
