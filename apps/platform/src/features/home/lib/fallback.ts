@@ -56,7 +56,7 @@ export const HOME_MAIN_FALLBACK: HomeMainFallback = {
     categoryLabel: '스토리',
     title: '14년 만에 심사위원으로! 민재님이 JA와 함께하는 이유',
     summary: '',
-    publishedAtLabel: '2026년 01월 15일',
+    publishedAtLabel: '2026년 1월 15일',
     publishedAt: '2026-01-15T12:00:00Z',
     isFeatured: true,
     placeholderColor: '#c5e8eb',

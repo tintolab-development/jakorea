@@ -92,7 +92,7 @@ export const FEATURED_STORIES: readonly CareersFeaturedStory[] = [
     categoryLabel: '스토리',
     title: '“멘티에서 서포터로” 미래 게임 기획자의 성장기 - 이제윤님의 이야기',
     titleLines: ['“멘티에서 서포터로” 미래 게임 기획자의', '성장기 - 이제윤님의 이야기'],
-    publishedAtLabel: '2026년 08월 15일',
+    publishedAtLabel: '2026년 8월 15일',
     imageUrl: storyMetlifeUrl,
   },
   {
@@ -100,7 +100,7 @@ export const FEATURED_STORIES: readonly CareersFeaturedStory[] = [
     categoryLabel: '스토리',
     title: '봉사에서 시작된 변화의 여정: 대학생 봉사자에서 사회인 후원자로',
     titleLines: ['봉사에서 시작된 변화의 여정:', '대학생 봉사자에서 사회인 후원자로'],
-    publishedAtLabel: '2025년 07월 20일',
+    publishedAtLabel: '2025년 7월 20일',
     imageUrl: storyMetlifeUrl,
   },
   {
@@ -108,7 +108,7 @@ export const FEATURED_STORIES: readonly CareersFeaturedStory[] = [
     categoryLabel: '스토리',
     title: '우리의 만남은 우연이 아니야! 신혼여행을 봉사활동으로 채운 노무사, 변호사 부부의 인터뷰',
     titleLines: ['우리의 만남은 우연이 아니야!', '신혼여행을 봉사활동으로 채운', '노무사, 변호사 부부의 인터뷰'],
-    publishedAtLabel: '2025년 03월 10일',
+    publishedAtLabel: '2025년 3월 10일',
     imageUrl: storyMetlifeUrl,
   },
 ]
