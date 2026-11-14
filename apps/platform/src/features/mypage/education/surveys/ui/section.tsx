@@ -64,8 +64,9 @@ export function EducationSurveySection({
         programId={programId}
         participantId={participantId}
         pendingSurveyCount={kind === 'survey' ? pendingSurveyCount : undefined}
+        displayStatus={displayStatus}
       />
     )
   }
-  return <EducationSurveyEmptyPanel kind={kind} />
+  return <EducationSurveyEmptyPanel kind={kind} inProgress={displayStatus === 'in_progress'} />
 }

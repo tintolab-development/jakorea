@@ -42,3 +42,8 @@
 .ujat-education-schedule-settings__range-picker {
   max-width: 420px;
 }
+
+/* 템플릿 관리 시안(5767:194428) — 상반기·하반기 표 간격 20 */
+.ujat-education-schedule-settings.ujat-education-schedule-settings--template {
+  gap: 20px;
+}

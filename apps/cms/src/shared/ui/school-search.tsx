@@ -6,7 +6,6 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -32,11 +31,12 @@ import { CmsCompactPagination } from '@/shared/ui/cms-compact-pagination'
 import { CmsInput } from '@/shared/ui/cms-input'
 import type { CmsInputProps } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import './school-search.css'
 
 export const SCHOOL_SEARCH_PAGE_SIZE = 10
 const MODAL_KEYWORD_PLACEHOLDER = '예) JA초등학교'
-const GUIDE_TEXT = '학교급과 지역을 선택한 후 학교명을 입력해 검색하세요.'
+const GUIDE_TEXT = '학교급과 지역을 선택한 후 학교명을 입력해 검색해 주세요.'
 
 export const SCHOOL_LEVEL_OPTIONS = [
   { label: '초등학교', value: '초등학교' },
@@ -386,6 +386,7 @@ export function SchoolSearch({
           type="button"
           variant="secondary"
           size="small"
+          className="school-search__select-btn"
           onClick={() => handleSelectNeis(record)} >
           선택
         </CmsButton>
@@ -437,6 +438,7 @@ export function SchoolSearch({
           type="button"
           variant="secondary"
           size="small"
+          className="school-search__select-btn"
           onClick={() => handleSelectUniversity(record)} >
           선택
         </CmsButton>
@@ -465,7 +467,7 @@ export function SchoolSearch({
         }}
       >
         <CmsInput
-          icon={<SearchOutlined />}
+          icon={<FieldSearchIcon />}
           value={value}
           readOnly
           placeholder={placeholder}
@@ -481,7 +483,7 @@ export function SchoolSearch({
         onCancel={closeModal}
         title="학교 검색"
         titleBodyGap="always"
-        width={1000}
+        width={800}
         className="school-search-modal"
         zIndex={1100}
       >
@@ -521,7 +523,7 @@ export function SchoolSearch({
             />
             <span className="school-search__keyword-wrap">
               <CmsInput
-                icon={<SearchOutlined />}
+                icon={<FieldSearchIcon />}
                 value={keyword}
                 onChange={event => {
                   const next = event.target.value
@@ -568,7 +570,10 @@ export function SchoolSearch({
               ) : null}
               {!loading && !error && !hasResults ? (
                 <div className="school-search__result-empty" role="status">
-                  {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
+                  <p className="school-search__result-empty-title">검색 결과가 없습니다</p>
+                  <p className="school-search__result-empty-description">
+                    검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.
+                  </p>
                 </div>
               ) : null}
               {hasResults && isHigherEd ? (

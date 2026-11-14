@@ -19,7 +19,7 @@ describe('notification send status Text (Figma 14804:19688, 메일·알림톡·�
     expect(render(status)).toBe(`<span style="${style}">${status}</span>`)
   })
 
-  it.each(['발송 요청', '예약', '확인불가', '수신 실패', 'SEND_FAILED', ''])(
+  it.each(['발송 요청', '발송 예약', '확인불가', '수신 실패', 'SEND_FAILED', ''])(
     'preserves %s verbatim without a status color',
     status => {
       expect(render(status)).toBe(status)

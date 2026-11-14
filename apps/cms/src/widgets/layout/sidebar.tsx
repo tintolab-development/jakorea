@@ -80,10 +80,7 @@ export function Sidebar() {
       user?.role === 'ADMIN' && path.startsWith('/programs/gemini')
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
-      ((path.startsWith('/programs') &&
-        !path.startsWith('/programs/my') &&
-        !path.startsWith('/programs/favorites')) ||
-        isGeminiProgramScope)
+      (path.startsWith('/programs') || isGeminiProgramScope)
     if (isProgramMgmt) {
       keys.push('programs-group')
     }

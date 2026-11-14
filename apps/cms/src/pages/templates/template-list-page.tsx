@@ -10,6 +10,7 @@ import { TemplateCreateModal } from '@/features/template/ui/modal/template-creat
 import './template-list-page.css'
 import './template-form-tab.css'
 import { CmsButton } from '@/shared/ui'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import { CmsPageTabs } from '@/shared/ui/cms-text-tabs'
 
 const FORM_MANAGEMENT_BASE = '/templates/form-management'
@@ -92,8 +93,12 @@ export function TemplateListPage() {
             items={formTabItems.map(t => ({ value: t.key, label: t.label }))}
             trailing={
               activeKey === 'template-form' ? (
-                <CmsButton type="button" onClick={() => setCreateModalOpen(true)}>
-                  + 신규 템플릿
+                <CmsButton
+                  type="button"
+                  icon={<ButtonAddIcon aria-hidden />}
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  신규 템플릿
                 </CmsButton>
               ) : null
             }

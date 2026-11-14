@@ -2,16 +2,12 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
+import { parseDetailedProgramUsageFilter as parseUsage } from '@/features/detailed-program/api/detailed-program-filter-params'
 import type {
   DetailedProgramManagementPendingFilters,
   DetailedProgramManagementRow,
   DetailedProgramManagementTableContext,
-  DetailedProgramUsageFilter,
 } from './detailed-program-management.types'
-
-function parseUsage(raw: string | null): DetailedProgramUsageFilter {
-  return raw === 'inactive' ? 'inactive' : 'active'
-}
 
 const tanstackColumns: ColumnDef<DetailedProgramManagementRow>[] = [
   { accessorKey: 'id', header: 'id' },
@@ -22,7 +18,7 @@ const searchSyncRules: readonly TableSearchParamRule<DetailedProgramManagementPe
     kind: 'param',
     filterKey: 'usageStatus',
     paramKey: 'dp_use',
-    condition: () => true,
+    condition: f => f.usageStatus !== 'ALL',
     transform: v => String(v),
   },
   {
@@ -48,7 +44,7 @@ export const detailedProgramManagementTablePageConfig: TablePageConfig<
   filters: {
     initialPending: {
       programName: '',
-      usageStatus: 'active',
+      usageStatus: 'ALL',
     },
 
     syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
@@ -65,8 +61,15 @@ export const detailedProgramManagementTablePageConfig: TablePageConfig<
 
     hasActiveFilters: ({ searchParams }) => {
       if ((searchParams.get('dp_name') ?? '').trim()) return true
-      if (parseUsage(searchParams.get('dp_use')) !== 'active') return true
+      if (parseUsage(searchParams.get('dp_use')) !== 'ALL') return true
       return false
+    },
+
+    onFilterChange: ({ prev, key, value }) => {
+      if (key === 'usageStatus') {
+        return { ...prev, usageStatus: parseUsage(typeof value === 'string' ? value : null) }
+      }
+      return { ...prev, [key]: value }
     },
 
     getBaseCount: ({ filteredData }) => filteredData.length,

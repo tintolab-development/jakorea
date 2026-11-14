@@ -66,6 +66,6 @@ describe('resolveDuplicatedPaymentItem', () => {
 
     expect(() =>
       resolveDuplicatedPaymentItem(config([source]), config([source, invalidCopy]), source.id)
-    ).toThrow('복제 결과가 지급 항목 복제 계약과 일치하지 않습니다.')
+    ).toThrow('복사 결과가 지급 항목 복사 계약과 일치하지 않습니다.')
   })
 })

@@ -16,6 +16,7 @@ import {
 } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
+import { JAKOREA_EMAIL_DOMAIN, isValidJakoreaEmail } from '@/features/auth/lib/jakorea-email'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -25,6 +26,7 @@ import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
+  hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
 import {
   ADMIN_PERMISSION_SELECT_OPTIONS,
@@ -50,8 +52,9 @@ export interface AdminRegisterModalFormValues {
    * 같은 값 타입을 쓰는 관리자 상세 프로필 수정 폼은 권한 유형을 따로 다루므로 선택 속성으로 둔다.
    */
   permissionType?: AdminPermissionTagVariant
-  consentTermsOfService: ConsentValue
-  consentPersonalInfo: ConsentValue
+  /** 신규 등록은 미선택(undefined)으로 시작 — 필수 동의 항목 */
+  consentTermsOfService: ConsentValue | undefined
+  consentPersonalInfo: ConsentValue | undefined
   consentMarketing: ConsentValue
   consentMfaSetup: ConsentValue
 }
@@ -82,20 +85,36 @@ const INITIAL_VALUES: AdminRegisterModalFormValues = {
   email: '',
   // 권한 유형은 미선택으로 시작 — 기본 권한을 정하지 않는다.
   permissionType: undefined,
-  consentTermsOfService: 'agree',
-  consentPersonalInfo: 'agree',
+  consentTermsOfService: undefined,
+  consentPersonalInfo: undefined,
   consentMarketing: 'disagree',
   consentMfaSetup: 'agree',
 }
 
+/** 필수 동의 — 미선택이면 필수 항목 미입력 안내 */
+const ADMIN_REGISTER_REQUIRED_CONSENT_SELECTION_KEYS = [
+  'consentTermsOfService',
+  'consentPersonalInfo',
+] as const
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/** 관리자 계정은 JA Korea 이메일(@jakorea.org)만 등록 가능 — 관리자 서비스 이용약관 제4조 */
+const ADMIN_EMAIL_DOMAIN_ALERT_TITLE = '이메일 재확인 안내'
+const ADMIN_EMAIL_DOMAIN_ALERT_CONTENT = (
+  <>
+    관리자 계정은 <strong>{JAKOREA_EMAIL_DOMAIN}</strong> 형식의 이메일만 등록 가능합니다.
+    <br />
+    이메일 형식을 다시 확인해 주세요.
+  </>
+)
 
 const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
 
 const ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS = [
   { key: 'consentTermsOfService', label: '서비스 이용약관' },
   { key: 'consentPersonalInfo', label: '개인정보 수집·이용 동의' },
-  { key: 'consentMfaSetup', label: '2단계 인증(MFA) 설정 동의' },
+  { key: 'consentMfaSetup', label: '2단계 인증 설정 동의' },
 ] as const satisfies ReadonlyArray<{
   key: keyof AdminRegisterModalFormValues
   label: string
@@ -114,9 +133,12 @@ function normalizeSubmitValues(values: AdminRegisterModalFormValues): AdminRegis
 
 export function collectAdminRegisterValidation(values: AdminRegisterModalFormValues): {
   missingRequired: boolean
+  /** 이메일 형식은 맞지만 `@jakorea.org` 도메인이 아님 — 이메일 재확인 안내 */
+  emailDomainInvalid: boolean
   formatMessages: string[]
 } {
   let missingRequired = false
+  let emailDomainInvalid = false
   const formatMessages: string[] = []
 
   if (!values.name?.trim()) {
@@ -146,13 +168,15 @@ export function collectAdminRegisterValidation(values: AdminRegisterModalFormVal
     missingRequired = true
   } else if (!EMAIL_PATTERN.test(email)) {
     formatMessages.push('올바른 이메일 형식이 아닙니다')
+  } else if (!isValidJakoreaEmail(email)) {
+    emailDomainInvalid = true
   }
 
   if (!isAdminPermissionTagVariant(values.permissionType)) {
     missingRequired = true
   }
 
-  return { missingRequired, formatMessages }
+  return { missingRequired, emailDomainInvalid, formatMessages }
 }
 
 export function AdminRegisterModal({
@@ -188,6 +212,14 @@ export function AdminRegisterModal({
   }
 
   const handleSubmitAttempt = (values: AdminRegisterModalFormValues) => {
+    if (hasUnsetConsentSelections(values, ADMIN_REGISTER_REQUIRED_CONSENT_SELECTION_KEYS)) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+
     const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(values, [
       ...ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS,
     ])
@@ -199,11 +231,19 @@ export function AdminRegisterModal({
       return
     }
 
-    const { missingRequired, formatMessages } = collectAdminRegisterValidation(values)
+    const { missingRequired, emailDomainInvalid, formatMessages } =
+      collectAdminRegisterValidation(values)
     if (missingRequired) {
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+    if (emailDomainInvalid) {
+      showAlert({
+        title: ADMIN_EMAIL_DOMAIN_ALERT_TITLE,
+        content: ADMIN_EMAIL_DOMAIN_ALERT_CONTENT,
       })
       return
     }
@@ -223,10 +263,11 @@ export function AdminRegisterModal({
       onCancel={handleClose}
       title="관리자 신규 등록"
       width={1200}
+      className="admin-register-modal"
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={handleClose}>
-            닫기
+            취소
           </CmsButton>
           <CmsButton
             variant="primary"
@@ -328,11 +369,11 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="permissionType" style={FORM_ITEM_STYLE}>
-                    {/* 선택지·라벨은 권한 승인 화면과 같은 목록 */}
+                    {/* 선택지·라벨은 권한 승인 화면과 같은 목록. 선택 값 길이와 무관하게 200px 고정 */}
                     <CmsSelect
                       inputSize="small"
-                      width="100%"
-                      placeholder="관리자 권한을 선택해 주세요"
+                      width={200}
+                      placeholder="승인 권한을 선택해 주세요"
                       withAllOption={false}
                       options={ADMIN_PERMISSION_SELECT_OPTIONS}
                     />
@@ -351,6 +392,7 @@ export function AdminRegisterModal({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="서비스 이용약관"
+                required
                 labelWidth={220}
                 view="-"
                 edit={
@@ -361,6 +403,7 @@ export function AdminRegisterModal({
               />
               <DetailInfoForm.Field
                 label="개인정보 수집·이용 동의"
+                required
                 labelWidth={220}
                 view="-"
                 edit={
@@ -372,7 +415,7 @@ export function AdminRegisterModal({
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
-                label="마케팅 제공 동의"
+                label="마케팅 정보 수신 동의"
                 labelWidth={220}
                 view="-"
                 edit={
@@ -382,7 +425,7 @@ export function AdminRegisterModal({
                 }
               />
               <DetailInfoForm.Field
-                label="2단계 인증(MFA) 설정 동의"
+                label="2단계 인증 설정 동의"
                 labelWidth={220}
                 view="-"
                 edit={

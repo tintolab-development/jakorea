@@ -10,7 +10,9 @@ import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hoo
 import {
   COMPANY_SCHOOL_DEFAULT_REP_EN,
   COMPANY_SCHOOL_DEFAULT_REP_KO,
+  createNewCompanySchoolRegistrationRhfValues,
 } from '@/features/program/1c-1s/lib/registration-rhf-values'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
 import { useProgramSponsorContactsMaskedQuery } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
@@ -85,6 +87,46 @@ type OperationRangeSeal = { start: string; end: string } | null
 
 const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
+const TEMPLATE_MANAGEMENT_COMPACT_SELECT_WIDTH = 200
+
+/**
+ * 템플릿 관리 등록 폼(시안 5767:191506) 초기 선택값 — 프로그램 신규 등록 시작값(시안 9899:215345)과 같다.
+ * 템플릿 관리 화면에는 1사1교 등록 RHF가 없어 overlay 키가 비어 있을 때만 쓴다(저장값은 그대로 보인다).
+ * 모듈 순환 참조를 피하려고 렌더 시점에 한 번만 만든다.
+ */
+type OneCOneSSelectDefaults = {
+  businessField: string
+  ipOwned: string
+  courseDeliveredBy: string
+  partnerInvolvement: 'yes' | 'no' | ''
+  ipsCategory: string
+}
+
+let templateManagementSelectDefaultsCache: OneCOneSSelectDefaults | null = null
+
+function getTemplateManagementSelectDefaults(): OneCOneSSelectDefaults {
+  if (templateManagementSelectDefaultsCache == null) {
+    const values = createNewCompanySchoolRegistrationRhfValues()
+    templateManagementSelectDefaultsCache = {
+      businessField: values.businessField,
+      ipOwned: values.ipOwned,
+      courseDeliveredBy: values.courseDeliveredBy,
+      // 템플릿 관리 라디오는 모두 미선택으로 시작한다(사용자 결정 2026-11-13) — 셀렉트만 시작값을 쓴다
+      partnerInvolvement: '',
+      ipsCategory: values.ipsCategory,
+    }
+  }
+  return templateManagementSelectDefaultsCache
+}
+
+const EMPTY_SELECT_DEFAULTS: OneCOneSSelectDefaults = {
+  businessField: '',
+  ipOwned: '',
+  courseDeliveredBy: '',
+  partnerInvolvement: '',
+  ipsCategory: '',
+}
+
 function EconomyOverlayTextField({
   label,
   validationKey,
@@ -130,25 +172,33 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   onOrganizationChange: _onOrganizationChange,
   onTeacherInstructorChange: _onTeacherInstructorChange,
 }: OneCOneSRegistrationBasicInfoParagraphProps) {
-  const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const selectDefaults = isTemplateManagementScreen
+    ? getTemplateManagementSelectDefaults()
+    : EMPTY_SELECT_DEFAULTS
+  /** 템플릿 관리 시안(5767:191506) 셀렉트 폭 ≈200 — 등록 위저드·상세는 기존 240 유지 */
+  const compactSelectWidth = isTemplateManagementScreen
+    ? TEMPLATE_MANAGEMENT_COMPACT_SELECT_WIDTH
+    : 240
+  const [businessField, setBusinessField] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.businessField',
-    ''
+    selectDefaults.businessField
   )
-  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv(
+  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.ipOwned',
-    ''
+    selectDefaults.ipOwned
   )
-  const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv(
+  const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.courseDeliveredBy',
-    ''
+    selectDefaults.courseDeliveredBy
   )
-  const [ipsCategory, setIpsCategory] = useProgramRegistrationOverlayKv(
+  const [ipsCategory, setIpsCategory] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.ipsCategory',
-    ''
+    selectDefaults.ipsCategory
   )
   const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
     'yes' | 'no' | ''
-  >('economyRegistration.basicInfo.partnerInvolvement', '')
+  >('economyRegistration.basicInfo.partnerInvolvement', selectDefaults.partnerInvolvement)
   const [educationCourse, setEducationCourse] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.educationCourse',
     ''
@@ -409,7 +459,17 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="참여자 유형"
             validationKey="basicInfo.audience"
             edit={
-              <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium">
+              <div
+                className={[
+                  'detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium',
+                  // 템플릿 관리 시안: 고정 선택(학교/기관·강사)은 활성 선택 모양으로 보인다
+                  isTemplateManagementScreen
+                    ? 'program-registration-paragraph__locked-checked'
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 <CmsCheckbox checkboxSize="medium" checked={false} disabled>
                   개인
                 </CmsCheckbox>
@@ -436,7 +496,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="사업 분야를 선택해 주세요"
-                  width={240}
+                  width={compactSelectWidth}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField}
                   onChange={v => setBusinessField(String(v ?? ''))}
@@ -477,6 +537,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
+                  className={
+                    isTemplateManagementScreen
+                      ? 'program-registration-sponsor-manager-select program-registration-sponsor-manager-select--template-idle'
+                      : undefined
+                  }
                   mode="multiple"
                   withAllOption={false}
                   inputSize="small"
@@ -504,7 +569,14 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="설문 진행 항목"
             fullRow
             edit={
-              <div className="detail-info-form-inputs-wrapper">
+              <div
+                className={
+                  isTemplateManagementScreen
+                    ? // 템플릿 관리 시안(5767:191506) 항목 간격 16
+                      'detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium'
+                    : 'detail-info-form-inputs-wrapper'
+                }
+              >
                 {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
                   <CmsCheckbox
                     key={id}
@@ -534,7 +606,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   inputSize="small"
                   // 등록 양식에는 「전체」를 두지 않는다(QA-0389-8556) — 미선택 안내만
                   placeholder="교육 과정을 선택해 주세요"
-                  width={240}
+                  width={compactSelectWidth}
                   options={educationCourseSelectOptions}
                   value={educationCourse}
                   onChange={v => setEducationCourse(String(v ?? ''))}
@@ -552,7 +624,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="선택해 주세요"
-                  width={240}
+                  width={compactSelectWidth}
                   options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
                   value={ipOwned}
                   onChange={v => setIpOwned(String(v ?? ''))}
@@ -572,7 +644,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="선택해 주세요"
-                  width={240}
+                  width={compactSelectWidth}
                   options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
                   value={courseDeliveredBy}
                   onChange={v => setCourseDeliveredBy(String(v ?? ''))}
@@ -611,7 +683,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 withAllOption={false}
                 inputSize="small"
                 placeholder="IPS 유형을 선택해 주세요"
-                width={240}
+                width={compactSelectWidth}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
                 value={ipsCategory}
                 onChange={v => setIpsCategory(String(v ?? ''))}

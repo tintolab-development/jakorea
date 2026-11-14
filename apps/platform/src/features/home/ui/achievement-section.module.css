@@ -5,8 +5,9 @@
   min-width: 0;
   max-width: 100%;
   /* 시안 1920: top 150 · side 502 (= content 916 중앙 정렬) */
-  padding-top: var(--spacing-80);
-  padding-bottom: var(--spacing-48);
+  /* 모바일 시안: 상단 56 · 하단 여백은 후원사 영역(간격 60)이 담당 */
+  padding-top: var(--spacing-56);
+  padding-bottom: 0;
   padding-inline: var(--spacing-20);
   flex-direction: column;
   /* 홈 achievements 밴드 배경이 비치도록 투명 */
@@ -41,7 +42,8 @@
   margin-inline: auto;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-48);
+  /* 모바일 시안: 헤더 · 통계 · 하이라이트 40 */
+  gap: var(--spacing-40);
   text-align: center;
 }
 
@@ -60,15 +62,14 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-12);
-  align-items: flex-start;
-  text-align: left;
+  gap: var(--spacing-8);
+  align-items: center;
+  text-align: center;
 }
 
 @media (--bp-pc-up) {
   .header {
-    align-items: center;
-    text-align: center;
+    gap: var(--spacing-12);
   }
 }
 
@@ -76,17 +77,18 @@
   margin: 0;
   color: var(--color-primary-600);
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 500;
-  line-height: 144%;
-  letter-spacing: 0.04em;
+  line-height: 140%;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 @media (--bp-pc-up) {
   .eyebrow {
     font-size: 26px;
+    line-height: 144%;
     letter-spacing: -0.52px;
     text-transform: none;
   }
@@ -94,17 +96,19 @@
 
 .title {
   margin: 0;
-  color: var(--color-neutral-white);
+  color: var(--color-neutral-cool-80);
   font-family: var(--font-family-base);
   font-size: 24px;
   font-style: normal;
   font-weight: 600;
-  line-height: 144%;
+  line-height: 140%;
   letter-spacing: -0.48px;
 }
 
 @media (--bp-pc-up) {
   .title {
+    color: var(--color-neutral-white);
+    line-height: 144%;
     font-size: 46px;
     letter-spacing: -0.92px;
   }
@@ -114,7 +118,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-32);
+  gap: 18px;
   width: 100%;
   margin: 0;
 }
@@ -149,11 +153,12 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-4);
 }
 
 @media (--bp-pc-up) {
   .stat {
+    gap: var(--spacing-8);
     width: 228px;
     flex-shrink: 0;
   }
@@ -167,12 +172,13 @@
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: 150%;
-  letter-spacing: -0.14px;
+  line-height: 140%;
+  letter-spacing: 0;
 }
 
 @media (--bp-pc-up) {
   .statLabel {
+    line-height: 150%;
     font-size: 20px;
     letter-spacing: -0.2px;
   }
@@ -183,23 +189,31 @@
   margin: 0;
   align-items: baseline;
   justify-content: center;
-  gap: var(--spacing-4);
+  gap: 2px;
   color: var(--color-neutral-white);
   text-align: center;
 }
 
+@media (--bp-pc-up) {
+  .statValue {
+    gap: var(--spacing-4);
+  }
+}
+
+/* 모바일 시안: 숫자 28 / Bold / 120% · 단위 15 / Regular / 120% */
 .statNumber {
   font-family: var(--font-family-base);
-  font-size: 36px;
+  font-size: 28px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%;
-  letter-spacing: -0.36px;
+  line-height: 120%;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
 @media (--bp-pc-up) {
   .statNumber {
+    line-height: 140%;
     font-size: 56px;
     letter-spacing: -0.56px;
   }
@@ -207,15 +221,16 @@
 
 .statUnit {
   font-family: var(--font-family-base);
-  font-size: 22px;
+  font-size: 15px;
   font-style: normal;
   font-weight: 400;
-  line-height: 140%;
-  letter-spacing: -0.44px;
+  line-height: 120%;
+  letter-spacing: 0;
 }
 
 @media (--bp-pc-up) {
   .statUnit {
+    line-height: 140%;
     font-size: 37px;
     letter-spacing: -0.74px;
   }
@@ -225,42 +240,21 @@
   position: relative;
   display: inline-flex;
   box-sizing: border-box;
-  padding: var(--spacing-40) var(--spacing-20) 0;
+  padding: 0 var(--spacing-20);
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  gap: 0;
+  /* 모바일 시안: 라벨 ↔ 숫자 8 */
+  gap: var(--spacing-8);
   transform: none;
-}
-
-/* 모바일 시안: 통계 ↔ 하이라이트 곡선 디바이더 */
-.highlight::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  width: min(220px, 70vw);
-  height: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.35) 20%,
-    rgba(255, 255, 255, 0.35) 80%,
-    transparent 100%
-  );
-  opacity: 0.8;
 }
 
 @media (--bp-pc-up) {
   .highlight {
+    gap: 0;
     padding: 51px 60px 0;
     /* 레이아웃(통계·클로징·파트너 갭)에 영향 없이 시각적으로만 50px 하향 */
     transform: translateY(50px);
-  }
-
-  .highlight::before {
-    display: none;
   }
 }
 
@@ -269,11 +263,11 @@
   color: var(--color-primary-100);
   text-align: center;
   font-family: var(--font-family-base);
-  font-size: 12px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 150%;
-  letter-spacing: -0.14px;
+  letter-spacing: 0;
 }
 
 @media (--bp-pc-up) {
@@ -289,23 +283,31 @@
   margin: 0;
   align-items: baseline;
   justify-content: center;
-  gap: var(--spacing-6);
+  gap: var(--spacing-4);
   color: var(--color-neutral-white);
   text-align: center;
 }
 
+@media (--bp-pc-up) {
+  .highlightValue {
+    gap: var(--spacing-6);
+  }
+}
+
+/* 모바일 시안: 숫자 44 / Bold / 110% · 단위 20 / Regular / 110% */
 .highlightNumber {
   font-family: var(--font-family-base);
-  font-size: 40px;
+  font-size: 44px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%;
-  letter-spacing: -0.4px;
+  line-height: 110%;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
 @media (--bp-pc-up) {
   .highlightNumber {
+    line-height: 140%;
     font-size: 62px;
     letter-spacing: -0.62px;
   }
@@ -313,30 +315,32 @@
 
 .highlightUnit {
   font-family: var(--font-family-base);
-  font-size: 28px;
+  font-size: 20px;
   font-style: normal;
   font-weight: 400;
-  line-height: 140%;
-  letter-spacing: -0.28px;
+  line-height: 110%;
+  letter-spacing: 0;
 }
 
 @media (--bp-pc-up) {
   .highlightUnit {
+    line-height: 140%;
     font-size: 48px;
     letter-spacing: -0.48px;
   }
 }
 
+/* 모바일 시안: 14 / Regular / 160% · 강조 없음 · 하이라이트 ↔ 문구 18 */
 .closing {
   margin: 0;
-  margin-top: var(--spacing-8);
+  margin-top: calc(18px - var(--spacing-40));
   color: var(--color-primary-100);
   text-align: center;
   font-family: var(--font-family-base);
   font-size: 14px;
   font-style: normal;
-  font-weight: 300;
-  line-height: 155%;
+  font-weight: 400;
+  line-height: 160%;
 }
 
 @media (--bp-pc-up) {
@@ -344,16 +348,26 @@
     /* 하이라이트 ↔ 디스크립션 58px (inner gap 상쇄) */
     margin-top: calc(58px - var(--spacing-64));
     font-size: 22px;
+    font-weight: 300;
+    line-height: 155%;
   }
 }
 
 .closing strong {
-  color: var(--color-primary-200);
+  color: inherit;
   font-family: var(--font-family-base);
   font-size: inherit;
   font-style: normal;
-  font-weight: 700;
-  line-height: 155%;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+@media (--bp-pc-up) {
+  .closing strong {
+    color: var(--color-primary-200);
+    font-weight: 700;
+    line-height: 155%;
+  }
 }
 
 .closingRemote {

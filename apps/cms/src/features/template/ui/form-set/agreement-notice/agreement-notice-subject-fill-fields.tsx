@@ -16,7 +16,7 @@ const SUBJECT_FIELD_SPECS = [
   },
   {
     itemId: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth,
-    label: '생년월일',
+    label: '생년월일(8자리)',
     placeholder: '생년월일 8자리를 입력해 주세요',
     kind: 'birth' as const,
   },

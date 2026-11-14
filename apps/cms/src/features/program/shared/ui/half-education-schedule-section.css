@@ -69,3 +69,14 @@
   max-width: 100%;
   white-space: pre-line;
 }
+
+/* 템플릿 관리 시안(5767:194428) — 사전 교육·행사 일정·해단식 블록 간격 16, 셀 안 항목 간격 16 */
+.half-education-schedule-section.half-education-schedule-section--template {
+  gap: 16px;
+}
+
+.half-education-schedule-section--template
+  .detail-info-form-inputs-wrapper.half-education-schedule__schedule-row,
+.half-education-schedule__textbook-row.half-education-schedule__textbook-row--template {
+  gap: 16px;
+}

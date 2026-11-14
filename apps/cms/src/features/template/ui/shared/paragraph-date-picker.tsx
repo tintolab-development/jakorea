@@ -1,10 +1,11 @@
+import { MaskIcon } from '@/shared/ui/icons'
 import type { CSSProperties, KeyboardEvent, ReactNode, RefObject } from 'react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
 }
-import { CalendarOutlined } from '@ant-design/icons'
+import calendar18Url from '@/shared/assets/icons/inputs/calendar-18-default.svg'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
@@ -899,14 +900,14 @@ function ParagraphDatePickerSingleInner({
         >
           <div className="paragraph-date-picker__trigger-dual-row">
             <div className="paragraph-date-picker__trigger-dual-cell">
-              <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+              <MaskIcon src={calendar18Url} className="paragraph-date-picker__trigger-icon" />
               <span className="paragraph-date-picker__trigger-dual-text">{dualStartText}</span>
             </div>
             <span className="paragraph-date-picker__trigger-dual-wave" aria-hidden>
               ~
             </span>
             <div className="paragraph-date-picker__trigger-dual-cell">
-              <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+              <MaskIcon src={calendar18Url} className="paragraph-date-picker__trigger-icon" />
               <span className="paragraph-date-picker__trigger-dual-text">{dualEndText}</span>
             </div>
           </div>
@@ -923,7 +924,7 @@ function ParagraphDatePickerSingleInner({
           style={{ ...triggerWidthStyle }}
           aria-label={triggerAriaLabel}
         >
-          <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+          <MaskIcon src={calendar18Url} className="paragraph-date-picker__trigger-icon" />
           <span
             className={cn(
               'paragraph-date-picker__trigger-text',

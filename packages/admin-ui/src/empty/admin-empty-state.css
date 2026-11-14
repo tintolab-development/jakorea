@@ -15,14 +15,13 @@
   height: 80px;
   justify-content: center;
   align-items: center;
-  border-radius: 40px;
-  background: rgba(0, 160, 175, 0.08);
 }
 
-.cms-table-empty-state__icon img {
+/* 원본 80 프레임에 원 배경이 포함되어 있다 */
+.cms-table-empty-state__icon svg {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
 }
 
 .cms-table-empty-state__texts {

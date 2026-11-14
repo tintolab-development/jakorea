@@ -99,9 +99,12 @@ export function isValidEmail(value: string) {
   return isValidEmailId(value)
 }
 
-export function isValidPassword(value: string) {
-  return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{12,}$/.test(value)
-}
+export {
+  ADMIN_REGISTERED_PASSWORD_HELP_TEXT,
+  isValidMemberPassword,
+  isValidPassword,
+  MEMBER_PASSWORD_HELP_TEXT,
+} from './password-policy'
 
 export function getMemberTypeLabel(type: MemberType | null) {
   if (type === 'teacher') return '교사 회원'

@@ -40,8 +40,9 @@ import { SmsVariableTextField } from './variable-text-field'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './form-modal.css'
 
-/** 시안: 발신 번호 select는 셀 전체가 아닌 내용 폭(약 200px) */
-const SMS_SENDER_SELECT_WIDTH = 200
+/** 시안: 템플릿명 입력 450px · 발신 번호 select 152px (QA 2026-11-13) */
+const SMS_TEMPLATE_NAME_INPUT_WIDTH = 450
+const SMS_SENDER_SELECT_WIDTH = 152
 const SMS_SUBJECT_PLACEHOLDER = '제목을 작성해 주세요'
 const SMS_BODY_PLACEHOLDER = '내용을 입력해 주세요'
 const SMS_PREVIEW_BODY_PLACEHOLDER = '내용을 작성해 주세요'
@@ -74,7 +75,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           edit={
             <CmsInput
               inputSize="small"
-              width="100%"
+              width={SMS_TEMPLATE_NAME_INPUT_WIDTH}
               allowClear={false}
               placeholder={SMS_TEMPLATE_NAME_PLACEHOLDER}
               value={templateName}

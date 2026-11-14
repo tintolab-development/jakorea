@@ -36,7 +36,7 @@ type SettlementCopy = {
 const RECEIPT_COPY: SettlementCopy = {
   submitMessage: '기한 내에 영수증을 제출해 주세요',
   // 영수증은 지연 제출 구간이 없다 — 기한 후는 운영 종료 (R5)
-  overdueMessage: '영수증 제출기한이 마감되었어요',
+  overdueMessage: '영수증 제출 기한이 지났어요',
   overdueMark: '영수증 미제출',
   upcomingHint: '교육 진행 완료 이후에 영수증 작성이 가능합니다',
   reportHint: '강의보고서 작성 이후에 영수증 작성이 가능합니다',

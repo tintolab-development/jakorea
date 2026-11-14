@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { assertFormTemplateWriteAllowed } from '@/features/template/lib/form-template-seed-preview'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import type { FormResponseFeedbackListResponse } from '@/features/template/lib/form-response-feedback-list'
 import { getJAKoreaCMSBackendAPIFormsSurveysSubset } from '@/shared/api/generated/forms-surveys/forms-surveys-api'
@@ -46,6 +47,7 @@ export async function updateFormTemplateVersionRemote(
   versionId: number,
   body: FormTemplateVersionUpdateRequest
 ): Promise<FormVersionAdminResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.updateVersion(versionId, body))
 }
 
@@ -53,6 +55,7 @@ export async function publishFormTemplateVersionRemote(
   versionId: number,
   body?: FormTemplateVersionPublishRequest
 ): Promise<FormTemplateVersionResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.publishVersion(versionId, body ?? {}))
 }
 
@@ -60,6 +63,7 @@ export async function replaceCatalogDocumentRemote(
   templateId: number,
   body: FormCatalogDocumentReplaceRequest
 ): Promise<void> {
+  assertFormTemplateWriteAllowed()
   await formsSurveysApi.replaceCatalogDocument(templateId, body)
 }
 
@@ -67,6 +71,7 @@ export async function copyFormTemplateVersionRemote(
   templateId: number,
   body?: FormTemplateVersionCopyRequest
 ): Promise<FormVersionAdminResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.copyVersion(templateId, body ?? {}))
 }
 
@@ -75,12 +80,14 @@ export async function createFormTemplateVersionRemote(
   templateId: number,
   body: FormTemplateVersionCreateRequest
 ): Promise<FormTemplateVersionResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.createVersion1(templateId, body))
 }
 
 export async function createFormTemplateRemote(
   body: FormTemplateCreateRequest
 ): Promise<FormTemplateResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.createTemplate2(body))
 }
 
@@ -88,6 +95,7 @@ export async function duplicateFormTemplateRemote(
   templateId: number,
   body: FormTemplateDuplicateRequest
 ): Promise<FormTemplateResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.duplicateTemplate(templateId, body))
 }
 
@@ -95,6 +103,7 @@ export async function updateFormTemplateRemote(
   templateId: number,
   body: FormTemplateUpdateRequest
 ): Promise<FormTemplateResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.updateTemplate(templateId, body))
 }
 
@@ -105,6 +114,7 @@ export async function fetchFormTemplateVersionsRemote(
 }
 
 export async function deleteFormTemplateRemote(templateId: number): Promise<FormTemplateResponse> {
+  assertFormTemplateWriteAllowed()
   return unwrapApiBody(await formsSurveysApi.deleteTemplate(templateId))
 }
 

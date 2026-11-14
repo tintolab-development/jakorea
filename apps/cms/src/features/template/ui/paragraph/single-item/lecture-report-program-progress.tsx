@@ -1,5 +1,5 @@
 import { DatePicker, Input, TimePicker } from 'antd'
-import { CalendarOutlined } from '@ant-design/icons'
+import time18Url from '@/shared/assets/icons/inputs/time-18-default.svg'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
@@ -128,7 +128,17 @@ export function LectureReportProgramProgress({
   const progressUnitLocked = isTemplateAuthoringMode ? false : !isEditMode
 
   return (
-    <div className="form-editor-body form-editor-vertical-table-wrap lecture-report-prog-info">
+    <div
+      className={[
+        'form-editor-body',
+        'form-editor-vertical-table-wrap',
+        'lecture-report-prog-info',
+        // 템플릿 관리 편집기 — 시안 5767:44423 표 셀·입력 치수(h36·14px·고정 폭)
+        isTemplateAuthoringMode ? 'lecture-report-prog-info--template' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="form-editor-vertical-table" role="grid">
         <div className="form-editor-vertical-table__row" role="row">
           <div className="form-editor-vertical-table__stage">
@@ -157,7 +167,9 @@ export function LectureReportProgramProgress({
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
                 <div className="lecture-report-prog-info__time-session-row">
-                  <div className={wrapClass('lecture-report-prog-info__split-wrap', autofillLocked)}>
+                  <div
+                    className={`${wrapClass('lecture-report-prog-info__split-wrap', autofillLocked)} lecture-report-prog-info__w240`}
+                  >
                     <Input
                       className="lecture-report-prog-info__session-input"
                       variant="borderless"
@@ -168,7 +180,9 @@ export function LectureReportProgramProgress({
                     />
                   </div>
                   <span className="lecture-report-prog-info__divider" role="presentation" />
-                  <div className={wrapClass('lecture-report-prog-info__split-wrap', progressUnitLocked)}>
+                  <div
+                    className={`${wrapClass('lecture-report-prog-info__split-wrap', progressUnitLocked)} lecture-report-prog-info__w120`}
+                  >
                     <DeferredBorderlessInput
                       className="lecture-report-prog-info__session-input"
                       value={paragraph.progressUnit}
@@ -192,7 +206,9 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <div className={wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)}>
+                <div
+                  className={`${wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)} lecture-report-prog-info__w240`}
+                >
                   <Input
                     className="lecture-report-prog-info__session-input"
                     variant="borderless"
@@ -267,7 +283,7 @@ export function LectureReportProgramProgress({
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
                 <div className="lecture-report-prog-info__time-session-row">
-                  <div className="lecture-report-prog-info__time-wrap">
+                  <div className="lecture-report-prog-info__time-wrap lecture-report-prog-info__w200">
                     <TimePicker
                       rootClassName={[
                         'form-editor-vertical-table__field-box',
@@ -283,11 +299,13 @@ export function LectureReportProgramProgress({
                       format="HH:mm"
                       placeholder="교육 진행 시간"
                       disabled={autofillLocked}
-                      suffixIcon={<CalendarOutlined aria-hidden />}
+                      suffixIcon={<img src={time18Url} width={18} height={18} alt="" aria-hidden draggable={false} />}
                     />
                   </div>
                   <span className="lecture-report-prog-info__divider" role="presentation" />
-                  <div className={wrapClass('lecture-report-prog-info__session-wrap', autofillLocked)}>
+                  <div
+                    className={`${wrapClass('lecture-report-prog-info__session-wrap', autofillLocked)} lecture-report-prog-info__w120`}
+                  >
                     <Input
                       className="lecture-report-prog-info__session-input"
                       variant="borderless"
@@ -310,7 +328,9 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <div className={wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)}>
+                <div
+                  className={`${wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)} lecture-report-prog-info__w240`}
+                >
                   <Input
                     className="lecture-report-prog-info__session-input"
                     variant="borderless"
@@ -330,7 +350,9 @@ export function LectureReportProgramProgress({
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
                 <div className="lecture-report-prog-info__time-session-row">
-                  <div className={wrapClass('lecture-report-prog-info__class-wrap', autofillLocked)}>
+                  <div
+                    className={`${wrapClass('lecture-report-prog-info__class-wrap', autofillLocked)} lecture-report-prog-info__w200`}
+                  >
                     <Input
                       className="lecture-report-prog-info__session-input"
                       variant="borderless"
@@ -341,7 +363,9 @@ export function LectureReportProgramProgress({
                     />
                   </div>
                   <span className="lecture-report-prog-info__divider" role="presentation" />
-                  <div className={wrapClass('lecture-report-prog-info__count-wrap', autofillLocked)}>
+                  <div
+                    className={`${wrapClass('lecture-report-prog-info__count-wrap', autofillLocked)} lecture-report-prog-info__w120`}
+                  >
                     <CmsNumericInput
                       mode="integer"
                       min={0}

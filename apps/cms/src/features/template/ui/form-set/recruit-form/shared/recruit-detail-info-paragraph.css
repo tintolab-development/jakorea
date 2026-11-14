@@ -59,3 +59,52 @@
   min-height: 56px !important;
   height: auto !important;
 }
+
+/*
+ * 템플릿 관리 모집 폼 상세 정보 시안(5767:39783·5798:97099·5800:157724 등)
+ * - 썸네일 칸 62×62(행 86 = 상하 12 + 62)
+ * - 리치텍스트 행: 셀 상하 12, 본문 패딩 16·최소 높이 70 → 에디터 약 150(행 174)
+ * - 라벨 칸 180(UJAT `DetailInfoSection` 은 200 을 인라인 변수로 넘겨 덮는다)
+ * 프로그램 등록·상세 화면에는 이 클래스가 붙지 않는다.
+ */
+.recruit-detail-template-spec .thumbnail-upload-field__thumb,
+.recruit-detail-template-spec .thumbnail-upload-field__image {
+  width: 62px;
+  height: 62px;
+}
+
+.recruit-detail-template-spec .thumbnail-upload-field__thumb > svg {
+  width: 62px;
+  height: 62px;
+}
+
+.recruit-detail-template-spec
+  .recruit-detail-info-paragraph__rich-text-row
+  .detail-info-form__field-label,
+.recruit-detail-template-spec
+  .recruit-detail-info-paragraph__rich-text-row
+  .detail-info-form__field-content,
+.recruit-detail-template-spec
+  .detail-info-form__field-content:has(.program-detail-info-tab__editor-host--field) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.recruit-detail-template-spec .recruit-detail-info-paragraph__editor-host .rich-text-editor,
+.recruit-detail-template-spec .recruit-detail-info-paragraph__editor-host .cms-rich-text-editor,
+.recruit-detail-template-spec .program-detail-info-tab__editor-host--field .rich-text-editor,
+.recruit-detail-template-spec .program-detail-info-tab__editor-host--field .cms-rich-text-editor {
+  --rt-body-min-height: 102px !important;
+  --rt-body-padding: 16px;
+}
+
+.recruit-detail-template-spec .recruit-detail-info-paragraph__editor-host .rich-text-editor__body,
+.recruit-detail-template-spec .program-detail-info-tab__editor-host--field .rich-text-editor__body {
+  min-height: 102px !important;
+}
+
+.recruit-detail-template-spec .detail-info-form__field-label {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}

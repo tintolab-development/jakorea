@@ -42,7 +42,7 @@ const WageGradeFeeField = memo(function WageGradeFeeField({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper">
-            <span className="detail-info-form--text">1시간 당</span>
+            <span className="detail-info-form--text">1시간당</span>
             <RegistrationWageFeeInput
               value={value}
               onChange={setValue}

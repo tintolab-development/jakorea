@@ -19,7 +19,7 @@ test.describe('세부 프로그램 관리', () => {
     await expectAuthenticatedShell(page)
     await programs.expectListShell()
     await programs.expectListColumns()
-    await programs.expectDefaultUseActive()
+    await programs.expectDefaultUseAll()
     await clickExcelClientDownload(page, test.info())
 
     await programs.fillName(DETAILED_PROGRAM_SEED_IN_USE)

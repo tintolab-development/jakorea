@@ -67,6 +67,7 @@ import {
   shouldLockEducationScheduleDateMode,
   shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_DISPLAY_LABEL,
+  PRE_EDUCATION_HEADING_LABEL,
   PRE_EDUCATION_SCHEDULE_LABEL,
   toPreEducationDisplayLabel,
   type ScheduleEventPerScheduleExtraPlan,
@@ -2349,7 +2350,7 @@ function MultiRoundCurriculumSessionForm({
   const assignmentEnabled = editForm.watch(`curriculumSessions.${index}.assignmentEnabled`) ?? false
   const sessionIpsCategory = editForm.watch(`curriculumSessions.${index}.ipsCategory`) ?? ''
   const sessionIpsDetail = editForm.watch(`curriculumSessions.${index}.ipsDetail`) ?? ''
-  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : session.sessionLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_HEADING_LABEL : session.sessionLabel
   const classFieldLabel = isPreEducationBlock
     ? '교육 내용'
     : isFormEdit
@@ -2749,7 +2750,7 @@ function SingleRoundCurriculumSessionForm({
 }) {
   const sessionIpsCategory = editForm.watch(`curriculumSessions.${index}.ipsCategory`) ?? ''
   const sessionIpsDetail = editForm.watch(`curriculumSessions.${index}.ipsDetail`) ?? ''
-  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : session.sessionLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_HEADING_LABEL : session.sessionLabel
   return (
     <div className="program-registration-curriculum__session-block">
       {showHeading ? (
@@ -2879,7 +2880,7 @@ function CurriculumPreEducationEventEditBlock({
   return (
     <div className="program-registration-schedule-curriculum__block">
       <div className="program-registration-schedule-curriculum__session-heading">
-        ■ {PRE_EDUCATION_DISPLAY_LABEL}
+        ■ {PRE_EDUCATION_HEADING_LABEL}
       </div>
       <div className="program-registration-curriculum__session-row">
         <div className="program-registration-schedule-curriculum__session-panel">
@@ -3277,7 +3278,7 @@ function CurriculumSection({
               control={editForm.control}
               render={({ field }) => (
                 <CmsToggle
-                  label={PRE_EDUCATION_DISPLAY_LABEL}
+                  label={PRE_EDUCATION_HEADING_LABEL}
                   checked={field.value ?? false}
                   onChange={field.onChange}
                 />
@@ -3510,7 +3511,7 @@ function ScheduleEventDetailViewBlock({
     <div className="program-registration-schedule-curriculum__block">
       {showHeading ? (
         <div className="program-registration-schedule-curriculum__session-heading">
-          ■ {isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : scheduleLabel}
+          ■ {isPreEducationBlock ? PRE_EDUCATION_HEADING_LABEL : scheduleLabel}
         </div>
       ) : null}
       <div className="program-registration-schedule-curriculum__session-panel">
@@ -3791,7 +3792,7 @@ function ScheduleEventDetailEditBlock({
   highlightScheduleNo: number
   participationMethodLocked?: boolean
 }) {
-  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : scheduleLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_HEADING_LABEL : scheduleLabel
   const participantIndividual = Boolean(editForm.watch('participantIndividual'))
   const participantOrganization = Boolean(editForm.watch('participantOrganization'))
   const sessionRound = editForm.watch('sessionRound') === 'multi' ? 'multi' : 'single'
@@ -3932,7 +3933,7 @@ function ScheduleDetailEditBlock({
 }) {
   const showGroupLabel = groupCount > 1
   const isSingleRound = sessionRound === 'single'
-  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : scheduleLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_HEADING_LABEL : scheduleLabel
   const participantOrganization = editForm.watch('participantOrganization')
   const perScheduleEducationFormOptions = getProgramRegistrationEducationFormOptions(
     Boolean(participantOrganization),
@@ -4581,7 +4582,7 @@ function ScheduleProgressEditSection({
             control={editForm.control}
             render={({ field }) => (
               <CmsToggle
-                label={PRE_EDUCATION_DISPLAY_LABEL}
+                label={PRE_EDUCATION_HEADING_LABEL}
                 checked={field.value ?? false}
                 onChange={field.onChange}
               />

@@ -9,7 +9,6 @@ import type { PermissionModalPayload } from '@/shared/components/permission-moda
 import { getGeneralProgramApiErrorCode } from '@/features/program/general/api/get-general-program-api-error'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { ApplicantsDetailContents } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
-import type { ApplicantInstructorApplicationInfoData } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-application-info'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -27,6 +26,7 @@ import {
 import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import { resolveGeminiInstructorApprovalAction } from '../../lib/approved/instructor-approval-action'
+import { buildGeminiInstructorApplicationInfo } from '../../lib/approved/instructor-available-schedule'
 import { GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS } from '../../model/approved/instructor-application-filter-fields'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import type {
@@ -34,6 +34,8 @@ import type {
   GeminiInstructorApplicationRow,
 } from '../../model/approved/instructor-application-types'
 import { GeminiInstructorApprovalModal } from './instructor-approval-modal'
+import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import { showNotificationResendRequestCompletedAlert } from '@/shared/ui/show-notification-resend-request-completed-alert'
 import './detail-instructor-application-tab.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
@@ -150,6 +152,8 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     mode: 'approve' | 'change'
     target: GeminiInstructorApplicationRow
   } | null>(null)
+  /** 재발송 확인 대상 신청 ID — 다른 상세로 바뀌면 열린 확인 팝업을 이어 쓰지 않는다 */
+  const [resendConfirmTargetId, setResendConfirmTargetId] = useState<string | null>(null)
   const handledDetailErrorRef = useRef<string | null>(null)
 
   const listQuery = useGeminiApprovedInstructorApplicationsQuery(
@@ -387,7 +391,8 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     ]
   )
 
-  const handleResendNotification = useCallback(async () => {
+  /** 일반(기관형) 강사 신청과 같은 「알림 재발송 안내」 확인 후 발송한다 — 같은 재발송 API(즉시 / 직접 설정) */
+  const handleResendNotification = useCallback(() => {
     if (!canWrite || !selectedApplicationDetail || resendNotificationMutation.isPending) return
     if (!canResendNotification(selectedApplicationDetail.availableActions)) {
       showAlert({
@@ -396,16 +401,22 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       })
       return
     }
+    setResendConfirmTargetId(selectedApplicationDetail.id)
+  }, [canWrite, resendNotificationMutation.isPending, selectedApplicationDetail, showAlert])
 
+  const handleResendConfirm = useCallback(async (payload: PermissionModalPayload) => {
+    if (!canWrite || !selectedApplicationDetail || resendNotificationMutation.isPending) return
+    const scheduled = payload.notifyTiming === 'manual'
     try {
       await resendNotificationMutation.mutateAsync({
         applicationId: selectedApplicationDetail.id,
-        payload: { timing: 'IMMEDIATE', scheduledAt: null },
+        payload: {
+          timing: scheduled ? 'SCHEDULED' : 'IMMEDIATE',
+          scheduledAt: scheduled ? (payload.manualNotifyAt?.toISOString() ?? null) : null,
+        },
       })
-      showAlert({
-        title: '알림 재발송 완료',
-        content: '승인 알림을 재발송했습니다.',
-      })
+      setResendConfirmTargetId(null)
+      showNotificationResendRequestCompletedAlert()
     } catch (error) {
       showAlert({
         title: '알림 재발송 실패',
@@ -413,6 +424,26 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       })
     }
   }, [canWrite, resendNotificationMutation, selectedApplicationDetail, showAlert])
+
+  const resendModal = (
+    <ApplicantNotificationResendModal
+      open={
+        resendConfirmTargetId != null && resendConfirmTargetId === selectedApplicationDetail?.id
+      }
+      subjectKind="instructor"
+      subjectName={selectedApplicationDetail?.instructorName ?? ''}
+      approvalStatus={selectedApplicationDetail?.approvalStatus === 'rejected' ? 'rejected' : 'approved'}
+      copyVariant="general-organization"
+      confirmLoading={resendNotificationMutation.isPending}
+      onCancel={() => {
+        if (resendNotificationMutation.isPending) return
+        setResendConfirmTargetId(null)
+      }}
+      onConfirm={payload => {
+        void handleResendConfirm(payload)
+      }}
+    />
+  )
 
   const approvalModal = (
     <GeminiInstructorApprovalModal
@@ -534,27 +565,23 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           data={selectedApplicationDetail}
           detailVariant="legacy"
           program={trainingDetail.programId ? ({ id: trainingDetail.programId } as Program) : null}
-          instructorApplicationInfo={
-            {
-              officialDocumentRequired: trainingDetail.officialDocumentRequired,
-              officialDocumentRequiredInfo: trainingDetail.officialDocumentRequiredInfo,
-              institutionName: trainingDetail.institutionName,
-              trainingDate: trainingDetail.trainingDate,
-              trainingTimeText: trainingDetail.trainingTimeText,
-            } satisfies ApplicantInstructorApplicationInfoData
-          }
+          instructorApplicationInfo={buildGeminiInstructorApplicationInfo(
+            trainingDetail,
+            selectedApplicationDetail
+          )}
           instructorResumeLayout="application"
           onBack={onCloseApplicationDetail ?? (() => undefined)}
           onApprove={handleDetailApprove}
           onReject={() => undefined}
           onResendNotification={
             canResendNotification(selectedApplicationDetail.availableActions)
-              ? () => void handleResendNotification()
+              ? handleResendNotification
               : undefined
           }
           hidePendingRejectAction
         />
         {approvalModal}
+        {resendModal}
       </>
     )
   }

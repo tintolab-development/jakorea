@@ -6,6 +6,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from './application-form-privacy-retention.js'
 
 /** Gemini 찾아가는 연수 참여 기관 신청 폼 — 시드 단락 ID */
 export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS = {
@@ -20,19 +24,25 @@ export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS = {
 export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS =
   new Set<string>(Object.values(GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS))
 
-const PERSONAL_INFO_TITLE = '개인 정보수집 및 제공에 대한 동의'
-const THIRD_PARTY_TITLE = '제 3자 정보 제공 동의'
-const PORTRAIT_TITLE = '초상권에 대한 동의'
+const PERSONAL_INFO_TITLE = '개인정보 수집‧이용'
+/** 시안 12875:515810 — 「개인정보 제3자 정보 제공‧이용 동의」(가운뎃점 U+2027) */
+const THIRD_PARTY_TITLE = '개인정보 제3자 정보 제공‧이용 동의'
+const PORTRAIT_TITLE = '초상권 수집·이용 동의'
 const CONTACT_PERSON_TITLE = '담당 교사 정보'
 const PREFERRED_SCHEDULE_DESCRIPTION =
-  '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.'
+  '1~3순위 희망 날짜 및 교육 시간을 기재해 주세요.'
 const LEGACY_CONTACT_PERSON_TITLES = ['담당자 정보'] as const
 
-const LEGACY_PERSONAL_INFO_TITLES = ['개인정보 수집·이용'] as const
-const LEGACY_THIRD_PARTY_TITLES = ['개인정보 제3자 정보 제공·이용 동의'] as const
-const LEGACY_PORTRAIT_TITLES = ['초상권 수집·이용 동의'] as const
+const LEGACY_PERSONAL_INFO_TITLES = ['개인정보 수집·이용', '개인 정보수집 및 제공에 대한 동의'] as const
+const LEGACY_THIRD_PARTY_TITLES = [
+  '개인정보 제3자 정보 제공·이용 동의',
+  '제3자 정보 제공‧이용 동의',
+  '제 3자 정보 제공 동의',
+] as const
+const LEGACY_PORTRAIT_TITLES = ['초상권에 대한 동의'] as const
 const LEGACY_PREFERRED_SCHEDULE_DESCRIPTIONS = [
   '1~3순위 희망 날짜 및 희망 교육 시간을 기재해 주세요.',
+  '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.',
 ] as const
 
 const PERSONAL_INFO_BOTTOM =
@@ -43,9 +53,6 @@ const THIRD_PARTY_BOTTOM =
 
 const PORTRAIT_BOTTOM =
   '동의하지 않을 권리가 있으며, 동의하지 않을 시 본 프로그램 참여가 불가능합니다.'
-
-const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
 
 function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
   const colCount = 3
@@ -77,7 +84,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value: PERSONAL_INFO_RETENTION_CELL,
+          value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
         },
       ],
     ],
@@ -117,9 +124,9 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value: 'Gemini Academy 연수 참가자 공유 및 프로그램 진행에 필요한 정보 안내',
+          value: 'Gemini Academy 연수 참가자 공유 및\n프로그램 진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: '동의일로부터 3년 보관 후 폐기' },
+        { kind: 'text', value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
       ],
     ],
     bottomText: THIRD_PARTY_BOTTOM,
@@ -275,7 +282,7 @@ export function migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(
         next.kind === 'single_item' &&
         next.variant === 'horizontal_table'
       ) {
-        next = patchHorizontalTableTextCell(next, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+        next = patchHorizontalTableTextCell(next, 0, 2, APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL)
       }
     } else if (
       paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent

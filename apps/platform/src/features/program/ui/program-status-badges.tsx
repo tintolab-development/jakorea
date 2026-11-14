@@ -21,6 +21,8 @@ type ProgramStatusBadgesProps = {
   className?: string
   /** 상태 배지에만 덧붙일 클래스 (예: 프로그램 목록 모집 완료 시안 색) */
   stateBadgeClassName?: string
+  /** 마이페이지 목록은 진행 상태를 우측 글로 두고, 알약에는 대상·형태·역할만 둔다 */
+  showRecruitmentStatus?: boolean
   /**
    * compact(기본): 12px 캡션 — 마이페이지 기존 유지.
    * regular: 참여하기 목록 카드·프로그램 상세 헤더 — Figma Badge Category(PC 14px SemiBold, 배지 간격 8px), 대상·형태 배지에 학교 아이콘(PC만).
@@ -60,6 +62,7 @@ export function ProgramStatusBadges({
   showParticipantRole = false,
   className,
   stateBadgeClassName: stateBadgeExtraClassName,
+  showRecruitmentStatus = true,
   size = 'compact',
 }: ProgramStatusBadgesProps) {
   const rootClassName = [styles.root, size === 'regular' ? styles.regular : null, className]
@@ -87,6 +90,7 @@ export function ProgramStatusBadges({
 
   return (
     <div className={rootClassName}>
+      {showRecruitmentStatus ? (
       <PFStateBadge
         size="small"
         tone={RECRUITMENT_STATUS_TONE_MAP[recruitmentStatus]}
@@ -98,6 +102,7 @@ export function ProgramStatusBadges({
           platformRecruitmentStatusLabel(recruitmentStatus)
         )}
       </PFStateBadge>
+      ) : null}
 
       {educationTargetLabel.trim() ? (
         <PFCategoryBadge

@@ -337,7 +337,11 @@ export function PaymentOrderCalculationBreakdownTable({
   return (
     <div
       className="payment-order-calc-statement-modal__detail-section"
-      style={isAccountPaymentDetail ? undefined : { minWidth: tableMinWidth }}
+      style={
+        isAccountPaymentDetail || layout === 'payment-statement'
+          ? undefined
+          : { minWidth: tableMinWidth }
+      }
     >
       <div className="payment-order-calc-statement-modal__detail-header">
         <div className="payment-order-calc-statement-modal__detail-header-left">

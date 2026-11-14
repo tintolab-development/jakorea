@@ -19,6 +19,7 @@
 
 .date {
   margin: 0;
+  color: var(--color-neutral-black);
 }
 
 .aside {

@@ -19,6 +19,8 @@ export type PFAccordionListProps = {
   emptyMessage?: string
   loading?: boolean
   className?: string
+  /** FAQ 시안은 질문 제목만. 1:1 문의 목록은 카테고리 칩을 둔다. */
+  hideCategoryBadge?: boolean
 }
 
 export function PFAccordionList({
@@ -28,8 +30,15 @@ export function PFAccordionList({
   emptyMessage = '등록된 FAQ가 없습니다.',
   loading = false,
   className,
+  hideCategoryBadge = false,
 }: PFAccordionListProps) {
-  const rootClassName = [styles.list, className].filter(Boolean).join(' ')
+  const rootClassName = [
+    styles.list,
+    hideCategoryBadge ? styles.hideCategory : undefined,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   if (items.length === 0) {
     return (
@@ -67,11 +76,13 @@ export function PFAccordionList({
               onClick={() => handleToggle(item.id)}
             >
               <div className={styles.content}>
-                <div className={styles.badgeContainer}>
-                  <PFCategoryBadge size="small" variant="secondary" className={styles.badge}>
-                    {item.categoryLabel}
-                  </PFCategoryBadge>
-                </div>
+                {hideCategoryBadge ? null : (
+                  <div className={styles.badgeContainer}>
+                    <PFCategoryBadge size="small" variant="secondary" className={styles.badge}>
+                      {item.categoryLabel}
+                    </PFCategoryBadge>
+                  </div>
+                )}
                 <PFText as="span" typo="hl-sm" color="black" className={styles.title}>
                   {item.title}
                 </PFText>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PFButton, PFEmptyState, PFLoadingSpinner, PFTabs, PFText } from '@/shared/ui'
 import type { MemberNotificationResponse } from '../api/client'
 import {
@@ -6,6 +7,7 @@ import {
   useMyNotificationsInfiniteQuery,
 } from '../api/hooks'
 import { formatNotificationDate } from '../lib/format'
+import { resolvePortalNotificationPath } from '../lib/resolve-portal-notification-path'
 import {
   NOTIFICATION_CATEGORY_ALL,
   NOTIFICATION_CATEGORY_TABS,
@@ -22,6 +24,7 @@ type NotificationInboxPanelProps = {
   variant?: NotificationInboxPanelVariant
   className?: string
   unreadOnly?: boolean
+  onNavigate?: () => void
 }
 
 function NotificationInboxItem({
@@ -78,6 +81,7 @@ function NotificationInboxItem({
 export function NotificationInboxPanel({
   variant = 'popover',
   className,
+  onNavigate,
   unreadOnly = false,
 }: NotificationInboxPanelProps) {
   const [category, setCategory] = useState<NotificationCategoryTabKey>(NOTIFICATION_CATEGORY_ALL)
@@ -93,6 +97,7 @@ export function NotificationInboxPanel({
     fetchNextPage,
     refetch,
   } = useMyNotificationsInfiniteQuery(category, true, unreadOnly)
+  const navigate = useNavigate()
   const markClicked = useMarkMyNotificationClickedMutation()
 
   useEffect(() => {
@@ -118,7 +123,11 @@ export function NotificationInboxPanel({
 
   const handleSelect = (item: MemberNotificationResponse) => {
     if (markClicked.isPending) return
+    const path = resolvePortalNotificationPath(item)
     markClicked.mutate(item.recipientId)
+    if (!path) return
+    onNavigate?.()
+    navigate(path)
   }
 
   let content

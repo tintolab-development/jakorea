@@ -127,7 +127,7 @@ const volunteerTabs = buildInProgressDetailTabItems({
 // 봉사자 만족도조사는 UJAT에서만 — 일반 봉사현황은 탭 없음
 assert.deepEqual(
   volunteerTabs.map(item => item.label),
-  ['안내사항', '배정현황', '설문조사', '정산현황'],
+  ['안내사항', '배정 현황', '설문조사', '정산 현황'],
 )
 assert.ok(
   !buildWithdrawnDuringDetailTabItems({
@@ -328,10 +328,21 @@ const geminiInstructorTabs = buildInProgressDetailTabItems({
 })
 assert.deepEqual(
   geminiInstructorTabs.map(item => item.label),
-  ['배정 현황', '정산 현황'],
+  ['배정 현황'],
 )
 assert.ok(!geminiInstructorTabs.some(item => item.key === 'notice'))
 assert.ok(!geminiInstructorTabs.some(item => item.key === 'lecture-report'))
+assert.ok(!geminiInstructorTabs.some(item => item.key === 'settlement'))
+// 제미나이 진행 중 포기도 배정 현황만
+assert.deepEqual(
+  buildWithdrawnDuringDetailTabItems({
+    detailCase: 'gemini',
+    programType: 'GEMINI_TRAINING',
+    geminiInstructorActivityTabs: true,
+    instructorAssignmentVisible: true,
+  }).map(item => item.key),
+  ['schedule'],
+)
 
 // 1사1교 교사 — 안내사항 / 교육 일정 / 설문조사 / 만족도조사만 (학생 명단·정산 없음, policy·회원 유형 무관)
 for (const programType of ['COMPANY_SCHOOL', 'ONE_COMPANY_ONE_SCHOOL']) {

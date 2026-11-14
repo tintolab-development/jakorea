@@ -71,10 +71,28 @@
   vertical-align: middle;
 }
 
+/*
+ * 표 높이 100%로 빈 행을 늘리는 방식은 브라우저가 남는 높이를 행에 나눠 주지 않아
+ * 문구가 헤더 바로 아래에 붙는다 → 표(.ant-table) 기준으로 헤더(52) 아래 남은 영역에 겹쳐 가운데 정렬
+ */
+.dashboard-widget-table .ant-table-wrapper:has(.ant-table-placeholder) .ant-table {
+  position: relative;
+}
+
+/* 가로 스크롤 시 antd가 감싸는 sticky 래퍼가 기준 상자가 되지 않도록 */
+.dashboard-widget-table .ant-table-wrapper .ant-table-placeholder .ant-table-expanded-row-fixed {
+  position: static !important;
+}
+
 .dashboard-widget-empty--in-table {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  bottom: 0;
+  left: 0;
   height: auto;
-  min-height: 120px;
-  padding: var(--spacing-24, 24px) 0;
+  min-height: 0;
+  padding: 0 var(--spacing-16, 16px);
 }
 
 /* KPI 0건: 본문이 카드 남은 높이를 채워 가운데 정렬 */

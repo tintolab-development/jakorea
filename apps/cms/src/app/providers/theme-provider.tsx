@@ -21,6 +21,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   return (
     <ConfigProvider
       wave={adminConfigProviderWave}
+      // CMS 전역: 브라우저 입력 이력 자동완성 드롭다운 끔 (로그인 등 명시 autoComplete는 개별 prop이 우선)
+      input={{ autoComplete: 'off' }}
+      textArea={{ autoComplete: 'off' }}
       theme={mergeAdminTheme({
         token: {
           colorSuccess: domainColorsHex.matching.primary,

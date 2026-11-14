@@ -10,7 +10,7 @@ import { formatNumberDisplay } from '@/shared/utils'
 import { useSearchParams } from 'react-router-dom'
 import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import type { ColumnsType } from 'antd/es/table'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/table-filter-group'
 import {
@@ -66,8 +66,8 @@ import {
 export type PaymentOrdersPageViewMode = 'list' | 'calendar'
 
 const paymentOrdersViewModeOptions = [
-  { value: 'list' as const, label: '리스트 뷰로 보기', icon: <UnorderedListOutlined /> },
-  { value: 'calendar' as const, label: '캘린더 뷰로 보기', icon: <CalendarOutlined /> },
+  { value: 'list' as const, label: '리스트 뷰로 보기', icon: <ButtonListIcon /> },
+  { value: 'calendar' as const, label: '캘린더 뷰로 보기', icon: <ButtonCalendarIcon /> },
 ] satisfies readonly ViewModeToggleOption<PaymentOrdersPageViewMode>[]
 
 export type PaymentOrdersDetailState =

@@ -12,6 +12,7 @@ import {
   updateSponsorStatus,
 } from '@/features/sponsor/api/admin-sponsors-service'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import { parseSponsorOrganizationKindFilter } from '@/features/sponsor/api/sponsor-filter-params'
 import {
   applyDeletedContactsToDetail,
   refetchSponsorContactsAfterSave,
@@ -66,8 +67,8 @@ function sponsorMatchesListFilter(
   const raw = queryKey[queryKey.length - 1]
   if (typeof raw !== 'string') return true
   const params = new URLSearchParams(raw)
-  const kind = params.get('sp_kind') === 'foundation' ? 'foundation' : 'corporate'
-  if ((row.organizationKind ?? 'corporate') !== kind) return false
+  const kind = parseSponsorOrganizationKindFilter(params.get('sp_kind'))
+  if (kind !== 'ALL' && (row.organizationKind ?? 'corporate') !== kind) return false
 
   const st = params.get('sp_st')
   if (isSponsorSponsorshipStatus(st)) {

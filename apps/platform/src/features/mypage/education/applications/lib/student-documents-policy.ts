@@ -45,6 +45,17 @@ export function canCancelOrganizationPortraitConsent(
   return consent?.status?.trim().toUpperCase() !== 'APPROVED'
 }
 
+export function resolveRosterUploadBlockedMessage(
+  policy: PortalStudentDocumentPolicy | null | undefined,
+): string | null {
+  if (!isPortalStudentDocumentsSupported(policy)) return null
+  if (policy?.studentRosterUploadAllowed !== false) return null
+  if (!policy.firstEducationDate?.trim()) {
+    return '교육 일정이 배정되면 학생 명단을 제출할 수 있습니다.'
+  }
+  return '학생 명단은 해당 기관의 첫 교육일 6일 전까지만 업로드·수정할 수 있어요.'
+}
+
 export function resolvePortraitUploadBlockedMessage(
   policy: PortalStudentDocumentPolicy | null | undefined,
 ): string | null {

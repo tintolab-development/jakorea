@@ -3,6 +3,7 @@ import {
   RtBoldIcon,
   RtEmojiIcon,
   RtFontFamilyIcon,
+  RtHeadingIcon,
   RtHighlightIcon,
   RtHorizontalRuleIcon,
   RtIndentIcon,
@@ -57,6 +58,10 @@ export function ToolbarToggle({
 
 export function FontFamilyIcon() {
   return <RtFontFamilyIcon />
+}
+
+export function HeadingIcon() {
+  return <RtHeadingIcon />
 }
 
 export function PaletteIcon() {

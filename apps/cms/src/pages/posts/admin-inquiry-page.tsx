@@ -344,11 +344,16 @@ export function AdminInquiryPage() {
     [totalElements]
   )
 
-  const singleDeleteCopy = useMemo(() => resolvePostsDeleteConfirmCopy('inquiry', 'single'), [])
-  const bulkDeleteCopy = useMemo(
-    () => resolvePostsDeleteConfirmCopy('inquiry', 'bulk', selectedRowKeys.length),
-    [selectedRowKeys.length]
-  )
+  // 시안: 단건 `[문의 제목] 문의를…` / 일괄 `[첫 제목] 외 N개의 문의를…` (목록 순서 기준 첫 행)
+  const singleDeleteCopy = useMemo(() => {
+    const target = rows.find(row => String(row.id) === singleDeleteInquiryId)
+    return resolvePostsDeleteConfirmCopy('inquiry', 'single', 1, target ? [target.title] : [])
+  }, [rows, singleDeleteInquiryId])
+  const bulkDeleteCopy = useMemo(() => {
+    const selected = new Set(selectedRowKeys.map(String))
+    const titles = tableData.filter(row => selected.has(String(row.id))).map(row => row.title)
+    return resolvePostsDeleteConfirmCopy('inquiry', 'bulk', selectedRowKeys.length, titles)
+  }, [selectedRowKeys, tableData])
 
   return (
     <div className="admin-inquiry-page">

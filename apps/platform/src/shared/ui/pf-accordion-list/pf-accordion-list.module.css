@@ -67,8 +67,8 @@
 
 .chevron {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
   transition: transform 160ms ease;
 }
@@ -157,12 +157,18 @@
   }
 
   .panelRow {
+    flex-direction: column;
     padding: var(--spacing-24) var(--spacing-16);
-    gap: var(--spacing-16);
+    gap: var(--spacing-8);
   }
 
   .label {
     width: auto;
+    justify-content: flex-start;
+    font-size: 18px !important;
+    font-weight: 600;
+    line-height: 145%;
+    letter-spacing: 0;
   }
 }
 
@@ -173,6 +179,10 @@
       display: grid;
       grid-template-columns: max-content minmax(0, 1fr) auto; /* 칩 | 제목 | 펼침 아이콘 */
       column-gap: var(--spacing-48);
+    }
+
+    .list.hideCategory {
+      grid-template-columns: minmax(0, 1fr) auto; /* 제목 | 펼침 아이콘 */
     }
 
     .list > * {
@@ -198,6 +208,14 @@
 
     .chevron {
       grid-column: 3;
+    }
+
+    .hideCategory .content {
+      grid-column: 1 / 2;
+    }
+
+    .hideCategory .chevron {
+      grid-column: 2;
     }
   }
 }

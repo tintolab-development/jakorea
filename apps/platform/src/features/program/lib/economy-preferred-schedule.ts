@@ -15,8 +15,6 @@ import type {
 
 export const ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT = 2
 export const ECONOMY_PREFERRED_SCHEDULE_MAX_CLASS_PERIOD = 12
-export const ECONOMY_PREFERRED_SCHEDULE_DUPLICATE_DATE_MESSAGE =
-  '1지망과 2지망의 희망 교육일은 서로 달라야 합니다.'
 export const ECONOMY_PREFERRED_SCHEDULE_REQUIRED_BOTH_MESSAGE =
   '진행 희망 교육 일정 1지망·2지망의 희망 교육일·희망 차시·교시·시간을 모두 입력해 주세요.'
 
@@ -217,7 +215,8 @@ function mapEconomyBlockToRequestedSchedule(
 
 /**
  * 1사1교 기관(ORGANIZATION) 최종 제출용 requestedSchedules.
- * 1·2지망이 모두 유효하고 날짜가 다를 때만 2건을 반환한다. 불완전하면 null (빈 배열 금지).
+ * 1·2지망이 모두 유효할 때만 2건을 반환한다. 불완전하면 null (빈 배열 금지).
+ * 1·2지망 같은 날짜도 허용한다(QA 2026-11-13 1사1교 #8 — 일정 1개 프로그램).
  */
 export function toEconomyRequestedSchedules(
   blocks: readonly EconomyPreferredScheduleBlock[]
@@ -226,13 +225,10 @@ export function toEconomyRequestedSchedules(
     { length: ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT },
     (_, index) => blocks[index] ?? createEmptyEconomyPreferredScheduleBlock()
   )
-  const dates = new Set<string>()
   const out: PortalRequestedScheduleRequest[] = []
   for (const block of ranked) {
     const mapped = mapEconomyBlockToRequestedSchedule(block)
     if (!mapped) return null
-    if (dates.has(mapped.requestedDate)) return null
-    dates.add(mapped.requestedDate)
     out.push(mapped)
   }
   if (out.length !== ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT) return null
@@ -293,14 +289,8 @@ export function findIncompleteEconomyPreferredScheduleMessage(
       }
     }
   }
-  const completeDates = ranked
-    .filter(isBlockComplete)
-    .map(block => block.date.trim())
-    .filter(Boolean)
-  if (completeDates.length === ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT) {
-    if (new Set(completeDates).size !== completeDates.length) {
-      return ECONOMY_PREFERRED_SCHEDULE_DUPLICATE_DATE_MESSAGE
-    }
+  // 1·2지망 같은 날짜는 막지 않는다(QA 2026-11-13 1사1교 #8).
+  if (ranked.filter(isBlockComplete).length === ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT) {
     if (toEconomyRequestedSchedules(ranked) == null) {
       return ECONOMY_PREFERRED_SCHEDULE_REQUIRED_BOTH_MESSAGE
     }

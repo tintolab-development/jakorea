@@ -75,6 +75,7 @@ export {
   EDUCATION_DISPLAY_STATUS_TONE,
   EDUCATION_DISPLAY_STATUS_TONE_CLASS,
   canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
   resolveEducationApplicationTab,
@@ -142,7 +143,7 @@ export {
   syncSelectedDateToMonth,
   toDateKey,
 } from './home'
-export { getMypageLnbItems } from './lib/lnb-config'
+export { canAccessMypageLnbItem, getMypageLnbItems } from './lib/lnb-config'
 export {
   VolunteerAssignmentPanel,
   VolunteerNoticePanel,

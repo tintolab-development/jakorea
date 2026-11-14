@@ -585,7 +585,7 @@ export function ParticipatingInstitutionsSection({
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView} >
-                {isCompanySchool ? '캘린더 뷰로 보기' : '캘린더 뷰 보기'}
+                캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton

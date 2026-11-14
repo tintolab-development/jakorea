@@ -96,6 +96,7 @@ import {
   isUjatInstitutionClassTimeParagraphId,
   isUjatInstitutionGradeInfoParagraphId,
   isUjatInstitutionPreferredScheduleParagraphId,
+  isUjatInstitutionSubmitConfirmationParagraphId,
   isUjatSubmitConfirmationParagraphId,
   isUjatVolunteerBasicInfoParagraphId,
   isUjatVolunteerFreeTextItemsParagraphId,
@@ -167,6 +168,7 @@ import {
   findIncompleteRequiredShortEssayParagraphId,
 } from '@/features/program/lib/portal-application-free-text'
 import {
+  filterCompanySchoolInstructorScheduleSlots,
   pruneSelectedSlotIdsToCurrentOptions,
   usesConfirmedOsaAvailableSchedule,
 } from '@/features/program/lib/portal-confirmed-osa-schedule'
@@ -640,7 +642,7 @@ export function ProgramApplyPage() {
         openTeacherRestrictedModal()
         return
       }
-      const missing = await findMissingRequiredConsents()
+      const missing = await findMissingRequiredConsents(option?.applicationType)
       if (missing.length > 0) openRequiredConsentModal(missing)
     })()
   }, [
@@ -1122,13 +1124,16 @@ export function ProgramApplyPage() {
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
   }, [applicationFormDocument, remoteForm, showGeminiInstructorApply])
   const instructorScheduleSlots = useMemo(() => {
-    return resolveApplyAvailableScheduleSlots({
+    const slots = resolveApplyAvailableScheduleSlots({
       runtimeSlots: runtimeInstructorScheduleSlots,
       allowProgramDisplayFallback:
         !showGeminiInstructorApply && !remoteApplyEnabled && !usesOsaAvailableSchedule,
       program,
     })
+    // 1사1교 강사: 승인된 기관의 희망 일정만 (교육 기간 선택지 제외)
+    return filterCompanySchoolInstructorScheduleSlots(slots, { program, applyCase })
   }, [
+    applyCase,
     program,
     remoteApplyEnabled,
     runtimeInstructorScheduleSlots,
@@ -1835,6 +1840,10 @@ export function ProgramApplyPage() {
         if (!item) return undefined
         return (
           <ApplyUjatInstitutionSubmitConfirmation
+            control={
+              isUjatInstitutionSubmitConfirmationParagraphId(paragraph.id) ? 'radio' : 'checkbox'
+            }
+            radioName={paragraph.id}
             label={item.label}
             checked={isUjatSubmitConfirmationChecked(paragraph)}
             onCheckedChange={checked => {
@@ -2679,9 +2688,17 @@ export function ProgramApplyPage() {
         return
       }
     }
+    // 제출 직전 교사 회원 신청 제한 재확인 — 개인·봉사 모집은 진입 시와 제출 시 모두 막는다
+    // (QA 2026-11-13 일반 #37). 회원 조회 실패는 막지 않는다(서버 게이트에 맡김).
+    if (remoteApplyEnabled && (await isTeacherRestrictedOption(applicationFormQuery.bundle?.option ?? null))) {
+      openTeacherRestrictedModal()
+      return
+    }
     // 제출 직전 필수 동의 재확인 — 진입 후 철회·만료된 경우도 막는다. 조회 실패는 서버 응답에 맡긴다.
     if (remoteApplyEnabled && applicationFormQuery.bundle?.option.canApply !== false) {
-      const missing = await findMissingRequiredConsents()
+      const missing = await findMissingRequiredConsents(
+        applicationFormQuery.bundle?.option.applicationType,
+      )
       if (missing.length > 0) {
         openRequiredConsentModal(missing)
         return

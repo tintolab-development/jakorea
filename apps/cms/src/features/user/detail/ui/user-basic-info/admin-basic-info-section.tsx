@@ -183,7 +183,6 @@ export function AdminBasicInfoSection({
           <DetailInfoForm.Field
             label="성명"
             required={profileFieldsEditable}
-            labelWidth={mode === 'edit' ? 200 : undefined}
             view={<span>{user.name}</span>}
             edit={
               profileReadOnly ? (
@@ -198,7 +197,6 @@ export function AdminBasicInfoSection({
           <DetailInfoForm.Field
             label="성별 및 생년월일"
             required={profileFieldsEditable}
-            labelWidth={mode === 'edit' ? 200 : undefined}
             view={genderBirthView(user)}
             edit={
               profileReadOnly ? (
@@ -232,7 +230,6 @@ export function AdminBasicInfoSection({
           <DetailInfoForm.Field
             label="연락처"
             required={profileFieldsEditable}
-            labelWidth={mode === 'edit' ? 200 : undefined}
             view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
             edit={
               profileReadOnly ? (
@@ -247,7 +244,6 @@ export function AdminBasicInfoSection({
           <DetailInfoForm.Field
             label="이메일"
             required={profileFieldsEditable}
-            labelWidth={mode === 'edit' ? 200 : undefined}
             view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
             edit={
               profileReadOnly ? (

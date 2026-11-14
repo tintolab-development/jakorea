@@ -171,7 +171,8 @@ export function sanitizeUjatParticipantBasicInfoFields<T extends { label: string
   if (!shouldUseUjatApplicationContent(detailCase)) return [...fields]
   if (educationTargetDetailLabel?.trim()) return [...fields]
   return fields.map(field =>
-    field.label === '대상' && field.value.trim() === '초등학교'
+    (field.label === '대상' || field.label === '교육 대상 상세') &&
+    field.value.trim() === '초등학교'
       ? { ...field, value: '-' }
       : field,
   )

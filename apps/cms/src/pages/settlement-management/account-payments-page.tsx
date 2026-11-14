@@ -530,8 +530,8 @@ export default function AccountPaymentsPage() {
         ellipsis: { showTitle: true },
         /**
          * 유연 열 — 넓은 화면의 남는 폭 흡수 (공통 표 최소 폭 계산).
-         * 시안 416은 표 폭 1546 기준 — 실화면 카드 padding 24·표 테두리로 본문 1536이라 400으로 두어
-         * 1920 뷰포트에서 가로 스크롤 없이 남는 폭(≈406)을 받는다.
+         * 시안 416은 표 폭 1546 기준 — 표를 카드 패딩 안쪽에서 좌우 5px씩 넓혀(account-payments-page.css)
+         * 1920 뷰포트에서 가로 스크롤 없이 남는 폭(≈416)을 받는다.
          */
         minWidth: 400,
         align: 'center',
@@ -939,6 +939,7 @@ export default function AccountPaymentsPage() {
             variant="secondary"
             icon={<ButtonCalendarIcon />}
             type="button"
+            className="payment-orders-page__view-mode-button"
             onClick={() => setViewMode('calendar')}
           >
             캘린더 뷰로 보기
@@ -948,6 +949,7 @@ export default function AccountPaymentsPage() {
             variant="secondary"
             icon={<ButtonListIcon />}
             type="button"
+            className="payment-orders-page__view-mode-button"
             onClick={() => setViewMode('list')}
           >
             리스트 뷰로 보기

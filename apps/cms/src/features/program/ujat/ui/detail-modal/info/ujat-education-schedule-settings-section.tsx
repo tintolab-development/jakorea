@@ -18,6 +18,7 @@ import { UjatInlineDividedSegments } from '@/features/program/ujat/ui/detail-mod
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import { buildRecurringUnavailableLabel } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import { useKoreanPublicHolidayDateKeys } from '@/features/program/ujat/api/korean-public-holidays'
 import type {
   UjatTypedDetail,
@@ -132,6 +133,7 @@ function TypedSemesterScheduleTableBlock({
   mode: 'view' | 'edit'
   form: TypedScheduleForm
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const detail = useWatch({ control: form.control }) as UjatTypedDetail | undefined
   const row = typedEventRow(detail, half)
   const range: [Dayjs | null, Dayjs | null] = [
@@ -199,7 +201,29 @@ function TypedSemesterScheduleTableBlock({
               end: row?.endDate ?? null,
             })}
             edit={
-              mode === 'edit' ? (
+              mode === 'edit' && isTemplateManagementScreen ? (
+                // 템플릿 관리 시안(5767:194428): 기간 캘린더 칸 1개(300) · 「일정을 선택해 주세요」
+                <ParagraphDatePicker
+                  inputSize="small"
+                  mode="single"
+                  presetMode="period"
+                  customizable={false}
+                  showTimeToggle={false}
+                  suppressAutoTodayWhenEmpty
+                  value={rangeStart}
+                  appliedSurfaceRange={
+                    rangeStart != null && rangeEnd != null ? [rangeStart, rangeEnd] : null
+                  }
+                  appliedSurfaceWithTime={false}
+                  width={300}
+                  placeholder="일정을 선택해 주세요"
+                  disabledDate={disableEducationScheduleDate}
+                  onRangeChange={next => updateRange(next ?? [null, null])}
+                  onChange={next => {
+                    if (next == null) updateRange([null, null])
+                  }}
+                />
+              ) : mode === 'edit' ? (
                 <ParagraphDatePicker
                   inputSize="small"
                   mode="range"
@@ -293,9 +317,16 @@ export function UjatEducationScheduleSettingsSection({
   h2Display: UjatEducationScheduleSettingsSemesterDisplay
   scheduleForm?: TypedScheduleForm
 }) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   if (scheduleForm) {
     return (
-      <div className="ujat-education-schedule-settings">
+      <div
+        className={
+          isTemplateManagementScreen
+            ? 'ujat-education-schedule-settings ujat-education-schedule-settings--template'
+            : 'ujat-education-schedule-settings'
+        }
+      >
         <TypedSemesterScheduleTableBlock half="h1" mode={mode} form={scheduleForm} />
         <TypedSemesterScheduleTableBlock half="h2" mode={mode} form={scheduleForm} />
       </div>

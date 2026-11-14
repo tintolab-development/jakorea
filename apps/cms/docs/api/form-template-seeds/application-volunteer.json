@@ -52,11 +52,11 @@
             },
             {
               "kind": "text",
-              "value": "JA 프로그램 봉사활동 안내 및\n진행에 필요한 정보 안내"
+              "value": "JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내"
             },
             {
               "kind": "text",
-              "value": "이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기"
+              "value": "이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기"
             }
           ]
         ],
@@ -93,7 +93,7 @@
         "columnFields": [
           {
             "kind": "text",
-            "placeholder": "제공받는 곳을 입력해 주세요"
+            "placeholder": "제공받는 기관명을 입력해 주세요"
           },
           {
             "kind": "text",
@@ -112,7 +112,7 @@
           [
             {
               "kind": "text",
-              "value": "배정된 교육 대상 학교"
+              "value": ""
             },
             {
               "kind": "text",
@@ -124,7 +124,7 @@
             },
             {
               "kind": "text",
-              "value": "동의일로부터 3년 보관 후 폐기"
+              "value": "동의일로부터 3년 보관 후 파기"
             }
           ]
         ],
@@ -192,7 +192,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "자유 작성 항목",
-        "paragraphDescription": "1~3번 문항은 자유롭게 작성 가능합니다.",
+        "paragraphDescription": "1~4번 문항은 자유롭게 작성 가능합니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [
@@ -220,7 +220,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "면접 진행 가능 일정",
-        "paragraphDescription": "서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요",
+        "paragraphDescription": "서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

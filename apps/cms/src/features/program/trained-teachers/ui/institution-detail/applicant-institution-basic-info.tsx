@@ -79,8 +79,12 @@ function buildTeacherInfoCell(
   const phone = hasCanonicalTeacherTel
     ? detail?.teacherTel?.trim()
     : detail?.teacherPhone?.trim() || detail?.teacherMobile?.trim() || institution.contact?.trim()
+  // 휴대폰 — 상세 teacherPhone/teacherMobile이 없으면 목록 응답 휴대폰(teacherPhoneMasked → contact)으로 채운다.
+  // 시안 「교사명 ㅣ Tel ㅣ M ㅣ E-mail」(QA 2026-11-13 교육받은 교사 #17, 1사1교 구현과 같은 순서)
+  const listContact = institution.contact?.trim()
+  const listMobile = listContact && listContact !== detail?.teacherTel?.trim() ? listContact : undefined
   const mobile = hasCanonicalTeacherTel
-    ? detail?.teacherPhone?.trim() || detail?.teacherMobile?.trim()
+    ? detail?.teacherPhone?.trim() || detail?.teacherMobile?.trim() || listMobile
     : detail?.teacherMobile?.trim() && detail.teacherMobile.trim() !== phone
       ? detail.teacherMobile.trim()
       : undefined

@@ -130,6 +130,7 @@ import {
   teacherTrainingEducationFormatLabel,
   type TeacherTrainingEducationFormat,
 } from '@/features/program/trained-teachers/lib/teacher-training-block'
+import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import './common-info-view.css'
 
 
@@ -894,7 +895,7 @@ function SingleRoundSessionBlock({
                     <DetailInfoForm.InputsSeparator />
                     <CmsInput
                       inputSize="small"
-                      placeholder="교육 내용을 작성하세요"
+                      placeholder="교육 내용을 작성해 주세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
                       value={session.description}
@@ -992,7 +993,7 @@ function MultiRoundSessionBlock({
                     <DetailInfoForm.InputsSeparator />
                     <CmsInput
                       inputSize="small"
-                      placeholder="교육 내용을 작성하세요"
+                      placeholder="교육 내용을 작성해 주세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
                       value={session.description}
@@ -1458,7 +1459,12 @@ function ScheduleEventBlock({
   return (
     <div className="program-registration-schedule-curriculum__block">
       <div className="program-registration-schedule-curriculum__session-heading">
-        ■ {heading ?? detail.scheduleLabel}
+        {/* 저장 일정명 「교육 연수」는 블록 제목으로 「교사 연수」(QA 2026-11-13 교육받은 교사 #6) */}
+        ■{' '}
+        {heading ??
+          (detail.scheduleLabel?.trim() === TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
+            ? TEACHER_TRAINING_BLOCK_LABEL
+            : detail.scheduleLabel)}
       </div>
       <DeletableBlockRow
         showDelete={isFormEdit && showDelete}

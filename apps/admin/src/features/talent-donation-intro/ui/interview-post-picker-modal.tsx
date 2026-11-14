@@ -11,6 +11,7 @@ import { useImpactStoriesPagedList } from '@/features/impact-stories/api/hooks'
 import { CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
 
 import './interview-post-picker-modal.css'
+import { FieldSearchIcon } from '@jakorea/admin-ui/field'
 
 /** Figma Field / Sorting / M — 게시년도 셀렉트 */
 const YEAR_SELECT_WIDTH_PX = 140
@@ -25,22 +26,6 @@ type Props = {
   open: boolean
   onCancel: () => void
   onSelect: (payload: { id: string; title: string; thumbnailUrl: string }) => void
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      aria-hidden
-    >
-      <circle cx="9" cy="9" r="6.25" stroke="#9E9E9E" strokeWidth="1.5" />
-      <path d="M13.5 13.5L17 17" stroke="#9E9E9E" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
 }
 
 function storyThumbnailUrl(story: ImpactStory): string {
@@ -157,7 +142,7 @@ export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
           inputSize="medium"
           width="100%"
           placeholder="고정 노출할 게시글 제목을 입력해 주세요"
-          icon={<SearchIcon />}
+          icon={<FieldSearchIcon />}
           value={pendingTitle}
           onChange={e => setPendingTitle(e.target.value)}
           onPressEnter={handleSearch}

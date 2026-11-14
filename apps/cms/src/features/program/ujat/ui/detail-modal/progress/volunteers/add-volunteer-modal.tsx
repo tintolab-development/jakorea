@@ -114,7 +114,7 @@ export function UjatAddVolunteerModal({
                 label: m.volunteerName,
               }))}
               notFoundContent={
-                memberOptions.length === 0 ? '추가 등록 가능한 봉사자가 없습니다' : undefined
+                memberOptions.length === 0 ? '추가 등록 가능한 회원이 없습니다' : undefined
               }
               getPopupContainer={() => document.body}
             />

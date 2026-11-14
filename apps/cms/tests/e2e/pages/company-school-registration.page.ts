@@ -116,7 +116,7 @@ export class CompanySchoolRegistrationPage {
     )
 
     await checkCheckboxIfVisible(this.page, '학교/기관')
-    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, /^강사$/)
     // 봉사자 — 1사1교에서는 숨김·미선택
 
     await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택해 주세요', '경제금융')

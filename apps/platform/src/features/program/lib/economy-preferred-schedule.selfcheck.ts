@@ -7,7 +7,6 @@ import type { PortalSaveApplicationRequest } from '../api/application-types.ts'
 import {
   buildEconomyOrganizationSchedulePayload,
   ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT,
-  ECONOMY_PREFERRED_SCHEDULE_DUPLICATE_DATE_MESSAGE,
   findIncompleteEconomyPreferredScheduleMessage,
   shouldAttachEconomyRequestedSchedules,
   toEconomyPreferredScheduleAnswerValue,
@@ -128,18 +127,13 @@ assert.equal(
 )
 
 assert.equal(toEconomyRequestedSchedules([first]), null)
+// 1·2지망 같은 날짜 허용 (QA 2026-11-13 1사1교 #8)
+const sameDateBlocks = [first, { ...second, date: first.date }]
+assert.equal(findIncompleteEconomyPreferredScheduleMessage(sameDateBlocks, true), null)
+assert.equal(toEconomyRequestedSchedules(sameDateBlocks)?.length, ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT)
 assert.equal(
-  findIncompleteEconomyPreferredScheduleMessage(
-    [
-      first,
-      {
-        ...second,
-        date: first.date,
-      },
-    ],
-    true,
-  ),
-  ECONOMY_PREFERRED_SCHEDULE_DUPLICATE_DATE_MESSAGE,
+  buildEconomyOrganizationSchedulePayload(sameDateBlocks)?.requestedSchedules.length,
+  ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT,
 )
 assert.ok(
   findIncompleteEconomyPreferredScheduleMessage(

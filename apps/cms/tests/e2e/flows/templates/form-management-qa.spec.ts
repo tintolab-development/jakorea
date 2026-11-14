@@ -78,7 +78,7 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
 
   test('동의 — 초상권: A4 셸·저장', async ({ page }) => {
     await page.goto(FORM_MANAGEMENT_URL)
-    await openTemplateByName(page, '초상권 수집·이용 동의')
+    await openTemplateByName(page, '초상권 수집·이용 동의서')
     await saveAndConfirm(page)
     await closeTemplateEditor(page)
   })
@@ -86,7 +86,7 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
   test('동의 — 성범죄 경력조회: 전용 모달', async ({ page }) => {
     await page.goto(FORM_MANAGEMENT_URL)
     await openTemplateByName(page, CRIME_CONSENT_TEMPLATE_NAME, { expectSaveButton: false })
-    await expect(page.getByText('해당 폼은 기존 항목의 삭제가 불가하며')).toBeVisible()
+    await expect(page.getByText('해당 폼은 모든 항목의 추가 및 삭제가 불가한 양식입니다.', { exact: false })).toBeVisible()
     await expect(page.getByRole('button', { name: '문서 다운로드' })).toBeVisible()
     await expect(page.getByRole('button', { name: '문서 변경' })).toBeVisible()
     await page.locator('.crime-consent-doc-modal__close').click()
@@ -122,12 +122,12 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
 
   test('P0 — 교육진행자 서약: 객관식 선택이 단락 이동·미리보기에 유지', async ({ page }) => {
     await page.goto(FORM_MANAGEMENT_URL)
-    await openTemplateByName(page, 'JA Korea 교육진행자 서약서(안)')
+    await openTemplateByName(page, 'JA Korea 교육진행자 서약서')
 
     await assertMultipleChoiceSurvivesParagraphSwitchById(
       page,
       'agreement-expense-pledge-clause-1',
-      /종교적 정치적/,
+      /종교적·정치적/,
       /아동·청소년 보호/,
       '동의'
     )
@@ -144,7 +144,7 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
 
   test('P0 — 행정정보: 에디터·저장', async ({ page }) => {
     await page.goto(FORM_MANAGEMENT_URL)
-    await openTemplateByName(page, '행정정보 공동이용 사전 동의서')
+    await openTemplateByName(page, '행정정보 공동이용 사전동의서')
     await saveAndConfirm(page)
     await closeTemplateEditor(page)
   })

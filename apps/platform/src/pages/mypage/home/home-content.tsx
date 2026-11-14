@@ -38,6 +38,7 @@ export function MypageHomeContent({
         <ScheduleSection
           events={scheduleEvents}
           eventsLoading={scheduleEventsLoading}
+          profile={member.profile}
           useMockDemoMonth={useMockDemoMonth}
           onViewMonthChange={onViewMonthChange}
         />

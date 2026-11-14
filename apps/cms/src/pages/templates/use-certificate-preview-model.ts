@@ -11,6 +11,8 @@ export interface CertificatePreviewModelInput {
   bodyContent: string
   participantInfo: string
   participantRowVisibility?: boolean[]
+  /** 참여자 정보 줄 수(증명서 종류별). 기본 6줄 */
+  participantRowCount?: number
 }
 
 /**
@@ -21,14 +23,15 @@ export function useCertificatePreviewModel({
   bodyContent,
   participantInfo,
   participantRowVisibility,
+  participantRowCount = PARTICIPANT_INFO_ROW_COUNT,
 }: CertificatePreviewModelInput) {
   const region = useMemo(() => resolveCanvasRegion(activeFieldName), [activeFieldName])
 
   const confirmLines = useMemo(() => bodyContent.split('\n'), [bodyContent])
 
   const participantValues = useMemo(
-    () => splitParticipantValues(participantInfo, PARTICIPANT_INFO_ROW_COUNT),
-    [participantInfo]
+    () => splitParticipantValues(participantInfo, participantRowCount),
+    [participantInfo, participantRowCount]
   )
 
   const rowVisibility = participantRowVisibility ?? DEFAULT_PARTICIPANT_ROW_VISIBILITY

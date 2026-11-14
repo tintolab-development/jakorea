@@ -1,6 +1,6 @@
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useMemo, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
+import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
 import {
   buildMiniCalendarGridDays,
   countMiniCalendarWeekRows,
@@ -165,11 +165,11 @@ export function CalendarMini({
     <div className="calendar-mini" style={miniStyle} data-week-rows={weekRows}>
       <div className="calendar-mini-header">
         <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
-          <LeftOutlined />
+          <ButtonLeftIcon className="calendar-mini-nav-icon" />
         </button>
         <span className="calendar-mini-title">{currentMonth.format('YYYY. MM')}</span>
         <button type="button" className="calendar-mini-nav-btn" onClick={handleNextMonth}>
-          <RightOutlined />
+          <ButtonRightIcon className="calendar-mini-nav-icon" />
         </button>
       </div>
       <div className="calendar-mini-grid" aria-label="달력">

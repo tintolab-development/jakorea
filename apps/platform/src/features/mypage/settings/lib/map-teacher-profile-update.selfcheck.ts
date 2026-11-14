@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict'
 import type { SettingsTeacherEditFormValues } from './map-edit'
-import { mapTeacherSettingsEditToPortalProfileUpdate } from './map-teacher-profile-update'
+import { mapTeacherSettingsEditToPortalProfileUpdate } from './map-teacher-profile-update.ts'
 
 const base: SettingsTeacherEditFormValues = {
   schoolName: '서울공항초등학교',
@@ -20,6 +20,10 @@ assert.equal(cms.schoolOrganizationId, 190112)
 assert.equal(cms.schoolSelection, undefined)
 // 강사가 아닌 교사는 affiliationName 전송 금지(BE PORTAL_TEACHER_PROFILE_FIELD_NOT_EDITABLE)
 assert.equal('affiliationName' in cms, false)
+
+// 휴직 상태도 그대로 전달
+const onLeave = mapTeacherSettingsEditToPortalProfileUpdate({ ...base, employmentStatus: 'ON_LEAVE' })
+assert.equal(onLeave.teacherEmploymentStatus, 'ON_LEAVE')
 
 // NEIS 검색으로 새로 고름 — schoolSelection만, schoolOrganizationId 없음
 const neis = mapTeacherSettingsEditToPortalProfileUpdate({

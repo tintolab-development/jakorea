@@ -3,6 +3,10 @@ import {
   normalizeHorizontalTableParagraph,
   type HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL,
+  APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL,
+} from '@jakorea/form-schema/paragraph-ids/application-form-privacy-retention'
 
 export const PARTICIPATING_INSTRUCTOR_ADD_CONSENT_IDS = {
   personalInfoCollection: 'participating-instructor-add-consent-personal-info',
@@ -109,13 +113,6 @@ const GENERAL_INSTITUTION_COLLECTION_ITEMS_CELL = '이름, 개인 연락처, e-m
 const GENERAL_INSTITUTION_COLLECTION_PURPOSE_CELL =
   'JA 프로그램 강사활동 안내 및\n진행에 필요한 정보 안내'
 
-/** 일반 프로그램(기관형) Figma 03-2 — 개인정보 수집·이용 보유기간 */
-const GENERAL_INSTITUTION_PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
-
-/** 일반 프로그램(기관형) Figma 03-2 — 제3자 제공받는 자의 보유기간 */
-const GENERAL_INSTITUTION_THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
-
 /** 일반 프로그램(기관형) Figma 03-2 — 제3자 「제공받는 곳」 입력 placeholder */
 export const PARTICIPATING_INSTRUCTOR_THIRD_PARTY_RECIPIENT_PLACEHOLDER =
   '제공받는 기관명을 입력해 주세요'
@@ -133,7 +130,8 @@ export function createGeneralInstitutionParticipatingInstructorAddConsentParagra
         [
           { kind: 'text' as const, value: GENERAL_INSTITUTION_COLLECTION_ITEMS_CELL },
           { kind: 'text' as const, value: GENERAL_INSTITUTION_COLLECTION_PURPOSE_CELL },
-          { kind: 'text' as const, value: GENERAL_INSTITUTION_PERSONAL_INFO_RETENTION_CELL },
+          // 일반 프로그램(기관형) Figma 03-2 — 신청서 공통 보유기간(FE·BE 공통 상수)
+          { kind: 'text' as const, value: APPLICATION_FORM_PERSONAL_INFO_RETENTION_CELL },
         ],
       ],
       bottomConsent: undefined,
@@ -151,7 +149,7 @@ export function createGeneralInstitutionParticipatingInstructorAddConsentParagra
           { kind: 'text' as const, value: '' },
           { kind: 'text' as const, value: GENERAL_INSTITUTION_COLLECTION_ITEMS_CELL },
           { kind: 'text' as const, value: GENERAL_INSTITUTION_COLLECTION_PURPOSE_CELL },
-          { kind: 'text' as const, value: GENERAL_INSTITUTION_THIRD_PARTY_RETENTION_CELL },
+          { kind: 'text' as const, value: APPLICATION_FORM_THIRD_PARTY_RETENTION_CELL },
         ],
       ],
       bottomConsent: undefined,

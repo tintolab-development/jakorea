@@ -1,6 +1,6 @@
 {
   "templateCode": "recruitment-trained-teachers",
-  "templateName": "교육받은 교사_참여 기관 모집 폼",
+  "templateName": "교육 받은 교사_참여 기관 모집 폼",
   "formType": "WRITING",
   "category": "RECRUITMENT",
   "schemaJson": {
@@ -43,7 +43,7 @@
         "variant": "horizontal_table",
         "requiredMark": false,
         "paragraphTitle": "상세 정보",
-        "paragraphDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.",
+        "paragraphDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출됩니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

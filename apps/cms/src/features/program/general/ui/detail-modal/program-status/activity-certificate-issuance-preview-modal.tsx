@@ -14,6 +14,12 @@ import { useCertificateTemplateModalState } from '@/features/template/hooks/use-
 import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import { certificateIssueReasonCodeFromLabel } from '@/features/program/shared/lib/certificate-serial'
+import { useActivityCertificatePeriodHours } from '@/features/program/general/hooks/use-activity-certificate-period-hours'
+import {
+  ACTIVITY_CERTIFICATE_BLOCKED_TITLE,
+  activityCertificateBlockMessageFromError,
+} from '@/features/program/general/lib/activity-certificate-issue-block'
+import { CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY } from '@/features/program/general/lib/activity-certificate-period-hours'
 import { unmaskInstructorForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -96,10 +102,23 @@ export function ActivityCertificateIssuancePreviewModal({
     showAlert,
   ])
 
+  const periodHours = useActivityCertificatePeriodHours({
+    open,
+    participantId: instructor.id,
+    certificateType: CERTIFICATE_ELIGIBILITY_TYPE_INSTRUCTOR_ACTIVITY,
+  })
+
   const runtimeStringValues = useMemo(
     () =>
-      buildActivityCertificateInitialStringValues(unmaskedInstructor, program, issuanceReasonLabel),
-    [issuanceReasonLabel, program, unmaskedInstructor]
+      buildActivityCertificateInitialStringValues(unmaskedInstructor, program, issuanceReasonLabel, {
+        participationPeriod: periodHours.participationPeriod,
+      }),
+    [
+      issuanceReasonLabel,
+      periodHours.participationPeriod,
+      program,
+      unmaskedInstructor,
+    ]
   )
 
   const modalState = useCertificateTemplateModalState({
@@ -157,10 +176,12 @@ export function ActivityCertificateIssuancePreviewModal({
         downloadPdf,
       })
     } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getCertificateSerialAllocateErrorMessage(error),
-      })
+      const blockMessage = activityCertificateBlockMessageFromError(error)
+      showAlert(
+        blockMessage
+          ? { title: ACTIVITY_CERTIFICATE_BLOCKED_TITLE, content: blockMessage }
+          : { title: '안내', content: getCertificateSerialAllocateErrorMessage(error) }
+      )
     } finally {
       setIsAllocatingSerial(false)
     }

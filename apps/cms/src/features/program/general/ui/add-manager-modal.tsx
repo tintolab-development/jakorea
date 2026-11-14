@@ -239,7 +239,7 @@ export function AddManagerModal({
               rules={[{ required: true, message: '권한을 선택해 주세요' }]}
               className="add-manager-modal__field"
             >
-              <CmsRadio.Group label="권한 설정" required size="large">
+              <CmsRadio.Group label="권한 설정" required size="medium">
                 {ROLE_OPTIONS.map(opt => (
                   <CmsRadio
                     key={opt.value}
@@ -260,7 +260,7 @@ export function AddManagerModal({
               <ManagerPresetSelect
                 label="담당자 추가"
                 required
-                inputSize="large"
+                inputSize="medium"
                 placeholder="추가 등록할 담당자를 선택해 주세요"
                 width="100%"
                 withAllOption={false}

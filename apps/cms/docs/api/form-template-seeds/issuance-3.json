@@ -120,7 +120,7 @@
         "answerRequired": true,
         "requiredMark": true,
         "paragraphTitle": "강의 종합 평가 및 개선점",
-        "paragraphDescription": "ex) 강의 총평, 잘 된 점, 아쉬운 점, 개선 방향 등",
+        "paragraphDescription": "ex) 강의 총평, 잘 된 점, 아쉬운 점, 개선 방향 등.",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
         "items": [
@@ -141,7 +141,7 @@
         "answerRequired": true,
         "requiredMark": true,
         "paragraphTitle": "교육 사진",
-        "paragraphDescription": "교육 장면 사진을 2장 이상 첨부해 주세요",
+        "paragraphDescription": "교육 당일 사진을 2장 이상 첨부해 주세요.",
         "participatesInTitleNumbering": true
       }
     ]

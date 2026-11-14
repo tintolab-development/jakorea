@@ -87,7 +87,7 @@ function categoryFromBasisDetail(line: PaymentOrderCalculationStatementLine): st
   if (detail.layout === 'activity') {
     return presentText(detail.categoryLabel) || '활동비'
   }
-  if (detail.layout === 'withholding') {
+  if (detail.layout === 'withholding' || detail.layout === 'withholdingRate') {
     return undefined
   }
   if (detail.layout === 'remote') {

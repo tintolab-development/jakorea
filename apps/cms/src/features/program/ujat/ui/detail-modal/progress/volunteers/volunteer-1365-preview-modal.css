@@ -1,6 +1,7 @@
 /**
  * UJAT 1365 봉사시간 등록 양식 미리보기 — 피그마 Popup / View / w1400 / 엑셀 양식 미리보기 (10014:40205)
- * 시트 영역 650 · 2px #E0E0E0 · radius 8 (large 모달 기본 840px max-height 덮어씀)
+ * 시트 영역 664 · 2px #E0E0E0 · radius 8 (large 모달 기본 840px max-height 덮어씀)
+ * 시안 모달 1400×880 — 시트 높이로 맞춤(650 → 664, 모달 866 → 880)
  */
 
 .volunteer-1365-preview-modal.teal-header-modal--large.ant-modal {
@@ -33,8 +34,8 @@
 .volunteer-1365-preview-modal__sheet-host {
   flex: 1 1 auto;
   min-height: 400px;
-  height: 650px;
-  max-height: 650px;
+  height: 664px;
+  max-height: 664px;
   width: 100%;
   border: 2px solid var(--Border-default, #e0e0e0);
   border-radius: var(--8, 8px);

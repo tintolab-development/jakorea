@@ -538,6 +538,12 @@ const TERM_LABEL: Record<string, string> = {
   SECOND_HALF: '하반기',
 }
 
+/** UJAT 세부내용 일정 블록 — Figma 14064-40209 「상반기(1학기)/하반기(2학기)」 */
+const UJAT_EVENT_TERM_LABEL: Record<string, string> = {
+  FIRST_HALF: '상반기(1학기)',
+  SECOND_HALF: '하반기(2학기)',
+}
+
 const UJAT_KIND_ORDER: Record<string, number> = {
   SESSION: 0,
   PRE_EDUCATION: 1,
@@ -645,7 +651,7 @@ function mapUjatPublicEventSchedules(schedules: PortalSchedule[] | undefined) {
       const kind = readString(schedule.scheduleKind)?.toUpperCase()
       const term = readString(schedule.term)?.toUpperCase()
       const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
-      const termLabel = term ? TERM_LABEL[term] : undefined
+      const termLabel = term ? UJAT_EVENT_TERM_LABEL[term] : undefined
       const fallbackName = toDisplayEducationScheduleName(schedule.scheduleName) ?? ''
       const scheduleLabel = termLabel ?? kindLabel ?? '일정'
       const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
@@ -702,7 +708,10 @@ function volunteerHalfRoleTag(row: PortalRecruitment): string | null {
   return termLabel ? `${termLabel} 봉사자` : null
 }
 
-function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
+function mapRecruitmentPhases(
+  recruitments: PortalRecruitment[] | undefined,
+  detailCase?: ProgramDetailCase,
+) {
   const rows = recruitments ?? []
   const qualify = rows.length > 1
   const typeCounts = new Map<string, number>()
@@ -717,10 +726,13 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
     const seen = (typeSeen.get(typeKey) ?? 0) + 1
     typeSeen.set(typeKey, seen)
     const role = recruitmentRoleShort(row.recruitmentType)
-    const halfTag = volunteerHalfRoleTag(row)
-    const roleTag =
-      halfTag ??
-      (qualify && (typeCounts.get(typeKey) ?? 0) > 1 ? `${role}${seen}` : qualify ? role : null)
+    const skipRolePrefix =
+      detailCase === 'ujat-volunteer' || detailCase === 'ujat-participant'
+    const halfTag = skipRolePrefix ? null : volunteerHalfRoleTag(row)
+    const roleTag = skipRolePrefix
+      ? null
+      : (halfTag ??
+        (qualify && (typeCounts.get(typeKey) ?? 0) > 1 ? `${role}${seen}` : qualify ? role : null))
     const selectionLabel = (base: string) => (roleTag ? `${roleTag} ${base}` : base)
     const periodLabel = halfTag
       ? `${halfTag} 모집`
@@ -1260,12 +1272,11 @@ function buildPortalBasicInfoFields(args: {
 }): ProgramBasicInfoField[] {
   switch (args.detailCase) {
     case 'instructor':
-      // QA-0198: 봉사자 모집과 같이 모집 대상 아래에 CMS「모집 대상 상세」를 보인다
+      // 시안: 강사 유형 상세는 모집 대상·모집 대상 상세. 교육 대상 행은 쓰지 않는다.
       return compactBasicInfoFields([
         { label: '사업 분야', value: args.businessFieldLabel },
         { label: '모집 대상', value: args.recruitmentTargetGroupLabel },
         { label: '모집 대상 상세', value: args.recruitmentTargetDetailLabel },
-        ...educationTargetBasicInfoFields(args),
         { label: '모집 지역', value: args.educationVenueLabel },
       ])
     case 'volunteer':
@@ -1284,20 +1295,21 @@ function buildPortalBasicInfoFields(args: {
         { label: '사업 분야', value: args.businessFieldLabel },
         {
           label: '모집 대상',
-          value: args.recruitmentTargetGroupLabel || '대학(원)생',
+          value: args.recruitmentTargetGroupLabel,
         },
         ...educationTargetBasicInfoFields(args),
-        { label: '교육 지역', value: args.educationVenueLabel },
+        { label: '교육 장소', value: args.educationVenueLabel },
       ])
     case 'ujat-participant':
       return compactBasicInfoFields([
         { label: '사업 분야', value: args.businessFieldLabel },
-        {
-          label: '대상',
-          value: args.educationTargetDetailLabel || '초등학교',
-        },
-        { label: '교육 지역', value: args.educationVenueLabel },
         { label: '교육 형태', value: args.educationFormLabel },
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
+        {
+          label: '교육 대상 상세',
+          value: args.educationTargetDetailLabel,
+        },
+        { label: '교육 장소', value: args.educationVenueLabel },
       ])
     case 'gemini':
       return compactBasicInfoFields([
@@ -1678,11 +1690,19 @@ export function mapPortalProgramDetail(
         : recruitmentResolved
           ? recruitmentRows
           : remote.recruitments,
-    ).map(phase =>
-      detailCase === 'gemini' && phase.label === '참여자 모집 기간'
-        ? { ...phase, label: '참여 기관 모집 기간' }
-        : phase,
-    ),
+      detailCase,
+    ).map(phase => {
+      const useOrgPeriodLabel =
+        detailCase === 'gemini' ||
+        (detailCase === 'general' && category === 'institution')
+      if (
+        useOrgPeriodLabel &&
+        (phase.label === '참여자 모집 기간' || phase.label === '기관 모집 기간')
+      ) {
+        return { ...phase, label: '참여 기관 모집 기간' }
+      }
+      return phase
+    }),
     educationSchedules:
       isUjatDetailCase
         ? []

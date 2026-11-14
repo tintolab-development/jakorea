@@ -41,6 +41,8 @@ import { GeminiInstitutionPreferredLectureScheduleCell } from './gemini-institut
 import './institution-application-tab.css'
 import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import { showApplicationApprovalCompletedAlert } from '@/shared/ui/show-application-approval-completed-alert'
+import { showApplicationRejectionCompletedAlert } from '@/shared/ui/show-application-rejection-completed-alert'
 
 type PendingFilters = {
   institutionName: string
@@ -293,6 +295,8 @@ export function GeminiInstitutionApplicationTab({
         refreshRows()
         setSelectedRowKeys([])
         setBulkRejectOpen(false)
+        // 일반 기관형 기관 신청 반려와 같은 완료 안내
+        showApplicationRejectionCompletedAlert()
       } catch (error) {
         showAlert({
           title: '안내',
@@ -318,6 +322,7 @@ export function GeminiInstitutionApplicationTab({
         payload.manualNotifyAt
       )
       setDecisionSubmitting(true)
+      let partialFailure = false
       try {
         if (remoteEnabled) {
           const result = await approveGeminiOrganizationApplications(ids, {
@@ -325,6 +330,7 @@ export function GeminiInstitutionApplicationTab({
             scheduledAt: notify.scheduledAt,
           })
           if (notify.timing !== 'SCHEDULED' && result.failureCount > 0) {
+            partialFailure = true
             const firstFailure = result.failures[0]
             showAlert({
               title: '처리 실패',
@@ -339,6 +345,8 @@ export function GeminiInstitutionApplicationTab({
         refreshRows()
         setSelectedRowKeys([])
         setBulkApproveOpen(false)
+        // 일반 기관형 기관 신청 승인과 같은 완료 안내 — 일부 실패는 위 처리 실패 안내만 띄운다
+        if (!partialFailure) showApplicationApprovalCompletedAlert()
       } catch (error) {
         showAlert({
           title: '안내',

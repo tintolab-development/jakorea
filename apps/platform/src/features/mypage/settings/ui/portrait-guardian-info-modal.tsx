@@ -13,6 +13,8 @@ export type PortraitGuardianInfoModalProps = {
   relation: string
   /** 안내 문구 덮어쓰기 — 기본값: 마이페이지 초상권 맥락 (`PORTRAIT_GUARDIAN_INFO_COPY.description`) */
   description?: ReactNode
+  /** 확인 버튼 라벨 덮어쓰기 — 기본값 `확인하기` (영수증 사전동의: `동의서 작성하기`) */
+  confirmLabel?: string
   relationError?: string | null
   confirmLoading?: boolean
   onRelationChange: (value: string) => void
@@ -27,6 +29,7 @@ export function PortraitGuardianInfoModal({
   guardianPhone,
   relation,
   description = PORTRAIT_GUARDIAN_INFO_COPY.description,
+  confirmLabel = PORTRAIT_GUARDIAN_INFO_COPY.confirmLabel,
   relationError,
   confirmLoading = false,
   onRelationChange,
@@ -112,7 +115,7 @@ export function PortraitGuardianInfoModal({
             disabled={confirmLoading}
             onClick={onConfirm}
           >
-            {confirmLoading ? '처리 중…' : PORTRAIT_GUARDIAN_INFO_COPY.confirmLabel}
+            {confirmLoading ? '처리 중…' : confirmLabel}
           </PFButton>
         </div>
       </div>

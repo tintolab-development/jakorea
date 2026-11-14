@@ -19,7 +19,7 @@ test.describe('교재 관리 목록·상세', () => {
     await expectAuthenticatedShell(page)
     await textbooks.expectListShell()
     await textbooks.expectListColumns()
-    await textbooks.expectDefaultUseUsed()
+    await textbooks.expectDefaultUseAll()
     await textbooks.expectBusinessAreaManageButton()
     await textbooks.registerAndDeleteUniqueBusinessArea()
     await clickExcelClientDownload(page, test.info())

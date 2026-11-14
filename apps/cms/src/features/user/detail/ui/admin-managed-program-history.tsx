@@ -349,7 +349,8 @@ export function AdminManagedProgramHistory({
         title: '프로그램명',
         dataIndex: 'title',
         key: 'title',
-        width: 260,
+        /** 시안: 프로그램명 676 (가장 넓음) */
+        width: 676,
         ellipsis: true,
         align: 'center',
         render: (t: string) => t,
@@ -357,6 +358,7 @@ export function AdminManagedProgramHistory({
       {
         title: '진행년도',
         key: 'year',
+        width: 130,
         align: 'center',
         render: (_: unknown, p: Program) => yearOfProgram(p),
       },
@@ -380,21 +382,21 @@ export function AdminManagedProgramHistory({
       {
         title: '참여자 모집 인원',
         key: 'recruitment',
-        width: 130,
+        width: 160,
         align: 'center',
         render: (_: unknown, p: Program) => recruitmentCountDisplay(p, membersRemote),
       },
       {
         title: '참여자 유형',
         key: 'ptype',
-        width: 120,
+        width: 160,
         align: 'center',
         render: (_: unknown, p: Program) => participantTypeLabel(p, membersRemote),
       },
       {
         title: '교육 대상',
         key: 'target',
-        width: 120,
+        width: 160,
         align: 'center',
         render: (_: unknown, p: Program) => targetLevelLabel(p),
       },

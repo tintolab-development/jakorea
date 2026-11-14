@@ -7,8 +7,16 @@ import { PFButton, PFModal, PFText } from '@/shared/ui'
 import { PROGRAM_GUARDIAN_IDENTITY_COPY } from '../../lib/program-minor-portrait-copy'
 import styles from './program-guardian-identity-modal.module.css'
 
+export type ProgramGuardianIdentityCopy = {
+  title: string
+  description: string
+  verifyLabel: string
+}
+
 export type ProgramGuardianIdentityModalProps = {
   open: boolean
+  /** 문구 덮어쓰기 — 기본값: 프로그램 신청 초상권 맥락. 영수증 사전동의 등 다른 맥락에서 전달 */
+  copy?: ProgramGuardianIdentityCopy
   /** 보호자 정보 누락 등 — 회색 박스 아래 안내 */
   errorMessage?: string | null
   onClose: () => void
@@ -18,6 +26,7 @@ export type ProgramGuardianIdentityModalProps = {
 /** 미성년 프로그램 신청 — 보호자 휴대폰 본인인증 안내 (PC 팝업 / 모바일 전체 화면 + 하단 고정 버튼) */
 export function ProgramGuardianIdentityModal({
   open,
+  copy = PROGRAM_GUARDIAN_IDENTITY_COPY,
   errorMessage,
   onClose,
   onVerify,
@@ -28,7 +37,7 @@ export function ProgramGuardianIdentityModal({
     <PFModal
       open={open}
       size="md"
-      title={PROGRAM_GUARDIAN_IDENTITY_COPY.title}
+      title={copy.title}
       ariaDescribedBy={descriptionId}
       onClose={onClose}
       mobilePlacement="full"
@@ -42,7 +51,7 @@ export function ProgramGuardianIdentityModal({
             id={descriptionId}
             className={styles.description}
           >
-            {PROGRAM_GUARDIAN_IDENTITY_COPY.description}
+            {copy.description}
           </PFText>
           <div className={styles.identityModule}>
             <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500">
@@ -59,7 +68,7 @@ export function ProgramGuardianIdentityModal({
         </div>
         <div className={styles.actions}>
           <PFButton type="button" variant="primary" size="xlarge" width="100%" onClick={onVerify}>
-            {PROGRAM_GUARDIAN_IDENTITY_COPY.verifyLabel}
+            {copy.verifyLabel}
           </PFButton>
         </div>
       </div>

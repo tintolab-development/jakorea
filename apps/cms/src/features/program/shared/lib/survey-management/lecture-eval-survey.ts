@@ -1,11 +1,11 @@
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
+  clearWritingFormParagraphFillPreviewAnswers,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   getUserInfoSelectedEntries,
   isUserInfoParagraph,
   normalizeWritingFormDraft,
   type MultipleChoiceParagraph,
-  type ScaleTypeParagraph,
   type ShortEssayParagraph,
   type StarRateParagraph,
   type TitleWithPeriodParagraph,
@@ -15,6 +15,10 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import {
+  normalizeUserInfoGenderValue,
+  USER_INFO_GENDER_FIELD_KEY,
+} from '@/features/template/ui/paragraph/single-item/user-info'
+import {
   resolveSurveyWritingDraft,
   resolveSurveyWritingDraftSync,
 } from './survey-writing-draft'
@@ -22,9 +26,10 @@ import type { RegisteredSurvey, SurveyPollRawResponse } from './survey-managemen
 
 export const LECTURE_EVAL_TEMPLATE_ID = 'survey-admin'
 
-/** 강의 평가 응답·미리보기 — 설문 기간을 지정 텍스트로 표시 */
+/** 강의 평가 응답·미리보기 — 설문 기간을 지정 텍스트로, 설문자 정보를 상세 정보 폼 규격(한 줄 두 항목)으로 표시 */
 export const LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS = {
   surveyPeriodReadonly: true,
+  lectureEvalRespondentDetailInfo: true,
 } satisfies Partial<RenderFormParagraphBodyOptions>
 
 export type LectureEvalTabKey = 'eval' | 'results'
@@ -68,28 +73,50 @@ export type ResolveLectureEvalWritingDraftOptions = {
   templateVersionId?: number
 }
 
+/**
+ * 저장된 응답이 없을 때의 초기 답변 — 시드·양식에 박힌 미리보기 선택값(예: 척도 「매우 그렇다」)을 비운다.
+ * 점수 선택형·별점·객관식·하단 동의는 양식 작성(fill) 공통 규칙, 주관식·설문자 정보는 강의평가 전용.
+ */
 function clearAnswerDefaults(paragraph: WritingFormParagraph): WritingFormParagraph {
-  if (paragraph.kind !== 'single_item') return paragraph
+  const cleared = clearWritingFormParagraphFillPreviewAnswers(paragraph)
+  if (cleared.kind !== 'single_item') return cleared
 
-  if (paragraph.variant === 'scale_type') {
+  if (cleared.variant === 'short_essay') {
+    const clearedItems = cleared.items?.map(item => ({ ...item, bodyText: '' })) ?? [
+      {
+        id: 'short-essay-item-1',
+        label: 'Title 01',
+        placeholder: '답변을 입력해 주세요',
+        bodyText: '',
+      },
+    ]
     return {
-      ...paragraph,
-      selectedPreviewItemId: null,
-    } satisfies ScaleTypeParagraph
-  }
-
-  if (paragraph.variant === 'short_essay') {
-    const clearedItems =
-      paragraph.items?.map(item => ({ ...item, bodyText: '' })) ??
-      [{ id: 'short-essay-item-1', label: 'Title 01', placeholder: '답변을 입력해 주세요', bodyText: '' }]
-    return {
-      ...paragraph,
+      ...cleared,
       bodyText: '',
       items: clearedItems,
     } satisfies ShortEssayParagraph
   }
 
-  return paragraph
+  if (isUserInfoParagraph(cleared) && cleared.fieldAnswers != null) {
+    return { ...cleared, fieldAnswers: {} } satisfies UserInfoParagraph
+  }
+
+  return cleared
+}
+
+/**
+ * 게시 version 본문을 그대로 연 강의평가 작성 초안 — 제목·기간은 양식 그대로 두고 답변만 비운다.
+ * (`buildLectureEvalFormDraft`를 거치지 않는 version 단건 조회 경로용)
+ */
+export function clearLectureEvalFormAnswers(draft: WritingFormDraft): WritingFormDraft {
+  return normalizeWritingFormDraft({
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph =>
+      paragraph.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title
+        ? paragraph
+        : clearAnswerDefaults(paragraph)
+    ),
+  })
 }
 
 function applyLectureEvalTitleParagraph(
@@ -180,17 +207,42 @@ function getShortEssayText(paragraph: ShortEssayParagraph): string {
   return paragraph.bodyText.trim()
 }
 
-function getMultipleChoiceAnswer(paragraph: MultipleChoiceParagraph): string {
-  if (paragraph.allowMultiple) {
-    return (paragraph.selectedPreviewMultipleIds ?? []).filter(id => id.trim() !== '').join(',')
+/** 객관식(MULTIPLE_CHOICE) 선택 옵션 value 목록 — 서버는 옵션 value 배열로 받는다(쉼표 문자열 금지). */
+function getMultipleChoiceSelectedIds(paragraph: MultipleChoiceParagraph): string[] {
+  const ids = paragraph.allowMultiple
+    ? (paragraph.selectedPreviewMultipleIds ?? [])
+    : [paragraph.selectedPreviewSingleId ?? '']
+  return ids.map(id => id.trim()).filter(id => id !== '')
+}
+
+/**
+ * 서버 응답의 객관식 값 → 옵션 value 목록.
+ * 배열 답은 `answerValueJson`(JSON 배열 문자열)로 오고, 예전 단일 값은 문자열 하나로 온다.
+ */
+function parseMultipleChoiceAnswerValue(raw: string): string[] {
+  const text = raw.trim()
+  if (text.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(text) as unknown
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((item): item is string | number => typeof item === 'string' || typeof item === 'number')
+          .map(item => String(item).trim())
+          .filter(item => item !== '')
+      }
+    } catch {
+      // JSON 배열이 아니면 단일 값으로 본다
+    }
   }
-  return paragraph.selectedPreviewSingleId?.trim() ?? ''
+  return text === '' ? [] : [text]
 }
 
 function collectUserInfoAnswers(paragraph: UserInfoParagraph): Record<string, string> {
   const next: Record<string, string> = {}
   for (const field of getUserInfoSelectedEntries(paragraph)) {
-    const value = paragraph.fieldAnswers?.[field.key]?.trim() ?? ''
+    const raw = paragraph.fieldAnswers?.[field.key]?.trim() ?? ''
+    // 성별은 서버 값 MALE/FEMALE (예전 직접 입력 「남자」·「여」 등도 변환)
+    const value = field.key === USER_INFO_GENDER_FIELD_KEY ? normalizeUserInfoGenderValue(raw) : raw
     if (value !== '') next[field.key] = value
   }
   return next
@@ -269,8 +321,9 @@ export function draftToLectureEvalPollResponse(draft: WritingFormDraft): SurveyP
     }
 
     if (paragraph.variant === 'multiple_choice') {
-      const value = getMultipleChoiceAnswer(paragraph)
-      if (value !== '') answers[paragraph.id] = value
+      // 화면 행은 서버 표시값과 같게 JSON 배열 문자열로 둔다(제출 payload는 배열 — draftToLectureEvalSubmitAnswers)
+      const ids = getMultipleChoiceSelectedIds(paragraph)
+      if (ids.length > 0) answers[paragraph.id] = JSON.stringify(ids)
       continue
     }
 
@@ -293,6 +346,55 @@ export function draftToLectureEvalPollResponse(draft: WritingFormDraft): SurveyP
     respondentName,
     addressRegion,
     answers,
+  }
+}
+
+/**
+ * 관리자 설문 제출(`POST /api/admin/form-responses/submit`·`PATCH …/{id}`) `answers`.
+ * 서버는 최상위 키가 문항 키(단락 id)와 같아야 받는다 — 설문자 정보(USER_INFO)는 단락 id 아래
+ * `{ name, gender, phone, … }` 객체로 묶는다(평면 키 금지, 백엔드 안내 2026-11-13). 값 없는 항목은 생략,
+ * 설문자 정보 단락 키 자체는 항상 넣는다.
+ */
+export function draftToLectureEvalSubmitAnswers(draft: WritingFormDraft): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  const userInfoFieldKeys = new Set<string>()
+  for (const paragraph of draft.paragraphs) {
+    if (!isUserInfoParagraph(paragraph)) continue
+    out[paragraph.id] = collectUserInfoAnswers(paragraph)
+    for (const field of getUserInfoSelectedEntries(paragraph)) userInfoFieldKeys.add(field.key)
+  }
+  // 객관식은 선택한 옵션 value 배열(1개여도 배열). 선택 없음이면 키를 생략한다 — 필수는 제출 전 검증에서 막는다.
+  for (const paragraph of draft.paragraphs) {
+    if (paragraph.kind !== 'single_item' || paragraph.variant !== 'multiple_choice') continue
+    const ids = getMultipleChoiceSelectedIds(paragraph)
+    if (ids.length > 0) out[paragraph.id] = ids
+  }
+  for (const [key, value] of Object.entries(draftToLectureEvalPollResponse(draft).answers)) {
+    // 설문자 정보 항목(name·gender…)은 위 객체에만 — 최상위 평면 키로 보내지 않는다
+    if (userInfoFieldKeys.has(key) || key in out) continue
+    out[key] = value
+  }
+  return out
+}
+
+/** 서버 응답의 설문자 정보 값 — 단락 id 아래 객체(JSON 문자열) 또는 예전 평면 키 */
+function readUserInfoAnswerObject(
+  answers: Record<string, string>,
+  paragraphId: string
+): Record<string, string> | null {
+  const raw = answers[paragraphId]
+  if (raw == null || raw.trim() === '') return null
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+    const out: Record<string, string> = {}
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (value == null) continue
+      out[key] = String(value)
+    }
+    return out
+  } catch {
+    return null
   }
 }
 
@@ -329,13 +431,11 @@ export function applyLectureEvalAnswersToDraft(
         return { ...paragraph, bodyText: value, items }
       }
       if (paragraph.variant === 'multiple_choice') {
+        const ids = parseMultipleChoiceAnswerValue(value)
         if (paragraph.allowMultiple) {
-          return {
-            ...paragraph,
-            selectedPreviewMultipleIds: value.split(',').filter(id => id !== ''),
-          }
+          return { ...paragraph, selectedPreviewMultipleIds: ids }
         }
-        return { ...paragraph, selectedPreviewSingleId: value }
+        return { ...paragraph, selectedPreviewSingleId: ids[0] ?? null }
       }
       if (paragraph.variant === 'star_rate') {
         const stars = Number(value)
@@ -346,8 +446,9 @@ export function applyLectureEvalAnswersToDraft(
       }
       if (isUserInfoParagraph(paragraph)) {
         const fieldAnswers = { ...(paragraph.fieldAnswers ?? {}) }
+        const nested = readUserInfoAnswerObject(answers, paragraph.id)
         for (const field of getUserInfoSelectedEntries(paragraph)) {
-          const fieldValue = answers[field.key]
+          const fieldValue = nested?.[field.key] ?? answers[field.key]
           if (fieldValue != null) fieldAnswers[field.key] = fieldValue
         }
         return { ...paragraph, fieldAnswers }
@@ -376,7 +477,7 @@ export function validateLectureEvalFormDraft(draft: WritingFormDraft): LectureEv
     }
 
     if (paragraph.variant === 'multiple_choice' && paragraph.answerRequired !== false) {
-      if (getMultipleChoiceAnswer(paragraph) === '') {
+      if (getMultipleChoiceSelectedIds(paragraph).length === 0) {
         const title = paragraph.paragraphTitle.trim() || '객관식 문항'
         return { valid: false, message: `${title}에 답변해 주세요.` }
       }
@@ -402,9 +503,15 @@ export function validateLectureEvalFormDraft(draft: WritingFormDraft): LectureEv
   return { valid: true }
 }
 
-/** 결과 탭·전체 응답·summary — 강의평가가 끝난 뒤(FINISHED)에만. 종료 전 서버는 본인 응답만 주고 summary는 409다. */
-export function isLectureEvalResultsTabAccessible(survey: RegisteredSurvey): boolean {
-  return survey.status === 'finished'
+/**
+ * 결과 탭·전체 응답 — 강의평가가 끝난 뒤(FINISHED), 또는 마감 없는 강의평가는 진행 중에도 상시.
+ * (마감 없음은 서버 진행 상태가 FINISHED가 되지 않으므로 결과를 막지 않는다.)
+ */
+export function isLectureEvalResultsTabAccessible(
+  survey: Pick<RegisteredSurvey, 'status' | 'submissionOpenEnded'>
+): boolean {
+  if (survey.status === 'finished') return true
+  return survey.status === 'in_progress' && survey.submissionOpenEnded === true
 }
 
 /**

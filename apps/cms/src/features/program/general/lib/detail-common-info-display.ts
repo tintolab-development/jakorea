@@ -567,7 +567,7 @@ export function resolveGeneralProgramListTitle(program: Program): string {
   return resolveGeneralProgramDisplayTitle(program)
 }
 
-/** 참여자 유형 요약 — 등록 선택지 라벨(학교/기관·개인·교사/강사·봉사자)과 같은 말 (QA-0419) */
+/** 참여자 유형 요약 — 등록 선택지 라벨(학교/기관·개인·강사·봉사자)과 같은 말 (QA-0419) */
 export function formatGeneralParticipantTypesSummary(program: Program): string {
   return resolveParticipantTypes(program)
     .map(t => PARTICIPANT_LABEL_BY_VALUE[t] ?? t)

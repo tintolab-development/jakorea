@@ -160,7 +160,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
   it('maps sendStatus/receiptStatus to the Figma mail send labels', () => {
     expect(
       mapMailDeliveryToSendHistoryRow({ deliveryId: 1, sendStatus: 'SCHEDULED' })?.sendStatus
-    ).toBe('예약')
+    ).toBe('발송 예약')
     expect(
       mapMailDeliveryToSendHistoryRow({ deliveryId: 2, sendStatus: 'WAITED' })?.sendStatus
     ).toBe('발송 대기')

@@ -1,8 +1,24 @@
 export const AGREEMENT_CRIME_TEMPLATE_CODE = 'agreement-crime' as const
 
+/** 템플릿 관리 [문서 변경] — 카탈로그 원본 양식은 PDF만 */
 export const CRIME_CONSENT_UPLOAD_ACCEPT = 'application/pdf,.pdf'
 
+/**
+ * 회원 화면 동의서 업로드 팝업(시안 6647:36345) — 작성본 증빙 PDF·JPG·PNG, 최대 20MB.
+ * 서버 `CRIMINAL_HISTORY_EVIDENCE` 허용 형식(PDF/JPG/JPEG/PNG/WEBP, 20MB) 안에서 시안 안내 문구대로 받는다.
+ */
+export const MEMBER_CRIME_CONSENT_EVIDENCE_UPLOAD_ACCEPT =
+  'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png'
+
+export const MEMBER_CRIME_CONSENT_EVIDENCE_MAX_BYTES = 20 * 1024 * 1024
+
 const PDF_FILE_NAME_PATTERN = /\.pdf$/i
+const MEMBER_CRIME_CONSENT_EVIDENCE_FILE_NAME_PATTERN = /\.(pdf|jpe?g|png)$/i
+const MEMBER_CRIME_CONSENT_EVIDENCE_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+])
 
 export type AgreementCrimeConsentSettings = {
   documentImageUrl?: string
@@ -54,6 +70,13 @@ export function isCrimeConsentUploadFile(file: File): boolean {
   const mime = file.type.trim().toLowerCase()
   if (mime === 'application/pdf') return true
   return PDF_FILE_NAME_PATTERN.test(file.name)
+}
+
+/** 회원 화면 동의서 업로드 팝업 — PDF·JPG·PNG */
+export function isMemberCrimeConsentEvidenceUploadFile(file: File): boolean {
+  const mime = file.type.trim().toLowerCase()
+  if (MEMBER_CRIME_CONSENT_EVIDENCE_MIME_TYPES.has(mime)) return true
+  return MEMBER_CRIME_CONSENT_EVIDENCE_FILE_NAME_PATTERN.test(file.name)
 }
 
 export function isCrimeConsentPdfPreviewSrc(

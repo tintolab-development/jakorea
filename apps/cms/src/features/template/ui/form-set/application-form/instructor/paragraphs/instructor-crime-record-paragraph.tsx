@@ -8,6 +8,7 @@ import {
 } from '@jakorea/form-schema/program-application'
 import { useInstructorApplicationField } from '@/features/template/ui/form-set/application-form/instructor/instructor-application-form-rhf'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 const CONFIRMED_VALUE = 'confirmed'
 
@@ -24,9 +25,18 @@ export function InstructorCrimeRecordParagraph({
     false
   )
   const displayOnly = isTemplateAuthoringMode || readOnlyPreview
+  /** 템플릿 관리 시안(12875:514566) — 목록 위아래 빈 줄(27), 항목 사이 간격 없음 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
 
   return (
-    <div className="form-editor-body program-application-form-instructor__crime-guide">
+    <div
+      className={[
+        'form-editor-body program-application-form-instructor__crime-guide',
+        isTemplateManagementScreen && 'program-application-form-instructor__crime-guide--spec',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="program-application-form-instructor__crime-guide-body">
         <p>{INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO}</p>
         <ul className="program-application-form-instructor__crime-guide-list">

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { getMypageLnbItems } from './lnb-config.ts'
+import { canAccessMypageLnbItem, getMypageLnbItems } from './lnb-config.ts'
 import type { PlatformMemberProfile } from '../model/types.ts'
 
 function keysOf(profile: PlatformMemberProfile) {
@@ -32,6 +32,8 @@ assert.deepEqual(
   INSTRUCTOR_KEYS.filter(key => key !== 'volunteer'),
 )
 
+assert.equal(canAccessMypageLnbItem('individual', 'lectures'), false)
+assert.equal(canAccessMypageLnbItem('instructor_only', 'lectures'), true)
 assert.equal(keysOf('individual').includes('lectures'), false)
 assert.equal(keysOf('individual').includes('settlement'), false)
 assert.equal(keysOf('school_teacher').includes('lectures'), false)

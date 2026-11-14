@@ -23,6 +23,20 @@ describe('QA-0137 새로고침 refresh 실패 분류', () => {
     expect(classifyRefreshFailure(withStatus(status))).toBe('transient')
   })
 
+  it.each([
+    ['{ error: { code } }', { error: { code: 'REFRESH_TOKEN_ALREADY_ROTATED' } }],
+    ['{ code }', { code: 'REFRESH_TOKEN_ALREADY_ROTATED' }],
+  ])('409 REFRESH_TOKEN_ALREADY_ROTATED(%s)는 같은 값을 다시 보내지 않도록 세션 종료(session-invalid)', (_label, data) => {
+    const error = new AxiosError('conflict', 'ERR_BAD_REQUEST', config, null, {
+      data,
+      status: 409,
+      statusText: 'Conflict',
+      headers: {},
+      config,
+    })
+    expect(classifyRefreshFailure(error)).toBe('session-invalid')
+  })
+
   it('네트워크 오류(응답 없음)는 transient', () => {
     expect(classifyRefreshFailure(new AxiosError('Network Error', 'ERR_NETWORK', config))).toBe('transient')
   })

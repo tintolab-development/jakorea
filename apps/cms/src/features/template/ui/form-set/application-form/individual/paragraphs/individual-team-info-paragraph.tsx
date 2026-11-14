@@ -5,6 +5,7 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 
 const TEAM_MEMBER_COUNT_OPTIONS = [
   ...Array.from({ length: 5 }, (_, index) => ({
@@ -23,6 +24,8 @@ const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 
 
 /** 프로그램 참여자 신청 폼 (개인·팀) — 팀 정보 단락 */
 export function ProgramApplicationFormIndividualTeamInfoParagraph() {
+  /** 템플릿 관리 시안(13153:437681) — 팀 내 역할 미선택 */
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [teamName, setTeamName] = useIndividualTeamInfoField<string>(
     'application.individual.teamInfo.teamName',
     ''
@@ -37,7 +40,7 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
   )
   const [teamRole, setTeamRole] = useIndividualTeamInfoField<string>(
     'application.individual.teamInfo.teamRole',
-    TEAM_ROLE_OPTIONS[0]?.value ?? 'leader'
+    isTemplateManagementScreen ? '' : (TEAM_ROLE_OPTIONS[0]?.value ?? 'leader')
   )
 
   return (
@@ -96,7 +99,7 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
           edit={
             <CmsRadioGroup
               size="medium"
-              value={teamRole}
+              value={teamRole === '' ? undefined : teamRole}
               onChange={event => setTeamRole(event.target.value)}
               style={inlineChoiceStyle}
             >

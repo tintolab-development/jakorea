@@ -80,6 +80,10 @@ export function mapSchoolOrganizationToUser(
     },
     ...(item.zipcode?.trim() ? { zipCode: item.zipcode.trim() } : {}),
     ...(Object.keys(listMetrics).length > 0 ? { listMetrics } : {}),
+    // 관리자 직접 등록 학교만 [정보 수정] 허용 — `admin-provisioned-member-policy` 판정 입력
+    ...(typeof item.registeredByAdmin === 'boolean'
+      ? { registeredByAdmin: item.registeredByAdmin }
+      : {}),
   }
 }
 

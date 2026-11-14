@@ -826,14 +826,15 @@
 }
 
 .enrollment-program-detail-modal__post-meta-icon {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  min-height: 20px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #8c8c8c;
+  /* 시안 Sprite ico-reaction-24 (#9FAFB5) */
+  color: #9fafb5;
 }
 
 .enrollment-program-detail-modal__post-meta-icon svg {

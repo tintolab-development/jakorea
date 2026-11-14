@@ -28,7 +28,7 @@ export const INSTRUCTOR_ASSIGNMENT_TAB_LABEL = '배정 현황'
 
 /**
  * 교육 일정 탭 라벨.
- * - 봉사: 배정현황
+ * - 봉사: 배정 현황
  * - UJAT: 배정 및 출결 현황
  * - 강사: 강의 일정
  * - 그 외: 교육 일정
@@ -36,7 +36,7 @@ export const INSTRUCTOR_ASSIGNMENT_TAB_LABEL = '배정 현황'
 export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase): string {
   switch (detailCase) {
     case 'volunteer':
-      return '배정현황'
+      return '배정 현황'
     case 'ujat-volunteer':
       return '배정 및 출결 현황'
     case 'ujat-participant':
@@ -44,7 +44,7 @@ export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase):
     case 'instructor':
       return '강의 일정'
     default:
-      return '교육일정'
+      return '교육 일정'
   }
 }
 
@@ -98,7 +98,8 @@ type ActivityTabOptions = {
   instructorAssignmentWithActivityTabs?: boolean
   /**
    * 제미나이 강의현황 진행 중·완료.
-   * 배정 현황·정산 현황만 두고 안내사항·강의보고서는 제공하지 않는다.
+   * 배정 현황만 둔다. 안내사항·강의보고서·정산 현황은 제공하지 않는다.
+   * 프로그램 정보·신청 정보는 상세 헤더 버튼(모달)으로 노출한다.
    */
   geminiInstructorActivityTabs?: boolean
 }
@@ -202,13 +203,7 @@ export function buildInProgressDetailTabItems(
   options: ActivityTabOptions
 ): EducationDetailTabItem[] {
   if (options.geminiInstructorActivityTabs === true) {
-    const items: EducationDetailTabItem[] = [
-      { key: 'schedule', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL },
-    ]
-    if (shouldShowSettlementTab(options)) {
-      items.push({ key: 'settlement', label: '정산 현황' })
-    }
-    return items
+    return [{ key: 'schedule', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL }]
   }
 
   if (

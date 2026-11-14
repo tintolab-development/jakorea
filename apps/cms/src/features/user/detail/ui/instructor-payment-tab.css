@@ -40,12 +40,13 @@
   gap: 12px;
 }
 
+/** 시안: 월 표시 `2026.11` 20/Bold */
 .instructor-payment-tab__month-label {
   color: #0a0a0a;
   font-family: Outfit;
-  font-size: 24px;
+  font-size: 20px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 130%; /* 31.2px */
 }
 
@@ -54,6 +55,18 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+/** 시안: 툴바 버튼 폭 — 뷰 전환 160 · 지급조서 발급 140 · 엑셀 다운로드 140 */
+.instructor-payment-tab__toolbar-actions .instructor-payment-tab__view-toggle-btn {
+  width: 160px;
+  min-width: 160px;
+}
+
+.instructor-payment-tab__toolbar-actions .instructor-payment-tab__statement-btn,
+.instructor-payment-tab__toolbar-actions .excel-button {
+  width: 140px;
+  min-width: 140px;
 }
 
 .instructor-payment-tab__summary-row {
@@ -83,6 +96,8 @@
 }
 
 .instructor-payment-tab__summary-value {
+  /* 시안: 요약 금액 #3d3d3d (mint 변형은 아래에서 덮어씀) */
+  color: var(--default-BK, #3d3d3d);
   font-size: 32px;
   font-style: normal;
   font-weight: 700;
@@ -182,4 +197,9 @@
 .instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
   .calendar-main {
   overflow: visible;
+}
+
+/** 시안: 강사 정산 현황 캘린더 월 제목 24/Medium */
+.instructor-payment-tab__calendar-view-container .calendar-header-title {
+  font-weight: 500;
 }

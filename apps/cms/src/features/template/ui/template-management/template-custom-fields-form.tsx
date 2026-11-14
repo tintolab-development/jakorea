@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Input } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import { useIsTemplateManagementScreen } from './detail-view-mode-context'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
 import {
   ADMIN_FILE_OWNER,
@@ -87,7 +89,7 @@ function sliceTitleNameToMax(value: string): string {
 const DEFAULT_CUSTOM_FIELDS: TemplateCustomFieldDef[] = [
   { name: 'titleName', label: '타이틀명' },
   { name: 'bodyContent', label: '본문 내용' },
-  { name: 'certificateBackground', label: '수료증 배경' },
+  { name: 'certificateBackground', label: '양식 배경' },
   { name: 'chairmanName', label: '회장명' },
   { name: 'chairmanSeal', label: '회장 직인' },
   { name: 'orgAddress', label: '기관 주소지' },
@@ -125,7 +127,7 @@ export const DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES: Record<string, string>
   orgPhone: 'Tel.02-783-2367',
   orgFax: 'Fax.070-4275-5115',
   orgWebsite: 'http://www.jakorea.org',
-  /** 기본 배경에 라벨이 포함됨 — 관리자 미리보기는 값 비움(실발급 시 런타임 주입) */
+  /** 라벨은 캔버스가 증명서별로 그린다 — 관리자 미리보기는 값 비움(실발급 시 런타임 주입) */
   participantInfo: '',
 }
 
@@ -148,6 +150,14 @@ export interface TemplateCustomFieldsFormProps {
   onParticipantRowVisibilityChange?: (index: number, checked: boolean) => void
   /** API·템플릿에서 복원한 이미지 URL — 우측 썸네일 동기화 */
   initialLogoPreviewUrls?: Record<string, string>
+  /** 참여자 정보 체크 항목 라벨(증명서 종류별 — 활동인증서 5줄). 미지정 시 기본 6줄 */
+  participantRowLabels?: readonly string[]
+  /** 수료증 배경 미업로드 시 썸네일(증명서 종류별 기본 배경). 미지정 시 기본 배경 */
+  defaultCertificateBackgroundThumbSrc?: string
+  /** true면 줄 고정(활동인증서) — 체크 항목 없이 줄 이름만 보여 준다 */
+  participantRowsLocked?: boolean
+  /** 템플릿 관리 — 항목 미선택 시 「타이틀명」 비활성 셀렉트에 보일 양식 이름(목록 템플릿명) */
+  certificateTypeName?: string
 }
 
 export function TemplateCustomFieldsForm({
@@ -161,7 +171,12 @@ export function TemplateCustomFieldsForm({
   participantRowVisibility,
   onParticipantRowVisibilityChange,
   initialLogoPreviewUrls,
+  participantRowLabels = PARTICIPANT_INFO_ROW_LABELS,
+  defaultCertificateBackgroundThumbSrc,
+  participantRowsLocked = false,
+  certificateTypeName,
 }: TemplateCustomFieldsFormProps) {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [activeField, setActiveField] = useState<TemplateCustomFieldDef | null>(() => {
     if (selectedFieldName === undefined || selectedFieldName === null || selectedFieldName === '')
       return null
@@ -320,13 +335,17 @@ export function TemplateCustomFieldsForm({
 
   const activeThumbSrc =
     activeField && isImageUploadField(activeField)
-      ? (activeLogoPreviewUrl ?? DEFAULT_FIELD_THUMB_SRC[activeField.name])
+      ? (activeLogoPreviewUrl ??
+        (activeField.name === TEMPLATE_FIELD_CERTIFICATE_BACKGROUND
+          ? defaultCertificateBackgroundThumbSrc
+          : undefined) ??
+        DEFAULT_FIELD_THUMB_SRC[activeField.name])
       : undefined
 
   const participantVisibilityResolved =
-    participantRowVisibility && participantRowVisibility.length === PARTICIPANT_INFO_ROW_COUNT
+    participantRowVisibility && participantRowVisibility.length === participantRowLabels.length
       ? participantRowVisibility
-      : createDefaultParticipantRowVisibility()
+      : participantRowLabels.map(() => true)
 
   return (
     <div className="template-custom-fields-form">
@@ -378,26 +397,51 @@ export function TemplateCustomFieldsForm({
                 role="group"
                 aria-label="참여자 정보 항목 표시"
               >
-                {PARTICIPANT_INFO_ROW_LABELS.map((rowLabel, index) => (
-                  <label
-                    key={rowLabel}
-                    className="template-custom-fields-form__participant-check-row"
-                  >
-                    <CmsCheckbox
-                      checkboxSize="medium"
-                      className="template-custom-fields-form__participant-checkbox"
-                      checked={participantVisibilityResolved[index]}
-                      onChange={e => {
-                        onParticipantRowVisibilityChange?.(index, e.target.checked)
-                      }}
-                    />
-                    <span className="template-custom-fields-form__participant-check-label">
-                      {rowLabel}
-                    </span>
-                  </label>
-                ))}
+                {participantRowLabels.map((rowLabel, index) =>
+                  participantRowsLocked ? (
+                    // 줄 고정(활동인증서, CMS-FUNC-0265) — 체크 항목 없이 표시 줄만 안내
+                    <div key={rowLabel} className="template-custom-fields-form__participant-check-row">
+                      <span className="template-custom-fields-form__participant-check-label">
+                        {rowLabel}
+                      </span>
+                    </div>
+                  ) : (
+                    <label
+                      key={rowLabel}
+                      className="template-custom-fields-form__participant-check-row"
+                    >
+                      <CmsCheckbox
+                        checkboxSize="medium"
+                        className="template-custom-fields-form__participant-checkbox"
+                        checked={participantVisibilityResolved[index]}
+                        onChange={e => {
+                          onParticipantRowVisibilityChange?.(index, e.target.checked)
+                        }}
+                      />
+                      <span className="template-custom-fields-form__participant-check-label">
+                        {rowLabel}
+                      </span>
+                    </label>
+                  )
+                )}
               </div>
             </>
+          ) : !activeField && isTemplateManagementScreen ? (
+            /* 시안 5767:46804·5767:48357 등 — 항목 미선택 시 「타이틀명」 비활성 셀렉트에 양식 이름(예: 봉사 활동인증서) */
+            <CmsSelect
+              className="template-custom-fields-form__secondary-select"
+              inputSize="large"
+              width="100%"
+              withAllOption={false}
+              disabled
+              value={certificateTypeName || undefined}
+              options={
+                certificateTypeName
+                  ? [{ label: certificateTypeName, value: certificateTypeName }]
+                  : []
+              }
+              aria-label="타이틀명"
+            />
           ) : activeField && MULTILINE_TEXT_FIELD_NAMES.has(activeField.name) ? (
             <Input.TextArea
               className="template-custom-fields-form__secondary-textarea"

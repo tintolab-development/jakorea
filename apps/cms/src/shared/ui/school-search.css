@@ -75,7 +75,7 @@
   padding: 40px;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: var(--Spacing-4, 4px);
   align-self: stretch;
   box-sizing: border-box;
   border-radius: 8px;
@@ -89,6 +89,22 @@
   font-weight: 500;
   line-height: 150%;
   white-space: pre-line;
+}
+
+/** 시안: 결과 없음 — 가운데 2줄 (16/SemiBold + 14/Regular), 글자색 #3d3d3d 50% */
+.school-search__result-empty-title,
+.school-search__result-empty-description {
+  margin: 0;
+}
+
+.school-search__result-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.school-search__result-empty-description {
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .school-search__results--no-results {
@@ -115,6 +131,12 @@
 .school-search__table.cms-data-table .ant-table-tbody > tr > td.school-search__col-select {
   padding-inline: 10px !important;
   box-sizing: border-box;
+}
+
+/** 시안: 「선택」 100×32 */
+.school-search__select-btn {
+  width: 100px;
+  min-width: 100px;
 }
 
 .school-search__pagination {

@@ -4,11 +4,10 @@ import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-register
 import {
   buildInProgressDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
-  canCancelEducationApplication,
+  shouldShowEducationApplicationCancelCta,
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
-  EducationApplicationInfoModal,
   resolvePreferredEducationScheduleDisplayLabel,
   EducationCancelConfirm,
   EducationDetailBack,
@@ -21,7 +20,9 @@ import {
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
   lectureApplicationDetailPath,
+  canAccessMypageLnbItem,
   MYPAGE_LECTURE_PATH,
+  MYPAGE_PATH,
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -50,7 +51,6 @@ import {
   resolveEducationNoticeAuthorDisplayName,
 } from '@/features/mypage/education/notices'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
-import { EducationProgramInfoModal } from '@/features/mypage/education/notices/ui/program-info-modal'
 import { isGeminiTrainingProgram } from '@/features/program/lib/is-gemini-training'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import { withApplicationThumbnail } from '@/features/mypage/education/applications/lib/application-program-thumbnail'
@@ -79,6 +79,12 @@ const ACTIVITY_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'compl
 const APPLIED_SECTION_TAB_ITEMS = [
   { key: 'program', label: '프로그램 정보' },
   { key: 'application', label: '신청 내용' },
+] as const
+
+/** 제미나이 진행 중·진행 완료 — 배정 현황 앞에 두는 탭. 라벨은 Figma 11001-286882 「신청 정보」. */
+const APPLIED_SECTION_TAB_ITEMS_GEMINI = [
+  { key: 'program', label: '프로그램 정보' },
+  { key: 'application', label: '신청 정보' },
 ] as const
 
 function isAppliedSection(value: string): value is AppliedSection {
@@ -140,8 +146,6 @@ export function MypageLectureDetailPage() {
   const [isAuthReady, setIsAuthReady] = useState(false)
   const section = readSection(location.search)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
-  const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
-  const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
   const member = useMypageMember()
@@ -240,6 +244,16 @@ export function MypageLectureDetailPage() {
     [activityTabOptions],
   )
 
+  /**
+   * 제미나이 진행 중·진행 완료 — Figma 11001-286882 Pattern Tab.
+   * 프로그램 정보 / 신청 정보 / 배정 현황. 기본 탭은 배정 현황(`section` 없음).
+   */
+  const isGeminiActivityTabs = isGeminiProgram && isActivityStatus
+  const geminiActivityTabItems = useMemo(
+    () => [...APPLIED_SECTION_TAB_ITEMS_GEMINI, ...inProgressTabItems],
+    [inProgressTabItems],
+  )
+
   const inProgressKeys = useMemo(
     () => inProgressTabItems.map(item => item.key),
     [inProgressTabItems],
@@ -269,6 +283,13 @@ export function MypageLectureDetailPage() {
   }, [applicationId, location.search, navigate, routeApplicationType])
 
   useEffect(() => {
+    if (!isAuthReady || member.isLoading) return
+    if (!canAccessMypageLnbItem(member.profile, 'lectures')) {
+      navigate(MYPAGE_PATH, { replace: true })
+    }
+  }, [isAuthReady, member.isLoading, member.profile, navigate])
+
+  useEffect(() => {
     if (application && !isInstructorRoleApplication(application)) {
       navigate(`${educationApplicationDetailPath(application.id, application.applicationType)}${location.search}`, {
         replace: true,
@@ -282,6 +303,13 @@ export function MypageLectureDetailPage() {
 
   const handleSectionChange = (next: string) => {
     let nextSection: DetailSection
+    if (isGeminiActivityTabs && isAppliedSection(next)) {
+      // 제미나이 진행 탭: 기본 탭이 배정 현황이므로 프로그램 정보도 `section=program`으로 남긴다.
+      const nextParams = new URLSearchParams(location.search)
+      nextParams.set('section', next)
+      navigate(`${lectureApplicationDetailPath(applicationId, application?.applicationType)}?${nextParams.toString()}`)
+      return
+    }
     if (isWithdrawnDuring) {
       nextSection = readActivitySection(
         `?section=${next}`,
@@ -415,8 +443,10 @@ export function MypageLectureDetailPage() {
   }
 
   const showBanner = shouldShowDocumentPassBanner(application)
-  const showCancelCta =
-    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
+  const showCancelCta = shouldShowEducationApplicationCancelCta(
+    application.displayStatus,
+    application.cancellable,
+  )
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection = isActivitySection(section)
     ? isWithdrawnDuring
@@ -431,6 +461,10 @@ export function MypageLectureDetailPage() {
     : isWithdrawnDuring
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
+
+  const sectionParam = new URLSearchParams(location.search).get('section')
+  const geminiActivityTabValue: DetailSection =
+    sectionParam === 'program' || sectionParam === 'application' ? sectionParam : activitySection
 
   const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
     preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
@@ -516,6 +550,7 @@ export function MypageLectureDetailPage() {
         <InstructorAssignmentPanel
           assignedItems={instructorAssignmentQuery.assignedItems}
           waitingItems={instructorAssignmentQuery.waitingItems}
+          variant={isGeminiProgram ? 'gemini' : 'default'}
           useScheduleName={
             program.educationStructure === 'schedule' && program.sessionRound === 'multi'
           }
@@ -598,17 +633,6 @@ export function MypageLectureDetailPage() {
         educationFormLabel={program.educationFormLabel}
         participationRoleLabel="강사"
       />
-      {isGeminiProgram && isActivityStatus ? (
-        <div className={styles.headerActions}>
-          <PFButton variant="text" onClick={() => setIsProgramInfoOpen(true)}>
-            프로그램 정보
-          </PFButton>
-          <span className={styles.actionDivider} aria-hidden="true" />
-          <PFButton variant="text" onClick={() => setIsApplicationInfoOpen(true)}>
-            신청 정보
-          </PFButton>
-        </div>
-      ) : null}
 
       {showBanner && appliedSection === 'application' ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
@@ -651,6 +675,37 @@ export function MypageLectureDetailPage() {
           />
           <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
         </>
+      ) : isGeminiActivityTabs ? (
+        <>
+          <PFTabs
+            className={styles.tabs}
+            items={geminiActivityTabItems}
+            value={geminiActivityTabValue}
+            onChange={handleSectionChange}
+            variant="pill"
+            size="large"
+            ariaLabel="진행중 강의 상세 탭"
+          />
+          {geminiActivityTabValue === 'program' ? (
+            <ProgramInfoBody
+              program={program}
+              showPeriodSponsor
+              showApplyCta={false}
+              showCancelCta={false}
+            />
+          ) : geminiActivityTabValue === 'application' ? (
+            <EducationApplicationContent
+              selfIntroMotivation={application.selfIntroMotivation}
+              preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+              instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+              instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
+              availableScheduleTitle="강의 진행 가능 일정"
+              officialDocument={geminiOfficialDocument}
+            />
+          ) : (
+            <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
+          )}
+        </>
       ) : isActivityStatus ? (
         <>
           <PFTabs
@@ -669,22 +724,6 @@ export function MypageLectureDetailPage() {
           해당 진행 상태의 상세 탭은 준비 중입니다.
         </PFText>
       )}
-
-      <EducationProgramInfoModal
-        open={isProgramInfoOpen}
-        program={program}
-        onClose={() => setIsProgramInfoOpen(false)}
-      />
-      <EducationApplicationInfoModal
-        open={isApplicationInfoOpen}
-        selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLabel={preferredEducationScheduleLabel}
-        instructorAvailableScheduleLines={instructorAvailableScheduleLines}
-        instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
-        availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
-        officialDocument={geminiOfficialDocument}
-        onClose={() => setIsApplicationInfoOpen(false)}
-      />
 
       <EducationCancelConfirm
         open={isCancelConfirmOpen}

@@ -22,6 +22,7 @@ import {
   type SettingsProfileInput,
 } from '@/features/mypage'
 import { isInstructorDualMypageProfile } from '@/features/mypage/lib/member-profile'
+import { isMinorSettingsMember } from '@/features/mypage/settings/lib/consent-visibility'
 import { mapPortalGuardianToSettingsView } from '@/features/mypage/settings/lib/map-view'
 import type { InstructorSettingsSectionId } from '@/features/mypage/settings/lib/format-instructor-settings-display'
 import { INSTRUCTOR_SETTINGS_ESSAY_SECTIONS } from '@/features/mypage/settings/lib/format-instructor-settings-display'
@@ -90,12 +91,18 @@ function resolvePageTitle(tab: SettingsTab, mode: SettingsMode, isInstructor: bo
   if (mode === 'edit-basic') return '회원 정보 수정'
   if (tab === 'social') return '소셜 계정 연동 관리'
   if (tab === 'consents') return '약관 및 정책 동의 관리'
-  return '회원 정보 설정'
+  return '회원 정보 수정'
 }
 
 const INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE = [
   '정산 계좌를 변경하려면 [약관 및 정책 동의 관리]\u2060에서',
   '지급조서 사전 동의서를 다시 작성해 주세요.',
+  '변경한 계좌는 이후 신청하는 정산 건부터 반영돼요.',
+].join('\n')
+
+const GENERAL_SETTLEMENT_ACCOUNT_GUIDE = [
+  '정산 계좌를 변경하려면 [약관 및 정책 동의 관리]\u2060에서',
+  '영수증 사전 동의서를 다시 작성해 주세요.',
   '변경한 계좌는 이후 신청하는 정산 건부터 반영돼요.',
 ].join('\n')
 
@@ -165,11 +172,25 @@ export function MypageSettingsPage() {
       variant: isTeacher ? 'teacher' : 'individual',
     })
   }, [effectiveProfile, guardian, isInstructor, isInstructorDual, isTeacher, linkedSocialProviders])
+  const isMinorMember = isMinorSettingsMember({
+    under14: member.under14 ?? effectiveProfile.under14,
+    ageGroup: effectiveProfile.ageGroup,
+    birthDate: member.birthDate ?? effectiveProfile.birthDate,
+  })
   const lnbActiveKey = resolveLnbKey(tab, mode)
-  const lnbItems = getSettingsLnbItems(lnbActiveKey)
+  const lnbItems = getSettingsLnbItems(lnbActiveKey, { showSocial: !isMinorMember })
   const pageTitle = resolvePageTitle(tab, mode, isInstructor)
   const instructorEditScrollTarget: InstructorFullEditScrollTarget | null =
     mode === 'edit-basic' ? 'basic' : instructorSection
+
+  useEffect(() => {
+    if (!isMinorMember || tab !== 'social') return
+    setTab('profile')
+    const params = new URLSearchParams(searchParams)
+    params.delete('tab')
+    params.delete('socialError')
+    setSearchParams(params, { replace: true })
+  }, [isMinorMember, searchParams, setSearchParams, tab])
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -218,20 +239,23 @@ export function MypageSettingsPage() {
     <ProgramBackButton size="small" label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
   )
 
-  const showInstructorSettlementAccountGuide = isInstructor && tab === 'profile'
+  const showSettlementAccountGuide = tab === 'profile'
+  const settlementAccountGuide = isInstructor
+    ? INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE
+    : GENERAL_SETTLEMENT_ACCOUNT_GUIDE
   const pageTitleNode = (
     <div className={styles.pageHeading}>
       <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
         {pageTitle}
       </PFText>
-      {showInstructorSettlementAccountGuide ? (
+      {showSettlementAccountGuide ? (
         <PFText
           as="p"
           typo="bd-lg-rg"
           color="primary-800"
           className={styles.instructorSettlementAccountGuide}
         >
-          {INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE}
+          {settlementAccountGuide}
         </PFText>
       ) : null}
     </div>
@@ -291,7 +315,7 @@ export function MypageSettingsPage() {
     )
   }
 
-  if (tab === 'social') {
+  if (tab === 'social' && !isMinorMember) {
     return wrap(<SettingsSocialAccountsView linkErrorReason={searchParams.get('socialError')} />)
   }
 

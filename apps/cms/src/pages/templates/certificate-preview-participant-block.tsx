@@ -1,4 +1,5 @@
 import { PARTICIPANT_INFO_ROW_LABELS } from '@/features/template/ui/template-management/template-custom-fields-form'
+import type { CertificateVariableChip } from '@/features/template/lib/certificate-participant-layout'
 import type { CertificateCanvasRegion } from './form-certificate-preview-mapping'
 import { shouldDim } from './form-certificate-preview-mapping'
 import { cn, getRegionActivationHandlers, labelToGraphemes } from './form-certificate-preview-utils'
@@ -10,6 +11,8 @@ const HANDLE_DOT = `${P}__region--has-dot`
 
 export interface CertificatePreviewParticipantBlockProps {
   region: CertificateCanvasRegion | null
+  /** 줄 라벨(증명서 종류별). 미지정 시 기본 6줄 */
+  rowLabels?: readonly string[]
   rowVisibility: boolean[]
   participantValues: string[]
   /** 라벨·값 텍스트 공통 색(흑백 등). 미지정 시 시트 기본(#606060) */
@@ -17,20 +20,29 @@ export interface CertificatePreviewParticipantBlockProps {
   onRegionClick?: (fieldName: string) => void
   showEditChrome?: boolean
   /**
-   * false면 라벨 열 숨김(기본 `certificate-background.png`에 라벨이 포함될 때).
-   * 값 열만 남기고 좌측 오프셋으로 배경 라벨과 정렬.
+   * 템플릿 관리 편집 캔버스 전용 — 값 대신 변수 칩(@성명 등)을 줄마다 그린다.
+   * 미지정이면 실제 값(`participantValues`)을 그린다(발급 PDF·발급 화면·미리보기 팝업).
    */
-  showLabels?: boolean
+  variableChips?: readonly CertificateVariableChip[]
+}
+
+/**
+ * 띄어쓰기가 있는 라벨(수료증 「프로그램 기간」)은 시안 5767:47765처럼 글자를 벌리지 않고 그대로 쓴다.
+ * 라벨 열 폭은 가장 긴 라벨에 맞고, 나머지 라벨은 그 폭에 양끝 정렬된다.
+ */
+function isNaturalSpacingLabel(label: string): boolean {
+  return /\s/.test(label)
 }
 
 export function CertificatePreviewParticipantBlock({
   region,
+  rowLabels = PARTICIPANT_INFO_ROW_LABELS,
   rowVisibility,
   participantValues,
   participantTextColor,
   onRegionClick,
   showEditChrome = true,
-  showLabels = true,
+  variableChips,
 }: CertificatePreviewParticipantBlockProps) {
   return (
     <div
@@ -38,7 +50,6 @@ export function CertificatePreviewParticipantBlock({
       tabIndex={showEditChrome ? 0 : undefined}
       className={cn(
         `${P}__content-frame`,
-        !showLabels ? `${P}__content-frame--values-only` : '',
         participantTextColor ? `${P}__content-frame--custom-text` : '',
         showEditChrome && HANDLE_DOT,
         showEditChrome && region === 'contentFrame' && FRAME_ACTIVE,
@@ -48,12 +59,14 @@ export function CertificatePreviewParticipantBlock({
       style={participantTextColor ? { color: participantTextColor } : undefined}
       {...(showEditChrome ? getRegionActivationHandlers('participantInfo', onRegionClick) : {})}
     >
-      {showLabels ? (
-        <div className={`${P}__content-frame-labels`}>
-          {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {
-            if (rowVisibility[index] === false) return null
-            return (
-              <div key={label} className={`${P}__label-row`}>
+      <div className={`${P}__content-frame-labels`}>
+        {rowLabels.map((label, index) => {
+          if (rowVisibility[index] === false) return null
+          return (
+            <div key={label} className={`${P}__label-row`}>
+              {isNaturalSpacingLabel(label) ? (
+                <span className={cn(`${P}__label-text`, `${P}__label-text--natural`)}>{label}</span>
+              ) : (
                 <span className={`${P}__label-text`} aria-label={label}>
                   {labelToGraphemes(label).map((ch, i) => (
                     <span key={`${label}-${i}`} className={`${P}__label-char`}>
@@ -61,17 +74,30 @@ export function CertificatePreviewParticipantBlock({
                     </span>
                   ))}
                 </span>
-              </div>
-            )
-          })}
-        </div>
-      ) : null}
+              )}
+            </div>
+          )
+        })}
+      </div>
       <div className={`${P}__content-frame-values`}>
-        {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {
+        {rowLabels.map((label, index) => {
           if (rowVisibility[index] === false) return null
+          const chip = variableChips?.[index]
           return (
             <div key={label} className={`${P}__value-row`}>
-              <span className={`${P}__value-text`}>{participantValues[index] ?? ''}</span>
+              {chip != null ? (
+                <span
+                  className={cn(
+                    `${P}__variable-chip`,
+                    chip.fullWidth ? `${P}__variable-chip--full` : ''
+                  )}
+                  data-certificate-variable-chip="participant"
+                >
+                  {chip.text}
+                </span>
+              ) : (
+                <span className={`${P}__value-text`}>{participantValues[index] ?? ''}</span>
+              )}
             </div>
           )
         })}

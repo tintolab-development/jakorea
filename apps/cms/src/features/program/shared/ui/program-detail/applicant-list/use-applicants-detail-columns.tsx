@@ -128,16 +128,14 @@ export function useInstitutionApplicantColumns(params: {
   const isCompanySchool = preset === 'company-school'
   const scheduleLines =
     educationScheduleLines ?? programBridge?.educationScheduleLines ?? []
-  const hasScheduleMultiLines =
-    isGeneralDetail &&
-    programBridge?.educationStructure === 'schedule' &&
-    programBridge.sessionRound === 'multi' &&
-    scheduleLines.length > 0
-  const showSessionsColumn =
-    hasScheduleMultiLines ||
-    (!isGeneralDetail && !isCompanySchool) ||
-    programBridge == null ||
-    shouldShowInstitutionApplicationSessionsColumn(programBridge)
+  // 일반 기관 신청 목록 — 「진행 희망 교육 일정」 열은 일정형+복수 회차일 때만 비노출(시안)
+  const isGeneralScheduleMultiRound =
+    programBridge?.educationStructure === 'schedule' && programBridge.sessionRound === 'multi'
+  const showSessionsColumn = isGeneralDetail
+    ? !isGeneralScheduleMultiRound
+    : !isCompanySchool ||
+      programBridge == null ||
+      shouldShowInstitutionApplicationSessionsColumn(programBridge)
 
   return useMemo(
     () => {

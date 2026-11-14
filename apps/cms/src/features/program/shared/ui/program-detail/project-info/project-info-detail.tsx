@@ -350,7 +350,7 @@ export function ProjectInfoDetailPanels({
       ) : program ? (
         <>
           {activeTab === 'info' && (
-            <div className="program-detail-fullpage-modal__info-tab">
+            <div className="program-detail-fullpage-modal__info-tab project-info-detail__info-tab">
               <ProjectInfoHiddenTabsInfoActions
                 hidden={hideTabsRow}
                 program={program}

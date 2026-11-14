@@ -9,6 +9,7 @@ import {
 } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
+import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 
 describe('buildOperationalImmutableFormSchemaDraft', () => {
   it('모집 강사 시드 구조를 유지하고 단락 타이틀·설명만 에디터 값으로 반영한다', () => {
@@ -180,5 +181,32 @@ describe('buildOperationalImmutableFormSchemaDraft', () => {
         ? seedParagraph.items
         : null
     )
+  })
+
+  it('서버 저장본에 남은 예전 시드 설명은 현재 시드 문구로 바꾸고, 관리자가 고친 설명은 유지한다', () => {
+    const seed = createUjatRecruitFormVolunteerDraft()
+    const recruitInfoId = 'ujat-recruit-form-volunteer-seed-recruit-info'
+    const detailId = 'ujat-recruit-form-volunteer-seed-detail-info'
+    const editorDraft = {
+      ...seed,
+      paragraphs: seed.paragraphs.map(p => {
+        if (p.id === recruitInfoId) {
+          return {
+            ...p,
+            paragraphDescription:
+              '봉사자 모집은 프로그램 등록 시 상반기/하반기 구분되어 진행되며, 양식 내용은 동일하게 노출됩니다. (모집 공고 노출 시점은 하반기 모집 폼에서만 노출됩니다.)',
+          }
+        }
+        if (p.id === detailId) return { ...p, paragraphDescription: '관리자가 고친 설명' }
+        return p
+      }),
+    }
+    const merged = buildOperationalImmutableFormSchemaDraft({
+      templateCode: 'recruitment-ujat-volunteer',
+      editorDraft,
+    })
+    const byId = new Map(merged?.paragraphs.map(p => [p.id, p]))
+    expect(byId.get(recruitInfoId)?.paragraphDescription).toBe('설명 입력')
+    expect(byId.get(detailId)?.paragraphDescription).toBe('관리자가 고친 설명')
   })
 })

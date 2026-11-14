@@ -6,50 +6,86 @@ import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/acco
 
 export const ACTIVITY_CERTIFICATE_DOCUMENT_TITLE = '활동인증서'
 
-function formatDateValue(value: Program['startDate'] | undefined): string | null {
-  if (value == null || value === '') return null
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}.${m}.${d}`
-}
+/** 자동입력 데이터가 없는 항목 표시 (CMS-FUNC-0631) */
+export const ACTIVITY_CERTIFICATE_EMPTY_VALUE = '-'
 
-function formatProgramPeriod(program?: Program | null): string {
-  const start = formatDateValue(program?.startDate)
-  const end = formatDateValue(program?.endDate)
-  if (start && end) return `${start} ~ ${end}`
-  return '2026.01.01 ~ 2026.12.31'
+function valueOrEmpty(value: string | null | undefined): string {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : ACTIVITY_CERTIFICATE_EMPTY_VALUE
 }
 
 function resolveProgramName(program?: Program | null): string {
-  return program?.mainTitle?.trim() || program?.title?.trim() || 'JA Korea 경제교육 프로그램'
+  return valueOrEmpty(program?.mainTitle?.trim() || program?.title)
 }
 
-/** 참여자 정보 마지막 줄(발급 목적) 기본값 — 발급 사유를 고르지 않는 기존 흐름 */
+/** 참여자 정보 마지막 줄(발급 목적) 기본값 — 발급 사유를 고르지 않는 흐름 */
 export const ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE = '기관 및 학교 제출용'
+
+export type ActivityCertificateParticipantInfoInput = {
+  name: string | null | undefined
+  /** 생년월일 — 원문 조회(unmask) 값. 없으면 '-' */
+  birthDate?: string | null
+  /** 소속 — 참여자 소속 학교/기관명. 없으면 '-' */
+  affiliation?: string | null
+  program?: Program | null
+  /**
+   * 참여기간 — 본인의 진행 완료된 첫 일정일 ~ 마지막 일정일(기획 회신 261113).
+   * 서버 값이 아직 없어 비워 두면 '-'.
+   */
+  participationPeriod?: string | null
+  /** 발급 사유 모달에서 고른 사유 라벨 — 「발급목적」 줄 */
+  issuanceReasonLabel?: string
+}
+
+function birthDateOrEmpty(value: string | null | undefined): string {
+  return valueOrEmpty(value?.replace(/\s/g, ''))
+}
+
+/**
+ * 활동인증서 참여자 정보 6줄(강사·봉사자 공통, 시안 5767:46959·5767:47403 — 사용자 결정 261113):
+ * 성명 · 생년월일 · 소속 · 프로그램명 · 활동기간 · 발급목적. 줄 순서는
+ * `ACTIVITY_CERTIFICATE_PARTICIPANT_ROW_LABELS`와 같다.
+ */
+export function buildActivityCertificateParticipantInfoLines(
+  input: ActivityCertificateParticipantInfoInput
+): string {
+  return [
+    valueOrEmpty(input.name),
+    birthDateOrEmpty(input.birthDate),
+    valueOrEmpty(input.affiliation),
+    resolveProgramName(input.program),
+    valueOrEmpty(input.participationPeriod),
+    input.issuanceReasonLabel?.trim() || ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
+  ].join('\n')
+}
+
+/** 서버 계산값(eligibility)을 표시 문구로 바꾼 참여기간(「활동기간」 줄) */
+export type ActivityCertificatePeriodHoursText = {
+  participationPeriod?: string | null
+}
 
 export function buildActivityCertificateParticipantInfo(
   instructor: ParticipatingInstructorRow,
   program?: Program | null,
   /** 발급 사유 모달에서 고른 사유 라벨 — 발급 문서 「발급목적」 줄에 기입 */
-  issuanceReasonLabel?: string
+  issuanceReasonLabel?: string,
+  periodHours?: ActivityCertificatePeriodHoursText
 ): string {
-  return [
-    instructor.instructorName,
-    instructor.birthDate ?? '-',
-    instructor.schoolName,
-    resolveProgramName(program),
-    formatProgramPeriod(program),
-    issuanceReasonLabel?.trim() || ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
-  ].join('\n')
+  return buildActivityCertificateParticipantInfoLines({
+    name: instructor.instructorName,
+    birthDate: instructor.birthDate,
+    affiliation: instructor.affiliation,
+    program,
+    issuanceReasonLabel,
+    participationPeriod: periodHours?.participationPeriod,
+  })
 }
 
 export function buildActivityCertificateInitialStringValues(
   instructor: ParticipatingInstructorRow,
   program?: Program | null,
-  issuanceReasonLabel?: string
+  issuanceReasonLabel?: string,
+  periodHours?: ActivityCertificatePeriodHoursText
 ): Record<string, string> {
   return {
     ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
@@ -58,7 +94,8 @@ export function buildActivityCertificateInitialStringValues(
     participantInfo: buildActivityCertificateParticipantInfo(
       instructor,
       program,
-      issuanceReasonLabel
+      issuanceReasonLabel,
+      periodHours
     ),
   }
 }
@@ -74,31 +111,33 @@ export function buildActivityCertificateFileName(
   return `[JA Korea] ${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName.replace(/[/\\]/g, ',')}_${formatAsiaSeoulYymmdd(date ?? new Date())}`
 }
 
+export type ActivityCertificateVolunteerOptions = ActivityCertificatePeriodHoursText & {
+  /** 생년월일 — 원문 조회(unmask) 값 */
+  birthDate?: string | null
+  /** 소속 학교/기관명 */
+  affiliation?: string | null
+  program?: Program | null
+  /** 발급 사유 모달에서 고른 사유 라벨 — 「발급목적」 줄 */
+  issuanceReasonLabel?: string
+}
+
 export function buildActivityCertificateParticipantInfoForVolunteer(
   volunteerName: string,
-  options?: {
-    birthDate?: string
-    institutionName?: string
-    program?: Program | null
-  }
+  options?: ActivityCertificateVolunteerOptions
 ): string {
-  return [
-    volunteerName,
-    options?.birthDate ?? '-',
-    options?.institutionName ?? '-',
-    resolveProgramName(options?.program),
-    formatProgramPeriod(options?.program),
-    ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
-  ].join('\n')
+  return buildActivityCertificateParticipantInfoLines({
+    name: volunteerName,
+    birthDate: options?.birthDate,
+    affiliation: options?.affiliation,
+    program: options?.program,
+    issuanceReasonLabel: options?.issuanceReasonLabel,
+    participationPeriod: options?.participationPeriod,
+  })
 }
 
 export function buildActivityCertificateInitialStringValuesForVolunteer(
   volunteerName: string,
-  options?: {
-    birthDate?: string
-    institutionName?: string
-    program?: Program | null
-  }
+  options?: ActivityCertificateVolunteerOptions
 ): Record<string, string> {
   return {
     ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,

@@ -1,0 +1,23 @@
+/**
+ * antd 체크박스 체크 표시 — 시안 `Check Box` 체크 선 원본(11.5×9.28, 박스 18·20 모두 같은 크기·중앙).
+ * antd 기본은 테두리를 45° 돌려 그리는 체크라 시안과 달라, 선택 상태에서만 원본 SVG를 mask로 그린다.
+ * 활성: 흰색 / 비활성: #22404D 40% (시안 status=off, check=on).
+ */
+
+.ant-checkbox.ant-checkbox-checked:not(.ant-checkbox-indeterminate) .ant-checkbox-inner::after {
+  top: 50% !important;
+  inset-inline-start: 50% !important;
+  width: 11.5px !important;
+  height: 9.28px !important;
+  border: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  transition: none !important;
+  background-color: #fff;
+  -webkit-mask: url('../assets/icons/inputs/checkbox-check.svg') center / contain no-repeat;
+  mask: url('../assets/icons/inputs/checkbox-check.svg') center / contain no-repeat;
+}
+
+.ant-checkbox.ant-checkbox-disabled.ant-checkbox-checked:not(.ant-checkbox-indeterminate)
+  .ant-checkbox-inner::after {
+  background-color: rgba(34, 64, 77, 0.4);
+}

@@ -18,6 +18,7 @@ import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/
 import {
   buildCompanySchoolAssignedInstructorRows,
   buildCompanySchoolWaitingInstructorRows,
+  collectCompanySchoolAssignedInstructorSchedulePairs,
   omitCompanySchoolScheduleRoundLabels,
   type CompanySchoolAssignedInstructorRow,
   type CompanySchoolWaitingInstructorRow,
@@ -90,6 +91,11 @@ export function ApplicantInstitutionInstructorAssignTab({
       sessions,
       approvedInstructors: boardQuery.data.approvedInstructorApplications,
       assignedInstructorMemberIds: assignedMemberIds,
+      // 배정 완료(강사 × 일정) 건만 숨긴다 (QA 2026-11-13 1사1교 #12)
+      assignedInstructorSchedulePairs: collectCompanySchoolAssignedInstructorSchedulePairs(
+        boardQuery.data.assignments,
+        organizationApplicationId
+      ),
       occupiedLectureDatesByInstructorId: boardQuery.data.occupiedLectureDatesByInstructorId,
       // 1사1교 희망 일정 번호는 지망 순위다 — 「N회차」가 아니라 「N지망」
       hopeSessionLabel: 'preference-only',

@@ -1,0 +1,5 @@
+/** 코멘트 작성 팝업 — 시안: 필수 표시 `*` 16/Bold */
+.member-admin-comment-modal .detail-info-form__field-required {
+  font-size: 16px;
+  font-weight: 700;
+}

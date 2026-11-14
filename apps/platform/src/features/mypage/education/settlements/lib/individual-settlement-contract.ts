@@ -133,7 +133,7 @@ const INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
   ATTENDANCE_NOT_QUALIFIED: '출석이 확인되지 않아 영수증을 제출할 수 없습니다.',
   SCHEDULE_NOT_ENDED: '교육이 종료된 이후에 영수증을 제출할 수 있습니다.',
   /** 서버 오류 문구 (R5). 정산 행 안내는 individualIneligibleRowMessage가 따로 쓴다 */
-  SUBMISSION_DEADLINE_PASSED: '프로그램 운영이 종료되어 영수증을 제출할 수 없어요',
+  SUBMISSION_DEADLINE_PASSED: '영수증 제출 기한이 지났어요',
   NO_PAYABLE_ITEMS: '이 프로그램에 신청할 수 있는 지급 항목이 없습니다.',
   EVIDENCE_POLICY_UNCONFIGURED: '증빙 정책을 확인할 수 없어 신청할 수 없습니다',
   EVIDENCE_REQUIRED: '증빙이 필요한 항목의 영수증을 제출해 주세요.',
@@ -161,7 +161,7 @@ export function normalizeIndividualIneligibleReason(
 }
 
 /** 영수증 정산 행 안내 — 운영 종료 후 (R5). 영수증은 지연 제출 구간이 없다 */
-export const RECEIPT_SUBMISSION_CLOSED_ROW_MESSAGE = '영수증 제출기한이 마감되었어요'
+export const RECEIPT_SUBMISSION_CLOSED_ROW_MESSAGE = '영수증 제출 기한이 지났어요'
 
 /** 봉사자 정산 — 개인(교육)과 문구가 다른 사유만 */
 const VOLUNTEER_INELIGIBLE_REASON_MESSAGES: Record<string, string> = {

@@ -35,8 +35,8 @@ export function toApiBirthDate(birthDate: string): string | undefined {
 }
 
 export function toApiGender(gender: GenderType | null): string | undefined {
-  if (gender === 'female') return 'F'
-  if (gender === 'male') return 'M'
+  if (gender === 'female') return 'FEMALE'
+  if (gender === 'male') return 'MALE'
   return undefined
 }
 

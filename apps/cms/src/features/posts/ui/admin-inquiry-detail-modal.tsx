@@ -17,7 +17,12 @@ import {
   CmsTextArea,
   ContentModal,
   showRegisterCompletedAlert,
+  useCmsAlert,
 } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import './admin-inquiry-detail-modal.css'
 
 export interface AdminInquiryDetailModalProps {
@@ -48,6 +53,7 @@ export function AdminInquiryDetailModal({
     retry: false,
   })
   const { replyMutation } = useInquiryMutations()
+  const { showAlert } = useCmsAlert()
   const detail = detailQuery.detail
   const attachments = attachmentsQuery.data ?? []
 
@@ -56,7 +62,6 @@ export function AdminInquiryDetailModal({
   }, [])
 
   const [answerText, setAnswerText] = useState('')
-  const [answerError, setAnswerError] = useState<string | null>(null)
   const [actionResultOpen, setActionResultOpen] = useState(false)
   const [actionResultTitle, setActionResultTitle] = useState('')
   const [actionResultMessage, setActionResultMessage] = useState('')
@@ -64,7 +69,6 @@ export function AdminInquiryDetailModal({
   useEffect(() => {
     if (!open) return
     setAnswerText(detail?.answerMarkdown ?? '')
-    setAnswerError(null)
   }, [detail?.answerMarkdown, open])
 
   const isAnswerRegistered =
@@ -74,10 +78,13 @@ export function AdminInquiryDetailModal({
     if (!detail || isAnswerRegistered) return
     const md = answerText.trim()
     if (md === '') {
-      setAnswerError('내용을 입력해 주세요.')
+      // 시안: 답변이 비면 인라인 오류 대신 공통 「필수 항목 미입력 안내」 팝업, 등록하지 않음
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
-    setAnswerError(null)
     try {
       await replyMutation.mutateAsync({ inquiryId: detail.id, content: md })
       onSuccess()
@@ -88,7 +95,7 @@ export function AdminInquiryDetailModal({
       setActionResultMessage(getPostsApiErrorMessage(error, '답변 등록에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [answerText, detail, isAnswerRegistered, onCancel, onSuccess, replyMutation])
+  }, [answerText, detail, isAnswerRegistered, onCancel, onSuccess, replyMutation, showAlert])
 
   const handleDelete = useCallback(() => {
     if (!detail) return
@@ -263,14 +270,9 @@ export function AdminInquiryDetailModal({
                 inputSize="large"
                 width="100%"
                 value={answerText}
-                onChange={e => {
-                  setAnswerText(e.target.value)
-                  if (answerError) setAnswerError(null)
-                }}
+                onChange={e => setAnswerText(e.target.value)}
                 placeholder="내용을 입력해 주세요"
                 disabled={isAnswerRegistered}
-                error={Boolean(answerError)}
-                message={answerError ?? undefined}
               />
             </section>
           </div>

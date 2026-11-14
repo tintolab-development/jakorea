@@ -19,3 +19,14 @@
   background: #edf0f2;
 }
 
+
+/* 양식 관리 「상세보기」 — 시안 156×32 (셀 180 - 좌우 12) · 테이블 셀 버튼 small(h32) */
+.template-table.cms-data-table .ant-table-tbody > tr > td.template-table__col-action,
+.template-table.cms-data-table .ant-table-tbody > tr:hover > td.template-table__col-action {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.template-table.cms-data-table td.template-table__col-action .cms-button {
+  width: 100%;
+}

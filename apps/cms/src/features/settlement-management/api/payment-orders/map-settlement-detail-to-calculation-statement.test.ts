@@ -494,4 +494,81 @@ describe('mapSettlementDetailToInstructorPageCalculationStatement', () => {
       calculatedTransportAmount: 51000,
     })
   })
+
+  describe('숙박비 산정 항목 라벨', () => {
+    function lodgingLabel(calculationDetail?: Record<string, unknown>): string | undefined {
+      const mapped = mapSettlementDetailToProgramCalculationStatement(
+        lineRow,
+        settlement({
+          items: [
+            {
+              type: 'accommodation',
+              description: '숙박비',
+              amount: 80000,
+              ...(calculationDetail ? { calculationDetail } : {}),
+            },
+          ],
+        }),
+        'JA 경제교실',
+        '홍길동'
+      )
+      return mapped.blocks[0]?.lines[0]?.itemLabel
+    }
+
+    const lodgingBasis = (layout: string) => ({
+      layout,
+      basisJson: JSON.stringify({
+        layout,
+        itemType: 'LODGING',
+        categoryLabel: '숙박비',
+        nightsDisplay: '1박',
+        lodgingFee: { amountWon: 80000 },
+        totalWon: 80000,
+      }),
+    })
+
+    it('1사1교 layout이면 숙박비(1사1교)', () => {
+      expect(lodgingLabel(lodgingBasis('lodging1s1g'))).toBe('숙박비(1사1교)')
+    })
+
+    it('일반 layout이면 숙박비(일반)', () => {
+      expect(lodgingLabel(lodgingBasis('lodgingGeneral'))).toBe('숙박비(일반)')
+    })
+
+    it('상세가 없으면 숙박비 그대로', () => {
+      expect(lodgingLabel()).toBe('숙박비')
+    })
+
+    it('숙박비가 아닌 항목 라벨은 바뀌지 않는다', () => {
+      const mapped = mapSettlementDetailToProgramCalculationStatement(
+        lineRow,
+        settlement({
+          items: [{ type: 'meal', description: '식사비', amount: 30000 }],
+        }),
+        'JA 경제교실',
+        '홍길동'
+      )
+      expect(mapped.blocks[0]?.lines[0]?.itemLabel).toBe('식사비')
+    })
+  })
+
+  it("항목 설명이 비어 있으면 '-'로 표시한다", () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      lineRow,
+      settlement({
+        items: [
+          { type: 'activity', description: undefined, amount: 20000 },
+          { type: 'meal', description: '   ', amount: 25000 },
+          { type: 'meal', description: '1인 1식 기준, 최대 30,000원 이내 실비 지급', amount: 25000 },
+        ],
+      }),
+      'JA 경제교실',
+      '홍길동'
+    )
+    expect(mapped.blocks[0]?.lines.map(line => line.description)).toEqual([
+      '-',
+      '-',
+      '1인 1식 기준, 최대 30,000원 이내 실비 지급',
+    ])
+  })
 })

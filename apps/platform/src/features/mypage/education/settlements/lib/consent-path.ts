@@ -25,12 +25,12 @@ export function buildSettlementReceiptConsentPath(options: {
   mode: 'write' | 'view'
   area?: SettlementArea
   applicationType?: string
+  /** 작성 완료 후 돌아갈 경로 덮어쓰기 — 기본값 정산 현황 탭. 제출 화면(409)에서는 제출 화면으로 복귀(기획 B) */
+  returnTo?: string
 }): string {
-  const returnTo = buildSettlementTabPath(
-    options.applicationId,
-    options.area ?? 'education',
-    options.applicationType,
-  )
+  const returnTo =
+    options.returnTo ??
+    buildSettlementTabPath(options.applicationId, options.area ?? 'education', options.applicationType)
   const params = new URLSearchParams({
     returnTo,
     mode: options.mode,

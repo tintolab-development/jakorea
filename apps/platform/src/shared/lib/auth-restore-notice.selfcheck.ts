@@ -5,11 +5,14 @@
  */
 import {
   buildSignInPathWithRedirect,
+  confirmAuthRestoreNotice,
   dismissAuthRestoreNotice,
+  isSessionExpiredNoticePending,
   getAuthRestoreNotice,
   resetAuthRestoreNoticeForTest,
   resolveAuthRestoreNoticeActions,
   showAuthRestoreNotice,
+  showSessionExpiredNotice,
   subscribeAuthRestoreNotice,
 } from './auth-restore-notice.ts'
 
@@ -49,6 +52,32 @@ assert(same(resolveAuthRestoreNoticeActions('session-ended', '/auth/required'), 
 assert(same(resolveAuthRestoreNoticeActions('session-ended', '/auth/sign-up'), ['close', 'sign-in']), '① 다른 auth 화면은 일반')
 assert(same(resolveAuthRestoreNoticeActions('unavailable', '/mypage'), ['close', 'retry']), '② 닫기·다시 시도')
 assert(same(resolveAuthRestoreNoticeActions('unavailable', '/auth/sign-in'), ['close', 'retry']), '② 로그인 화면도 다시 시도')
+
+// 사용 중 세션 종료(session-expired): 화면에 머문 채 안내하고 [확인] 때만 로그아웃을 한 번 실행
+{
+  resetAuthRestoreNoticeForTest()
+  const calls = { logout: 0, second: 0, silent: 0 }
+  showSessionExpiredNotice(() => { calls.logout += 1 })
+  showSessionExpiredNotice(() => { calls.second += 1 })
+  assert(getAuthRestoreNotice() === 'session-expired' && isSessionExpiredNoticePending(), 'session-expired shown')
+  assert(calls.logout < 1, 'logout waits for confirm')
+  showAuthRestoreNotice('unavailable')
+  assert(getAuthRestoreNotice() === 'session-expired', 'other notices do not replace session-expired')
+  dismissAuthRestoreNotice('unavailable')
+  assert(getAuthRestoreNotice() === 'session-expired', 'logout cleanup keeps session-expired')
+  assert(same(resolveAuthRestoreNoticeActions('session-expired', '/mypage'), ['confirm']), 'session-expired: 확인만')
+  confirmAuthRestoreNotice()
+  assert(calls.logout === 1 && calls.second === 0, 'confirm runs the first logout once')
+  assert(getAuthRestoreNotice() === null && !isSessionExpiredNoticePending(), 'confirm closes')
+  confirmAuthRestoreNotice()
+  assert(calls.logout === 1, 'confirm again does nothing')
+
+  // 다른 탭 재로그인 등 코드에서 닫으면(새 토큰) 로그아웃하지 않는다
+  showSessionExpiredNotice(() => { calls.silent += 1 })
+  dismissAuthRestoreNotice()
+  assert(getAuthRestoreNotice() === null && calls.silent === 0, 'programmatic dismiss does not logout')
+  resetAuthRestoreNoticeForTest()
+}
 
 // 로그인 이동: 기존 redirect 규칙
 assert(

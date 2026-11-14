@@ -47,6 +47,7 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+import { withRegistrationWizardTitleNumberingOff } from '@/features/program/shared/lib/registration-wizard-title-numbering'
 import {
   collectOperationalOverlayForCatalogId,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
@@ -77,10 +78,6 @@ import {
   listIncompleteApplicationFormThirdPartyRecipientFieldKeys,
 } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
-import {
-  buildAnnouncementPublishConfirmContent,
-  listPublishedRecruitAnnouncements,
-} from '@/features/program/general/lib/registration-announcement-publish-confirm'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   hydrateRegistrationProgramDraft,
@@ -515,14 +512,11 @@ export function useGeneralProgramRegistrationFlow(
         : isTrainedTeachersRegistration
           ? 'trainedTeachers'
           : undefined,
+      // 1사1교 — 배정 강사·학급·일정·차시 최대값은 기본값 없이 빈 칸으로 시작한다(2026-11-13 요청)
       applicantRecruitInstitutionDefaults: isCompanySchoolRegistration
         ? {
             studentListRequired: 'none',
             preguidanceRequired: 'need',
-            maxAssignableInstructors: 2,
-            maxClassCount: 4,
-            maxScheduleCount: 2,
-            maxSessionsPerDay: 2,
           }
         : isTrainedTeachersRegistration
           ? {
@@ -592,6 +586,12 @@ export function useGeneralProgramRegistrationFlow(
     [selectedTemplateCode, writingFormSections]
   )
 
+  /** 등록 위저드 공통 정보 — 섹션 제목 번호 미표시(표시용 vm만) */
+  const registrationWizardDisplayVm = useMemo(
+    () => withRegistrationWizardTitleNumberingOff(registrationVm),
+    [registrationVm]
+  )
+
   const editorVm = useMemo((): TemplateEditorVm => {
     const isDraftLoading = isProgramStep
       ? registrationVm.isDraftLoading
@@ -605,14 +605,21 @@ export function useGeneralProgramRegistrationFlow(
       isParticipantApplication: isParticipantStep,
       isWritingSurveyList: false,
       isDraftLoading,
-      programRegistrationVm: registrationVm,
-      ujatProgramRegistrationVm: registrationVm,
+      programRegistrationVm: registrationWizardDisplayVm,
+      ujatProgramRegistrationVm: registrationWizardDisplayVm,
       programParticipantApplicationVm: participantVm,
       surveyListEditor: registrationVm,
       surveyTableRowSelection: participantVm,
       handleSave: isProgramStep ? registrationVm.handleSave : participantVm.handleSave,
     } as unknown as TemplateEditorVm
-  }, [registryEntry, isProgramStep, isParticipantStep, registrationVm, participantVm])
+  }, [
+    registryEntry,
+    isProgramStep,
+    isParticipantStep,
+    registrationVm,
+    registrationWizardDisplayVm,
+    participantVm,
+  ])
 
   const isDraftLoading = editorVm.isDraftLoading === true
 
@@ -833,12 +840,7 @@ export function useGeneralProgramRegistrationFlow(
     void participantVm.handleSave()
   }, [isProgramStep, registrationVm, participantVm])
 
-  /** 「게시」 공고 확인 팝업 본문 — null 이면 닫힘 (QA-0121) */
-  const [announcementPublishConfirmContent, setAnnouncementPublishConfirmContent] = useState<
-    string | null
-  >(null)
-
-  const completeRegistration = useCallback((publishConfirmed: boolean) => {
+  const handleCompleteRegistration = useCallback(() => {
     if (!SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK) {
       const current =
         isParticipantStep && selectedTemplateCode.startsWith('application-')
@@ -952,22 +954,6 @@ export function useGeneralProgramRegistrationFlow(
       }
     }
 
-    // 공고 게시 기본값은 미게시 — 「게시」를 고른 탭이 있으면 노출 대상·시점을 확인받은 뒤 등록한다.
-    if (
-      !publishConfirmed &&
-      (registrationFormVariant === 'general' || registrationFormVariant === 'economy')
-    ) {
-      const published = listPublishedRecruitAnnouncements(
-        registrationVm.buildCurrentProgramSnapshot(
-          registrationPendingSnapshotId(registrationFormVariant)
-        )
-      )
-      if (published.length > 0) {
-        setAnnouncementPublishConfirmContent(buildAnnouncementPublishConfirmContent(published))
-        return
-      }
-    }
-
     const applicationOverrides = () =>
       flushApplicationOperationalOverrides({
         current: isParticipantStep
@@ -1053,23 +1039,6 @@ export function useGeneralProgramRegistrationFlow(
     showAlert,
   ])
 
-  const handleCompleteRegistration = useCallback(() => {
-    completeRegistration(false)
-  }, [completeRegistration])
-
-  const announcementPublishConfirm = useMemo(
-    () => ({
-      open: announcementPublishConfirmContent != null,
-      content: announcementPublishConfirmContent ?? '',
-      onConfirm: () => {
-        setAnnouncementPublishConfirmContent(null)
-        completeRegistration(true)
-      },
-      onCancel: () => setAnnouncementPublishConfirmContent(null),
-    }),
-    [announcementPublishConfirmContent, completeRegistration]
-  )
-
   const selectStepTemplate = useCallback(
     async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
       const result = await applyRegistrationStepTemplateChange({
@@ -1125,7 +1094,6 @@ export function useGeneralProgramRegistrationFlow(
     handleSave,
     persistDraftSilent,
     handleCompleteRegistration,
-    announcementPublishConfirm,
     registrationVm,
     participantVm,
     participantFlags,

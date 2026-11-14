@@ -746,6 +746,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
     ),
+    approvalNotificationSentAtIso: readResultNotificationSentAt(dto)?.trim() || undefined,
     availableActions: dto.availableActions ?? [],
     programId,
     sessions,
@@ -880,6 +881,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
     ),
+    approvalNotificationSentAtIso: readResultNotificationSentAt(dto)?.trim() || undefined,
     availableActions: dto.availableActions ?? [],
     sessions,
     preferredEducationSchedules: preferred,

@@ -51,11 +51,14 @@ const MEMBER_LIST_FIXED_COLUMN_WIDTH = {
   adminProgramCount: 200,
 } as const
 
-/** 강사·관리자 회원 목록 시안 — 선택 열 60 (cms-data-table 룰: 화면별 `--table-selection-column-width`) */
+/** 전체·학교·강사·관리자 회원 목록 시안 — 선택 열 60 (cms-data-table 룰: 화면별 `--table-selection-column-width`) */
 const COMPACT_SELECTION_COLUMN_WIDTH = 60
 
+/** 학교(교사) 목록 시안 — 기관명·소재지·수강 횟수·교사 수·등록일 5열 모두 279 */
+const INSTITUTION_LIST_COLUMN_WIDTH = 279
+
 function resolveListSelectionColumnWidth(kind: MemberListKind): number {
-  return kind === 'instructors' || kind === 'admins'
+  return kind === 'instructors' || kind === 'admins' || kind === 'all' || kind === 'institutions'
     ? COMPACT_SELECTION_COLUMN_WIDTH
     : TABLE_COLUMN_WIDTHS.checkbox
 }
@@ -200,6 +203,7 @@ function columnsForKind(
       {
         title: '기관명',
         key: 'institutionName',
+        width: INSTITUTION_LIST_COLUMN_WIDTH,
         ellipsis: true,
         align: 'center',
         render: (_: unknown, r: Row) => r.schoolInfo?.schoolName?.trim() || r.name || '-',
@@ -207,6 +211,7 @@ function columnsForKind(
       {
         title: '기관 소재지',
         key: 'address',
+        width: INSTITUTION_LIST_COLUMN_WIDTH,
         ellipsis: true,
         align: 'center',
         /** 시안: 시·도 + 시·군·구만 */
@@ -216,7 +221,7 @@ function columnsForKind(
         title: '프로그램 수강 횟수',
         key: 'programCount',
         align: 'center',
-        width: 200,
+        width: INSTITUTION_LIST_COLUMN_WIDTH,
         render: (_: unknown, r: Row) =>
           displayProgramAttendanceCount(r.listMetrics?.institutionProgramAttendanceCount),
       },
@@ -224,7 +229,7 @@ function columnsForKind(
         title: '등록된 교사 수',
         key: 'teacherCount',
         align: 'center',
-        width: 200,
+        width: INSTITUTION_LIST_COLUMN_WIDTH,
         render: (_: unknown, r: Row) =>
           displayMetric(r.listMetrics?.institutionRegisteredTeacherCount) + '명',
       },
@@ -232,7 +237,7 @@ function columnsForKind(
         title: '등록일',
         dataIndex: 'createdAt',
         key: 'createdAt',
-        width: 200,
+        width: INSTITUTION_LIST_COLUMN_WIDTH,
         align: 'center',
         render: (d: string) => formatDateDot(d),
       },
@@ -404,6 +409,17 @@ function columnsForKind(
       render: (d: string) => formatDateDot(d),
     },
   ]
+}
+
+/**
+ * 회원 목록 엑셀 — 탭별 화면 테이블 열 구성 그대로 (회원 유형·가입 유형·권한 유형·정산 현황·기관 소재지 등).
+ * 셀 값은 화면 render 와 같아 목록 개인정보 마스킹이 그대로 유지된다.
+ */
+export function buildUserListExcelColumns(
+  kind: MemberListKind,
+  totalCount?: number
+): ColumnsType<Row> {
+  return columnsForKind(kind, { totalCount })
 }
 
 export function UserList({

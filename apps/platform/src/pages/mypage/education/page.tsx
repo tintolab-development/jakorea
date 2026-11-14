@@ -9,6 +9,7 @@ import {
   MypageLayoutBootSkeleton,
   navigateMypageLnb,
   readEducationApplicationListParams,
+  hasTeacherMypageProfile,
   showInstructorApplyCta,
   useMypageMember,
   useMypagePageAuthReady,
@@ -30,8 +31,7 @@ export function MypageEducationPage() {
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile, 'education')
-  /** 교육현황 진행 상태 라벨 — 승인 대기/진행중/진행 완료/활동 포기/신청 반려 (Figma·SSOT) */
-  const educationStatusAudience = 'teacher' as const
+  const educationStatusAudience = hasTeacherMypageProfile(member.profile) ? 'teacher' : 'general'
 
   useEffect(() => {
     const onPopState = () => {

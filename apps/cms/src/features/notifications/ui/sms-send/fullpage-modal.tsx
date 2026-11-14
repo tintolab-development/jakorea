@@ -623,20 +623,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                               <PreviewModal
                                 open={open}
                                 zIndex={zIndex}
-                                templateName={template?.templateName ?? ''}
-                                senderPhone={template?.senderPhone ?? ''}
                                 messageType={template?.messageType ?? 'SMS'}
                                 subject={template?.subject ?? ''}
                                 bodyText={template?.bodyText ?? ''}
-                                attachments={
-                                  template?.attachments?.length
-                                    ? template.attachments.map(item => ({
-                                        name: item.fileName,
-                                        sizeBytes: item.byteSize,
-                                      }))
-                                    : template?.attachmentFileNames.map(name => ({ name }))
-                                }
-                                previewAt={new Date().toISOString()}
                                 onClose={onClose}
                                 onUseTemplate={
                                   template

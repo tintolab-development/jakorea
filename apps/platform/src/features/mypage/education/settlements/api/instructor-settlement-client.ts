@@ -51,6 +51,8 @@ export type PortalInstructorSettlementPreview = {
   assignmentId?: number | null
   canSubmit?: boolean
   blockerCode?: string | null
+  /** canSubmit=false일 때 화면에 그대로 보이는 서버 문구 */
+  blockerMessage?: string | null
   grossAmount?: number | null
   withholdingTaxAmount?: number | null
   netPaymentAmount?: number | null

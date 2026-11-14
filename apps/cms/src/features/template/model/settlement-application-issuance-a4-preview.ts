@@ -1,7 +1,7 @@
 import type { FormDocumentPreviewParagraphGapResolver } from '@/features/template/lib/a4-document-preview'
 import { A4_DOCUMENT_PARAGRAPH_GAP_PX } from '@/features/template/lib/a4-document-pagination-constants'
 import {
-  createPaymentStatementIssuanceDraft,
+  createPaymentStatementIssuanceDocumentDraft,
   PAYMENT_STATEMENT_ISSUANCE_IDS,
 } from '@/features/template/model/payment-statement-issuance-draft'
 import {
@@ -23,10 +23,10 @@ export const getSettlementApplicationA4ParagraphGap: FormDocumentPreviewParagrap
 
 /**
  * 정산 신청서 A4/PDF 미리보기용 draft.
- * 편집 시드(교통·숙박 신청)와 분리 — 지급조서형 본문 3단락 + 정산 신청서 제목.
+ * 편집 시드(교통·숙박 신청)와 분리 — 실제 지급조서 발급 문서 draft의 본문 3단락 + 정산 신청서 제목.
  */
 export function buildSettlementApplicationDocumentPreviewDraft(): WritingFormDraft {
-  const paymentDraft = createPaymentStatementIssuanceDraft()
+  const paymentDraft = createPaymentStatementIssuanceDocumentDraft()
   const keepIds = new Set<string>([
     PAYMENT_STATEMENT_ISSUANCE_IDS.title,
     PAYMENT_STATEMENT_ISSUANCE_IDS.tableBasic,

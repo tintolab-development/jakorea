@@ -1,5 +1,5 @@
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import { useEffect, useMemo, useState } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
@@ -270,7 +270,7 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
           />
           <span className="send-recipient-select-modal__search-input">
             <CmsInput
-              icon={<SearchOutlined />}
+              icon={<FieldSearchIcon />}
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}

@@ -12,6 +12,10 @@ import {
   readInstructorExpensePolicies,
   type InstructorExpensePolicies,
 } from '../lib/instructor-expense-items.ts'
+import {
+  readInstructorPreviewSubmitBlock,
+  type InstructorPreviewSubmitBlock,
+} from '../lib/instructor-settlement-contract.ts'
 import { previewInstructorSettlementApplication } from './instructor-settlement-client.ts'
 
 /**
@@ -44,6 +48,18 @@ export function useInstructorSettlementPreviewQuery(assignmentId: number | null 
     query.isSuccess && typeof query.data?.blockerCode === 'string' && query.data.blockerCode.trim()
       ? query.data.blockerCode.trim().toUpperCase()
       : null
+  /** canSubmit=false면 제출 차단(지급 항목 0건 SETTLEMENT_CALCULATION_ITEMS_REQUIRED 등). 받기 전·오류면 null */
+  const submitBlock: InstructorPreviewSubmitBlock | null = query.isSuccess
+    ? readInstructorPreviewSubmitBlock(query.data)
+    : null
   const calculation = query.isSuccess ? readInstructorSettlementCalculation(query.data) : null
-  return { enabled, transportExclusion, expensePolicies, blockerCode, calculation, isPending: query.isPending }
+  return {
+    enabled,
+    transportExclusion,
+    expensePolicies,
+    blockerCode,
+    submitBlock,
+    calculation,
+    isPending: query.isPending,
+  }
 }

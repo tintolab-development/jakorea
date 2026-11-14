@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
 import { toInstructorRoleReviewScheduledAt } from '@/features/user/permission-management/lib/instructor-role-review-notify'
+import './instructor-permission-revoke-modal.css'
 import {
   INSTRUCTOR_PERMISSION_REVOKE_CONFIRM_LABEL,
   INSTRUCTOR_PERMISSION_REVOKE_REASON_LABEL,
@@ -52,6 +53,8 @@ export function InstructorPermissionRevokeModal({
         void handleConfirm(payload)
       }}
       variant="reject"
+      className="instructor-permission-revoke-modal"
+      confirmEnabledWithoutReason
       title={INSTRUCTOR_PERMISSION_REVOKE_TITLE}
       width={600}
       notifyTimingOptions="two"

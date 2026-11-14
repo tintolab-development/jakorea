@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -19,6 +19,7 @@ import {
   useTrainedTeachersRegistrationField,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/trained-teachers-registration-form-rhf'
 import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const EMPTY_IPS_TYPE: ProgramRegistrationIpsTypeValue = {
@@ -50,7 +51,13 @@ function ScheduleDetailRadioRow({
   commonDetailEdit?: ReactNode
   validationKey?: string
 }) {
+  // 템플릿 관리 시안(5767:196354): 「일정 공통」「일정 별 상이」 모두 미선택으로 시작하고
+  // 일정 공통 입력칸(IPS 셀렉트)은 그대로 보인다. 사용자가 고르면 선택값을 보인다. 등록·상세는 기존 동작.
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const [touched, setTouched] = useState(false)
+  const radioValue = isTemplateManagementScreen && !touched ? '' : value
   const handleChange = (e: RadioChangeEvent) => {
+    setTouched(true)
     onChange(e.target.value as ProgramRegistrationScheduleDetailKind)
   }
 
@@ -62,7 +69,7 @@ function ScheduleDetailRadioRow({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
-            <CmsRadioGroup size="medium" value={value} onChange={handleChange}>
+            <CmsRadioGroup size="medium" value={radioValue} onChange={handleChange}>
               <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
               <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
             </CmsRadioGroup>
@@ -98,13 +105,29 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   ipsScheduleDetail,
   onIpsScheduleDetailChange,
 }: TrainedTeachersRegistrationTypeSettingsParagraphProps) {
+  // 템플릿 관리 시안(5767:196354): 수업 회차 유형·교육 형태 라디오는 미선택으로 시작한다.
+  // 교육 진행 구조·수업 회차 유형은 편집기 상태(기본 커리큘럼형·단일 회차)로 블록을 그리므로 고르기 전까지 표시만 비운다.
+  // 교육 진행 구조 「커리큘럼형」은 시안에선 선택 상태지만 템플릿 관리 라디오는 모두 미선택(사용자 결정 2026-11-13).
+  // 등록 위저드·상세는 기존 동작.
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const [programTypeTouched, setProgramTypeTouched] = useState(false)
+  const programTypeRadioValue =
+    isTemplateManagementScreen && !programTypeTouched && programType === 'curriculum'
+      ? ''
+      : programType
+  const [sessionRoundTouched, setSessionRoundTouched] = useState(false)
+  const sessionRoundRadioValue =
+    isTemplateManagementScreen && !sessionRoundTouched && sessionRoundType === 'single'
+      ? ''
+      : sessionRoundType
+  const defaultEducationForm = isTemplateManagementScreen ? '' : 'online'
   const [educationForm, setEducationForm] = useTrainedTeachersRegistrationField(
     'trainedTeachersRegistration.typeSettings.educationForm',
-    'online'
+    defaultEducationForm
   )
   const [multiCommonEducationForm, setMultiCommonEducationForm] = useTrainedTeachersRegistrationField(
     'trainedTeachersRegistration.typeSettings.multiCommonEducationForm',
-    'online'
+    defaultEducationForm
   )
   const [ipsType, setIpsType] = useTrainedTeachersRegistrationField<ProgramRegistrationIpsTypeValue>(
     'trainedTeachersRegistration.typeSettings.ipsType',
@@ -131,6 +154,8 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   ])
 
   useEffect(() => {
+    // 템플릿 관리: 미선택 초기값을 유지한다(단일 회차 값으로 시드하지 않음)
+    if (isTemplateManagementScreen) return
     if (sessionRoundType !== 'multi' || educationFormScheduleDetail !== 'common') return
     if (
       readTrainedTeachersRegistrationRecordValue(
@@ -144,6 +169,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   }, [
     educationForm,
     educationFormScheduleDetail,
+    isTemplateManagementScreen,
     multiCommonEducationForm,
     sessionRoundType,
     setMultiCommonEducationForm,
@@ -163,8 +189,11 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
             edit={
               <CmsRadioGroup
                 size="medium"
-                value={programType}
-                onChange={e => onProgramTypeChange(e.target.value as ProgramRegistrationType)}
+                value={programTypeRadioValue}
+                onChange={e => {
+                  setProgramTypeTouched(true)
+                  onProgramTypeChange(e.target.value as ProgramRegistrationType)
+                }}
               >
                 <CmsRadio size="medium" value="curriculum">커리큘럼형</CmsRadio>
                 {/* 신규 등록은 커리큘럼형 고정 — 시안 9899:221372 「일정형」 비활성 (CMS-FUNC-0591) */}
@@ -180,10 +209,11 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
             edit={
               <CmsRadioGroup
                 size="medium"
-                value={sessionRoundType}
-                onChange={e =>
+                value={sessionRoundRadioValue}
+                onChange={e => {
+                  setSessionRoundTouched(true)
                   onSessionRoundTypeChange(e.target.value as ProgramRegistrationSessionRoundType)
-                }
+                }}
               >
                 <CmsRadio size="medium" value="single">단일 회차</CmsRadio>
                 <CmsRadio size="medium" value="multi">복수 회차</CmsRadio>
@@ -233,7 +263,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
                 edit={
                   <CmsRadioGroup
                     size="medium"
-                    value={educationForm}
+                    value={educationForm || undefined}
                     onChange={e => setEducationForm(String(e.target.value))}
                   >
                     {educationFormOptions.map(option => (

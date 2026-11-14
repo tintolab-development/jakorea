@@ -19,6 +19,13 @@ function displayOptionalText(value: string): string {
   return value.trim() ? value : '-'
 }
 
+/** 강사 경력 — 서버가 숫자(연차)만 주면 「N년」, 이미 단위가 붙은 문자열은 그대로 둔다. */
+export function formatGeminiManagerLectureExperience(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  return /^\d+$/.test(trimmed) ? `${Number(trimmed)}년` : trimmed
+}
+
 /**
  * 담당 교사 생년월일 — 상세 GET `yyyy-**-**`는 정책 표기 `yyyy.**.**`, 원문 조회 `yyyy-MM-dd`는
  * `yyyy. MM. dd (만 N세)`. 응답에 나이 필드가 없어 마스킹 표시에는 나이를 붙이지 않는다(날짜를 지어내지 않음).
@@ -100,7 +107,7 @@ export function buildGeminiApprovedManagerTableItems(
     {
       key: 'lectureExperience',
       label: '강사 경력',
-      children: detail.managerLectureExperience || '-',
+      children: formatGeminiManagerLectureExperience(detail.managerLectureExperience),
     },
     {
       key: 'homeAddress',

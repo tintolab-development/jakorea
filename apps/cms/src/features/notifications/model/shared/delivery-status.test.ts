@@ -8,7 +8,7 @@ import {
 describe('notification delivery status (세 채널 공통)', () => {
   it.each([
     ['REQUESTED', '발송 요청'],
-    ['SCHEDULED', '예약'],
+    ['SCHEDULED', '발송 예약'],
     ['WAITED', '발송 대기'],
     ['IN_PROGRESS', '발송 중'],
     ['SENT', '발송 성공'],

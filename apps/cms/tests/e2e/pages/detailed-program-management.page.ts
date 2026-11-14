@@ -9,8 +9,9 @@ import { expectAuthenticatedShell } from '../helpers/authenticated-shell'
 import {
   clickSearch,
   expectColumnTitles,
-  filterField,
+  expectFilterSelectText,
   isAdminMutation,
+  selectFilterOption,
   selectRowCheckbox,
   tableRows,
   tryFindRow,
@@ -19,7 +20,7 @@ import {
 import { DATA_MANAGEMENT_NAME_PREFIX } from './data-management-seed-titles'
 import { fillByPlaceholder } from './form-helpers'
 
-const LIST_COLUMNS = ['No.', '사용 여부', '세부 프로그램명', '등록자명', '등록일시'] as const
+const LIST_COLUMNS = ['No.', '사용 여부', '세부 프로그램', '등록자명', '등록일시'] as const
 
 export class DetailedProgramManagementPage {
   readonly page: Page
@@ -51,17 +52,13 @@ export class DetailedProgramManagementPage {
     await expectColumnTitles(this.page, LIST_COLUMNS)
   }
 
-  async expectDefaultUseActive() {
-    await expect(this.page).toHaveURL(/dp_use=active/, { timeout: 15_000 })
-    await expect(
-      filterField(this.page, '사용 여부').getByRole('radio', { name: '사용' })
-    ).toBeChecked()
+  async expectDefaultUseAll() {
+    await expect(this.page).not.toHaveURL(/dp_use=/, { timeout: 15_000 })
+    await expectFilterSelectText(this.page, '사용 여부', '전체')
   }
 
-  async selectUseStatus(label: '사용' | '미사용') {
-    await filterField(this.page, '사용 여부')
-      .getByRole('radio', { name: label })
-      .check({ force: true })
+  async selectUseStatus(label: '전체' | '사용' | '미사용') {
+    await selectFilterOption(this.page, '사용 여부', label)
   }
 
   async fillName(name: string) {
@@ -170,7 +167,7 @@ export class DetailedProgramManagementPage {
     await this.page.getByRole('button', { name: '항목 삭제' }).click()
     const guide = this.page.getByRole('dialog').filter({ hasText: '세부 프로그램 삭제 안내' })
     await expect(guide).toBeVisible()
-    await expect(guide.getByText('해당 세부 프로그램을 삭제하시겠습니까?')).toBeVisible()
+    await expect(guide.getByText(/세부 프로그램을 삭제하시겠습니까\?/)).toBeVisible()
     await expect(guide.getByText('삭제된 정보는 되돌릴 수 없습니다.')).toBeVisible()
 
     const deletePromise = this.page.waitForResponse(

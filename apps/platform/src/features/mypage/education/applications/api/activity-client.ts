@@ -582,6 +582,14 @@ export async function updateApplicationNotice(
   return unwrapEnvelope<PortalUpdateApplicationNoticeResponse>(data)
 }
 
+export async function deleteApplicationNotice(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+): Promise<void> {
+  await axiosClient.delete(noticePath(applicationType, applicationId, postId))
+}
+
 export async function putApplicationNoticeAttachments(
   applicationType: ProgramApplicationType,
   applicationId: string,

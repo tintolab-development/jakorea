@@ -63,19 +63,8 @@ import { GeneralProgramListRouteShell } from '@/pages/programs/general/general-p
 import { RedirectLegacyTemplatesProgramForms } from '@/features/template/template-route-redirects'
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
-const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
-const InstructorDetailPage = lazyLoad(() => import('@/pages/instructors/instructor-detail-page'))
-const InstructorFormPage = lazyLoad(() => import('@/pages/instructors/instructor-form-page'))
-const InstructorMypagePage = lazyLoad(() => import('@/pages/instructors/instructor-mypage-page'))
-const InstructorDocumentsPage = lazyLoad(
-  () => import('@/pages/instructors/instructor-documents-page')
-)
-const InstructorSchedulePage = lazyLoad(
-  () => import('@/pages/instructors/instructor-schedule-page')
-)
-const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
 const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
 const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
 const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
@@ -98,33 +87,11 @@ const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-a
 const ProgramApplicationCompletePage = lazyLoad(
   () => import('@/pages/programs/program-application-complete-page')
 )
-const MyProgramListPage = lazyLoad(() => import('@/pages/programs/my-program-list-page'))
-const MyProgramDetailPage = lazyLoad(() => import('@/pages/programs/my-program-detail-page'))
-const MyProgramHistoryPage = lazyLoad(() => import('@/pages/programs/my-program-history-page'))
-const ProgramSatisfactionPage = lazyLoad(() => import('@/pages/programs/program-satisfaction-page'))
-const MyProgramApplicationsPage = lazyLoad(
-  () => import('@/pages/programs/my-program-applications-page')
-)
-const MyFavoriteProgramsPage = lazyLoad(() => import('@/pages/programs/my-favorite-programs-page'))
-const MyScheduleListPage = lazyLoad(() => import('@/pages/schedules/my-schedule-list-page'))
-const MyScheduleCalendarPage = lazyLoad(() => import('@/pages/schedules/my-schedule-calendar-page'))
-const MyScheduleDetailPage = lazyLoad(() => import('@/pages/schedules/my-schedule-detail-page'))
-const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
-const MySettlementDetailPage = lazyLoad(
-  () => import('@/pages/settlements/my-settlement-detail-page')
-)
-const MyMonthlySettlementPage = lazyLoad(
-  () => import('@/pages/settlements/my-monthly-settlement-page')
-)
-const MySettlementSubmissionPage = lazyLoad(
-  () => import('@/pages/settlements/my-settlement-submission-page')
-)
 const PaymentOrdersPage = lazyLoad(() => import('@/pages/settlement-management/payment-orders-page'))
 const AccountPaymentsPage = lazyLoad(() => import('@/pages/settlement-management/account-payments-page'))
 const SettlementItemSettingsPage = lazyLoad(
   () => import('@/pages/settlement-management/settlement-item-settings-page')
 )
-const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const EducationRecordListPage = lazyLoad(
   () => import('@/pages/education-records/education-record-list-page')
 )
@@ -133,7 +100,6 @@ const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() =>
   import('@/pages/templates/template-list-page').then(m => ({ default: m.TemplateListPage }))
 )
-const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminNoticeDetailPage = lazyLoad(() => import('@/pages/posts/admin-notice-detail-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
@@ -151,7 +117,6 @@ const PermissionRequestListPage = lazyLoad(
 const KakaoAlimtalkPage = lazyLoad(() => import('@/pages/notifications/kakao-alimtalk-page'))
 const MailPage = lazyLoad(() => import('@/pages/notifications/mail-page'))
 const SmsPage = lazyLoad(() => import('@/pages/notifications/sms-page'))
-const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const MemberLoginHistoryPage = lazyLoad(() => import('@/pages/logs/member-login-history-page'))
 const FileDownloadHistoryPage = lazyLoad(() => import('@/pages/logs/file-download-history-page'))
 const PersonalInfoAccessHistoryPage = lazyLoad(
@@ -174,7 +139,7 @@ const BackendDummiesCategoryPage = import.meta.env.DEV
 function LegacyPostsRedirect({
   kind,
 }: {
-  kind: 'root' | 'faq' | 'inquiries' | 'notices' | 'categories'
+  kind: 'root' | 'faq' | 'inquiries' | 'notices'
 }) {
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'ADMIN'
@@ -191,12 +156,7 @@ function LegacyPostsRedirect({
     return <Navigate to={isAdmin ? '/admin/posts/inquiries' : '/'} replace />
   }
 
-  if (kind === 'notices') {
-    return <Navigate to={isAdmin ? '/admin/posts/notices' : '/'} replace />
-  }
-
-  // categories: 관리자 전용이지만 legacy URL 호환을 위해 리다이렉트 유지
-  return <Navigate to="/admin/posts/categories" replace />
+  return <Navigate to={isAdmin ? '/admin/posts/notices' : '/'} replace />
 }
 
 export const router = createBrowserRouter([
@@ -372,16 +332,9 @@ export const router = createBrowserRouter([
         element: <IndexPage />,
       },
       {
-        path: 'my-learning',
-        element: <MyLearningPage />,
-      },
-      {
         path: 'instructors',
         children: [
           { index: true, element: <Navigate to="/users/list?kind=instructors" replace /> },
-          { path: 'new', element: <InstructorFormPage /> },
-          { path: ':id', element: <InstructorDetailPage /> },
-          { path: ':id/edit', element: <InstructorFormPage /> },
         ],
       },
       {
@@ -480,34 +433,8 @@ export const router = createBrowserRouter([
           },
           { path: ':id/apply', element: <ProgramApplicationPage /> }, // Phase 0.2.2: 신청서 작성 페이지
           { path: ':id/apply/complete', element: <ProgramApplicationCompletePage /> }, // Phase 0.2.3: 신청 완료 페이지
-          { path: 'my', element: <MyProgramApplicationsPage /> },
-          { path: 'my/active', element: <MyProgramListPage /> },
-          { path: 'my/active/:id', element: <MyProgramDetailPage /> },
-          { path: 'my/:id', element: <MyProgramDetailPage /> },
-          { path: 'my/:id/history', element: <MyProgramHistoryPage /> },
-          { path: 'satisfaction', element: <ProgramSatisfactionPage /> },
-          { path: 'favorites', element: <MyFavoriteProgramsPage /> },
           { path: 'new', element: <ProgramFormPage /> },
           { path: ':id/edit', element: <ProgramFormPage /> },
-        ],
-      },
-      {
-        path: 'school',
-        children: [
-          { path: 'my-learning', element: <SchoolMyLearningPage /> },
-          { path: 'applications', element: <Navigate to="/programs/my" replace /> },
-          { path: 'applications/*', element: <Navigate to="/programs/my" replace /> },
-        ],
-      },
-      {
-        path: 'instructor',
-        children: [
-          { index: true, element: <InstructorMypagePage /> },
-          { path: 'applications', element: <Navigate to="/programs/my" replace /> },
-          { path: 'applications/*', element: <Navigate to="/programs/my" replace /> },
-          { path: 'documents', element: <InstructorDocumentsPage /> },
-          { path: 'schedule', element: <InstructorSchedulePage /> },
-          { path: 'reports', element: <InstructorReportsPage /> },
         ],
       },
       {
@@ -542,9 +469,6 @@ export const router = createBrowserRouter([
             index: true,
             element: <Navigate to="/programs/education/schedule" replace />,
           },
-          { path: 'my', element: <MyScheduleListPage /> },
-          { path: 'my/calendar', element: <MyScheduleCalendarPage /> },
-          { path: ':id', element: <MyScheduleDetailPage /> },
         ],
       },
       {
@@ -571,15 +495,6 @@ export const router = createBrowserRouter([
             path: 'schedule-negotiations',
             element: <Navigate to="/programs/education/enrollment" replace />,
           },
-          {
-            path: 'my',
-            children: [
-              { index: true, element: <MySettlementListPage /> },
-              { path: 'monthly', element: <MyMonthlySettlementPage /> },
-              { path: 'submit', element: <MySettlementSubmissionPage /> },
-              { path: ':id', element: <MySettlementDetailPage /> },
-            ],
-          },
         ],
       },
       {
@@ -590,71 +505,6 @@ export const router = createBrowserRouter([
           {
             path: 'instructors',
             element: <Navigate to="/users/list?kind=instructors" replace />,
-          },
-        ],
-      },
-      {
-        path: 'mypage',
-        children: [
-          { index: true, element: <Navigate to="/mypage/profile" replace /> },
-          { path: 'profile', element: <ProfilePage /> },
-          // 학교(교사) 인증 / 교사 정보 (인증 상태에 따라 동적 처리)
-          {
-            path: 'school-auth',
-            element: (
-              <ComingSoonPage
-                title="학교(교사) 인증"
-                description="학교(교사) 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          {
-            path: 'school-info',
-            element: (
-              <ComingSoonPage
-                title="교사 정보"
-                description="교사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          // 강사 인증 / 강사 정보 (인증 상태에 따라 동적 처리)
-          {
-            path: 'instructor-auth',
-            element: (
-              <ComingSoonPage
-                title="강사 인증"
-                description="강사 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          {
-            path: 'instructor-info',
-            element: (
-              <ComingSoonPage
-                title="강사 정보"
-                description="강사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          // 내 프로그램 일정 (2뎁스)
-          {
-            path: 'program-schedule',
-            element: (
-              <ComingSoonPage
-                title="내 프로그램 일정"
-                description="내 프로그램 일정 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
-          },
-          // 서류 발급 이력 (2뎁스)
-          {
-            path: 'documents',
-            element: (
-              <ComingSoonPage
-                title="서류 발급 이력"
-                description="서류 발급 이력 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-              />
-            ),
           },
         ],
       },
@@ -697,7 +547,6 @@ export const router = createBrowserRouter([
             path: 'posts',
             children: [
               { index: true, element: <Navigate to="/admin/posts/notices" replace /> },
-              { path: 'categories', element: <AdminCategoryPage /> },
               { path: 'notices', element: <AdminNoticeListPage /> },
               { path: 'notices/:id', element: <AdminNoticeDetailPage /> },
               { path: 'faq/:id', element: <AdminFaqDetailPage /> },
@@ -806,7 +655,6 @@ export const router = createBrowserRouter([
           { path: 'faq', element: <LegacyPostsRedirect kind="faq" /> },
           { path: 'inquiries', element: <LegacyPostsRedirect kind="inquiries" /> },
           { path: 'notices', element: <LegacyPostsRedirect kind="notices" /> },
-          { path: 'categories', element: <LegacyPostsRedirect kind="categories" /> },
         ],
       },
       {
@@ -903,14 +751,6 @@ export const router = createBrowserRouter([
         element: <Navigate to="/" replace />,
       },
       {
-        path: 'reports',
-        element: <Navigate to="/instructor/reports" replace />,
-      },
-      {
-        path: 'reports/*',
-        element: <Navigate to="/instructor/reports" replace />,
-      },
-      {
         path: 'lectures',
         element: <Navigate to="/programs" replace />,
       },
@@ -933,13 +773,6 @@ export const router = createBrowserRouter([
       {
         path: 'histories/*',
         element: <Navigate to="/programs" replace />,
-      },
-      {
-        path: 'my',
-        children: [
-          { path: 'applications', element: <Navigate to="/programs/my" replace /> },
-          { path: 'applications/*', element: <Navigate to="/programs/my" replace /> },
-        ],
       },
       {
         path: 'error',

@@ -15,6 +15,9 @@ vi.mock('@/shared/instance/axios-instance', async importOriginal => {
   return {
     ...actual,
     refreshAccessTokenSession: (...args: unknown[]) => refreshAccessTokenSessionMock(...args),
+    // checkSessionExpiry는 실패 종류가 필요해 Outcome을 쓴다 — 같은 mock을 ok/invalid로 매핑
+    refreshAccessTokenSessionOutcome: async (...args: unknown[]) =>
+      ((await refreshAccessTokenSessionMock(...args)) ? 'ok' : 'invalid'),
   }
 })
 

@@ -5,35 +5,6 @@
  */
 
 import { Card, Tooltip } from 'antd'
-import {
-  AccountBookOutlined,
-  BankOutlined,
-  BookOutlined,
-  BugOutlined,
-  CloudDownloadOutlined,
-  ControlOutlined,
-  CustomerServiceOutlined,
-  ExperimentOutlined,
-  FileDoneOutlined,
-  HeartOutlined,
-  IdcardOutlined,
-  LineChartOutlined,
-  LockOutlined,
-  LoginOutlined,
-  MessageOutlined,
-  NotificationOutlined,
-  ProfileOutlined,
-  QuestionCircleOutlined,
-  ReadOutlined,
-  RocketOutlined,
-  SafetyOutlined,
-  SafetyCertificateOutlined,
-  SettingOutlined,
-  ShopOutlined,
-  SolutionOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -58,41 +29,12 @@ import {
   shouldPostDashboardShortcutRead,
   shouldShowShortcutBadge,
 } from '../api/adapters/dashboard-adapters'
+import { ShortcutIcon } from './shortcut-icons'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
 function formatBadgeCount(count: number): string {
   return count >= 99 ? '99+' : String(count)
-}
-
-const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
-  'programs-general-education': <ReadOutlined />,
-  'programs-economy': <BookOutlined />,
-  'programs-gemini': <ExperimentOutlined />,
-  'programs-ujat': <RocketOutlined />,
-  'users-all': <TeamOutlined />,
-  'users-school': <BankOutlined />,
-  'users-instructor': <IdcardOutlined />,
-  'users-admin': <UserOutlined />,
-  'permission-requests': <SafetyCertificateOutlined />,
-  'admin-permission-settings': <ControlOutlined />,
-  'program-permission-settings': <LockOutlined />,
-  'settlement-payment-orders': <FileDoneOutlined />,
-  'settlement-account-payments': <AccountBookOutlined />,
-  'settlement-item-settings': <SettingOutlined />,
-  notices: <NotificationOutlined />,
-  faq: <QuestionCircleOutlined />,
-  inquiries: <CustomerServiceOutlined />,
-  'template-management': <ProfileOutlined />,
-  sponsors: <HeartOutlined />,
-  textbooks: <ReadOutlined />,
-  'programs-detail': <ShopOutlined />,
-  'notification-messages': <MessageOutlined />,
-  performance: <LineChartOutlined />,
-  'member-login-history': <LoginOutlined />,
-  'file-download-history': <CloudDownloadOutlined />,
-  'privacy-query-history': <SafetyOutlined />,
-  'bug-issue-history': <BugOutlined />,
 }
 
 export function MenuShortcutWidget() {
@@ -180,7 +122,7 @@ export function MenuShortcutWidget() {
                 <span className="menu-shortcut-widget__item-inner">
                   <span className="menu-shortcut-widget__item-left">
                     <span className="menu-shortcut-widget__icon">
-                      {SHORTCUT_ICON_MAP[item.id] ?? <SolutionOutlined />}
+                      <ShortcutIcon shortcutId={item.id} />
                     </span>
                     <span className="menu-shortcut-widget__label">{item.label}</span>
                   </span>

@@ -14,6 +14,11 @@
   gap: var(--spacing-32);
 }
 
+/* Figma 11005:341655 월 그룹 사이 60px — 공용 EducationSessionList 목록 gap(16px)에 더한다 */
+.month + .month {
+  margin-top: calc(60px - var(--spacing-16));
+}
+
 .monthTrigger {
   display: flex;
   width: 100%;
@@ -77,6 +82,11 @@
   .month,
   .monthList {
     gap: var(--spacing-20);
+  }
+
+  /* 모바일은 기존 목록 간격 유지 (60px은 PC 시안 기준) */
+  .month + .month {
+    margin-top: 0;
   }
 
   .monthHeading {

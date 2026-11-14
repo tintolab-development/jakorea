@@ -106,6 +106,38 @@ function resolveBasicInfoFields(program: ProgramDetail) {
   return fields.filter(field => field.value.trim().length > 0)
 }
 
+function EventScheduleList({ events }: { events: readonly ProgramEventSchedule[] }) {
+  if (events.length === 0) return null
+  return (
+    <div className={styles.curriculumBlock}>
+      <ul className={styles.sessions} aria-label="행사·세부 일정">
+        {events.map(event => (
+          <li
+            key={`${event.scheduleLabel}-${event.name}-${event.dateLabel}`}
+            className={styles.session}
+          >
+            <PFText
+              as="p"
+              typo="bd-md-sb"
+              color="black"
+              className={`${styles.sessionTitle} ${styles.fieldValue}`}
+            >
+              <span className={styles.sessionLabel}>{event.scheduleLabel}</span>
+              {event.name ? <span>{` ${event.name}`}</span> : null}
+            </PFText>
+            {event.dateLabel && event.dateLabel !== '-' ? (
+              <PFText as="p" typo="bd-md-rg" color="black" className={styles.fieldValue}>
+                {event.dateLabel}
+              </PFText>
+            ) : null}
+            <ProgressMeta row={event} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function ProgramInfoDetail({
   program,
   header,
@@ -115,18 +147,20 @@ export function ProgramInfoDetail({
 }: ProgramInfoDetailProps) {
   const isParticipate = variant === 'participate'
   const basicInfoFields = resolveBasicInfoFields(program)
-  const hasCurriculumBlock = program.sessions.length > 0 || program.eventSchedules.length > 0
+  const showUjatTermSchedulesInDetail =
+    program.detailCase === 'ujat-participant' || program.detailCase === 'ujat-volunteer'
+  const hasCurriculumBlock =
+    program.sessions.length > 0 ||
+    (!showUjatTermSchedulesInDetail && program.eventSchedules.length > 0)
   const hasBasicInfoSection = basicInfoFields.length > 0 || hasCurriculumBlock
   const applicationMethodValue = program.applicationMethodValue.trim()
-  const geminiTrainingRequestPeriodLabel =
-    program.detailCase === 'gemini' ? (program.geminiTrainingRequestPeriodLabel ?? '').trim() : ''
   const hasDetailContent =
     program.recruitmentPhases.length > 0 ||
-    Boolean(geminiTrainingRequestPeriodLabel) ||
     program.educationSchedules.length > 0 ||
     program.extraSections.length > 0 ||
     Boolean(program.contactValue.trim()) ||
-    Boolean(applicationMethodValue)
+    Boolean(applicationMethodValue) ||
+    (showUjatTermSchedulesInDetail && program.eventSchedules.length > 0)
 
   const contactParts = isParticipate ? splitContactParts(program.contactValue) : []
 
@@ -206,33 +240,8 @@ export function ProgramInfoDetail({
             </div>
           ) : null}
 
-          {program.eventSchedules.length > 0 ? (
-            <div className={styles.curriculumBlock}>
-              <ul className={styles.sessions} aria-label="행사·세부 일정">
-                {program.eventSchedules.map(event => (
-                  <li
-                    key={`${event.scheduleLabel}-${event.name}-${event.dateLabel}`}
-                    className={styles.session}
-                  >
-                    <PFText
-                      as="p"
-                      typo="bd-md-sb"
-                      color="black"
-                      className={`${styles.sessionTitle} ${styles.fieldValue}`}
-                    >
-                      <span className={styles.sessionLabel}>{event.scheduleLabel}</span>
-                      {event.name ? <span>{` ${event.name}`}</span> : null}
-                    </PFText>
-                    {event.dateLabel && event.dateLabel !== '-' ? (
-                      <PFText as="p" typo="bd-md-rg" color="black" className={styles.fieldValue}>
-                        {event.dateLabel}
-                      </PFText>
-                    ) : null}
-                    <ProgressMeta row={event} />
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {!showUjatTermSchedulesInDetail ? (
+            <EventScheduleList events={program.eventSchedules} />
           ) : null}
         </section>
       ) : null}
@@ -244,36 +253,28 @@ export function ProgramInfoDetail({
           </PFText>
 
           <div className={styles.detailContentBody}>
-            {program.recruitmentPhases.length > 0 || geminiTrainingRequestPeriodLabel ? (
+            {program.recruitmentPhases.length > 0 ? (
               <div className={styles.recruitmentCard}>
                 <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
                   {program.recruitmentPhaseGroupLabel}
                 </PFText>
-                {program.recruitmentPhases.length > 0 ? (
-                  <div className={styles.recruitmentList}>
-                    {program.recruitmentPhases.map((phase, index) => (
-                      <div key={`${phase.label}-${index}`} className={styles.infoBlock}>
-                        <PFText as="span" typo="bd-md-sb" color="black" className={styles.fieldValue}>
-                          {phase.label}
-                        </PFText>
-                        <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
-                          {phase.value}
-                        </PFText>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                {geminiTrainingRequestPeriodLabel ? (
-                  <div className={styles.infoBlock}>
-                    <PFText as="span" typo="bd-md-sb" color="black" className={styles.fieldValue}>
-                      연수 요청 가능 기간
-                    </PFText>
-                    <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
-                      {geminiTrainingRequestPeriodLabel}
-                    </PFText>
-                  </div>
-                ) : null}
+                <div className={styles.recruitmentList}>
+                  {program.recruitmentPhases.map((phase, index) => (
+                    <div key={`${phase.label}-${index}`} className={styles.infoBlock}>
+                      <PFText as="span" typo="bd-md-sb" color="black" className={styles.fieldValue}>
+                        {phase.label}
+                      </PFText>
+                      <PFText as="span" typo="bd-md-md" color="black" className={styles.fieldValue}>
+                        {phase.value}
+                      </PFText>
+                    </div>
+                  ))}
+                </div>
               </div>
+            ) : null}
+
+            {showUjatTermSchedulesInDetail ? (
+              <EventScheduleList events={program.eventSchedules} />
             ) : null}
 
             {program.educationSchedules.length > 0 ? (
