@@ -51,7 +51,7 @@ export {
   startAdminRegisteredFlowFromSignUp,
 } from './lib/admin-registered-member'
 export { continueAdminRegisteredSessionAfterPasswordChange } from './lib/continue-session-after-password-change'
-export { finishAdminRegisteredOnboardingToSignIn } from './lib/finish-onboarding-to-sign-in'
+export { endAdminRegisteredOnboardingSession } from './lib/end-onboarding-session'
 export {
   clearAdminRegisteredWizardState,
   getAdminRegisteredProfileFields,

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import chevronLeftUrl from '../image/icon/chevron-left.svg'
 import chevronRightUrl from '../image/icon/chevron-right.svg'
 import type { CareersFeaturedStory } from '../model/types'
+import { useRemoteThumbnailUrl } from '@/shared/hooks'
 import { PFText } from '@/shared/ui'
 import styles from './featured-story-carousel.module.css'
 
@@ -35,8 +36,8 @@ function StoryNavButton({
 export function FeaturedStoryCarousel({ stories }: FeaturedStoryCarouselProps) {
   const [index, setIndex] = useState(0)
   const current = stories.length > 0 ? stories[index % stories.length] : undefined
-  // 썸네일 없음(서버 null) → 이미지 없음
-  const imageUrl = current?.imageUrl || undefined
+  // 어드민 「썸네일 없음」 표식(1×1 투명 PNG)은 이미지 없음으로 본다
+  const imageUrl = useRemoteThumbnailUrl(current?.imageUrl)
 
   if (stories.length === 0) {
     return null

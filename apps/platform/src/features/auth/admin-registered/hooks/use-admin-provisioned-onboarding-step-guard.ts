@@ -11,6 +11,7 @@ import {
 } from '../lib/onboarding-step'
 import { getAdminRegisteredWizardState } from '../model/wizard-state'
 import { syncAdminRegisteredOnboardingSession } from '../lib/sync-onboarding-session'
+import { clearAdminRegisteredPasswordChangeRequired } from '../lib/admin-registered-member'
 
 function toOnboardingFlags(data: {
   email?: string
@@ -53,7 +54,8 @@ export function useAdminProvisionedOnboardingStepGuard() {
   const remote = isRemoteApiConfigured()
   const hasToken = Boolean(getAccessToken())
   const pageStep = resolveAdminProvisionedStepFromPathname(location.pathname)
-  const enabled = remote && hasToken && pageStep != null
+  // 완료 화면은 GET /me로 정렬하지 않는다 (진입 시 세션 종료)
+  const enabled = remote && hasToken && pageStep != null && pageStep !== 'DONE'
 
   const meQuery = usePortalMeQuery({ enabled })
   const me = meQuery.data
@@ -69,6 +71,8 @@ export function useAdminProvisionedOnboardingStepGuard() {
 
   useEffect(() => {
     if (!remote) return
+    // 완료 화면은 진입 시 세션을 끝낸다 — 토큰·Wizard가 없어도 로그인 화면으로 보내지 않는다.
+    if (pageStep === 'DONE') return
     if (isChecking) return
 
     if (!hasToken && !hasWizard) {
@@ -92,6 +96,10 @@ export function useAdminProvisionedOnboardingStepGuard() {
     })
 
     if (target && target !== location.pathname) {
+      // 온보딩 대상이 아니어서 위저드를 떠나면 온보딩 세션 표시를 지워 헤더가 로그인 상태로 보이게 한다.
+      if (!shouldContinueAdminProvisionedOnboarding(flags)) {
+        clearAdminRegisteredPasswordChangeRequired()
+      }
       navigate(target, { replace: true })
     }
   }, [
@@ -103,6 +111,7 @@ export function useAdminProvisionedOnboardingStepGuard() {
     me,
     meQuery.isError,
     navigate,
+    pageStep,
     remote,
   ])
 

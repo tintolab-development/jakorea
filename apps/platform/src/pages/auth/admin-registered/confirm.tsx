@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   buildAdminRegisteredConfirmationRows,
-  finishAdminRegisteredOnboardingToSignIn,
   requireAdminRegisteredWizardState,
   useAdminProvisionedCompleteMutation,
   useAdminRegisteredProfileHydration,
@@ -63,7 +62,8 @@ export function AdminRegisteredConfirmPage() {
         }
       }
 
-      finishAdminRegisteredOnboardingToSignIn()
+      // 세션 종료는 완료 화면 진입 시 처리한다 (시안: 「확인이 완료되었어요!」)
+      navigate('/auth/admin-registered/complete', { replace: true })
     })()
   }
 
