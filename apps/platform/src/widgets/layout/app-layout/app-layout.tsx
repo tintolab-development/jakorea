@@ -87,8 +87,12 @@ export function AppLayout({
     children
   )
 
+  /**
+   * 인증(auth) 화면은 본문을 늘리지 않는다 — 푸터가 콘텐츠 하단 여백(시안 100px) 바로 아래에 붙는다.
+   * 만 14세 전환 본문·콜백(full)만 헤더·푸터 사이를 채운다.
+   */
   const mainClassName =
-    isMemberConversionBody || isAuth || isFull
+    isMemberConversionBody || isFull
     ? styles.mainFill
     : isMypage
       ? styles.mainMypage
