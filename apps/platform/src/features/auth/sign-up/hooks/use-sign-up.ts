@@ -163,6 +163,8 @@ export function useSignUp() {
   const wizardPathname = location.pathname
   const freshEntryHandledKeyRef = useRef<string | null>(null)
   const pendingWizardFormResetRef = useRef(false)
+  /** [가입 완료하기] 중복 제출 방지 — state 반영 전 연속 클릭도 막는다 */
+  const signupSubmitInFlightRef = useRef(false)
   const guardianFinalConsentInFlightRef = useRef(false)
   const guardianFinalConsentDoneRef = useRef(false)
 
@@ -1232,9 +1234,26 @@ export function useSignUp() {
   }
 
   const handleSignupComplete = async () => {
-    setSubmitMessage('')
+    if (signupSubmitInFlightRef.current) return
+    signupSubmitInFlightRef.current = true
+    // 교사회원 학교 기관 ID 조회(resolvePortalSchoolOrganizationId)보다 먼저 제출 중으로 둔다
+    setIsSubmitting(true)
 
+    try {
+      await submitSignup()
+    } finally {
+      signupSubmitInFlightRef.current = false
+      setIsSubmitting(false)
+    }
+  }
+
+  /**
+   * 가입 제출 본문. 에러 문구는 클릭 즉시 지우지 않고,
+   * 새 결과(성공 또는 새 실패)가 확정될 때 바꾼다.
+   */
+  const submitSignup = async () => {
     if (!remoteApi) {
+      setSubmitMessage('')
       clearPortraitConsentSession()
       navigate(SIGN_UP_COMPLETE_PATH, {
         replace: true,
@@ -1364,8 +1383,6 @@ export function useSignUp() {
       portraitConsentDraft,
     }
 
-    setIsSubmitting(true)
-
     try {
       if (selectedType === 'teacher') {
         const body = mapSignUpToTeacherRequest(mapInput)
@@ -1378,6 +1395,7 @@ export function useSignUp() {
         await postGeneralSignup(mapSignUpToGeneralRequest(mapInput))
       }
 
+      setSubmitMessage('')
       clearPortraitConsentSession()
       navigate(SIGN_UP_COMPLETE_PATH, {
         replace: true,
@@ -1390,8 +1408,6 @@ export function useSignUp() {
           '가입에 실패했어요. 입력 정보를 확인한 뒤 다시 시도해 주세요.'
         )
       )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
