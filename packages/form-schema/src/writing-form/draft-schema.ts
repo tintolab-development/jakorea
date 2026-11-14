@@ -3375,7 +3375,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
           },
           {
             id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth,
-            label: '생년월일(8자리)',
+            label: '생년월일',
             placeholder: AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER,
             bodyText: '',
           },

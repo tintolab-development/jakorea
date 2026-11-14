@@ -226,14 +226,14 @@ function preserveUnlockedAgreementConfirmBodyOptions(
   if (options == null) return undefined
   if (
     options.agreementAdminProxyConfirm !== true &&
-    options.paymentPreConsentSheetLayout !== true &&
+    options.agreementConfirmSheetLayout !== true &&
     (options.hiddenParagraphIds == null || options.hiddenParagraphIds.size === 0)
   ) {
     return undefined
   }
   return {
     agreementAdminProxyConfirm: options.agreementAdminProxyConfirm,
-    paymentPreConsentSheetLayout: options.paymentPreConsentSheetLayout,
+    agreementConfirmSheetLayout: options.agreementConfirmSheetLayout,
     hiddenParagraphIds: options.hiddenParagraphIds,
     agreementSystemParticipantName: options.agreementSystemParticipantName,
     agreementSystemNow: options.agreementSystemNow,
@@ -686,8 +686,8 @@ export function AgreementWritingFormShell({
               structureControlLockedParagraphIds != null
                 ? 'agreement-writing-form-left--structure-control-locked'
                 : '',
-              leftPanelParagraphBodyOptions?.paymentPreConsentSheetLayout === true
-                ? 'agreement-writing-form-left--pre-consent-sheet'
+              leftPanelParagraphBodyOptions?.agreementConfirmSheetLayout === true
+                ? 'agreement-writing-form-left--confirm-sheet'
                 : '',
             ]
               .filter(Boolean)

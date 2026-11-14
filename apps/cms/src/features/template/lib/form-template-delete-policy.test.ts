@@ -306,9 +306,11 @@ describe('resolveAgreementWritingFormConfig', () => {
     const catalog = resolveAgreementWritingFormConfig('agreement-third-party')
     const editable = stripAgreementWritingFormStructureLocks(catalog!)
     expect(editable.structureLockedParagraphIds).toBeUndefined()
-    expect(editable.paragraphBodyOptions?.paymentStatementBasicInfoValues).toEqual(
-      catalog!.paragraphBodyOptions?.paymentStatementBasicInfoValues
-    )
+    // 템플릿 관리 화면만 시안 5767:42072 「지급 목적」 문구로 덮어쓰고, 나머지 기본 정보 값은 카탈로그 그대로
+    expect(editable.paragraphBodyOptions?.paymentStatementBasicInfoValues).toEqual({
+      ...catalog!.paragraphBodyOptions?.paymentStatementBasicInfoValues,
+      paymentPurpose: '강사비 및 교통비 등 실비 지급',
+    })
     expect(editable.paragraphBodyOptions?.structureLockedAuthoringChoicePreview).toBeUndefined()
   })
 })

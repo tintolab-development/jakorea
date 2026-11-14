@@ -45,9 +45,20 @@ const {
   ...sheetLayoutBaseOptions
 } = PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
 
+/**
+ * 템플릿 관리 시안 5767:42072 「지급 목적」 문구.
+ * 회원 작성·발급 서식은 업무 상수 `PAYMENT_STATEMENT_DEFAULT_PURPOSE`를 그대로 쓴다.
+ */
+export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PAYMENT_PURPOSE =
+  '강사비 및 교통비 등 실비 지급'
+
 export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS = {
   ...sheetLayoutBaseOptions,
-  paymentPreConsentSheetLayout: true,
+  paymentStatementBasicInfoValues: {
+    ...sheetLayoutBaseOptions.paymentStatementBasicInfoValues,
+    paymentPurpose: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PAYMENT_PURPOSE,
+  },
+  agreementConfirmSheetLayout: true,
 } satisfies RenderFormParagraphBodyOptions
 
 export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS: ReadonlySet<string> =

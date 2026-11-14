@@ -59,8 +59,16 @@ import {
   PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
 } from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
 import { AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-portrait/paragraph-config'
-import { AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-notice/paragraph-config'
-import { EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-expense/paragraph-config'
+import {
+  AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS,
+  AGREEMENT_NOTICE_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+  AGREEMENT_NOTICE_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
+} from '@/features/template/ui/form-set/agreement-notice/paragraph-config'
+import {
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS,
+  EDUCATOR_FACILITATOR_PLEDGE_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+  EDUCATOR_FACILITATOR_PLEDGE_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
+} from '@/features/template/ui/form-set/agreement-expense/paragraph-config'
 import type { AgreementWritingFormShellProps } from '@/features/template/ui/form-set/editors/new-agreement-form'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { AGREEMENT_MODAL_DESCRIPTION, DIRECT_AGREEMENT_MODAL_DESCRIPTION } from './template-registry'
@@ -111,6 +119,11 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       paragraphBodyOptions: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS,
       /** 시안: JA KOREA 귀하·작성완료 없음 */
       agreementClosingFooter: { showSubmitButton: false, showRecipient: false },
+      /** 템플릿 관리 시안 5767:41865 — 흰 위반 동의 문구 카드·회색 날짜·서명 카드를 따로 보인다 */
+      templateManagement: {
+        paragraphBodyOptions: EDUCATOR_FACILITATOR_PLEDGE_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
+        navHiddenParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+      },
     }
   },
   'agreement-notice': () => {
@@ -131,6 +144,11 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4ParagraphGapPx: getAgreementNoticeA4ParagraphGap,
       paragraphBodyOptions: AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS,
       agreementClosingFooter: { showSubmitButton: false, showRecipient: false },
+      /** 템플릿 관리 시안 5767:41434 — 흰 확인 문구 카드·회색 날짜·서명 카드를 따로 보인다 */
+      templateManagement: {
+        paragraphBodyOptions: AGREEMENT_NOTICE_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS,
+        navHiddenParagraphIds: AGREEMENT_NOTICE_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS,
+      },
     }
   },
   'agreement-portrait': () => {
