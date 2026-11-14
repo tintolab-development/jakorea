@@ -917,7 +917,8 @@ export function ProgramScheduleWidget({
                   <div className="program-schedule-widget__event-title">{event.title}</div>
                   <div className="program-schedule-widget__event-desc">
                     <span>{getEventTypeLabel(event)}</span>
-                    <span> | {event.time}</span>
+                    <span className="program-schedule-widget__event-desc-divider" aria-hidden />
+                    <span>{event.time}</span>
                   </div>
                 </div>
               </List.Item>
