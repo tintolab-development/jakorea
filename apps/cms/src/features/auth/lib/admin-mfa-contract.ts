@@ -309,7 +309,6 @@ export function mapMfaResetError(
   }
   if (
     code === 'MFA_RESET_CONCURRENT_CHANGE' ||
-    code === 'MFA_RESET_ALREADY_UNENROLLED' ||
     code === 'MFA_ALREADY_ENROLLED' ||
     httpStatus === 409
   ) {

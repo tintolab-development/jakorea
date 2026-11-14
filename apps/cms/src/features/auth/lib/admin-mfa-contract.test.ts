@@ -134,7 +134,6 @@ describe('buildMfaResetRequest', () => {
 describe('mapMfaResetError', () => {
   it('409 재등록 차단과 timeout, step-up 실패를 구분한다', () => {
     expect(mapMfaResetError('MFA_ALREADY_ENROLLED', 409).action).toBe('refresh-status')
-    expect(mapMfaResetError('MFA_RESET_ALREADY_UNENROLLED').action).toBe('refresh-status')
     expect(mapMfaResetError('MFA_RESET_OUTCOME_UNKNOWN').action).toBe('timeout')
     expect(mapMfaResetError('MFA_RESET_STEP_UP_EXPIRED', 401).action).toBe('restart-step-up')
     expect(mapMfaResetError('MFA_RESET_RATE_LIMITED', 429).action).toBe('rate-limited')
