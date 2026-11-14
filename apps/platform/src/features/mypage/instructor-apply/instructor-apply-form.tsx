@@ -15,7 +15,7 @@ import {
   INSTRUCTOR_FORM_PLACEHOLDERS as PH,
   INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
 } from '@jakorea/domain/instructor/form-copy'
-import { GENDER_OPTIONS } from '@jakorea/domain/instructor/gender'
+import { GENDER_OPTIONS, type Gender } from '@jakorea/domain/instructor/gender'
 import {
   INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
   type InstructorSharedProfileFormValues,
@@ -496,12 +496,17 @@ export function InstructorApplyForm({
               </PFFormField>
               <PFFormField label="성별 및 생년월일">
                 <PFFormInlineSeparatedFields>
-                  <RadioGroup
+                  {/* 원격 프로필이 있으면 프로필 성별로 표시한다 — OTHER·예전 값은 남/여 어느 쪽도 선택하지 않는다 */}
+                  <RadioGroup<Gender | ''>
                     name="gender"
-                    value={values.gender}
+                    value={
+                      lockedBasic.profileGender !== undefined ? lockedBasic.gender : values.gender
+                    }
                     options={GENDER_OPTIONS}
                     disabled
-                    onChange={value => patch('gender', value)}
+                    onChange={value => {
+                      if (value) patch('gender', value)
+                    }}
                   />
                   <PFTextInput
                     variant="formPage"
