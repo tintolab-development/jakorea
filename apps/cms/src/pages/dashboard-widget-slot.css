@@ -30,15 +30,10 @@
   overflow: visible;
 }
 
-/* 메뉴 바로가기: 50%/100% 슬롯 높이 — dashboard-layout-tokens.css 변수 = config 상수와 동기화 */
+/* 메뉴 바로가기: 50% 슬롯 높이 — dashboard-layout-tokens.css 변수 = config 상수와 동기화. 100%는 콘텐츠 높이(hug) */
 .dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) {
   min-height: var(--dashboard-slot-half-height);
   max-height: var(--dashboard-slot-half-height);
-}
-
-.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) {
-  min-height: var(--dashboard-menu-shortcut-slot-full);
-  max-height: var(--dashboard-menu-shortcut-slot-full);
 }
 
 .dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget),
@@ -118,6 +113,15 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* KPI 100% 슬롯: 콘텐츠 높이(hug) — 카드 최대 높이·KPI 목록 내부 세로 스크롤 없이 모든 항목 노출 */
+.dashboard-widget-slot[data-col-span='24'] .kpi-achievement-widget__card {
+  max-height: none;
+}
+
+.dashboard-widget-slot[data-col-span='24'] .kpi-achievement-widget__kpi-list {
+  overflow-y: visible;
 }
 
 .dashboard-widget-slot > .ant-card {
