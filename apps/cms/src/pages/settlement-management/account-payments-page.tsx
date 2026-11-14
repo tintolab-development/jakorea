@@ -593,7 +593,7 @@ export default function AccountPaymentsPage() {
 
   /**
    * 툴바 양식 발급: 선택한 행만 대상.
-   * 대량이체 = 지급 대기, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
+   * 대량이체 = 지급 대기·지급 완료, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
    */
   const resolveToolbarFormIssueRows = useCallback(
     (kind: 'bulk-transfer' | 'tax-report'): AccountPaymentRow[] | null => {
@@ -1058,7 +1058,6 @@ export default function AccountPaymentsPage() {
 
   /**
    * 일괄 완료 모달「세금신고 양식 발급」— 방금 계좌 지급 완료한 행은 세금신고 대상이다.
-   * (대량이체는 지급 대기 건만 서버가 허용하므로 완료 직후에는 발급할 수 없다.)
    */
   const handleIssueTaxReportFromSuccessModal = useCallback(() => {
     const ctx = accountPaymentCompleteSuccessContext
