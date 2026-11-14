@@ -75,4 +75,29 @@ describe('isScreenOwnedApiError', () => {
       })
     ).toBe(false)
   })
+
+  it('관리자 비밀번호 재설정(confirm·eligibility)의 화면 안내 코드 3종이 대상이다', () => {
+    for (const url of [
+      '/api/admin/auth/password-reset/confirm',
+      '/api/admin/auth/password-reset/eligibility',
+    ]) {
+      for (const code of [
+        'PASSWORD_RESET_ACCOUNT_MISMATCH',
+        'PASSWORD_RESET_CONFIRM_MISMATCH',
+        'IDENTITY_VERIFICATION_SESSION_REQUIRED',
+      ]) {
+        expect(isScreenOwnedApiError({ url, code, field: undefined })).toBe(true)
+      }
+      // 그 밖의 코드는 전역 알럿 그대로
+      expect(isScreenOwnedApiError({ url, code: 'RATE_LIMITED', field: undefined })).toBe(false)
+    }
+    // 다른 경로의 같은 코드는 대상이 아니다
+    expect(
+      isScreenOwnedApiError({
+        url: '/api/admin/auth/password/change',
+        code: 'IDENTITY_VERIFICATION_SESSION_REQUIRED',
+        field: undefined,
+      })
+    ).toBe(false)
+  })
 })

@@ -17,18 +17,50 @@ import type {
 } from '@/shared/api/generated/members/schemas'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+// 화면이 직접 안내하는 재설정 오류 코드 — 전역 오류 알럿 제외 목록과 같은 상수
+import {
+  IDENTITY_VERIFICATION_SESSION_REQUIRED_CODE,
+  PASSWORD_RESET_ACCOUNT_MISMATCH_CODE,
+  PASSWORD_RESET_CONFIRM_MISMATCH_CODE,
+} from '@/shared/lib/screen-owned-api-errors'
 
 const VERIFICATION_TTL_MS = 10 * 60 * 1000
 
 export type FindPasswordEmailVerifyResult = { kind: 'found' } | { kind: 'not_found' }
 
+/** 화면이 직접 처리하는 재설정 오류 — 분기는 error.code로만 한다 */
+export type PasswordResetScreenError =
+  /** 401 PASSWORD_RESET_ACCOUNT_MISMATCH(field email) — 이메일 입력 단계로, 이메일 칸에 서버 message */
+  | { kind: 'account_mismatch'; message: string }
+  /** 401 IDENTITY_VERIFICATION_SESSION_REQUIRED — 본인인증부터 다시 */
+  | { kind: 'identity_required' }
+
+function classifyPasswordResetScreenError(error: unknown): PasswordResetScreenError | null {
+  const data = (error as { response?: { data?: unknown } } | null)?.response?.data
+  if (!data) return null
+  const parsed = parseAdminRegisterApiError(data)
+  if (parsed.code === PASSWORD_RESET_ACCOUNT_MISMATCH_CODE) {
+    return { kind: 'account_mismatch', message: parsed.message }
+  }
+  if (parsed.code === IDENTITY_VERIFICATION_SESSION_REQUIRED_CODE) {
+    return { kind: 'identity_required' }
+  }
+  return null
+}
+
 /** 본인인증 후 계정 확인 — `not_eligible`이면 「일치하는 가입 정보 없음」 */
-export type PasswordResetEligibilityResult = { kind: 'eligible' } | { kind: 'not_eligible' }
+export type PasswordResetEligibilityResult =
+  | { kind: 'eligible' }
+  | { kind: 'not_eligible' }
+  | PasswordResetScreenError
 
 export type ChangePasswordAfterResetResult =
   | { kind: 'success' }
   | { kind: 'invalid_new_password' }
   | { kind: 'api_error'; message: string }
+  /** 401 PASSWORD_RESET_CONFIRM_MISMATCH(field newPasswordConfirm) — 확인값 칸 오류 */
+  | { kind: 'confirm_mismatch' }
+  | PasswordResetScreenError
 
 export interface ChangePasswordAfterResetInput {
   email: string
@@ -121,12 +153,18 @@ export async function verifyPasswordResetEligibility(
     identityVerificationSessionId: input.identityVerificationSessionId,
     profileToken: input.profileToken,
   }
-  const { data: payload } = await axiosClient.post<unknown>(
-    adminAuthPaths.passwordResetEligibility(),
-    body
-  )
-  const result = unwrapPasswordResetEligibility(payload)
-  return result.eligible === true ? { kind: 'eligible' } : { kind: 'not_eligible' }
+  try {
+    const { data: payload } = await axiosClient.post<unknown>(
+      adminAuthPaths.passwordResetEligibility(),
+      body
+    )
+    const result = unwrapPasswordResetEligibility(payload)
+    return result.eligible === true ? { kind: 'eligible' } : { kind: 'not_eligible' }
+  } catch (error) {
+    const screenError = classifyPasswordResetScreenError(error)
+    if (screenError) return screenError
+    throw error
+  }
 }
 
 async function changePasswordAfterResetMock(
@@ -172,7 +210,15 @@ async function changePasswordAfterResetRemote(
     if (error instanceof AdminRegisterApiError) {
       return { kind: 'api_error', message: error.message }
     }
+    const screenError = classifyPasswordResetScreenError(error)
+    if (screenError) return screenError
     const axiosErr = error as { response?: { data?: unknown } }
+    if (
+      axiosErr.response?.data &&
+      parseAdminRegisterApiError(axiosErr.response.data).code === PASSWORD_RESET_CONFIRM_MISMATCH_CODE
+    ) {
+      return { kind: 'confirm_mismatch' }
+    }
     if (axiosErr.response?.data) {
       const parsed = parseAdminRegisterApiError(axiosErr.response.data)
       return { kind: 'api_error', message: parsed.message }

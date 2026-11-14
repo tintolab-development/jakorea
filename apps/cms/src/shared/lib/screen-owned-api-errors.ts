@@ -16,11 +16,24 @@ export const ADMIN_IDENTITY_ALREADY_REGISTERED_CODE = 'ADMIN_IDENTITY_ALREADY_RE
 /** 회원 사전등록(개인·강사) — 같은 조건의 중복 코드. 관리자 등록과 같은 코드로 확정(BE 회신 2026-11-14) */
 export const PRE_REGISTER_IDENTITY_DUPLICATE_CODE = ADMIN_IDENTITY_ALREADY_REGISTERED_CODE
 
+/** 관리자 비밀번호 재설정(confirm·eligibility) — 화면이 직접 안내하는 코드 */
+export const PASSWORD_RESET_ACCOUNT_MISMATCH_CODE = 'PASSWORD_RESET_ACCOUNT_MISMATCH'
+export const PASSWORD_RESET_CONFIRM_MISMATCH_CODE = 'PASSWORD_RESET_CONFIRM_MISMATCH'
+export const IDENTITY_VERIFICATION_SESSION_REQUIRED_CODE = 'IDENTITY_VERIFICATION_SESSION_REQUIRED'
+
+export const PASSWORD_RESET_SCREEN_OWNED_CODES: ReadonlySet<string> = new Set([
+  PASSWORD_RESET_ACCOUNT_MISMATCH_CODE,
+  PASSWORD_RESET_CONFIRM_MISMATCH_CODE,
+  IDENTITY_VERIFICATION_SESSION_REQUIRED_CODE,
+])
+
 const IDENTITY_CONTACT_PATH = /\/api\/admin\/me\/identity-contact(?:$|[?#])/
 const ADMIN_ACCOUNT_BASIC_INFO_PATH = /\/api\/admin\/admin-accounts\/\d+\/basic-info(?:$|[?#])/
 const ADMIN_ACCOUNT_CREATE_PATH = /\/api\/admin\/admin-accounts(?:$|[?#])/
 const MEMBER_PRE_REGISTER_PATH =
   /\/api\/admin\/users\/pre-register\/(?:individual|instructor)(?:$|[?#])/
+const ADMIN_PASSWORD_RESET_PATH =
+  /\/api\/admin\/auth\/password-reset\/(?:confirm|eligibility)(?:$|[?#])/
 
 export function isScreenOwnedApiError(input: {
   url: string | undefined
@@ -49,6 +62,14 @@ export function isScreenOwnedApiError(input: {
     return true
   }
   if (input.code === PRE_REGISTER_IDENTITY_DUPLICATE_CODE && MEMBER_PRE_REGISTER_PATH.test(url)) {
+    return true
+  }
+  // 관리자 비밀번호 재설정 — 이메일 칸·확인값 칸 오류, 본인인증 재진행을 화면이 안내한다.
+  if (
+    input.code &&
+    PASSWORD_RESET_SCREEN_OWNED_CODES.has(input.code) &&
+    ADMIN_PASSWORD_RESET_PATH.test(url)
+  ) {
     return true
   }
   return false
