@@ -20,6 +20,9 @@ export async function withAuthenticatedPage<T>(
   try {
     return await run(page)
   } finally {
+    // refresh token은 사용 시 rotate된다. 닫기 전에 최신 세션을 저장해 두지 않으면
+    // 다음 컨텍스트가 이미 쓴 refresh token으로 복원하다 세션을 잃는다(화면 요청에 Bearer 없음).
+    await context.storageState({ path: E2E_ADMIN_AUTH_FILE }).catch(() => undefined)
     await context.close().catch(() => undefined)
   }
 }
