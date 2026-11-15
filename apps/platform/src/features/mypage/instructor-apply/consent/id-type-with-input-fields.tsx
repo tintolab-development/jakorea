@@ -138,6 +138,7 @@ export function PlatformIdTypeWithInputFields({
       {isResident ? (
         <div className={styles.idTypeWithInputResident}>
           <PFFormResidentNumberInput
+            fillRow
             frontValue={residentParts.front}
             backValue={residentParts.back}
             onFrontChange={value =>
