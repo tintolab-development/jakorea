@@ -1,4 +1,5 @@
 import { formatMultiFileUploadHint } from './file-upload-policy'
+import { buildFileTypeInvalidAlertCopy, type PlatformAlertCopy } from './platform-alert-copy'
 
 /**
  * 공개 신청 문서 첨부(기업후원 상담·재능기부 신청) — 시안 안내: JPG, PNG, HWP, Excel, PDF, Word.
@@ -32,12 +33,14 @@ const ALLOWED_MIME = new Set([
 
 const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'hwp', 'hwpx', 'xls', 'xlsx', 'pdf', 'doc', 'docx'])
 
-/** 허용 형식이 아니면 안내 문구, 맞으면 null */
-export function validateDocumentAttachmentType(file: File): string | null {
+/**
+ * 허용 형식이 아니면 「파일 형식이 맞지 않는 경우」 팝업 문구(Figma 14504-51207), 맞으면 null
+ */
+export function validateDocumentAttachmentType(file: File): PlatformAlertCopy | null {
   const mime = file.type.trim().toLowerCase()
   const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
   if (!ALLOWED_MIME.has(mime) && !ALLOWED_EXTENSIONS.has(extension)) {
-    return `${DOCUMENT_ATTACHMENT_FORMATS_LABEL} 형식의 파일만 첨부할 수 있습니다.`
+    return buildFileTypeInvalidAlertCopy(DOCUMENT_ATTACHMENT_FORMATS_LABEL)
   }
   return null
 }
