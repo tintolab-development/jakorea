@@ -5,7 +5,8 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { IndividualSettlementApprovalTarget } from './individualSettlementApprovalTarget';
+import type { IndividualSettlementBulkApprovalTarget } from './individualSettlementBulkApprovalTarget';
+import type { InstructorSettlementApplicationTarget } from './instructorSettlementApplicationTarget';
 
 /**
  * 정산/지급 일괄 상태 변경 요청. 프론트 핸드오프 호환을 위해 statementIds/paymentIds와 legacy ids를 모두 허용합니다.
@@ -40,9 +41,14 @@ export interface SettlementBulkStatusChangeRequest {
      */
   reason: string;
   /**
-     * 지급조서 일괄 확인에 함께 처리할 영수증 정산 신청(개인 참여자·봉사자) 목록. 지급조서 확인 목록 영수증 행의 individualSettlementApplicationId·revisionNo를 그대로 보낸다. 강사 지급조서와 같은 트랜잭션에서 승인하며 한 건이라도 실패하면 전체를 롤백한다. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.
+     * 지급조서 일괄 확인에 함께 처리할 영수증 정산 신청(개인 참여자·봉사자). 강사 지급조서와 같은 트랜잭션에서 승인하며 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.
+     * @maxItems 500
+     */
+  individualSettlementApplications?: IndividualSettlementBulkApprovalTarget[];
+  /**
+     * 지급조서 일괄 확인에 함께 처리할 확정 전 강사 정산 신청서 목록. 지급조서 확인 목록 rowType=SETTLEMENT_APPLICATION 행(availableActions에 BULK_CONFIRM_PAYMENT_STATEMENT)의 settlementApplicationId를 보낸다. 신청서마다 승인(settlement·지급조서 생성) 후 지급조서 확인까지 한 번에 처리하며 강사 지급조서·영수증과 같은 트랜잭션이다. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.
      * @minItems 0
      * @maxItems 500
      */
-  individualSettlementApplications?: IndividualSettlementApprovalTarget[];
+  instructorSettlementApplications?: InstructorSettlementApplicationTarget[];
 }

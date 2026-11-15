@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { SettlementApplicationListItemResponseConfirmationStatus } from './settlementApplicationListItemResponseConfirmationStatus';
 import type { SettlementApplicationListItemResponseSupersededReason } from './settlementApplicationListItemResponseSupersededReason';
 
 /**
@@ -61,4 +62,8 @@ export interface SettlementApplicationListItemResponse {
   rejectedReason?: string | null;
   /** 반려 시각. rejectedReason과 같은 기준. 반려가 아니면 null. */
   rejectedAt?: string | null;
+  /** 정산 신청 revision 번호(1부터). 2 이상이면 반려·정정 요청 뒤 재제출한 신청이다. */
+  revisionNo?: number | null;
+  /** CMS 지급조서 확인과 같은 기준의 처리 상태. 정산(지급조서)이 있으면 그 상태(정정 승인 후 재신청 대기 DRAFT는 CORRECTION_REQUESTED), 없으면 신청서 기준: 제출 revision 1=WAITING_CONFIRM, 2 이상=REAPPLICATION, CORRECTION_REQUESTED, REJECTED. 재제출로 대체된 이전 신청·임시저장·취소는 null. FE는 이 값을 그대로 쓴다. */
+  confirmationStatus?: SettlementApplicationListItemResponseConfirmationStatus;
 }

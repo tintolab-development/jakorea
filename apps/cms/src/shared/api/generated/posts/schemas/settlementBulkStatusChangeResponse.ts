@@ -6,16 +6,19 @@
  * OpenAPI spec version: v9
  */
 import type { Decision } from './decision';
+import type { SettlementApplicationAdminActionResponse } from './settlementApplicationAdminActionResponse';
 import type { SettlementStatusChangeResponse } from './settlementStatusChangeResponse';
 
 export interface SettlementBulkStatusChangeResponse {
   statusAxis?: string;
   toStatus?: string;
-  /** 요청 건수. 지급조서 일괄 확인이면 지급조서 + 영수증 정산 신청 건수 */
+  /** 요청 건수. 지급조서 일괄 확인이면 지급조서 + 확정 전 강사 신청서 + 영수증 합계 */
   requestedCount?: number;
   /** 처리 건수. 전체 성공일 때만 응답하므로 requestedCount와 같다 */
   successCount?: number;
   results?: SettlementStatusChangeResponse[];
   /** 지급조서 일괄 확인에서 함께 승인한 영수증 정산 신청 결과(단건 승인 응답과 같은 모양). 없으면 빈 배열 */
   individualSettlementApplicationResults?: Decision[];
+  /** 지급조서 일괄 확인에서 승인·확인한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양: applicationId, status=CONFIRMED, settlementId, paymentStatementId). 지급조서는 이미 CONFIRMED로 확인된 상태다. 없으면 빈 배열 */
+  instructorSettlementApplicationResults?: SettlementApplicationAdminActionResponse[];
 }
