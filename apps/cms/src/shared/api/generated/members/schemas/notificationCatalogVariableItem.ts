@@ -31,4 +31,6 @@ export interface NotificationCatalogVariableItem {
   memberTypes?: string[];
   /** 값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립. */
   sourceMode?: NotificationCatalogVariableItemSourceMode;
+  /** 이번 발송에서 수신자별 직접 입력으로 받는 변수인지. programId 미전달(대상 프로그램 미선택)일 때만 true가 될 수 있다: EVENT_ONLY 또는 requiresProgram=true인 SERVER_RESOLVED 키(수신자 정보로 서버가 채우는 키 제외). programId가 있으면 항상 false(기존 검사·치환 그대로). FE는 템플릿 본문 키 중 이 값이 true인 키만 수신자 설정 입력 칼럼으로 그린다. 알림 링크 경로(MANUAL_ALLOWED)는 false: 칼럼 없이 보내면 서버가 템플릿별 기본 마이페이지 목록 경로를 쓰고 요청 값이 있으면 요청 값이 우선 */
+  manualInputRequired?: boolean;
 }

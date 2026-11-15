@@ -16,10 +16,10 @@ export interface MemberPortalConsentCompleteRequest {
   programEligible?: boolean;
   /** Completed authored form for portrait, payment statement, facilitator pledge, and administrative information consents */
   filledDocument?: FilledDocumentRequest;
-  /** CRIMINAL_HISTORY_CHECK_CONSENT 전용, confirm 및 CLEAN 검사를 마친 원본 PDF fileObjectId */
+  /** CRIMINAL_HISTORY_CHECK_CONSENT 전용, confirm 및 CLEAN 검사를 마친 원본(PDF/JPG/PNG) fileObjectId */
   evidenceFileObjectId?: number;
   /**
-     * 만 14세 미만 PORTRAIT_RIGHTS complete 시 필수. POST /api/portal/me/guardian-verifications 이후 VERIFIED 조회에서 받은 one-time token.
+     * 만 14세 미만 PORTRAIT_RIGHTS 또는 RECEIPT_PRE_CONSENT complete 시 필수. POST /api/portal/me/guardian-verifications 이후 VERIFIED 조회에서 받은 purpose-scoped one-time token.
      * @minLength 0
      * @maxLength 256
      */

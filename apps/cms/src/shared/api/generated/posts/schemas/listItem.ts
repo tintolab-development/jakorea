@@ -7,6 +7,7 @@
  */
 import type { ListItemApplicationType } from './listItemApplicationType';
 import type { ListItemLectureProgressStatus } from './listItemLectureProgressStatus';
+import type { ListItemPaymentStatus } from './listItemPaymentStatus';
 import type { ListItemRowType } from './listItemRowType';
 import type { ListItemScheduleKind } from './listItemScheduleKind';
 
@@ -43,4 +44,6 @@ export interface ListItem {
   lectureProgressStatus?: ListItemLectureProgressStatus;
   /** 일정 종류(program_schedule.schedule_kind). 강사 정산 현황 scheduleKind와 같은 값. 모든 조회에서 채우며, 값이 비어 있는 일정은 null. */
   scheduleKind?: ListItemScheduleKind;
+  /** 영수증 [확인] 때 만든 계좌 지급 건(sourceType=INDIVIDUAL_SETTLEMENT, sourceId=settlementApplicationId)의 현재 지급 상태. PAID=계좌 지급 완료(화면 처리 현황 「계좌 지급 완료」, 지급조서 일괄 다운로드 대상). 승인 전·반려·미신청(NOT_APPLIED) 등 계좌 지급 건이 없으면 null. status(Revision 상태)는 바꾸지 않는다. */
+  paymentStatus?: ListItemPaymentStatus;
 }
