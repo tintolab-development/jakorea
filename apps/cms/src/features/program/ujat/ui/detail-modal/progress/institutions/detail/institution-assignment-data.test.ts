@@ -408,7 +408,7 @@ describe('institution assignment sources', () => {
         volunteerA: '안재원',
         volunteerB: '백소리',
         textbookName: 'UJAT 초등 경제교육 교재 05',
-        textbookQuantityLabel: '2키트 (41권)',
+        textbookQuantityLabel: '20권',
       }),
       expect.objectContaining({
         gradeLabel: '2학년',
@@ -416,7 +416,7 @@ describe('institution assignment sources', () => {
         volunteerA: '김민수',
         volunteerB: '이서연',
         textbookName: 'UJAT 초등 경제교육 교재 05',
-        textbookQuantityLabel: '2키트 (41권)',
+        textbookQuantityLabel: '21권',
       }),
     ])
   })

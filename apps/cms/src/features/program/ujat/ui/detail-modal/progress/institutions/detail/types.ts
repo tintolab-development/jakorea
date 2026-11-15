@@ -1,5 +1,6 @@
 import type { UjatInstitutionApplicationDetail } from '../../../application-institution/detail/detail-types'
 import type { EducationProgressHalfKey } from '../../tabs'
+import type { UjatInstitutionParticipantState } from './participant-status'
 
 export const UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TABS = [
   'application',
@@ -32,12 +33,18 @@ export type UjatEducationProgressInstitutionConfirmedScheduleRow = {
   id: string
   dateDisplay: string
   classLabels: string[]
+  /** temporary-schedule slot.scheduleId — 활동 포기 stopScheduleId. 없거나 특정 불가면 생략 */
+  scheduleId?: number
 }
 
 export type UjatEducationProgressInstitutionDetail = {
   institutionId: string
   half: EducationProgressHalfKey
   institutionName: string
+  /** 기관 신청 상세 GET `participantId` — 활동 포기 POST 대상. 응답에 없으면 null */
+  participantId?: number | null
+  /** 기관 신청 상세 GET participantStatus·participantAvailableActions. 없으면 null */
+  participantState?: UjatInstitutionParticipantState
   educationRegion: string
   adminComment: string
   applicationDetail: UjatInstitutionApplicationDetail

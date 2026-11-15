@@ -55,28 +55,27 @@ function sameAssignmentGradeLabel(left: string, right: string): boolean {
   return left.trim() === right.trim()
 }
 
-function formatAssignmentTextbookQuantityLabel(input: {
-  kitCount: number | null
-  bookCount: number | null
-}): string {
-  const kitLabel = input.kitCount != null ? `${input.kitCount}키트` : ''
-  const bookLabel = input.bookCount != null ? `(${input.bookCount}권)` : ''
-  if (kitLabel && bookLabel) return `${kitLabel} ${bookLabel}`
-  if (kitLabel) return kitLabel
-  if (input.bookCount != null) return `${input.bookCount}권`
-  return '-'
-}
-
-function resolveGradeTextbook(
+/**
+ * 교육 배정 표 「교재 준비수량」— 학급별 권수(시안 4082:102959: 학급 학생 수와 같은 `28권`).
+ * 학년 블록 classes[].studentCount(기관 신청 상세 GET gradeBlocks)가 SSOT.
+ * 학년 교재가 없거나 학급·학생 수가 없으면 `-`. 학년 키트 합계를 학급마다 반복하지 않는다.
+ */
+function resolveClassTextbook(
   gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>,
-  gradeLabel: string
+  gradeLabel: string,
+  classNo: number
 ): { textbookName: string; textbookQuantityLabel: string } {
   const block = gradeBlocks.find(item => sameAssignmentGradeLabel(item.gradeLabel, gradeLabel))
   if (!block) return { textbookName: '-', textbookQuantityLabel: '-' }
   const supply = calculateGradeTextbookSupply(block)
+  if (supply.textbookName === '-') return { textbookName: '-', textbookQuantityLabel: '-' }
+  const studentCount = block.classes.find(room => room.classNo === classNo)?.studentCount
   return {
     textbookName: supply.textbookName,
-    textbookQuantityLabel: formatAssignmentTextbookQuantityLabel(supply),
+    textbookQuantityLabel:
+      typeof studentCount === 'number' && Number.isFinite(studentCount) && studentCount > 0
+        ? `${studentCount}권`
+        : '-',
   }
 }
 
@@ -234,7 +233,7 @@ function buildRowsForSchedule(
       sources && scheduleId != null
         ? volunteersForClassFromSources(sources, scheduleId, section.gradeLabel, section.classNo)
         : { volunteerA: '-', volunteerB: '-' }
-    const textbook = resolveGradeTextbook(gradeBlocks, section.gradeLabel)
+    const textbook = resolveClassTextbook(gradeBlocks, section.gradeLabel, section.classNo)
 
     return {
       gradeLabel: section.gradeLabel,

@@ -726,7 +726,17 @@ function UjatProgramDetailFullPageModalContent({
     institutionApplicationDetailRow.institutionName !== '-'
       ? institutionApplicationDetailRow.institutionName
       : null
-  const eduInstitutionDetailName: string | null = null
+  // 교육 진행 · 참여 기관 상세 — 같은 기관 신청 상세 쿼리(캐시 공유)에서 기관명을 읽는다.
+  const { row: eduInstitutionApplicationDetailRow } = useUjatInstitutionApplicationDetail({
+    institutionId: eduInstitutionDetailId ?? '',
+    programId: displayProgram?.id ?? programId,
+  })
+  const eduInstitutionDetailName =
+    eduInstitutionDetailId &&
+    eduInstitutionApplicationDetailRow?.institutionName &&
+    eduInstitutionApplicationDetailRow.institutionName !== '-'
+      ? eduInstitutionApplicationDetailRow.institutionName
+      : null
 
   const eduInstitutionDetailTab = open
     ? parseUjatEduInstTab(searchParams)
@@ -1597,7 +1607,7 @@ function UjatProgramDetailFullPageModalContent({
     eduVolunteerDetailMeta?.title ??
         volunteerApplicantDetailMeta?.title ??
         (eduInstitutionDetailName
-          ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
+          ? `참여 기관 상세 (${eduInstitutionDetailName})`
           : institutionDetailName
             ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
             : programTitle)
@@ -1668,10 +1678,15 @@ function UjatProgramDetailFullPageModalContent({
           : { label: lnbLabel }
       )
     } else {
+      // 시안 4082:101647 — 참여 기관 상세에서만 중간 항목을 「참여 기관 목록」으로 표기
+      const childBreadcrumbLabel =
+        nestedDetailLabel && nestedDetailLabel === eduInstitutionDetailName
+          ? '참여 기관 목록'
+          : childLabel
       items.push(
         nestedDetailLabel && childParams
-          ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
-          : { label: childLabel }
+          ? makeBreadcrumbItem(childBreadcrumbLabel, location.pathname, childParams)
+          : { label: childBreadcrumbLabel }
       )
     }
 
@@ -1814,9 +1829,6 @@ function UjatProgramDetailFullPageModalContent({
                 key={institutionListVersion}
                 programId={programId}
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
-                onOpenScheduleAssign={() =>
-                  setLnbTab('institution_applications', 'inst_schedule_assign')
-                }
               />
             ))}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_assign' && (
@@ -1968,7 +1980,11 @@ function UjatProgramDetailFullPageModalContent({
 
           {activeLnb === 'managers' && displayProgram.id ? (
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-              <ProgramManagersTab programId={displayProgram.id} />
+              <ProgramManagersTab
+                programId={displayProgram.id}
+                blockLastManagerDelete
+                variant="ujat"
+              />
             </div>
           ) : null}
         </>
