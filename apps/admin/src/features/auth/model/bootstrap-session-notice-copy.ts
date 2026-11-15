@@ -1,8 +1,8 @@
-/** QA-0137 새로고침 세션 복원 실패 안내 문구 (사용자 확정 문구) */
+/** QA-0137 새로고침 세션 복원 실패 안내 문구 — CMS `SESSION_ENDED_NOTICE`(시안 「자동 로그아웃 안내」)와 같은 문구 */
 
 export const BOOTSTRAP_SESSION_ENDED_NOTICE = {
-  title: '로그인이 종료되었어요.',
-  content: '로그인 유지 시간이 지났거나 로그아웃되어 다시 로그인이 필요해요.',
+  title: '자동 로그아웃 안내',
+  content: '보안을 위해 로그인 세션이 종료되었습니다.\n계속 이용하시려면 다시 로그인해 주세요.',
   confirmLabel: '확인',
 } as const
 
