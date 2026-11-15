@@ -4,6 +4,7 @@ import {
   ensureApplyGateRequiredDocumentConsentItems,
   filterListedDocumentConsentItems,
   parseApplyGateRequiredConsentItemIds,
+  sortDocumentConsentItemsForDisplay,
   isMinorSettingsMember,
   isTeacherSettingsProfile,
   isUnder14FromBirthDate,
@@ -102,6 +103,12 @@ assert.deepEqual(
     .map(item => item.id)
     .sort(),
   ['educatorPledge', 'sexOffenseCheck'],
+)
+
+// 동의서·서약서 표시 순서 — 시안: 지급조서 → 교육진행자 → 성범죄경력 → 행정정보
+assert.deepEqual(
+  sortDocumentConsentItemsForDisplay(allListed).map(item => item.id),
+  ['paymentStatement', 'receiptPreConsent', 'educatorPledge', 'sexOffenseCheck', 'administrativeJoint'],
 )
 
 console.log('consent-visibility.selfcheck: ok')

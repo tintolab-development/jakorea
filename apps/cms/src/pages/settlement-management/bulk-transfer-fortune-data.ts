@@ -102,11 +102,14 @@ export function getCompletedRowsOrderedForBulkTransfer(rows: AccountPaymentRow[]
   return out
 }
 
-/** 대량이체 export는 CONFIRMED + WAITING_PAYMENT만 대상으로 한다. */
-export function getWaitingPaymentRowsOrderedForBulkTransfer(
-  rows: AccountPaymentRow[]
-): AccountPaymentRow[] {
-  const waiting = rows.filter(r => r.accountPaymentStatus === 'awaiting_confirmation')
+/** 대량이체 export는 지급 대기·계좌 지급 완료 건을 대상으로 하고, 지급 실패(`paymentFailureYn`) 건은 제외한다. */
+export function getBulkTransferRowsOrdered(rows: AccountPaymentRow[]): AccountPaymentRow[] {
+  const waiting = rows.filter(
+    r =>
+      (r.accountPaymentStatus === 'awaiting_confirmation' ||
+        r.accountPaymentStatus === 'account_paid') &&
+      r.paymentFailureYn !== true
+  )
   const byInstructor = new Map<string, AccountPaymentRow[]>()
   for (const row of waiting) {
     const list = byInstructor.get(row.instructorName) ?? []
@@ -163,7 +166,7 @@ function buildBulkTransferSheetRowsByMode(
   rows: AccountPaymentRow[],
   mode: 'preview' | 'download'
 ): BulkTransferSheetRow[] {
-  const ordered = getWaitingPaymentRowsOrderedForBulkTransfer(rows)
+  const ordered = getBulkTransferRowsOrdered(rows)
   const lines: BulkTransferSheetRow[] = []
   for (const row of ordered) {
     lines.push(toSheetLine(payoutMetaFromRow(row, mode), row.amount))

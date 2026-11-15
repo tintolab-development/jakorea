@@ -34,6 +34,13 @@
   font-weight: 700;
 }
 
+/* 시안 PC — 카드 396×129 (1px 보더 포함, 패딩 23) */
+@media (--bp-pc-up) {
+  .card {
+    padding: 23px;
+  }
+}
+
 @media (--bp-below-pc) {
   .row {
     grid-template-columns: 1fr;

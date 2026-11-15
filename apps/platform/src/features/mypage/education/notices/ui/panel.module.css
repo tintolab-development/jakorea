@@ -157,6 +157,11 @@
     margin-top: var(--spacing-24);
   }
 
+  /* 시안 PC: 프로그램 정보 · 신청 정보 — 14 SemiBold */
+  .footer .footerAction {
+    font-weight: 600;
+  }
+
   .actionDivider {
     height: 20px;
   }

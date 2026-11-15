@@ -512,20 +512,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     [selectedTemplate]
   )
   const programSelected = programNumericId != null
-  const directRecipientProbe = useMemo(
-    () => ({ source: 'manual' as const, actorType: 'DIRECT' }),
-    []
-  )
-  const directManualKeys = useMemo(
-    () =>
-      listAlimtalkManualVariableKeys({
-        keys: placeholderKeys,
-        catalog: variablesCatalog,
-        recipient: directRecipientProbe,
-        programSelected,
-      }),
-    [directRecipientProbe, placeholderKeys, programSelected, variablesCatalog]
-  )
   const manualKeysByRecipientId = useMemo(() => {
     const next: Record<string, string[]> = {}
     for (const recipient of recipients) {
@@ -934,6 +920,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         selectedIds={selectedRecipientIds}
                         onSelectedIdsChange={setSelectedRecipientIds}
                         typeColumnTitle={typeColumnTitle}
+                        typeMode={recipientTypeMode}
                         manualKeysByRecipientId={manualKeysByRecipientId}
                         blockedKeysByRecipientId={blockedKeysByRecipientId}
                         onVariableChange={(recipientId, key, value) => {
@@ -1065,7 +1052,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             ? ALIMTALK_SEND_MEMBER_TYPE_OPTIONS
             : ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS
         }
-        getTypeLabel={row => alimtalkSendRecipientTypeLabel(row) || '-'}
+        getTypeLabel={row => alimtalkSendRecipientTypeLabel(row, recipientTypeMode) || '-'}
         contactColumnTitle="휴대폰 번호"
         getContact={row => row.phone}
         filterCandidates={(rows, applied) =>
@@ -1134,7 +1121,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           contact: entry.phone,
           variables: entry.variables,
         }))}
-        variableKeys={directManualKeys}
         normalize={normalizeAlimtalkSendPhone}
         isValid={isValidKoreanPhoneNumber}
         invalidMessage="올바른 휴대폰 번호를 입력해 주세요."

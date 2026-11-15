@@ -2,7 +2,10 @@ import { memo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { mailSendRecipientTypeLabel } from '@/features/notifications/model/mail-send/recipients'
-import type { MailSendRecipient } from '@/features/notifications/model/mail-send/types'
+import type {
+  MailSendRecipient,
+  MailSendRecipientTypeMode,
+} from '@/features/notifications/model/mail-send/types'
 import '@/features/notifications/ui/alimtalk-send/recipient-table.css'
 import './recipient-table.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -18,6 +21,8 @@ type RecipientTableProps = {
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
   typeColumnTitle?: string
+  /** 유형 칸 종류 — 서버가 영문 코드만 준 경우 칸에 맞는 라벨로 바꾸는 데 쓴다 */
+  typeMode: MailSendRecipientTypeMode
   /** 수신자별 직접 입력 변수. 서버 치환 키는 포함하지 않는다. */
   manualKeysByRecipientId?: Record<string, string[]>
   blockedKeysByRecipientId?: Record<string, string[]>
@@ -29,6 +34,7 @@ export const RecipientTable = memo(function RecipientTable({
   selectedIds,
   onSelectedIdsChange,
   typeColumnTitle = '유형',
+  typeMode,
   manualKeysByRecipientId,
   blockedKeysByRecipientId,
   onVariableChange,
@@ -56,7 +62,7 @@ export const RecipientTable = memo(function RecipientTable({
       key: 'type',
       align: 'center',
       ellipsis: true,
-      render: (_value, record) => mailSendRecipientTypeLabel(record) || '-',
+      render: (_value, record) => mailSendRecipientTypeLabel(record, typeMode) || '-',
     },
     {
       title: '수신자명',

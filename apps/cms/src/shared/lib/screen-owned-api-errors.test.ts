@@ -100,4 +100,31 @@ describe('isScreenOwnedApiError', () => {
       })
     ).toBe(false)
   })
+
+  it('세금신고 발급·미리보기의 대상 없음(TAX_REPORT_NO_ELIGIBLE_SELECTION)은 화면이 안내한다', () => {
+    for (const url of [
+      '/api/admin/settlements/exports/tax-report',
+      '/api/admin/settlements/exports/tax-report/preview',
+    ]) {
+      expect(
+        isScreenOwnedApiError({ url, code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION', field: undefined })
+      ).toBe(true)
+      // 그 밖의 코드는 전역 알럿 그대로
+      expect(
+        isScreenOwnedApiError({
+          url,
+          code: 'SETTLEMENT_EXPORT_SELECTION_INELIGIBLE',
+          field: undefined,
+        })
+      ).toBe(false)
+    }
+    // 다른 경로의 같은 코드는 대상이 아니다
+    expect(
+      isScreenOwnedApiError({
+        url: '/api/admin/settlements/exports/bulk-transfer',
+        code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION',
+        field: undefined,
+      })
+    ).toBe(false)
+  })
 })

@@ -62,6 +62,7 @@ function SubmissionCell({
       })
     } catch (error) {
       handleError(error, { context: 'downloadProgressAssignmentFile' })
+      showAlert({ title: '안내', content: '첨부파일 다운로드에 실패했습니다.' })
     }
   }
 

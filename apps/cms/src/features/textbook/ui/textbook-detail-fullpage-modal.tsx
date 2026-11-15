@@ -274,7 +274,7 @@ function TextbookDetailFullPageModalInner({
                         )
                       }
                       options={businessAreaOptions}
-                      style={{ width: 220 }}
+                      style={{ width: 200 }}
                     />
                   }
                 />

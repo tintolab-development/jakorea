@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
-  ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT,
   assertSelectedRawExportDisabled,
   buildAccountPaymentExportRequest,
   buildRawAccountPaymentExportRequest,
@@ -9,7 +8,7 @@ import {
 } from './build-account-payment-export-request'
 
 describe('buildAccountPaymentExportRequest', () => {
-  it('대량이체는 WAITING_PAYMENT와 선택한 settlement/accountPayment ID만 전송한다', () => {
+  it('대량이체는 status 없이 선택한 settlement/accountPayment ID만 전송한다', () => {
     const body = buildAccountPaymentExportRequest({
       kind: 'bulk-transfer',
       selection: {
@@ -22,7 +21,7 @@ describe('buildAccountPaymentExportRequest', () => {
         ],
       },
     })
-    expect(body.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT)
+    expect(body.status).toBeUndefined()
     expect(body.reason).toBe('대량이체 양식 발급')
     expect(body.settlementIds).toEqual([101])
     expect(body.accountPaymentIds).toEqual([2001])
@@ -148,7 +147,7 @@ describe('buildRawAccountPaymentExportRequest', () => {
       fromDate: '2026-08-01',
       toDate: '2026-08-31',
     })
-    expect(masked.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT)
+    expect(masked.status).toBeUndefined()
     expect(masked.fromDate).toBe('2026-08-01')
     const raw = buildRawAccountPaymentExportRequest({
       kind: 'bulk-transfer',

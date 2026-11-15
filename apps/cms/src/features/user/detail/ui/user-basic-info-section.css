@@ -148,6 +148,17 @@
 }
 
 /*
+ * 시안 4427:53835: 강사 상세 기본 정보 표2 행 52 — 「A등급 │ [등급 평가]」처럼 h32 버튼이 있는 값 셀도
+ * 위아래 10으로 52를 유지한다(공통 padding 12면 56). 약관 표([동의서 보기] 행 56)는 대상 아님.
+ */
+.detail-fullpage-modal
+  .user-basic-info-section__split-cards
+  .detail-info-form__field-content--view:has(.ant-btn) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/*
  * 시안 4427:22524 (221743): 일정 변경&취소 배지 134×23 — 테두리 1px이 밖으로 더해져 25가 되던 것
  * 공통 배지는 프로그램 화면도 쓰므로 회원 상세 범위만 맞춘다.
  */
@@ -255,6 +266,14 @@
   flex-wrap: nowrap;
   vertical-align: middle;
   position: relative;
+  overflow: visible;
+}
+
+/*
+ * 보기 슬롯 공통 `.detail-info-form__field-content--view > span { overflow: hidden }`이
+ * 드롭다운 트리거 틀(margin -8px)을 잘라 열림 테두리 오른쪽 변만 민트 선으로 남던 문제 — 이 래퍼는 잘라내지 않는다.
+ */
+.detail-info-form__field-content--view > .user-basic-info-section__admin-permission-inline {
   overflow: visible;
 }
 

@@ -69,12 +69,12 @@ export const RECEIPT_PROCESS_LABEL = {
   confirmed: '확인 완료',
   paid: '계좌 지급 완료',
   rejected: '신청 반려',
-  mixed: '확인 진행 중',
+  mixed: '확인 진행중',
 } as const
 
 /**
- * 영수증 처리 현황 — 강사식 집계 (R17): 제출된 회차의 상태가 한 가지면 그 라벨, 여러 가지면 "확인 진행 중".
- * "미작성 N건"은 쓰지 않는다. 제출된 회차가 없을 때도 "확인 진행 중"(기존 기본값 유지).
+ * 영수증 처리 현황 — 강사식 집계 (R17): 제출된 회차의 상태가 한 가지면 그 라벨, 여러 가지면 "확인 진행중".
+ * "미작성 N건"은 쓰지 않는다. 제출된 회차가 없을 때도 "확인 진행중"(기존 기본값 유지).
  */
 export function resolveReceiptProcessLabel(items: readonly EducationSettlementItem[]): string {
   const labels = items

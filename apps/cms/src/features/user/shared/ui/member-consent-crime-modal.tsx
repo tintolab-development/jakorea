@@ -137,8 +137,9 @@ export function MemberConsentCrimeModal({
   const handleDownload = useCallback(() => {
     void downloadCrimeConsentFormDocument().catch(error => {
       console.debug('memberConsentCrime download failed', error)
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
     })
-  }, [])
+  }, [showAlert])
 
   const handleSubmit = useCallback(async () => {
     if (!hasUploadedDocument) {

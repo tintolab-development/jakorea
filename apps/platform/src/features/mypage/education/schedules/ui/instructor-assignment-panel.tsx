@@ -6,6 +6,8 @@ import {
   asAssignmentDisplayText,
   displayAssignmentValueOrDash,
   formatAssignmentDistanceKm,
+  formatAssignmentGradeLabel,
+  formatAssignmentInstitutionRegion,
   formatAssignmentWaitingStatus,
   formatInstructorRole,
   groupAssignmentsByInstitution,
@@ -90,11 +92,11 @@ function buildRows(
     return {
       id: key,
       role: formatInstructorRole(first?.instructorRole),
-      grade: displayAssignmentValueOrDash(first?.grade),
+      grade: formatAssignmentGradeLabel(first?.grade),
       institutionName: asAssignmentDisplayText(first?.institutionName) || '-',
-      location: displayAssignmentValueOrDash(
-        individual ? first?.scheduleLocation : first?.institutionAddress,
-      ),
+      location: individual
+        ? displayAssignmentValueOrDash(first?.scheduleLocation)
+        : formatAssignmentInstitutionRegion(first?.institutionAddress),
       distance: formatAssignmentDistanceKm(first?.distanceKm),
       lines: groupItems.map(item => {
         const parts = formatInstructorEducationScheduleLineParts(item, useScheduleName)
@@ -119,10 +121,10 @@ function buildWaitingRows(
     return {
       id: item.rowKey,
       institutionName: asAssignmentDisplayText(item.institutionName) || '-',
-      requestedGrade: displayAssignmentValueOrDash(item.requestedGrade),
-      location: displayAssignmentValueOrDash(
-        individual ? item.scheduleLocation : item.institutionAddress,
-      ),
+      requestedGrade: formatAssignmentGradeLabel(item.requestedGrade),
+      location: individual
+        ? displayAssignmentValueOrDash(item.scheduleLocation)
+        : formatAssignmentInstitutionRegion(item.institutionAddress),
       distance: formatAssignmentDistanceKm(item.distanceKm),
       schedule: schedule === '-' ? displayAssignmentValueOrDash(item.dateRangeLabel) : schedule,
       status: formatAssignmentWaitingStatus(item.status),

@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
+import {
+  PROGRAM_WAGE_DEDUCTION_LABEL,
+  PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -286,6 +290,33 @@ describe('UJAT program adapters', () => {
       },
     })
     expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비, 장거리 교통비, 숙박비')
+  })
+
+  it('공제 항목은 settlementPolicy.deductionType을 정본으로 쓰고 null이면 해당없음이다', () => {
+    const withholding = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      settlementPolicy: {
+        structuredPolicyYn: true,
+        deductionType: 'DAILY_WORKER_WITHHOLDING',
+        wagePolicies: [],
+        paymentItems: [{ id: 1999, itemType: 'TRANSPORTATION', useYn: true }],
+      },
+    })
+    expect(withholding.generalCommonInfo?.paymentItems).toBe('교통비')
+    expect(withholding.generalCommonInfo?.deductionItems).toBe(PROGRAM_WAGE_DEDUCTION_LABEL)
+
+    const none = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: { deductionItems: PROGRAM_WAGE_DEDUCTION_LABEL },
+      }),
+      settlementPolicy: { deductionType: undefined, wagePolicies: [], paymentItems: [] },
+    })
+    expect(none.generalCommonInfo?.deductionItems).toBe(PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL)
   })
 
   it('settlementPolicy.paymentItems []는 JSON overlay 지급 항목을 덮어 빈 상태로 둔다', () => {
@@ -1020,6 +1051,43 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
     })
     expect(mapped.participantApprovedCount).toBe(2)
     expect(mapped.participantCapacity).toBe(15)
+  })
+
+  it('목록 최종 파견 학교 수는 ujatConfirmedSchoolCount를 쓰고, 없으면 승인 기준으로 대체한다', () => {
+    const mapped = fromListItem({
+      id: 186495,
+      title: 'UJAT',
+      participatingSchoolCount: 12,
+      participatingOrganizationCount: 12,
+      ujatConfirmedSchoolCount: 8,
+    })
+    expect(mapped.participatingSchoolCount).toBe(8)
+
+    const legacy = fromListItem({ id: 186495, title: 'UJAT', participatingSchoolCount: 12 })
+    expect(legacy.participatingSchoolCount).toBe(12)
+
+    const empty = fromListItem({ id: 186496, title: 'UJAT' })
+    expect(empty.participatingSchoolCount).toBe(0)
+  })
+
+  it('목록 상·하반기 봉사자 정원·모집된 인원은 새 응답 필드만 쓴다', () => {
+    const mapped = fromListItem({
+      id: 186495,
+      title: 'UJAT',
+      participantCapacity: 16,
+      volunteerRecruitmentCount: 64,
+      ujatFirstHalfVolunteerCapacity: 64,
+      ujatSecondHalfVolunteerCapacity: null,
+      ujatFirstHalfVolunteerSelectedCount: 0,
+      ujatSecondHalfVolunteerSelectedCount: 8,
+    })
+    expect(mapped.ujatFirstHalfVolunteerCapacity).toBe(64)
+    expect(mapped.ujatSecondHalfVolunteerCapacity).toBeNull()
+    expect(mapped.ujatFirstHalfVolunteerSelectedCount).toBe(0)
+    expect(mapped.ujatSecondHalfVolunteerSelectedCount).toBe(8)
+    // 등록·수정용 정원 필드와 섞지 않는다
+    expect(mapped.ujatFirstHalfVolunteerCount).toBeUndefined()
+    expect(mapped.ujatSecondHalfVolunteerCount).toBeUndefined()
   })
 
   it('목록 진행 현황은 canonical 응답 필드만 사용한다', () => {

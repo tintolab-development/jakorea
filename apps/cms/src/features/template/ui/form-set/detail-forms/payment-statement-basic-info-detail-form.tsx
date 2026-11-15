@@ -87,6 +87,11 @@ export type PaymentStatementBasicInfoDetailFormProps = {
   lockedProfileFields?: boolean
   /** 영수증 발급 사전 동의서 — 주민등록번호·소속 미노출 */
   hideResidentFields?: boolean
+  /**
+   * 영수증 정산 신청서(시안 14680:103216) — 주민등록번호 행만 빼고 「소속」은 단독 행으로 둔다.
+   * `hideResidentFields`(소속까지 숨김)와 다르다.
+   */
+  hideResidentNumberRow?: boolean
   /** 편집 가능 모드에서 값 변경 시 (확인·서명란 성명 동기화 등) */
   onValuesChange?: (values: PaymentStatementBasicInfoAutofillValues) => void
   /**
@@ -114,6 +119,7 @@ export function PaymentStatementBasicInfoDetailForm({
   onlyPaymentPurposeLocked = false,
   lockedProfileFields = false,
   hideResidentFields = false,
+  hideResidentNumberRow = false,
   onValuesChange,
   issuanceLayout,
 }: PaymentStatementBasicInfoDetailFormProps) {
@@ -302,7 +308,7 @@ export function PaymentStatementBasicInfoDetailForm({
         />
       </DetailInfoForm.Row>
 
-      {hideResidentFields ? null : (
+      {hideResidentFields || hideResidentNumberRow ? null : (
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="주민등록번호"
@@ -341,7 +347,7 @@ export function PaymentStatementBasicInfoDetailForm({
       </DetailInfoForm.Row>
       )}
       {/* 영수증 사전 동의서(주민번호 없음) — 시안 16046:109928은 소속 단독 행 */}
-      {hideResidentFields && preConsentTemplate ? (
+      {(hideResidentFields && preConsentTemplate) || (hideResidentNumberRow && !hideResidentFields) ? (
         <DetailInfoForm.Row type="single">{renderAffiliationField(true)}</DetailInfoForm.Row>
       ) : null}
 

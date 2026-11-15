@@ -51,3 +51,39 @@ export function buildSettlementApplicationDocumentPreviewDraft(): WritingFormDra
     paragraphs,
   })
 }
+
+/** 영수증 정산 신청서 「영수증 산출 내역」 단락 제목 (시안 14680:103216) */
+export const RECEIPT_SETTLEMENT_APPLICATION_LINES_PARAGRAPH_TITLE = '영수증 산출 내역'
+
+/**
+ * 영수증 정산(참여자·봉사자) 「JA KOREA 정산 신청서」 A4 미리보기 draft — 시안 14680:103216.
+ * 기본 정보 + 영수증 산출 내역만 둔다(강사비 산출 내역·근무일지·서명 단락 없음).
+ */
+export function buildReceiptSettlementApplicationDocumentPreviewDraft(): WritingFormDraft {
+  const paymentDraft = createPaymentStatementIssuanceDocumentDraft()
+  const keepIds = new Set<string>([
+    PAYMENT_STATEMENT_ISSUANCE_IDS.title,
+    PAYMENT_STATEMENT_ISSUANCE_IDS.tableBasic,
+    PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcLines,
+  ])
+  const paragraphs = paymentDraft.paragraphs
+    .filter(p => keepIds.has(p.id))
+    .map(p => {
+      if (
+        p.id === PAYMENT_STATEMENT_ISSUANCE_IDS.title &&
+        p.kind === 'description' &&
+        p.variant === 'survey_title_with_period'
+      ) {
+        return { ...p, surveyTitle: 'JA KOREA 정산 신청서' }
+      }
+      if (p.id === PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcLines) {
+        return { ...p, paragraphTitle: RECEIPT_SETTLEMENT_APPLICATION_LINES_PARAGRAPH_TITLE }
+      }
+      return p
+    })
+  return normalizeWritingFormDraft({
+    ...paymentDraft,
+    formSettings: { titleNumbering: 'none' },
+    paragraphs,
+  })
+}

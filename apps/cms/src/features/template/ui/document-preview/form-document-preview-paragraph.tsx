@@ -488,6 +488,9 @@ function renderBody(
           isEditMode={false}
           tableCanvasInteractive={false}
           paymentStatementBasicInfoValues={paragraphBodyOptions?.paymentStatementBasicInfoValues}
+          paymentStatementBasicInfoHideResidentNumberRow={
+            paragraphBodyOptions?.paymentStatementBasicInfoHideResidentNumberRow
+          }
           lectureFeeCalculationValues={paragraphBodyOptions?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={paragraphBodyOptions?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={

@@ -94,7 +94,7 @@ export function MypageEducationPage() {
         value={params.tab}
         onChange={handleTabChange}
         variant="pill"
-        size="large"
+        size="medium"
         ariaLabel="교육현황 탭"
       />
 

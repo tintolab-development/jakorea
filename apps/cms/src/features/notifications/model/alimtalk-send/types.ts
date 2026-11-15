@@ -13,7 +13,7 @@ export type AlimtalkSendParticipationType = 'participant' | 'volunteer' | 'instr
 
 /**
  * 대상 프로그램 미선택 시 필터/컬럼 — 회원 유형
- * 전체 / 일반 / 교사 / 강사 / 교사 겸 강사 / 관리자
+ * 전체 / 개인 / 학교(교사) / 강사 / 학교(교사), 강사 / 관리자
  */
 export type AlimtalkSendMemberType =
   | 'general'

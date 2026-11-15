@@ -65,7 +65,7 @@ export const PRIVACY_NOTICE_CONTENT: TermsDocumentContent = {
     {
       heading: '2. 처리하는 개인정보 항목',
       paragraphs: [
-        'JA Korea는 서비스 제공을 위해 아래와 같은 개인정보를 처리할 수 있습니다. 실제 수집 항목 및 필수/선택 여부는 회원가입 화면과 각 동의서에 명확히 표시합니다.',
+        'JA Korea는 서비스 제공을 위해 아래와 같은 개인정보를 처리합니다. 실제 수집 항목 및 필수/선택 여부는 회원가입 화면과 각 동의서에 명확히 표시합니다.',
       ],
       table: {
         columns: itemColumns,

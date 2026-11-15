@@ -7,6 +7,7 @@
  */
 
 import { useMemo, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -36,6 +37,7 @@ import {
 } from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { useVolunteerReceiptSettlementList } from '@/features/program/general/hooks/use-volunteer-receipt-settlement-list'
+import { useIndividualSettlementDocumentBulkDownload } from '@/features/program/general/hooks/use-individual-settlement-document-bulk-download'
 import { formatBusinessPeriodDisplay } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -45,16 +47,14 @@ import { IndividualSettlementReviewDetailModal } from './individual-settlement-r
 import './participating-instructor-settlement-section.css'
 import './individual-settlement-review-detail-modal.css'
 
-const VOLUNTEER_RECEIPT_BULK_DOWNLOAD_ALERT = {
-  title: '안내',
-  content:
-    '다운로드할 지급조서가 없습니다. 봉사자 정산은 일정별 영수증 정산이며, 지급조서 일괄 다운로드 대상이 아닙니다.',
-} as const
-
 function buildExcelColumns(showProgress: boolean): ColumnsType<IndividualSettlementReviewListRow> {
   return [
     { title: 'No.', dataIndex: 'no', key: 'no' },
-    { title: '담당 봉사 진행 일정', dataIndex: 'educationScheduleLabel', key: 'educationScheduleLabel' },
+    {
+      title: '담당 봉사 진행 일정',
+      dataIndex: 'educationScheduleLabel',
+      key: 'educationScheduleLabel',
+    },
     ...(showProgress
       ? [
           {
@@ -114,6 +114,12 @@ export function VolunteerReceiptSettlementPanel({
     })
 
   const [detailApplicationId, setDetailApplicationId] = useState<number | null>(null)
+  // CMS-FUNC-0248: 지급조서 확인 완료·계좌 지급 완료 건 일괄 다운로드(강사 정산 현황과 같은 흐름)
+  const bulkDownload = useIndividualSettlementDocumentBulkDownload({
+    rows,
+    remoteEnabled,
+    context: 'volunteerReceiptSettlementPanel',
+  })
 
   const excelColumns = useMemo(() => buildExcelColumns(showProgress), [showProgress])
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
@@ -227,11 +233,12 @@ export function VolunteerReceiptSettlementPanel({
     formatDate: iso => formatDateDotWithWeekday(iso),
   })
   const summaryStatusView = isLoading
-    ? '불러오는 중'
+    ? ''
     : resolveIndividualSettlementReviewSummaryLabel(summary, isError)
 
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
+      {isLoading ? <FullscreenSpinner /> : null}
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
         <DetailInfoForm title="정산 현황" mode="view">
           {showProgress ? (
@@ -270,7 +277,8 @@ export function VolunteerReceiptSettlementPanel({
             variant="secondary"
             size="h40"
             icon={<ButtonDownloadIcon />}
-            onClick={() => showAlert(VOLUNTEER_RECEIPT_BULK_DOWNLOAD_ALERT)}
+            loading={bulkDownload.loading}
+            onClick={bulkDownload.handleBulkDownload}
           >
             지급조서 일괄 다운로드
           </CmsButton>
@@ -309,6 +317,7 @@ export function VolunteerReceiptSettlementPanel({
         onClose={() => setDetailApplicationId(null)}
         onReviewed={invalidate}
       />
+      {bulkDownload.filePasswordModal}
     </div>
   )
 }

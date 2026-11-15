@@ -54,7 +54,7 @@ export function EducationSessionList({
           <PFText as="h2" typo="hl-sm" color="black" className={styles.count}>
             {`${title} `}
           </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.count}>
+          <PFText as="p" typo="bd-md-rg" color="black" className={styles.count}>
             {totalCount}건
           </PFText>
         </div>

@@ -33,4 +33,6 @@
 .mail-template-detail--empty {
   min-height: 220px;
   align-self: stretch;
+  /* 빈 폴더 선택 시 공통 빈 상태를 상세 영역 가운데에 둔다 */
+  justify-content: center;
 }

@@ -7,6 +7,11 @@
   margin: 0 0 var(--spacing-80);
 }
 
+/* 시안: 약관·소셜 탭은 제목 아래 20 (PC — 모바일은 아래 media에서 0) */
+.pageHeadingCompact {
+  margin-bottom: var(--spacing-20);
+}
+
 .pageTitle {
   display: block;
   margin: 0;
@@ -45,7 +50,36 @@
     margin: 0;
   }
 
+  /* 시안 모바일: 제목 24/1.2 · 안내 14/22 (typo 클래스보다 우선) */
+  .pageHeading .pageTitle {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .pageHeading .instructorSettlementAccountGuide {
+    font-size: 14px;
+    line-height: 22px;
+  }
+
   .backLink {
     margin-bottom: 0;
+  }
+
+  /* 마이페이지로: PC는 ProgramBackButton large(40·18/600·gap 16), 모바일만 30·14/600·gap 8 — 공용 컴포넌트는 그대로 */
+  .backLink > button {
+    gap: var(--spacing-8);
+  }
+
+  .backLink > button > span:first-child {
+    width: 30px;
+    height: 30px;
+    padding: 7px;
+  }
+
+  .backLink > button > span:last-child {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    letter-spacing: 0;
   }
 }

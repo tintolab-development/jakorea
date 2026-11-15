@@ -1,6 +1,7 @@
 /**
  * 세부 프로그램명 신규 등록 모달
- * 시안: padding 26 30 34 30 · 타이틀↔본문 30 · 필드 간 30 · 본문↔푸터 30
+ * 시안 9270:79294 600×358: padding 24 30 34 30 · r16 · 타이틀↔본문 30 · 필드 간 30 · 본문↔푸터 30
+ * 컨트롤 medium(40 · 15px) · 라벨 22(lh20 + 2) · 라디오 줄 40 (QA 2026-11-15 데이터 관리 C38)
  *
  * ContentModal 구조상 gap은 ant-modal-content에 걸어도
  * (자식이 ant-modal-body 하나) 타이틀/푸터 간격에 안 먹힘 → margin으로 고정.
@@ -45,11 +46,11 @@
   width: 600px;
   max-width: 100%;
   height: auto;
-  padding: 26px 30px 34px 30px !important;
+  padding: 24px 30px 34px 30px !important;
   flex-direction: column;
   align-items: flex-start;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   max-height: calc(100dvh - 48px);
@@ -108,4 +109,10 @@
   width: 100%;
   flex-direction: column;
   gap: 30px;
+}
+
+.detailed-program-add-item-modal__form :is(.cms-field__label, .cms-choice-field__label) {
+  box-sizing: border-box;
+  padding-bottom: 2px;
+  line-height: 20px;
 }

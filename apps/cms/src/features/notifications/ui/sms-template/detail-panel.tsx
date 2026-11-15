@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
+import { CmsTableEmptyState } from '@/shared/ui/cms-table-empty-state'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
 import { formatSmsMessageTypeCode } from '@/features/notifications/model/sms-template/message-type'
 
@@ -9,6 +10,8 @@ type DetailPanelProps = {
   template: SmsTemplateItem | null
   categoryName: string
   onPreview: () => void
+  /** 선택한 폴더 안에 템플릿이 없을 때 — 공통 빈 상태(등록된 데이터 없음) */
+  emptyFolder?: boolean
   loading?: boolean
 }
 
@@ -23,7 +26,13 @@ function subjectView(template: SmsTemplateItem): string {
   return template.subject?.trim() || '-'
 }
 
-export function DetailPanel({ template, categoryName, onPreview, loading }: DetailPanelProps) {
+export function DetailPanel({
+  template,
+  categoryName,
+  onPreview,
+  loading,
+  emptyFolder = false,
+}: DetailPanelProps) {
   if (loading) {
     return (
       <div
@@ -37,7 +46,11 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
     )
   }
   if (!template) {
-    return <div className="sms-template-detail sms-template-detail--empty" />
+    return (
+      <div className="sms-template-detail sms-template-detail--empty">
+        {emptyFolder ? <CmsTableEmptyState variant="no-data" /> : null}
+      </div>
+    )
   }
 
   return (

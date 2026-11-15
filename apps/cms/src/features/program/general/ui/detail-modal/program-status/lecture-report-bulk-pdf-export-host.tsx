@@ -21,6 +21,9 @@ import {
 import type { LectureReportPdfFile } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
 import './lecture-report-issuance-preview-modal.css'
 
+/** 보고서 한 건의 페이지 분할 대기 상한 — 사진이 많은 보고서도 측정이 끝나도록 여유를 둔다 */
+const LECTURE_REPORT_PDF_PAGES_TIMEOUT_MS = 15_000
+
 export interface LectureReportBulkPdfExportHostProps {
   context: LectureReportPreviewContext
   onComplete: (result: LectureReportPdfFile | null) => void
@@ -68,6 +71,18 @@ export function LectureReportBulkPdfExportHost({
   useEffect(() => {
     completedRef.current = false
   }, [context.row.id])
+
+  // 페이지 분할이 끝나지 않으면(pagesReady가 계속 false) 완료 신호가 오지 않는다. 프로그램 화면·회원 상세
+  // 일괄 다운로드가 이 신호를 기다리므로, 제한 시간 안에 끝나지 않으면 실패로 알려 멈추지 않게 한다.
+  useEffect(() => {
+    if (pagesReady) return
+    const timer = window.setTimeout(() => {
+      if (completedRef.current) return
+      completedRef.current = true
+      onComplete(null)
+    }, LECTURE_REPORT_PDF_PAGES_TIMEOUT_MS)
+    return () => window.clearTimeout(timer)
+  }, [context.row.id, onComplete, pagesReady])
 
   useEffect(() => {
     if (!pagesReady || completedRef.current || pages.length === 0) return

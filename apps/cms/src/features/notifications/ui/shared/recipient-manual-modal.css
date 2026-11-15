@@ -17,16 +17,6 @@
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
 }
 
-/* 직접 입력 변수 열(280)이 붙으면 600폭에 수신자 정보·관리 열이 들어가지 않아 w800 팝업으로 넓힌다 */
-.send-recipient-manual-modal--with-variables.content-modal.teal-header-modal.ant-modal {
-  width: 800px !important;
-}
-
-.send-recipient-manual-modal--with-variables.content-modal.teal-header-modal.ant-modal
-  .ant-modal-content {
-  width: 800px;
-}
-
 .send-recipient-manual-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
   display: flex;
   flex-direction: column;
@@ -58,7 +48,7 @@
 }
 
 .send-recipient-manual-modal__table.cms-data-table .ant-table-body {
-  max-height: 346px;
+  max-height: 356px;
 }
 
 .send-recipient-manual-modal__row-actions {
@@ -68,22 +58,32 @@
   gap: 8px;
 }
 
-.send-recipient-manual-modal__variables {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: left;
+/*
+ * 시안 수신자 직접 입력(Popup w600): 헤더 44·행 56, 셀 padding 10(관리 칸 왼쪽 16)
+ * 공통 cms-data-table 52 !important 를 이기도록 :not 선택자 유지 — QA 2026-11-15 알림 메시지 관리 행 17·27
+ * (표 바깥 테두리 처리는 사용자 확인 대상이라 건드리지 않음)
+ */
+.send-recipient-manual-modal__table.cms-data-table
+  .ant-table-thead
+  .ant-table-cell:not(.ant-table-cell-scrollbar):not(.ant-table-selection-column) {
+  height: 44px !important;
+  min-height: 44px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
-.send-recipient-manual-modal__variable {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.send-recipient-manual-modal__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  height: 56px !important;
+  min-height: 56px !important;
+  padding: 10px !important;
 }
 
-.send-recipient-manual-modal__variable-label {
-  margin: 0;
-  font-size: var(--font-size-12, 12px);
-  line-height: 1.4;
-  color: var(--color-text-body);
+.send-recipient-manual-modal__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td:last-child {
+  padding-left: 16px !important;
 }

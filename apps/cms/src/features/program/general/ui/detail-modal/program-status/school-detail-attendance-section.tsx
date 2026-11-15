@@ -1,4 +1,5 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { CmsButton } from '@/shared/ui'
 import { showSaveCompletedAlert } from '@/shared/ui/show-save-completed-alert'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -77,7 +78,8 @@ export function SchoolDetailAttendanceSection({
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()} >
+              onClick={() => refetchAttendance()}
+            >
               다시 시도
             </CmsButton>
           }
@@ -99,7 +101,8 @@ export function SchoolDetailAttendanceSection({
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()} >
+              onClick={() => refetchAttendance()}
+            >
               다시 시도
             </CmsButton>
           }
@@ -116,7 +119,8 @@ export function SchoolDetailAttendanceSection({
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()} >
+              onClick={() => refetchAttendance()}
+            >
               다시 시도
             </CmsButton>
           }
@@ -134,7 +138,7 @@ export function SchoolDetailAttendanceSection({
         hideExcelDownload
       >
         {loading ? (
-          <div className="school-detail-attendance-section__empty">출석 정보를 불러오는 중…</div>
+          <FullscreenSpinner />
         ) : isEmptyResult ? (
           <div className="school-detail-attendance-section__empty">{emptyMessage}</div>
         ) : (

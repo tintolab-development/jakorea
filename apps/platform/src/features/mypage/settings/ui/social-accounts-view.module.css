@@ -58,3 +58,22 @@
   display: inline-flex;
   align-items: center;
 }
+
+/* 시안 PC: 안내 18/27, 행 18·16 패딩, 아이콘 48 */
+@media (--bp-pc-up) {
+  .section .description {
+    font-size: 18px;
+    line-height: 27px;
+    letter-spacing: -0.18px;
+  }
+
+  .row {
+    box-sizing: border-box;
+    padding: 18px var(--spacing-16);
+  }
+
+  .icon svg {
+    width: 48px;
+    height: 48px;
+  }
+}

@@ -5,6 +5,7 @@
  * - CalcInfo / SettlementApplicationDocumentCalcInfo: instructorFeeCalculationUnit, educationStartAt,
  *   educationEndAt, recognizedSessionCount (nullable)
  * - BasicInfo 스냅샷 필드 nullable (제출 스냅샷에 없으면 null)
+ * - Line.calculationDetail: 행별 산정 기준 상세 근거(정산 상세 items[].calculationDetail과 같은 스키마, nullable)
  *
  * settlement 필터가 /api/admin/settlements* 만 남기므로 filter 이후에도 실행한다. 멱등.
  *   node scripts/patch-openapi-settlement-application-document-admin.mjs
@@ -95,6 +96,18 @@ function patchCalcInfo(schema) {
   }
 }
 
+const lineCalculationDetailProperty = {
+  allOf: [{ $ref: '#/components/schemas/SettlementFrontendCalculationDetailResponse' }],
+  nullable: true,
+  description:
+    'CMS 산정 기준 상세 근거. 정산 상세 items[].calculationDetail과 같은 스키마. 이 revision 제출 스냅샷 값만 담고 다시 계산하지 않는다. 근거를 만들 수 없는 행은 null.',
+}
+
+function patchLine(schema, schemas) {
+  if (!schema?.properties || !schemas.SettlementFrontendCalculationDetailResponse) return
+  schema.properties.calculationDetail = lineCalculationDetailProperty
+}
+
 function patchBasicInfo(schema) {
   if (!schema?.properties) return
   for (const prop of Object.values(schema.properties)) {
@@ -115,6 +128,8 @@ for (const file of SPEC_FILES) {
   patchCalcInfo(schemas.SettlementApplicationDocumentCalcInfo)
   patchBasicInfo(schemas.BasicInfo)
   patchBasicInfo(schemas.SettlementApplicationDocumentBasicInfo)
+  patchLine(schemas.Line, schemas)
+  patchLine(schemas.SettlementApplicationDocumentLine, schemas)
 
   const indent = raw.startsWith('{\n    "') ? 4 : 2
   writeFileSync(path, `${JSON.stringify(spec, null, indent)}\n`)

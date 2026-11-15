@@ -19,7 +19,7 @@ export function EducationNoticeDeleteConfirm({
           <PFText as="div" typo="hl-lg" color="black" className={styles.title}>
             안내사항을 삭제할까요?
           </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={styles.description}>
             삭제한 안내사항은 다시 확인하기 어려워요.
           </PFText>
         </div>

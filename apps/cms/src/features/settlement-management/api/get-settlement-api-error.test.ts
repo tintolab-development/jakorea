@@ -485,7 +485,23 @@ describe('normalizeSettlementApiErrorCode', () => {
     const error = {
       response: { status: 400, data: { error: { code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION' } } },
     }
-    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe('선택한 건 중 세금신고 대상이 없어요.')
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '선택한 신청 건에 세금신고 대상 항목이 없습니다.\n세금신고 대상 항목이 포함된 건을 선택해 주세요.'
+    )
+  })
+
+  it('TAX_REPORT_NO_ELIGIBLE_SELECTION: 서버 message가 있어도 시안 문구를 쓴다', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          error: { code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION', message: '세금신고 대상 없음' },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '선택한 신청 건에 세금신고 대상 항목이 없습니다.\n세금신고 대상 항목이 포함된 건을 선택해 주세요.'
+    )
   })
 })
 

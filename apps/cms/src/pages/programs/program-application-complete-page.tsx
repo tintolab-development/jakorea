@@ -5,6 +5,7 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useEffect, useState } from 'react'
 import { Result, Card, Typography, Space } from 'antd'
 import { CmsButton } from '@/shared/ui'
@@ -45,7 +46,7 @@ export function ProgramApplicationCompletePage() {
   }
 
   if (loading) {
-    return <div>로딩 중...</div>
+    return <FullscreenSpinner />
   }
 
   return (
@@ -60,10 +61,15 @@ export function ProgramApplicationCompletePage() {
           <CmsButton
             key="list"
             icon={<FileSearchOutlined />}
-            onClick={() => navigate(getApplicationListPath())} >
+            onClick={() => navigate(getApplicationListPath())}
+          >
             신청 내역 확인
           </CmsButton>,
-          <CmsButton key="home" variant="default" onClick={() => navigate(getRedirectPathByRole(user))}>
+          <CmsButton
+            key="home"
+            variant="default"
+            onClick={() => navigate(getRedirectPathByRole(user))}
+          >
             홈으로 이동
           </CmsButton>,
         ]}

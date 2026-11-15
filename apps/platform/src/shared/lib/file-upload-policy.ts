@@ -21,9 +21,9 @@ export function formatSingleFileUploadHint(formats: string): string {
   return `파일은 최대 20MB까지 ${formats} 형식만 등록 가능합니다.`
 }
 
-/** 여러 개 첨부 안내 — 개수·총 용량 포함 */
+/** 여러 개 첨부 안내 — 개수·총 용량 포함. 문장은 시안 공통 표기를 따른다. */
 export function formatMultiFileUploadHint(formats: string): string {
-  return `파일은 1개당 최대 20MB, 최대 10개(총 100MB)까지 ${formats} 형식만 등록 가능합니다.`
+  return `파일은 ${formats} 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.`
 }
 
 export function validateUploadFileSize(file: SizedFile): string | null {

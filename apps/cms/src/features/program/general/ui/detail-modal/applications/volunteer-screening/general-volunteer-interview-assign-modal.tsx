@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Spin } from 'antd'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import type { Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -84,7 +84,8 @@ export function GeneralVolunteerInterviewAssignModal({
 
   const schedule = useMemo(() => {
     /** 배정 가능 시간 SSOT = interview-slots. 신청 가능 일정과 겹치는 슬롯만 남긴다. */
-    const scheduleProgram = useLocalInterviewSchedule && localProgramDetail ? localProgramDetail : program
+    const scheduleProgram =
+      useLocalInterviewSchedule && localProgramDetail ? localProgramDetail : program
     const fromProgram = parseGeneralInterviewScheduleFromProgram(
       scheduleProgram,
       publicHolidayDateKeys
@@ -120,13 +121,7 @@ export function GeneralVolunteerInterviewAssignModal({
   return (
     <>
       {waitingRemoteSlots ? (
-        <div
-          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/45"
-          role="status"
-          aria-live="polite"
-        >
-          <Spin size="large" tip="면접 일정을 불러오는 중…" />
-        </div>
+        <FullscreenSpinner />
       ) : (
         <UjatVolunteerInterviewAssignModal
           open={open}

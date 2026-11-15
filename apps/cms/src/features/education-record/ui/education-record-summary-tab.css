@@ -52,7 +52,7 @@
 /* 전체 합계 카드 — 타이틀이 카드 내부에 위치 */
 .er-summary__category-card--grand {
   align-items: stretch;
-  /* 시안: 「총 합계」 라벨 ↔ 테이블 16 */
+  /* 시안: 「합계」 라벨 ↔ 테이블 16 */
   gap: 16px;
   border: 1px solid var(--JA-mint-01, #01a1af);
   background: var(
@@ -102,13 +102,21 @@
   padding: 0 8px;
 }
 
+/*
+ * 시안: 열 169×8 + 마지막 188 (QA 2026-11-15 실적 CSS 1-8). 열 최소 160 — 작은 화면(1440 이하)에서
+ * 헤더 글자가 잘리지 않고 표 안에서 가로 스크롤된다(미디어 쿼리 없이 1920 폭은 그대로).
+ * 외곽선은 outline(-1)으로 그려 표 높이 +2를 없앤다(1-9, 시안 표 88·카드 1000).
+ */
 .er-summary__table {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(160px, 1fr)) minmax(160px, 1.1124fr);
   width: 100%;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid var(--Border-default, #e0e0e0);
+  border-width: 0 !important;
+  outline: 1px solid var(--Border-default, #e0e0e0);
+  outline-offset: -1px;
 }
 
 .er-summary__table-header,

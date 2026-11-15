@@ -38,9 +38,9 @@ describe('insertMailVariableInText', () => {
   it('appends after the enclosing token when the caret is inside', () => {
     const text = '안녕 #{회원명}님'
     const inside = text.indexOf('원')
-    const { next, caret } = insertMailVariableInText(text, '담당자명', inside, inside)
-    expect(next).toBe('안녕 #{회원명}#{담당자명}님')
-    expect(caret).toBe('안녕 #{회원명}#{담당자명}'.length)
+    const { next, caret } = insertMailVariableInText(text, '프로그램 담당자명', inside, inside)
+    expect(next).toBe('안녕 #{회원명}#{프로그램 담당자명}님')
+    expect(caret).toBe('안녕 #{회원명}#{프로그램 담당자명}'.length)
   })
 
   it('does not split a token when inserting at the start of its interior', () => {

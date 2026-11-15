@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useQuery } from '@tanstack/react-query'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -331,7 +332,7 @@ export function InstructorInvoiceModal({
           }
         >
           {settlementDetailQuery.isLoading ? (
-            <div className="instructor-invoice-modal__loading">로딩 중...</div>
+            <FullscreenSpinner />
           ) : (
             <>
               <section>
@@ -624,8 +625,7 @@ export function InstructorInvoiceModal({
               return
             }
             const idempotencyKey =
-              resendIdempotencyKeyRef.current ??
-              `settlement-${settlementId}-${crypto.randomUUID()}`
+              resendIdempotencyKeyRef.current ?? `settlement-${settlementId}-${crypto.randomUUID()}`
             resendIdempotencyKeyRef.current = idempotencyKey
             void resendNotificationMutation
               .mutateAsync({
@@ -637,8 +637,7 @@ export function InstructorInvoiceModal({
                     payload.notifyTiming === 'manual'
                       ? (payload.manualNotifyAt?.toISOString() ?? null)
                       : null,
-                  reason:
-                    invoiceResendKind === 'rejected' ? payload.reason.trim() || null : null,
+                  reason: invoiceResendKind === 'rejected' ? payload.reason.trim() || null : null,
                 },
               })
               .then(() => {
@@ -650,7 +649,8 @@ export function InstructorInvoiceModal({
               .catch(error => {
                 showAlert({
                   title: networkAwareAlertTitle(error, '알림 재발송 실패'),
-                  content: getSettlementApiErrorMessage(error,
+                  content: getSettlementApiErrorMessage(
+                    error,
                     '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
                   ),
                 })

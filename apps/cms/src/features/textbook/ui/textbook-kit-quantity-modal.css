@@ -118,6 +118,10 @@
   color: var(--color-text-secondary);
 }
 
+/*
+ * 시안 9270:76179 — 표 540×280 · 행 56 · 라벨 180 Bold 14(헤더 배경) · 입력 S(36)
+ * 바깥 1px #E0E0E0 · r8, 셀은 마지막 열·행 테두리 없음 (QA 2026-11-15 데이터 관리 C33)
+ */
 .textbook-kit-quantity-modal__table {
   display: flex;
   width: 100%;
@@ -125,10 +129,17 @@
   box-sizing: border-box;
   flex-direction: column;
   flex-shrink: 0;
-  border-top: 1px solid var(--table-line, #e0e0e0);
-  border-left: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 10px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
   overflow: hidden;
+}
+
+.textbook-kit-quantity-modal__row > :last-child {
+  border-right: 0;
+}
+
+.textbook-kit-quantity-modal__row:last-child > * {
+  border-bottom: 0;
 }
 
 .textbook-kit-quantity-modal__row {
@@ -140,8 +151,11 @@
 
 .textbook-kit-quantity-modal__th {
   display: flex;
-  width: 140px;
-  max-width: 140px;
+  box-sizing: border-box;
+  flex: 0 0 180px;
+  width: 180px;
+  max-width: 180px;
+  min-height: 56px;
   padding: 10px;
   justify-content: center;
   align-items: center;
@@ -150,11 +164,13 @@
   align-self: stretch;
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
-  background: #f5f6f7;
+  background:
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6), rgba(231, 235, 239, 0.6)),
+    var(--main-WT, #fff);
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 140%;
@@ -168,8 +184,8 @@
   display: flex;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 64px;
-  padding: 12px;
+  min-height: 56px;
+  padding: 10px;
   align-items: center;
   gap: 12px;
   flex: 1 1 0;

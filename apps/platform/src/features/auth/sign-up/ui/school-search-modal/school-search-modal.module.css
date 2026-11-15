@@ -18,8 +18,9 @@
   min-width: 0;
 }
 
+/* 시안: 검색 필드 ↔ 결과 리스트 28 */
 .schoolModalSearchRowActive {
-  margin-bottom: var(--spacing-12);
+  margin-bottom: var(--spacing-28);
 }
 
 .schoolModalSearchButton {
@@ -129,7 +130,8 @@
   display: flex;
   width: 100%;
   align-items: center;
-  margin-top: 15px;
+  /* 시안: 학교명 ↔ 소재지 12 */
+  margin-top: var(--spacing-12);
 }
 
 .schoolResultTag {

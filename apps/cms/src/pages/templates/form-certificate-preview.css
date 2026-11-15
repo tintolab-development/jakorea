@@ -75,8 +75,9 @@
 .form-certificate-preview span.form-certificate-preview__serial-text,
 .form-certificate-preview [data-certificate-serial='text'] {
   position: absolute;
-  top: 142px;
-  left: 34px;
+  /* 시안 5767:47245 — left 46 / top 144, Noto Sans KR Bold 20px, rgba(61,61,61,.8) */
+  top: 144px;
+  left: 46px;
   display: block;
   margin: 0;
   padding: 0 !important;
@@ -86,7 +87,7 @@
   background: transparent !important;
   box-shadow: none !important;
   box-sizing: border-box;
-  color: #606060;
+  color: rgba(61, 61, 61, 0.8);
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 20px;
   font-style: normal;
@@ -96,12 +97,18 @@
   white-space: nowrap;
 }
 
+/*
+ * 시안 5767:47266 — 로고 영역 left 76 / top 208 / 280×87 고정(CMS-FUNC-0630 시스템 발급 양식).
+ * 업로드 로고(orgLogo)도 이 영역 안으로만 비율 유지 축소해 로고–타이틀 간격이 템플릿마다 달라지지 않게 한다.
+ * object-fit은 html2canvas(1.4.1) 캡처와 어긋날 수 있어 max-width·max-height로 맞춘다.
+ */
 .form-certificate-preview__logo-wrap {
   position: absolute;
   top: 208px;
   left: 76px;
   z-index: 1;
-  max-width: calc(100% - 76px);
+  width: 280px;
+  height: 87px;
   pointer-events: none;
 }
 
@@ -109,7 +116,8 @@
   display: block;
   width: auto;
   height: auto;
-  max-width: 100%;
+  max-width: 280px;
+  max-height: 87px;
 }
 
 .form-certificate-preview__education-wrap {
@@ -255,7 +263,7 @@
   min-width: 0;
   justify-content: space-between;
   align-items: center;
-  color: #606060;
+  color: rgba(61, 61, 61, 0.8);
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 24px;
   font-style: normal;
@@ -300,11 +308,11 @@
   display: block;
   width: 100%;
   overflow: hidden;
-  color: #606060;
+  color: rgba(61, 61, 61, 0.8);
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 24px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 700;
   line-height: 150%; /* 36px */
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -354,35 +362,41 @@
 
 .form-certificate-preview__confirm {
   position: absolute;
+  /* 시안 5767:47247 — 캔버스 가운데 정렬, Noto Sans KR Medium 32px / 170%, rgba(61,61,61,.8) */
   top: 971px;
-  left: 372px;
+  left: 50%;
+  transform: translateX(-50%);
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   width: fit-content;
   min-width: 0;
-  max-width: calc(100% - 372px);
+  max-width: calc(100% - 80px);
   min-height: 109px;
   height: auto;
   max-height: none;
-  color: #606060;
+  color: rgba(61, 61, 61, 0.8);
   text-align: center;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 32px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 170%; /* 54.4px */
   word-break: keep-all;
 }
 
 .form-certificate-preview__issue-date {
   position: absolute;
+  /* 시안 5767:47248 — 캔버스 가운데 정렬, Noto Sans KR Bold 34px, #4b4b49, YYYY.MM.DD */
   top: 1180px;
-  left: 492px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  text-align: center;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  color: var(--color-mint-03, #22404b);
+  color: #4b4b49;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 34px;
   font-style: normal;
@@ -394,13 +408,15 @@
 .form-certificate-preview__org-name {
   position: absolute;
   z-index: 3;
+  /* 시안 5767:47249 — 기관명·회장 가운데 정렬 */
   bottom: 263px;
-  left: 362px;
+  left: 50%;
+  transform: translateX(-50%);
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   width: max-content;
-  max-width: calc(100% - 362px);
+  max-width: calc(100% - 80px);
   min-width: 0;
   color: #003d4c;
   text-align: center;
@@ -417,7 +433,8 @@
 .form-certificate-preview__chairman-name {
   position: absolute;
   bottom: 181px;
-  left: 433.5px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -426,7 +443,7 @@
   padding: 0;
   box-sizing: border-box;
   width: fit-content;
-  max-width: calc(100% - 433.5px);
+  max-width: calc(100% - 80px);
   min-width: 0;
   min-height: 72px;
   color: #003d4c;
@@ -482,7 +499,7 @@
   left: 35px;
   white-space: nowrap;
   color: var(--main-WT, #fff);
-  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
@@ -496,7 +513,7 @@
   bottom: 0;
   white-space: nowrap;
   color: var(--main-WT, #fff);
-  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
@@ -582,7 +599,7 @@
 }
 
 .form-certificate-preview--pdf-export .form-certificate-preview__serial-text {
-  color: #606060 !important;
+  color: rgba(61, 61, 61, 0.8) !important;
   font-weight: 700 !important;
   white-space: nowrap !important;
   padding: 0 !important;

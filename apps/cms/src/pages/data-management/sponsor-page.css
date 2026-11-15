@@ -4,6 +4,9 @@
  */
 
 .sponsor-page.filter-table-layout {
+  /* 시안 체크박스 열 60 (공통 기본 80) — QA 2026-11-15 데이터 관리 C4 */
+  --table-selection-column-width: 60px;
+
   box-sizing: border-box;
   width: 100%;
 }
@@ -105,4 +108,15 @@
   min-width: var(--sponsor-donation-col-width, 160px) !important;
   white-space: nowrap !important;
   overflow: visible !important;
+}
+
+/*
+ * 후원 상태 셀 — 트리거 틀(padding 7 + border 1)이 td padding 10에 더해져 행이 69로 커지던 것을
+ * 막는다(시안 행 56). QA 2026-11-15 데이터 관리 C3
+ */
+.filter-table-layout.sponsor-page
+  .filter-table-layout__table
+  .sponsor-page__table.cms-data-table
+  .status-dropdown-cell__status-trigger {
+  padding: 0;
 }

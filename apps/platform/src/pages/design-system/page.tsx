@@ -684,7 +684,7 @@ const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[
         steps: [
           '스텝1~7 일반 플로우 (회원유형 → 생년월일·성별 → 본인인증 → 약관 → 이메일 → 비밀번호 → 프로필 → 확인)',
           '본인인증·프로필 단계 이름/휴대폰은 mock 고정값 표시',
-          `이메일 중복확인(mock): ${MOCK_DUPLICATE_EMAIL} → "이미 가입된 이메일이에요. 로그인하거나 다른 이메일을 입력해 주세요."`,
+          `이메일 중복확인(mock): ${MOCK_DUPLICATE_EMAIL} → "이미 가입된 이메일이에요."`,
           '금칙어: admin@test.com → "사용할 수 없는 이메일이에요. 다른 이메일을 입력해 주세요."',
           '원격 API(VITE_API_*): 이메일·약관·학교검색·본인인증(NICE) 실API / 세션 없으면 가입 완료 단계에서 안내',
           '가입 완료(mock·로컬·본인인증 mock) → /auth/sign-up/complete',

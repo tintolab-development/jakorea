@@ -79,3 +79,11 @@
     font-size: 14px;
   }
 }
+
+/* 시안(PC): 연락처 라벨 Telephone·Fax·Email 16 Medium */
+@media (--bp-pc-up) {
+  .contactLabel {
+    font-size: 16px;
+    font-weight: 500;
+  }
+}

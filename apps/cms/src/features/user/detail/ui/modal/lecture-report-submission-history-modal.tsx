@@ -15,12 +15,20 @@ import type { MemberLectureReportTableRow } from '@/features/user/api/map-member
 import { resolveMemberApplicationIdFromApplication } from '@/features/user/api/member-program-history-ids'
 import { resolveMemberLectureReportFiles } from '@/features/user/api/resolve-member-lecture-report-files'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
-import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
 import {
   LECTURE_REPORT_NO_ATTACHMENT_CTA,
   hasFileDownloadPermission,
-  saveLectureReportBulkDownloadJob,
 } from '@/shared/lib/lecture-report-bulk-download'
+import {
+  downloadLectureReportPdfFiles,
+  LECTURE_REPORT_NO_SUBMITTED_PDF_CTA,
+  type LectureReportPdfFile,
+} from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
+import {
+  buildMemberLectureReportPreviewContext,
+  filterMemberLectureReportBulkPdfRows,
+  MemberLectureReportBulkPdfExportRunner,
+} from './member-lecture-report-bulk-pdf-export'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './lecture-report-submission-history-modal.css'
@@ -120,51 +128,63 @@ export function LectureReportSubmissionHistoryModal({
 
   const previewContext = useMemo<LectureReportPreviewContext | null>(() => {
     if (previewRow == null || previewQuery.data == null) return null
-    return {
-      instructor: { instructorName: instructorName?.trim() || '-' },
-      program: { mainTitle: programTitle },
-      row: {
-        id: previewRow.id,
-        no: rows.findIndex(row => row.id === previewRow.id) + 1,
-        reportId: previewRow.reportId,
-        schoolName: previewRow.institutionName ?? '',
-        educationGrade: previewRow.educationGrade ?? '',
-        educationScheduleLabel: previewRow.educationDateLabel,
-        lectureDate: previewRow.lectureStartAt,
-      },
+    return buildMemberLectureReportPreviewContext({
+      row: previewRow,
+      rows,
       content: previewQuery.data,
-      // 회원 목록 응답에는 프로그램 유형이 없다 — 기관 칸은 제출 답변대로 둔다
-      hideInstitutionFields: false,
-    }
+      instructorName,
+      programTitle,
+    })
   }, [instructorName, previewQuery.data, previewRow, programTitle, rows])
 
-  const hasZipTargets = rows.some(row => (row.reportFileIds?.length ?? 0) > 0)
+  // CMS-FUNC-0412: 이 팝업(한 프로그램)의 제출 완료 보고서 본문 PDF만 일괄로 받는다.
+  // 프로그램 화면 일괄 다운로드(CMS-FUNC-0244)와 같은 본문 PDF이며 첨부파일은 행별 다운로드로 받는다.
+  const bulkPdfTargets = useMemo(() => filterMemberLectureReportBulkPdfRows(rows), [rows])
+  const [bulkExportTargets, setBulkExportTargets] = useState<MemberLectureReportTableRow[] | null>(
+    null
+  )
   const canBulkDownloadFiles = hasFileDownloadPermission()
 
-  const handleBulkDownload = useCallback(async () => {
-    if (memberId == null) return
+  const handleBulkDownload = useCallback(() => {
+    if (bulkDownloading) return
     // 권한 설정 V1.2: 버튼은 노출하고 다운로드 권한이 없으면 접근 불가 안내
     if (!canBulkDownloadFiles) {
       showAdminAccessDeniedAlert()
       return
     }
-    if (!hasZipTargets) {
-      showAlert({ title: '안내', content: LECTURE_REPORT_NO_ATTACHMENT_CTA })
+    if (bulkPdfTargets.length === 0) {
+      showAlert({ title: '안내', content: LECTURE_REPORT_NO_SUBMITTED_PDF_CTA })
       return
     }
     setBulkDownloading(true)
-    try {
-      const job = await downloadAllMemberLectureReportsRemote(memberId)
-      await saveLectureReportBulkDownloadJob(job, '강의보고서_일괄')
-    } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getMemberApiErrorMessage(error, '강의보고서 일괄 다운로드에 실패했습니다.'),
-      })
-    } finally {
-      setBulkDownloading(false)
-    }
-  }, [memberId, canBulkDownloadFiles, hasZipTargets, showAlert])
+    setBulkExportTargets(bulkPdfTargets)
+  }, [bulkDownloading, bulkPdfTargets, canBulkDownloadFiles, showAlert])
+
+  const handleBulkExportComplete = useCallback(
+    async (files: LectureReportPdfFile[], failedCount: number) => {
+      setBulkExportTargets(null)
+      try {
+        // 일부 건이 빠진 ZIP을 저장하지 않는다(프로그램 화면 일괄 다운로드와 같은 기준).
+        if (failedCount > 0) {
+          showAlert({ title: '안내', content: '강의보고서 일괄 다운로드에 실패했습니다.' })
+          return
+        }
+        if (files.length === 0) {
+          showAlert({ title: '안내', content: '강의보고서 PDF를 만들지 못했습니다.' })
+          return
+        }
+        await downloadLectureReportPdfFiles(files)
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: getMemberApiErrorMessage(error, '강의보고서 일괄 다운로드에 실패했습니다.'),
+        })
+      } finally {
+        setBulkDownloading(false)
+      }
+    },
+    [showAlert]
+  )
 
   const handleViewReport = useCallback(
     async (record: MemberLectureReportTableRow) => {
@@ -268,6 +288,17 @@ export function LectureReportSubmissionHistoryModal({
 
   return (
     <>
+    {bulkExportTargets != null ? (
+      <MemberLectureReportBulkPdfExportRunner
+        targets={bulkExportTargets}
+        rows={rows}
+        instructorName={instructorName}
+        programTitle={programTitle}
+        onComplete={(files, failedCount) => {
+          void handleBulkExportComplete(files, failedCount)
+        }}
+      />
+    ) : null}
     <LectureReportIssuancePreviewModal
       open={previewContext != null}
       context={previewContext}
@@ -291,8 +322,8 @@ export function LectureReportSubmissionHistoryModal({
             size="medium"
             icon={<ButtonDownloadIcon />}
             loading={bulkDownloading}
-            disabled={memberId == null || !hasZipTargets}
-            onClick={() => void handleBulkDownload()}
+            disabled={bulkPdfTargets.length === 0}
+            onClick={handleBulkDownload}
           >
             강의보고서 일괄 다운로드
           </CmsButton>

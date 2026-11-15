@@ -25,7 +25,7 @@ export function programTabLabels(tabs: readonly ProgramTab[]): string {
 
 export const PROGRAM_CATEGORY_ITEMS: { key: ProgramCategory; label: string }[] = [
   { key: 'all', label: '전체 프로그램' },
-  { key: 'youth', label: '청소년·청년 프로그램' },
+  { key: 'youth', label: '청소년 · 청년 프로그램' },
   { key: 'institution', label: '기관 프로그램' },
   { key: 'instructor', label: '강사 프로그램' },
 ]

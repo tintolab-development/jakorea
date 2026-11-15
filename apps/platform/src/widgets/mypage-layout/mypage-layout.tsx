@@ -91,6 +91,7 @@ export function MypageLayout({
   const shellClassName = [
     styles.shell,
     variant === 'subpage' ? styles.shellSubpage : undefined,
+    variant === 'subpage' && sidebarLeading ? styles.shellSubpageWithLeading : undefined,
     mobileLnbOpen ? styles.shellMenuOpen : undefined,
   ]
     .filter(Boolean)

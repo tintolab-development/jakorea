@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Alert, Spin } from 'antd'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
+import { Alert } from 'antd'
 import { CmsButton, CmsNumericInput, ContentModal } from '@/shared/ui'
 import {
   isValidKitQuantityInput,
@@ -104,7 +105,7 @@ export function TextbookKitQuantityModal({
       open={open}
       onCancel={onCancel}
       title="키트 수량 관리"
-      description={`키트 1개에 해당하는 교재 권수를 입력해 주세요.
+      description={`키트 1개에 해당하는 교재 권수를 입력해 주세요
 수량 변경 시 기존 프로그램에는 반영되지 않으며, **신규 프로그램부터 적용**됩니다.`}
       width={600}
       className="textbook-kit-quantity-modal"
@@ -119,17 +120,14 @@ export function TextbookKitQuantityModal({
             size="large"
             type="button"
             disabled={isUnavailable}
-            onClick={handleConfirm} >
+            onClick={handleConfirm}
+          >
             설정
           </CmsButton>
         </div>
       }
     >
-      {loading ? (
-        <div className="textbook-kit-quantity-modal__loading">
-          <Spin size="small" /> 키트 수량을 불러오는 중입니다.
-        </div>
-      ) : null}
+      {loading ? <FullscreenSpinner /> : null}
       {loadError ? <Alert type="error" showIcon message={loadError} /> : null}
       <div className="textbook-kit-quantity-modal__table">
         {KIT_LEVELS.map(level => (
@@ -144,7 +142,7 @@ export function TextbookKitQuantityModal({
               <CmsNumericInput
                 className="textbook-kit-quantity-modal__input"
                 mode="integer"
-                inputSize="medium"
+                inputSize="small"
                 width={'100%'}
                 aria-label={`${level.label} 키트 수량`}
                 aria-required

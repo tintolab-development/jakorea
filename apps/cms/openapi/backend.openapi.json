@@ -106270,6 +106270,15 @@
             "type": "integer",
             "format": "int64",
             "description": "공제 행은 음수"
+          },
+          "calculationDetail": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettlementFrontendCalculationDetailResponse"
+              }
+            ],
+            "nullable": true,
+            "description": "CMS 산정 기준 상세 근거. 정산 상세 items[].calculationDetail과 같은 스키마. 이 revision 제출 스냅샷 값만 담고 다시 계산하지 않는다. 근거를 만들 수 없는 행은 null."
           }
         }
       },

@@ -10,7 +10,9 @@
 .permission-customization-page__grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  /* 시안 03·04 (1970 프레임): 열 간격 24 · 열 높이는 내용별(위 정렬) — QA 2026-11-15 권한관리 md 1-G */
+  gap: 24px;
+  align-items: start;
   margin-top: 16px;
 }
 
@@ -78,6 +80,19 @@
   border-color: #20b2aa;
 }
 
+/*
+ * 머리 체크박스(비활성·선택) — 시안 03 8333:32966·04 13387:274: 흰 배경 + 보더 #22404B 20% + 체크 아이콘 opacity 0.4.
+ * 위 청록 규칙이 비활성 머리 체크박스까지 덮어 03에서 청록으로 보이던 것 (QA 2026-11-15 권한관리 md 1-G).
+ */
+.permission-customization-page__card-head .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #fff !important;
+  border-color: rgba(34, 64, 75, 0.2) !important;
+}
+
+.permission-customization-page__card-head .ant-checkbox-checked .ant-checkbox-inner::after {
+  opacity: 0.4 !important;
+}
+
 /* 세부 권한 영역 */
 .permission-customization-page__card-body {
   display: flex;
@@ -116,12 +131,6 @@
 .permission-customization-page__item-checkbox .ant-checkbox-checked .ant-checkbox-inner {
   background-color: #20b2aa;
   border-color: #20b2aa;
-}
-
-/* 관리자 권한 설정 화면만. 프로그램 담당자 권한 설정은 기존 그리드를 유지한다. */
-.permission-customization-page--admin-settings .permission-customization-page__grid {
-  align-items: start;
-  gap: 24px;
 }
 
 .permission-customization-page--admin-settings .permission-customization-page__card-head {

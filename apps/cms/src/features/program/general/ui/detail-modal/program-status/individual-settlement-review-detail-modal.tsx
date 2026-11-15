@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
-import { useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -8,11 +8,25 @@ import {
   networkAwareAlertTitle,
   readApiErrorAlertMessage,
 } from '@/shared/lib/extract-api-error-message'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  downloadIndividualSettlementApplicationDocumentRemote,
+  fetchIndividualSettlementApplicationDocumentRemote,
   individualSettlementReviewDetailQueryOptions,
+  isIndividualSettlementReviewConflict,
   isIndividualSettlementReviewRemoteEnabled,
 } from '@/features/program/general/api/individual-settlement-review-remote'
+import {
+  buildReceiptSettlementDocumentFileName,
+  buildReceiptSettlementPreviewOptions,
+} from '@/features/program/general/lib/map-receipt-settlement-document-to-preview-options'
+import { getSettlementApplicationDocumentErrorMessage } from '@/features/program/general/lib/map-settlement-application-document-to-payment-statement-preview-options'
+import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
+import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
+import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { useIndividualSettlementReviewMutations } from '@/features/program/general/hooks/use-individual-settlement-review-mutations'
 import {
   canApproveIndividualSettlement,
@@ -133,6 +147,10 @@ export function IndividualSettlementReviewDetailModal({
   const [approveOpen, setApproveOpen] = useState(false)
   const [approveDoneOpen, setApproveDoneOpen] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
+  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const [issueBlockedOpen, setIssueBlockedOpen] = useState(false)
+  const [documentLoading, setDocumentLoading] = useState(false)
+  const queryClient = useQueryClient()
 
   const {
     basisDetailOpen,
@@ -147,6 +165,8 @@ export function IndividualSettlementReviewDetailModal({
       setApproveOpen(false)
       setApproveDoneOpen(false)
       setRejectOpen(false)
+      setIssuanceViewOpen(false)
+      setIssueBlockedOpen(false)
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -244,6 +264,90 @@ export function IndividualSettlementReviewDetailModal({
     [expectedRevisionNo, rejectMutation, settlementApplicationId, showAlert, showMutationError]
   )
 
+  /** 「JA KOREA 정산 신청서」(영수증 산출 내역) — 최신 revision 제출 스냅샷 */
+  const applicationDocumentQueryOptions = useMemo(
+    () =>
+      queryOptions({
+        queryKey: [
+          'individual-settlement-application-document',
+          settlementApplicationId,
+          expectedRevisionNo,
+        ] as const,
+        queryFn: () =>
+          fetchIndividualSettlementApplicationDocumentRemote(
+            settlementApplicationId!,
+            expectedRevisionNo ?? undefined
+          ),
+        staleTime: 30_000,
+        retry: false,
+      }),
+    [expectedRevisionNo, settlementApplicationId]
+  )
+  const applicationDocumentQuery = useQuery({
+    ...applicationDocumentQueryOptions,
+    enabled: issuanceViewOpen && settlementApplicationId != null,
+  })
+  const applicationDocument = applicationDocumentQuery.data
+  const issuanceParagraphBodyOptions = useMemo(
+    () =>
+      applicationDocument && settlementApplicationId != null
+        ? buildReceiptSettlementPreviewOptions({
+            document: applicationDocument,
+            settlementApplicationId,
+          })
+        : undefined,
+    [applicationDocument, settlementApplicationId]
+  )
+
+  /** 강사 산출 내역서와 같은 흐름 — 승인 건만 여기로 온다(그 전은 표가 발급 불가 안내) */
+  const handleOpenIssuanceView = useCallback(async () => {
+    if (settlementApplicationId == null || documentLoading) return
+    setDocumentLoading(true)
+    try {
+      await queryClient.fetchQuery(applicationDocumentQueryOptions)
+      setIssuanceViewOpen(true)
+    } catch (error) {
+      showAlert({
+        title: networkAwareAlertTitle(error, '안내'),
+        content: getSettlementApplicationDocumentErrorMessage(error),
+      })
+    } finally {
+      setDocumentLoading(false)
+    }
+  }, [
+    applicationDocumentQueryOptions,
+    documentLoading,
+    queryClient,
+    settlementApplicationId,
+    showAlert,
+  ])
+
+  const handleDownloadApplicationDocument = useCallback(
+    async (password: string) => {
+      if (settlementApplicationId == null) return
+      try {
+        await downloadIndividualSettlementApplicationDocumentRemote(settlementApplicationId, {
+          password,
+          revisionNo: expectedRevisionNo ?? undefined,
+        })
+      } catch (error) {
+        // 409 SETTLEMENT_APPLICATION_DOCUMENT_NOT_APPROVED — 승인 전·반려 revision. 강사 정산과 같은 발급 불가 안내
+        if (isIndividualSettlementReviewConflict(error)) {
+          setIssueBlockedOpen(true)
+          return
+        }
+        if (!isFileDownloadPasswordApiError(error)) {
+          showAlert({
+            title: networkAwareAlertTitle(error, '안내'),
+            content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+          })
+        }
+        throw error
+      }
+    },
+    [expectedRevisionNo, settlementApplicationId, showAlert]
+  )
+
   const reviewing = approveMutation.isPending || rejectMutation.isPending
   const isStatementActionLocked = !canApprove && !canReject
 
@@ -298,6 +402,7 @@ export function IndividualSettlementReviewDetailModal({
                   statementView.basic.processingStatusClass
                 )
               }
+              onDownloadPaymentStatement={() => void handleOpenIssuanceView()}
               onBasisDetailClick={handleBasisDetailClick}
               headerActions={
                 isStatementActionLocked ? null : (
@@ -359,6 +464,25 @@ export function IndividualSettlementReviewDetailModal({
         data={rejectStatement}
         confirmLoading={rejectMutation.isPending}
         applicationKind="receipt"
+      />
+
+      <PaymentStatementIssuanceViewModal
+        open={issuanceViewOpen && Boolean(issuanceParagraphBodyOptions)}
+        onClose={() => setIssuanceViewOpen(false)}
+        documentVariant="receiptSettlementApplication"
+        paragraphBodyOptions={issuanceParagraphBodyOptions}
+        fileName={
+          applicationDocument ? buildReceiptSettlementDocumentFileName(applicationDocument) : undefined
+        }
+        onDownloadPdf={handleDownloadApplicationDocument}
+        zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
+      />
+
+      <InstructorPaymentStatementBlockedModal
+        open={issueBlockedOpen}
+        onClose={() => setIssueBlockedOpen(false)}
+        variant="single"
+        zIndex={CMS_ALERT_MODAL_Z_INDEX}
       />
 
       <PaymentOrderCalculationBasisDetailModal

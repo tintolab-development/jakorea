@@ -107,6 +107,7 @@ export function ResultsPage() {
             value={activeTab}
             onChange={category => updateParams({ category, page: 1 })}
             variant="category"
+            stretch
             ariaLabel="결과 카테고리"
           />
         </div>

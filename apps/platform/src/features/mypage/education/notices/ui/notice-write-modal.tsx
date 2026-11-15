@@ -103,7 +103,7 @@ export function EducationProgramNoticeWriteModal({
     enabled: open,
     initialContent: notice?.content ?? '',
     contentFormat: 'html',
-    placeholder: '안내사항을 입력해 주세요.',
+    placeholder: '안내사항을 입력해 주세요',
     resetKey: editorResetKey,
     resolveImageSrc: resolveNoticeImageSrc,
   })
@@ -278,6 +278,7 @@ export function EducationProgramNoticeWriteModal({
           <div className={styles.editorWrap}>
             <PfRichTextEditor
               editor={editor}
+              className={styles.editor}
               allowImageUrl={false}
               resolveImageSrc={resolveNoticeImageSrc}
             />

@@ -539,10 +539,10 @@ assert.equal(
 )
 assert.equal(buildReceiptViewPath({ applicationId: '1', sessionId: '2' }), null)
 
-// 영수증 처리 현황(R17): 한 가지 상태면 그 라벨, 섞이면 "확인 진행 중", 미작성 N건은 쓰지 않는다
-assert.equal(resolvePaymentStatementProcessLabel(oneUpcoming), '확인 진행 중')
+// 영수증 처리 현황(R17): 한 가지 상태면 그 라벨, 섞이면 "확인 진행중", 미작성 N건은 쓰지 않는다
+assert.equal(resolvePaymentStatementProcessLabel(oneUpcoming), '확인 진행중')
 assert.equal(resolvePaymentStatementProcessLabel(paid), '계좌 지급 완료')
-assert.equal(resolvePaymentStatementProcessLabel(fiveNoReceipts), '확인 진행 중')
+assert.equal(resolvePaymentStatementProcessLabel(fiveNoReceipts), '확인 진행중')
 assert.equal(
   resolvePaymentStatementProcessLabel([
     { ...fiveNoReceipts[0]!, status: 'waiting_confirm' },
@@ -556,7 +556,7 @@ assert.equal(
     { ...fiveNoReceipts[0]!, status: 'waiting_confirm' },
     { ...fiveNoReceipts[1]!, status: 'rejected' },
   ]),
-  '확인 진행 중',
+  '확인 진행중',
 )
 assert.equal(
   resolvePaymentStatementProcessLabel([{ ...fiveNoReceipts[0]!, status: 'reapplied' }]),

@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
+import { CmsTableEmptyState } from '@/shared/ui/cms-table-empty-state'
 import {
   ALIMTALK_MESSAGE_TYPE_LABEL,
   type AlimtalkTemplateItem,
@@ -10,11 +11,22 @@ type DetailPanelProps = {
   template: AlimtalkTemplateItem | null
   categoryName: string
   onPreview: () => void
+  /** 선택한 폴더 안에 템플릿이 없을 때 — 공통 빈 상태(등록된 데이터 없음) */
+  emptyFolder?: boolean
 }
 
-export function DetailPanel({ template, categoryName, onPreview }: DetailPanelProps) {
+export function DetailPanel({
+  template,
+  categoryName,
+  onPreview,
+  emptyFolder = false,
+}: DetailPanelProps) {
   if (!template) {
-    return <div className="alimtalk-template-detail alimtalk-template-detail--empty" />
+    return (
+      <div className="alimtalk-template-detail alimtalk-template-detail--empty">
+        {emptyFolder ? <CmsTableEmptyState variant="no-data" /> : null}
+      </div>
+    )
   }
 
   return (

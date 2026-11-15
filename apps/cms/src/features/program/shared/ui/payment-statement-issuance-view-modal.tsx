@@ -16,6 +16,8 @@ import {
   getA4PreviewParagraphs,
 } from '@/features/template/lib/a4-document-preview'
 import { createPaymentStatementIssuanceDocumentDraft } from '@/features/template/model/payment-statement-issuance-draft'
+import { buildReceiptSettlementApplicationDocumentPreviewDraft } from '@/features/template/model/settlement-application-issuance-a4-preview'
+import type { ContainedPiiType } from '@jakorea/domain/shared/file-download-password'
 import {
   getPaymentStatementA4ParagraphGap,
   PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
@@ -36,6 +38,18 @@ import '@/features/program/general/ui/detail-modal/program-status/lecture-report
 
 const PAYMENT_STATEMENT_ISSUANCE_VIEW_TITLE = '지급조서(발급용)'
 const PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE = '지급조서'
+const RECEIPT_SETTLEMENT_APPLICATION_TITLE = '정산 신청서'
+/** 영수증 정산 신청서 PDF — 주민등록번호는 넣지 않고 계좌번호만 담는다(BE 계약) */
+const RECEIPT_SETTLEMENT_APPLICATION_CONTAINED_PII: readonly ContainedPiiType[] = ['ACCOUNT_NUMBER']
+
+/**
+ * 문서 종류.
+ * - `paymentStatement`(기본): 강사 지급조서(발급용)
+ * - `receiptSettlementApplication`: 참여자·봉사자 영수증 정산 「JA KOREA 정산 신청서」(시안 14680:103216)
+ */
+export type PaymentStatementIssuanceViewDocumentVariant =
+  | 'paymentStatement'
+  | 'receiptSettlementApplication'
 
 export interface PaymentStatementIssuanceViewModalProps {
   open: boolean
@@ -51,6 +65,8 @@ export interface PaymentStatementIssuanceViewModalProps {
   downloadLoading?: boolean
   /** 서버 단건 다운로드용. onDownloadPdf가 없을 때 사용 */
   settlementId?: number
+  /** 문서 종류 — 기본 지급조서 */
+  documentVariant?: PaymentStatementIssuanceViewDocumentVariant
 }
 
 function PreviewPagePrevIcon() {
@@ -110,15 +126,20 @@ export function PaymentStatementIssuanceViewModal({
   onDownloadPdf,
   downloadLoading: downloadLoadingProp = false,
   settlementId,
+  documentVariant = 'paymentStatement',
 }: PaymentStatementIssuanceViewModalProps) {
+  const isReceiptSettlement = documentVariant === 'receiptSettlementApplication'
   const { showAlert } = useCmsAlert()
   const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const pdfLoading = downloadLoadingProp
 
   const draft = useMemo(
-    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDocumentDraft()),
-    []
+    () =>
+      isReceiptSettlement
+        ? buildReceiptSettlementApplicationDocumentPreviewDraft()
+        : normalizeWritingFormDraft(createPaymentStatementIssuanceDocumentDraft()),
+    [isReceiptSettlement]
   )
 
   const resolvedParagraphBodyOptions = useMemo(
@@ -126,7 +147,9 @@ export function PaymentStatementIssuanceViewModal({
     [paragraphBodyOptions]
   )
 
-  const fileName = fileNameProp ?? PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE
+  const fileName =
+    fileNameProp ??
+    (isReceiptSettlement ? RECEIPT_SETTLEMENT_APPLICATION_TITLE : PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE)
 
   const previewParagraphs = useMemo(
     () => getA4PreviewParagraphs(draft.paragraphs, PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS),
@@ -134,8 +157,12 @@ export function PaymentStatementIssuanceViewModal({
   )
 
   const documentTitle = useMemo(
-    () => getA4DocumentTitle(draft, PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE),
-    [draft]
+    () =>
+      getA4DocumentTitle(
+        draft,
+        isReceiptSettlement ? RECEIPT_SETTLEMENT_APPLICATION_TITLE : PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE
+      ),
+    [draft, isReceiptSettlement]
   )
 
   const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
@@ -176,6 +203,7 @@ export function PaymentStatementIssuanceViewModal({
     if (pdfLoading) return
     runProtectedDownload({
       kind: 'PAYMENT_STATEMENT',
+      containedPiiTypes: isReceiptSettlement ? RECEIPT_SETTLEMENT_APPLICATION_CONTAINED_PII : null,
       zIndex: zIndex + 20,
       download: async password => {
         if (onDownloadPdf) {
@@ -204,7 +232,15 @@ export function PaymentStatementIssuanceViewModal({
         throw new Error('서버 지급조서가 없어 다운로드할 수 없습니다.')
       },
     })
-  }, [onDownloadPdf, pdfLoading, runProtectedDownload, settlementId, showAlert, zIndex])
+  }, [
+    isReceiptSettlement,
+    onDownloadPdf,
+    pdfLoading,
+    runProtectedDownload,
+    settlementId,
+    showAlert,
+    zIndex,
+  ])
 
   if (!open) return null
 
@@ -258,7 +294,10 @@ export function PaymentStatementIssuanceViewModal({
           <div className="full-page-modal__body">
             <div className="full-page-modal__body-header">
               <p className="full-page-modal__description lecture-report-issuance-preview-modal__description">
-                {PAYMENT_STATEMENT_ISSUANCE_VIEW_TITLE} 미리보기 화면입니다.
+                {isReceiptSettlement
+                  ? RECEIPT_SETTLEMENT_APPLICATION_TITLE
+                  : PAYMENT_STATEMENT_ISSUANCE_VIEW_TITLE}{' '}
+                미리보기 화면입니다.
               </p>
               {actionButtons}
             </div>

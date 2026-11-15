@@ -236,15 +236,22 @@ export function MypageSettingsPage() {
   }
 
   const backButton = (
-    <ProgramBackButton size="small" label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
+    <ProgramBackButton label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
   )
 
   const showSettlementAccountGuide = tab === 'profile'
   const settlementAccountGuide = isInstructor
     ? INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE
     : GENERAL_SETTLEMENT_ACCOUNT_GUIDE
+  const isCompactHeadingTab = tab === 'social' || tab === 'consents'
   const pageTitleNode = (
-    <div className={styles.pageHeading}>
+    <div
+      className={
+        isCompactHeadingTab
+          ? `${styles.pageHeading} ${styles.pageHeadingCompact}`
+          : styles.pageHeading
+      }
+    >
       <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
         {pageTitle}
       </PFText>

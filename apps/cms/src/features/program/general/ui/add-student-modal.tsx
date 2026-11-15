@@ -32,7 +32,11 @@ const GENDER_OPTIONS = [
 export interface AddStudentModalProps {
   open: boolean
   onCancel: () => void
-  onAdd: (values: AddStudentFormValues) => void
+  /**
+   * 등록 처리. 성공하면 상위가 `open=false`로 모달을 닫는다.
+   * 실패하면 모달을 닫지 않아 입력값이 남고, 오류 안내는 상위가 띄운다.
+   */
+  onAdd: (values: AddStudentFormValues) => void | Promise<void>
   /** 미전달 시 옵션 없음 — 상위에서 필터와 동일 학급 옵션 전달 */
   gradeClassOptions?: Array<{ label: string; value: string }>
   /** 기본 설명 문구 대체 — 일반 기관형 참여 기관 상세는 시안(05-1) 문구 */
@@ -53,7 +57,7 @@ export function AddStudentModal({
     handleSubmit,
     reset,
     setError,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentFormSchema),
     defaultValues: DEFAULT_ADD_STUDENT_FORM_VALUES,
@@ -65,7 +69,7 @@ export function AddStudentModal({
     }
   }, [open, reset])
 
-  const onSubmit = (values: AddStudentFormValues) => {
+  const onSubmit = async (values: AddStudentFormValues) => {
     if (!isValidCalendarDate(sanitizeDateTextInput(values.birthDate))) {
       setError('birthDate', {
         type: 'validate',
@@ -74,8 +78,8 @@ export function AddStudentModal({
       return
     }
 
-    onAdd(values)
-    onCancel()
+    // 서버 응답 전에 닫지 않는다 — 닫기는 상위가 성공 시에만 한다.
+    await onAdd(values)
   }
 
   const footer = (
@@ -83,7 +87,12 @@ export function AddStudentModal({
       <CmsButton variant="secondary" size="medium" onClick={onCancel}>
         취소
       </CmsButton>
-      <CmsButton variant="primary" size="medium" onClick={() => handleSubmit(onSubmit)()}>
+      <CmsButton
+        variant="primary"
+        size="medium"
+        loading={isSubmitting}
+        onClick={() => void handleSubmit(onSubmit)()}
+      >
         등록
       </CmsButton>
     </>
@@ -104,7 +113,7 @@ export function AddStudentModal({
           className="add-student-modal__form"
           onSubmit={e => {
             e.preventDefault()
-            handleSubmit(onSubmit)(e)
+            void handleSubmit(onSubmit)(e)
           }}
           noValidate
         >

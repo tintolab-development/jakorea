@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { Spin } from 'antd'
@@ -61,7 +62,7 @@ export function ParticipatingIndividualProgressAssignmentSection({
 
   const existingFeedback = useMemo(() => {
     if (feedbackTarget?.mode !== 'view') return ''
-    if (feedbackQuery.isLoading) return '불러오는 중…'
+    if (feedbackQuery.isLoading) return ''
     if (feedbackQuery.isError) return '피드백을 불러오지 못했습니다.'
     return resolveFormResponseFeedbackDisplayContent(feedbackQuery.data) ?? ''
   }, [feedbackQuery.data, feedbackQuery.isError, feedbackQuery.isLoading, feedbackTarget?.mode])
@@ -117,6 +118,7 @@ export function ParticipatingIndividualProgressAssignmentSection({
 
   return (
     <div className="participating-individual-progress-assignment-section school-detail-attendance-section">
+      {feedbackTarget?.mode === 'view' && feedbackQuery.isLoading ? <FullscreenSpinner /> : null}
       <FilterTableLayout
         className="school-detail-attendance-section__filter-layout"
         bordered={false}

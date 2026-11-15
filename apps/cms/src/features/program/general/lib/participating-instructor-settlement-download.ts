@@ -1,13 +1,7 @@
 import type { ParticipatingInstructorSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
 import { isParticipatingInstructorSettlementEligibleForPaymentStatementDownload } from '@/features/program/general/lib/participating-instructor-payment-statement-issuance-view'
-import {
-  bulkDownloadPaymentStatementsRemote,
-  downloadPaymentStatementRemote,
-} from '@/features/settlement-management/api/settlement-api-client'
-import {
-  getSettlementApiErrorMessage,
-  isFileDownloadPasswordApiError,
-} from '@/features/settlement-management/api/get-settlement-api-error'
+import { bulkDownloadPaymentStatementsRemote } from '@/features/settlement-management/api/settlement-api-client'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 
 export function filterParticipatingInstructorSettlementDownloadRows(
   rows: ParticipatingInstructorSettlementApiRow[]
@@ -37,16 +31,9 @@ export async function bulkDownloadParticipatingInstructorPaymentStatements(
   void filenamePrefix
   const password = options.password
 
-  try {
-    await bulkDownloadPaymentStatementsRemote({ settlementIds, password })
-    return
-  } catch (error) {
-    if (isFileDownloadPasswordApiError(error)) throw error
-  }
-
-  for (const settlementId of settlementIds) {
-    await downloadPaymentStatementRemote(settlementId, { password })
-  }
+  // 일괄 ZIP 실패 시 건별 다운로드로 대체하지 않는다. 건마다 다운로드 횟수·이력이 쌓이고
+  // 같은 실패가 건수만큼 반복되므로, 오류를 그대로 올려 호출부의 실패 안내를 띄운다.
+  await bulkDownloadPaymentStatementsRemote({ settlementIds, password })
 }
 
 export function getParticipatingInstructorSettlementBulkDownloadErrorMessage(error: unknown): string {

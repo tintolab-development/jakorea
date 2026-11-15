@@ -37,11 +37,41 @@ export function isPasswordRecentlyUsedApiError(error: unknown): boolean {
   return readPortalAuthApiErrorCode(error)?.toUpperCase() === PASSWORD_RECENTLY_USED_ERROR_CODE
 }
 
+/**
+ * 이메일·비밀번호 불일치. BE는 계정 없음·비밀번호 틀림을 같은 코드로 내려 어느 칸인지 구분하지 않는다.
+ * 로그인 화면은 시안(14474-43444)대로 두 칸 아래에 각각 안내 문구를 띄운다.
+ */
+export const LOGIN_INVALID_CREDENTIALS_ERROR_CODE = 'INVALID_CREDENTIALS'
+export const LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES = {
+  email: '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.',
+  password: '비밀번호가 일치하지 않아요. 다시 한번 확인해 주세요.',
+} as const
+
+export function isLoginInvalidCredentialsApiError(error: unknown): boolean {
+  return readPortalAuthApiErrorCode(error)?.toUpperCase() === LOGIN_INVALID_CREDENTIALS_ERROR_CODE
+}
+
 export function isLoginApprovalPendingApiError(error: unknown): boolean {
   if (!isAxiosError(error)) return false
   if (error.response?.status === 423) return true
   const code = extractErrorCode(error.response?.data)
   return Boolean(code && LOGIN_APPROVAL_PENDING_CODES.has(code.toUpperCase()))
+}
+
+/**
+ * 서버가 오류 내용을 주지 못한 경우(미응답·연결 끊김·5xx이면서 message 없음).
+ * 로그인 화면은 이때 「네트워크 오류 안내」 팝업을 띄운다(Figma 14491-2874).
+ */
+export function isLoginNetworkError(error: unknown): boolean {
+  if (!isAxiosError(error)) return false
+  const response = error.response
+  if (!response) return true
+  if (response.status < 500) return false
+  const data = response.data
+  if (!data || typeof data !== 'object') return true
+  const body = data as { message?: unknown; error?: { message?: unknown } }
+  const hasText = (value: unknown) => typeof value === 'string' && value.trim().length > 0
+  return !hasText(body.error?.message) && !hasText(body.message)
 }
 
 export type LoginApiErrorMessageOptions = {

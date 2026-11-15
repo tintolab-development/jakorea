@@ -10,9 +10,15 @@
  * - 프로그램 범위(PROGRAM_APPLICATION 등): 프로그램 상세 — 유형별 경로는 navigateToProgramAdminDetail이 확정 후 1회 이동
  * - ADMIN_ACCOUNT: 관리자 회원 상세
  * - INSTRUCTOR_ROLE_REQUEST / INQUIRY: 상세 URL 계약이 없어 해당 목록으로 이동
+ * - ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED(강사비 정정 요청, linkType SETTLEMENT·linkId settlementId):
+ *   정산 관리 > 지급조서 확인 > 신청자 별 상세. 신청자(강사 회원) ID는 알림에 없어 정산 상세로 확인한 뒤 이동한다.
  */
 
 import type { Notification } from '@/features/dashboard/api/notification-service'
+import {
+  PAYMENT_ORDERS_DETAIL_KEY_PARAM,
+  PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
+} from '@/pages/settlement-management/payment-orders-table.config'
 import {
   USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
   USER_DETAIL_MEMBER_ID_QUERY_KEY,
@@ -22,6 +28,26 @@ import {
 export type AdminNotificationNavigation =
   | { kind: 'path'; path: string }
   | { kind: 'program'; programId: string }
+  /** 강사비 정정 요청 — settlementId로 신청자를 확인해 신청자 별 지급 현황 상세를 연다 */
+  | { kind: 'payment-statement-correction'; settlementId: string }
+
+/** 관리자_강사비_정정_요청 (BE 2026-11-15). 강사 본인 알림 PAYMENT_STATEMENT_CORRECTION_REQUESTED와 다르다. */
+export const ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED_EVENT =
+  'ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED'
+
+const PAYMENT_ORDERS_PATH = '/settlement-management/payment-orders'
+
+/** 정산 관리 > 지급조서 확인 > 신청자 별 지급 현황 상세 (URL 구동 풀페이지) */
+export function buildPaymentOrderInstructorDetailPath(instructorMemberId: string): string {
+  const params = new URLSearchParams({
+    [PAYMENT_ORDERS_DETAIL_TYPE_PARAM]: 'instructor',
+    [PAYMENT_ORDERS_DETAIL_KEY_PARAM]: instructorMemberId,
+  })
+  return `${PAYMENT_ORDERS_PATH}?${params.toString()}`
+}
+
+/** 신청자를 확인하지 못했을 때 — 지급조서 확인 목록 */
+export const PAYMENT_ORDERS_LIST_PATH = PAYMENT_ORDERS_PATH
 
 /** 프로그램 상세로 여는 linkType (programId 필수) */
 const PROGRAM_SCOPED_LINK_TYPES: ReadonlySet<string> = new Set([
@@ -80,6 +106,14 @@ export function resolveAdminNotificationNavigation(
   const target = notification.target
   const linkType = target?.linkType?.trim().toUpperCase()
   if (!target || !linkType) return null
+
+  if (
+    target.eventType?.trim().toUpperCase() === ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED_EVENT
+  ) {
+    return linkType === 'SETTLEMENT' && isPositiveId(target.linkId)
+      ? { kind: 'payment-statement-correction', settlementId: target.linkId }
+      : null
+  }
 
   if (linkType === 'MEMBER') {
     if (!isPositiveId(target.linkId)) return null

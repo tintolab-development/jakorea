@@ -20,7 +20,7 @@
   gap: 10px;
   margin-bottom: var(--spacing-40);
   padding: var(--spacing-24);
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16);
   background: var(--color-neutral-cool-50);
   text-align: center;
 }

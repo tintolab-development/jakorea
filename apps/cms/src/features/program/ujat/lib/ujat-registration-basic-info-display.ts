@@ -458,5 +458,14 @@ export function resolveUjatAnnouncementTitle(program: Program): string {
 export function applyUjatRegistrationTemplateDefaults(program: Program): Program {
   const overlay = readUjatRegistrationOverlayFromProgram(program)
   if (Object.keys(overlay).length === 0) return program
-  return applyUjatRegistrationOverlayToProgram(program, overlay, { fillDefaults: false })
+  const applied = applyUjatRegistrationOverlayToProgram(program, overlay, { fillDefaults: false })
+  // 상세 조회의 지급·공제 항목은 remote API 응답(settlementPolicy)이 SSOT — overlay로 덮지 않는다.
+  return {
+    ...applied,
+    generalCommonInfo: {
+      ...applied.generalCommonInfo,
+      paymentItems: program.generalCommonInfo?.paymentItems,
+      deductionItems: program.generalCommonInfo?.deductionItems,
+    },
+  }
 }

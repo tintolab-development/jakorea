@@ -5,6 +5,7 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useQuery } from '@tanstack/react-query'
 import type {
   ApplicantInstitutionDetailExtend,
@@ -504,8 +505,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const affiliatedFinancialCompanyValue = buildAffiliatedFinancialCompanyCell(detail, program)
 
   const textbookViewValue =
-    (detail?.textbookDisplayLabel?.trim() &&
-    detail.textbookDisplayLabel.trim() !== '해당 없음'
+    (detail?.textbookDisplayLabel?.trim() && detail.textbookDisplayLabel.trim() !== '해당 없음'
       ? detail.textbookDisplayLabel.trim()
       : textbookDisplayLabel?.trim() && textbookDisplayLabel.trim() !== '해당 없음'
         ? textbookDisplayLabel.trim()
@@ -807,13 +807,16 @@ export function ApplicantGeneralInstitutionBasicInfo({
           <CompanySchoolPreferredScheduleSection blocks={companySchoolScheduleBlocks} />
         ) : null
       ) : showScheduleSection ? (
-        <ApplicantPreferredScheduleDetailSection
-          sessions={sessions}
-          bridge={institutionApplicationBridge}
-          detailScheduleTimeSpan={detailScheduleTimeSpan}
-          curriculumSessionLabels={curriculumSessionLabels}
-          emptyMessage={institutionHopeScheduleEmptyMessage(institution)}
-        />
+        <>
+          {institution.requestedSchedulesSyncState === 'loading' ? <FullscreenSpinner /> : null}
+          <ApplicantPreferredScheduleDetailSection
+            sessions={sessions}
+            bridge={institutionApplicationBridge}
+            detailScheduleTimeSpan={detailScheduleTimeSpan}
+            curriculumSessionLabels={curriculumSessionLabels}
+            emptyMessage={institutionHopeScheduleEmptyMessage(institution)}
+          />
+        </>
       ) : null}
     </div>
   )

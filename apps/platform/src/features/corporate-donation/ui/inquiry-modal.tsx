@@ -392,6 +392,7 @@ export function CorporateDonationInquiryModal({
                       placeholder="상담내용을 입력해 주세요"
                       size="xlarge"
                       width="100%"
+                      className={styles.consultTextarea}
                       rows={5}
                       maxLength={5000}
                       error={Boolean(fieldState.error)}

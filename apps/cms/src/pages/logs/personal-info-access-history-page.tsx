@@ -24,6 +24,7 @@ import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
+import '@/pages/logs/logs-history-page.css'
 
 const PERSONAL_INFO_ACCESS_TABLE_SCROLL_X = 1280
 
@@ -144,6 +145,7 @@ export default function PersonalInfoAccessHistoryPage() {
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
+      className="logs-history-page"
       bordered={false}
       fields={personalInfoAccessHistoryFilterFields}
       filters={{

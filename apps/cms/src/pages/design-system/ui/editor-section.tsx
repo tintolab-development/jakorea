@@ -25,7 +25,7 @@ const DEMO_MARKDOWN = `**CMS Rich Text** 에디터입니다.
 const MAIL_VARIABLE_DEMO_HTML =
   '<p>안녕하세요, <span class="mail-template-variable" data-mail-variable="회원명">#{회원명}</span>님 <span class="mail-template-variable" data-mail-variable="프로그램명">#{프로그램명}</span>입니다.</p><p>본문 빈 곳을 클릭하면 커서가 텍스트 위치로 이동합니다. 변수 칩은 통째로만 지울 수 있습니다.</p>'
 
-const MAIL_VARIABLE_INSERT_SAMPLES = ['회원명', '프로그램명', '담당자명'] as const
+const MAIL_VARIABLE_INSERT_SAMPLES = ['회원명', '프로그램명', '프로그램 담당자명'] as const
 
 export function EditorSection() {
   const [previewMarkdown, setPreviewMarkdown] = useState(DEMO_MARKDOWN)

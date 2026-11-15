@@ -145,7 +145,7 @@ export function CareersPage() {
                   </span>
                 ))}
               </PFText>
-              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.heroEn}>
+              <PFText as="p" typo="bd-md-rg" color="black" className={styles.heroEn}>
                 {hero.descriptionEn}
               </PFText>
             </div>

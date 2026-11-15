@@ -28,7 +28,7 @@
 
 .small {
   height: 30px;
-  padding: 6px 20px;
+  padding: 6px 19px;
   border-radius: var(--radius-8);
 }
 
@@ -60,7 +60,14 @@
   min-width: 160px;
   height: 53px;
   padding: 13px var(--spacing-28);
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-12);
+}
+
+/* 기본 버튼 아래 [이전으로] 같은 텍스트 액션 (시안 h52, 상하 8, 16 SemiBold) */
+.textAction {
+  height: 52px;
+  padding: var(--spacing-8) 0;
+  border-radius: 0;
 }
 
 .primary {
@@ -177,5 +184,10 @@
 
   .button.xlarge {
     font-size: 16px;
+  }
+
+  .button.textAction {
+    height: 42px;
+    font-size: 14px;
   }
 }

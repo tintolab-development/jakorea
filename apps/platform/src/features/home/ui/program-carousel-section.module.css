@@ -399,7 +399,7 @@
 
 @media (--bp-pc-up) {
   .cardBadge {
-    height: 32px;
+    height: 36px;
     padding: 0 var(--spacing-12);
     gap: 10px;
     font-size: 16px;

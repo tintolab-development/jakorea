@@ -457,6 +457,10 @@ export default function DetailedProgramPage() {
         dataIndex: 'name',
         key: 'name',
         className: 'detailed-program-page__name-col',
+        /* 시안 9270:79002 — 정보 수정 모드 헤더 '세부 프로그램 *' (QA 2026-11-15 데이터 관리 T20).
+         * 엑셀 헤더가 title 문자열을 쓰므로 별표는 헤더 셀 CSS로만 붙인다. */
+        onHeaderCell: () =>
+          isEditMode ? { className: 'detailed-program-page__name-col--required' } : {},
         ellipsis: !isEditMode,
         render: (_: unknown, row: DetailedProgramManagementRow) => {
           if (!isEditMode) {

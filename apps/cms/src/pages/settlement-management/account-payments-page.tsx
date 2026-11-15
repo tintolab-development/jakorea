@@ -27,6 +27,8 @@ import {
   getSettlementApiErrorCode,
   getSettlementApiErrorMessage,
   readAccountPaymentMissingAccountIds,
+  TAX_REPORT_NO_ELIGIBLE_SELECTION,
+  TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import {
@@ -47,7 +49,6 @@ import { useSettlementBudgetSummaryQuery } from '@/features/settlement-managemen
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
 import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
@@ -594,7 +595,7 @@ export default function AccountPaymentsPage() {
 
   /**
    * 툴바 양식 발급: 선택한 행만 대상.
-   * 대량이체 = 지급 대기, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
+   * 대량이체 = 지급 대기·지급 완료, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
    */
   const resolveToolbarFormIssueRows = useCallback(
     (kind: 'bulk-transfer' | 'tax-report'): AccountPaymentRow[] | null => {
@@ -622,7 +623,10 @@ export default function AccountPaymentsPage() {
   const notifyExportError = useCallback((error: unknown, fallback: string) => {
     if (isGlobalApiErrorAlertShown(error)) return
     cmsAlertModal.show({
-      title: networkAwareAlertTitle(error, '발급 불가'),
+      title:
+        getSettlementApiErrorCode(error) === TAX_REPORT_NO_ELIGIBLE_SELECTION
+          ? TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE
+          : networkAwareAlertTitle(error, '발급 불가'),
       content: getSettlementApiErrorMessage(error, fallback),
     })
   }, [])
@@ -702,8 +706,8 @@ export default function AccountPaymentsPage() {
       }
       setIssuedFormPreviewRows(rows)
       setIssuedFormExport(readyExport)
+      // 「발급 완료」 안내는 미리보기의 엑셀 다운로드 성공 시점에 노출한다.
       setBulkTransferPreviewOpen(true)
-      showIssueCompletedAlert()
     })()
   }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
 
@@ -1059,7 +1063,6 @@ export default function AccountPaymentsPage() {
 
   /**
    * 일괄 완료 모달「세금신고 양식 발급」— 방금 계좌 지급 완료한 행은 세금신고 대상이다.
-   * (대량이체는 지급 대기 건만 서버가 허용하므로 완료 직후에는 발급할 수 없다.)
    */
   const handleIssueTaxReportFromSuccessModal = useCallback(() => {
     const ctx = accountPaymentCompleteSuccessContext

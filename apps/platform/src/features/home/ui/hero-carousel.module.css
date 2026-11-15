@@ -350,4 +350,9 @@
     gap: 50px;
     justify-content: flex-start;
   }
+
+  .title {
+    font-size: 64px;
+    line-height: 84px;
+  }
 }

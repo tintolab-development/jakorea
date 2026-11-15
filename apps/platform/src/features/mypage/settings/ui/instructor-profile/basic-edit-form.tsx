@@ -159,6 +159,14 @@ export function SettingsInstructorBasicFields({
   return (
     <>
         <div className={styles.fields}>
+          {/* 시안: 이메일 ID가 기본 정보 첫 필드 (조회 화면과 같은 라벨) */}
+          <PFTextInput
+            size="xlarge"
+            label="이메일 ID"
+            value={displayEmail === EMPTY_SETTINGS_VALUE ? '' : displayEmail}
+            disabled
+          />
+
           <PFTextInput
             size="xlarge"
             label="이름"
@@ -183,7 +191,7 @@ export function SettingsInstructorBasicFields({
                 disabled={isReverifying}
                 onClick={handleReverify}
               >
-                {isReverifying ? '본인인증 진행 중…' : '재인증 하기'}
+                {isReverifying ? '본인인증 진행 중…' : '재인증하기'}
               </PFButton>
             </div>
             {identityError ? (
@@ -227,13 +235,6 @@ export function SettingsInstructorBasicFields({
               </PFButton>
             </div>
           </div>
-
-          <PFTextInput
-            size="xlarge"
-            label="이메일"
-            value={displayEmail === EMPTY_SETTINGS_VALUE ? '' : displayEmail}
-            disabled
-          />
 
           {isDual ? (
             <div className={styles.addressField}>

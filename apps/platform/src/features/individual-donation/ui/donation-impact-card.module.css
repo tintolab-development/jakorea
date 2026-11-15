@@ -94,4 +94,8 @@
   .meta {
     padding-inline: var(--spacing-16);
   }
+  .badge {
+    height: 30px;
+    font-size: 14px;
+  }
 }

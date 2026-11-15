@@ -107,7 +107,7 @@
 
 @media (--bp-pc-up) {
   .title {
-    color: var(--color-neutral-white);
+    color: var(--color-neutral-cool-80);
     line-height: 144%;
     font-size: 46px;
     letter-spacing: -0.92px;

@@ -1,7 +1,7 @@
 /**
  * 대시보드 설정 모달
  * - 바로가기 아이콘 설정 (체크박스)
- * - 위젯 별 프로그램 설정 (프로그램별 아코디언 + 위젯별 체크)
+ * - 위젯별 프로그램 설정 (프로그램별 아코디언 + 위젯별 체크)
  * ContentModal(흰 헤더), 800×최대 720px(뷰포트 안), 바디 스크롤
  */
 
@@ -490,7 +490,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         </section>
 
         <section className="dashboard-settings-modal__section">
-          <div className="dashboard-settings-modal__section-title">위젯 별 프로그램 설정</div>
+          <div className="dashboard-settings-modal__section-title">위젯별 프로그램 설정</div>
           {programMinSelectionNotice ? (
             <div className="dashboard-settings-modal__program-notice" role="alert">
               {programMinSelectionNotice}

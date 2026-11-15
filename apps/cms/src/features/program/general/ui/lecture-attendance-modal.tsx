@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
@@ -260,62 +261,67 @@ export function LectureAttendanceModal({
       </>
     )
 
+  // 첫 조회 중에는 빈 모달·안내 문구 대신 전체 화면 스피너만 보인다.
+  // 정정 저장처럼 내용이 이미 있을 때는 모달을 둔 채 스피너를 위에 덮는다.
+  const loadingWithoutContent = remoteDetailLoading && detailBase == null
+
   return (
-    <ContentModal
-      open={open}
-      onCancel={handleModalCancel}
-      title="강의 출석 내역"
-      footer={footer}
-      className="lecture-attendance-modal"
-      zIndex={zIndex}
-      width={800}
-      description={
-        detailBase ? `**[${detailBase.studentName}]** 학생의 강의 출석 내역입니다.` : undefined
-      }
-    >
-      {remoteDetailLoading ? (
-        <div className="lecture-attendance-modal__loading">로딩 중...</div>
-      ) : detailBase ? (
-        <DetailInfoForm title="강의 출석 내역" hideHeader mode="view">
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field label="학생명" view={detailBase.studentName} />
-            <DetailInfoForm.Field
-              label="출석률"
-              view={<AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />}
-            />
-          </DetailInfoForm.Row>
-          {summaryAttendanceCounts == null
-            ? sessionPairs.map(([left, right], index) => (
-                <DetailInfoForm.Row type="double" key={`session-pair-${index}`}>
-                  <DetailInfoForm.Field
-                    label={left ? formatLectureAttendanceSessionLabel(left) : '\u00a0'}
-                    view={
-                      left ? (
-                        <SessionStatusCell
-                          session={left}
-                          editing={editing}
-                          onPick={patchSessionStatus}
-                        />
-                      ) : null
-                    }
-                  />
-                  <DetailInfoForm.Field
-                    label={right ? formatLectureAttendanceSessionLabel(right) : '\u00a0'}
-                    view={
-                      right ? (
-                        <SessionStatusCell
-                          session={right}
-                          editing={editing}
-                          onPick={patchSessionStatus}
-                        />
-                      ) : null
-                    }
-                  />
-                </DetailInfoForm.Row>
-              ))
-            : null}
-        </DetailInfoForm>
-      ) : null}
-    </ContentModal>
+    <>
+      {open && remoteDetailLoading ? <FullscreenSpinner /> : null}
+      <ContentModal
+        open={open && !loadingWithoutContent}
+        onCancel={handleModalCancel}
+        title="강의 출석 내역"
+        footer={footer}
+        className="lecture-attendance-modal"
+        zIndex={zIndex}
+        width={800}
+        description={
+          detailBase ? `**[${detailBase.studentName}]** 학생의 강의 출석 내역입니다.` : undefined
+        }
+      >
+        {detailBase ? (
+          <DetailInfoForm title="강의 출석 내역" hideHeader mode="view">
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field label="학생명" view={detailBase.studentName} />
+              <DetailInfoForm.Field
+                label="출석률"
+                view={<AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />}
+              />
+            </DetailInfoForm.Row>
+            {summaryAttendanceCounts == null
+              ? sessionPairs.map(([left, right], index) => (
+                  <DetailInfoForm.Row type="double" key={`session-pair-${index}`}>
+                    <DetailInfoForm.Field
+                      label={left ? formatLectureAttendanceSessionLabel(left) : '\u00a0'}
+                      view={
+                        left ? (
+                          <SessionStatusCell
+                            session={left}
+                            editing={editing}
+                            onPick={patchSessionStatus}
+                          />
+                        ) : null
+                      }
+                    />
+                    <DetailInfoForm.Field
+                      label={right ? formatLectureAttendanceSessionLabel(right) : '\u00a0'}
+                      view={
+                        right ? (
+                          <SessionStatusCell
+                            session={right}
+                            editing={editing}
+                            onPick={patchSessionStatus}
+                          />
+                        ) : null
+                      }
+                    />
+                  </DetailInfoForm.Row>
+                ))
+              : null}
+          </DetailInfoForm>
+        ) : null}
+      </ContentModal>
+    </>
   )
 }

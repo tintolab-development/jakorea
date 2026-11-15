@@ -140,7 +140,7 @@ export function LectureReportIssuancePreviewModal({
     [a4Preview.a4HiddenParagraphIds, draft?.paragraphs]
   )
 
-  const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
+  const { pages, overflowParagraphIds, waitForPagesReady, measureLayer } = useA4ParagraphPages({
     allParagraphs: previewParagraphs,
     titleNumbering: draft?.formSettings.titleNumbering ?? 'none',
     editorKind: 'survey',
@@ -184,6 +184,7 @@ export function LectureReportIssuancePreviewModal({
     if (!root || pdfLoading) return
     setPdfLoading(true)
     try {
+      await waitForPagesReady()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, `${fileName}.pdf`)
     } catch (e) {
@@ -195,7 +196,7 @@ export function LectureReportIssuancePreviewModal({
     } finally {
       setPdfLoading(false)
     }
-  }, [fileName, pdfLoading, showAlert])
+  }, [fileName, pdfLoading, showAlert, waitForPagesReady])
 
   if (!open || draft == null) return null
 

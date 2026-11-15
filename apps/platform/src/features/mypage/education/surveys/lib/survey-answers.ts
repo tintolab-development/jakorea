@@ -8,10 +8,22 @@ import {
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 import { PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH } from '@/features/program/lib/portal-application-free-text'
 import type { SurveySidecarState } from './survey-sidecar'
+import {
+  buildRequiredMissingAlertCopy,
+  summarizeRequiredMissingAlertCopy,
+  type RequiredMissing,
+  type RequiredMissingKind,
+} from '@/shared/lib/required-missing-alert'
 
 export type EducationSurveyFillValidation =
   | { ok: true }
-  | { ok: false; message: string; incomplete?: 'file_attachment' }
+  | {
+      ok: false
+      message: string
+      incomplete?: 'file_attachment'
+      /** 필수 입력 누락 — 안내 팝업(Figma 14550-2349)으로 띄운다 */
+      missingRequired?: RequiredMissing
+    }
 
 function isAnswerRequired(paragraph: WritingFormParagraph): boolean {
   if (paragraph.kind === 'single_item') {
@@ -201,6 +213,18 @@ export function validateEducationSurveyFill(
     requiredUserInfoFieldKeys?: readonly string[]
   }
 ): EducationSurveyFillValidation {
+  /**
+   * 필수 누락은 끝까지 모아 한 번에 안내한다. 입력 항목(이용자 정보)과 설문 문항은 섞지 않고,
+   * 화면 순서상 먼저 누락된 쪽을 띄운다. 글자 수 초과·사진 첨부는 그보다 앞에 있을 때만 먼저 안내한다.
+   */
+  const missingLabels: Record<RequiredMissingKind, string[]> = { field: [], question: [] }
+  let firstMissingKind: RequiredMissingKind | null = null
+  const pushMissing = (kind: RequiredMissingKind, label: string) => {
+    firstMissingKind ??= kind
+    const trimmed = label.trim()
+    if (trimmed && !missingLabels[kind].includes(trimmed)) missingLabels[kind].push(trimmed)
+  }
+
   for (const paragraph of draft.paragraphs) {
     if (isUserInfoParagraph(paragraph)) {
       if (!options?.requireUserInfoAnswers) continue
@@ -212,7 +236,7 @@ export function validateEducationSurveyFill(
           const field = entryByKey.get(key)
           if (field == null) continue
           if ((paragraph.fieldAnswers?.[key] ?? '').trim() === '') {
-            return { ok: false, message: `${field.label}을 입력해 주세요.` }
+            pushMissing('field', field.label)
           }
         }
         continue
@@ -220,13 +244,14 @@ export function validateEducationSurveyFill(
       if (!isAnswerRequired(paragraph)) continue
       for (const field of getUserInfoSelectedEntries(paragraph)) {
         if ((paragraph.fieldAnswers?.[field.key] ?? '').trim() === '') {
-          return { ok: false, message: `${field.label}을 입력해 주세요.` }
+          pushMissing('field', field.label)
         }
       }
       continue
     }
     const valueForLength = extractSurveyParagraphAnswer(paragraph, sidecar)
     if (surveyFreeTextLength(valueForLength) > PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH) {
+      if (firstMissingKind != null) break
       return {
         ok: false,
         message: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
@@ -241,6 +266,7 @@ export function validateEducationSurveyFill(
           : (sidecar.fileNames[paragraph.id]?.length ?? 0)
       const minimum = options?.minimumFilesPerAttachment ?? 1
       if (fileCount < minimum) {
+        if (firstMissingKind != null) break
         const title = paragraph.paragraphTitle?.trim() || '교육 사진'
         return {
           ok: false,
@@ -252,10 +278,19 @@ export function validateEducationSurveyFill(
     }
     const value = extractSurveyParagraphAnswer(paragraph, sidecar)
     if (!isEmptyAnswer(value)) continue
-    const title = paragraph.paragraphTitle?.trim() || '필수 문항'
-    return { ok: false, message: `${title}에 답변해 주세요.` }
+    pushMissing('question', paragraph.paragraphTitle?.trim() ?? '')
   }
-  return { ok: true }
+
+  if (firstMissingKind == null) return { ok: true }
+  const missingRequired: RequiredMissing = {
+    kind: firstMissingKind,
+    labels: missingLabels[firstMissingKind],
+  }
+  return {
+    ok: false,
+    message: summarizeRequiredMissingAlertCopy(buildRequiredMissingAlertCopy(missingRequired)),
+    missingRequired,
+  }
 }
 
 export function applyEducationSurveyAnswersToDraft(

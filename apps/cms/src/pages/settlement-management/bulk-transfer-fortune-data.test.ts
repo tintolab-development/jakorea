@@ -27,14 +27,28 @@ function row(
 }
 
 describe('buildBulkTransferSheetRows', () => {
-  it('지급 대기 건만 대상으로 하고 지급 완료 건은 제외한다', () => {
+  it('지급 대기와 계좌 지급 완료 건을 모두 담고 지급 실패 건은 제외한다', () => {
     const rows = buildBulkTransferSheetRows([
       row('awaiting_confirmation'),
+      row('account_paid', { id: 'ap-2', accountPaymentId: 102, settlementId: 202 }),
+      row('awaiting_confirmation', {
+        id: 'ap-3',
+        accountPaymentId: 103,
+        settlementId: 203,
+        paymentFailureYn: true,
+      }),
+    ])
+
+    expect(rows).toHaveLength(2)
+    expect(rows.every(line => line.depositAmount === 100_000)).toBe(true)
+  })
+
+  it('미리보기도 계좌 지급 완료 건만 골랐을 때 행을 만든다', () => {
+    const rows = buildBulkTransferPreviewSheetRows([
       row('account_paid', { id: 'ap-2', accountPaymentId: 102, settlementId: 202 }),
     ])
 
     expect(rows).toHaveLength(1)
-    expect(rows[0]?.depositAmount).toBe(100_000)
   })
 
   it('원천징수세액이 있으면 실지급액 다음에 세액 행을 두고 JA 계좌는 비운다', () => {

@@ -339,6 +339,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         })
       } catch (error) {
         handleError(error, { context: 'downloadParticipantDetailAssignmentFile' })
+        showAlert({ title: '안내', content: '첨부파일 다운로드에 실패했습니다.' })
       }
     },
     [showAlert]

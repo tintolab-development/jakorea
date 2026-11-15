@@ -127,3 +127,8 @@
   ~ col:nth-child(8) {
   width: 200px !important;
 }
+
+/* 시안: 작성일 날짜 입력 각 180×40 — 범위 칸 세그먼트 폭은 CSS 변수로만 정해지므로 이 화면 필터만 덮어쓴다 */
+.admin-faq-list-page .table-filter-group__container {
+  --filter-control-range-segment-width: 180px;
+}

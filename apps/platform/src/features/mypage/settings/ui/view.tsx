@@ -53,7 +53,7 @@ function VolunteerIdValue({ value }: { value: string }) {
       </PFText>
       <PFButton
         size="small"
-        variant="tertiary"
+        variant="secondary"
         className={styles.volunteerShortcut}
         disabled={!hasVolunteerId}
         onClick={() => {
@@ -88,11 +88,11 @@ type ReviewRow = ReturnType<typeof toReviewRows>[number]
 function SettingsBasicInfoReview({ rows }: { rows: ReviewRow[] }) {
   const hasDivider = rows.some(row => row.dividerBefore)
   if (!hasDivider) {
-    return <PFInfoReview rows={rows} />
+    return <PFInfoReview rows={rows} className={styles.basicInfoList} />
   }
 
   return (
-    <div className={pfInfoReviewStyles.list}>
+    <div className={[pfInfoReviewStyles.list, styles.basicInfoList].join(' ')}>
       {rows.map((row, index) => (
         <div
           key={row.label}
@@ -104,7 +104,7 @@ function SettingsBasicInfoReview({ rows }: { rows: ReviewRow[] }) {
             .filter(Boolean)
             .join(' ')}
         >
-          <PFText typo="bd-md-rg" color="neutral-cool-500" className={pfInfoReviewStyles.label}>
+          <PFText typo="bd-md-md" color="neutral-cool-500" className={pfInfoReviewStyles.label}>
             {row.label}
           </PFText>
           {typeof row.value === 'string' || typeof row.value === 'number' ? (

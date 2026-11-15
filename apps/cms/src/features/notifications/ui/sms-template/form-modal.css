@@ -12,7 +12,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0 8px 0 0;
+  /* 시안 제목 글자 시작 x=80 (QA 2026-11-15 알림 메시지 관리 0-2b) */
+  padding: 0 8px;
+  white-space: nowrap;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 20px;

@@ -30,6 +30,8 @@ export type EducationSurveyFormBodyProps = {
   userInfoRequiredFieldKeys?: readonly string[]
   readOnly?: boolean
   hideLectureReportInstitutionFields?: boolean
+  /** 마이페이지 설문·만족도조사 모바일 단락 카드(radius 16·padding 16·타이틀 18) */
+  compactMobileSections?: boolean
 }
 
 /** 공개(외부) 만족도·설문 공유 — 설문자 정보 중 이름만 필수 */
@@ -60,6 +62,7 @@ export function EducationSurveyFormBody({
   userInfoRequiredFieldKeys,
   readOnly = false,
   hideLectureReportInstitutionFields = false,
+  compactMobileSections = false,
 }: EducationSurveyFormBodyProps) {
   return (
     <div className={styles.form}>
@@ -102,6 +105,7 @@ export function EducationSurveyFormBody({
                 : resolveEducationSurveySectionDescription(paragraph.paragraphDescription)
             }
             required={resolveEducationSurveySectionRequired(paragraph)}
+            className={compactMobileSections ? styles.compactMobileSection : undefined}
           >
             <PlatformSurveyParagraphBody
               paragraph={paragraph}

@@ -112,3 +112,28 @@
     display: none;
   }
 }
+
+/* 시안 Mobile 375: 카드 110 · radius 16 · 패딩 16/24 · 위 정렬, 라벨은 어절 단위 줄바꿈(신청한/프로그램) */
+@media (--bp-below-pc) {
+  .card {
+    height: 110px;
+    min-height: 110px;
+    padding: var(--spacing-16) var(--spacing-24);
+    align-items: flex-start;
+    border-radius: var(--radius-16);
+  }
+
+  .info {
+    justify-content: flex-start;
+    gap: var(--spacing-4);
+  }
+
+  .info .label {
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  .info .value {
+    font-weight: 600;
+  }
+}

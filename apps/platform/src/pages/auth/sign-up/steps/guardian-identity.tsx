@@ -28,7 +28,7 @@ export function GuardianIdentityStep({ signUp }: GuardianIdentityStepProps) {
   })
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title="보호자 본인인증을 진행해 주세요."
         description={

@@ -112,6 +112,15 @@
   letter-spacing: -0.24px;
 }
 
+.pill.xlarge .tab {
+  height: 60px;
+  flex-basis: 220px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+}
+
 .pill.medium .tab {
   height: 52px;
   font-size: 20px;
@@ -148,6 +157,7 @@
   }
 
   .pill .tab,
+  .pill.xlarge .tab,
   .pill.large .tab,
   .pill.medium .tab {
     flex: 0 0 auto;
@@ -243,6 +253,15 @@
 @media (--bp-pc-up) {
   .category {
     gap: var(--spacing-20);
+  }
+  /* stretch — 탭 영역 전체 폭을 탭 수만큼 균등 분할 (결과 확인) */
+  .category.stretch {
+    width: 100%;
+    gap: 0;
+  }
+  .category.stretch .tab {
+    flex: 1 1 0;
+    min-width: 0;
   }
   .category .tab {
     height: 60px;

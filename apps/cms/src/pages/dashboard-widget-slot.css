@@ -128,6 +128,8 @@
   flex: 1;
   min-height: 0;
   border-radius: var(--radius-16, 16px);
+  /* 시안 위젯 카드 DROP 0,0 b16 #000 6% — 위젯마다 b8·antd 기본 그림자가 섞이던 것을 통일 (QA 2026-11-15 대시보드 F2) */
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
   overflow: hidden;
   box-sizing: border-box;
   padding: 24px;

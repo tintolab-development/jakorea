@@ -59,7 +59,7 @@ export function InstitutionInfoTable({
         <PFFormField label="기관 소재지" labelWidth="wider">
           <p className={styles.fieldValue}>{displayInstitutionField(institution.address)}</p>
         </PFFormField>
-        <PFFormField label="상세주소" labelWidth="wider">
+        <PFFormField label="상세 주소" labelWidth="wider">
           <p className={styles.fieldValue}>{displayInstitutionField(institution.addressDetail)}</p>
         </PFFormField>
       </PFFormFieldRow>

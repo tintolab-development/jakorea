@@ -14,11 +14,14 @@ import '@jakorea/admin-ui/styles'
 import { ConfigProvider } from 'antd'
 import type { ReactNode } from 'react'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { installPointerFocusModality } from '@/shared/lib/pointer-focus-modality'
 import './theme-provider.css'
 import './ant-modal-motion-disable.css'
 
 // 고정형 스크롤바 환경(Windows 등)에만 <html>.scrollbar-classic — 전역 4px 시안 스크롤바(admin-ui styles/scrollbar.css)
 installScrollbarModeClass()
+// 마우스로 누른 뒤 보조키로 켜지는 포커스 링(민트 outline) 숨김 — index.css `data-cms-input-modality`
+installPointerFocusModality()
 
 interface ThemeProviderProps {
   children: ReactNode

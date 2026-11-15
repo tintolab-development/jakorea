@@ -50,11 +50,11 @@ function createP1CollectionTable(): HorizontalTableParagraph {
     {
       kind: 'text',
       value:
-        '성명, 영문 성명, 생년월일, 소속, 주소, 전화번호, 이메일, 계좌정보(은행, 계좌번호, 예금주)',
+        '성명, 영문 성명, 생년월일, 소속, 주소, 전화번호,\n이메일, 계좌정보(은행, 계좌번호, 예금주)',
     },
     {
       kind: 'text',
-      value: '교통비·식사비·활동비 등 실비 지급 및 사업에 필요한 업무처리',
+      value: '교통비·식사비·활동비 등\n실비 지급 및 사업에 필요한 업무처리',
     },
     {
       kind: 'text',
@@ -95,7 +95,7 @@ function createP2ThirdPartyTable(): HorizontalTableParagraph {
       { kind: 'text', value: '사회복지공동모금회 (선택 동의)' },
       {
         kind: 'text',
-        value: '성명, 생년월일, 주소, 전화번호, 이메일, 계좌정보(은행, 계좌번호, 예금주)',
+        value: '성명, 생년월일, 주소, 전화번호, 이메일,\n계좌정보(은행, 계좌번호, 예금주)',
       },
       { kind: 'text', value: '배분사업 수행 관련 증빙서류 제출' },
       { kind: 'text', value: '10년' },
@@ -149,7 +149,7 @@ const intro: AgreementExplanationTextParagraph = {
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
-    'JA KOREA (이하 “기관”이라 함)는 「개인정보 보호법」제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며, 개인정보 제공자가 동의한 이용목적 외의 용도로는 이용․제공되지 않습니다. 제공된 개인정보는 개인정보 보호책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
+    'JA KOREA (이하 “기관”이라 함)는 「개인정보 보호법」제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며,\n개인정보 제공자가 동의한 이용목적 외의 용도로는 이용․제공되지 않습니다. 제공된 개인정보는 개인정보 보호책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
   answerRequired: false,
 }
 

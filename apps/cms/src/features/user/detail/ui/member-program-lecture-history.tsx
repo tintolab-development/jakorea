@@ -17,14 +17,16 @@ import { useSearchParams } from 'react-router-dom'
 import type { TableProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application, UserHistory } from '@/types/domain'
-import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
   resolveApplicationEnrollmentDisplayStatus,
   resolveMemberProgramTitle,
   resolveMemberProgramYear,
   resolveVolunteerHistoryDisplayStatus,
 } from '@/features/user/detail/lib/member-program-history-display'
-import { isProgramHistoryDeleteBlockedByDisplayStatus } from '@/shared/constants/status'
+import {
+  isProgramHistoryDeleteBlockedByDisplayStatus,
+  type ProgramEnrollmentDisplayStatus,
+} from '@/shared/constants/status'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -68,6 +70,11 @@ function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
     !!target.closest('.member-program-lecture-history__action-cell') ||
     !!target.closest('.user-detail-modal__attendance-link')
   )
+}
+
+/** 강의 이력 「강의보고서 제출 내역」 [내역 보기] 활성 진행 현황 — 진행 중·진행 완료 */
+function isLectureReportHistoryViewableStatus(status: ProgramEnrollmentDisplayStatus): boolean {
+  return status === 'EDUCATION_IN_PROGRESS' || status === 'PROGRAM_ENDED'
 }
 
 /** 테이블 표시 순 기준 No. — 상단 행이 큰 번호(내림차순) */
@@ -184,7 +191,10 @@ export function MemberProgramLectureHistory({
 
   const yearOptions = useMemo(() => buildProgressYearSelectOptions(''), [])
 
-  const enrollmentStatusOptions = useMemo(() => memberProgramEnrollmentStatusFieldOptions(), [])
+  const enrollmentStatusOptions = useMemo(
+    () => memberProgramEnrollmentStatusFieldOptions(mode),
+    [mode]
+  )
 
   const filterFields = useMemo((): FilterFieldConfig[] => {
     return [
@@ -544,12 +554,11 @@ export function MemberProgramLectureHistory({
         key: 'lectureReport',
         align: 'center',
         render: (_: unknown, record: Application) => {
-          // 시안 4427:60361: 강의보고서를 제출하지 않았으면 비활성(클릭 불가·안내 팝업 없음), 제출했으면 활성.
-          // 활성 조건은 응답 `hasLectureReportSubmission`(memberEnrollmentSummary) — mock만 종료 여부로 보완
-          const canView = isMembersRemoteEnabled()
-            ? record.hasLectureReportSubmission === true
-            : resolveApplicationEnrollmentDisplayStatus(record) === 'PROGRAM_ENDED' &&
-              (record.hasLectureReportSubmission ?? true)
+          // QA(강사 상세 > 강의 이력): 「프로그램 진행 중」「프로그램 진행 완료」일 때만 활성, 누르면 제출 내역 팝업.
+          // 그 밖의 진행 현황은 비활성(클릭 불가·안내 팝업 없음).
+          const canView = isLectureReportHistoryViewableStatus(
+            resolveApplicationEnrollmentDisplayStatus(record)
+          )
           return (
             <span
               className="member-program-lecture-history__action-cell"
@@ -616,6 +625,8 @@ export function MemberProgramLectureHistory({
         className={[
           'member-program-lecture-history',
           mode === 'instructorLecture' ? 'member-program-lecture-history--instructor-lecture' : '',
+          mode === 'studentEnrollment' ? 'member-program-lecture-history--student-enrollment' : '',
+          mode === 'volunteerProgram' ? 'member-program-lecture-history--volunteer' : '',
           mode === 'schoolProgramParticipation'
             ? 'member-program-lecture-history--school-participation'
             : '',

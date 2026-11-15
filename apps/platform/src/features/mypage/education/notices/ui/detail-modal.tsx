@@ -545,7 +545,7 @@ export function EducationInProgressNoticeDetailModal({
                   <PFText
                     as="p"
                     typo="bd-md-sb"
-                    color={notice.authorIsStaff ? 'primary-500' : 'black'}
+                    color="black"
                     id="education-notice-detail-author"
                     className={styles.author}
                   >
@@ -564,7 +564,7 @@ export function EducationInProgressNoticeDetailModal({
                     <PFText
                       as="span"
                       typo="bd-sm-sb"
-                      color={notice.read ? 'neutral-cool-700' : 'primary-500'}
+                      color={notice.read ? 'neutral-cool-500' : 'primary-500'}
                       className={styles.readStatus}
                     >
                       {notice.read ? '읽음' : '안읽음'}

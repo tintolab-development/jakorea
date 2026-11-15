@@ -16,7 +16,11 @@ import { EducationSurveyPanelSkeleton } from '@/features/mypage/shared/ui'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { getMypageProfileLabel } from '@/features/mypage/lib/member-profile'
 import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-view'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFRequiredMissingAlert, PFText } from '@/shared/ui'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import {
   clearEducationSurveyPreviewAnswers,
   applySurveyDisplayTitleToDraft,
@@ -245,6 +249,8 @@ export function EducationSurveyFillPanel({
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState('안내')
   const [alertDescription, setAlertDescription] = useState('')
+  const [requiredMissingAlert, setRequiredMissingAlert] =
+    useState<RequiredMissingAlertCopy | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [deferSubmittedView, setDeferSubmittedView] = useState(false)
 
@@ -407,7 +413,11 @@ export function EducationSurveyFillPanel({
     if (!canWrite || submitMutation.isPending) return
     const validation = validateEducationSurveyFill(draft, sidecar)
     if (!validation.ok) {
-      setAlertTitle('입력 확인')
+      if (validation.missingRequired) {
+        setRequiredMissingAlert(buildRequiredMissingAlertCopy(validation.missingRequired))
+        return
+      }
+      setAlertTitle('안내')
       setAlertDescription(validation.message)
       setAlertOpen(true)
       return
@@ -478,7 +488,11 @@ export function EducationSurveyFillPanel({
   }
 
   const holdFillSurface =
-    confirmOpen || alertOpen || deferSubmittedView || submitMutation.isPending
+    confirmOpen ||
+    alertOpen ||
+    requiredMissingAlert != null ||
+    deferSubmittedView ||
+    submitMutation.isPending
 
   if (
     !holdFillSurface &&
@@ -630,6 +644,7 @@ export function EducationSurveyFillPanel({
         onSidecarChange={setSidecar}
         userInfoValues={userInfoValues}
         readOnly={readOnly}
+        compactMobileSections
       />
 
       {readOnly ? null : (
@@ -685,6 +700,10 @@ export function EducationSurveyFillPanel({
           setAlertOpen(false)
           setDeferSubmittedView(false)
         }}
+      />
+      <PFRequiredMissingAlert
+        copy={requiredMissingAlert}
+        onConfirm={() => setRequiredMissingAlert(null)}
       />
     </>
   )

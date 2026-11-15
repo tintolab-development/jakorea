@@ -229,7 +229,7 @@
     flex-direction: row;
     flex-shrink: 0;
     align-items: center;
-    gap: var(--spacing-16);
+    gap: var(--spacing-32);
   }
 
   .actionDescription {
@@ -247,6 +247,10 @@
     align-items: stretch;
     min-height: 320px;
     border-radius: var(--radius-24);
+  }
+
+  .badge {
+    padding-inline: 14px;
   }
 
   .cardContent {

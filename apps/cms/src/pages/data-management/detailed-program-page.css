@@ -85,3 +85,10 @@
   vertical-align: middle !important;
   text-align: center !important;
 }
+
+/* 정보 수정 모드 헤더 필수 표시 — 시안 9270:79002 '세부 프로그램 *' */
+.detailed-program-page .ant-table-thead > tr > th.detailed-program-page__name-col--required::after {
+  content: '*';
+  margin-left: 2px;
+  color: var(--Status-red-main, #c32f4a);
+}

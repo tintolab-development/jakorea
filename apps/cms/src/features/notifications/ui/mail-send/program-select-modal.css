@@ -20,6 +20,11 @@
   max-height: none;
 }
 
+/* 시안 Popup / Table w800: 타이틀 ↔ 검색 줄 16 (공통 always 12) — QA 2026-11-15 알림 메시지 관리 행 13 */
+.mail-send-program-select-modal.content-modal.teal-header-modal .teal-header-modal__body {
+  padding-top: 16px;
+}
+
 .mail-send-program-select-modal__body {
   display: flex;
   flex-direction: column;

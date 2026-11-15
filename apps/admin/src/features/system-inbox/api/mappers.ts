@@ -1,5 +1,6 @@
 import type { HomepageAdminSystemNotificationItem } from '@/shared/api/generated/notifications/schemas/homepageAdminSystemNotificationItem'
 import { resolveInboxNavigationPath } from '../lib/action-path.ts'
+import { resolveSystemInboxCategory, type SystemInboxCategory } from '../lib/inbox-category.ts'
 
 export type SystemInboxListItem = {
   id: string
@@ -9,6 +10,10 @@ export type SystemInboxListItem = {
   createdAt: string
   read: boolean
   link?: string
+  /** 드롭다운 탭·라벨 — 시안 신청·매칭 / 시스템 */
+  category: SystemInboxCategory
+  /** 안내 팝업 이동 버튼 문구 (서버 actionLabel, 예: 「지원 상세 보기」) */
+  actionLabel?: string
 }
 
 function asText(value: string | null | undefined): string {
@@ -41,6 +46,8 @@ export function mapInboxItemToListItem(
     createdAt: item.createdAt?.trim() || '',
     read: isInboxItemRead(item),
     link: link ?? undefined,
+    category: resolveSystemInboxCategory(item.notificationType),
+    actionLabel: item.actionLabel?.trim() || undefined,
   }
 }
 
