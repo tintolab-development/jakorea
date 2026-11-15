@@ -11,7 +11,11 @@ export const UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS: Record<TextbookStat
 
 export type UjatEducationProgressInstitutionTextbookSupply = {
   textbookName: string
-  kitCount: number | null
+  /**
+   * 학년 교재 준비 수량(권) — 학생 1명당 교재 1권, 그 학년 학급별 학생 수(classes[].studentCount) 합계.
+   * 서버 학년 블록 kitCount/bookCount는 기관 전체 총원 기준 키트 올림 값이라 쓰지 않는다.
+   * 교재가 정해지지 않았거나 학생 수가 없으면 null.
+   */
   bookCount: number | null
   status: TextbookStatusKey | null
 }
@@ -33,13 +37,22 @@ function displayOrDash(value: string | null | undefined): string {
   return value?.trim() || '-'
 }
 
+function sumGradeStudentCount(gradeBlock: UjatInstitutionApplicationGradeBlockDetail): number | null {
+  let total = 0
+  for (const classRoom of gradeBlock.classes) {
+    const count = classRoom.studentCount
+    if (typeof count === 'number' && Number.isFinite(count) && count > 0) total += count
+  }
+  return total > 0 ? total : null
+}
+
 export function calculateGradeTextbookSupply(
   gradeBlock: UjatInstitutionApplicationGradeBlockDetail
 ): UjatEducationProgressInstitutionTextbookSupply {
+  const textbookName = displayOrDash(gradeBlock.textbookName)
   return {
-    textbookName: displayOrDash(gradeBlock.textbookName),
-    kitCount: typeof gradeBlock.kitCount === 'number' ? gradeBlock.kitCount : null,
-    bookCount: typeof gradeBlock.bookCount === 'number' ? gradeBlock.bookCount : null,
+    textbookName,
+    bookCount: textbookName === '-' ? null : sumGradeStudentCount(gradeBlock),
     status: mapUjatTextbookDeliveryStatus(gradeBlock.textbookDeliveryStatus),
   }
 }
@@ -47,11 +60,7 @@ export function calculateGradeTextbookSupply(
 export function formatGradeTextbookSupplyDisplay(
   supply: UjatEducationProgressInstitutionTextbookSupply
 ): string {
-  const kitLabel = supply.kitCount != null ? `${supply.kitCount}키트` : ''
-  const bookLabel = supply.bookCount != null ? `(${supply.bookCount}권)` : ''
-  const quantity = [kitLabel, bookLabel].filter(Boolean).join(' ').trim()
-  if (supply.textbookName === '-' && !quantity) return '-'
-  if (supply.textbookName === '-') return quantity || '-'
-  if (!quantity) return supply.textbookName
-  return `${supply.textbookName} | ${quantity}`
+  if (supply.textbookName === '-') return '-'
+  if (supply.bookCount == null) return supply.textbookName
+  return `${supply.textbookName} | ${supply.bookCount}권`
 }

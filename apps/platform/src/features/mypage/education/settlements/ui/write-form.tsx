@@ -793,8 +793,10 @@ export function EducationSettlementWriteForm({
    * 강사 최초 제출만 미리보기 canSubmit=false(지급 항목 0건 등)로 막는다 — blockerMessage 그대로.
    * 반려 후 재제출은 기존 신청서 경로라 미리보기 차단(ACTIVE_APPLICATION_EXISTS)을 적용하지 않는다.
    */
+  /** 반려·관리자 정정 요청 후 재제출 — 기존 신청서 경로라 새 신청 미리보기(ACTIVE_APPLICATION_EXISTS)를 쓰지 않는다 */
+  const instructorResubmitMode = resubmitRequested && settlementApplicationIdForSubmit != null
   const previewSubmitBlock =
-    !isReceipt && !(resubmitRequested && settlementApplicationIdForSubmit != null)
+    !isReceipt && !instructorResubmitMode
       ? instructorSettlementPreview.submitBlock
       : null
 
@@ -973,9 +975,8 @@ export function EducationSettlementWriteForm({
 
   /** 시안 01 「지급조서 작성 전」의 [강사비 정정 요청하기] — 입력 검증 후 정정 요청 팝업 */
   const [feeCorrectionDraft, setFeeCorrectionDraft] = useState<SettlementWriteDraft | null>(null)
-  /** 강사 지급조서 최초 제출에만 — 반려 후 재제출(/revisions)은 정정 요청을 함께 보낼 수 없다 */
-  const feeCorrectionAvailable =
-    !isReceipt && !(resubmitRequested && settlementApplicationIdForSubmit != null)
+  /** 강사 지급조서 — 최초 제출·반려 후 재제출 모두 정정 요청을 함께 보낼 수 있다 */
+  const feeCorrectionAvailable = !isReceipt
   const handleRequestFeeCorrection = () => {
     const draft = prepareSubmitDraft()
     if (draft) setFeeCorrectionDraft(draft)
@@ -1045,7 +1046,7 @@ export function EducationSettlementWriteForm({
           </PFFormSection>
         ) : null}
 
-        {!isReceipt && instructorSettlementPreview.calculation ? (
+        {!isReceipt && !instructorResubmitMode && instructorSettlementPreview.calculation ? (
           <PFFormSection id="instructor-settlement-calculation" title="기본 정산 미리보기 (추가 신청 항목 제외)">
             <div className={styles.calculationPreview} aria-live="polite">
               <PFText as="p" typo="bd-md-rg" color="black">

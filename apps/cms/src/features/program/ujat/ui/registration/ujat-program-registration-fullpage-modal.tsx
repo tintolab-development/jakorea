@@ -22,7 +22,6 @@ import {
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/use-ujat-program-registration-flow'
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
-import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
 import {
   HideParagraphSelectionChromeContext,
   LockParagraphHeadingContext,
@@ -121,7 +120,6 @@ function UjatProgramRegistrationFullpageModalInner({
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
   const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
   const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
-  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const [devAutofillCaseId, setDevAutofillCaseId] = useState<UjatDevAutofillCaseId>(
     UJAT_DEV_AUTOFILL_DEFAULT_CASE_ID
   )
@@ -171,7 +169,6 @@ function UjatProgramRegistrationFullpageModalInner({
     setCompleteSuccessOpen(false)
     setRecruitmentPreviewOpen(false)
     setRecruitmentPreviewProgram(null)
-    setTemplatePickerOpen(false)
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
@@ -371,28 +368,11 @@ function UjatProgramRegistrationFullpageModalInner({
         bodyHeaderLeading={
           <UjatProgramRegistrationBodyHeader
             activeStep={flow.activeStep}
-            onSelectStep={key => {
-              setTemplatePickerOpen(false)
-              flow.selectStep(key)
-            }}
+            onSelectStep={key => flow.selectStep(key)}
           />
         }
-        bodyHeaderBelow={
-          flow.phase === 'program' ? undefined : (
-            <RegistrationStepTemplateChrome
-              templateName={flow.stepTemplateName}
-              isDefault={flow.isDefaultStepTemplate}
-              category={flow.phase === 'application' ? 'application_form' : 'application'}
-              allowedFamilyBaseTemplateCode={flow.currentStepDef.templateId}
-              pickerOpen={templatePickerOpen}
-              onOpenPicker={() => setTemplatePickerOpen(true)}
-              onClosePicker={() => setTemplatePickerOpen(false)}
-              onUseTemplate={row => {
-                void flow.selectStepTemplate(row).then(() => setTemplatePickerOpen(false))
-              }}
-            />
-          )
-        }
+        // UJAT 등록 위저드는 모집·신청 단계 상단 템플릿 배너(「탭별로 기본 템플릿이…」·[템플릿 변경])를
+        // 노출하지 않는다(사용자 결정 2026-11-16). 단계별 기본 템플릿 적용은 flow가 그대로 담당한다.
         headerActionsLeading={
           <UjatDevAutofillToolbar
             caseId={devAutofillCaseId}

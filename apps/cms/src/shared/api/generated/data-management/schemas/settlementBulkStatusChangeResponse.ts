@@ -19,6 +19,6 @@ export interface SettlementBulkStatusChangeResponse {
   results?: SettlementStatusChangeResponse[];
   /** 지급조서 일괄 확인에서 함께 승인한 영수증 정산 신청 결과(단건 승인 응답과 같은 모양). 없으면 빈 배열 */
   individualSettlementApplicationResults?: Decision[];
-  /** 지급조서 일괄 확인에서 승인·확인한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양: applicationId, status=CONFIRMED, settlementId, paymentStatementId). 지급조서는 이미 CONFIRMED로 확인된 상태다. 없으면 빈 배열 */
+  /** 지급조서 일괄 확인에서 함께 처리한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양). 없으면 빈 배열 */
   instructorSettlementApplicationResults?: SettlementApplicationAdminActionResponse[];
 }

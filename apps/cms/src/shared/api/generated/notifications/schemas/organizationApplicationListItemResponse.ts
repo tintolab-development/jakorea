@@ -68,4 +68,6 @@ export interface OrganizationApplicationListItemResponse {
   operatingStudentCount?: number | null;
   /** 학년별 학급. [{gradeLabel, classCount}]. 다학년 신청 원문·학급 카탈로그가 있으면 학년마다 한 줄. 없으면 null이며 grade+requestedClassCount로 추정해 여러 줄을 만들지 않음 */
   gradeBlocks?: GradeBlock[] | null;
+  /** UJAT이고 temporaryAssignmentStatus가 TEMP_ASSIGNED일 때만 boolean. false는 임시 배정(일정 미배정): 상태만 바뀌고 활성 교육일 슬롯이 없다. true는 임시 배정(일정 배정 완료): 활성 임시 교육일 슬롯이 하나 이상 있다. 평가 대기·임시 반려·UJAT가 아니면 null. false를 평가 대기로 읽지 않는다. */
+  temporaryScheduleAssigned?: boolean | null;
 }

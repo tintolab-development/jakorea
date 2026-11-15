@@ -14,6 +14,6 @@ export interface TemporaryScheduleSaveRequest {
      * @maxLength 100
      */
   educationRegionCode?: string | null;
-  /** 임시 교육일·학급 배정. 빈 배열 []이면 임시 일정 해제: 활성 슬롯을 취소하고 temporaryAssignmentStatus·institutionConfirmationStatus를 null로 되돌리며 assignmentRevision을 1 올린다. 기관 확인 완료/잠금 상태면 409, 봉사자 배정이 남아 있으면 409 UJAT_TEMPORARY_SCHEDULE_HAS_VOLUNTEER_ASSIGNMENTS. 이미 해제된 신청에 []를 다시 보내면 변경 없이 현재 상태를 반환한다. */
+  /** 임시 교육일·학급 배정. 빈 배열 []이고 활성 슬롯이 있으면 임시 일정 해제: 활성 슬롯을 취소하고 temporaryAssignmentStatus·institutionConfirmationStatus를 null로 되돌리며 assignmentRevision을 1 올린다. 활성 슬롯이 없는 상태만 임시 배정(TEMP_ASSIGNED)은 바꾸지 않는다. 그 취소는 POST .../temporary-assignments:cancel. 기관 확인 완료/잠금 상태면 409, 봉사자 배정이 남아 있으면 409 UJAT_TEMPORARY_SCHEDULE_HAS_VOLUNTEER_ASSIGNMENTS. 이미 해제된 신청에 []를 다시 보내면 변경 없이 현재 상태를 반환한다. 슬롯 저장은 temporaryAssignmentStatus를 TEMP_ASSIGNED로 유지하고 institutionConfirmationStatus를 CHECKING으로 두며 UJAT_ORGANIZATION_SCHEDULE_SUBMITTED 알림을 보낸다. 상태만 임시 배정하는 POST temporary-assignments는 알림을 보내지 않는다. */
   slots: TemporaryScheduleSlotRequest[];
 }

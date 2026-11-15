@@ -45,6 +45,10 @@ export type UjatEducationProgressInstitutionDetail = {
   participantId?: number | null
   /** 기관 신청 상세 GET participantStatus·participantAvailableActions. 없으면 null */
   participantState?: UjatInstitutionParticipantState
+  /** 기관 신청 상세 GET `organizationId` — 소속 교사 목록 조회 키. 응답에 없으면 null */
+  organizationId?: number | null
+  /** 기관 신청 상세 GET `teacherMemberId` — 현재 담당 교사 회원 ID. 응답에 없으면 null */
+  teacherMemberId?: number | null
   educationRegion: string
   adminComment: string
   applicationDetail: UjatInstitutionApplicationDetail
