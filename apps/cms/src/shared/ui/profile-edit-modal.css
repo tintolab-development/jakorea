@@ -73,15 +73,6 @@
   white-space: nowrap;
 }
 
-.profile-edit-modal__section .user-consent-agreement-section__value-status {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
 .profile-edit-modal__managed-programs {
   display: inline-flex;
   align-items: center;
@@ -258,32 +249,10 @@
   margin-block: 0;
 }
 
+/* 상태 · 구분선 · 버튼 · 일시 간격은 공통 ConsentStatusValue(16px) — 한 줄 유지만 둔다 */
 .profile-edit-modal__marketing-consent {
-  display: inline-flex;
-  align-items: center;
   flex-wrap: nowrap;
-  gap: 0;
-  width: auto;
-  max-width: 100%;
-  min-width: 0;
   white-space: nowrap;
-}
-
-.profile-edit-modal__marketing-consent .detail-info-form-inputs-separator {
-  margin: 0 0 0 16px;
-}
-
-/* 동의 일시 — 동의 철회 버튼 뒤 구분선 없이 16px (Figma 8193:140673) */
-.profile-edit-modal__marketing-consent .user-consent-agreement-section__value-datetime {
-  flex-shrink: 0;
-  white-space: nowrap;
-  margin-left: 16px;
-}
-
-/* 동의하기 · 동의 철회하기 — Button / h32 · 최소 폭 100 (「동의 철회하기」는 라벨 길이만큼) */
-.profile-edit-modal__marketing-consent .profile-edit-modal__field-action-btn.cms-button.ant-btn {
-  width: auto;
-  min-width: 100px;
 }
 
 .profile-edit-modal .content-modal__footer-actions {

@@ -9,7 +9,7 @@ describe('splitNotificationBodyEmphasis', () => {
     expect(
       splitNotificationBodyEmphasis({
         body,
-        target: { eventType: 'ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY' },
+        target: { eventType: 'ADMIN_PROGRAM_APPLICATION_SUBMITTED' },
       })
     ).toEqual([
       { text: '2026.11.13에 신규 접수된 신청자 수는 ', bold: false },
@@ -40,5 +40,21 @@ describe('splitNotificationBodyEmphasis', () => {
         target: { eventType: 'ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY' },
       })
     ).toEqual([{ text: '신청자 정보를 확인해 주세요.', bold: false }])
+  })
+
+  it('신청 기관·강사·봉사자 합산 알림도 BE 이벤트 코드로 강조하고, 기관은 「N개」를 굵게 둔다', () => {
+    const segments = splitNotificationBodyEmphasis({
+      body: '2026.11.13에 신규 접수된 신청 기관 수는 2개입니다.',
+      target: { eventType: 'ADMIN_ORGANIZATION_APPLICATION_SUBMITTED' },
+    })
+    expect(segments.find(segment => segment.bold)?.text).toBe('2개')
+    for (const eventType of [
+      'ADMIN_INSTRUCTOR_APPLICATION_SUBMITTED',
+      'ADMIN_VOLUNTEER_APPLICATION_SUBMITTED',
+    ]) {
+      expect(
+        splitNotificationBodyEmphasis({ body, target: { eventType } }).find(s => s.bold)?.text
+      ).toBe('3명')
+    }
   })
 })

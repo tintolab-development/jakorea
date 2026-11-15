@@ -7,7 +7,7 @@
 
 import { Layout, Space, Typography, Dropdown } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
 import { useAdminNotificationNavigate } from '@/features/dashboard/hooks/use-admin-notification-navigate'
@@ -41,7 +41,6 @@ const SHOW_NOTIFICATION_SETTINGS = false
 export function MainHeader() {
   const navigate = useNavigate()
   const location = useLocation()
-  const navigateToNotificationTarget = useAdminNotificationNavigate()
   const { user, logout, checkAuth } = useAuthStore()
   const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
   const { data: remoteUnreadCount, refetch: refetchRemoteUnreadCount } =
@@ -72,6 +71,11 @@ export function MainHeader() {
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false)
   const [profileEditModalOpen, setProfileEditModalOpen] = useState(false)
+  // 관리자 권한 변경 알림 [내 정보 보기] — 이 헤더가 가진 「내 정보 확인」 팝업을 연다
+  const openProfileEditModal = useCallback(() => setProfileEditModalOpen(true), [])
+  const navigateToNotificationTarget = useAdminNotificationNavigate({
+    onOpenProfile: openProfileEditModal,
+  })
 
   // 상태 동기화 확인: user 상태 변경 시 권한 정보 업데이트 확인
   useEffect(() => {

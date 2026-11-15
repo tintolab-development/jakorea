@@ -196,30 +196,12 @@
   outline-offset: 0;
 }
 
-/* 숨김 input(absolute)의 기준을 라벨로 고정 — 포커스 시 패널이 스크롤되며 화면이 밀리는 것 방지 */
-.privacyAgreementBar .privacyCheckbox {
-  position: relative;
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  align-items: center;
-  gap: var(--spacing-16);
-  padding: 0;
-  box-sizing: border-box;
+/* 재능기부 동의 바와 같이 동의 시 배경을 강조한다 */
+.privacyAgreementBarChecked {
+  background: var(--color-element-hover);
 }
 
-.privacyAgreementBar .privacyCheckbox :global(.typo-bd-md-md) {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: visible;
-  white-space: normal;
-  text-overflow: unset;
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-}
-
-.privacyAgreementBar:has(input:checked) .privacyAgreementLabel {
+.privacyAgreementLabel {
   color: var(--color-primary-600);
 }
 

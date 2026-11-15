@@ -20,7 +20,11 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
+import {
+  DOCUMENT_ATTACHMENT_ACCEPT,
+  validateDocumentAttachmentType,
+} from '@/shared/lib/document-attachment-policy'
+import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import { toApiDate } from '@/shared/lib/public-text'
 import { useCreatePublicTalentApplication } from '../api/hooks'
 import { TALENT_DONATION_PATH } from '../lib/constants'
@@ -219,12 +223,22 @@ export function TalentDonationApplyForm() {
     const selected = Array.from(event.target.files ?? [])
     event.target.value = ''
     if (selected.length === 0) return
+    // 안내 문구(시안)와 같은 기준: JPG·PNG·HWP·Excel·PDF·Word, 최대 10개 · 파일당 20MB · 총 100MB
     for (const file of selected) {
-      const sizeError = validateUploadFileSize(file)
-      if (sizeError) {
-        setAlert({ title: '안내', description: sizeError })
+      const typeError = validateDocumentAttachmentType(file)
+      if (typeError) {
+        setAlert({ title: '안내', description: typeError })
         return
       }
+    }
+    const batchError = validateUploadBatch({
+      currentCount: attachedFiles.length,
+      currentTotalBytes: attachedFiles.reduce((sum, item) => sum + item.file.size, 0),
+      incoming: selected,
+    })
+    if (batchError) {
+      setAlert({ title: '안내', description: batchError })
+      return
     }
     setAttachedFiles(prev => [
       ...prev,
@@ -581,29 +595,24 @@ export function TalentDonationApplyForm() {
                 >
                   파일찾기
                 </PFButton>
-                {attachedFiles.length === 0 ? (
-                  <div className={styles.fileGuideBox}>
-                    <PFText
-                      as="p"
-                      typo="bd-md-rg"
-                      color="neutral-warm-500"
-                      className={styles.fileGuide}
-                    >
-                      {TALENT_APPLY_FILE_GUIDE_LINES[0]}
-                      <br />
-                      {TALENT_APPLY_FILE_GUIDE_LINES[1]}
-                    </PFText>
-                  </div>
-                ) : (
+                {/* 시안 13279:85128 — 안내는 파일 유무와 관계없이 버튼 아래 점 목록으로 둔다 */}
+                <ul className={styles.fileGuide}>
+                  {TALENT_APPLY_FILE_GUIDE_LINES.map(line => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                {attachedFiles.length > 0 ? (
                   <PFAttachedFileList
+                    className={styles.fileList}
                     files={attachedFiles.map(item => ({ id: item.id, name: item.file.name }))}
                     onRemove={id => setAttachedFiles(prev => prev.filter(item => item.id !== id))}
                   />
-                )}
+                ) : null}
                 <input
                   ref={fileInputRef}
                   type="file"
                   multiple
+                  accept={DOCUMENT_ATTACHMENT_ACCEPT}
                   className={styles.visuallyHiddenFile}
                   onChange={handleFileChange}
                 />

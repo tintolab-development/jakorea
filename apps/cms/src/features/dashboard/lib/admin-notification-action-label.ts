@@ -1,7 +1,8 @@
 /**
  * 알림 안내 팝업 — 이동 버튼 문구.
- * 시안 Figma 「시스템 안내 팝업」(17119:183139) 이벤트별 버튼 문구를 우선 쓰고,
- * 시안에 없는 이벤트는 이동 대상(`admin-notification-navigation`)에 맞춘 linkType 문구, 모르는 값은 「자세히 보기」.
+ * 시안 「시스템 안내 팝업」(17119:183139)에 있는 이벤트는 이벤트별 문구, 그 밖의 linkType은 이동 대상
+ * (`admin-notification-navigation`)에 맞춘 문구이며, 모르는 값은 「자세히 보기」.
+ * 시안에 이동 버튼이 없는 이벤트(프로그램 신청 취소)는 이동 대상이 없어 버튼을 두지 않는다.
  */
 
 import type { Notification } from '@/features/dashboard/api/notification-service'
@@ -26,39 +27,44 @@ const LINK_TYPE_ACTION_LABELS: Readonly<Record<string, string>> = {
   INQUIRY: '문의 목록 보기',
 }
 
-/** 시안 「시스템 안내 팝업」 이벤트별 버튼 문구 — linkType 문구보다 우선 */
+/**
+ * 시안 「시스템 안내 팝업」(17119:183139) 이벤트별 버튼 문구 — linkType 문구보다 우선.
+ * 이동 대상은 `admin-notification-navigation`의 같은 이벤트 분기와 맞춘다.
+ */
 const EVENT_TYPE_ACTION_LABELS: Readonly<Record<string, string>> = {
-  /** 신청·매칭 — 관리자_신규_관리자_권한_요청 / 관리자_신규_강사_권한_요청 */
+  /** 17149:68380 신규 관리자 권한 요청 · 17149:68394 신규 강사 권한 요청 */
   ADMIN_SIGNUP_APPROVAL_REQUESTED: '신청 목록 보기',
   ADMIN_INSTRUCTOR_ROLE_REQUESTED: '신청 목록 보기',
-  /** 신청·매칭 — 관리자_프로그램_신규_신청자·기관·강사·봉사자 */
+  /** 신청 합산 — 관리자_프로그램_신규_신청자 */
   ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY: '신청 목록 보기',
+  /** 17149:68436·68450·68464·68478 프로그램 신규 신청자·기관·강사·봉사자 */
   ADMIN_PROGRAM_APPLICATION_SUBMITTED: '신청 목록 보기',
   ADMIN_ORGANIZATION_APPLICATION_SUBMITTED: '신청 목록 보기',
   ADMIN_INSTRUCTOR_APPLICATION_SUBMITTED: '신청 목록 보기',
   ADMIN_VOLUNTEER_APPLICATION_SUBMITTED: '신청 목록 보기',
-  /** 프로그램 진행 — 관리자_학생_명단_제출_완료·수정_제출·미제출 / 관리자_초상권_동의서_미제출 */
+  /** 17149:68562·68576·68590·68604 학생 명단 제출 완료·수정 제출·미제출, 초상권 동의서 미제출 */
   ADMIN_STUDENT_ROSTER_SUBMITTED: '학생 명단 확인',
   ADMIN_STUDENT_ROSTER_UPDATED: '학생 명단 확인',
   ADMIN_STUDENT_ROSTER_UNSUBMITTED: '학생 명단 확인',
   ADMIN_PORTRAIT_CONSENT_UNSUBMITTED: '학생 명단 확인',
-  /** 정산 — 관리자_신규_정산_신청 / 관리자_정산_재신청 */
+  /** 17149:68646·68660 신규 정산 신청·정산 재신청 */
   ADMIN_SETTLEMENT_APPLICATION_SUBMITTED: '신청 내역 확인',
   ADMIN_SETTLEMENT_APPLICATION_RESUBMITTED: '신청 내역 확인',
-  /** 정산 — 관리자_강사비_정정_요청 (17149:68674) */
+  /** 17149:68674 강사비 정정 요청 */
   [ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED_EVENT]: '정정 요청 확인',
-  /** 정산 — 관리자_강사비_확인_완료 / 관리자_영수증_확인_완료 */
+  /** 17149:68688 강사비 확인 완료 · 영수증 확인 완료 */
   ADMIN_PAYMENT_STATEMENT_CONFIRMED: '지급 대상 목록 보기',
   ADMIN_EXPENSE_RECEIPT_CONFIRMED: '지급 대상 목록 보기',
-  /** 문의 — 관리자_신규_문의_접수 */
+  /** 17149:68716 신규 문의 접수 */
   ADMIN_INQUIRY_CREATED: '문의 내용 확인',
   ADMIN_INQUIRY_CREATED_UNASSIGNED: '문의 내용 확인',
   ADMIN_INQUIRY_CREATED_MAILBOX: '문의 내용 확인',
-  /** 업데이트 — 관리자_교사_정보_변경 / 관리자_신규_게시글_안내 / 관리자_신규_댓글_안내 */
+  /** 17149:68408 교사 정보 변경 */
   ADMIN_TEACHER_EMPLOYMENT_CHANGED: '회원 정보 보기',
+  /** 17149:68730 신규 게시글 안내 · 17149:68744 신규 댓글 안내 */
   ADMIN_PROGRAM_NOTICE_CREATED: '게시글 확인',
   ADMIN_PROGRAM_POST_COMMENT_CREATED: '댓글 확인',
-  /** 시스템 — 관리자_관리자_권한_변경 */
+  /** 17149:68758 관리자 권한 변경 */
   ADMIN_ROLE_CHANGED: '내 정보 보기',
 }
 
@@ -71,9 +77,14 @@ const INSTRUCTOR_UNASSIGNED_EVENT_TYPES: ReadonlySet<string> = new Set([
   'ADMIN_INDIVIDUAL_PROGRAM_INSTRUCTOR_UNASSIGNED',
 ])
 
-/** 알림 응답에 변수 값이 없어, 시안 제목 「#{교육진행자} 미배정 건 안내」에서 #{교육진행자} 자리를 읽는다 */
+/**
+ * 제목에 역할이 있으면 그 값으로 「… 배정」을 만든다.
+ * 제목에 역할이 없으면 시안 고정 문구 「강사 배정」을 쓴다.
+ * TODO(ui-merge): jiwon 시안은 미배정 버튼을 「강사 배정」으로 고정하고,
+ * keonhee는 제목의 #{교육진행자}를 읽어 역할명을 붙인다. 역할이 보이면 제목을 우선한다.
+ */
 const INSTRUCTOR_UNASSIGNED_TITLE_PATTERN = /(\S+)\s+미배정\s+건\s+안내/
-const INSTRUCTOR_UNASSIGNED_FALLBACK_ROLE = '교육진행자'
+const INSTRUCTOR_UNASSIGNED_FALLBACK_ROLE = '강사'
 
 function resolveInstructorAssignLabel(title: string | undefined): string {
   const role = INSTRUCTOR_UNASSIGNED_TITLE_PATTERN.exec(title ?? '')?.[1]

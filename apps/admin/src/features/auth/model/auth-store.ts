@@ -263,7 +263,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
    * 새로고침 복원 1회 실행 + 결과 처리. 이미 진행 중이면 같은 promise를 돌려준다 (refresh 중복 없음).
    * - 성공: 안내를 닫고 로그인을 이어 간다. [닫기] 뒤 늦게 성공하면 토큰만 반영하고,
    *   로그인 화면에 redirect가 있을 때만 로그인 상태로 바꿔 원래 경로로 보낸다(로그인 화면의 기존 이동 처리).
-   * - 400·401·403: 로컬 로그아웃 + "로그인이 종료되었어요."
+   * - 400·401·403: 로컬 로그아웃 + 「자동 로그아웃 안내」
    * - 그 밖의 실패: 로그아웃하지 않고 재시도 안내 (닫은 뒤라면 아무것도 하지 않는다)
    */
   const runBootstrapRestore = (silentRetry: boolean): Promise<void> => {
@@ -304,7 +304,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         }
         if (outcome.kind === 'session-invalid') {
           if (get().token !== tokenAtStart) return
-          // 복원 로딩 화면 위에서 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃한다
+          // 복원 로딩 화면 위에서 「자동 로그아웃 안내」를 띄우고 [확인] 때 로그아웃한다
           // (로그아웃 뒤 ProtectedRoute가 원래 경로를 redirect로 넘겨 로그인 화면으로 보낸다).
           endExpiredSession()
           return
@@ -660,7 +660,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
 /**
  * 서버가 세션 무효를 확정했을 때(유휴·절대 만료, refresh 거절, Activity 401 등) 공통 종료 처리.
- * 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인](또는 닫기) 때 로그아웃한다.
+ * 지금 화면에서 「자동 로그아웃 안내」를 띄우고 [확인](또는 닫기) 때 로그아웃한다.
  * skipRemote는 저장소의 refresh 수단이 다른 탭의 새 세션일 수 있을 때.
  */
 export function endExpiredSession(options?: { skipRemote?: boolean }): void {

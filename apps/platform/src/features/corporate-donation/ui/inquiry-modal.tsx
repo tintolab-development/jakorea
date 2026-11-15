@@ -11,11 +11,11 @@ import {
   PFAlertModal,
   PFAttachedFileList,
   PFButton,
-  PFCheckbox,
   PFModal,
   PFText,
   PFTextInput,
   PFTextarea,
+  PFToggle,
 } from '@/shared/ui'
 import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import {
@@ -30,10 +30,10 @@ import {
   CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_SECTIONS,
 } from '../lib/privacy-consent'
 import {
-  CORPORATE_CONSULTATION_ATTACHMENT_ACCEPT,
-  CORPORATE_CONSULTATION_ATTACHMENT_HINT,
-  validateCorporateConsultationAttachmentType,
-} from '../lib/attachment-policy'
+  DOCUMENT_ATTACHMENT_ACCEPT,
+  DOCUMENT_ATTACHMENT_HINT,
+  validateDocumentAttachmentType,
+} from '@/shared/lib/document-attachment-policy'
 import styles from './inquiry-modal.module.css'
 
 type InquiryValues = {
@@ -179,7 +179,7 @@ export function CorporateDonationInquiryModal({
     event.target.value = ''
     if (selected.length === 0) return
     for (const file of selected) {
-      const typeError = validateCorporateConsultationAttachmentType(file)
+      const typeError = validateDocumentAttachmentType(file)
       if (typeError) {
         setUploadError(typeError)
         return
@@ -469,14 +469,14 @@ export function CorporateDonationInquiryModal({
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept={CORPORATE_CONSULTATION_ATTACHMENT_ACCEPT}
+                    accept={DOCUMENT_ATTACHMENT_ACCEPT}
                     className={styles.fileInput}
                     disabled={isBusy}
                     onChange={handleFileChange}
                   />
                 </div>
                 <ul className={styles.fileHint}>
-                  <li>{CORPORATE_CONSULTATION_ATTACHMENT_HINT}</li>
+                  <li>{DOCUMENT_ATTACHMENT_HINT}</li>
                   <li>첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.</li>
                 </ul>
                 <PFAttachedFileList
@@ -552,29 +552,31 @@ export function CorporateDonationInquiryModal({
                       <div
                         className={[
                           styles.privacyAgreementBar,
+                          field.value ? styles.privacyAgreementBarChecked : undefined,
                           fieldState.error ? styles.privacyAgreementError : undefined,
                         ]
                           .filter(Boolean)
                           .join(' ')}
                       >
-                        <PFCheckbox
+                        {/* 시안 13260:85079 — Atomic Checkbox type=check(박스 없는 체크 표시), 재능기부 동의와 같은 PFToggle */}
+                        <PFToggle
+                          variant="check-large"
                           checked={field.value}
-                          onCheckedChange={checked => {
+                          onChange={checked => {
                             field.onChange(checked)
                             setFormError(null)
                           }}
                           disabled={isBusy}
-                          className={styles.privacyCheckbox}
                         >
                           <PFText
                             as="span"
                             typo="bd-lg-sb"
-                            color="neutral-cool-700"
+                            color={field.value ? 'primary-600' : 'neutral-cool-700'}
                             className={styles.privacyAgreementLabel}
                           >
                             {CORPORATE_DONATION_INQUIRY_PRIVACY_AGREEMENT_LABEL}
                           </PFText>
-                        </PFCheckbox>
+                        </PFToggle>
                       </div>
                     </div>
                     <div className={styles.privacyErrorSlot} aria-live="polite">

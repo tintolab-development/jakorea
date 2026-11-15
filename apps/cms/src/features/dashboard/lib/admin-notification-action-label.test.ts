@@ -49,41 +49,32 @@ describe('resolveAdminNotificationActionLabel', () => {
     ).toBe('지급 대상 목록 보기')
   })
 
-  it('시스템 안내 팝업 시안의 이벤트별 버튼 문구', () => {
-    const cases: Array<[string, string, string]> = [
-      ['ADMIN_INSTRUCTOR_ROLE_REQUESTED', 'INSTRUCTOR_ROLE_REQUEST', '신청 목록 보기'],
-      ['ADMIN_STUDENT_ROSTER_UNSUBMITTED', 'PROGRAM_APPLICATION', '학생 명단 확인'],
-      ['ADMIN_PORTRAIT_CONSENT_UNSUBMITTED', 'PROGRAM_APPLICATION', '학생 명단 확인'],
-      ['ADMIN_SETTLEMENT_APPLICATION_RESUBMITTED', 'SETTLEMENT_APPLICATION', '신청 내역 확인'],
-      ['ADMIN_INQUIRY_CREATED', 'INQUIRY', '문의 내용 확인'],
-      ['ADMIN_TEACHER_EMPLOYMENT_CHANGED', 'MEMBER', '회원 정보 보기'],
-      ['ADMIN_PROGRAM_NOTICE_CREATED', 'PROGRAM_POST', '게시글 확인'],
-      ['ADMIN_PROGRAM_POST_COMMENT_CREATED', 'PROGRAM_POST', '댓글 확인'],
-      ['ADMIN_ROLE_CHANGED', 'ADMIN_ACCOUNT', '내 정보 보기'],
-    ]
-    for (const [eventType, linkType, label] of cases) {
-      expect(
-        resolveAdminNotificationActionLabel({
-          target: { eventType, linkType, linkId: '5', programId: '10' },
-        })
-      ).toBe(label)
-    }
-  })
-
-  it('프로그램 신청 취소는 이동 대상이 있어도 버튼 없음(닫기만)', () => {
-    expect(
+  it('시안 「시스템 안내 팝업」 버튼 문구', () => {
+    const label = (eventType: string, linkType = 'PROGRAM_APPLICATION') =>
       resolveAdminNotificationActionLabel({
-        target: {
-          eventType: 'ADMIN_PROGRAM_APPLICATION_CANCELLED',
-          linkType: 'PROGRAM_APPLICATION',
-          linkId: '7',
-          programId: '12',
-        },
+        target: { eventType, linkType, linkId: '7', programId: '10' },
       })
-    ).toBeNull()
+    expect(label('ADMIN_INSTRUCTOR_ROLE_REQUESTED', 'INSTRUCTOR_ROLE_REQUEST')).toBe('신청 목록 보기')
+    expect(label('ADMIN_SIGNUP_APPROVAL_REQUESTED', 'ADMIN_APPROVAL_REQUEST')).toBe('신청 목록 보기')
+    expect(label('ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY')).toBe('신청 목록 보기')
+    expect(label('ADMIN_STUDENT_ROSTER_UNSUBMITTED')).toBe('학생 명단 확인')
+    expect(label('ADMIN_PORTRAIT_CONSENT_UNSUBMITTED')).toBe('학생 명단 확인')
+    expect(label('ADMIN_SETTLEMENT_APPLICATION_RESUBMITTED', 'SETTLEMENT_APPLICATION')).toBe(
+      '신청 내역 확인'
+    )
+    expect(label('ADMIN_EXPENSE_RECEIPT_CONFIRMED', 'SETTLEMENT')).toBe('지급 대상 목록 보기')
+    expect(label('ADMIN_INQUIRY_CREATED', 'INQUIRY')).toBe('문의 내용 확인')
+    expect(label('ADMIN_TEACHER_EMPLOYMENT_CHANGED', 'MEMBER')).toBe('회원 정보 보기')
+    expect(label('ADMIN_PROGRAM_NOTICE_CREATED', 'PROGRAM_POST')).toBe('게시글 확인')
+    expect(label('ADMIN_PROGRAM_POST_COMMENT_CREATED', 'PROGRAM_POST')).toBe('댓글 확인')
+    expect(label('ADMIN_ROLE_CHANGED', 'ADMIN_ACCOUNT')).toBe('내 정보 보기')
+    expect(label('ADMIN_PROGRAM_APPLICATION_CANCELLED')).toBeNull()
+    expect(label('ADMIN_INDIVIDUAL_PROGRAM_INSTRUCTOR_UNASSIGNED', 'PROGRAM_SCHEDULE')).toBe(
+      '강사 배정'
+    )
   })
 
-  it('교육진행자 미배정은 제목의 #{교육진행자} 값으로 「… 배정」', () => {
+  it('교육진행자 미배정은 제목의 역할이 있으면 그 값으로 「… 배정」', () => {
     const target = {
       eventType: 'ADMIN_ORGANIZATION_PROGRAM_INSTRUCTOR_UNASSIGNED',
       linkType: 'PROGRAM_SCHEDULE',
@@ -99,8 +90,5 @@ describe('resolveAdminNotificationActionLabel', () => {
         title: '개인 프로그램 교육진행자 미배정 건 안내',
       })
     ).toBe('교육진행자 배정')
-    expect(resolveAdminNotificationActionLabel({ target, title: '알 수 없는 제목' })).toBe(
-      '교육진행자 배정'
-    )
   })
 })

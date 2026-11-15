@@ -25,6 +25,7 @@ import {
 } from '@/shared/ui'
 import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ConsentStatusValue } from '@/shared/ui/consent-status-value'
 import { FreeWriteItemsSection } from '@/shared/components/free-write-items-section'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
@@ -169,15 +170,15 @@ function ConsentDocumentFieldEdit({
   onWrite: () => void
 }) {
   return (
-    <span className="instructor-register-modal__consent-document">
-      <span className="instructor-register-modal__consent-status">
-        {value === 'agree' ? '동의' : '미동의'}
-      </span>
-      <DetailInfoForm.InputsSeparator />
-      <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
-        {value === 'agree' ? '동의서 보기' : '동의서 작성'}
-      </CmsButton>
-    </span>
+    <ConsentStatusValue
+      className="instructor-register-modal__consent-document"
+      status={value === 'agree' ? '동의' : '미동의'}
+      action={
+        <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
+          {value === 'agree' ? '동의서 보기' : '동의서 작성'}
+        </CmsButton>
+      }
+    />
   )
 }
 

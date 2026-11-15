@@ -1,0 +1,44 @@
+/* 동의 상태 값 칸 — 시안 16299:623421: 상태 · 구분선 · 버튼 · 일시 사이 16px */
+.consent-status-value {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/*
+ * 공통 구분선의 양옆 12px 대신 칸 간격 16px만 쓴다.
+ * 화면 CSS의 `.{모달} .detail-info-form-inputs-separator { margin }`보다 앞서도록 요소까지 지정한다.
+ */
+span.consent-status-value > span.detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.consent-status-value__status {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-sans, system-ui), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.consent-status-value__datetime {
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard, var(--font-sans, system-ui), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+/* 시안 Button / h32 — 폭 100 (긴 라벨은 라벨만큼) */
+.consent-status-value > .cms-button.ant-btn {
+  flex-shrink: 0;
+  width: auto;
+  min-width: 100px;
+}
