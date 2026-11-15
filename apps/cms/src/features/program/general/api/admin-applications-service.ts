@@ -47,6 +47,8 @@ import {
   rejectIndividualApplicationRemote,
   cancelIndividualApplicationApprovalRemote,
   cancelIndividualApplicationRejectionRemote,
+  cancelIndividualDocumentApprovalRemote,
+  cancelInterviewAssignmentRemote,
   cancelVolunteerApplicationApprovalRemote,
   cancelVolunteerApplicationRejectionRemote,
   rejectInstructorApplicationRemote,
@@ -564,6 +566,22 @@ export async function cancelGeneralIndividualApplicationApproval(
   })
 }
 
+/**
+ * 개인 1차 서류 합격 취소 — `cancel-document-approval`(최종 승인 취소 `cancel-approval`과 별개).
+ * 목록 availableActions `CANCEL_DOCUMENT_APPROVAL`일 때만 호출한다.
+ */
+export async function cancelGeneralIndividualDocumentApproval(
+  applicationId: string,
+  reason: string,
+  notification?: InstructorApplicationNotificationRequest
+): Promise<ApplicationDecisionResponse> {
+  assertApplicationsRemoteReady()
+  return cancelIndividualDocumentApprovalRemote(applicationId, {
+    reason: reason.trim() || '승인 취소',
+    ...(notification ? { notification } : {}),
+  })
+}
+
 export async function cancelGeneralVolunteerApplicationRejection(
   applicationId: string,
   reason: string,
@@ -709,6 +727,17 @@ export async function submitGeneralInterviewAssignmentEvaluation(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitInterviewAssignmentEvaluationRemote(assignmentId, payload)
+}
+
+/** 면접 배정 취소 — 봉사자·개인 공통. path는 목록 `interviewAssignmentId`(상세에서 다시 찾지 않는다) */
+export async function cancelGeneralInterviewAssignment(
+  assignmentId: string | number,
+  reason: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewAssignmentResponse').InterviewAssignmentResponse
+> {
+  assertApplicationsRemoteReady()
+  return cancelInterviewAssignmentRemote(assignmentId, { reason: reason.trim() })
 }
 
 export async function submitGeneralIndividualFinalResult(

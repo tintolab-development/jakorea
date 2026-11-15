@@ -18,6 +18,8 @@ import {
   resendIndividualDocumentResultNotification,
   cancelIndividualApplicationApprovalRemote,
   cancelIndividualApplicationRejectionRemote,
+  cancelIndividualDocumentApprovalRemote,
+  cancelInterviewAssignmentRemote,
   unmaskIndividualApplicationPrivacyRemote,
   unmaskInstructorApplicationPrivacyRemote,
   unmaskOrganizationApplicationPrivacyRemote,
@@ -850,6 +852,49 @@ describe('기관 승인 취소·반려 취소 — 발표일에 맞춰서 (BE 항
       url: '/api/admin/organization-applications/1690800/cancel-rejection',
       method: 'POST',
       data: { reason: '반려 취소', notification: { timing: 'ON_ANNOUNCEMENT' } },
+    })
+  })
+})
+
+describe('개인 서류 합격 취소 · 면접 배정 취소 경로', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('개인 서류 합격 취소는 cancel-document-approval 전용 경로로 보낸다(cancel-approval 아님)', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 501,
+      toStatus: 'APPROVAL_CANCELLED',
+    })
+    await cancelIndividualDocumentApprovalRemote('501', { reason: '서류 재검토' })
+    expect(customInstance).toHaveBeenCalledTimes(1)
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/501/cancel-document-approval',
+      method: 'POST',
+      data: { reason: '서류 재검토' },
+    })
+  })
+
+  it('최종 승인 취소는 기존 cancel-approval 경로를 그대로 쓴다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({ applicationId: 501 })
+    await cancelIndividualApplicationApprovalRemote('501', { reason: '승인 취소' })
+    expect(customInstance).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/api/admin/individual-applications/501/cancel-approval' })
+    )
+  })
+
+  it('면접 배정 취소는 배정 ID path로 reason만 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      interviewAssignmentId: 9001,
+      individualApplicationId: 501,
+      volunteerApplicationId: null,
+      assignmentStatus: 'CANCELLED',
+    })
+    await cancelInterviewAssignmentRemote(9001, { reason: '일정 변경' })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/interview-assignments/9001/cancel',
+      method: 'POST',
+      data: { reason: '일정 변경' },
     })
   })
 })

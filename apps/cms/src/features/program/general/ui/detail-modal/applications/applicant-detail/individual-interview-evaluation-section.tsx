@@ -6,6 +6,8 @@ import {
   formatGeneralAssignedInterviewScheduleDisplay,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { mapParticipantToVolunteerScreeningRow } from '@/features/program/general/lib/participant-volunteer-row-adapter'
+import { GeneralVolunteerApplicantInterviewEvaluationSection } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/interview-evaluation-section'
+import { useIndividualInterviewEvaluationEdit } from './individual-interview-evaluation-context'
 
 function formatScoreValue(score: number | null | undefined): string {
   return score != null ? String(score) : '-'
@@ -31,6 +33,23 @@ export function IndividualApplicantInterviewEvaluationSection({
     () => computeGeneralInterviewTotalScore(screeningRow),
     [screeningRow]
   )
+
+  // 2차 면접 상세에서 평가 입력이 연결되면 봉사자와 같은 평가 섹션(담당자 A·B 점수·비고)을 쓴다
+  const evaluationEdit = useIndividualInterviewEvaluationEdit()
+  if (evaluationEdit) {
+    const { bindSection, isEditing, canFillBothSlots, currentAdminId, onSave } = evaluationEdit
+    return (
+      <GeneralVolunteerApplicantInterviewEvaluationSection
+        ref={bindSection}
+        className="applicant-institution-basic-info__section"
+        applicant={screeningRow}
+        isEditing={isEditing}
+        canFillBothSlots={canFillBothSlots}
+        currentAdminId={currentAdminId}
+        onSave={onSave}
+      />
+    )
+  }
 
   return (
     <section className="general-volunteer-applicant-interview-evaluation applicant-institution-basic-info__section">

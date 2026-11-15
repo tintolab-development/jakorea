@@ -16,6 +16,7 @@ import {
   submitGeneralIndividualDocumentResult,
   cancelGeneralIndividualApplicationApproval,
   cancelGeneralIndividualApplicationRejection,
+  cancelGeneralIndividualDocumentApproval,
   submitGeneralIndividualFinalResult,
 } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
@@ -99,7 +100,27 @@ import {
 import type { VolunteerInterview2CancelFailConfirmPayload } from '@/features/program/general/lib/volunteer-interview2-cancel-fail'
 import { GeneralVolunteerInterview2CancelPassModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-cancel-pass-modal'
 import { GeneralVolunteerInterview2CancelFailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-cancel-fail-modal'
-import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { GeneralVolunteerDocumentCancelApprovalModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-document-cancel-approval-modal'
+import { generalInterviewSlotsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import type {
+  GeneralVolunteerApplicantRow,
+  GeneralVolunteerInterviewEvaluationPayload,
+} from '@/features/program/general/model/volunteer-applicant'
+import type { GeneralVolunteerApplicantInterviewEvaluationSectionHandle } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/interview-evaluation-section'
+import { guardGeneralVolunteerInterview2Evaluation } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-applicant-guard-actions'
+import {
+  IndividualInterviewEvaluationEditContext,
+  type IndividualInterviewEvaluationEditValue,
+} from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-interview-evaluation-context'
+import { mapParticipantToVolunteerScreeningRow } from '@/features/program/general/lib/participant-volunteer-row-adapter'
+import {
+  APPLICATION_ACTION_CANCEL_FINAL_FAIL,
+  APPLICATION_ACTION_CANCEL_FINAL_PASS,
+  hasExplicitApplicationAction,
+} from '@/features/program/shared/lib/application-available-actions'
+import { buildParticipantScreeningLeadingHeaderActions } from '@/features/program/general/lib/participant-screening-header-actions'
+import type { ApplicantHeaderActionItem } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
 import { MESSAGES } from '@/shared/constants/messages'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
@@ -187,6 +208,17 @@ export interface GeneralParticipantApplicantDetailViewProps {
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onApplicantDetailMetaChange?: (meta: ApplicantDetailMeta) => void
   onApplicantUpdated?: (row: GeneralIndividualApplicantRow) => void
+  /**
+   * 2차 면접 상세 — 면접 평가 저장(봉사자와 같은 `/interview-assignments/{id}/evaluations`).
+   * 지정하면 헤더 「면접 평가」 버튼과 평가 입력을 연다. 미지정이면 평가 섹션은 조회 전용.
+   */
+  interviewEvaluation?: {
+    canFillBothSlots: boolean
+    currentAdminId: number | null
+    onSave: (payload: GeneralVolunteerInterviewEvaluationPayload) => Promise<boolean>
+  }
+  /** 서류 합격·2차 면접 상세 — 「활동 포기」. availableActions `GIVE_UP`일 때만 노출 */
+  onWithdrawActivity?: () => void
 }
 
 export function GeneralParticipantApplicantDetailView({
@@ -197,6 +229,8 @@ export function GeneralParticipantApplicantDetailView({
   onRegisterApplicantCloseHandler: _onRegisterApplicantCloseHandler,
   onApplicantDetailMetaChange,
   onApplicantUpdated,
+  interviewEvaluation,
+  onWithdrawActivity,
 }: GeneralParticipantApplicantDetailViewProps) {
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
@@ -331,6 +365,8 @@ export function GeneralParticipantApplicantDetailView({
     id: string
     name: string
   } | null>(null)
+  /** 1차 서류 심사 상세 「승인 취소」(시안 05-3 → 06-1 1차 서류 승인 취소 안내) */
+  const [cancelDocumentApprovalOpen, setCancelDocumentApprovalOpen] = useState(false)
   const [cancelFinalPassOpen, setCancelFinalPassOpen] = useState(false)
   const [cancelFinalFailOpen, setCancelFinalFailOpen] = useState(false)
   const [cancelApprovalComplete, setCancelApprovalComplete] = useState<{
@@ -610,16 +646,160 @@ export function GeneralParticipantApplicantDetailView({
     usesApplicationMock,
   ])
 
+  const evaluationSectionRef = useRef<GeneralVolunteerApplicantInterviewEvaluationSectionHandle>(null)
+  const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+  const [evaluationSaving, setEvaluationSaving] = useState(false)
+  const bindEvaluationSection = useCallback(
+    (handle: GeneralVolunteerApplicantInterviewEvaluationSectionHandle | null) => {
+      evaluationSectionRef.current = handle
+    },
+    []
+  )
+
+  useEffect(() => {
+    setIsEvaluationEditing(false)
+  }, [applicantId])
+
+  const evaluationScreeningRow = useMemo(
+    () => (applicant ? mapParticipantToVolunteerScreeningRow(applicant) : null),
+    [applicant]
+  )
+
+  /** 봉사자 2차 면접 상세와 같은 노출 — 최종 결과(합격·불합격)가 정해지지 않은 대기 신청만 */
+  const showInterviewEvaluationAction =
+    isInterviewFinalStage &&
+    interviewEvaluation != null &&
+    !usesApplicationMock &&
+    applicant != null &&
+    applicant.approvalStatus === 'pending' &&
+    !hasExplicitApplicationAction(applicant.availableActions, APPLICATION_ACTION_CANCEL_FINAL_PASS) &&
+    !hasExplicitApplicationAction(applicant.availableActions, APPLICATION_ACTION_CANCEL_FINAL_FAIL)
+
+  const handleInterviewEvaluationClick = useCallback(async () => {
+    if (!evaluationScreeningRow || evaluationSaving) return
+    if (!isEvaluationEditing) {
+      if (!guardGeneralVolunteerInterview2Evaluation(evaluationScreeningRow)) return
+      setIsEvaluationEditing(true)
+      return
+    }
+    setEvaluationSaving(true)
+    try {
+      const saved = await evaluationSectionRef.current?.submit()
+      if (saved) setIsEvaluationEditing(false)
+    } finally {
+      setEvaluationSaving(false)
+    }
+  }, [evaluationSaving, evaluationScreeningRow, isEvaluationEditing])
+
+  const interviewEvaluationHeaderActions = useMemo((): ApplicantHeaderActionItem[] | undefined => {
+    if (!showInterviewEvaluationAction) return undefined
+    return [
+      {
+        key: 'interview-evaluation',
+        variant: 'primary',
+        label: '면접 평가',
+        loading: evaluationSaving,
+        onClick: () => {
+          void handleInterviewEvaluationClick()
+        },
+      },
+    ]
+  }, [evaluationSaving, handleInterviewEvaluationClick, showInterviewEvaluationAction])
+
+  /** 봉사자 서류 합격·2차 면접 상세와 같은 순서 — 승인 취소·활동 포기를 헤더 맨 앞에 둔다 */
+  const openCancelDocumentApproval = useCallback(() => {
+    setCancelDocumentApprovalOpen(true)
+  }, [])
+
+  const screeningLeadingHeaderActions = useMemo(
+    () =>
+      usesApplicationMock || !applicant
+        ? undefined
+        : buildParticipantScreeningLeadingHeaderActions({
+            screeningStage,
+            availableActions: applicant.availableActions,
+            onCancelDocumentApproval: openCancelDocumentApproval,
+            onWithdrawActivity,
+          }),
+    [applicant, onWithdrawActivity, openCancelDocumentApproval, screeningStage, usesApplicationMock]
+  )
+
+  /** 개인 서류 합격 취소 — `cancel-document-approval`(최종 승인 취소 `cancel-approval`과 별개) */
+  const confirmCancelDocumentApproval = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!applicant || decisionBusy) return
+      if (!useRemote) {
+        notifyProgramApiUnavailable(
+          'general-individual-document-cancel-approval',
+          '참여자 서류 승인 취소'
+        )
+        return
+      }
+      setDecisionBusy(true)
+      try {
+        await cancelGeneralIndividualDocumentApproval(
+          applicant.id,
+          payload.reason,
+          toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)?.notification
+        )
+        await invalidateIndividualApplications()
+        // 면접 배정이 없을 때만 허용되지만 슬롯 집계도 서버 값으로 다시 받는다
+        await queryClient.invalidateQueries({
+          queryKey: generalInterviewSlotsQueryKeys.listByAudience(program.id, 'PARTICIPANT'),
+        })
+        await detailQuery.refetch()
+        setCancelDocumentApprovalOpen(false)
+        // 봉사자 1차 서류 승인 취소 완료와 같은 공통 완료 안내
+        void showAlert({ title: '취소 완료', content: MESSAGES.success.cancelled })
+      } catch (error) {
+        notifyDecisionFailure(error)
+      } finally {
+        setDecisionBusy(false)
+      }
+    },
+    [
+      applicant,
+      decisionBusy,
+      detailQuery,
+      invalidateIndividualApplications,
+      notifyDecisionFailure,
+      program.id,
+      queryClient,
+      showAlert,
+      useRemote,
+    ]
+  )
+
+  const interviewEvaluationEditValue = useMemo((): IndividualInterviewEvaluationEditValue | null => {
+    if (!isInterviewFinalStage || !interviewEvaluation || usesApplicationMock) return null
+    return {
+      isEditing: showInterviewEvaluationAction && isEvaluationEditing,
+      canFillBothSlots: interviewEvaluation.canFillBothSlots,
+      currentAdminId: interviewEvaluation.currentAdminId,
+      bindSection: bindEvaluationSection,
+      onSave: interviewEvaluation.onSave,
+    }
+  }, [
+    bindEvaluationSection,
+    interviewEvaluation,
+    isEvaluationEditing,
+    isInterviewFinalStage,
+    showInterviewEvaluationAction,
+    usesApplicationMock,
+  ])
+
   if (!applicant) return null
 
   return (
-    <>
+    <IndividualInterviewEvaluationEditContext.Provider value={interviewEvaluationEditValue}>
       <ApplicantsDetailContents
         type="individual-applications"
         detailVariant="general"
         data={applicant}
         program={program}
         individualScreeningStage={screeningStage}
+        individualExtraHeaderActions={interviewEvaluationHeaderActions}
+        individualLeadingHeaderActions={screeningLeadingHeaderActions}
         onBack={() => {}}
         onApprove={id => {
           if (
@@ -1090,6 +1270,17 @@ export function GeneralParticipantApplicantDetailView({
         participantName={cancelRejectComplete?.participantName ?? ''}
         onClose={() => setCancelRejectComplete(null)}
       />
+      <GeneralVolunteerDocumentCancelApprovalModal
+        open={cancelDocumentApprovalOpen}
+        volunteer={volunteerModalRow}
+        onCancel={() => {
+          if (decisionBusy) return
+          setCancelDocumentApprovalOpen(false)
+        }}
+        onConfirm={payload => {
+          void confirmCancelDocumentApproval(payload)
+        }}
+      />
       <GeneralVolunteerInterview2CancelPassModal
         open={cancelFinalPassOpen}
         volunteer={volunteerModalRow}
@@ -1186,6 +1377,6 @@ export function GeneralParticipantApplicantDetailView({
           void run()
         }}
       />
-    </>
+    </IndividualInterviewEvaluationEditContext.Provider>
   )
 }

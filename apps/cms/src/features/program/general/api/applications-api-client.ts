@@ -954,6 +954,24 @@ export async function cancelIndividualApplicationApprovalRemote(
 }
 
 /**
+ * OpenAPI operationId: cancelIndividualDocumentApproval — 개인 1차 서류 합격 취소.
+ * `cancel-approval`(최종 승인 취소)과 다른 경로다. 생성 클라이언트에 아직 없어 직접 둔다.
+ * 409: INDIVIDUAL_INTERVIEW_ASSIGNMENT_MUST_BE_CANCELLED_FIRST | INDIVIDUAL_FINAL_DECISION_EXISTS | APPLICATION_DECISION_CONFLICT
+ */
+export async function cancelIndividualDocumentApprovalRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequestWithNotification
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/cancel-document-approval`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
  * OpenAPI operationId: resendIndividualApplicationNotification
  * 로컬 codegen은 BE 재기동 후 교체한다.
  */
@@ -1216,6 +1234,26 @@ export async function submitInterviewAssignmentEvaluationRemote(
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/interview-assignments/${encodeURIComponent(String(assignmentId))}/evaluations`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * POST /api/admin/interview-assignments/{assignmentId}/cancel (operationId cancelVolunteerInterviewAssignment).
+ * 봉사자·개인 공통 — path는 목록 `interviewAssignmentId`. reason 2~500자(비면 400).
+ * 409: VOLUNTEER_INTERVIEW_EVALUATION_EXISTS(평가 등록 후) | VOLUNTEER_INTERVIEW_CONFLICT
+ */
+export async function cancelInterviewAssignmentRemote(
+  assignmentId: string | number,
+  payload: import('@/shared/api/generated/dashboard/schemas/interviewAssignmentCancelRequest').InterviewAssignmentCancelRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewAssignmentResponse').InterviewAssignmentResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/interview-assignments/${encodeURIComponent(String(assignmentId))}/cancel`,
       method: 'POST',
       data: payload,
     })

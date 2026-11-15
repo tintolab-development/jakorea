@@ -1634,6 +1634,10 @@ export function mapIndividualApplicationToApplicantRow(
     canEditManagerBEvaluation:
       dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true,
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
+    // 2차 면접 — 평가 API path용 배정 ID와 담당자 A·B 점수(봉사자 목록 매퍼와 같은 규칙)
+    interviewAssignmentId:
+      dto.interviewAssignmentId != null ? Number(dto.interviewAssignmentId) : undefined,
+    ...mapInterviewEvaluationSlots(dto.interviewEvaluations),
     detail: {
       interviewAvailability,
     },
@@ -1660,9 +1664,15 @@ export function mapIndividualApplicationDetailToApplicantRow(
   const canEditDocumentEvaluation =
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
 
+  // 상세 응답에는 interviewStatus가 없다. BE는 담당자 A·B(evaluatorOrder 1·2) 점수가 모두 있으면
+  // interview_status=EVALUATED로 바꾸므로, 같은 상세 응답의 평가 슬롯으로 평가 완료를 읽는다.
+  const detailEvaluationSlots = mapInterviewEvaluationSlots(screening?.interviewEvaluations)
+  const detailInterviewEvaluated =
+    detailEvaluationSlots.managerAScore != null && detailEvaluationSlots.managerBScore != null
   const interviewStatusCandidates = [
     dto.applicationStatus,
     screening?.finalResultStatus,
+    ...(detailInterviewEvaluated ? ['EVALUATED'] : []),
     ...(screening?.interviewEvaluations ?? []).map(item => item.evaluationStatus),
   ]
     .map(value => (typeof value === 'string' ? value.trim().toUpperCase() : ''))
@@ -1748,7 +1758,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       screening?.reserveRank
     ),
     totalScore: screening?.interviewTotalScore ?? null,
-    ...mapInterviewEvaluationSlots(screening?.interviewEvaluations),
+    ...detailEvaluationSlots,
     interviewEvaluationRemark: screening?.interviewEvaluationRemark ?? undefined,
     assignedInterviewDateLabel: assigned.assignedInterviewDateLabel,
     assignedInterviewTime: assigned.assignedInterviewTime,
