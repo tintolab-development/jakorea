@@ -20,6 +20,7 @@ import {
   fetchConsentOriginalFileBlobRemote,
   fetchConsentSignedDocumentRemote,
   loadConsentSignedSignatureBlobRemote,
+  postConsentDocumentRevealEndpoint,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal'
@@ -35,6 +36,7 @@ import {
 } from '@/features/user/shared/lib/member-consent-view-privacy'
 import type { FilledDocumentResponse } from '@/shared/api/generated/members/schemas/filledDocumentResponse'
 import type { PaymentStatementBasicInfo } from '@/shared/api/generated/members/schemas/paymentStatementBasicInfo'
+import type { SignedConsentDocumentResponse } from '@/shared/api/generated/members/schemas/signedConsentDocumentResponse'
 import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -77,6 +79,12 @@ export interface MemberConsentDocumentViewModalProps {
   consentRecordId?: number
   filledDocumentId?: number
   filledDocumentRevealEndpoint?: string
+  /**
+   * 회원 상세 Summary 전용 — 전자서명본 열람 가능 여부. boolean이면 BE 판정을 그대로 쓴다.
+   * 작성본(filledDocumentAvailable)이 우선이고, 작성본이 없을 때만 서명본을 연다. 둘 다 false면 조회하지 않는다.
+   */
+  signedDocumentAvailable?: boolean
+  signedDocumentRevealEndpoint?: string
   /** consent-records 메타 없을 때 filled-document API 시도 여부 */
   documentAgreed?: boolean
   /** 동의-only 미리보기 PII 주입용 */
@@ -433,6 +441,8 @@ export function MemberConsentDocumentViewModal({
   consentRecordId,
   filledDocumentId,
   filledDocumentRevealEndpoint,
+  signedDocumentAvailable,
+  signedDocumentRevealEndpoint,
   documentAgreed,
   memberUser,
   isProgramOwner,
@@ -456,6 +466,7 @@ export function MemberConsentDocumentViewModal({
   const [syntheticLoading, setSyntheticLoading] = useState(false)
   const [crimeLoading, setCrimeLoading] = useState(false)
   const [crimeOriginalFileName, setCrimeOriginalFileName] = useState<string | null>(null)
+  const [signedLoading, setSignedLoading] = useState(false)
   const requestedDocumentKeyRef = useRef<string | null>(null)
 
   const submissionMeta = useMemo(
@@ -474,28 +485,45 @@ export function MemberConsentDocumentViewModal({
       formResponseId,
     ]
   )
-  const useSubmittedPath = shouldAttemptSubmittedConsentDocumentFetch(submissionMeta, {
+  /** 작성본 열람 가능 — BE `filledDocumentAvailable` */
+  const filledReady = shouldAttemptSubmittedConsentDocumentFetch(submissionMeta, {
     documentAgreed,
   })
-  const isSyntheticPreview = !useSubmittedPath
+  /** Summary가 서명본 열람 여부를 내려준 경우(회원 상세). records만 쓰는 화면은 undefined */
+  const hasSignedAvailability = typeof signedDocumentAvailable === 'boolean'
+  const signedReady = signedDocumentAvailable === true
+  /** 작성본 우선, 없으면 서명본, 둘 다 없으면 조회하지 않는다 */
+  const documentSource: 'filled' | 'signed' | 'none' = filledReady
+    ? 'filled'
+    : signedReady
+      ? 'signed'
+      : 'none'
+  const isSyntheticPreview = documentSource === 'none'
   const isCrime = templateId === AGREEMENT_CRIME_TEMPLATE_CODE
   const requiresPrivacyReveal = memberConsentViewRequiresPrivacyReveal(templateId)
   const canFetchRemote = Boolean(
-    useSubmittedPath && !isCrime && membersRemote && open && memberId != null && consentType?.trim()
-  )
-  const canFetchCrimeOriginal = Boolean(
-    isCrime &&
+    documentSource !== 'none' &&
+    !isCrime &&
     membersRemote &&
     open &&
     memberId != null &&
-    Boolean(consentType?.trim()) &&
-    (useSubmittedPath || documentAgreed)
+    consentType?.trim()
   )
+  const canFetchCrimeOriginal = Boolean(
+    isCrime &&
+    documentSource !== 'none' &&
+    membersRemote &&
+    open &&
+    memberId != null &&
+    Boolean(consentType?.trim())
+  )
+  /** 서명 이미지·성범죄 원본에 쓰는 서명본 조회 — Summary가 불가로 판정하면 요청하지 않는다 */
+  const canLoadSignedDocument = !hasSignedAvailability || signedReady
 
   const loadFilledDocument = useCallback(
     (reason: string) => {
       if (memberId == null || !consentType?.trim()) return
-      const requestKey = `${memberId}:${consentType.trim()}:${consentRecordId ?? 'current'}:${reason}`
+      const requestKey = `${documentSource}:${memberId}:${consentType.trim()}:${consentRecordId ?? 'current'}:${reason}`
       if (requestedDocumentKeyRef.current === requestKey) return
       requestedDocumentKeyRef.current = requestKey
       setFilled(null)
@@ -509,18 +537,73 @@ export function MemberConsentDocumentViewModal({
         return null
       })
       setLoadFailed(false)
+      if (documentSource === 'signed' && signedDocumentRevealEndpoint) {
+        /** 작성본이 없고 서명본만 열 수 있는 경우 — 서명본 스냅샷 본문을 보여준다 */
+        setSignedLoading(true)
+        void postConsentDocumentRevealEndpoint<SignedConsentDocumentResponse>(
+          signedDocumentRevealEndpoint,
+          { reason }
+        )
+          .then(async signed => {
+            if (requestedDocumentKeyRef.current !== requestKey) return
+            setFilled({
+              consentRecordId: signed.consentRecordId,
+              consentType: signed.consentType,
+              memberId: signed.memberId,
+              version: signed.version,
+              templateVersionId: signed.templateVersionId,
+              schemaJson: signed.schemaJson as FilledDocumentResponse['schemaJson'],
+              savedAt: signed.signedAt,
+            })
+            try {
+              const blob = await loadConsentSignedSignatureBlobRemote({
+                memberId,
+                consentType: consentType.trim(),
+                reason,
+                signed,
+              })
+              if (requestedDocumentKeyRef.current !== requestKey) return
+              if (blob == null || blob.size < 1) return
+              setSignatureImageSrc(prev => {
+                if (prev) URL.revokeObjectURL(prev)
+                return URL.createObjectURL(blob)
+              })
+            } catch {
+              /* 서명 이미지는 선택 */
+            }
+          })
+          .catch(error => {
+            if (requestedDocumentKeyRef.current !== requestKey) return
+            setLoadFailed(true)
+            handleError(error, {
+              defaultMessage: getMemberApiErrorMessage(error, SUBMITTED_CONSENT_LOAD_FAILED_MESSAGE),
+            })
+          })
+          .finally(() => {
+            if (requestedDocumentKeyRef.current === requestKey) setSignedLoading(false)
+          })
+        return
+      }
       void mutation
-        .mutateAsync({ memberId, consentType: consentType.trim(), consentRecordId, reason })
+        .mutateAsync({
+          memberId,
+          consentType: consentType.trim(),
+          consentRecordId,
+          reason,
+          filledDocumentRevealEndpoint,
+        })
         .then(async response => {
           if (requestedDocumentKeyRef.current !== requestKey) return
           setFilled(response)
           if (!isCrime) {
+            if (!canLoadSignedDocument) return
             try {
               const blob = await loadConsentSignedSignatureBlobRemote({
                 memberId,
                 consentType: consentType.trim(),
                 reason,
                 consentRecordId,
+                signedDocumentRevealEndpoint,
               })
               if (requestedDocumentKeyRef.current !== requestKey) return
               if (blob == null || blob.size < 1) return
@@ -540,6 +623,8 @@ export function MemberConsentDocumentViewModal({
               reason,
               consentRecordId,
               filled: response,
+              signedDocumentRevealEndpoint,
+              skipSignedDocument: !canLoadSignedDocument,
             })
             if (blob == null || blob.size < 1) {
               setLoadFailed(true)
@@ -569,7 +654,17 @@ export function MemberConsentDocumentViewModal({
           })
         })
     },
-    [consentRecordId, consentType, isCrime, memberId, mutation]
+    [
+      canLoadSignedDocument,
+      consentRecordId,
+      consentType,
+      documentSource,
+      filledDocumentRevealEndpoint,
+      isCrime,
+      memberId,
+      mutation,
+      signedDocumentRevealEndpoint,
+    ]
   )
   const loadFilledDocumentRef = useRef(loadFilledDocument)
   loadFilledDocumentRef.current = loadFilledDocument
@@ -577,6 +672,11 @@ export function MemberConsentDocumentViewModal({
   const loadCrimeOriginal = useCallback(
     (reason: string) => {
       if (memberId == null || !consentType?.trim()) return
+      if (!canLoadSignedDocument) {
+        /** 서명본 열람 불가·작성본만 있음 — 작성본 첨부(evidence)로 연다 */
+        loadFilledDocument(reason)
+        return
+      }
       const requestKey = `crime:${memberId}:${consentType.trim()}:${consentRecordId ?? 'current'}:${reason}`
       if (requestedDocumentKeyRef.current === requestKey) return
       requestedDocumentKeyRef.current = requestKey
@@ -588,11 +688,13 @@ export function MemberConsentDocumentViewModal({
         if (current) URL.revokeObjectURL(current)
         return null
       })
-      void fetchConsentSignedDocumentRemote(
-        memberId,
-        consentType.trim(),
-        { reason },
-        consentRecordId
+      void (
+        signedDocumentRevealEndpoint
+          ? postConsentDocumentRevealEndpoint<SignedConsentDocumentResponse>(
+              signedDocumentRevealEndpoint,
+              { reason }
+            )
+          : fetchConsentSignedDocumentRemote(memberId, consentType.trim(), { reason }, consentRecordId)
       )
         .then(async signed => {
           if (requestedDocumentKeyRef.current !== requestKey) return
@@ -620,7 +722,14 @@ export function MemberConsentDocumentViewModal({
           if (requestedDocumentKeyRef.current === requestKey) setCrimeLoading(false)
         })
     },
-    [consentRecordId, consentType, memberId]
+    [
+      canLoadSignedDocument,
+      consentRecordId,
+      consentType,
+      loadFilledDocument,
+      memberId,
+      signedDocumentRevealEndpoint,
+    ]
   )
   const loadCrimeOriginalRef = useRef(loadCrimeOriginal)
   loadCrimeOriginalRef.current = loadCrimeOriginal
@@ -633,6 +742,7 @@ export function MemberConsentDocumentViewModal({
       setSynthetic(null)
       setSyntheticLoading(false)
       setCrimeLoading(false)
+      setSignedLoading(false)
       setCrimeOriginalFileName(null)
       setEvidenceMimeType(null)
       setSignatureImageSrc(current => {
@@ -735,6 +845,7 @@ export function MemberConsentDocumentViewModal({
     setSynthetic(null)
     setSyntheticLoading(false)
     setCrimeLoading(false)
+    setSignedLoading(false)
     setCrimeOriginalFileName(null)
     mutation.reset()
     requestedDocumentKeyRef.current = null
@@ -771,6 +882,8 @@ export function MemberConsentDocumentViewModal({
             consentRecordId,
             filled,
             password,
+            signedDocumentRevealEndpoint,
+            skipSignedDocument: !canLoadSignedDocument,
           })
           if (blob == null || blob.size < 1) {
             throw new Error(CRIME_SNAPSHOT_UNAVAILABLE_MESSAGE)
@@ -787,6 +900,8 @@ export function MemberConsentDocumentViewModal({
     })
   }, [
     canDownloadSensitiveFile,
+    canLoadSignedDocument,
+    signedDocumentRevealEndpoint,
     consentRecordId,
     consentType,
     crimeOriginalFileName,
@@ -826,11 +941,14 @@ export function MemberConsentDocumentViewModal({
     })
   }, [canDownloadSensitiveFile, filled, modalTitle, runProtectedDownload, showAlert])
 
-  const remoteRequestPending = mutation.isPending && filled == null && !loadFailed
+  const remoteRequestPending =
+    (mutation.isPending || signedLoading) && filled == null && !loadFailed
+  /** 성범죄 — 서명본 원본 조회, 또는 서명본 불가 시 작성본 첨부 조회 */
+  const crimeRequestPending = crimeLoading || mutation.isPending
   const isLoading = canFetchCrimeOriginal
     ? requiresPrivacyReveal
-      ? reasonOpen || crimeLoading
-      : crimeLoading
+      ? reasonOpen || crimeRequestPending
+      : crimeRequestPending
     : canFetchRemote
       ? requiresPrivacyReveal
         ? reasonOpen || remoteRequestPending
@@ -841,13 +959,14 @@ export function MemberConsentDocumentViewModal({
   const remoteUnavailable = canFetchCrimeOriginal
     ? requiresPrivacyReveal &&
       !reasonOpen &&
-      !crimeLoading &&
+      !crimeRequestPending &&
       evidenceObjectUrl == null &&
       !loadFailed
     : canFetchRemote &&
       requiresPrivacyReveal &&
       !reasonOpen &&
       !mutation.isPending &&
+      !signedLoading &&
       filled == null
 
   if (isCrime) {

@@ -7,6 +7,7 @@ import { useCallback, useState, type CSSProperties, type ReactNode } from 'react
 import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import type { User } from '@/types/user'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import type { FilledDocumentUnavailableReason } from '@/shared/api/generated/members/schemas/filledDocumentUnavailableReason'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadioGroup } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -141,6 +142,12 @@ export type ConsentFieldValueSchema =
       filledDocumentId?: number
       filledDocumentAvailable?: boolean
       filledDocumentRevealEndpoint?: string
+      /** filledDocumentAvailable=false일 때 BE가 준 이유 (표시는 시안 확정 전까지 바꾸지 않음) */
+      filledDocumentUnavailableReason?: FilledDocumentUnavailableReason
+      /** Summary 전용 — 전자서명본 열람 가능 여부·조회 주소 */
+      signedDocumentAvailable?: boolean
+      signedDocumentId?: number
+      signedDocumentRevealEndpoint?: string
       consentType?: string
       /** 초상권 동의/부분 동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
       allItemsAgreed?: boolean | null
@@ -423,6 +430,7 @@ function resolveConsentFieldStatusLabel(
     consentStatus?: string
     consentType?: string
     allItemsAgreed?: boolean | null
+    /** Summary status=EXPIRED에서만 true */
     expired?: boolean
   },
   fieldLabel: string
@@ -666,6 +674,8 @@ type ActiveConsentView = {
   consentRecordId?: number
   filledDocumentId?: number
   filledDocumentRevealEndpoint?: string
+  signedDocumentAvailable?: boolean
+  signedDocumentRevealEndpoint?: string
 }
 
 type ActiveConsentWrite = {
@@ -726,6 +736,8 @@ export function UserConsentAgreementSection({
           consentRecordId: document.consentRecordId,
           filledDocumentId: document.filledDocumentId,
           filledDocumentRevealEndpoint: document.filledDocumentRevealEndpoint,
+          signedDocumentAvailable: document.signedDocumentAvailable,
+          signedDocumentRevealEndpoint: document.signedDocumentRevealEndpoint,
         })
       }
     },
@@ -805,6 +817,8 @@ export function UserConsentAgreementSection({
           consentRecordId={activeView.consentRecordId}
           filledDocumentId={activeView.filledDocumentId}
           filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
+          signedDocumentAvailable={activeView.signedDocumentAvailable}
+          signedDocumentRevealEndpoint={activeView.signedDocumentRevealEndpoint}
           documentAgreed={activeView.documentAgreed}
           memberUser={memberUser}
           onClose={() => setActiveView(null)}

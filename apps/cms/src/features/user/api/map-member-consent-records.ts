@@ -1,5 +1,6 @@
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas'
-import type { MemberPortalConsentSummary } from '@/shared/api/generated/members/schemas/memberPortalConsentSummary'
+import type { AdminMemberConsentSummary } from '@/shared/api/generated/members/schemas/adminMemberConsentSummary'
+import type { FilledDocumentUnavailableReason } from '@/shared/api/generated/members/schemas/filledDocumentUnavailableReason'
 import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import type {
   ConsentFieldValueSchema,
@@ -77,7 +78,7 @@ type AgreementOverlay = {
   consentStatus?: string
   /** 초상권 1·2·3 모두 동의 여부(표시 전용). 비초상권·판정 불가 과거 기록은 null */
   allItemsAgreed?: boolean | null
-  /** Summary `expired` — 유효기간 경과. 기간제(동의서형) 항목에만 표시에 쓴다 */
+  /** Summary `status === 'EXPIRED'` — 기간제(동의서형) 항목에만 표시에 쓴다 */
   expired?: boolean
   /** Summary `expiresAt` — 만료일 표시용 */
   expiresAt?: string
@@ -86,6 +87,10 @@ type AgreementOverlay = {
   filledDocumentId?: number
   filledDocumentAvailable?: boolean
   filledDocumentRevealEndpoint?: string
+  filledDocumentUnavailableReason?: FilledDocumentUnavailableReason
+  signedDocumentAvailable?: boolean
+  signedDocumentId?: number
+  signedDocumentRevealEndpoint?: string
   consentType?: string
 }
 
@@ -127,12 +132,12 @@ function agreementToFieldValue(
   const agreedAtDisplay = formatConsentedAt(agreement.agreedAt)
 
   if (DOCUMENT_LABELS.has(label)) {
-    /** 동의서형 항목은 모두 기간제 — 유효기간 경과 시 「동의 만료」 + 만료일 */
+    /** 동의서형 항목은 모두 기간제 — Summary status=EXPIRED면 「동의 만료」 + 만료일 */
     const expired = agreement.expired === true
     return {
       type: 'document',
       agreed,
-      agreedAtDisplay: agreed && !expired ? agreedAtDisplay : undefined,
+      agreedAtDisplay: agreed ? agreedAtDisplay : undefined,
       consentStatus: agreement.consentStatus,
       allItemsAgreed: agreement.allItemsAgreed,
       ...(expired
@@ -142,6 +147,10 @@ function agreementToFieldValue(
       filledDocumentId: agreement.filledDocumentId,
       filledDocumentAvailable: agreement.filledDocumentAvailable,
       filledDocumentRevealEndpoint: agreement.filledDocumentRevealEndpoint,
+      filledDocumentUnavailableReason: agreement.filledDocumentUnavailableReason,
+      signedDocumentAvailable: agreement.signedDocumentAvailable,
+      signedDocumentId: agreement.signedDocumentId,
+      signedDocumentRevealEndpoint: agreement.signedDocumentRevealEndpoint,
       consentType: agreement.consentType,
       consentRecordId: agreement.consentRecordId,
     }
@@ -175,37 +184,6 @@ function neutralizeConsentSchema(schema: ConsentRowSchema[]): ConsentRowSchema[]
   }))
 }
 
-function compareConsentRecordRecency(
-  a: MemberConsentRecordResponse,
-  b: MemberConsentRecordResponse
-): number {
-  const aTime = a.consentedAt ? dayjs(a.consentedAt).valueOf() : 0
-  const bTime = b.consentedAt ? dayjs(b.consentedAt).valueOf() : 0
-  if (aTime !== bTime) return aTime - bTime
-  const aId = a.consentRecordId ?? a.formResponseId ?? a.filledDocumentId ?? 0
-  const bId = b.consentRecordId ?? b.formResponseId ?? b.filledDocumentId ?? 0
-  return aId - bId
-}
-
-function consentRecordHasFilledDocumentMeta(record: MemberConsentRecordResponse): boolean {
-  return (
-    record.filledDocumentAvailable === true ||
-    record.formResponseId != null ||
-    record.filledDocumentId != null ||
-    record.consentRecordId != null
-  )
-}
-
-function compareConsentRecordMetaQuality(
-  a: MemberConsentRecordResponse,
-  b: MemberConsentRecordResponse
-): number {
-  const byDocument =
-    Number(consentRecordHasFilledDocumentMeta(a)) - Number(consentRecordHasFilledDocumentMeta(b))
-  if (byDocument !== 0) return byDocument
-  return compareConsentRecordRecency(a, b)
-}
-
 function consentIndexKeys(consentType: string | undefined, label?: string): string[] {
   const keys: string[] = []
   const typeKey = normalizeConsentTypeKey(consentType)
@@ -227,52 +205,27 @@ function lookupConsentIndex<T>(
   return undefined
 }
 
-function toConsentRecordOverlay(record: MemberConsentRecordResponse): AgreementOverlay {
-  return {
-    agreed: false,
-    consentStatus: record.consentStatus,
-    allItemsAgreed: record.allItemsAgreed,
-    consentRecordId: record.consentRecordId,
-    formResponseId: record.formResponseId,
-    filledDocumentId: record.filledDocumentId,
-    filledDocumentAvailable: record.filledDocumentAvailable,
-    filledDocumentRevealEndpoint: record.filledDocumentRevealEndpoint,
-    consentType: record.consentType,
-  }
-}
-
 function readTermsConsentRecordId(row: TermsAgreementRow): number | undefined {
   const value = (row as TermsAgreementRow & { consentRecordId?: number | null }).consentRecordId
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
-/** consent-records — 작성본·이력 메타만 (동의 여부는 Summary 또는 termsAgreements) */
-function buildConsentRecordMetaByTypeMap(
-  records: MemberConsentRecordResponse[]
-): Map<string, AgreementOverlay> {
-  const latestByKey = new Map<string, MemberConsentRecordResponse>()
-  for (const record of records) {
-    const keys = consentIndexKeys(record.consentType)
-    if (keys.length === 0) continue
-    for (const key of keys) {
-      const prev = latestByKey.get(key)
-      if (!prev || compareConsentRecordMetaQuality(record, prev) > 0) {
-        latestByKey.set(key, record)
-      }
-    }
+/** records 응답의 작성본 열람 메타 — 같은 유형 중 고르지 않고, 지정한 기록 id와 정확히 일치할 때만 쓴다 */
+function toConsentRecordDocumentMeta(record: MemberConsentRecordResponse): Partial<AgreementOverlay> {
+  return {
+    consentRecordId: record.consentRecordId,
+    formResponseId: record.formResponseId ?? undefined,
+    filledDocumentId: record.filledDocumentId ?? undefined,
+    filledDocumentAvailable: record.filledDocumentAvailable === true,
+    filledDocumentRevealEndpoint: record.filledDocumentRevealEndpoint ?? undefined,
+    filledDocumentUnavailableReason: record.filledDocumentUnavailableReason ?? undefined,
   }
-
-  const map = new Map<string, AgreementOverlay>()
-  for (const [key, record] of latestByKey) {
-    map.set(key, toConsentRecordOverlay(record))
-  }
-  return map
 }
 
 function buildConsentSummaryTypeMap(
-  summaries: MemberPortalConsentSummary[]
-): Map<string, MemberPortalConsentSummary> {
-  const map = new Map<string, MemberPortalConsentSummary>()
+  summaries: AdminMemberConsentSummary[]
+): Map<string, AdminMemberConsentSummary> {
+  const map = new Map<string, AdminMemberConsentSummary>()
   for (const row of summaries) {
     for (const key of consentIndexKeys(row.consentType)) {
       map.set(key, row)
@@ -300,26 +253,6 @@ function buildTermsAgreementLabelMap(
   return map
 }
 
-function mergeRecordMetaIntoOverlay(
-  overlay: AgreementOverlay,
-  meta: AgreementOverlay | undefined
-): AgreementOverlay {
-  if (!meta) return overlay
-  return {
-    ...overlay,
-    consentRecordId: meta.consentRecordId ?? overlay.consentRecordId,
-    formResponseId: meta.formResponseId ?? overlay.formResponseId,
-    filledDocumentId: meta.filledDocumentId ?? overlay.filledDocumentId,
-    filledDocumentAvailable: meta.filledDocumentAvailable ?? overlay.filledDocumentAvailable,
-    filledDocumentRevealEndpoint:
-      meta.filledDocumentRevealEndpoint ?? overlay.filledDocumentRevealEndpoint,
-    consentType: meta.consentType ?? overlay.consentType,
-    consentStatus: overlay.consentStatus ?? meta.consentStatus,
-    // 동의 여부와 같은 출처(Summary·termsAgreements) 우선, 없으면 consent-records 최신값
-    allItemsAgreed: overlay.allItemsAgreed ?? meta.allItemsAgreed,
-  }
-}
-
 function overlayAgreementByLabel(
   schema: ConsentRowSchema[],
   labelToAgreement: Map<string, AgreementOverlay>
@@ -340,22 +273,46 @@ function overlayAgreementByLabel(
   }))
 }
 
-function lookupRecordMeta(
-  recordMetaByType: Map<string, AgreementOverlay>,
-  label: string,
-  consentType?: string
-): AgreementOverlay | undefined {
-  const typeKey = resolveCanonicalTermsTypeForLabel(label)
-  return (
-    lookupConsentIndex(recordMetaByType, consentType ?? typeKey, label) ??
-    (typeKey ? recordMetaByType.get(typeKey) : undefined)
-  )
+/** Summary `status` 중 「동의」로 표시하는 값. 그 외(NOT_AGREED·WITHDRAWN·POLICY_UPDATED 등)는 미동의 */
+const AGREED_SUMMARY_STATUSES = new Set(['AGREED', 'SIGNED', 'CONSENTED'])
+const EXPIRED_SUMMARY_STATUS = 'EXPIRED'
+
+/** 상태 문구는 Summary `status` 하나로 정한다 (`agreed`·`expired` 조합을 쓰지 않음) */
+export function resolveConsentSummaryStatusState(status: string | null | undefined): {
+  agreed: boolean
+  expired: boolean
+} {
+  const normalized = (status ?? '').trim().toUpperCase()
+  return {
+    agreed: AGREED_SUMMARY_STATUSES.has(normalized),
+    expired: normalized === EXPIRED_SUMMARY_STATUS,
+  }
+}
+
+/** Summary 한 건 → 표시 값. 작성본·서명본 열람 메타도 BE가 고른 대표 기록 값만 쓴다 */
+function toSummaryOverlay(summary: AdminMemberConsentSummary): AgreementOverlay {
+  const { agreed, expired } = resolveConsentSummaryStatusState(summary.status)
+  return {
+    agreed,
+    agreedAt: agreed ? (summary.agreedAt ?? undefined) : undefined,
+    consentType: summary.consentType,
+    consentStatus: summary.consentStatus ?? undefined,
+    allItemsAgreed: summary.allItemsAgreed,
+    expired,
+    expiresAt: expired ? (summary.expiresAt ?? undefined) : undefined,
+    consentRecordId: summary.currentConsentRecordId ?? undefined,
+    filledDocumentAvailable: summary.filledDocumentAvailable === true,
+    filledDocumentRevealEndpoint: summary.filledDocumentRevealEndpoint ?? undefined,
+    filledDocumentUnavailableReason: summary.filledDocumentUnavailableReason ?? undefined,
+    signedDocumentAvailable: summary.signedDocumentAvailable === true,
+    signedDocumentId: summary.signedDocumentId ?? undefined,
+    signedDocumentRevealEndpoint: summary.signedDocumentRevealEndpoint ?? undefined,
+  }
 }
 
 function buildLabelMapFromSummaries(
   schema: ConsentRowSchema[],
-  summaries: MemberPortalConsentSummary[],
-  recordMetaByType: Map<string, AgreementOverlay>
+  summaries: AdminMemberConsentSummary[]
 ): Map<string, AgreementOverlay> {
   const summaryMap = buildConsentSummaryTypeMap(summaries)
   const labelMap = new Map<string, AgreementOverlay>()
@@ -366,24 +323,7 @@ function buildLabelMapFromSummaries(
       const typeKey = resolveCanonicalTermsTypeForLabel(field.label)
       const summary = lookupConsentIndex(summaryMap, typeKey, field.label)
       if (!summary) continue
-
-      const agreed = summary.agreed === true
-      const overlay: AgreementOverlay = {
-        agreed,
-        agreedAt: agreed ? summary.agreedAt : undefined,
-        consentType: summary.consentType,
-        consentStatus: summary.consentStatus,
-        allItemsAgreed: summary.allItemsAgreed,
-        expired: summary.expired === true,
-        expiresAt: summary.expiresAt,
-      }
-      labelMap.set(
-        field.label,
-        mergeRecordMetaIntoOverlay(
-          overlay,
-          lookupRecordMeta(recordMetaByType, field.label, summary.consentType)
-        )
-      )
+      labelMap.set(field.label, toSummaryOverlay(summary))
     }
   }
   return labelMap
@@ -395,27 +335,30 @@ function applyTermsAgreementsWithRecordMeta(
   records: MemberConsentRecordResponse[]
 ): ConsentRowSchema[] {
   const result = neutralizeConsentSchema(schema)
-  const recordMetaByType = buildConsentRecordMetaByTypeMap(records)
+  const recordById = new Map<number, MemberConsentRecordResponse>()
+  for (const record of records) {
+    if (record.consentRecordId != null) recordById.set(record.consentRecordId, record)
+  }
   const termsMap = buildTermsAgreementLabelMap(terms)
 
   for (const [label, termsOverlay] of termsMap) {
-    termsMap.set(
-      label,
-      mergeRecordMetaIntoOverlay(
-        termsOverlay,
-        lookupRecordMeta(recordMetaByType, label, termsOverlay.consentType)
-      )
-    )
+    const record =
+      termsOverlay.consentRecordId != null ? recordById.get(termsOverlay.consentRecordId) : undefined
+    if (record) termsMap.set(label, { ...termsOverlay, ...toConsentRecordDocumentMeta(record) })
   }
 
   return overlayAgreementByLabel(result, termsMap)
 }
 
-/** 상세 약관·동의 UI — 일반 회원은 Summary `agreed`/`agreedAt` SSOT, 관리자 계정은 `termsAgreements`. */
+/**
+ * 상세 약관·동의 UI — 일반 회원은 Summary가 상태·작성본·서명본 열람 여부의 SSOT.
+ * 관리자 계정 등 Summary가 없을 때만 `termsAgreements`(+ 같은 consentRecordId의 records 메타).
+ */
 export function applyMemberConsentToSchema(
   schema: ConsentRowSchema[],
   input: {
-    consentSummaries?: MemberPortalConsentSummary[]
+    consentSummaries?: AdminMemberConsentSummary[]
+    /** Summary가 없을 때 termsAgreements의 consentRecordId와 일치하는 기록 메타만 쓴다 */
     consentRecords?: MemberConsentRecordResponse[]
     /** 관리자 계정 상세 등 — current summary API 미사용 */
     termsAgreements?: TermsAgreementRow[]
@@ -427,9 +370,7 @@ export function applyMemberConsentToSchema(
 
   if (summaries.length > 0) {
     const result = neutralizeConsentSchema(schema)
-    const recordMetaByType = buildConsentRecordMetaByTypeMap(records)
-    const labelMap = buildLabelMapFromSummaries(result, summaries, recordMetaByType)
-    return overlayAgreementByLabel(result, labelMap)
+    return overlayAgreementByLabel(result, buildLabelMapFromSummaries(result, summaries))
   }
 
   if (terms.length > 0) {
