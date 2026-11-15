@@ -59,7 +59,7 @@ export function mapFormTemplateListItemToRow(
     key: `${options.rowKeyPrefix}-${options.rowIndex + 1}`,
     no: options.rowIndex + 1,
     creator: systemTemplate === false ? '사용자 생성' : '시스템 생성',
-    createdAt: formatTemplateDate(item.updatedAt),
+    createdAt: formatTemplateDate(item.createdAt),
     updatedAt: formatTemplateDate(item.updatedAt),
     apiTemplateId: item.templateId,
     systemTemplate,
@@ -176,7 +176,7 @@ export function mapFormTemplateListItemToIssuanceRow(
     key: `${options.rowKeyPrefix}-${options.rowIndex + 1}`,
     no: options.rowIndex + 1,
     creator: '시스템 생성',
-    createdAt: formatTemplateDate(item.updatedAt),
+    createdAt: formatTemplateDate(item.createdAt),
     updatedAt: formatTemplateDate(item.updatedAt),
   }
 }
