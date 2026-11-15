@@ -561,6 +561,16 @@ function patchRecruitDatePlan(
     'recruit.individual.interviewRangeSeal': interviewSeal,
     'recruit.individual.interviewAnchorIso': interviewSeal.start,
     'recruit.individual.interviewMethod': pick(INTERVIEW_METHOD_OPTIONS).value,
+    // 개인 참여자 면접 진행 가능 일정 — 봉사자와 같은 필수(참여자 모집 행 interviewConfig)
+    'recruit.individual.interview.interviewTimeRange': [
+      interviewClockStart.toISOString(),
+      interviewClockEnd.toISOString(),
+    ],
+    'recruit.individual.interview.timeUnit': '30',
+    'recruit.individual.interview.selectedSlotKeys': [
+      `${interviewClockStart.valueOf()}-${firstSlotEnd.valueOf()}`,
+    ],
+    'recruit.individual.interview.exclusionState': createDefaultUnavailableDatesExclusionState(),
     'recruit.instructor.announcementPublished': 'published',
     'recruit.instructor.programRangeSeal': programSeal,
     'recruit.instructor.programAnchorIso': programSeal.start,
