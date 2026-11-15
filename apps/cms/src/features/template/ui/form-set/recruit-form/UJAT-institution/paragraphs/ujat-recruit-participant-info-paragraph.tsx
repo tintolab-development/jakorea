@@ -105,6 +105,7 @@ export function UjatRecruitParticipantInfoParagraph(props: UjatRecruitParagraphP
         sectionTitle={props.sectionTitle}
         highlightParagraphId={props.highlightParagraphId}
         hideSectionHeader={props.hideSectionHeader}
+        registrationFormDesign={props.designPreset === 'registration-form'}
       />
     )
   }

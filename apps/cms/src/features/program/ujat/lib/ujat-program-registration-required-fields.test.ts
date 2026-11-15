@@ -247,6 +247,29 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
     ).toBe(true)
   })
 
+  it('교육 형태를 고르지 않은 일정 행이 있으면 미완료이다(등록 양식 시안 미선택 기본값)', () => {
+    const overlay = filledRegistration()
+    const typed = typedFromOverlay(overlay)
+    const typedDetail = {
+      ...typed.typedDetail,
+      halfPlans: typed.typedDetail.halfPlans?.map(plan =>
+        plan.semesterType === 'FIRST_HALF'
+          ? {
+              ...plan,
+              stages: plan.stages?.map(stage =>
+                stage.stage === 'MAIN_EDUCATION'
+                  ? { ...stage, rows: stage.rows?.map(row => ({ ...row, educationMethod: null })) }
+                  : stage
+              ),
+            }
+          : plan
+      ),
+    }
+    expect(
+      listIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typedDetail)
+    ).toEqual(['h1.event.delivery'])
+  })
+
   it('Typed RHF 0/false/[]는 오래된 Overlay 값을 쓰지 않는다', () => {
     const overlay = filledRegistration()
     overlay['ujat.kpi.participantCount'] = 10

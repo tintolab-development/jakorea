@@ -592,6 +592,7 @@ export function useUjatProgramRegistrationFlow(
         program: registrationWizardLinkedProgram,
         form: institutionRecruitmentForm,
         hideSectionHeader: true,
+        designPreset: 'registration-form' as const,
       }
     }
     if (half == null) return undefined
@@ -601,6 +602,7 @@ export function useUjatProgramRegistrationFlow(
       form: half === 'h1' ? volunteerH1RecruitmentForm : volunteerH2RecruitmentForm,
       volunteerHalf: half,
       hideSectionHeader: true,
+      designPreset: 'registration-form' as const,
     }
   }, [
     activeStep,

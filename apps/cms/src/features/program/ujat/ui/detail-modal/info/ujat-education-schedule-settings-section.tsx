@@ -70,7 +70,9 @@ function typedEventRow(detail: UjatTypedDetail | undefined, half: UjatHalfSemest
 export function updateUjatTypedEventRow(
   form: TypedScheduleForm,
   half: UjatHalfSemesterKey,
-  update: (row: UjatTypedScheduleRow) => UjatTypedScheduleRow
+  update: (row: UjatTypedScheduleRow) => UjatTypedScheduleRow,
+  /** UJAT 등록 양식 시안(4082:104345) — 새 행사 일정 행은 일정명 빈 칸·교육 형태 미선택 */
+  registrationFormDesign = false
 ) {
   const current = form.getValues()
   const semesterType = typedSemester(half)
@@ -85,8 +87,8 @@ export function updateUjatTypedEventRow(
   const currentRow = stage.rows?.[0] ?? {
     rowId: `ujat-${half}-main-1`,
     displayOrder: 1,
-    educationName: '교육 진행',
-    educationMethod: 'offline',
+    educationName: registrationFormDesign ? null : '교육 진행',
+    educationMethod: registrationFormDesign ? null : 'offline',
     regionCode: null,
     startDate: null,
     endDate: null,
@@ -128,12 +130,13 @@ function TypedSemesterScheduleTableBlock({
   half,
   mode,
   form,
+  registrationFormDesign,
 }: {
   half: UjatHalfSemesterKey
   mode: 'view' | 'edit'
   form: TypedScheduleForm
+  registrationFormDesign: boolean
 }) {
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const detail = useWatch({ control: form.control }) as UjatTypedDetail | undefined
   const row = typedEventRow(detail, half)
   const range: [Dayjs | null, Dayjs | null] = [
@@ -173,12 +176,17 @@ function TypedSemesterScheduleTableBlock({
   const updateRange = (next: [Dayjs | null, Dayjs | null]) => {
     const startDate = next[0]?.format('YYYY-MM-DD') ?? null
     const endDate = next[1]?.format('YYYY-MM-DD') ?? null
-    updateUjatTypedEventRow(form, half, current => ({
-      ...current,
-      startDate,
-      endDate,
-      dates: startDate ? [startDate] : [],
-    }))
+    updateUjatTypedEventRow(
+      form,
+      half,
+      current => ({
+        ...current,
+        startDate,
+        endDate,
+        dates: startDate ? [startDate] : [],
+      }),
+      registrationFormDesign
+    )
   }
 
   return (
@@ -201,8 +209,8 @@ function TypedSemesterScheduleTableBlock({
               end: row?.endDate ?? null,
             })}
             edit={
-              mode === 'edit' && isTemplateManagementScreen ? (
-                // 템플릿 관리 시안(5767:194428): 기간 캘린더 칸 1개(300) · 「일정을 선택해 주세요」
+              mode === 'edit' && registrationFormDesign ? (
+                // 등록 양식 시안(4082:104345·5767:194428): 기간 캘린더 칸 1개(300) · 「일정을 선택해 주세요」
                 <ParagraphDatePicker
                   inputSize="small"
                   mode="single"
@@ -251,15 +259,27 @@ function TypedSemesterScheduleTableBlock({
                   initialCalendarDate={rangeStart ?? rangeEnd}
                   appliedDates={unavailableDates}
                   onApplyDatesChange={dates =>
-                    updateUjatTypedEventRow(form, half, current => ({ ...current, excludedDates: dates }))
+                    updateUjatTypedEventRow(
+                      form,
+                      half,
+                      current => ({ ...current, excludedDates: dates }),
+                      registrationFormDesign
+                    )
                   }
                   exclusionState={exclusion}
                   onExclusionChange={next =>
-                    updateUjatTypedEventRow(form, half, current => ({
-                      ...current,
-                      exclusion: uiExclusionToTyped(next),
-                    }))
+                    updateUjatTypedEventRow(
+                      form,
+                      half,
+                      current => ({
+                        ...current,
+                        exclusion: uiExclusionToTyped(next),
+                      }),
+                      registrationFormDesign
+                    )
                   }
+                  // 등록 양식 시안(4082:104345) 「진행 불가일 직접 추가」 Button / h36
+                  addButtonSize={registrationFormDesign ? 'h36' : undefined}
                   modalUnavailableDescriptionLead="교육 진행 불가한 날짜를 모두 선택해 주세요."
                   modalUnavailableDescriptionSecond="선택된 날짜는 교육 진행 일정으로 신청할 수 없습니다."
                   canOpenDirectUnavailableModal={educationScheduleRangeComplete}
@@ -311,24 +331,41 @@ export function UjatEducationScheduleSettingsSection({
   h1Display,
   h2Display,
   scheduleForm,
+  designPreset,
 }: {
   mode: 'view' | 'edit'
   h1Display: UjatEducationScheduleSettingsSemesterDisplay
   h2Display: UjatEducationScheduleSettingsSemesterDisplay
   scheduleForm?: TypedScheduleForm
+  /**
+   * `registration-form` — UJAT 등록 양식 단락(템플릿 관리·등록 위저드) 시안 값 적용.
+   * 생략 시(프로그램 상세) 기존 기본값 유지.
+   */
+  designPreset?: 'registration-form'
 }) {
   const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const registrationFormDesign = isTemplateManagementScreen || designPreset === 'registration-form'
   if (scheduleForm) {
     return (
       <div
         className={
-          isTemplateManagementScreen
+          registrationFormDesign
             ? 'ujat-education-schedule-settings ujat-education-schedule-settings--template'
             : 'ujat-education-schedule-settings'
         }
       >
-        <TypedSemesterScheduleTableBlock half="h1" mode={mode} form={scheduleForm} />
-        <TypedSemesterScheduleTableBlock half="h2" mode={mode} form={scheduleForm} />
+        <TypedSemesterScheduleTableBlock
+          half="h1"
+          mode={mode}
+          form={scheduleForm}
+          registrationFormDesign={registrationFormDesign}
+        />
+        <TypedSemesterScheduleTableBlock
+          half="h2"
+          mode={mode}
+          form={scheduleForm}
+          registrationFormDesign={registrationFormDesign}
+        />
       </div>
     )
   }

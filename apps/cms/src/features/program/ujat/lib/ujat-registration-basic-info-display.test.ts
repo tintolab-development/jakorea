@@ -367,8 +367,8 @@ describe('UJAT 설문 4종 — 등록 체크와 상세', () => {
         },
       },
     }
-    expect(resolveUjatSurveyMenuItems(program).map(item => item.label)).toEqual([
-      '봉사단 만족도조사',
+    expect(resolveUjatSurveyMenuItems(program)).toEqual([
+      { key: 'survey-satisfaction', label: '만족도조사' },
     ])
     expect(resolveUjatRegistrationBasicInfoDisplay(program).surveyItems).toBe('봉사단 만족도조사')
   })
@@ -395,7 +395,7 @@ describe('UJAT 설문 4종 — 등록 체크와 상세', () => {
     })
   })
 
-  it('저장 후 LNB는 overlay 4종 체크만 2depth로 남긴다', () => {
+  it('저장 후 LNB는 봉사단·학교 만족도조사를 「만족도조사」 한 2depth로 묶는다(저장 키는 4종 유지)', () => {
     const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {
       'ujat.basicInfo.surveyItems': {
         survey: false,
@@ -405,10 +405,7 @@ describe('UJAT 설문 4종 — 등록 체크와 상세', () => {
       },
     })
     expect(next.generalSurveyMenuKeys).toEqual(['volunteer_satisfaction', 'school_satisfaction'])
-    expect(resolveUjatSurveyMenuItems(next).map(item => item.label)).toEqual([
-      '봉사단 만족도조사',
-      '학교 만족도조사',
-    ])
+    expect(resolveUjatSurveyMenuItems(next).map(item => item.label)).toEqual(['만족도조사'])
   })
 
   it('설문 0개면 LNB 항목이 비고, 1개여도 2depth 키는 유지한다', () => {
@@ -499,7 +496,7 @@ describe('UJAT 공통 저장 overlay/KPI roundtrip', () => {
     expect(draft.generalSurveyMenuKeys).toEqual(['survey', 'school_satisfaction'])
     expect(resolveUjatSurveyMenuItems(draft).map(item => item.key)).toEqual([
       'survey-poll',
-      'survey-school-satisfaction',
+      'survey-satisfaction',
     ])
   })
 })
