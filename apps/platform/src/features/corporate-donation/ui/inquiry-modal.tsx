@@ -29,6 +29,11 @@ import {
   CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_INTRO,
   CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_SECTIONS,
 } from '../lib/privacy-consent'
+import {
+  CORPORATE_CONSULTATION_ATTACHMENT_ACCEPT,
+  CORPORATE_CONSULTATION_ATTACHMENT_HINT,
+  validateCorporateConsultationAttachmentType,
+} from '../lib/attachment-policy'
 import styles from './inquiry-modal.module.css'
 
 type InquiryValues = {
@@ -56,8 +61,6 @@ const EMPTY_VALUES: InquiryValues = {
   privacyConsent: false,
 }
 
-const ACCEPTED_ATTACHMENT_TYPES = new Set(['image/jpeg', 'image/png'])
-const ACCEPTED_ATTACHMENT_EXTENSIONS = new Set(['jpg', 'jpeg', 'png'])
 
 function validateRequiredText(
   value: string,
@@ -103,15 +106,6 @@ function messageFromError(error: unknown): string {
     }
   }
   return '문의 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-}
-
-function attachmentTypeValidationMessage(file: File): string | null {
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-  if (!ACCEPTED_ATTACHMENT_TYPES.has(file.type) && !ACCEPTED_ATTACHMENT_EXTENSIONS.has(extension)) {
-    return 'JPG, PNG 형식의 파일만 첨부할 수 있습니다.'
-  }
-
-  return null
 }
 
 function buildRequest(
@@ -185,7 +179,7 @@ export function CorporateDonationInquiryModal({
     event.target.value = ''
     if (selected.length === 0) return
     for (const file of selected) {
-      const typeError = attachmentTypeValidationMessage(file)
+      const typeError = validateCorporateConsultationAttachmentType(file)
       if (typeError) {
         setUploadError(typeError)
         return
@@ -475,17 +469,14 @@ export function CorporateDonationInquiryModal({
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    accept={CORPORATE_CONSULTATION_ATTACHMENT_ACCEPT}
                     className={styles.fileInput}
                     disabled={isBusy}
                     onChange={handleFileChange}
                   />
                 </div>
                 <ul className={styles.fileHint}>
-                  <li>
-                    파일은 JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지
-                    첨부할 수 있습니다.
-                  </li>
+                  <li>{CORPORATE_CONSULTATION_ATTACHMENT_HINT}</li>
                   <li>첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.</li>
                 </ul>
                 <PFAttachedFileList
