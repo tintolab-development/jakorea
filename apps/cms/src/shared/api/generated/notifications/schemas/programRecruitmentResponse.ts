@@ -78,7 +78,7 @@ export interface ProgramRecruitmentResponse {
   volunteerTargets?: string[] | null;
   /** 비고 해당 없음. typed 없으면 overlay 호환. 없으면 null. */
   remarksNotApplicable?: boolean | null;
-  /** 봉사자 면접 슬롯. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 빈 typed 는 overlay로 복원하지 않는다. */
+  /** 면접 진행 가능 일정. VOLUNTEER는 typed 없으면 overlay 호환. PARTICIPANT는 저장된 typed만 반환하고 overlay로 채우지 않는다. 그 외 모집 유형은 null. 명시적 빈 typed 는 overlay로 복원하지 않는다. */
   interviewConfig?: RecruitmentInterviewConfig | null;
   /** 1차 서류 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. VOLUNTEER가 아니면 null. */
   documentPassAnnouncementMethod?: string | null;

@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ListSettlementAggregatesPayeeType } from './listSettlementAggregatesPayeeType';
 import type { ListSettlementAggregatesPendingItemBucket } from './listSettlementAggregatesPendingItemBucket';
 import type { ListSettlementAggregatesStatementStatus } from './listSettlementAggregatesStatementStatus';
 
@@ -42,9 +43,13 @@ fromDate?: string;
  */
 toDate?: string;
 /**
- * 리스트 지급대기 건수 버킷. 캘린더에서는 보내지 않습니다.
+ * 리스트 「지급 대기 항목」 건수 버킷(pendingPaymentSettlementItemCount 기준). 캘린더에서는 보내지 않습니다.
  */
 pendingItemBucket?: ListSettlementAggregatesPendingItemBucket;
+/**
+ * 정산 대상자 구분. INSTRUCTOR=강사(Gemini 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 생략하면 전체
+ */
+payeeType?: ListSettlementAggregatesPayeeType;
 /**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
