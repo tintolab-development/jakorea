@@ -121,6 +121,8 @@ import type {
   SchoolOrganizationUpsertRequest,
   SignedConsentDocumentParams,
   SignedConsentDocumentResponse,
+  SignedConsentOriginalContentParams,
+  SignedConsentPdfContentParams,
   SignedConsentSignatureImageParams,
   StepUpRequest,
   StepUpResponse,
@@ -6516,7 +6518,47 @@ const deleteProgramRole = (
       options);
     }
 
-return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskTeacherMemberDetail,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,signedConsentDocument,signedConsentSignatureImage,consentFilledDocument,listMemberComments,createMemberComment,download1,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,allocateCertificateSerialByRoster,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,reset,stepUp,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,updateMemberBasicInfoAsMaster,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,currentConsents,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listSelectableRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,listActiveProgramRoles,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole}};
+/**
+ * 성범죄경력 조회 동의서(CRIMINAL_HISTORY_CHECK_CONSENT)의 업로드 원본(PDF/JPG/PNG)을 CMS 모달 표시용으로 반환합니다. 파일 암호 없이 저장된 원본 그대로 inline, Cache-Control: no-store, X-Content-Type-Options: nosniff로 내려가며 다운로드용이 아닙니다. 다운로드는 signed-document 응답의 originalDownloadApi(sensitive-downloads, 파일 암호 필수)를 사용합니다. FE는 응답을 Blob으로 받아 object URL로 표시하고, 모달을 닫으면 URL을 해제하세요. 주소는 signed-document 응답의 originalViewEndpoint를 그대로 사용합니다. 권한은 signed-document 조회와 같습니다(MEMBER_READ, Master·Accounting Manager·Program Manager 역할, 성범죄 동의서는 Master 또는 그 회원이 강사로 배정·신청한 프로그램의 PM만, Accounting Manager 제외). 보관 기간 종료 등으로 증빙 열람이 막힌 문서는 410 CONSENT_ARTIFACT_NOT_ACCESSIBLE(다운로드 relay와 같은 기준). 조회할 때마다 개인정보 열람 이력(UNMASKED_VIEW)과 파일 접근 이력(VIEW, CONSENT_ORIGINAL_INLINE_VIEW)을 남깁니다.
+ * @summary 회원 동의서 업로드 원본 화면 열람
+ */
+const signedConsentOriginalContent = (
+    memberId: number,
+    consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
+    params: SignedConsentOriginalContentParams,
+ options?: SecondParameter<typeof customInstance<Blob>>,) => {
+      return customInstance<Blob>(
+      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/original/content`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminPrivacyUnmaskRequest,
+        params,
+        responseType: 'blob'
+    },
+      options);
+    }
+
+/**
+ * 전자서명 동의서(PORTRAIT_RIGHTS, PAYMENT_STATEMENT_CONSENT, RECEIPT_PRE_CONSENT, FACILITATOR_PLEDGE, ADMINISTRATIVE_INFO_CONSENT)의 서명이 들어간 전체 PDF(제출 당시 본문·입력 내용·서명 이미지)를 CMS 모달 표시용으로 반환합니다. 파일 암호 없이 저장된 PDF 그대로 inline, Cache-Control: no-store, X-Content-Type-Options: nosniff로 내려가며 다운로드용이 아닙니다. 다운로드는 signedPdfDownloadApi / signedPdfDownloadEndpoint(sensitive-downloads, 파일 암호 필수)를 사용합니다. 성범죄경력 동의서는 업로드 원본이 동의서이므로 .../signed-document/original/content를 사용합니다. FE는 응답을 Blob으로 받아 object URL로 표시하고, 모달을 닫으면 URL을 해제하세요. 주소는 signedPdfViewEndpoint를 그대로 사용합니다. 권한은 signed-document 조회와 같습니다(MEMBER_READ, Master·Accounting Manager·Program Manager 역할, 행정정보는 Master 또는 그 회원이 강사로 배정·신청한 프로그램의 PM만, Accounting Manager 제외). 조회할 때마다 개인정보 열람 이력(UNMASKED_VIEW)과 파일 접근 이력(VIEW, CONSENT_SIGNED_PDF_INLINE_VIEW)을 남깁니다.
+ * @summary 회원 전자서명 동의서 서명 PDF 화면 열람
+ */
+const signedConsentPdfContent = (
+    memberId: number,
+    consentType: 'PORTRAIT_RIGHTS' | 'PAYMENT_STATEMENT_CONSENT' | 'PAYMENT_STATEMENT_PRE_CONSENT' | 'RECEIPT_PRE_CONSENT' | 'FACILITATOR_PLEDGE' | 'ADMINISTRATIVE_INFO_CONSENT',
+    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
+    params: SignedConsentPdfContentParams,
+ options?: SecondParameter<typeof customInstance<Blob>>,) => {
+      return customInstance<Blob>(
+      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/pdf/content`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminPrivacyUnmaskRequest,
+        params,
+        responseType: 'blob'
+    },
+      options);
+    }
+
+return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskTeacherMemberDetail,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,signedConsentDocument,signedConsentSignatureImage,consentFilledDocument,listMemberComments,createMemberComment,download1,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,allocateCertificateSerialByRoster,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,reset,stepUp,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,updateMemberBasicInfoAsMaster,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,currentConsents,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listSelectableRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,listActiveProgramRoles,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole,signedConsentOriginalContent,signedConsentPdfContent}};
 export type GetRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getRolePermissions']>>>
 export type UpdateRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateRolePermissions']>>>
 export type ListProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoles']>>>
@@ -6633,3 +6675,5 @@ export type ConsentRecords1Result = NonNullable<Awaited<ReturnType<ReturnType<ty
 export type ListProgramRoleOptionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoleOptions']>>>
 export type DeleteApplicationHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteApplicationHistory']>>>
 export type DeleteProgramRoleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteProgramRole']>>>
+export type SignedConsentOriginalContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentOriginalContent']>>>
+export type SignedConsentPdfContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentPdfContent']>>>

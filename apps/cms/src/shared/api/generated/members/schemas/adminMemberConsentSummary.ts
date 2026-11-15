@@ -34,6 +34,7 @@ export interface AdminMemberConsentSummary {
   termsVersion?: string | null;
   currentTermsVersion?: string | null;
   policyUpdated: boolean;
+  /** MemberPortalConsentSummary.consentStatus와 같다. PORTRAIT_RIGHTS 전용(동의면 PARTIAL, 아니면 DISAGREED), 그 외 유형은 항상 null. */
   consentStatus?: string | null;
   programEligible?: boolean | null;
   /** PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다. */
@@ -58,4 +59,18 @@ export interface AdminMemberConsentSummary {
   signedDocumentId?: number | null;
   /** signedDocumentAvailable=true일 때만 값이 있다. POST, 본문 reason 필수. */
   signedDocumentRevealEndpoint?: string | null;
+  /** 철회 일시. status=WITHDRAWN일 때만 값이 있고, 그 외 상태는 null이다. 현재 상태를 결정한 기록(동의 기록 또는 전자서명 문서)의 철회 시각이다. */
+  withdrawnAt?: string | null;
+  /** signedDocumentId 문서의 서명이 들어간 전체 PDF(제출 당시 본문·입력 내용·서명 이미지)를 지금 열 수 있으면 true. 실제 PDF 파일이 생성·검사 완료되어 있어야 true이며, true이면 signedPdfViewEndpoint 열람이 성공하는 조건과 같다. 성범죄경력 동의서는 항상 false(업로드 원본이 동의서이므로 originalAvailable을 본다). 「동의서 보기」 노출 기준: signedPdfAvailable 또는 originalAvailable이 true일 때. 둘 다 true이면 서명 PDF를 먼저 연다. */
+  signedPdfAvailable: boolean;
+  /** signedPdfAvailable=true일 때만 값이 있다. POST, 본문 reason 필수, 파일 암호 없이 PDF 바이트(inline)를 반환한다. */
+  signedPdfViewEndpoint?: string | null;
+  /** signedPdfAvailable=true일 때만 값이 있다. 민감 파일 relay(POST, 사유·파일 암호 필수, SENSITIVE_FILE_DOWNLOAD). */
+  signedPdfDownloadEndpoint?: string | null;
+  /** 성범죄경력 동의서 전용. signedDocumentId 문서의 업로드 원본(PDF/JPG/PNG)을 지금 열 수 있으면 true. 그 외 유형은 항상 false. */
+  originalAvailable: boolean;
+  /** originalAvailable=true일 때만 값이 있다. POST, 본문 reason 필수, 파일 암호 없이 원본 바이트(inline)를 반환한다. */
+  originalViewEndpoint?: string | null;
+  /** originalAvailable=true일 때만 값이 있다. 민감 파일 relay(POST, 사유·파일 암호 필수, SENSITIVE_FILE_DOWNLOAD). */
+  originalDownloadEndpoint?: string | null;
 }

@@ -5,31 +5,41 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SignedConsentDocumentResponseConsentType } from './signedConsentDocumentResponseConsentType';
+import type { SignedConsentDocumentResponseContentFormat } from './signedConsentDocumentResponseContentFormat';
+import type { SignedConsentDocumentResponseDocumentStatus } from './signedConsentDocumentResponseDocumentStatus';
 import type { SignedConsentDocumentResponseSchemaJson } from './signedConsentDocumentResponseSchemaJson';
 import type { SignedConsentSignatureField } from './signedConsentSignatureField';
 
-/**
- * 관리자용 신청 당시 전자동의서 원본. 작성 폼이 없으므로 schemaJson은 null이고, signatureFields는 해당 문서에 고정된 서명 메타데이터입니다.
- */
 export interface SignedConsentDocumentResponse {
-  documentId?: number;
-  consentRecordId?: number;
-  memberId?: number;
-  consentType?: string;
-  titleSnapshot?: string;
-  contentFormat?: string;
-  contentSnapshot?: string;
-  version?: string;
-  templateVersionId?: number;
-  documentStatus?: string;
-  signedAt?: string;
-  expiresAt?: string;
-  retentionUntil?: string;
-  writingFormAvailable?: boolean;
-  schemaJson?: SignedConsentDocumentResponseSchemaJson;
-  signatureFields?: SignedConsentSignatureField[];
-  /** 회원이 제출한 성범죄 동의서 원본 PDF ID. 연결된 원본이 없으면 null. */
-  originalFileObjectId?: number;
-  /** 원본 PDF의 관리자 민감 파일 relay 요청 API. 원본이 없으면 null. SENSITIVE_FILE_DOWNLOAD 권한과 사유가 필요합니다. */
-  originalDownloadApi?: string;
+  documentId: number;
+  consentRecordId: number;
+  memberId: number;
+  consentType: SignedConsentDocumentResponseConsentType;
+  titleSnapshot: string;
+  contentFormat: SignedConsentDocumentResponseContentFormat;
+  contentSnapshot: string;
+  version: string;
+  /** 서명 당시 고정된 CMS form_template_version ID. legacy·외부문서는 null. */
+  templateVersionId?: number | null;
+  documentStatus: SignedConsentDocumentResponseDocumentStatus;
+  signedAt: string;
+  expiresAt?: string | null;
+  retentionUntil?: string | null;
+  writingFormAvailable: false;
+  /** Always null; this consent has no WritingFormDraft. */
+  schemaJson: SignedConsentDocumentResponseSchemaJson;
+  signatureFields: SignedConsentSignatureField[];
+  /** Uploaded criminal-history consent original file ID (PDF/JPG/PNG); null when no original is linked. This is not a criminal-history lookup result. */
+  originalFileObjectId?: number | null;
+  /** 원본 파일 다운로드 API(POST, 민감 파일 relay). 원본이 없으면 null. SENSITIVE_FILE_DOWNLOAD 권한, 사유, 파일 암호가 필요하고 암호가 걸린 PDF(이미지는 AES ZIP)로 내려갑니다. 반환된 relayToken·streamUrl을 따릅니다. */
+  originalDownloadApi?: string | null;
+  /** 원본 파일 화면 열람 API(POST, 본문 reason 필수). 원본이 없으면 null. 파일 암호 없이 원본 그대로 inline으로 내려가며 CMS 모달 표시용입니다. originalFileObjectId가 있을 때만 값이 있습니다. */
+  originalViewEndpoint?: string | null;
+  /** 서명이 들어간 전체 PDF(제출 당시 본문·입력 내용·서명 이미지) 파일 ID. 성범죄경력 동의서, PDF가 아직 생성되지 않았거나 생성에 실패한 문서는 null. */
+  signedPdfFileObjectId?: number | null;
+  /** 서명 PDF 화면 열람 API(POST, 본문 reason 필수). signedPdfFileObjectId가 있을 때만 값이 있습니다. 파일 암호 없이 PDF 그대로 inline으로 내려가며 CMS 모달 표시용입니다. */
+  signedPdfViewEndpoint?: string | null;
+  /** 서명 PDF 다운로드 API(POST, 민감 파일 relay). signedPdfFileObjectId가 있을 때만 값이 있습니다. SENSITIVE_FILE_DOWNLOAD 권한, 사유, 파일 암호가 필요하고 암호가 걸린 PDF로 내려갑니다. */
+  signedPdfDownloadApi?: string | null;
 }

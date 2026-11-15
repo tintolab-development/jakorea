@@ -7,7 +7,7 @@
  */
 
 /**
- * 작성본을 지금 열 수 없는 이유. 여러 이유가 겹치면 우선순위가 가장 높은 하나만 내려준다. 우선순위: NOT_SUPPORTED > WITHDRAWN > NOT_AGREED > CONSENT_EXPIRED > RETENTION_EXPIRED > TERMS_VERSION_MISMATCH > NOT_SUBMITTED. NOT_SUPPORTED=작성본이 없는 유형(MARKETING·SERVICE_TERMS·PRIVACY_COLLECTION 등, CONSENT_FILLED_DOCUMENT_TYPE_NOT_SUPPORTED). WITHDRAWN=철회. NOT_AGREED=동의한 적 없음·동의 기록 없음. CONSENT_EXPIRED=동의 유효기간 만료(초상권은 동의일로부터 1년, 진행자 서약·행정정보·범죄경력 동의는 만료일이 없거나 지난 경우 포함). RETENTION_EXPIRED=보관 기간이 지나 작성본 파기(CONSENT_FILLED_DOCUMENT_RETENTION_EXPIRED). TERMS_VERSION_MISMATCH=초상권 동의 버전이 현재 게시 약관 버전과 다름(초상권 전용). NOT_SUBMITTED=작성본을 지원하는 유형이지만 저장된 작성본 없음(CONSENT_FILLED_DOCUMENT_NOT_FOUND).
+ * 작성본을 지금 열 수 없는 이유. 여러 이유가 겹치면 우선순위가 가장 높은 하나만 내려준다. 우선순위: NOT_SUPPORTED > WITHDRAWN > NOT_AGREED > CONSENT_EXPIRED > RETENTION_EXPIRED > NOT_SUBMITTED. NOT_SUPPORTED=작성본이 없는 유형(MARKETING·SERVICE_TERMS·PRIVACY_COLLECTION 등, CONSENT_FILLED_DOCUMENT_TYPE_NOT_SUPPORTED). WITHDRAWN=철회. NOT_AGREED=동의한 적 없음·동의 기록 없음. CONSENT_EXPIRED=동의 유효기간 만료(초상권은 동의일로부터 1년, 진행자 서약·행정정보·범죄경력 동의는 만료일이 없거나 지난 경우 포함). RETENTION_EXPIRED=보관 기간이 지나 작성본 파기(CONSENT_FILLED_DOCUMENT_RETENTION_EXPIRED). NOT_SUBMITTED=작성본을 지원하는 유형이지만 저장된 작성본 없음(CONSENT_FILLED_DOCUMENT_NOT_FOUND). 약관 버전이 현재 게시 버전과 달라도 열람을 막지 않는다(작성 당시 양식 그대로 조회). 재동의 필요 여부는 reconsentRequired로만 표현한다.
  */
 export type FilledDocumentUnavailableReason = typeof FilledDocumentUnavailableReason[keyof typeof FilledDocumentUnavailableReason];
 
@@ -18,6 +18,5 @@ export const FilledDocumentUnavailableReason = {
   NOT_AGREED: 'NOT_AGREED',
   CONSENT_EXPIRED: 'CONSENT_EXPIRED',
   RETENTION_EXPIRED: 'RETENTION_EXPIRED',
-  TERMS_VERSION_MISMATCH: 'TERMS_VERSION_MISMATCH',
   NOT_SUBMITTED: 'NOT_SUBMITTED',
 } as const;

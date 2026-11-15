@@ -280,10 +280,10 @@ export function UjatEducationProgressVolunteerTermsConsentSection({
       consentType: record?.consentType,
       documentAgreed: record?.consentValue === true,
       filledDocumentAvailable: record?.filledDocumentAvailable,
-      formResponseId: record?.formResponseId,
-      consentRecordId: record?.consentRecordId,
-      filledDocumentId: record?.filledDocumentId,
-      filledDocumentRevealEndpoint: record?.filledDocumentRevealEndpoint,
+      formResponseId: record?.formResponseId ?? undefined,
+      consentRecordId: record?.consentRecordId ?? undefined,
+      filledDocumentId: record?.filledDocumentId ?? undefined,
+      filledDocumentRevealEndpoint: record?.filledDocumentRevealEndpoint ?? undefined,
     })
   }
 
