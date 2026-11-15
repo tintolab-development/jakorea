@@ -544,6 +544,7 @@ export function buildAssignedSettlementItems(
       ...(!individual && settlement?.settlementId != null
         ? { settlementId: settlement.settlementId }
         : {}),
+      ...(paymentStatus ? { paymentStatus } : {}),
       ...(isAdminApplicationCorrectionRequest({
         applicationStatus: settlement?.status,
         settlementId: settlement?.settlementId,

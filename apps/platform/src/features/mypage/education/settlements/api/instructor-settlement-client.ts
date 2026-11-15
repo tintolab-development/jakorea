@@ -119,6 +119,21 @@ export async function fetchPaymentStatementCorrectionDetail(
   return unwrapEnvelope<PaymentStatementCorrectionDetail>(data)
 }
 
+/**
+ * POST /api/portal/me/settlements/{settlementId}/payment-statement/correction-request
+ * 확인 완료·지급 시작 전 지급조서를 CORRECTION_REQUESTED로 바꾼다.
+ */
+export async function requestPaymentStatementCorrection(
+  settlementId: number,
+  reason: string,
+): Promise<PortalSettlementStatusChange> {
+  const { data } = await axiosClient.post<unknown>(
+    `/api/portal/me/settlements/${settlementId}/payment-statement/correction-request`,
+    { reason },
+  )
+  return unwrapEnvelope<PortalSettlementStatusChange>(data)
+}
+
 export async function reapplyCorrectedPaymentStatement(
   settlementId: number,
 ): Promise<PortalSettlementStatusChange> {

@@ -12,6 +12,7 @@ import {
   PAYMENT_STATEMENT_OVERDUE_MESSAGE,
   paymentStatementLateSubmitMessage,
   PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE,
+  canRequestPaymentStatementCorrection,
   resolveSettlementStatusUi,
   type SettlementDocumentKind,
   type SettlementStatusAction,
@@ -36,7 +37,9 @@ import alertBlack24Url from '@/shared/assets/icons/alert-black-24.svg'
 import villaIconUrl from '@/shared/assets/icons/villa.svg'
 import { PFAlertModal, PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
 import { useReapplyPaymentStatementMutation } from '../api/use-reapply-payment-statement-mutation'
+import { useRequestPaymentStatementCorrectionMutation } from '../api/use-request-payment-statement-correction-mutation'
 import { CorrectionDetailModal } from './correction-detail-modal'
+import { FeeCorrectionRequestModal } from './fee-correction-request-modal'
 import { instructorSettlementApiErrorMessage } from '../lib/instructor-settlement-contract'
 import {
   resolveEducationErrorAlert,
@@ -88,12 +91,21 @@ export function EducationSettlementRow({
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
   const [errorAlert, setErrorAlert] = useState<EducationAlert | null>(null)
   const [correctionOpen, setCorrectionOpen] = useState(false)
+  const [correctionRequestOpen, setCorrectionRequestOpen] = useState(false)
   const closeCorrection = useCallback(() => setCorrectionOpen(false), [])
   /** 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패(코드별 안내는 설명에) */
   const showSettlementError = useCallback((error: unknown) => {
     setErrorAlert(resolveEducationErrorAlert(error, instructorSettlementApiErrorMessage))
   }, [])
   const reapplyMutation = useReapplyPaymentStatementMutation()
+  const requestCorrectionMutation = useRequestPaymentStatementCorrectionMutation()
+  const canRequestCorrection = canRequestPaymentStatementCorrection({
+    documentKind,
+    status: item.status,
+    settlementId: item.settlementId,
+    paymentStatus: item.paymentStatus,
+    gemini: hideInstructorWrite,
+  })
   const config = resolveSettlementStatusUi(item.status, documentKind, {
     adminApplicationCorrection: item.adminApplicationCorrection === true,
   })
@@ -316,6 +328,21 @@ export function EducationSettlementRow({
         </PFButton>
       )
     }
+    if (action === 'request-correction') {
+      if (!canRequestCorrection) return null
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="primary"
+          size="large"
+          disabled={requestCorrectionMutation.isPending}
+          onClick={() => setCorrectionRequestOpen(true)}
+        >
+          정정 요청하기
+        </PFButton>
+      )
+    }
     if (action === 'view-correction') {
       const correctionDisabled = item.settlementId == null
       return (
@@ -474,6 +501,26 @@ export function EducationSettlementRow({
         ) : null}
       </EducationSessionCard>
 
+      <FeeCorrectionRequestModal
+        open={correctionRequestOpen}
+        submitting={requestCorrectionMutation.isPending}
+        minLength={2}
+        onCancel={() => {
+          if (requestCorrectionMutation.isPending) return
+          setCorrectionRequestOpen(false)
+        }}
+        onSubmit={reason => {
+          const settlementId = item.settlementId
+          if (settlementId == null) return
+          requestCorrectionMutation.mutate(
+            { settlementId, reason },
+            {
+              onSuccess: () => setCorrectionRequestOpen(false),
+              onError: showSettlementError,
+            },
+          )
+        }}
+      />
       <PFModal
         open={rejectOpen}
         size="md"
