@@ -2443,11 +2443,21 @@ export function useProgramRegistrationEditor(
               const recruitDraft =
                 recruitSaved?.draft ??
                 createSeedDraftForOperationalCatalogId('recruitment-trained-teachers')
+              // 신청 양식은 세션 draft(지금 작성 중인 「제공받는 곳」 등) 우선 — localStorage 저장본은
+              // [임시 저장] 때만 쓰여 오래됐을 수 있다. 아래 항목이 같은 키의 세션 항목을 덮으므로 여기서 골라 둔다.
+              const sessionApplication = (operationalOverrides ?? []).find(
+                item =>
+                  item.templateCode === 'application-trained-teachers' &&
+                  item.draft.paragraphs.length > 0
+              )
               const applicationDraft =
+                sessionApplication?.draft ??
                 applicationSaved?.draft ??
                 createSeedDraftForOperationalCatalogId('application-trained-teachers')
               operationalOverrides = [
-                ...(operationalOverrides ?? []),
+                ...(operationalOverrides ?? []).filter(
+                  item => item.templateCode !== 'application-trained-teachers'
+                ),
                 ...(recruitDraft
                   ? [
                       {
@@ -2468,7 +2478,9 @@ export function useProgramRegistrationEditor(
                         overlay: serializeTrainedTeachersApplicationForFormVersion(
                           canonical.application
                         ),
-                        editorState: trainedTeachersApplicationEditorState(canonical.application),
+                        editorState:
+                          sessionApplication?.editorState ??
+                          trainedTeachersApplicationEditorState(canonical.application),
                       },
                     ]
                   : []),
