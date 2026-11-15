@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   buildSettlementTabPath,
@@ -97,8 +97,24 @@ import {
 } from '@/features/mypage/education/shared/lib/education-error-alert'
 import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
 import { ReceiptGuardianGateModals } from '@/features/mypage/education/settlements/ui/receipt-guardian-gate-modals'
+import { FeeCorrectionRequestModal } from '@/features/mypage/education/settlements/ui/fee-correction-request-modal'
 import { RECEIPT_PRE_CONSENT_SUBMIT_BLOCKED_DESCRIPTION } from '@/features/mypage/education/settlements/lib/settlement-pre-consent-copy'
 import styles from './page.module.css'
+
+/** 화면이 준비된 뒤 한 번만 onSubmit을 부른다(StrictMode 이중 실행 방지) */
+function SubmitOnMount({ onSubmit }: { onSubmit: () => void }) {
+  const firedRef = useRef(false)
+  const onSubmitRef = useRef(onSubmit)
+  useEffect(() => {
+    onSubmitRef.current = onSubmit
+  })
+  useEffect(() => {
+    if (firedRef.current) return
+    firedRef.current = true
+    onSubmitRef.current()
+  }, [])
+  return null
+}
 
 function readRevisionNoParam(raw: string | null): number | null {
   if (!raw) return null
@@ -164,6 +180,13 @@ export function MypageEducationSettlementConfirmPage() {
   const [alertTitle, setAlertTitle] = useState('안내')
   const [alertMessage, setAlertMessage] = useState<ReactNode>('')
   const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
+  const [feeCorrectionOpen, setFeeCorrectionOpen] = useState(false)
+  /** 작성 화면 [강사비 정정 요청하기] 팝업에서 넘어온 사유 — 준비되면 한 번만 제출한다 */
+  const [pendingFeeCorrectionReason, setPendingFeeCorrectionReason] = useState<string | null>(() =>
+    viewMode
+      ? null
+      : ((location.state as SettlementWriteDraftLocationState | null)?.feeCorrectionReason?.trim() || null),
+  )
   /** 업무 안내 — 제목 「안내」, 시안 팝업 문구는 그 제목 */
   const openAlert = (message: ReactNode, title = '안내') => {
     setAlertTitle(title)
@@ -351,7 +374,7 @@ export function MypageEducationSettlementConfirmPage() {
     )
   }
 
-  const handleComplete = () => {
+  const handleComplete = (feeCorrectionReason?: string) => {
     if (remoteSettlements.individualDisabled) {
       openAlert(INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE)
       return
@@ -419,7 +442,12 @@ export function MypageEducationSettlementConfirmPage() {
           openAlert(instructorSettlementPreview.submitBlock.message)
           return
         }
-        const create = resubmit ? undefined : buildInstructorSettlementCreateRequest(draft)
+        const create = resubmit
+          ? undefined
+          : {
+              ...buildInstructorSettlementCreateRequest(draft),
+              ...(feeCorrectionReason ? { correctionRequestReason: feeCorrectionReason } : {}),
+            }
         void instructorSubmitMutation
           .mutateAsync({
             settlementApplicationId,
@@ -504,6 +532,11 @@ export function MypageEducationSettlementConfirmPage() {
     })
   }
 
+  /** 강사 지급조서 최초 제출에만 — 반려 후 재제출(/revisions)은 정정 요청을 함께 보낼 수 없다 */
+  const feeCorrectionAvailable =
+    isInstructorSubmit &&
+    !(draft.meta.resubmit === true && draft.meta.settlementApplicationId != null)
+
   return (
     <PFFormPage
       aria-label={documentKind === 'receipt' ? '영수증 신청 내용 확인' : '지급조서 신청 내용 확인'}
@@ -517,8 +550,31 @@ export function MypageEducationSettlementConfirmPage() {
         session={session}
         submitting={submitMutation.isPending || instructorSubmitMutation.isPending}
         readOnly={false}
-        onComplete={handleComplete}
+        onComplete={() => handleComplete()}
+        onRequestFeeCorrection={feeCorrectionAvailable ? () => setFeeCorrectionOpen(true) : undefined}
         onBack={handleBack}
+      />
+      {pendingFeeCorrectionReason && !remoteSettlements.isLoading ? (
+        <SubmitOnMount
+          onSubmit={() => {
+            const reason = pendingFeeCorrectionReason
+            setPendingFeeCorrectionReason(null)
+            // 새로고침·뒤로가기로 다시 제출되지 않게 사유를 기록에서 지운다
+            navigate(`${location.pathname}${location.search}`, {
+              replace: true,
+              state: { draft: storedDraft },
+            })
+            handleComplete(reason)
+          }}
+        />
+      ) : null}
+      <FeeCorrectionRequestModal
+        open={feeCorrectionOpen}
+        onCancel={() => setFeeCorrectionOpen(false)}
+        onSubmit={reason => {
+          setFeeCorrectionOpen(false)
+          handleComplete(reason)
+        }}
       />
       {documentKind === 'receipt' ? (
         <>

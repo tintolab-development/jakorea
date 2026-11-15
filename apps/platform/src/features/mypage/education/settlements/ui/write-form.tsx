@@ -9,6 +9,7 @@ import type { EducationSettlementItem } from '../model/types'
 import type {
   SettlementAmountItemDraft,
   SettlementReceiptAttachment,
+  SettlementWriteDraft,
   SettlementWriteDraftLocationState,
 } from '../model/write-draft'
 import {
@@ -133,6 +134,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import { FeeCorrectionRequestModal } from './fee-correction-request-modal'
 import styles from './write-form.module.css'
 
 type TripType = 'one_way' | 'round_trip'
@@ -793,15 +795,15 @@ export function EducationSettlementWriteForm({
       ? instructorSettlementPreview.submitBlock
       : null
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  /** [신청하기]·[강사비 정정 요청하기] 공통 — 입력 검증을 통과하면 확인 화면으로 넘길 draft, 아니면 안내 후 null */
+  const prepareSubmitDraft = (): SettlementWriteDraft | null => {
     if (consentSidecarQuery.isLoading || profileQuery.isPending) {
       showAlert(
         isReceipt
           ? '영수증 발급 사전 동의서 정보를 불러오는 중입니다.'
           : '지급조서 사전 동의서 정보를 불러오는 중입니다.',
       )
-      return
+      return null
     }
     if (isReceipt && payableItems.length === 0) {
       showAlert(
@@ -809,14 +811,14 @@ export function EducationSettlementWriteForm({
           individualIneligibleMessage('NO_PAYABLE_ITEMS') ??
           '이 프로그램에 신청할 수 있는 지급 항목이 없습니다.',
       )
-      return
+      return null
     }
     if (isReceipt && evidencePolicyUnconfigured) {
       showAlert(
         individualIneligibleMessage('EVIDENCE_POLICY_UNCONFIGURED') ??
           '증빙 정책을 확인할 수 없어 신청할 수 없습니다',
       )
-      return
+      return null
     }
     if (isReceipt && (session?.eligible === false || matchedIndividual?.eligible === false)) {
       showAlert(
@@ -827,20 +829,20 @@ export function EducationSettlementWriteForm({
           ) ??
           '지금은 영수증을 제출할 수 없습니다.',
       )
-      return
+      return null
     }
     if (lectureFeeBlocked) {
       showAlert(lectureFeeBlockerMessage ?? INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE)
-      return
+      return null
     }
     // 사업 운영 종료 후 최초 제출 차단(A1) — 서버 409와 같은 문구
     if (instructorSettlementPreview.blockerCode === SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE) {
       showAlert(PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE)
-      return
+      return null
     }
     if (receiptLimitError) {
       showAlert(receiptLimitError)
-      return
+      return null
     }
 
     const draft = buildSettlementWriteDraft({
@@ -923,7 +925,7 @@ export function EducationSettlementWriteForm({
       const missingLabels = collectSettlementWriteRequiredMissingLabels(draft)
       if (missingLabels.length > 0) {
         setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
-        return
+        return null
       }
     }
     if (validationError) {
@@ -937,9 +939,13 @@ export function EducationSettlementWriteForm({
         ),
         alert.title,
       )
-      return
+      return null
     }
 
+    return draft
+  }
+
+  const goToConfirm = (draft: SettlementWriteDraft, feeCorrectionReason?: string) => {
     saveSettlementWriteDraft(draft)
     navigate(
       buildSettlementConfirmPath({
@@ -948,8 +954,28 @@ export function EducationSettlementWriteForm({
         area: resolveSettlementAreaFromPathname(location.pathname),
         applicationType: applicationType ?? undefined,
       }),
-      { state: { draft } },
+      {
+        state: feeCorrectionReason
+          ? ({ draft, feeCorrectionReason } satisfies SettlementWriteDraftLocationState)
+          : { draft },
+      },
     )
+  }
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const draft = prepareSubmitDraft()
+    if (draft) goToConfirm(draft)
+  }
+
+  /** 시안 01 「지급조서 작성 전」의 [강사비 정정 요청하기] — 입력 검증 후 정정 요청 팝업 */
+  const [feeCorrectionDraft, setFeeCorrectionDraft] = useState<SettlementWriteDraft | null>(null)
+  /** 강사 지급조서 최초 제출에만 — 반려 후 재제출(/revisions)은 정정 요청을 함께 보낼 수 없다 */
+  const feeCorrectionAvailable =
+    !isReceipt && !(resubmitRequested && settlementApplicationIdForSubmit != null)
+  const handleRequestFeeCorrection = () => {
+    const draft = prepareSubmitDraft()
+    if (draft) setFeeCorrectionDraft(draft)
   }
 
   let sectionNo = 1
@@ -1398,16 +1424,40 @@ export function EducationSettlementWriteForm({
               {lectureFeeBlockerMessage}
             </PFText>
           ) : null}
-          <PFButton
-            type="submit"
-            size="xlarge"
-            width={240}
-            disabled={receiptSubmitBlocked || lectureFeeBlocked || Boolean(receiptLimitError)}
-          >
-            신청하기
-          </PFButton>
+          <div className={styles.actionButtons}>
+            {feeCorrectionAvailable ? (
+              <PFButton
+                type="button"
+                variant="secondary"
+                size="xlarge"
+                width={240}
+                disabled={lectureFeeBlocked}
+                onClick={handleRequestFeeCorrection}
+              >
+                강사비 정정 요청하기
+              </PFButton>
+            ) : null}
+            <PFButton
+              type="submit"
+              size="xlarge"
+              width={240}
+              disabled={receiptSubmitBlocked || lectureFeeBlocked || Boolean(receiptLimitError)}
+            >
+              신청하기
+            </PFButton>
+          </div>
         </div>
       </form>
+      <FeeCorrectionRequestModal
+        open={feeCorrectionDraft != null}
+        onCancel={() => setFeeCorrectionDraft(null)}
+        onSubmit={reason => {
+          if (!feeCorrectionDraft) return
+          const draft = feeCorrectionDraft
+          setFeeCorrectionDraft(null)
+          goToConfirm(draft, reason)
+        }}
+      />
       <PFAlertModal
         open={alertOpen}
         title={alertTitle}

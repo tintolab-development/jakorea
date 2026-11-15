@@ -93,4 +93,9 @@ export type SettlementWriteDraft = {
 
 export type SettlementWriteDraftLocationState = {
   draft?: SettlementWriteDraft
+  /**
+   * 지급조서 작성 화면 [강사비 정정 요청하기] 팝업에서 쓴 사유 — 확인 화면이 받자마자
+   * 지급조서 제출과 정정 요청을 함께 보낸다(POST /api/portal/me/settlement-applications correctionRequestReason).
+   */
+  feeCorrectionReason?: string
 }

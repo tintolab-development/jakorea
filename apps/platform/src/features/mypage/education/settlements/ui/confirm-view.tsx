@@ -54,6 +54,8 @@ type EducationSettlementConfirmViewProps = {
   submitting?: boolean
   readOnly?: boolean
   onComplete: () => void
+  /** 시안 02 [강사비 정정 요청하기] — 강사 지급조서 최초 제출일 때만 넘긴다 */
+  onRequestFeeCorrection?: () => void
   onBack: () => void
 }
 
@@ -137,6 +139,7 @@ export function EducationSettlementConfirmView({
   submitting = false,
   readOnly = false,
   onComplete,
+  onRequestFeeCorrection,
   onBack,
 }: EducationSettlementConfirmViewProps) {
   const isReceipt = isReceiptWriteDraft(draft)
@@ -374,6 +377,18 @@ export function EducationSettlementConfirmView({
             {submitting ? '제출 중' : '신청 완료하기'}
           </PFButton>
         )}
+        {!readOnly && onRequestFeeCorrection ? (
+          <PFButton
+            type="button"
+            variant="secondary"
+            size="xlarge"
+            width="100%"
+            disabled={submitting || lectureFeeBlocked}
+            onClick={onRequestFeeCorrection}
+          >
+            강사비 정정 요청하기
+          </PFButton>
+        ) : null}
         <PFButton
           type="button"
           variant="tertiary"
