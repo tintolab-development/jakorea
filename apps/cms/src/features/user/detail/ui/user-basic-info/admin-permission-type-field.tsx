@@ -13,7 +13,7 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { AdminMfaResetButton } from '@/features/user/detail/ui/admin-mfa-reset-button'
-import { getAdminPermissionTag } from '@/shared/lib/status-tag-specs'
+import { getAdminListPermissionTag, getAdminPermissionTag } from '@/shared/lib/status-tag-specs'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { getSessionAdminRoleCode } from '@/shared/lib/session-admin-role'
 
@@ -58,7 +58,8 @@ export function AdminPermissionTypeField({
         <StatusDropdownCell<AdminPermissionTagVariant>
           status={selectedPerm}
           statusOptions={ADMIN_PERMISSION_SELECT_OPTIONS.map(option => option.value)}
-          getTag={getAdminPermissionTag}
+          // QA: 권한 유형 변경 시 태그와 드롭다운 목록 너비를 맞춘다 — 옵션 라벨 길이가 달라 목록과 같은 140 고정 태그를 쓴다
+          getTag={getAdminListPermissionTag}
           isItemDisabled={(cur, option) => cur === option}
           onChange={async next => {
             if (permDropdownInView) {

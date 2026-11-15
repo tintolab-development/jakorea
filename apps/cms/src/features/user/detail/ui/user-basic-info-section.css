@@ -269,6 +269,14 @@
   overflow: visible;
 }
 
+/*
+ * 보기 슬롯 공통 `.detail-info-form__field-content--view > span { overflow: hidden }`이
+ * 드롭다운 트리거 틀(margin -8px)을 잘라 열림 테두리 오른쪽 변만 민트 선으로 남던 문제 — 이 래퍼는 잘라내지 않는다.
+ */
+.detail-info-form__field-content--view > .user-basic-info-section__admin-permission-inline {
+  overflow: visible;
+}
+
 /* 시안 4427:84432: `Master │ [MFA 재발급]` 구분선 양쪽 16px */
 .user-basic-info-section__admin-permission-inline > .detail-info-form-inputs-separator {
   margin: 0 16px;
