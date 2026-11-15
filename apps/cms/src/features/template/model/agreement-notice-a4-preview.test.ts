@@ -16,8 +16,8 @@ describe('agreement-notice A4 preview', () => {
     )
   })
 
-  it('uses compact section gap for 1-page layout', () => {
-    expect(AGREEMENT_NOTICE_A4_SECTION_GAP_PX).toBeLessThan(40)
+  it('uses the 40px section gap from design 5767:42587', () => {
+    expect(AGREEMENT_NOTICE_A4_SECTION_GAP_PX).toBe(40)
   })
 
   it('zeros gap around confirmationClosing stack divider', () => {
