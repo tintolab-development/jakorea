@@ -37,6 +37,8 @@ export {
   isLoginNetworkError,
   LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES,
   isPasswordRecentlyUsedApiError,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
 } from './lib'
 export {
   usePortalLoginMutation,

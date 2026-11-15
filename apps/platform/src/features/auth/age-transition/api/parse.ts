@@ -62,13 +62,13 @@ export function toAgeTransitionApiError(error: unknown, fallbackCode = 'UNKNOWN'
   if (isAxiosError(error)) {
     const payload = error.response?.data
     const code = readErrorCode(payload) ?? fallbackCode
-    return new AgeTransitionApiError(code, 'AGE14_TRANSITION_ERROR', error.response?.status)
+    return new AgeTransitionApiError(code, 'AGE14_TRANSITION_ERROR', error.response?.status, error)
   }
   const code =
     error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
       ? error.code
       : fallbackCode
-  return new AgeTransitionApiError(code, 'AGE14_TRANSITION_ERROR')
+  return new AgeTransitionApiError(code, 'AGE14_TRANSITION_ERROR', undefined, error)
 }
 
 function unwrapEnvelope<T>(payload: unknown): T {

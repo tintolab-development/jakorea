@@ -87,6 +87,12 @@ import {
   validateBirthStep,
 } from '../lib/identity/identity.logic'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  isPlatformNetworkError,
+  isPlatformRateLimitedError,
+  resolvePlatformErrorAlert,
+} from '@/shared/lib/platform-error-alert'
 import { resolvePortalSchoolOrganizationId } from '../lib/resolve-portal-school-organization-id'
 import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import { resolveSignUpProgressStep } from '../lib/progress-step'
@@ -173,6 +179,11 @@ import {
 } from '../lib/portrait-consent-bridge'
 
 export type UseSignUpReturn = ReturnType<typeof useSignUp>
+
+/**
+ * 서버 업무 메시지가 없는 실패를 알아보기 위한 표식 — 화면에 쓰지 않고 시안 「처리 실패」 팝업으로 바꾼다.
+ */
+const SIGNUP_REQUEST_FAILED_FALLBACK = '__signup_request_failed__'
 
 export function useSignUp() {
   const remoteApi = isRemoteApiConfigured()
@@ -308,10 +319,19 @@ export function useSignUp() {
   const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 (단계 공통) */
+  const [requestErrorAlert, setRequestErrorAlert] = useState<PlatformAlertCopy | null>(null)
   /** 본인인증부터 다시 진행해야 할 때 본인인증 단계에 보여 줄 서버 message */
   const [identityRestartMessage, setIdentityRestartMessage] = useState('')
   /** 최종 가입 실패 시 입력칸에 붙이는 서버 message (PB2) */
   const [passwordServerError, setPasswordServerError] = useState('')
+
+  /** 응답 없음·429면 시안 공통 팝업을 띄우고 true */
+  const showTransportFailureAlert = (error: unknown): boolean => {
+    if (!isPlatformNetworkError(error) && !isPlatformRateLimitedError(error)) return false
+    setRequestErrorAlert(resolvePlatformErrorAlert(error))
+    return true
+  }
   const [profileFieldErrors, setProfileFieldErrors] = useState<
     Partial<Record<Extract<SignupFieldErrorKey, 'name' | 'address' | 'grade'>, string>>
   >({})
@@ -925,7 +945,7 @@ export function useSignUp() {
 
       const termsVersion = resolveGuardianConsentVersion(termsQuery.data ?? null)
       if (!termsVersion) {
-        setGuardianAgreementSubmitError('약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+        setRequestErrorAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
 
@@ -936,7 +956,7 @@ export function useSignUp() {
       })
       const intentId = intent.intentId?.trim()
       if (!intentId) {
-        setGuardianAgreementSubmitError('가입 준비 정보를 발급하지 못했습니다.')
+        setRequestErrorAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
 
@@ -948,7 +968,7 @@ export function useSignUp() {
       const guardianSessionId = challenge.sessionId
       const statusToken = challenge.statusToken?.trim()
       if (guardianSessionId == null || !statusToken) {
-        setGuardianAgreementSubmitError('보호자 인증 세션을 생성하지 못했습니다.')
+        setRequestErrorAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
 
@@ -986,6 +1006,7 @@ export function useSignUp() {
       setGuardianIdentityErrorMessage('')
       pushWizard(3, 'guardian-identity')
     } catch (error) {
+      if (showTransportFailureAlert(error)) return
       const resolved = resolveGuardianBridgeError(error)
       if (resolved.action === 'restart_profile' || resolved.action === 'restart_intent') {
         restartGuardianSession(resolved.message)
@@ -1074,7 +1095,12 @@ export function useSignUp() {
           // 429: 공통 처리처럼 서버 message를 보여 주고 멈춘다.
           // 그 밖(404 — 사전 검사 API가 아직 없는 서버, 5xx, 네트워크)은 막지 않고 최종 가입 가드에 맡긴다.
           const status = detail?.httpStatus
-          if (status === 400 || status === 401 || status === 429) {
+          if (status === 429) {
+            // 시안 「공통 제한 안내 / 처리 제한」
+            setRequestErrorAlert(PLATFORM_ALERT_COPY.rateLimited)
+            return
+          }
+          if (status === 400 || status === 401) {
             setIdentityRestartMessage(
               getSignupApiErrorMessage(error, SIGNUP_IDENTITY_REQUIRED_MESSAGE),
             )
@@ -1258,9 +1284,10 @@ export function useSignUp() {
       })
       setIsGuardianFinalConsentCompleted(true)
       pushWizard(4)
-    } catch {
+    } catch (error) {
       guardianFinalConsentInFlightRef.current = false
-      setGuardianProfileSubmitError('보호자 동의를 완료하지 못했습니다. 다시 시도해 주세요.')
+      // 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업
+      setRequestErrorAlert(resolvePlatformErrorAlert(error))
     } finally {
       setGuardianProfileSubmitting(false)
     }
@@ -1312,9 +1339,14 @@ export function useSignUp() {
       }
     } catch (error) {
       setEmailCheckStatus('error')
-      setEmailMessage(
-        getSignupApiErrorMessage(error, '이메일 확인에 실패했어요. 잠시 후 다시 시도해 주세요.')
-      )
+      if (showTransportFailureAlert(error)) return
+      // 서버 업무 메시지는 입력란 아래, 그 밖의 실패는 시안 「처리 실패」 팝업
+      const message = getSignupApiErrorMessage(error, SIGNUP_REQUEST_FAILED_FALLBACK)
+      if (message === SIGNUP_REQUEST_FAILED_FALLBACK) {
+        setRequestErrorAlert(PLATFORM_ALERT_COPY.requestFailed)
+        return
+      }
+      setEmailMessage(message)
     } finally {
       setIsEmailChecking(false)
     }
@@ -1642,11 +1674,12 @@ export function useSignUp() {
         state: { memberType: selectedType },
       })
     } catch (error) {
+      if (showTransportFailureAlert(error)) return
       applySignupSubmitError(
         resolveSignupSubmitError(
           error,
           { memberType: selectedType, isUnderAgeSignup: underAgeSignup },
-          '가입에 실패했어요. 입력 정보를 확인한 뒤 다시 시도해 주세요.',
+          SIGNUP_REQUEST_FAILED_FALLBACK,
         ),
         underAgeSignup,
       )
@@ -1666,6 +1699,12 @@ export function useSignUp() {
   ) => {
     switch (resolution.kind) {
       case 'confirmation':
+        // 서버 업무 메시지가 없는 실패는 시안 「처리 실패」 팝업
+        if (resolution.message === SIGNUP_REQUEST_FAILED_FALLBACK) {
+          setSubmitMessage('')
+          setRequestErrorAlert(PLATFORM_ALERT_COPY.requestFailed)
+          return
+        }
         setSubmitMessage(resolution.message)
         return
       case 'duplicate-member':
@@ -1742,6 +1781,11 @@ export function useSignUp() {
       })
 
   return {
+    /** 단계 공통 요청 실패 팝업 */
+    requestErrorAlert: {
+      copy: requestErrorAlert,
+      close: () => setRequestErrorAlert(null),
+    },
     step: {
       current: currentStep,
       total: totalSteps,

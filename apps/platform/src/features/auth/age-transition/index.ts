@@ -40,6 +40,7 @@ export {
   mapAgeTransitionErrorCodeToAlert,
   mapAgeTransitionNiceStatusToAlert,
   mapAgeTransitionUnknownErrorToAlert,
+  isAgeTransitionAuthBoundaryError,
   markAgeTransitionIdentityPending,
   markAgeTransitionNiceValidated,
   resolvePostLoginPath,
