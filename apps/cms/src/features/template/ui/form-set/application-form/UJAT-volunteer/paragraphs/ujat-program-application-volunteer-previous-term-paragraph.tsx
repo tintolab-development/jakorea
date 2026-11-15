@@ -15,18 +15,33 @@ import {
   useUjatApplicationVolunteerOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { FILE_SELECT_MAX_FILE_BYTES } from '@/shared/ui/file-select-field-limits'
+import {
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE,
+  GENERAL_RECRUIT_DETAIL_ATTACHMENT_MAX_COUNT,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 
+// 시안 4082:106592 봉사자 신청 폼 「수료증 첨부」(16301:626058) 안내 문구
 const CERTIFICATE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
+  '- 파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
   '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
+/** 안내 문구와 같은 제한 — 최대 10개 · 파일당 20MB · 총 100MB */
+const CERTIFICATE_MAX_COUNT = GENERAL_RECRUIT_DETAIL_ATTACHMENT_MAX_COUNT
+const CERTIFICATE_MAX_FILE_BYTES = FILE_SELECT_MAX_FILE_BYTES
+const CERTIFICATE_MAX_TOTAL_BYTES = 100 * 1024 * 1024
+const CERTIFICATE_FILE_EXCEEDED_MESSAGE = '파일당 최대 20MB까지 업로드 가능합니다.'
+const CERTIFICATE_TOTAL_EXCEEDED_MESSAGE = '첨부 파일은 총 100MB까지 업로드 가능합니다.'
 
 const TEMPLATE_UPLOAD_DISABLED_HINT = '프로그램에서 등록 시 첨부 가능합니다.'
 
 export type UjatPreviousTermAttachmentRow = {
   fileName: string
+  /** 총 용량 검사용 — 이전에 저장된 행은 없을 수 있다 */
+  fileSize?: number
   fileObjectId?: number
   status: 'uploading' | 'uploaded' | 'failed'
   error?: string
@@ -93,6 +108,11 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
   const fileUploadDisabled =
     props?.programLinkedPreview === true || numericProgramId == null
 
+  const currentAttachmentBytes = normalizedAttachments.reduce(
+    (total, row) => total + (row.status === 'failed' ? 0 : row.fileSize ?? 0),
+    0
+  )
+
   const uploadHint =
     numericProgramId == null && props?.programLinkedPreview !== true
       ? TEMPLATE_UPLOAD_DISABLED_HINT
@@ -144,6 +164,12 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
                 multiple
                 disabled={fileUploadDisabled}
                 guideLines={CERTIFICATE_GUIDE_LINES}
+                maxFileBytes={CERTIFICATE_MAX_FILE_BYTES}
+                maxTotalBytes={CERTIFICATE_MAX_TOTAL_BYTES}
+                currentTotalBytes={currentAttachmentBytes}
+                sizeExceededMessage={file =>
+                  file ? CERTIFICATE_FILE_EXCEEDED_MESSAGE : CERTIFICATE_TOTAL_EXCEEDED_MESSAGE
+                }
                 fileNames={
                   fileUploadDisabled
                     ? undefined
@@ -153,6 +179,13 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
                   fileUploadDisabled
                     ? undefined
                     : files => {
+                        if (normalizedAttachments.length + files.length > CERTIFICATE_MAX_COUNT) {
+                          cmsAlertModal.show({
+                            title: '안내',
+                            content: GENERAL_RECRUIT_DETAIL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE,
+                          })
+                          return
+                        }
                         const owner = buildAdminFileOwner(
                           ADMIN_FILE_OWNER.PROGRAM,
                           numericProgramId,
@@ -160,6 +193,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
                         )
                         const placeholders: UjatPreviousTermAttachmentRow[] = files.map(file => ({
                           fileName: file.name,
+                          fileSize: file.size,
                           status: 'uploading',
                         }))
                         const base = [...normalizedAttachments, ...placeholders]
@@ -177,6 +211,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
                                 index === rowIndex
                                   ? {
                                       fileName: files[i]!.name,
+                                      fileSize: files[i]!.size,
                                       fileObjectId: result.fileObjectId,
                                       status: 'uploaded' as const,
                                     }
