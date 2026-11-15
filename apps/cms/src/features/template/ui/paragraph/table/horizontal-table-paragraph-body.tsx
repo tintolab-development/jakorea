@@ -477,6 +477,8 @@ export function HorizontalTableParagraphBody({
   bottomConsentDisplayOnly = false,
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode = false,
+  /** 「동의서 보기」A4 문서 — 하단 동의 라디오 disabled 스킨 */
+  documentReadOnlyView = false,
   tableRowSelection: controlledSelection,
   onTableRowSelectionChange,
   paymentStatementBasicInfoValues,
@@ -536,6 +538,8 @@ export function HorizontalTableParagraphBody({
   bottomConsentDisplayOnly?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
+  /** 「동의서 보기」A4 문서 — 하단 동의 라디오 disabled 스킨(시안 동의 양식 미리보기) */
+  documentReadOnlyView?: boolean
   /** 있으면 상위(우측 패널)와 행 선택 동기화 */
   tableRowSelection?: HorizontalTableRowSelection | null
   onTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
@@ -1427,7 +1431,7 @@ export function HorizontalTableParagraphBody({
                 if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
               }}
-              disabled={false}
+              disabled={documentReadOnlyView}
               style={
                 bottomConsentDisplayOnly || !bottomConsentInteractive
                   ? { pointerEvents: 'none' }
