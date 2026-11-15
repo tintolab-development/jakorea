@@ -11,7 +11,7 @@ export const CORPORATE_CONSULTATION_ATTACHMENT_HINT = formatMultiFileUploadHint(
 )
 
 export const CORPORATE_CONSULTATION_ATTACHMENT_ACCEPT =
-  '.jpg,.jpeg,.png,.hwp,.xls,.xlsx,.pdf,.doc,.docx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/x-hwp,application/haansofthwp'
+  '.jpg,.jpeg,.png,.hwp,.hwpx,.xls,.xlsx,.pdf,.doc,.docx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/x-hwp,application/haansofthwp,application/x-hwpx'
 
 const ALLOWED_MIME = new Set([
   'image/jpeg',
@@ -24,9 +24,12 @@ const ALLOWED_MIME = new Set([
   'application/x-hwp',
   'application/haansofthwp',
   'application/vnd.hancom.hwp',
+  'application/x-hwpx',
+  'application/vnd.hancom.hwpx',
+  'application/hwp+zip',
 ])
 
-const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'hwp', 'xls', 'xlsx', 'pdf', 'doc', 'docx'])
+const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'hwp', 'hwpx', 'xls', 'xlsx', 'pdf', 'doc', 'docx'])
 
 /** 허용 형식이 아니면 안내 문구, 맞으면 null */
 export function validateCorporateConsultationAttachmentType(file: File): string | null {
@@ -44,6 +47,7 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   png: 'image/png',
   pdf: 'application/pdf',
   hwp: 'application/x-hwp',
+  hwpx: 'application/x-hwpx',
   doc: 'application/msword',
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   xls: 'application/vnd.ms-excel',
