@@ -97,6 +97,31 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/*
+ * QA 2026-11-15(알림 메시지 관리 탭·공통 항목 클릭): 클릭 시 터치 하이라이트 배경을 띄우지 않는다.
+ * 상속 속성이라 문서 루트에 한 번만 둔다.
+ */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * 마우스·터치로 누른 뒤에는 Shift 등 보조키로 :focus-visible 이 켜져도 포커스 링(민트 outline)을 숨긴다.
+ * Tab·방향키를 누르면 `data-cms-input-modality="keyboard"`로 바뀌어 기존 링이 그대로 보인다.
+ * 글자 입력 필드는 클릭 후에도 포커스 표시가 필요하므로 제외한다.
+ * 설정: `shared/lib/pointer-focus-modality.ts`
+ */
+html[data-cms-input-modality='pointer']
+  :focus-visible:not(input):not(textarea):not([contenteditable='true']):not([contenteditable='']) {
+  outline: none !important;
+}
+
+/* antd 체크박스·라디오는 숨긴 input 옆 박스에 링을 그린다(Shift+클릭 범위 선택 시 민트 링 번쩍임) */
+html[data-cms-input-modality='pointer'] .ant-checkbox-input:focus-visible + .ant-checkbox-inner,
+html[data-cms-input-modality='pointer'] .ant-radio-input:focus-visible + .ant-radio-inner {
+  outline: none !important;
+}
+
 /* Alert 컴포넌트 버튼 정렬 */
 .pending-actions-alert {
   display: flex !important;
