@@ -3,7 +3,7 @@
 import { Layout, Menu, type MenuProps } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
+import { useState, useMemo, useCallback, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { invalidateQueriesForMemberManagementNavigation } from '@/features/user/api/invalidate-member-management-navigation-queries'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
@@ -71,7 +71,11 @@ export function Sidebar() {
 
   const menuRouteKeys = useMemo(() => collectMenuRouteKeys(menuItems), [menuItems])
 
-  const openKeys = useMemo(() => {
+  /**
+   * 현재 경로가 속한 그룹 키 목록을 문자열로 만든다.
+   * 같은 그룹 안에서 경로만 바뀔 때(목록 → 상세 등)는 값이 같아 그룹을 다시 펼치지 않는다.
+   */
+  const routeOpenKeysSignature = useMemo(() => {
     const path = location.pathname
     const keys: string[] = []
 
@@ -136,19 +140,29 @@ export function Sidebar() {
       keys.push('settlement-management-group')
     }
 
-    return keys
+    return keys.join('|')
   }, [location.pathname, user?.role])
 
-  const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
+  const openKeys = useMemo(
+    () => (routeOpenKeysSignature ? routeOpenKeysSignature.split('|') : []),
+    [routeOpenKeysSignature]
+  )
 
-  /** 경로에 맞는 그룹은 열어 주되, 사용자가 펼쳐 둔 다른 그룹은 자동으로 닫지 않음 */
-  useEffect(() => {
+  const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
+  const [appliedRouteOpenKeys, setAppliedRouteOpenKeys] = useState<string[]>(openKeys)
+
+  /**
+   * 다른 메뉴 그룹으로 진입할 때만 해당 그룹을 열어 준다(렌더 중 상태 보정 — effect 없이).
+   * 사용자가 펼쳐 둔 다른 그룹은 자동으로 닫지 않고, 사용자가 접은 현재 그룹은 같은 그룹 안에서 이동해도 다시 펼치지 않는다.
+   */
+  if (appliedRouteOpenKeys !== openKeys) {
+    setAppliedRouteOpenKeys(openKeys)
     setControlledOpenKeys(prev => {
       const merged = new Set(prev)
       for (const key of openKeys) merged.add(key)
       return [...merged]
     })
-  }, [openKeys])
+  }
 
   const selectedKeys = useMemo(() => {
     const path = location.pathname
@@ -222,7 +236,7 @@ export function Sidebar() {
         <Menu
           mode="inline"
           selectedKeys={selectedKeys}
-          openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : openKeys}
+          openKeys={controlledOpenKeys}
           onOpenChange={setControlledOpenKeys}
           className="sidebar-menu"
           style={sidebarChrome}
