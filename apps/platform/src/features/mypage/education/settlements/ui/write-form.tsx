@@ -54,6 +54,7 @@ import {
 import { useInstructorSettlementPreviewQuery } from '../api/use-instructor-settlement-preview-query'
 import {
   RECEIPT_UPLOAD_ACCEPT,
+  RECEIPT_UPLOAD_FORMATS_LABEL,
   RECEIPT_UPLOAD_HINTS,
   RECEIPT_UPLOAD_POLICY,
 } from '../lib/receipt-upload-policy'
@@ -73,6 +74,7 @@ import {
 } from '../lib/settlement-status-ui'
 import {
   SETTLEMENT_WRITE_ALERT_TITLE,
+  collectSettlementWriteRequiredMissingLabels,
   resolveSettlementWriteValidationAlert,
   validateSettlementWriteDraft,
 } from '../lib/validate-write-draft'
@@ -96,6 +98,16 @@ import {
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { isInstructorMypageProfile } from '@/features/mypage/lib/member-profile'
 import { sumUploadFileBytes, validateUploadBatch } from '@/shared/lib/file-upload-policy'
+import { buildFileTypeInvalidAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  isEducationAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import {
   MemberFileTooLargeError,
   MemberFileTypeNotAllowedError,
@@ -103,6 +115,7 @@ import {
 } from '@/features/mypage/instructor-apply/api/member-file-upload'
 import {
   PFAlertModal,
+  PFRequiredMissingAlert,
   PFButton,
   PFEmptyState,
   PFFormControlCluster,
@@ -233,7 +246,7 @@ function ReceiptUpload({
   onAttachmentsChange?: (next: SettlementReceiptAttachment[]) => void
   uploadEnabled: boolean
   ariaLabel: string
-  onError: (message: string) => void
+  onError: (message: string | EducationAlert) => void
 }) {
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -312,15 +325,20 @@ function ReceiptUpload({
                 }
                 onAttachmentsChange?.(uploaded)
               } catch (error) {
+                const serverMessage = resolveReceiptUploadServerErrorMessage(error)
                 if (error instanceof MemberFileTooLargeError) {
                   onError(error.message)
-                } else if (error instanceof MemberFileTypeNotAllowedError) {
-                  onError(RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE)
+                } else if (
+                  error instanceof MemberFileTypeNotAllowedError ||
+                  serverMessage === RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE
+                ) {
+                  // 시안 「파일 형식이 맞지 않는 경우」 — 영수증 허용 형식
+                  onError(buildFileTypeInvalidAlertCopy(RECEIPT_UPLOAD_FORMATS_LABEL))
+                } else if (serverMessage) {
+                  onError(serverMessage)
                 } else {
-                  onError(
-                    resolveReceiptUploadServerErrorMessage(error) ??
-                      '영수증 업로드에 실패했습니다. 다시 시도해 주세요.'
-                  )
+                  // 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패
+                  onError(resolveEducationErrorAlert(error))
                 }
               } finally {
                 setUploading(false)
@@ -386,7 +404,7 @@ function TripLegBlock({
   onAmountChange: (next: string) => void
   onFileNamesChange: (next: string[]) => void
   onAttachmentsChange?: (next: SettlementReceiptAttachment[]) => void
-  onError: (message: string) => void
+  onError: (message: string | EducationAlert) => void
 }) {
   return (
     <div className={styles.legBlock}>
@@ -458,7 +476,7 @@ function AmountReceiptSection({
   item: SettlementAmountItemDraft
   maxWon?: number | null
   onChange: (next: SettlementAmountItemDraft) => void
-  onError: (message: string) => void
+  onError: (message: string | EducationAlert) => void
 }) {
   return (
     <PFFormSection
@@ -639,6 +657,7 @@ export function EducationSettlementWriteForm({
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState(SETTLEMENT_WRITE_ALERT_TITLE)
   const [alertMessage, setAlertMessage] = useState<ReactNode>('')
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
   const prefilledFromDetail = useRef(Boolean(hydrated))
 
   const name = composedBasic.name
@@ -706,9 +725,18 @@ export function EducationSettlementWriteForm({
     return depart + back
   }, [departAmount, returnAmount, tripType])
 
-  const showAlert = (message: ReactNode, title = SETTLEMENT_WRITE_ALERT_TITLE) => {
-    setAlertTitle(title)
-    setAlertMessage(message)
+  /** 문구만 주면 제목 「안내」, 시안 팝업 문구(EducationAlert)면 그 제목·설명 */
+  const showAlert = (
+    message: ReactNode | EducationAlert,
+    title = SETTLEMENT_WRITE_ALERT_TITLE,
+  ) => {
+    if (isEducationAlert(message)) {
+      setAlertTitle(message.title)
+      setAlertMessage(message.description ?? '')
+    } else {
+      setAlertTitle(title)
+      setAlertMessage(message)
+    }
     setAlertOpen(true)
   }
 
@@ -893,6 +921,14 @@ export function EducationSettlementWriteForm({
     })
 
     const validationError = validateSettlementWriteDraft(draft)
+    if (validationError === 'required_incomplete') {
+      // 시안 「필수 항목 미입력 (항목명 노출)」 — 항목명을 알 수 있으면 그대로 보여 준다
+      const missingLabels = collectSettlementWriteRequiredMissingLabels(draft)
+      if (missingLabels.length > 0) {
+        setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
+        return
+      }
+    }
     if (validationError) {
       const alert = resolveSettlementWriteValidationAlert(validationError, documentKind)
       // 필수 항목 미입력 — 시안 설명(빨간 `*`)으로 보여 준다
@@ -1381,6 +1417,7 @@ export function EducationSettlementWriteForm({
         description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
       />
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
     </>
   )
 }

@@ -14,15 +14,33 @@ import {
   useFindPasswordIdentityVerification,
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
-import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
+import {
+  getLoginApiErrorMessage,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
+} from '@/features/auth/sign-in'
 import { normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFText, PFTextInput } from '@/shared/ui'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  isPlatformNetworkError,
+  isPlatformRateLimitedError,
+  resolvePlatformErrorAlert,
+} from '@/shared/lib/platform-error-alert'
+import { PFAlertModal, PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const EMAIL_NOT_FOUND_MESSAGE = '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.'
 const IDENTITY_MISMATCH_MESSAGE = '본인인증 정보가 회원 정보와 일치하지 않습니다.'
+
+/** 응답 없음·429는 입력란 문구 대신 시안 공통 팝업 */
+function resolveTransportFailureAlert(error: unknown): PlatformAlertCopy | null {
+  if (isPlatformNetworkError(error) || isPlatformRateLimitedError(error)) {
+    return resolvePlatformErrorAlert(error)
+  }
+  return null
+}
 
 export function FindPasswordPage() {
   const navigate = useNavigate()
@@ -48,6 +66,8 @@ export function FindPasswordPage() {
   const [identityError, setIdentityError] = useState<string | null>(
     returnError?.field === 'identity' ? returnError.message : null,
   )
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   const handleIdentitySuccess = useCallback(
     async (result: IdentityChallengeCompleteResult) => {
@@ -76,6 +96,11 @@ export function FindPasswordPage() {
             return
           }
         } catch (error) {
+          const transportAlert = resolveTransportFailureAlert(error)
+          if (transportAlert) {
+            setErrorAlert(transportAlert)
+            return
+          }
           const resolved = resolvePasswordResetApiError(error)
           if (resolved?.kind === 'email') {
             setEmailError(resolved.message)
@@ -144,7 +169,13 @@ export function FindPasswordPage() {
         return
       }
     } catch (error) {
-      setEmailError(getLoginApiErrorMessage(error, '이메일 확인에 실패했어요. 다시 시도해 주세요.'))
+      // 서버 업무 메시지는 입력란 아래, 그 밖의 실패는 시안 공통 팝업
+      const failureAlert = resolveLoginApiFailureAlert(error)
+      if (failureAlert) {
+        setErrorAlert(failureAlert)
+      } else {
+        setEmailError(readLoginApiServerMessage(error))
+      }
       return
     }
 
@@ -152,6 +183,11 @@ export function FindPasswordPage() {
     try {
       await verify()
     } catch (error) {
+      const transportAlert = resolveTransportFailureAlert(error)
+      if (transportAlert) {
+        setErrorAlert(transportAlert)
+        return
+      }
       setIdentityError(getLoginApiErrorMessage(error, IDENTITY_MISMATCH_MESSAGE))
     }
   }
@@ -194,6 +230,13 @@ export function FindPasswordPage() {
           {busy ? '본인인증 진행 중…' : '본인인증 후 비밀번호 찾기'}
         </PFButton>
       </div>
+
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </section>
   )
 }

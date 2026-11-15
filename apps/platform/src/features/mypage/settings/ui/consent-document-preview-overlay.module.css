@@ -196,3 +196,8 @@
     color: #999;
   }
 }
+
+/* 불러오기 실패 안내 팝업 — 전체 화면 미리보기(1200·1201) 위에 띄운다 (PFAlertModal 기본 1000보다 우선) */
+.alertBackdrop.alertBackdrop {
+  z-index: 1300;
+}

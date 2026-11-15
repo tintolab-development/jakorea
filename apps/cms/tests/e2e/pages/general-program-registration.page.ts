@@ -228,39 +228,29 @@ export class GeneralProgramRegistrationPage {
     const rows = panel.locator('.cms-select-multi__row')
     await expect(rows.first()).toBeVisible({ timeout: 10_000 })
 
-    const rowCount = await rows.count()
     const isSelected = async (row: Locator) =>
       (await row.getAttribute('aria-selected').catch(() => null)) === 'true' ||
       (await row.locator('input[type="checkbox"]:checked, .ant-checkbox-checked').count()) > 0
-    const toggle = async (row: Locator) => {
-      await row
-        .locator('.ant-checkbox-input, .cms-select-multi__checkbox')
-        .first()
-        .click({ timeout: 5_000 })
-        .catch(async () => row.click())
-    }
-    for (let index = 0; index < rowCount; index += 1) {
-      const row = rows.nth(index)
-      if (!(await isSelected(row))) continue
-      await toggle(row)
-    }
-
     // 「전체」·「해당 없음」·숙박비 행을 피해 교통비·식사비·활동비 중 하나를 고른다.
+    // 선택 변경 시 패널이 닫히거나 다시 그려질 수 있어 시도마다 패널을 다시 열고 행을 다시 찾는다.
     const safeRow = panel
       .getByRole('option')
       .filter({ hasText: /교통비|식사비|활동비/ })
       .first()
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    const placeholder = '지급 항목을 선택해 주세요'
+    for (let attempt = 0; attempt < 4; attempt += 1) {
       if (!(await panel.isVisible().catch(() => false))) {
         await trigger.click()
         await expect(panel).toBeVisible({ timeout: 10_000 })
       }
       await expect(safeRow).toBeVisible({ timeout: 10_000 })
-      if (!(await isSelected(safeRow))) await toggle(safeRow)
       if (await isSelected(safeRow)) break
+      await safeRow.click({ timeout: 5_000 }).catch(() => undefined)
+      if (await isSelected(safeRow).catch(() => false)) break
+      if (!(await trigger.innerText().catch(() => placeholder)).includes(placeholder)) break
     }
-    await trigger.click({ force: true })
-    await expect(trigger).not.toContainText('지급 항목을 선택해 주세요')
+    if (await panel.isVisible().catch(() => false)) await trigger.click({ force: true })
+    await expect(trigger).not.toContainText(placeholder)
   }
 
   private async applyDevAutofillCase() {
@@ -477,6 +467,8 @@ export class GeneralProgramRegistrationPage {
       .filter({ has: this.page.locator('.calendar-mini') })
       .last()
     await expect(dialog).toBeVisible()
+    // 지난 날짜(이미 시작한 일정)를 피하려고 다음 달 날짜를 고른다.
+    await revealEnabledCalendarMiniDays(dialog, 1)
     const enabledDays = dialog.locator(
       'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month):not([aria-disabled="true"])'
     )
@@ -624,7 +616,9 @@ export class GeneralProgramRegistrationPage {
 
       const dialog = datePickerDialog(this.page)
       await expect(dialog).toBeVisible({ timeout: 10_000 })
-      await revealEnabledCalendarMiniDays(dialog, 0)
+      // 운영 기간이 이번 달 1일부터라 첫 선택 가능일은 이미 지난 날짜일 수 있다. 지난 일정은
+      // BE가 PROGRAM_SCHEDULE_LOCKED로 변경을 막으므로 다음 달 날짜를 고른다.
+      await revealEnabledCalendarMiniDays(dialog, 1)
       const enabledDays = enabledCalendarMiniDayButtons(dialog)
       await expect(enabledDays.first()).toBeVisible({ timeout: 10_000 })
       const dayCount = await enabledDays.count()
@@ -1413,7 +1407,16 @@ export class GeneralProgramRegistrationPage {
       // 강사 모집 대상은 화면 기본값 「성인」을 건드리지 않고 표시만 확인한다(기본값 저장 검증용, 클릭 우회 금지)
       // QA-0121로 강사 모집 대상 「성인」 기본 선택이 제거됐다(861d21b19) — 직접 고른다.
       if (options?.role === 'instructor') await this.selectMultiFieldStrict('모집 대상', '성인')
-      else if (options?.role === 'volunteer') await this.selectMultiFieldStrict('모집 대상', '대학(원)생')
+      else if (options?.role === 'volunteer') {
+        await this.selectMultiFieldStrict('모집 대상', '대학(원)생')
+        // 실서버 통합 E2E 봉사자 계정(일반회원)은 대학(원)생이 아니라 VOLUNTEER_RECRUITMENT_TARGET_MISMATCH로
+        // 신청이 막힌다. 엄격 격리 스펙(sponsorManagerLabel)은 값 구분용으로 대학(원)생만 유지한다.
+        if (!this.sponsorManagerLabel) {
+          // activateCmsProgramRecruitmentsForIntegration이 봉사자 대상을 elementary로 보정하는 계정 기준과 맞춘다.
+          await this.selectMultiFieldStrict('모집 대상', '성인')
+          await this.selectMultiFieldStrict('모집 대상', '초등학생')
+        }
+      }
       else {
         await this.selectMultiFieldStrict('교육 대상', '고등학생')
         if (this.regCase.audience === 'organization') {

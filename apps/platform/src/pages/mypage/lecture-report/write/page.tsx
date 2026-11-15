@@ -64,8 +64,17 @@ import {
   PFFormPage,
   PFLoadingSpinner,
   PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
   PFText,
 } from '@/shared/ui'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  readErrorMessage,
+  resolveEducationErrorAlert,
+} from '@/features/mypage/education/shared/lib/education-error-alert'
 import styles from './page.module.css'
 import {
   buildLectureReportPageTitle,
@@ -188,11 +197,11 @@ export function MypageLectureReportWritePage() {
     {}
   )
   const [uploadingFile, setUploadingFile] = useState(false)
-  const [fileUploadError, setFileUploadError] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [alert, setAlert] = useState<{ title: string; description: ReactNode } | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
   const [submitCompleteOpen, setSubmitCompleteOpen] = useState(false)
   const [settlementSessionId, setSettlementSessionId] = useState('')
   const [paymentStatementAlreadySubmitted, setPaymentStatementAlreadySubmitted] = useState(false)
@@ -327,7 +336,6 @@ export function MypageLectureReportWritePage() {
     if (files.length === 0) return
 
     setUploadingFile(true)
-    setFileUploadError('')
     void Promise.all(
       files.map(file => uploadMemberPortalFile({ file, filePurpose: 'ASSIGNMENT_ATTACHMENT' }))
     )
@@ -347,8 +355,9 @@ export function MypageLectureReportWritePage() {
           },
         }))
       })
-      .catch(() => {
-        setFileUploadError('파일 업로드에 실패했습니다. 파일을 다시 선택해 주세요.')
+      .catch(cause => {
+        // 시안 오류 팝업 — 네트워크·처리 제한·처리 실패 (보안 검사 거절 등 업무 안내는 설명)
+        setAlert(resolveEducationErrorAlert(cause, readErrorMessage))
       })
       .finally(() => setUploadingFile(false))
   }
@@ -374,7 +383,6 @@ export function MypageLectureReportWritePage() {
       }
       return { ...previous, [questionKey]: nextIds }
     })
-    setFileUploadError('')
   }
 
   function buildSubmitInput() {
@@ -409,16 +417,26 @@ export function MypageLectureReportWritePage() {
       minimumFilesPerAttachment: 2,
     })
     if (!validation.ok) {
+      // 시안 「필수 항목 미입력 (항목명 노출)」 — 빠진 문항명이 있으면 그대로 보여 준다
+      if (validation.missingRequired) {
+        const copy = buildRequiredMissingAlertCopy(validation.missingRequired)
+        if (copy.description || copy.list) {
+          setRequiredMissing(copy)
+          return
+        }
+      }
       setAlert(
         validation.incomplete === 'file_attachment'
           ? {
               title: EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE,
               description: EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION,
             }
-          : {
-              title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-              description: REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION,
-            },
+          : validation.missingRequired
+            ? {
+                title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+                description: REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION,
+              }
+            : { title: '안내', description: validation.message },
       )
       return
     }
@@ -465,13 +483,12 @@ export function MypageLectureReportWritePage() {
       )
       setSubmitCompleteOpen(true)
     } catch (cause) {
-      setAlert({
-        title: '안내',
-        description: getLectureReportApiErrorMessage(
-          cause,
-          cause instanceof Error ? cause.message : '강의보고서 제출에 실패했습니다.',
+      // 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패(서버·코드별 안내는 설명에)
+      setAlert(
+        resolveEducationErrorAlert(cause, (target, fallback) =>
+          getLectureReportApiErrorMessage(target, readErrorMessage(target, fallback)),
         ),
-      })
+      )
     } finally {
       setBusy(false)
     }
@@ -550,11 +567,6 @@ export function MypageLectureReportWritePage() {
               {lectureReportOverdueWarningText()}
             </PFText>
           ) : null}
-          {fileUploadError ? (
-            <PFText as="p" role="alert" typo="bd-md-rg" color="error" className={styles.error}>
-              {fileUploadError}
-            </PFText>
-          ) : null}
           <EducationSurveyFormBody
             draft={draft}
             programTitle={formProgramTitle}
@@ -602,6 +614,7 @@ export function MypageLectureReportWritePage() {
         description={alert?.description}
         onConfirm={() => setAlert(null)}
       />
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
       <LectureReportSubmitCompleteModal
         open={submitCompleteOpen}
         hidePaymentStatementCta={

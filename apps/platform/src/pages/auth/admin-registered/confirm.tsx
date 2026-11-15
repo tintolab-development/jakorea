@@ -6,11 +6,12 @@ import {
   useAdminProvisionedCompleteMutation,
   useAdminRegisteredProfileHydration,
 } from '@/features/auth/admin-registered'
-import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
+import { readLoginApiServerMessage, resolveLoginApiFailureAlert } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFInfoReview, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFInfoReview, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import sharedStyles from './shared.module.css'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 
 export function AdminRegisteredConfirmPage() {
   const navigate = useNavigate()
@@ -19,6 +20,8 @@ export function AdminRegisteredConfirmPage() {
     useAdminRegisteredProfileHydration(initialWizardState)
   const completeMutation = useAdminProvisionedCompleteMutation()
   const [completeError, setCompleteError] = useState<string>()
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   useEffect(() => {
     if (isHydrating) return
@@ -55,9 +58,13 @@ export function AdminRegisteredConfirmPage() {
         try {
           await completeMutation.mutateAsync()
         } catch (error) {
-          setCompleteError(
-            getLoginApiErrorMessage(error, '가입 정보 확인을 완료하지 못했습니다. 다시 시도해 주세요.'),
-          )
+          // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+          const failureAlert = resolveLoginApiFailureAlert(error)
+          if (failureAlert) {
+            setErrorAlert(failureAlert)
+          } else {
+            setCompleteError(readLoginApiServerMessage(error))
+          }
           return
         }
       }
@@ -124,6 +131,12 @@ export function AdminRegisteredConfirmPage() {
           이전
         </PFButton>
       </div>
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </section>
   )
 }

@@ -1,4 +1,4 @@
-import { requireCmsAccessToken } from '../../helpers/browser-access-token'
+import { installAccessTokenRecorder, requireCmsAccessToken } from '../../helpers/browser-access-token'
 import { expect, type Browser, type Page } from '@playwright/test'
 import { test } from '../../fixtures/test'
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
@@ -188,11 +188,19 @@ async function adminRequest(
     await page.goto('/')
   }
   const token = await requireCmsAccessToken(page, 'CMS 관리자')
-  const response = await page.request.fetch(path, {
-    method,
-    headers: { Authorization: `Bearer ${token}` },
-    ...(data === undefined ? {} : { data }),
-  })
+  const send = () =>
+    page.request.fetch(path, {
+      method,
+      headers: { Authorization: `Bearer ${token}` },
+      ...(data === undefined ? {} : { data }),
+    })
+  let response = await send()
+  // 조회(GET)만 일시적 5xx에 한해 다시 시도한다. 변경 요청은 중복 반영 위험이 있어 재시도하지 않는다.
+  for (let retry = 1; method === 'GET' && response.status() >= 500 && retry <= 2; retry += 1) {
+    console.log(`[BE-RETRY] ${method} ${path} → HTTP ${response.status()} (재시도 ${retry}/2)`)
+    await new Promise(resolve => setTimeout(resolve, 1_500 * retry))
+    response = await send()
+  }
   return parseResponse(response)
 }
 
@@ -281,16 +289,15 @@ async function ensureEducationSchedules(
   // 새 테스트의 일정 공간으로 교체해 반복 실행 간 회원별 날짜 충돌을
   // 방지한다. DB 직접 삽입은 하지 않는다.
   const [firstDayOffset, secondDayOffset] = uniqueScheduleOffsets(program.title)
-  const operationStartDate = localDateKeyFromOffset(1)
-  const operationEndDate = localDateKeyFromOffset(secondDayOffset + 1)
   const scheduleStartHour = uniqueScheduleStartHour(program.title)
   const scheduleDateKeys = [
     localDateKeyFromOffset(firstDayOffset),
     localDateKeyFromOffset(secondDayOffset),
   ] as [string, string]
+  // 등록 시 운영 기간(이번 달 ~ +2개월 15일)이 오늘 시작 모집과 다음 달 교육 일정을 모두 포함한다.
+  // 운영 기간을 내일부터로 줄이면 이미 열린 모집 날짜가 기간 밖이 되어
+  // PROGRAM_DATE_OUTSIDE_OPEN_PERIOD로 거절되므로 운영 기간은 바꾸지 않는다.
   await adminRequest(page, `/api/admin/programs/${program.programId}`, 'PATCH', {
-    businessStartDate: operationStartDate,
-    businessEndDate: operationEndDate,
     // 신청 폼의 동적 일정 선택지는 canonical educationScheduleLines와
     // 실제 program_schedule의 날짜가 겹칠 때만 노출된다. 일정만 추가하면
     // UI에서 선택 카드가 비어 있으므로 두 원본을 같은 공식 PATCH로 맞춘다.
@@ -462,6 +469,19 @@ async function approveOrganization(page: Page, applicationId: number, scheduleId
     }
   )
   expect(applicationStatus(asRecord(unwrap(payload)))).toBe('APPROVED')
+}
+
+// 새 관리자 컨텍스트는 화면 요청이 있어야 access token을 읽을 수 있다 — 목록을 연 뒤 승인한다.
+async function approveOrganizationFromAdminScreen(
+  page: Page,
+  applicationId: number,
+  scheduleId: number
+) {
+  // 기록기는 화면 요청 전에 설치해야 목록 로드 때 보낸 Bearer를 잡는다.
+  installAccessTokenRecorder(page.context())
+  await page.goto('/programs/general')
+  await expectAuthenticatedShell(page)
+  await approveOrganization(page, applicationId, scheduleId)
 }
 
 async function rejectOrganization(page: Page, applicationId: number) {
@@ -689,6 +709,15 @@ test.describe('기관·강사·봉사자 승인/반려 및 진행 현황 통합 
       APPROVAL_ORGANIZATION,
       password
     )
+    // 일반(기관) 강사 「강의 진행 가능 일정」은 승인·일정 배정된 기관의 일정만 선택지로 내려온다.
+    // 기관 신청만 있고 승인 전이면 문단이 숨겨지므로 강사 신청 전에 기관을 승인한다.
+    await withAuthenticatedPage(browser, page =>
+      approveOrganizationFromAdminScreen(
+        page,
+        approvalOrganization.applicationId,
+        selectEducationScheduleId(approval.schedules)
+      )
+    )
     const approvalInstructor = await submitPlatformApplication(
       browser,
       approval.program,
@@ -710,6 +739,20 @@ test.describe('기관·강사·봉사자 승인/반려 및 진행 현황 통합 
       rejection.program,
       REJECTION_ORGANIZATION,
       password
+    )
+    // 반려 대상 기관은 대기로 두고, 강사가 고를 일정이 생기도록 별도 기관을 승인해 둔다.
+    const rejectionScheduleHost = await submitPlatformApplication(
+      browser,
+      rejection.program,
+      APPROVAL_ORGANIZATION,
+      password
+    )
+    await withAuthenticatedPage(browser, page =>
+      approveOrganizationFromAdminScreen(
+        page,
+        rejectionScheduleHost.applicationId,
+        selectEducationScheduleId(rejection.schedules)
+      )
     )
     const rejectionInstructor = await submitPlatformApplication(
       browser,
@@ -762,7 +805,14 @@ test.describe('기관·강사·봉사자 승인/반려 및 진행 현황 통합 
     const { program, schedules, organization, instructor, volunteer } = fixture.approval
     const educationScheduleId = selectEducationScheduleId(schedules)
 
-    await approveOrganization(page, organization.applicationId, educationScheduleId)
+    // beforeAll에서 강사 신청 전에 이미 승인했다(강사 일정 선택지 조건). 아니면 여기서 승인한다.
+    const beforeApproval = await fetchDetail(
+      page,
+      `/api/admin/organization-applications/${organization.applicationId}`
+    )
+    if (applicationStatus(beforeApproval) !== 'APPROVED') {
+      await approveOrganization(page, organization.applicationId, educationScheduleId)
+    }
     const organizationDetail = await fetchDetail(
       page,
       `/api/admin/organization-applications/${organization.applicationId}`

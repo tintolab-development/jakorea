@@ -30,7 +30,17 @@ import {
   resolveRosterUploadBlockedMessage,
   STUDENT_DOCUMENTS_UNSUPPORTED_MESSAGE,
 } from '../lib/student-documents-policy'
-import { validatePortraitConsentUploadFile } from '../lib/validate-student-document-file'
+import {
+  isPortraitConsentUploadFileTypeAllowed,
+  PORTRAIT_CONSENT_FILE_FORMATS_LABEL,
+  validatePortraitConsentUploadFile,
+} from '../lib/validate-student-document-file'
+import { buildFileTypeInvalidAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  educationNoticeAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import type { PortraitConsentTemplateDownloadProgress } from '../lib/student-documents-template-download'
 import { PFAlertModal, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { StudentsPanelCertificateModal } from './students-panel-certificate-modal'
@@ -75,7 +85,7 @@ export function EducationStudentsPanel({
     applicationId,
     documentsScope
   )
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
   const [portraitTemplateDownloadProgress, setPortraitTemplateDownloadProgress] =
     useState<PortraitConsentTemplateDownloadProgress | null>(null)
   const [portraitUploadedFileState, setPortraitUploadedFileState] =
@@ -163,14 +173,15 @@ export function EducationStudentsPanel({
   const isLoading = isPolicyLoading || isDocumentsLoading
   const isFileUploading = importRoster.isPending || submitPortrait.isPending
 
-  const handleAsyncError = (error: unknown, fallback: string) => {
-    setErrorMessage(resolveStudentDocumentsErrorMessage(error, fallback))
+  /** 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패(서버·코드별 안내는 설명에) */
+  const handleAsyncError = (error: unknown) => {
+    setAlert(resolveEducationErrorAlert(error, resolveStudentDocumentsErrorMessage))
   }
 
   const runPortraitTemplateDownload = () => {
     if (!ensureDocumentsApiReady()) return
     if (portraitUploadBlockedMessage) {
-      setErrorMessage(portraitUploadBlockedMessage)
+      setAlert(educationNoticeAlert(portraitUploadBlockedMessage))
       return
     }
 
@@ -178,9 +189,7 @@ export function EducationStudentsPanel({
     void downloadPortraitTemplate
       .mutateAsync()
       .catch(error => {
-        setErrorMessage(
-          resolveStudentDocumentsErrorMessage(error, '초상권 동의서 양식을 받지 못했습니다.')
-        )
+        handleAsyncError(error)
       })
       .finally(() => setPortraitTemplateDownloadProgress(null))
   }
@@ -199,7 +208,7 @@ export function EducationStudentsPanel({
           setPortraitUploadedFileState(null)
           return
         }
-        handleAsyncError(error, '초상권 동의서 업로드를 취소하지 못했습니다.')
+        handleAsyncError(error)
       })
       .finally(() => {
         portraitCancelInFlightRef.current = false
@@ -208,15 +217,15 @@ export function EducationStudentsPanel({
 
   const ensureDocumentsApiReady = (): boolean => {
     if (!documentsUiScope) {
-      setErrorMessage('기관 신청 건에서만 학생 명단·초상권 동의서를 제출할 수 있습니다.')
+      setAlert(educationNoticeAlert('기관 신청 건에서만 학생 명단·초상권 동의서를 제출할 수 있습니다.'))
       return false
     }
     if (!remoteEnabled) {
-      setErrorMessage('로그인 후 이용할 수 있습니다.')
+      setAlert(educationNoticeAlert('로그인 후 이용할 수 있습니다.'))
       return false
     }
     if (documentsUnsupported || !documentsSupported) {
-      setErrorMessage(STUDENT_DOCUMENTS_UNSUPPORTED_MESSAGE)
+      setAlert(educationNoticeAlert(STUDENT_DOCUMENTS_UNSUPPORTED_MESSAGE))
       return false
     }
     return true
@@ -247,11 +256,11 @@ export function EducationStudentsPanel({
       <>
         <StudentsPanelUnsupported />
         <PFAlertModal
-          open={errorMessage != null}
-          title="안내"
-          description={errorMessage ?? ''}
+          open={alert != null}
+          title={alert?.title ?? ''}
+          description={alert?.description}
           confirmLabel="확인"
-          onConfirm={() => setErrorMessage(null)}
+          onConfirm={() => setAlert(null)}
         />
       </>
     )
@@ -278,18 +287,18 @@ export function EducationStudentsPanel({
           if (!ensureDocumentsApiReady()) return
           void downloadRosterTemplate
             .mutateAsync()
-            .catch(error => handleAsyncError(error, '학생 명단 양식을 받지 못했습니다.'))
+            .catch(error => handleAsyncError(error))
         }}
         rosterUploadBlockedMessage={rosterUploadBlockedMessage}
         onImportFile={file => {
           if (!ensureDocumentsApiReady()) return
           if (rosterUploadBlockedMessage) {
-            setErrorMessage(rosterUploadBlockedMessage)
+            setAlert(educationNoticeAlert(rosterUploadBlockedMessage))
             return
           }
           void importRoster
             .mutateAsync(file)
-            .catch(error => handleAsyncError(error, '학생 명단을 업로드하지 못했습니다.'))
+            .catch(error => handleAsyncError(error))
         }}
         onCertificateIssue={() => setCertificateModalOpen(true)}
       />
@@ -310,12 +319,16 @@ export function EducationStudentsPanel({
         onUploadFile={file => {
           if (!ensureDocumentsApiReady()) return
           if (portraitUploadBlockedMessage) {
-            setErrorMessage(portraitUploadBlockedMessage)
+            setAlert(educationNoticeAlert(portraitUploadBlockedMessage))
+            return
+          }
+          if (!isPortraitConsentUploadFileTypeAllowed(file)) {
+            setAlert(buildFileTypeInvalidAlertCopy(PORTRAIT_CONSENT_FILE_FORMATS_LABEL))
             return
           }
           const validationError = validatePortraitConsentUploadFile(file)
           if (validationError) {
-            setErrorMessage(validationError)
+            setAlert(educationNoticeAlert(validationError))
             return
           }
           void submitPortrait
@@ -328,17 +341,17 @@ export function EducationStudentsPanel({
                 size: file.size,
               })
             })
-            .catch(error => handleAsyncError(error, '초상권 동의서를 업로드하지 못했습니다.'))
+            .catch(error => handleAsyncError(error))
         }}
       />
 
       <PFAlertModal
-        open={errorMessage != null}
-        title="안내"
-        description={errorMessage ?? ''}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
         confirmLabel="확인"
         onConfirm={() => {
-          setErrorMessage(null)
+          setAlert(null)
         }}
       />
 

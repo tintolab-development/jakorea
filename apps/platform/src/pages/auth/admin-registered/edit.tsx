@@ -8,7 +8,11 @@ import {
   updateAdminRegisteredWizardState,
   useAdminRegisteredProfileHydration,
 } from '@/features/auth/admin-registered'
-import { getLoginApiErrorMessage, usePortalProfileUpdateMutation } from '@/features/auth/sign-in'
+import {
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
+  usePortalProfileUpdateMutation,
+} from '@/features/auth/sign-in'
 import {
   AddressSearchModal,
   SchoolSearchModal,
@@ -17,10 +21,11 @@ import {
   type SelectedSchool,
 } from '@/features/auth/sign-up'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFLoadingSpinner, PFText, PFTextInput } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import sharedStyles from './shared.module.css'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 
 export function AdminRegisteredEditPage() {
   const navigate = useNavigate()
@@ -54,6 +59,8 @@ export function AdminRegisteredEditPage() {
   const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
   const [fieldsSynced, setFieldsSynced] = useState(Boolean(wizardState?.profileHydrated))
   const [submitError, setSubmitError] = useState<string>()
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const profileUpdateMutation = usePortalProfileUpdateMutation()
 
   useEffect(() => {
@@ -203,7 +210,13 @@ export function AdminRegisteredEditPage() {
           profileHydrated: true,
         })
       } catch (error) {
-        setSubmitError(getLoginApiErrorMessage(error, '회원 정보를 수정하지 못했습니다.'))
+        // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+        const failureAlert = resolveLoginApiFailureAlert(error)
+        if (failureAlert) {
+          setErrorAlert(failureAlert)
+        } else {
+          setSubmitError(readLoginApiServerMessage(error))
+        }
         return
       }
     } else {
@@ -387,6 +400,12 @@ export function AdminRegisteredEditPage() {
         open={isSchoolSearchModalOpen}
         onClose={() => setIsSchoolSearchModalOpen(false)}
         onSelect={handleSchoolSelect}
+      />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </section>
   )

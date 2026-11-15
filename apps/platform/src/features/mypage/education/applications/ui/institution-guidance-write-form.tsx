@@ -7,7 +7,6 @@ import {
 } from '@jakorea/form-schema/program-application'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import type { ProgramDetailCase } from '@/features/program'
-import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
 import {
   ApplyInstitutionGuidance,
   type ApplyInstitutionGuidanceAnswers,
@@ -42,7 +41,6 @@ import type { TeacherInstitutionGuidanceFormState } from '../lib/institution-gui
 import {
   isUjatStaleRevisionError,
   resolveInstitutionGuidanceErrorMessage,
-  resolveUjatTemporaryScheduleConfirmErrorMessage,
   UJAT_STALE_REVISION_ALERT_MESSAGE,
 } from '../lib/institution-guidance-errors'
 import {
@@ -59,12 +57,31 @@ import {
   UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE,
 } from '../lib/ujat-acknowledged-schedule'
 import { hasInstitutionGuidanceDraftContent } from '../lib/teacher-institution-guidance'
-import { isTeacherInstitutionGuidanceSubmitIncomplete } from '../lib/validate-institution-guidance'
+import {
+  collectIncompleteInstitutionGuidanceFieldLabels,
+  isInstitutionGuidanceOtherSectionIncomplete,
+  isTeacherInstitutionGuidanceSubmitIncomplete,
+} from '../lib/validate-institution-guidance'
+import {
+  educationNoticeAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
 import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
-import { PFAlertModal, PFButton } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
+} from '@/shared/ui'
 import styles from './institution-guidance-write-form.module.css'
 
 type EducationInstitutionGuidanceWriteFormProps = {
@@ -102,7 +119,8 @@ export function EducationInstitutionGuidanceWriteForm({
   const [ujatExtras, setUjatExtras] = useState<ApplyUjatInstitutionGuidanceExtras>(
     initialState.ujatExtras ?? emptyUjatInstitutionGuidanceExtras(),
   )
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
   const [afterAlertPath, setAfterAlertPath] = useState<string | null>(null)
   const submittingRef = useRef(false)
   const patchGuidanceMutation = usePatchOrganizationGuidanceAnswersMutation(
@@ -145,17 +163,30 @@ export function EducationInstitutionGuidanceWriteForm({
         ujatExtras: isUjat ? ujatExtras : undefined,
       })
     ) {
-      setAlertMessage(PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE)
+      // 시안 「필수 항목 미입력 (항목명 노출)」 — 안내사항 항목만 비었으면 항목명, 그 밖은 시안 기본 설명
+      const missingLabels = collectIncompleteInstitutionGuidanceFieldLabels(guidance)
+      const otherIncomplete = isInstitutionGuidanceOtherSectionIncomplete(nextSexOffense, {
+        ujat: isUjat,
+        ujatExtras: isUjat ? ujatExtras : undefined,
+      })
+      if (missingLabels.length > 0 && !otherIncomplete) {
+        setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
+      } else {
+        setAlert({
+          title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+          description: <PFRequiredFieldsIncompleteDescription />,
+        })
+      }
       return
     }
 
     if (!isRemoteApiConfigured()) {
-      setAlertMessage('API가 설정되지 않아 저장할 수 없습니다.')
+      setAlert(educationNoticeAlert('API가 설정되지 않아 저장할 수 없습니다.'))
       return
     }
     if (isUjat) {
       if (scheduleRevisionDrift) {
-        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        setAlert(educationNoticeAlert(UJAT_STALE_REVISION_ALERT_MESSAGE))
         setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
         return
       }
@@ -165,7 +196,7 @@ export function EducationInstitutionGuidanceWriteForm({
           applicationId,
         )
       ) {
-        setAlertMessage(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE)
+        setAlert(educationNoticeAlert(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE))
         setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
         return
       }
@@ -174,7 +205,7 @@ export function EducationInstitutionGuidanceWriteForm({
     try {
       const blockedMessage = resolveOrganizationGuidancePatchBlockedMessage(portalPatchContext ?? {})
       if (blockedMessage) {
-        setAlertMessage(blockedMessage)
+        setAlert(educationNoticeAlert(blockedMessage))
         return
       }
       const acknowledgedRevision = isUjat
@@ -199,7 +230,7 @@ export function EducationInstitutionGuidanceWriteForm({
           !Number.isInteger(acknowledgedRevision) ||
           acknowledgedRevision < 1
         ) {
-          setAlertMessage(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE)
+          setAlert(educationNoticeAlert(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE))
           setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
           return
         }
@@ -208,7 +239,7 @@ export function EducationInstitutionGuidanceWriteForm({
           Number.isInteger(latestRevision) &&
           latestRevision !== acknowledgedRevision
         ) {
-          setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+          setAlert(educationNoticeAlert(UJAT_STALE_REVISION_ALERT_MESSAGE))
           setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
           return
         }
@@ -222,9 +253,7 @@ export function EducationInstitutionGuidanceWriteForm({
               detailQueryKey,
             )
             if (afterConfirm?.supplement?.ujat?.portalBannerState !== 'ADMIN_REVIEW') {
-              setAlertMessage(
-                '일정 확인 응답을 확인하지 못했습니다. 신청 상세를 새로고침 후 다시 시도해 주세요.',
-              )
+              setAlert(PLATFORM_ALERT_COPY.requestFailed)
               return
             }
           }
@@ -239,11 +268,11 @@ export function EducationInstitutionGuidanceWriteForm({
             return
           }
           if (isUjatStaleRevisionError(confirmError)) {
-            setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+            setAlert(educationNoticeAlert(UJAT_STALE_REVISION_ALERT_MESSAGE))
             setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
             return
           }
-          setAlertMessage(resolveUjatTemporaryScheduleConfirmErrorMessage(confirmError))
+          setAlert(resolveEducationErrorAlert(confirmError, resolveInstitutionGuidanceErrorMessage))
           return
         }
       }
@@ -254,11 +283,11 @@ export function EducationInstitutionGuidanceWriteForm({
       )
     } catch (error) {
       if (isUjatStaleRevisionError(error)) {
-        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        setAlert(educationNoticeAlert(UJAT_STALE_REVISION_ALERT_MESSAGE))
         setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
         return
       }
-      setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
+      setAlert(resolveEducationErrorAlert(error, resolveInstitutionGuidanceErrorMessage))
     } finally {
       submittingRef.current = false
     }
@@ -397,18 +426,19 @@ export function EducationInstitutionGuidanceWriteForm({
       </div>
 
       <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? undefined}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
         onConfirm={() => {
           const nextPath = afterAlertPath
-          setAlertMessage(null)
+          setAlert(null)
           setAfterAlertPath(null)
           if (nextPath) {
             navigate(nextPath, { replace: true })
           }
         }}
       />
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
     </>
   )
 }

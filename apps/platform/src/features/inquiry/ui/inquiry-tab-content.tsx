@@ -11,12 +11,11 @@ import {
   type OneToOneInquiryWritePayload,
 } from '@/features/inquiry'
 import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
-import { PFButton, PFModal, PFPagination, PFText } from '@/shared/ui'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import { PFAlertModal, PFButton, PFModal, PFPagination, PFText } from '@/shared/ui'
 import cancelConfirmStyles from '@/features/mypage/education/applications/ui/cancel-confirm.module.css'
-import {
-  getInquiryApiErrorMessage,
-  INQUIRY_DELETE_ERROR_FALLBACK,
-} from '../lib/inquiry-errors'
+import { readInquiryServerErrorMessage } from '../lib/inquiry-errors'
 import { InquiryAccordionList } from './inquiry-accordion-list'
 import { OneToOneInquiryWriteModal } from './one-to-one-inquiry-write-modal'
 import styles from './inquiry-tab-content.module.css'
@@ -50,7 +49,8 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
-  const [inquiryError, setInquiryError] = useState<string | null>(null)
+  /** 삭제 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [deleteErrorAlert, setDeleteErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const remoteDetail = useMyInquiryDetailQuery(remoteInquiries.enabled ? expandedId : null)
   const writeOptions = useInquiryWriteOptionsQuery(remoteInquiries.enabled)
   const createInquiry = useCreateMyInquiryMutation()
@@ -80,7 +80,6 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
 
   const handleDelete = (id: string) => {
     if (deletingId) return
-    setInquiryError(null)
     setPendingDeleteId(id)
   }
 
@@ -92,13 +91,16 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const handleConfirmDelete = async () => {
     const id = pendingDeleteId
     if (!id || deletingId) return
-    setInquiryError(null)
     if (remoteInquiries.enabled) {
       setDeletingId(id)
       try {
         await deleteInquiry.mutateAsync(id)
       } catch (error) {
-        setInquiryError(getInquiryApiErrorMessage(error, INQUIRY_DELETE_ERROR_FALLBACK))
+        // 확인 창을 닫고 오류 팝업을 띄운다
+        setPendingDeleteId(null)
+        setDeleteErrorAlert(
+          resolvePlatformErrorAlert(error, { serverMessage: readInquiryServerErrorMessage }),
+        )
         return
       } finally {
         setDeletingId(null)
@@ -132,20 +134,11 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
         <PFButton
           size="xlarge"
           type="button"
-          onClick={() => {
-            setInquiryError(null)
-            setIsWriteModalOpen(true)
-          }}
+          onClick={() => setIsWriteModalOpen(true)}
         >
           1:1 문의 작성하기
         </PFButton>
       </div>
-
-      {inquiryError ? (
-        <PFText as="p" typo="bd-sm-md" color="error" role="alert" className={styles.error}>
-          {inquiryError}
-        </PFText>
-      ) : null}
 
       <InquiryAccordionList
         items={pageItems}
@@ -209,6 +202,13 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
           </div>
         </div>
       </PFModal>
+
+      <PFAlertModal
+        open={deleteErrorAlert != null}
+        title={deleteErrorAlert?.title ?? ''}
+        description={deleteErrorAlert?.description}
+        onConfirm={() => setDeleteErrorAlert(null)}
+      />
 
       <OneToOneInquiryWriteModal
         open={isWriteModalOpen}

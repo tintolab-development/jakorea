@@ -17,15 +17,14 @@ import type {
   MemberFileUploadPolicy,
   MemberFileUploadStatus,
 } from '@/features/mypage/instructor-apply/api/member-file-upload'
+import { getApiErrorMessageFromBody } from '@/features/program/lib/application-api-error'
 import {
-  DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE,
-  getApiErrorMessageFromBody,
-} from '@/features/program/lib/application-api-error'
-import {
+  PFAlertModal,
   PFButton,
   PFDescriptionList,
   PFItemDeleteButton,
   PFModal,
+  PFRequiredMissingAlert,
   PFSelect,
   PFText,
   PFTextarea,
@@ -37,6 +36,16 @@ import {
   FILE_UPLOAD_TOTAL_EXCEEDED_MESSAGE,
   sumUploadFileBytes,
 } from '@/shared/lib/file-upload-policy'
+import { buildFileTypeInvalidAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  educationNoticeAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   PORTAL_ABSENCE_REASON_MAX_FILE_COUNT,
@@ -55,6 +64,12 @@ const ABSENCE_REASON_FILE_PURPOSE = 'ABSENCE_EVIDENCE'
 const ABSENCE_REASON_ACCEPT = '.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf'
 const ABSENCE_REASON_MAX_FILES = PORTAL_ABSENCE_REASON_MAX_FILE_COUNT
 const ABSENCE_REASON_FILE_TYPES_LABEL = 'JPG, JPEG, PNG, PDF'
+/** 필수 항목 미입력 팝업에 보이는 항목명 (화면 라벨과 같게) */
+const ABSENCE_REASON_REQUIRED_LABELS = {
+  schedule: '결석 일자',
+  reason: '불참 사유',
+  files: '증빙서류',
+} as const
 /** 시안 문구 — 형식 표기는 PDF·JPG·PNG(JPEG는 JPG로 함께 받는다) */
 const ABSENCE_REASON_FILE_HINT =
   '파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.'
@@ -86,7 +101,6 @@ type AbsenceFile = {
   fileName: string
   fileSize: number
   status: AbsenceFileStatus
-  error?: string
 }
 
 type EducationAbsenceReasonModalProps = {
@@ -186,7 +200,7 @@ function uploadErrorMessage(error: unknown): string {
   return '증빙서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
-function submitErrorMessage(error: unknown): string {
+function submitErrorMessage(error: unknown, fallback: string): string {
   const code = getResponseErrorCode(error)
   switch (code) {
     case 'INVALID_ABSENCE_REASON':
@@ -212,18 +226,46 @@ function submitErrorMessage(error: unknown): string {
   if (getResponseStatus(error) === 409) {
     return '교육 일정 상태가 변경되었습니다. 교육현황을 새로고침한 뒤 다시 시도해 주세요.'
   }
-  return getApiErrorMessageFromBody(
-    getResponseData(error),
-    DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE
+  return getApiErrorMessageFromBody(getResponseData(error), fallback)
+}
+
+/** 파일 형식 오류인지 (선택 시 검사·서버 응답 모두) */
+function isAbsenceFileTypeError(error: unknown): boolean {
+  return (
+    error instanceof MemberFileTypeNotAllowedError ||
+    getResponseErrorCode(error) === 'MEMBER_FILE_TYPE_NOT_ALLOWED'
   )
 }
 
-function absenceFileError(file: File): string | null {
+/** 용량·빈 파일 — 시안에 따로 없어 「안내」 팝업 */
+function isAbsenceFileSizeError(error: unknown): boolean {
+  return (
+    error instanceof MemberFileTooLargeError ||
+    error instanceof MemberFileEmptyError ||
+    getResponseErrorCode(error) === 'MEMBER_FILE_SIZE_EXCEEDED' ||
+    isMemberFileSizeUploadError(getOriginalMemberFileError(error))
+  )
+}
+
+/**
+ * 증빙서류 첨부·업로드 오류 팝업 — 시안 「오류 제한 팝업」(14491-2533).
+ * 형식 → 「파일 형식이 맞지 않는 경우」, 용량 → 「안내」, 그 밖 → 네트워크·처리 제한·처리 실패.
+ */
+function absenceUploadErrorAlert(error: unknown): EducationAlert {
+  if (isAbsenceFileTypeError(error)) {
+    return buildFileTypeInvalidAlertCopy(ABSENCE_REASON_FILE_TYPES_LABEL)
+  }
+  if (isAbsenceFileSizeError(error)) return educationNoticeAlert(uploadErrorMessage(error))
+  return resolveEducationErrorAlert(error, uploadErrorMessage)
+}
+
+/** 선택한 파일 검사 — 통과하면 null, 아니면 팝업 문구 */
+function absenceFileError(file: File): EducationAlert | null {
   try {
     validateMemberPortalFile(file, ABSENCE_REASON_FILE_POLICY)
     return null
   } catch (error) {
-    return uploadErrorMessage(error)
+    return absenceUploadErrorAlert(error)
   }
 }
 
@@ -297,8 +339,11 @@ export function EducationAbsenceReasonModal({
   const [reason, setReason] = useState('')
   const [files, setFiles] = useState<AbsenceFile[]>([])
   const [uploading, setUploading] = useState(false)
-  const [fileSelectionNotice, setFileSelectionNotice] = useState<string | null>(null)
-  const [formError, setFormError] = useState<string | null>(null)
+  // 첨부·제출 안내는 빨간 글씨 대신 팝업 — 시안 「오류 제한 팝업」(14491-2533)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
+  /** [사유 제출하기]를 눌러 필수 항목 안내를 띄운 뒤 — 빈 칸을 빨간 테두리로 표시 */
+  const [showRequiredErrors, setShowRequiredErrors] = useState(false)
   const submitMutation = useSubmitApplicationAbsenceReason(applicationType, applicationId)
   const wasOpenRef = useRef(false)
 
@@ -308,8 +353,9 @@ export function EducationAbsenceReasonModal({
       setReason('')
       setFiles([])
       setUploading(false)
-      setFileSelectionNotice(null)
-      setFormError(null)
+      setAlert(null)
+      setRequiredMissing(null)
+      setShowRequiredErrors(false)
       submitMutation.reset()
     }
     wasOpenRef.current = open
@@ -325,11 +371,11 @@ export function EducationAbsenceReasonModal({
   )
 
   const isBusy = uploading || submitMutation.isPending
-  const canSubmit =
-    Boolean(selectedScheduleId && reason.trim()) &&
-    files.length > 0 &&
-    !isBusy &&
-    files.every(file => file.status === 'uploaded' && file.fileObjectId != null)
+  /** 업로드 중이거나 실패한 파일이 남아 있으면 제출할 수 없다 (필수 항목 누락은 눌렀을 때 팝업) */
+  const hasUnsettledFile = files.some(
+    file => file.status !== 'uploaded' || file.fileObjectId == null
+  )
+  const canSubmit = !isBusy && !hasUnsettledFile
 
   const updateFile = (key: string, patch: Partial<AbsenceFile>) => {
     setFiles(current => current.map(file => (file.key === key ? { ...file, ...patch } : file)))
@@ -337,17 +383,17 @@ export function EducationAbsenceReasonModal({
 
   const uploadSingleFile = async (file: AbsenceFile): Promise<void> => {
     try {
-      updateFile(file.key, { status: 'uploading', error: undefined, fileObjectId: undefined })
+      updateFile(file.key, { status: 'uploading', fileObjectId: undefined })
       const fileObjectId = await uploadMemberPortalFile({
         file: file.file,
         filePurpose: ABSENCE_REASON_FILE_PURPOSE,
         policy: ABSENCE_REASON_FILE_POLICY,
         onStatusChange: status => updateFile(file.key, { status: toAbsenceFileStatus(status) }),
       })
-      updateFile(file.key, { fileObjectId, status: 'uploaded', error: undefined })
+      updateFile(file.key, { fileObjectId, status: 'uploaded' })
     } catch (error) {
-      const message = uploadErrorMessage(error)
-      updateFile(file.key, { status: 'failed', fileObjectId: undefined, error: message })
+      updateFile(file.key, { status: 'failed', fileObjectId: undefined })
+      setAlert(absenceUploadErrorAlert(error))
     }
   }
 
@@ -366,8 +412,10 @@ export function EducationAbsenceReasonModal({
     if (isBusy || selectedFiles.length === 0) return
     const remainingCount = ABSENCE_REASON_MAX_FILES - files.length
     if (remainingCount <= 0) {
-      setFileSelectionNotice(
-        `증빙서류는 최대 ${ABSENCE_REASON_MAX_FILES}개까지 첨부할 수 있습니다.`
+      setAlert(
+        educationNoticeAlert(
+          `증빙서류는 최대 ${ABSENCE_REASON_MAX_FILES}개까지 첨부할 수 있습니다.`
+        )
       )
       return
     }
@@ -375,6 +423,7 @@ export function EducationAbsenceReasonModal({
     const existingFileIdentities = new Set(files.map(item => fileIdentity(item.file)))
     const incomingFileIdentities = new Set<string>()
     const filesToUpload: File[] = []
+    let fileTypeAlert: EducationAlert | null = null
     const rejectedMessages = new Set<string>()
     let duplicateCount = 0
     let overflowCount = 0
@@ -390,9 +439,13 @@ export function EducationAbsenceReasonModal({
         overflowCount += 1
         continue
       }
-      const invalidMessage = absenceFileError(file)
-      if (invalidMessage) {
-        rejectedMessages.add(invalidMessage)
+      const invalidAlert = absenceFileError(file)
+      if (invalidAlert) {
+        if (invalidAlert.title === '안내' && typeof invalidAlert.description === 'string') {
+          rejectedMessages.add(invalidAlert.description)
+        } else {
+          fileTypeAlert ??= invalidAlert
+        }
         continue
       }
       if (totalBytes + file.size > FILE_UPLOAD_MAX_TOTAL_BYTES) {
@@ -423,34 +476,31 @@ export function EducationAbsenceReasonModal({
         `증빙서류는 최대 ${ABSENCE_REASON_MAX_FILES}개까지 첨부할 수 있어 ${overflowCount}개 파일은 제외했습니다.`
       )
     }
-    setFileSelectionNotice(notices.length > 0 ? notices.join(' ') : null)
+    // 형식 오류는 시안 「파일 형식」 팝업을 먼저, 그 밖(용량·중복·개수)은 「안내」 팝업
+    if (fileTypeAlert) setAlert(fileTypeAlert)
+    else if (notices.length > 0) setAlert(educationNoticeAlert(notices.join(' ')))
   }
 
   const handleRetry = (fileKey: string) => {
     if (isBusy) return
     const file = files.find(item => item.key === fileKey)
     if (!file || file.status !== 'failed') return
-    setFileSelectionNotice(null)
     void uploadFiles([file])
   }
 
   const handleSubmit = () => {
     if (isBusy) return
-    if (!selectedScheduleId) {
-      setFormError('사유를 제출할 결석 일자를 선택해 주세요.')
+    const missingLabels = [
+      ...(selectedScheduleId ? [] : [ABSENCE_REASON_REQUIRED_LABELS.schedule]),
+      ...(reason.trim() ? [] : [ABSENCE_REASON_REQUIRED_LABELS.reason]),
+      ...(files.length > 0 ? [] : [ABSENCE_REASON_REQUIRED_LABELS.files]),
+    ]
+    if (missingLabels.length > 0) {
+      setShowRequiredErrors(true)
+      setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
       return
     }
-    if (!reason.trim()) {
-      setFormError('불참 사유를 작성해 주세요.')
-      return
-    }
-    if (files.length === 0) {
-      setFormError('증빙서류를 첨부해 주세요.')
-      return
-    }
-    if (files.some(file => file.status !== 'uploaded' || file.fileObjectId == null)) {
-      return
-    }
+    if (hasUnsettledFile) return
     const selectedItem = items.find(item => String(item.scheduleId) === selectedScheduleId)
     if (
       selectedItem &&
@@ -458,13 +508,12 @@ export function EducationAbsenceReasonModal({
         resolveEducationScheduleProgressStatus(selectedItem.heldAt),
         selectedItem.attendanceStatus,
         selectedItem.availableActions,
-        selectedItem.absenceReasonStatus,
+        selectedItem.absenceReasonStatus
       )
     ) {
-      setFormError('출석 처리된 회차에는 불참 사유를 제출할 수 없습니다.')
+      setAlert(educationNoticeAlert('출석 처리된 회차에는 불참 사유를 제출할 수 없습니다.'))
       return
     }
-    setFormError(null)
     const fileObjectIds = files.flatMap(file =>
       file.fileObjectId == null ? [] : [file.fileObjectId]
     )
@@ -474,186 +523,172 @@ export function EducationAbsenceReasonModal({
         reason: reason.trim(),
         ...(fileObjectIds.length > 0 ? { fileObjectIds } : {}),
       },
-      { onSuccess: onClose }
+      {
+        onSuccess: onClose,
+        onError: error => setAlert(resolveEducationErrorAlert(error, submitErrorMessage)),
+      }
     )
   }
 
   return (
-    <PFModal
-      showCloseButton={false}
-      open={open}
-      title="결석 사유 제출하기"
-      className={styles.modal}
-      ariaDescribedBy={descriptionId}
-      onClose={onClose}
-      mobilePlacement="full"
-      closeOnEscape={!isBusy}
-    >
-      <div className={styles.content}>
-        <div id={descriptionId} className={styles.description}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
-            개인 사유로 교육에 참여하지 못한 경우, 불참 사유 및 증빙서류를 제출해 주세요.
-          </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
-            제출하면 우선 사유 불참으로 처리되어 수료 결격 사유에서 제외돼요.
-          </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
-            * 담당자가 제출한 사유를 반려하면 결석으로 변경되어 수료 기준에 다시 반영돼요.
-          </PFText>
-        </div>
+    <>
+      <PFModal
+        showCloseButton={false}
+        open={open}
+        title="결석 사유 제출하기"
+        className={styles.modal}
+        ariaDescribedBy={descriptionId}
+        onClose={onClose}
+        mobilePlacement="full"
+        closeOnEscape={!isBusy}
+      >
+        <div className={styles.content}>
+          <div id={descriptionId} className={styles.description}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+              개인 사유로 교육에 참여하지 못한 경우, 불참 사유 및 증빙서류를 제출해 주세요.
+            </PFText>
+            <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+              제출하면 우선 사유 불참으로 처리되어 수료 결격 사유에서 제외돼요.
+            </PFText>
+            <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+              * 담당자가 제출한 사유를 반려하면 결석으로 변경되어 수료 기준에 다시 반영돼요.
+            </PFText>
+          </div>
 
-        <div className={styles.fields}>
-          <PFSelect
-            size="xlarge"
-            label="결석 일자"
-            placeholder="사유를 제출할 결석 일자를 선택해 주세요"
-            options={dateOptions}
-            value={selectedScheduleId}
-            required
-            onValueChange={value => {
-              setSelectedScheduleId(value)
-              setFormError(null)
-            }}
-            disabled={isBusy || dateOptions.length === 0}
-            error={Boolean(formError && !selectedScheduleId)}
-          />
-
-          <PFTextarea
-            size="xlarge"
-            label="불참 사유"
-            placeholder="불참 사유를 작성해 주세요"
-            rows={2}
-            maxLength={PORTAL_ABSENCE_REASON_MAX_LENGTH}
-            value={reason}
-            required
-            onValueChange={value => {
-              setReason(value)
-              setFormError(null)
-            }}
-            disabled={isBusy}
-            error={Boolean(formError && !reason.trim())}
-            message={formError && !reason.trim() ? formError : undefined}
-            messageStatus="error"
-          />
-
-          <div className={styles.fileField}>
-            <div className={styles.fileLabel}>
-              <PFText as="label" typo="label-md" color="inherit" className={styles.fileLabelText}>
-                증빙서류를 첨부해 주세요.
-              </PFText>
-              <span className={styles.requiredMark} aria-hidden="true">
-                *
-              </span>
-            </div>
-            <input
-              ref={fileInputRef}
-              className={styles.fileInput}
-              type="file"
-              accept={ABSENCE_REASON_ACCEPT}
-              disabled={isBusy || files.length >= ABSENCE_REASON_MAX_FILES}
-              onChange={event => {
-                const selectedFiles = Array.from(event.target.files ?? [])
-                if (selectedFiles.length > 0) handleFileSelect(selectedFiles)
-                event.target.value = ''
-              }}
-              multiple
+          <div className={styles.fields}>
+            <PFSelect
+              size="xlarge"
+              label="결석 일자"
+              placeholder="사유를 제출할 결석 일자를 선택해 주세요"
+              options={dateOptions}
+              value={selectedScheduleId}
+              required
+              onValueChange={setSelectedScheduleId}
+              disabled={isBusy || dateOptions.length === 0}
+              error={showRequiredErrors && !selectedScheduleId}
             />
+
+            <PFTextarea
+              size="xlarge"
+              label="불참 사유"
+              placeholder="불참 사유를 작성해 주세요"
+              rows={2}
+              maxLength={PORTAL_ABSENCE_REASON_MAX_LENGTH}
+              value={reason}
+              required
+              onValueChange={setReason}
+              disabled={isBusy}
+              error={showRequiredErrors && !reason.trim()}
+            />
+
+            <div className={styles.fileField}>
+              <div className={styles.fileLabel}>
+                <PFText as="label" typo="label-md" color="inherit" className={styles.fileLabelText}>
+                  증빙서류를 첨부해 주세요.
+                </PFText>
+                <span className={styles.requiredMark} aria-hidden="true">
+                  *
+                </span>
+              </div>
+              <input
+                ref={fileInputRef}
+                className={styles.fileInput}
+                type="file"
+                accept={ABSENCE_REASON_ACCEPT}
+                disabled={isBusy || files.length >= ABSENCE_REASON_MAX_FILES}
+                onChange={event => {
+                  const selectedFiles = Array.from(event.target.files ?? [])
+                  if (selectedFiles.length > 0) handleFileSelect(selectedFiles)
+                  event.target.value = ''
+                }}
+                multiple
+              />
+              <PFButton
+                type="button"
+                variant="tertiary"
+                size="xlarge"
+                width="100%"
+                className={styles.filePicker}
+                disabled={isBusy || files.length >= ABSENCE_REASON_MAX_FILES}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploading ? '업로드 중…' : '증빙서류 추가하기'}
+              </PFButton>
+              <PFDescriptionList
+                items={[ABSENCE_REASON_FILE_HINT, ABSENCE_REASON_FILE_NAME_HINT]}
+              />
+              {files.length > 0 ? (
+                <ul className={styles.fileList}>
+                  {files.map(file => (
+                    <li key={file.key} className={styles.fileRow}>
+                      <div className={styles.fileInfo}>
+                        <PFText as="span" typo="bd-lg-rg" color="black" className={styles.fileName}>
+                          {file.fileName}
+                        </PFText>
+                        <PFText
+                          as="span"
+                          typo="bd-sm-rg"
+                          color={file.status === 'failed' ? 'error' : 'neutral-cool-600'}
+                        >
+                          {formatFileSize(file.fileSize)} · {absenceFileStatusLabel(file.status)}
+                        </PFText>
+                      </div>
+                      <div className={styles.fileActions}>
+                        {file.status === 'failed' ? (
+                          <PFButton
+                            type="button"
+                            variant="tertiary"
+                            size="small"
+                            disabled={isBusy}
+                            onClick={() => handleRetry(file.key)}
+                          >
+                            다시 시도
+                          </PFButton>
+                        ) : null}
+                        <PFItemDeleteButton
+                          aria-label={`${file.fileName} 삭제`}
+                          disabled={isBusy}
+                          onClick={() =>
+                            setFiles(current => current.filter(item => item.key !== file.key))
+                          }
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+
+          <div className={styles.actions}>
             <PFButton
               type="button"
-              variant="tertiary"
+              variant="secondary"
               size="xlarge"
-              width="100%"
-              className={styles.filePicker}
-              disabled={isBusy || files.length >= ABSENCE_REASON_MAX_FILES}
-              onClick={() => fileInputRef.current?.click()}
+              disabled={isBusy}
+              onClick={onClose}
             >
-              {uploading ? '업로드 중…' : '증빙서류 추가하기'}
+              취소
             </PFButton>
-            <PFDescriptionList
-              items={[ABSENCE_REASON_FILE_HINT, ABSENCE_REASON_FILE_NAME_HINT]}
-            />
-            {files.length > 0 ? (
-              <ul className={styles.fileList}>
-                {files.map(file => (
-                  <li key={file.key} className={styles.fileRow}>
-                    <div className={styles.fileInfo}>
-                      <PFText as="span" typo="bd-lg-rg" color="black" className={styles.fileName}>
-                        {file.fileName}
-                      </PFText>
-                      <PFText
-                        as="span"
-                        typo="bd-sm-rg"
-                        color={file.status === 'failed' ? 'error' : 'neutral-cool-600'}
-                      >
-                        {formatFileSize(file.fileSize)} ·{' '}
-                        {file.error ?? absenceFileStatusLabel(file.status)}
-                      </PFText>
-                    </div>
-                    <div className={styles.fileActions}>
-                      {file.status === 'failed' ? (
-                        <PFButton
-                          type="button"
-                          variant="tertiary"
-                          size="small"
-                          disabled={isBusy}
-                          onClick={() => handleRetry(file.key)}
-                        >
-                          다시 시도
-                        </PFButton>
-                      ) : null}
-                      <PFItemDeleteButton
-                        aria-label={`${file.fileName} 삭제`}
-                        disabled={isBusy}
-                        onClick={() =>
-                          setFiles(current => current.filter(item => item.key !== file.key))
-                        }
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {fileSelectionNotice ? (
-              <PFText
-                as="p"
-                typo="bd-sm-rg"
-                color="neutral-cool-600"
-                className={styles.fileSelectionNotice}
-                role="status"
-              >
-                {fileSelectionNotice}
-              </PFText>
-            ) : null}
+            <PFButton
+              type="button"
+              variant="primary"
+              size="xlarge"
+              disabled={!canSubmit}
+              onClick={handleSubmit}
+            >
+              {submitMutation.isPending ? '제출 중…' : '사유 제출하기'}
+            </PFButton>
           </div>
         </div>
-
-        {submitMutation.isError ? (
-          <PFText as="p" typo="bd-md-rg" color="error" className={styles.formError}>
-            {submitErrorMessage(submitMutation.error)}
-          </PFText>
-        ) : null}
-
-        <div className={styles.actions}>
-          <PFButton
-            type="button"
-            variant="secondary"
-            size="xlarge"
-            disabled={isBusy}
-            onClick={onClose}
-          >
-            취소
-          </PFButton>
-          <PFButton
-            type="button"
-            variant="primary"
-            size="xlarge"
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-          >
-            {submitMutation.isPending ? '제출 중…' : '사유 제출하기'}
-          </PFButton>
-        </div>
-      </div>
-    </PFModal>
+      </PFModal>
+      <PFAlertModal
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
+      />
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
+    </>
   )
 }

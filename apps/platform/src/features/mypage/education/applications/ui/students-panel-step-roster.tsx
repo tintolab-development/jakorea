@@ -9,8 +9,15 @@ import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import {
   STUDENT_ROSTER_FILE_ACCEPT,
   STUDENT_ROSTER_UPLOAD_HINT,
+  isStudentRosterUploadFileTypeAllowed,
+  STUDENT_ROSTER_FILE_FORMATS_LABEL,
   validateStudentRosterUploadFile,
 } from '../lib/student-roster-upload-policy'
+import { buildFileTypeInvalidAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  educationNoticeAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import { StudentsPanelRosterTable } from './students-panel-roster-table'
 import styles from './students-panel.module.css'
 
@@ -40,13 +47,13 @@ export function StudentsPanelStepRoster({
   onCertificateIssue,
 }: StudentsPanelStepRosterProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
   const hasStudents = rosterCount > 0
   const isCertificateDisabled = !certificateButtonEnabled
 
   const handlePickExcel = () => {
     if (rosterUploadBlockedMessage) {
-      setAlertMessage(rosterUploadBlockedMessage)
+      setAlert(educationNoticeAlert(rosterUploadBlockedMessage))
       return
     }
     fileInputRef.current?.click()
@@ -56,9 +63,13 @@ export function StudentsPanelStepRoster({
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
+    if (!isStudentRosterUploadFileTypeAllowed(file)) {
+      setAlert(buildFileTypeInvalidAlertCopy(STUDENT_ROSTER_FILE_FORMATS_LABEL))
+      return
+    }
     const validationError = validateStudentRosterUploadFile(file)
     if (validationError) {
-      setAlertMessage(validationError)
+      setAlert(educationNoticeAlert(validationError))
       return
     }
     onImportFile(file)
@@ -171,11 +182,11 @@ export function StudentsPanelStepRoster({
       )}
 
       <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? ''}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
         confirmLabel="확인"
-        onConfirm={() => setAlertMessage(null)}
+        onConfirm={() => setAlert(null)}
       />
     </section>
   )

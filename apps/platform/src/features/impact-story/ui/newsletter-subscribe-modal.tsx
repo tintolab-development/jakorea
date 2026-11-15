@@ -1,8 +1,20 @@
 import { useCallback, useId, useState, type FormEvent } from 'react'
 import { isValidEmailId } from '@/shared/lib'
-import { PFAlertModal, PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFModal,
+  PFRequiredMissingAlert,
+  PFText,
+  PFTextInput,
+} from '@/shared/ui'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
-import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
+import { getNewsletterSubscribeErrorAlert } from '../api/newsletter-errors'
 import {
   getNewsletterSubscribeResultCopy,
   resolveNewsletterSubscribeUi,
@@ -42,7 +54,8 @@ export function NewsletterSubscribeModal({
   const [email, setEmail] = useState(EMPTY_FORM.email)
   const [agreed, setAgreed] = useState(defaultAgreed)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
 
   const resetForm = useCallback(() => {
     setName(EMPTY_FORM.name)
@@ -54,7 +67,8 @@ export function NewsletterSubscribeModal({
   const handleClose = useCallback(() => {
     if (subscribeMutation.isPending) return
     resetForm()
-    setErrorMessage('')
+    setErrorAlert(null)
+    setRequiredMissing(null)
     onClose()
   }, [onClose, resetForm, subscribeMutation.isPending])
 
@@ -77,6 +91,16 @@ export function NewsletterSubscribeModal({
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      // 항목 아래 문구와 함께 시안 팝업 — 미입력(항목명) 먼저, 그다음 필수 항목 미동의
+      const missingLabels = [
+        ...(trimmedName ? [] : ['이름']),
+        ...(trimmedEmail ? [] : ['이메일 주소']),
+      ]
+      if (missingLabels.length > 0) {
+        setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
+      } else if (nextErrors.consent) {
+        setErrorAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
+      }
       return
     }
 
@@ -91,9 +115,9 @@ export function NewsletterSubscribeModal({
         onSuccess?.(result)
         return
       }
-      setErrorMessage(getNewsletterSubscribeResultCopy(result).description)
+      setErrorAlert(getNewsletterSubscribeResultCopy(result))
     } catch (error) {
-      setErrorMessage(getNewsletterSubscribeErrorMessage(error))
+      setErrorAlert(getNewsletterSubscribeErrorAlert(error))
     }
   }
 
@@ -219,11 +243,12 @@ export function NewsletterSubscribeModal({
       </form>
     </PFModal>
 
+    <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
     <PFAlertModal
-      open={Boolean(errorMessage)}
-      title="뉴스레터 구독 안내"
-      description={errorMessage}
-      onConfirm={() => setErrorMessage('')}
+      open={errorAlert != null}
+      title={errorAlert?.title ?? ''}
+      description={errorAlert?.description}
+      onConfirm={() => setErrorAlert(null)}
     />
     </>
   )

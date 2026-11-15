@@ -123,6 +123,8 @@ export function mapUploadAndDisplayToImportRow(
     instructorName: preserveImportText(upload.instructorName) ?? undefined,
     feePayee: preserveImportText(upload.paymentDestination),
     assistantInstructorNames: upload.assistantInstructorNames.trim() || undefined,
+    // 엑셀 「연수형태」 원문 — 서버 training_type에 저장한다(단가·연수방식 판정과 무관).
+    trainingType: upload.trainingFormat.trim() || undefined,
     trainingLocation: upload.trainingLocation.trim() || undefined,
     schoolOrOrganizationName: upload.school.trim() || undefined,
     trainingDate: toJavaLocalDate(display.trainingDate),

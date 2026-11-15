@@ -41,6 +41,23 @@ describe('buildWritingFormSectionsFromApiItems', () => {
     expect(registration?.rows).toHaveLength(1)
   })
 
+  it('maps 최초 생성일 from createdAt and 최근 수정일 from updatedAt', () => {
+    const sections = buildWritingFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'survey-default',
+        category: 'SURVEY',
+        createdAt: '2026-03-02T12:00:00Z',
+        updatedAt: '2026-11-16T12:00:00Z',
+      }),
+    ])
+    const row = sections
+      .find(section => section.key === 'survey')
+      ?.rows.find(item => item.id === 'survey-default')
+
+    expect(row?.createdAt).toBe('2026.03.02')
+    expect(row?.updatedAt).toBe('2026.11.16')
+  })
+
   it('shows user-created application/recruitment copies and hides registration copies', () => {
     const sections = buildWritingFormSectionsFromApiItems([
       listItem({
@@ -156,6 +173,23 @@ describe('buildIssuanceFormSectionsFromApiItems', () => {
     expect(document?.rows.find(row => row.id === 'document-3')?.templateName).toBe('수료증 (API)')
     expect(document?.rows.some(row => row.id === 'document-payment-order-issue')).toBe(false)
     expect(document?.rows).toHaveLength(1)
+  })
+
+  it('maps 최초 생성일 from createdAt and 최근 수정일 from updatedAt', () => {
+    const sections = buildIssuanceFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'issuance-3',
+        category: 'REPORT',
+        createdAt: '2026-03-02T12:00:00Z',
+        updatedAt: '2026-11-16T12:00:00Z',
+      }),
+    ])
+    const row = sections
+      .find(section => section.key === 'issuance-report')
+      ?.rows.find(item => item.id === 'issuance-3')
+
+    expect(row?.createdAt).toBe('2026.03.02')
+    expect(row?.updatedAt).toBe('2026.11.16')
   })
 
   it('hides Notion-excluded issuance catalog codes from the list', () => {

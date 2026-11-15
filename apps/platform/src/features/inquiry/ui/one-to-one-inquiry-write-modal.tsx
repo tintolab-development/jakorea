@@ -1,9 +1,23 @@
 import { useCallback, useId, useState } from 'react'
 import { INQUIRY_CATEGORY_OPTIONS, INQUIRY_PROGRAM_OPTIONS } from '../lib/constants'
 import { createInquiryIdempotencyKey } from '../lib/idempotency'
-import { getInquiryApiErrorMessage } from '../lib/inquiry-errors'
+import { readInquiryServerErrorMessage } from '../lib/inquiry-errors'
 import type { OneToOneInquiryWritePayload } from '../model/types'
-import { PFButton, PFModal, PFSelect, PFText, PFTextInput } from '@/shared/ui'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  PFAlertModal,
+  PFButton,
+  PFModal,
+  PFRequiredMissingAlert,
+  PFSelect,
+  PFText,
+  PFTextInput,
+} from '@/shared/ui'
 import styles from './one-to-one-inquiry-write-modal.module.css'
 
 export type InquirySelectOption = {
@@ -33,6 +47,14 @@ type FieldErrors = {
   content?: string
 }
 
+/** 필수 누락 팝업에 쓰는 화면 항목명 (입력 순서) */
+const REQUIRED_FIELD_LABELS: Record<keyof FieldErrors, string> = {
+  program: '문의 프로그램명',
+  category: '카테고리',
+  title: '제목',
+  content: '문의내용',
+}
+
 function resolveProgramName(programValue: string, options: readonly InquirySelectOption[]) {
   return options.find(option => option.value === programValue)?.label ?? ''
 }
@@ -50,7 +72,9 @@ export function OneToOneInquiryWriteModal({
   const [title, setTitle] = useState(EMPTY_FORM.title)
   const [content, setContent] = useState(EMPTY_FORM.content)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
+  /** 등록 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [submitErrorAlert, setSubmitErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null)
 
@@ -60,7 +84,8 @@ export function OneToOneInquiryWriteModal({
     setTitle(EMPTY_FORM.title)
     setContent(EMPTY_FORM.content)
     setErrors({})
-    setSubmitError(null)
+    setRequiredMissing(null)
+    setSubmitErrorAlert(null)
     setIdempotencyKey(null)
   }, [])
 
@@ -72,7 +97,6 @@ export function OneToOneInquiryWriteModal({
 
   const handleSubmit = async () => {
     if (isSubmitting) return
-    setSubmitError(null)
     const nextErrors: FieldErrors = {}
     const trimmedTitle = title.trim()
     const trimmedContent = content.trim()
@@ -92,6 +116,16 @@ export function OneToOneInquiryWriteModal({
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      // 항목 아래 문구와 함께 시안 「필수 항목 미입력(항목명 노출)」 팝업을 띄운다
+      const missingKeys = (Object.keys(REQUIRED_FIELD_LABELS) as (keyof FieldErrors)[]).filter(
+        key => nextErrors[key],
+      )
+      setRequiredMissing(
+        buildRequiredMissingAlertCopy({
+          kind: 'field',
+          labels: missingKeys.map(key => REQUIRED_FIELD_LABELS[key]),
+        }),
+      )
       return
     }
 
@@ -109,7 +143,9 @@ export function OneToOneInquiryWriteModal({
       resetForm()
       onClose()
     } catch (error) {
-      setSubmitError(getInquiryApiErrorMessage(error))
+      setSubmitErrorAlert(
+        resolvePlatformErrorAlert(error, { serverMessage: readInquiryServerErrorMessage }),
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -122,7 +158,8 @@ export function OneToOneInquiryWriteModal({
       size="md"
       title="1:1 문의 작성하기"
       mobilePlacement="full"
-      closeOnEscape={!isSubmitting}
+      // 안내 팝업이 열려 있으면 Escape는 팝업만 닫는다
+      closeOnEscape={!isSubmitting && requiredMissing == null && submitErrorAlert == null}
       onClose={handleClose}
     >
       <div className={styles.form}>
@@ -145,7 +182,6 @@ export function OneToOneInquiryWriteModal({
               setProgramValue(value)
               setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, program: undefined }))
-              setSubmitError(null)
             }}
           />
         </div>
@@ -166,7 +202,6 @@ export function OneToOneInquiryWriteModal({
               setCategory(value)
               setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, category: undefined }))
-              setSubmitError(null)
             }}
           />
         </div>
@@ -185,7 +220,6 @@ export function OneToOneInquiryWriteModal({
               setTitle(value)
               setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, title: undefined }))
-              setSubmitError(null)
             }}
           />
         </div>
@@ -208,19 +242,12 @@ export function OneToOneInquiryWriteModal({
               setContent(event.target.value)
               setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, content: undefined }))
-              setSubmitError(null)
             }}
           />
           {errors.content ? (
             <p className={[styles.message, styles.messageError].join(' ')}>{errors.content}</p>
           ) : null}
         </div>
-
-        {submitError ? (
-          <PFText as="p" typo="bd-sm-md" color="error" role="alert" className={styles.submitError}>
-            {submitError}
-          </PFText>
-        ) : null}
 
         <div className={styles.actions}>
           <PFButton
@@ -242,6 +269,13 @@ export function OneToOneInquiryWriteModal({
           </PFButton>
         </div>
       </div>
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
+      <PFAlertModal
+        open={submitErrorAlert != null}
+        title={submitErrorAlert?.title ?? ''}
+        description={submitErrorAlert?.description}
+        onConfirm={() => setSubmitErrorAlert(null)}
+      />
     </PFModal>
   )
 }

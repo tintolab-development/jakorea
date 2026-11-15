@@ -1,7 +1,5 @@
 import {
   collectMemberConsentUnagreedRequiredLabels,
-  formatMemberConsentDisagreedRequiredAlertMessage,
-  formatMemberConsentIncompleteRequiredAlertMessage,
   listMemberConsentIncompleteRequiredFields,
   MEMBER_CONSENT_TEMPLATE_MAP,
   normalizeMemberConsentWriteDraft,
@@ -19,11 +17,17 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import { ConsentSignatureStatement } from '@/features/mypage/instructor-apply/consent/signature-statement'
 import consentStyles from '@/features/mypage/instructor-apply/consent/consent-form.module.css'
-import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import { getLoginApiErrorMessage } from '@/features/auth/sign-in/lib/get-login-api-error-message'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import {
   PFAlertModal,
-  PFRequiredFieldsIncompleteDescription,
   PFButton,
+  PFRequiredMissingAlert,
   PFFormDraftSignatureProvider,
   PFFormDraftSignatureTitleAsideBridge,
   type FormSignatureValue,
@@ -37,7 +41,8 @@ import {
 import { clearMypagePortraitConsentDraftState } from '@/features/mypage/settings/lib/mypage-portrait-consent-draft'
 
 const TEMPLATE_ID = MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.templateId
-const SIGNATURE_REQUIRED_ALERT_MESSAGE = '전자서명을 완료해 주세요'
+/** 전자서명 누락 — 「필수 항목 미입력(항목명 노출)」의 항목명 */
+const SIGNATURE_REQUIRED_FIELD_LABEL = '전자서명'
 
 type PortraitConsentWriteState = {
   draft: WritingFormDraft
@@ -91,9 +96,6 @@ function hasPortraitSignature(signature: FormSignatureValue | string | undefined
   return signature.dataUrl.trim() !== ''
 }
 
-const SUBMIT_FAILED_ALERT_MESSAGE = '동의서 제출에 실패했어요. 잠시 후 다시 시도해 주세요.'
-const SERVER_DRAFT_UNAVAILABLE_ALERT_MESSAGE =
-  '초상권 동의 양식을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
 export function PortraitConsentWriteForm({
   onComplete,
   verifiedName: verifiedNameProp,
@@ -127,8 +129,11 @@ export function PortraitConsentWriteForm({
   const draftScope = portraitConsentDraftScope(bridge)
 
   const [alertOpen, setAlertOpen] = useState(false)
-  const [alertTitle, setAlertTitle] = useState('안내')
+  const [alertTitle, setAlertTitle] = useState('')
   const [alertMessage, setAlertMessage] = useState<ReactNode>(null)
+  const [requiredMissingCopy, setRequiredMissingCopy] = useState<RequiredMissingAlertCopy | null>(
+    null,
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [state, setState] = useState<PortraitConsentWriteState>(() => {
     if (saveDraftState != null) {
@@ -162,8 +167,9 @@ export function PortraitConsentWriteForm({
   // 양식을 불러오지 못하면 [작성완료]가 잠기므로, 누르기 전에도 기존 안내를 바로 보여 준다
   useEffect(() => {
     if (!serverDraftUnavailable) return
-    setAlertTitle('안내')
-    setAlertMessage(SERVER_DRAFT_UNAVAILABLE_ALERT_MESSAGE)
+    // 시안 「공통 제한 안내 / 처리 실패」
+    setAlertTitle(PLATFORM_ALERT_COPY.requestFailed.title)
+    setAlertMessage(PLATFORM_ALERT_COPY.requestFailed.description)
     setAlertOpen(true)
   }, [serverDraftUnavailable])
 
@@ -210,46 +216,51 @@ export function PortraitConsentWriteForm({
   const handleSubmit = () => {
     if (isSubmitting) return
     if (serverDraftPending || serverDraftUnavailable) {
-      setAlertTitle('안내')
-      setAlertMessage(
-        serverDraftUnavailable
-          ? SERVER_DRAFT_UNAVAILABLE_ALERT_MESSAGE
-          : '동의서 양식을 불러오는 중입니다.',
-      )
+      if (serverDraftUnavailable) {
+        setAlertTitle(PLATFORM_ALERT_COPY.requestFailed.title)
+        setAlertMessage(PLATFORM_ALERT_COPY.requestFailed.description)
+      } else {
+        setAlertTitle('안내')
+        setAlertMessage('동의서 양식을 불러오는 중입니다.')
+      }
       setAlertOpen(true)
       return
     }
     if (incomplete) {
       const unagreedLabels = collectMemberConsentUnagreedRequiredLabels(state.draft)
       if (unagreedLabels.length > 0) {
-        // 시안 「필수 항목 미동의」 제목 — 본문은 미동의 항목명을 그대로 안내한다
+        // 시안 「필수 항목 미동의」 — 제목·설명 모두 시안 고정 문구
         setAlertTitle(PLATFORM_ALERT_COPY.requiredNotAgreed.title)
-        setAlertMessage(formatMemberConsentDisagreedRequiredAlertMessage(unagreedLabels))
+        setAlertMessage(PLATFORM_ALERT_COPY.requiredNotAgreed.description)
+        setAlertOpen(true)
       } else {
-        // 시안 「필수 항목 미입력」 제목 — 빠진 항목명을 알 수 있으면 그대로, 없으면 시안 설명
-        setAlertTitle(PLATFORM_REQUIRED_NOT_FILLED_TITLE)
-        setAlertMessage(
-          formatMemberConsentIncompleteRequiredAlertMessage(incompleteFields) || (
-            <PFRequiredFieldsIncompleteDescription />
-          ),
+        // 시안 「필수 항목 미입력(항목명 노출)」 — 빠진 항목명을 그대로 보여 준다
+        setRequiredMissingCopy(
+          buildRequiredMissingAlertCopy({
+            kind: 'field',
+            labels: incompleteFields.map(field => field.label),
+          }),
         )
       }
-      setAlertOpen(true)
       return
     }
     if (!hasPortraitSignature(state.signatures?.final)) {
-      setAlertTitle('안내')
-      setAlertMessage(SIGNATURE_REQUIRED_ALERT_MESSAGE)
-      setAlertOpen(true)
+      setRequiredMissingCopy(
+        buildRequiredMissingAlertCopy({ kind: 'field', labels: [SIGNATURE_REQUIRED_FIELD_LABEL] }),
+      )
       return
     }
     if (onSubmitAsync) {
       setIsSubmitting(true)
       void onSubmitAsync(state)
         .then(() => onComplete())
-        .catch(() => {
-          setAlertTitle('안내')
-          setAlertMessage(SUBMIT_FAILED_ALERT_MESSAGE)
+        .catch((error: unknown) => {
+          // 시안 「네트워크 오류 / 처리 제한 / 처리 실패」 — 서버 업무 메시지는 설명에 그대로
+          const copy = resolvePlatformErrorAlert(error, {
+            serverMessage: e => getLoginApiErrorMessage(e, '', { overrideApprovalPending: false }),
+          })
+          setAlertTitle(copy.title)
+          setAlertMessage(copy.description)
           setAlertOpen(true)
         })
         .finally(() => setIsSubmitting(false))
@@ -338,6 +349,10 @@ export function PortraitConsentWriteForm({
         title={alertTitle}
         description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
+      />
+      <PFRequiredMissingAlert
+        copy={requiredMissingCopy}
+        onConfirm={() => setRequiredMissingCopy(null)}
       />
     </>
   )

@@ -1,14 +1,21 @@
 import { type ChangeEvent, type ReactNode, useRef, useState } from 'react'
 import axios from 'axios'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { buildRequiredConsentDisagreeAlertMessage } from '@jakorea/domain/shared/required-consent-alert'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { Controller, useForm, type FieldErrors, type Resolver } from 'react-hook-form'
 import { AddressSearchModal } from '@/features/auth'
-import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import {
+  PLATFORM_ALERT_COPY,
+  buildFileTypeInvalidAlertCopy,
+} from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import {
   PFAlertModal,
-  PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
   PFAttachedFileList,
   PFButton,
   PFSelect,
@@ -21,13 +28,15 @@ import { useCreatePublicCareerTalentApplication } from '../api/hooks'
 import {
   CAREERS_TALENT_APPLY_PLACEHOLDERS as PH,
   CAREERS_TALENT_APPLY_STEP_TITLES,
-  CAREERS_TALENT_APPLY_SUBMIT_ERROR_MESSAGE,
   CAREERS_TALENT_APPLY_SUBMIT_LABEL,
   CAREERS_TALENT_APPLY_SUBMIT_SUCCESS_MESSAGE,
   CAREERS_TALENT_CAREER_OPTIONS,
+  CAREERS_TALENT_EVIDENCE_FORMATS_LABEL,
   CAREERS_TALENT_EDUCATION_LEVEL_OPTIONS,
   CAREERS_TALENT_JOB_OPTIONS,
   EMPTY_CAREERS_TALENT_APPLY_FORM_VALUES,
+  collectCareersTalentApplyMissingLabels,
+  isCareersTalentEvidenceFileTypeAllowed,
   type CareersTalentCareerType,
   type CareersTalentJobInterest,
 } from '../lib/talent-apply-form'
@@ -48,7 +57,8 @@ type AlertState = {
   description?: ReactNode
 } | null
 
-function messageFromError(error: unknown): string {
+/** 서버가 보낸 업무 메시지만 — FE 기본 실패 문구는 공통 「처리 실패」 팝업이 맡는다 */
+function serverMessageFromError(error: unknown): string | null {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data
     if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
@@ -56,10 +66,7 @@ function messageFromError(error: unknown): string {
       if (message) return message
     }
   }
-  if (error instanceof Error && error.message.trim()) {
-    return error.message.trim()
-  }
-  return CAREERS_TALENT_APPLY_SUBMIT_ERROR_MESSAGE
+  return null
 }
 
 function FieldLabel({
@@ -131,6 +138,7 @@ function CareerTypeRadioGroup({
 
 export function TalentApplyForm() {
   const [alert, setAlert] = useState<AlertState>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
   const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [successOpen, setSuccessOpen] = useState(false)
@@ -169,6 +177,11 @@ export function TalentApplyForm() {
     event.target.value = ''
     if (selected.length === 0) return
     for (const file of selected) {
+      if (!isCareersTalentEvidenceFileTypeAllowed(file)) {
+        // 시안 「파일 형식이 맞지 않는 경우」
+        setAlert(buildFileTypeInvalidAlertCopy(CAREERS_TALENT_EVIDENCE_FORMATS_LABEL))
+        return
+      }
       const sizeError = validateUploadFileSize(file)
       if (sizeError) {
         setAlert({ title: '안내', description: sizeError })
@@ -194,34 +207,24 @@ export function TalentApplyForm() {
           setAttachedFiles([])
           setSuccessOpen(true)
         },
+        // 시안 「네트워크 오류 / 처리 제한 / 처리 실패」 — 서버 업무 메시지는 설명에 그대로
         onError: error =>
-          setAlert({
-            title: '안내',
-            description: messageFromError(error),
-          }),
+          setAlert(resolvePlatformErrorAlert(error, { serverMessage: serverMessageFromError })),
       },
     )
   }
 
   const onInvalid = (formErrors: FieldErrors<CareersTalentApplyFormInput>) => {
     const mapped = mapCareersTalentApplyFormErrors(formErrors)
-    const keys = Object.keys(mapped)
-    if (keys.length === 1 && mapped.privacy) {
-      setAlert({
-        // 시안 「필수 항목 미동의」 제목 — 본문은 미동의 항목명을 그대로 안내한다
-        title: PLATFORM_ALERT_COPY.requiredNotAgreed.title,
-        description: buildRequiredConsentDisagreeAlertMessage([
-          CAREERS_TALENT_PRIVACY_CONSENT_LABEL,
-        ]),
-      })
+    const missingLabels = collectCareersTalentApplyMissingLabels(mapped)
+    if (missingLabels.length === 0) {
+      // 시안 「공통 제한 안내 / 필수 항목 미동의」
+      if (mapped.privacy) setAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
       return
     }
 
-    // 시안 「공통 제한 안내 / 필수 항목 미입력」
-    setAlert({
-      title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
-      description: <PFRequiredFieldsIncompleteDescription />,
-    })
+    // 시안 「필수 항목 미입력 (항목명 노출)」
+    setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
   }
 
   const jobRows = [
@@ -779,6 +782,8 @@ export function TalentApplyForm() {
         description={alert?.description}
         onConfirm={() => setAlert(null)}
       />
+
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
 
       <PFAlertModal
         open={successOpen}

@@ -10,6 +10,11 @@ import {
   type EducationSurveyFillValidation,
 } from '@/features/mypage/education/surveys/lib/survey-answers'
 import type { SurveySidecarState } from '@/features/mypage/education/surveys/lib/survey-sidecar'
+import {
+  buildRequiredMissingAlertCopy,
+  summarizeRequiredMissingAlertCopy,
+  type RequiredMissing,
+} from '@/shared/lib/required-missing-alert'
 
 export type UjatDocumentAttachedFile = {
   questionKey: string
@@ -62,8 +67,16 @@ export function validateUjatDocumentFill(
     if (!required) continue
     const key = resolveAnswerKey(paragraph)
     if (!key || !fileKeys.has(key)) {
-      const title = paragraph.paragraphTitle?.trim() || '필수 첨부'
-      return { ok: false, message: `${title} 파일을 첨부해 주세요.` }
+      // 시안 「필수 항목 미입력(항목명 노출)」 — 답하지 않은 첨부 문항
+      const missingRequired: RequiredMissing = {
+        kind: 'question',
+        labels: [paragraph.paragraphTitle?.trim() ?? ''],
+      }
+      return {
+        ok: false,
+        message: summarizeRequiredMissingAlertCopy(buildRequiredMissingAlertCopy(missingRequired)),
+        missingRequired,
+      }
     }
   }
   return validateEducationSurveyFill(draft, sidecar)

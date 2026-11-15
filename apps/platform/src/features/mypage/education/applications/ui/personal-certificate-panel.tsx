@@ -27,6 +27,13 @@ import {
   portalCertificateDocumentLabel,
   shouldShowPersonalCertificateAction,
 } from '../lib/personal-certificate-eligibility'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
+import {
+  educationNoticeAlert,
+  readErrorMessage,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
+import { resolveCertificateErrorAlert } from '../lib/certificate-error-alert'
 import styles from './personal-certificate-panel.module.css'
 
 type EducationPersonalCertificatePanelProps = {
@@ -76,7 +83,7 @@ export function EducationPersonalCertificatePanel({
   })
   const downloadMutation = useDownloadPersonalCertificateMutation()
   const { displayName } = useMypageMember()
-  const [alertMessage, setAlertMessage] = useState('')
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
   const [issueReasonOpen, setIssueReasonOpen] = useState(false)
   const [issueReason, setIssueReason] = useState<PortalCertificateIssueReason>('PERSONAL_ARCHIVE')
   const [localIssueIds, setLocalIssueIds] = useState<
@@ -169,11 +176,7 @@ export function EducationPersonalCertificatePanel({
         }),
       })
     } catch (error) {
-      setAlertMessage(
-        error instanceof Error && error.message.trim()
-          ? error.message
-          : `${documentLabel}을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.`,
-      )
+      setAlert(resolveCertificateErrorAlert(error, readErrorMessage))
     }
   }
 
@@ -185,12 +188,12 @@ export function EducationPersonalCertificatePanel({
     const documentLabel = portalCertificateDocumentLabel(kind)
     const participantId = resolveParticipantId(availability)
     if (participantId == null) {
-      setAlertMessage(`참가자 정보가 없어 ${documentLabel}을 발급할 수 없습니다.`)
+      setAlert(educationNoticeAlert(`참가자 정보가 없어 ${documentLabel}을 발급할 수 없습니다.`))
       return
     }
     const programIdNumber = Number(programId)
     if (!Number.isInteger(programIdNumber) || programIdNumber <= 0) {
-      setAlertMessage('프로그램 정보가 올바르지 않습니다.')
+      setAlert(educationNoticeAlert('프로그램 정보가 올바르지 않습니다.'))
       return
     }
     try {
@@ -202,7 +205,7 @@ export function EducationPersonalCertificatePanel({
       })
       const certificateIssueId = readPortalCertificateIssueId(issuedResponse)
       if (certificateIssueId == null) {
-        setAlertMessage(`${documentLabel} 발급 결과를 확인하지 못했습니다.`)
+        setAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
       if (kind === 'COMPLETION') {
@@ -211,11 +214,7 @@ export function EducationPersonalCertificatePanel({
       await handleDownload(certificateIssueId, documentLabel, issuedResponse?.issuedAt)
       await completionQuery.refetch()
     } catch (error) {
-      setAlertMessage(
-        error instanceof Error && error.message.trim()
-          ? error.message
-          : `${documentLabel}을 발급하지 못했습니다. 잠시 후 다시 시도해 주세요.`,
-      )
+      setAlert(resolveCertificateErrorAlert(error, readErrorMessage))
     }
   }
 
@@ -304,11 +303,11 @@ export function EducationPersonalCertificatePanel({
         </div>
       </PFModal>
       <PFAlertModal
-        open={Boolean(alertMessage)}
-        title="안내"
-        description={alertMessage}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
         confirmLabel="확인"
-        onConfirm={() => setAlertMessage('')}
+        onConfirm={() => setAlert(null)}
       />
       {downloadMutation.isPending || issueMutation.isPending ? (
         <PFLoadingSpinner blocking label="증명서를 처리하는 중" />

@@ -15,10 +15,6 @@
   gap: var(--spacing-24);
 }
 
-.error {
-  margin: 0;
-}
-
 .backLink {
   color: var(--color-primary-500);
   text-decoration: none;

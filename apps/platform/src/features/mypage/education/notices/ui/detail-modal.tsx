@@ -50,6 +50,10 @@ import {
   PFOptionList,
   PFText,
 } from '@/shared/ui'
+import {
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import { EducationNoticeCommentDeleteConfirm } from './comment-delete-confirm'
 import { EducationNoticeCommentList } from './comment-list'
 import { EducationNoticeDeleteConfirm } from './delete-confirm'
@@ -194,7 +198,9 @@ export function EducationInProgressNoticeDetailModal({
     : import.meta.env.DEV
       ? MOCK_MYPAGE_USER_NAME
       : ''
-  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null)
+  const [actionErrorAlert, setActionErrorAlert] = useState<EducationAlert | null>(null)
+  /** 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패 */
+  const showActionError = (error: unknown) => setActionErrorAlert(resolveEducationErrorAlert(error))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isContentImagesLoading, setIsContentImagesLoading] = useState(false)
 
@@ -399,9 +405,7 @@ export function EducationInProgressNoticeDetailModal({
       void downloadAttachment(file.fileName)
       return
     }
-    downloadRemoteEducationNoticeFile(file).catch(() => {
-      setActionErrorMessage('첨부파일을 내려받지 못했습니다.')
-    })
+    downloadRemoteEducationNoticeFile(file).catch(showActionError)
   }
 
   /** 반응은 고르는 즉시 저장 — 같은 반응을 다시 고르면 취소, 다른 반응이면 교체 (1인 1반응) */
@@ -416,7 +420,7 @@ export function EducationInProgressNoticeDetailModal({
         reactionType: emojiType,
         myReactionTypes: remoteReactions.myReactionTypes,
       },
-      { onError: () => setActionErrorMessage('반응을 저장하지 못했습니다.') }
+      { onError: showActionError }
     )
   }
 
@@ -445,8 +449,8 @@ export function EducationInProgressNoticeDetailModal({
         try {
           try {
             await commentMutations.create.mutateAsync({ postId: notice.id, content })
-          } catch {
-            setActionErrorMessage('댓글을 등록하지 못했습니다.')
+          } catch (error) {
+            showActionError(error)
             return
           }
           finish()
@@ -464,7 +468,7 @@ export function EducationInProgressNoticeDetailModal({
     if (isRemote) {
       commentMutations.update.mutate(
         { postId: notice.id, commentId, content },
-        { onError: () => setActionErrorMessage('댓글을 수정하지 못했습니다.') }
+        { onError: showActionError }
       )
       return
     }
@@ -475,7 +479,7 @@ export function EducationInProgressNoticeDetailModal({
     if (isRemote) {
       commentMutations.remove.mutate(
         { postId: notice.id, commentId: commentToDeleteId },
-        { onError: () => setActionErrorMessage('댓글을 삭제하지 못했습니다.') }
+        { onError: showActionError }
       )
       setCommentToDeleteId(null)
       return
@@ -878,9 +882,10 @@ export function EducationInProgressNoticeDetailModal({
       />
 
       <PFAlertModal
-        open={actionErrorMessage !== null}
-        title={actionErrorMessage ?? ''}
-        onConfirm={() => setActionErrorMessage(null)}
+        open={actionErrorAlert !== null}
+        title={actionErrorAlert?.title ?? ''}
+        description={actionErrorAlert?.description}
+        onConfirm={() => setActionErrorAlert(null)}
       />
     </>
   )

@@ -1,7 +1,6 @@
 import { isAxiosError } from 'axios'
-
-export const NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK =
-  '뉴스레터 구독 신청에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+import type { PlatformAlertCopy } from '../../../shared/lib/platform-alert-copy.ts'
+import { resolvePlatformErrorAlert } from '../../../shared/lib/platform-error-alert.ts'
 
 export const NEWSLETTER_SUBSCRIBE_ALREADY_SUBSCRIBED =
   '이미 구독 중인 이메일입니다.'
@@ -18,7 +17,8 @@ function readErrorCode(data: unknown): string | undefined {
   return undefined
 }
 
-export function getNewsletterSubscribeErrorMessage(error: unknown): string {
+/** 구독 실패 중 이용자가 고칠 수 있는 경우(이미 구독·입력 오류) 안내 — 그 밖은 null */
+function getNewsletterSubscribeBusinessMessage(error: unknown): string | null {
   if (isAxiosError(error)) {
     const status = error.response?.status
     const code = readErrorCode(error.response?.data)
@@ -29,5 +29,13 @@ export function getNewsletterSubscribeErrorMessage(error: unknown): string {
       return NEWSLETTER_SUBSCRIBE_INVALID_INPUT
     }
   }
-  return NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK
+  return null
+}
+
+/**
+ * 구독 요청 오류 팝업 — 시안 「오류 제한 팝업」(14491-2533)
+ * 네트워크 오류·처리 제한·처리 실패 공통 문구, 이미 구독·입력 오류는 설명에 안내한다.
+ */
+export function getNewsletterSubscribeErrorAlert(error: unknown): PlatformAlertCopy {
+  return resolvePlatformErrorAlert(error, { serverMessage: getNewsletterSubscribeBusinessMessage })
 }

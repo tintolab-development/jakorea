@@ -171,6 +171,29 @@ export function validateSettlementWriteDraft(
   return null
 }
 
+/** 정산 계좌 정보 칸 라벨 (작성 화면 `PFFormField label`) */
+export const SETTLEMENT_ACCOUNT_FIELD_LABEL = '정산 계좌 정보'
+
+/**
+ * `required_incomplete`일 때 빠진 항목명 — 시안 「필수 항목 미입력 (항목명 노출)」(14550-2349).
+ * 계좌 정보·금액 없이 영수증만 올린 실비 항목을 모은다.
+ */
+export function collectSettlementWriteRequiredMissingLabels(draft: SettlementWriteDraft): string[] {
+  const { basic, extraItems, meta } = draft
+  const labels: string[] = []
+  if (isBlank(basic.bank) || isBlank(basic.accountNumber) || isBlank(basic.accountHolder)) {
+    labels.push(SETTLEMENT_ACCOUNT_FIELD_LABEL)
+  }
+  if (meta.isInstructor && meta.documentKind !== 'receipt') return labels
+  for (const item of extraItems) {
+    const amount = parseSettlementAmount(item.amount)
+    if (amount <= 0 && item.attachments.length > 0 && item.itemName.trim()) {
+      labels.push(item.itemName.trim())
+    }
+  }
+  return labels
+}
+
 export function resolveSettlementWriteValidationMessage(
   error: SettlementWriteValidationError,
   documentKind: SettlementWriteDraft['meta']['documentKind'] = 'receipt'

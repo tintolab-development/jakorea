@@ -24,10 +24,19 @@ import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
-import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import {
+  PLATFORM_ALERT_COPY,
+  PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+} from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
 import {
   PFAlertModal,
   PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
   PFButton,
   PFCheckbox,
   PFFormField,
@@ -41,7 +50,8 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import { getInstructorApplyApiErrorMessage } from './api/get-instructor-apply-api-error-message'
+import { readInstructorApplyServerErrorMessage } from './api/get-instructor-apply-api-error-message'
+import { resolveInstructorRegisterMissingLabels } from './lib/instructor-register-missing-labels'
 import { mapInstructorApplyFormToCreateRequest } from './api/map-create-request'
 import { resolveInstructorApplyTermsAgreementVersions } from './api/resolve-terms-agreement-versions'
 import { resolveInstructorEmploymentStatusToSync } from './api/resolve-employment-status-sync'
@@ -127,9 +137,7 @@ const LOCKED_BASIC_KEYS = [
   'affiliationNone',
 ] as const satisfies ReadonlyArray<keyof InstructorApplyLockedBasicInfo>
 
-function shouldPreserveEmploymentStatus(
-  draft: InstructorSharedProfileFormValues | null,
-): boolean {
+function shouldPreserveEmploymentStatus(draft: InstructorSharedProfileFormValues | null): boolean {
   return draft?.memberType === 'school_teacher' && Boolean(draft.employmentStatus)
 }
 
@@ -280,6 +288,9 @@ export function InstructorApplyForm({
     () => !seedFromSubmittedRequest || hadDraftOnMountRef.current || seededFromSubmittedRef.current,
   )
   const [alert, setAlert] = useState<AlertState>(null)
+  const [requiredMissingAlert, setRequiredMissingAlert] = useState<RequiredMissingAlertCopy | null>(
+    null,
+  )
   const [submitting, setSubmitting] = useState(false)
   const createMutation = useCreateInstructorRoleRequestMutation()
   const useRemoteSubmit = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -329,9 +340,7 @@ export function InstructorApplyForm({
     const mapped = mapPortalConsentsToInstructorApplyValues(consentsQuery.data)
     setConsentAgreedAt(mapped.agreedAt)
     setValues(prev => {
-      const unchanged = INSTRUCTOR_APPLY_CONSENT_KEYS.every(
-        key => prev[key] === mapped.values[key],
-      )
+      const unchanged = INSTRUCTOR_APPLY_CONSENT_KEYS.every(key => prev[key] === mapped.values[key])
       if (unchanged) return prev
       return { ...prev, ...mapped.values }
     })
@@ -351,7 +360,7 @@ export function InstructorApplyForm({
 
   const patch = <K extends keyof InstructorSharedProfileFormValues>(
     key: K,
-    next: InstructorSharedProfileFormValues[K]
+    next: InstructorSharedProfileFormValues[K],
   ) => {
     if ((LOCKED_BASIC_KEYS as readonly string[]).includes(key)) return
     if (key === 'homeAddress' && homeAddressLock.roadLocked) return
@@ -389,29 +398,42 @@ export function InstructorApplyForm({
   }
 
   const handleSubmit = () => {
-    const { missingRequired, formatMessages } = collectInstructorRegisterValidation(
-      values,
-      {
-        isBirthDateIncomplete: value => {
-          const digits = value.replace(/\D/g, '')
-          return digits.length > 0 && digits.length < 8
+    const { missingRequired, missingRequiredKeys, formatMessages } =
+      collectInstructorRegisterValidation(
+        values,
+        {
+          isBirthDateIncomplete: value => {
+            const digits = value.replace(/\D/g, '')
+            return digits.length > 0 && digits.length < 8
+          },
+          isBirthDateValid: value => parseBirthDate(value) != null,
+          isEmailValid: isValidEmail,
         },
-        isBirthDateValid: value => parseBirthDate(value) != null,
-        isEmailValid: isValidEmail,
-      },
-      {
-        requiredConsentAgreeKeys: [...REQUIRED_CONSENT_AGREE_KEYS],
-        requireEducation: true,
-        requireCareer: true,
-      }
-    )
+        {
+          requiredConsentAgreeKeys: [...REQUIRED_CONSENT_AGREE_KEYS],
+          requireEducation: true,
+          requireCareer: true,
+        },
+      )
 
     if (missingRequired) {
-      // 시안 「공통 제한 안내 / 필수 항목 미입력」
-      setAlert({
-        title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
-        description: <PFRequiredFieldsIncompleteDescription />,
-      })
+      const consentKeys: readonly string[] = REQUIRED_CONSENT_AGREE_KEYS
+      const fieldKeys = missingRequiredKeys.filter(key => !consentKeys.includes(key))
+      if (fieldKeys.length > 0) {
+        // 시안 「필수 항목 미입력 (항목명 노출)」 — 빠진 칸 이름을 보여 준다
+        const labels = resolveInstructorRegisterMissingLabels(fieldKeys, 'apply')
+        if (labels.length > 0) {
+          setRequiredMissingAlert(buildRequiredMissingAlertCopy({ kind: 'field', labels }))
+        } else {
+          setAlert({
+            title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+            description: <PFRequiredFieldsIncompleteDescription />,
+          })
+        }
+        return
+      }
+      // 필수 작성 동의서만 남은 경우 — 시안 「필수 항목 미동의」
+      setAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
       return
     }
     if (formatMessages.length > 0) {
@@ -452,13 +474,12 @@ export function InstructorApplyForm({
         onSubmitSuccess()
       } catch (error) {
         setSubmitting(false)
-        setAlert({
-          title: '안내',
-          description: getInstructorApplyApiErrorMessage(
-            error,
-            '강사 신청을 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-          ),
-        })
+        // 시안 「오류 제한 팝업」 — 네트워크·요청 반복·처리 실패, 서버 안내는 설명으로
+        setAlert(
+          resolvePlatformErrorAlert(error, {
+            serverMessage: readInstructorApplyServerErrorMessage,
+          }),
+        )
       }
     })()
   }
@@ -742,6 +763,10 @@ export function InstructorApplyForm({
         </div>
       </form>
 
+      <PFRequiredMissingAlert
+        copy={requiredMissingAlert}
+        onConfirm={() => setRequiredMissingAlert(null)}
+      />
       <PFAlertModal
         open={alert != null}
         title={alert?.title ?? ''}

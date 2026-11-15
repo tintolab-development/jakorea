@@ -61,11 +61,14 @@ export type AgeTransitionCompletionResult = {
 export class AgeTransitionApiError extends Error {
   readonly code: string
   readonly httpStatus?: number
+  /** 원래 axios 오류 — 공통 오류 팝업이 네트워크 오류·429를 구분할 때 쓴다 */
+  readonly originalError?: unknown
 
-  constructor(code: string, message: string, httpStatus?: number) {
+  constructor(code: string, message: string, httpStatus?: number, originalError?: unknown) {
     super(message)
     this.name = 'AgeTransitionApiError'
     this.code = code
     this.httpStatus = httpStatus
+    this.originalError = originalError
   }
 }

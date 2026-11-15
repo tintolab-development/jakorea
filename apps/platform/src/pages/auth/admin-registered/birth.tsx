@@ -16,12 +16,13 @@ import {
   updateAdminRegisteredWizardState,
   useAdminProvisionedProfileMutation,
 } from '@/features/auth/admin-registered'
-import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
+import { readLoginApiServerMessage, resolveLoginApiFailureAlert } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFText, PFTextInput } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './birth.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import { useNavigate } from 'react-router-dom'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 
 export function AdminRegisteredBirthPage() {
   const navigate = useNavigate()
@@ -30,6 +31,8 @@ export function AdminRegisteredBirthPage() {
   const [birthDate, setBirthDate] = useState(wizardState?.birthDate ?? '')
   const [gender, setGender] = useState<GenderType | null>(wizardState?.gender ?? null)
   const [message, setMessage] = useState('')
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   if (!wizardState) {
     return null
@@ -69,14 +72,18 @@ export function AdminRegisteredBirthPage() {
         try {
           const onboarding = await profileMutation.mutateAsync(body)
           if (onboarding.profileCompleted === false) {
-            setMessage('프로필 확인에 실패했어요. 다시 시도해 주세요.')
+            setErrorAlert(PLATFORM_ALERT_COPY.requestFailed)
             return
           }
           applyAdminProvisionedOnboardingResponse(onboarding)
         } catch (error) {
-          setMessage(
-            getLoginApiErrorMessage(error, '생년월일·성별 확인에 실패했어요. 다시 시도해 주세요.'),
-          )
+          // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+          const failureAlert = resolveLoginApiFailureAlert(error)
+          if (failureAlert) {
+            setErrorAlert(failureAlert)
+          } else {
+            setMessage(readLoginApiServerMessage(error))
+          }
           return
         }
       }
@@ -203,6 +210,12 @@ export function AdminRegisteredBirthPage() {
             이전으로
           </PFButton>
         </div>
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </section>
   )
 }

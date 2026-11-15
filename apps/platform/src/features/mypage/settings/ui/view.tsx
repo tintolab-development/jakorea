@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  getLoginApiErrorMessage,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
   usePortalWithdrawalMutation,
 } from '@/features/auth/sign-in'
 import {
@@ -9,7 +10,7 @@ import {
   isRemoteApiConfigured,
   setDevAuthLoggedIn,
 } from '@/shared/lib'
-import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import pfInfoReviewStyles from '@/shared/ui/pf-info-review/pf-info-review.module.css'
 import { EMPTY_SETTINGS_VALUE, SETTINGS_WITHDRAW_GUIDE, VOLUNTEER_1365_URL } from '../lib/constants'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
@@ -19,6 +20,7 @@ import { SettingsInstructorProfileSectionsView } from './instructor-profile/inst
 import { SettingsChangePasswordModal } from './change-password-modal'
 import { SettingsWithdrawGuideModal } from './withdraw-guide-modal'
 import styles from './view.module.css'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 
 export type SettingsViewProps = {
   basicRows: SettingsInfoRow[]
@@ -135,6 +137,8 @@ export function SettingsView({
   const [withdrawPassword, setWithdrawPassword] = useState('')
   const [withdrawPasswordError, setWithdrawPasswordError] = useState<string | null>(null)
   const [withdrawFormError, setWithdrawFormError] = useState<string | null>(null)
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   const closeWithdrawGuide = useCallback(() => {
     if (withdrawMutation.isPending) return
@@ -174,9 +178,13 @@ export function SettingsView({
       setIsWithdrawGuideOpen(false)
       navigate('/', { replace: true })
     } catch (error) {
-      setWithdrawFormError(
-        getLoginApiErrorMessage(error, '회원 탈퇴에 실패했어요. 다시 시도해 주세요.'),
-      )
+      // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+      const failureAlert = resolveLoginApiFailureAlert(error)
+      if (failureAlert) {
+        setErrorAlert(failureAlert)
+      } else {
+        setWithdrawFormError(readLoginApiServerMessage(error))
+      }
     }
   }, [navigate, withdrawMutation, withdrawPassword])
 
@@ -256,6 +264,12 @@ export function SettingsView({
         onConfirm={() => {
           void handleWithdrawConfirm()
         }}
+      />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </div>
   )

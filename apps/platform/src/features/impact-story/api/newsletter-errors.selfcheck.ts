@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict'
 import { AxiosError } from 'axios'
-import {
-  getNewsletterSubscribeErrorMessage,
-  NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK,
-} from './newsletter-errors.ts'
+import { getNewsletterSubscribeErrorAlert } from './newsletter-errors.ts'
 import { parseNewsletterSubscribeResponse } from './newsletter-parse.ts'
 import {
   getNewsletterSubscribeResultCopy,
@@ -21,36 +18,39 @@ function axiosErr(status: number, data: unknown) {
   })
 }
 
-assert.equal(
-  getNewsletterSubscribeErrorMessage(new Error('Network Error')),
-  NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK,
-)
+const REQUEST_FAILED = {
+  title: '요청을 처리하지 못했어요.',
+  description: '잠시 후 다시 시도해 주세요.',
+}
+
+assert.deepEqual(getNewsletterSubscribeErrorAlert(new Error('Network Error')), REQUEST_FAILED)
+
+const noResponse = new AxiosError('Network Error', 'ERR_NETWORK')
+assert.deepEqual(getNewsletterSubscribeErrorAlert(noResponse), {
+  title: '일시적인 네트워크 오류가 발생했어요.',
+  description: '잠시 후 다시 시도해 주세요.',
+})
+
+assert.equal(getNewsletterSubscribeErrorAlert(axiosErr(429, {})).title, '요청이 반복되어 제한되었어요.')
+
+assert.deepEqual(getNewsletterSubscribeErrorAlert(axiosErr(409, {})), {
+  title: '요청을 처리하지 못했어요.',
+  description: '이미 구독 중인 이메일입니다.',
+})
 
 assert.equal(
-  getNewsletterSubscribeErrorMessage(new Error('timeout of 8000ms exceeded')),
-  NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK,
-)
-
-assert.equal(
-  getNewsletterSubscribeErrorMessage(axiosErr(409, {})),
-  '이미 구독 중인 이메일입니다.',
-)
-
-assert.equal(
-  getNewsletterSubscribeErrorMessage(
+  getNewsletterSubscribeErrorAlert(
     axiosErr(400, { error: { message: '이메일 형식이 올바르지 않습니다.' } }),
-  ),
+  ).description,
   '입력한 이름과 이메일을 다시 확인해 주세요.',
 )
 
-assert.equal(
-  getNewsletterSubscribeErrorMessage(
-    axiosErr(500, { message: 'Errors.List.NoEmail' }),
-  ),
-  NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK,
+assert.deepEqual(
+  getNewsletterSubscribeErrorAlert(axiosErr(500, { message: 'Errors.List.NoEmail' })),
+  REQUEST_FAILED,
 )
 
-assert.equal(getNewsletterSubscribeErrorMessage({}), NEWSLETTER_SUBSCRIBE_ERROR_FALLBACK)
+assert.deepEqual(getNewsletterSubscribeErrorAlert({}), REQUEST_FAILED)
 
 assert.equal(
   getNewsletterSubscribeResultCopy({
@@ -78,7 +78,7 @@ assert.equal(
     status: 'FAILED',
     message: '구독 신청은 저장됐지만 스티비 동기화에 실패했습니다. (Errors.List.NoEmail)',
   }).title,
-  '뉴스레터 구독에 실패했어요',
+  '요청을 처리하지 못했어요.',
 )
 
 assert.equal(
@@ -86,7 +86,7 @@ assert.equal(
     status: 'FAILED',
     message: '구독 신청은 저장됐지만 스티비 동기화에 실패했습니다. (Errors.List.NoEmail)',
   }).description,
-  '지금은 구독을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
+  '잠시 후 다시 시도해 주세요.',
 )
 
 assert.notEqual(

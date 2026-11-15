@@ -8,10 +8,12 @@ import {
   resolveLectureReportLectureName,
 } from '../lib/lecture-report-display'
 import {
-  getLectureReportPreviewLoadErrorMessage,
   loadLectureReportPreview,
   writingFormDraftFromLectureReportPreview,
 } from '../lib/lecture-report-preview-load'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { PFAlertModal } from '@/shared/ui'
+import { resolveEducationPreviewErrorAlert } from '../../shared/lib/education-error-alert'
 import { LectureReportPreviewModal } from './lecture-report-preview-modal'
 
 type LectureReportPreviewModalContainerProps = {
@@ -28,7 +30,8 @@ export function LectureReportPreviewModalContainer({
   onClose,
 }: LectureReportPreviewModalContainerProps) {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  /** 시안 「미리보기 실패 시」 팝업 — 뜨면 미리보기 창은 닫는다 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const [content, setContent] = useState<LectureReportContent | null>(null)
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [assignment, setAssignment] = useState<LectureReportAssignment | null>(null)
@@ -41,7 +44,7 @@ export function LectureReportPreviewModalContainer({
   useEffect(() => {
     if (!open || assignmentId == null) {
       setLoading(false)
-      setError('')
+      setErrorAlert(null)
       setContent(null)
       setDraft(null)
       setAssignment(null)
@@ -51,7 +54,7 @@ export function LectureReportPreviewModalContainer({
 
     let alive = true
     setLoading(true)
-    setError('')
+    setErrorAlert(null)
     setContent(null)
     setDraft(null)
     setAssignment(null)
@@ -67,7 +70,7 @@ export function LectureReportPreviewModalContainer({
       })
       .catch(cause => {
         if (!alive) return
-        setError(getLectureReportPreviewLoadErrorMessage(cause))
+        setErrorAlert(resolveEducationPreviewErrorAlert(cause))
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -84,16 +87,26 @@ export function LectureReportPreviewModalContainer({
   }, [assignment, program])
 
   return (
-    <LectureReportPreviewModal
-      open={open}
-      title={pageTitle}
-      draft={draft}
-      content={content}
-      loading={loading}
-      error={error}
-      instructorName={displayName}
-      hideInstitutionFields={program?.programAudience === 'individual'}
-      onClose={onClose}
-    />
+    <>
+      <LectureReportPreviewModal
+        open={open && errorAlert == null}
+        title={pageTitle}
+        draft={draft}
+        content={content}
+        loading={loading}
+        instructorName={displayName}
+        hideInstitutionFields={program?.programAudience === 'individual'}
+        onClose={onClose}
+      />
+      <PFAlertModal
+        open={open && errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => {
+          setErrorAlert(null)
+          onClose()
+        }}
+      />
+    </>
   )
 }

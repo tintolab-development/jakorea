@@ -37,10 +37,11 @@ import villaIconUrl from '@/shared/assets/icons/villa.svg'
 import { PFAlertModal, PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
 import { useReapplyPaymentStatementMutation } from '../api/use-reapply-payment-statement-mutation'
 import { CorrectionDetailModal } from './correction-detail-modal'
+import { instructorSettlementApiErrorMessage } from '../lib/instructor-settlement-contract'
 import {
-  PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE,
-  instructorSettlementApiErrorMessage,
-} from '../lib/instructor-settlement-contract'
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
@@ -85,13 +86,12 @@ export function EducationSettlementRow({
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
-  const [reapplyErrorMessage, setReapplyErrorMessage] = useState<string | null>(null)
-  const [alertTitle, setAlertTitle] = useState('지급조서 재신청')
+  const [errorAlert, setErrorAlert] = useState<EducationAlert | null>(null)
   const [correctionOpen, setCorrectionOpen] = useState(false)
   const closeCorrection = useCallback(() => setCorrectionOpen(false), [])
-  const showCorrectionError = useCallback((message: string) => {
-    setAlertTitle('정정 내역 확인')
-    setReapplyErrorMessage(message)
+  /** 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패(코드별 안내는 설명에) */
+  const showSettlementError = useCallback((error: unknown) => {
+    setErrorAlert(resolveEducationErrorAlert(error, instructorSettlementApiErrorMessage))
   }, [])
   const reapplyMutation = useReapplyPaymentStatementMutation()
   const config = resolveSettlementStatusUi(item.status, documentKind, {
@@ -350,12 +350,7 @@ export function EducationSettlementRow({
           onClick={() => {
             if (disabled || settlementId == null) return
             reapplyMutation.mutate(settlementId, {
-              onError: error => {
-                setAlertTitle('지급조서 재신청')
-                setReapplyErrorMessage(
-                  instructorSettlementApiErrorMessage(error, PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE),
-                )
-              },
+              onError: showSettlementError,
             })
           }}
         >
@@ -561,14 +556,14 @@ export function EducationSettlementRow({
           settlementId={item.settlementId}
           operationEnded={operationEnded}
           onClose={closeCorrection}
-          onError={showCorrectionError}
+          onError={showSettlementError}
         />
       ) : null}
       <PFAlertModal
-        open={reapplyErrorMessage != null}
-        title={alertTitle}
-        description={reapplyErrorMessage ?? ''}
-        onConfirm={() => setReapplyErrorMessage(null)}
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </>
   )

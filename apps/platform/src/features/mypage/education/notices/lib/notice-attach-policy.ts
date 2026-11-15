@@ -8,7 +8,10 @@ import {
 export const NOTICE_ATTACH_ACCEPT =
   '.jpg,.jpeg,.png,.hwp,.xls,.xlsx,.pdf,.doc,.docx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/x-hwp,application/haansofthwp'
 
-export const NOTICE_ATTACH_HINT = formatMultiFileUploadHint('JPG, PNG, HWP, Excel, PDF, Word')
+/** 안내사항 첨부 허용 형식 — 첨부 안내 문구·「파일 형식」 팝업 설명에 같이 쓴다 */
+export const NOTICE_ATTACH_FORMATS_LABEL = 'JPG, PNG, HWP, Excel, PDF, Word'
+
+export const NOTICE_ATTACH_HINT = formatMultiFileUploadHint(NOTICE_ATTACH_FORMATS_LABEL)
 
 const ALLOWED_MIME = new Set([
   'image/jpeg',
@@ -47,13 +50,15 @@ export function validateNoticeAttachmentsBatch(
   })
 }
 
-export function validateNoticeAttachmentFile(file: File): string | null {
+/** 허용 형식인지 (MIME 또는 확장자) — 아니면 시안 「파일 형식이 맞지 않는 경우」 팝업 */
+export function isNoticeAttachmentTypeAllowed(file: File): boolean {
   const mime = file.type.trim().toLowerCase()
   const name = file.name.toLowerCase()
-  const byExt = ALLOWED_EXT.some(ext => name.endsWith(ext))
-  if (!ALLOWED_MIME.has(mime) && !byExt) {
-    return 'JPG, PNG, HWP, Excel, PDF, Word 형식의 파일만 등록할 수 있습니다.'
-  }
+  return ALLOWED_MIME.has(mime) || ALLOWED_EXT.some(ext => name.endsWith(ext))
+}
+
+/** 파일당 용량 검사 (형식은 `isNoticeAttachmentTypeAllowed`) */
+export function validateNoticeAttachmentFile(file: File): string | null {
   return validateUploadFileSize(file)
 }
 

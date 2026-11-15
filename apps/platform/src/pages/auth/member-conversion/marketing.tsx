@@ -4,14 +4,17 @@ import {
   ensureAgeTransitionCompleteIdempotencyKey,
   isAgeTransitionCompleted,
   isAgeTransitionEvidencePending,
+  isAgeTransitionAuthBoundaryError,
   mapAgeTransitionUnknownErrorToAlert,
   useAgeTransitionCompleteMutation,
 } from '@/features/auth/age-transition'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { MYPAGE_INQUIRIES_PATH } from '@/features/mypage'
-import { PFButton, PFLoadingSpinner, PFText, PFToggle } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText, PFToggle } from '@/shared/ui'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import type { MemberConversionAlertKind } from './lib/alert-copy'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
 import { readMemberConversionNiceSessionId } from './lib/identity-session'
 import { useMemberConversionValidatedGate } from './lib/use-validated-gate'
 import {
@@ -30,6 +33,8 @@ export function MemberConversionMarketingPage() {
   const gate = useMemberConversionValidatedGate()
   const [marketingAgreed, setMarketingAgreed] = useState<boolean | null>(null)
   const [alertKind, setAlertKind] = useState<MemberConversionAlertKind | null>(null)
+  /** 실패 모달 4종에 없는 오류 — 시안 「네트워크 오류 / 처리 제한 / 처리 실패」 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const terms = useTermsViewModal()
   const completeMutation = useAgeTransitionCompleteMutation()
   const submittingRef = useRef(false)
@@ -77,6 +82,7 @@ export function MemberConversionMarketingPage() {
     } catch (error) {
       const mapped = mapAgeTransitionUnknownErrorToAlert(error)
       if (mapped) setAlertKind(mapped)
+      else if (!isAgeTransitionAuthBoundaryError(error)) setErrorAlert(resolvePlatformErrorAlert(error))
     } finally {
       submittingRef.current = false
     }
@@ -158,6 +164,12 @@ export function MemberConversionMarketingPage() {
       ) : null}
 
       <MemberConversionAlert kind={alertKind} onClose={handleCloseAlert} onInquiry={handleInquiry} />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </section>
   )
 }

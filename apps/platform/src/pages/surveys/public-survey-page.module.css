@@ -26,11 +26,6 @@
   padding-top: var(--spacing-16);
 }
 
-.error {
-  margin: 0;
-  text-align: center;
-}
-
 .state {
   display: flex;
   box-sizing: border-box;

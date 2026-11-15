@@ -16,10 +16,11 @@ import {
 } from '@/features/auth/age-transition'
 import {
   expiresAtFromExpiresInSeconds,
-  getLoginApiErrorMessage,
   isLoginInvalidCredentialsApiError,
   isLoginNetworkError,
   LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
 import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/apply-auth-token-age-group'
@@ -56,7 +57,8 @@ import illustPeopleUrl from '@/shared/assets/illustration/graphic-84-01.png'
 import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import styles from './page.module.css'
 import { resolveLoginRedirectTarget, sanitizeLoginRedirectPath } from '@/shared/lib/login-redirect'
-import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { isPlatformRateLimitedError } from '@/shared/lib/platform-error-alert'
 
 const accountLinkItems: Array<{ label: string; href?: string }> = [
   { label: '이메일 찾기', href: '/auth/find-email' },
@@ -90,7 +92,8 @@ export function SignInPage() {
     return socialError
   })
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
-  const [networkErrorOpen, setNetworkErrorOpen] = useState(false)
+  /** 시안 「네트워크 오류 안내」·「처리 제한」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   // 이 브라우저에서 최근 소셜 로그인에 성공한 수단 — 읽지 못하면 null(툴팁 없음)
   const [recentSocialProvider] = useState(readRecentSocialLoginProvider)
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
@@ -188,7 +191,11 @@ export function SignInPage() {
       clearAuthTokens()
       setDevAuthLoggedIn(false)
       if (isLoginNetworkError(error)) {
-        setNetworkErrorOpen(true)
+        setErrorAlert(PLATFORM_ALERT_COPY.networkError)
+        return
+      }
+      if (isPlatformRateLimitedError(error)) {
+        setErrorAlert(PLATFORM_ALERT_COPY.rateLimited)
         return
       }
       // 시안 14474-43444 — 불일치는 하단 통합 문구 대신 두 칸 아래에 각각 안내 (BE가 어느 칸인지 구분하지 않음)
@@ -197,9 +204,13 @@ export function SignInPage() {
         setPasswordError(LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.password)
         return
       }
-      setFormError(
-        getLoginApiErrorMessage(error, '로그인에 실패했어요. 이메일과 비밀번호를 확인해 주세요.')
-      )
+      // 서버 업무 메시지(승인 대기 등)는 하단 문구, 그 밖의 실패는 시안 「처리 실패」 팝업
+      const failureAlert = resolveLoginApiFailureAlert(error)
+      if (failureAlert) {
+        setErrorAlert(failureAlert)
+        return
+      }
+      setFormError(readLoginApiServerMessage(error))
     }
   }
 
@@ -235,9 +246,12 @@ export function SignInPage() {
             )
           }
         }
-        setFormError(
-          getLoginApiErrorMessage(error, '소셜 로그인을 시작하지 못했어요. 다시 시도해 주세요.')
-        )
+        const failureAlert = resolveLoginApiFailureAlert(error)
+        if (failureAlert) {
+          setErrorAlert(failureAlert)
+        } else {
+          setFormError(readLoginApiServerMessage(error))
+        }
         setLoadingProvider(null)
       })
   }
@@ -368,10 +382,10 @@ export function SignInPage() {
         </div>
       </div>
       <PFAlertModal
-        open={networkErrorOpen}
-        title={PLATFORM_ALERT_COPY.networkError.title}
-        description={PLATFORM_ALERT_COPY.networkError.description}
-        onConfirm={() => setNetworkErrorOpen(false)}
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </section>
   )

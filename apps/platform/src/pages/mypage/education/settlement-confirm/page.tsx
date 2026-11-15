@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   buildSettlementTabPath,
@@ -31,6 +31,7 @@ import {
   buildInstructorSettlementResubmitRequest,
 } from '@/features/mypage/education/settlements/lib/build-instructor-settlement-submit'
 import {
+  collectSettlementWriteRequiredMissingLabels,
   resolveSettlementWriteValidationAlert,
   validateSettlementWriteDraft,
 } from '@/features/mypage/education/settlements/lib/validate-write-draft'
@@ -62,10 +63,6 @@ import {
   buildIndividualSettlementSubmitRequest,
 } from '@/features/mypage/education/settlements/lib/build-individual-settlement-submit'
 import {
-  getSettlementApplicationDocumentErrorMessage,
-  SETTLEMENT_APPLICATION_DOCUMENT_LOAD_FAILED_MESSAGE,
-} from '@/features/mypage/education/settlements/lib/application-document-errors'
-import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
   individualSettlementApiErrorMessage,
   isReceiptPreConsentRequiredError,
@@ -79,7 +76,25 @@ import {
 } from '@/features/mypage/education/settlements/lib/payment-item-limit'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFFormPage,
+  PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
+  PFText,
+} from '@/shared/ui'
+import {
+  PLATFORM_ALERT_COPY,
+  PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+} from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  resolveEducationErrorAlert,
+  resolveEducationPreviewErrorAlert,
+} from '@/features/mypage/education/shared/lib/education-error-alert'
 import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
 import { ReceiptGuardianGateModals } from '@/features/mypage/education/settlements/ui/receipt-guardian-gate-modals'
 import { RECEIPT_PRE_CONSENT_SUBMIT_BLOCKED_DESCRIPTION } from '@/features/mypage/education/settlements/lib/settlement-pre-consent-copy'
@@ -146,7 +161,19 @@ export function MypageEducationSettlementConfirmPage() {
   /** 영수증 사전 동의서 미작성 안내 팝업 (사전 가드·서버 RECEIPT_PRE_CONSENT_REQUIRED 공용) */
   const [receiptConsentModalOpen, setReceiptConsentModalOpen] = useState(false)
   const [alertOpen, setAlertOpen] = useState(false)
-  const [alertMessage, setAlertMessage] = useState('')
+  const [alertTitle, setAlertTitle] = useState('안내')
+  const [alertMessage, setAlertMessage] = useState<ReactNode>('')
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
+  /** 업무 안내 — 제목 「안내」, 시안 팝업 문구는 그 제목 */
+  const openAlert = (message: ReactNode, title = '안내') => {
+    setAlertTitle(title)
+    setAlertMessage(message)
+    setAlertOpen(true)
+  }
+  /** 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패(서버·코드별 안내는 설명에) */
+  const openErrorAlert = (alert: { title: string; description: string }) => {
+    openAlert(alert.description, alert.title)
+  }
 
   const session = useMemo(() => {
     if (!remoteSettlements.enabled) return undefined
@@ -255,13 +282,20 @@ export function MypageEducationSettlementConfirmPage() {
       return null
     }
 
-    const documentError = documentQuery.isLoading
-      ? ''
-      : documentQuery.document
-        ? ''
-        : documentQuery.isError
-          ? getSettlementApplicationDocumentErrorMessage(documentQuery.error)
-          : SETTLEMENT_APPLICATION_DOCUMENT_LOAD_FAILED_MESSAGE
+    // 시안 「미리보기 실패 시」 — 신청서를 못 불러오면 미리보기 대신 팝업, [확인] 시 목록으로
+    if (!documentQuery.isLoading && !documentQuery.document) {
+      const previewAlert = documentQuery.isError
+        ? resolveEducationPreviewErrorAlert(documentQuery.error)
+        : PLATFORM_ALERT_COPY.previewFailed
+      return (
+        <PFAlertModal
+          open
+          title={previewAlert.title}
+          description={previewAlert.description}
+          onConfirm={handleClose}
+        />
+      )
+    }
 
     return (
       <EducationSettlementApplicationDocumentOverlay
@@ -270,7 +304,6 @@ export function MypageEducationSettlementConfirmPage() {
         programTitle={application?.title}
         programType={programType}
         loading={documentQuery.isLoading}
-        error={documentError}
         refreshing={documentQuery.isFetching}
         onClose={handleClose}
         onRefreshDocument={refreshDocument}
@@ -320,8 +353,7 @@ export function MypageEducationSettlementConfirmPage() {
 
   const handleComplete = () => {
     if (remoteSettlements.individualDisabled) {
-      setAlertMessage(INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE)
-      setAlertOpen(true)
+      openAlert(INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE)
       return
     }
     if (consentSidecarQuery.isLoading || profileQuery.isPending) {
@@ -335,19 +367,14 @@ export function MypageEducationSettlementConfirmPage() {
       return
     }
     if (!isInstructorSubmit && !useIndividualSettlementApi) {
-      setAlertMessage(
+      openAlert(
         documentKind === 'receipt'
           ? '이 신청 유형에서는 일정별 정산을 제출할 수 없습니다.'
           : '이 신청 유형에서는 지급조서를 제출할 수 없습니다.'
       )
-      setAlertOpen(true)
       return
     }
     if (submitMutation.isPending || instructorSubmitMutation.isPending) return
-    const submitFailedMessage =
-      documentKind === 'receipt'
-        ? '영수증 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
-        : '지급조서 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
     const missingScheduleMessage =
       documentKind === 'receipt'
         ? '영수증 제출에 필요한 일정 정보가 없습니다. 작성 화면으로 돌아가 다시 시도해 주세요.'
@@ -355,25 +382,31 @@ export function MypageEducationSettlementConfirmPage() {
     try {
       const settlementApplicationId = draft.meta.settlementApplicationId
       const writeValidationError = validateSettlementWriteDraft(draft)
+      if (writeValidationError === 'required_incomplete') {
+        // 시안 「필수 항목 미입력 (항목명 노출)」 — 항목명을 모르면 시안 기본 설명
+        const missingLabels = collectSettlementWriteRequiredMissingLabels(draft)
+        if (missingLabels.length > 0) {
+          setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
+        } else {
+          openAlert(<PFRequiredFieldsIncompleteDescription />, PLATFORM_REQUIRED_NOT_FILLED_TITLE)
+        }
+        return
+      }
       if (writeValidationError) {
-        setAlertMessage(
-          resolveSettlementWriteValidationAlert(writeValidationError, documentKind).description
-        )
-        setAlertOpen(true)
+        const validationAlert = resolveSettlementWriteValidationAlert(writeValidationError, documentKind)
+        openAlert(validationAlert.description, validationAlert.title)
         return
       }
       const exceededInstructorLimit = isInstructorSubmit
         ? findExceededInstructorExpenseLimit(draft)
         : null
       if (exceededInstructorLimit != null) {
-        setAlertMessage(instructorPaymentItemLimitMessage(exceededInstructorLimit))
-        setAlertOpen(true)
+        openAlert(instructorPaymentItemLimitMessage(exceededInstructorLimit))
         return
       }
       const exceededLimitWon = findExceededReceiptItemLimit(draft)
       if (exceededLimitWon != null) {
-        setAlertMessage(paymentItemLimitExceededMessage(exceededLimitWon))
-        setAlertOpen(true)
+        openAlert(paymentItemLimitExceededMessage(exceededLimitWon))
         return
       }
       if (isInstructorSubmit) {
@@ -383,8 +416,7 @@ export function MypageEducationSettlementConfirmPage() {
             : undefined
         // 지급 항목 0건 등 미리보기 차단 — 빈 항목 제출은 서버 오류가 날 수 있어 FE에서 막는다(BE 409 작업 전)
         if (!resubmit && instructorSettlementPreview.submitBlock) {
-          setAlertMessage(instructorSettlementPreview.submitBlock.message)
-          setAlertOpen(true)
+          openAlert(instructorSettlementPreview.submitBlock.message)
           return
         }
         const create = resubmit ? undefined : buildInstructorSettlementCreateRequest(draft)
@@ -400,26 +432,25 @@ export function MypageEducationSettlementConfirmPage() {
           })
           .catch(error => {
             if (isPaymentStatementConsentRequiredError(error)) {
-              setAlertMessage(PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE)
-              setAlertOpen(true)
+              openAlert(PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE)
               return
             }
             // 강사 식사비·활동비 한도 초과(400) — 강사 문구 "신청은 최대 N원까지만 가능합니다." (K14)
             if (readInstructorSettlementErrorCode(error) === PAYMENT_ITEM_LIMIT_EXCEEDED_CODE) {
               const limitMessage = instructorPaymentItemLimitExceededAlert(draft)
               if (limitMessage) {
-                setAlertMessage(limitMessage)
-                setAlertOpen(true)
+                openAlert(limitMessage)
                 return
               }
             }
-            setAlertMessage(
-              instructorSettlementApiErrorMessage(
-                error,
-                getProgramApplicationApiErrorMessage(error, submitFailedMessage)
-              )
+            openErrorAlert(
+              resolveEducationErrorAlert(error, (target, fallback) =>
+                instructorSettlementApiErrorMessage(
+                  target,
+                  getProgramApplicationApiErrorMessage(target, fallback),
+                ),
+              ),
             )
-            setAlertOpen(true)
           })
         return
       }
@@ -448,23 +479,22 @@ export function MypageEducationSettlementConfirmPage() {
           if (readIndividualSettlementErrorCode(error) === PAYMENT_ITEM_LIMIT_EXCEEDED_CODE) {
             const limitWon = findExceededReceiptItemLimit(draft)
             if (limitWon != null) {
-              setAlertMessage(paymentItemLimitExceededMessage(limitWon))
-              setAlertOpen(true)
+              openAlert(paymentItemLimitExceededMessage(limitWon))
               return
             }
           }
-          setAlertMessage(
-            individualSettlementApiErrorMessage(
-              error,
-              getProgramApplicationApiErrorMessage(error, submitFailedMessage),
-              scheduleSettlementAudience ?? 'individual'
-            )
+          openErrorAlert(
+            resolveEducationErrorAlert(error, (target, fallback) =>
+              individualSettlementApiErrorMessage(
+                target,
+                getProgramApplicationApiErrorMessage(target, fallback),
+                scheduleSettlementAudience ?? 'individual',
+              ),
+            ),
           )
-          setAlertOpen(true)
         })
     } catch {
-      setAlertMessage(missingScheduleMessage)
-      setAlertOpen(true)
+      openAlert(missingScheduleMessage)
     }
   }
 
@@ -507,7 +537,7 @@ export function MypageEducationSettlementConfirmPage() {
       ) : null}
       <PFAlertModal
         open={alertOpen}
-        title="안내"
+        title={alertTitle}
         description={alertMessage}
         onConfirm={() => {
           setAlertOpen(false)
@@ -523,6 +553,7 @@ export function MypageEducationSettlementConfirmPage() {
           }
         }}
       />
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
     </PFFormPage>
   )
 }

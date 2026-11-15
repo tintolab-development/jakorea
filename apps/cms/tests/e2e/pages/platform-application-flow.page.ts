@@ -48,6 +48,19 @@ function unwrapApiBody(payload: unknown): unknown {
   return payload
 }
 
+type GetOptions = Parameters<Page['request']['get']>[1]
+
+/** 조회(GET)만 일시적 5xx에 한해 최대 2회 다시 시도한다(실서버 BE 간헐 500 대응, 변경 요청은 재시도하지 않음). */
+async function getWithRetry(page: Page, url: string, options?: GetOptions) {
+  let response = await page.request.get(url, options)
+  for (let retry = 1; response.status() >= 500 && retry <= 2; retry += 1) {
+    console.log(`[BE-RETRY] GET ${url} → HTTP ${response.status()} (재시도 ${retry}/2)`)
+    await new Promise(resolve => setTimeout(resolve, 1_500 * retry))
+    response = await page.request.get(url, options)
+  }
+  return response
+}
+
 async function readJson(response: { ok(): boolean; status(): number; text(): Promise<string> }) {
   const text = await response.text()
   let payload: unknown
@@ -114,7 +127,7 @@ export async function fetchCmsProgramSnapshot(
   programId: string
 ): Promise<CmsProgramSnapshot> {
   const authToken = await requireCmsAccessToken(page, 'CMS 프로그램 조회')
-  const response = await page.request.get(`/api/admin/programs/${encodeURIComponent(programId)}`, {
+  const response = await getWithRetry(page, `/api/admin/programs/${encodeURIComponent(programId)}`, {
     headers: { Authorization: `Bearer ${authToken}` },
   })
   const payload = await readJson(response)
@@ -303,7 +316,7 @@ export class PlatformApplicationFlowPage {
     expect(row.blockedReason == null).toBe(true)
 
     const headers = await this.authenticatedHeaders()
-    const formResponse = await this.page.request.get(
+    const formResponse = await getWithRetry(this.page, 
       `/api/portal/programs/${programId}/form-bindings/${recruitment.formBindingId}`,
       { headers, params: { recruitmentId: recruitment.recruitmentId, applicationType } }
     )
@@ -321,7 +334,7 @@ export class PlatformApplicationFlowPage {
     applicationType: PortalApplicationType
   ) {
     const headers = await this.authenticatedHeaders()
-    const response = await this.page.request.get(
+    const response = await getWithRetry(this.page, 
       `/api/portal/programs/${programId}/application-options`,
       { headers }
     )
@@ -351,6 +364,19 @@ export class PlatformApplicationFlowPage {
       if (!(await checkbox.isChecked().catch(() => false))) {
         await checkbox.check({ force: true }).catch(() => undefined)
       }
+    }
+
+    // 필수 동의(개인정보 수집·이용, 제3자 제공 등)는 「동의」 라디오를 이름으로 정확히 체크한다.
+    // 보이는 라디오의 첫 항목만 고르는 일반 처리로는 렌더 시점에 따라 놓쳐 「필수 항목에 동의해 주세요」로 막힌다.
+    const agreeRadios = this.page.getByRole('radio', { name: '동의', exact: true })
+    for (let index = 0; index < (await agreeRadios.count()); index += 1) {
+      const agree = agreeRadios.nth(index)
+      if (await agree.isChecked().catch(() => false)) continue
+      // antd 라디오는 숨은 input을 강제 클릭해도 상태가 바뀌지 않을 수 있다 — 감싼 label을 누른다.
+      await agree.check({ force: true, timeout: 3_000 }).catch(async () => {
+        await agree.locator('xpath=ancestor::label[1]').click()
+      })
+      await expect(agree).toBeChecked()
     }
 
     if (options?.includeRadios !== false) {
@@ -695,7 +721,7 @@ export class PlatformApplicationFlowPage {
     applicationId: number
   ) {
     const headers = await this.authenticatedHeaders()
-    const listResponse = await this.page.request.get('/api/portal/me/program-applications', {
+    const listResponse = await getWithRetry(this.page, '/api/portal/me/program-applications', {
       headers,
       params: { applicationType: account.applicationType, page: 0, size: 100 },
     })
@@ -713,7 +739,7 @@ export class PlatformApplicationFlowPage {
     const portalProgramTitle = String(listItem.programTitle ?? '').trim()
     expect(portalProgramTitle, `${account.applicationType} 목록 programTitle`).not.toBe('')
 
-    const detailResponse = await this.page.request.get(
+    const detailResponse = await getWithRetry(this.page, 
       `/api/portal/me/program-applications/${account.applicationType}/${applicationId}`,
       { headers }
     )

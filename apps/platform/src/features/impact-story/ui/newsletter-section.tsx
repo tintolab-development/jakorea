@@ -2,8 +2,9 @@ import { useId, useState, type FormEvent } from 'react'
 import { TermsViewModal } from '@/features/auth'
 import { isValidEmailId } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
-import { getNewsletterSubscribeErrorMessage } from '../api/newsletter-errors'
+import { getNewsletterSubscribeErrorAlert } from '../api/newsletter-errors'
 import {
   getNewsletterSubscribeResultCopy,
   resolveNewsletterSubscribeUi,
@@ -27,18 +28,19 @@ export function NewsletterSection() {
   const [subscribeModalKey, setSubscribeModalKey] = useState(0)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [subscribeResult, setSubscribeResult] = useState<NewsletterSubscribeResponse | null>(null)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   const showSuccess = (result?: NewsletterSubscribeResponse | null) => {
     setIsSubscribeOpen(false)
-    setErrorMessage('')
+    setErrorAlert(null)
     setSubscribeResult(result ?? null)
     setIsSuccessOpen(true)
   }
 
   const trySubscribeFromBanner = async () => {
     if (!agreed) {
-      setErrorMessage('뉴스레터 구독을 위한 이름 및 이메일 주소 수집에\n동의해 주세요.')
+      // 시안 「공통 제한 안내 / 필수 항목 미동의」
+      setErrorAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
       return
     }
 
@@ -65,9 +67,9 @@ export function NewsletterSection() {
         showSuccess(result)
         return
       }
-      setErrorMessage(getNewsletterSubscribeResultCopy(result).description)
+      setErrorAlert(getNewsletterSubscribeResultCopy(result))
     } catch (error) {
-      setErrorMessage(getNewsletterSubscribeErrorMessage(error))
+      setErrorAlert(getNewsletterSubscribeErrorAlert(error))
     }
   }
 
@@ -206,11 +208,11 @@ export function NewsletterSection() {
       />
 
       <PFAlertModal
-        open={Boolean(errorMessage)}
+        open={errorAlert != null}
         confirmVariant="primary"
-        title="뉴스레터 구독 안내"
-        description={errorMessage}
-        onConfirm={() => setErrorMessage('')}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </section>
   )

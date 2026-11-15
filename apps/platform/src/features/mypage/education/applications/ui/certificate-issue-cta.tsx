@@ -17,7 +17,8 @@ import {
   shouldFetchIndividualCertificateAvailability,
 } from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
-import { isCertificateIssuancePeriodExpiredMessage } from '../lib/certificate-reason-messages'
+import { resolveCertificateErrorAlert } from '../lib/certificate-error-alert'
+import type { EducationAlert } from '../../shared/lib/education-error-alert'
 import {
   PERSONAL_CERTIFICATE_ISSUE_NOTICE,
   PERSONAL_CERTIFICATE_ISSUE_REASONS,
@@ -84,7 +85,7 @@ export function CertificateIssueCta({
   const [issueReason, setIssueReason] = useState<PortalCertificateIssueReason>('PERSONAL_ARCHIVE')
   const [completeIssuedAt, setCompleteIssuedAt] = useState<string | null>(null)
   const [completeIssueId, setCompleteIssueId] = useState<number | null>(null)
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
 
   const isBusy = issueMutation.isPending || downloadMutation.isPending
   const documentLabel = portalCertificateDocumentLabel('COMPLETION')
@@ -102,9 +103,7 @@ export function CertificateIssueCta({
         }),
       })
     } catch (error) {
-      setAlertMessage(
-        getProgramApplicationApiErrorMessage(error, `${documentLabel}을 다운로드하지 못했습니다.`),
-      )
+      setAlert(resolveCertificateErrorAlert(error, getProgramApplicationApiErrorMessage))
     } finally {
       pendingRef.current = false
     }
@@ -126,7 +125,7 @@ export function CertificateIssueCta({
       !Number.isInteger(parsedProgramId) ||
       parsedProgramId <= 0
     ) {
-      setAlertMessage(`${documentLabel} 발급 대상 정보를 확인하지 못했습니다.`)
+      setAlert(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     pendingRef.current = true
@@ -139,16 +138,14 @@ export function CertificateIssueCta({
       })
       setConfirmOpen(false)
       if (result.certificateIssueId == null) {
-        setAlertMessage(`${documentLabel} 발급 결과를 확인하지 못했습니다.`)
+        setAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
       setCompleteIssueId(result.certificateIssueId)
       setCompleteIssuedAt(result.issuedAt ?? null)
     } catch (error) {
       setConfirmOpen(false)
-      setAlertMessage(
-        getProgramApplicationApiErrorMessage(error, `${documentLabel}을 발급하지 못했습니다.`),
-      )
+      setAlert(resolveCertificateErrorAlert(error, getProgramApplicationApiErrorMessage))
     } finally {
       pendingRef.current = false
     }
@@ -253,18 +250,10 @@ export function CertificateIssueCta({
       />
 
       <PFAlertModal
-        open={alertMessage != null}
-        title={
-          isCertificateIssuancePeriodExpiredMessage(alertMessage)
-            ? PLATFORM_ALERT_COPY.certificateExpired.title
-            : '안내'
-        }
-        description={
-          isCertificateIssuancePeriodExpiredMessage(alertMessage)
-            ? PLATFORM_ALERT_COPY.certificateExpired.description
-            : (alertMessage ?? '')
-        }
-        onConfirm={() => setAlertMessage(null)}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
       />
       {downloadMutation.isPending ? (
         <PFLoadingSpinner blocking label={`${documentLabel}을 다운로드하는 중`} />

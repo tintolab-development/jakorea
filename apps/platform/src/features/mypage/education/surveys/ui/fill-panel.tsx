@@ -17,6 +17,8 @@ import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { getMypageProfileLabel } from '@/features/mypage/lib/member-profile'
 import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-view'
 import { PFAlertModal, PFButton, PFRequiredMissingAlert, PFText } from '@/shared/ui'
+import { buildRequestFailedAlertCopy } from '@/shared/lib/platform-error-alert'
+import { resolveEducationErrorAlert } from '../../shared/lib/education-error-alert'
 import {
   buildRequiredMissingAlertCopy,
   type RequiredMissingAlertCopy,
@@ -399,6 +401,12 @@ export function EducationSurveyFillPanel({
     }))
   }, [])
 
+  const showAlert = (alert: { title: string; description: string }) => {
+    setAlertTitle(alert.title)
+    setAlertDescription(alert.description)
+    setAlertOpen(true)
+  }
+
   const showSubmitSuccessAlert = () => {
     setConfirmOpen(false)
     setDeferSubmittedView(true)
@@ -435,9 +443,7 @@ export function EducationSurveyFillPanel({
       )
     ) {
       setConfirmOpen(false)
-      setAlertTitle('제출 실패')
-      setAlertDescription('현재 참여 역할에 해당하지 않는 설문입니다.')
-      setAlertOpen(true)
+      showAlert(buildRequestFailedAlertCopy('현재 참여 역할에 해당하지 않는 설문입니다.'))
       return
     }
     const answers = buildEducationSurveyAnswers(draft, sidecar)
@@ -464,20 +470,14 @@ export function EducationSurveyFillPanel({
           onSuccess: showSubmitSuccessAlert,
           onError: error => {
             setConfirmOpen(false)
-            setAlertTitle('제출 실패')
             const closed = getApplicationApiErrorCode(error) === 'FORM_SUBMISSION_CLOSED'
             const alreadySubmitted = selectedEntry?.status === 'submitted'
-            setAlertDescription(
+            // 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패(서버 안내는 설명에)
+            showAlert(
               closed && alreadySubmitted
-                ? '더 이상 제출할 수 없습니다.'
-                : getProgramApplicationApiErrorMessage(
-                    error,
-                    kind === 'satisfaction'
-                      ? '만족도조사 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-                      : '설문 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-                  ),
+                ? buildRequestFailedAlertCopy('더 이상 제출할 수 없습니다.')
+                : resolveEducationErrorAlert(error, getProgramApplicationApiErrorMessage),
             )
-            setAlertOpen(true)
           },
         },
       )
