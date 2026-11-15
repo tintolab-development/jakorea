@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { RichTextViewer } from '@/shared/rich-text'
+import { MailButton } from '@/features/notifications/model/mail-template/button-node'
+import { mailHtmlEmptyLinesForEditor } from '@/features/notifications/model/shared/mail-body-display-html'
 import { MAIL_VARIABLE_EXTENSIONS } from '@/features/notifications/model/mail-template/variable-node'
 import {
   applyMailPreviewBody,
@@ -14,6 +16,9 @@ import {
   type MailPreviewRecipient,
 } from '@/features/notifications/model/mail-template/preview'
 import './preview-modal.css'
+
+/** 미리보기 뷰어도 편집기와 같이 메일 버튼(`table[data-mail-button]`)을 버튼 노드로 그린다. */
+const MAIL_PREVIEW_EXTENSIONS = [...MAIL_VARIABLE_EXTENSIONS, MailButton]
 
 type PreviewModalProps = {
   open: boolean
@@ -56,7 +61,10 @@ export function PreviewModal({
   zIndex,
 }: PreviewModalProps) {
   const previewSubject = useMemo(() => applyMailPreviewTokens(subject), [subject])
-  const previewHtml = useMemo(() => applyMailPreviewBody(bodyHtml), [bodyHtml])
+  const previewHtml = useMemo(
+    () => mailHtmlEmptyLinesForEditor(applyMailPreviewBody(bodyHtml)),
+    [bodyHtml]
+  )
   const sender = formatMailPreviewSender(senderName, senderEmail)
   const attachmentLines = attachments.map(formatMailPreviewAttachment).filter(Boolean)
   const hasRecipient = recipient != null
@@ -160,7 +168,7 @@ export function PreviewModal({
               className="mail-template-preview__body mail-template-rich-body"
               content={previewHtml}
               contentFormat="html"
-              extraExtensions={MAIL_VARIABLE_EXTENSIONS}
+              extraExtensions={MAIL_PREVIEW_EXTENSIONS}
               maxHeight="none"
             />
           </div>

@@ -12,6 +12,7 @@ import {
   MAIL_NOTIFICATION_LINK_PATH_VARIABLE_LABEL,
   mailDetailButton,
   mailNotificationLinkHref,
+  mailPrimaryButton,
   wrapMailLayoutHtml,
 } from './layout-html'
 import { applyMailPreviewBody } from './preview'
@@ -81,5 +82,67 @@ describe('mailDetailButton', () => {
     expect(saved).toContain(`href="${ADMIN_HREF}"`)
     expect(saved).toContain('문의 내용 확인하기')
     expect(isPlainTextMailBody(saved)).toBe(false)
+  })
+})
+
+describe('mailPrimaryButton', () => {
+  it('CMS primary h40 값을 인라인 스타일로 쓰고 수신자 유형에 맞는 href를 단다', () => {
+    const admin = mailPrimaryButton('문의 내용 확인하기', 'ADMIN')
+    expect(admin).toContain(`<a href="${ADMIN_HREF}"`)
+    expect(admin).toContain('background:#00a0af')
+    expect(admin).toContain('border-radius:8px')
+    expect(admin).toContain('border:1px solid rgba(61,61,61,0.1)')
+    expect(admin).toContain('height:40px')
+    expect(admin).toContain('font-size:14px')
+    expect(admin).toContain('font-weight:600')
+    expect(admin).toContain('>문의 내용 확인하기</a>')
+    expect(mailPrimaryButton('문의 내역 보기', 'MEMBER')).toContain(`<a href="${MEMBER_HREF}"`)
+  })
+
+  it('버튼이 든 본문은 평문으로 판정되지 않는다', () => {
+    expect(isPlainTextMailBody(mailPrimaryButton('문의 내역 보기', 'MEMBER'))).toBe(false)
+  })
+
+  it('긴 라벨도 말줄임·잘림 없이 줄바꿈한다', () => {
+    const label = '학생 초상권 동의서 제출하기 및 학생 명단 제출 현황 확인하기'
+    const button = mailPrimaryButton(label, 'MEMBER')
+    expect(button).toContain(`>${label}</a>`)
+    expect(button).not.toContain('white-space:nowrap')
+    expect(button).not.toContain('text-overflow')
+    expect(button).not.toContain('overflow:hidden')
+    expect(button).toContain('word-break:keep-all')
+  })
+
+  it('메일 에디터에서 열고 다시 저장한 HTML에 href·라벨이 남는다', () => {
+    editor = new Editor({
+      element: document.createElement('div'),
+      extensions: createRichTextExtensions({ extraExtensions: [MailVariable] }),
+      content: `<p>본문</p>${mailPrimaryButton('문의 내역 보기', 'MEMBER')}`,
+      editable: true,
+    })
+    const saved = editor.getHTML()
+    expect(saved).toContain(`href="${MEMBER_HREF}"`)
+    expect(saved).toContain('문의 내역 보기')
+  })
+})
+
+describe('mailPrimaryButtonHtml — BE 일괄 교체와 같은 문자열', () => {
+  /**
+   * JABACK `NotificationEmailButtonBodyTest.FE_MEMBER_BUTTON`과 같은 기대 문자열.
+   * BE 일괄 교체(`NotificationEmailButtonBody.buttonHtml`)가 같은 HTML을 쓰므로,
+   * 버튼 스타일을 바꾸면 이 값과 BE 테스트·BE 상수를 함께 고친다.
+   */
+  const BE_MEMBER_BUTTON =
+    '<table data-mail-button="" role="presentation" cellpadding="0" cellspacing="0" border="0" ' +
+    'style="border-collapse:separate;border-spacing:0;"><tr><td height="40" bgcolor="#00a0af" ' +
+    'style="height:40px;box-sizing:border-box;border:1px solid rgba(61,61,61,0.1);border-radius:8px;' +
+    'background:#00a0af;text-align:center;"><a href="https://#{홈페이지 도메인}#{알림 링크 경로}" ' +
+    'target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:9px 15px;' +
+    'color:#ffffff;font-family:Pretendard,Arial,sans-serif;font-size:14px;line-height:20px;' +
+    'font-weight:600;text-decoration:none;word-break:keep-all;overflow-wrap:break-word;">' +
+    '문의 내역 보기</a></td></tr></table>'
+
+  it('FE 버튼 HTML이 BE 일괄 교체 버튼 HTML과 한 글자도 다르지 않다', () => {
+    expect(mailPrimaryButton('문의 내역 보기', 'MEMBER')).toBe(BE_MEMBER_BUTTON)
   })
 })
