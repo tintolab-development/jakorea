@@ -144,6 +144,11 @@ export type GeneralProgramRegistrationOptions = {
   sponsorManagerLabel?: string
   /** 지정 시 필수 「지급 항목」을 이 라벨로 실제 클릭 선택한다. */
   paymentItemLabel?: string
+  /**
+   * 모집 정보 단계만 엄격 입력(교육·모집 대상 cms-select-multi, 최대값, 면접 유형·가능 시간)을 쓴다.
+   * sponsorManagerLabel 없이도 실서버 통합 E2E에서 필수값이 조용히 skip되지 않게 한다.
+   */
+  strictRecruitment?: boolean
 }
 
 async function clickButtonIfVisible(page: Page, name: string | RegExp) {
@@ -179,6 +184,7 @@ export class GeneralProgramRegistrationPage {
     this.sponsorLabel = options?.sponsorLabel
     this.sponsorManagerLabel = options?.sponsorManagerLabel
     this.paymentItemLabel = options?.paymentItemLabel
+    this.strictRecruitment = options?.strictRecruitment === true
   }
 
   private readonly openRecruitment: boolean
@@ -191,6 +197,11 @@ export class GeneralProgramRegistrationPage {
   private readonly sponsorLabel?: string
   private readonly sponsorManagerLabel?: string
   private readonly paymentItemLabel?: string
+  private readonly strictRecruitment: boolean
+
+  private get useStrictRecruitment() {
+    return Boolean(this.sponsorManagerLabel) || this.strictRecruitment
+  }
 
   private async selectSafeWagePaymentItemIfNeeded() {
     if (!this.safeWagePaymentItems) return
@@ -208,26 +219,48 @@ export class GeneralProgramRegistrationPage {
     if ((await trigger.count()) === 0 || !(await trigger.isVisible().catch(() => false))) return
 
     await trigger.click()
-    const panel = this.page.locator('.cms-select-multi__panel:visible').last()
+    // 다른 패널이 닫히는 중이면 :visible.last()가 그 패널을 집는다 — aria-controls로 이 필드 패널만 쓴다.
+    const panelId = await trigger.getAttribute('aria-controls').catch(() => null)
+    const panel = panelId
+      ? this.page.locator(`[id="${panelId}"]`)
+      : this.page.locator('.cms-select-multi__panel:visible').last()
     await expect(panel).toBeVisible({ timeout: 10_000 })
     const rows = panel.locator('.cms-select-multi__row')
     await expect(rows.first()).toBeVisible({ timeout: 10_000 })
 
     const rowCount = await rows.count()
+    const isSelected = async (row: Locator) =>
+      (await row.getAttribute('aria-selected').catch(() => null)) === 'true' ||
+      (await row.locator('input[type="checkbox"]:checked, .ant-checkbox-checked').count()) > 0
+    const toggle = async (row: Locator) => {
+      await row
+        .locator('.ant-checkbox-input, .cms-select-multi__checkbox')
+        .first()
+        .click({ timeout: 5_000 })
+        .catch(async () => row.click())
+    }
     for (let index = 0; index < rowCount; index += 1) {
       const row = rows.nth(index)
-      if ((await row.locator('.ant-checkbox-checked').count()) === 0) continue
-      await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
+      if (!(await isSelected(row))) continue
+      await toggle(row)
     }
 
-    for (let index = 0; index < rowCount; index += 1) {
-      const row = rows.nth(index)
-      const text = (await row.innerText()).trim()
-      if (!text || /숙박비|lodging/i.test(text) || /해당 없음/.test(text)) continue
-      await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
-      break
+    // 「전체」·「해당 없음」·숙박비 행을 피해 교통비·식사비·활동비 중 하나를 고른다.
+    const safeRow = panel
+      .getByRole('option')
+      .filter({ hasText: /교통비|식사비|활동비/ })
+      .first()
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (!(await panel.isVisible().catch(() => false))) {
+        await trigger.click()
+        await expect(panel).toBeVisible({ timeout: 10_000 })
+      }
+      await expect(safeRow).toBeVisible({ timeout: 10_000 })
+      if (!(await isSelected(safeRow))) await toggle(safeRow)
+      if (await isSelected(safeRow)) break
     }
     await trigger.click({ force: true })
+    await expect(trigger).not.toContainText('지급 항목을 선택해 주세요')
   }
 
   private async applyDevAutofillCase() {
@@ -360,6 +393,100 @@ export class GeneralProgramRegistrationPage {
    * (paragraph-date-picker.tsx omitTriggerSurfaceDisplay) 선택값은 「교육 진행 예정일」 목록에 한 줄로 추가된다.
    * 운영 기간 안의 첫 활성일을 명시 클릭하고, 시작<종료 시간을 확인한 뒤 목록 증가로 검증한다.
    */
+  /**
+   * 사업 운영 기간: 이번 달의 첫 선택 가능일 ~ 2개월 뒤 15일(없으면 그 달 마지막 선택 가능일).
+   * 오늘이 포함돼야 모집 기간을 오늘로 열 수 있고, 교육 일정(+2개월)도 기간 안에 든다.
+   */
+  private async pickOperationRangeIncludingToday() {
+    const placeholder = '사업 운영 기간을 선택해 주세요'
+    const trigger = this.page
+      .locator('.paragraph-date-picker__trigger:visible')
+      .filter({ hasText: placeholder })
+      .or(this.page.getByRole('button', { name: placeholder, exact: true }))
+      .first()
+    await trigger.scrollIntoViewIfNeeded()
+    await trigger.click()
+    const dialog = datePickerDialog(this.page)
+    await expect(dialog).toBeVisible({ timeout: 10_000 })
+
+    const navButtons = dialog.locator('.calendar-mini-header button.calendar-mini-nav-btn')
+    const title = dialog.locator('.calendar-mini-title')
+    const now = new Date()
+    const monthIndex = async () => {
+      const match = /^(\d{4})\.\s*(\d{1,2})$/.exec((await title.innerText()).trim())
+      return match ? Number(match[1]) * 12 + Number(match[2]) - 1 : null
+    }
+    const goToMonth = async (target: number) => {
+      for (let i = 0; i < 24; i += 1) {
+        const current = await monthIndex()
+        if (current == null || current === target) return
+        const before = await title.innerText()
+        await (current < target ? navButtons.last() : navButtons.first()).click()
+        await expect(title).not.toHaveText(before, { timeout: 5_000 })
+      }
+    }
+    const thisMonth = now.getFullYear() * 12 + now.getMonth()
+
+    await goToMonth(thisMonth)
+    const startCells = enabledCalendarMiniDayButtons(dialog)
+    await expect(startCells.first()).toBeVisible({ timeout: 5_000 })
+    const startDay = Number((await startCells.first().innerText()).trim())
+    expect(startDay, '이번 달에 오늘 이전·당일 선택 가능일이 있어야 한다').toBeLessThanOrEqual(now.getDate())
+    await startCells.first().click()
+
+    const endField = dialog.locator('.date-time-picker-popover__field').filter({ hasText: '종료일' }).first()
+    if (await endField.isVisible().catch(() => false)) await endField.click()
+    await goToMonth(thisMonth + 2)
+    const endCells = enabledCalendarMiniDayButtons(dialog)
+    await expect(endCells.first()).toBeVisible({ timeout: 5_000 })
+    const mid = endCells.filter({ hasText: /^15$/ }).first()
+    await ((await mid.count()) > 0 ? mid : endCells.last()).click()
+
+    await dialog.getByRole('button', { name: '설정' }).click()
+    await expect(dialog).toBeHidden({ timeout: 10_000 })
+    const pad = (n: number) => String(n).padStart(2, '0')
+    await expect(
+      this.page.locator('.paragraph-date-picker__trigger:visible').filter({
+        hasText: `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(startDay)}`,
+      })
+    ).toHaveCount(1)
+  }
+
+  /**
+   * 「교육 진행 일정 선택」은 추가형 피커다. 날짜를 고르면 「교육 진행 예정일」에 칩으로
+   * 추가되고 트리거는 placeholder로 돌아간다 — 트리거 텍스트가 아니라 칩 수로 검증한다.
+   */
+  private async addEducationScheduleDateIfVisible() {
+    const field = this.page
+      .locator('.detail-info-form__field:visible')
+      .filter({
+        has: this.page.locator('.detail-info-form__field-label-text', { hasText: /^교육 진행 일정 선택$/ }),
+      })
+      .first()
+    const trigger = field.locator('.paragraph-date-picker__trigger').first()
+    if (!(await trigger.isVisible().catch(() => false))) return
+
+    const listItems = this.page.locator('.education-schedule-preview-lines__item')
+    const before = await listItems.count()
+    // 앞 단계에서 예정일이 이미 들어갔으면 같은 날짜를 다시 고르지 않는다(중복은 추가되지 않음).
+    if (before > 0) return
+    await trigger.scrollIntoViewIfNeeded()
+    await trigger.click()
+    const dialog = this.page
+      .locator('.date-time-picker-popover[role="dialog"]')
+      .filter({ has: this.page.locator('.calendar-mini') })
+      .last()
+    await expect(dialog).toBeVisible()
+    const enabledDays = dialog.locator(
+      'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month):not([aria-disabled="true"])'
+    )
+    await expect(enabledDays.first()).toBeVisible()
+    await enabledDays.first().click()
+    await dialog.getByRole('button', { name: '설정' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(listItems).toHaveCount(before + 1)
+  }
+
   private async addEducationScheduleDateStrict() {
     const field = this.page
       .locator('.detail-info-form__field')
@@ -459,7 +586,8 @@ export class GeneralProgramRegistrationPage {
     await heading.scrollIntoViewIfNeeded()
     await expect(heading).toBeVisible({ timeout: 15_000 })
 
-    const nameInputs = this.page.getByPlaceholder('행사 일정명을 작성하세요')
+    // 화면 문구가 「~작성하세요」→「~작성해 주세요」로 바뀌었다 — 세부·행사 일정명 모두 허용
+    const nameInputs = this.page.getByPlaceholder(/(세부|행사) 일정명을 작성(하세요|해 주세요)/)
     if ((await nameInputs.count()) < 2) {
       const add = this.page.getByRole('button', { name: /강의 세부 일정 추가|강의 행사 일정 추가/ })
       await expect(add.first()).toBeVisible({ timeout: 10_000 })
@@ -600,13 +728,14 @@ export class GeneralProgramRegistrationPage {
   }
 
   /** 엄격 모드: 라벨 필드의 「최대값 입력」에 값을 넣고 반영을 확인한다. */
-  private async fillMaxValueStrict(label: string, value: string) {
+  private async fillMaxValueStrict(label: string | RegExp, value: string) {
     const field = this.page
       .locator('.detail-info-form__field:visible')
       .filter({ has: this.page.locator('.detail-info-form__field-label-text', { hasText: label }) })
       .first()
     await expect(field, `${label} 필드`).toBeVisible()
-    const input = field.getByPlaceholder('최대값 입력').first()
+    // placeholder가 「최대값 입력」에서 「최대 강사」·「최대 학급」으로 바뀌었다 — 필드 안 첫 입력란을 쓴다.
+    const input = field.getByPlaceholder('최대값 입력').or(field.getByRole('textbox')).first()
     await input.fill(value)
     await expect(input).toHaveValue(new RegExp(`^${value}`))
   }
@@ -812,10 +941,19 @@ export class GeneralProgramRegistrationPage {
         continue
       }
       const row = rows.nth(i)
+      // 선택 상태는 aria-selected·checked 체크박스로 판단한다(antd 클래스는 패널마다 다르다).
       const alreadyChecked =
-        (await row.locator('.ant-checkbox-checked').count().catch(() => 0)) > 0
+        (await row.getAttribute('aria-selected').catch(() => null)) === 'true' ||
+        (await row
+          .locator('input[type="checkbox"]:checked, .ant-checkbox-checked')
+          .count()
+          .catch(() => 0)) > 0
+      // 다른 값으로 바꾸는 중(currentValue 지정)이면 이미 선택된 행은 건너뛴다.
+      // 라벨 비교가 어긋나면 현재 후원사를 다시 눌러 단일 선택 패널이 닫힌다.
+      if (currentValue !== undefined && alreadyChecked) continue
       if (!alreadyChecked) {
-        await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
+        const checkbox = row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first()
+        await checkbox.click({ timeout: 5_000 }).catch(async () => row.click())
       }
       await this.closeOpenSelectOverlays()
       return true
@@ -888,33 +1026,55 @@ export class GeneralProgramRegistrationPage {
       return
     }
 
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      await this.closeOpenSelectOverlays()
-      if (await this.openFieldSelect(managerField)) {
-        if (await this.pickFirstRealOpenOption()) {
-          if (await managerFilled()) {
-            await this.closeOpenSelectOverlays()
-            return
-          }
-        }
-        await this.closeOpenSelectOverlays()
-      }
+    // 담당자가 없는 후원사가 목록 맨 앞에 올 수 있다. 후원사를 이름으로 하나씩 골라
+    // 담당자 선택지가 실제로 있는 후원사를 찾고, 그 첫 담당자를 고른다.
+    const managerTrigger = managerField.locator('.cms-select-multi__trigger, .ant-select').first()
+    // 닫히는 패널과 여는 패널이 잠깐 함께 보인다 — 트리거 aria-controls로 그 필드의 패널만 집는다.
+    const fieldPanelOptions = async (field: Locator) => {
+      const trigger = field.locator('.cms-select-multi__trigger').first()
+      const panelId = await trigger.getAttribute('aria-controls').catch(() => null)
+      const panel = panelId
+        ? this.page.locator(`[id="${panelId}"]`)
+        : this.page.locator('.cms-select-multi__panel:visible').last()
+      await expect(panel).toBeVisible({ timeout: 10_000 })
+      return panel.getByRole('option')
+    }
 
-      const currentSponsor = await this.readLabeledSelectText(sponsorField)
-      if (await this.openFieldSelect(sponsorField)) {
-        const switched = await this.pickFirstRealOpenOption(currentSponsor)
-        await this.closeOpenSelectOverlays()
-        if (switched) {
-          if (
-            await expect
-              .poll(managerFilled, { timeout: 8_000 })
-              .toBeTruthy()
-              .then(() => true)
-              .catch(() => false)
-          ) {
-            return
-          }
+    await this.closeOpenSelectOverlays()
+    let sponsorNames: string[] = []
+    if (await this.openFieldSelect(sponsorField)) {
+      sponsorNames = (await (await fieldPanelOptions(sponsorField)).allInnerTexts())
+        .map(text => text.replace(/\s+/g, ' ').trim())
+        .filter(text => this.isChosenSelectValue(text))
+    }
+    await this.closeOpenSelectOverlays()
+
+    for (const sponsorName of sponsorNames.slice(0, 12)) {
+      if (!(await this.openFieldSelect(sponsorField))) continue
+      const option = (await fieldPanelOptions(sponsorField)).filter({ hasText: sponsorName }).first()
+      if ((await option.getAttribute('aria-selected').catch(() => null)) !== 'true') {
+        await option.click()
+      }
+      await this.closeOpenSelectOverlays()
+
+      const enabled = await expect(managerTrigger)
+        .toBeEnabled({ timeout: 5_000 })
+        .then(() => true)
+        .catch(() => false)
+      if (!enabled) continue
+      if (await managerFilled()) return
+
+      if (await this.openFieldSelect(managerField)) {
+        const managerOptions = await fieldPanelOptions(managerField)
+        const count = await managerOptions.count()
+        for (let i = 0; i < count; i += 1) {
+          const text = (await managerOptions.nth(i).innerText()).replace(/\s+/g, ' ').trim()
+          if (!this.isChosenSelectValue(text)) continue
+          await managerOptions.nth(i).click()
+          break
         }
+        await this.closeOpenSelectOverlays()
+        if (await managerFilled()) return
       }
     }
 
@@ -971,12 +1131,17 @@ export class GeneralProgramRegistrationPage {
     )
     await selectNearLabelIfVisible(this.page, '세부 프로그램명', this.detailedProgramLabel)
     await selectNearLabelIfVisible(this.page, '상세 프로그램명', this.detailedProgramLabel)
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '사업 운영 기간을 선택해 주세요',
-      'range',
-      OPERATION_DATE_OPTS
-    )
+    if (this.openRecruitment) {
+      // 모집은 운영 기간 안이어야 한다. 바로 신청을 받으려면 운영 기간에 오늘이 들어가야 한다.
+      await this.pickOperationRangeIncludingToday()
+    } else {
+      await fillParagraphDateByPlaceholder(
+        this.page,
+        '사업 운영 기간을 선택해 주세요',
+        'range',
+        OPERATION_DATE_OPTS
+      )
+    }
 
     // 대분류 — 개인/학교·기관은 상호 배타. 기본값이 개인이면 학교/기관이 비활성이라
     // 먼저 개인을 해제한 뒤 학교/기관을 켜야 한다.
@@ -1082,18 +1247,20 @@ export class GeneralProgramRegistrationPage {
         OPERATION_DATE_OPTS
       )
     }
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '날짜를 선택해 주세요',
-      'single',
-      OPERATION_DATE_OPTS
-    )
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '기간을 선택해 주세요',
-      'range',
-      OPERATION_DATE_OPTS
-    )
+    await this.addEducationScheduleDateIfVisible()
+    // 「기간 지정」 교육 일정 트리거만 채운다. 부분 일치로 찾으면 「사업 운영 기간을 선택해 주세요」
+    // 트리거(aria-label은 값이 있어도 placeholder 유지)를 다시 열어 운영 기간을 덮어쓴다.
+    const periodOnlyTrigger = this.page
+      .locator('.paragraph-date-picker__trigger:visible')
+      .filter({ hasText: /^\s*기간을 선택해 주세요\s*$/ })
+    if ((await periodOnlyTrigger.count()) > 0) {
+      await fillParagraphDateByPlaceholder(
+        this.page,
+        '기간을 선택해 주세요',
+        'range',
+        OPERATION_DATE_OPTS
+      )
+    }
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', KPI_VALUE)
@@ -1112,6 +1279,9 @@ export class GeneralProgramRegistrationPage {
       }
       await expect(this.page.locator('.cms-select-multi__panel:visible')).toHaveCount(0)
       await expect(payField.locator('.cms-select-multi__trigger').first()).toContainText(this.paymentItemLabel)
+    } else if (this.safeWagePaymentItems) {
+      // placeholder IfVisible은 cms-select-multi를 못 찾아 조용히 skip한다 — 정책에 맞는 항목을 직접 고른다.
+      await this.selectSafeWagePaymentItemIfNeeded()
     } else {
       await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택해 주세요')
     }
@@ -1143,6 +1313,9 @@ export class GeneralProgramRegistrationPage {
     }
     await fillAllByPlaceholder(this.page, '세부 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
     await fillAllByPlaceholder(this.page, '행사 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
+    // 현재 화면 문구(「~작성해 주세요」)도 함께 채운다.
+    await fillAllByPlaceholder(this.page, '세부 일정명을 작성해 주세요', SCHEDULE_DETAIL_NAME)
+    await fillAllByPlaceholder(this.page, '행사 일정명을 작성해 주세요', SCHEDULE_DETAIL_NAME)
     if (this.sponsorManagerLabel) {
       await this.fillScheduleDetailDatesStrict()
     } else {
@@ -1154,12 +1327,14 @@ export class GeneralProgramRegistrationPage {
       )
     }
     // 진행 시간 — ParagraphTimePicker(버튼 트리거)
-    const timeTriggers = this.page
-      .locator('.paragraph-time-picker__trigger:visible')
-      .filter({ hasText: '시간 선택' })
-    const timeCount = await timeTriggers.count()
-    for (let i = 0; i < Math.min(timeCount, 4); i += 1) {
-      await fillParagraphTimeIfVisible(this.page, '시간 선택')
+    for (const timePlaceholder of ['시간 선택', '시간을 선택해 주세요']) {
+      const timeTriggers = this.page
+        .locator('.paragraph-time-picker__trigger:visible')
+        .filter({ hasText: timePlaceholder })
+      const timeCount = await timeTriggers.count()
+      for (let i = 0; i < Math.min(timeCount, 4); i += 1) {
+        await fillParagraphTimeIfVisible(this.page, timePlaceholder)
+      }
     }
     if (this.sponsorManagerLabel) {
       const detail = this.page.getByPlaceholder('일정 상세 내용을 작성하세요')
@@ -1232,18 +1407,19 @@ export class GeneralProgramRegistrationPage {
         this.ensureFutureDates ? { futureStartWindow: true } : operationDateOptions
       )
     }
-    if (this.sponsorManagerLabel) {
+    if (this.useStrictRecruitment) {
       // 엄격 모드: 필수 「교육 대상」(cms-select-multi)을 실제 클릭 선택. placeholder IfVisible은 .ant-select만 찾아 조용히 skip했음
       // 역할별로 다른 값을 골라 역할 간 혼입을 CREATE·overlay에서 구분할 수 있게 한다(EDUCATION_TARGET_OPTIONS 라벨).
       // 강사 모집 대상은 화면 기본값 「성인」을 건드리지 않고 표시만 확인한다(기본값 저장 검증용, 클릭 우회 금지)
-      if (options?.role === 'instructor') await this.expectMultiFieldShows('모집 대상', '성인')
+      // QA-0121로 강사 모집 대상 「성인」 기본 선택이 제거됐다(861d21b19) — 직접 고른다.
+      if (options?.role === 'instructor') await this.selectMultiFieldStrict('모집 대상', '성인')
       else if (options?.role === 'volunteer') await this.selectMultiFieldStrict('모집 대상', '대학(원)생')
       else {
         await this.selectMultiFieldStrict('교육 대상', '고등학생')
         if (this.regCase.audience === 'organization') {
           // 기관 모집 「최대값 입력」 2칸 — 라벨 기준으로 명시 입력 후 값 확인
-          await this.fillMaxValueStrict('배정 가능 최대 강사 수', '2')
-          await this.fillMaxValueStrict('신청 가능 최대 학급 수', '3')
+          await this.fillMaxValueStrict(/배정 가능 최대 강사 수|최대 배정 강사 수/, '2')
+          await this.fillMaxValueStrict(/신청 가능 최대 학급 수|최대 학급 수/, '3')
         }
       }
     } else {
@@ -1278,6 +1454,7 @@ export class GeneralProgramRegistrationPage {
     await fillByPlaceholderIfVisible(this.page, '문의처 이메일', CONTACT_EMAIL)
     await fillByPlaceholderIfVisible(this.page, '비고란을 작성하세요 (없으면 -로 입력)', REMARK)
     await fillByPlaceholderIfVisible(this.page, '비고란을 작성하세요', REMARK)
+    await fillAllByPlaceholder(this.page, '비고를 입력해 주세요', REMARK)
 
     await fillByPlaceholderIfVisible(
       this.page,
@@ -1327,7 +1504,7 @@ export class GeneralProgramRegistrationPage {
         ? { currentMonthWindow: true }
         : RECRUIT_DATE_OPTS
     )
-    if (this.sponsorManagerLabel) {
+    if (this.useStrictRecruitment) {
       // 엄격 모드: 면접 유형은 CmsSelect(INTERVIEW_METHOD_OPTIONS) — 텍스트 fill IfVisible은 조용히 skip했음
       await selectByPlaceholder(this.page, '면접 유형', '온라인')
     } else {
@@ -1335,7 +1512,36 @@ export class GeneralProgramRegistrationPage {
     }
     await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillAllByPlaceholder(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
-    if (this.sponsorManagerLabel) await this.fillVolunteerInterviewScheduleStrict()
+    if (this.useStrictRecruitment) await this.fillVolunteerInterviewScheduleStrict()
+  }
+
+  /** 신청 정보 탭마다 비어 있는 제3자 「제공받는 곳」 셀을 채운다(application-form-third-party-recipient 필수). */
+  private async fillThirdPartyRecipientCells() {
+    for (const tab of ['참여자 신청 정보', '참여 기관 신청 정보', '강사 신청 정보', '봉사자 신청 정보']) {
+      const t = this.page.getByRole('tab', { name: tab })
+      if ((await t.count()) === 0) continue
+      await t.first().click()
+      const emptyCells = this.page
+        .locator('.form-editor-horizontal-table__td--field:visible')
+        .filter({ hasText: /^제공받는 (곳|기관명)을 입력해 주세요$/ })
+      const cellCount = await emptyCells.count()
+      for (let i = 0; i < cellCount; i += 1) {
+        const cell = emptyCells.first()
+        const area = this.page
+          .locator(
+            '.form-editor-horizontal-table__td--field .text-cell-input textarea:visible, .form-editor-horizontal-table__td--field .text-cell-input input:visible'
+          )
+          .first()
+        // 1차 클릭: 단락 카드 선택(편집 모드 진입), 2차 클릭: 셀 TextCellInput 활성화
+        await expect(async () => {
+          if (!(await area.isVisible())) await cell.click()
+          await expect(area).toBeVisible({ timeout: 1_500 })
+        }).toPass({ timeout: 10_000 })
+        await area.fill('E2E 협력 기관')
+        await area.press('Tab')
+      }
+      await expect(emptyCells).toHaveCount(0)
+    }
   }
 
   async goToApplication() {
@@ -1348,7 +1554,11 @@ export class GeneralProgramRegistrationPage {
 
   /** 신청 정보 — 참여자·강사·봉사자 탭 전부 채움 */
   async fillApplicationInfo() {
-    if (this.skipApplicationFormEdits) return
+    if (this.skipApplicationFormEdits) {
+      // 양식 편집은 건너뛰어도 관리자 필수 입력인 제3자 「제공받는 곳」은 채워야 등록된다.
+      if (this.useStrictRecruitment) await this.fillThirdPartyRecipientCells()
+      return
+    }
     if (this.sponsorManagerLabel) {
       // 엄격 모드: 신청 정보 단계는 신청 양식 미리보기(신청자 답변란)라 관리자가 값을 넣는 곳이 아니다.
       // 미리보기 라디오에 force 클릭하던 기존 동작을 하지 않고, 탭별 빈 관리자 입력 필드만 감사 로그로 남긴다.
@@ -1483,8 +1693,21 @@ export class GeneralProgramRegistrationPage {
       programId = ''
     }
 
-    await expect(successDialog).toBeVisible({ timeout: 30_000 })
-    await successDialog.getByRole('button', { name: '확인' }).click()
+    // 생성 성공은 POST 응답으로 판정한다. 완료 팝업 문구·종류가 케이스마다 다를 수 있어
+    // 안 보이면 떠 있는 팝업 문구를 기록하고 닫는다(응답이 실패면 위에서 이미 throw).
+    const successShown = await successDialog
+      .waitFor({ state: 'visible', timeout: 15_000 })
+      .then(() => true)
+      .catch(() => false)
+    if (successShown) {
+      await successDialog.getByRole('button', { name: '확인' }).click()
+    } else {
+      const otherDialog = this.page.getByRole('dialog').last()
+      const otherText = await otherDialog.innerText().catch(() => '(팝업 없음)')
+      console.log('[REGISTRATION] 완료 팝업 대신 표시된 화면:', otherText.replace(/\s+/g, ' ').slice(0, 300))
+      const confirm = otherDialog.getByRole('button', { name: '확인' })
+      if (await confirm.isVisible().catch(() => false)) await confirm.click()
+    }
 
     if (!programId) {
       // 실 API 성공 후에도 현재 화면을 목록에 남겨 두는 환경이 있으므로,

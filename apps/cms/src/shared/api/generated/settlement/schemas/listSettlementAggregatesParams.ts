@@ -43,7 +43,7 @@ fromDate?: string;
  */
 toDate?: string;
 /**
- * 리스트 지급대기 건수 버킷. 캘린더에서는 보내지 않습니다.
+ * 리스트 「지급 대기 항목」 건수 버킷(pendingPaymentSettlementItemCount 기준). 캘린더에서는 보내지 않습니다.
  */
 pendingItemBucket?: ListSettlementAggregatesPendingItemBucket;
 /**

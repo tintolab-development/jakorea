@@ -15,4 +15,5 @@ export interface InterviewSlotResponse {
   maxAssignCount?: number;
   currentAssignCount?: number;
   exceptionSlot?: boolean;
+  audience?: string;
 }

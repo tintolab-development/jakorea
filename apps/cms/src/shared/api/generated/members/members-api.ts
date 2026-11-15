@@ -843,6 +843,124 @@ const signedConsentSignatureImage = (
 
 /**
  * ### 이 API가 하는 일
+ * - 회원 전자서명 동의서 서명 PDF 화면 열람(파일 암호 없음)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document/pdf/content`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요
+ * - 접근 범위: MEMBER_SCOPE 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_SIGNED_CONSENT_PDF 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: PORTRAIT_RIGHTS/PAYMENT_STATEMENT_CONSENT/RECEIPT_PRE_CONSENT/FACILITATOR_PLEDGE/ADMINISTRATIVE_INFO_CONSENT; same document predicate and roles as signed-document; ConsentDocumentRuntimeGuard; inline no-store; UNMASKED_VIEW + file_access_log VIEW; download stays on sensitive-downloads with password
+ * @summary 회원 전자서명 동의서 서명 PDF 화면 열람(파일 암호 없음)
+ */
+const signedConsentPdfContent = (
+    memberId: number,
+    consentType: string,
+    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
+    params: SignedConsentPdfContentParams,
+ options?: SecondParameter<typeof customInstance<Blob | string>>,) => {
+      return customInstance<Blob | string>(
+      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/pdf/content`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminPrivacyUnmaskRequest,
+        params,
+        responseType: 'blob'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 회원 동의서 업로드 원본 화면 열람(파일 암호 없음)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document/original/content`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요
+ * - 접근 범위: MEMBER_SCOPE 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_CONSENT_ORIGINAL 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: CRIMINAL_HISTORY_CHECK_CONSENT only; same document predicate and roles as signed-document; Master or member-instructor PM; inline no-store; UNMASKED_VIEW + file_access_log VIEW; download stays on sensitive-downloads with password
+ * @summary 회원 동의서 업로드 원본 화면 열람(파일 암호 없음)
+ */
+const signedConsentOriginalContent = (
+    memberId: number,
+    consentType: string,
+    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
+    params: SignedConsentOriginalContentParams,
+ options?: SecondParameter<typeof customInstance<Blob | string>>,) => {
+      return customInstance<Blob | string>(
+      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/original/content`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminPrivacyUnmaskRequest,
+        params,
+        responseType: 'blob'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 회원 동의서 작성본 원문 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
@@ -6518,47 +6636,7 @@ const deleteProgramRole = (
       options);
     }
 
-/**
- * 성범죄경력 조회 동의서(CRIMINAL_HISTORY_CHECK_CONSENT)의 업로드 원본(PDF/JPG/PNG)을 CMS 모달 표시용으로 반환합니다. 파일 암호 없이 저장된 원본 그대로 inline, Cache-Control: no-store, X-Content-Type-Options: nosniff로 내려가며 다운로드용이 아닙니다. 다운로드는 signed-document 응답의 originalDownloadApi(sensitive-downloads, 파일 암호 필수)를 사용합니다. FE는 응답을 Blob으로 받아 object URL로 표시하고, 모달을 닫으면 URL을 해제하세요. 주소는 signed-document 응답의 originalViewEndpoint를 그대로 사용합니다. 권한은 signed-document 조회와 같습니다(MEMBER_READ, Master·Accounting Manager·Program Manager 역할, 성범죄 동의서는 Master 또는 그 회원이 강사로 배정·신청한 프로그램의 PM만, Accounting Manager 제외). 보관 기간 종료 등으로 증빙 열람이 막힌 문서는 410 CONSENT_ARTIFACT_NOT_ACCESSIBLE(다운로드 relay와 같은 기준). 조회할 때마다 개인정보 열람 이력(UNMASKED_VIEW)과 파일 접근 이력(VIEW, CONSENT_ORIGINAL_INLINE_VIEW)을 남깁니다.
- * @summary 회원 동의서 업로드 원본 화면 열람
- */
-const signedConsentOriginalContent = (
-    memberId: number,
-    consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
-    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
-    params: SignedConsentOriginalContentParams,
- options?: SecondParameter<typeof customInstance<Blob>>,) => {
-      return customInstance<Blob>(
-      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/original/content`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: adminPrivacyUnmaskRequest,
-        params,
-        responseType: 'blob'
-    },
-      options);
-    }
-
-/**
- * 전자서명 동의서(PORTRAIT_RIGHTS, PAYMENT_STATEMENT_CONSENT, RECEIPT_PRE_CONSENT, FACILITATOR_PLEDGE, ADMINISTRATIVE_INFO_CONSENT)의 서명이 들어간 전체 PDF(제출 당시 본문·입력 내용·서명 이미지)를 CMS 모달 표시용으로 반환합니다. 파일 암호 없이 저장된 PDF 그대로 inline, Cache-Control: no-store, X-Content-Type-Options: nosniff로 내려가며 다운로드용이 아닙니다. 다운로드는 signedPdfDownloadApi / signedPdfDownloadEndpoint(sensitive-downloads, 파일 암호 필수)를 사용합니다. 성범죄경력 동의서는 업로드 원본이 동의서이므로 .../signed-document/original/content를 사용합니다. FE는 응답을 Blob으로 받아 object URL로 표시하고, 모달을 닫으면 URL을 해제하세요. 주소는 signedPdfViewEndpoint를 그대로 사용합니다. 권한은 signed-document 조회와 같습니다(MEMBER_READ, Master·Accounting Manager·Program Manager 역할, 행정정보는 Master 또는 그 회원이 강사로 배정·신청한 프로그램의 PM만, Accounting Manager 제외). 조회할 때마다 개인정보 열람 이력(UNMASKED_VIEW)과 파일 접근 이력(VIEW, CONSENT_SIGNED_PDF_INLINE_VIEW)을 남깁니다.
- * @summary 회원 전자서명 동의서 서명 PDF 화면 열람
- */
-const signedConsentPdfContent = (
-    memberId: number,
-    consentType: 'PORTRAIT_RIGHTS' | 'PAYMENT_STATEMENT_CONSENT' | 'PAYMENT_STATEMENT_PRE_CONSENT' | 'RECEIPT_PRE_CONSENT' | 'FACILITATOR_PLEDGE' | 'ADMINISTRATIVE_INFO_CONSENT',
-    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
-    params: SignedConsentPdfContentParams,
- options?: SecondParameter<typeof customInstance<Blob>>,) => {
-      return customInstance<Blob>(
-      {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/pdf/content`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: adminPrivacyUnmaskRequest,
-        params,
-        responseType: 'blob'
-    },
-      options);
-    }
-
-return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskTeacherMemberDetail,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,signedConsentDocument,signedConsentSignatureImage,consentFilledDocument,listMemberComments,createMemberComment,download1,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,allocateCertificateSerialByRoster,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,reset,stepUp,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,updateMemberBasicInfoAsMaster,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,currentConsents,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listSelectableRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,listActiveProgramRoles,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole,signedConsentOriginalContent,signedConsentPdfContent}};
+return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskTeacherMemberDetail,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,signedConsentDocument,signedConsentSignatureImage,signedConsentPdfContent,signedConsentOriginalContent,consentFilledDocument,listMemberComments,createMemberComment,download1,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,allocateCertificateSerialByRoster,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,reset,stepUp,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,updateMemberBasicInfoAsMaster,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,currentConsents,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listSelectableRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,listActiveProgramRoles,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole}};
 export type GetRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getRolePermissions']>>>
 export type UpdateRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateRolePermissions']>>>
 export type ListProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoles']>>>
@@ -6571,6 +6649,8 @@ export type UnmaskIndividualMemberPrivacyResult = NonNullable<Awaited<ReturnType
 export type DeleteAndAnonymizeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteAndAnonymize']>>>
 export type SignedConsentDocumentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentDocument']>>>
 export type SignedConsentSignatureImageResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentSignatureImage']>>>
+export type SignedConsentPdfContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentPdfContent']>>>
+export type SignedConsentOriginalContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentOriginalContent']>>>
 export type ConsentFilledDocumentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['consentFilledDocument']>>>
 export type ListMemberCommentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listMemberComments']>>>
 export type CreateMemberCommentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['createMemberComment']>>>
@@ -6675,5 +6755,3 @@ export type ConsentRecords1Result = NonNullable<Awaited<ReturnType<ReturnType<ty
 export type ListProgramRoleOptionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoleOptions']>>>
 export type DeleteApplicationHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteApplicationHistory']>>>
 export type DeleteProgramRoleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteProgramRole']>>>
-export type SignedConsentOriginalContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentOriginalContent']>>>
-export type SignedConsentPdfContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['signedConsentPdfContent']>>>

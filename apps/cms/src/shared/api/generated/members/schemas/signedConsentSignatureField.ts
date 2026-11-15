@@ -6,13 +6,15 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 당시 consent_document_signature_field에서 읽은 값. signatureFileObjectId는 참조 메타데이터이며 다운로드 URL이 아닙니다.
+ */
 export interface SignedConsentSignatureField {
-  fieldKey: string;
-  required: boolean;
-  signed: boolean;
-  signedAt: string | null;
-  /** Reference metadata only. No download URL or stream access is provided by this endpoint. */
-  signatureFileObjectId: number | null;
+  fieldKey?: string;
+  required?: boolean;
+  signed?: boolean;
+  signedAt?: string;
+  signatureFileObjectId?: number;
   /** 서명 이미지 조회 API(POST, 본문 reason 필수, 이미지 바이트 inline). signed=true일 때만 값이 있습니다. FE가 fieldKey·documentId로 주소를 조립하지 않도록 내려줍니다. */
   contentRevealEndpoint?: string | null;
 }

@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { MemberConsentRecordResponseFilledDocumentUnavailableReason } from './memberConsentRecordResponseFilledDocumentUnavailableReason';
 
 export interface MemberConsentRecordResponse {
   consentRecordId?: number;
@@ -25,4 +26,6 @@ export interface MemberConsentRecordResponse {
   allItemsAgreed?: boolean | null;
   filledDocumentAvailable?: boolean;
   filledDocumentRevealEndpoint?: string;
+  /** filledDocumentAvailable=false일 때만 값이 있다. 이 기록의 작성본을 열 수 없는 이유(우선순위는 FilledDocumentUnavailableReason 참고). filledDocumentAvailable 판정 자체는 바뀌지 않는다. */
+  filledDocumentUnavailableReason?: MemberConsentRecordResponseFilledDocumentUnavailableReason;
 }

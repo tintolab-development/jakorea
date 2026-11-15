@@ -83,7 +83,7 @@ export interface ProgramRecruitmentRequest {
   volunteerTargets?: string[] | null;
   /** 비고 해당 없음. null 유지. */
   remarksNotApplicable?: boolean | null;
-  /** 봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략(null)은 기존 유지, 빈 객체는 명시적 빈 typed 값. */
+  /** 면접 진행 가능 일정. VOLUNTEER와 일반 프로그램 개인 PARTICIPANT 행. 객체 생략(null)은 기존 유지, 빈 객체는 명시적 빈 typed 값. 기관 참여자 행은 거절. */
   interviewConfig?: RecruitmentInterviewConfig | null;
   /** 1차 서류 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
   documentPassAnnouncementMethod?: string | null;

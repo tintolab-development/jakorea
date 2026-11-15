@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { SettlementListItemResponseLectureProgressStatus } from './settlementListItemResponseLectureProgressStatus';
+import type { SettlementListItemResponsePayeeType } from './settlementListItemResponsePayeeType';
 import type { SettlementListItemResponsePaymentStatementPreConsentStatus } from './settlementListItemResponsePaymentStatementPreConsentStatus';
 import type { SettlementListItemResponseRowType } from './settlementListItemResponseRowType';
 import type { SettlementListItemResponseScheduleKind } from './settlementListItemResponseScheduleKind';
@@ -54,7 +55,7 @@ export interface SettlementListItemResponse {
   availableActions?: string[];
   /** Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null. */
   paymentStatementPreConsentStatus?: SettlementListItemResponsePaymentStatementPreConsentStatus;
-  /** 프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null. */
+  /** 프로그램 참여 강사 정산 현황(programId+instructorMemberId)과 지급조서 확인 목록의 확정 전 신청서 행에서 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, INDIVIDUAL_SETTLEMENT_APPLICATION=승인 전 개인 참여자·봉사자 영수증 정산 신청 행(지급조서 확인 목록만), NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 지급조서 확인 목록의 정산 행과 회원 상세 정산 탭에서는 null. */
   rowType?: SettlementListItemResponseRowType;
   /** 프로그램 참여 강사 정산 현황에서만 채우는 강의 진행 여부. SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 회차. 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null. */
   lectureProgressStatus?: SettlementListItemResponseLectureProgressStatus;
@@ -66,4 +67,14 @@ export interface SettlementListItemResponse {
   scheduleName?: string | null;
   /** 프로그램 참여 강사 정산 현황에서만 채우는 일정 종류(program_schedule.schedule_kind). 값이 비어 있는 일정과 일정이 없는 행, 다른 정산 목록에서는 null. */
   scheduleKind?: SettlementListItemResponseScheduleKind;
+  /** 정산 대상자 구분. INSTRUCTOR=강사(Gemini 실적 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 계좌 지급 목록의 payeeType과 같은 규칙이다. */
+  payeeType?: SettlementListItemResponsePayeeType;
+  /** 영수증 정산 신청 ID(individual_settlement_application.id). rowType=INDIVIDUAL_SETTLEMENT_APPLICATION 행만 값이 있다. 상세·승인·반려는 /api/admin/individual-settlement-applications/{id} 계열을 쓴다. 이 행은 settlementId·statementId·settlementApplicationId·instructorAssignmentId가 null이고 instructorMemberId·instructorName에는 신청 회원 ID·이름이 들어간다. */
+  individualSettlementApplicationId?: number | null;
+  /** 영수증 정산 신청 행의 정산 계좌 은행명. 신청 당시 사전 동의서 계좌 스냅샷(지급조서 사전 동의서가 있으면 그 계좌, 없으면 영수증 사전 동의서 계좌)이며, 신청 뒤 계좌를 바꿔도 그대로다. 강사 행과 스냅샷에 계좌가 없는 신청은 null. */
+  payeeBankName?: string | null;
+  /** 영수증 정산 신청 행의 정산 계좌번호(마스킹). 강사 정산 상세의 accountNumber와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null. */
+  payeeAccountNumberMasked?: string | null;
+  /** 영수증 정산 신청 행의 예금주(마스킹). 강사 정산 상세의 accountHolder와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null. */
+  payeeAccountHolder?: string | null;
 }

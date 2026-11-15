@@ -590,3 +590,11 @@
   > td:last-child {
   padding: 0 12px;
 }
+
+/*
+ * 산출 내역 상세(data-table) — 여러 행을 합친 칸이 표 맨 아래까지 내려오면 아래 선을 지운다.
+ * 공통 cms-data-table은 마지막 tr 아래 선만 지워, 블록 첫 tr의 합친 칸 아래 선이 합계 위 선과 겹쳐 두 줄로 보였다.
+ */
+.cms-data-table .ant-table-tbody > tr > td.payment-order-calc-breakdown__span-cell--reaches-bottom {
+  border-bottom: none !important;
+}

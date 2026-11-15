@@ -238,6 +238,38 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
     )
     expect(keys).not.toContain('recruit.individual.interviewRequired')
     expect(keys).toContain('recruit.individual.interviewMethod')
+    // 면접 진행 가능 일정 — 봉사자와 같은 필수(가능 시간·시간대)
+    expect(keys).toContain('recruit.individual.interview.interviewTimeRange')
+    expect(keys).toContain('recruit.individual.interview.selectedSlotKeys')
+  })
+
+  it('개인 모집 — 면접 있음이고 면접 진행 가능 일정을 채우면 일정 키로 막지 않는다', () => {
+    replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, {
+      ...filledIndividual(),
+      'recruit.individual.interviewRequired': 'yes',
+      'recruit.individual.interview.interviewTimeRange': [
+        '2026-11-16T00:00:00.000Z',
+        '2026-11-16T03:00:00.000Z',
+      ],
+      'recruit.individual.interview.timeUnit': '30',
+      'recruit.individual.interview.selectedSlotKeys': ['1763251200000-1763253000000'],
+    })
+    const keys = listIncompleteGeneralProgramRecruitmentRequiredFields(
+      ctx({
+        participant: { individual: true, organization: false, teacherInstructor: false, volunteer: false },
+      })
+    )
+    expect(keys.filter(key => key.startsWith('recruit.individual.interview.'))).toEqual([])
+  })
+
+  it('개인 모집 — 면접 없음이면 면접 진행 가능 일정을 검사하지 않는다', () => {
+    replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, filledIndividual())
+    const keys = listIncompleteGeneralProgramRecruitmentRequiredFields(
+      ctx({
+        participant: { individual: true, organization: false, teacherInstructor: false, volunteer: false },
+      })
+    )
+    expect(keys.filter(key => key.startsWith('recruit.individual.interview.'))).toEqual([])
   })
 
   it('봉사자 모집 — 면접 유무 라디오 미조작(미선택)이면 일정을 넣어도 interviewRequired 로 막는다', () => {

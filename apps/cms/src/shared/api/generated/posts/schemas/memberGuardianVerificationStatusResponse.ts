@@ -12,4 +12,6 @@ export interface MemberGuardianVerificationStatusResponse {
   failureCode?: string;
   verificationToken?: string;
   tokenExpiresAt?: string;
+  guardianName?: string;
+  guardianPhoneMasked?: string;
 }

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { LineDirection } from './lineDirection';
+import type { SettlementFrontendCalculationDetailResponse } from './settlementFrontendCalculationDetailResponse';
 
 export interface Line {
   institutionName?: string;
@@ -17,4 +18,6 @@ export interface Line {
   description?: string | null;
   /** 공제 행은 음수 */
   amount?: number;
+  /** CMS 산정 기준 상세 근거. 정산 상세 items[].calculationDetail과 같은 스키마. 이 revision 제출 스냅샷 값만 담고 다시 계산하지 않는다. 근거를 만들 수 없는 행은 null. */
+  calculationDetail?: SettlementFrontendCalculationDetailResponse | null;
 }

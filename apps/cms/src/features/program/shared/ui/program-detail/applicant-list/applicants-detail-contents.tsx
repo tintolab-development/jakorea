@@ -156,7 +156,7 @@ function parseDetailTabFromSearch(
   return 'info'
 }
 
-type ApplicantHeaderActionItem = {
+export type ApplicantHeaderActionItem = {
   key: string
   variant: CmsButtonVariant
   label: string
@@ -213,6 +213,16 @@ function ApplicantHeaderActionsExtra({
       )}
     </Space>
   )
+}
+
+/** 추가 버튼을 개인정보 상세보기 바로 앞에 넣는다. 개인정보 버튼이 없으면 맨 뒤에 붙인다. */
+function insertBeforePrivacyHeaderItem(
+  items: ApplicantHeaderActionItem[],
+  extra: ApplicantHeaderActionItem[]
+): ApplicantHeaderActionItem[] {
+  const privacyIndex = items.findIndex(item => item.key === 'privacy')
+  if (privacyIndex < 0) return [...items, ...extra]
+  return [...items.slice(0, privacyIndex), ...extra, ...items.slice(privacyIndex)]
 }
 
 function headerBtnPrivacy(onRevealPersonalInfo: () => void): ApplicantHeaderActionItem {
@@ -723,6 +733,16 @@ interface ApplicantsDetailContentsProps {
   onResendNotification?: () => void
   /** Gemini 승인 연수 강사 상세 시안처럼 대기 상태의 반려 CTA를 숨긴다. */
   hidePendingRejectAction?: boolean
+  /**
+   * 개인 신청 상세 헤더 추가 버튼 — 개인정보 상세보기 앞에 붙인다.
+   * 일반 개인 참여자 2차 면접 「면접 평가」 전용. 미지정이면 기존 헤더 그대로.
+   */
+  individualExtraHeaderActions?: ApplicantHeaderActionItem[]
+  /**
+   * 개인 신청 상세 헤더 맨 앞 버튼 — 봉사자 심사 상세처럼 취소·활동 포기(delete)를 먼저 둔다.
+   * 일반 개인 참여자 서류 합격·2차 면접 전용. 미지정이면 기존 헤더 그대로.
+   */
+  individualLeadingHeaderActions?: ApplicantHeaderActionItem[]
   /** 개인 면접 심사 탭 — 상세 섹션 분기 */
   individualScreeningStage?: IndividualApplicantScreeningStage
 }
@@ -757,6 +777,8 @@ export function ApplicantsDetailContents({
   onResendNotification,
   hidePendingRejectAction = false,
   individualScreeningStage = 'main',
+  individualExtraHeaderActions,
+  individualLeadingHeaderActions,
 }: ApplicantsDetailContentsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [openManagerDropdown, setOpenManagerDropdown] = useState<{
@@ -1670,9 +1692,20 @@ export function ApplicantsDetailContents({
       isIndividual &&
       showIndividualPrivacyReveal === false &&
       isIndividualInterviewDocumentDecisionStage(program, individualScreeningStage)
-    const visibleItems = hideIndividualPrivacy
+    const baseItems = hideIndividualPrivacy
       ? items.filter(item => item.key !== 'privacy')
       : items
+    const withExtraItems =
+      isIndividual && individualExtraHeaderActions?.length
+        ? insertBeforePrivacyHeaderItem(baseItems, individualExtraHeaderActions)
+        : baseItems
+    const visibleItems =
+      // 정보 수정 중(취소·저장 버튼)에는 붙이지 않는다
+      isIndividual &&
+      individualLeadingHeaderActions?.length &&
+      !withExtraItems.some(item => item.key === 'save-edit')
+        ? [...individualLeadingHeaderActions, ...withExtraItems]
+        : withExtraItems
     return (
       <ApplicantHeaderActionsExtra
         items={visibleItems}
@@ -1733,6 +1766,8 @@ export function ApplicantsDetailContents({
     handleIndividualAdminCommentEditEnter,
     handleInstructorAdminCommentEditEnter,
     isTrainedTeachers,
+    individualExtraHeaderActions,
+    individualLeadingHeaderActions,
   ])
 
   const tabBarExtraContent = headerExtraContent

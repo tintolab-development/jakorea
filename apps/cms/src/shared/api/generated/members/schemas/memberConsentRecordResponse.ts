@@ -5,33 +5,27 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { FilledDocumentUnavailableReason } from './filledDocumentUnavailableReason';
-import type { MemberConsentRecordResponseConsentStatus } from './memberConsentRecordResponseConsentStatus';
+import type { MemberConsentRecordResponseFilledDocumentUnavailableReason } from './memberConsentRecordResponseFilledDocumentUnavailableReason';
 
 export interface MemberConsentRecordResponse {
   consentRecordId?: number;
-  formResponseId?: number | null;
+  formResponseId?: number;
   memberId?: number;
   consentType?: string;
   consentValue?: boolean;
-  consentedAt?: string | null;
-  collectedByAdminId?: number | null;
-  evidenceFileObjectId?: number | null;
-  evidenceAccessPolicy?: string | null;
-  filledDocumentId?: number | null;
-  /** Null in roster responses; use birthYear. */
-  version?: string | null;
-  /** Year-only birth date display for admin roster responses. */
-  birthYear?: number | null;
-  templateCode?: string | null;
-  /** PORTRAIT_RIGHTS 전용 상태 */
-  consentStatus?: MemberConsentRecordResponseConsentStatus;
-  /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 */
-  programEligible?: boolean | null;
+  consentedAt?: string;
+  collectedByAdminId?: number;
+  evidenceFileObjectId?: number;
+  evidenceAccessPolicy?: string;
+  filledDocumentId?: number;
+  version?: string;
+  templateCode?: string;
+  consentStatus?: string;
+  programEligible?: boolean;
   /** PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다. */
   allItemsAgreed?: boolean | null;
   filledDocumentAvailable?: boolean;
-  filledDocumentRevealEndpoint?: string | null;
-  /** filledDocumentAvailable=false일 때만 값이 있다. 이 기록의 작성본을 열 수 없는 이유. filledDocumentAvailable 판정 자체는 바뀌지 않는다. */
-  filledDocumentUnavailableReason?: FilledDocumentUnavailableReason | null;
+  filledDocumentRevealEndpoint?: string;
+  /** filledDocumentAvailable=false일 때만 값이 있다. 이 기록의 작성본을 열 수 없는 이유(우선순위는 FilledDocumentUnavailableReason 참고). filledDocumentAvailable 판정 자체는 바뀌지 않는다. */
+  filledDocumentUnavailableReason?: MemberConsentRecordResponseFilledDocumentUnavailableReason;
 }

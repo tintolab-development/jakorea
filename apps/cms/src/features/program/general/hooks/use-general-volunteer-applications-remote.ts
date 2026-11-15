@@ -17,9 +17,12 @@ import {
   cancelGeneralVolunteerApplicationApproval,
   cancelGeneralVolunteerApplicationRejection,
   cancelGeneralIndividualApplicationRejection,
+  cancelGeneralIndividualDocumentApproval,
+  cancelGeneralInterviewAssignment,
 } from '@/features/program/general/api/admin-applications-service'
 import {
   generalApplicationsQueryKeys,
+  generalInterviewSlotsQueryKeys,
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
@@ -143,6 +146,10 @@ export function useGeneralVolunteerApplicationsRemote({
         }),
         queryClient.invalidateQueries({
           queryKey: generalApplicationsQueryKeys.individualDetails(),
+        }),
+        // 개인 면접 배정·배정 취소·활동 포기는 PARTICIPANT 슬롯 배정 인원을 바꾼다(BE가 정원 복구)
+        queryClient.invalidateQueries({
+          queryKey: generalInterviewSlotsQueryKeys.listByAudience(programId, 'PARTICIPANT'),
         }),
       ])
       return
@@ -382,12 +389,20 @@ export function useGeneralVolunteerApplicationsRemote({
       reason: string,
       notification?: InstructorApplicationNotificationRequest
     ) => {
-      if (!remoteEnabled || subjectKind !== 'volunteer') return false
+      if (!remoteEnabled) return false
       try {
-        await cancelGeneralVolunteerApplicationApproval(applicationId, reason, notification)
-        await queryClient.invalidateQueries({
-          queryKey: generalApplicationsQueryKeys.volunteerDetail(applicationId),
-        })
+        if (subjectKind === 'participant') {
+          // 개인 서류 합격 취소는 전용 경로 — `cancel-approval`(최종 승인 취소)로 보내지 않는다
+          await cancelGeneralIndividualDocumentApproval(applicationId, reason, notification)
+          await queryClient.invalidateQueries({
+            queryKey: generalApplicationsQueryKeys.individualDetail(applicationId),
+          })
+        } else {
+          await cancelGeneralVolunteerApplicationApproval(applicationId, reason, notification)
+          await queryClient.invalidateQueries({
+            queryKey: generalApplicationsQueryKeys.volunteerDetail(applicationId),
+          })
+        }
         await invalidateApplications()
         return true
       } catch (error) {
@@ -396,6 +411,26 @@ export function useGeneralVolunteerApplicationsRemote({
       }
     },
     [invalidateApplications, notifyRemoteFailure, queryClient, remoteEnabled, subjectKind]
+  )
+
+  /**
+   * 면접 배정 취소 — 봉사자·개인 공통 `/interview-assignments/{assignmentId}/cancel`.
+   * assignmentId는 목록 행 `interviewAssignmentId`. 평가 등록 후 409(VOLUNTEER_INTERVIEW_EVALUATION_EXISTS)는 서버 문구로 안내한다.
+   */
+  const applyRemoteInterviewAssignmentCancel = useCallback(
+    async (assignmentId: number | string | undefined, reason: string) => {
+      if (!remoteEnabled) return false
+      if (assignmentId == null || assignmentId === '') return false
+      try {
+        await cancelGeneralInterviewAssignment(assignmentId, reason)
+        await invalidateApplications()
+        return true
+      } catch (error) {
+        notifyRemoteFailure(error)
+        return false
+      }
+    },
+    [invalidateApplications, notifyRemoteFailure, remoteEnabled]
   )
 
   const applyRemoteDocumentCancelRejection = useCallback(
@@ -481,6 +516,7 @@ export function useGeneralVolunteerApplicationsRemote({
     applyRemoteGiveUp,
     applyRemoteDocumentCancelApproval,
     applyRemoteDocumentCancelRejection,
+    applyRemoteInterviewAssignmentCancel,
     invalidateVolunteerApplications: invalidateApplications,
     invalidateApplications,
   }

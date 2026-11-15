@@ -113,6 +113,16 @@ describe('resolveAdminNotificationNavigation', () => {
         },
       })
     ).toEqual({ kind: 'path', path: '/settlement-management/account-payments' })
+    // 영수증 확인 완료 — 계좌 지급 연결(linkType ACCOUNT_PAYMENT)이어도 같은 지급 대상 목록
+    expect(
+      resolveAdminNotificationNavigation({
+        target: {
+          eventType: 'ADMIN_EXPENSE_RECEIPT_CONFIRMED',
+          linkType: 'ACCOUNT_PAYMENT',
+          linkId: '77',
+        },
+      })
+    ).toEqual({ kind: 'path', path: '/settlement-management/account-payments' })
     expect(
       resolveAdminNotificationNavigation({
         target: { eventType: 'ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED', linkType: 'SETTLEMENT' },

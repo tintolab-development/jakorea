@@ -12,7 +12,7 @@ export type DashboardProgramSchedulesParams = {
  */
 programIds?: string;
 /**
- * 프로그램 유형 필터. general | company_school | ujat | gemini 또는 canonical program_type
+ * 프로그램 유형 필터. general | company_school | ujat | gemini | trained_teacher 또는 canonical program_type(TRAINED_TEACHER 등). trained_teacher는 program-schedule-trained-teacher-widget의 저장 프로그램 필터를 쓴다
  */
 programType?: string;
 /**

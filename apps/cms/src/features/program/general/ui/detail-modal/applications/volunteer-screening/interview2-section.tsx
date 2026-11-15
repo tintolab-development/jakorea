@@ -27,6 +27,10 @@ import { GeneralVolunteerInterview2FailModal } from './general-volunteer-intervi
 import { GeneralVolunteerInterview2PassTypeModal } from './interview2-pass-type-modal'
 import { GeneralVolunteerOrganizationAssignOnPassModal } from './organization-assign-on-pass-modal'
 import { GeneralVolunteerEducationAssignModal } from './education-assign-modal'
+import {
+  IndividualApproveScopeModal,
+  IndividualBulkApproveScopeModal,
+} from '../individual-approve-scope-modal'
 import { GeneralVolunteerInterview2ResultCompleteModal } from './interview2-result-complete-modal'
 import { GeneralVolunteerInterview2CancelPassModal } from './general-volunteer-interview2-cancel-pass-modal'
 import { GeneralVolunteerInterview2CancelFailModal } from './general-volunteer-interview2-cancel-fail-modal'
@@ -133,6 +137,8 @@ export function GeneralVolunteerInterview2Section({
     fetchNextPage,
     educationAssign,
     educationAssignOnPass,
+    participantScopeApproval,
+    participantScopeApprovalOnPass,
   } = useGeneralVolunteerInterview2({ programId, program, subjectKind })
   const evaluationAccess = useGeneralInterviewEvaluationAccess(programId)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
@@ -210,6 +216,21 @@ export function GeneralVolunteerInterview2Section({
     [saveInterviewEvaluation, selectedApplicant]
   )
 
+  /** 개인 참여자 상세 — 봉사자 상세와 같은 면접 평가 저장(배정 ID 기준 evaluations API) */
+  const participantInterviewEvaluation = useMemo(
+    () => ({
+      canFillBothSlots: evaluationAccess.canFillBothSlots,
+      currentAdminId: evaluationAccess.currentAdminId,
+      onSave: handleDetailSaveInterviewEvaluation,
+    }),
+    [
+      evaluationAccess.canFillBothSlots,
+      evaluationAccess.currentAdminId,
+      handleDetailSaveInterviewEvaluation,
+    ]
+  )
+
+  /** 시안 18-1·18-2 — 봉사자·개인 참여자 공통(교육 일정·귀책 사유 → 활동 포기 완료) */
   const withdrawConfirmModal = (
     <>
       <GeneralVolunteerScreeningActivityWithdrawModal
@@ -288,6 +309,36 @@ export function GeneralVolunteerInterview2Section({
           }}
         />
       ) : null}
+      {participantScopeApprovalOnPass ? (
+        // 개인 참여자 면접 합격 — 상세 「참여 승인」과 같은 승인·교육 일정 확정(approve-with-education-scope)
+        <>
+          <IndividualApproveScopeModal
+            open={participantScopeApproval.target != null}
+            participantName={participantScopeApproval.target?.participantName ?? ''}
+            programId={programId}
+            program={program}
+            preferredEducationSchedules={
+              participantScopeApproval.target?.preferredEducationSchedules
+            }
+            confirmLoading={participantScopeApproval.submitting}
+            // 알림은 16-1 면접 합격 안내에서 이미 골랐다 — 일정 선택만
+            showNotifyTiming={false}
+            onCancel={participantScopeApproval.cancel}
+            onConfirm={participantScopeApproval.confirm}
+          />
+          <IndividualBulkApproveScopeModal
+            open={participantScopeApproval.bulkTargets != null}
+            applicants={participantScopeApproval.bulkTargets ?? []}
+            programId={programId}
+            program={program}
+            confirmLoading={participantScopeApproval.submitting}
+            // 알림은 12-1 면접 일괄 합격 안내에서 이미 골랐다 — 일정 선택·승인 사유만
+            showNotifyTiming={false}
+            onCancel={participantScopeApproval.cancelBulk}
+            onConfirm={participantScopeApproval.confirmBulk}
+          />
+        </>
+      ) : null}
       <GeneralVolunteerInterview2FailModal
         open={failModalVolunteer != null}
         copyPreset="general-volunteer"
@@ -343,6 +394,10 @@ export function GeneralVolunteerInterview2Section({
               selectedApplicant.participantApplicant ??
               mapVolunteerScreeningRowToParticipant(selectedApplicant)
             }
+            // 봉사자 상세와 같은 면접 평가 저장(배정 ID 기준 evaluations API)
+            interviewEvaluation={participantInterviewEvaluation}
+            // 봉사자 2차 면접 상세와 같은 활동 포기 — 노출은 availableActions GIVE_UP 기준
+            onWithdrawActivity={handleDetailWithdrawActivity}
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={meta => {
               if (!meta) {

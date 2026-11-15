@@ -72,15 +72,14 @@
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
 }
 
-.status-dropdown-cell__status-updating {
+/* 변경 요청 중 스피너 — 태그 폭·행 높이에 영향 없도록 태그 오른쪽에 띄운다 */
+.status-dropdown-cell__status-updating.ant-spin {
   position: absolute;
   top: 50%;
-  inset-inline-end: -14px;
+  inset-inline-end: -20px;
   transform: translateY(-50%);
-  color: var(--color-text-tertiary, #8c8c8c);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 150%;
+  display: inline-flex;
+  line-height: 0;
   pointer-events: none;
 }
 

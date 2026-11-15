@@ -31,6 +31,8 @@ export interface PaymentOrderCalculationTableRow {
   key: string
   blockRowSpan: number
   isFirstInBlock: boolean
+  /** 마지막 일정 블록의 행 — 합친 칸(기관명·교육 진행 일자)이 표 맨 아래까지 내려온다 */
+  isInLastBlock?: boolean
   institutionName: string
   lectureDateDisplay: string
   lectureSessionDisplay: string
@@ -54,6 +56,7 @@ export function buildPaymentOrderCalculationTableRows(
         key: `${bi}-${line.id}`,
         blockRowSpan: span,
         isFirstInBlock: li === 0,
+        isInLastBlock: bi === blocks.length - 1,
         institutionName: block.institutionName,
         lectureDateDisplay: block.lectureDateDisplay,
         lectureSessionDisplay: block.lectureSessionDisplay,
@@ -68,6 +71,21 @@ export function buildPaymentOrderCalculationTableRows(
     })
   })
   return out
+}
+
+/**
+ * 공통 `cms-data-table`은 본문 마지막 `tr`의 아래 선을 지우고 합계 행 위 선 하나만 남긴다.
+ * 여러 행을 합친 칸(기관명·교육 진행 일자)은 블록 첫 `tr`에 있어 그 규칙에 안 걸려 아래 선이 남고,
+ * 합계 위 선과 겹쳐 그 칸 아래만 두 줄·1px 어긋나 보인다 → 표 맨 아래까지 내려오는 합친 칸만 아래 선을 지운다.
+ */
+const SPANNED_CELL_REACHING_BOTTOM_CLASS = 'payment-order-calc-breakdown__span-cell--reaches-bottom'
+
+function spannedCellReachingTableBottomClass(
+  record: PaymentOrderCalculationTableRow
+): string | undefined {
+  return record.isFirstInBlock && record.isInLastBlock && record.blockRowSpan > 1
+    ? SPANNED_CELL_REACHING_BOTTOM_CLASS
+    : undefined
 }
 
 /** 지급 `+`, 공제 `-`, 0원은 부호 없이 `0원` */
@@ -147,6 +165,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       align: 'center',
       onCell: (record: PaymentOrderCalculationTableRow) => ({
         rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
+        className: spannedCellReachingTableBottomClass(record),
       }),
     },
     {
@@ -156,6 +175,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       align: 'center',
       onCell: (record: PaymentOrderCalculationTableRow) => ({
         rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
+        className: spannedCellReachingTableBottomClass(record),
       }),
       render: (_: unknown, row: PaymentOrderCalculationTableRow) => (
         <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--center">

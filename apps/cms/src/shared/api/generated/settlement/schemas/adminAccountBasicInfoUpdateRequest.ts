@@ -20,12 +20,12 @@ export interface AdminAccountBasicInfoUpdateRequest {
      * 초기 비밀번호가 이전 이메일 그대로면 새 이메일로 함께 바뀝니다.
      */
   email?: string | null;
-  /** 관리자 연락처 */
-  phone?: string;
-  /** 성별 코드. MALE, FEMALE, OTHER 권장. M/F·남/여 별칭도 허용하며 서버가 MALE/FEMALE/OTHER로 정규화해 저장한다. 그 외 값은 400 GENDER_INVALID. */
-  gender?: string;
-  /** 생년월일. yyyy-MM-dd 형식 */
-  birthDate?: string;
+  /** 관리자 연락처. 생략·null·빈 문자열이면 기존 값을 유지합니다. 공백만 있거나 형식이 틀리면 400 VALIDATION_FAILED(field=phone). */
+  phone?: string | null;
+  /** 성별 코드. MALE, FEMALE, OTHER 권장. M/F·남/여 별칭도 허용하며 서버가 MALE/FEMALE/OTHER로 정규화해 저장한다. 그 외 값은 400 GENDER_INVALID. 생략·null·공백이면 기존 값을 유지합니다. */
+  gender?: string | null;
+  /** 생년월일. yyyy-MM-dd 형식이며 잘못된 날짜는 400 INVALID_BIRTH_DATE. 생략·null·공백이면 기존 값을 유지합니다. */
+  birthDate?: string | null;
   /** 수정 사유 */
   reason?: string;
 }

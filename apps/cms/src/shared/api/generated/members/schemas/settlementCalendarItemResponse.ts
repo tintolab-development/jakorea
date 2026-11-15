@@ -21,4 +21,8 @@ export interface SettlementCalendarItemResponse {
   slotEndTime?: string;
   calendarWeekGridLabel?: string;
   aggregateKey?: string;
+  rowType?: string;
+  payeeType?: string;
+  settlementApplicationId?: number;
+  individualSettlementApplicationId?: number;
 }

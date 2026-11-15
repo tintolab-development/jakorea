@@ -5,6 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InterviewSlotCreateRequestAudience } from './interviewSlotCreateRequestAudience';
 
 /**
  * 면접 슬롯 생성 요청
@@ -20,4 +21,6 @@ export interface InterviewSlotCreateRequest {
   maxAssignCount?: number;
   /** 예외 슬롯 여부. 일반 배정 규칙을 우회하는 운영 슬롯일 때 true */
   exceptionSlot?: boolean;
+  /** 슬롯 대상. 생략하면 VOLUNTEER. PARTICIPANT는 개인 참여자 면접 슬롯. */
+  audience?: InterviewSlotCreateRequestAudience;
 }

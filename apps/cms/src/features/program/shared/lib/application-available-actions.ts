@@ -3,6 +3,10 @@ export const APPLICATION_ACTION_CANCEL_APPROVAL = 'CANCEL_APPROVAL'
 export const APPLICATION_ACTION_CANCEL_REJECTION = 'CANCEL_REJECTION'
 export const APPLICATION_ACTION_CANCEL_FINAL_PASS = 'CANCEL_FINAL_PASS'
 export const APPLICATION_ACTION_CANCEL_FINAL_FAIL = 'CANCEL_FINAL_FAIL'
+/** 개인 1차 서류 합격 취소(`cancel-document-approval`) — 서버가 개인·서류 합격·최종 결과 없음·면접 배정 없음일 때만 준다 */
+export const APPLICATION_ACTION_CANCEL_DOCUMENT_APPROVAL = 'CANCEL_DOCUMENT_APPROVAL'
+/** 활동 포기(`…/give-up`) */
+export const APPLICATION_ACTION_GIVE_UP = 'GIVE_UP'
 
 /**
  * 프로그램 신청 상세/목록 — BE `availableActions` 기반 CTA 게이트.

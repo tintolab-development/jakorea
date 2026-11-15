@@ -1,7 +1,8 @@
 /*
- * 알림 안내 팝업 — 시안 CMS 「시스템 안내 팝업」 공통_ 3종
- * 제목 ↔ 본문 16 · 본문 ↔ 버튼 30 · 버튼 120 폭 · 버튼 간격 8 · 우측 정렬
- * 동적 문구(#{동의 항목} 등)가 길면 단어 단위로 줄바꿈한다.
+ * 알림 안내 팝업 — 시안 사용자 플랫폼 「시스템 안내 팝업」
+ * 제목 ↔ [프로그램명] 8 · [프로그램명] ↔ 본문 8 (프로그램명 없으면 제목 ↔ 본문 16)
+ * 본문 ↔ 사유 상자 28 · 사유 상자 안쪽 20 · 라벨 ↔ 사유 8 · 버튼 영역 위 28 · 버튼 160 폭 · 간격 8 · 우측 정렬
+ * 서버 문구가 길면 단어 단위로 줄바꿈한다.
  */
 
 .content {
@@ -18,8 +19,36 @@
   overflow-wrap: break-word;
 }
 
+.programName {
+  margin: var(--spacing-8) 0 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 .message {
   margin: var(--spacing-16) 0 0;
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.programName + .message {
+  margin-top: var(--spacing-8);
+}
+
+.reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-28);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50);
+}
+
+.reasonLabel,
+.reasonText {
+  margin: 0;
   white-space: pre-line;
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -34,5 +63,5 @@
 }
 
 .actions > * {
-  min-width: 120px;
+  min-width: 160px;
 }

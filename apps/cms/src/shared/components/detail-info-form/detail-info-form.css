@@ -94,8 +94,13 @@
   right: 0;
   bottom: 0;
   left: 0;
-  height: 1px;
-  background: var(--Border-default, var(--table-line, #e0e0e0));
+  height: 0;
+  /*
+   * 배경색 1px 상자가 아니라 border로 그린다 — 표가 소수점 위치(제목 줄 높이 25.2px 등)에 놓이면
+   * Safari·확대 배율에서 배경 상자는 기기 픽셀 2칸에 걸쳐 바깥선보다 두껍게 보인다(QA 2026-11-15 이중선).
+   * border는 바깥선(`::before`)과 같은 방식으로 픽셀에 맞춰져 두께가 같다.
+   */
+  border-bottom: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
   pointer-events: none;
 }
 
