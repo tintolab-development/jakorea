@@ -15,6 +15,10 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  isPasswordRecentlyUsedCode,
+  PASSWORD_RECENTLY_USED_ALERT,
+} from '@/shared/lib/password-recently-used-alert'
 import './profile-password-change-modal.css'
 
 export interface ProfilePasswordChangeModalProps {
@@ -68,6 +72,7 @@ export function resolvePasswordChangeFailureAlert(error: unknown): {
 } {
   if (error instanceof AdminMfaApiError) {
     const code = error.code.trim().toUpperCase()
+    if (isPasswordRecentlyUsedCode(code)) return { ...PASSWORD_RECENTLY_USED_ALERT }
     if (code === 'VALIDATION_FAILED') {
       // 서버 검증 문구를 그대로 쓴다 (QA-0478). 비어 있을 때만 FE 조건 문구.
       const serverMessage = error.message.trim()
