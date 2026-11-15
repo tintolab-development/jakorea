@@ -552,9 +552,12 @@ export function InstructorInvoiceModal({
                         </td>
                         <td>
                           <div className="instructor-invoice-modal__footer-actions">
+                            {/* 시안 8248:147086: Button / h32 · 셀 폭 채움 (정산 관리 산출 표와 동일) */}
                             <CmsButton
+                              type="button"
                               variant="primary"
-                              size="large"
+                              size="h32"
+                              style={{ width: '100%' }}
                               icon={<ButtonDownloadIcon />}
                               loading={downloadLoading}
                               onClick={() => void handleDownloadPaymentStatement()}
