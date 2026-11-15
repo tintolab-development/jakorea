@@ -90,74 +90,18 @@ export function alimtalkSendMemberTypeLabel(type: AlimtalkSendMemberType | undef
 
 /**
  * 유형 컬럼 셀 SSOT = 서버 typeLabel.
- * memberType / participantType 으로 재번역·덮어쓰기 금지(서버 영문 코드·기획과 다른 옛 한글만 기획 라벨로 바꾼다).
+ * memberType / participantType 으로 재번역·덮어쓰기 금지.
  */
-export function alimtalkSendRecipientTypeLabel(
-  recipient: AlimtalkSendRecipient,
-  mode: AlimtalkSendRecipientTypeMode
-): string {
-  return resolveNotificationRecipientTypeLabel(recipient.typeLabel, mode)
+export function alimtalkSendRecipientTypeLabel(recipient: AlimtalkSendRecipient): string {
+  return resolveNotificationRecipientTypeLabel(recipient.typeLabel)
 }
 
 /**
- * 프로그램 참여 행 participant_type 코드 → 참여 유형.
- * 기획(시안 9411:46487 「대상 프로그램 선택 시」) 참여 유형은 강사·참여자·봉사자 3종뿐이므로
- * 개인 신청(INDIVIDUAL)·기관 신청(ORGANIZATION) 참여자도 「참여자」다.
+ * 수신자 유형 셀 — 서버 typeLabel을 그대로 쓴다(서버가 기획 라벨로 내려 준다).
+ * 서버가 모르는 코드면 typeLabel=null → 빈 값('-' 표시).
  */
-const PARTICIPATION_TYPE_BY_CODE: Record<string, Exclude<AlimtalkSendParticipationType, ''>> = {
-  ...Object.fromEntries(
-    Object.entries(ALIMTALK_SEND_PARTICIPATION_TYPE_API).map(([type, code]) => [code, type])
-  ),
-  INDIVIDUAL: 'participant',
-  ORGANIZATION: 'participant',
-} as Record<string, Exclude<AlimtalkSendParticipationType, ''>>
-
-/** 회원 유형 코드 → 회원 유형 (회원 목록 `INDIVIDUAL`=개인·`SCHOOL`=학교(교사)와 같은 코드 포함) */
-const MEMBER_TYPE_BY_CODE: Record<string, Exclude<AlimtalkSendMemberType, ''>> = {
-  ...Object.fromEntries(
-    Object.entries(ALIMTALK_SEND_MEMBER_TYPE_API).map(([type, code]) => [code, type])
-  ),
-  INDIVIDUAL: 'general',
-  SCHOOL: 'school_teacher',
-  TEACHER_INSTRUCTOR: 'teacher_instructor',
-} as Record<string, Exclude<AlimtalkSendMemberType, ''>>
-
-const ENUM_CODE_PATTERN = /^[A-Z][A-Z0-9_]*$/
-
-/**
- * 서버(JABACK NotificationRecipientCandidateService.memberTypeLabel)가 내려 주는 회원 유형 한글이
- * 기획 라벨(시안 9411:46487 「대상 프로그램 미선택 시」)과 다른 것만 기획 라벨로 바꾼다.
- * 서버가 기획 라벨로 바뀌면 이 표는 그대로 통과(no-op)된다.
- */
-const LEGACY_SERVER_MEMBER_TYPE_LABEL: Record<string, Exclude<AlimtalkSendMemberType, ''>> = {
-  일반: 'general',
-  교사: 'school_teacher',
-  '교사·강사': 'teacher_instructor',
-  '교사 겸 강사': 'teacher_instructor',
-}
-
-/**
- * 수신자 유형 셀. 서버 typeLabel(한글)은 그대로 쓴다.
- * 서버가 라벨 대신 영문 코드(예: INDIVIDUAL)를 내려 주면 칸 종류(참여 유형 / 회원 유형)에 맞는 기획 라벨로 바꾸고,
- * 모르는 코드는 화면에 영문을 노출하지 않도록 빈 값('-' 표시)으로 둔다.
- */
-export function resolveNotificationRecipientTypeLabel(
-  typeLabel: string | undefined,
-  mode: AlimtalkSendRecipientTypeMode
-): string {
-  const label = typeLabel?.trim() || ''
-  if (!label) return ''
-  const code = label.toUpperCase().replace(/-/g, '_')
-  if (!ENUM_CODE_PATTERN.test(code)) {
-    const legacyMember = mode === 'member' ? LEGACY_SERVER_MEMBER_TYPE_LABEL[label] : undefined
-    return legacyMember ? ALIMTALK_SEND_MEMBER_TYPE_LABEL[legacyMember] : label
-  }
-  if (mode === 'participation') {
-    const participation = PARTICIPATION_TYPE_BY_CODE[code]
-    return participation ? ALIMTALK_SEND_PARTICIPATION_TYPE_LABEL[participation] : ''
-  }
-  const member = MEMBER_TYPE_BY_CODE[code]
-  return member ? ALIMTALK_SEND_MEMBER_TYPE_LABEL[member] : ''
+export function resolveNotificationRecipientTypeLabel(typeLabel: string | null | undefined): string {
+  return typeLabel?.trim() || ''
 }
 
 export function normalizeAlimtalkSendPhone(value: string): string {

@@ -942,7 +942,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     selectedIds={selectedRecipientIds}
                     onSelectedIdsChange={setSelectedRecipientIds}
                     typeColumnTitle={typeColumnTitle}
-                    typeMode={recipientTypeMode}
                     manualKeysByRecipientId={manualKeysByRecipientId}
                     blockedKeysByRecipientId={blockedKeysByRecipientId}
                     onVariableChange={form.updateRecipientVariable}
@@ -1050,7 +1049,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
             ? MAIL_SEND_MEMBER_TYPE_OPTIONS
             : MAIL_SEND_PARTICIPATION_TYPE_OPTIONS
         }
-        getTypeLabel={row => mailSendRecipientTypeLabel(row, recipientTypeMode) || '-'}
+        getTypeLabel={row => mailSendRecipientTypeLabel(row) || '-'}
         contactColumnTitle="이메일"
         getContact={row => row.email}
         filterCandidates={(rows, applied) =>

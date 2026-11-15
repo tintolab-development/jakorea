@@ -920,7 +920,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         selectedIds={selectedRecipientIds}
                         onSelectedIdsChange={setSelectedRecipientIds}
                         typeColumnTitle={typeColumnTitle}
-                        typeMode={recipientTypeMode}
                         manualKeysByRecipientId={manualKeysByRecipientId}
                         blockedKeysByRecipientId={blockedKeysByRecipientId}
                         onVariableChange={(recipientId, key, value) => {
@@ -1052,7 +1051,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             ? ALIMTALK_SEND_MEMBER_TYPE_OPTIONS
             : ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS
         }
-        getTypeLabel={row => alimtalkSendRecipientTypeLabel(row, recipientTypeMode) || '-'}
+        getTypeLabel={row => alimtalkSendRecipientTypeLabel(row) || '-'}
         contactColumnTitle="휴대폰 번호"
         getContact={row => row.phone}
         filterCandidates={(rows, applied) =>

@@ -72,11 +72,8 @@ export function mailSendRecipientTypeColumnTitle(mode: MailSendRecipientTypeMode
 }
 
 /** 서버 typeLabel 표시. 영문 코드만 온 경우는 알림톡과 같이 라벨로 바꾼다. */
-export function mailSendRecipientTypeLabel(
-  recipient: MailSendRecipient,
-  mode: MailSendRecipientTypeMode
-): string {
-  return resolveNotificationRecipientTypeLabel(recipient.typeLabel, mode)
+export function mailSendRecipientTypeLabel(recipient: MailSendRecipient): string {
+  return resolveNotificationRecipientTypeLabel(recipient.typeLabel)
 }
 
 export function toMailSendParticipantTypeApi(type: string): string | undefined {
