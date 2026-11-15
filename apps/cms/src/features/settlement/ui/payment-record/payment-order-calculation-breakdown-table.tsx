@@ -16,7 +16,10 @@ import type {
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
-import type { PaymentOrderCalculationBasisDetail } from './payment-order-calculation-basis-detail'
+import {
+  toLectureSessionCellSegment,
+  type PaymentOrderCalculationBasisDetail,
+} from './payment-order-calculation-basis-detail'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './payment-order-program-calculation-statement-modal.css'
 
@@ -80,11 +83,11 @@ export function formatPaymentOrderCalculationWonPlain(n: number | null | undefin
 }
 
 /**
- * 일정 칸 세션 구간은 `lectureSessionDisplay` 원문 그대로 쓴다.
+ * 일정 칸 세션 구간 = 회차·차시·일정명 조각(`toLectureSessionCellSegment`). 없으면 '' → 날짜만 표시(서버 PDF와 동일).
  * 회차와 차시는 다른 값이므로 차시 → 회차(또는 반대)로 단위를 바꾸지 않는다. `_mode`는 호출 호환용.
  */
 function formatLectureSessionSegment(raw: string, _mode: 'session' | 'round' | undefined): string {
-  return raw
+  return toLectureSessionCellSegment(raw)
 }
 
 export function getPaymentOrderCalculationColumns(options?: {
