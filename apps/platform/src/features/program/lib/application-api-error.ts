@@ -4,6 +4,8 @@
 
 import { isAxiosError } from 'axios'
 import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from './program-apply-messages.ts'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '../../../shared/lib/platform-alert-copy.ts'
+import { resolvePlatformErrorAlert } from '../../../shared/lib/platform-error-alert.ts'
 
 function extractErrorCode(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined
@@ -39,8 +41,8 @@ function isGenericApplicationErrorMessage(message: string): boolean {
   )
 }
 
-export const DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE =
-  '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+/** 서버 안내가 없는 실패 — 시안 「공통 제한 안내 / 처리 실패」(14491-2683) 제목·설명을 한 줄로 */
+export const DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE = `${PLATFORM_ALERT_COPY.requestFailed.title} ${PLATFORM_ALERT_COPY.requestFailed.description}`
 
 export const PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE =
   '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.'
@@ -211,6 +213,20 @@ export function getProgramApplicationApiErrorMessage(
 ): string {
   if (!isAxiosError(error)) return fallback
   return getApiErrorMessageFromBody(error.response?.data, fallback)
+}
+
+/**
+ * 신청·제출 API 오류 팝업 — 시안 「오류 제한 팝업」(14491-2533).
+ * 네트워크 오류·처리 제한(429)은 공통 문구, 그 밖은 「처리 실패」 제목에 서버·거절 코드 안내를 설명으로 쓴다.
+ */
+export function resolveProgramApplicationErrorAlert(error: unknown): PlatformAlertCopy {
+  // 시안 「공통 제한 안내 / 필수 항목 미동의」
+  if (getApplicationApiErrorCode(error) === 'FORM_REQUIRED_CONSENT_NOT_AGREED') {
+    return PLATFORM_ALERT_COPY.requiredNotAgreed
+  }
+  return resolvePlatformErrorAlert(error, {
+    serverMessage: target => getProgramApplicationApiErrorMessage(target, ''),
+  })
 }
 
 export function resolveApplicationBlockedDisplayMessage(

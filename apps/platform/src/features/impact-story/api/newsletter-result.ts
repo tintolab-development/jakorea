@@ -1,3 +1,4 @@
+import { PLATFORM_ALERT_COPY } from '../../../shared/lib/platform-alert-copy.ts'
 import type { NewsletterSubscribeResponse, NewsletterSubscribeStatus } from './newsletter-client'
 
 export const NEWSLETTER_SUBSCRIBE_STATUSES = [
@@ -13,20 +14,8 @@ const COMPLETE_COPY = {
   description: 'JA Korea의 교육 프로그램과\n새로운 소식을 이메일로 전해드릴게요.',
 }
 
-const FAILED_COPY = {
-  title: '뉴스레터 구독에 실패했어요',
-  description: '지금은 구독을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
-}
-
-const SKIPPED_LOCAL_COPY = {
-  title: '뉴스레터 구독에 실패했어요',
-  description: '지금은 구독을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
-}
-
-const UNKNOWN_COPY = {
-  title: '뉴스레터 구독에 실패했어요',
-  description: '지금은 구독을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
-}
+/** 구독이 접수되지 않은 결과(FAILED·SKIPPED_LOCAL·알 수 없음) — 시안 「공통 제한 안내 / 처리 실패」 */
+const FAILED_COPY = PLATFORM_ALERT_COPY.requestFailed
 
 export function normalizeNewsletterSubscribeStatus(
   status?: string,
@@ -81,13 +70,5 @@ export function getNewsletterSubscribeResultCopy(
     return COMPLETE_COPY
   }
 
-  if (status === 'FAILED') {
-    return FAILED_COPY
-  }
-
-  if (status === 'SKIPPED_LOCAL') {
-    return SKIPPED_LOCAL_COPY
-  }
-
-  return UNKNOWN_COPY
+  return FAILED_COPY
 }

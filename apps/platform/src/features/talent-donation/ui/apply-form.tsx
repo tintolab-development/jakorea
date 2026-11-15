@@ -2,13 +2,17 @@ import { type ChangeEvent, type FormEvent, type ReactNode, useRef, useState } fr
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
-import { buildRequiredConsentDisagreeAlertMessage } from '@jakorea/domain/shared/required-consent-alert'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { formatBirthDateInput } from '@/features/auth/sign-up'
-import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import {
   PFAlertModal,
-  PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
   PFButton,
   PFToggle,
   PFDateInput,
@@ -37,6 +41,7 @@ import {
   TALENT_APPLY_LONG_TEXT_MAX_LENGTH,
   TALENT_APPLY_STEP_TITLES,
   TALENT_APPLY_SUBMIT_LABEL,
+  collectTalentApplyMissingLabels,
   trimTalentApplyLongText,
   type TalentApplyFieldKey,
   type TalentApplyFormValues,
@@ -62,7 +67,8 @@ type AlertState = {
   description?: ReactNode
 } | null
 
-function messageFromError(error: unknown): string {
+/** 서버가 보낸 업무 메시지만 — FE 기본 실패 문구는 공통 「처리 실패」 팝업이 맡는다 */
+function serverMessageFromError(error: unknown): string | null {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data
     if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
@@ -70,7 +76,7 @@ function messageFromError(error: unknown): string {
       if (message) return message
     }
   }
-  return '신청 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  return null
 }
 
 function FieldLabel({
@@ -178,6 +184,7 @@ export function TalentDonationApplyForm() {
   const [values, setValues] = useState<TalentApplyFormValues>(EMPTY_TALENT_APPLY_FORM_VALUES)
   const [errors, setErrors] = useState<TalentApplyFieldErrors>({})
   const [alert, setAlert] = useState<AlertState>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
   const [successOpen, setSuccessOpen] = useState(false)
   const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -227,7 +234,8 @@ export function TalentDonationApplyForm() {
     for (const file of selected) {
       const typeError = validateDocumentAttachmentType(file)
       if (typeError) {
-        setAlert({ title: '안내', description: typeError })
+        // 시안 「파일 형식이 맞지 않는 경우」
+        setAlert(typeError)
         return
       }
     }
@@ -261,22 +269,15 @@ export function TalentDonationApplyForm() {
     setErrors(nextErrors)
 
     if (hasTalentApplyFieldErrors(nextErrors)) {
-      if (nextErrors.privacy && Object.keys(nextErrors).length === 1) {
-        setAlert({
-          // 시안 「필수 항목 미동의」 제목 — 본문은 미동의 항목명을 그대로 안내한다
-          title: PLATFORM_ALERT_COPY.requiredNotAgreed.title,
-          description: buildRequiredConsentDisagreeAlertMessage([
-            TALENT_APPLY_PRIVACY_CONSENT_LABEL,
-          ]),
-        })
+      const missingLabels = collectTalentApplyMissingLabels(nextErrors)
+      if (missingLabels.length === 0) {
+        // 시안 「공통 제한 안내 / 필수 항목 미동의」
+        setAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
         return
       }
 
-      // 시안 「공통 제한 안내 / 필수 항목 미입력」
-      setAlert({
-        title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
-        description: <PFRequiredFieldsIncompleteDescription />,
-      })
+      // 시안 「필수 항목 미입력 (항목명 노출)」
+      setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
       return
     }
 
@@ -303,11 +304,9 @@ export function TalentDonationApplyForm() {
       },
       {
         onSuccess: () => setSuccessOpen(true),
+        // 시안 「네트워크 오류 / 처리 제한 / 처리 실패」 — 서버 업무 메시지는 설명에 그대로
         onError: error =>
-          setAlert({
-            title: '안내',
-            description: messageFromError(error),
-          }),
+          setAlert(resolvePlatformErrorAlert(error, { serverMessage: serverMessageFromError })),
       },
     )
   }
@@ -719,6 +718,8 @@ export function TalentDonationApplyForm() {
         description={alert?.description}
         onConfirm={() => setAlert(null)}
       />
+
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
 
       <PFAlertModal
         open={successOpen}

@@ -13,13 +13,25 @@ import {
   sumUploadFileBytes,
   validateUploadBatch,
 } from '@/shared/lib/file-upload-policy'
-import { PFFormFileAttach } from '@/shared/ui'
+import {
+  buildFileTypeInvalidAlertCopy,
+  type PlatformAlertCopy,
+} from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import { PFAlertModal, PFFormFileAttach } from '@/shared/ui'
 import styles from './apply-volunteer-evidence-attach.module.css'
 
 const EVIDENCE_ACCEPT = '.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf'
 const EVIDENCE_FILE_PURPOSE = 'VOLUNTEER_APPLICATION_EVIDENCE'
 const EVIDENCE_NAME_PATTERN = /\.(jpe?g|png|pdf)$/i
-const EVIDENCE_HINT = formatMultiFileUploadHint('JPG, PNG, PDF')
+const EVIDENCE_FORMATS_LABEL = 'JPG, PNG, PDF'
+const EVIDENCE_HINT = formatMultiFileUploadHint(EVIDENCE_FORMATS_LABEL)
+
+function isEvidenceFileTypeAllowed(file: File): boolean {
+  const mime = file.type.trim().toLowerCase()
+  const allowedMime = mime === 'image/jpeg' || mime === 'image/png' || mime === 'application/pdf'
+  return allowedMime || EVIDENCE_NAME_PATTERN.test(file.name)
+}
 
 export type ApplyVolunteerEvidenceFile = {
   questionKey: string
@@ -36,15 +48,11 @@ type ApplyVolunteerEvidenceAttachProps = {
   onUploadingChange?: (uploading: boolean) => void
 }
 
-function evidenceFileError(
+/** 개수·용량 안내 (형식은 팝업으로 따로 안내) */
+function evidenceFileBatchError(
   file: File,
   currentFiles: readonly ApplyVolunteerEvidenceFile[]
 ): string | null {
-  const mime = file.type.trim().toLowerCase()
-  const allowedMime = mime === 'image/jpeg' || mime === 'image/png' || mime === 'application/pdf'
-  if (!allowedMime && !EVIDENCE_NAME_PATTERN.test(file.name)) {
-    return 'JPG, PNG, PDF 파일만 첨부할 수 있습니다.'
-  }
   return validateUploadBatch({
     currentCount: currentFiles.length,
     currentTotalBytes: sumUploadFileBytes(currentFiles.map(item => ({ size: item.fileSize ?? 0 }))),
@@ -91,10 +99,18 @@ export function ApplyVolunteerEvidenceAttach({
 }: ApplyVolunteerEvidenceAttachProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  /** 시안 「오류 제한 팝업」(14491-2533) — 파일 형식·업로드 실패 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const ownFiles = files.filter(file => file.questionKey === questionKey)
 
   const handleFileSelect = (file: File) => {
-    const invalid = evidenceFileError(file, ownFiles)
+    if (!isEvidenceFileTypeAllowed(file)) {
+      // 시안 「파일 형식이 맞지 않는 경우」
+      setUploadError(null)
+      setErrorAlert(buildFileTypeInvalidAlertCopy(EVIDENCE_FORMATS_LABEL))
+      return
+    }
+    const invalid = evidenceFileBatchError(file, ownFiles)
     if (invalid) {
       setUploadError(invalid)
       return
@@ -107,15 +123,20 @@ export function ApplyVolunteerEvidenceAttach({
         onChange([...files, { questionKey, fileObjectId, fileName: file.name, fileSize: file.size }])
       })
       .catch((error: unknown) => {
-        setUploadError(
-          error instanceof MemberFileRejectedError
-            ? '보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.'
-            : error instanceof MemberFileTooLargeError
-              ? FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE
-            : error instanceof MemberFileEmptyError || isMemberFileSizeUploadError(error)
-              ? '빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.'
-              : '증빙서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-        )
+        if (error instanceof MemberFileRejectedError) {
+          setUploadError('보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.')
+          return
+        }
+        if (error instanceof MemberFileTooLargeError) {
+          setUploadError(FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE)
+          return
+        }
+        if (error instanceof MemberFileEmptyError || isMemberFileSizeUploadError(error)) {
+          setUploadError('빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.')
+          return
+        }
+        // 시안 「네트워크 오류 / 처리 제한 / 처리 실패」
+        setErrorAlert(resolvePlatformErrorAlert(error))
       })
       .finally(() => {
         setUploading(false)
@@ -157,6 +178,12 @@ export function ApplyVolunteerEvidenceAttach({
         </p>
       </div>
       {uploadError ? <p className={styles.evidenceError}>{uploadError}</p> : null}
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </div>
   )
 }

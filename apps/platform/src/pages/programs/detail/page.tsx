@@ -1,3 +1,5 @@
+import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
 import {
   getProgramIdFromPath,
   programApplyPath,
@@ -41,6 +43,10 @@ function applyBlockedAlertFor(
       title: '프로그램 모집기간이 시작되지 않았어요.',
       description: '모집기간이 시작되지 않은 프로그램은\n신청서를 제출할 수 없어요.',
     }
+  }
+  // 거절 사유를 알 수 없으면 시안 「공통 제한 안내 / 처리 실패」
+  if (blockedMessage === DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE) {
+    return PLATFORM_ALERT_COPY.requestFailed
   }
   return { title: '안내', description: blockedMessage }
 }

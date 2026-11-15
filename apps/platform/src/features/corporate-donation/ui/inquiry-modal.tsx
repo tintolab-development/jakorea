@@ -12,12 +12,19 @@ import {
   PFAttachedFileList,
   PFButton,
   PFModal,
+  PFRequiredMissingAlert,
   PFText,
   PFTextInput,
   PFTextarea,
   PFToggle,
 } from '@/shared/ui'
 import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import {
   useCreatePublicCorporateConsultation,
   useUploadPublicCorporateConsultationAttachments,
@@ -45,6 +52,15 @@ type InquiryValues = {
   linkUrl: string
   privacyConsent: boolean
 }
+
+/** 필수 누락 팝업 항목명 — 화면 라벨과 같은 순서 */
+const REQUIRED_TEXT_FIELD_LABELS = {
+  companyName: '기업명',
+  contactName: '담당자 이름',
+  departmentTitle: '부서명/직함',
+  contactPhone: '휴대폰 번호',
+  consultationContent: '상담내용',
+} as const satisfies Partial<Record<keyof InquiryValues, string>>
 
 type CorporateDonationInquiryModalProps = {
   open: boolean
@@ -89,7 +105,8 @@ function validateContactPhone(value: string): true | string {
   return true
 }
 
-function messageFromError(error: unknown): string {
+/** 서버가 보낸 업무 메시지만 — FE 기본 실패 문구는 공통 「처리 실패」 팝업이 맡는다 */
+function serverMessageFromError(error: unknown): string | null {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data
     if (data && typeof data === 'object') {
@@ -105,7 +122,7 @@ function messageFromError(error: unknown): string {
       if (typeof message === 'string') return message.trim()
     }
   }
-  return '문의 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  return null
 }
 
 function buildRequest(
@@ -140,13 +157,15 @@ export function CorporateDonationInquiryModal({
   onClose,
 }: CorporateDonationInquiryModalProps) {
   const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
-  const [formError, setFormError] = useState<string | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
+  /** 시안 「오류 제한 팝업」(14491-2533) — 파일 형식·미동의·접수 실패, 용량·업로드 중 안내 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const [successOpen, setSuccessOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const {
     control,
     clearErrors,
+    getValues,
     formState: { isSubmitting },
     handleSubmit: handleFormSubmit,
     reset,
@@ -164,8 +183,7 @@ export function CorporateDonationInquiryModal({
     reset(EMPTY_VALUES)
     clearErrors()
     setAttachedFiles([])
-    setFormError(null)
-    setUploadError(null)
+    setRequiredMissing(null)
   }
 
   const handleClose = () => {
@@ -181,7 +199,8 @@ export function CorporateDonationInquiryModal({
     for (const file of selected) {
       const typeError = validateDocumentAttachmentType(file)
       if (typeError) {
-        setUploadError(typeError)
+        // 시안 「파일 형식이 맞지 않는 경우」 팝업
+        setErrorAlert(typeError)
         return
       }
     }
@@ -192,11 +211,10 @@ export function CorporateDonationInquiryModal({
       incoming: selected,
     })
     if (batchError) {
-      setUploadError(batchError)
+      // 용량·개수 제한 — 시안 팝업이 없어 「안내」 팝업
+      setErrorAlert({ title: '안내', description: batchError })
       return
     }
-    setUploadError(null)
-    setFormError(null)
     setAttachedFiles(prev => [
       ...prev,
       ...selected.map(file => ({
@@ -208,15 +226,10 @@ export function CorporateDonationInquiryModal({
 
   const handleSubmit: SubmitHandler<InquiryValues> = async values => {
     if (attachmentsMutation.isPending) {
-      setFormError('첨부파일 업로드가 끝난 후 등록해 주세요.')
-      return
-    }
-    if (uploadError) {
-      setFormError('첨부파일을 확인해 주세요.')
+      setErrorAlert({ title: '안내', description: '첨부파일 업로드가 끝난 후 등록해 주세요.' })
       return
     }
 
-    setFormError(null)
     try {
       const uploaded = await attachmentsMutation.mutateAsync(attachedFiles.map(item => item.file))
       await consultationMutation.mutateAsync(buildRequest(values, uploaded))
@@ -224,7 +237,25 @@ export function CorporateDonationInquiryModal({
       onClose()
       setSuccessOpen(true)
     } catch (error) {
-      setFormError(messageFromError(error))
+      // 시안 「네트워크 오류 / 처리 제한 / 처리 실패」 — 서버 업무 메시지는 설명에 그대로
+      setErrorAlert(resolvePlatformErrorAlert(error, { serverMessage: serverMessageFromError }))
+    }
+  }
+
+  /** 입력란 아래 문구와 함께 시안 팝업 — 미입력(항목명) 먼저, 그다음 필수 항목 미동의 */
+  const handleInvalidSubmit = () => {
+    const values = getValues()
+    const missingLabels = (
+      Object.keys(REQUIRED_TEXT_FIELD_LABELS) as (keyof typeof REQUIRED_TEXT_FIELD_LABELS)[]
+    )
+      .filter(key => !values[key].trim())
+      .map(key => REQUIRED_TEXT_FIELD_LABELS[key])
+    if (missingLabels.length > 0) {
+      setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
+      return
+    }
+    if (!values.privacyConsent) {
+      setErrorAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
     }
   }
 
@@ -236,10 +267,10 @@ export function CorporateDonationInquiryModal({
         title="기업후원 상담하기"
         size="md"
         mobilePlacement="full"
-        closeOnEscape={!isBusy}
+        closeOnEscape={!isBusy && errorAlert == null && requiredMissing == null}
         className={styles.panel}
       >
-          <form className={styles.form} onSubmit={handleFormSubmit(handleSubmit)} noValidate>
+          <form className={styles.form} onSubmit={handleFormSubmit(handleSubmit, handleInvalidSubmit)} noValidate>
             <div className={styles.body}>
               <div className={styles.fields}>
                 <Controller
@@ -269,7 +300,6 @@ export function CorporateDonationInquiryModal({
                       value={field.value}
                       onValueChange={value => {
                         field.onChange(value)
-                        setFormError(null)
                       }}
                     />
                   )}
@@ -301,7 +331,6 @@ export function CorporateDonationInquiryModal({
                       value={field.value}
                       onValueChange={value => {
                         field.onChange(value)
-                        setFormError(null)
                       }}
                     />
                   )}
@@ -333,7 +362,6 @@ export function CorporateDonationInquiryModal({
                       value={field.value}
                       onValueChange={value => {
                         field.onChange(value)
-                        setFormError(null)
                       }}
                     />
                   )}
@@ -362,7 +390,6 @@ export function CorporateDonationInquiryModal({
                       value={field.value}
                       onValueChange={value => {
                         onChange(formatKoreanPhoneNumber(value))
-                        setFormError(null)
                       }}
                     />
                   )}
@@ -396,7 +423,6 @@ export function CorporateDonationInquiryModal({
                       value={field.value}
                       onValueChange={value => {
                         field.onChange(value)
-                        setFormError(null)
                       }}
                     />
                   )}
@@ -439,7 +465,6 @@ export function CorporateDonationInquiryModal({
                       value={field.value}
                       onValueChange={value => {
                         field.onChange(value)
-                        setFormError(null)
                       }}
                     />
                   )}
@@ -484,14 +509,8 @@ export function CorporateDonationInquiryModal({
                   disabled={isBusy}
                   onRemove={id => {
                     setAttachedFiles(prev => prev.filter(item => item.id !== id))
-                    setUploadError(null)
                   }}
                 />
-                {uploadError ? (
-                  <PFText as="p" typo="bd-sm-rg" color="error" className={styles.error}>
-                    {uploadError}
-                  </PFText>
-                ) : null}
               </div>
 
               <Controller
@@ -564,7 +583,6 @@ export function CorporateDonationInquiryModal({
                           checked={field.value}
                           onChange={checked => {
                             field.onChange(checked)
-                            setFormError(null)
                           }}
                           disabled={isBusy}
                         >
@@ -589,11 +607,6 @@ export function CorporateDonationInquiryModal({
                   </div>
                 )}
               />
-              {formError ? (
-                <PFText as="p" typo="bd-sm-md" color="error" className={styles.error}>
-                  {formError}
-                </PFText>
-              ) : null}
             </div>
           </div>
 
@@ -618,6 +631,14 @@ export function CorporateDonationInquiryModal({
           </div>
         </form>
       </PFModal>
+
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
 
       <PFAlertModal
         open={successOpen}
