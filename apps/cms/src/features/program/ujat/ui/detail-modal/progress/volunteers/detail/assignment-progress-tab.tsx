@@ -513,19 +513,15 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
         return
       }
 
-      void progress.correctAttendance(attendanceCorrectionTargetRow, payload).then(
-        () => {
-          setAttendanceCorrectionModalOpen(false)
-          setAttendanceCorrectionTargetRowId(null)
-          showAlert({
-            title: '안내',
-            content: '출결이 정정되었습니다.',
-          })
-        },
-        () => {
-          // 실패 토스트는 mutation onError. 이전 출결을 유지한다.
-        }
-      )
+      // 실패는 팝업으로 되던진다 — 결석 증빙 코드는 팝업 인라인, 그 외는 mutation onError 안내. 이전 출결 유지.
+      return progress.correctAttendance(attendanceCorrectionTargetRow, payload).then(() => {
+        setAttendanceCorrectionModalOpen(false)
+        setAttendanceCorrectionTargetRowId(null)
+        showAlert({
+          title: '안내',
+          content: '출결이 정정되었습니다.',
+        })
+      })
     },
     [attendanceCorrectionTargetRow, progress, showAlert]
   )
@@ -715,6 +711,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
           }
           statusOptions={ujatAttendanceCorrectionStatusOptions}
           evidenceScheduleId={attendanceCorrectionTargetRow.scheduleId}
+          variant="ujat"
           onCancel={() => {
             setAttendanceCorrectionModalOpen(false)
             setAttendanceCorrectionTargetRowId(null)

@@ -126,10 +126,11 @@
   gap: 8px;
 }
 
+/* Figma 10019:43780 — 출결 상태 셀렉트 w120 */
 .ujat-attendance-correction-modal__status-select {
-  flex: 0 0 160px;
-  width: 160px;
-  min-width: 160px;
+  flex: 0 0 120px;
+  width: 120px;
+  min-width: 120px;
 }
 
 .ujat-attendance-correction-modal__time-field {
