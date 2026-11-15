@@ -126,7 +126,7 @@ export function buildCareersMailLayoutHtml(): string {
   ${educationInfoTable()}
   ${mailSectionHeading('경력 정보')}
   ${careerInfoTable()}
-  ${mailDetailButton('인재채용 지원 상세보기', CAREERS_MAIL_DETAIL_LINK_VARIABLE_LABEL)}
+  ${mailDetailButton('인재채용 지원 상세보기', CAREERS_MAIL_DETAIL_LINK_VARIABLE_LABEL, null)}
 `
   )
 }
