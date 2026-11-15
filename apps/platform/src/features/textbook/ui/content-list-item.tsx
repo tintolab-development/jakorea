@@ -64,7 +64,7 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
             {content.title}
           </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
+          <PFText as="p" typo="bd-md-md" color="neutral-warm-600" className={styles.description}>
             {content.description}
           </PFText>
           {hasComposition ? (
@@ -135,7 +135,7 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           <div className={styles.sessionBody}>
             {content.unitCount > 0 ? (
               <PFText as="span" typo="bd-lg-sb" color="black" className={styles.sessionUnitCount}>
-                총 {content.unitCount}단원
+                {`총 ${content.unitCount}단원`}
               </PFText>
             ) : (
               <PFText as="span" typo="bd-lg-sb" color="black" className={styles.sessionUnitCount}>
@@ -144,7 +144,7 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
             )}
             {content.unitCount > 0 && content.unitSessionText ? (
               <PFText as="span" typo="bd-sm-rg" color="black" className={styles.sessionDetail}>
-                ({content.unitSessionText})
+                {`(${content.unitSessionText})`}
               </PFText>
             ) : null}
           </div>

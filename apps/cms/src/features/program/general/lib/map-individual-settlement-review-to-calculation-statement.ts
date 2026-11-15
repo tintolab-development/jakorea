@@ -136,6 +136,10 @@ export function mapIndividualSettlementReviewToCalculationStatement(
       processingStatusDisplay: individualSettlementReviewStatusLabel(status),
       processingStatusClass: mapIndividualSettlementProcessingStatusClass(status),
       processingRejectionReason: rejectionReason || undefined,
+      // 계좌 지급 건의 현재 이체 예정일. 승인 전·반려처럼 지급 건이 없으면 null → 화면 '-'
+      lectureFeePaymentScheduledDateDisplay: detail.scheduledPaymentDate
+        ? formatDateDotWithWeekday(detail.scheduledPaymentDate)
+        : undefined,
       lectureFeeStandardTitle: '-',
       lectureFeeStandardAmount: '',
       businessIncomeEarnerLabel: '-',

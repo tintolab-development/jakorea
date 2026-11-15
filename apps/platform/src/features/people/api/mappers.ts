@@ -30,7 +30,7 @@ const ROLE_SECTIONS: readonly RoleSection[] = [
   {
     role: 'BOARD_CHAIR',
     id: 'board-chair',
-    title: 'Board Chair',
+    title: 'Board Member',
     columns: 4,
   },
 ]

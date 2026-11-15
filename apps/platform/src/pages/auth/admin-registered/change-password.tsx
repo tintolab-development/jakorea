@@ -154,7 +154,7 @@ export function AdminRegisteredChangePasswordPage() {
             size="xlarge"
             label="현재 비밀번호"
             type="password"
-            placeholder="현재 비밀번호를 입력해 주세요."
+            placeholder="현재 비밀번호를 입력해 주세요"
             autoComplete="current-password"
             required
             value={currentPassword}

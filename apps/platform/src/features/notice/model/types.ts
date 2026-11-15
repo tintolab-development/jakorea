@@ -22,7 +22,7 @@ export type NoticeListItem = {
   isPinned: boolean
   /** ISO date string */
   publishedAt: string
-  /** 표시용 — 예: 2026년 05월 08일 */
+  /** 표시용 — 예: 2026년 5월 8일 */
   publishedAtLabel: string
 }
 
@@ -32,7 +32,7 @@ export type NoticeDetail = NoticeListItem & {
   contentFormat: NoticeContentFormat
   author: string
   viewCount: number
-  /** 상세 메타용 — 예: 2026년 01월 15일 오후 3:00 */
+  /** 상세 메타용 — 예: 2026년 1월 15일 오후 3:00 */
   publishedAtDetailLabel: string
   attachments: NoticeAttachment[]
 }

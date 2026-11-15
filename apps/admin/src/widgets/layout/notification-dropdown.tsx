@@ -1,6 +1,6 @@
 /**
- * 상단 GNB 알림 드롭다운 — CMS notification-dropdown 카테고리·UI 미러
- * 홈페이지 시스템 Inbox는 type=system 으로만 표시한다.
+ * 상단 GNB 알림 드롭다운 — CMS notification-dropdown UI 미러
+ * 탭은 시안 「02. GNB / 06. 알림 리스트」대로 전체·신청·매칭·시스템 3개만 둔다.
  */
 
 import { useMemo, useState } from 'react'
@@ -10,23 +10,19 @@ import './notification-dropdown.css'
 
 const { Text } = Typography
 
-export type NotificationCategoryKey =
-  | 'all'
-  | 'matching'
-  | 'progress'
-  | 'settlement'
-  | 'inquiry'
-  | 'schedule'
-  | 'system'
+export type NotificationCategoryKey = 'all' | 'matching' | 'system'
 
 export type HeaderNotification = {
   id: string
-  type: Exclude<NotificationCategoryKey, 'all' | 'inquiry' | 'progress'>
+  type: Exclude<NotificationCategoryKey, 'all'>
   message: string
   createdAt: string
   read: boolean
-  programName?: string
+  /** 알림 본문 (서버 body) */
+  body?: string
   link?: string
+  /** 안내 팝업 이동 버튼 문구 */
+  actionLabel?: string
 }
 
 export type NotificationDropdownStatus = 'ready' | 'loading' | 'error' | 'forbidden'
@@ -34,23 +30,11 @@ export type NotificationDropdownStatus = 'ready' | 'loading' | 'error' | 'forbid
 const CATEGORIES: { key: NotificationCategoryKey; label: string }[] = [
   { key: 'all', label: '전체' },
   { key: 'matching', label: '신청·매칭' },
-  { key: 'progress', label: '프로그램 진행' },
-  { key: 'settlement', label: '정산' },
-  { key: 'inquiry', label: '문의' },
-  { key: 'schedule', label: '업데이트' },
   { key: 'system', label: '시스템' },
 ]
 
-const TYPE_TO_CATEGORY: Record<HeaderNotification['type'], NotificationCategoryKey> = {
-  schedule: 'schedule',
-  matching: 'matching',
-  settlement: 'settlement',
-  system: 'system',
-}
-
 function getCategoryLabel(type: HeaderNotification['type']): string {
-  const key = TYPE_TO_CATEGORY[type]
-  return CATEGORIES.find(c => c.key === key)?.label ?? '알림'
+  return CATEGORIES.find(c => c.key === type)?.label ?? '알림'
 }
 
 function NotificationReadBadge({ read }: { read: boolean }) {
@@ -103,9 +87,9 @@ function NotificationRow({
           </Text>
           <NotificationReadBadge read={notification.read} />
         </div>
-        {notification.programName ? (
-          <Text className="notification-dropdown-item-sub" title={notification.programName}>
-            {notification.programName}
+        {notification.body ? (
+          <Text className="notification-dropdown-item-sub" title={notification.body}>
+            {notification.body}
           </Text>
         ) : null}
       </div>
@@ -125,7 +109,6 @@ type NotificationDropdownProps = {
   status?: NotificationDropdownStatus
   onNotificationClick?: (notification: HeaderNotification) => void
   onRetry?: () => void
-  onClose?: () => void
 }
 
 export function NotificationDropdown({
@@ -133,28 +116,21 @@ export function NotificationDropdown({
   status = 'ready',
   onNotificationClick,
   onRetry,
-  onClose,
 }: NotificationDropdownProps) {
   const [category, setCategory] = useState<NotificationCategoryKey>('all')
 
-  const filtered = useMemo(() => {
-    const base =
-      category === 'all'
-        ? notifications
-        : category === 'inquiry' || category === 'progress'
-          ? []
-          : notifications.filter(n => n.type === category)
-
-    return base
-  }, [notifications, category])
+  const filtered = useMemo(
+    () => (category === 'all' ? notifications : notifications.filter(n => n.type === category)),
+    [notifications, category],
+  )
 
   // CMS와 같이 안 읽은 알림 → 「읽음」 구역 순, 각 구역은 최신순
   const unreadItems = useMemo(() => filtered.filter(item => !item.read).sort(byNewest), [filtered])
   const readItems = useMemo(() => filtered.filter(item => item.read).sort(byNewest), [filtered])
 
+  // 항목 클릭 → 안내 팝업(시스템 안내 팝업 시안). 화면 이동은 팝업의 이동 버튼에서 한다.
   const handleItemClick = (notification: HeaderNotification) => {
     onNotificationClick?.(notification)
-    if (notification.link) onClose?.()
   }
 
   return (

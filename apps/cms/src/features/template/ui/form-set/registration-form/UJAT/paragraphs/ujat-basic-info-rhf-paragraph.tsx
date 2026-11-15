@@ -59,8 +59,11 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
-/** 시안(등록 폼_공통): 사업 분야·교육 과정·IP·운영 주체·IPS 유형 선택 박스는 같은 짧은 고정폭 */
-const UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH = 240
+/**
+ * 시안(등록 폼_공통): 사업 분야·교육 과정·IP·운영 주체·IPS 유형 선택 박스는 같은 짧은 고정폭.
+ * 240이면 가장 긴 교육 과정 값 `Blended (Paper & Computer)`(14px, 약 182px)가 값 영역(166px)에서 잘려 260으로 둔다.
+ */
+const UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH = 260
 
 const DETAILED_PROGRAM_UJAT_OPTION = {
   value: UJAT_DETAILED_PROGRAM_UJAT_VALUE,

@@ -1,7 +1,10 @@
 import type { User } from '@/types/user'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui'
-import { ADMIN_COMMENT_SENSITIVE_INFO_NOTICE } from '@/features/user/detail/lib/admin-comment-copy'
+import {
+  ADMIN_COMMENT_SENSITIVE_INFO_NOTICE,
+  ADMIN_COMMENT_SENSITIVE_INFO_NOTICE_INSTRUCTOR_AND_PERMISSION,
+} from '@/features/user/detail/lib/admin-comment-copy'
 import './user-detail-admin-comment-section.css'
 
 export type UserDetailAdminCommentSectionProps = {
@@ -9,6 +12,8 @@ export type UserDetailAdminCommentSectionProps = {
   memberInfoEditing?: boolean
   adminCommentDraft?: string
   onAdminCommentChange?: (value: string) => void
+  /** 강사 회원 상세·권한 승인 신청 상세 — 시안 섹션 설명 문구가 다르다 */
+  instructorOrPermissionNotice?: boolean
 }
 
 export function UserDetailAdminCommentSection({
@@ -16,14 +21,18 @@ export function UserDetailAdminCommentSection({
   memberInfoEditing = false,
   adminCommentDraft,
   onAdminCommentChange,
+  instructorOrPermissionNotice = false,
 }: UserDetailAdminCommentSectionProps) {
   const trimmed = user.adminComment?.trim() ?? ''
+  const notice = instructorOrPermissionNotice
+    ? ADMIN_COMMENT_SENSITIVE_INFO_NOTICE_INSTRUCTOR_AND_PERMISSION
+    : ADMIN_COMMENT_SENSITIVE_INFO_NOTICE
 
   if (memberInfoEditing && onAdminCommentChange) {
     return (
       <DetailInfoForm
         title="관리자 코멘트"
-        description={ADMIN_COMMENT_SENSITIVE_INFO_NOTICE}
+        description={notice}
         mode="edit"
         className="user-detail-admin-comment-section user-detail-admin-comment-section--editing"
       >
@@ -44,7 +53,7 @@ export function UserDetailAdminCommentSection({
   return (
     <DetailInfoForm
       title="관리자 코멘트"
-      description={ADMIN_COMMENT_SENSITIVE_INFO_NOTICE}
+      description={notice}
       mode="view"
       className="user-detail-admin-comment-section"
     >

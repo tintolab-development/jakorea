@@ -49,6 +49,7 @@ import {
   isPaymentStatementApplicationMissing,
   PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT,
 } from '@/features/settlement/lib/payment-statement-view-unavailable-alert'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 /** 산출 내역서 — 일반 프로그램 상세 풀페이지(1100) 위 */
 export const PARTICIPATING_INSTRUCTOR_CALCULATION_STATEMENT_Z_INDEX =
@@ -277,7 +278,7 @@ export function useParticipatingInstructorPaymentStatementView(input: {
       } catch (error) {
         await refreshSettlements()
         showAlert({
-          title: '안내',
+          title: networkAwareAlertTitle(error, '안내'),
           content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
         })
         throw error

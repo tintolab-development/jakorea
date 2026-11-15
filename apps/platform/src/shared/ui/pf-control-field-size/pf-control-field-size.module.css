@@ -12,7 +12,7 @@
 
 .xlarge {
   height: 54px;
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-12);
 }
 
 .mobile {

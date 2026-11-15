@@ -14,6 +14,7 @@ export function LectureHistoryView({
       applications={applications}
       loading={loading}
       memberId={user.memberId}
+      memberName={user.name}
       onRowClick={onRowClick}
       onBulkDelete={onBulkDeleteHistory}
       onCertificateIssue={onInstructorCertificateBulkIssue}

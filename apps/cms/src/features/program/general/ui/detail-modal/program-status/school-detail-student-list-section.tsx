@@ -84,8 +84,10 @@ import { mapStudentRosterResponseToRows } from '../../../api/adapters/student-ro
 import { getGeneralProgramApiErrorMessage } from '../../../api/get-general-program-api-error'
 import {
   fetchStudentLectureAttendanceByParticipantRemote,
+  lectureAttendanceSessionsForParticipant,
   saveStudentLectureAttendanceByParticipantRemote,
 } from '../../../api/student-lecture-attendance-api'
+import { useStudentLectureAttendanceSource } from '../../../hooks/use-student-lecture-attendance-source'
 import {
   useIsTrainedTeachersProgramsSurface,
   useProgramProgressRemoteEnabledForSurface,
@@ -313,6 +315,14 @@ export function SchoolDetailStudentListSection({
   const progressRemoteEnabled =
     generalProgressRemoteEnabled ||
     (isTrainedTeachersSurface && programId != null && shouldUseTrainedTeacherProgramsRemoteApi())
+  // 학생 명단 응답에는 출석 요약이 없다 — 목록 「강의 출석 내역」은 상세 모달과 같은 원본으로 계산한다.
+  const lectureAttendanceSourceQuery = useStudentLectureAttendanceSource({
+    programId,
+    organizationApplicationId:
+      organizationApplicationId != null ? String(organizationApplicationId) : '',
+    enabled: progressRemoteEnabled && rosterRemote.remoteEnabled,
+  })
+  const lectureAttendanceSource = lectureAttendanceSourceQuery.data
 
   const showStudentListEditModeBlockedAlert = useCallback(
     () => showAlert({ title: '안내', content: STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE }),
@@ -344,17 +354,30 @@ export function SchoolDetailStudentListSection({
   const organizationApplicationKey =
     organizationApplicationId != null ? String(organizationApplicationId) : ''
 
-  const mergedStudentList = useMemo(() => {
-    const patchRow = (row: SchoolDetailStudentRow): SchoolDetailStudentRow => {
+  /** 「강의 출석 내역」 값 채우기 — 화면 목록과 엑셀 다운로드가 같은 값을 쓴다 */
+  const withLectureAttendance = useCallback(
+    (row: SchoolDetailStudentRow): SchoolDetailStudentRow => {
+      // 상세 모달에서 방금 조회·정정한 값이 가장 최신이다.
       const saved = attendanceSessionsByStudentId[row.id]
-      if (!saved?.length) return row
-      return {
-        ...row,
-        lectureAttendance: lectureAttendanceStringFromSessions(saved),
+      if (saved?.length) {
+        return { ...row, lectureAttendance: lectureAttendanceStringFromSessions(saved) }
       }
-    }
-    return [...studentList.map(patchRow), ...addedStudents.map(patchRow)]
-  }, [studentList, addedStudents, attendanceSessionsByStudentId])
+      if (lectureAttendanceSource && row.participantId != null) {
+        const sessions = lectureAttendanceSessionsForParticipant(
+          lectureAttendanceSource,
+          row.participantId,
+          program
+        )
+        return { ...row, lectureAttendance: lectureAttendanceStringFromSessions(sessions) }
+      }
+      return row
+    },
+    [attendanceSessionsByStudentId, lectureAttendanceSource, program]
+  )
+  const mergedStudentList = useMemo(
+    () => [...studentList.map(withLectureAttendance), ...addedStudents.map(withLectureAttendance)],
+    [studentList, addedStudents, withLectureAttendance]
+  )
   const filteredStudentList = useMemo(
     () => mergedStudentList.filter(row => matchesStudentListFilters(row, appliedFilters)),
     [mergedStudentList, appliedFilters]
@@ -363,13 +386,16 @@ export function SchoolDetailStudentListSection({
     const source = rosterRemote.remoteEnabled
       ? rosterRemote.students
       : getSchoolDetailStudents(schoolId, studentCount)
-    return source.filter(row => matchesStudentListFilters(row, appliedFilters))
+    return source
+      .filter(row => matchesStudentListFilters(row, appliedFilters))
+      .map(withLectureAttendance)
   }, [
     appliedFilters,
     rosterRemote.remoteEnabled,
     rosterRemote.students,
     schoolId,
     studentCount,
+    withLectureAttendance,
   ])
 
   const handleCertificateIssueClick = useCallback(async () => {
@@ -892,6 +918,10 @@ export function SchoolDetailStudentListSection({
         } catch (error) {
           const conflictAlert = resolveStudentRosterCommitErrorAlert(error)
           if (conflictAlert) {
+            // 추가 세션의 기준 명단·revision이 낡았다 — 모달을 열어 두면 재시도도 계속 충돌하므로 닫고,
+            // 최신 명단으로 다시 열게 한다. 그 밖의 실패(형식 오류 등)는 모달을 열어 둬 입력값을 유지한다.
+            rosterAddSessionRef.current = null
+            setAddStudentModalOpen(false)
             void rosterRemote.refetch()
             showAlert(conflictAlert)
             return
@@ -965,6 +995,8 @@ export function SchoolDetailStudentListSection({
       } catch (error) {
         console.debug('student lecture attendance fetch failed', error)
         setLectureAttendanceRemoteDetail(null)
+        // 스피너 뒤에 빈 모달이 남지 않게 닫는다.
+        setLectureAttendanceModalOpen(false)
         showAlert({
           title: '조회 실패',
           content: '강의 출석 내역을 불러오지 못했습니다. 다시 시도해 주세요.',

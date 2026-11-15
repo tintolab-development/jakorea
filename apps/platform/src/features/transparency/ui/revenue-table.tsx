@@ -40,9 +40,9 @@ export function RevenueTable({ summary, order }: RevenueTableProps) {
         {rows.map(slice => (
           <tr key={slice.id} className={styles.row}>
             <td className={[styles.cell, styles.categoryCell].join(' ')}>{slice.label}</td>
-            <td className={[styles.cell, styles.pcOnly].join(' ')}>{slice.percent}%</td>
+            <td className={[styles.cell, styles.pcOnly].join(' ')}>{`${slice.percent}%`}</td>
             <td className={[styles.cell, styles.metricsCell].join(' ')}>
-              <span className={styles.mobilePercent}>{slice.percent}%</span>
+              <span className={styles.mobilePercent}>{`${slice.percent}%`}</span>
               <span className={styles.amountValue}>{formatKrwAmount(slice.amount)}</span>
             </td>
           </tr>

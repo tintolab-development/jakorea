@@ -1,0 +1,160 @@
+/**
+ * 회원 관리 — 작은 화면(노트북 1440·1366·1280) 대응
+ * QA 2026-11-15 「CMS 작은화면 대응 수정 항목」 10절 확정 CSS (사용자 확정).
+ * 반응형 사이트가 아니라 1920 시안 기준이며, 1440 이상은 바뀌지 않는다(필터 최소 폭 규칙만 예외로 상시).
+ * 범위: 회원 목록·권한 승인 목록(`.member-list-filter-layout`), 회원 상세(`.user-detail-fullpage-modal`).
+ */
+
+/* ---- 목록 필터: 칸이 최소 200까지 줄고(말줄임) 그보다 좁아지면 줄바꿈 (JS 인라인 폭은 그대로 두고 덮어씀) ---- */
+:is(.member-list-filter-layout, .user-detail-fullpage-modal)
+  .table-filter-group__container
+  :is(
+    .ant-col.table-filter-group__col--explicit-width,
+    .table-filter-group__grid-cell--explicit-width
+  ):not(.table-filter-group__col--date-range):not(.table-filter-group__grid-cell--date-range):not(
+    .table-filter-group__col--radio
+  ):not(.table-filter-group__col--pct-width):not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__col--pair-field
+  ):not(.table-filter-group__grid-cell--pair-field) {
+  flex: 1 1 200px !important;
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: var(--filter-field-width, 260px) !important;
+}
+
+:is(.member-list-filter-layout, .user-detail-fullpage-modal)
+  .table-filter-group__container
+  :is(
+    .ant-col.table-filter-group__col--explicit-width,
+    .table-filter-group__grid-cell--explicit-width
+  ):not(.table-filter-group__col--date-range):not(.table-filter-group__grid-cell--date-range):not(
+    .table-filter-group__col--radio
+  ):not(.table-filter-group__col--pct-width):not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__col--pair-field
+  ):not(.table-filter-group__grid-cell--pair-field)
+  :is(
+    .table-filter-group__field,
+    .labeled-search-input,
+    .cms-select,
+    .cms-select .ant-select,
+    .cms-select .ant-select-selector
+  ) {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+:is(.member-list-filter-layout, .user-detail-fullpage-modal)
+  .table-filter-group__container
+  :is(
+    .ant-col.table-filter-group__col--explicit-width,
+    .table-filter-group__grid-cell--explicit-width
+  )
+  :is(.ant-select-selection-item, .ant-select-selection-placeholder) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1439px) {
+  /* ---- 기관 소재지(시/도+시/군/구): 최소 240, 두 셀렉트는 칸을 반씩 채움 ---- */
+  .member-list-filter-layout
+    .table-filter-group__container
+    :is(.ant-col.table-filter-group__col--pair-field, .table-filter-group__grid-cell--pair-field) {
+    /* 인라인 변수보다 우선 — 하위 셀렉트 폭 규칙이 이 값을 그대로 쓴다 */
+    --filter-field-pair-segment-width: calc((100% - var(--filter-field-pair-gap, 8px)) / 2) !important;
+
+    flex: 0 1 240px !important;
+    width: auto !important;
+    min-width: 240px !important;
+    max-width: 100% !important;
+  }
+
+  .member-list-filter-layout
+    .table-filter-group__container
+    :is(.ant-col.table-filter-group__col--pair-field, .table-filter-group__grid-cell--pair-field)
+    :is(.table-filter-group__field, .table-filter-group__address-region-selects) {
+    box-sizing: border-box;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* ---- 약관 및 동의 표: 모든 행을 1열(라벨 + 값 fill)로 ---- */
+  .user-consent-agreement-section__form.detail-info-form
+    .detail-info-form__row--double
+    > .detail-info-form__field {
+    flex: 1 1 100%;
+    border-right: 0 !important;
+  }
+
+  .user-consent-agreement-section__form.detail-info-form
+    .detail-info-form__row--double
+    > .detail-info-form__field
+    + .detail-info-form__field {
+    margin-top: -1px;
+    border-top: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
+  }
+
+  .user-consent-agreement-section__form.detail-info-form
+    .detail-info-form__row--double
+    > .user-consent-agreement-section__field--empty-half {
+    display: none;
+  }
+
+  /* ---- 권한 승인 상세 기본 정보 표: 권한 승인 현황·JA 평가 등급이 꺾이므로 1열 ---- */
+  .user-basic-info-section__split-cards:has(.user-basic-info-section__permission-approval-meta)
+    .detail-info-form
+    .detail-info-form__row--double
+    > .detail-info-form__field {
+    flex: 1 1 100%;
+    border-right: 0 !important;
+  }
+
+  .user-basic-info-section__split-cards:has(.user-basic-info-section__permission-approval-meta)
+    .detail-info-form
+    .detail-info-form__row--double
+    > .detail-info-form__field
+    + .detail-info-form__field {
+    margin-top: -1px;
+    border-top: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
+  }
+
+  /* ---- 상세 Full Page LNB 240 · 메뉴명 단어 단위 2줄 ---- */
+  .detail-fullpage-modal.user-detail-fullpage-modal.ant-modal {
+    --detail-fullpage-lnb-width: 240px;
+  }
+
+  .user-detail-fullpage-modal :is(.detail-fullpage-modal__lnb-item-label, .detail-fullpage-modal__lnb-child-label) {
+    min-width: 0;
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .user-detail-fullpage-modal
+    :is(.detail-fullpage-modal__lnb-child, .detail-fullpage-modal__lnb-child--active) {
+    height: auto;
+    min-height: 44px;
+  }
+
+  .user-detail-fullpage-modal .detail-fullpage-modal__lnb-child-dot {
+    align-self: flex-start;
+    margin-top: 7px;
+  }
+}
+
+/* ---- 강사 정산 캘린더: 컨테이너만 가로 스크롤 (캘린더 최소 폭 1154 > 본문 가용 폭) ---- */
+@media (max-width: 1527px) {
+  .user-detail-fullpage-modal .instructor-payment-tab__calendar-view-container {
+    overflow-x: auto;
+  }
+
+  /* 컨테이너가 스크롤 기준이 되면 sticky top이 어긋나 캘린더가 밀리므로 해제 */
+  .user-detail-fullpage-modal
+    .instructor-payment-tab__calendar-view-container
+    :is(.calendar-main-container, .calendar-sub-right-list) {
+    position: static !important;
+  }
+}

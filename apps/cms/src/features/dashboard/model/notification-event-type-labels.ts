@@ -39,7 +39,6 @@ export const NOTIFICATION_EVENT_TYPE_LABELS: Readonly<Record<string, string>> = 
   UJAT_VOLUNTEER_ATTENDANCE_STATUS_CHANGED: 'UJAT 출석 현황 안내',
   /** @deprecated BE는 STATUS_CHANGED — 구 키 호환 */
   UJAT_VOLUNTEER_ATTENDANCE_NOTICE: 'UJAT 출석 현황 안내',
-  UJAT_ATTENDANCE_MANAGER_CHANGED: 'UJAT 출석 현황 관리자 변경 안내',
   // 수료·배정 — BE 키 SSOT (`…_NOT_COMPLETED`)
   PROGRAM_PARTICIPANT_COMPLETION_COMPLETED: '프로그램 수료 완료 안내',
   PROGRAM_PARTICIPANT_COMPLETION_NOT_COMPLETED: '프로그램 수료 불가 안내',
@@ -67,6 +66,7 @@ export const NOTIFICATION_EVENT_TYPE_LABELS: Readonly<Record<string, string>> = 
   ADMIN_PROGRAM_NOTICE_CREATED: '신규 안내사항 안내 (관리자)',
   ADMIN_PORTRAIT_CONSENT_UNSUBMITTED: '초상권 동의서 미제출',
   ADMIN_STUDENT_ROSTER_UNSUBMITTED: '학생 명단 미제출',
+  ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED: '강사비 정정 요청',
   // (프로그램 × 담당 PM)별 전날 신규 신청 합산 (매일 08:00 KST)
   ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY: '프로그램 신규 신청자',
 } as const

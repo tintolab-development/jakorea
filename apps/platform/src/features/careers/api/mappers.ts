@@ -9,7 +9,7 @@
  * 커버는 coverImageUrl ?? impactStory.imageUrl. 둘 다 없으면 빈 문자열이다.
  *
  * 공고: publishedOn(YYYY-MM-DD)을 우선하고, 없으면 publishedAt(date-time)으로 날짜를 만든다.
- * 라벨은 `2026년 05월 08일`. CLOSED는 공개 목록에 없다.
+ * 라벨은 `2026년 5월 8일`. CLOSED는 공개 목록에 없다.
  */
 import type { CareersGuideView } from '../model/guide-view'
 import type {
@@ -43,7 +43,6 @@ import type {
 import {
   formatDisplayDate,
   formatDisplayDateRangeCompact,
-  formatPaddedKoreanSeoulDate,
   toSeoulDisplayParts,
 } from '../../../shared/lib/format-display-date.ts'
 import { readCareerPostingLinkFields } from '../lib/link-cta.ts'
@@ -211,23 +210,23 @@ function mapPostingStatus(status: string | undefined): CareerJobStatus | null {
   return null
 }
 
-/** YYYY-MM-DD → `2026년 05월 08일`. 타임존으로 하루 밀리지 않게 날짜만 쓴다. */
+/** YYYY-MM-DD → `2026년 5월 8일`(월·일 0 채움 없음). 타임존으로 하루 밀리지 않게 날짜만 쓴다. */
 export function formatCareerPublishedAtLabel(publishedOn: string | undefined | null): string {
   if (typeof publishedOn !== 'string') return ''
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(publishedOn.trim())
   if (!match) return ''
-  return `${match[1]}년 ${match[2]}월 ${match[3]}일`
+  return `${match[1]}년 ${Number(match[2])}월 ${Number(match[3])}일`
 }
 
 /**
  * 상세 메타. 날짜만 오면 시각을 생략한다.
- * 시각이 있으면 `2026년 01월 15일 오후 3:00`. 문자열의 벽시계를 쓴다.
+ * 시각이 있으면 `2026년 1월 15일 오후 3:00`(월·일 0 채움 없음). 문자열의 벽시계를 쓴다.
  */
 export function formatCareerPublishedAtDetailLabel(value: string | undefined | null): string {
   if (typeof value !== 'string') return ''
   const parts = toSeoulDisplayParts(value)
   if (!parts) return ''
-  const dateLabel = formatPaddedKoreanSeoulDate(value)
+  const dateLabel = `${parts.year}년 ${parts.month}월 ${parts.day}일`
   if (!parts.hasTime) return dateLabel
   const period = parts.hour < 12 ? '오전' : '오후'
   const hours12 = parts.hour % 12 || 12

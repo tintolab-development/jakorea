@@ -9,7 +9,11 @@ import {
   EMPTY_SURVEY_SIDECAR,
   type SurveySidecarState,
 } from '@/features/mypage/education/surveys/lib/survey-sidecar'
-import { PFAlertModal, PFButton, PFModal, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFModal, PFRequiredMissingAlert, PFText } from '@/shared/ui'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
 import {
   useReviseUjatEducationDocumentMutation,
@@ -137,6 +141,8 @@ export function UjatEducationDocumentFillModal({
   const [files, setFiles] = useState<UjatDocumentAttachedFile[]>(seedFiles)
   const [seededKey, setSeededKey] = useState(seedKey)
   const [alertOpen, setAlertOpen] = useState(false)
+  const [requiredMissingAlert, setRequiredMissingAlert] =
+    useState<RequiredMissingAlertCopy | null>(null)
   const [alertTitle, setAlertTitle] = useState('안내')
   const [alertDescription, setAlertDescription] = useState('')
   const [closeAfterAlert, setCloseAfterAlert] = useState(false)
@@ -171,7 +177,11 @@ export function UjatEducationDocumentFillModal({
 
     const validation = validateUjatDocumentFill(draft, sidecar, files)
     if (!validation.ok) {
-      setAlertTitle('입력 확인')
+      if (validation.missingRequired) {
+        setRequiredMissingAlert(buildRequiredMissingAlertCopy(validation.missingRequired))
+        return
+      }
+      setAlertTitle('안내')
       setAlertDescription(validation.message)
       setAlertOpen(true)
       return
@@ -180,7 +190,7 @@ export function UjatEducationDocumentFillModal({
     const answers = buildUjatDocumentAnswers(draft, sidecar, bindingQuery.document?.form ?? null)
     const fileObjectIdsByQuestion = buildUjatDocumentFileObjectIds(files)
     if (!hasUjatDocumentSubmitPayload(answers, files)) {
-      setAlertTitle('입력 확인')
+      setAlertTitle('안내')
       setAlertDescription('제출할 내용이 없습니다.')
       setAlertOpen(true)
       return
@@ -355,6 +365,10 @@ export function UjatEducationDocumentFillModal({
           )}
         </div>
       </PFModal>
+      <PFRequiredMissingAlert
+        copy={requiredMissingAlert}
+        onConfirm={() => setRequiredMissingAlert(null)}
+      />
       <PFAlertModal
         open={alertOpen}
         title={alertTitle}

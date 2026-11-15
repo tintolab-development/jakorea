@@ -38,14 +38,14 @@
 }
 
 /*
- * 시안: 팝업 높이 878 (기존 908) — 고정 높이 대신 여백으로 맞춘다.
- * 상·하 padding 18/20 (admin-notice-form-modal-spec) + 첨부↔푸터 간격을 다른 블록과 같은 24로.
+ * 시안: 팝업 padding 24/30/34/30 (QA 2026-11-15 — 18/20이라 제목이 6px 위, 하단 버튼이 14px 아래였음).
+ * 입력 M(40)·첨부 행 86으로 줄어든 높이와 함께 1400×880에 맞는다.
  * 공통 셸(.content-modal.teal-header-modal.ant-modal .ant-modal-content)보다 구체성을 높인다.
  */
 .content-modal.teal-header-modal.ant-modal.notice-register-modal.teal-header-modal--large
   .ant-modal-content {
-  padding-top: 18px;
-  padding-bottom: 20px;
+  padding-top: 24px;
+  padding-bottom: 34px;
 }
 
 .content-modal.notice-register-modal.teal-header-modal--large .ant-modal-body {
@@ -175,8 +175,9 @@
   border-radius: var(--rt-radius, 8px);
 }
 
-/* 첨부 — DetailInfoForm 단일 행 */
+/* 첨부 — DetailInfoForm 단일 행 (시안: 라벨 칸 140×86) */
 .notice-register-modal__attachment-form.detail-info-form {
+  --detail-info-label-w: 140px;
   width: 100%;
   flex-shrink: 0;
 }
@@ -202,7 +203,7 @@
   .detail-info-form__field:has(.notice-register-modal__file-field)
   .detail-info-form__field-content {
   align-items: flex-start;
-  min-height: 88px;
+  min-height: 86px;
 }
 
 .notice-register-modal__attachment-form {
@@ -231,6 +232,7 @@
 .notice-register-modal__footer-actions-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  /* 시안: 취소 ↔ 등록·저장 8px */
+  gap: 8px;
   margin-left: auto;
 }

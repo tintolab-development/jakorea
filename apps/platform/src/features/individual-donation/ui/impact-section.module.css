@@ -113,6 +113,14 @@
   }
 }
 
+/* 시안(PC 1920): 후원 변화 카드 461, 간격 28 (3장 = 1439) */
+@media (--bp-pc-full-up) {
+  .viewport {
+    --carousel-gap: var(--spacing-28);
+    --slide-width: 461px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .track {
     transition: none;

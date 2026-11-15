@@ -28,6 +28,7 @@ alwaysApply: false
 | td 타이포 | 14px / **500** / 150% / center · `#3d3d3d` | 동일 |
 | th 배경 | `var(--BG-header)` (= `rgba(231,235,239,.6)` over `#fff`) — [table-th.mdc](./table-th.mdc) | 동일 |
 | 보더 | `1px solid var(--table-line)` (`#e0e0e0`) · 외곽 radius **8px** | 동일 |
+| 가로 스크롤바 (목록 셸) | 표 테두리 **밖** 하단 여백 — 테두리 ↔ 바 **16px** · 바 4px (시안 `6289:93622`). 레이아웃 높이 변동 없음(카드 하단 padding 안). 공유 CSS `--table-scroll-gutter-x` 블록이 `.filter-table-layout__table` 안 가로 스크롤 표에 자동 적용 — 화면 CSS로 재구현 금지. 제외: scroll.y · `--fluid` · 표 바로 아래 페이지네이션 | 동일 |
 | hover | 배경만 `var(--color-table-row-hover)` (`rgba(1,161,175,.06)`) | 동일 |
 | disabled | 시안 opacity 40% → `cms-data-table__row--disabled` 흰 오버레이 **60%** | 동일 |
 | 링크 셀 | `#0070e7` (`--Content-link`) 14/500 · 좌측 정렬 | 동일 |
@@ -71,4 +72,4 @@ alwaysApply: false
 | Admin | [table-implementation](../../../apps/admin/.cursor/rules/tables/table-implementation.mdc) |
 | CMS | [table-implementation](../../../apps/cms/.cursor/rules/tables/table-implementation.md) · [table-management](../../../apps/cms/.cursor/rules/tables/table-management.md) |
 
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-15

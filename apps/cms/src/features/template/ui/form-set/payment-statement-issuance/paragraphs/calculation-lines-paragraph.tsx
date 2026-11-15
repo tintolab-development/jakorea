@@ -16,6 +16,7 @@ export function CalculationLinesParagraph({ lines }: CalculationLinesParagraphPr
         formulaLabel={linesVm.formulaLabel}
         totalAmount={linesVm.totalAmount}
         hideInstitutionColumn={linesVm.hideInstitutionColumn}
+        columnPreset={linesVm.columnPreset}
       />
     </div>
   )

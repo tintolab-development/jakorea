@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
 import { CmsButton, showNotificationResendRequestCompletedAlert } from '@/shared/ui'
@@ -334,8 +335,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     applicationDetailId !== '' &&
     canResendApplicationResultNotification({
       approvalStatus: applicationApprovalStatus,
-      availableActions:
-        applicationDetailQuery.data?.availableActions ?? row.availableActions,
+      availableActions: applicationDetailQuery.data?.availableActions ?? row.availableActions,
     })
 
   /** 열람 해제 함수(아래 usePersonalInfoReveal)를 저장 콜백에서 동기 호출하기 위한 참조 */
@@ -968,11 +968,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   }
 
   if (canFetchApplicationDetail && applicationDetailQuery.isPending) {
-    return (
-      <div className="school-detail-fullpage-view" role="status">
-        기관 신청 상세 정보를 불러오는 중입니다.
-      </div>
-    )
+    return <FullscreenSpinner />
   }
 
   if (

@@ -30,7 +30,7 @@ export function NoticeListItemRow({ item, onClick }: NoticeListItemRowProps) {
         </PFText>
       </div>
 
-      <PFText as="span" typo="bd-md-rg" color="neutral-cool-500" className={styles.date}>
+      <PFText as="span" typo="bd-md-rg" color="neutral-cool-600" className={styles.date}>
         {item.publishedAtLabel}
       </PFText>
     </button>

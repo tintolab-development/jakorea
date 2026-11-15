@@ -88,7 +88,7 @@ export function useAgreementDocumentPdf({
     return getA4DocumentTitle(draft, headerTitle)
   }, [draft, headerTitle, paragraphBodyOptions?.documentPreviewClassName])
 
-  const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
+  const { pages, overflowParagraphIds, waitForPagesReady, measureLayer } = useA4ParagraphPages({
     allParagraphs: previewParagraphs,
     titleNumbering: draft.formSettings.titleNumbering,
     editorKind,
@@ -105,6 +105,7 @@ export function useAgreementDocumentPdf({
     setLoading(true)
     void (async () => {
       try {
+        await waitForPagesReady()
         const pageEls = collectFormDocumentPdfPageElements(root)
         await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(documentTitle))
       } catch (error) {
@@ -117,7 +118,7 @@ export function useAgreementDocumentPdf({
         setLoading(false)
       }
     })()
-  }, [documentTitle, loading, showAlert])
+  }, [documentTitle, loading, showAlert, waitForPagesReady])
 
   const hostNode = enabled ? (
     <>

@@ -20,6 +20,8 @@ export type CreateAddressRegionFilterFieldArgs = {
   allowClear?: boolean
   /** 기본 `FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` (235.5) */
   width?: number
+  /** 시/도·시/군/구 사이 gap(px). 기본 6 */
+  pairGapPx?: number
 }
 
 /** 기관 소재지 — 시/도·시/군/구 이중 셀렉트 */
@@ -39,6 +41,7 @@ export function createInstitutionAddressRegionFilterField(
       getSigunguOptions: getInstitutionSigunguSelectOptions,
       sidoPlaceholder: '시/도',
       sigunguPlaceholder: '시/군/구',
+      pairGapPx: args.pairGapPx,
     },
   }
 }

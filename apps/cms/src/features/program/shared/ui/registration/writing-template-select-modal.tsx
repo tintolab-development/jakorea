@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
@@ -176,17 +177,20 @@ export function WritingTemplateSelectModal({
               <CmsButton
                 type="button"
                 variant="default"
-                size="small" className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--preview"
+                size="small"
+                className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--preview"
                 onClick={event => {
                   event.stopPropagation()
                   void handlePreview(record)
-                }} >
+                }}
+              >
                 미리보기
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="small" className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--use"
+                size="small"
+                className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--use"
                 disabled={!canUse}
                 onClick={event => {
                   event.stopPropagation()
@@ -198,7 +202,8 @@ export function WritingTemplateSelectModal({
                     return
                   }
                   onUse(record)
-                }} >
+                }}
+              >
                 사용하기
               </CmsButton>
             </div>
@@ -249,9 +254,7 @@ export function WritingTemplateSelectModal({
           </div>
 
           {isFetching && !hasResults ? (
-            <div className="writing-template-select-modal__empty" role="status">
-              템플릿 목록을 불러오는 중입니다.
-            </div>
+            <FullscreenSpinner />
           ) : hasResults ? (
             <>
               <div className="writing-template-select-modal__table-section">

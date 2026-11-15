@@ -16,6 +16,14 @@
   margin: 0;
 }
 
+/* 시안 PC — `YYYY년 M월 정산 현황` 20 SemiBold (모바일은 bd-lg-sb 그대로) */
+@media (--bp-pc-up) {
+  .heading .headingTitle {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
+}
+
 .scroller {
   width: 100%;
   min-width: 0;
@@ -55,20 +63,28 @@
 }
 
 .colProgram {
-  width: 28%;
+  width: 26%;
   text-align: left;
 }
 
 .colOrg {
-  width: 18%;
+  width: 15%;
 }
 
 .colDate {
-  width: 34%;
+  width: 29%;
 }
 
 .colStatus {
-  width: 16%;
+  width: 15%;
+}
+
+.colAmount {
+  width: 15%;
+}
+
+.supersededAmount {
+  text-decoration: line-through;
 }
 
 .ellipsis {

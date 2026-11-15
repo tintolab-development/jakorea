@@ -17,6 +17,9 @@ import {
 import {
   expiresAtFromExpiresInSeconds,
   getLoginApiErrorMessage,
+  isLoginInvalidCredentialsApiError,
+  isLoginNetworkError,
+  LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
 import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/apply-auth-token-age-group'
@@ -44,6 +47,7 @@ import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
   NaverSocialLoginIcon,
+  PFAlertModal,
   PFButton,
   PFText,
   PFTextInput,
@@ -52,6 +56,7 @@ import illustPeopleUrl from '@/shared/assets/illustration/graphic-84-01.png'
 import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import styles from './page.module.css'
 import { resolveLoginRedirectTarget, sanitizeLoginRedirectPath } from '@/shared/lib/login-redirect'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
 
 const accountLinkItems: Array<{ label: string; href?: string }> = [
   { label: '이메일 찾기', href: '/auth/find-email' },
@@ -85,6 +90,7 @@ export function SignInPage() {
     return socialError
   })
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
+  const [networkErrorOpen, setNetworkErrorOpen] = useState(false)
   // 이 브라우저에서 최근 소셜 로그인에 성공한 수단 — 읽지 못하면 null(툴팁 없음)
   const [recentSocialProvider] = useState(readRecentSocialLoginProvider)
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
@@ -98,6 +104,10 @@ export function SignInPage() {
     setEmail(value)
     if (emailError) {
       setEmailError(null)
+    }
+    // 불일치 안내는 두 칸 한 쌍 — 한쪽을 고치면 함께 지운다
+    if (passwordError === LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.password) {
+      setPasswordError(null)
     }
     if (formError) {
       setFormError(null)
@@ -177,6 +187,16 @@ export function SignInPage() {
     } catch (error) {
       clearAuthTokens()
       setDevAuthLoggedIn(false)
+      if (isLoginNetworkError(error)) {
+        setNetworkErrorOpen(true)
+        return
+      }
+      // 시안 14474-43444 — 불일치는 하단 통합 문구 대신 두 칸 아래에 각각 안내 (BE가 어느 칸인지 구분하지 않음)
+      if (isLoginInvalidCredentialsApiError(error)) {
+        setEmailError(LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.email)
+        setPasswordError(LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.password)
+        return
+      }
       setFormError(
         getLoginApiErrorMessage(error, '로그인에 실패했어요. 이메일과 비밀번호를 확인해 주세요.')
       )
@@ -234,7 +254,7 @@ export function SignInPage() {
           color="gradient-primary-01"
           className={authPageCopyClass('title', authPageCopy.titleAfterMedia)}
         >
-          다시 만나서 반가워요.
+          다시 만나서 반가워요
         </PFText>
         <PFText
           as="p"
@@ -242,7 +262,7 @@ export function SignInPage() {
           color="primary-800"
           className={authPageCopyClass('description', authPageCopy.descriptionTight)}
         >
-          이메일과 비밀번호로 로그인 해주세요.
+          이메일과 비밀번호로 로그인해 주세요.
         </PFText>
       </div>
 
@@ -273,6 +293,7 @@ export function SignInPage() {
             onValueChange={next => {
               setPassword(next)
               if (passwordError) setPasswordError(null)
+              if (emailError === LOGIN_INVALID_CREDENTIALS_FIELD_MESSAGES.email) setEmailError(null)
               if (formError) setFormError(null)
             }}
             error={Boolean(passwordError)}
@@ -302,6 +323,7 @@ export function SignInPage() {
             <PFButton
               variant="text"
               size={isBelowPc ? 'small' : 'medium'}
+              className={styles.accountLinkButton}
               onClick={
                 item.href
                   ? () => {
@@ -322,7 +344,7 @@ export function SignInPage() {
       <div className={styles.socialSection}>
         <div className={styles.socialDivider}>
           <span className={styles.socialDividerLine} />
-          <PFText typo="caption-rg" color="neutral-cool-500">
+          <PFText typo="caption-rg" color="neutral-cool-500" className={styles.socialDividerLabel}>
             또는 소셜 로그인
           </PFText>
           <span className={styles.socialDividerLine} />
@@ -345,6 +367,12 @@ export function SignInPage() {
           ))}
         </div>
       </div>
+      <PFAlertModal
+        open={networkErrorOpen}
+        title={PLATFORM_ALERT_COPY.networkError.title}
+        description={PLATFORM_ALERT_COPY.networkError.description}
+        onConfirm={() => setNetworkErrorOpen(false)}
+      />
     </section>
   )
 }

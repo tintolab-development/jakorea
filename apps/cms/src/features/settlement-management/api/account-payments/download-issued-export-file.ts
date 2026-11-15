@@ -12,6 +12,7 @@ import {
   SETTLEMENT_FORM_DOWNLOAD_REASON,
   type SettlementFormExportKind,
 } from '@/features/settlement-management/api/account-payments/settlement-form-download'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 export async function downloadIssuedSettlementExportFile(input: {
   serverExport: SettlementExportResponse
@@ -39,18 +40,20 @@ export async function downloadIssuedSettlementExportFileOrReissue(input: {
   kind: SettlementFormExportKind
   password?: string
   onReissue: () => Promise<SettlementExportResponse | null>
-}): Promise<void> {
+}): Promise<boolean> {
   try {
     await downloadIssuedSettlementExportFile(input)
+    return true
   } catch (error) {
     if (!isSettlementExportAlreadyDownloadedError(error)) throw error
     const next = await input.onReissue()
-    if (next?.fileObjectId == null) return
+    if (next?.fileObjectId == null) return false
     await downloadIssuedSettlementExportFile({
       serverExport: next,
       kind: input.kind,
       password: input.password,
     })
+    return true
   }
 }
 
@@ -69,7 +72,7 @@ export function notifySettlementExportDownloadError(input: {
     return
   }
   cmsAlertModal.show({
-    title: '다운로드 불가',
+    title: networkAwareAlertTitle(input.error, '다운로드 불가'),
     content: getSettlementApiErrorMessage(input.error, input.fallback),
   })
 }

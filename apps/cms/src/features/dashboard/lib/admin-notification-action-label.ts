@@ -5,7 +5,10 @@
  */
 
 import type { Notification } from '@/features/dashboard/api/notification-service'
-import { hasAdminNotificationNavigation } from './admin-notification-navigation'
+import {
+  ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED_EVENT,
+  hasAdminNotificationNavigation,
+} from './admin-notification-navigation'
 
 const DEFAULT_ACTION_LABEL = '자세히 보기'
 
@@ -23,11 +26,19 @@ const LINK_TYPE_ACTION_LABELS: Readonly<Record<string, string>> = {
   INQUIRY: '문의 목록 보기',
 }
 
+/** 시안 「시스템 안내 팝업」 이벤트별 버튼 문구 — linkType 문구보다 우선 */
+const EVENT_TYPE_ACTION_LABELS: Readonly<Record<string, string>> = {
+  /** 시안 17149:68674 「[JA Korea] 관리자_강사비_정정_요청」 */
+  [ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED_EVENT]: '정정 요청 확인',
+}
+
 /** 이동 대상이 없으면 null (버튼 비노출) */
 export function resolveAdminNotificationActionLabel(
   notification: Pick<Notification, 'link' | 'target'>
 ): string | null {
   if (!hasAdminNotificationNavigation(notification)) return null
+  const eventType = notification.target?.eventType?.trim().toUpperCase()
+  if (eventType && EVENT_TYPE_ACTION_LABELS[eventType]) return EVENT_TYPE_ACTION_LABELS[eventType]
   const linkType = notification.target?.linkType?.trim().toUpperCase()
   if (linkType && LINK_TYPE_ACTION_LABELS[linkType]) return LINK_TYPE_ACTION_LABELS[linkType]
   return DEFAULT_ACTION_LABEL

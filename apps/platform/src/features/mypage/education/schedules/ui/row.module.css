@@ -82,3 +82,12 @@
     font-weight: 600;
   }
 }
+
+/* 시안(PC): 진행 상태 배지 높이 30 */
+@media (--bp-pc-up) {
+  .card .progressBadge {
+    height: 30px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}

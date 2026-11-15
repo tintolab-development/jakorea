@@ -145,6 +145,19 @@ assert.equal(
   '2026년 11월 6일(금) 15:00 ~ 15:10 사전교육',
 )
 
+// 시안: 시(hour)는 0을 채우지 않는다. UTC 00:00Z → 한국 9:00
+assert.equal(
+  formatInstructorEducationScheduleLine(
+    {
+      startAt: '2026-11-06T00:00:00.000Z',
+      endAt: '2026-11-06T02:00:00.000Z',
+      sessionNo: 1,
+    },
+    false,
+  ),
+  '2026년 11월 6일(금) 9:00 ~ 11:00 1회차',
+)
+
 // 일정형 복수 회차: 일정명 우선. 사전교육 canonical은 일정명보다 우선.
 assert.equal(
   formatAssignmentEducationUnitLabel(

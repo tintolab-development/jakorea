@@ -212,10 +212,17 @@
     min-width: 0;
     margin-left: 0;
     aspect-ratio: 948 / 560;
-    max-height: 550px;
+    max-height: 560px;
   }
 
   .imageFrame {
-    border-radius: 32px;
+    border-radius: 40px;
+  }
+}
+
+/* PC full · 1600~ — 시안 이미지 프레임 948×560 (재능기부 소개와 동일: 콘텐츠 1440 = 텍스트 460 + 간격 32 + 이미지 948) */
+@media (--bp-pc-full-up) {
+  .content {
+    padding-inline: 0;
   }
 }

@@ -351,7 +351,7 @@ export function JaGradeEvaluationModal({
             <div className="ja-grade-evaluation-modal__footer-inner">
               <CmsButton
                 type="button"
-                size="large" className="ja-grade-evaluation-modal__submit"
+                size="h52" className="ja-grade-evaluation-modal__submit"
                 adminAction="write"
                 disabled={
                   draft == null ||

@@ -161,7 +161,10 @@ export function UserDetailFullpageBasicTabContent({
           : INDIVIDUAL_CONSENT_CAPTION
         : consentPreset === 'school_teacher' || consentPreset === 'instructor_dual'
           ? INDIVIDUAL_CONSENT_CAPTION
-          : undefined
+          : /* 강사 상세(4427:53835, 관리자 등록 강사): 서면 동의 처리 안내 — 그 외는 기본 안내 유지 */
+            consentPreset === 'instructor_only' && shouldShowAdminRegisteredMemberDetailCaption(user)
+            ? INDIVIDUAL_ADMIN_REGISTERED_CONSENT_CAPTION
+            : undefined
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 
@@ -499,7 +502,12 @@ export function UserDetailFullpageBasicTabContent({
   return (
     <Space direction="vertical" size={32} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
-        <UserDetailAdminCommentSection user={userForAdminComment} />
+        <UserDetailAdminCommentSection
+          user={userForAdminComment}
+          instructorOrPermissionNotice={
+            mode === 'permission' || basicInfoEntrySource === 'instructor'
+          }
+        />
       ) : null}
       <UserBasicInfoSection
         user={user}
@@ -556,7 +564,12 @@ export function UserDetailFullpageBasicTabContent({
         />
       ) : null}
       {instructorResumeApplicantRow ? (
-        <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+        <InstructorResumeDetailForms
+          instructor={instructorResumeApplicantRow}
+          variant={
+            mode !== 'permission' && consentPreset === 'instructor_dual' ? 'teacher' : 'instructor'
+          }
+        />
       ) : null}
       {basicTab.showSchoolAffiliatedTeachers ? (
         <>

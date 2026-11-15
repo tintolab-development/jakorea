@@ -5,6 +5,9 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { customInstance } from '@/shared/api/orval-mutator'
+import { postEncryptedAdminFile } from '@/shared/lib/post-encrypted-admin-file'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
+import type { SettlementApplicationDocumentResponse } from '@/shared/api/generated/settlement/schemas'
 import type { ApiResponseIndividualSettlementReviewDecision } from '@/shared/api/generated/dashboard/schemas/apiResponseIndividualSettlementReviewDecision'
 import type { ApiResponseIndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/apiResponseIndividualSettlementReviewDetail'
 import type { IndividualSettlementReviewDecision } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDecision'
@@ -31,6 +34,35 @@ export function individualSettlementReviewApproveUrl(settlementApplicationId: nu
 
 export function individualSettlementReviewRejectUrl(settlementApplicationId: number): string {
   return `${individualSettlementReviewDetailUrl(settlementApplicationId)}/reject`
+}
+
+/** 영수증 정산 「JA KOREA 정산 신청서」 조회 — GET, ApiResponse 래퍼(포털과 다름) */
+export function individualSettlementApplicationDocumentUrl(settlementApplicationId: number): string {
+  return `${individualSettlementReviewDetailUrl(settlementApplicationId)}/application-document`
+}
+
+/** 영수증 정산 「JA KOREA 정산 신청서」 암호 PDF — POST { password }, 래퍼 없이 PDF 바이트 */
+export function individualSettlementApplicationDocumentDownloadUrl(
+  settlementApplicationId: number,
+  revisionNo?: number
+): string {
+  const base = `${individualSettlementApplicationDocumentUrl(settlementApplicationId)}/download`
+  return revisionNo != null ? `${base}?revisionNo=${revisionNo}` : base
+}
+
+/** 승인 건 서버 PDF 일괄 암호화 ZIP — 한 건이라도 범위 밖·미승인이면 서버가 요청 전체를 거부한다 */
+export const INDIVIDUAL_SETTLEMENT_DOCUMENT_BULK_DOWNLOAD_URL = `${INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL}/application-document/bulk-download`
+
+export async function bulkDownloadIndividualSettlementDocumentsRemote(body: {
+  settlementApplicationIds: number[]
+  password: string
+}): Promise<void> {
+  await postEncryptedAdminFile({
+    url: INDIVIDUAL_SETTLEMENT_DOCUMENT_BULK_DOWNLOAD_URL,
+    password: body.password,
+    extraBody: { settlementApplicationIds: body.settlementApplicationIds },
+    fallbackFileName: `[JA Korea] 정산 신청서_일괄_${formatAsiaSeoulYymmdd()}.zip`,
+  })
 }
 
 export function parseIndividualSettlementNumericId(
@@ -156,6 +188,42 @@ export async function fetchIndividualSettlementReviewDetailRemote(
     method: 'GET',
   })
   return unwrapIndividualSettlementReviewDetail(response)
+}
+
+/**
+ * 관리자 영수증 정산 신청서 문서(제출 스냅샷) — documentType=RECEIPT_SETTLEMENT.
+ * 관리자 GET은 ApiResponse.data로 감싸 온다(포털 GET은 래퍼 없음). attachments는 항상 [].
+ * SUBMITTED·APPROVED·REJECTED revision 조회 가능, 그 외 404.
+ */
+export async function fetchIndividualSettlementApplicationDocumentRemote(
+  settlementApplicationId: number,
+  revisionNo?: number
+): Promise<SettlementApplicationDocumentResponse> {
+  const response = await customInstance<unknown>({
+    url: individualSettlementApplicationDocumentUrl(settlementApplicationId),
+    method: 'GET',
+    ...(revisionNo != null ? { params: { revisionNo } } : {}),
+  })
+  return unwrapApiBody<SettlementApplicationDocumentResponse>(response)
+}
+
+/**
+ * 영수증 정산 신청서 암호 PDF 다운로드 — 승인(APPROVED) revision만 허용, 그 외 409
+ * SETTLEMENT_APPLICATION_DOCUMENT_NOT_APPROVED. 다운로드 로그는 BE가 남긴다.
+ */
+export async function downloadIndividualSettlementApplicationDocumentRemote(
+  settlementApplicationId: number,
+  options: { password: string; revisionNo?: number }
+): Promise<void> {
+  await postEncryptedAdminFile({
+    url: individualSettlementApplicationDocumentDownloadUrl(
+      settlementApplicationId,
+      options.revisionNo
+    ),
+    password: options.password,
+    // 서버 Content-Disposition(`[JA Korea] 정산 신청서_{성명}_{제출일}.pdf`)을 우선 쓴다. 헤더를 못 읽을 때만 사용.
+    fallbackFileName: `[JA Korea] 정산 신청서_${settlementApplicationId}_${formatAsiaSeoulYymmdd()}.pdf`,
+  })
 }
 
 export async function approveIndividualSettlementReviewRemote(input: {

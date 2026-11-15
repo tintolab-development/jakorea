@@ -66,7 +66,8 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
 
 const INSTITUTION_FIELDS: FilterFieldConfig[] = [
   searchField('기관명', '기관명을 입력해 주세요'),
-  createInstitutionAddressRegionFilterField(),
+  /** 시안 4427:30055: 시/도·시/군/구 각 126, gap 8 (열 260) — 프로그램 화면 공통 235.5와 별도 */
+  createInstitutionAddressRegionFilterField({ width: 260, pairGapPx: 8 }),
   dateRangeField('등록 시기'),
 ]
 

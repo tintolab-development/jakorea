@@ -504,6 +504,7 @@ export function UserDetailFullPageModal({
         onClose={onClose}
         title={title}
         loading={shell == null}
+        permissionRequest={permissionRole != null}
         headerTrailing={
           shell ? <DetailFullpageBreadcrumb items={headerBreadcrumbItems} /> : undefined
         }

@@ -59,3 +59,25 @@
   > td {
   color: rgba(61, 61, 61, 0.4) !important;
 }
+
+/** 시안 4427:46312: 본문 행 56 (공통 cms-data-table 52 !important보다 구체적으로) */
+.detail-fullpage-modal
+  .ant-table-wrapper.school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  height: 56px !important;
+  min-height: 56px !important;
+}
+
+/**
+ * 헤더 전체 선택 체크박스 — 행 체크박스와 같은 흰 배경·#E0E0E0 (작은화면 md 10-3 E)
+ * 교사 0명이면 antd 비활성 회색이 덮이므로 그때만 흰색으로 되돌린다(클릭 불가는 유지).
+ */
+.school-affiliated-teachers-section
+  .ant-table-thead
+  .ant-checkbox-disabled:not(.ant-checkbox-checked)
+  .ant-checkbox-inner {
+  background-color: var(--main-WT, #fff);
+  border-color: var(--table-line, #e0e0e0);
+}

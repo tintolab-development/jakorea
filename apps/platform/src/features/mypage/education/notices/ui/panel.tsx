@@ -297,11 +297,19 @@ export function EducationInProgressNoticePanel({
         )}
 
         <div className={styles.footer}>
-          <PFButton variant="text" onClick={() => setIsProgramInfoOpen(true)}>
+          <PFButton
+            variant="text"
+            className={styles.footerAction}
+            onClick={() => setIsProgramInfoOpen(true)}
+          >
             프로그램 정보
           </PFButton>
           <span className={styles.actionDivider} aria-hidden="true" />
-          <PFButton variant="text" onClick={() => setIsApplicationInfoOpen(true)}>
+          <PFButton
+            variant="text"
+            className={styles.footerAction}
+            onClick={() => setIsApplicationInfoOpen(true)}
+          >
             신청 정보
           </PFButton>
         </div>

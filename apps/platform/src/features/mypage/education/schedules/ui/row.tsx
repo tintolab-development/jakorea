@@ -99,7 +99,11 @@ export function EducationScheduleRow({
         <EducationSessionCardHeader
           mobileStack
           badge={
-            <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
+            <PFStateBadge
+              size="small"
+              tone={progress === 'completed' ? 'success' : 'progress'}
+              className={styles.progressBadge}
+            >
               {educationScheduleProgressLabel(progress)}
             </PFStateBadge>
           }

@@ -28,6 +28,7 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { Program } from '@/types/domain'
 import {
   FormCertificatePreview,
+  FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_CLASS,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
 } from '@/pages/templates/form-certificate-preview'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
@@ -128,8 +129,20 @@ export function ActivityCertificateIssuancePreviewModal({
     runtimeStringValues,
     runtimeStringOverrideKeys: CERTIFICATE_PARTICIPANT_INFO_OVERRIDE_KEYS,
   })
-  const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
+  const { interactive: certificateInteractiveProps, pdfExport: certificatePdfExportProps } =
     useFormCertificatePreviewProps(modalState, pdfIssueDate, pdfSerialNumber)
+  // 발급 미리보기는 읽기 전용 — 양식 편집기의 선택 테두리·민트 점(activeFieldName·onRegionClick)을 그리지 않고,
+  // PDF 캡처와 같은 표시 클래스(--pdf-export)를 써서 미리보기와 다운로드 PDF 모양을 맞춘다.
+  // 고유번호는 미리보기에서 플레이스홀더, PDF에서 발급 번호(certificatePdfExportProps)를 쓴다.
+  const certificatePreviewProps = useMemo(
+    () => ({
+      ...certificateInteractiveProps,
+      activeFieldName: null,
+      onRegionClick: undefined,
+      className: FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_CLASS,
+    }),
+    [certificateInteractiveProps]
+  )
 
   const fileName = useMemo(
     () => buildActivityCertificateFileName(unmaskedInstructor.instructorName),

@@ -25,9 +25,16 @@
   width: 100%;
 }
 
+/* 학교 검색은 한 줄(nowrap)에서 남는 폭 228을 채운다(시안 4718:38736). 대학교 검색은 줄바꿈 허용 */
 .school-search__keyword-wrap {
   flex: 1 1 200px;
   min-width: 160px;
+}
+
+/** 시안: 검색 입력 돋보기 16×16 (트리거 입력·모달 검색어 입력) */
+.school-search__trigger-wrap .cms-field__icon,
+.school-search__keyword-wrap .cms-field__icon {
+  --cms-icon-size: 16px;
 }
 
 .school-search__search-btn {
@@ -79,8 +86,9 @@
   align-self: stretch;
   box-sizing: border-box;
   border-radius: 8px;
-  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
-  background: rgba(61, 61, 61, 0.04);
+  /* 시안 14661:55225: 흰 배경 · stroke #E0E0E0 */
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   text-align: center;
   font-family: Pretendard, sans-serif;
@@ -105,6 +113,8 @@
 .school-search__result-empty-description {
   font-size: 14px;
   font-weight: 400;
+  /* 부모 16px의 150%(24px)가 상속되지 않게 14px 기준 150%(21px) */
+  line-height: 150%;
 }
 
 .school-search__results--no-results {
@@ -133,14 +143,22 @@
   box-sizing: border-box;
 }
 
-/** 시안: 「선택」 100×32 */
-.school-search__select-btn {
+/** 시안 14661:55224: 헤더 행 44 (th padding 4/12) */
+.school-search__table.cms-data-table
+  .ant-table-thead
+  .ant-table-cell:not(.ant-table-cell-scrollbar):not(.ant-table-selection-column) {
+  height: 44px !important;
+  padding: var(--Spacing-4, 4px) var(--Spacing-12, 12px) !important;
+}
+
+/** 시안: 「선택」 100×32 — 공통 h32 `min-width: 80px`보다 구체적으로 */
+.school-search__table .cms-button.ant-btn.school-search__select-btn {
   width: 100px;
   min-width: 100px;
 }
 
+/** 시안: 표 ↔ 페이지 이동 16 (결과 영역 gap 16만 사용) */
 .school-search__pagination {
   display: flex;
   justify-content: center;
-  padding-top: 8px;
 }

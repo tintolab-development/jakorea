@@ -44,7 +44,7 @@ export const memberTypeOptions: MemberTypeOption[] = [
     type: 'general',
     title: '일반 회원',
     primaryDescription: 'JA Korea 프로그램과\n소식을 확인하고 참여할 수\n있어요.',
-    secondaryDescription: '학생, 청소년, 일반 참여자라면\n일반회원으로 가입해 주세요.',
+    secondaryDescription: '학생, 청소년, 일반 참여자라면\n일반 회원으로 가입해 주세요.',
     imageUrl: illustSparkleUrl,
   },
   {
@@ -95,13 +95,13 @@ export const guardianAgreementItems: GuardianAgreementItem[] = [
   {
     key: 'guardianLegal',
     required: true,
-    label: '만 14세 미만 아동의 개인정보 수집 및 이용에 대한 법정대리인 동의',
+    label: '만 14세 미만 아동 회원가입 및 개인정보 수집·이용에 대한 법정대리인 동의',
   },
   { key: 'marketing', required: false, label: '마케팅 정보 수신 동의' },
   {
     key: 'portrait',
     required: false,
-    label: '초상권 수집·이용 동의 항목',
+    label: '초상권 수집·이용 동의',
     guide: '* 미동의 시 프로그램 참여가 불가능해요.',
   },
 ]

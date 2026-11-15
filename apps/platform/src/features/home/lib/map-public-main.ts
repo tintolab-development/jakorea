@@ -86,9 +86,7 @@ function normalizeBottomText(value: string | undefined, fallback: string | null)
 function formatPublishedAtLabel(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${date.getFullYear()}년 ${month}월 ${day}일`
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
 }
 
 function mapFeaturedStory(

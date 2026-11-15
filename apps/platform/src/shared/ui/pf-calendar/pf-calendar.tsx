@@ -361,7 +361,7 @@ export function PFCalendar({
                           </span>
                         ) : null}
                         {overflow > 0 ? (
-                          <span className={styles.overflowLabel}>외 {overflow}개</span>
+                          <span className={styles.overflowLabel}>{`외 ${overflow}개`}</span>
                         ) : null}
                       </button>
 

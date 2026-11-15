@@ -120,7 +120,10 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  border: 1px solid var(--table-line, #e0e0e0);
+  /* 시안 stroke Inside — border는 높이에 +2가 더해져 결과 1~3건 팝업이 6~8px 커지므로 outline으로 그린다 */
+  border: 0;
+  outline: 1px solid var(--table-line, #e0e0e0);
+  outline-offset: -1px;
   /* 시안: radius 12 */
   border-radius: var(--Radius-12, 12px);
   background: var(--main-WT, #fff);
@@ -128,11 +131,12 @@
 
 .address-search__result-card-item {
   margin: 0;
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  /* 행 구분선은 행 높이(시안 111) 안에 — inset 그림자 */
+  box-shadow: inset 0 -1px 0 var(--table-line, #e0e0e0);
 }
 
 .address-search__result-card-item:last-child {
-  border-bottom: none;
+  box-shadow: none;
 }
 
 .address-search__result-card-body {
@@ -422,9 +426,9 @@
 
 /*
  * suggest-list: 시안 14661:55220 — 7행(316) 전부 노출.
- * 목록은 셸 하단 padding(34) 영역까지 내려온다(목록 하단 ≈ 셸 상단 443 < 469).
+ * 목록은 셸 하단 padding(34) 영역까지 내려온다(목록 하단 ≈ 셸 상단 443 < 463).
  * 검색 전 상태에서만 본문 클리핑을 풀어 목록이 하단 padding 위에서 잘리지 않게 한다.
- * (셸 `.ant-modal-content`의 overflow hidden은 유지 — 469 밖으로는 나가지 않음)
+ * (셸 `.ant-modal-content`의 overflow hidden은 유지 — 463 밖으로는 나가지 않음)
  */
 .address-search-modal .address-search__suggest-list {
   max-height: var(--address-search-suggest-max-10);
@@ -465,6 +469,7 @@
 
 .address-search-modal .address-search__results--queried .address-search__pagination {
   flex-shrink: 0;
+  padding-top: 0;
   padding-bottom: 34px;
 }
 
@@ -507,12 +512,12 @@
   padding-bottom: 0;
 }
 
-/* 1) 기본(검색 전) 2) 검색 버튼 전 미리보기 → 높이 469 고정 */
+/* 1) 기본(검색 전) 2) 검색 버튼 전 미리보기 → 높이 463 고정 (시안 1257:9164) */
 .address-search-modal--compact:not(.address-search-modal--show-results).content-modal.ant-modal
   .ant-modal-content {
-  height: 469px;
-  min-height: 469px;
-  max-height: 469px;
+  height: 463px;
+  min-height: 463px;
+  max-height: 463px;
 }
 
 /*

@@ -105,11 +105,7 @@ export function shouldBlockInstructorApprovalWithoutAssignments(params: {
   assignmentCount: number
   skipLectureAssign: boolean
 }): boolean {
-  return (
-    params.useInstructorAssignFlow &&
-    params.assignmentCount === 0 &&
-    !params.skipLectureAssign
-  )
+  return params.useInstructorAssignFlow && params.assignmentCount === 0 && !params.skipLectureAssign
 }
 
 /** skip 시 일정은 이후 배정하므로, 강사비 policy 검증만 통과할 수 있게 1로 둔다. */
@@ -156,7 +152,7 @@ function resolveAvailableScheduleSlotsEmptyText(params: {
   submittedAt?: string | null
   instructorSubmittedScheduleHint: boolean
 }): string {
-  if (params.loading) return '배정 가능한 일정을 불러오는 중입니다.'
+  if (params.loading) return ''
   if (params.error) return '배정 가능한 일정을 불러오지 못했습니다. 다시 시도해 주세요.'
   const submitted =
     Boolean(params.submittedAt?.trim()) ||
@@ -386,16 +382,21 @@ export function useInstructorLectureAssignModal(params: {
 
   const canConfirm = assignedItems.length > 0
 
-  const organizationSlotsEmptyText =
+  const organizationSlotsLoading =
     !isIndividual && organizationRemoteEnabled && organizationApplicationsQuery.isPending
-      ? '배정 가능한 기관·일정을 불러오는 중입니다.'
-      : '이 날짜에 배정 가능한 기관이 없습니다.'
+  const organizationSlotsEmptyText = organizationSlotsLoading
+    ? ''
+    : '이 날짜에 배정 가능한 기관이 없습니다.'
 
   const slotsEmptyText = useSlotListLayout
     ? useAvailableScheduleSlotsUi
       ? scheduleSlotsEmptyText
       : '등록된 교육 일정이 없습니다.'
     : organizationSlotsEmptyText
+  /** 빈 목록 자리에 문구 대신 전체 화면 스피너를 띄울지 */
+  const slotsLoading = useSlotListLayout
+    ? useAvailableScheduleSlotsUi && detailSlotsLoading
+    : organizationSlotsLoading
 
   return {
     variant,
@@ -413,6 +414,7 @@ export function useInstructorLectureAssignModal(params: {
     detailSlotsError,
     scheduleSlotsEmptyText,
     slotsEmptyText,
+    slotsLoading,
     showNoApprovedOrganizationBanner,
     organizationSlotsEmptyText,
     preferredDateKeys,

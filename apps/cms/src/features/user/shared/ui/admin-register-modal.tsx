@@ -258,6 +258,7 @@ export function AdminRegisterModal({
       title="관리자 신규 등록"
       width={1200}
       className="admin-register-modal"
+      titleBodyGap="section"
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={handleClose}>
@@ -288,23 +289,27 @@ export function AdminRegisterModal({
             title="기본 정보"
             mode="edit"
             className="admin-register-modal__section admin-register-modal__section--basic"
+            headerNote={
+              /* 시안 4427:78084: 필수 표시는 섹션 제목 뒤 한 번 — 라벨마다 붙이지 않는다 */
+              <span className="admin-register-modal__title-required" aria-hidden>
+                *
+              </span>
+            }
           >
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="성명"
-                required
-                labelWidth={200}
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="name" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="한글 성명" inputSize="small" width="100%" />
+                    <CmsInput placeholder="성명" inputSize="small" width={200} />
                   </Form.Item>
                 }
               />
               <DetailInfoForm.Field
                 label="성별 및 생년월일"
-                required
-                labelWidth={200}
+                labelWidth={180}
                 view="-"
                 edit={
                   <span className="detail-info-form-inputs-wrapper-no-gap">
@@ -314,7 +319,7 @@ export function AdminRegisterModal({
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item
                       name="birthDate"
-                      style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
+                      style={FORM_ITEM_STYLE}
                       trigger="onValueChange"
                       getValueFromEvent={(value: string) => value}
                     >
@@ -322,7 +327,7 @@ export function AdminRegisterModal({
                         placeholder="생년월일 8자리"
                         maxLength={10}
                         inputSize="small"
-                        width="100%"
+                        width={200}
                       />
                     </Form.Item>
                   </span>
@@ -333,23 +338,21 @@ export function AdminRegisterModal({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="연락처"
-                required
-                labelWidth={200}
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                    <CmsPhoneInput placeholder="연락처" inputSize="small" width="100%" />
+                    <CmsPhoneInput placeholder="연락처" inputSize="small" width={200} />
                   </Form.Item>
                 }
               />
               <DetailInfoForm.Field
                 label="이메일"
-                required
-                labelWidth={200}
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="email" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="이메일" inputSize="small" width="100%" />
+                    <CmsInput placeholder="이메일" inputSize="small" width={200} />
                   </Form.Item>
                 }
               />
@@ -358,8 +361,7 @@ export function AdminRegisterModal({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="권한 유형"
-                required
-                labelWidth={200}
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="permissionType" style={FORM_ITEM_STYLE}>
@@ -385,9 +387,9 @@ export function AdminRegisterModal({
           >
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
-                label="서비스 이용약관"
+                label="서비스 이용약관 동의"
                 required
-                labelWidth={220}
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="consentTermsOfService" noStyle>
@@ -398,7 +400,7 @@ export function AdminRegisterModal({
               <DetailInfoForm.Field
                 label="개인정보 수집·이용 동의"
                 required
-                labelWidth={220}
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="consentPersonalInfo" noStyle>
@@ -410,7 +412,7 @@ export function AdminRegisterModal({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="마케팅 정보 수신 동의"
-                labelWidth={220}
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="consentMarketing" noStyle>
@@ -420,7 +422,8 @@ export function AdminRegisterModal({
               />
               <DetailInfoForm.Field
                 label="2단계 인증 설정 동의"
-                labelWidth={220}
+                required
+                labelWidth={180}
                 view="-"
                 edit={
                   <Form.Item name="consentMfaSetup" noStyle>

@@ -1,3 +1,5 @@
+import { waitForCaptureFonts } from '@/shared/utils/capture-font-ready'
+
 function loadImage(src: string): Promise<void> {
   return new Promise(resolve => {
     const img = new Image()
@@ -13,7 +15,7 @@ function extractCssBackgroundImageUrl(element: HTMLElement): string | null {
   return match?.[1] ?? null
 }
 
-/** html2canvas 캡처 전 — 레이아웃 커밋·이미지·배경 로드 대기 */
+/** html2canvas 캡처 전 — 레이아웃 커밋·웹폰트·이미지·배경 로드 대기 */
 export async function waitForCertificatePreviewCaptureReady(
   root: HTMLElement | null
 ): Promise<void> {
@@ -24,6 +26,8 @@ export async function waitForCertificatePreviewCaptureReady(
       requestAnimationFrame(() => resolve())
     })
   })
+
+  await waitForCaptureFonts(root)
 
   const bgUrl = extractCssBackgroundImageUrl(root)
   const imageWaits = [

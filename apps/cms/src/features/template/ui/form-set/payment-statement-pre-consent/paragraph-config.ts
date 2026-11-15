@@ -33,3 +33,33 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS = {
   /** A4 미리보기 전용 스코프 — 작성 화면 대리동의 카드는 유지 */
   documentPreviewClassName: PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME,
 } satisfies RenderFormParagraphBodyOptions
+
+/**
+ * 템플릿 관리 작성 화면 전용 — 시안 5767:42072·16046:109928.
+ * 대리 확인 2단 카드(회원 대리 동의용) 대신 문구 카드·회색 날짜·서명·「JA KOREA 귀하」 카드를 따로 보인다.
+ * 우측 「커스텀 필드」 목록은 그대로 날짜·서명·귀하를 뺀다(`PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS`).
+ */
+const {
+  agreementAdminProxyConfirm: _proxyConfirm,
+  hiddenParagraphIds: _proxyHiddenIds,
+  ...sheetLayoutBaseOptions
+} = PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
+
+/**
+ * 템플릿 관리 시안 5767:42072 「지급 목적」 문구.
+ * 회원 작성·발급 서식은 업무 상수 `PAYMENT_STATEMENT_DEFAULT_PURPOSE`를 그대로 쓴다.
+ */
+export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PAYMENT_PURPOSE =
+  '강사비 및 교통비 등 실비 지급'
+
+export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS = {
+  ...sheetLayoutBaseOptions,
+  paymentStatementBasicInfoValues: {
+    ...sheetLayoutBaseOptions.paymentStatementBasicInfoValues,
+    paymentPurpose: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PAYMENT_PURPOSE,
+  },
+  agreementConfirmSheetLayout: true,
+} satisfies RenderFormParagraphBodyOptions
+
+export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS: ReadonlySet<string> =
+  PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS.hiddenParagraphIds

@@ -18,7 +18,7 @@ export type CareerPostingAttachment = {
 export type CareerPostingDetail = CareerJobListItem & {
   content: string
   contentFormat: 'html'
-  /** publishedOn 날짜, 없으면 publishedAt. 시각이 있으면 `2026년 01월 15일 오후 3:00` */
+  /** publishedOn 날짜, 없으면 publishedAt. 시각이 있으면 `2026년 1월 15일 오후 3:00` */
   publishedAtDetailLabel: string
   /** recruitStart·recruitEnd가 둘 다 있을 때만. CTA: `2026년 5월 15일 ~ 6월 15일` */
   recruitPeriodLabel: string

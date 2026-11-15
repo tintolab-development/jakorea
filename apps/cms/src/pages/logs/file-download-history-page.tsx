@@ -24,6 +24,7 @@ import type { DownloadLog } from '@/types/download-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
+import '@/pages/logs/logs-history-page.css'
 
 const FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X = 1200
 
@@ -134,6 +135,7 @@ export default function FileDownloadHistoryPage() {
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
+      className="logs-history-page"
       bordered={false}
       fields={fileDownloadHistoryFilterFields}
       filters={{

@@ -79,7 +79,11 @@ import {
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
-import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import {
+  applySettlementPolicyToCommonInfo,
+  mapSettlementDeductionTypeToLabel,
+} from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { toOperationCalendarDate } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
@@ -861,7 +865,17 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     }),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount ?? 0,
     ...mapListParticipantRecruitment(dto),
-    participatingSchoolCount: dto.organizationApplicationCount ?? 0,
+    // 최종 파견 학교 수 — 기관 확정 기준 `ujatConfirmedSchoolCount` 우선, 구버전 응답이면 승인 기준으로 대체
+    participatingSchoolCount:
+      dto.ujatConfirmedSchoolCount ??
+      dto.participatingSchoolCount ??
+      dto.participatingOrganizationCount ??
+      0,
+    // 상·하반기 봉사자 정원(null = 미입력)과 모집된 인원(최종 합격) — 등록·수정용 ujat*VolunteerCount와 별개
+    ujatFirstHalfVolunteerCapacity: dto.ujatFirstHalfVolunteerCapacity ?? null,
+    ujatSecondHalfVolunteerCapacity: dto.ujatSecondHalfVolunteerCapacity ?? null,
+    ujatFirstHalfVolunteerSelectedCount: dto.ujatFirstHalfVolunteerSelectedCount ?? 0,
+    ujatSecondHalfVolunteerSelectedCount: dto.ujatSecondHalfVolunteerSelectedCount ?? 0,
     instructors: instructorCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
@@ -935,9 +949,15 @@ export function fromDetail(
           : {}),
       }
     : namedCommonInfo
+  // 공제 항목은 BE가 계산한 settlementPolicy.deductionType이 정본이다. null이면 「해당없음」.
+  const policyDeductionItems = dto.settlementPolicy
+    ? mapSettlementDeductionTypeToLabel(dto.settlementPolicy.deductionType) ??
+      PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+    : undefined
   const generalCommonInfo = generalCommonInfoBase
     ? {
         ...generalCommonInfoBase,
+        ...(policyDeductionItems ? { deductionItems: policyDeductionItems } : {}),
         kpi: responseKpi as GeneralProgramCommonInfoExtension['kpi'],
         participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
           generalCommonInfoBase.participantRecruitmentInfo,
@@ -945,6 +965,7 @@ export function fromDetail(
         ),
       }
     : {
+      ...(policyDeductionItems ? { deductionItems: policyDeductionItems } : {}),
       participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
         undefined,
         dto

@@ -19,7 +19,7 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
   const openAgreementKey = terms.openType ? termsViewToAgreementKey(terms.openType) : null
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title={
           <>
@@ -65,7 +65,12 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
 
           <div className={styles.agreementList}>
             {agreement.items.map(item => (
-              <div className={styles.agreementItem} key={item.key}>
+              <div
+                className={[styles.agreementItem, item.guide ? styles.agreementItemWithGuide : '']
+                  .filter(Boolean)
+                  .join(' ')}
+                key={item.key}
+              >
                 <PFToggle
                   variant="check-small"
                   checked={agreement.state[item.key]}
@@ -80,9 +85,17 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
                     >
                       {item.required ? '필수' : '선택'}
                     </PFText>
-                    <PFText typo="bd-md-md" color="black">
-                      {item.label}
-                    </PFText>
+                    {/* 미동의 안내는 시안처럼 약관명 바로 아래(4px)에 약관명과 같은 시작점으로 둔다 */}
+                    <span className={styles.agreementLabel}>
+                      <PFText typo="bd-md-md" color="black">
+                        {item.label}
+                      </PFText>
+                      {item.guide ? (
+                        <PFText typo="caption-rg" color="error">
+                          {item.guide}
+                        </PFText>
+                      ) : null}
+                    </span>
                   </span>
                 </PFToggle>
                 <button
@@ -100,11 +113,6 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
                     보기
                   </PFText>
                 </button>
-                {item.guide ? (
-                  <PFText as="p" typo="caption-rg" color="error" className={styles.agreementGuide}>
-                    {item.guide}
-                  </PFText>
-                ) : null}
               </div>
             ))}
           </div>

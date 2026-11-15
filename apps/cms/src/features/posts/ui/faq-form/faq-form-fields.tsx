@@ -33,7 +33,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
             placeholder="카테고리 선택"
             options={registerOptions}
             width={260}
-            inputSize="large"
+            inputSize="medium"
             withAllOption={false}
             allowClear={false}
           />
@@ -45,7 +45,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           <CmsRadioGroup
             label="공개 여부"
             required
-            size="large"
+            size="medium"
             options={[
               { label: '공개', value: 'public' },
               { label: '비공개', value: 'private' },
@@ -61,7 +61,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           label="제목 (질문)"
           required
           placeholder="제목을 입력해 주세요"
-          inputSize="large"
+          inputSize="medium"
           width="100%"
           maxLength={500}
         />
@@ -74,7 +74,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           className="faq-form-modal__section faq-form-modal__answer"
           label="내용 (답변)"
           required
-          inputSize="large"
+          inputSize="medium"
           width="100%"
           rows={8}
           placeholder="내용을 입력해 주세요"

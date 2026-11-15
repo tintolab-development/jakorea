@@ -294,7 +294,7 @@ assert.ok(listed)
 assert.equal(listed.id, '186012')
 assert.equal(listed.recruitmentStatus, 'recruiting')
 assert.equal(listed.educationTargetLabel, '대학(원)생')
-assert.equal(listed.recruitmentPeriodLabel, '2026년 9월 17일(목) ~ 2026년 9월 18일(금)')
+assert.equal(listed.recruitmentPeriodLabel, '2026년 9월 17일 ~ 9월 18일')
 
 const recruitingAlias = mapPortalProgramListItem({
   programId: 3,

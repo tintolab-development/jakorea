@@ -20,7 +20,7 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
   const openAgreementKey = terms.openType ? termsViewToGuardianAgreementKey(terms.openType) : null
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title={'보호자님의 동의가 완료되면\n가입을 계속할 수 있어요.'}
         description="필수 항목인 서비스 이용과 개인정보 동의 내용을 확인해 주세요."
@@ -60,7 +60,12 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
 
           <div className={styles.agreementList}>
             {agreement.items.map(item => (
-              <div className={styles.agreementItem} key={item.key}>
+              <div
+                className={[styles.agreementItem, item.guide ? styles.agreementItemWithGuide : '']
+                  .filter(Boolean)
+                  .join(' ')}
+                key={item.key}
+              >
                 <PFToggle
                   variant="check-small"
                   checked={agreement.state[item.key]}
@@ -75,9 +80,17 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
                     >
                       {item.required ? '필수' : '선택'}
                     </PFText>
-                    <PFText typo="bd-md-md" color="black">
-                      {item.label}
-                    </PFText>
+                    {/* 미동의 안내는 시안처럼 약관명 바로 아래(4px)에 약관명과 같은 시작점으로 둔다 */}
+                    <span className={styles.agreementLabel}>
+                      <PFText typo="bd-md-md" color="black">
+                        {item.label}
+                      </PFText>
+                      {item.guide ? (
+                        <PFText typo="caption-rg" color="error">
+                          {item.guide}
+                        </PFText>
+                      ) : null}
+                    </span>
                   </span>
                 </PFToggle>
                 <button
@@ -95,11 +108,6 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
                     보기
                   </PFText>
                 </button>
-                {item.guide ? (
-                  <PFText as="p" typo="caption-rg" color="error" className={styles.agreementGuide}>
-                    {item.guide}
-                  </PFText>
-                ) : null}
               </div>
             ))}
           </div>

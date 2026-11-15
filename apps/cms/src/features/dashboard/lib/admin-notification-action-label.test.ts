@@ -30,4 +30,22 @@ describe('resolveAdminNotificationActionLabel', () => {
       '문의 목록 보기'
     )
   })
+
+  it('강사비 정정 요청은 시안대로 「정정 요청 확인」, 다른 정산 알림은 기존 문구', () => {
+    expect(
+      resolveAdminNotificationActionLabel({
+        target: {
+          eventType: 'ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED',
+          linkType: 'SETTLEMENT',
+          linkId: '5',
+          programId: '10',
+        },
+      })
+    ).toBe('정정 요청 확인')
+    expect(
+      resolveAdminNotificationActionLabel({
+        target: { eventType: 'ADMIN_PAYMENT_STATEMENT_CONFIRMED', linkType: 'SETTLEMENT', linkId: '5', programId: '10' },
+      })
+    ).toBe('정산 보기')
+  })
 })

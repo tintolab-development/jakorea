@@ -90,7 +90,7 @@ export function MypageVolunteerPage() {
         value={params.tab}
         onChange={handleTabChange}
         variant="pill"
-        size="large"
+        size="medium"
         ariaLabel="봉사현황 탭"
       />
 

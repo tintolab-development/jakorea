@@ -70,7 +70,7 @@ export const TALENT_STORIES: readonly StoryContent[] = [
   {
     id: 'im_minjae',
     layout: 'textFirst',
-    titleLines: ['받은 기회를', ' 다음 세대에게 돌려주는 일'],
+    titleLines: ['받은 기회를', ' 다음 세대에게 들려주는 일'],
     descriptionLines: [
       '14년 전 JA에서 얻은 도전의 경험은 지금의 진로를 선택하는 데 큰 힘이 되었습니다. 이제는 멘토와 심사위원으로 돌아와 제가 받았던 자극과 응원을 후배들에게 전할 수 있어 뜻깊습니다.',
     ],

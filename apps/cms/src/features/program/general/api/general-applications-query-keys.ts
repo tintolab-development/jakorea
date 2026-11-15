@@ -138,6 +138,14 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'organization-merge-groups', programId] as const,
   studentRoster: (organizationApplicationId: string) =>
     [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
+  /** 학생 명단 「강의 출석 내역」 열 — 회차(분모)·회차별 출결 원본 */
+  studentLectureAttendanceSource: (programId: string, organizationApplicationId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'student-lecture-attendance-source',
+      programId,
+      organizationApplicationId,
+    ] as const,
   instructorAssignments: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
   instructorAssignmentCalendar: (programId: string, instructorMemberId: string) =>

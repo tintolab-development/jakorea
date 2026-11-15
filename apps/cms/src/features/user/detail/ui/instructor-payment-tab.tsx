@@ -70,6 +70,7 @@ import {
   ButtonListIcon,
 } from '@/shared/ui/icons/ButtonIcons'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 const SETTLEMENT_STATUS_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
   label: option.label,
@@ -284,7 +285,7 @@ export function InstructorPaymentTab({
         } catch (error) {
           if (!isFileDownloadPasswordApiError(error)) {
             showAlert({
-              title: '안내',
+              title: networkAwareAlertTitle(error, '안내'),
               content: getSettlementApiErrorMessage(error, '지급조서 일괄 발급에 실패했습니다.'),
             })
           }
@@ -306,8 +307,9 @@ export function InstructorPaymentTab({
         align: 'center',
         width: TABLE_COLUMN_WIDTHS.index,
       },
-      { title: '프로그램명', dataIndex: 'programName', key: 'programName', minWidth: 260 },
-      { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName', minWidth: 360 },
+      // 시안 4427:72292: 체크 60 · No. 80 · 프로그램명 496 · 참여 기관명 180 · 교육 진행 일자 250 · 나머지 160 (합 1546)
+      { title: '프로그램명', dataIndex: 'programName', key: 'programName', minWidth: 496 },
+      { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName', minWidth: 180 },
       {
         title: '교육 진행 일자',
         dataIndex: 'lectureDateDisplay',
@@ -319,7 +321,7 @@ export function InstructorPaymentTab({
         dataIndex: 'status',
         key: 'status',
         align: 'center',
-        minWidth: 180,
+        minWidth: 160,
         render: (status: InstructorSettlementListRow['status']) => (
           <div className="instructor-payment-tab__settlement-status-cell">
             <InstructorSettlementStatusText status={status} />
@@ -437,14 +439,14 @@ export function InstructorPaymentTab({
               <Button
                 type="text"
                 size="small"
-                icon={<ButtonLeftIcon style={{ display: 'block', width: 20, height: 20 }} />}
+                icon={<ButtonLeftIcon style={{ display: 'block', width: 24, height: 24 }} />}
                 className="calendar-nav-btn"
                 onClick={() => setCurrentMonth(prev => prev.subtract(1, 'month'))}
               />
               <Button
                 type="text"
                 size="small"
-                icon={<ButtonRightIcon style={{ display: 'block', width: 20, height: 20 }} />}
+                icon={<ButtonRightIcon style={{ display: 'block', width: 24, height: 24 }} />}
                 className="calendar-nav-btn"
                 onClick={() => setCurrentMonth(prev => prev.add(1, 'month'))}
               />

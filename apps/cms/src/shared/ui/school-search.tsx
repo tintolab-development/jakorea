@@ -71,6 +71,33 @@ function careerNetSch1ForLevel(level: string): string | undefined {
   return undefined
 }
 
+/**
+ * 학교급 미선택 시 허용 학교급 중 해당 출처가 있으면 함께 검색한다.
+ * (QA: 검색어를 제외한 학교급·시도·시군구는 선택하지 않아도 검색 가능)
+ */
+function resolveSearchSources(
+  level: string,
+  allowedLevels: readonly SchoolLevel[]
+): { neis: boolean; careerNet: boolean } {
+  if (level) {
+    return { neis: isK12Level(level), careerNet: isHigherEdLevel(level) }
+  }
+  return {
+    neis: allowedLevels.some(isK12Level),
+    careerNet: allowedLevels.some(isHigherEdLevel),
+  }
+}
+
+/** 학교급 미선택 시 허용 대학 학교급이 1개면 그 sch1, 아니면 전체 */
+function careerNetSch1ForSearch(
+  level: string,
+  allowedLevels: readonly SchoolLevel[]
+): string | undefined {
+  if (level) return careerNetSch1ForLevel(level)
+  const higherEdLevels = allowedLevels.filter(isHigherEdLevel)
+  return higherEdLevels.length === 1 ? careerNetSch1ForLevel(higherEdLevels[0]) : undefined
+}
+
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -90,17 +117,22 @@ function highlightKeyword(text: string, q: string): ReactNode {
   )
 }
 
-function schoolResultKey(school: NeisSchoolItem) {
-  return `${school.sdSchulCode}-${school.schulNm}-${school.orgRdnma}`
-}
-
-function universityResultKey(item: CareerNetUniversityItem) {
-  return `${item.seq}-${item.schoolName}-${item.campusName}-${item.address}`
-}
-
 export type SchoolSearchSelection =
   | { source: 'neis'; item: NeisSchoolItem }
   | { source: 'careerNet'; item: CareerNetUniversityItem }
+
+function resultKey(result: SchoolSearchSelection) {
+  if (result.source === 'neis') {
+    const school = result.item
+    return `neis-${school.sdSchulCode}-${school.schulNm}-${school.orgRdnma}`
+  }
+  const item = result.item
+  return `careerNet-${item.seq}-${item.schoolName}-${item.campusName}-${item.address}`
+}
+
+function universityDisplayName(item: CareerNetUniversityItem) {
+  return item.campusName ? `${item.schoolName} (${item.campusName})` : item.schoolName
+}
 
 /** 검색 시 선택한 시/도·시/군/구 (서버 `regionSido`/`regionSigungu`용) */
 export type SchoolSearchSelectMeta = {
@@ -156,14 +188,14 @@ export function SchoolSearch({
   const [keyword, setKeyword] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [schoolLevelValidationError, setSchoolLevelValidationError] = useState<string | null>(null)
   const [keywordValidationError, setKeywordValidationError] = useState<string | null>(null)
 
   const neisApiKey = apiKeyProp ?? readNeisApiKeyFromEnv()
   const careerNetApiKey = careerNetApiKeyProp ?? readCareerNetApiKeyFromEnv()
   const sigunguOptions = getSigunguOptions(sido)
   const trimmedKeyword = keyword.trim()
-  const isHigherEd = isHigherEdLevel(schoolLevel)
+  const allowedLevelValues = useMemo(() => levelOptions.map(opt => opt.value), [levelOptions])
+  const sources = resolveSearchSources(schoolLevel, allowedLevelValues)
 
   const {
     schools,
@@ -192,39 +224,53 @@ export function SchoolSearch({
     resetCareerNet()
   }, [resetNeis, resetCareerNet])
 
-  const filteredSchools = useMemo(() => {
-    if (!isK12Level(schoolLevel)) return []
-    const byRegion = filterNeisSchoolsByRegion(schools, sido, sigungu)
-    return sortNeisSchools(byRegion.filter(school => school.schulKndScNm.trim() === schoolLevel))
-  }, [schools, sido, sigungu, schoolLevel])
+  const filteredResults = useMemo<SchoolSearchSelection[]>(() => {
+    const items: SchoolSearchSelection[] = []
+    if (sources.neis) {
+      const byRegion = filterNeisSchoolsByRegion(schools, sido, sigungu)
+      // 학교급 미선택 시에도 셀렉트에 있는 초·중·고 학교급만 노출한다.
+      const k12Levels: readonly string[] = schoolLevel
+        ? [schoolLevel]
+        : allowedLevelValues.filter(isK12Level)
+      const byLevel = byRegion.filter(school => k12Levels.includes(school.schulKndScNm.trim()))
+      for (const item of sortNeisSchools(byLevel)) items.push({ source: 'neis', item })
+    }
+    if (sources.careerNet) {
+      for (const item of filterCareerNetUniversitiesBySigungu(universities, sigungu)) {
+        items.push({ source: 'careerNet', item })
+      }
+    }
+    return items
+  }, [
+    schools,
+    universities,
+    sido,
+    sigungu,
+    schoolLevel,
+    allowedLevelValues,
+    sources.neis,
+    sources.careerNet,
+  ])
 
-  const filteredUniversities = useMemo(
-    () => (isHigherEd ? filterCareerNetUniversitiesBySigungu(universities, sigungu) : []),
-    [universities, sigungu, isHigherEd]
-  )
-
-  const filteredTotalCount = isHigherEd ? filteredUniversities.length : filteredSchools.length
+  const filteredTotalCount = filteredResults.length
   const totalPages = Math.max(1, Math.ceil(filteredTotalCount / SCHOOL_SEARCH_PAGE_SIZE))
-  const pagedFilteredSchools = useMemo(
+  const pagedResults = useMemo(
     () =>
-      filteredSchools.slice(
+      filteredResults.slice(
         (currentPage - 1) * SCHOOL_SEARCH_PAGE_SIZE,
         currentPage * SCHOOL_SEARCH_PAGE_SIZE
       ),
-    [filteredSchools, currentPage]
-  )
-  const pagedUniversities = useMemo(
-    () =>
-      filteredUniversities.slice(
-        (currentPage - 1) * SCHOOL_SEARCH_PAGE_SIZE,
-        currentPage * SCHOOL_SEARCH_PAGE_SIZE
-      ),
-    [filteredUniversities, currentPage]
+    [filteredResults, currentPage]
   )
 
-  const loading = isHigherEd ? careerNetLoading : neisLoading
-  const error = isHigherEd ? careerNetError : neisError
+  const loading = (sources.neis && neisLoading) || (sources.careerNet && careerNetLoading)
   const hasResults = filteredTotalCount > 0
+  const sourceErrors = [
+    sources.neis ? neisError : null,
+    sources.careerNet ? careerNetError : null,
+  ].filter((e): e is Error => e != null)
+  // 혼합 검색에서 한쪽만 실패하면 나머지 결과를 그대로 보여 준다.
+  const errorMessage = hasResults ? null : sourceErrors.map(e => e.message).join('\n') || null
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -240,7 +286,6 @@ export function SchoolSearch({
     setKeyword('')
     setHasSearched(false)
     setCurrentPage(1)
-    setSchoolLevelValidationError(null)
     setKeywordValidationError(null)
     resetResults()
   }, [lockedLevel, resetResults])
@@ -253,7 +298,6 @@ export function SchoolSearch({
     setSigungu('')
     setHasSearched(false)
     setCurrentPage(1)
-    setSchoolLevelValidationError(null)
     setKeywordValidationError(null)
     resetResults()
     setOpen(true)
@@ -261,7 +305,6 @@ export function SchoolSearch({
 
   const handleSchoolLevelChange = (next: string) => {
     setSchoolLevel(next)
-    setSchoolLevelValidationError(null)
     setKeywordValidationError(null)
     setHasSearched(false)
     setCurrentPage(1)
@@ -271,7 +314,6 @@ export function SchoolSearch({
   const handleSidoChange = (next: string) => {
     setSido(next)
     setSigungu('')
-    setSchoolLevelValidationError(null)
     setKeywordValidationError(null)
     setHasSearched(false)
     setCurrentPage(1)
@@ -282,34 +324,26 @@ export function SchoolSearch({
     if (loading) return
     setHasSearched(true)
     setCurrentPage(1)
-    if (!schoolLevel) {
-      setHasSearched(false)
-      setSchoolLevelValidationError('학교급을 선택해 주세요.')
-      setKeywordValidationError(trimmedKeyword ? null : '검색어를 입력해 주세요.')
-      resetResults()
-      return
-    }
     if (!trimmedKeyword) {
       setHasSearched(false)
-      setSchoolLevelValidationError(null)
       setKeywordValidationError('검색어를 입력해 주세요.')
       resetResults()
       return
     }
-    setSchoolLevelValidationError(null)
     setKeywordValidationError(null)
-    if (isHigherEdLevel(schoolLevel)) {
+    if (sources.careerNet) {
       void searchCareerNet(trimmedKeyword, {
         regionSido: sido || undefined,
-        sch1: careerNetSch1ForLevel(schoolLevel),
+        sch1: careerNetSch1ForSearch(schoolLevel, allowedLevelValues),
       }).catch(() => {
         // API 오류는 검색 결과 영역에서 사용자에게 표시한다.
       })
-      return
     }
-    void searchNeis(trimmedKeyword, sido || undefined).catch(() => {
-      // API 오류는 검색 결과 영역에서 사용자에게 표시한다.
-    })
+    if (sources.neis) {
+      void searchNeis(trimmedKeyword, sido || undefined).catch(() => {
+        // API 오류는 검색 결과 영역에서 사용자에게 표시한다.
+      })
+    }
   }
 
   const handlePageChange = (page: number) => {
@@ -318,7 +352,6 @@ export function SchoolSearch({
 
   const handleSigunguChange = (next: string) => {
     setSigungu(next)
-    setSchoolLevelValidationError(null)
     setKeywordValidationError(null)
     setCurrentPage(1)
   }
@@ -336,10 +369,7 @@ export function SchoolSearch({
   }
 
   const handleSelectUniversity = (item: CareerNetUniversityItem) => {
-    const displayName = item.campusName
-      ? `${item.schoolName} (${item.campusName})`
-      : item.schoolName
-    onChange(displayName)
+    onChange(universityDisplayName(item))
     onSelect?.(
       { source: 'careerNet', item },
       {
@@ -350,101 +380,94 @@ export function SchoolSearch({
     closeModal()
   }
 
-  const neisColumns: ColumnsType<NeisSchoolItem> = [
+  const handleSelectResult = (result: SchoolSearchSelection) => {
+    if (result.source === 'neis') handleSelectNeis(result.item)
+    else handleSelectUniversity(result.item)
+  }
+
+  const selectColumn: ColumnsType<SchoolSearchSelection>[number] = {
+    title: '선택',
+    key: 'select',
+    width: 120,
+    align: 'center',
+    className: 'school-search__col-select',
+    onHeaderCell: () => ({ className: 'school-search__col-select' }),
+    render: (_, record) => (
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="small"
+        className="school-search__select-btn"
+        onClick={() => handleSelectResult(record)} >
+        선택
+      </CmsButton>
+    ),
+  }
+
+  /** 초·중·고 표 — 학교급 미선택 혼합 검색도 같은 열 구성으로 대학을 함께 노출 */
+  const neisColumns: ColumnsType<SchoolSearchSelection> = [
     {
       title: '학교급',
-      dataIndex: 'schulKndScNm',
-      key: 'schulKndScNm',
-      width: 100,
+      key: 'schoolLevel',
+      width: 120,
       ellipsis: true,
-      render: (text: string) => text || '-',
+      render: (_, record) =>
+        (record.source === 'neis' ? record.item.schulKndScNm : record.item.schoolGubun) || '-',
     },
     {
       title: '학교명',
-      dataIndex: 'schulNm',
-      key: 'schulNm',
-      width: 220,
-      ellipsis: true,
-      render: (text: string) => highlightKeyword(text, keyword),
-    },
-    {
-      title: '학교 소재지',
-      dataIndex: 'orgRdnma',
-      key: 'orgRdnma',
-      ellipsis: true,
-      render: (text: string) => text || '-',
-    },
-    {
-      title: '선택',
-      key: 'select',
-      width: 120,
-      align: 'center',
-      className: 'school-search__col-select',
-      onHeaderCell: () => ({ className: 'school-search__col-select' }),
-      render: (_, record) => (
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="small"
-          className="school-search__select-btn"
-          onClick={() => handleSelectNeis(record)} >
-          선택
-        </CmsButton>
-      ),
-    },
-  ]
-
-  const universityColumns: ColumnsType<CareerNetUniversityItem> = [
-    {
-      title: '학교유형',
-      dataIndex: 'schoolGubun',
-      key: 'schoolGubun',
-      width: 110,
-      ellipsis: true,
-      render: (text: string) => text || '-',
-    },
-    {
-      title: '대학교명',
-      dataIndex: 'schoolName',
       key: 'schoolName',
       width: 200,
       ellipsis: true,
-      render: (text: string) => highlightKeyword(text, keyword),
+      render: (_, record) =>
+        highlightKeyword(
+          record.source === 'neis' ? record.item.schulNm : universityDisplayName(record.item),
+          keyword
+        ),
+    },
+    {
+      title: '학교 소재지',
+      key: 'address',
+      ellipsis: true,
+      render: (_, record) =>
+        (record.source === 'neis' ? record.item.orgRdnma : record.item.address) || '-',
+    },
+    selectColumn,
+  ]
+
+  const universityColumns: ColumnsType<SchoolSearchSelection> = [
+    {
+      title: '학교유형',
+      key: 'schoolGubun',
+      width: 110,
+      ellipsis: true,
+      render: (_, record) => (record.source === 'careerNet' && record.item.schoolGubun) || '-',
+    },
+    {
+      title: '대학교명',
+      key: 'schoolName',
+      width: 200,
+      ellipsis: true,
+      render: (_, record) =>
+        record.source === 'careerNet' ? highlightKeyword(record.item.schoolName, keyword) : '-',
     },
     {
       title: '캠퍼스',
-      dataIndex: 'campusName',
       key: 'campusName',
       width: 100,
       ellipsis: true,
-      render: (text: string) => text || '-',
+      render: (_, record) => (record.source === 'careerNet' && record.item.campusName) || '-',
     },
     {
       title: '소재지',
-      dataIndex: 'address',
       key: 'address',
       ellipsis: true,
-      render: (text: string) => text || '-',
+      render: (_, record) => (record.source === 'careerNet' && record.item.address) || '-',
     },
-    {
-      title: '선택',
-      key: 'select',
-      width: 120,
-      align: 'center',
-      className: 'school-search__col-select',
-      onHeaderCell: () => ({ className: 'school-search__col-select' }),
-      render: (_, record) => (
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="small"
-          className="school-search__select-btn"
-          onClick={() => handleSelectUniversity(record)} >
-          선택
-        </CmsButton>
-      ),
-    },
+    selectColumn,
   ]
+
+  const isUniversityOnly = sources.careerNet && !sources.neis
 
   const resolvedWidth = width != null ? (typeof width === 'number' ? `${width}px` : width) : '100%'
 
@@ -490,7 +513,8 @@ export function SchoolSearch({
         <div className="school-search__body">
           <p className="school-search__guide">{GUIDE_TEXT}</p>
 
-          <Flex className="school-search__filter-row" gap={16} align="center" wrap="wrap">
+          {/* 시안 4718:38736: 선택창 3개 + 검색어 228 + [검색]이 한 줄, 칸 사이 8 */}
+          <Flex className="school-search__filter-row" gap={8} align="center" wrap="nowrap">
             <CmsSelect
               placeholder="학교급"
               value={schoolLevel || undefined}
@@ -500,8 +524,6 @@ export function SchoolSearch({
               width={120}
               disabled={Boolean(lockedLevel)}
               withAllOption={false}
-              error={Boolean(schoolLevelValidationError)}
-              message={schoolLevelValidationError ?? undefined}
             />
             <CmsSelect
               placeholder="시/도"
@@ -519,6 +541,8 @@ export function SchoolSearch({
               onChange={handleSigunguChange}
               inputSize="medium"
               width={120}
+              // 시/도 미선택 등 선택할 값이 없으면 비활성화한다(빈 목록 No Data 방지).
+              disabled={sigunguOptions.length === 0}
               withAllOption={false}
             />
             <span className="school-search__keyword-wrap">
@@ -555,7 +579,7 @@ export function SchoolSearch({
             <div
               className={[
                 'school-search__results',
-                !loading && !error && !hasResults ? 'school-search__results--no-results' : '',
+                !loading && !errorMessage && !hasResults ? 'school-search__results--no-results' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -563,12 +587,14 @@ export function SchoolSearch({
               {loading && !hasResults ? (
                 <p className="school-search__status">검색 중입니다.</p>
               ) : null}
-              {error ? (
+              {errorMessage ? (
                 <div className="school-search__result-error" role="alert">
-                  <p>{error.message}</p>
+                  {errorMessage.split('\n').map(line => (
+                    <p key={line}>{line}</p>
+                  ))}
                 </div>
               ) : null}
-              {!loading && !error && !hasResults ? (
+              {!loading && !errorMessage && !hasResults ? (
                 <div className="school-search__result-empty" role="status">
                   <p className="school-search__result-empty-title">검색 결과가 없습니다</p>
                   <p className="school-search__result-empty-description">
@@ -576,14 +602,14 @@ export function SchoolSearch({
                   </p>
                 </div>
               ) : null}
-              {hasResults && isHigherEd ? (
+              {hasResults ? (
                 <>
-                  <div aria-label="대학교 검색 결과">
+                  <div aria-label={isUniversityOnly ? '대학교 검색 결과' : '학교 검색 결과'}>
                     <CmsDataTable
                       className="cms-data-table cms-data-table--skip-auto-no-col school-search__table"
-                      columns={universityColumns}
-                      dataSource={pagedUniversities}
-                      rowKey={universityResultKey}
+                      columns={isUniversityOnly ? universityColumns : neisColumns}
+                      dataSource={pagedResults}
+                      rowKey={resultKey}
                       pagination={false}
                       size="small"
                     />
@@ -594,28 +620,7 @@ export function SchoolSearch({
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
                       ariaLabel="학교 검색 페이지 이동"
-                    />
-                  </div>
-                </>
-              ) : null}
-              {hasResults && !isHigherEd ? (
-                <>
-                  <div aria-label="학교 검색 결과">
-                    <CmsDataTable
-                      className="cms-data-table cms-data-table--skip-auto-no-col school-search__table"
-                      columns={neisColumns}
-                      dataSource={pagedFilteredSchools}
-                      rowKey={schoolResultKey}
-                      pagination={false}
-                      size="small"
-                    />
-                  </div>
-                  <div className="school-search__pagination">
-                    <CmsCompactPagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                      ariaLabel="학교 검색 페이지 이동"
+                      variant="modal"
                     />
                   </div>
                 </>

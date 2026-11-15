@@ -12,6 +12,7 @@ import {
   NOTIFICATION_CATEGORY_ALL,
   NOTIFICATION_CATEGORY_TABS,
   type NotificationCategoryTabKey,
+  toPlatformNotificationCategoryLabel,
 } from '../model/categories'
 import styles from './inbox-panel.module.css'
 
@@ -35,7 +36,8 @@ function NotificationInboxItem({
   onSelect: (item: MemberNotificationResponse) => void
 }) {
   const isRead = item.readAt !== null
-  const categoryLabel = item.notificationCategoryLabel?.trim()
+  const rawCategoryLabel = item.notificationCategoryLabel?.trim()
+  const categoryLabel = rawCategoryLabel ? toPlatformNotificationCategoryLabel(rawCategoryLabel) : ''
 
   return (
     <li className={styles.itemRow}>

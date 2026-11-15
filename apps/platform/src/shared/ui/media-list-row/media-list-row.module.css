@@ -24,12 +24,12 @@
 }
 
 .thumbnailWrap {
-  width: 176px;
+  width: 160px;
   height: 220px;
   flex-shrink: 0;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--radius-12);
 }
 
 .thumbnailWrapNoImage {

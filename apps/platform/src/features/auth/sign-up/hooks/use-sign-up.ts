@@ -89,6 +89,7 @@ import {
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { resolvePortalSchoolOrganizationId } from '../lib/resolve-portal-school-organization-id'
 import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
+import { resolveSignUpProgressStep } from '../lib/progress-step'
 import type { SelectedAddress } from '../ui/address-search-modal'
 import type { SelectedSchool } from '../ui/school-search-modal'
 import { SCHOOL_SELECTION_INCOMPLETE_MESSAGE } from '../ui/school-search-modal/map-selected-school'
@@ -1304,10 +1305,8 @@ export function useSignUp() {
       const response = await getEmailAvailability(normalizedEmail)
       const available = response.available === true
       setEmailCheckStatus(available ? 'success' : 'error')
-      setEmailMessage(
-        response.message?.trim() ||
-          (available ? '사용할 수 있는 이메일이에요.' : EMAIL_ID_MESSAGES.duplicate)
-      )
+      // 결과 문구는 시안(Figma 2516-2201·12611-99428) 그대로 쓴다 — 서버 message(「…입니다.」)는 쓰지 않는다
+      setEmailMessage(available ? '사용할 수 있는 이메일이에요.' : EMAIL_ID_MESSAGES.duplicate)
       if (available) {
         setEmail(normalizeEmailId(normalizedEmail))
       }
@@ -1746,6 +1745,14 @@ export function useSignUp() {
     step: {
       current: currentStep,
       total: totalSteps,
+      /** 스텝퍼 표시용 — 시안 단계 번호(내부 단계와 다름) */
+      progress: resolveSignUpProgressStep({
+        wizardStep: currentStep,
+        isUnderAgeSignup,
+        isIdentityVerified,
+        isGuardianAgreementCompleted,
+        isGuardianIdentityVerified,
+      }),
       goTo: handleGoToStep,
       goPrevious: handlePreviousStep,
       goNextFromStep1: handleNextStep,

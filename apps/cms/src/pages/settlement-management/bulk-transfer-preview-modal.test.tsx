@@ -68,5 +68,30 @@ describe('BulkTransferPreviewModal SERVER_FILE 다운로드', () => {
         password: 'Jafile1!',
       })
     })
+    expect(await screen.findByText('발급 완료')).toBeTruthy()
+  })
+
+  it('「발급 완료」 안내를 확인하면 미리보기를 닫는다', async () => {
+    const onCancel = vi.fn()
+    render(
+      <CmsAlertModalProvider>
+        <BulkTransferPreviewModal
+          open
+          onCancel={onCancel}
+          rows={[]}
+          serverExport={{
+            deliveryMethod: 'SERVER_FILE',
+            fileObjectId: 91,
+          }}
+        />
+      </CmsAlertModalProvider>
+    )
+
+    await confirmFilePassword()
+    expect(await screen.findByText('발급 완료')).toBeTruthy()
+    expect(onCancel).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: '확인' }))
+    await waitFor(() => expect(onCancel).toHaveBeenCalledTimes(1))
   })
 })

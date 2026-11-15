@@ -53,9 +53,9 @@ export function SendScheduleField({
       setPickerOpen(false)
       return
     }
+    // 예약 발송 선택 시에는 날짜 필드만 활성화한다. 날짜 선택 팝업은 필드를 눌렀을 때 연다(openPicker).
     const resolved = resolveScheduledValue(scheduledAt)
     onScheduledAtChange(resolved)
-    setPickerOpen(true)
   }
 
   const openPicker = () => {

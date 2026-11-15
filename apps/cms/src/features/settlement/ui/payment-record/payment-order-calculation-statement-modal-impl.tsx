@@ -61,6 +61,7 @@ import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payme
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 export type PaymentOrderCalculationStatementProgramContext = Extract<
   PaymentOrderProgramCalculationStatement,
@@ -374,7 +375,7 @@ export function PaymentOrderCalculationStatementModalImpl({
       setPaymentCorrectionDoneOpen(true)
     } catch (error) {
       showAlert({
-        title: '안내',
+        title: networkAwareAlertTitle(error, '안내'),
         content: getSettlementApiErrorMessage(error, '지급 정정 처리에 실패했습니다.'),
       })
     }
@@ -393,7 +394,7 @@ export function PaymentOrderCalculationStatementModalImpl({
       onAfterCorrectionProcessed?.()
     } catch (error) {
       showAlert({
-        title: '안내',
+        title: networkAwareAlertTitle(error, '안내'),
         content: getSettlementApiErrorMessage(error, '지급 정정 요청 반려에 실패했습니다.'),
       })
     }
@@ -434,7 +435,7 @@ export function PaymentOrderCalculationStatementModalImpl({
       const preConsentRequired = isGeminiPaymentStatementPreConsentRequiredError(error)
       showAlert({
         // 사전 동의 미완료(Gemini)는 시안 팝업 '지급조서 확인 불가 안내' 제목에 서버 안내를 본문으로 쓴다
-        title: preConsentRequired ? '지급조서 확인 불가 안내' : '안내',
+        title: networkAwareAlertTitle(error, preConsentRequired ? '지급조서 확인 불가 안내' : '안내'),
         content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
       })
       // 사전 동의 미완료(Gemini)면 목록을 다시 받아 그 행의 확인 가능 여부를 갱신한다
@@ -467,7 +468,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         await detailContextQuery?.refetch()
       } catch (error) {
         showAlert({
-          title: '안내',
+          title: networkAwareAlertTitle(error, '안내'),
           content: getSettlementApiErrorMessage(error, '신청 반려 처리에 실패했습니다.'),
         })
         return
@@ -744,9 +745,8 @@ export function PaymentOrderCalculationStatementModalImpl({
               })
               .catch(error => {
                 showAlert({
-                  title: '알림 재발송 실패',
-                  content: getSettlementApiErrorMessage(
-                    error,
+                  title: networkAwareAlertTitle(error, '알림 재발송 실패'),
+                  content: getSettlementApiErrorMessage(error,
                     '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
                   ),
                 })

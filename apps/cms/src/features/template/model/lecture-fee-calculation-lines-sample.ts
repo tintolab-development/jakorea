@@ -13,6 +13,8 @@ export type PaymentStatementCalculationLinesViewModel = {
   totalAmount: number
   /** 개인형 프로그램 — 「참여 기관명」열 자체를 그리지 않는다 */
   hideInstitutionColumn?: boolean
+  /** 열 구성 — 생략 시 지급조서(`issuance`). 영수증 정산 신청서는 `receipt-settlement` */
+  columnPreset?: 'issuance' | 'receipt-settlement'
 }
 
 const lectureFee = 240_000

@@ -31,8 +31,50 @@
 .send-template-select-modal__body {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 16px;
   min-height: 0;
+}
+
+/*
+ * QA: 항목이 길면 팝업은 최대 높이(bounded 셸)에서 멈추고, 검색·건수·페이지 이동·「닫기」는 고정,
+ * 표 영역이 남은 높이를 채운 뒤 표 본문만 표 안에서 스크롤한다(머리행은 상단 고정).
+ * 짧은 목록은 지금처럼 내용 높이만큼만 차지한다.
+ */
+.send-template-select-modal__search,
+.send-template-select-modal__count,
+.send-template-select-modal__pagination {
+  flex-shrink: 0;
+}
+
+.send-template-select-modal__table-section {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.send-template-select-modal__table.ant-table-wrapper,
+.send-template-select-modal__table.ant-table-wrapper > .ant-spin-nested-loading,
+.send-template-select-modal__table.ant-table-wrapper
+  > .ant-spin-nested-loading
+  > .ant-spin-container,
+.send-template-select-modal__table.ant-table-wrapper .ant-spin-container > .ant-table,
+.send-template-select-modal__table.ant-table-wrapper .ant-table > .ant-table-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.send-template-select-modal__table.ant-table-wrapper .ant-table-container > .ant-table-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.send-template-select-modal__table.cms-data-table .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .send-template-select-modal__search {

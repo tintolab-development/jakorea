@@ -313,17 +313,18 @@ export async function fetchGeneralProgramLectureReportsPage(
   return resolveProgressListPage(page.items ?? [], page, pageParam)
 }
 
-/** 관리자 강의보고서 답변·양식·첨부 API를 미리보기 데이터로 변환한다. */
-export async function fetchGeneralProgramLectureReportPreviewContent(
-  _programId: string,
-  row: ParticipatingInstructorLectureReportRow
+/**
+ * 관리자 강의보고서 답변·양식·첨부 API를 미리보기 데이터로 변환한다.
+ * 보고서 id만 있으면 되므로 프로그램 상세·회원 상세가 같이 쓴다.
+ */
+export async function fetchLectureReportPreviewContentByReportId(
+  reportId: number
 ): Promise<LectureReportPreviewContent> {
-  assertProgramProgressRemoteReady()
-  if (row.reportId == null || row.reportId <= 0) {
+  if (!Number.isFinite(reportId) || reportId <= 0) {
     throw new Error('강의보고서 ID가 목록 응답에 없습니다.')
   }
 
-  const detail = await fetchAdminProgramLectureReportContentRemote(row.reportId)
+  const detail = await fetchAdminProgramLectureReportContentRemote(reportId)
 
   return {
     formResponseId: detail.formResponseId,
@@ -331,13 +332,26 @@ export async function fetchGeneralProgramLectureReportPreviewContent(
     form: detail.form,
     answers: detail.answers,
     files: (detail.files ?? [])
-      .filter(file => typeof file.fileObjectId === 'number' && Number.isFinite(file.fileObjectId))
+      .filter(
+        file =>
+          file.downloadable !== false &&
+          typeof file.fileObjectId === 'number' &&
+          Number.isFinite(file.fileObjectId)
+      )
       .map(file => ({
         fileObjectId: file.fileObjectId!,
         originalFileName: file.originalFileName,
       })),
     submittedAt: typeof detail.submittedAt === 'string' ? detail.submittedAt : null,
   }
+}
+
+export async function fetchGeneralProgramLectureReportPreviewContent(
+  _programId: string,
+  row: ParticipatingInstructorLectureReportRow
+): Promise<LectureReportPreviewContent> {
+  assertProgramProgressRemoteReady()
+  return fetchLectureReportPreviewContentByReportId(row.reportId ?? 0)
 }
 
 /** 프로그램(또는 강사 스코프) 강의보고서 ZIP 다운로드 */

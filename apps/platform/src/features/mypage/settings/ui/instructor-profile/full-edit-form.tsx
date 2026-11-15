@@ -378,6 +378,7 @@ export function SettingsInstructorFullEditForm({
         description="수정한 내용이 저장되지 않습니다."
         cancelLabel="계속 수정하기"
         confirmLabel="나가기"
+        emphasis="cancel"
         onCancel={() => setIsLeaveConfirmOpen(false)}
         onConfirm={leave}
       />

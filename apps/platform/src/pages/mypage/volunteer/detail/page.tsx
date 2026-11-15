@@ -66,6 +66,7 @@ const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
 ])
 
 const ACTIVITY_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'completed'])
+const VOLUNTEER_RECRUITMENT_PHASE_GROUP_LABEL = '모집 및 선별 기간'
 
 const APPLIED_SECTION_TAB_ITEMS = [
   { key: 'program', label: '프로그램 정보' },
@@ -164,11 +165,16 @@ export function MypageVolunteerDetailPage() {
   const remoteProgram = remoteProgramQuery.program
   const program = useMemo(() => {
     if (!remoteProgram) return undefined
+    // 봉사현황 상세 > 프로그램 정보 세부내용 소제목은 시안 「모집 및 선별 기간」
+    const volunteerProgram = {
+      ...remoteProgram,
+      recruitmentPhaseGroupLabel: VOLUNTEER_RECRUITMENT_PHASE_GROUP_LABEL,
+    }
     const applicationProgram = application?.programConfig
-    if (!applicationProgram) return withApplicationThumbnail(remoteProgram, application)
+    if (!applicationProgram) return withApplicationThumbnail(volunteerProgram, application)
     return withApplicationThumbnail(
       {
-        ...remoteProgram,
+        ...volunteerProgram,
         surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
         satisfactionConfigured:
           applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
@@ -605,7 +611,7 @@ export function MypageVolunteerDetailPage() {
             value={appliedSection}
             onChange={handleSectionChange}
             variant="pill"
-            size="large"
+            size="xlarge"
             ariaLabel="봉사현황 상세 탭"
           />
 
@@ -629,7 +635,7 @@ export function MypageVolunteerDetailPage() {
             value={activitySection}
             onChange={handleSectionChange}
             variant="pill"
-            size="large"
+            size="xlarge"
             ariaLabel="활동 포기 봉사 상세 탭"
           />
           <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
@@ -642,7 +648,7 @@ export function MypageVolunteerDetailPage() {
             value={activitySection}
             onChange={handleSectionChange}
             variant="pill"
-            size="large"
+            size="xlarge"
             ariaLabel="진행중 봉사 상세 탭"
           />
           <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>

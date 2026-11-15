@@ -56,3 +56,19 @@
 .delete-guide-modal--school .delete-guide-modal__line {
   color: var(--default-BK, #3d3d3d);
 }
+
+/**
+ * 시안 4427:77793 관리자 목록: 행 56 (p8/12). 권한 유형 태그 140은 StatusTag `width="fixed140"`.
+ * 다른 회원 목록(행 52)과 공통 표 규칙은 그대로 둔다.
+ */
+
+.user-list-page--admins
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell {
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+}

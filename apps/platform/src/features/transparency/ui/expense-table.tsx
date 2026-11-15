@@ -70,10 +70,10 @@ export function ExpenseTable({ groups, totalAmount }: ExpenseTableProps) {
                   ) : null}
                   <td className={[styles.cell, styles.areaCell].join(' ')}>{row.label}</td>
                   <td className={[styles.cell, styles.ratioCell, styles.pcOnly].join(' ')}>
-                    {row.percent}%
+                    {`${row.percent}%`}
                   </td>
                   <td className={[styles.cell, styles.amountCell, styles.metricsCell].join(' ')}>
-                    <span className={styles.mobilePercent}>{row.percent}%</span>
+                    <span className={styles.mobilePercent}>{`${row.percent}%`}</span>
                     <span className={styles.amountValue}>{formatKrwAmount(row.amount)}</span>
                   </td>
                 </tr>
@@ -91,7 +91,7 @@ export function ExpenseTable({ groups, totalAmount }: ExpenseTableProps) {
                   styles.pcOnly,
                 ].join(' ')}
               >
-                {group.subtotal.percent}%
+                {`${group.subtotal.percent}%`}
               </td>
               <td
                 className={[
@@ -101,7 +101,7 @@ export function ExpenseTable({ groups, totalAmount }: ExpenseTableProps) {
                   styles.metricsCell,
                 ].join(' ')}
               >
-                <span className={styles.mobilePercent}>{group.subtotal.percent}%</span>
+                <span className={styles.mobilePercent}>{`${group.subtotal.percent}%`}</span>
                 <span className={styles.amountValue}>
                   {formatKrwAmount(group.subtotal.amount)}
                 </span>

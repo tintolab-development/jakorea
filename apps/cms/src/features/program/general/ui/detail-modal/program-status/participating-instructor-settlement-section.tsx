@@ -44,7 +44,10 @@ import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
-import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import {
+  getApiErrorHttpStatus,
+  networkAwareAlertTitle,
+} from '@/shared/lib/extract-api-error-message'
 import type { SettlementApplicationActionKind } from '@/features/program/general/api/settlement-application-actions-remote'
 import { useSettlementApplicationActions } from '@/features/program/general/hooks/use-settlement-application-actions'
 import { SettlementApplicationReasonModal } from './settlement-application-reason-modal'
@@ -192,7 +195,7 @@ export function ParticipatingInstructorSettlementSection({
       } catch (error) {
         if (getApiErrorHttpStatus(error) === 409) setPendingAction(null)
         showAlert({
-          title: '안내',
+          title: networkAwareAlertTitle(error, '안내'),
           content: getSettlementApiErrorMessage(error, '정산 신청서를 처리하지 못했습니다.'),
         })
       }

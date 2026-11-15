@@ -108,7 +108,13 @@ function mapApplicationFields(item: IndividualSettlementReviewListItemView | und
     }
   }
   const settlementApplicationId = positiveId(item.settlementApplicationId)
-  const status = normalizeIndividualSettlementReviewStatus(item.status) || 'NONE'
+  const revisionStatus = normalizeIndividualSettlementReviewStatus(item.status) || 'NONE'
+  // 확인(APPROVED) 뒤 계좌 지급이 끝난 건은 처리 현황을 「계좌 지급 완료」(PAID)로 보인다(표시 규칙은 기존 PAID 매핑).
+  const status =
+    revisionStatus === 'APPROVED' &&
+    normalizeIndividualSettlementReviewStatus(item.paymentStatus) === 'PAID'
+      ? 'PAID'
+      : revisionStatus
   const latestRevisionNo =
     typeof item.latestRevisionNo === 'number' && Number.isFinite(item.latestRevisionNo)
       ? item.latestRevisionNo
@@ -295,6 +301,18 @@ export function isIndividualSettlementRowNotApplicable(
   )
 }
 
+/**
+ * 「지급조서 일괄 다운로드」 대상 — 지급조서 확인 완료(APPROVED)·계좌 지급 완료(PAID) 건(CMS-FUNC-0248·0252).
+ * 미신청·미진행 행은 정산 신청 id가 없거나 상태가 맞지 않아 빠진다.
+ */
+export function filterIndividualSettlementDocumentDownloadRows<
+  T extends Pick<IndividualSettlementReviewListRow, 'settlementApplicationId' | 'status'>,
+>(rows: ReadonlyArray<T>): T[] {
+  return rows.filter(
+    row => row.settlementApplicationId != null && (row.status === 'APPROVED' || row.status === 'PAID')
+  )
+}
+
 export function summarizeIndividualSettlementReviewRows(
   rows: ReadonlyArray<IndividualSettlementReviewListRow>
 ): { submitted: number; approved: number; rejected: number; none: number; total: number } {
@@ -304,7 +322,8 @@ export function summarizeIndividualSettlementReviewRows(
   let none = 0
   for (const row of rows) {
     if (row.status === 'SUBMITTED') submitted += 1
-    else if (row.status === 'APPROVED') approved += 1
+    // 계좌 지급 완료(PAID)도 확인 완료된 건이라 요약 집계는 지금처럼 확인 완료로 센다
+    else if (row.status === 'APPROVED' || row.status === 'PAID') approved += 1
     else if (row.status === 'REJECTED') rejected += 1
     else if (row.status === 'NONE') none += 1
   }

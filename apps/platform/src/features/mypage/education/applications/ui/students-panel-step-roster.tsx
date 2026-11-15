@@ -112,13 +112,14 @@ export function StudentsPanelStepRoster({
           >
             <span className={styles.buttonInner}>
               <img src={fileUploadBlackUrl} alt="" width={20} height={20} aria-hidden="true" />
-              {isImporting ? '업로드 중' : '파일 업로드'}
+              {isImporting ? '업로드 중' : '엑셀 업로드'}
             </span>
           </PFButton>
         </div>
         <PFButton
           type="button"
           variant="certificate"
+          className={styles.certificateButton}
           disabled={isCertificateDisabled}
           onClick={onCertificateIssue}
         >

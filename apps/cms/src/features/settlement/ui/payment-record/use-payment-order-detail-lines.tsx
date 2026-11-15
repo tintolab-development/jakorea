@@ -23,8 +23,6 @@ import { useConfirmPaymentStatementMutation } from '@/features/settlement-manage
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import {
-  buildMockInstructorDetailLinePaymentStatementIssuancePayload,
-  buildMockProgramDetailLinePaymentStatementIssuancePayload,
   buildPaymentStatementIssuancePayloadFromCalculationStatement,
   isPaymentOrderLineEligibleForPaymentStatementIssue,
   type PaymentStatementIssuancePayload,
@@ -71,6 +69,7 @@ import {
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
+import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -381,9 +380,8 @@ export function usePaymentOrderDetailLinesController(
       })
       .catch(error => {
         showAlert({
-          title: '안내',
-          content: getSettlementApiErrorMessage(
-            error,
+          title: networkAwareAlertTitle(error, '안내'),
+          content: getSettlementApiErrorMessage(error,
             '지급 현황 상세 목록을 불러오지 못했습니다.'
           ),
         })
@@ -458,7 +456,7 @@ export function usePaymentOrderDetailLinesController(
           })
           .catch(async error => {
             showAlert({
-              title: '안내',
+              title: networkAwareAlertTitle(error, '안내'),
               content: getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'),
             })
             // 사전 동의 미완료(Gemini)도 상태 충돌처럼 목록을 다시 받아 확인 불가 행을 반영한다(일괄 확인은 전체 롤백됨)
@@ -614,11 +612,9 @@ export function usePaymentOrderDetailLinesController(
           }
           return { ...payload, settlementId: programLineRow.settlementId }
         }
-        return buildMockProgramDetailLinePaymentStatementIssuancePayload(
-          args.programRow,
-          programDetail,
-          programLineRow
-        )
+        // 지급조서는 개인정보가 담긴 법정 문서다. 실서버 연동(관리자 JWT)이 없으면 mock 데이터로 만들지 않고
+        // 호출부의 기존 실패 안내(지급조서 발급 미리보기를 불러오지 못했습니다.)로 보낸다.
+        throw new Error()
       }
 
       if (!instructorDetail) {
@@ -642,13 +638,10 @@ export function usePaymentOrderDetailLinesController(
         }
         return { ...payload, settlementId: instructorLineRow.settlementId }
       }
-      return buildMockInstructorDetailLinePaymentStatementIssuancePayload(
-        args.instructorRow,
-        instructorDetail,
-        instructorLineRow
-      )
+      // 프로그램 기준과 같다 — mock 지급조서를 만들지 않는다.
+      throw new Error()
     },
-    [mode, programDetail, instructorDetail, paymentOrdersRemote, args]
+    [mode, programDetail, instructorDetail, paymentOrdersRemote]
   )
 
   const closeIssuanceView = useCallback(() => {
@@ -691,9 +684,8 @@ export function usePaymentOrderDetailLinesController(
         setIssuanceViewOpen(true)
       } catch (error) {
         showAlert({
-          title: '안내',
-          content: getSettlementApiErrorMessage(
-            error,
+          title: networkAwareAlertTitle(error, '안내'),
+          content: getSettlementApiErrorMessage(error,
             '지급조서 발급 미리보기를 불러오지 못했습니다.'
           ),
         })

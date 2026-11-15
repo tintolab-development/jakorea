@@ -23,7 +23,17 @@ import {
 } from '@/features/mypage/education/surveys/ui/survey-form-body'
 import { EducationSurveyHeader } from '@/features/mypage/education/surveys/ui/survey-header'
 import { EducationSurveySubmitConfirm } from '@/features/mypage/education/surveys/ui/submit-confirm'
-import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFLoadingSpinner,
+  PFRequiredMissingAlert,
+  PFText,
+} from '@/shared/ui'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   fetchPublicSurveyForm,
@@ -116,6 +126,8 @@ export function PublicSurveyPage() {
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [requiredMissingAlert, setRequiredMissingAlert] =
+    useState<RequiredMissingAlertCopy | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [successAlertOpen, setSuccessAlertOpen] = useState(false)
@@ -227,6 +239,10 @@ export function PublicSurveyPage() {
       requiredUserInfoFieldKeys: PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS,
     })
     if (!validation.ok) {
+      if (validation.missingRequired) {
+        setRequiredMissingAlert(buildRequiredMissingAlertCopy(validation.missingRequired))
+        return
+      }
       setSubmitError(validation.message)
       return
     }
@@ -286,6 +302,10 @@ export function PublicSurveyPage() {
           if (submitMutation.isPending) return
           submitMutation.mutate(buildEducationSurveyAnswers(draft, sidecar))
         }}
+      />
+      <PFRequiredMissingAlert
+        copy={requiredMissingAlert}
+        onConfirm={() => setRequiredMissingAlert(null)}
       />
       <PFAlertModal
         open={successAlertOpen}

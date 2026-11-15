@@ -19,8 +19,12 @@ export interface MemberLectureReportTableRow {
   submissionStatusLabel: LectureReportSubmissionLabel
   /** 내려받을 첨부(file_object)가 있을 때만 보기 — 회원 API에 보고서 단건 다운로드 경로가 없다 */
   canViewReport: boolean
-  /** 서버 `reportFileIds` — form_submission_file id가 아니라 file_object id */
+  /** 서버 `reportFileIds` — file_object id 보장이 없어 보고서 본문 응답을 우선 쓴다 */
   reportFileIds?: number[]
+  /** 미리보기 「프로그램 진행 정보」 보조값 — 제출 답변이 비었을 때만 쓴다 */
+  institutionName?: string
+  educationGrade?: string
+  lectureStartAt?: string
 }
 
 function formatDateLabel(value?: string): string {
@@ -62,6 +66,9 @@ export function mapMemberLectureReportsToTableRows(
       submissionStatusLabel: submission.label,
       canViewReport: (reportFileIds?.length ?? 0) > 0,
       reportFileIds,
+      institutionName: report.institutionName?.trim() || undefined,
+      educationGrade: report.educationGrade?.trim() || undefined,
+      lectureStartAt: report.lectureStartAt,
     }
   })
 }

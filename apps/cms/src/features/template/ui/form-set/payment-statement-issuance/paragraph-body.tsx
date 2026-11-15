@@ -37,6 +37,8 @@ interface RenderPaymentStatementIssuanceParagraphBodyParams {
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
   /** 사전 동의 등: 지급조서 기본정보에서 「지급 목적」만 잠금 */
   onlyPaymentPurposeLocked?: boolean
+  /** 영수증 정산 신청서 — 기본 정보에서 주민등록번호 행만 숨김 */
+  hideResidentNumberRow?: boolean
 }
 
 export function renderPaymentStatementIssuanceParagraphBody({
@@ -44,6 +46,7 @@ export function renderPaymentStatementIssuanceParagraphBody({
   values,
   displayMode = 'editor',
   onlyPaymentPurposeLocked,
+  hideResidentNumberRow,
 }: RenderPaymentStatementIssuanceParagraphBodyParams) {
   switch (paragraph.id) {
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableBasic:
@@ -52,6 +55,7 @@ export function renderPaymentStatementIssuanceParagraphBody({
           values={values?.basicInfo}
           displayMode={displayMode}
           onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+          hideResidentNumberRow={hideResidentNumberRow}
           issuanceLayout="payment_statement"
         />
       )

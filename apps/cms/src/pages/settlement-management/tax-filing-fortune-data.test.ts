@@ -4,6 +4,7 @@ import {
   TAX_FILING_MAX_DETAIL_ROWS,
   TAX_FILING_MAX_DETAIL_ROWS_ERROR_MESSAGE,
   TAX_FILING_PREVIEW_DATA_DEPENDENCY_MESSAGE,
+  buildTaxFilingColumnLengths,
   buildTaxFilingFortuneSheet,
   getTaxFilingPreviewValidationError,
   getTaxFilingSelectionValidationError,
@@ -136,5 +137,24 @@ describe('tax filing preview contract', () => {
     expect(resolveTaxFilingIncomeGroup('EVENT_PRIZE_INCOME')).toBe(3)
     expect(resolveTaxFilingIncomeGroup('BUSINESS_INCOME')).toBe(4)
     expect(resolveTaxFilingIncomeGroup('UNKNOWN')).toBeUndefined()
+  })
+})
+
+describe('buildTaxFilingColumnLengths', () => {
+  const widths = [36, 22, 14, 12, 12, 14, 14, 18, 26] as const
+  const sum = (lengths: Record<string, number>) =>
+    Object.values(lengths).reduce((total, width) => total + width, 0)
+
+  it('시트 영역이 좁거나 폭이 없으면 원래 열 너비를 유지한다', () => {
+    expect(buildTaxFilingColumnLengths(widths)).toEqual(
+      Object.fromEntries(widths.map((width, index) => [String(index), width * 7]))
+    )
+    expect(sum(buildTaxFilingColumnLengths(widths, 800))).toBe(168 * 7)
+  })
+
+  it('시트 영역이 넓으면 열 경계선 1px씩을 포함해 폭을 꽉 채운다', () => {
+    const lengths = buildTaxFilingColumnLengths(widths, 1300)
+    expect(sum(lengths) + widths.length).toBe(1300)
+    expect(lengths['0']!).toBeGreaterThan(36 * 7)
   })
 })

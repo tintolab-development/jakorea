@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildPaymentOrderInstructorDetailPath,
   hasAdminNotificationNavigation,
   resolveAdminNotificationNavigation,
 } from './admin-notification-navigation'
@@ -89,5 +90,41 @@ describe('resolveAdminNotificationNavigation', () => {
       false
     )
     expect(hasAdminNotificationNavigation({})).toBe(false)
+  })
+
+  it('강사비 정정 요청은 settlementId로 신청자 별 지급 현황 상세를 연다 (기존 SETTLEMENT 알림은 프로그램 상세 유지)', () => {
+    expect(
+      resolveAdminNotificationNavigation({
+        target: {
+          eventType: 'ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED',
+          linkType: 'SETTLEMENT',
+          linkId: '5',
+          programId: '10',
+        },
+      })
+    ).toEqual({ kind: 'payment-statement-correction', settlementId: '5' })
+    expect(
+      resolveAdminNotificationNavigation({
+        target: {
+          eventType: 'ADMIN_PAYMENT_STATEMENT_CONFIRMED',
+          linkType: 'SETTLEMENT',
+          linkId: '5',
+          programId: '10',
+        },
+      })
+    ).toEqual({ kind: 'program', programId: '10' })
+    expect(
+      resolveAdminNotificationNavigation({
+        target: { eventType: 'ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED', linkType: 'SETTLEMENT' },
+      })
+    ).toBeNull()
+  })
+
+  it('신청자 별 지급 현황 상세 경로', () => {
+    const path = buildPaymentOrderInstructorDetailPath('42')
+    expect(path.startsWith('/settlement-management/payment-orders?')).toBe(true)
+    const search = searchOf(path)
+    expect(search.get('po_detail')).toBe('instructor')
+    expect(search.get('po_detail_key')).toBe('42')
   })
 })

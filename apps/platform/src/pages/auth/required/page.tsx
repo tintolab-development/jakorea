@@ -56,11 +56,9 @@ export function RequiredPage() {
         </PFButton>
       </div>
 
-        <div className={styles.back}>
-          <PFButton variant="text" size="medium" onClick={handleBack}>
-            이전으로
-          </PFButton>
-        </div>
+      <PFButton variant="text" size="textAction" width="100%" onClick={handleBack}>
+        이전으로
+      </PFButton>
     </section>
   )
 }

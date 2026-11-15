@@ -906,7 +906,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         values={form.recipients
           .filter(item => item.source === 'manual')
           .map(item => ({ contact: item.phone, variables: item.variables }))}
-        variableKeys={directManualKeys}
         normalize={normalizeSmsSendPhone}
         isValid={isValidKoreanPhoneNumber}
         invalidMessage="올바른 휴대폰 번호를 입력해 주세요."

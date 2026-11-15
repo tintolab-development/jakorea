@@ -3,6 +3,7 @@
  */
 
 import { useMemo, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import type { UUID } from '@/types'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
 import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
@@ -165,7 +166,7 @@ export function PostReadStatusPopoverContent({
               </div>
             ) : null}
             {remoteEnabled && remoteReads.loading ? (
-              <div className="post-read-status-popup__empty">불러오는 중…</div>
+              <FullscreenSpinner />
             ) : list.length === 0 ? (
               <div className="post-read-status-popup__empty">표시할 인원이 없습니다.</div>
             ) : (
@@ -173,10 +174,7 @@ export function PostReadStatusPopoverContent({
                 <div key={row.id} className="post-read-status-popup__row">
                   <ProfileAvatarIcon className="post-read-status-popup__avatar" aria-hidden />
                   <div className="post-read-status-popup__meta">
-                    <span
-                      className="post-read-status-popup__name"
-                      title={row.displayName}
-                    >
+                    <span className="post-read-status-popup__name" title={row.displayName}>
                       {truncateDisplayNameForList(row.displayName)}
                     </span>
                     <span className="post-read-status-popup__name-role-divider" aria-hidden>
@@ -187,7 +185,10 @@ export function PostReadStatusPopoverContent({
                   {tab === 'read' ? (
                     <span className="post-read-status-popup__badge">읽음</span>
                   ) : (
-                    <label className="post-read-status-popup__checkbox-wrap" aria-label="안읽음 선택">
+                    <label
+                      className="post-read-status-popup__checkbox-wrap"
+                      aria-label="안읽음 선택"
+                    >
                       <input
                         type="checkbox"
                         className="post-read-status-popup__checkbox"

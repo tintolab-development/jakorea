@@ -75,6 +75,11 @@
   text-align: left;
 }
 
+.recruitment .recruitmentLabel {
+  /* 시안: 모집 기간 라벨 14 Bold */
+  font-weight: 700;
+}
+
 .asideScheduleGroup {
   display: flex;
   min-width: 0;

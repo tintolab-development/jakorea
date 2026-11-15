@@ -39,6 +39,12 @@
 }
 
 @media (--bp-below-pc) {
+  /* 시안 Mobile 375: 좌 0 · 우 8 */
+  .header {
+    padding-right: var(--spacing-8);
+    padding-left: 0;
+  }
+
   /* Figma: Heading/Small · PFText typo="hd-sm" */
   .displayName {
     font-size: 30px;
@@ -88,6 +94,8 @@
 .employmentBadgePc {
   display: inline-flex;
   height: 35px;
+  /* 시안 PC: 18 SemiBold primary-500 */
+  font-size: 18px;
 }
 
 .settingsButton {

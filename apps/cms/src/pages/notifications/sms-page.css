@@ -1,14 +1,15 @@
-/* 헤더 ↔ 탭: layout-content 32px + 탭 16px 이중 패딩을 상단 16px만 사용 */
+/* 헤더 ↔ 탭: 시안 탭/버튼 행 y=96·카드 y=156 — 기본 layout-content 상단 32px (QA 2026-11-15 알림 메시지 관리 행 1) */
 .layout-content:has(.sms-page) {
-  --cms-layout-content-padding-top: 16px;
-  padding-top: 16px;
+  --cms-layout-content-padding-top: 32px;
+  padding-top: 32px;
 }
 
 .sms-page {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-height: calc(100vh - 64px - 16px - 32px);
+  /* GNB 64 + 상단 32 + 하단 32 — 카드 892(시안)로 레이아웃 스크롤 없음 */
+  min-height: calc(100vh - 128px);
 }
 
 .sms-page .sms-page__tabs.cms-text-tabs .cms-text-tabs__row {

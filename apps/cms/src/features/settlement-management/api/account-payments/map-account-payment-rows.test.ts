@@ -34,6 +34,21 @@ describe('mapAccountPaymentListItemToRow', () => {
     expect(row.accountPaymentStatus).toBe('awaiting_confirmation')
   })
 
+  it('지급 실패(paymentFailureYn=true)는 상태가 지급 대기여도 실패 여부를 남긴다', () => {
+    const failed = mapAccountPaymentListItemToRow(
+      { accountPaymentId: 21, paymentStatus: 'WAITING_PAYMENT', paymentFailureYn: true },
+      0
+    )
+    const normal = mapAccountPaymentListItemToRow(
+      { accountPaymentId: 22, paymentStatus: 'WAITING_PAYMENT', paymentFailureYn: false },
+      1
+    )
+
+    expect(failed.accountPaymentStatus).toBe('awaiting_confirmation')
+    expect(failed.paymentFailureYn).toBe(true)
+    expect(normal.paymentFailureYn).toBeUndefined()
+  })
+
   it('개인 프로그램은 기관·차시가 `-`', () => {
     const payment: AccountPaymentListItemResponse = {
       accountPaymentId: 12,

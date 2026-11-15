@@ -32,4 +32,11 @@
     display: block;
     width: fit-content;
   }
+
+  /* ProgramBackButton 원형 40 → 30 — 공용 컴포넌트는 그대로, 현황 상세 모바일에서만 */
+  .mobileOnly > button > span:first-child {
+    width: 30px;
+    height: 30px;
+    padding: 7px;
+  }
 }

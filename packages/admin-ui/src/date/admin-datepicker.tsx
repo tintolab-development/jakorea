@@ -41,6 +41,44 @@ import './admin-datepicker.css'
 const PANEL_PREV_ICON = <NavPrevIcon className="cms-datepicker__panel-nav-icon" />
 const PANEL_NEXT_ICON = <NavNextIcon className="cms-datepicker__panel-nav-icon" />
 
+/**
+ * 년도·연월 선택 팝업 — 디자인 시스템 `Calendar / Miniview`(miniview on) 모양 (`admin-datepicker.css`).
+ * 일반 날짜(date) 팝업은 건드리지 않도록 `picker` 가 year·month 일 때만 팝업 루트 클래스를 붙인다.
+ */
+const YEAR_MONTH_POPUP_CLASS = 'cms-datepicker-popup--year-month'
+
+/** 년도·연월 패널은 «» 버튼만 있어(연도·10년 단위 이동) 시안 꺾쇠 1개 아이콘으로 바꾼다 */
+const YEAR_MONTH_PANEL_NAV_ICONS = {
+  superPrevIcon: PANEL_PREV_ICON,
+  superNextIcon: PANEL_NEXT_ICON,
+} as const
+
+type PickerMode = DatePickerProps['picker']
+type PickerClassNames = DatePickerProps['classNames']
+
+function isYearMonthPicker(picker: PickerMode): boolean {
+  return picker === 'year' || picker === 'month'
+}
+
+function resolveYearMonthPopupClassNames(
+  picker: PickerMode,
+  classNames: PickerClassNames
+): PickerClassNames {
+  if (!isYearMonthPicker(picker)) return classNames
+  return {
+    ...classNames,
+    popup: {
+      ...classNames?.popup,
+      root: joinClassNames(YEAR_MONTH_POPUP_CLASS, classNames?.popup?.root),
+    },
+  }
+}
+
+/** 호출부가 superPrev/NextIcon 을 넘기지 않았을 때만 시안 아이콘 — `undefined` 를 넘기면 antd 기본 아이콘이 사라진다 */
+function resolveYearMonthNavIcons(picker: PickerMode) {
+  return isYearMonthPicker(picker) ? YEAR_MONTH_PANEL_NAV_ICONS : undefined
+}
+
 export type AdminDatePickerRef = {
   nativeElement: HTMLElement
   focus: (options?: FocusOptions) => void
@@ -113,6 +151,7 @@ const AdminDatePickerRender: ForwardRefRenderFunction<AdminDatePickerRef, AdminD
     error = false,
     status,
     value,
+    classNames,
     ...rest
   } = props
   const { getPopupContainer, ...pickerRest } = rest
@@ -167,7 +206,9 @@ const AdminDatePickerRender: ForwardRefRenderFunction<AdminDatePickerRef, AdminD
         disabled={disabled}
         allowClear={resolveAdminPickerAllowClear(allowClear)}
         value={value}
+        {...resolveYearMonthNavIcons(props.picker)}
         {...pickerRest}
+        classNames={resolveYearMonthPopupClassNames(props.picker, classNames)}
         getPopupContainer={getPopupContainer ?? adminDatePickerPopupContainer}
       />
     </span>
@@ -245,6 +286,7 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
     message,
     error = false,
     status,
+    classNames,
     ...rest
   } = props
   const startPickerRef = useRef<InternalDatePickerRef>(null)
@@ -330,6 +372,8 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
 
   const resolvedPopupContainer = getPopupContainer ?? adminDatePickerPopupContainer
   const resolvedAllowClear = resolveAdminPickerAllowClear(allowClear)
+  const yearMonthNavIcons = resolveYearMonthNavIcons(props.picker)
+  const resolvedClassNames = resolveYearMonthPopupClassNames(props.picker, classNames)
 
   const segmentCn = (segmentDisabled: boolean, filled: boolean) =>
     joinClassNames(
@@ -369,7 +413,9 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           placeholder={placeholderTuple[0]}
           id={startId}
           defaultPickerValue={defaultStart}
+          {...yearMonthNavIcons}
           {...sharedPickerProps}
+          classNames={resolvedClassNames}
           getPopupContainer={resolvedPopupContainer}
         />
       </span>
@@ -394,7 +440,9 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           placeholder={placeholderTuple[1]}
           id={endId}
           defaultPickerValue={defaultEnd}
+          {...yearMonthNavIcons}
           {...sharedPickerProps}
+          classNames={resolvedClassNames}
           getPopupContainer={resolvedPopupContainer}
         />
       </span>

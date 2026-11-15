@@ -31,20 +31,14 @@ function mapApiStatusToLecture(status?: string | null): LectureAttendanceStatusK
   if (normalized === 'LATE') return 'late'
   if (normalized === 'ABSENT') return 'absent'
   if (normalized === 'EXCUSED' || normalized === 'EXCUSED_ABSENCE') return 'excused'
-  if (
-    normalized === 'PRESENT' ||
-    normalized === 'ATTEND' ||
-    normalized === 'ATTENDED'
-  ) {
+  if (normalized === 'PRESENT' || normalized === 'ATTEND' || normalized === 'ATTENDED') {
     return 'attended'
   }
   if (normalized === 'NOT_HELD') return 'not_held'
   return 'not_held'
 }
 
-function mapLectureStatusToApi(
-  status: LectureAttendanceStatusKey
-): string | null {
+function mapLectureStatusToApi(status: LectureAttendanceStatusKey): string | null {
   if (status === 'attended') return 'PRESENT'
   if (status === 'late') return 'LATE'
   if (status === 'absent') return 'ABSENT'
@@ -71,7 +65,9 @@ function dashboardScheduleById(
   return byId
 }
 
-function toProgramSchedule(schedule: DashboardProgramScheduleResponse): ProgramScheduleResponse | null {
+function toProgramSchedule(
+  schedule: DashboardProgramScheduleResponse
+): ProgramScheduleResponse | null {
   const id = schedule.scheduleId
   if (id == null || !Number.isFinite(id) || id <= 0) return null
   return {
@@ -194,14 +190,19 @@ function toLectureSession(
   }
 }
 
-export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
+/**
+ * 강의 출석 내역 계산 원본 — 회차 행(분모)과 회차별 출결 목록.
+ * 학생과 무관한 기관 단위 데이터라 한 번 조회해 명단 전체 학생의 출석 내역을 만든다.
+ */
+export type LectureAttendanceSource = {
+  roundRows: LectureRoundRow[]
+  attendancesByScheduleId: Record<string, AttendanceItemResponse[] | undefined>
+}
+
+export async function fetchLectureAttendanceSourceRemote(input: {
   programId: string
-  participantId: number
-  studentName: string
   organizationApplicationId?: string | null
-  /** 행 라벨 교육 구조 분기용. 없으면 「N회차」 */
-  program?: Program | null
-}): Promise<LectureAttendanceDetail> {
+}): Promise<LectureAttendanceSource> {
   const organizationApplicationId = input.organizationApplicationId?.trim() ?? ''
   const schedules = await fetchProgramSchedulesViaDashboardRemote(input.programId)
   const assignedSlots = organizationApplicationId
@@ -215,16 +216,10 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
           organizationApplicationId,
         })
   // 기관 신청이 있으면 분모는 active OSA 배정 일정만(사전교육 포함). 미배정 프로그램 일정으로 폴백하지 않는다.
-  const roundRows = organizationApplicationId
-    ? assignedRows
-    : educationSessionRoundRows(schedules)
+  const roundRows = organizationApplicationId ? assignedRows : educationSessionRoundRows(schedules)
 
   if (roundRows.length === 0) {
-    return {
-      studentName: input.studentName,
-      attendanceRatePercent: 0,
-      sessions: [],
-    }
+    return { roundRows: [], attendancesByScheduleId: {} }
   }
 
   const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
@@ -232,16 +227,42 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
     roundRows.map(row => row.scheduleId),
     organizationApplicationId ? { organizationApplicationId } : {}
   )
+  return { roundRows, attendancesByScheduleId }
+}
 
-  const sessions: LectureAttendanceSession[] = roundRows.map(row =>
+/** 원본에서 참여자 한 명의 회차별 강의 출석 세션을 만든다(순수 함수). */
+export function lectureAttendanceSessionsForParticipant(
+  source: LectureAttendanceSource,
+  participantId: number,
+  program?: Program | null
+): LectureAttendanceSession[] {
+  return source.roundRows.map(row =>
     toLectureSession(
       row,
-      attendancesByScheduleId[String(row.scheduleId)],
-      input.participantId,
-      input.program
+      source.attendancesByScheduleId[String(row.scheduleId)],
+      participantId,
+      program
     )
   )
+}
 
+export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
+  programId: string
+  participantId: number
+  studentName: string
+  organizationApplicationId?: string | null
+  /** 행 라벨 교육 구조 분기용. 없으면 「N회차」 */
+  program?: Program | null
+}): Promise<LectureAttendanceDetail> {
+  const source = await fetchLectureAttendanceSourceRemote({
+    programId: input.programId,
+    organizationApplicationId: input.organizationApplicationId,
+  })
+  const sessions = lectureAttendanceSessionsForParticipant(
+    source,
+    input.participantId,
+    input.program
+  )
   const { attended, held } = countLectureAttendanceHeldAndAttended(sessions)
   return {
     studentName: input.studentName,

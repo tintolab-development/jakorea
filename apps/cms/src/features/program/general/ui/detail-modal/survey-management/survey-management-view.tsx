@@ -3,6 +3,7 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -448,6 +449,8 @@ export function GeneralSurveyManagementView({
   const [satisfactionDownloadModalOpen, setSatisfactionDownloadModalOpen] = useState(false)
   const [downloadingPollResults, setDownloadingPollResults] = useState(false)
   const [downloadingSatisfactionResults, setDownloadingSatisfactionResults] = useState(false)
+  /** 설문 결과 PDF 생성 중 — CMS 공통 「PDF 생성 중…」 로더를 띄운다(엑셀은 버튼 로딩만). */
+  const [exportingResultsPdf, setExportingResultsPdf] = useState(false)
   const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
   const pollResultsExportRef = useRef<HTMLDivElement>(null)
   const satisfactionResultsExportRef = useRef<HTMLDivElement>(null)
@@ -1538,6 +1541,7 @@ export function GeneralSurveyManagementView({
       setDownloadingSatisfactionResults(true)
       try {
         if (format === 'pdf') {
+          setExportingResultsPdf(true)
           const root = satisfactionResultsExportRef.current
           if (root == null) {
             throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
@@ -1568,6 +1572,7 @@ export function GeneralSurveyManagementView({
           content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       } finally {
+        setExportingResultsPdf(false)
         setDownloadingSatisfactionResults(false)
       }
     },
@@ -1588,6 +1593,7 @@ export function GeneralSurveyManagementView({
       setDownloadingPollResults(true)
       try {
         if (format === 'pdf') {
+          setExportingResultsPdf(true)
           const root = pollResultsExportRef.current
           if (root == null) {
             throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
@@ -1618,6 +1624,7 @@ export function GeneralSurveyManagementView({
           content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       } finally {
+        setExportingResultsPdf(false)
         setDownloadingPollResults(false)
       }
     },
@@ -1854,6 +1861,7 @@ export function GeneralSurveyManagementView({
       setDownloadingLectureEvalResults(true)
       try {
         if (format === 'pdf') {
+          setExportingResultsPdf(true)
           const root = lectureEvalResultsExportRef.current
           if (root == null) {
             throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
@@ -1879,6 +1887,7 @@ export function GeneralSurveyManagementView({
           content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       } finally {
+        setExportingResultsPdf(false)
         setDownloadingLectureEvalResults(false)
       }
     },
@@ -2089,6 +2098,7 @@ export function GeneralSurveyManagementView({
 
   return (
     <>
+      <FormCertificatePdfExportOverlay visible={exportingResultsPdf} />
       {surveyMenuEmpty || activeTab === 'main' ? renderEmptyMain() : null}
       {!surveyMenuEmpty && activeTab === 'survey' ? renderPoll() : null}
       {!surveyMenuEmpty &&

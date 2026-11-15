@@ -13,7 +13,7 @@ export type ImpactStoryListItem = {
   categoryLabel: string
   title: string
   summary: string
-  /** 표시용 — 예: 2026년 08월 15일 */
+  /** 표시용 — 예: 2026년 8월 15일 */
   publishedAtLabel: string
   /** 정렬용 ISO */
   publishedAt: string
@@ -40,7 +40,7 @@ export type ImpactStoryContentBlock =
 export type ImpactStoryBodyFormat = 'html' | 'markdown'
 
 export type ImpactStoryDetail = ImpactStoryListItem & {
-  /** 상세 메타용 — 예: 2026년 08월 15일 오전 12:00 */
+  /** 상세 메타용 — 예: 2026년 8월 15일 오전 12:00 */
   publishedAtDetailLabel: string
   viewCount: number
   blocks: ImpactStoryContentBlock[]

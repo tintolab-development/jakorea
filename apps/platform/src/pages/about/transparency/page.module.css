@@ -159,8 +159,9 @@
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.20) 51.7%, #FFF 89.16%);
   }
 
+  /* 시안: PC 본문 좌우 패딩 없음 (셸 폭 기준) */
   .content {
-    padding-inline: var(--spacing-20);
+    padding-inline: 0;
   }
 
   /* 셸 padding-block(74)을 상쇄해 버튼 ↔ 푸터 시안 32px */

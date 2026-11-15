@@ -43,7 +43,7 @@ export function getMypageProfileLabel(profile: PlatformMemberProfile) {
 export function resolveEmploymentStatusLabel(status: string | undefined): string | undefined {
   const normalized = status?.trim().toUpperCase()
   if (!normalized) return undefined
-  if (normalized === 'ACTIVE' || normalized === 'EMPLOYED') return '재직중'
+  if (normalized === 'ACTIVE' || normalized === 'EMPLOYED') return '재직 중'
   if (normalized === 'ON_LEAVE' || normalized === 'LEAVE') return '휴직'
   if (normalized === 'TRANSFERRED' || normalized === 'TRANSFER') return '전근'
   if (normalized === 'WITHDRAWN' || normalized === 'RESIGNED') return '탈퇴'

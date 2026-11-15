@@ -181,7 +181,7 @@ export default function TextbookPage() {
       {
         key: 'textbookName',
         type: 'search',
-        label: '교재명',
+        label: '교재',
         placeholder: '교재명을 입력해 주세요',
         width: '20%',
       },
@@ -448,7 +448,7 @@ export default function TextbookPage() {
         ellipsis: true,
       },
       {
-        title: '등록자명',
+        title: '등록자',
         dataIndex: 'registrant',
         key: 'registrant',
         width: TEXTBOOK_COL_WIDTH.registrant,

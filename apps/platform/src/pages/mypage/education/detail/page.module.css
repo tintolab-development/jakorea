@@ -252,3 +252,10 @@
     padding-bottom: var(--spacing-48);
   }
 }
+
+/* 시안(PC): 탭 바 아래 본문까지 60 (안내사항·교육 일정·정산 현황) */
+@media (--bp-pc-up) {
+  .tabPanelBody {
+    padding-top: var(--spacing-4);
+  }
+}

@@ -217,7 +217,7 @@ function RecordsContent({
     <div className={styles.recordsLayout}>
       <div className={styles.recordsToolbar}>
         <PFText as="p" typo="hd-sm" color="black" className={styles.recordsCount}>
-          총 {filtered.length.toLocaleString('ko-KR')}건
+          {`총 ${filtered.length.toLocaleString('ko-KR')}건`}
         </PFText>
         <PFSearchInput
           className={styles.recordsSearch}

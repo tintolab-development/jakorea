@@ -25,6 +25,7 @@ import type { BugIssueLog, BugIssueLogDetail } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
+import '@/pages/logs/logs-history-page.css'
 
 const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 980
 
@@ -142,6 +143,7 @@ export default function BugIssueHistoryPage() {
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
+      className="logs-history-page"
       bordered={false}
       fields={bugIssueHistoryFilterFields}
       filters={{

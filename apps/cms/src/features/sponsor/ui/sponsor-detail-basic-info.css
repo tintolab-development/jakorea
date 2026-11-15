@@ -1,13 +1,13 @@
-/* 후원사 상세 > 기본 정보: 후원 시작일/후원 상태 행 높이 57px */
+/* 후원사 상세 > 기본 정보: 후원 시작일/후원 상태 행 높이 52px (시안 9270:73090, QA 2026-11-15 데이터 관리 C17) */
 .sponsor-detail-basic-info__status-row > .detail-info-form__field {
-  height: 57px !important;
-  min-height: 57px !important;
+  height: 52px !important;
+  min-height: 52px !important;
 }
 
 .sponsor-detail-basic-info__status-row > .detail-info-form__field > .detail-info-form__field-label,
 .sponsor-detail-basic-info__status-row > .detail-info-form__field > .detail-info-form__field-content {
-  height: 57px !important;
-  min-height: 57px !important;
+  height: 52px !important;
+  min-height: 52px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;

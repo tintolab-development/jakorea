@@ -132,7 +132,7 @@ export function ProgramsPage() {
           value={params.category}
           onChange={value => setAudience(parseAudienceValue(value))}
           variant="pill"
-          size="large"
+          size="xlarge"
         />
       </div>
 
@@ -141,7 +141,7 @@ export function ProgramsPage() {
           <PFSearchInput
             value={draftQ}
             onValueChange={setDraftQ}
-            placeholder="프로그램 검색 (예: 기업가 정신, 금융 문해력)"
+            placeholder="프로그램 검색 (예: 기업가정신, 금융 문해력)"
           />
         }
         filters={

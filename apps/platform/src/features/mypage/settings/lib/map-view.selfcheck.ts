@@ -16,7 +16,7 @@ import {
   mapPortalProfileToSettingsView,
 } from './map-view.ts'
 
-assert.equal(formatSettingsJoinedAt('2026-09-15'), '2026년 09월 15일')
+assert.equal(formatSettingsJoinedAt('2026-09-15'), '2026년 9월 15일')
 assert.equal(formatSettingsDateDot('1999-01-01'), '1999.01.01')
 assert.equal(formatSettingsPhone('01012345678'), '010-1234-5678')
 assert.equal(formatSettingsPhone('0212345678'), '02-1234-5678')
@@ -27,7 +27,7 @@ assert.equal(formatSettingsGrade('2'), '2학년')
 assert.equal(formatSettingsGrade('2학년'), '2학년')
 
 const view = mapPortalProfileToSettingsView(MOCK_SETTINGS_PROFILE, MOCK_SETTINGS_GUARDIAN)
-assert.equal(view.basicRows[0]?.value, '2026년 09월 15일')
+assert.equal(view.basicRows[0]?.value, '2026년 9월 15일')
 assert.equal(view.basicRows[1]?.label, '이메일 ID')
 assert.equal(view.basicRows[7]?.label, '소속/학교')
 assert.equal(view.basicRows[7]?.value, '재희 고등학교')

@@ -28,7 +28,7 @@ export function LectureReportSubmitCompleteModal({
             강의보고서 제출이 완료되었어요.
           </PFText>
           {hidePaymentStatementCta ? null : (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={styles.description}>
               강사비 지급을 위해 지급조서도 지금 작성할까요?
               <br />
               나중에 프로그램의 정산 현황 메뉴에서도 작성할 수 있어요.

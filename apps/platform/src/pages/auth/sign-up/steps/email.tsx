@@ -12,7 +12,7 @@ export function EmailStep({ signUp }: EmailStepProps) {
   const { step, email } = signUp
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title={
           <>
@@ -48,7 +48,7 @@ export function EmailStep({ signUp }: EmailStepProps) {
               <div className={styles.emailInputControl}>
                 <PFTextInput
                   size="xlarge"
-                  placeholder="이메일을 입력해 주세요."
+                  placeholder="이메일을 입력해 주세요"
                   type="email"
                   required
                   value={email.value}

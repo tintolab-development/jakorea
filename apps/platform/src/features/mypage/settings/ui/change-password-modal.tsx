@@ -113,9 +113,9 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
         onClose={handleClose}
       >
         <div className={styles.guide} id={descriptionId}>
-          <PFText as="p" typo="bd-sm-rg" color="black" className={styles.guideText}>
+          <PFText as="p" typo="bd-md-rg" color="black" className={styles.guideText}>
             개인정보를 안전하게 보호하기 위해 비밀번호를 주기적(90일)으로 변경해 주세요. <br />
-            비밀번호는 8자 이상의 영문, 숫자, 특수문자를 조합하여 사용 가능합니다.
+            비밀번호는 8자 이상의 영문, 숫자, 특수문자를 조합하여 사용 가능해요.
           </PFText>{' '}
         </div>
         <div className={styles.content}>

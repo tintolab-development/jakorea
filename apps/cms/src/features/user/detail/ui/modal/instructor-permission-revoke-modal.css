@@ -1,9 +1,43 @@
-/** 강사 권한 종료 처리 팝업 — 시안: 라벨 #525252 · `*` 14/Bold */
+/**
+ * 강사 권한 종료 처리 팝업 — 시안 4427:54154 (600×442)
+ * 공용 PermissionModal 기본값(필드 간격 24 · 입력 44/16)을 이 팝업에서만 시안 값으로 맞춘다.
+ * 본문·입력 → 다음 라벨 30, 라벨 14/Medium #525252 · 140% · pb2, 라벨 → 입력 6 · 라벨 → 라디오 줄 4(높이 40),
+ * 입력 540×40 · p9/16 · Medium 15 / 145%. `*` 14/Bold.
+ */
+.instructor-permission-revoke-modal .permission-modal__field {
+  margin-top: 30px;
+}
+
 .instructor-permission-revoke-modal .permission-modal__label {
+  margin-bottom: 6px;
+  padding: 0 4px 2px;
   color: var(--Content-secondary, #525252);
+  line-height: 140%;
+}
+
+.instructor-permission-revoke-modal
+  .permission-modal__field:has(> .app-radio-group)
+  > .permission-modal__label {
+  margin-bottom: 0;
+}
+
+.instructor-permission-revoke-modal .permission-modal__field > .app-radio-group.ant-radio-group {
+  min-height: 40px;
+  margin-top: 4px;
+  padding-left: 0;
 }
 
 .instructor-permission-revoke-modal .permission-modal__required {
   font-size: 14px;
   font-weight: 700;
+}
+
+.instructor-permission-revoke-modal .permission-modal__field .cms-control--large {
+  --cms-control-h: 40px;
+  --cms-control-pt: 9px;
+  --cms-control-pr: 16px;
+  --cms-control-pb: 9px;
+  --cms-control-pl: 16px;
+  --cms-control-font: 15px;
+  --cms-control-lh: 145%;
 }

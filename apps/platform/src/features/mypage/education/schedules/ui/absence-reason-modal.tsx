@@ -35,7 +35,6 @@ import {
   FILE_UPLOAD_MAX_TOTAL_BYTES,
   FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE,
   FILE_UPLOAD_TOTAL_EXCEEDED_MESSAGE,
-  formatMultiFileUploadHint,
   sumUploadFileBytes,
 } from '@/shared/lib/file-upload-policy'
 import type { ProgramApplicationType } from '../../applications/api/types'
@@ -56,6 +55,11 @@ const ABSENCE_REASON_FILE_PURPOSE = 'ABSENCE_EVIDENCE'
 const ABSENCE_REASON_ACCEPT = '.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf'
 const ABSENCE_REASON_MAX_FILES = PORTAL_ABSENCE_REASON_MAX_FILE_COUNT
 const ABSENCE_REASON_FILE_TYPES_LABEL = 'JPG, JPEG, PNG, PDF'
+/** 시안 문구 — 형식 표기는 PDF·JPG·PNG(JPEG는 JPG로 함께 받는다) */
+const ABSENCE_REASON_FILE_HINT =
+  '파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.'
+const ABSENCE_REASON_FILE_NAME_HINT =
+  '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.'
 
 const ABSENCE_REASON_FILE_POLICY: MemberFileUploadPolicy = {
   maxBytes: FILE_UPLOAD_MAX_BYTES,
@@ -487,13 +491,13 @@ export function EducationAbsenceReasonModal({
     >
       <div className={styles.content}>
         <div id={descriptionId} className={styles.description}>
-          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
-            개인 사유로 교육에 참여하지 못할 경우, 불참 사유 및 증빙서류를 제출해 주세요.
+          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+            개인 사유로 교육에 참여하지 못한 경우, 불참 사유 및 증빙서류를 제출해 주세요.
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
-            제출하면 우선 사유 불참으로 처리되며 추후 결격 사유에서 제외돼요.
+          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+            제출하면 우선 사유 불참으로 처리되어 수료 결격 사유에서 제외돼요.
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
+          <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
             * 담당자가 제출한 사유를 반려하면 결석으로 변경되어 수료 기준에 다시 반영돼요.
           </PFText>
         </div>
@@ -566,10 +570,7 @@ export function EducationAbsenceReasonModal({
               {uploading ? '업로드 중…' : '증빙서류 추가하기'}
             </PFButton>
             <PFDescriptionList
-              items={[
-                formatMultiFileUploadHint(ABSENCE_REASON_FILE_TYPES_LABEL),
-                '첨부파일명에 특수문자가 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-              ]}
+              items={[ABSENCE_REASON_FILE_HINT, ABSENCE_REASON_FILE_NAME_HINT]}
             />
             {files.length > 0 ? (
               <ul className={styles.fileList}>

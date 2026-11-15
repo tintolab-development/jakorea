@@ -10,7 +10,9 @@
 .permission-customization-page__grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  /* 시안 03·04 (1970 프레임): 열 간격 24 · 열 높이는 내용별(위 정렬) — QA 2026-11-15 권한관리 md 1-G */
+  gap: 24px;
+  align-items: start;
   margin-top: 16px;
 }
 
@@ -78,16 +80,30 @@
   border-color: #20b2aa;
 }
 
+/*
+ * 머리 체크박스(비활성·선택) — 시안 03 8333:32966·04 13387:274: 흰 배경 + 보더 #22404B 20% + 체크 아이콘 opacity 0.4.
+ * 위 청록 규칙이 비활성 머리 체크박스까지 덮어 03에서 청록으로 보이던 것 (QA 2026-11-15 권한관리 md 1-G).
+ */
+.permission-customization-page__card-head .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #fff !important;
+  border-color: rgba(34, 64, 75, 0.2) !important;
+}
+
+.permission-customization-page__card-head .ant-checkbox-checked .ant-checkbox-inner::after {
+  opacity: 0.4 !important;
+}
+
 /* 세부 권한 영역 */
 .permission-customization-page__card-body {
   display: flex;
   padding: 22px 24px;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  /* 시안 03·04: 항목 21 + gap 20 = 41, 카드 r10 */
+  gap: 20px;
   align-self: stretch;
   box-sizing: border-box;
-  border-radius: 0 0 10px 10px;
+  border-radius: 10px;
   background: var(--default-WT, #fff);
   box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.05);
   color: var(--default-BK, #3d3d3d);
@@ -96,10 +112,11 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  border-radius: 8px;
 }
 
+/* block + line-height 24면 줄 상자가 26.9로 커진다 — flex로 줄 상자를 없애고 글자 16/130%(21) */
 .permission-customization-page__item-row {
+  display: flex;
   width: 100%;
   text-align: left;
 }
@@ -108,18 +125,12 @@
   width: 100%;
   color: var(--default-BK, #3d3d3d);
   font-weight: 500;
-  line-height: 150%;
+  line-height: 130%;
 }
 
 .permission-customization-page__item-checkbox .ant-checkbox-checked .ant-checkbox-inner {
   background-color: #20b2aa;
   border-color: #20b2aa;
-}
-
-/* 관리자 권한 설정 화면만. 프로그램 담당자 권한 설정은 기존 그리드를 유지한다. */
-.permission-customization-page--admin-settings .permission-customization-page__grid {
-  align-items: start;
-  gap: 24px;
 }
 
 .permission-customization-page--admin-settings .permission-customization-page__card-head {
@@ -128,21 +139,10 @@
   padding: 0 24px;
 }
 
-.permission-customization-page--admin-settings
-  .permission-customization-page__card-head-checkbox
-  .ant-checkbox-disabled.ant-checkbox-checked
-  .ant-checkbox-inner {
-  background-color: #20b2aa;
-  border-color: #20b2aa;
-}
-
-.permission-customization-page--admin-settings
-  .permission-customization-page__card-head-checkbox
-  .ant-checkbox-disabled.ant-checkbox-checked
-  .ant-checkbox-inner::after {
-  border-color: #fff;
-  opacity: 1;
-}
+/*
+ * 머리 체크박스(비활성·선택) — 시안 8333:32966: 흰 배경 + 보더 #22404B 20% + 체크 아이콘 opacity 0.4.
+ * 프로그램 담당자 권한 설정(04)과 같은 공통 비활성 체크박스 모양을 쓰도록 청록 덮어쓰기를 두지 않는다.
+ */
 
 .permission-customization-page--admin-settings
   .permission-customization-page__card-head-checkbox

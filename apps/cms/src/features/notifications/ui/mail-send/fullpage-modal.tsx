@@ -942,6 +942,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     selectedIds={selectedRecipientIds}
                     onSelectedIdsChange={setSelectedRecipientIds}
                     typeColumnTitle={typeColumnTitle}
+                    typeMode={recipientTypeMode}
                     manualKeysByRecipientId={manualKeysByRecipientId}
                     blockedKeysByRecipientId={blockedKeysByRecipientId}
                     onVariableChange={form.updateRecipientVariable}
@@ -1049,7 +1050,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
             ? MAIL_SEND_MEMBER_TYPE_OPTIONS
             : MAIL_SEND_PARTICIPATION_TYPE_OPTIONS
         }
-        getTypeLabel={row => mailSendRecipientTypeLabel(row) || '-'}
+        getTypeLabel={row => mailSendRecipientTypeLabel(row, recipientTypeMode) || '-'}
         contactColumnTitle="이메일"
         getContact={row => row.email}
         filterCandidates={(rows, applied) =>
@@ -1103,7 +1104,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         values={form.recipients
           .filter(item => item.source === 'manual')
           .map(item => ({ contact: item.email, variables: item.variables }))}
-        variableKeys={directManualKeys}
         normalize={normalizeMailSendEmail}
         isValid={isMailSendEmail}
         invalidMessage="올바른 이메일 주소를 입력해 주세요."

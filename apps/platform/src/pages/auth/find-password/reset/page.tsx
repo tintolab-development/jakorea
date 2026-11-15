@@ -114,9 +114,10 @@ export function FindPasswordResetPage() {
 
   return (
     <section>
+      {/* 시안 2800-12957 */}
       <div className={styles.header}>
         <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
-          새 비밀번호를 입력해 주세요
+          새 비밀번호를 입력해 주세요.
         </PFText>
         <PFText
           as="p"
@@ -124,7 +125,9 @@ export function FindPasswordResetPage() {
           color="primary-800"
           className={authPageCopyClass('description')}
         >
-          이제 새 비밀번호로 로그인할 수 있어요.
+          안전한 계정 이용을 위해
+          <br />
+          다른 곳에서 쓰지 않는 비밀번호를 추천해요.
         </PFText>
       </div>
 

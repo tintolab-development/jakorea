@@ -13,12 +13,12 @@
   flex-direction: column;
 }
 
-/* 헤더: 상단 26px · 좌우 30px (타이틀~상단 여백) */
+/* 헤더: 상단 24px · 좌우 30px (시안 4427:75991 닫기 X y130) */
 .instructor-invoice-modal.content-modal.teal-header-modal .teal-header-modal__header {
   height: auto;
   min-height: 0;
   max-height: none;
-  padding: 26px 30px 24px;
+  padding: 24px 30px 24px;
   box-sizing: border-box;
 }
 
@@ -40,10 +40,26 @@
   box-sizing: border-box;
 }
 
-/* 산출내역 상세 테이블 헤더 */
+/* 시안: 섹션 제목(기본 정보·산출 내역 상세) Bold 18 · 140% */
+.instructor-invoice-modal .detail-info-form > .detail-info-form__header .detail-info-form__title,
+.instructor-invoice-modal .info-section-wrapper .info-section-title {
+  font-size: 18px;
+  line-height: 140%;
+}
+
+/* 시안: 제목 옆 안내 Medium 16 · 150% · #3D3D3D 60% */
+.instructor-invoice-modal .info-section-wrapper .info-section-description {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+/* 산출내역 상세 테이블 헤더 — 시안 fill #FFF + #E7EBEF 60% */
 .instructor-invoice-modal .instructor-invoice-modal__detail-table thead th {
-  background: #f5f6f7;
-  font-weight: 600;
+  background: linear-gradient(0deg, rgba(231, 235, 239, 0.6), rgba(231, 235, 239, 0.6)), #fff;
+  font-weight: 700;
   color: #3d3d3d;
   text-align: center;
 }
@@ -96,13 +112,15 @@
   border: none;
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
-  padding: 12px 16px;
+  /* 시안: 헤더 행 52 · 본문 행 54 · Medium 14 / 150% */
+  height: 54px;
+  padding: 8px 12px;
   vertical-align: middle;
   box-sizing: border-box;
   color: var(--default-BK, #3d3d3d);
   text-align: center;
-  font-size: 16px;
-  line-height: 150%; /* 24px */
+  font-size: 14px;
+  line-height: 150%;
   font-weight: 500;
 }
 
@@ -110,6 +128,7 @@
   .instructor-invoice-modal__detail-card
   .instructor-invoice-modal__detail-table
   th {
+  height: 52px;
   font-weight: 700;
 }
 
@@ -157,6 +176,8 @@
 }
 
 .instructor-invoice-modal .instructor-invoice-modal__footer-row td {
+  /* 시안: 합계 행 56 */
+  height: 56px;
   background: rgba(1, 161, 175, 0.06) !important;
   border-radius: 6px;
   font-weight: 700;
@@ -187,4 +208,45 @@
 .instructor-invoice-modal .instructor-invoice-modal__modal-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 시안: 「지급조서 처리 현황 │ [알림 재발송]」 구분선 앞뒤 16 · 버튼 100×32 (프로그램 신청자 공용 행은 그대로) */
+.instructor-invoice-modal .applicant-institution-basic-info__approval-status-row {
+  gap: 16px;
+}
+
+.instructor-invoice-modal
+  .detail-info-form__field-content
+  .cms-button.ant-btn.cms-button--h32.cms-button--secondary {
+  width: 100px;
+  min-width: 100px;
+}
+
+/* 시안: 「특강 강사비 │ 1시간당 250,000원」 구분선 앞뒤 16 */
+.instructor-invoice-modal
+  .detail-info-form__field-content
+  .program-detail-td-segment-wrap
+  .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
+/* 시안: 교육 진행 일자 셀 「날짜 │ 시간 · 회차」 구분선 앞뒤 16 */
+.instructor-invoice-modal .instructor-invoice-modal__lecture-date-sessions {
+  justify-content: center;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__lecture-date-sessions .program-detail-td-divider {
+  margin: 0 16px;
+}
+
+/* 1439px 이하: 셀(약 200)이 좁아 구분선이 넘치므로 숨기고 날짜 / 시간·회차 두 줄 (사용자 결정 2026-11-15) */
+@media (max-width: 1439px) {
+  .instructor-invoice-modal .instructor-invoice-modal__lecture-date-sessions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .instructor-invoice-modal .instructor-invoice-modal__lecture-date-sessions .program-detail-td-divider {
+    display: none;
+  }
 }

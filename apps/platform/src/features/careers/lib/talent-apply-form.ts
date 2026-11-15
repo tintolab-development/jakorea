@@ -17,7 +17,9 @@ export const CAREERS_TALENT_APPLY_PLACEHOLDERS = {
   educationLevel: '최종 학력을 선택해 주세요',
   schoolName: '학교명',
   major: '학부/과',
-  evidenceFile: '경력 증빙 서류를 첨부해 주세요',
+  /** 2줄 안내 — `.fileGuide`가 `white-space: pre-line`으로 줄을 나눈다 */
+  evidenceFile:
+    '경력 증빙 서류를 첨부해 주세요.\n파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
 } as const
 
 export const CAREERS_TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'

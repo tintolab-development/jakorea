@@ -406,6 +406,8 @@
   text-align: left;
   border: none;
   background: transparent;
+  /* button은 글꼴을 상속하지 않아 Arial로 그려지던 것 — 시안 Pretendard */
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
@@ -532,6 +534,7 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
   line-height: 120%;
   padding: 12px 18px 12px 24px;
   box-sizing: border-box;

@@ -14,9 +14,12 @@ import { participatingInstructorSettlementsQueryOptions } from '@/features/progr
 import {
   approveIndividualSettlementReviewRemote,
   buildIndividualSettlementReviewListParams,
+  fetchIndividualSettlementApplicationDocumentRemote,
   fetchIndividualSettlementReviewDetailRemote,
   fetchIndividualSettlementReviewListRemote,
   INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL,
+  individualSettlementApplicationDocumentDownloadUrl,
+  individualSettlementApplicationDocumentUrl,
   individualSettlementReviewApproveUrl,
   individualSettlementReviewRejectUrl,
   isIndividualSettlementReviewConflict,
@@ -198,5 +201,33 @@ describe('individual settlement review remote', () => {
       totalPages: 0,
     })
     await expect(fetchIndividualSettlementReviewListRemote({ page: 0, size: 100 })).resolves.toEqual([])
+  })
+
+  it('관리자 정산 신청서 문서 경로는 개인 정산 신청 아래이고 settlements payment-statement를 쓰지 않는다', () => {
+    expect(individualSettlementApplicationDocumentUrl(12)).toBe(
+      '/api/admin/individual-settlement-applications/12/application-document'
+    )
+    expect(individualSettlementApplicationDocumentDownloadUrl(12)).toBe(
+      '/api/admin/individual-settlement-applications/12/application-document/download'
+    )
+    expect(individualSettlementApplicationDocumentDownloadUrl(12, 2)).toBe(
+      '/api/admin/individual-settlement-applications/12/application-document/download?revisionNo=2'
+    )
+    expect(individualSettlementApplicationDocumentUrl(12)).not.toContain('/api/admin/settlements')
+  })
+
+  it('관리자 정산 신청서 GET은 ApiResponse.data를 언래핑하고 revisionNo를 넘긴다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      success: true,
+      data: { documentType: 'RECEIPT_SETTLEMENT', title: 'JA KOREA 정산 신청서', revisionNo: 2 },
+    })
+    const document = await fetchIndividualSettlementApplicationDocumentRemote(12, 2)
+    expect(document.documentType).toBe('RECEIPT_SETTLEMENT')
+    expect(document.revisionNo).toBe(2)
+    expect(vi.mocked(customInstance)).toHaveBeenCalledWith({
+      url: '/api/admin/individual-settlement-applications/12/application-document',
+      method: 'GET',
+      params: { revisionNo: 2 },
+    })
   })
 })

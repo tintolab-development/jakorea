@@ -27,6 +27,7 @@ import type { MemberLoginLog } from '@/types/member-login-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
+import '@/pages/logs/logs-history-page.css'
 
 const MEMBER_LOGIN_HISTORY_TABLE_SCROLL_X = 1120
 
@@ -140,6 +141,7 @@ export default function MemberLoginHistoryPage() {
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
+      className="logs-history-page"
       bordered={false}
       fields={memberLoginHistoryFilterFields}
       filters={{

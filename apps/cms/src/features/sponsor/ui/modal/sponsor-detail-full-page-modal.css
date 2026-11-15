@@ -54,3 +54,26 @@
   padding-top: 10px !important;
   padding-bottom: 10px !important;
 }
+
+/*
+ * 후원사 상세 — 시안 9270:73090 (QA 2026-11-15 데이터 관리 C11·C12·C13·C14)
+ * 섹션 제목 Bold 18 · 건수 Medium 14 #3D3D3D 50% · 후원사명 라벨 100 + 한글/영문 80 · 로고 일괄 다운로드 200
+ */
+.sponsor-detail-fullpage-modal .info-section-title {
+  font-size: 18px;
+  line-height: 140%;
+}
+
+.sponsor-detail-fullpage-modal .info-section-desc {
+  color: rgba(61, 61, 61, 0.5);
+  font-size: 14px;
+  opacity: 1;
+}
+
+.sponsor-detail-fullpage-modal .detail-info-form__name-block {
+  grid-template-columns: 100px 80px minmax(0, 1fr) var(--detail-info-label-w, 180px) minmax(0, 1fr);
+}
+
+.sponsor-detail-fullpage-modal .info-section-buttons--wrapper .cms-button:has(.cms-button__icon) {
+  min-width: 200px;
+}

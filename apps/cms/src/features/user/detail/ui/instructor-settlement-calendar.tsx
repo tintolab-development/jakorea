@@ -20,7 +20,9 @@ import {
   settlementEventStatusColorPair,
   settlementRowFromCalendarItem,
   type CalendarItem,
+  type RenderCalendarMonthEventContent,
 } from '@/shared/components/calendar'
+import { CalendarMonthEventTitleWithDivider } from '@/shared/components/calendar/ui/calendar-month-event-title'
 import '@/shared/components/calendar/styles/calendar.css'
 
 dayjs.extend(isSameOrAfter)
@@ -87,6 +89,30 @@ export function InstructorSettlementCalendarView({
     return map
   }, [])
 
+  /**
+   * 월간 셀 「+금액원 │ 상태」 — 문자 `|` 대신 공통 구분선(`calendar-event-title--with-divider`)으로 그린다.
+   * (시안 4427:72829, 구분선 점검 #14) 툴팁·접근성용 `title` 문자열은 그대로 둔다.
+   */
+  const renderMonthEventContent = useCallback<RenderCalendarMonthEventContent>(
+    ({ row, colors }) => {
+      const event = row.sourceEvent.original as SettlementCalendarEvent | undefined
+      const settlement = event?.originalItem
+      if (!settlement) {
+        return <span className="calendar-event-title">{String(row.sourceEvent.title ?? '')}</span>
+      }
+      return (
+        <CalendarMonthEventTitleWithDivider
+          parts={{
+            left: `+${settlement.scheduledAmount.toLocaleString()}원`,
+            right: INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[settlement.status],
+          }}
+          accentColor={colors.text}
+        />
+      )
+    },
+    []
+  )
+
   const handleDateSelect = useCallback(
     (date: Dayjs) => {
       onSelectedDateChange(date)
@@ -104,7 +130,8 @@ export function InstructorSettlementCalendarView({
   }, [onDisplayMonthChange, onSelectedDateChange])
 
   return (
-    <div className="calendar-set">
+    // 시안 4427:72829: 상세 캘린더뷰 셸(r16 · #E0E0E0 · padding 20, 요약 카드 ↔ 캘린더 24) — page-scroll 변형
+    <div className="calendar-set calendar-set--page-scroll">
       <div className="calendar-main-container">
         <CalendarMain
           mode="month"
@@ -120,6 +147,7 @@ export function InstructorSettlementCalendarView({
           overrideEventColorMap={overrideEventColorMap}
           eventsTooltipTrigger="cell"
           previewTooltipContent={renderSettlementEventsTooltipContent}
+          renderMonthEventContent={renderMonthEventContent}
         />
       </div>
       <div className="calendar-sub-right-list">
