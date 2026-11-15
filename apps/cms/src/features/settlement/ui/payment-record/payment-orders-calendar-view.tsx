@@ -226,7 +226,7 @@ function paymentEventToSettlementListRow(
       ? ev.cardSubtitle || ev.sourceInstructorRow.relatedProgramNames.join(', ') || '—'
       : ev.bracketTitle
   const institutionName = isProgram
-    ? `정산 대상 강사 ${programRow.instructorCount}명`
+    ? `정산 대상자 ${programRow.instructorCount}명`
     : ev.cardSubtitle || '—'
   const invoiceProgramName = isProgram
     ? programRow.programName
@@ -298,7 +298,7 @@ function eventsFromPrograms(rows: PaymentOrderAdminProgramRow[]): PaymentOrderCa
         status: row.processingStatus,
         amount: row.estimatedAmount,
         bracketTitle: row.programName,
-        cardSubtitle: `정산 대상 강사 ${row.instructorCount}명`,
+        cardSubtitle: `정산 대상자 ${row.instructorCount}명`,
         filterKey: row.programName,
         sourceProgramRow: row,
       })

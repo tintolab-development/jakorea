@@ -25,9 +25,24 @@ function pickHigherPriorityStatus(
   return (STATUS_PRIORITY[next] ?? 0) > (STATUS_PRIORITY[current] ?? 0) ? next : current
 }
 
-function instructorDisplayTitle(name: string): string {
+/** 강사만 「OOO 강사」로 붙인다. 참여자·봉사자(영수증 정산)는 이름만 쓴다. */
+function payeeDisplayTitle(
+  name: string,
+  payeeType: SettlementCalendarItemResponse['payeeType']
+): string {
   const n = name.trim()
+  if (payeeType === 'PARTICIPANT' || payeeType === 'VOLUNTEER') return n || '-'
   return n ? `${n} 강사` : '강사'
+}
+
+/** 신청 행은 settlementId가 없어 행 종류 + 신청 ID로 키를 만든다. */
+function calendarItemKey(item: SettlementCalendarItemResponse, index: number): string {
+  if (item.settlementId != null) return String(item.settlementId)
+  if (item.settlementApplicationId != null) return `application-${item.settlementApplicationId}`
+  if (item.individualSettlementApplicationId != null) {
+    return `receipt-${item.individualSettlementApplicationId}`
+  }
+  return `line-${index}`
 }
 
 function findProgramRow(
@@ -101,7 +116,7 @@ export function mapCalendarItemsToProgramEvents(
       status,
       amount,
       bracketTitle: programRow.programName,
-      cardSubtitle: `정산 대상 강사 ${instructorIds.size || programRow.instructorCount}명`,
+      cardSubtitle: `정산 대상자 ${instructorIds.size || programRow.instructorCount}명`,
       filterKey: programRow.programName,
       sourceProgramRow: programRow,
     }
@@ -122,12 +137,12 @@ export function mapCalendarItemsToInstructorEvents(
     if (!instructorRow) continue
 
     out.push({
-      id: `instructor-api-${item.settlementId ?? index}-${item.date}`,
+      id: `instructor-api-${calendarItemKey(item, index)}-${item.date}`,
       date: dayjs(item.date),
       exposure: 'instructor' as const,
       status: mapStatementStatusToProcessingStatus(item.statementStatus),
       amount: item.expectedAmount ?? 0,
-      bracketTitle: instructorDisplayTitle(instructorRow.instructorName),
+      bracketTitle: payeeDisplayTitle(instructorRow.instructorName, item.payeeType),
       cardSubtitle: item.programNameKo ?? instructorRow.relatedProgramNames.join(', '),
       filterKey: instructorRow.instructorName,
       sourceInstructorRow: instructorRow,

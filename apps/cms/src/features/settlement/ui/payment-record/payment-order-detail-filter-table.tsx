@@ -3,6 +3,7 @@
  */
 
 import type { Dayjs } from 'dayjs'
+import type { PaymentOrderPayeeTypeFilter } from '@/pages/settlement-management/payment-orders-table.config'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   PaymentOrderAdminInstructorDetailProgramRow,
@@ -32,6 +33,8 @@ export type { PaymentOrderDetailLineRow }
 export type PaymentOrderDetailFilterTableProps = {
   paymentOrdersRemote?: boolean
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
+  /** 목록에 조회 적용된 정산 대상자 구분 — 상세 재조회에도 같이 건다 */
+  listPagePayeeType?: PaymentOrderPayeeTypeFilter
 } & (
   | {
       mode: 'program'
@@ -67,6 +70,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     batchConfirmDoneOpen,
     setBatchConfirmDoneOpen,
     batchConfirmApplicantSummary,
+    batchConfirmApplicationKind,
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
@@ -75,6 +79,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     closeIssuanceView,
     issuanceViewOpen,
     currentIssuancePayload,
+    downloadCurrentReceiptIssuancePdf,
     selectedRowKeys,
     setSelectedRowKeys,
     filterFields,
@@ -95,6 +100,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         onCancel={() => setBatchConfirmOpen(false)}
         leadApplicantName={batchConfirmApplicantSummary.leadApplicantName}
         otherApplicantCount={batchConfirmApplicantSummary.otherApplicantCount}
+        applicationKind={batchConfirmApplicationKind}
         onConfirm={handleBatchConfirm}
       />
       <PaymentOrderPaymentConfirmationResultModal
@@ -114,6 +120,12 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         paragraphBodyOptions={currentIssuancePayload?.paragraphBodyOptions}
         fileName={currentIssuancePayload?.fileName}
         settlementId={currentIssuancePayload?.settlementId}
+        documentVariant={
+          currentIssuancePayload?.receiptSettlementApplication
+            ? 'receiptSettlementApplication'
+            : 'paymentStatement'
+        }
+        onDownloadPdf={downloadCurrentReceiptIssuancePdf}
         key={currentIssuancePayload?.fileName ?? 'payment-order-issuance'}
       />
       <FilterTableLayout

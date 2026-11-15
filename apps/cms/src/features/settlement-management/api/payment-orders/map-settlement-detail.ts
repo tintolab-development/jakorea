@@ -55,9 +55,21 @@ export function isSettlementApplicationListItem(item: {
   return item.settlementId == null && item.settlementApplicationId != null
 }
 
+/** 지급조서 확인 목록의 영수증 정산 신청 행(개인 참여자·봉사자). 지급조서가 없어 검토 모달로 처리한다. */
+export function isIndividualSettlementApplicationListItem(item: {
+  rowType?: string | null
+  individualSettlementApplicationId?: number | null
+}): boolean {
+  if (item.rowType === 'INDIVIDUAL_SETTLEMENT_APPLICATION') return true
+  return item.individualSettlementApplicationId != null
+}
+
 function paymentOrderLineId(item: SettlementListItemResponse, index: number): string {
   if (item.settlementId != null) return String(item.settlementId)
   if (item.settlementApplicationId != null) return `application-${item.settlementApplicationId}`
+  if (item.individualSettlementApplicationId != null) {
+    return `receipt-${item.individualSettlementApplicationId}`
+  }
   return `line-${index}`
 }
 
@@ -74,6 +86,12 @@ function sharedPaymentOrderLineFields(
     settlementId: item.settlementId ?? undefined,
     settlementApplicationId: item.settlementApplicationId ?? undefined,
     rowType: item.rowType ?? undefined,
+    payeeType: item.payeeType ?? undefined,
+    individualSettlementApplicationId: item.individualSettlementApplicationId ?? undefined,
+    revisionNo: item.revisionNo ?? undefined,
+    payeeBankName: item.payeeBankName?.trim() || undefined,
+    payeeAccountNumberMasked: item.payeeAccountNumberMasked?.trim() || undefined,
+    payeeAccountHolder: item.payeeAccountHolder?.trim() || undefined,
     programId: item.programId ?? undefined,
     statementId: applicationLine ? undefined : resolveStatementId(item, statementMap),
     lectureDate: item.lectureDate ?? '',

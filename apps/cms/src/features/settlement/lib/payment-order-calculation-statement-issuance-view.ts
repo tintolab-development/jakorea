@@ -288,6 +288,8 @@ export type PaymentStatementIssuancePayload = {
   paragraphBodyOptions: RenderFormParagraphBodyOptions
   fileName: string
   settlementId?: number
+  /** 영수증(참여자·봉사자) 지급조서 — 영수증 신청 문서 API로 미리보기·다운로드한다 */
+  receiptSettlementApplication?: { settlementApplicationId: number; revisionNo?: number }
 }
 
 export function buildPaymentStatementIssuancePayloadFromCalculationStatement(

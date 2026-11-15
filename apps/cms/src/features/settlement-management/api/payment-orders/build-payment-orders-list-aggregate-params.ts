@@ -10,6 +10,8 @@ export type PaymentOrdersListFilterInput = Pick<
   PaymentOrdersPendingFilters,
   'programName' | 'instructorName' | 'processingStatus' | 'pendingItemBucket' | 'dateRange'
 > & {
+  /** 정산 대상자 구분 — 생략·`all`이면 전체 */
+  payeeType?: PaymentOrdersPendingFilters['payeeType']
   viewMode?: 'list' | 'calendar'
 }
 
@@ -51,6 +53,10 @@ export function buildPaymentOrdersListAggregateParams(
   }
   if (viewMode === 'list' && filters.pendingItemBucket !== 'all') {
     params.pendingItemBucket = mapPendingItemBucketToApi(filters.pendingItemBucket)
+  }
+
+  if (filters.payeeType && filters.payeeType !== 'all') {
+    params.payeeType = filters.payeeType
   }
 
   if (filters.dateRange?.[0] && filters.dateRange[1]) {

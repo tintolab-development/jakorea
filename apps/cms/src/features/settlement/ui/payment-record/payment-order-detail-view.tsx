@@ -39,6 +39,7 @@ import {
   PAYMENT_ORDERS_DETAIL_KEY_PARAM,
   PAYMENT_ORDERS_DETAIL_NO_PARAM,
   PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
+  type PaymentOrderPayeeTypeFilter,
 } from '@/pages/settlement-management/payment-orders-table.config'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/pages/settlement-management/payment-order-program-status-detail-fullpage-modal.css'
@@ -52,6 +53,8 @@ type PaymentOrderDetailViewShared = {
   isOpen: boolean
   /** 목록 페이지에 조회 적용된 기간 — 상세 기간 필터와 동기화 */
   listPageDateRange: [Dayjs | null, Dayjs | null] | null
+  /** 목록 페이지에 조회 적용된 정산 대상자 구분 */
+  listPagePayeeType?: PaymentOrderPayeeTypeFilter
   lineAggregateStatus: PaymentOrderDetailAggregateStatus
   handleAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
   /** rowsState 기준 반려·정정 제외 합산. null이면 detail.totalEstimatedAmount 사용 */
@@ -111,6 +114,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     detail,
     row,
     listPageDateRange,
+    listPagePayeeType,
     lineAggregateStatus,
     handleAggregateChange,
     lineCountableAmount,
@@ -218,6 +222,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           programRow={row}
           isOpen={isOpen}
           listPageDateRange={listPageDateRange}
+          listPagePayeeType={listPagePayeeType}
           onAggregateChange={handleAggregateChange}
           onCountableAmountChange={handleCountableAmountChange}
           onOpenCalculationStatement={openCalculationStatement}
@@ -240,6 +245,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           instructorRow={row}
           isOpen={isOpen}
           listPageDateRange={listPageDateRange}
+          listPagePayeeType={listPagePayeeType}
           onAggregateChange={handleAggregateChange}
           onCountableAmountChange={handleCountableAmountChange}
           onOpenCalculationStatement={openCalculationStatement}

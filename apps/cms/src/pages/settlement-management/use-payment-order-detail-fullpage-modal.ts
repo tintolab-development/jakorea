@@ -7,6 +7,7 @@ import type { Dayjs } from 'dayjs'
 import {
   buildInstructorDetailFromSettlements,
   buildProgramDetailFromSettlements,
+  isIndividualSettlementApplicationListItem,
   isSettlementApplicationListItem,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
 import {
@@ -30,7 +31,9 @@ import type {
 import { useSettlementTransportationSnapshotQuery } from '@/features/settlement-management/hooks/use-settlement-transportation-snapshot-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { useCmsAlert } from '@/shared/ui'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
+import type { PaymentOrderPayeeTypeFilter } from './payment-orders-table.config'
 import { generalProgramDetailQueryOptions } from '@/features/program/general/hooks/use-general-program-detail'
 import { isIndividualProgramForSettlement } from '@/features/settlement/lib/settlement-program-individual'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
@@ -53,13 +56,22 @@ export type PaymentOrderDetailFullPageModalInput = {
   onClose: () => void
   data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
   listPageDateRange: [Dayjs | null, Dayjs | null] | null
+  /** 목록 페이지에 조회 적용된 정산 대상자 구분 */
+  listPagePayeeType?: PaymentOrderPayeeTypeFilter
+}
+
+/** 영수증 정산 신청 행 — 기존 영수증 검토 모달로 여는 대상 */
+export type PaymentOrderReceiptReviewTarget = {
+  individualSettlementApplicationId: number
+  programId: number | null
 }
 
 export function usePaymentOrderDetailFullPageModalState(
   input: PaymentOrderDetailFullPageModalInput
 ) {
-  const { type, isOpen, onClose, data, listPageDateRange } = input
+  const { type, isOpen, onClose, data, listPageDateRange, listPagePayeeType = 'all' } = input
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
 
   const row = data
   const paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders')
@@ -69,7 +81,8 @@ export function usePaymentOrderDetailFullPageModalState(
     type,
     aggregateKey,
     listPageDateRange,
-    isOpen && paymentOrdersRemote
+    isOpen && paymentOrdersRemote,
+    listPagePayeeType
   )
 
   const [lineAggregateStatus, setLineAggregateStatus] =
@@ -79,6 +92,9 @@ export function usePaymentOrderDetailFullPageModalState(
   const [calcLineRow, setCalcLineRow] = useState<CalcLineRow | null>(null)
   const [calcStatementData, setCalcStatementData] =
     useState<PaymentOrderProgramCalculationStatement | null>(null)
+  /** 영수증 행은 지급조서가 없어 산출 내역서 대신 영수증 검토 모달을 연다 */
+  const [receiptReviewTarget, setReceiptReviewTarget] =
+    useState<PaymentOrderReceiptReviewTarget | null>(null)
 
   const calcSettlementId = calcLineRow?.settlementId ?? null
   const calcApplicationLine =
@@ -172,8 +188,10 @@ export function usePaymentOrderDetailFullPageModalState(
       setCalcStatementOpen(false)
       setCalcLineRow(null)
       setCalcStatementData(null)
+      setReceiptReviewTarget(null)
     }
-  }, [isOpen, type, row])
+    // row 객체가 아니라 aggregateKey 기준 — 승인 뒤 목록 재조회로 row만 새로 와도 열린 검토 모달·완료 안내를 닫지 않는다
+  }, [isOpen, type, aggregateKey])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
@@ -326,6 +344,16 @@ export function usePaymentOrderDetailFullPageModalState(
       if (!row || !detail) return
 
       if (paymentOrdersRemote) {
+        if (
+          isIndividualSettlementApplicationListItem(lineRow) &&
+          lineRow.individualSettlementApplicationId != null
+        ) {
+          setReceiptReviewTarget({
+            individualSettlementApplicationId: lineRow.individualSettlementApplicationId,
+            programId: lineRow.programId ?? null,
+          })
+          return
+        }
         if (lineRow.settlementId == null && !isSettlementApplicationListItem(lineRow)) {
           showAlert({
             title: '안내',
@@ -355,8 +383,22 @@ export function usePaymentOrderDetailFullPageModalState(
     setCalcStatementOpen(false)
     setCalcLineRow(null)
     setCalcStatementData(null)
+    setReceiptReviewTarget(null)
     onClose()
   }, [onClose])
+
+  const closeReceiptReview = useCallback(() => {
+    setReceiptReviewTarget(null)
+  }, [])
+
+  /** 영수증 승인·반려 뒤 목록·상세 라인·캘린더와 계좌 지급 목록을 다시 읽는다 */
+  const handleReceiptReviewed = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.all() }),
+      queryClient.invalidateQueries({ queryKey: settlementQueryKeys.calendar.all() }),
+      queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.all() }),
+    ])
+  }, [queryClient])
 
   const title = useMemo(() => {
     if (type === 'program' && row && 'programName' in row) {
@@ -425,6 +467,11 @@ export function usePaymentOrderDetailFullPageModalState(
   return {
     detailLoading,
     detailError: paymentOrdersRemote ? detailContextQuery.error : null,
+    receiptReview: {
+      target: receiptReviewTarget,
+      close: closeReceiptReview,
+      onReviewed: handleReceiptReviewed,
+    },
     sharedViewProps,
     viewBranch: row
       ? {
@@ -434,6 +481,7 @@ export function usePaymentOrderDetailFullPageModalState(
           detail,
           row,
           listPageDateRange,
+          listPagePayeeType,
         }
       : null,
   }
