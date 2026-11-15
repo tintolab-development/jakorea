@@ -31,7 +31,7 @@ describe('resolveAdminNotificationActionLabel', () => {
     )
   })
 
-  it('강사비 정정 요청은 시안대로 「정정 요청 확인」, 다른 정산 알림은 기존 문구', () => {
+  it('강사비 정정 요청은 「정정 요청 확인」, 강사비 확인 완료는 「지급 대상 목록 보기」', () => {
     expect(
       resolveAdminNotificationActionLabel({
         target: {
@@ -46,6 +46,25 @@ describe('resolveAdminNotificationActionLabel', () => {
       resolveAdminNotificationActionLabel({
         target: { eventType: 'ADMIN_PAYMENT_STATEMENT_CONFIRMED', linkType: 'SETTLEMENT', linkId: '5', programId: '10' },
       })
-    ).toBe('정산 보기')
+    ).toBe('지급 대상 목록 보기')
+  })
+
+  it('시안 「시스템 안내 팝업」 버튼 문구', () => {
+    const label = (eventType: string, linkType = 'PROGRAM_APPLICATION') =>
+      resolveAdminNotificationActionLabel({
+        target: { eventType, linkType, linkId: '7', programId: '10' },
+      })
+    expect(label('ADMIN_INSTRUCTOR_ROLE_REQUESTED', 'INSTRUCTOR_ROLE_REQUEST')).toBe('신청 목록 보기')
+    expect(label('ADMIN_SIGNUP_APPROVAL_REQUESTED', 'ADMIN_APPROVAL_REQUEST')).toBe('신청 목록 보기')
+    expect(label('ADMIN_INDIVIDUAL_PROGRAM_INSTRUCTOR_UNASSIGNED', 'PROGRAM_SCHEDULE')).toBe('강사 배정')
+    expect(label('ADMIN_STUDENT_ROSTER_UNSUBMITTED')).toBe('학생 명단 확인')
+    expect(label('ADMIN_SETTLEMENT_APPLICATION_RESUBMITTED', 'SETTLEMENT_APPLICATION')).toBe('신청 내역 확인')
+    expect(label('ADMIN_INQUIRY_CREATED', 'INQUIRY')).toBe('문의 내용 확인')
+    expect(label('ADMIN_TEACHER_EMPLOYMENT_CHANGED', 'MEMBER')).toBe('회원 정보 보기')
+    expect(label('ADMIN_PROGRAM_NOTICE_CREATED', 'PROGRAM_POST')).toBe('게시글 확인')
+    expect(label('ADMIN_PROGRAM_POST_COMMENT_CREATED', 'PROGRAM_POST')).toBe('댓글 확인')
+    expect(label('ADMIN_ROLE_CHANGED', 'ADMIN_ACCOUNT')).toBe('내 정보 보기')
+    // 시안: 프로그램 신청 취소는 [닫기]만
+    expect(label('ADMIN_PROGRAM_APPLICATION_CANCELLED')).toBeNull()
   })
 })
