@@ -10,6 +10,11 @@ import {
   PFText,
 } from '@/shared/ui'
 import { formatSingleFileUploadHint } from '@/shared/lib/file-upload-policy'
+import {
+  buildFileTypeInvalidAlertCopy,
+  type PlatformAlertCopy,
+} from '@/shared/lib/platform-alert-copy'
+import { buildRequiredMissingAlertCopy } from '@/shared/lib/required-missing-alert'
 import { submitPortalCrimeConsentComplete } from '../../settings/lib/submit-portal-consent-document'
 import type { InstructorApplyConsentKey } from './catalog'
 import {
@@ -32,6 +37,7 @@ import {
   resolveCrimeConsentSubmitErrorMessage,
   resolveCrimeConsentUploadErrorMessage,
 } from './crime-consent-error'
+import { CRIME_CONSENT_ORIGINAL_FORMATS_LABEL, toCrimeConsentFailureAlert } from './crime-consent-alert'
 import { markInstructorApplyConsentAgreed } from './form-persist'
 import type { ConsentWriteSubmitContext } from './write-form'
 import {
@@ -43,11 +49,26 @@ import {
 import styles from './consent-form.module.css'
 
 const CRIME_CONSENT_UPLOAD_HINTS = [
-  formatSingleFileUploadHint('PDF, JPG, PNG'),
+  formatSingleFileUploadHint(CRIME_CONSENT_ORIGINAL_FORMATS_LABEL),
   '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
 const UPLOADING_MESSAGE = '동의서를 업로드하는 중입니다. 잠시만 기다려 주세요.'
+
+/** 업로드 영역 제목(「2. 작성한 동의서 업로드」)의 항목명 — 시안 「필수 항목 미입력(항목명 노출)」 */
+const CRIME_CONSENT_UPLOAD_FIELD_LABEL = '작성한 동의서 업로드'
+
+/** 진행 상태·용량 안내처럼 시안 오류 팝업에 해당하지 않는 안내 */
+function guidanceAlert(description: string): PlatformAlertCopy {
+  return { title: '안내', description }
+}
+
+/** 파일 선택 직후 검사 결과 — 형식 오류는 시안 「파일 형식이 맞지 않는 경우」 */
+function fileValidationAlert(message: string): PlatformAlertCopy {
+  return message === CRIME_CONSENT_MESSAGES.fileType
+    ? buildFileTypeInvalidAlertCopy(CRIME_CONSENT_ORIGINAL_FORMATS_LABEL)
+    : guidanceAlert(message)
+}
 
 /** 원본 PDF 업로드 상태. `fileObjectId`는 CLEAN+AVAILABLE을 확인한 `ready`에서만 제출에 쓴다. */
 type CrimeOriginalUpload =
@@ -68,7 +89,7 @@ export function CrimeConsentDocumentForm({
   portalSubmitEnabled?: boolean
 }) {
   const [upload, setUpload] = useState<CrimeOriginalUpload>({ status: 'idle' })
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<PlatformAlertCopy | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const queryClient = useQueryClient()
   const uploadSeqRef = useRef(0)
@@ -95,7 +116,7 @@ export function CrimeConsentDocumentForm({
         error instanceof CrimeConsentCatalogDownloadError
           ? error.message
           : CRIME_CONSENT_MESSAGES.formFileUnavailable
-      setAlertMessage(message)
+      setAlert(toCrimeConsentFailureAlert(message))
     })
   }, [])
 
@@ -131,14 +152,16 @@ export function CrimeConsentDocumentForm({
           (error.lastFile == null || canRecheckCrimeConsentOriginalFile(error.lastFile))
         ) {
           setUpload({ status: 'scanPending', fileName, fileObjectId: error.fileObjectId })
-          setAlertMessage(resolveCrimeConsentUploadErrorMessage(error))
+          setAlert(toCrimeConsentFailureAlert(resolveCrimeConsentUploadErrorMessage(error)))
           return
         }
         setUpload({ status: 'idle' })
-        setAlertMessage(
-          error instanceof MemberFileScanTimeoutError
-            ? CRIME_CONSENT_MESSAGES.fileNotReady
-            : resolveCrimeConsentUploadErrorMessage(error),
+        setAlert(
+          toCrimeConsentFailureAlert(
+            error instanceof MemberFileScanTimeoutError
+              ? CRIME_CONSENT_MESSAGES.fileNotReady
+              : resolveCrimeConsentUploadErrorMessage(error),
+          ),
         )
       })
       .finally(() => {
@@ -150,7 +173,7 @@ export function CrimeConsentDocumentForm({
     if (submittingRef.current) return
     const validationError = validateCrimeConsentOriginalFile(file)
     if (validationError) {
-      setAlertMessage(validationError)
+      setAlert(fileValidationAlert(validationError))
       return
     }
     runWithUploadSession(file.name, 'PREPARING', ({ signal, onStatusChange }) =>
@@ -186,15 +209,23 @@ export function CrimeConsentDocumentForm({
   const handleSubmit = () => {
     if (submittingRef.current) return
     if (upload.status === 'uploading') {
-      setAlertMessage(upload.phase === 'SCANNING' ? CRIME_CONSENT_MESSAGES.scanning : UPLOADING_MESSAGE)
+      setAlert(
+        guidanceAlert(
+          upload.phase === 'SCANNING' ? CRIME_CONSENT_MESSAGES.scanning : UPLOADING_MESSAGE,
+        ),
+      )
       return
     }
     if (upload.status === 'scanPending') {
-      setAlertMessage(CRIME_CONSENT_MESSAGES.scanTimeout)
+      setAlert(guidanceAlert(CRIME_CONSENT_MESSAGES.scanTimeout))
       return
     }
     if (upload.status !== 'ready') {
-      setAlertMessage(CRIME_CONSENT_MESSAGES.fileRequired)
+      const missing = buildRequiredMissingAlertCopy({
+        kind: 'field',
+        labels: [CRIME_CONSENT_UPLOAD_FIELD_LABEL],
+      })
+      setAlert({ title: missing.title, description: missing.description ?? '' })
       return
     }
     if (!portalSubmitEnabled) {
@@ -226,7 +257,7 @@ export function CrimeConsentDocumentForm({
               : { status: 'idle' },
           )
         }
-        setAlertMessage(resolveCrimeConsentSubmitErrorMessage(error))
+        setAlert(toCrimeConsentFailureAlert(resolveCrimeConsentSubmitErrorMessage(error)))
       })
       .finally(() => {
         submittingRef.current = false
@@ -352,10 +383,10 @@ export function CrimeConsentDocumentForm({
         </div>
       </div>
       <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? ''}
-        onConfirm={() => setAlertMessage(null)}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
       />
     </>
   )

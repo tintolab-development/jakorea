@@ -86,8 +86,18 @@ export type InstructorRegisterValidationOptions = {
   requireFreeWrite?: boolean
 }
 
+/**
+ * 비어 있는 필수 항목 키 (화면 순서). 앱이 자기 화면 라벨로 바꿔 「필수 항목 미입력」 팝업에 쓴다.
+ * - 입력 값 키: 기본 정보·동의·자유 작성
+ * - 학력: `eduSchoolType`/`eduStatus`(최종 학력), `highSchool`·`college23Rows`·`college4Rows`·`graduateRows`(학력 상세 행)
+ * - 경력: `careerLevel`(경력 구분), `careers`(경력 행)
+ */
+export type InstructorRegisterMissingKey = keyof InstructorRegisterValidationInput
+
 export type InstructorRegisterValidationResult = {
   missingRequired: boolean
+  /** 비어 있는 필수 항목 키 (중복 없음, 화면 순서). `missingRequired`가 true면 1개 이상 */
+  missingRequiredKeys: InstructorRegisterMissingKey[]
   formatMessages: string[]
 }
 
@@ -121,7 +131,7 @@ function isEducationGraduateRowIncomplete(
   )
 }
 
-function isEducationSectionIncomplete(
+function collectEducationSectionMissingKeys(
   values: Pick<
     InstructorRegisterValidationInput,
     | 'eduSchoolType'
@@ -132,8 +142,12 @@ function isEducationSectionIncomplete(
     | 'college4Rows'
     | 'graduateRows'
   >,
-): boolean {
-  if (isBlank(values.eduSchoolType) || isBlank(values.eduStatus)) return true
+): InstructorRegisterMissingKey[] {
+  const missing: InstructorRegisterMissingKey[] = []
+  if (isBlank(values.eduSchoolType)) missing.push('eduSchoolType')
+  if (isBlank(values.eduStatus)) missing.push('eduStatus')
+  // 최종 학력이 비어 있으면 학력 상세는 따지지 않는다 (기존 판정과 동일)
+  if (missing.length > 0) return missing
 
   const enrolledFinal =
     values.eduStatus === EDUCATION_STATUS.enrolled && Boolean(values.eduSchoolType)
@@ -149,12 +163,12 @@ function isEducationSectionIncomplete(
             requireGradYear: requireGradYearFor('high'),
           })
         ) {
-          return true
+          missing.push('highSchool')
         }
         break
       case 'college23':
-        if (values.college23Rows.length === 0) return true
         if (
+          values.college23Rows.length === 0 ||
           values.college23Rows.some(row =>
             isEducationSchoolRowIncomplete(row, {
               requireMajor: true,
@@ -162,12 +176,12 @@ function isEducationSectionIncomplete(
             }),
           )
         ) {
-          return true
+          missing.push('college23Rows')
         }
         break
       case 'college4':
-        if (values.college4Rows.length === 0) return true
         if (
+          values.college4Rows.length === 0 ||
           values.college4Rows.some(row =>
             isEducationSchoolRowIncomplete(row, {
               requireMajor: true,
@@ -175,17 +189,17 @@ function isEducationSectionIncomplete(
             }),
           )
         ) {
-          return true
+          missing.push('college4Rows')
         }
         break
       case 'graduate':
-        if (values.graduateRows.length === 0) return true
         if (
+          values.graduateRows.length === 0 ||
           values.graduateRows.some(row =>
             isEducationGraduateRowIncomplete(row, requireGradYearFor('graduate')),
           )
         ) {
-          return true
+          missing.push('graduateRows')
         }
         break
       default:
@@ -193,7 +207,7 @@ function isEducationSectionIncomplete(
     }
   }
 
-  return false
+  return missing
 }
 
 function isCareerRowIncomplete(row: InstructorCareerRow): boolean {
@@ -204,15 +218,15 @@ function isCareerRowIncomplete(row: InstructorCareerRow): boolean {
   return false
 }
 
-function isCareerSectionIncomplete(
+function collectCareerSectionMissingKeys(
   values: Pick<InstructorRegisterValidationInput, 'careerLevel' | 'careers'>,
-): boolean {
+): InstructorRegisterMissingKey[] {
   if (values.careerLevel !== CAREER_LEVEL.new && values.careerLevel !== CAREER_LEVEL.experienced) {
-    return true
+    return ['careerLevel']
   }
-  if (values.careerLevel === CAREER_LEVEL.new) return false
-  if (values.careers.length === 0) return true
-  return values.careers.some(isCareerRowIncomplete)
+  if (values.careerLevel === CAREER_LEVEL.new) return []
+  if (values.careers.length === 0 || values.careers.some(isCareerRowIncomplete)) return ['careers']
+  return []
 }
 
 export function collectInstructorRegisterValidation(
@@ -220,7 +234,10 @@ export function collectInstructorRegisterValidation(
   formatChecks: InstructorRegisterFormatChecks = {},
   options: InstructorRegisterValidationOptions = {},
 ): InstructorRegisterValidationResult {
-  let missingRequired = false
+  const missingKeys: InstructorRegisterMissingKey[] = []
+  const markMissing = (key: InstructorRegisterMissingKey) => {
+    if (!missingKeys.includes(key)) missingKeys.push(key)
+  }
   const formatMessages: string[] = []
 
   const isBirthDateIncomplete = formatChecks.isBirthDateIncomplete ?? (() => false)
@@ -229,37 +246,37 @@ export function collectInstructorRegisterValidation(
   const isEmailValid =
     formatChecks.isEmailValid ?? ((value: string) => DEFAULT_EMAIL_PATTERN.test(value))
 
-  if (isBlank(values.name)) missingRequired = true
-  if (!values.gender) missingRequired = true
+  if (isBlank(values.name)) markMissing('name')
+  if (!values.gender) markMissing('gender')
 
   const birthDate = values.birthDate?.trim()
   if (!birthDate || isBirthDateIncomplete(birthDate)) {
-    missingRequired = true
+    markMissing('birthDate')
   } else if (!isBirthDateValid(birthDate)) {
     formatMessages.push('올바른 생년월일을 입력해 주세요.')
   }
 
   const contact = values.contact?.trim()
   if (!contact) {
-    missingRequired = true
+    markMissing('contact')
   } else if (!isPhoneValid(contact)) {
     formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
   }
 
   const email = values.email?.trim()
   if (!email) {
-    missingRequired = true
+    markMissing('email')
   } else if (!isEmailValid(email)) {
     formatMessages.push('올바른 이메일 형식이 아닙니다')
   }
 
-  if (!values.memberType) missingRequired = true
+  if (!values.memberType) markMissing('memberType')
 
   if (values.memberType === ('school_teacher' satisfies InstructorMemberType)) {
-    if (isBlank(values.schoolName)) missingRequired = true
-    if (!values.employmentStatus) missingRequired = true
+    if (isBlank(values.schoolName)) markMissing('schoolName')
+    if (!values.employmentStatus) markMissing('employmentStatus')
   } else if (!values.affiliationNone && isBlank(values.affiliationName)) {
-    missingRequired = true
+    markMissing('affiliationName')
   }
 
   if (
@@ -269,39 +286,38 @@ export function collectInstructorRegisterValidation(
       subject: 'person',
     })
   ) {
-    missingRequired = true
+    markMissing('homeAddress')
   }
-  if (isBlank(values.instructorCareer)) missingRequired = true
-  if (!values.isBusinessIncome) missingRequired = true
-  if (isBlank(values.oneLineIntro)) missingRequired = true
+  if (isBlank(values.instructorCareer)) markMissing('instructorCareer')
+  if (!values.isBusinessIncome) markMissing('isBusinessIncome')
+  if (isBlank(values.oneLineIntro)) markMissing('oneLineIntro')
 
   const requiredConsentKeys = options.requiredConsentAgreeKeys ?? DEFAULT_REQUIRED_CONSENT_KEYS
   for (const key of requiredConsentKeys) {
     if (values[key] !== ('agree' satisfies ConsentValue)) {
-      missingRequired = true
+      markMissing(key)
     }
   }
 
-  if (options.requireEducation && isEducationSectionIncomplete(values)) {
-    missingRequired = true
+  if (options.requireEducation) {
+    collectEducationSectionMissingKeys(values).forEach(markMissing)
   }
 
-  if (options.requireCareer && isCareerSectionIncomplete(values)) {
-    missingRequired = true
+  if (options.requireCareer) {
+    collectCareerSectionMissingKeys(values).forEach(markMissing)
   }
 
   if (options.requireFreeWrite) {
-    if (
-      isBlank(values.freeWrite1) ||
-      isBlank(values.freeWrite2) ||
-      isBlank(values.freeWrite3) ||
-      isBlank(values.freeWrite4)
-    ) {
-      missingRequired = true
+    for (const key of ['freeWrite1', 'freeWrite2', 'freeWrite3', 'freeWrite4'] as const) {
+      if (isBlank(values[key])) markMissing(key)
     }
   }
 
-  return { missingRequired, formatMessages }
+  return {
+    missingRequired: missingKeys.length > 0,
+    missingRequiredKeys: missingKeys,
+    formatMessages,
+  }
 }
 
 export type InstructorConsentBasicInfoInput = Pick<

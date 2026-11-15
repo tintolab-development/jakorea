@@ -1,3 +1,5 @@
+import { PLATFORM_ALERT_COPY } from '../../../../shared/lib/platform-alert-copy.ts'
+
 /**
  * 성범죄 경력 조회 동의서 원본 — OpenAPI `MemberPortalFileUploadRequest.filePurpose`
  * `CRIMINAL_HISTORY_CONSENT_ORIGINAL` (PDF·JPG·PNG, 20MB) · `MemberPortalConsentCompleteRequest.evidenceFileObjectId`.
@@ -31,7 +33,10 @@ export const CRIME_CONSENT_MESSAGES = {
   scanTimeout:
     '파일 보안 검사가 아직 끝나지 않았어요. 잠시 후 「검사 상태 확인」을 눌러 다시 확인해 주세요.',
   scanRejected: '보안 검사를 통과하지 못한 파일입니다. 다른 PDF 파일을 업로드해 주세요.',
-  network: '네트워크 오류로 요청하지 못했어요. 연결 상태를 확인한 뒤 다시 시도해 주세요.',
+  /** 시안 「네트워크 오류 안내」 설명 — 팝업에서는 `toCrimeConsentFailureAlert`가 제목까지 시안 문구로 바꾼다 */
+  network: PLATFORM_ALERT_COPY.networkError.description,
+  /** 시안 「공통 제한 안내 / 처리 제한」(429) 설명 */
+  rateLimited: PLATFORM_ALERT_COPY.rateLimited.description,
   uploadFailed: '동의서 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
   fileRequired: '작성한 동의서 PDF를 업로드해 주세요.',
   fileNotReady: '업로드한 동의서 파일을 확인할 수 없어요. PDF 파일을 다시 업로드해 주세요.',
@@ -185,6 +190,7 @@ export function resolveCrimeConsentApiErrorMessage(
   fallback: string,
 ): string {
   if (input.status === 401) return CRIME_CONSENT_MESSAGES.unauthorized
+  if (input.status === 429) return CRIME_CONSENT_MESSAGES.rateLimited
   const code = input.code?.trim().toUpperCase()
   if (code && CRIME_CONSENT_ERROR_CODE_MESSAGES[code]) {
     return CRIME_CONSENT_ERROR_CODE_MESSAGES[code]
