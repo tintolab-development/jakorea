@@ -112,6 +112,7 @@ describe.each<Kind>(['GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])('%s 생성 �
         { id: '1765000000000', exceptionDate: '2026-12-14', selectedSlotKeys: [SLOT(14, 5, 0)] },
       ],
     })
+    // 참여자 면접 없음 — 참여자 행에도 interviewConfig 를 보내지 않는다(봉사 면접 키로 채우지 않음)
     expect(
       rows.filter(r => r.recruitmentType !== 'VOLUNTEER').every(r => !('interviewConfig' in r))
     ).toBe(true)

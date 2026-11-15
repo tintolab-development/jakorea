@@ -37,6 +37,7 @@ import {
   cancelInstructorApplicationRejectionRemote,
   createInterviewAssignmentRemote,
   createInterviewSlotRemote,
+  type InterviewSlotAudience,
   fetchIndividualApplicationsRemote,
   fetchInstructorApplicationsRemote,
   fetchOrganizationApplicationsRemote,
@@ -738,24 +739,38 @@ function isSameInstant(left: string | null | undefined, right: string | null | u
   return (left ?? '') === (right ?? '')
 }
 
+/** 슬롯 응답 대상 — 필드가 없는 기존 슬롯은 모두 VOLUNTEER(BE keonhee 2026-11) */
+export function interviewSlotAudienceOf(row: {
+  audience?: string | null
+}): InterviewSlotAudience {
+  return (row.audience ?? '').trim().toUpperCase() === 'PARTICIPANT' ? 'PARTICIPANT' : 'VOLUNTEER'
+}
+
 /**
- * 동일 일시 슬롯이 있으면 재사용, 없으면 생성.
+ * 같은 대상(audience)·같은 일시 슬롯이 있으면 재사용, 없으면 생성.
+ * 같은 시각이라도 대상이 다르면 다른 슬롯이다 — 개인 참여자는 PARTICIPANT 슬롯만, 봉사자는 VOLUNTEER 슬롯만.
+ * 봉사자 요청 본문은 기존과 같다(조회 `audience` 생략·생성 `audience` 생략 = BE 기본 VOLUNTEER). 응답에서만 대상을 거른다.
  */
-async function resolveInterviewSlotId(params: {
-  programId: string
-  slotDate: string
-  startAt: string
-  endAt: string
-  maxAssignCount?: number
-}): Promise<number> {
+async function resolveInterviewSlotId(
+  params: {
+    programId: string
+    slotDate: string
+    startAt: string
+    endAt: string
+    maxAssignCount?: number
+  },
+  audience: InterviewSlotAudience
+): Promise<number> {
   const existing = await listInterviewSlotsRemote(params.programId, {
     from: params.slotDate,
     to: params.slotDate,
+    ...(audience === 'PARTICIPANT' ? { audience } : {}),
   })
   // 시각은 문자열이 아니라 instant로 비교한다 — FE `toISOString()`(…000Z)과 BE(…Z) 표기가 달라 같은 슬롯을 못 찾고 매번 새로 만들던 문제
   const matched = existing.find(
     row =>
       row.interviewSlotId != null &&
+      interviewSlotAudienceOf(row) === audience &&
       row.slotDate === params.slotDate &&
       isSameInstant(row.startAt, params.startAt) &&
       isSameInstant(row.endAt, params.endAt)
@@ -770,6 +785,7 @@ async function resolveInterviewSlotId(params: {
     endAt: params.endAt,
     maxAssignCount: params.maxAssignCount ?? 1,
     exceptionSlot: false,
+    ...(audience === 'PARTICIPANT' ? { audience } : {}),
   })
   if (slot.interviewSlotId == null) {
     throw new Error('면접 슬롯 생성 응답에 interviewSlotId가 없습니다.')
@@ -798,7 +814,7 @@ export async function assignGeneralVolunteerInterview(params: {
     throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
   }
 
-  const interviewSlotId = await resolveInterviewSlotId(params)
+  const interviewSlotId = await resolveInterviewSlotId(params, 'VOLUNTEER')
 
   const notifyFields = toInterviewAssignmentNotifyFields({
     notifyTiming: params.notifyTiming,
@@ -837,7 +853,8 @@ export async function assignGeneralIndividualInterview(params: {
     throw new Error('개인 신청 ID가 올바르지 않습니다.')
   }
 
-  const interviewSlotId = await resolveInterviewSlotId(params)
+  // 개인 참여자는 PARTICIPANT 슬롯에만 배정한다(VOLUNTEER 슬롯 id 는 409 INTERVIEW_SLOT_AUDIENCE_MISMATCH)
+  const interviewSlotId = await resolveInterviewSlotId(params, 'PARTICIPANT')
 
   const notifyFields = toInterviewAssignmentNotifyFields({
     notifyTiming: params.notifyTiming,
@@ -888,6 +905,8 @@ export function mapSecondInterviewStatusToFinalResultPayload(
 
 export type GeneralInterviewSlotListItem = {
   interviewSlotId: number
+  /** 슬롯 대상(응답에 없으면 VOLUNTEER) */
+  audience?: InterviewSlotAudience
   slotDate: string
   startAt: string
   endAt: string
@@ -897,18 +916,22 @@ export type GeneralInterviewSlotListItem = {
 }
 
 /**
- * GET interview-slots. mock 폴백 없음 — 실패 시 throw.
+ * GET interview-slots?audience=…. mock 폴백 없음 — 실패 시 throw.
+ * `audience` 를 주면 응답도 그 대상만 남긴다(대상 없는 전체 목록을 배정 화면에 그리지 않는다).
  */
 export async function listGeneralInterviewSlots(
   programId: string,
-  range?: { from?: string; to?: string }
+  query?: { from?: string; to?: string; audience?: InterviewSlotAudience }
 ): Promise<GeneralInterviewSlotListItem[]> {
   assertApplicationsRemoteReady()
-  const rows = await listInterviewSlotsRemote(programId, range)
+  const rows = await listInterviewSlotsRemote(programId, query)
+  const audience = query?.audience
   return rows
     .filter(row => row.interviewSlotId != null && row.slotDate && row.startAt && row.endAt)
+    .filter(row => audience == null || interviewSlotAudienceOf(row) === audience)
     .map(row => ({
       interviewSlotId: row.interviewSlotId as number,
+      audience: interviewSlotAudienceOf(row),
       slotDate: row.slotDate as string,
       startAt: row.startAt as string,
       endAt: row.endAt as string,

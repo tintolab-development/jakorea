@@ -3,6 +3,7 @@
  * 「상세 정보」단락은 제외. 유형별 「* 모집 정보」단락(+ 봉사자 면접 일정)만 검사.
  */
 
+import { PARTICIPANT_INTERVIEW_OVERLAY_PREFIX } from '@/features/program/shared/lib/volunteer-interview-config'
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
 import type {
   ProgramRegistrationEducationScheduleMode,
@@ -267,6 +268,12 @@ function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): 
   }
   pushInquiryIncomplete(reasons, overlay, p)
   pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
+  // 개인 참여자 면접 진행 가능 일정 — 봉사자와 같은 필수 규칙(참여자 행 interviewConfig 정본)
+  if (!skipSchedule && interviewRequired === 'yes') {
+    reasons.push(
+      ...listIncompleteVolunteerInterviewSchedule(overlay, 0, PARTICIPANT_INTERVIEW_OVERLAY_PREFIX)
+    )
+  }
   return reasons
 }
 
@@ -300,13 +307,18 @@ function isInterviewTimeRangeIncomplete(value: unknown): boolean {
   return value[0] == null || value[1] == null
 }
 
+/**
+ * 면접 진행 가능 일정 필수 — 봉사자(`recruit.volunteer.interview`)와 개인 참여자(`recruit.individual.interview`)가
+ * 같은 규칙을 쓴다. `namespace` 없으면 봉사자 키.
+ */
 function listIncompleteVolunteerInterviewSchedule(
   overlay: Record<string, unknown>,
-  exceptionCount: number
+  exceptionCount: number,
+  namespace?: string
 ): string[] {
   const reasons: string[] = []
-  const p = 'recruit.volunteer.interview'
-  const key = (suffix: string) => buildVolunteerInterviewOverlayKey('recruit', suffix)
+  const p = namespace ?? 'recruit.volunteer.interview'
+  const key = (suffix: string) => buildVolunteerInterviewOverlayKey('recruit', suffix, namespace)
   pushReason(
     reasons,
     isInterviewTimeRangeIncomplete(read(overlay, key('interviewTimeRange'))),
@@ -319,7 +331,7 @@ function listIncompleteVolunteerInterviewSchedule(
     !Array.isArray(slots) || slots.length === 0 || slots.every(s => isEmptyText(s)),
     `${p}.selectedSlotKeys`
   )
-  const exceptionIds = listVolunteerInterviewExceptionBlockIds(overlay, 'recruit')
+  const exceptionIds = listVolunteerInterviewExceptionBlockIds(overlay, 'recruit', namespace)
   if (exceptionCount > exceptionIds.length) {
     pushReason(reasons, true, `${p}.exceptionDate`)
   }

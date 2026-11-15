@@ -206,4 +206,7 @@ export const generalInterviewSlotsQueryKeys = {
   all: ['general-interview-slots'] as const,
   list: (programId: string, from?: string, to?: string) =>
     [...generalInterviewSlotsQueryKeys.all, programId, from ?? '', to ?? ''] as const,
+  /** 대상별 슬롯 목록(`?audience=`) — 참여자·봉사자 배정 캐시를 섞지 않는다 */
+  listByAudience: (programId: string, audience: 'PARTICIPANT' | 'VOLUNTEER') =>
+    [...generalInterviewSlotsQueryKeys.all, programId, '', '', audience] as const,
 }

@@ -46,6 +46,7 @@ export function GeneralVolunteerInterviewAssignModals({
           mode={assignMode}
           applicationsUseRemote={applicationsUseRemote}
           subjectNoun={subjectNoun}
+          audience={subjectKind === 'participant' ? 'PARTICIPANT' : 'VOLUNTEER'}
           onCancel={onClosePick}
           onConfirm={onConfirmPick}
         />

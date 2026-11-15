@@ -1,8 +1,12 @@
 import {
+  applyTypedParticipantInterviewToOverlay,
   applyTypedVolunteerInterviewToOverlay,
+  buildParticipantInterviewConfigForSave,
   buildVolunteerInterviewConfigForSave,
   completeVolunteerInterviewConfig,
+  omitParticipantInterviewKeysFromServiceDetailJson,
   omitVolunteerInterviewSaveKeysFromServiceDetailJson,
+  supportsParticipantInterviewConfigProgramType,
   volunteerInterviewRequiredFromOverlay,
   type RecruitmentInterviewConfig,
 } from '@/features/program/shared/lib/volunteer-interview-config'
@@ -18,6 +22,7 @@ import type { AdminProgramListItemDto } from '@/features/program/general/api/pro
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
 import { withRecruitmentCreateMedia } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import { ProgramRecruitmentRequestApplicationType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestApplicationType'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
@@ -447,6 +452,55 @@ function applyTypedVolunteerInterviewToServiceDetail<
     : { ...serviceDetail, registrationOverlay: overlay }
 }
 
+/** 개인 참여자 모집 행인지 — PARTICIPANT + applicationType(없으면 targetType) INDIVIDUAL */
+function isIndividualParticipantRecruitmentRow(row: {
+  recruitmentType?: string | null
+  applicationType?: string | null
+  targetType?: string | null
+}): boolean {
+  if ((row.recruitmentType ?? '').toUpperCase() !== 'PARTICIPANT') return false
+  const applicationType =
+    row.applicationType?.toUpperCase() ||
+    resolveRecruitmentApplicationType(row.recruitmentType, row.targetType)
+  return applicationType === 'INDIVIDUAL'
+}
+
+/** 조회 typed 대상 행 — GENERAL 계열 프로그램 + 개인 참여자 모집 행 정확히 1개 */
+function singleTypedParticipantInterviewRow(
+  dto: ProgramResponse
+): { interviewConfig?: RecruitmentInterviewConfig | null } | undefined {
+  if (!supportsParticipantInterviewConfigProgramType(dto.programType)) return undefined
+  const rows = (dto.recruitments ?? []).filter(isIndividualParticipantRecruitmentRow)
+  if (rows.length !== 1) return undefined
+  return rows[0] as { interviewConfig?: RecruitmentInterviewConfig | null }
+}
+
+/**
+ * 개인 참여자 모집 행 typed `interviewConfig` 가 참여자 면접 overlay 키(`recruit.individual.interview.*`)의 정본.
+ * null(저장 값 없음)이면 참여자 면접 키를 비운다 — 봉사 면접 일정을 기본값으로 쓰지 않는다(BE overlay fallback 없음).
+ */
+function applyTypedParticipantInterviewToServiceDetail<
+  T extends { registrationOverlay?: Record<string, unknown> },
+>(serviceDetail: T, dto: ProgramResponse): T {
+  const row = singleTypedParticipantInterviewRow(dto)
+  if (!row) return serviceDetail
+  const overlay = applyTypedParticipantInterviewToOverlay(
+    serviceDetail.registrationOverlay,
+    row.interviewConfig ?? null
+  )
+  return overlay === serviceDetail.registrationOverlay
+    ? serviceDetail
+    : { ...serviceDetail, registrationOverlay: overlay }
+}
+
+function typedParticipantInterviewProgramFields(
+  dto: ProgramResponse
+): Pick<Program, 'participantInterviewConfigFromServer'> {
+  const row = singleTypedParticipantInterviewRow(dto)
+  if (!row) return {}
+  return { participantInterviewConfigFromServer: row.interviewConfig ?? null }
+}
+
 /** 상세 Program typed 면접 필드 — typed 가 있으면 면접 여부도 행 interviewEnabled 가 SSOT */
 function typedVolunteerInterviewProgramFields(
   dto: ProgramResponse
@@ -473,7 +527,10 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
   const parsedServiceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
-  const serviceDetail = applyTypedVolunteerInterviewToServiceDetail(parsedServiceDetail, dto)
+  const serviceDetail = applyTypedParticipantInterviewToServiceDetail(
+    applyTypedVolunteerInterviewToServiceDetail(parsedServiceDetail, dto),
+    dto
+  )
   const dtoDetailedProgramName = dto.detailedProgramName?.trim()
   const generalCommonInfoBase = applyResolvedVenueKindToCommonInfo(
     applySettlementPolicyToCommonInfo(
@@ -626,6 +683,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
             parsedServiceDetail.generalCommonInfo?.volunteerInterviewScheduleInfo ?? null,
         }),
     ...typedVolunteerInterviewProgramFields(dto),
+    ...typedParticipantInterviewProgramFields(dto),
   })
 
   return hydrateRecruitmentWindowsOntoProgram(
@@ -1150,7 +1208,10 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
     businessEndDate: toOperationCalendarDate(program.endDate) ?? toRequestDate(program.endDate),
     autoApplyDefaultFormBindings: true,
   }) as ProgramCreateRequestBody
-  return withTypedVolunteerInterviewConfigForCreate(body, program)
+  return withTypedParticipantInterviewConfigForCreate(
+    withTypedVolunteerInterviewConfigForCreate(body, program),
+    program
+  )
 }
 
 function readRequestServiceDetail(serviceDetailJson: string | undefined): Record<string, unknown> {
@@ -1241,6 +1302,58 @@ function withTypedVolunteerInterviewConfigForCreate(
         : row
     ),
     serviceDetailJson: omitVolunteerInterviewSaveKeysFromServiceDetailJson(body.serviceDetailJson),
+  }
+}
+
+/**
+ * 생성 본문 — GENERAL 계열 + 개인 참여자 모집 행이 정확히 1개면 그 행에 참여자 면접 정본을 싣는다.
+ * - BE 는 PARTICIPANT·INDIVIDUAL 행에만 interviewConfig 를 저장한다 → 행에 `applicationType: INDIVIDUAL`·
+ *   `recruitmentType: PARTICIPANT` 를 명시한다.
+ * - `interviewConfig`: 면접 있음이면 overlay 참여자 면접 키로 만든 전체 typed, 없음이면 보내지 않는다.
+ * - serviceDetailJson 에서는 참여자 면접 overlay 키를 뺀다(행 typed 가 정본).
+ * 봉사자 행·UJAT·1사1교·교육받은 교사·Gemini 는 건드리지 않는다.
+ */
+function withTypedParticipantInterviewConfigForCreate(
+  body: ProgramCreateRequestBody,
+  program: Program
+): ProgramCreateRequestBody {
+  if (!supportsParticipantInterviewConfigProgramType(body.programType)) return body
+  const backendProgramType = program.backendProgramType?.trim()
+  if (backendProgramType && !supportsParticipantInterviewConfigProgramType(backendProgramType)) {
+    return body
+  }
+  const rows = body.recruitments ?? []
+  const participantIndexes = rows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => isIndividualParticipantRecruitmentRow(row))
+  const serviceDetailJson = omitParticipantInterviewKeysFromServiceDetailJson(
+    body.serviceDetailJson
+  )
+  if (participantIndexes.length !== 1) {
+    return serviceDetailJson === body.serviceDetailJson ? body : { ...body, serviceDetailJson }
+  }
+  const target = participantIndexes[0]!.index
+  const detail = readRequestServiceDetail(body.serviceDetailJson)
+  const overlay = recordOrEmpty(recordOrEmpty(detail.registration).overlay)
+  // 면접 없음이면 interviewConfig 를 보내지 않는다(저장 값 없음 = 조회 null = 빈 폼). 참여자 행 interviewConfig 를
+  // 받지 못하는 BE 에 배포 순서가 어긋나도 면접 없는 개인 프로그램 등록이 400으로 막히지 않게 한다.
+  const interviewConfig =
+    rows[target]!.interviewEnabled === true
+      ? buildParticipantInterviewConfigForSave(overlay)
+      : undefined
+  return {
+    ...body,
+    recruitments: rows.map((row, index) =>
+      index === target
+        ? ({
+            ...row,
+            recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
+            applicationType: ProgramRecruitmentRequestApplicationType.INDIVIDUAL,
+            ...(interviewConfig ? { interviewConfig } : {}),
+          } as typeof row)
+        : row
+    ),
+    serviceDetailJson,
   }
 }
 
@@ -1664,9 +1777,32 @@ export function mapGeneralProgramToUpdateRequest(
         )
       : mapProgramCoreFieldsToRequest(program)
   return withExpectedUpdatedAt(
-    omitTypedVolunteerInterviewKeysFromUpdateRequest(body, baselineProgram),
+    omitTypedParticipantInterviewKeysFromUpdateRequest(
+      omitTypedVolunteerInterviewKeysFromUpdateRequest(body, baselineProgram),
+      baselineProgram
+    ),
     baselineProgram.updatedAt
   )
+}
+
+/**
+ * 생성 외 프로그램 PATCH — 참여자 면접 overlay 키(`recruit.individual.interview.*`)는 보내지 않는다.
+ * 정본은 개인 참여자 모집 행 PATCH 의 interviewConfig. GENERAL 계열만.
+ */
+function omitTypedParticipantInterviewKeysFromUpdateRequest(
+  body: ProgramUpdateRequestBody,
+  program: Program
+): ProgramUpdateRequestBody {
+  if (
+    !body.serviceDetailJson ||
+    !supportsParticipantInterviewConfigProgramType(program.backendProgramType)
+  ) {
+    return body
+  }
+  const serviceDetailJson = omitParticipantInterviewKeysFromServiceDetailJson(
+    body.serviceDetailJson
+  )
+  return serviceDetailJson === body.serviceDetailJson ? body : { ...body, serviceDetailJson }
 }
 
 /** 조회 typed 적용 조건과 같다 — UJAT 아님 + 반기 아닌 봉사 모집 행 정확히 1개 */

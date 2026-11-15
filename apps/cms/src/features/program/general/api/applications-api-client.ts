@@ -1222,12 +1222,27 @@ export async function submitInterviewAssignmentEvaluationRemote(
   )
 }
 
+/**
+ * 면접 슬롯 대상(BE keonhee 2026-11) — 개인 참여자 `PARTICIPANT` / 봉사자 `VOLUNTEER`.
+ * 생성 OpenAPI 타입에 아직 없어 여기서 더한다. 기존 슬롯은 모두 VOLUNTEER.
+ */
+export type InterviewSlotAudience = 'PARTICIPANT' | 'VOLUNTEER'
+
+export type InterviewSlotCreateRequestWithAudience =
+  import('@/shared/api/generated/dashboard/schemas/interviewSlotCreateRequest').InterviewSlotCreateRequest & {
+    /** 생략 시 BE 기본 VOLUNTEER */
+    audience?: InterviewSlotAudience
+  }
+
+export type InterviewSlotResponseWithAudience =
+  import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse & {
+    audience?: InterviewSlotAudience | string | null
+  }
+
 export async function createInterviewSlotRemote(
   programId: string,
-  payload: import('@/shared/api/generated/dashboard/schemas/interviewSlotCreateRequest').InterviewSlotCreateRequest
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse
-> {
+  payload: InterviewSlotCreateRequestWithAudience
+): Promise<InterviewSlotResponseWithAudience> {
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/interview-slots`,
@@ -1240,17 +1255,16 @@ export async function createInterviewSlotRemote(
 /**
  * GET /api/admin/programs/{programId}/interview-slots
  * OpenAPI GET/POST 등재. 404/실패 시 호출측에서 mock 폴백.
+ * `audience` 를 주면 그 대상 슬롯만(생략 = 전체). 배정 화면은 항상 대상을 지정한다.
  */
 export async function listInterviewSlotsRemote(
   programId: string,
-  params?: { from?: string; to?: string }
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse[]
-> {
+  params?: { from?: string; to?: string; audience?: InterviewSlotAudience }
+): Promise<InterviewSlotResponseWithAudience[]> {
   const body = await unwrapApiBody<
-    | import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse[]
+    | InterviewSlotResponseWithAudience[]
     | {
-        items?: import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse[]
+        items?: InterviewSlotResponseWithAudience[]
       }
   >(
     await customInstance({

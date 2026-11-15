@@ -783,6 +783,12 @@ export interface Program {
    * `undefined` = 서버 조회가 아닌 Program 또는 UJAT·봉사 행 여러 개.
    */
   volunteerInterviewConfigFromServer?: ProgramVolunteerInterviewConfig | null
+  /**
+   * 일반 프로그램(GENERAL 계열) 개인 참여자 모집 행(PARTICIPANT·INDIVIDUAL) 1개의 typed `interviewConfig`.
+   * 참여자 「면접 진행 가능 일정」 표시·수정 초기값 SSOT. `null` = 저장 값 없음(봉사 일정으로 채우지 않는다),
+   * `undefined` = 서버 조회가 아닌 Program 또는 대상 행 없음.
+   */
+  participantInterviewConfigFromServer?: ProgramVolunteerInterviewConfig | null
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
   /**

@@ -45,6 +45,17 @@ type InterviewTimeSlot = {
 
 type RecruitInterviewRangeSeal = { start: string; end: string } | null
 
+/** 일반 개인 참여자 모집 면접 일정 overlay 네임스페이스(예외 블록은 `.exception.<id>` 하위) */
+const PARTICIPANT_RECRUIT_INTERVIEW_NAMESPACE = 'recruit.individual.interview'
+
+function isParticipantRecruitInterviewNamespace(namespace: string | undefined): boolean {
+  const ns = namespace?.trim() ?? ''
+  return (
+    ns === PARTICIPANT_RECRUIT_INTERVIEW_NAMESPACE ||
+    ns.startsWith(`${PARTICIPANT_RECRUIT_INTERVIEW_NAMESPACE}.`)
+  )
+}
+
 function slotLabelFromKey(key: string): string | null {
   const match = /^(\d+)-(\d+)$/.exec(key.trim())
   if (!match) return null
@@ -158,6 +169,8 @@ function VolunteerInterviewScheduleBlock({
   interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
   const { showAlert } = useCmsAlert()
+  const participantRecruitInterview =
+    overlayStore === 'recruit' && isParticipantRecruitInterviewNamespace(overlayNamespace)
   const seed = type === 'common' ? commonScheduleSeed : undefined
   const initialTimeRange = useMemo(
     () => (seed ? buildDayjsTimeRange(seed.interviewTimeRange) : null),
@@ -194,28 +207,34 @@ function VolunteerInterviewScheduleBlock({
   const handleDirectUnavailableModalBlocked = useCallback(() => {
     showAlert({
       title: '진행 불가일 추가 불가',
-      content: '봉사자 모집 정보의 2차 면접 기간을 먼저 선택해 주세요.',
+      content: participantRecruitInterview
+        ? '참여자 모집 정보의 2차 면접 기간을 먼저 선택해 주세요.'
+        : '봉사자 모집 정보의 2차 면접 기간을 먼저 선택해 주세요.',
     })
-  }, [showAlert])
+  }, [participantRecruitInterview, showAlert])
 
   const ujatInterviewHalf = overlayNamespace?.includes('.h1.')
     ? 'h1'
     : overlayNamespace?.includes('.h2.')
       ? 'h2'
       : null
+  /** 일반 개인 참여자 모집 면접 일정 — 검증 키 루트만 참여자 접두사, 그 외(봉사자·UJAT)는 기존 키 */
+  const recruitInterviewKeyRoot = participantRecruitInterview
+    ? PARTICIPANT_RECRUIT_INTERVIEW_NAMESPACE
+    : 'recruit.volunteer.interview'
   const interviewTimeValidationKey = ujatInterviewHalf
     ? `recruit.volunteer.${ujatInterviewHalf}.interviewSchedule`
     : overlayStore === 'recruit'
       ? [
-          'recruit.volunteer.interview.interviewTimeRange',
-          'recruit.volunteer.interview.timeUnit',
-          'recruit.volunteer.interview.selectedSlotKeys',
+          `${recruitInterviewKeyRoot}.interviewTimeRange`,
+          `${recruitInterviewKeyRoot}.timeUnit`,
+          `${recruitInterviewKeyRoot}.selectedSlotKeys`,
         ]
       : undefined
   const exceptionDateValidationKey = ujatInterviewHalf
     ? `recruit.volunteer.${ujatInterviewHalf}.interviewSchedule`
     : overlayStore === 'recruit'
-      ? 'recruit.volunteer.interview.exceptionDate'
+      ? `${recruitInterviewKeyRoot}.exceptionDate`
       : undefined
 
   const [exceptionDate, setExceptionDate] = useVolunteerInterviewOverlayKv<Dayjs | null>(
@@ -470,9 +489,9 @@ function VolunteerInterviewScheduleBlock({
             validationKey={
               type === 'exception' && overlayStore === 'recruit' && ujatInterviewHalf == null
                 ? [
-                    'recruit.volunteer.interview.interviewTime',
-                    'recruit.volunteer.interview.interviewTimeRange',
-                    'recruit.volunteer.interview.selectedSlotKeys',
+                    `${recruitInterviewKeyRoot}.interviewTime`,
+                    `${recruitInterviewKeyRoot}.interviewTimeRange`,
+                    `${recruitInterviewKeyRoot}.selectedSlotKeys`,
                   ]
                 : interviewTimeValidationKey
             }

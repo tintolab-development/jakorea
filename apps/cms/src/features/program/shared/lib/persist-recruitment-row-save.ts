@@ -12,7 +12,9 @@ import { ProgramRecruitmentRequestApplicationType } from '@/shared/api/generated
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
 import {
+  buildParticipantInterviewConfigForRowSave,
   buildVolunteerInterviewConfigForRowSave,
+  supportsParticipantInterviewConfigProgramType,
   volunteerInterviewRequiredFromOverlay,
   type RecruitmentInterviewConfig,
 } from '@/features/program/shared/lib/volunteer-interview-config'
@@ -597,6 +599,14 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
     recruitmentType,
   })
   if (overlayInterviewConfig) typedBody.interviewConfig = overlayInterviewConfig
+  const participantInterviewConfig = participantInterviewConfigForRowSave({
+    source,
+    row,
+    patch,
+    audience,
+    recruitmentType,
+  })
+  if (participantInterviewConfig) typedBody.interviewConfig = participantInterviewConfig
   if (clearFields.length > 0) body.clearFields = clearFields
   return body
 }
@@ -629,6 +639,36 @@ function volunteerInterviewConfigForRowSave(args: {
   return buildVolunteerInterviewConfigForRowSave(
     overlay as Record<string, unknown>,
     args.source.volunteerInterviewConfigFromServer as RecruitmentInterviewConfig | null | undefined
+  )
+}
+
+/**
+ * 일반 개인 참여자 모집 행 저장 — 저장 typed(`participantInterviewConfigFromServer`)에 이번 저장 overlay 의
+ * 참여자 면접 키(`recruit.individual.interview.*`)를 합친 전체 interviewConfig.
+ * GENERAL 계열 + PARTICIPANT + applicationType INDIVIDUAL 행만(기관 참여자·UJAT·1사1교·교육받은 교사·Gemini 제외).
+ * overlay 에 참여자 면접 키가 없으면 보내지 않는다(서버 typed 값 유지).
+ */
+function participantInterviewConfigForRowSave(args: {
+  source: Program
+  row: ProgramRecruitmentWindow
+  patch: Partial<Program>
+  audience: RecruitmentCopyAudience
+  recruitmentType: string
+}): RecruitmentInterviewConfig | undefined {
+  if (args.audience !== 'participant') return undefined
+  if (args.recruitmentType !== ProgramRecruitmentRequestRecruitmentType.PARTICIPANT) return undefined
+  if (applicationTypeOf(args.row) !== ProgramRecruitmentRequestApplicationType.INDIVIDUAL) {
+    return undefined
+  }
+  if (!supportsParticipantInterviewConfigProgramType(args.source.backendProgramType)) return undefined
+  if (isCompanySchoolProgram(args.source) || isTrainedTeachersDetailProgram(args.source)) {
+    return undefined
+  }
+  const overlay = args.patch.registrationOverlay
+  if (!overlay || typeof overlay !== 'object') return undefined
+  return buildParticipantInterviewConfigForRowSave(
+    overlay as Record<string, unknown>,
+    args.source.participantInterviewConfigFromServer as RecruitmentInterviewConfig | null | undefined
   )
 }
 

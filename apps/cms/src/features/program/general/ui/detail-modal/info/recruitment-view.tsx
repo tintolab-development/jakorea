@@ -27,7 +27,10 @@ import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/p
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
 import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
 import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
-import { GeneralProgramVolunteerInterviewScheduleSection } from './volunteer-interview-schedule-section'
+import {
+  GeneralProgramParticipantInterviewScheduleSection,
+  GeneralProgramVolunteerInterviewScheduleSection,
+} from './volunteer-interview-schedule-section'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './recruitment-view.css'
 
@@ -119,6 +122,7 @@ export function GeneralProgramRecruitmentView({
 
   let recruitment: ReactNode
   let detail: ReactNode
+  let participantInterviewSchedule: ReactNode = null
   // 교육받은 교사 참여 기관 모집 상세 — 일반 기관 시안 스펙(HWP·10개·100MB·안내/placeholder). 1사1교·UJAT 불변
   const resolvedParticipantDetailVariant: DetailInfoSectionVariant =
     participantDetailVariant ??
@@ -132,6 +136,14 @@ export function GeneralProgramRecruitmentView({
           isEdit={isEditModeInstitutions && recruitmentEditable}
           form={isEditModeInstitutions && recruitmentEditable ? institutionsForm : undefined}
           variant={variant}
+        />
+      )
+      // 일반 개인 참여자 + 면접 있음 — 봉사자 모집과 같은 「면접 진행 가능 일정」(기관·1사1교·교육받은 교사 미노출)
+      participantInterviewSchedule = (
+        <GeneralProgramParticipantInterviewScheduleSection
+          program={program}
+          isEdit={isEditModeInstitutions && recruitmentEditable}
+          form={isEditModeInstitutions && recruitmentEditable ? institutionsForm : undefined}
         />
       )
       detail = (
@@ -250,6 +262,7 @@ export function GeneralProgramRecruitmentView({
         />
         <div className="recruitment-view__body">
           {recruitment}
+          {participantInterviewSchedule}
           <div className="detail-info-form--gap">{detail}</div>
         </div>
       </div>

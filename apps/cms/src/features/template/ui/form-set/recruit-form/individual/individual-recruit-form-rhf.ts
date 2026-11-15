@@ -5,15 +5,22 @@
  * - 위저드: RHF `recruitmentKv`(registration-wizard-recruitment-rhf)가 정본이고, 같은 값을 이 폼에도 둔다(예전 스토어 투영과 같은 위치).
  * - 상세·양식 편집기: 양식(templateCode)별 이 RHF 폼이 정본.
  * - 일반 모집 스토어(`general-recruit-overlay-sync`)는 이 폼을 합성해서 기존 읽기·양식 collect 결과를 그대로 만든다.
+ * - 제외(스토어 유지): 면접 진행 가능 일정 키(`recruit.individual.interview.*`).
  */
 import { isRecruitMediaOverlayKey } from '@/features/program/general/lib/overlay-phase1/registration-wizard-recruitment-rhf'
 import { useGeneralRecruitField } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-field-binding'
 import { createScopedRhfFieldForm } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
 
 export const INDIVIDUAL_RECRUIT_KEY_PREFIX = 'recruit.individual'
+/** 면접 진행 가능 일정(슬롯·예외 블록) — 봉사자 `recruit.volunteer.interview.*` 처럼 overlay 스토어에 둔다 */
+const INDIVIDUAL_INTERVIEW_SCHEDULE_KEY_PREFIX = 'recruit.individual.interview.'
 
 export function isIndividualRecruitFieldKey(key: string): boolean {
-  return key.startsWith(INDIVIDUAL_RECRUIT_KEY_PREFIX) && !isRecruitMediaOverlayKey(key)
+  return (
+    key.startsWith(INDIVIDUAL_RECRUIT_KEY_PREFIX) &&
+    !key.startsWith(INDIVIDUAL_INTERVIEW_SCHEDULE_KEY_PREFIX) &&
+    !isRecruitMediaOverlayKey(key)
+  )
 }
 
 export const individualRecruitFieldForm = createScopedRhfFieldForm({
