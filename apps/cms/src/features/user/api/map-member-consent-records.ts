@@ -296,7 +296,8 @@ function toSummaryOverlay(summary: AdminMemberConsentSummary): AgreementOverlay 
     agreed,
     agreedAt: agreed ? (summary.agreedAt ?? undefined) : undefined,
     consentType: summary.consentType,
-    consentStatus: summary.consentStatus ?? undefined,
+    /** 부분 동의 판정은 동의 상태일 때만 — 철회·미동의에 PARTIAL이 와도 「부분 동의」로 올리지 않는다 */
+    consentStatus: agreed ? (summary.consentStatus ?? undefined) : undefined,
     allItemsAgreed: summary.allItemsAgreed,
     expired,
     expiresAt: expired ? (summary.expiresAt ?? undefined) : undefined,

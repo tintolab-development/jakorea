@@ -181,6 +181,23 @@ describe('applyMemberConsentToSchema', () => {
     expect(fieldValue(rows, '서비스 이용약관')).toMatchObject({ agreed: false })
   })
 
+  it('철회 상태는 consentStatus PARTIAL이 와도 부분 동의로 넘기지 않는다 (190001 행정정보)', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        summary({
+          consentType: 'ADMINISTRATIVE_INFO_CONSENT',
+          status: 'WITHDRAWN',
+          consentStatus: 'PARTIAL',
+          filledDocumentUnavailableReason: 'WITHDRAWN',
+        }),
+      ],
+    })
+    const value = fieldValue(rows, '행정정보 공동이용 동의서')
+    expect(value).toMatchObject({ agreed: false, filledDocumentUnavailableReason: 'WITHDRAWN' })
+    if (value?.type !== 'document') throw new Error('Expected document value')
+    expect(value.consentStatus).toBeUndefined()
+  })
+
   it('Summary consentStatus PARTIAL을 필드에 전달한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       consentSummaries: [
