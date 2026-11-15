@@ -201,6 +201,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.enrollmentStatus).toBe('ENROLLED')
     expect(body.grade).toBe('2학년')
     expect(body.affiliation).toBe('서울고등학교 | 2학년')
+    expect(body.socialAccounts).toBeUndefined()
   })
 
   it('개인 회원 미재학 초안은 소속 clear payload로 PATCH된다', () => {

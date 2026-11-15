@@ -409,7 +409,6 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
     | 'id1365'
   >
 > {
-  const social = draft.socialAccount.trim()
   const adminTrimmed = draft.adminComment.trim()
   const affiliation = composeIndividualAffiliationFromDraft(draft)
   const detailAddressSearch = (draft.detailAddressSearch ?? '').trim()
@@ -429,7 +428,7 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
     // 사용자가 바꾼 경우에만 성별을 보낸다(미등록·마스킹·미변경은 제외).
     gender: genderPatchValue(draft.gender, draft.genderOriginal),
     birthDate: draft.birthDate.trim() || undefined,
-    socialAccounts: social ? [social] : [],
+    // 연동 소셜 계정은 상세 GET 표시 전용. 기본정보 PATCH에 넣으면 빈 배열·첫 항목만 저장되어 연동이 깨진다.
     adminComment: adminTrimmed ? adminTrimmed : undefined,
     ...(id1365 ? { id1365 } : {}),
     listMetrics: isAdminPermissionTagVariant(adminPermissionVariant)

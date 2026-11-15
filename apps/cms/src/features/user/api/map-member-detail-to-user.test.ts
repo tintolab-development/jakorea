@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
+  mapLinkedSocialAccountsToDisplay,
   mapTeacherMemberDetailToUser,
   resolveInstructorBankFields,
 } from './map-member-detail-to-user'
@@ -137,6 +138,38 @@ describe('mapIndividualMemberDetailToUser', () => {
 
     expect(user.schoolEnrollmentStatus).toBeUndefined()
     expect(user.affiliation).toBe('서울고등학교 | 2학년')
+  })
+
+  it('member.socialAccounts의 CONNECTED provider를 화면 라벨로 매핑한다', () => {
+    const user = mapIndividualMemberDetailToUser(
+      baseIndividualDetail({
+        member: {
+          memberId: 201,
+          uuid: 'individual-uuid',
+          email: 'student@example.com',
+          name: '김학생',
+          roles: ['INDIVIDUAL'],
+          status: 'ACTIVE',
+          socialAccounts: [
+            { provider: 'KAKAO', status: 'CONNECTED', maskedProviderUserId: 'kak***' },
+            { provider: 'naver', status: 'DISCONNECTED' },
+            { provider: 'GOOGLE' },
+            { provider: '  ' },
+          ],
+        },
+      })
+    )
+
+    expect(user.socialAccounts).toEqual(['카카오', '구글'])
+  })
+
+  it('socialAccounts가 없으면 필드를 두지 않는다', () => {
+    const user = mapIndividualMemberDetailToUser(baseIndividualDetail())
+    expect(user.socialAccounts).toBeUndefined()
+    expect(mapLinkedSocialAccountsToDisplay([])).toBeUndefined()
+    expect(mapLinkedSocialAccountsToDisplay([{ provider: 'APPLE', status: 'CONNECTED' }])).toEqual([
+      'APPLE',
+    ])
   })
 
   it('termsAgreements를 User에 매핑한다', () => {
