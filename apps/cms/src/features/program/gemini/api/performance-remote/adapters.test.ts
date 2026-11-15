@@ -176,6 +176,7 @@ describe('gemini performance adapters', () => {
     expect(importRow.participantCount).toBe(10)
     expect(importRow.trainingMinutes).toBeUndefined()
     expect(importRow.schoolOrOrganizationName).toBe('학교')
+    expect(importRow.trainingType).toBe('강의')
   })
 
   // BE @KoreanPhoneNumber가 어긋나면 preview 전체가 400 → 정상 파일이 「양식 불일치 안내」로 거부됐다.
