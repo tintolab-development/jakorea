@@ -31,7 +31,7 @@ describe('resolveAdminNotificationActionLabel', () => {
     )
   })
 
-  it('강사비 정정 요청은 시안대로 「정정 요청 확인」, 다른 정산 알림은 기존 문구', () => {
+  it('강사비 정정 요청은 「정정 요청 확인」, 강사비 확인 완료는 「지급 대상 목록 보기」', () => {
     expect(
       resolveAdminNotificationActionLabel({
         target: {
@@ -46,6 +46,61 @@ describe('resolveAdminNotificationActionLabel', () => {
       resolveAdminNotificationActionLabel({
         target: { eventType: 'ADMIN_PAYMENT_STATEMENT_CONFIRMED', linkType: 'SETTLEMENT', linkId: '5', programId: '10' },
       })
-    ).toBe('정산 보기')
+    ).toBe('지급 대상 목록 보기')
+  })
+
+  it('시스템 안내 팝업 시안의 이벤트별 버튼 문구', () => {
+    const cases: Array<[string, string, string]> = [
+      ['ADMIN_INSTRUCTOR_ROLE_REQUESTED', 'INSTRUCTOR_ROLE_REQUEST', '신청 목록 보기'],
+      ['ADMIN_STUDENT_ROSTER_UNSUBMITTED', 'PROGRAM_APPLICATION', '학생 명단 확인'],
+      ['ADMIN_PORTRAIT_CONSENT_UNSUBMITTED', 'PROGRAM_APPLICATION', '학생 명단 확인'],
+      ['ADMIN_SETTLEMENT_APPLICATION_RESUBMITTED', 'SETTLEMENT_APPLICATION', '신청 내역 확인'],
+      ['ADMIN_INQUIRY_CREATED', 'INQUIRY', '문의 내용 확인'],
+      ['ADMIN_TEACHER_EMPLOYMENT_CHANGED', 'MEMBER', '회원 정보 보기'],
+      ['ADMIN_PROGRAM_NOTICE_CREATED', 'PROGRAM_POST', '게시글 확인'],
+      ['ADMIN_PROGRAM_POST_COMMENT_CREATED', 'PROGRAM_POST', '댓글 확인'],
+      ['ADMIN_ROLE_CHANGED', 'ADMIN_ACCOUNT', '내 정보 보기'],
+    ]
+    for (const [eventType, linkType, label] of cases) {
+      expect(
+        resolveAdminNotificationActionLabel({
+          target: { eventType, linkType, linkId: '5', programId: '10' },
+        })
+      ).toBe(label)
+    }
+  })
+
+  it('프로그램 신청 취소는 이동 대상이 있어도 버튼 없음(닫기만)', () => {
+    expect(
+      resolveAdminNotificationActionLabel({
+        target: {
+          eventType: 'ADMIN_PROGRAM_APPLICATION_CANCELLED',
+          linkType: 'PROGRAM_APPLICATION',
+          linkId: '7',
+          programId: '12',
+        },
+      })
+    ).toBeNull()
+  })
+
+  it('교육진행자 미배정은 제목의 #{교육진행자} 값으로 「… 배정」', () => {
+    const target = {
+      eventType: 'ADMIN_ORGANIZATION_PROGRAM_INSTRUCTOR_UNASSIGNED',
+      linkType: 'PROGRAM_SCHEDULE',
+      linkId: '3',
+      programId: '12',
+    }
+    expect(resolveAdminNotificationActionLabel({ target, title: '강사 미배정 건 안내' })).toBe(
+      '강사 배정'
+    )
+    expect(
+      resolveAdminNotificationActionLabel({
+        target,
+        title: '개인 프로그램 교육진행자 미배정 건 안내',
+      })
+    ).toBe('교육진행자 배정')
+    expect(resolveAdminNotificationActionLabel({ target, title: '알 수 없는 제목' })).toBe(
+      '교육진행자 배정'
+    )
   })
 })
