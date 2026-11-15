@@ -6,6 +6,11 @@ import { settingsConsentWritePath } from '@/features/mypage'
 import { useQueryClient } from '@tanstack/react-query'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequestFailedAlertCopy,
+  resolvePlatformErrorAlert,
+} from '@/shared/lib/platform-error-alert'
 import {
   PFAlertModal,
   PFButton,
@@ -55,6 +60,7 @@ import {
   downloadSubmittedCrimeConsent,
 } from '../lib/download-submitted-crime-consent'
 import { CRIME_CONSENT_MESSAGES } from '../../instructor-apply/consent/crime-consent-original'
+import { toCrimeConsentFailureAlert } from '../../instructor-apply/consent/crime-consent-alert'
 import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
   PortraitGuardianVerificationCancelledError,
@@ -65,7 +71,6 @@ import {
   formatPortraitGuardianVerifiedDate,
   PORTRAIT_GUARDIAN_CARD_COPY,
   PORTRAIT_GUARDIAN_CONFIRM_COPY,
-  PORTRAIT_GUARDIAN_ERROR_TITLE,
   PORTRAIT_GUARDIAN_MISSING_MESSAGE,
   PORTRAIT_GUARDIAN_VERIFIED_COPY,
   validatePortraitGuardianRelation,
@@ -76,11 +81,22 @@ import { ConsentDocumentPreviewOverlay } from './consent-document-preview-overla
 import styles from './consents-view.module.css'
 
 const WITHDRAW_REASON = '회원 마이페이지에서 직접 철회'
-const DOWNLOAD_FAILED_MESSAGE =
-  '업로드한 동의서를 다운로드하지 못했어요. 잠시 후 다시 시도해 주세요.'
-const MARKETING_FAILED_MESSAGE =
-  '마케팅 정보 수신 동의 변경에 실패했어요. 잠시 후 다시 시도해 주세요.'
 const MARKETING_CONFLICT_MESSAGE = CONSENT_WITHDRAW_CONFLICT_MESSAGE
+
+/** 원본 동의서 다운로드 실패 → 시안 「오류 제한 팝업」 문구 */
+function crimeDownloadFailureAlert(error: unknown): PlatformAlertCopy {
+  if (error instanceof CrimeConsentDownloadError) return toCrimeConsentFailureAlert(error.message)
+  return resolvePlatformErrorAlert(error)
+}
+
+/** 보호자 본인인증 실패 — 인증 서비스 기본 문구는 시안 「처리 실패」, 인증 결과 안내는 설명으로 둔다 */
+function portraitGuardianFailureAlert(error: unknown): PlatformAlertCopy {
+  const message = error instanceof Error ? error.message.trim() : ''
+  return resolvePlatformErrorAlert(error, {
+    serverMessage: () =>
+      message && message !== PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE ? message : '',
+  })
+}
 const CRIME_ORIGINAL_MISSING_COPY = {
   title: '원본 동의서 제출이 필요해요',
   description: CRIME_CONSENT_MESSAGES.signedFileNotReady,
@@ -489,7 +505,7 @@ export function SettingsConsentsView() {
   const [isMarketingSaving, setIsMarketingSaving] = useState(false)
   const [marketingAgreeOpen, setMarketingAgreeOpen] = useState(false)
   const [marketingAgreedAt, setMarketingAgreedAt] = useState<string | null>(null)
-  const [notice, setNotice] = useState<{ title: string; description: string } | null>(null)
+  const [notice, setNotice] = useState<PlatformAlertCopy | null>(null)
   const [withdrawComplete, setWithdrawComplete] = useState<{
     id: SettingsConsentItemId
     withdrawnAt: string
@@ -547,10 +563,7 @@ export function SettingsConsentsView() {
   const handlePortraitGuardianConfirm = () => {
     if (!guardian) {
       setPortraitGuardianStep(null)
-      setNotice({
-        title: PORTRAIT_GUARDIAN_ERROR_TITLE,
-        description: PORTRAIT_GUARDIAN_MISSING_MESSAGE,
-      })
+      setNotice(buildRequestFailedAlertCopy(PORTRAIT_GUARDIAN_MISSING_MESSAGE))
       return
     }
     setPortraitGuardianStep('info')
@@ -577,13 +590,7 @@ export function SettingsConsentsView() {
         return
       }
       setPortraitGuardianStep(null)
-      setNotice({
-        title: PORTRAIT_GUARDIAN_ERROR_TITLE,
-        description:
-          error instanceof Error && error.message
-            ? error.message
-            : PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE,
-      })
+      setNotice(portraitGuardianFailureAlert(error))
     } finally {
       setIsPortraitGuardianVerifying(false)
     }
@@ -606,13 +613,13 @@ export function SettingsConsentsView() {
     if (consents.isRemoteSession) {
       try {
         documentId = await resolveLatestCrimeConsentDocumentId()
-      } catch {
-        setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      } catch (error) {
+        setNotice(resolvePlatformErrorAlert(error))
         return
       }
     }
     if (documentId == null) {
-      setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      setNotice(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     try {
@@ -625,17 +632,13 @@ export function SettingsConsentsView() {
         setCrimeOriginalMissingOpen(true)
         return
       }
-      setNotice({
-        title: '다운로드 실패',
-        description:
-          error instanceof CrimeConsentDownloadError ? error.message : DOWNLOAD_FAILED_MESSAGE,
-      })
+      setNotice(crimeDownloadFailureAlert(error))
     }
   }
 
   const handleDownloadDocument = (item: SettingsConsentItem) => {
     if (item.id !== 'sexOffenseCheck') {
-      setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      setNotice(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     if (crimeDownloadingRef.current) return
@@ -740,9 +743,9 @@ export function SettingsConsentsView() {
     } catch (error) {
       if (isConflictError(error)) {
         await refetchConsents()
-        setNotice({ title: '안내', description: MARKETING_CONFLICT_MESSAGE })
+        setNotice(buildRequestFailedAlertCopy(MARKETING_CONFLICT_MESSAGE))
       } else {
-        setNotice({ title: '동의 변경 실패', description: MARKETING_FAILED_MESSAGE })
+        setNotice(resolvePlatformErrorAlert(error))
       }
       return { ok: false }
     } finally {
@@ -816,10 +819,13 @@ export function SettingsConsentsView() {
         await refetchConsents(consentType)
       }
       closeWithdrawConfirm()
-      setNotice({
-        title: parsed.refetch ? '안내' : '동의 철회 실패',
-        description: parsed.message || CONSENT_WITHDRAW_FAILED_MESSAGE,
-      })
+      // 서버 기본 거절 문구가 없으면 시안 「처리 실패」, 코드별 안내는 설명으로 둔다
+      setNotice(
+        resolvePlatformErrorAlert(error, {
+          serverMessage: () =>
+            parsed.message === CONSENT_WITHDRAW_FAILED_MESSAGE ? '' : parsed.message,
+        }),
+      )
     } finally {
       withdrawingRef.current = false
       setIsWithdrawing(false)

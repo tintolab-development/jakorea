@@ -317,6 +317,9 @@ function readCheckInErrorMessage(error: unknown): string | null {
   return null
 }
 
+/** 서버 안내가 없는 출석 실패 — 팝업에서는 시안 「처리 실패」 문구로 바뀐다 */
+export const SCHEDULE_CHECK_IN_FAILED_MESSAGE = '출석 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+
 export function resolveScheduleCheckInErrorMessage(error: unknown): string {
   const code = readCheckInErrorCode(error)
   if (code === 'ORGANIZATION_PORTAL_CHECK_IN_NOT_AVAILABLE') {
@@ -346,5 +349,5 @@ export function resolveScheduleCheckInErrorMessage(error: unknown): string {
       return '출석 상태가 변경되었습니다. 배정 현황을 새로고침한 뒤 다시 시도해 주세요.'
     }
   }
-  return '출석 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  return SCHEDULE_CHECK_IN_FAILED_MESSAGE
 }

@@ -5,7 +5,12 @@ import type { PaymentStatementBasicInfoValues } from '@jakorea/form-schema/conse
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
-import { PFPagination, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFAlertModal, PFPagination, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  isPlatformNetworkError,
+  isPlatformRateLimitedError,
+} from '@/shared/lib/platform-error-alert'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { fetchPortalConsentDocument } from '../api/consents'
 import { fetchSubmittedCrimeConsentOriginal } from '../lib/download-submitted-crime-consent'
@@ -32,9 +37,20 @@ import type { SettingsConsentItem } from '../lib/consent-catalog'
 import { ConsentDocumentA4Page } from './consent-document-a4-page'
 import styles from './consent-document-preview-overlay.module.css'
 
-const LOAD_FAILED_MESSAGE = '동의서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
-const NO_SUBMITTED_DOCUMENT_MESSAGE =
-  '제출된 동의서를 찾을 수 없어요. 잠시 후 다시 시도하거나 고객센터로 문의해 주세요.'
+/** 시안 「미리보기 실패 시」(14504-51221) */
+const LOAD_FAILED_ALERT = PLATFORM_ALERT_COPY.previewFailed
+/** 제출본이 없을 때 — 시안 「미리보기 실패 시」 제목 + 제출본 없음 안내 */
+const NO_SUBMITTED_DOCUMENT_ALERT: PlatformAlertCopy = {
+  title: PLATFORM_ALERT_COPY.previewFailed.title,
+  description: '제출된 동의서를 찾을 수 없어요. 잠시 후 다시 시도하거나 고객센터로 문의해 주세요.',
+}
+
+/** 불러오기 요청 실패 — 네트워크·요청 반복은 시안 공통 안내, 그 밖은 미리보기 실패 */
+function resolvePreviewLoadFailedAlert(error: unknown): PlatformAlertCopy {
+  if (isPlatformNetworkError(error)) return PLATFORM_ALERT_COPY.networkError
+  if (isPlatformRateLimitedError(error)) return PLATFORM_ALERT_COPY.rateLimited
+  return LOAD_FAILED_ALERT
+}
 const PREVIEW_NOTICE = '현재 화면은 미리보기 화면입니다.'
 
 function revokePreviewObjectUrl(url: string | undefined) {
@@ -114,11 +130,12 @@ export function ConsentDocumentPreviewOverlay({
   const { displayName: memberName } = useMypageMember()
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
-  const [loadFailed, setLoadFailed] = useState(false)
+  /** 불러오기 실패 안내 팝업 — 확인 시 미리보기를 닫는다 */
+  const [loadFailedAlert, setLoadFailedAlert] = useState<PlatformAlertCopy | null>(null)
+  const loadFailed = loadFailedAlert != null
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   /** 성범죄 동의서 — 제출 원본(PDF는 페이지별 이미지) */
   const [crimePageSrcs, setCrimePageSrcs] = useState<string[]>([])
-  const [loadFailedMessage, setLoadFailedMessage] = useState(LOAD_FAILED_MESSAGE)
   const [submittedAtRaw, setSubmittedAtRaw] = useState<string | undefined>()
   const [paymentBasicInfo, setPaymentBasicInfo] = useState<
     Partial<PaymentStatementBasicInfoValues> | undefined
@@ -159,8 +176,7 @@ export function ConsentDocumentPreviewOverlay({
         return undefined
       })
       setIsSubmittedDocument(false)
-      setLoadFailed(false)
-      setLoadFailedMessage(LOAD_FAILED_MESSAGE)
+      setLoadFailedAlert(null)
       setIsLoading(false)
       return
     }
@@ -170,8 +186,7 @@ export function ConsentDocumentPreviewOverlay({
 
     const load = async () => {
       setIsLoading(true)
-      setLoadFailed(false)
-      setLoadFailedMessage(LOAD_FAILED_MESSAGE)
+      setLoadFailedAlert(null)
       setDraft(null)
       setCrimePageSrcs(previous => {
         revokePreviewObjectUrls(previous)
@@ -207,8 +222,7 @@ export function ConsentDocumentPreviewOverlay({
               applyLocalDraftFallback()
               return
             }
-            setLoadFailed(true)
-            setLoadFailedMessage(NO_SUBMITTED_DOCUMENT_MESSAGE)
+            setLoadFailedAlert(NO_SUBMITTED_DOCUMENT_ALERT)
             return
           }
           detail = await fetchPortalConsentDocument(item.documentId)
@@ -254,7 +268,7 @@ export function ConsentDocumentPreviewOverlay({
             return
           }
           if (crimePages.length === 0) {
-            setLoadFailed(true)
+            setLoadFailedAlert(LOAD_FAILED_ALERT)
             return
           }
           setCrimePageSrcs(previous => {
@@ -272,18 +286,12 @@ export function ConsentDocumentPreviewOverlay({
             applyLocalDraftFallback()
             return
           }
-          setLoadFailed(true)
-          setLoadFailedMessage(
-            isRemoteSession ? NO_SUBMITTED_DOCUMENT_MESSAGE : LOAD_FAILED_MESSAGE,
-          )
+          setLoadFailedAlert(isRemoteSession ? NO_SUBMITTED_DOCUMENT_ALERT : LOAD_FAILED_ALERT)
           return
         }
         setDraft(resolved)
-      } catch {
-        if (!cancelled) {
-          setLoadFailed(true)
-          setLoadFailedMessage(LOAD_FAILED_MESSAGE)
-        }
+      } catch (error) {
+        if (!cancelled) setLoadFailedAlert(resolvePreviewLoadFailedAlert(error))
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -345,12 +353,6 @@ export function ConsentDocumentPreviewOverlay({
           <PFLoadingSpinner label="동의서를 불러오는 중" />
         ) : null}
 
-        {!isLoading && loadFailed ? (
-          <PFText as="p" typo="bd-md-rg" color="error">
-            {loadFailedMessage}
-          </PFText>
-        ) : null}
-
         {!isLoading && !loadFailed && crimePageSrcs.length > 0 ? (
           <ConsentDocumentA4Page title={documentTitle} pageIndex={safePage - 1}>
             <img
@@ -391,6 +393,14 @@ export function ConsentDocumentPreviewOverlay({
           className={styles.pagination}
         />
       </div>
+
+      <PFAlertModal
+        open={!isLoading && loadFailedAlert != null}
+        title={loadFailedAlert?.title ?? ''}
+        description={loadFailedAlert?.description}
+        backdropClassName={styles.alertBackdrop}
+        onConfirm={onClose}
+      />
     </div>,
     document.body,
   )

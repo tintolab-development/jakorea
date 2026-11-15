@@ -1,5 +1,5 @@
-import { useId } from 'react'
-import { PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
+import { useId, useState } from 'react'
+import { PFAlertModal, PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
 import {
   useApplicationScheduleAttendanceQuery,
@@ -8,9 +8,12 @@ import {
 import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
 import type { EducationScheduleItem } from '@/features/mypage/education/schedules/model/types'
 import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
 import {
   resolveScheduleAttendanceQueryErrorMessage,
   resolveScheduleCheckInErrorMessage,
+  SCHEDULE_CHECK_IN_FAILED_MESSAGE,
 } from '../lib/history'
 import { joinSchedulePlaceLabel } from '../lib/map-attendance'
 import styles from './check-in-modal.module.css'
@@ -36,6 +39,8 @@ export function UjatCheckInModal({
     enabled: open && scheduleId != null,
   })
   const checkInMutation = useSubmitApplicationScheduleCheckIn(applicationType, applicationId)
+  /** 출석 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업, 코드별 안내는 설명에 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const sessionTime =
     item?.progressTimeLabel?.trim() ||
     formatDisplayDateTime(item?.heldAt) ||
@@ -60,7 +65,8 @@ export function UjatCheckInModal({
       title="출석하기"
       size="md"
       ariaDescribedBy={descriptionId}
-      closeOnEscape={!checkInMutation.isPending}
+      // 안내 팝업이 열려 있으면 Escape는 팝업만 닫는다
+      closeOnEscape={!checkInMutation.isPending && errorAlert == null}
     >
       <div className={styles.body}>
         <div id={descriptionId} className={styles.description}>
@@ -86,11 +92,6 @@ export function UjatCheckInModal({
             <PFTextInput size="xlarge" label="배정 기관 및 학급" value={assignedPlace} disabled />
           </div>
         )}
-        {checkInMutation.isError ? (
-          <PFText as="p" typo="bd-md-rg" color="error">
-            {resolveScheduleCheckInErrorMessage(checkInMutation.error)}
-          </PFText>
-        ) : null}
         <div className={styles.actions}>
           <PFButton
             type="button"
@@ -108,13 +109,30 @@ export function UjatCheckInModal({
             disabled={!canSubmit}
             onClick={() => {
               if (scheduleId == null || !canSubmit) return
-              checkInMutation.mutate(scheduleId, { onSuccess: onClose })
+              checkInMutation.mutate(scheduleId, {
+                onSuccess: onClose,
+                onError: error =>
+                  setErrorAlert(
+                    resolvePlatformErrorAlert(error, {
+                      serverMessage: e => {
+                        const message = resolveScheduleCheckInErrorMessage(e)
+                        return message === SCHEDULE_CHECK_IN_FAILED_MESSAGE ? '' : message
+                      },
+                    }),
+                  ),
+              })
             }}
           >
             {checkInMutation.isPending ? '출석 중…' : '출석'}
           </PFButton>
         </div>
       </div>
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </PFModal>
   )
 }

@@ -9,8 +9,8 @@ import {
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
 import {
-  formatPortalProfileUpdateError,
-  getLoginApiErrorMessage,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
   usePortalPhoneIdentityConfirmMutation,
   usePortalProfileUpdateMutation,
 } from '@/features/auth/sign-in'
@@ -22,7 +22,7 @@ import {
   type SelectedSchool,
 } from '@/features/auth/sign-up'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
 import { isMinorSettingsMember } from '../lib/consent-visibility'
 import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
@@ -47,6 +47,7 @@ import {
   type SettingsProfileInput,
 } from '../lib/map-view'
 import styles from './edit-form.module.css'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 
 export type SettingsEditFormProps = {
   profile: SettingsProfileInput
@@ -112,6 +113,8 @@ export function SettingsEditForm({
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
   const [phoneError, setPhoneError] = useState<string>()
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const [guardianIdentityError, setGuardianIdentityError] = useState<string>()
   const profileUpdateMutation = usePortalProfileUpdateMutation()
   const phoneConfirmMutation = usePortalPhoneIdentityConfirmMutation()
@@ -141,12 +144,13 @@ export function SettingsEditForm({
             })
             setPhone(changed.phone?.trim() || verifiedPhone || '')
           } catch (error) {
-            setPhoneError(
-              getLoginApiErrorMessage(
-                error,
-                '휴대폰 번호를 변경하지 못했습니다. 다시 인증해 주세요.',
-              ),
-            )
+            // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+            const failureAlert = resolveLoginApiFailureAlert(error)
+            if (failureAlert) {
+              setErrorAlert(failureAlert)
+            } else {
+              setPhoneError(readLoginApiServerMessage(error))
+            }
             return
           } finally {
             clearMypagePhoneIdentityConfirmPending()
@@ -325,9 +329,13 @@ export function SettingsEditForm({
         })
         return
       } catch (error) {
-        setSubmitError(
-          formatPortalProfileUpdateError(error, '회원 정보를 수정하지 못했습니다.'),
-        )
+        // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+        const failureAlert = resolveLoginApiFailureAlert(error)
+        if (failureAlert) {
+          setErrorAlert(failureAlert)
+        } else {
+          setSubmitError(readLoginApiServerMessage(error))
+        }
         return
       }
     }
@@ -737,6 +745,12 @@ export function SettingsEditForm({
         open={isSchoolSearchOpen}
         onClose={() => setIsSchoolSearchOpen(false)}
         onSelect={handleSchoolSelect}
+      />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </div>
   )
