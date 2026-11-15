@@ -8,7 +8,7 @@
 
 import { useMemo, useCallback, useState, useEffect, memo } from 'react'
 import { Row } from 'antd'
-import { DndContext, DragOverlay, MeasuringStrategy, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragOverlay, MeasuringStrategy } from '@dnd-kit/core'
 import { SortableContext, rectSwappingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isWidgetResizable } from '@/shared/config/dashboard-config'
@@ -34,6 +34,7 @@ import {
   useSyncDashboardShortcutCatalog,
 } from '@/features/dashboard'
 import { DashboardWidgetDragOverlayShell } from '@/features/dashboard/ui/drag-overlay-shell'
+import { dashboardCollisionDetection } from '@/features/dashboard/lib/dashboard-dnd-helpers'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import './dashboard.css'
 import '@/features/dashboard/ui/widget-card.css'
@@ -41,6 +42,12 @@ import '@/features/dashboard/ui/widget-card.css'
 import '@/features/dashboard/ui/menu-shortcut-widget.css'
 
 const EMPTY_DASHBOARD_PROGRAM_IDS: string[] = []
+
+/**
+ * 설정 모달은 스토어를 직접 구독하므로 Dashboard 재렌더(드래그 시작·종료마다 activeId 등)에 끌려 렌더될 필요가 없다.
+ * 닫힌 상태에서도 본문 계산이 무거워 위젯 이동 시 프레임을 잡아먹던 부분.
+ */
+const MemoizedDashboardSettingsModal = memo(DashboardSettingsModal)
 
 type DashboardWidgetGridProps = {
   displayOrder: string[]
@@ -160,6 +167,7 @@ export function Dashboard() {
   } = useDashboardLayout({ userRole: user?.role ?? null, user: user ?? undefined })
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+  const handleSettingsModalCancel = useCallback(() => setSettingsModalOpen(false), [])
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   useEffect(() => {
@@ -216,14 +224,14 @@ export function Dashboard() {
         onOpenSettings={() => setSettingsModalOpen(true)}
       />
 
-      <DashboardSettingsModal
+      <MemoizedDashboardSettingsModal
         open={settingsModalOpen}
-        onCancel={() => setSettingsModalOpen(false)}
+        onCancel={handleSettingsModalCancel}
       />
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={dashboardCollisionDetection}
         measuring={{ droppable: { strategy: MeasuringStrategy.BeforeDragging } }}
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
