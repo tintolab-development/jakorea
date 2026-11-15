@@ -216,4 +216,54 @@ describe('buildInstructorDetailFromSettlements', () => {
     expect(detail.programRows.every(r => r.institutionName === '-')).toBe(true)
     expect(detail.totalEstimatedAmount).toBe(100_000)
   })
+
+  it('신청서 행은 settlementId 없이 신청서 ID로 그리고 지급조서 확인 대상이 아니다', () => {
+    const detail = buildInstructorDetailFromSettlements(
+      instructorRow,
+      [
+        listItem({
+          settlementId: undefined,
+          statementId: undefined,
+          settlementApplicationId: 1001,
+          rowType: 'SETTLEMENT_APPLICATION',
+          statementStatus: 'WAITING_CONFIRM',
+          paymentStatus: undefined,
+          netPaymentAmount: 106700,
+          availableActions: [
+            'VIEW',
+            'CONFIRM_SETTLEMENT_APPLICATION',
+            'REJECT_SETTLEMENT_APPLICATION',
+            'REQUEST_CORRECTION',
+          ],
+        }),
+        listItem({
+          settlementId: 4101,
+          settlementApplicationId: 1001,
+          statementId: 5101,
+          rowType: null,
+          statementStatus: 'WAITING_CONFIRM',
+          paymentStatus: 'NOT_READY',
+          availableActions: ['VIEW', 'CONFIRM_PAYMENT_STATEMENT'],
+        }),
+      ],
+      [{ settlementId: 4101, statementId: 9999 }]
+    )
+
+    expect(detail.programRows[0]).toMatchObject({
+      id: 'application-1001',
+      settlementId: undefined,
+      settlementApplicationId: 1001,
+      statementId: undefined,
+      rowType: 'SETTLEMENT_APPLICATION',
+      processingStatus: 'pending',
+      estimatedAmount: 106700,
+      canConfirmPaymentStatement: false,
+    })
+    expect(detail.programRows[1]).toMatchObject({
+      id: '4101',
+      settlementId: 4101,
+      statementId: 5101,
+      canConfirmPaymentStatement: true,
+    })
+  })
 })
