@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { toPublicSearchErrorMessage } from '@/shared/lib/public-search-error-message'
 import {
   CAREER_NET_UNIV_SCH1,
   filterCareerNetUniversitiesBySigungu,
@@ -270,7 +271,7 @@ export function SchoolSearch({
     sources.careerNet ? careerNetError : null,
   ].filter((e): e is Error => e != null)
   // 혼합 검색에서 한쪽만 실패하면 나머지 결과를 그대로 보여 준다.
-  const errorMessage = hasResults ? null : sourceErrors.map(e => e.message).join('\n') || null
+  const errorMessage = hasResults ? null : [...new Set(sourceErrors.map(toPublicSearchErrorMessage))].join('\n') || null
 
   useEffect(() => {
     if (currentPage > totalPages) {
