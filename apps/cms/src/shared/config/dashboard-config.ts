@@ -50,7 +50,7 @@ export const DASHBOARD_SLOT_HEIGHT_HALF_PX = 400 as const
 export const MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX = 352 as const
 
 /** 프로그램 일정 위젯 100% 너비(colSpan 24) 슬롯 높이 */
-export const PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX = 376 as const
+export const PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX = 400 as const
 
 const EMPTY_PROGRAM_SCHEDULE_KINDS: ProgramScheduleKind[] = []
 
