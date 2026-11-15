@@ -11,7 +11,12 @@ import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/li
 import {
   invalidateUjatOrganizationApplicationLists,
   patchUjatOrganizationApplicationTempAssignmentStatus,
+  patchUjatOrganizationApplicationTemporaryAssignmentProcessed,
 } from '@/features/program/ujat/api/organization-application-list-cache'
+import {
+  assignUjatOrganizationApplicationsTemporarilyIfRemote,
+  buildTemporaryAssignmentFailureLines,
+} from '@/features/program/ujat/api/temporary-assignments'
 import {
   type UjatInstitutionApplicationFilters,
   EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
@@ -27,6 +32,8 @@ import {
   getUjatInstitutionTempRejectCompleteContent,
   UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
   UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
+  UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_TITLE,
   UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
 } from './temp-assign-complete'
 import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
@@ -305,13 +312,12 @@ export function useUjatInstitutionApplicationList(
     }
   }, [eligibleTempRejectRows, programId, queryClient, showAlert, tempActionLoading])
 
+  /**
+   * 임시 배정 허용 전 상태는 평가 대기(temporaryAssignmentStatus null·EVALUATION_PENDING)뿐이다.
+   * 임시 반려·신청 반려·이미 임시 배정된 행은 선택 단계에서 제외한다(서버도 다시 검사).
+   */
   const eligibleTempAssignRows = useMemo(
-    () =>
-      selectedApplications.filter(
-        row =>
-          row.tempAssignmentStatus !== 'application_rejected' &&
-          row.tempAssignmentStatus !== 'temp_rejected'
-      ),
+    () => selectedApplications.filter(row => row.tempAssignmentStatus === 'evaluation_pending'),
     [selectedApplications]
   )
 
@@ -324,7 +330,7 @@ export function useUjatInstitutionApplicationList(
       showAlert({
         title: '임시 배정 안내',
         content:
-          '신청 반려·임시 반려 상태의 기관은 임시 배정할 수 없습니다.\n배정 가능한 기관을 선택한 뒤 다시 시도해 주세요.',
+          '평가 대기 상태의 기관만 임시 배정할 수 있습니다.\n평가 대기 기관을 선택한 뒤 다시 시도해 주세요.',
       })
       return
     }
@@ -336,10 +342,73 @@ export function useUjatInstitutionApplicationList(
     showNoSelectionAlert,
   ])
 
-  const confirmBulkTempAssign = useCallback(() => {
-    if (tempActionLoading) return
-    setPendingTempAction(null)
-  }, [tempActionLoading])
+  /**
+   * POST temporary-assignments — 선택한 평가 대기 id를 한 번에 보낸다. 일정 탭으로 이동하지 않는다.
+   * 일부 실패도 HTTP 200: 성공 id만 processed 값으로 갱신하고, 실패 id만 failures[].message로 안내한다.
+   */
+  const confirmBulkTempAssign = useCallback(async () => {
+    const rows = eligibleTempAssignRows
+    const ids = rows.map(row => row.id)
+    if (ids.length === 0 || tempActionLoading) return
+    const resolvedProgramId = String(programId ?? '')
+    setTempActionLoading(true)
+    try {
+      const response = await assignUjatOrganizationApplicationsTemporarilyIfRemote({
+        programId,
+        applicationIds: ids,
+      })
+      if (!response) {
+        showAlert({
+          title: '안내',
+          content: '원격 API가 비활성 상태라 임시 배정을 반영하지 않았습니다.',
+        })
+        return
+      }
+      patchUjatOrganizationApplicationTemporaryAssignmentProcessed(
+        queryClient,
+        resolvedProgramId,
+        response.processed
+      )
+      setSelectedRowKeys([])
+      setPendingTempAction(null)
+      const refetchList = () => {
+        void invalidateUjatOrganizationApplicationLists(queryClient, resolvedProgramId)
+      }
+      if (response.failures.length === 0 && response.successCount >= 1) {
+        // 팝업을 닫으면 목록을 다시 조회한다 — processed로 맞춘 캐시를 서버 값으로 덮어쓴다.
+        showAlert({
+          title: UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_TITLE,
+          content: UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_CONTENT,
+          onConfirm: refetchList,
+          onDismiss: refetchList,
+        })
+        return
+      }
+      const namesById = Object.fromEntries(rows.map(row => [row.id, row.institutionName]))
+      const lines = buildTemporaryAssignmentFailureLines(response.failures, {
+        namesById,
+        fallback: '임시 배정에 실패했습니다.',
+      })
+      // 기존 일괄 신청 반려와 같은 결과 안내 — 성공 건은 이미 목록에 반영돼 실패 건만 알린다.
+      showAlert({
+        title: response.successCount >= 1 ? '일부 처리 실패' : '처리 실패',
+        content: [
+          `배정 ${response.successCount}건 · 실패 ${response.failureCount}건`,
+          '',
+          ...lines,
+        ].join('\n'),
+        onConfirm: refetchList,
+        onDismiss: refetchList,
+      })
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: readApiErrorAlertMessage(error, '신청기관 임시 배정에 실패했습니다.'),
+      })
+    } finally {
+      setTempActionLoading(false)
+    }
+  }, [eligibleTempAssignRows, programId, queryClient, showAlert, tempActionLoading])
 
   const closeTempActionModal = useCallback(() => {
     if (tempActionLoading) return

@@ -135,22 +135,20 @@
   gap: var(--spacing-20);
 }
 
-/* Figma — 안내 박스는 본문 높이만큼 펼침. 스크롤은 모달 .body 단일 */
+/*
+ * Figma 13260:85073 — 안내 박스는 본문 높이만큼 펼침. 스크롤은 모달 .body 단일.
+ * 본문 전체 13px·행간 1.4, 도입문·소제목은 Bold, 묶음 사이는 빈 줄 1개(13px × 1.4).
+ */
 .privacyBox {
   display: flex;
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: calc(13px * 1.4);
   box-sizing: border-box;
   padding: 15px var(--spacing-12) 15px 14px;
   border-radius: var(--radius-16);
   background: var(--color-neutral-cool-50);
-}
-
-.privacyIntro {
-  margin: 0;
-  line-height: 140%;
 }
 
 .privacyBlock {
@@ -159,14 +157,24 @@
   gap: 0;
 }
 
-.privacyHeading {
+/* 전역 typo 클래스(PC 크기 포함)보다 우선해 시안 13px로 고정 */
+.privacyBox .privacyIntro,
+.privacyBox .privacyHeading,
+.privacyBox .privacyParagraph {
   margin: 0;
+  color: var(--color-neutral-cool-700);
+  font-size: 13px;
   line-height: 140%;
+  letter-spacing: 0;
 }
 
-.privacyParagraph {
-  margin: 0;
-  line-height: 140%;
+.privacyBox .privacyIntro,
+.privacyBox .privacyHeading {
+  font-weight: 700;
+}
+
+.privacyBox .privacyParagraph {
+  font-weight: 400;
 }
 
 /* Figma check_btn — radius 12 · px20 py16 · gap16 */
@@ -188,30 +196,12 @@
   outline-offset: 0;
 }
 
-/* 숨김 input(absolute)의 기준을 라벨로 고정 — 포커스 시 패널이 스크롤되며 화면이 밀리는 것 방지 */
-.privacyAgreementBar .privacyCheckbox {
-  position: relative;
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  align-items: center;
-  gap: var(--spacing-16);
-  padding: 0;
-  box-sizing: border-box;
+/* 재능기부 동의 바와 같이 동의 시 배경을 강조한다 */
+.privacyAgreementBarChecked {
+  background: var(--color-element-hover);
 }
 
-.privacyAgreementBar .privacyCheckbox :global(.typo-bd-md-md) {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: visible;
-  white-space: normal;
-  text-overflow: unset;
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-}
-
-.privacyAgreementBar:has(input:checked) .privacyAgreementLabel {
+.privacyAgreementLabel {
   color: var(--color-primary-600);
 }
 

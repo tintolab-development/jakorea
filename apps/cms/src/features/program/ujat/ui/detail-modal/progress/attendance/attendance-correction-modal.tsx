@@ -155,7 +155,7 @@ export function UjatAttendanceCorrectionModal({
         loading={confirming}
         onClick={handleConfirm}
       >
-        출결 정정
+        정정
       </CmsButton>
     </div>
   )
@@ -204,7 +204,7 @@ export function UjatAttendanceCorrectionModal({
             <CmsSelect
               inputSize="large"
               className="ujat-attendance-correction-modal__status-select"
-              width={170}
+              width={120}
               value={status ?? ''}
               disabled={confirming}
               onChange={value => setStatus(parseUjatAttendanceStatus(value))}

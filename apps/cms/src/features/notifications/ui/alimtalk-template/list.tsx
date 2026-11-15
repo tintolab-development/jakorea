@@ -60,8 +60,9 @@ import {
   ALIMTALK_DND_CATEGORY_MOVE_PREFIX,
 } from './category-tree'
 import {
-  ALIMTALK_TEMPLATE_LIST_NHN_EDIT_GUIDE,
-  ALIMTALK_TEMPLATE_LIST_REGISTER_GUIDE,
+  ALIMTALK_TEMPLATE_LIST_GUIDE_LINK,
+  ALIMTALK_TEMPLATE_LIST_GUIDE_PREFIX,
+  ALIMTALK_TEMPLATE_LIST_GUIDE_SUFFIX,
 } from '@/features/notifications/model/alimtalk-template/list-guide'
 import { DetailPanel } from './detail-panel'
 import { PreviewModal } from './preview-modal'
@@ -636,6 +637,19 @@ export function AlimtalkTemplateList({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="알림톡 템플릿"
+        description={
+          <>
+            {ALIMTALK_TEMPLATE_LIST_GUIDE_PREFIX}
+            <a
+              className="alimtalk-template-list__guide-link"
+              href={resolveNhnConsoleUrl(null)}
+              target="_blank"
+              rel="noopener noreferrer" >
+              {ALIMTALK_TEMPLATE_LIST_GUIDE_LINK}
+            </a>
+            {ALIMTALK_TEMPLATE_LIST_GUIDE_SUFFIX}
+          </>
+        }
         actions={
           <>
             <FilterTableToolbarButton
@@ -675,10 +689,6 @@ export function AlimtalkTemplateList({
           </>
         }
       >
-        <div className="alimtalk-template-list__guide" role="note">
-          <p>{ALIMTALK_TEMPLATE_LIST_NHN_EDIT_GUIDE}</p>
-          <p>{ALIMTALK_TEMPLATE_LIST_REGISTER_GUIDE}</p>
-        </div>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="alimtalk-template-split">
             <CategoryTree
@@ -691,7 +701,6 @@ export function AlimtalkTemplateList({
             />
             <DetailPanel
               template={selectedTemplate}
-              emptyFolder={selection?.kind === 'category' && !selectedTemplateId}
               categoryName={selectedCategoryName}
               onPreview={() => setPreviewOpen(true)}
             />

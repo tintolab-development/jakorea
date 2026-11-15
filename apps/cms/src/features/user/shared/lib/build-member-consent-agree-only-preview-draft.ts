@@ -53,6 +53,8 @@ export function shouldFetchSubmittedConsentDocument(
     return meta === true
   }
   if (meta.filledDocumentAvailable === true) return true
+  // BE가 작성본 없음/열람 불가를 명시하면 id가 있어도 조회하지 않는다 (404/410 방지).
+  if (meta.filledDocumentAvailable === false) return false
   if (meta.consentRecordId != null && Number.isFinite(meta.consentRecordId)) return true
   if (meta.formResponseId != null && Number.isFinite(meta.formResponseId)) return true
   if (meta.filledDocumentId != null && Number.isFinite(meta.filledDocumentId)) return true

@@ -16,15 +16,25 @@ export function findIncompleteInstitutionGuidanceFields(
   return INSTITUTION_GUIDANCE_FIELDS.some(field => !(guidance[field.id] ?? '').trim())
 }
 
-export function isTeacherInstitutionGuidanceSubmitIncomplete(
+/** 비어 있는 안내사항 항목명 — 필수 항목 미입력 팝업(항목명 노출)에 쓴다 */
+export function collectIncompleteInstitutionGuidanceFieldLabels(
   guidance: ApplyInstitutionGuidanceAnswers,
+): string[] {
+  return INSTITUTION_GUIDANCE_FIELDS.filter(field => !(guidance[field.id] ?? '').trim()).map(
+    field => field.title,
+  )
+}
+
+type InstitutionGuidanceSubmitOptions = {
+  ujat?: boolean
+  ujatExtras?: ApplyUjatInstitutionGuidanceExtras
+}
+
+/** 안내사항 항목 밖(성범죄 조회·UJAT 추가 항목)에 빠진 값이 있는지 — 항목명을 알 수 없는 부분 */
+export function isInstitutionGuidanceOtherSectionIncomplete(
   sexOffense: ApplyInstitutionSexOffenseValues,
-  options?: {
-    ujat?: boolean
-    ujatExtras?: ApplyUjatInstitutionGuidanceExtras
-  },
+  options?: InstitutionGuidanceSubmitOptions,
 ): boolean {
-  if (findIncompleteInstitutionGuidanceFields(guidance)) return true
   if (options?.ujat) {
     if (
       options.ujatExtras &&
@@ -35,4 +45,13 @@ export function isTeacherInstitutionGuidanceSubmitIncomplete(
     return findIncompleteUjatSexOffenseWriteMessage(sexOffense) != null
   }
   return findIncompleteSexOffenseMessage(sexOffense) != null
+}
+
+export function isTeacherInstitutionGuidanceSubmitIncomplete(
+  guidance: ApplyInstitutionGuidanceAnswers,
+  sexOffense: ApplyInstitutionSexOffenseValues,
+  options?: InstitutionGuidanceSubmitOptions,
+): boolean {
+  if (findIncompleteInstitutionGuidanceFields(guidance)) return true
+  return isInstitutionGuidanceOtherSectionIncomplete(sexOffense, options)
 }

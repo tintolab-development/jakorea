@@ -139,14 +139,6 @@
   gap: var(--spacing-8);
 }
 
-.fileSelectionNotice {
-  margin: 0;
-}
-
-.formError {
-  margin: calc(var(--spacing-12) * -1) 0 0;
-}
-
 .actions {
   position: sticky;
   bottom: 0;

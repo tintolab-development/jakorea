@@ -58,6 +58,38 @@ export type TalentApplyFormValues = {
 
 export type TalentApplyFieldKey = Exclude<keyof TalentApplyFormValues, 'privacyAgreed'> | 'privacy'
 
+/**
+ * 필수 입력 누락 팝업(Figma 14550-2349)에 보이는 항목명 — 화면 표시 순서.
+ * 주소·기간처럼 두 칸이 한 항목이면 같은 이름을 쓰고 한 번만 보인다. 개인정보 동의는 미동의 팝업이 따로 있다.
+ */
+const TALENT_APPLY_FIELD_LABELS: ReadonlyArray<readonly [Exclude<TalentApplyFieldKey, 'privacy'>, string]> = [
+  ['name', '이름'],
+  ['birthDate', '생년월일'],
+  ['gender', '성별'],
+  ['phone', '휴대폰 번호'],
+  ['email', '이메일'],
+  ['affiliation', '소속/학교명'],
+  ['sido', '자택 주소'],
+  ['sigungu', '자택 주소'],
+  ['periodStart', '재능기부 가능 기간'],
+  ['periodEnd', '재능기부 가능 기간'],
+  ['bio', '간단한 약력 소개'],
+  ['talentIntro', '기부 가능한 재능 소개'],
+  ['motivation', '참여 동기'],
+  ['jaParticipation', 'JA 프로그램 참여 이력'],
+]
+
+/** 오류가 난 필수 항목명(중복 제거, 화면 순서) */
+export function collectTalentApplyMissingLabels(
+  errors: Partial<Record<TalentApplyFieldKey, boolean>>,
+): string[] {
+  const labels: string[] = []
+  for (const [key, label] of TALENT_APPLY_FIELD_LABELS) {
+    if (errors[key] && !labels.includes(label)) labels.push(label)
+  }
+  return labels
+}
+
 export const EMPTY_TALENT_APPLY_FORM_VALUES: TalentApplyFormValues = {
   name: '',
   birthDate: '',

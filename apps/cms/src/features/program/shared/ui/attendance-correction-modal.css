@@ -29,6 +29,21 @@
   gap: 10px;
 }
 
+/* UJAT 참여 봉사자 상세 Figma 16324:632039 — 출결 상태 셀렉트 w120 · gap 8 */
+.program-attendance-correction-modal__status-row--ujat {
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+}
+
+/* 저장 실패 인라인 오류 — 서버 error.message 그대로 */
+.program-attendance-correction-modal__error {
+  margin: 0;
+  font-size: var(--font-size-12, 12px);
+  line-height: 1.5;
+  color: var(--color-required-mark, #c32f4a);
+  white-space: pre-line;
+}
+
 .program-attendance-correction-modal__time-picker {
   width: 100%;
 }

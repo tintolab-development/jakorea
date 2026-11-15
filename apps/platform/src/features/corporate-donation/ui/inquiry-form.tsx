@@ -7,7 +7,21 @@ import {
   KOREAN_MOBILE_PREFIX,
   normalizeKoreanPhoneDigits,
 } from '@jakorea/domain/shared/korean-phone'
-import { PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  PFAlertModal,
+  PFButton,
+  PFCheckbox,
+  PFRequiredMissingAlert,
+  PFText,
+  PFTextarea,
+  PFTextInput,
+} from '@/shared/ui'
 import { useCreatePublicCorporateConsultation } from '../api/hooks'
 import { CORPORATE_DONATION_PATH } from '../lib/constants'
 import styles from './inquiry-form.module.css'
@@ -30,16 +44,25 @@ const EMPTY_VALUES: InquiryValues = {
   privacyConsent: false,
 }
 
-function messageFromError(error: unknown): string {
+/** 서버가 보낸 업무 메시지만 — FE 기본 문구는 시안 「처리 실패」 팝업이 맡는다 */
+function serverMessageFromError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data
     if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
-      const message = data.message.trim()
-      if (message) return message
+      return data.message.trim()
     }
   }
-  return '문의 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  return ''
 }
+
+/** 필수 누락 팝업 항목명 — 화면 라벨과 같은 순서 */
+const REQUIRED_FIELD_LABELS = {
+  companyName: '회사명',
+  contactName: '담당자명',
+  departmentTitle: '부서/직책',
+  contactPhone: '휴대폰 번호',
+  consultationContent: '문의 내용',
+} as const
 
 /** QA-0475 — 문의 모달(inquiry-modal.tsx)과 같은 휴대폰 번호 검사·문구 */
 function validateContactPhone(value: string): string | null {
@@ -56,7 +79,9 @@ function validateContactPhone(value: string): string | null {
 
 export function CorporateDonationInquiryForm() {
   const [values, setValues] = useState<InquiryValues>(EMPTY_VALUES)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
+  /** 미동의·접수 실패 — 시안 공통 안내 팝업 */
+  const [alert, setAlert] = useState<PlatformAlertCopy | null>(null)
   const [contactPhoneError, setContactPhoneError] = useState<string | null>(null)
   const mutation = useCreatePublicCorporateConsultation()
 
@@ -75,20 +100,21 @@ export function CorporateDonationInquiryForm() {
     const phoneError = validateContactPhone(contactPhone)
     setContactPhoneError(phoneError)
 
-    if (!companyName || !contactName || !departmentTitle || !contactPhone || !consultationContent) {
-      setFormError('필수 항목을 입력해 주세요.')
+    const trimmed = { companyName, contactName, departmentTitle, contactPhone, consultationContent }
+    const missingLabels = (Object.keys(REQUIRED_FIELD_LABELS) as (keyof typeof trimmed)[])
+      .filter(key => !trimmed[key])
+      .map(key => REQUIRED_FIELD_LABELS[key])
+    if (missingLabels.length > 0) {
+      setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
       return
     }
-    if (phoneError) {
-      setFormError(null)
-      return
-    }
+    // 휴대폰 형식 오류는 입력란 아래 문구로 안내한다
+    if (phoneError) return
     if (!values.privacyConsent) {
-      setFormError('개인정보 수집·이용에 동의해 주세요.')
+      setAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
       return
     }
 
-    setFormError(null)
     mutation.mutate(
       {
         companyName,
@@ -99,7 +125,8 @@ export function CorporateDonationInquiryForm() {
         privacyConsent: true,
       },
       {
-        onError: error => setFormError(messageFromError(error)),
+        onError: error =>
+          setAlert(resolvePlatformErrorAlert(error, { serverMessage: serverMessageFromError })),
       },
     )
   }
@@ -180,14 +207,16 @@ export function CorporateDonationInquiryForm() {
         onCheckedChange={checked => setValues(current => ({ ...current, privacyConsent: checked }))}
         label="개인정보 수집·이용에 동의합니다."
       />
-      {formError ? (
-        <PFText as="p" typo="bd-sm-md" color="error" className={styles.error}>
-          {formError}
-        </PFText>
-      ) : null}
       <PFButton type="submit" size="xlarge" variant="primary" disabled={mutation.isPending}>
         {mutation.isPending ? '접수 중' : '문의하기'}
       </PFButton>
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
+      <PFAlertModal
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
+      />
     </form>
   )
 }

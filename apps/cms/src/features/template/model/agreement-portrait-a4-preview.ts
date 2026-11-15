@@ -12,8 +12,8 @@ export const AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS = new Set<string>([
 export const AGREEMENT_PORTRAIT_A4_PREVIEW_BODY_CLASS_NAME =
   'form-document-preview-body--agreement-portrait'
 
-/** 시안 1페이지 수용 — 단락 간 간격(공통 40px보다 축소) */
-export const AGREEMENT_PORTRAIT_A4_SECTION_GAP_PX = 24
+/** 시안 5767:42795 — 단락 간 간격 40 */
+export const AGREEMENT_PORTRAIT_A4_SECTION_GAP_PX = 40
 
 export const getAgreementPortraitA4ParagraphGap: FormDocumentPreviewParagraphGapResolver = (
   paragraph,

@@ -11,15 +11,12 @@ export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE: ReactNode = (
   </>
 )
 
+/**
+ * 필수 항목 미입력 팝업 본문 — 미입력 항목 이름은 나열하지 않고 공통 안내 문구만 보인다(사용자 결정 2026-11-16).
+ * 호출부는 그대로 두기 위해 인자를 받되 쓰지 않는다.
+ */
 export function buildRequiredFieldsIncompleteAlertContent(
-  fieldLabels: readonly string[]
+  _fieldLabels: readonly string[]
 ): ReactNode {
-  if (fieldLabels.length === 0) return REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE
-  return (
-    <>
-      {REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE}
-      {'\n'}
-      {fieldLabels.join(', ')}
-    </>
-  )
+  return REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE
 }

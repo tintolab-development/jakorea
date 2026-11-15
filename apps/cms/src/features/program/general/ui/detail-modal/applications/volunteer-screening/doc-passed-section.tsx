@@ -235,9 +235,12 @@ export function GeneralVolunteerDocPassedSection({
               selectedApplicant.participantApplicant ??
               mapVolunteerScreeningRowToParticipant(selectedApplicant)
             }
+            // 시안 08 — 봉사자 서류 합격자 상세와 같은 활동 포기(노출은 availableActions GIVE_UP 기준)
+            onWithdrawActivity={handleDetailWithdrawActivity}
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={handleParticipantDetailMetaChange}
           />
+          {withdrawConfirmModal}
           {assignModals}
           {documentCancelModals}
         </>

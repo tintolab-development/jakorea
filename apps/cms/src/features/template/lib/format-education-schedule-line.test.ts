@@ -9,6 +9,7 @@ import {
   EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE,
   educationScheduleLineSerializationIssue,
   flattenGroupTimeSlotsByDetail,
+  formatEducationScheduleLineFromRange,
   isCanonicalServerEducationScheduleLine,
   isEducationScheduleLineBeforeSeoulToday,
   canRemoveEducationSchedulePreviewLine,
@@ -340,6 +341,34 @@ describe('canRemoveEducationSchedulePreviewLine', () => {
         lockStartedLines: false,
       })
     ).toBe(true)
+  })
+})
+
+describe('과제 제출 기한 문장 서버 왕복 (QA #96)', () => {
+  it('시간 토글을 끈 기간은 날짜만 있는 서버 문장으로 보내고 화면 문장으로 되돌린다', () => {
+    const cms = formatEducationScheduleLineFromRange([
+      dayjs('2026-12-01T00:00:00'),
+      dayjs('2026-12-03T23:59:59'),
+    ])
+    expect(cms).toBe('2026.12.01(화) ~ 2026.12.03(목)')
+
+    const server = serializeEducationScheduleLineForServer(cms)
+    expect(server).toBe('26년 12월 1일(화) ~ 26년 12월 3일(목)')
+    expect(server).not.toContain('00:00')
+    expect(serializeEducationScheduleLineForServer(server)).toBe(server)
+    expect(parseEducationScheduleLineForCms(server)).toBe(cms)
+  })
+
+  it('시간 토글을 켠 기간만 시각을 포함해 왕복한다', () => {
+    const cms = formatEducationScheduleLineFromRange([
+      dayjs('2026-12-01T09:00:00'),
+      dayjs('2026-12-03T18:00:00'),
+    ])
+    expect(cms).toBe('2026.12.01(화) 09:00 ~ 2026.12.03(목) 18:00')
+
+    const server = serializeEducationScheduleLineForServer(cms)
+    expect(server).toBe('26년 12월 1일(화) 09:00 ~ 26년 12월 3일(목) 18:00')
+    expect(parseEducationScheduleLineForCms(server)).toBe(cms)
   })
 })
 

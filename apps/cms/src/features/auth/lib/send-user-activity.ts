@@ -33,7 +33,7 @@ export async function sendUserActivity(): Promise<void> {
     // A delayed 401 from the previous access token must not end a refreshed login.
     if (!current.isAuthenticated || current.token !== requestedToken) return
     if (isAdminAuthUnauthorizedError(error)) {
-      // 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃한다.
+      // 지금 화면에서 「자동 로그아웃 안내」를 띄우고 [확인] 때 로그아웃한다.
       endExpiredSession()
     } else if (isAdminAuthForbiddenError(error)) {
       // Permission/account-type mismatch is not token expiration.

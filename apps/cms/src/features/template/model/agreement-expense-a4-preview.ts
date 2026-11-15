@@ -16,8 +16,8 @@ export const AGREEMENT_EXPENSE_A4_HIDDEN_PARAGRAPH_IDS = new Set<string>([
 export const AGREEMENT_EXPENSE_A4_PREVIEW_BODY_CLASS_NAME =
   'form-document-preview-body--agreement-expense'
 
-/** 시안 1페이지 수용 — 항목 간 간격(공통 40px보다 축소) */
-export const AGREEMENT_EXPENSE_A4_SECTION_GAP_PX = 28
+/** 시안 5767:42711 — 항목 간 간격 40 */
+export const AGREEMENT_EXPENSE_A4_SECTION_GAP_PX = 40
 
 /** A4 문서 헤더·PDF 파일명 — 시드 `(안)` 접미만 제거(목록·schema 제목은 유지) */
 export function stripAgreementExpenseAuthoringTitleSuffix(title: string): string {

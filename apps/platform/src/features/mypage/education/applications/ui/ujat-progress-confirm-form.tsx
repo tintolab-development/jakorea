@@ -41,6 +41,12 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { ApplyUjatInstitutionSubmitConfirmation } from '@/features/program/ui/apply-ujat-institution-submit-confirmation/apply-ujat-institution-submit-confirmation'
 import { formatDisplayDateTime } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import {
+  educationNoticeAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import type { ProgramApplicationType } from '../api/types'
 import type { EducationUjatTemporarySchedule } from '../model/types'
 import { usePortalMeFormBindingRender } from '../api/hooks'
@@ -184,7 +190,7 @@ export function UjatProgressConfirmForm({
   )
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
   const [incompleteField, setIncompleteField] = useState<ReturnType<
     typeof resolveUjatInstitutionApplyIncomplete
   >>(null)
@@ -218,15 +224,16 @@ export function UjatProgressConfirmForm({
     })
     if (incomplete) {
       setIncompleteField(incomplete)
-      setAlertMessage(incomplete.message)
+      // 시안 「필수 항목 미입력」 제목 — 설명은 빠진 항목 안내
+      setAlert({ title: PLATFORM_REQUIRED_NOT_FILLED_TITLE, description: incomplete.message })
       return
     }
     if (!isRemoteApiConfigured()) {
-      setAlertMessage('API가 설정되지 않아 저장할 수 없습니다.')
+      setAlert(educationNoticeAlert('API가 설정되지 않아 저장할 수 없습니다.'))
       return
     }
     if (applicationType !== 'ORGANIZATION') {
-      setAlertMessage('기관 프로그램 신청만 진행할 수 있습니다.')
+      setAlert(educationNoticeAlert('기관 프로그램 신청만 진행할 수 있습니다.'))
       return
     }
     const revisionAtConfirm = assignmentRevision
@@ -236,15 +243,11 @@ export function UjatProgressConfirmForm({
         temporarySchedule,
       })
     ) {
-      setAlertMessage(
-        '관리자 배정 일정을 확인할 수 없습니다. 잠시 후 다시 시도하거나 담당자에게 문의해 주세요.',
-      )
+      setAlert(educationNoticeAlert('관리자 배정 일정을 확인할 수 없습니다. 잠시 후 다시 시도하거나 담당자에게 문의해 주세요.'))
       return
     }
     if (!isPositiveIntegerRevision(revisionAtConfirm)) {
-      setAlertMessage(
-        '배정 일정 확인 정보가 올바르지 않습니다. 화면을 새로고침한 후 다시 확인해 주세요.',
-      )
+      setAlert(educationNoticeAlert('배정 일정 확인 정보가 올바르지 않습니다. 화면을 새로고침한 후 다시 확인해 주세요.'))
       return
     }
     submittingRef.current = true
@@ -276,7 +279,7 @@ export function UjatProgressConfirmForm({
         Number.isInteger(latestRevision) &&
         latestRevision !== revisionAtConfirm
       ) {
-        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        setAlert(educationNoticeAlert(UJAT_STALE_REVISION_ALERT_MESSAGE))
         return
       }
       navigate(educationInstitutionGuidanceWritePath(applicationId, applicationType), {
@@ -286,7 +289,7 @@ export function UjatProgressConfirmForm({
         }),
       })
     } catch (error) {
-      setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
+      setAlert(resolveEducationErrorAlert(error, resolveInstitutionGuidanceErrorMessage))
     } finally {
       submittingRef.current = false
       setSaving(false)
@@ -405,10 +408,10 @@ export function UjatProgressConfirmForm({
       </div>
 
       <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? undefined}
-        onConfirm={() => setAlertMessage(null)}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
       />
     </>
   )

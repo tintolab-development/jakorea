@@ -23,6 +23,8 @@ import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { handleError } from '@/shared/utils/error-handler'
 import type { Program } from '@/types/domain'
+import { resolveUjatSurveyItemFlags } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { GENERAL_SATISFACTION_SHARE_EMPTY_COPY } from '@/features/program/shared/lib/survey-management/survey-copy'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { usePushUserPreviewHistoryWhenOpen } from '@/features/template/hooks/use-push-user-preview-history-when-open'
@@ -609,18 +611,28 @@ export function UjatSurveyManagementView({
     [adminAccountId, lectureEvalResponses]
   )
 
+  const satisfactionSurveyItemFlags = useMemo(() => {
+    const flags = resolveUjatSurveyItemFlags(program)
+    return {
+      volunteer_satisfaction: flags.volunteer_satisfaction,
+      school_satisfaction: flags.school_satisfaction,
+    }
+  }, [program])
+
   const satisfactionAudienceTabs = useMemo(
-    () => getSatisfactionAudienceTabsForSurveyTab(activeTab),
-    [activeTab]
+    () => getSatisfactionAudienceTabsForSurveyTab(activeTab, satisfactionSurveyItemFlags),
+    [activeTab, satisfactionSurveyItemFlags]
   )
 
   useEffect(() => {
     if (!isUjatSatisfactionSurveyTab(activeTab)) return
     const allowed = new Set(satisfactionAudienceTabs.map(tab => tab.key))
     if (!allowed.has(activeSatisfactionAudience)) {
-      setActiveSatisfactionAudience(defaultSatisfactionAudienceForSurveyTab(activeTab))
+      setActiveSatisfactionAudience(
+        defaultSatisfactionAudienceForSurveyTab(activeTab, satisfactionSurveyItemFlags)
+      )
     }
-  }, [activeTab, activeSatisfactionAudience, satisfactionAudienceTabs])
+  }, [activeTab, activeSatisfactionAudience, satisfactionAudienceTabs, satisfactionSurveyItemFlags])
   const handleOpenSurveyCreateModal = useCallback(() => {
     setSelectedSurveyTemplateId(null)
     setSelectedSurveyScheduleValue(null)
@@ -1061,7 +1073,12 @@ export function UjatSurveyManagementView({
   ])
 
   const handleShareSatisfactionSurvey = useCallback(() => {
-    if (!activeSatisfactionSurvey || programId == null) return
+    if (programId == null) return
+    // 등록 전 공유 — 일반 프로그램(기관)과 같은 안내 (시안 16324:638096 「그 외 화면 일반 프로그램(기관)과 동일」)
+    if (!activeSatisfactionSurvey) {
+      void showAlert(GENERAL_SATISFACTION_SHARE_EMPTY_COPY)
+      return
+    }
     if (!surveysRemote) {
       void showAlert({
         title: '공유',

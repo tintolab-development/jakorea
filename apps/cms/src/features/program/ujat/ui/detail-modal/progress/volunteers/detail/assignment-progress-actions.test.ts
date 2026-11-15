@@ -138,6 +138,7 @@ describe('volunteer assignment mutations', () => {
           status: 'LATE',
           absenceReason: null,
           arrivalTime: '09:05',
+          fileObjectIds: [],
         },
       ],
     })
@@ -153,6 +154,36 @@ describe('volunteer assignment mutations', () => {
         },
       ],
     })
+  })
+
+  it('출결 정정 — 사유 불참에서 파일을 모두 지우면 [], 출석에는 증빙 ID가 있어도 []', async () => {
+    await correctVolunteerAttendance({
+      programId: '42',
+      scheduleId: 10,
+      participantId: 7,
+      payload: {
+        status: 'excused_absence',
+        attendanceTime: null,
+        reason: '병원',
+        evidenceFileName: null,
+        evidenceFileObjectIds: [],
+      },
+    })
+    await correctVolunteerAttendance({
+      programId: '42',
+      scheduleId: 10,
+      participantId: 7,
+      payload: {
+        status: 'present',
+        attendanceTime: '9:00',
+        reason: '',
+        evidenceFileName: null,
+        evidenceFileObjectIds: [99],
+      },
+    })
+
+    expect(vi.mocked(bulkUpsertUjatAttendances).mock.calls[0]?.[1].attendances[0]?.fileObjectIds).toEqual([])
+    expect(vi.mocked(bulkUpsertUjatAttendances).mock.calls[1]?.[1].attendances[0]?.fileObjectIds).toEqual([])
   })
 
   it('confirm 409 CONFLICT는 성공으로 처리한다', async () => {

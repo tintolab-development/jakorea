@@ -6,6 +6,7 @@ import {
   isInvalidAttendanceArrivalTimeError,
 } from '@/shared/lib/attendance-arrival-time'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { isAbsenceEvidenceSaveError } from '@/features/program/shared/lib/absence-evidence-policy'
 import { resolveRegionAssignmentErrorMessage } from '../../region/region-assignment-messages'
 import {
   ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
@@ -143,7 +144,11 @@ export function useVolunteerAssignmentProgress(input: {
     mutationFn: correctVolunteerAttendance,
     retry: false,
     onSuccess: () => invalidate(),
-    onError: error => showMutationError(error, '출결 정정에 실패했습니다.'),
+    onError: error => {
+      // 결석 증빙 오류 코드는 출결 정정 팝업이 서버 error.message를 인라인으로 보여 준다
+      if (isAbsenceEvidenceSaveError(error)) return
+      showMutationError(error, '출결 정정에 실패했습니다.')
+    },
   })
 
   const roleMutation = useMutation({

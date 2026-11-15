@@ -18,7 +18,7 @@ export interface SettlementAggregateResponse {
   instructorName?: string;
   instructorCount?: number;
   participationCount?: number;
-  /** 지급 대기 건수. payment_status IN (WAITING_PAYMENT, WAITING, READY_TO_PAY, FAILED). PAID 제외. */
+  /** 지급 대기 항목 건수. 계좌 지급이 끝나지 않은 건: 확인 대기 중(WAITING_CONFIRM)·지급조서 재신청(REAPPLICATION)·지급 정정 요청(CORRECTION_REQUESTED), 지급조서 확인 완료(CONFIRMED) 중 계좌 지급 전(PAID 아님). 신청 반려(REJECTED)·계좌 지급 완료(PAID)는 제외. 정산·확정 전 강사 신청서·영수증 신청에 같은 기준. */
   pendingPaymentSettlementItemCount?: number;
   /** 총액. REJECTED 제외. CORRECTION_REQUESTED는 기존 정산금액을 유지한다. */
   estimatedAmount?: number;

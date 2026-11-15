@@ -56,6 +56,21 @@ describe('gemini performance adapters', () => {
     expect(row.trainingMethod).toBe('OFFLINE')
   })
 
+  it('maps 연수 형태 from the server trainingType and shows - when it is blank', () => {
+    expect(
+      mapGeminiTrainingReportItemToRow({ trainingReportId: 9, trainingType: ' 찾아가는 연수 ' }, 0)
+        .trainingFormat
+    ).toBe('찾아가는 연수')
+    expect(
+      mapGeminiTrainingReportItemToRow({ trainingReportId: 10, trainingType: null }, 0)
+        .trainingFormat
+    ).toBe('-')
+    expect(
+      mapGeminiTrainingReportItemToRow({ trainingReportId: 11, trainingType: '  ' }, 0)
+        .trainingFormat
+    ).toBe('-')
+  })
+
   it('omits accountPaymentId when the list item has none', () => {
     const row = mapGeminiTrainingReportItemToRow({ trainingReportId: 1 }, 0)
     expect(row.accountPaymentId).toBeUndefined()
@@ -174,8 +189,12 @@ describe('gemini performance adapters', () => {
     expect(importRow.trainingEndTime).toBe('11:00:00')
     expect(importRow.trainingSessionCount).toBe(2)
     expect(importRow.participantCount).toBe(10)
+    expect(importRow.bankName).toBeUndefined()
+    expect(importRow.accountNo).toBeUndefined()
+    expect(importRow.accountHolder).toBeUndefined()
     expect(importRow.trainingMinutes).toBeUndefined()
     expect(importRow.schoolOrOrganizationName).toBe('학교')
+    expect(importRow.trainingType).toBe('강의')
   })
 
   // BE @KoreanPhoneNumber가 어긋나면 preview 전체가 400 → 정상 파일이 「양식 불일치 안내」로 거부됐다.

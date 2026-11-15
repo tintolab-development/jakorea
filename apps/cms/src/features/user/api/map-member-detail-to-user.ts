@@ -58,6 +58,35 @@ import { applyScheduleChangeCancelCountToUser } from '@/features/user/api/resolv
 
 const USER_AFFILIATION_PIPE_SEP = ' | ' as const
 
+/** 회원 상세 `socialAccounts[].provider` — 화면 표기 */
+const LINKED_SOCIAL_PROVIDER_LABEL: Record<string, string> = {
+  KAKAO: '카카오',
+  NAVER: '네이버',
+  GOOGLE: '구글',
+}
+
+/**
+ * `MemberDetailResponse.socialAccounts` → 기본정보 「연동된 소셜 계정」.
+ * OpenAPI는 CONNECTED만 내려주지만, status가 있으면 CONNECTED만 표시한다.
+ */
+export function mapLinkedSocialAccountsToDisplay(
+  accounts: Array<{ provider?: string; status?: string }> | undefined
+): string[] | undefined {
+  if (!accounts?.length) return undefined
+  const labels = accounts
+    .filter(account => {
+      const status = account.status?.trim().toUpperCase()
+      return !status || status === 'CONNECTED'
+    })
+    .map(account => {
+      const provider = account.provider?.trim()
+      if (!provider) return ''
+      return LINKED_SOCIAL_PROVIDER_LABEL[provider.toUpperCase()] ?? provider
+    })
+    .filter(Boolean)
+  return labels.length > 0 ? labels : undefined
+}
+
 function parseIndividualApiEnrollmentStatus(
   raw: string | undefined
 ): 'ENROLLED' | 'NOT_ENROLLED' | undefined {
@@ -301,6 +330,7 @@ export function mapMemberDetailToUser(
   const now = new Date().toISOString()
   const normalizedBirthDate = toApiBirthDate(detail.birthDate)
   const roles = copyMemberRoles(detail.roles)
+  const socialAccounts = mapLinkedSocialAccountsToDisplay(detail.socialAccounts)
 
   const user: Omit<User, 'password'> = {
     id: uuid,
@@ -336,6 +366,7 @@ export function mapMemberDetailToUser(
       }),
     under14: detail.under14,
     guardianConsentRequired: detail.guardianConsentRequired,
+    ...(socialAccounts ? { socialAccounts } : {}),
     ...copyUserResponseResendIds(
       detail as MemberDetailResponse & {
         instructorRoleRequestId?: number | null

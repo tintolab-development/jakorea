@@ -7,7 +7,9 @@ import { useCallback, useState, type CSSProperties, type ReactNode } from 'react
 import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import type { User } from '@/types/user'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import type { FilledDocumentUnavailableReason } from '@/shared/api/generated/members/schemas/filledDocumentUnavailableReason'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { ConsentStatusValue } from '@/shared/ui/consent-status-value'
 import { CmsRadioGroup } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
@@ -126,6 +128,10 @@ export type ConsentFieldValueSchema =
       consentType?: string
       /** 초상권 동의/부분 동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
       allItemsAgreed?: boolean | null
+      /** Summary 기준 확정 상태 문구 — 있으면 그대로 표시 */
+      statusLabel?: string
+      /** 철회 일시 — Summary status=WITHDRAWN일 때만 */
+      withdrawnAtDisplay?: string
     }
   | {
       type: 'document'
@@ -136,11 +142,30 @@ export type ConsentFieldValueSchema =
       expired?: boolean
       /** 만료일 (예: 2027.10.31) — `expired`일 때만 */
       expiredAtDisplay?: string
+      /** 철회 일시 — Summary status=WITHDRAWN일 때만 */
+      withdrawnAtDisplay?: string
       formResponseId?: number
       consentRecordId?: number
       filledDocumentId?: number
       filledDocumentAvailable?: boolean
       filledDocumentRevealEndpoint?: string
+      /** filledDocumentAvailable=false일 때 BE가 준 이유 (표시는 시안 확정 전까지 바꾸지 않음) */
+      filledDocumentUnavailableReason?: FilledDocumentUnavailableReason
+      /** Summary 전용 — 전자서명본 열람 가능 여부·조회 주소 */
+      signedDocumentAvailable?: boolean
+      signedDocumentId?: number
+      signedDocumentRevealEndpoint?: string
+      /** Summary 전용 — 서명 PDF·업로드 원본 열람/다운로드 주소 (BE 회신 1~3번) */
+      signedPdfAvailable?: boolean
+      signedPdfViewEndpoint?: string
+      signedPdfDownloadEndpoint?: string
+      originalAvailable?: boolean
+      originalViewEndpoint?: string
+      originalDownloadEndpoint?: string
+      /** Summary 기준 확정 상태 문구 — 있으면 그대로 표시 */
+      statusLabel?: string
+      /** false면 「동의서 보기」를 숨김 — 열 수 있는 서명 PDF·업로드 원본이 없음 (BE 회신 1번) */
+      documentViewable?: boolean
       consentType?: string
       /** 초상권 동의/부분 동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
       allItemsAgreed?: boolean | null
@@ -394,23 +419,6 @@ export interface ConsentRenderCtx {
   onEditableConsentChange?: (label: string, agreed: boolean) => void
 }
 
-/** `동의 | 2026.01.15 09:15:42` 형태면 상태·구분자·날짜시간으로 나누어 날짜에 전용 스타일 적용 */
-function ConsentValueDisplay({ value }: { value: ReactNode }) {
-  if (typeof value !== 'string') return value
-  const idx = value.indexOf('|')
-  if (idx === -1) return value
-  const status = value.slice(0, idx).trim()
-  const datetime = value.slice(idx + 1).trim()
-  if (!datetime) return value
-  return (
-    <span className="user-consent-agreement-section__value-inner">
-      <span className="user-consent-agreement-section__value-status">{status}</span>
-      <DetailInfoForm.TdDivider />
-      <span className="user-consent-agreement-section__value-datetime">{datetime}</span>
-    </span>
-  )
-}
-
 const PORTRAIT_CONSENT_FIELD_LABEL = '초상권 수집·이용 동의'
 
 /**
@@ -423,10 +431,13 @@ function resolveConsentFieldStatusLabel(
     consentStatus?: string
     consentType?: string
     allItemsAgreed?: boolean | null
+    /** Summary status=EXPIRED에서만 true */
     expired?: boolean
+    statusLabel?: string
   },
   fieldLabel: string
 ): string {
+  if (value.statusLabel) return value.statusLabel
   return resolveConsentStatusDisplayLabel({
     agreed: value.agreed,
     consentStatus: value.consentStatus,
@@ -441,57 +452,47 @@ function resolveConsentFieldStatusLabel(
 /** 초상권·지급조서 등 동의서 제출형 항목 — 동의 시 보기+일시, 미동의 시 비활성 보기 */
 function ConsentDocumentRow({
   agreed,
+  showDocumentButton = true,
   agreedAtDisplay,
   statusLabel,
   expired = false,
   expiredAtDisplay,
+  withdrawnAtDisplay,
   onOpenDocument,
 }: {
   agreed: boolean
+  /** false면 동의 상태여도 「동의서 보기」 숨김 — 열 수 있는 문서 없음 */
+  showDocumentButton?: boolean
   /** 동의한 경우에만 표시 (예: 2026.01.15 09:15:42) */
   agreedAtDisplay?: string
   statusLabel: string
   /** 유효기간 경과 — 「동의 만료」 + 만료일 */
   expired?: boolean
   expiredAtDisplay?: string
+  /** 철회 — 「동의 철회」 + 철회 일시 */
+  withdrawnAtDisplay?: string
   onOpenDocument?: () => void
 }) {
   const open = onOpenDocument
-  /** 기존 일시 자리 — 만료면 만료일, 아니면 동의 일시 */
-  const datetimeDisplay = expired ? expiredAtDisplay : agreedAtDisplay
+  /** 기존 일시 자리 — 만료면 만료일, 동의면 동의 일시, 철회면 철회 일시 */
+  const datetimeDisplay = expired
+    ? expiredAtDisplay
+    : agreed
+      ? agreedAtDisplay
+      : withdrawnAtDisplay
 
   return (
-    <span className="user-consent-agreement-section__value-inner">
-      <span className="user-consent-agreement-section__value-status">
-        {statusLabel}
-      </span>
-      {/* 시안: 미동의는 상태 문구만 — 구분선·동의서 보기 없음 */}
-      {agreed ? (
-        <>
-          <DetailInfoForm.TdDivider />
+    <ConsentStatusValue
+      status={statusLabel}
+      action={
+        agreed && showDocumentButton ? (
           <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
-          {datetimeDisplay ? (
-            <span className="user-consent-agreement-section__value-datetime">
-              {datetimeDisplay}
-            </span>
-          ) : null}
-        </>
-      ) : expired && datetimeDisplay ? (
-        <span className="user-consent-agreement-section__value-datetime">
-          {datetimeDisplay}
-        </span>
-      ) : null}
-    </span>
-  )
-}
-
-function consentFieldContent(value: ReactNode) {
-  return (
-    <span className="user-consent-agreement-section__value-inner">
-      <ConsentValueDisplay value={value} />
-    </span>
+        ) : undefined
+      }
+      datetime={datetimeDisplay}
+    />
   )
 }
 
@@ -502,9 +503,12 @@ function resolveConsentFieldView(
 ): ReactNode {
   switch (value.type) {
     case 'remote_consent': {
-      const status = resolveConsentFieldStatusLabel(value, fieldLabel)
-      const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
-      return consentFieldContent(text)
+      return (
+        <ConsentStatusValue
+          status={resolveConsentFieldStatusLabel(value, fieldLabel)}
+          datetime={value.agreedAtDisplay ?? value.withdrawnAtDisplay}
+        />
+      )
     }
     case 'document': {
       /**
@@ -514,10 +518,12 @@ function resolveConsentFieldView(
       return (
         <ConsentDocumentRow
           agreed={value.agreed}
+          showDocumentButton={value.documentViewable !== false}
           agreedAtDisplay={value.agreedAtDisplay}
           statusLabel={resolveConsentFieldStatusLabel(value, fieldLabel)}
           expired={value.expired}
           expiredAtDisplay={value.expiredAtDisplay}
+          withdrawnAtDisplay={value.withdrawnAtDisplay}
           onOpenDocument={
             value.agreed ? () => ctx.openDocumentForLabel(fieldLabel, value) : undefined
           }
@@ -535,15 +541,14 @@ function resolveConsentFieldView(
 
 function ConsentDocumentFieldEdit({ agreed, onWrite }: { agreed: boolean; onWrite: () => void }) {
   return (
-    <span className="user-consent-agreement-section__document-edit">
-      <span className="user-consent-agreement-section__document-edit-status">
-        {agreed ? '동의' : '미동의'}
-      </span>
-      <DetailInfoForm.TdDivider />
-      <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
-        동의서 작성
-      </CmsButton>
-    </span>
+    <ConsentStatusValue
+      status={agreed ? '동의' : '미동의'}
+      action={
+        <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
+          동의서 작성
+        </CmsButton>
+      }
+    />
   )
 }
 
@@ -666,6 +671,12 @@ type ActiveConsentView = {
   consentRecordId?: number
   filledDocumentId?: number
   filledDocumentRevealEndpoint?: string
+  signedPdfAvailable?: boolean
+  signedPdfViewEndpoint?: string
+  signedPdfDownloadEndpoint?: string
+  originalAvailable?: boolean
+  originalViewEndpoint?: string
+  originalDownloadEndpoint?: string
 }
 
 type ActiveConsentWrite = {
@@ -726,6 +737,12 @@ export function UserConsentAgreementSection({
           consentRecordId: document.consentRecordId,
           filledDocumentId: document.filledDocumentId,
           filledDocumentRevealEndpoint: document.filledDocumentRevealEndpoint,
+          signedPdfAvailable: document.signedPdfAvailable,
+          signedPdfViewEndpoint: document.signedPdfViewEndpoint,
+          signedPdfDownloadEndpoint: document.signedPdfDownloadEndpoint,
+          originalAvailable: document.originalAvailable,
+          originalViewEndpoint: document.originalViewEndpoint,
+          originalDownloadEndpoint: document.originalDownloadEndpoint,
         })
       }
     },
@@ -805,6 +822,12 @@ export function UserConsentAgreementSection({
           consentRecordId={activeView.consentRecordId}
           filledDocumentId={activeView.filledDocumentId}
           filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
+          signedPdfAvailable={activeView.signedPdfAvailable}
+          signedPdfViewEndpoint={activeView.signedPdfViewEndpoint}
+          signedPdfDownloadEndpoint={activeView.signedPdfDownloadEndpoint}
+          originalAvailable={activeView.originalAvailable}
+          originalViewEndpoint={activeView.originalViewEndpoint}
+          originalDownloadEndpoint={activeView.originalDownloadEndpoint}
           documentAgreed={activeView.documentAgreed}
           memberUser={memberUser}
           onClose={() => setActiveView(null)}

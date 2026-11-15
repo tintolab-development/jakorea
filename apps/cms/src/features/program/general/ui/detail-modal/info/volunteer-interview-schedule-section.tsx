@@ -8,6 +8,8 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import type { GeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import {
   isGeneralProgramVolunteerInterviewScheduleVisible,
+  resolveGeneralProgramParticipantInterviewScheduleDisplay,
+  resolveGeneralProgramParticipantInterviewScheduleEditSeed,
   resolveGeneralProgramVolunteerInterviewScheduleDisplay,
   resolveGeneralProgramVolunteerInterviewScheduleEditSeed,
 } from '@/features/program/general/lib/volunteer-interview-schedule-display'
@@ -24,7 +26,19 @@ import {
   VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { ensureRecruitOperationalEditScope } from '@/features/program/general/lib/detail-operational-save-merge'
-import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
+import {
+  RecruitFormIndividualInterviewScheduleSection,
+  RecruitFormVolunteerInterviewScheduleParagraph,
+} from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
+import {
+  PARTICIPANT_INTERVIEW_OVERLAY_PREFIX,
+  supportsParticipantInterviewConfigProgramType,
+} from '@/features/program/shared/lib/volunteer-interview-config'
+import { resolveParticipantRecruitmentInterviewEnabled } from '@/features/program/general/lib/participant-recruitment-display'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-individual-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-volunteer-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -62,6 +76,7 @@ function UnavailableDatesReadRow({
   )
 }
 
+/** 읽기·수정 본문 — 개인 참여자 면접 일정 읽기도 같은 읽기 UI를 쓴다 */
 function GeneralProgramVolunteerInterviewScheduleBody({
   display,
   isEdit,
@@ -349,4 +364,146 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
   if (!showInterviewSchedule) return null
 
   return <GeneralProgramVolunteerInterviewScheduleReadSection program={program} />
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 일반 프로그램 상세 — 개인 참여자 모집 「면접 진행 가능 일정」 (봉사자 모집 면접 일정과 같은 UI).
+ * 정본: 개인 참여자 모집 행 typed `interviewConfig`(`participantInterviewConfigFromServer`).
+ * null 이면 빈 일정 — 봉사자 일정을 기본값으로 쓰지 않는다.
+ * ---------------------------------------------------------------------------------------------- */
+
+/** 보일 때만 간격을 둔다(면접 없음이면 빈 여백 없음) */
+const SECTION_GAP_CLASS = 'detail-info-form--gap'
+
+/** 개인 참여자 면접 일정 대상 — GENERAL 계열 개인 프로그램(기관·1사1교·교육받은 교사·UJAT 제외) */
+function isGeneralParticipantInterviewScheduleProgram(program: Program): boolean {
+  return (
+    isGeneralIndividualProgram(program) &&
+    supportsParticipantInterviewConfigProgramType(program.backendProgramType) &&
+    !isCompanySchoolProgram(program) &&
+    !isTrainedTeachersDetailProgram(program)
+  )
+}
+
+function readParticipantRegistrationOverlay(program: Program): Record<string, unknown> | undefined {
+  const overlay = program.registrationOverlay
+  return overlay != null && typeof overlay === 'object' && !Array.isArray(overlay)
+    ? (overlay as Record<string, unknown>)
+    : undefined
+}
+
+function GeneralProgramParticipantInterviewScheduleReadSection({ program }: { program: Program }) {
+  const display = resolveGeneralProgramParticipantInterviewScheduleDisplay(program)
+  return (
+    <section aria-label="면접 진행 가능 일정">
+      <FormParagraphSectionHeader
+        title="면접 진행 가능 일정"
+        surface="responseEntry"
+        titleAligned
+        highlightParagraphId={APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS.participantRecruitInfo}
+      />
+      <GeneralProgramVolunteerInterviewScheduleBody
+        display={display}
+        isEdit={false}
+        exceptionBlockKeys={[]}
+        onRemoveExceptionBlock={() => {}}
+      />
+    </section>
+  )
+}
+
+function GeneralProgramParticipantInterviewScheduleEditSection({
+  program,
+  form,
+}: {
+  program: Program
+  form: UseFormReturn<ProgramDetailEditFormValues>
+}) {
+  const editSeed = useMemo(
+    () => resolveGeneralProgramParticipantInterviewScheduleEditSeed(program),
+    [program]
+  )
+  const interviewEnabledField = useWatch({
+    control: form.control,
+    name: 'participantRecruitmentInterviewEnabled',
+  }) as ProgramDetailEditFormValues['participantRecruitmentInterviewEnabled'] | undefined
+  const watchedInterviewStart = useWatch({ control: form.control, name: 'interviewStartDate' }) as
+    | string
+    | Date
+    | undefined
+  const watchedInterviewEnd = useWatch({ control: form.control, name: 'interviewEndDate' }) as
+    | string
+    | Date
+    | undefined
+  const interviewStart = watchedInterviewStart ?? program.interviewStartDate
+  const interviewEnd = watchedInterviewEnd ?? program.interviewEndDate
+  const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>([])
+  const programIdRef = useRef(program.id)
+
+  useLayoutEffect(() => {
+    ensureRecruitOperationalEditScope(program, 'participant')
+    const source = readParticipantRegistrationOverlay(program)
+    // 조회 typed 로 만든 참여자 면접 키만 live 에 채운다(편집 중 값은 덮지 않음). 봉사자 키는 읽지 않는다.
+    hydrateMissingVolunteerInterviewOverlay({
+      source,
+      store: 'recruit',
+      namespace: PARTICIPANT_INTERVIEW_OVERLAY_PREFIX,
+    })
+    const filled = listFilledVolunteerInterviewExceptionBlockIds(
+      { ...(source ?? {}), ...getGeneralRecruitOverlayRecord() },
+      'recruit',
+      PARTICIPANT_INTERVIEW_OVERLAY_PREFIX
+    )
+    setExceptionBlockKeys(prev => {
+      if (programIdRef.current !== program.id) {
+        programIdRef.current = program.id
+        return filled
+      }
+      if (prev.length === 0) return filled
+      return [...filled, ...prev.filter(id => !filled.includes(id))]
+    })
+  }, [program])
+
+  const interviewPeriodRange = useMemo((): [Dayjs, Dayjs] | null => {
+    if (interviewStart == null || interviewEnd == null) return null
+    const start = dayjs(interviewStart)
+    const end = dayjs(interviewEnd)
+    if (!start.isValid() || !end.isValid()) return null
+    return start.isBefore(end, 'day') ? [start, end] : [end, start]
+  }, [interviewEnd, interviewStart])
+
+  if (!resolveParticipantRecruitmentInterviewEnabled(program, interviewEnabledField)) return null
+
+  return (
+    <div className={SECTION_GAP_CLASS}>
+      <RecruitFormIndividualInterviewScheduleSection
+        exceptionBlockKeys={exceptionBlockKeys}
+        onExceptionBlockKeysChange={setExceptionBlockKeys}
+        commonScheduleSeed={editSeed}
+        interviewPeriodRange={interviewPeriodRange}
+        highlightParagraphId={APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS.participantRecruitInfo}
+      />
+    </div>
+  )
+}
+
+export function GeneralProgramParticipantInterviewScheduleSection({
+  program,
+  form,
+  isEdit,
+}: {
+  program: Program
+  form?: UseFormReturn<ProgramDetailEditFormValues>
+  isEdit: boolean
+}) {
+  if (!isGeneralParticipantInterviewScheduleProgram(program)) return null
+  if (isEdit && form) {
+    return <GeneralProgramParticipantInterviewScheduleEditSection program={program} form={form} />
+  }
+  if (!resolveParticipantRecruitmentInterviewEnabled(program)) return null
+  return (
+    <div className={SECTION_GAP_CLASS}>
+      <GeneralProgramParticipantInterviewScheduleReadSection program={program} />
+    </div>
+  )
 }

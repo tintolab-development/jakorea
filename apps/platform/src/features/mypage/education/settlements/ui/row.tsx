@@ -6,12 +6,13 @@ import { formatSettlementGradeLabel } from '../lib/format-write-draft'
 import { isLectureFeeSettlementBlocked } from '../lib/lecture-fee-preview'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
 import {
-  isSettlementDeadlinePassed,
+  isSettlementResubmitDisabled,
   isSettlementWriteCtaDisabled,
   PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
   PAYMENT_STATEMENT_OVERDUE_MESSAGE,
   paymentStatementLateSubmitMessage,
   PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE,
+  canRequestPaymentStatementCorrection,
   resolveSettlementStatusUi,
   type SettlementDocumentKind,
   type SettlementStatusAction,
@@ -36,11 +37,14 @@ import alertBlack24Url from '@/shared/assets/icons/alert-black-24.svg'
 import villaIconUrl from '@/shared/assets/icons/villa.svg'
 import { PFAlertModal, PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
 import { useReapplyPaymentStatementMutation } from '../api/use-reapply-payment-statement-mutation'
+import { useRequestPaymentStatementCorrectionMutation } from '../api/use-request-payment-statement-correction-mutation'
 import { CorrectionDetailModal } from './correction-detail-modal'
+import { FeeCorrectionRequestModal } from './fee-correction-request-modal'
+import { instructorSettlementApiErrorMessage } from '../lib/instructor-settlement-contract'
 import {
-  PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE,
-  instructorSettlementApiErrorMessage,
-} from '../lib/instructor-settlement-contract'
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
@@ -85,16 +89,26 @@ export function EducationSettlementRow({
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
-  const [reapplyErrorMessage, setReapplyErrorMessage] = useState<string | null>(null)
-  const [alertTitle, setAlertTitle] = useState('지급조서 재신청')
+  const [errorAlert, setErrorAlert] = useState<EducationAlert | null>(null)
   const [correctionOpen, setCorrectionOpen] = useState(false)
+  const [correctionRequestOpen, setCorrectionRequestOpen] = useState(false)
   const closeCorrection = useCallback(() => setCorrectionOpen(false), [])
-  const showCorrectionError = useCallback((message: string) => {
-    setAlertTitle('정정 내역 확인')
-    setReapplyErrorMessage(message)
+  /** 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패(코드별 안내는 설명에) */
+  const showSettlementError = useCallback((error: unknown) => {
+    setErrorAlert(resolveEducationErrorAlert(error, instructorSettlementApiErrorMessage))
   }, [])
   const reapplyMutation = useReapplyPaymentStatementMutation()
-  const config = resolveSettlementStatusUi(item.status, documentKind)
+  const requestCorrectionMutation = useRequestPaymentStatementCorrectionMutation()
+  const canRequestCorrection = canRequestPaymentStatementCorrection({
+    documentKind,
+    status: item.status,
+    settlementId: item.settlementId,
+    paymentStatus: item.paymentStatus,
+    gemini: hideInstructorWrite,
+  })
+  const config = resolveSettlementStatusUi(item.status, documentKind, {
+    adminApplicationCorrection: item.adminApplicationCorrection === true,
+  })
   /** 정정 승인 후 강사 재신청 대기 — [지급조서 재신청]이 재신청 API를 부른다 */
   const isCorrectionReapply =
     documentKind === 'payment_statement' && item.status === 'correction_completed'
@@ -243,11 +257,11 @@ export function EducationSettlementRow({
         iconSrc={MARK_ICON[config.markTone]}
       />
     ) : null
-  const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
-  const receiptReapplyUnavailable =
-    documentKind === 'receipt' &&
-    (item.canResubmitReceipt === false ||
-      (item.hasPayableItems === false && item.canResubmitReceipt !== true))
+  const resubmitDisabled = isSettlementResubmitDisabled({
+    documentKind,
+    canResubmit: item.canResubmitReceipt,
+    statementReapplyDeadlineDate: item.reapplyDeadlineDate,
+  })
 
   const renderAction = (action: SettlementStatusAction) => {
     if (action === 'write') {
@@ -314,6 +328,21 @@ export function EducationSettlementRow({
         </PFButton>
       )
     }
+    if (action === 'request-correction') {
+      if (!canRequestCorrection) return null
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="primary"
+          size="large"
+          disabled={requestCorrectionMutation.isPending}
+          onClick={() => setCorrectionRequestOpen(true)}
+        >
+          정정 요청하기
+        </PFButton>
+      )
+    }
     if (action === 'view-correction') {
       const correctionDisabled = item.settlementId == null
       return (
@@ -348,12 +377,7 @@ export function EducationSettlementRow({
           onClick={() => {
             if (disabled || settlementId == null) return
             reapplyMutation.mutate(settlementId, {
-              onError: error => {
-                setAlertTitle('지급조서 재신청')
-                setReapplyErrorMessage(
-                  instructorSettlementApiErrorMessage(error, PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE),
-                )
-              },
+              onError: showSettlementError,
             })
           }}
         >
@@ -362,16 +386,15 @@ export function EducationSettlementRow({
       )
     }
     const reapplyPath = documentKind === 'receipt' ? receiptSubmitPath : writePath
-    const reapplyUnavailable = receiptReapplyUnavailable
     return (
       <PFButton
         key={action}
         type="button"
         variant="primary"
         size="large"
-        disabled={reapplyDisabled || reapplyUnavailable}
+        disabled={resubmitDisabled}
         onClick={() => {
-          if (reapplyDisabled || reapplyUnavailable) return
+          if (resubmitDisabled) return
           if (onWrite) {
             onWrite(reapplyPath)
             return
@@ -478,6 +501,26 @@ export function EducationSettlementRow({
         ) : null}
       </EducationSessionCard>
 
+      <FeeCorrectionRequestModal
+        open={correctionRequestOpen}
+        submitting={requestCorrectionMutation.isPending}
+        minLength={2}
+        onCancel={() => {
+          if (requestCorrectionMutation.isPending) return
+          setCorrectionRequestOpen(false)
+        }}
+        onSubmit={reason => {
+          const settlementId = item.settlementId
+          if (settlementId == null) return
+          requestCorrectionMutation.mutate(
+            { settlementId, reason },
+            {
+              onSuccess: () => setCorrectionRequestOpen(false),
+              onError: showSettlementError,
+            },
+          )
+        }}
+      />
       <PFModal
         open={rejectOpen}
         size="md"
@@ -517,9 +560,9 @@ export function EducationSettlementRow({
                 variant="primary"
                 size="xlarge"
                 className={styles.rejectButton}
-                disabled={reapplyDisabled}
+                disabled={resubmitDisabled}
                 onClick={() => {
-                  if (reapplyDisabled) return
+                  if (resubmitDisabled) return
                   closeRejectReason()
                   if (onWrite) {
                     onWrite(writePath)
@@ -537,9 +580,9 @@ export function EducationSettlementRow({
                 variant="primary"
                 size="xlarge"
                 className={styles.rejectButton}
-                disabled={reapplyDisabled || receiptReapplyUnavailable}
+                disabled={resubmitDisabled}
                 onClick={() => {
-                  if (reapplyDisabled || receiptReapplyUnavailable) return
+                  if (resubmitDisabled) return
                   closeRejectReason()
                   if (onWrite) {
                     onWrite(receiptSubmitPath)
@@ -560,14 +603,14 @@ export function EducationSettlementRow({
           settlementId={item.settlementId}
           operationEnded={operationEnded}
           onClose={closeCorrection}
-          onError={showCorrectionError}
+          onError={showSettlementError}
         />
       ) : null}
       <PFAlertModal
-        open={reapplyErrorMessage != null}
-        title={alertTitle}
-        description={reapplyErrorMessage ?? ''}
-        onConfirm={() => setReapplyErrorMessage(null)}
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </>
   )

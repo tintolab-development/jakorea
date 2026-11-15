@@ -14,13 +14,6 @@
   margin-top: 0;
 }
 
-.user-consent-agreement-section__value-status {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-}
-
 .user-consent-agreement-section__table {
   width: 100%;
 }
@@ -58,52 +51,6 @@
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
-}
-
-/* 동의 | 일시, 동의 | [동의서 보기] 일시 — 시안 15518:306296: 공통 구분선(1×13 #3D3D3D 50%) 양쪽 16px */
-.user-consent-agreement-section__value-inner {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0 16px;
-}
-
-.user-consent-agreement-section__value-inner > .detail-info-form-inputs-separator {
-  margin: 0;
-}
-
-.user-consent-agreement-section__document-edit {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0 16px;
-}
-
-.user-consent-agreement-section__document-edit-status {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-}
-
-/* 시안: 상태 · 디바이더 · 버튼 간격은 셀 gap 16만 — 공통 디바이더 양옆 12px 여백 제거 */
-.user-consent-agreement-section__document-edit > .detail-info-form-inputs-separator {
-  margin: 0;
-}
-
-/* 시안(12239:235392) 「동의서 작성」 h32 버튼 폭 100 — 공통 h32 min-width 80 대비 */
-.user-consent-agreement-section__document-edit > .cms-button.ant-btn.cms-button--h32 {
-  min-width: 100px;
-}
-
-.user-consent-agreement-section__value-datetime {
-  /* 시안: 14px Medium · rgba(61,61,61,0.5) */
-  color: rgba(61, 61, 61, 0.5);
-  font-family: Pretendard, var(--font-sans, system-ui), sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 /* 강사(강사만) 상세: 마지막 더블 행 우측 빈 절반 — 라벨 없이 값 영역만(DetailInfoForm 격자선 유지) */

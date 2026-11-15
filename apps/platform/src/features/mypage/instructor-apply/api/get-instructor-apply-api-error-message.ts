@@ -45,3 +45,13 @@ export function getInstructorApplyApiErrorMessage(error: unknown, fallback: stri
 
   return fallback
 }
+
+/**
+ * 오류 팝업 설명용 — 서버 응답이 있을 때의 업무 안내만 돌려준다.
+ * 응답이 없거나 axios 기본 문구(`Request failed with status code …`)뿐이면 빈 값 → 시안 「처리 실패」.
+ */
+export function readInstructorApplyServerErrorMessage(error: unknown): string {
+  if (!isAxiosError(error) || error.response == null) return ''
+  const message = getInstructorApplyApiErrorMessage(error, '')
+  return message === error.message.trim() ? '' : message
+}

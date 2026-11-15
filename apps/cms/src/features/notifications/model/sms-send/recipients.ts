@@ -73,9 +73,9 @@ export function smsSendRecipientTypeColumnTitle(mode: SmsSendRecipientTypeMode):
 /** 유형 컬럼은 서버 typeLabel만 표시한다. memberType으로 덮어쓰지 않는다. (영문 코드만 온 경우는 알림톡과 같이 라벨로 바꾼다) */
 export function smsSendRecipientTypeLabel(
   recipient: SmsSendRecipient,
-  mode: SmsSendRecipientTypeMode
+  _mode: SmsSendRecipientTypeMode = 'member'
 ): string {
-  return resolveNotificationRecipientTypeLabel(recipient.typeLabel, mode)
+  return resolveNotificationRecipientTypeLabel(recipient.typeLabel)
 }
 
 export function normalizeSmsSendPhone(value: string): string {

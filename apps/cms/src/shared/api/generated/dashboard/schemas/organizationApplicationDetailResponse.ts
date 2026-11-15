@@ -119,4 +119,6 @@ export interface OrganizationApplicationDetailResponse {
   kitCount?: number | null;
   /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
   bookCount?: number | null;
+  /** UJAT이고 temporaryAssignmentStatus가 TEMP_ASSIGNED일 때만 boolean. false는 임시 배정(일정 미배정), true는 활성 임시 교육일 슬롯이 있는 임시 배정(일정 배정 완료). 평가 대기·임시 반려·UJAT가 아니면 null. null과 false를 구분한다. false를 평가 대기로 읽지 않는다. */
+  temporaryScheduleAssigned?: boolean | null;
 }

@@ -3,6 +3,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Spin } from 'antd'
 import type { Program } from '@/types/domain'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  updateOrganizationApplicationRemote,
+  type OrganizationApplicationUpdateWire,
+} from '@/features/program/general/api/applications-api-client'
+import { giveUpProgramParticipantRemote } from '@/features/program/general/api/program-progress-api-client'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import {
   PROGRAM_MANAGER_ADD_COMPLETE_BODY,
@@ -28,6 +33,9 @@ import {
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { useAffiliatedTeachersQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
 import {
   getApiErrorCode,
   readApiErrorAlertMessage,
@@ -70,6 +78,15 @@ import {
   mergePendingClassesIntoGradeBlocks,
   removeClassesFromGradeBlocks,
 } from './grade-blocks'
+import {
+  buildUjatInstitutionInfoUpdateRequest,
+  hasUjatInstitutionInfoUpdateFields,
+} from './application-info-update'
+import { canRequestUjatInstitutionGiveUp } from './participant-status'
+import {
+  buildUjatInstitutionTeacherOptions,
+  resolveUjatInstitutionTeacherMemberIdChange,
+} from './teacher-options'
 import './detail.css'
 
 const CLASS_ADD_ERROR_TITLES: Record<string, string> = {
@@ -100,20 +117,20 @@ export function UjatEducationProgressInstitutionDetailView({
   const [changeClassModalOpen, setChangeClassModalOpen] = useState(false)
   const [changeClassConfirming, setChangeClassConfirming] = useState(false)
   const [addClassConfirming, setAddClassConfirming] = useState(false)
-  const [activityWithdrawn, setActivityWithdrawn] = useState(false)
+  const [givingUp, setGivingUp] = useState(false)
   const [isApplicationInfoEditing, setIsApplicationInfoEditing] = useState(false)
+  const [savingApplicationInfo, setSavingApplicationInfo] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [savingComment, setSavingComment] = useState(false)
   const [adminComment, setAdminComment] = useState(() => detail.adminComment)
   const [adminCommentDraft, setAdminCommentDraft] = useState(() => detail.adminComment)
   const remoteReady = shouldUseUjatApplicationsRemoteApi()
   const applicationNumericId = parseOrganizationApplicationIdFromSchoolId(detail.institutionId)
-  const [addressDetail, setAddressDetail] = useState(() => detail.applicationDetail.addressDetail)
+  // 상세 주소·담당 교사 정보 표시값은 기관 신청 상세 GET이 SSOT. 저장 후 invalidate 재조회로 다시 그린다.
+  const addressDetail = detail.applicationDetail.addressDetail
+  const teacherContact = detail.applicationDetail.teacherContact
   const [addressDetailDraft, setAddressDetailDraft] = useState(
     () => detail.applicationDetail.addressDetail
-  )
-  const [teacherContact, setTeacherContact] = useState<UjatInstitutionApplicationTeacherContact>(
-    () => detail.applicationDetail.teacherContact
   )
   const [teacherContactDraft, setTeacherContactDraft] =
     useState<UjatInstitutionApplicationTeacherContact>(() => detail.applicationDetail.teacherContact)
@@ -127,14 +144,11 @@ export function UjatEducationProgressInstitutionDetailView({
     setChangeClassModalOpen(false)
     setChangeClassConfirming(false)
     setAddClassConfirming(false)
-    setActivityWithdrawn(false)
     setIsApplicationInfoEditing(false)
     setAdminCommentModalOpen(false)
     setAdminComment(detail.adminComment)
     setAdminCommentDraft(detail.adminComment)
-    setAddressDetail(detail.applicationDetail.addressDetail)
     setAddressDetailDraft(detail.applicationDetail.addressDetail)
-    setTeacherContact(detail.applicationDetail.teacherContact)
     setTeacherContactDraft(detail.applicationDetail.teacherContact)
     setAssignmentDataRevision(0)
     setGradeBlocks(detail.applicationDetail.gradeBlocks)
@@ -153,12 +167,10 @@ export function UjatEducationProgressInstitutionDetailView({
       adminComment,
       applicationDetail: {
         ...detail.applicationDetail,
-        addressDetail,
-        teacherContact,
         gradeBlocks,
       },
     }),
-    [addressDetail, adminComment, detail, gradeBlocks, teacherContact]
+    [adminComment, detail, gradeBlocks]
   )
 
   const assignmentTabModel = useInstitutionAssignmentTabModel({
@@ -192,6 +204,36 @@ export function UjatEducationProgressInstitutionDetailView({
     accessItemLabel: `${detail.institutionName} 참여 기관 신청 정보`,
   })
 
+  // 담당 교사는 기관 소속 교사 선택(teacherMemberId)으로만 바뀐다 — 일반 참여 기관 상세와 같은 소속 교사 API·필터.
+  const organizationId = detail.organizationId ?? undefined
+  const canFetchAffiliatedTeachers = Boolean(isMembersRemoteEnabled() && organizationId != null)
+  const affiliatedTeachersQuery = useAffiliatedTeachersQuery(
+    detail.teacherMemberId ?? undefined,
+    canFetchAffiliatedTeachers && isApplicationInfoEditing,
+    organizationId
+  )
+  const teacherOptions = useMemo(
+    () =>
+      buildUjatInstitutionTeacherOptions({
+        rows:
+          canFetchAffiliatedTeachers && isApplicationInfoEditing && affiliatedTeachersQuery.data
+            ? affiliatedTeachersQuery.data.filter(row =>
+                isSchoolAffiliatedTeacherRowSelectable(row.employmentStatus)
+              )
+            : null,
+        currentTeacherName: isApplicationInfoEditing
+          ? teacherContactDraft.teacherName
+          : teacherContact.teacherName,
+      }),
+    [
+      affiliatedTeachersQuery.data,
+      canFetchAffiliatedTeachers,
+      isApplicationInfoEditing,
+      teacherContact.teacherName,
+      teacherContactDraft.teacherName,
+    ]
+  )
+
   const tabKeys = useMemo(
     () =>
       Object.keys(
@@ -209,26 +251,20 @@ export function UjatEducationProgressInstitutionDetailView({
     [detail.confirmedScheduleRows]
   )
 
+  // 활동 포기 허용은 서버 participantAvailableActions(GIVE_UP)가 SSOT. 포기된 기관·불가 상태는 비활성.
+  const canRequestWithdraw = detail.participantState
+    ? canRequestUjatInstitutionGiveUp(detail.participantState)
+    : false
+
   const handleRequestWithdraw = useCallback(() => {
-    if (activityWithdrawn) return
+    if (!canRequestWithdraw) return
     setWithdrawConfirmOpen(true)
-  }, [activityWithdrawn])
+  }, [canRequestWithdraw])
 
   const handleCancelWithdraw = useCallback(() => {
+    if (givingUp) return
     setWithdrawConfirmOpen(false)
-  }, [])
-
-  const handleConfirmWithdraw = useCallback(
-    (_payload: UjatEducationProgressActivityWithdrawPayload) => {
-      setActivityWithdrawn(true)
-      setWithdrawConfirmOpen(false)
-      showAlert({
-        title: '활동 포기',
-        content: `${detail.institutionName} 기관이 활동 포기 처리되었습니다.`,
-      })
-    },
-    [detail.institutionName, showAlert]
-  )
+  }, [givingUp])
 
   const changeClassRemoteScheduleRows = useMemo(
     () =>
@@ -273,6 +309,70 @@ export function UjatEducationProgressInstitutionDetailView({
       ])
     },
     [queryClient]
+  )
+
+  const handleConfirmWithdraw = useCallback(
+    async (payload: UjatEducationProgressActivityWithdrawPayload) => {
+      const programId = String(program.id)
+      const participantId = detail.participantId
+      if (!remoteReady || !programId || participantId == null) {
+        showAlert({
+          title: '활동 포기 처리 실패',
+          content: '기관 신청 API가 활성화되지 않았거나 참여 기관 ID가 올바르지 않습니다.',
+        })
+        return
+      }
+      const selectedSchedule = detail.confirmedScheduleRows.find(
+        row => row.id === payload.stopScheduleRowId
+      )
+      if (!selectedSchedule || selectedSchedule.scheduleId == null) {
+        showAlert({
+          title: '활동 포기 처리 실패',
+          content: '선택한 교육 일정 정보를 확인할 수 없습니다. 다시 시도해 주세요.',
+        })
+        return
+      }
+      setGivingUp(true)
+      try {
+        await giveUpProgramParticipantRemote(programId, String(participantId), {
+          reason: `활동 포기 (${selectedSchedule.dateDisplay})`,
+          stopScheduleId: selectedSchedule.scheduleId,
+          faultParty: payload.faultParty,
+        })
+        setWithdrawConfirmOpen(false)
+        await Promise.all([
+          invalidateAfterClassRemap(programId, detail.institutionId),
+          queryClient.invalidateQueries({
+            queryKey: ujatQueryKeys.organizationApplicationsRoot(programId),
+          }),
+        ])
+        showAlert({
+          title: '활동 포기',
+          content: `${detail.institutionName} 기관이 활동 포기 처리되었습니다.`,
+        })
+      } catch (error) {
+        showAlert({
+          title: '활동 포기 처리 실패',
+          content: readApiErrorAlertMessage(
+            error,
+            '활동 포기 처리에 실패했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      } finally {
+        setGivingUp(false)
+      }
+    },
+    [
+      detail.confirmedScheduleRows,
+      detail.institutionId,
+      detail.institutionName,
+      detail.participantId,
+      invalidateAfterClassRemap,
+      program.id,
+      queryClient,
+      remoteReady,
+      showAlert,
+    ]
   )
 
   const handleConfirmAddClasses = useCallback(
@@ -430,31 +530,82 @@ export function UjatEducationProgressInstitutionDetailView({
     [detail, invalidateAfterClassRemap, program.id, showAlert]
   )
 
-  const handleApplicationInfoButtonClick = useCallback(() => {
+  const handleApplicationInfoButtonClick = useCallback(async () => {
     if (!isApplicationInfoEditing) {
       setAddressDetailDraft(addressDetail)
       setTeacherContactDraft(teacherContact)
       setIsApplicationInfoEditing(true)
       return
     }
+    if (savingApplicationInfo) return
 
-    setAddressDetail(addressDetailDraft)
-    setTeacherContact(teacherContactDraft)
-    setIsApplicationInfoEditing(false)
-    showUpdateCompletedAlert()
+    const body = buildUjatInstitutionInfoUpdateRequest({
+      addressDetailDraft,
+      addressDetailBaseline: addressDetail,
+      teacherContactDraft,
+      teacherContactBaseline: teacherContact,
+      teacherMemberId: resolveUjatInstitutionTeacherMemberIdChange({
+        teacherNameDraft: teacherContactDraft.teacherName,
+        teacherOptions,
+        currentTeacherMemberId: detail.teacherMemberId,
+      }),
+    })
+    if (!hasUjatInstitutionInfoUpdateFields(body)) {
+      setIsApplicationInfoEditing(false)
+      showUpdateCompletedAlert()
+      return
+    }
+    const programId = String(program.id)
+    if (applicationNumericId == null || !remoteReady || !programId) {
+      showAlert({
+        title: '저장 실패',
+        content: '기관 신청 API가 활성화되지 않았거나 신청 ID가 올바르지 않습니다.',
+      })
+      return
+    }
+
+    setSavingApplicationInfo(true)
+    try {
+      // 상세 주소를 비우면 null 전송(BE present 추적으로 지움). generated 타입은 null을 빠뜨린다.
+      await updateOrganizationApplicationRemote(
+        String(applicationNumericId),
+        body as OrganizationApplicationUpdateWire
+      )
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.organizationApplicationsRoot(programId),
+      })
+      setIsApplicationInfoEditing(false)
+      showUpdateCompletedAlert()
+    } catch (error) {
+      showAlert({
+        title: '저장 실패',
+        content: readApiErrorAlertMessage(error, '신청 정보를 저장하지 못했습니다.'),
+      })
+    } finally {
+      setSavingApplicationInfo(false)
+    }
   }, [
     addressDetail,
     addressDetailDraft,
+    applicationNumericId,
+    detail.teacherMemberId,
     isApplicationInfoEditing,
+    program.id,
+    queryClient,
+    remoteReady,
+    savingApplicationInfo,
+    showAlert,
     teacherContact,
     teacherContactDraft,
+    teacherOptions,
   ])
 
   const handleApplicationInfoCancel = useCallback(() => {
+    if (savingApplicationInfo) return
     setAddressDetailDraft(addressDetail)
     setTeacherContactDraft(teacherContact)
     setIsApplicationInfoEditing(false)
-  }, [addressDetail, teacherContact])
+  }, [addressDetail, savingApplicationInfo, teacherContact])
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
@@ -541,7 +692,7 @@ export function UjatEducationProgressInstitutionDetailView({
                 type="button"
                 variant="delete"
                 size="h40"
-                disabled={activityWithdrawn}
+                disabled={!canRequestWithdraw || givingUp}
                 onClick={handleRequestWithdraw} >
                 활동 포기
               </CmsButton>
@@ -551,9 +702,14 @@ export function UjatEducationProgressInstitutionDetailView({
               canWrite={canWrite}
               size="h40"
               isEditing={isApplicationInfoEditing}
-              onEdit={handleApplicationInfoButtonClick}
+              saving={savingApplicationInfo}
+              onEdit={() => {
+                void handleApplicationInfoButtonClick()
+              }}
               onCancel={handleApplicationInfoCancel}
-              onSave={handleApplicationInfoButtonClick} />
+              onSave={() => {
+                void handleApplicationInfoButtonClick()
+              }} />
             {!isApplicationInfoEditing ? (
               <>
                 <CmsButton
@@ -613,6 +769,8 @@ export function UjatEducationProgressInstitutionDetailView({
               onAddressDetailDraftChange={setAddressDetailDraft}
               teacherContactDraft={teacherContactDraft}
               onTeacherContactDraftChange={setTeacherContactDraft}
+              teacherOptions={teacherOptions}
+              isTeacherOptionsLoading={affiliatedTeachersQuery.isLoading}
               isAdminCommentEditing={false}
               adminCommentDraft=""
               onAdminCommentDraftChange={() => {}}
@@ -664,8 +822,11 @@ export function UjatEducationProgressInstitutionDetailView({
         participantName={detail.institutionName}
         subjectKind="institution"
         scheduleOptions={withdrawScheduleOptions}
+        submitting={givingUp}
         onCancel={handleCancelWithdraw}
-        onConfirm={handleConfirmWithdraw}
+        onConfirm={payload => {
+          void handleConfirmWithdraw(payload)
+        }}
       />
 
       <UjatEducationProgressChangeClassModal

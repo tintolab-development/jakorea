@@ -1,5 +1,7 @@
 import {
+  cloneElement,
   forwardRef,
+  isValidElement,
   useImperativeHandle,
   useRef,
   type ComponentProps,
@@ -42,7 +44,7 @@ const PANEL_PREV_ICON = <NavPrevIcon className="cms-datepicker__panel-nav-icon" 
 const PANEL_NEXT_ICON = <NavNextIcon className="cms-datepicker__panel-nav-icon" />
 
 /**
- * 년도·연월 선택 팝업 — 디자인 시스템 `Calendar / Miniview`(miniview on) 모양 (`admin-datepicker.css`).
+ * 년도·연월 선택 팝업 — 디자인 시스템 `Popup / Date Picker`(type=year · year-month) 모양 (`admin-datepicker.css`).
  * 일반 날짜(date) 팝업은 건드리지 않도록 `picker` 가 year·month 일 때만 팝업 루트 클래스를 붙인다.
  */
 const YEAR_MONTH_POPUP_CLASS = 'cms-datepicker-popup--year-month'
@@ -71,6 +73,47 @@ function resolveYearMonthPopupClassNames(
       ...classNames?.popup,
       root: joinClassNames(YEAR_MONTH_POPUP_CLASS, classNames?.popup?.root),
     },
+  }
+}
+
+type PickerLocale = DatePickerProps['locale']
+
+/**
+ * 년도·연월 팝업 헤더 — 시안 `2026` / `2020-2029` 처럼 연도에 「년」을 붙이지 않는다.
+ * antd ko_KR `yearFormat`(`YYYY년`)은 헤더에만 쓰이므로 year·month 피커에서만 `YYYY` 로 덮는다.
+ */
+function resolveYearMonthLocale(picker: PickerMode, locale: PickerLocale): PickerLocale {
+  if (!isYearMonthPicker(picker) || locale?.lang == null) return locale
+  return { ...locale, lang: { ...locale.lang, yearFormat: 'YYYY' } }
+}
+
+type PickerCellRender = DatePickerProps['cellRender']
+
+/** 시안 Calendar / Picker / Cell `status=select` — 올해(연도 패널)·이번 달(월 패널) */
+const YEAR_MONTH_CURRENT_CELL_CLASS = 'cms-datepicker__cell--current'
+
+/**
+ * antd(rc-picker)는 날짜 패널에만 `-cell-today` 를 붙이고 년도·월 패널에는 붙이지 않는다.
+ * 그래서 year·month 피커에서 호출부가 `cellRender` 를 넘기지 않았을 때만, 올해·이번 달 칸 안쪽에 클래스를 붙인다.
+ */
+function resolveYearMonthCellRender(
+  picker: PickerMode,
+  cellRender: PickerCellRender
+): PickerCellRender {
+  if (!isYearMonthPicker(picker) || cellRender != null) return cellRender
+  return (current, info) => {
+    const origin = info.originNode
+    if (
+      (info.type === 'year' || info.type === 'month') &&
+      typeof current === 'object' &&
+      current.isSame(info.today, info.type) &&
+      isValidElement<{ className?: string }>(origin)
+    ) {
+      return cloneElement(origin, {
+        className: joinClassNames(origin.props.className, YEAR_MONTH_CURRENT_CELL_CLASS),
+      })
+    }
+    return origin
   }
 }
 
@@ -208,6 +251,8 @@ const AdminDatePickerRender: ForwardRefRenderFunction<AdminDatePickerRef, AdminD
         value={value}
         {...resolveYearMonthNavIcons(props.picker)}
         {...pickerRest}
+        locale={resolveYearMonthLocale(props.picker, props.locale)}
+        cellRender={resolveYearMonthCellRender(props.picker, props.cellRender)}
         classNames={resolveYearMonthPopupClassNames(props.picker, classNames)}
         getPopupContainer={getPopupContainer ?? adminDatePickerPopupContainer}
       />
@@ -374,6 +419,11 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
   const resolvedAllowClear = resolveAdminPickerAllowClear(allowClear)
   const yearMonthNavIcons = resolveYearMonthNavIcons(props.picker)
   const resolvedClassNames = resolveYearMonthPopupClassNames(props.picker, classNames)
+  const resolvedLocale = resolveYearMonthLocale(props.picker, props.locale)
+  const resolvedCellRender = resolveYearMonthCellRender(
+    props.picker,
+    props.cellRender as PickerCellRender
+  )
 
   const segmentCn = (segmentDisabled: boolean, filled: boolean) =>
     joinClassNames(
@@ -415,6 +465,8 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           defaultPickerValue={defaultStart}
           {...yearMonthNavIcons}
           {...sharedPickerProps}
+          locale={resolvedLocale}
+          cellRender={resolvedCellRender}
           classNames={resolvedClassNames}
           getPopupContainer={resolvedPopupContainer}
         />
@@ -442,6 +494,8 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           defaultPickerValue={defaultEnd}
           {...yearMonthNavIcons}
           {...sharedPickerProps}
+          locale={resolvedLocale}
+          cellRender={resolvedCellRender}
           classNames={resolvedClassNames}
           getPopupContainer={resolvedPopupContainer}
         />

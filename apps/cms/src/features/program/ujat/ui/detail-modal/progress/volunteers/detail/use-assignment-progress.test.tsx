@@ -181,6 +181,7 @@ describe('useVolunteerAssignmentProgress mutations', () => {
           status: 'ABSENT',
           absenceReason: null,
           arrivalTime: null,
+          fileObjectIds: [],
         },
       ],
     })

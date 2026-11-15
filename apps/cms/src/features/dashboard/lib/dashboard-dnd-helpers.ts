@@ -3,8 +3,21 @@
  * @see use-dashboard-dnd.ts
  */
 
+import { closestCenter, pointerWithin, type CollisionDetection } from '@dnd-kit/core'
+
 export const COL_SPAN_FULL = 24
 export const COL_SPAN_HALF = 12
+
+/**
+ * 드롭 대상 판정: 포인터가 올라간 위젯을 우선한다.
+ * closestCenter만 쓰면 끌고 가는 위젯 상자(1단은 폭이 넓다)의 중심으로 판정해, 포인터를 대상 위젯 위에 놓아도
+ * 아래 행의 다른 위젯이 대상으로 잡혀 순서만 바뀐다. 포인터 아래 위젯이 없을 때(키보드 이동·위젯 사이 빈 공간)만 closestCenter를 쓴다.
+ */
+export const dashboardCollisionDetection: CollisionDetection = args => {
+  const underPointer = pointerWithin(args)
+  if (underPointer.length > 0) return underPointer
+  return closestCenter(args)
+}
 
 export function areWidgetIdListsEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false

@@ -161,3 +161,51 @@ describe('mapIndividualSettlementReviewToCalculationStatement', () => {
     expect(submitted.basic.lectureFeePaymentScheduledDateDisplay).toBeUndefined()
   })
 })
+
+describe('처리 현황 — 차수 기준 재신청(모든 화면 공통)', () => {
+  const resubmitted: IndividualSettlementReviewDetail = {
+    ...detail,
+    latestRevisionNo: 2,
+    revisions: [{ ...detail.revisions![0], revisionId: 2, revisionNo: 2 }],
+  }
+
+  it('2차 이상 제출이면 「지급조서 재신청」', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement(resubmitted)
+    expect(view.basic.processingStatusDisplay).toBe('지급조서 재신청')
+    expect(view.basic.processingStatusClass).toBe('reapplication')
+  })
+
+  it('1차 제출이면 「확인 대기 중」', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement(detail)
+    expect(view.basic.processingStatusDisplay).toBe('확인 대기 중')
+    expect(view.basic.processingStatusClass).toBe('pending')
+  })
+
+  it('2차 제출이 승인되면 「지급조서 확인 완료」', () => {
+    const approved: IndividualSettlementReviewDetail = {
+      ...resubmitted,
+      status: 'APPROVED',
+      revisions: [{ ...resubmitted.revisions![0], status: 'APPROVED' }],
+    }
+    const view = mapIndividualSettlementReviewToCalculationStatement(approved)
+    expect(view.basic.processingStatusDisplay).toBe('지급조서 확인 완료')
+    expect(view.basic.processingStatusClass).toBe('confirmed')
+  })
+})
+
+describe('교육 진행 일자 칸 — 시안 「YYYY.MM.DD(요일) │ N회차」', () => {
+  it('목록 행 회차를 받아 뒤 칸에 「N회차」를 쓴다(시간은 쓰지 않는다)', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement(
+      { ...detail, scheduleName: '가상 일정' },
+      { sessionOrdinal: 2 }
+    )
+    expect(view.blocks[0]?.lectureDateDisplay).toBe('2026.01.28(수)')
+    expect(view.blocks[0]?.lectureDateDisplay).not.toMatch(/\d{2}:\d{2}/)
+    expect(view.blocks[0]?.lectureSessionDisplay).toBe('2회차')
+  })
+
+  it('회차를 모르면 뒤 칸을 비워 날짜만 보인다', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement({ ...detail, scheduleName: '가상 일정' })
+    expect(view.blocks[0]?.lectureSessionDisplay).toBe('')
+  })
+})

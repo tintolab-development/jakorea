@@ -24,6 +24,14 @@ function fileExtension(fileName: string): string {
   return trimmed.slice(dot + 1).toLowerCase()
 }
 
+/** 「파일 형식이 맞지 않는 경우」 팝업 설명에 넣는 허용 형식 */
+export const STUDENT_ROSTER_FILE_FORMATS_LABEL = 'XLSX, CSV'
+
+/** 허용 형식(XLSX·CSV)인지 — 아니면 시안 「파일 형식이 맞지 않는 경우」 팝업을 띄운다 */
+export function isStudentRosterUploadFileTypeAllowed(file: Pick<File, 'name'>): boolean {
+  return ALLOWED_EXTENSIONS.has(fileExtension(file.name))
+}
+
 /** 클라이언트에서 막을 수 있는 항목만 검사. 행 수·내용 검증은 import API. */
 export function validateStudentRosterUploadFile(file: File): string | null {
   const ext = fileExtension(file.name)

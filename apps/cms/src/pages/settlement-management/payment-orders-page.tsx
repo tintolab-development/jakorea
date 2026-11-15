@@ -68,6 +68,7 @@ export default function PaymentOrdersPage() {
             // 시안: 미선택 시 placeholder가 아니라 「전체」 옵션이 선택된 값으로 보인다
             processingStatus: pendingFilters.processingStatus,
             pendingItemBucket: pendingFilters.pendingItemBucket,
+            payeeType: pendingFilters.payeeType,
             dateRange: pendingFilters.dateRange,
           }}
           onFilterChange={handleFilterChange}
@@ -100,6 +101,7 @@ export default function PaymentOrdersPage() {
         onClose={closeDetail}
         data={detailState?.data ?? null}
         listPageDateRange={appliedFromUrl.dateRange}
+        listPagePayeeType={appliedFromUrl.payeeType}
       />
     </div>
   )

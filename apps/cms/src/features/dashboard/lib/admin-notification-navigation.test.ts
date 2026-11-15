@@ -92,7 +92,7 @@ describe('resolveAdminNotificationNavigation', () => {
     expect(hasAdminNotificationNavigation({})).toBe(false)
   })
 
-  it('강사비 정정 요청은 settlementId로 신청자 별 지급 현황 상세를 연다 (기존 SETTLEMENT 알림은 프로그램 상세 유지)', () => {
+  it('강사비 정정 요청은 settlementId로 신청자 별 지급 현황 상세, 강사비 확인 완료는 계좌 지급 대상 목록을 연다', () => {
     expect(
       resolveAdminNotificationNavigation({
         target: {
@@ -112,7 +112,17 @@ describe('resolveAdminNotificationNavigation', () => {
           programId: '10',
         },
       })
-    ).toEqual({ kind: 'program', programId: '10' })
+    ).toEqual({ kind: 'path', path: '/settlement-management/account-payments' })
+    // 영수증 확인 완료 — 계좌 지급 연결(linkType ACCOUNT_PAYMENT)이어도 같은 지급 대상 목록
+    expect(
+      resolveAdminNotificationNavigation({
+        target: {
+          eventType: 'ADMIN_EXPENSE_RECEIPT_CONFIRMED',
+          linkType: 'ACCOUNT_PAYMENT',
+          linkId: '77',
+        },
+      })
+    ).toEqual({ kind: 'path', path: '/settlement-management/account-payments' })
     expect(
       resolveAdminNotificationNavigation({
         target: { eventType: 'ADMIN_PAYMENT_STATEMENT_CORRECTION_REQUESTED', linkType: 'SETTLEMENT' },
@@ -126,5 +136,71 @@ describe('resolveAdminNotificationNavigation', () => {
     const search = searchOf(path)
     expect(search.get('po_detail')).toBe('instructor')
     expect(search.get('po_detail_key')).toBe('42')
+  })
+
+  describe('시안 「시스템 안내 팝업」 이벤트별 이동', () => {
+    const nav = (eventType: string, extra: Record<string, string> = {}) =>
+      resolveAdminNotificationNavigation({
+        target: { eventType, linkType: 'PROGRAM_APPLICATION', linkId: '7', programId: '10', ...extra },
+      })
+
+    it('권한 신청 알림은 권한 신청 관리의 해당 탭 목록', () => {
+      expect(
+        nav('ADMIN_SIGNUP_APPROVAL_REQUESTED', { linkType: 'ADMIN_APPROVAL_REQUEST' })
+      ).toEqual({ kind: 'path', path: '/admin/permission-requests?pr_detail_role=admin' })
+      expect(
+        nav('ADMIN_INSTRUCTOR_ROLE_REQUESTED', { linkType: 'INSTRUCTOR_ROLE_REQUEST' })
+      ).toEqual({ kind: 'path', path: '/admin/permission-requests?pr_detail_role=instructor' })
+    })
+
+    it('프로그램 신청 취소는 이동 버튼이 없다', () => {
+      expect(nav('ADMIN_PROGRAM_APPLICATION_CANCELLED')).toBeNull()
+    })
+
+    it('강사 미배정·학생 명단·게시글 알림은 프로그램 상세의 진행 현황 탭', () => {
+      expect(nav('ADMIN_ORGANIZATION_PROGRAM_INSTRUCTOR_UNASSIGNED')).toEqual({
+        kind: 'program',
+        programId: '10',
+        section: 'participants',
+      })
+      expect(nav('ADMIN_INDIVIDUAL_PROGRAM_INSTRUCTOR_UNASSIGNED')).toEqual({
+        kind: 'program',
+        programId: '10',
+        section: 'instructors',
+      })
+      for (const eventType of [
+        'ADMIN_STUDENT_ROSTER_SUBMITTED',
+        'ADMIN_STUDENT_ROSTER_UPDATED',
+        'ADMIN_STUDENT_ROSTER_UNSUBMITTED',
+        'ADMIN_PORTRAIT_CONSENT_UNSUBMITTED',
+      ]) {
+        expect(nav(eventType)).toEqual({ kind: 'program', programId: '10', section: 'participants' })
+      }
+      expect(nav('ADMIN_PROGRAM_POST_COMMENT_CREATED', { linkType: 'PROGRAM_POST' })).toEqual({
+        kind: 'program',
+        programId: '10',
+        section: 'posts',
+      })
+    })
+
+    it('정산 신청은 지급조서 확인의 프로그램 별 상세', () => {
+      const destination = nav('ADMIN_SETTLEMENT_APPLICATION_SUBMITTED', {
+        linkType: 'SETTLEMENT_APPLICATION',
+      })
+      expect(destination?.kind).toBe('path')
+      const path = destination?.kind === 'path' ? destination.path : ''
+      const params = new URLSearchParams(path.split('?')[1])
+      expect(path.startsWith('/settlement-management/payment-orders?')).toBe(true)
+      expect(params.get('po_detail')).toBe('program')
+      expect(params.get('po_detail_key')).toBe('10')
+    })
+
+    it('신규 문의는 해당 문의 상세, 관리자 권한 변경은 내 정보 확인', () => {
+      expect(nav('ADMIN_INQUIRY_CREATED', { linkType: 'INQUIRY', linkId: '33' })).toEqual({
+        kind: 'path',
+        path: '/admin/posts/inquiries?inquiryId=33',
+      })
+      expect(nav('ADMIN_ROLE_CHANGED', { linkType: 'ADMIN_ACCOUNT' })).toEqual({ kind: 'profile' })
+    })
   })
 })

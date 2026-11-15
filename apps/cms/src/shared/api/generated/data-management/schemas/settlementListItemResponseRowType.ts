@@ -7,7 +7,7 @@
  */
 
 /**
- * 프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null.
+ * SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, INDIVIDUAL_SETTLEMENT_APPLICATION=개인 참여자·봉사자 영수증 정산 신청 행(지급조서 확인 목록만), NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행. 지급조서 확인 목록의 정산 행과 회원 상세 정산 탭에서는 null.
  */
 export type SettlementListItemResponseRowType = typeof SettlementListItemResponseRowType[keyof typeof SettlementListItemResponseRowType] | null;
 
@@ -15,5 +15,6 @@ export type SettlementListItemResponseRowType = typeof SettlementListItemRespons
 export const SettlementListItemResponseRowType = {
   SETTLEMENT: 'SETTLEMENT',
   SETTLEMENT_APPLICATION: 'SETTLEMENT_APPLICATION',
+  INDIVIDUAL_SETTLEMENT_APPLICATION: 'INDIVIDUAL_SETTLEMENT_APPLICATION',
   NOT_APPLIED: 'NOT_APPLIED',
 } as const;

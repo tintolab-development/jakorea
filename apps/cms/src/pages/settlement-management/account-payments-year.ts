@@ -15,6 +15,20 @@ export function parseAccountPaymentsYearParam(
   return y
 }
 
+/**
+ * 탭 클릭으로 적어 둔 연도. URL `ap_year`는 한 박자 늦게 따라오므로,
+ * 아직 도착하지 않은 URL 연도로 화면 연도를 되돌리지 않는다.
+ * 도착하면 `null`(URL을 따른다).
+ */
+export function reconcileAccountPaymentsPendingYear(
+  yearFromUrl: number,
+  pendingYear: number | null
+): number | null {
+  if (pendingYear == null) return null
+  if (yearFromUrl === pendingYear) return null
+  return pendingYear
+}
+
 /** 이체 예정일 구간의 연도만 교체(월·일 유지). null은 유지. */
 export function shiftTransferDateRangeToYear(
   range: [Dayjs | null, Dayjs | null] | null | undefined,

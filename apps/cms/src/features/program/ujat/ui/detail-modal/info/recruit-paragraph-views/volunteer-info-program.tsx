@@ -119,6 +119,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
+  registrationFormDesign = false,
 }: {
   program: Program
   sponsorName?: string
@@ -132,9 +133,16 @@ export function UjatRecruitVolunteerInfoProgramView({
   hideSectionHeader?: boolean
   /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
   isTemplateAuthoring?: boolean
+  /**
+   * UJAT 등록 위저드 — 시안(4082:105354·105632) placeholder·모집 현황 안내만 적용.
+   * 값·연동 동작은 바꾸지 않는다(프로그램 상세는 false).
+   */
+  registrationFormDesign?: boolean
 }) {
   /** 템플릿 관리 화면 — 시안 치수 수식 클래스(문의처·발표 방법·면접 유형·활동 기수) */
   const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  /** 시안 placeholder·안내 문구 — 템플릿 작성·등록 위저드 공통 */
+  const useDesignPlaceholders = isTemplateAuthoring || registrationFormDesign
   const recruitKey = (suffix: string) => `recruit.volunteer.${volunteerHalf}.${suffix}`
   const period = getUjatVolunteerRecruitPeriod(program, volunteerHalf)
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
@@ -293,7 +301,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                       inputSize="small"
                       width="100%"
                       placeholder={
-                        isTemplateAuthoring
+                        useDesignPlaceholders
                           ? UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER
                           : '공고용 프로그램명'
                       }
@@ -363,7 +371,7 @@ export function UjatRecruitVolunteerInfoProgramView({
             label="봉사자 모집 현황"
             readOnlyDisplay
             view={
-              isTemplateAuthoring ? (
+              useDesignPlaceholders ? (
                 <span className="form-editor-template-field-hint-text">
                   {UJAT_RECRUIT_PROGRESS_HINT}
                 </span>
@@ -437,7 +445,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                     startName={recruitStartName}
                     endName={recruitEndName}
                     placeholder={
-                      isTemplateAuthoring
+                      useDesignPlaceholders
                         ? UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER
                         : '봉사자 모집 기간을 선택해 주세요'
                     }
@@ -462,10 +470,10 @@ export function UjatRecruitVolunteerInfoProgramView({
                   dateName="documentPassAnnouncementDate"
                   methodName="documentPassAnnouncementMethod"
                   datePlaceholder={
-                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
+                    useDesignPlaceholders ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
                   }
                   methodPlaceholder={
-                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER : '공지 방법'
+                    useDesignPlaceholders ? UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER : '공지 방법'
                   }
                 />
               ) : undefined
@@ -503,10 +511,10 @@ export function UjatRecruitVolunteerInfoProgramView({
                   dateName="finalPassAnnouncementDate"
                   methodName="finalPassAnnouncementMethod"
                   datePlaceholder={
-                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
+                    useDesignPlaceholders ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
                   }
                   methodPlaceholder={
-                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER : '공지 방법'
+                    useDesignPlaceholders ? UJAT_TEMPLATE_ANNOUNCE_METHOD_PLACEHOLDER : '공지 방법'
                   }
                 />
               ) : undefined
@@ -614,7 +622,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                 <UjatRecruitVolunteerNotesField
                   form={form}
                   placeholder={
-                    isTemplateAuthoring ? UJAT_TEMPLATE_NOTES_PLACEHOLDER : undefined
+                    useDesignPlaceholders ? UJAT_TEMPLATE_NOTES_PLACEHOLDER : undefined
                   }
                 />
               ) : undefined

@@ -1,7 +1,7 @@
 /**
  * 상·하반기 교육 일정 블록 — 등록 양식·프로그램 상세 공통
  */
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { useWatch } from 'react-hook-form'
 import type { Dayjs } from 'dayjs'
@@ -46,6 +46,18 @@ import './half-education-schedule-section.css'
 function ScheduleTextView({ text }: { text: string }) {
   if (!text || text === '-') return <>-</>
   return <span className="half-education-schedule__schedule-text">{text}</span>
+}
+
+/**
+ * UJAT 등록 양식 시안(등록 폼_공통 4082:104345 · 템플릿 관리 5767:194428) 값 적용 여부.
+ * 등록 양식 단락(템플릿 관리·등록 위저드)만 `designPreset="registration-form"` 으로 켠다 — 프로그램 상세는 기존 기본값 유지.
+ */
+const RegistrationFormDesignContext = createContext(false)
+
+function useRegistrationFormDesign(): boolean {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const registrationFormDesign = useContext(RegistrationFormDesignContext)
+  return isTemplateManagementScreen || registrationFormDesign
 }
 
 function HalfEducationScheduleSubheading({ children }: { children: string }) {
@@ -109,13 +121,23 @@ function updateTypedRows(
   form.setValue('halfPlans', halfPlans, { shouldDirty: true, shouldTouch: true })
 }
 
-function newTypedScheduleRow(half: UjatHalfSemesterKey, section: 'pre' | 'event' | 'closing', order: number): UjatTypedScheduleRow {
+function newTypedScheduleRow(
+  half: UjatHalfSemesterKey,
+  section: 'pre' | 'event' | 'closing',
+  order: number,
+  registrationFormDesign = false
+): UjatTypedScheduleRow {
   const randomId = globalThis.crypto?.randomUUID?.()
+  // 등록 양식 시안(4082:104345): 사전 교육 「사전 교육(발대식)」, 행사 일정명 빈 칸, 교육 형태 미선택
+  const educationName = registrationFormDesign
+    ? section === 'pre' ? '사전 교육(발대식)' : section === 'event' ? null : '해단식'
+    : section === 'pre' ? '사전교육(발대식)' : section === 'event' ? '교육 진행' : '해단식'
+  const educationMethod = registrationFormDesign ? null : section === 'event' ? 'offline' : 'online'
   return {
     rowId: randomId ?? `${half}-${section}-${order}`,
     displayOrder: order,
-    educationName: section === 'pre' ? '사전교육(발대식)' : section === 'event' ? '교육 진행' : '해단식',
-    educationMethod: section === 'event' ? 'offline' : 'online',
+    educationName,
+    educationMethod,
     regionCode: null,
     startDate: null,
     endDate: null,
@@ -139,12 +161,13 @@ function TypedRegionDateMultiScheduleRows({
   detail: UjatTypedDetail | undefined
 }) {
   const { regions } = useUjatEducationRegions()
-  // 템플릿 관리 시안(5767:194428): 교육 지역 셀렉트 320 · 일정 캘린더 240 — 프로그램 상세는 기존 360 유지
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
-  const regionSelectWidth = isTemplateManagementScreen ? 320 : 360
-  const datePickerWidth = isTemplateManagementScreen ? 240 : 360
+  // 등록 양식 시안(4082:104345·5767:194428): 교육 지역 셀렉트 320 · 일정 캘린더 240 — 프로그램 상세는 기존 360 유지
+  const registrationFormDesign = useRegistrationFormDesign()
+  const regionSelectWidth = registrationFormDesign ? 320 : 360
+  const datePickerWidth = registrationFormDesign ? 240 : 360
   const rows = typedRowsFor(detail, half, section)
-  const visibleRows = rows.length > 0 ? rows : [newTypedScheduleRow(half, section, 1)]
+  const visibleRows =
+    rows.length > 0 ? rows : [newTypedScheduleRow(half, section, 1, registrationFormDesign)]
 
   const updateRow = (rowId: string, patch: Partial<UjatTypedScheduleRow>) => {
     updateTypedRows(form, half, section, current => {
@@ -185,7 +208,12 @@ function TypedRegionDateMultiScheduleRows({
               onClick={() =>
                 updateTypedRows(form, half, section, current => [
                   ...(current.length > 0 ? current : visibleRows),
-                  newTypedScheduleRow(half, section, (current.length || visibleRows.length) + 1),
+                  newTypedScheduleRow(
+                    half,
+                    section,
+                    (current.length || visibleRows.length) + 1,
+                    registrationFormDesign
+                  ),
                 ])
               }
             />
@@ -223,12 +251,12 @@ function TypedScheduleEducationRadioRow({
   detail: UjatTypedDetail | undefined
   initial: UjatEducationDelivery
 }) {
-  // 템플릿 관리 화면 라디오는 미선택으로 시작(시안 5767:194428 교육 형태 모두 미선택)
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  // 등록 양식 라디오는 미선택으로 시작(시안 4082:104345·5767:194428 교육 형태 모두 미선택)
+  const registrationFormDesign = useRegistrationFormDesign()
   const rows = typedRowsFor(detail, half, section)
   const value = rows[0]?.educationMethod === 'online' || rows[0]?.educationMethod === 'hybrid' || rows[0]?.educationMethod === 'offline'
     ? rows[0].educationMethod
-    : isTemplateManagementScreen
+    : registrationFormDesign
       ? undefined
       : initial
   return (
@@ -236,7 +264,8 @@ function TypedScheduleEducationRadioRow({
       size="medium"
       value={value}
       onChange={event => updateTypedRows(form, half, section, current => {
-        const source = current.length > 0 ? current : [newTypedScheduleRow(half, section, 1)]
+        const source =
+          current.length > 0 ? current : [newTypedScheduleRow(half, section, 1, registrationFormDesign)]
         return source.map(row => ({ ...row, educationMethod: event.target.value }))
       })}
     >
@@ -260,12 +289,12 @@ function TypedScheduleNameField({
   form: UjatScheduleForm
   detail: UjatTypedDetail | undefined
   fallback: string
-  /** 템플릿 관리 화면 전용 — 저장값이 없을 때 fallback 대신 빈 칸 + placeholder */
+  /** 등록 양식(템플릿 관리·등록 위저드) 전용 — 저장값이 없을 때 fallback 대신 빈 칸 + placeholder */
   templatePlaceholder?: string
 }) {
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const registrationFormDesign = useRegistrationFormDesign()
   const rows = typedRowsFor(detail, half, section)
-  const showTemplatePlaceholder = isTemplateManagementScreen && templatePlaceholder != null
+  const showTemplatePlaceholder = registrationFormDesign && templatePlaceholder != null
   const value = rows[0]?.educationName ?? (showTemplatePlaceholder ? '' : fallback)
   return (
     <CmsInput
@@ -274,7 +303,8 @@ function TypedScheduleNameField({
       placeholder={showTemplatePlaceholder ? templatePlaceholder : undefined}
       value={value}
       onChange={event => updateTypedRows(form, half, section, current => {
-        const source = current.length > 0 ? current : [newTypedScheduleRow(half, section, 1)]
+        const source =
+          current.length > 0 ? current : [newTypedScheduleRow(half, section, 1, registrationFormDesign)]
         return source.map(row => ({ ...row, educationName: event.target.value }))
       })}
     />
@@ -291,14 +321,14 @@ function TypedTextbookEducationField({
   detail: UjatTypedDetail | undefined
 }) {
   const [instructorOptions, setInstructorOptions] = useState<Array<{ value: string; label: string }>>([])
-  // 템플릿 관리 시안(5767:194428 「default 미선택」): 저장값이 없으면 JA 진행·강사 섭외 모두 미선택
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  // 등록 양식 시안(4082:104345·5767:194428 「default 미선택」): 저장값이 없으면 JA 진행·강사 섭외 모두 미선택
+  const registrationFormDesign = useRegistrationFormDesign()
   const rows = typedRowsFor(detail, half, 'pre')
   const provisionMethod = rows[0]?.textbook?.provisionMethod
   const mode =
     provisionMethod === 'instructor_outsource'
       ? 'instructor_outsource'
-      : isTemplateManagementScreen && provisionMethod !== 'ja'
+      : registrationFormDesign && provisionMethod !== 'ja'
         ? undefined
         : 'ja'
   const instructorId = rows[0]?.textbook?.responsiblePerson ?? undefined
@@ -319,7 +349,8 @@ function TypedTextbookEducationField({
 
   const setTextbook = (patch: { provisionMethod?: string | null; responsiblePerson?: string | null }) =>
     updateTypedRows(form, half, 'pre', current => {
-      const source = current.length > 0 ? current : [newTypedScheduleRow(half, 'pre', 1)]
+      const source =
+        current.length > 0 ? current : [newTypedScheduleRow(half, 'pre', 1, registrationFormDesign)]
       return source.map(row => ({ ...row, textbook: { ...(row.textbook ?? {}), ...patch } }))
     })
 
@@ -327,7 +358,7 @@ function TypedTextbookEducationField({
     <div
       className={[
         'detail-info-form-inputs-wrapper half-education-schedule__textbook-row',
-        isTemplateManagementScreen ? 'half-education-schedule__textbook-row--template' : '',
+        registrationFormDesign ? 'half-education-schedule__textbook-row--template' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -342,7 +373,7 @@ function TypedTextbookEducationField({
       {mode === 'instructor_outsource' ? (
         <>
           <DetailInfoForm.InputsSeparator />
-          <CmsSelect inputSize="small" showSearch optionFilterProp="label" placeholder="교재 교육 강사를 선택해 주세요" style={isTemplateManagementScreen ? { width: 240 } : { minWidth: 200, flex: 1 }} options={instructorOptions} value={instructorId} onChange={value => setTextbook({ responsiblePerson: value == null || value === '' ? null : String(value) })} />
+          <CmsSelect inputSize="small" showSearch optionFilterProp="label" placeholder="교재 교육 강사를 선택해 주세요" style={registrationFormDesign ? { width: 240 } : { minWidth: 200, flex: 1 }} options={instructorOptions} value={instructorId} onChange={value => setTextbook({ responsiblePerson: value == null || value === '' ? null : String(value) })} />
         </>
       ) : null}
     </div>
@@ -358,7 +389,7 @@ function TypedEventRangeField({
   form: UjatScheduleForm
   detail: UjatTypedDetail | undefined
 }) {
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const registrationFormDesign = useRegistrationFormDesign()
   const row = typedRowsFor(detail, half, 'event')[0]
   const range: [Dayjs | null, Dayjs | null] = [
     row?.startDate ? dayjs(row.startDate) : null,
@@ -366,7 +397,8 @@ function TypedEventRangeField({
   ]
   const writeRange = (start: Dayjs | null, end: Dayjs | null) =>
     updateTypedRows(form, half, 'event', current => {
-      const source = current.length > 0 ? current : [newTypedScheduleRow(half, 'event', 1)]
+      const source =
+        current.length > 0 ? current : [newTypedScheduleRow(half, 'event', 1, registrationFormDesign)]
       return source.map((item, index) => index === 0 ? {
         ...item,
         startDate: start?.format('YYYY-MM-DD') ?? null,
@@ -374,8 +406,8 @@ function TypedEventRangeField({
         dates: start ? [start.format('YYYY-MM-DD')] : [],
       } : item)
     })
-  if (isTemplateManagementScreen) {
-    // 템플릿 관리 시안(5767:194428): 기간 캘린더 칸 1개(≈240) · 「일정을 선택해 주세요」
+  if (registrationFormDesign) {
+    // 등록 양식 시안(4082:104345·5767:194428): 기간 캘린더 칸 1개(≈240) · 「일정을 선택해 주세요」
     const appliedRange: [Dayjs, Dayjs] | null =
       range[0] != null && range[1] != null ? [range[0], range[1]] : null
     return (
@@ -444,7 +476,7 @@ function UjatPreEducationBlock({
   scheduleForm?: UjatScheduleForm
   typedDetail?: UjatTypedDetail
 }) {
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const registrationFormDesign = useRegistrationFormDesign()
   return (
     <div className="half-education-schedule__block half-education-schedule__block--first">
       <HalfEducationScheduleSubheading>{`■ ${PRE_EDUCATION_HEADING_LABEL}`}</HalfEducationScheduleSubheading>
@@ -466,8 +498,8 @@ function UjatPreEducationBlock({
                 form={scheduleForm}
                 detail={typedDetail}
                 fallback={
-                  // 템플릿 관리 시안(5767:194428) 표기 「사전 교육(발대식)」 — 프로그램 상세 기본값은 그대로
-                  isTemplateManagementScreen ? '사전 교육(발대식)' : '사전교육(발대식)'
+                  // 등록 양식 시안(4082:104345·5767:194428) 표기 「사전 교육(발대식)」 — 프로그램 상세 기본값은 그대로
+                  registrationFormDesign ? '사전 교육(발대식)' : '사전교육(발대식)'
                 }
               />
             ) : undefined}
@@ -492,6 +524,7 @@ function UjatPreEducationBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
+            validationKey={`${half}.pre.delivery`}
             view={viewRow.deliveryLabel}
             edit={mode === 'edit' && scheduleForm ? (
               <TypedScheduleEducationRadioRow
@@ -570,6 +603,7 @@ function UjatEventScheduleBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
+            validationKey={`${half}.event.delivery`}
             view={viewRow.deliveryLabel}
             edit={mode === 'edit' && scheduleForm ? (
               <TypedScheduleEducationRadioRow
@@ -643,6 +677,7 @@ function UjatClosingCeremonyBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
+            validationKey={`${half}.closing.delivery`}
             view={viewRow.deliveryLabel}
             edit={mode === 'edit' && scheduleForm ? (
               <TypedScheduleEducationRadioRow
@@ -665,6 +700,11 @@ type HalfEducationScheduleSectionProps = {
   mode: 'view' | 'edit'
   display: import('@/features/program/ujat/lib/ujat-half-education-schedule-display').UjatHalfEducationScheduleDisplay
   scheduleForm?: UseFormReturn<UjatTypedDetail>
+  /**
+   * `registration-form` — UJAT 등록 양식 단락(템플릿 관리·등록 위저드) 시안 값 적용.
+   * 생략 시(프로그램 상세) 기존 기본값 유지.
+   */
+  designPreset?: 'registration-form'
 }
 
 function HalfEducationScheduleTypedSection({
@@ -674,11 +714,11 @@ function HalfEducationScheduleTypedSection({
 }: Required<Pick<HalfEducationScheduleSectionProps, 'half' | 'mode' | 'scheduleForm'>>) {
   const typedDetail = useWatch({ control: scheduleForm.control }) as UjatTypedDetail | undefined
   const typedDisplay = resolveUjatHalfEducationScheduleDisplayFromTypedDetail(typedDetail, half)
-  const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  const registrationFormDesign = useRegistrationFormDesign()
   return (
     <div
       className={
-        isTemplateManagementScreen
+        registrationFormDesign
           ? 'half-education-schedule-section half-education-schedule-section--template'
           : 'half-education-schedule-section'
       }
@@ -705,9 +745,15 @@ export function HalfEducationScheduleSection({
   mode,
   display,
   scheduleForm,
+  designPreset,
 }: HalfEducationScheduleSectionProps) {
-  if (scheduleForm) {
-    return <HalfEducationScheduleTypedSection half={half} mode={mode} scheduleForm={scheduleForm} />
-  }
-  return <HalfEducationScheduleLegacySection half={half} mode={mode} display={display} />
+  return (
+    <RegistrationFormDesignContext.Provider value={designPreset === 'registration-form'}>
+      {scheduleForm ? (
+        <HalfEducationScheduleTypedSection half={half} mode={mode} scheduleForm={scheduleForm} />
+      ) : (
+        <HalfEducationScheduleLegacySection half={half} mode={mode} display={display} />
+      )}
+    </RegistrationFormDesignContext.Provider>
+  )
 }

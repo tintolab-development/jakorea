@@ -407,6 +407,8 @@
 /**
  * Field·td 값 줄 인라인 세로 디바이더 (DetailInfoFormTdDivider / InputsSeparator)
  * — opacity 0.5, default-BK, 1×13px, 양옆 12px (총 구간 간격 24px + 막대 1px)
+ * 막대는 배경색이 아니라 왼쪽 테두리로 그린다. 배경색 1px 박스는 브라우저 확대(125%·150% 등)에서
+ * 놓인 위치에 따라 2px/4px로 굵기가 달라져, 같은 표 안에서도 구분선 굵기가 칸마다 다르게 보인다.
  */
 .detail-info-form-inputs-separator {
   display: inline-block;
@@ -418,7 +420,9 @@
   flex-shrink: 0;
   align-self: center;
   opacity: 0.5;
-  background: var(--default-BK, #3d3d3d);
+  background: none;
+  border: 0;
+  border-left: 1px solid var(--default-BK, #3d3d3d);
   vertical-align: middle;
   font-size: 0;
   line-height: 0;

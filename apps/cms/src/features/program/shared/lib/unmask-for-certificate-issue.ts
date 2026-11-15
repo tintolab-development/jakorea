@@ -25,6 +25,8 @@ import type { UserRole } from '@/types/user'
 export type CertificateIssueUnmaskedPerson = {
   name?: string
   birthDate?: string
+  /** 원문 소속 — 강사 `profile.affiliation`(학교명, 기관명), 개인 `affiliationName`·`schoolName` */
+  affiliation?: string
 }
 
 function readTrimmedString(value: unknown): string | undefined {
@@ -53,10 +55,32 @@ export function extractCertificateIssuePersonFromUnmaskPayload(
     readTrimmedString(root.birthDate) ??
     readTrimmedString(member?.birthDate) ??
     readTrimmedString(profile?.birthDate)
+  const affiliation = readAffiliationFromUnmaskPayload(root, profile)
   return {
     ...(name ? { name } : {}),
     ...(rawBirthDate ? { birthDate: mapApiBirthDateToDisplay(rawBirthDate) ?? rawBirthDate } : {}),
+    ...(affiliation ? { affiliation } : {}),
   }
+}
+
+/** 강사 신청 상세 소속 표시(`affiliationDisplayFromInstructorCmsProfile`)와 같은 규칙: 학교명, 기관명 */
+function readAffiliationFromUnmaskPayload(
+  root: Record<string, unknown>,
+  profile: Record<string, unknown> | null
+): string | undefined {
+  const cmsAffiliation = asRecord(profile?.affiliation)
+  if (cmsAffiliation != null) {
+    const school = readTrimmedString(cmsAffiliation.schoolName)
+    const orgs = Array.isArray(cmsAffiliation.organizationNames)
+      ? cmsAffiliation.organizationNames
+          .map(readTrimmedString)
+          .filter((name): name is string => name != null)
+          .join(', ')
+      : ''
+    if (school && orgs) return `${school}, ${orgs}`
+    if (school || orgs) return school ?? orgs
+  }
+  return readTrimmedString(root.affiliationName) ?? readTrimmedString(root.schoolName)
 }
 
 function parseOptionalProgramId(programId?: string | number | null): number | undefined {

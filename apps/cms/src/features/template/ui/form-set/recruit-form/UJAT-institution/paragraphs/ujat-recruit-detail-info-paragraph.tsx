@@ -65,6 +65,7 @@ function UjatRecruitDetailInfoTypedTemplateEditor({ templateCode }: { templateCo
 export function UjatRecruitDetailInfoParagraph(props: UjatRecruitParagraphProps = {}) {
   if (isUjatRecruitProgramContext(props) && props.program) {
     const mode = resolveUjatRecruitParagraphMode(props)
+    const registrationFormDesign = props.designPreset === 'registration-form'
     return (
       <DetailInfoSection
         program={props.program}
@@ -79,6 +80,13 @@ export function UjatRecruitDetailInfoParagraph(props: UjatRecruitParagraphProps 
         emptyReadDisplay="dash"
         textFieldControl="input"
         hideFormHeader={props.hideSectionHeader}
+        // UJAT 등록 위저드 — 시안(4082:105197) placeholder·썸네일 「파일 선택」. 프로그램 상세는 생략(기존 문구)
+        placeholderOverrides={
+          registrationFormDesign ? RECRUIT_TEMPLATE_DETAIL_PLACEHOLDERS : undefined
+        }
+        thumbnailButtonLabel={
+          registrationFormDesign ? RECRUIT_TEMPLATE_UJAT_THUMBNAIL_BUTTON_LABEL : undefined
+        }
       />
     )
   }

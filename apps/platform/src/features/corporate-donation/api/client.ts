@@ -1,4 +1,5 @@
 import type { InternalAxiosRequestConfig } from 'axios'
+import { resolveDocumentAttachmentContentType } from '@/shared/lib/document-attachment-policy'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
 import { resolveHomepagePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
@@ -84,7 +85,7 @@ async function prepareCorporateConsultationAttachment(file: File): Promise<Prepa
     '/api/public/sponsorship/corporate-consultations/attachments/upload-requests',
     {
       originalName: file.name,
-      contentType: file.type || 'application/octet-stream',
+      contentType: resolveDocumentAttachmentContentType(file),
       sizeBytes: file.size,
     },
     SKIP_AUTH,
@@ -120,7 +121,7 @@ async function uploadPreparedCorporateConsultationAttachment(
   const method = (prepared.method ?? 'PUT').toUpperCase()
   const headers: Record<string, string> = { ...(prepared.requiredHeaders ?? {}) }
   if (!headers['Content-Type'] && !headers['content-type']) {
-    headers['Content-Type'] = file.type || 'application/octet-stream'
+    headers['Content-Type'] = resolveDocumentAttachmentContentType(file)
   }
 
   const uploadResponse = await fetch(resolveHomepagePresignedUploadUrl(uploadUrl), {

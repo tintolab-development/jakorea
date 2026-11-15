@@ -10,6 +10,7 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { toLectureSessionCellSegment } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import { resolvePaymentStatementIssuanceCategoryLabel } from './payment-statement-issuance-category-label'
 import './payment-statement-issuance-calculation-lines-table.css'
 
@@ -217,7 +218,8 @@ export function PaymentStatementIssuanceCalculationLinesTable({
                         <div className="payment-statement-issuance-calculation-lines-table__date-cell">
                           {withProgramDetailTdDivider([
                             row.lectureDateDisplay,
-                            row.lectureSessionDisplay,
+                            // 뒤 조각 없으면 날짜만(서버 지급조서 PDF와 동일)
+                            toLectureSessionCellSegment(row.lectureSessionDisplay),
                           ])}
                         </div>
                       </td>

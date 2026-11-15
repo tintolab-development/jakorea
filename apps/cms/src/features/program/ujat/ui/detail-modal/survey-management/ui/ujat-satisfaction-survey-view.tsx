@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   UJAT_SATISFACTION_ACTION_LABELS,
@@ -73,7 +74,17 @@ export function UjatSatisfactionSurveyView({
           activeKey={activeAudience}
           onChange={key => onAudienceChange(key as UjatSatisfactionAudienceKey)}
           items={audienceTabs.map(tab => ({ key: tab.key, label: tab.label }))}
-          trailing={null}
+          trailing={
+            // 시안 4082:115365(14931:808787) — 등록 전에도 탭 오른쪽 「만족도조사 공유」(h44)
+            <div className="survey-management-registered-actions survey-management-registered-actions--satisfaction">
+              <CmsButton
+                className="survey-management-registered-actions__share-button"
+                onClick={onShareClick}
+              >
+                {UJAT_SATISFACTION_ACTION_LABELS.share}
+              </CmsButton>
+            </div>
+          }
         />
         <UjatSurveyEmptyState
           title={UJAT_SATISFACTION_EMPTY_COPY.title}

@@ -1,30 +1,28 @@
 import dayjs from 'dayjs'
+import { AdminEmptyState } from '@jakorea/admin-ui/empty'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
-import { CmsTableEmptyState } from '@/shared/ui/cms-table-empty-state'
 import {
   ALIMTALK_MESSAGE_TYPE_LABEL,
   type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
 
+/** 시안 17119:169121 — 템플릿 미선택 빈 상태(아이콘 없음) */
+const UNSELECTED_TITLE = '템플릿을 먼저 선택해 주세요.'
+const UNSELECTED_DESCRIPTION = '항목이 선택되면 이곳에 목록이 표시됩니다.'
+
 type DetailPanelProps = {
   template: AlimtalkTemplateItem | null
   categoryName: string
   onPreview: () => void
-  /** 선택한 폴더 안에 템플릿이 없을 때 — 공통 빈 상태(등록된 데이터 없음) */
-  emptyFolder?: boolean
 }
 
-export function DetailPanel({
-  template,
-  categoryName,
-  onPreview,
-  emptyFolder = false,
-}: DetailPanelProps) {
+export function DetailPanel({ template, categoryName, onPreview }: DetailPanelProps) {
+  /** 템플릿 미선택·빈 폴더 선택 모두 시안 빈 상태 */
   if (!template) {
     return (
       <div className="alimtalk-template-detail alimtalk-template-detail--empty">
-        {emptyFolder ? <CmsTableEmptyState variant="no-data" /> : null}
+        <AdminEmptyState title={UNSELECTED_TITLE} description={UNSELECTED_DESCRIPTION} />
       </div>
     )
   }

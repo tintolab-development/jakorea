@@ -67,6 +67,33 @@ describe('extractCertificateIssuePersonFromUnmaskPayload', () => {
       birthDate: '2010. 03. 15.',
     })
   })
+
+  it('reads instructor affiliation as school, organizations without employment status', () => {
+    expect(
+      extractCertificateIssuePersonFromUnmaskPayload({
+        member: { name: '이건희' },
+        profile: {
+          affiliation: {
+            schoolName: '서울중학교',
+            employmentStatus: 'EMPLOYED',
+            organizationNames: [' JA Korea ', ''],
+          },
+        },
+      }).affiliation
+    ).toBe('서울중학교, JA Korea')
+  })
+
+  it('reads individual affiliationName before schoolName and omits when empty', () => {
+    expect(
+      extractCertificateIssuePersonFromUnmaskPayload({
+        affiliationName: '한국대학교',
+        schoolName: '서울고등학교',
+      }).affiliation
+    ).toBe('한국대학교')
+    expect(extractCertificateIssuePersonFromUnmaskPayload({ name: '김서연' })).toEqual({
+      name: '김서연',
+    })
+  })
 })
 
 describe('unmaskRosterStudentForCertificateIssue', () => {

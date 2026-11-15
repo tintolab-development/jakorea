@@ -1,11 +1,12 @@
 import { useCallback, useId, useState } from 'react'
 import {
-  getLoginApiErrorMessage,
   isPasswordRecentlyUsedApiError,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
   usePortalPasswordChangeMutation,
 } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 import { PFAlertModal, PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
 import { validateSettingsChangePassword } from '../lib/change-password'
 import styles from './change-password-modal.module.css'
@@ -33,6 +34,8 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
   const [successOpen, setSuccessOpen] = useState(false)
   /** 최근 사용한 비밀번호 재사용 — 시안 「비밀번호 재사용 시」 팝업 */
   const [passwordReusedOpen, setPasswordReusedOpen] = useState(false)
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   const isBusy = passwordChangeMutation.isPending
 
@@ -91,7 +94,13 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
           setPasswordReusedOpen(true)
           return
         }
-        setCurrentPasswordError(getLoginApiErrorMessage(error, '비밀번호를 변경하지 못했습니다.'))
+        // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+        const failureAlert = resolveLoginApiFailureAlert(error)
+        if (failureAlert) {
+          setErrorAlert(failureAlert)
+        } else {
+          setCurrentPasswordError(readLoginApiServerMessage(error))
+        }
         return
       }
     }
@@ -204,6 +213,12 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
         title={PLATFORM_ALERT_COPY.passwordRecentlyUsed.title}
         description={PLATFORM_ALERT_COPY.passwordRecentlyUsed.description}
         onConfirm={() => setPasswordReusedOpen(false)}
+      />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </>
   )

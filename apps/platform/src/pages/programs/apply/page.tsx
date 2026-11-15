@@ -39,6 +39,7 @@ import {
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
   PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
+  resolveProgramApplicationErrorAlert,
 } from '@/features/program/lib/application-api-error'
 import { clearProgramMinorPortraitAttempt } from '@/features/program/lib/program-minor-portrait-attempt'
 import {
@@ -392,7 +393,21 @@ import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
 import { normalizeScheduleDisplayLabel } from '@/shared/lib/format-display-date'
-import { PFAlertModal, PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFCheckbox,
+  PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
+  PFText,
+  PFTextarea,
+  PFTextInput,
+} from '@/shared/ui'
+import {
+  PLATFORM_ALERT_COPY,
+  PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+} from '@/shared/lib/platform-alert-copy'
+import { buildRequiredMissingAlertCopy } from '@/shared/lib/required-missing-alert'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -2638,10 +2653,8 @@ export function ProgramApplyPage() {
         setGateModal(gateKind)
         return
       }
-      setSubmitAlert({
-        description:
-          blockedMessage ?? '신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
-      })
+      // 거절 사유가 없으면 시안 「공통 제한 안내 / 처리 실패」
+      setSubmitAlert(blockedMessage ? { description: blockedMessage } : PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     if (blockedMessage && !canSubmitRemote) {
@@ -2712,7 +2725,8 @@ export function ProgramApplyPage() {
         paragraphId: missingConsentId,
       }
       setSubmitErrorField(missingConsentId)
-      setSubmitAlert({ description: '필수 동의 항목을 확인해 주세요.' })
+      // 시안 「공통 제한 안내 / 필수 항목 미동의」
+      setSubmitAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
       return
     }
     const missingEssayId = findIncompleteRequiredShortEssayParagraphId(
@@ -2725,7 +2739,7 @@ export function ProgramApplyPage() {
         paragraphId: missingEssayId,
       }
       setSubmitErrorField(missingEssayId)
-      setSubmitAlert({ description: '필수 입력값을 입력해 주세요.' })
+      setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
       return
     }
     const tooLongId = findApplicationFreeTextTooLongParagraphId(displayDraft, hiddenParagraphIds)
@@ -2774,18 +2788,16 @@ export function ProgramApplyPage() {
         isTrainedTeachersFixedScheduleTarget &&
         trainedTeachersScheduleParagraphForSubmit == null
       ) {
-        setSubmitAlert({
-          description: '신청 일정 문항을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-        })
+        // 시안 「공통 제한 안내 / 처리 실패」
+        setSubmitAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
       if (
         isTrainedTeachersFixedScheduleTarget &&
         trainedTeachersRuntimeFixedScheduleChoices == null
       ) {
-        setSubmitAlert({
-          description: '신청 가능한 교육 일정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-        })
+        // 시안 「공통 제한 안내 / 처리 실패」
+        setSubmitAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
       const allowedTrainedTeachersFixedIds = new Set(
@@ -3517,9 +3529,8 @@ export function ProgramApplyPage() {
         !applyScheduleChoiceHidden &&
         applyEducationFixedScheduleChoices == null
       ) {
-        setSubmitAlert({
-          description: '신청 가능한 교육 일정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-        })
+        // 시안 「공통 제한 안내 / 처리 실패」
+        setSubmitAlert(PLATFORM_ALERT_COPY.requestFailed)
         return
       }
       const overrides: Record<string, unknown> = {}
@@ -3862,6 +3873,8 @@ export function ProgramApplyPage() {
           return
         }
         const message = getProgramApplicationApiErrorMessage(error)
+        // 팝업은 시안 「오류 제한 팝업」(14491-2533) — 문단 아래 인라인 오류는 message를 그대로 쓴다
+        const errorAlert = resolveProgramApplicationErrorAlert(error)
         const promptSettingsGrade = isIndividualApplicationEnrolledGradeRequiredError(error)
         const errorCode = getApplicationApiErrorCode(error)
         const validationFailed = errorCode === 'VALIDATION_FAILED'
@@ -3893,10 +3906,7 @@ export function ProgramApplyPage() {
             setGateModal(gateKind)
             return
           }
-          setSubmitAlert({
-            description: message,
-            promptSettingsGrade,
-          })
+          setSubmitAlert({ ...errorAlert, promptSettingsGrade })
           return
         }
         // 런타임 선택지(면접·OSA 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
@@ -3924,10 +3934,7 @@ export function ProgramApplyPage() {
           }
           applicationFormQuery.refetch()
         }
-        setSubmitAlert({
-          description: message,
-          promptSettingsGrade,
-        })
+        setSubmitAlert({ ...errorAlert, promptSettingsGrade })
       }
       return
     }
@@ -3963,6 +3970,33 @@ export function ProgramApplyPage() {
     visibleInstructorCrimeParagraph != null &&
     isRequiredParagraph(visibleInstructorCrimeParagraph) &&
     !instructorCrimeRecord.confirmed
+
+  /**
+   * 필수 입력 누락 안내 — 시안 「필수 항목 미입력 (항목명 노출)」(14550-2349).
+   * 오류 문단 제목을 항목명으로 쓰고, 제목이 없으면 「‘*’ 표시된 필수 항목」 설명을 쓴다.
+   */
+  const submitAlertRequiredIncomplete =
+    submitAlert != null &&
+    !submitAlert.title &&
+    submitAlert.description === PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE
+  const submitAlertMissingLabel = submitAlertRequiredIncomplete
+    ? displayDraft?.paragraphs
+        .find(paragraph => paragraph.id === submitErrorField)
+        ?.paragraphTitle?.trim()
+    : undefined
+  const submitRequiredMissingCopy = submitAlertMissingLabel
+    ? buildRequiredMissingAlertCopy({ kind: 'field', labels: [submitAlertMissingLabel] })
+    : null
+  const submitAlertView =
+    submitAlert == null || submitRequiredMissingCopy
+      ? null
+      : submitAlertRequiredIncomplete
+        ? {
+            ...submitAlert,
+            title: PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+            description: <PFRequiredFieldsIncompleteDescription />,
+          }
+        : submitAlert
 
   return (
     <section className={[shell.page, styles.page].join(' ')}>
@@ -4076,13 +4110,14 @@ export function ProgramApplyPage() {
         }}
         onViewApplications={handleViewApplications}
       />
+      <PFRequiredMissingAlert copy={submitRequiredMissingCopy} onConfirm={dismissSubmitAlert} />
       <PFAlertModal
-        open={submitAlert != null}
-        title={submitAlert?.title ?? '안내'}
-        description={submitAlert?.description}
+        open={submitAlertView != null}
+        title={submitAlertView?.title ?? '안내'}
+        description={submitAlertView?.description}
         onConfirm={dismissSubmitAlert}
       >
-        {submitAlert?.promptSettingsGrade ? (
+        {submitAlertView?.promptSettingsGrade ? (
           <div className={styles.submitAlertFollowUp}>
             <PFButton
               type="button"

@@ -32,6 +32,11 @@ export type UjatInstitutionWorkflowInput = {
   institutionConfirmationStatus?: string | null
   assignmentLockedAt?: string | null
   portalBannerState?: string | null
+  /**
+   * 서버 `temporaryScheduleAssigned` — TEMP_ASSIGNED의 일정 미배정(false)/배정 완료(true) 구분 SSOT.
+   * scheduleConfirmStatus·institutionConfirmationStatus로 일정 미배정 여부를 나누지 않는다.
+   */
+  temporaryScheduleAssigned?: boolean | null
 }
 
 export type UjatInstitutionWorkflowPrimaryAction = 'open_schedule_assign' | 'final_approve' | 'none'
@@ -170,6 +175,22 @@ export function resolveUjatInstitutionWorkflow(
   }
 
   if (isTempAssigned(temporaryAssignmentStatus)) {
+    // 상태만 임시 배정(POST temporary-assignments) — 일정·학급은 「신청 기관 임시 배정」 탭에서 저장한다.
+    // 상세 버튼은 [신청 반려] [임시 배정 취소] [개인정보 상세보기]만이라 주 버튼이 없다.
+    if (input.temporaryScheduleAssigned === false) {
+      return withRevisionRequestGate(
+        {
+          displayLabel: '일정 배정 필요',
+          primaryLabel: '임시 배정',
+          primaryAction: 'none',
+          primaryDisabled: true,
+          canFinalApprove: false,
+          scheduleEditDisabled,
+          revisionRequestDisabled: revisionRequestGate.disabled,
+        },
+        revisionRequestGate
+      )
+    }
     if (isConfirmed(institutionConfirmationStatus)) {
       return withRevisionRequestGate(
         {
@@ -238,7 +259,15 @@ export function readUjatInstitutionWorkflowInput(
     institutionConfirmationStatus: readInstitutionConfirmationStatus(detail, schedule),
     assignmentLockedAt: readWorkflowString(detail, schedule, 'assignmentLockedAt'),
     portalBannerState: readWorkflowString(detail, schedule, 'portalBannerState'),
+    temporaryScheduleAssigned: readWorkflowBoolean(detail, 'temporaryScheduleAssigned'),
   }
+}
+
+/** 상세 GET의 boolean만 읽는다. 키가 없거나 boolean이 아니면 null */
+function readWorkflowBoolean(source: object | null | undefined, key: string): boolean | null {
+  if (!source || !Object.prototype.hasOwnProperty.call(source, key)) return null
+  const value = (source as Record<string, unknown>)[key]
+  return typeof value === 'boolean' ? value : null
 }
 
 /**

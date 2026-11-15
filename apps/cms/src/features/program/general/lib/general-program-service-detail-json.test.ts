@@ -468,6 +468,123 @@ describe('scheduleDateLabel persist format', () => {
     ])
   })
 
+  it('과제 제출 기한을 서버 문장으로 보내고 GET에서 CMS 문장으로 되돌린다 (QA #96)', () => {
+    const program = {
+      id: '186505',
+      sponsorId: 'sponsor-1',
+      title: '개인 커리큘럼',
+      mainTitle: '개인 커리큘럼',
+      type: 'offline',
+      format: 'workshop',
+      category: 'individual',
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      status: 'pending',
+      generalProgramAudience: 'individual',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'multi',
+      generalCommonInfo: {
+        curriculumSessions: [
+          {
+            sessionNo: 1,
+            sessionLabel: '1회차',
+            title: '2',
+            description: '1회차',
+            scheduleDateLabel: '2026.11.04(수) 10:00 ~ 11:00',
+            assignmentEnabled: true,
+            assignmentPeriod: '2026.12.01(화) ~ 2026.12.03(목)',
+          },
+          {
+            sessionNo: 2,
+            sessionLabel: '2회차',
+            title: '2',
+            description: '2회차',
+            assignmentEnabled: true,
+            assignmentPeriod: '2026.12.01(화) 09:00 ~ 2026.12.03(목) 18:00',
+          },
+          {
+            sessionNo: 3,
+            sessionLabel: '3회차',
+            title: '2',
+            description: '3회차',
+            assignmentEnabled: true,
+            assignmentPeriod: '26년 12월 10일(목)',
+          },
+          {
+            sessionNo: 4,
+            sessionLabel: '4회차',
+            title: '2',
+            description: '4회차',
+            assignmentEnabled: true,
+            assignmentPeriod: '협의 후 안내',
+          },
+          {
+            sessionNo: 5,
+            sessionLabel: '5회차',
+            title: '2',
+            description: '5회차',
+            assignmentEnabled: false,
+            assignmentPeriod: '',
+          },
+        ],
+        scheduleDetails: [
+          {
+            scheduleLabel: '행사 일정 01',
+            blockKind: 'event',
+            name: '행사A',
+            scheduleDateLabel: '2026.11.05(목) 10:00 ~ 11:00',
+            assignmentEnabled: true,
+            assignmentPeriod: '2026.12.01(화) ~ 2026.12.03(목)',
+          },
+        ],
+      },
+      rounds: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    } as Program
+
+    const json = serializeGeneralProgramServiceDetailJson(program)
+    const persisted = JSON.parse(json ?? '{}') as {
+      generalCommonInfo?: {
+        scheduleDetails?: Array<{ scheduleDateLabel?: string; assignmentPeriod?: string }>
+        curriculumSessions?: Array<{ scheduleDateLabel?: string; assignmentPeriod?: string }>
+      }
+    }
+    expect(persisted.generalCommonInfo?.curriculumSessions?.map(row => row.assignmentPeriod)).toEqual([
+      '26년 12월 1일(화) ~ 26년 12월 3일(목)',
+      '26년 12월 1일(화) 09:00 ~ 26년 12월 3일(목) 18:00',
+      '26년 12월 10일(목)',
+      '협의 후 안내',
+      '',
+    ])
+    expect(persisted.generalCommonInfo?.curriculumSessions?.[0]?.scheduleDateLabel).toBe(
+      '26년 11월 4일(수) 10:00 ~ 11:00'
+    )
+    expect(persisted.generalCommonInfo?.scheduleDetails?.[0]?.assignmentPeriod).toBe(
+      '26년 12월 1일(화) ~ 26년 12월 3일(목)'
+    )
+    expect(persisted.generalCommonInfo?.scheduleDetails?.[0]?.scheduleDateLabel).toBe(
+      '26년 11월 5일(목) 10:00 ~ 11:00'
+    )
+    expect(json).not.toContain('assignmentPeriodStart')
+    expect(json).not.toContain('assignmentPeriodEnd')
+
+    const parsed = parseGeneralProgramServiceDetailJson(json)
+    expect(parsed.generalCommonInfo?.curriculumSessions?.map(row => row.assignmentPeriod)).toEqual([
+      '2026.12.01(화) ~ 2026.12.03(목)',
+      '2026.12.01(화) 09:00 ~ 2026.12.03(목) 18:00',
+      '2026.12.10(목)',
+      '협의 후 안내',
+      '',
+    ])
+    expect(parsed.generalCommonInfo?.curriculumSessions?.[0]?.scheduleDateLabel).toBe(
+      '2026.11.04(수) 10:00 ~ 11:00'
+    )
+    expect(parsed.generalCommonInfo?.scheduleDetails?.[0]?.assignmentPeriod).toBe(
+      '2026.12.01(화) ~ 2026.12.03(목)'
+    )
+  })
+
   it('행사 이름에 사전·연수가 있어도 blockKind event를 유지한다', () => {
     const json = serializeGeneralProgramServiceDetailJson({
       id: '186504',

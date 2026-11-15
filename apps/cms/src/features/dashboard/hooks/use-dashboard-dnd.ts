@@ -143,6 +143,9 @@ export function useDashboardDnd({
 
       const overIdStr: string | null = over ? (over.id as string) : null
 
+      // 자기 원래 자리 위에 놓음 = 이동 취소. (빈 공간 삽입 계산으로 넘기면 자기 슬롯을 빼고 계산해 이웃과 순서가 바뀐다)
+      if (overIdStr === activeIdStr) return
+
       const effectiveOverId =
         overIdStr && activeIdStr !== overIdStr
           ? overIdStr

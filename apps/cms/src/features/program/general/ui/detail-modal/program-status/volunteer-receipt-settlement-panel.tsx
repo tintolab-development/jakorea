@@ -71,7 +71,7 @@ function buildExcelColumns(showProgress: boolean): ColumnsType<IndividualSettlem
       render: (_value: unknown, record: IndividualSettlementReviewListRow) =>
         isIndividualSettlementRowNotApplicable(record)
           ? '-'
-          : individualSettlementTableProcessingLabel(record.status),
+          : individualSettlementTableProcessingLabel(record.status, record.latestRevisionNo),
     },
     {
       title: '정산 예정 금액',
@@ -171,14 +171,14 @@ export function VolunteerReceiptSettlementPanel({
         width: 160,
         render: (_value, record) => {
           if (isIndividualSettlementRowNotApplicable(record)) return '-'
-          const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status)
+          const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status, record.latestRevisionNo)
           if (uiStatus) return <InstructorSettlementStatusText status={uiStatus} />
           return (
             <StatusBadge
               domain="custom"
               variant="text"
-              label={individualSettlementTableProcessingLabel(record.status)}
-              accentColor={individualSettlementReviewStatusAccent(record.status)}
+              label={individualSettlementTableProcessingLabel(record.status, record.latestRevisionNo)}
+              accentColor={individualSettlementReviewStatusAccent(record.status, record.latestRevisionNo)}
             />
           )
         },
@@ -311,6 +311,9 @@ export function VolunteerReceiptSettlementPanel({
         programId={programId}
         participantId={reviewKey}
         settlementApplicationId={detailApplicationId}
+        sessionOrdinal={
+          rows.find(row => row.settlementApplicationId === detailApplicationId)?.sessionOrdinal ?? null
+        }
         programSessionProgressDisplay={programSessionProgressDisplay}
         businessPeriodDisplay={businessPeriodDisplay}
         showInstitutionColumn={showInstitutionColumn}

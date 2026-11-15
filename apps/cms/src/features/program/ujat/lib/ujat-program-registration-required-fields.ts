@@ -125,6 +125,11 @@ function isTypedScheduleRowsIncomplete(rows: readonly UjatTypedScheduleRow[]): b
   return rows.some(row => isEmptyText(row.regionCode) || isEmptyText(typedRowDate(row)))
 }
 
+function isTypedEducationMethodIncomplete(rows: readonly UjatTypedScheduleRow[]): boolean {
+  if (rows.length === 0) return true
+  return rows.some(row => isEmptyText(row.educationMethod))
+}
+
 function pushReason(reasons: string[], condition: boolean, key: string): void {
   if (condition) reasons.push(key)
 }
@@ -274,6 +279,10 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
           `${half}.event.range`
         )
         pushReason(reasons, isTypedScheduleRowsIncomplete(closingRows), `${half}.closing.multi`)
+        // 등록 양식 시안(4082:104345)은 교육 형태 미선택으로 시작 — 서버는 행마다 educationMethod 필수
+        pushReason(reasons, isTypedEducationMethodIncomplete(preRows), `${half}.pre.delivery`)
+        pushReason(reasons, isTypedEducationMethodIncomplete(eventRows), `${half}.event.delivery`)
+        pushReason(reasons, isTypedEducationMethodIncomplete(closingRows), `${half}.closing.delivery`)
         continue
       }
       pushReason(reasons, true, `${half}.pre.name`)
@@ -281,6 +290,9 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
       pushReason(reasons, true, `${half}.event.name`)
       pushReason(reasons, true, `${half}.event.range`)
       pushReason(reasons, true, `${half}.closing.multi`)
+      pushReason(reasons, true, `${half}.pre.delivery`)
+      pushReason(reasons, true, `${half}.event.delivery`)
+      pushReason(reasons, true, `${half}.closing.delivery`)
     }
 
     const capacity: UjatRegionCapacityBySemesterState = cloneUjatRegionCapacityState(

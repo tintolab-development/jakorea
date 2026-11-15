@@ -3,7 +3,13 @@ import type { SettlementAmountKind } from './settlement-rules.ts'
 
 export type SettlementDocumentKind = 'receipt' | 'payment_statement'
 
-export type SettlementStatusAction = 'write' | 'view' | 'reject-reason' | 'reapply' | 'view-correction'
+export type SettlementStatusAction =
+  | 'write'
+  | 'view'
+  | 'reject-reason'
+  | 'reapply'
+  | 'view-correction'
+  | 'request-correction'
 
 export type SettlementStatusUiConfig = {
   message?: string
@@ -77,6 +83,30 @@ export function paymentStatementLateSubmitMessage(businessEndDate: string | null
 /** 정정 승인 후 재신청 기한이 지났을 때 (기획 확정 2026-11-11). 운영 종료 문구와 겹치면 운영 종료가 우선 */
 export const PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE = '지급조서 재신청 기한이 지났어요'
 
+/** CMS가 정산 전 신청서에 정정을 요청했을 때. 기존 안내 칸(message)에 넣는다. */
+export const ADMIN_APPLICATION_CORRECTION_MESSAGE = '관리자가 정정을 요청했어요'
+
+const CORRECTION_REQUEST_BLOCKED_PAYMENT = new Set(['READY_TO_PAY', 'PAID'])
+const CORRECTION_REQUEST_STATUSES = new Set<EducationSettlementStatus>([
+  'waiting_confirm',
+  'reapplied',
+  'confirmed',
+])
+
+/** 강사 지급조서에서 회원 정정 요청을 연다. 확인 대기·재신청·확인 완료이고, 지급이 시작되지 않은 행만. */
+export function canRequestPaymentStatementCorrection(input: {
+  documentKind: SettlementDocumentKind
+  status: EducationSettlementStatus
+  settlementId?: number | null
+  paymentStatus?: string | null
+  gemini?: boolean
+}): boolean {
+  if (input.gemini || input.documentKind !== 'payment_statement') return false
+  if (!CORRECTION_REQUEST_STATUSES.has(input.status) || input.settlementId == null) return false
+  const payment = input.paymentStatus?.trim().toUpperCase() ?? ''
+  return !CORRECTION_REQUEST_BLOCKED_PAYMENT.has(payment)
+}
+
 export function resolveSettlementDocumentKind(
   applicationType: string | null | undefined,
 ): SettlementDocumentKind {
@@ -90,6 +120,7 @@ function copyFor(kind: SettlementDocumentKind): SettlementCopy {
 export function resolveSettlementStatusUi(
   status: EducationSettlementStatus,
   kind: SettlementDocumentKind = 'receipt',
+  options?: { adminApplicationCorrection?: boolean },
 ): SettlementStatusUiConfig {
   const copy = copyFor(kind)
   const configs: Record<EducationSettlementStatus, SettlementStatusUiConfig> = {
@@ -123,18 +154,18 @@ export function resolveSettlementStatusUi(
       guideVariant: 'submitted',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
-      actions: ['view'],
+      actions: kind === 'payment_statement' ? ['view', 'request-correction'] : ['view'],
     },
     reapplied: {
       message: copy.reappliedMessage,
-      markLabel: '재신청',
+      markLabel: kind === 'payment_statement' ? '지급조서 재신청' : '재신청',
       markTone: 'neutral',
       statusLabel: '제출 완료',
       statusTone: 'submitted',
       guideVariant: 'submitted',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
-      actions: ['view'],
+      actions: kind === 'payment_statement' ? ['view', 'request-correction'] : ['view'],
     },
     confirmed: {
       message: '담당자 확인이 완료되어 계좌 지급 예정이에요',
@@ -142,7 +173,7 @@ export function resolveSettlementStatusUi(
       markTone: 'success',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
-      actions: ['view'],
+      actions: kind === 'payment_statement' ? ['view', 'request-correction'] : ['view'],
     },
     paid: {
       message: '계좌 지급이 완료되었어요',
@@ -197,7 +228,38 @@ export function resolveSettlementStatusUi(
           },
     unresolved: {},
   }
-  return configs[status]
+  const resolved = configs[status]
+  if (
+    options?.adminApplicationCorrection === true &&
+    kind === 'payment_statement' &&
+    status === 'correction_requested'
+  ) {
+    return {
+      message: ADMIN_APPLICATION_CORRECTION_MESSAGE,
+      markLabel: '지급 정정 요청',
+      markTone: 'alert',
+      amountKind: 'expected',
+      writeLabel: '지급조서 재신청',
+      viewLabel: copy.viewLabel,
+      actions: ['reapply'],
+    }
+  }
+  return resolved
+}
+
+/** 작성 화면이 기존 신청서 재제출 API를 타야 하는지. 새 신청 생성과 구분한다. */
+export function isInstructorSettlementResubmit(input: {
+  status?: string | null
+  canResubmitReceipt?: boolean
+  individualCanResubmit?: boolean
+  adminApplicationCorrection?: boolean
+}): boolean {
+  return (
+    input.canResubmitReceipt === true ||
+    input.individualCanResubmit === true ||
+    input.status === 'rejected' ||
+    input.adminApplicationCorrection === true
+  )
 }
 
 /** 일반회원(영수증) 기본 카피 — 테스트·하위 호환 */
@@ -230,6 +292,42 @@ export function isSettlementDeadlinePassed(deadlineAt: string | undefined, now =
   const due = new Date(deadlineAt)
   if (Number.isNaN(due.getTime())) return false
   return now.getTime() > due.getTime()
+}
+
+const SEOUL_CALENDAR_DATE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/**
+ * 정정 승인 DRAFT의 statementReapplyDeadlineDate (YYYY-MM-DD, Asia/Seoul, 그날 포함).
+ * 값이 없거나 날짜가 아니면 막지 않는다. 최초 제출 마감으로 대체하지 않는다.
+ */
+export function isStatementReapplyDeadlinePassed(
+  deadlineDate: string | null | undefined,
+  now = new Date(),
+): boolean {
+  const date = deadlineDate?.trim().slice(0, 10) ?? ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false
+  return SEOUL_CALENDAR_DATE.format(now) > date
+}
+
+/**
+ * 반려·신청서 정정·영수증 재제출 버튼.
+ * 영수증은 canResubmit === false 만 비활성. true 면 deadlineAt 으로 막지 않는다.
+ * 강사는 statementReapplyDeadlineDate 가 있을 때만 그 날짜로 막는다.
+ * statementReapplyAvailable 은 보지 않는다. 정정 승인 DRAFT 재신청 숨김과 별개다.
+ */
+export function isSettlementResubmitDisabled(input: {
+  documentKind: SettlementDocumentKind
+  canResubmit?: boolean | null
+  statementReapplyDeadlineDate?: string | null
+  now?: Date
+}): boolean {
+  if (input.documentKind === 'receipt') return input.canResubmit === false
+  return isStatementReapplyDeadlinePassed(input.statementReapplyDeadlineDate, input.now)
 }
 
 /** 영수증 작성 CTA. 지급항목 미확인(undefined)은 막지 않는다. 명시적 없음·적격 아님만 비활성. */

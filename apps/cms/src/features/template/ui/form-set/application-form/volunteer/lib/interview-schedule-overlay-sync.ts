@@ -46,6 +46,17 @@ export {
 } from './interview-exception-overlay-blocks'
 
 const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
+/** 일반 개인 참여자 모집 — 면접 일정 키(`recruit.individual.interview.*`) 미러 버킷 */
+const PARTICIPANT_INDIVIDUAL_RECRUIT_CATALOG = 'recruitment-participant-individual'
+const PARTICIPANT_INTERVIEW_KEY_PREFIX = 'recruit.individual.interview.'
+
+/** 모두 참여자 면접 키면 개인 참여자 모집 버킷, 아니면(봉사자·UJAT) 기존 봉사자 모집 버킷 */
+function recruitInterviewMirrorCatalog(partial: Record<string, unknown>): string {
+  const keys = Object.keys(partial)
+  return keys.length > 0 && keys.every(key => key.startsWith(PARTICIPANT_INTERVIEW_KEY_PREFIX))
+    ? PARTICIPANT_INDIVIDUAL_RECRUIT_CATALOG
+    : VOLUNTEER_RECRUIT_CATALOG
+}
 
 /** 모집 면접 슬롯 — 활성 편집은 typed 브리지, Template authoring은 typed 상태로 반영한다. */
 
@@ -63,13 +74,11 @@ function patchRecruitVolunteerInterviewOverlay(partial: Record<string, unknown>)
   }
   patchGeneralRecruitOverlay(partial)
   const activeScope = getGeneralRecruitOverlayScope()
-  if (activeScope !== VOLUNTEER_RECRUIT_CATALOG) {
-    patchGeneralRecruitOverlayForScope(VOLUNTEER_RECRUIT_CATALOG, partial)
+  const mirrorCatalog = recruitInterviewMirrorCatalog(partial)
+  if (activeScope !== mirrorCatalog) {
+    patchGeneralRecruitOverlayForScope(mirrorCatalog, partial)
   }
-  if (
-    activeScope.startsWith('recruitment-volunteer') &&
-    activeScope !== VOLUNTEER_RECRUIT_CATALOG
-  ) {
+  if (activeScope.startsWith(mirrorCatalog) && activeScope !== mirrorCatalog) {
     patchGeneralRecruitOverlayForScope(activeScope, partial)
   }
 }

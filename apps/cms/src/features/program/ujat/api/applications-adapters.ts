@@ -28,13 +28,22 @@ import { pickVolunteerInterviewAssignmentApiStatus } from '@/features/program/sh
 import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import {
+  readTemporaryScheduleAssigned,
+  type UjatTemporaryScheduleAssignedField,
+} from '@/features/program/ujat/api/temporary-assignments'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
   return String(value)
 }
 
-function mapOrgStatusToTempAssignment(
+/**
+ * 임시 배정 현황 배지.
+ * 평가 대기 = temporaryAssignmentStatus `null` 또는 `EVALUATION_PENDING`(임시 배정 취소 직후).
+ * 둘 다 평가 대기로 읽는다 — 빈 값만 평가 대기로 두면 취소한 기관이 평가 대기에서 빠진다.
+ */
+export function mapOrgStatusToTempAssignment(
   status?: string | null,
   temporaryAssignmentStatus?: string | null
 ): UjatInstitutionApplicationRow['tempAssignmentStatus'] {
@@ -52,7 +61,17 @@ function mapOrgStatusToTempAssignment(
   if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
     return 'application_rejected'
   }
+  // temp가 '' 또는 'EVALUATION_PENDING'
   return 'evaluation_pending'
+}
+
+/** TEMP_ASSIGNED일 때만 서버 boolean을 유지한다. 다른 상태면 null */
+function resolveRowTemporaryScheduleAssigned(
+  tempAssignmentStatus: UjatInstitutionApplicationRow['tempAssignmentStatus'],
+  source: unknown
+): boolean | null {
+  if (tempAssignmentStatus !== 'temp_assigned') return null
+  return readTemporaryScheduleAssigned(source)
 }
 
 const UNRESOLVED_REGION_KEY = '' as UjatInstitutionApplicationRegionKey
@@ -179,7 +198,7 @@ function scheduleSlotsFromPreferredDates(
  * grade/className/studentCount는 roster SSOT — 목록 DTO만으로는 학년 분해 불가.
  */
 export function mapOrganizationApplicationToUjatInstitutionRow(
-  dto: OrganizationApplicationListItemResponse,
+  dto: OrganizationApplicationListItemResponse & UjatTemporaryScheduleAssignedField,
   index: number,
   options?: {
     regionKey?: UjatInstitutionApplicationRegionKey
@@ -188,6 +207,10 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
 ): UjatInstitutionApplicationRow {
   const regionKey = resolveInstitutionRegionKey(dto, options)
   const gradeClassCounts = mapListGradeClassCounts(dto)
+  const tempAssignmentStatus = mapOrgStatusToTempAssignment(
+    dto.applicationStatus,
+    dto.temporaryAssignmentStatus
+  )
   const totalElements = options?.totalElements
   const no =
     totalElements != null && totalElements > 0 ? totalElements - index : index + 1
@@ -197,10 +220,8 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     regionKey,
     no,
     institutionName: displayTextOrDash(dto.organizationName),
-    tempAssignmentStatus: mapOrgStatusToTempAssignment(
-      dto.applicationStatus,
-      dto.temporaryAssignmentStatus
-    ),
+    tempAssignmentStatus,
+    temporaryScheduleAssigned: resolveRowTemporaryScheduleAssigned(tempAssignmentStatus, dto),
     gradeClassCounts,
     totalClassCount: resolveTotalClassCount(dto, gradeClassCounts),
     scheduleSlots: scheduleSlotsFromPreferredDates(dto.preferredEducationSchedules),
@@ -238,6 +259,7 @@ export function mapOrganizationApplicationDetailToUjatInstitutionRow(
       regionSigungu: dto.regionSigungu,
       educationRegionCode: dto.educationRegionCode,
       temporaryAssignmentStatus: dto.temporaryAssignmentStatus,
+      temporaryScheduleAssigned: readTemporaryScheduleAssigned(dto),
       scheduleConfirmStatus: dto.scheduleConfirmStatus,
       assignedInstructorCount: dto.assignedInstructorCount,
       operatingStudentCount: dto.operatingStudentCount,

@@ -20,7 +20,7 @@
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isReadOnlyAdminRoleCode, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
-import { Dropdown } from 'antd'
+import { Dropdown, Spin } from 'antd'
 import type { MenuProps } from 'antd'
 import { useContext, useEffect, useId, useState } from 'react'
 import { CMS_CALENDAR_PREVIEW_TOOLTIP_Z_INDEX } from '@/shared/constants/modal-z-index'
@@ -44,7 +44,7 @@ export interface StatusDropdownCellProps<T extends string = string> {
   isGroupStart?: (optionStatus: T) => boolean
   /** 값 변경 시 호출 (없으면 드롭다운 없이 태그만 표시) */
   onChange?: (newStatus: T) => void | Promise<void>
-  /** 변경 요청 중 여부 (트리거 비활성 + "…" 표시) */
+  /** 변경 요청 중 여부 (트리거 비활성 + 태그 오른쪽 작은 스피너) */
   isUpdating?: boolean
   /** 드롭다운 열림 여부 (테이블에서는 openDropdownId === rowId) */
   isOpen: boolean
@@ -229,9 +229,7 @@ export function StatusDropdownCell<T extends string = string>({
       >
         {renderTag(status)}
         {isUpdating ? (
-          <span className="status-dropdown-cell__status-updating" aria-hidden>
-            …
-          </span>
+          <Spin size="small" className="status-dropdown-cell__status-updating" aria-label="변경 중" />
         ) : null}
       </span>
     </Dropdown>

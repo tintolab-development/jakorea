@@ -13,7 +13,7 @@ import {
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   getSettlementApiErrorMessage,
-  isGeminiPaymentStatementPreConsentRequiredError,
+  isPaymentStatementConfirmConsentBlockError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   useApproveSettlementCorrectionMutation,
@@ -62,6 +62,7 @@ import { PaymentOrderCalculationStatementInstructorBasicSection } from './paymen
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
 import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
+import { CONFIRM_PAYMENT_STATEMENT_ACTION } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 
 export type PaymentOrderCalculationStatementProgramContext = Extract<
   PaymentOrderProgramCalculationStatement,
@@ -107,13 +108,20 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   zIndex?: number
   /**
    * 지급조서(statementId)가 아직 없는 확정 전 정산 신청서 — 확인·반려 API를 상위가 처리.
-   * 확인 처리: 같은 「지급조서 확인 안내」(계좌 지급 예정일) 모달을 띄운 뒤 `onConfirm`을 부른다.
+   * 확인 처리: 기본은 「지급조서 확인 안내」(계좌 지급 예정일) 뒤 `onConfirm`.
+   * `confirmWithoutScheduledDate`이면 예정일 없이 `onConfirm`만 부른다.
    * 신청 반려: `onRejectClick` (상위 사유 모달).
    */
   statementActionOverride?: {
     onConfirm: (lectureFeePaymentScheduledDateIso: string) => Promise<void>
     onRejectClick: () => void
     pending?: boolean
+    /** false면 확인 버튼을 비활성화. 생략하면 활성 */
+    confirmEnabled?: boolean
+    /** false면 반려 버튼을 비활성화. 생략하면 활성 */
+    rejectEnabled?: boolean
+    /** 신청서 승인 — 강의비 지급 예정일을 받지 않는다 */
+    confirmWithoutScheduledDate?: boolean
   }
   /** 기관 프로그램이 아니면 산출 내역 「참여 기관명」열 미노출 */
   hideInstitutionColumn?: boolean
@@ -410,7 +418,22 @@ export function PaymentOrderCalculationStatementModalImpl({
       availableActions == null ||
       availableActions.includes('REJECT_PAYMENT_STATEMENT'))
 
+  const canConfirmStatement =
+    !isStatementActionLocked &&
+    (availableActions == null ||
+      availableActions.includes(CONFIRM_PAYMENT_STATEMENT_ACTION))
+
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
+    if (
+      availableActions != null &&
+      !availableActions.includes(CONFIRM_PAYMENT_STATEMENT_ACTION)
+    ) {
+      showAlert({
+        title: '안내',
+        content: '확인할 수 없는 지급조서가 포함되어 있습니다. 목록을 새로고침해 주세요.',
+      })
+      return
+    }
     if (statementId == null) {
       showAlert({
         title: '안내',
@@ -424,22 +447,17 @@ export function PaymentOrderCalculationStatementModalImpl({
         lectureFeePaymentScheduledDate: lectureFeePaymentScheduledDateIso,
       })
       await detailContextQuery?.refetch()
-      onStatementLineCommitted?.({
-        lineId: statement.sourceLineRowId,
-        status: 'confirmed',
-        lectureFeePaymentScheduledDate: lectureFeePaymentScheduledDateIso,
-      })
       setPaymentConfirmOpen(false)
       setPaymentConfirmDoneOpen(true)
     } catch (error) {
-      const preConsentRequired = isGeminiPaymentStatementPreConsentRequiredError(error)
+      const consentBlock = isPaymentStatementConfirmConsentBlockError(error)
       showAlert({
-        // 사전 동의 미완료(Gemini)는 시안 팝업 '지급조서 확인 불가 안내' 제목에 서버 안내를 본문으로 쓴다
-        title: networkAwareAlertTitle(error, preConsentRequired ? '지급조서 확인 불가 안내' : '안내'),
+        // 사전 동의 미완료·동의서 계좌 없음은 시안 팝업 '지급조서 확인 불가 안내' 제목에 안내를 본문으로 쓴다
+        title: networkAwareAlertTitle(error, consentBlock ? '지급조서 확인 불가 안내' : '안내'),
         content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
       })
-      // 사전 동의 미완료(Gemini)면 목록을 다시 받아 그 행의 확인 가능 여부를 갱신한다
-      if (preConsentRequired) {
+      // 동의서 미완료면 목록을 다시 받아 그 행의 확인 가능 여부를 갱신한다
+      if (consentBlock) {
         await detailContextQuery?.refetch()
       }
     }
@@ -542,7 +560,10 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="delete"
                   size="medium"
-                  disabled={statementActionOverride.pending}
+                  disabled={
+                    statementActionOverride.pending ||
+                    statementActionOverride.rejectEnabled === false
+                  }
                   onClick={statementActionOverride.onRejectClick}
                 >
                   신청 반려
@@ -550,8 +571,17 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="primary"
                   size="medium"
-                  disabled={statementActionOverride.pending}
-                  onClick={() => setPaymentConfirmOpen(true)}
+                  disabled={
+                    statementActionOverride.pending ||
+                    statementActionOverride.confirmEnabled === false
+                  }
+                  onClick={() => {
+                    if (statementActionOverride.confirmWithoutScheduledDate) {
+                      void statementActionOverride.onConfirm('')
+                      return
+                    }
+                    setPaymentConfirmOpen(true)
+                  }}
                 >
                   확인 처리
                 </CmsButton>
@@ -589,7 +619,7 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="primary"
                   size="medium"
-                  disabled={isStatementActionLocked || confirmMutation.isPending}
+                  disabled={!canConfirmStatement || confirmMutation.isPending}
                   onClick={() => setPaymentConfirmOpen(true)}
                 >
                   확인 처리

@@ -40,6 +40,7 @@ export interface ParticipatingVolunteerAddRegistrationModalProps {
   /**
    * 생략(`default`) — 기존 동작(동의 기본 선택, 경험 여부 기존 라벨). UJAT 추가 등록 기본값.
    * `generalInstitution` — 일반 프로그램(기관형) Figma: 동의 미선택 시작, 경험 여부 「있음 / 없음」, 미동의 시 필수 동의 안내.
+   * `ujat` — UJAT 진행 현황 Figma 14672:63639: 경험 여부 「있음 / 없음」, 자유 작성 1~4번 문항 `*` 숨김. 그 외 동작은 `default`와 같다.
    */
   preset?: ParticipatingVolunteerAddRegistrationDraftPreset
   onClose: () => void
@@ -161,13 +162,15 @@ function ParticipatingVolunteerAddRegistrationModalBody({
       })
   }
 
+  const hideFreeTextQuestionRequiredMark = preset === 'ujat'
   const sectionContext = useMemo(
     () => ({
       jaVolunteerExperience,
       hideBasicInfoSection: hideBasicInfoSection ?? false,
       programId,
+      hideFreeTextQuestionRequiredMark,
     }),
-    [jaVolunteerExperience, hideBasicInfoSection, programId]
+    [jaVolunteerExperience, hideBasicInfoSection, programId, hideFreeTextQuestionRequiredMark]
   )
 
   const footer = (

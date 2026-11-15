@@ -179,12 +179,21 @@
   max-width: none !important;
 }
 
-/* 시안: 본문 행 56 */
+/*
+ * 시안: 본문 행 56
+ * 호버 시 antd가 붙이는 `ant-table-cell-row-hover` 상태도 같은 높이로 고정한다 —
+ * 공통 선택 열 hover 규칙(52px)이 이기면 행이 56→52로 줄어 흔들린다.
+ */
 .instructor-payment-tab
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td {
+  > td.ant-table-cell,
+.instructor-payment-tab
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell.ant-table-cell-row-hover {
   height: 56px !important;
   min-height: 56px !important;
 }

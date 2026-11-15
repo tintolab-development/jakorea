@@ -6,12 +6,20 @@ import {
   rejectSettlementCorrectionRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import { invalidateSettlementLedgerCaches } from '@/features/settlement-management/api/invalidate-settlement-ledger-caches'
-import type { SettlementCorrectionApprovalRequest } from '@/shared/api/generated/settlement/schemas'
+import type {
+  IndividualSettlementApprovalTarget,
+  InstructorSettlementApplicationTarget,
+  SettlementCorrectionApprovalRequest,
+} from '@/shared/api/generated/settlement/schemas'
 import type { PaymentOrderRejectNotificationType } from '@/features/settlement/lib/payment-order-reject-notification'
 
 export type ConfirmPaymentStatementsInput = {
   statementIds: number[]
   lectureFeePaymentScheduledDate?: string
+  /** 영수증(참여자·봉사자) 승인 대상 — 강사 지급조서와 한 트랜잭션(전체 성공 또는 전체 롤백) */
+  individualSettlementApplications?: IndividualSettlementApprovalTarget[]
+  /** 확정 전 강사 정산 신청서 — 신청서 승인 + 지급조서 확인을 같은 트랜잭션에서 처리 */
+  instructorSettlementApplications?: InstructorSettlementApplicationTarget[]
 }
 
 export type RejectPaymentStatementInput = {
@@ -29,11 +37,24 @@ export function useConfirmPaymentStatementMutation() {
 
   return useMutation({
     mutationFn: async (input: ConfirmPaymentStatementsInput) => {
-      const { statementIds, lectureFeePaymentScheduledDate } = input
-      if (statementIds.length === 0) return
+      const {
+        statementIds,
+        lectureFeePaymentScheduledDate,
+        individualSettlementApplications = [],
+        instructorSettlementApplications = [],
+      } = input
+      if (
+        statementIds.length === 0 &&
+        individualSettlementApplications.length === 0 &&
+        instructorSettlementApplications.length === 0
+      ) {
+        return
+      }
 
       await bulkConfirmPaymentStatementsRemote({
         statementIds,
+        ...(individualSettlementApplications.length > 0 ? { individualSettlementApplications } : {}),
+        ...(instructorSettlementApplications.length > 0 ? { instructorSettlementApplications } : {}),
         reason: BULK_CONFIRM_REASON,
         // BE: scheduledPaymentDate 우선, 없으면 lectureFeePaymentScheduledDate — 동일 값 dual 전송
         // 날짜 없으면 400 SCHEDULED_PAYMENT_DATE_REQUIRED. 트랜잭션 all-or-nothing.

@@ -81,15 +81,16 @@ interface ProgramManagersTabProps {
   maskSensitive?: boolean
   /**
    * 삭제 후 담당자가 남지 않으면 「프로그램 담당자 삭제 불가 안내」를 띄운다(일반 프로그램 시안).
-   * 생략 시 기존 동작(서버 `removableYn`·삭제 실패 알림)만 유지한다 — UJAT·Gemini 호출부.
+   * 생략 시 기존 동작(서버 `removableYn`·삭제 실패 알림)만 유지한다 — 1사1교·Gemini 호출부.
    */
   blockLastManagerDelete?: boolean
   /**
    * `general`: 일반 프로그램 시안 — 「선택 삭제」 라벨, 권한 열 180·나머지 균등 폭,
    * 선택 없이 삭제 시 「항목 미선택 안내」, 담당자 추가 팝업 권한 기본 미선택.
-   * 생략(`default`) 시 기존 동작 유지 — UJAT·1사1교·Gemini 호출부.
+   * `ujat`: UJAT 시안(「담당자 정보 일반 프로그램(기관)과 동일」) — `general`과 같은 동작.
+   * 생략(`default`) 시 기존 동작 유지 — 1사1교·Gemini 호출부.
    */
-  variant?: 'default' | 'general'
+  variant?: 'default' | 'general' | 'ujat'
 }
 
 /** 일반 프로그램 담당자 목록 선택 열 — 시안 60px */
@@ -101,7 +102,7 @@ export function ProgramManagersTab({
   blockLastManagerDelete = false,
   variant = 'default',
 }: ProgramManagersTabProps) {
-  const isGeneralVariant = variant === 'general'
+  const isGeneralVariant = variant === 'general' || variant === 'ujat'
   const { showAlert } = useCmsAlert()
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({

@@ -28,8 +28,16 @@ export interface SignedConsentDocumentResponse {
   writingFormAvailable?: boolean;
   schemaJson?: SignedConsentDocumentResponseSchemaJson;
   signatureFields?: SignedConsentSignatureField[];
-  /** 회원이 제출한 성범죄 동의서 원본 PDF ID. 연결된 원본이 없으면 null. */
+  /** 회원이 제출한 성범죄 동의서 원본(PDF/JPG/PNG) 파일 ID. 연결된 원본이 없으면 null. */
   originalFileObjectId?: number;
-  /** 원본 PDF의 관리자 민감 파일 relay 요청 API. 원본이 없으면 null. SENSITIVE_FILE_DOWNLOAD 권한과 사유가 필요합니다. */
+  /** 원본 파일 다운로드 API(POST, 민감 파일 relay). 원본이 없으면 null. SENSITIVE_FILE_DOWNLOAD 권한, 사유, 파일 암호가 필요하고 암호가 걸린 PDF(이미지는 AES ZIP)로 내려갑니다. */
   originalDownloadApi?: string;
+  /** 원본 파일 화면 열람 API(POST, 본문 reason 필수). 원본이 없으면 null. 파일 암호 없이 원본 그대로 inline으로 내려가며 CMS 모달 표시용입니다. originalFileObjectId가 있을 때만 값이 있습니다. */
+  originalViewEndpoint?: string | null;
+  /** 서명이 들어간 전체 PDF(제출 당시 본문·입력 내용·서명 이미지) 파일 ID. 성범죄경력 동의서, PDF가 아직 생성되지 않았거나 생성에 실패한 문서는 null. */
+  signedPdfFileObjectId?: number | null;
+  /** 서명 PDF 화면 열람 API(POST, 본문 reason 필수). signedPdfFileObjectId가 있을 때만 값이 있습니다. 파일 암호 없이 PDF 그대로 inline으로 내려가며 CMS 모달 표시용입니다. */
+  signedPdfViewEndpoint?: string | null;
+  /** 서명 PDF 다운로드 API(POST, 민감 파일 relay). signedPdfFileObjectId가 있을 때만 값이 있습니다. SENSITIVE_FILE_DOWNLOAD 권한, 사유, 파일 암호가 필요하고 암호가 걸린 PDF로 내려갑니다. */
+  signedPdfDownloadApi?: string | null;
 }

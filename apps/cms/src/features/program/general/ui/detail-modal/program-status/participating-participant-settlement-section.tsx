@@ -118,14 +118,14 @@ export function ParticipatingParticipantSettlementSection({
         width: 160,
         render: (_value, record) => {
           if (isIndividualSettlementRowNotApplicable(record)) return '-'
-          const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status)
+          const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status, record.latestRevisionNo)
           if (uiStatus) return <InstructorSettlementStatusText status={uiStatus} />
           return (
             <StatusBadge
               domain="custom"
               variant="text"
-              label={individualSettlementTableProcessingLabel(record.status)}
-              accentColor={individualSettlementReviewStatusAccent(record.status)}
+              label={individualSettlementTableProcessingLabel(record.status, record.latestRevisionNo)}
+              accentColor={individualSettlementReviewStatusAccent(record.status, record.latestRevisionNo)}
             />
           )
         },
@@ -246,6 +246,9 @@ export function ParticipatingParticipantSettlementSection({
         programId={programId}
         participantId={participantId}
         settlementApplicationId={detailApplicationId}
+        sessionOrdinal={
+          rows.find(row => row.settlementApplicationId === detailApplicationId)?.sessionOrdinal ?? null
+        }
         programSessionProgressDisplay={programSessionProgressDisplay}
         businessPeriodDisplay={businessPeriodDisplay}
         onClose={() => setDetailApplicationId(null)}

@@ -87,7 +87,7 @@ describe('mapCalendarItemsToProgramEvents', () => {
 
     expect(events).toHaveLength(1)
     expect(events[0]?.amount).toBe(50_000)
-    expect(events[0]?.cardSubtitle).toBe('정산 대상 강사 2명')
+    expect(events[0]?.cardSubtitle).toBe('정산 대상자 2명')
   })
 })
 
@@ -114,5 +114,37 @@ describe('mapCalendarItemsToInstructorEvents', () => {
     expect(events).toHaveLength(1)
     expect(events[0]?.bracketTitle).toBe('홍길동 강사')
     expect(events[0]?.sourceInstructorRow?.instructorMemberId).toBe(200)
+  })
+
+  it('영수증 신청 행은 신청 ID로 키를 만들고 이름에 강사를 붙이지 않는다', () => {
+    const items: SettlementCalendarItemResponse[] = [
+      {
+        instructorMemberId: 200,
+        date: '2026-08-10',
+        expectedAmount: 10_000,
+        statementStatus: 'WAITING_CONFIRM',
+        rowType: 'INDIVIDUAL_SETTLEMENT_APPLICATION',
+        payeeType: 'PARTICIPANT',
+        individualSettlementApplicationId: 77,
+      },
+      {
+        instructorMemberId: 200,
+        date: '2026-08-10',
+        expectedAmount: 20_000,
+        statementStatus: 'WAITING_CONFIRM',
+        rowType: 'SETTLEMENT_APPLICATION',
+        payeeType: 'INSTRUCTOR',
+        settlementApplicationId: 1001,
+      },
+    ]
+
+    const events = mapCalendarItemsToInstructorEvents(items, instructorRows)
+
+    expect(events.map(e => e.id)).toEqual([
+      'instructor-api-receipt-77-2026-08-10',
+      'instructor-api-application-1001-2026-08-10',
+    ])
+    expect(events[0]?.bracketTitle).toBe('홍길동')
+    expect(events[1]?.bracketTitle).toBe('홍길동 강사')
   })
 })

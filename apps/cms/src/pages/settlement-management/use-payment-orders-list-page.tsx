@@ -60,8 +60,10 @@ import {
   PAYMENT_ORDERS_DETAIL_NO_PARAM,
   PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
   PAYMENT_ORDERS_EXPOSURE_PARAM_KEY,
+  PAYMENT_ORDER_PAYEE_TYPES,
   type ExposureMode,
 } from './payment-orders-table.config'
+import { ACCOUNT_PAYMENT_PAYEE_TYPE_LABELS } from '@/features/settlement-management/model/account-payments-list'
 
 export type PaymentOrdersPageViewMode = 'list' | 'calendar'
 
@@ -94,6 +96,14 @@ const PENDING_ITEM_BUCKET_FILTER_OPTIONS = [
   ...PAYMENT_ORDER_PENDING_ITEM_BUCKETS.map(value => ({
     value,
     label: PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS[value],
+  })),
+]
+
+const PAYEE_TYPE_FILTER_OPTIONS = [
+  ALL_FILTER_OPTION,
+  ...PAYMENT_ORDER_PAYEE_TYPES.map(value => ({
+    value,
+    label: ACCOUNT_PAYMENT_PAYEE_TYPE_LABELS[value],
   })),
 ]
 
@@ -198,7 +208,8 @@ export function usePaymentOrdersListPage() {
   const remoteCalendarQuery = useSettlementCalendarQuery(
     calendarRange.fromDate,
     calendarRange.toDate,
-    paymentOrdersRemote && viewMode === 'calendar'
+    paymentOrdersRemote && viewMode === 'calendar',
+    appliedFromUrl.payeeType
   )
 
   const sourceProgramRows = useMemo(() => {
@@ -582,9 +593,18 @@ export function usePaymentOrdersListPage() {
       nameFilter,
       statusOrBucketFilter,
       {
+        key: 'payeeType',
+        type: 'select',
+        label: '신청자 유형',
+        placeholder: '전체',
+        options: PAYEE_TYPE_FILTER_OPTIONS,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
+      },
+      {
         key: 'dateRange',
         type: 'dateRange',
-        label: '강의 출강일',
+        // 강사=출강일, 제미나이=연수일, 영수증=일정 시작일 — 대상자 전체를 포괄하는 이름
+        label: '교육 진행일',
         dateRangeOneMonthFromStart: true,
         width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
       },

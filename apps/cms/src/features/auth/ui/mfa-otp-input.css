@@ -21,7 +21,7 @@
 .mfa-otp-input__boxes .ant-otp {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
 }
 
 .mfa-otp-input__boxes .ant-otp-input-wrapper {
@@ -51,8 +51,8 @@
   background: var(--main-WT, #fff);
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
+  font-weight: 500;
+  line-height: 1.5;
   color: var(--main-BK, #3d3d3d);
   text-align: center;
 }
@@ -61,6 +61,15 @@
 .mfa-otp-input__boxes .ant-otp-input-focused {
   border-color: var(--color-mint-01, #01a1af);
   box-shadow: var(--shadow-focus-teal, 0 0 0 1px rgba(74, 212, 204, 0.2));
+}
+
+/* 코드 불일치 — 시안: 6칸 모두 Status/red/main 테두리 */
+.mfa-otp-input__boxes--error .ant-otp-input,
+.mfa-otp-input__boxes--error .ant-otp-input:hover,
+.mfa-otp-input__boxes--error .ant-otp-input:focus,
+.mfa-otp-input__boxes--error .ant-otp-input-focused {
+  border-color: var(--color-red, #c32f4a);
+  box-shadow: none;
 }
 
 .mfa-otp-input__failure {

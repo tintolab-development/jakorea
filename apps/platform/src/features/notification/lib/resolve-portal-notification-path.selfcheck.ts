@@ -54,4 +54,25 @@ assert.equal(
   null,
 )
 
+assert.equal(
+  resolvePortalNotificationPath({
+    eventType: 'MEMBER_IDENTITY_VERIFIED',
+    linkType: 'MEMBER_PROFILE',
+    sourceDomain: 'MEMBER',
+    linkId: 3,
+  }),
+  '/mypage/settings',
+)
+
+/** 같은 MEMBER_PROFILE이라도 본인인증 완료가 아니면 이동하지 않는다 */
+assert.equal(
+  resolvePortalNotificationPath({
+    eventType: 'MEMBER_SIGNUP_COMPLETED',
+    linkType: 'MEMBER_PROFILE',
+    sourceDomain: 'MEMBER',
+    linkId: 3,
+  }),
+  null,
+)
+
 console.log('resolve-portal-notification-path.selfcheck: ok')

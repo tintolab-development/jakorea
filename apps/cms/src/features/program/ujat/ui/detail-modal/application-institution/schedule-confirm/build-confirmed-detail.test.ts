@@ -255,4 +255,23 @@ describe('buildUjatScheduleConfirmConfirmedDetail', () => {
       },
     ])
   })
+
+  it('slot.scheduleId를 날짜 행의 scheduleId로 싣고, 같은 날짜에 값이 다르면 비운다', () => {
+    const rows = buildProgressConfirmedScheduleRowsFromTemporarySchedule({
+      institutionId: '1691554',
+      half: 'h2',
+      temporarySchedule: {
+        slots: [
+          { scheduleId: 187580, scheduleStartAt: '2026-11-05T15:00:00Z', classLabel: '2학년 1반' },
+          { scheduleId: 187580, scheduleStartAt: '2026-11-05T15:00:00Z', classLabel: '2학년 2반' },
+          { scheduleId: 187590, scheduleStartAt: '2026-11-12T15:00:00Z', classLabel: '3학년 1반' },
+          { scheduleId: 187591, scheduleStartAt: '2026-11-12T15:00:00Z', classLabel: '3학년 2반' },
+        ],
+      },
+      resolveHalf: () => 'h2',
+      formatDateDisplay: iso => iso,
+    })
+
+    expect(rows.map(row => row.scheduleId)).toEqual([187580, undefined])
+  })
 })

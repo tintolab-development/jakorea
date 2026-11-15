@@ -45,7 +45,7 @@ describe('참여 강사 추가 등록 동의서 — 일반 기관형 preset (Fig
 })
 
 describe('참여 봉사자 추가 등록 — JA 봉사 프로그램 진행 경험 여부 선택지', () => {
-  function experienceLabels(preset?: 'default' | 'generalInstitution') {
+  function experienceLabels(preset?: 'default' | 'generalInstitution' | 'ujat') {
     const paragraph = createParticipatingVolunteerAddRegistrationDraft(preset).paragraphs.find(
       p => p.id === PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.jaVolunteerExperience
     )
@@ -60,7 +60,14 @@ describe('참여 봉사자 추가 등록 — JA 봉사 프로그램 진행 경�
     ])
   })
 
-  it('기본값(UJAT 등)은 기존 라벨 유지', () => {
+  it('UJAT 진행 현황 추가 등록(Figma 14672:63639)은 「있음 / 없음」, id는 동일', () => {
+    expect(experienceLabels('ujat')).toEqual([
+      [JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes, '있음'],
+      [JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no, '없음'],
+    ])
+  })
+
+  it('기본값(일반 비기관형 등)은 기존 라벨 유지', () => {
     expect(experienceLabels()).toEqual([
       [JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes, '동의서 제출 요청'],
       [JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no, '동의서 미제출'],

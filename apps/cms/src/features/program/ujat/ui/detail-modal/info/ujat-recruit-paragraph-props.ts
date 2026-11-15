@@ -24,6 +24,8 @@ export type UjatRecruitParagraphProps = {
   /** 독립 Template Authoring — Form Version settingsJson의 typed 상태 키 */
   templateCode?: string
   templateAuthoring?: boolean
+  /** UJAT 등록 위저드 — 시안 placeholder·모집 현황 안내 적용(프로그램 상세는 생략) */
+  designPreset?: 'registration-form'
 }
 
 export function resolveUjatRecruitParagraphMode(props: UjatRecruitParagraphProps): UjatRecruitParagraphMode {

@@ -131,31 +131,6 @@
   align-items: center;
 }
 
-.add-user-individual__consent-document {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0;
-}
-
-/** 시안: 동의 상태 | 구분선 | [동의서 작성] — 구분선 양옆 gap 16 */
-.add-user-individual__consent-document > .detail-info-form-inputs-separator {
-  margin: 0 16px;
-}
-
-/** 시안: 동의서 작성 버튼 100×32 — 공통 `.cms-button.ant-btn{width:max-content}`·h32 min-width 80보다 우선 */
-.add-user-individual__consent-document .cms-button.ant-btn.add-user-individual__consent-write-btn {
-  width: 100px;
-  min-width: 100px;
-}
-
-.add-user-individual__consent-status {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-}
-
 .add-user-individual__affiliation-row {
   display: flex;
   align-items: center;

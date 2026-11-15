@@ -94,6 +94,8 @@ export interface GeneralIndividualApplicantRow {
   documentScreeningStatus?: GeneralDocumentScreeningStatus
   interviewSlotCount?: number
   interviewAssignmentStatus?: GeneralInterviewAssignmentStatus
+  /** 목록 `interviewAssignmentId` — 면접 평가 API path(`/interview-assignments/{id}/evaluations`) */
+  interviewAssignmentId?: number
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
   secondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus

@@ -12,7 +12,11 @@ import {
   type SexOffenseInquiryCase,
 } from '@jakorea/form-schema/program-application'
 import { resolveAssignedInstructorCardBody } from '../../lib/teacher-assignment-aside'
-import { PFPageButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFPageButton, PFText } from '@/shared/ui'
+import {
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../../shared/lib/education-error-alert'
 import styles from './assigned-instructor-card.module.css'
 
 export type TeacherAssignedInstructorCardProps = {
@@ -36,6 +40,7 @@ function readErrorStatus(error: unknown): number | undefined {
   return typeof status === 'number' ? status : undefined
 }
 
+/** 오류 코드별 업무 안내 — 그 밖은 '' (시안 「처리 실패」 설명을 쓴다) */
 function resolveDownloadErrorMessage(error: unknown): string {
   switch (readErrorCode(error)) {
     case 'ASSIGNED_INSTRUCTOR_CONSENT_NOT_VISIBLE':
@@ -49,7 +54,7 @@ function resolveDownloadErrorMessage(error: unknown): string {
     case 'ASSIGNED_INSTRUCTOR_CONSENT_NOT_AVAILABLE':
       return '철회되었거나 만료된 동의서입니다. 최신 정보를 다시 확인해 주세요.'
     default:
-      return '동의서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      return ''
   }
 }
 
@@ -65,7 +70,7 @@ function ConsentList({
   onRefresh?: () => Promise<unknown>
 }) {
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorAlert, setErrorAlert] = useState<EducationAlert | null>(null)
   const consents =
     instructor.consentDocumentsRequested === true && (instructor.consents?.length ?? 0) > 0
       ? instructor.consents ?? []
@@ -111,7 +116,6 @@ function ConsentList({
                       ) {
                         return
                       }
-                      setErrorMessage(null)
                       setDownloadingDocumentId(consent.documentId)
                       void requestAssignedInstructorConsentDownload({
                         applicationType,
@@ -131,7 +135,7 @@ function ConsentList({
                         })
                         .catch(async error => {
                           console.error('[attachment] assigned instructor consent failed', error)
-                          setErrorMessage(resolveDownloadErrorMessage(error))
+                          setErrorAlert(resolveEducationErrorAlert(error, resolveDownloadErrorMessage))
                           const code = readErrorCode(error)
                           const status = readErrorStatus(error)
                           if (
@@ -161,11 +165,12 @@ function ConsentList({
           )
         })}
       </ul>
-      {errorMessage ? (
-        <PFText as="p" typo="caption-rg" color="neutral-warm-500" role="alert">
-          {errorMessage}
-        </PFText>
-      ) : null}
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </>
   )
 }

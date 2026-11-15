@@ -128,9 +128,13 @@ function createParticipatingVolunteerThirdPartyTable(): HorizontalTableParagraph
 /**
  * - `default` — 기존 선택지 라벨 유지(UJAT 추가 등록 등 기존 호출부).
  * - `generalInstitution` — 일반 프로그램(기관형) Figma 03-2/03-4: 「있음 / 없음」.
+ * - `ujat` — UJAT 진행 현황 · 봉사자 추가 등록 Figma 10014:42046 / 14672:63639: 「있음 / 없음」.
  * 선택지 id·전송값(REQUESTED / NOT_REQUESTED)은 동일하고 라벨만 다르다.
  */
-export type ParticipatingVolunteerAddRegistrationDraftPreset = 'default' | 'generalInstitution'
+export type ParticipatingVolunteerAddRegistrationDraftPreset =
+  | 'default'
+  | 'generalInstitution'
+  | 'ujat'
 
 const JA_VOLUNTEER_EXPERIENCE_OPTION_LABELS: Record<
   ParticipatingVolunteerAddRegistrationDraftPreset,
@@ -138,6 +142,7 @@ const JA_VOLUNTEER_EXPERIENCE_OPTION_LABELS: Record<
 > = {
   default: { yes: '동의서 제출 요청', no: '동의서 미제출' },
   generalInstitution: { yes: '있음', no: '없음' },
+  ujat: { yes: '있음', no: '없음' },
 }
 
 function createJaVolunteerExperienceMultipleChoiceParagraph(

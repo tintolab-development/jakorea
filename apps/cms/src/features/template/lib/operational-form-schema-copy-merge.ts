@@ -1,6 +1,8 @@
 import { getFormTemplateSeedDraft } from '@/features/template/lib/form-template-seed-registry'
 import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
+import { isApplicationFormThirdPartyConsentParagraph } from '@/features/template/model/application-form-third-party-recipient'
 import type {
+  HorizontalTableParagraph,
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -80,7 +82,44 @@ function applyAllowedParagraphCopyFromEditor(
     }
   }
 
-  return next
+  return copyThirdPartyRecipientCellsFromEditor(next, editorParagraph)
+}
+
+/**
+ * 제3자 동의 표 — 「제공받는 곳」 등 설명 칸 값은 에디터 입력을 보낸다.
+ * BE `FormTemplateSystemFieldGuard.allowEditablePrivacyTableValues`와 같은 범위:
+ * 행마다 마지막(보유·이용 기간) 칸은 시스템 값이라 baseline 그대로, 표 구조(행·열 수)도 baseline 그대로.
+ * 이 복사가 없으면 UJAT 신청 양식 PUT이 빈 시드 칸으로 덮어 홈페이지 신청서에 「제공받는 곳」이 비어 보인다.
+ */
+function copyThirdPartyRecipientCellsFromEditor(
+  next: WritingFormParagraph,
+  editorParagraph: WritingFormParagraph
+): WritingFormParagraph {
+  if (!isApplicationFormThirdPartyConsentParagraph(next.id)) return next
+  if (next.variant !== 'horizontal_table' || editorParagraph.variant !== 'horizontal_table') {
+    return next
+  }
+  const base = next as HorizontalTableParagraph
+  const editor = editorParagraph as HorizontalTableParagraph
+
+  const fieldDataRows = base.fieldDataRows?.map((row, rowIndex) =>
+    row.map((cell, colIndex) => {
+      if (colIndex >= row.length - 1) return cell
+      const editorCell = editor.fieldDataRows?.[rowIndex]?.[colIndex]
+      return editorCell != null && editorCell.kind === cell.kind ? editorCell : cell
+    })
+  )
+  const dataRows = base.dataRows.map((row, rowIndex) =>
+    row.map((cell, colIndex) => {
+      if (colIndex >= row.length - 1) return cell
+      return editor.dataRows?.[rowIndex]?.[colIndex] ?? cell
+    })
+  )
+  return {
+    ...base,
+    dataRows,
+    ...(fieldDataRows != null ? { fieldDataRows } : {}),
+  } as WritingFormParagraph
 }
 
 /** 잠긴 단락: baseline에 있는 키만, 값은 에디터 현재 입력 */

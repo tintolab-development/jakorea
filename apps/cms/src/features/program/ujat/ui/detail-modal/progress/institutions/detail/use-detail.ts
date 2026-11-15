@@ -15,6 +15,7 @@ import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { UjatEducationProgressInstitutionDetail } from './types'
+import { readUjatInstitutionParticipantState } from './participant-status'
 import {
   formatUjatInstitutionFridayDisplay,
   resolveEducationSemesterForIsoDate,
@@ -75,6 +76,13 @@ export function useUjatEducationProgressInstitutionDetail(input: {
       institutionId,
       half,
       institutionName: row.institutionName,
+      participantId:
+        typeof remoteDetail?.participantId === 'number' ? remoteDetail.participantId : null,
+      participantState: readUjatInstitutionParticipantState(remoteDetail),
+      organizationId:
+        typeof remoteDetail?.organizationId === 'number' ? remoteDetail.organizationId : null,
+      teacherMemberId:
+        typeof remoteDetail?.teacherMemberId === 'number' ? remoteDetail.teacherMemberId : null,
       educationRegion: getUjatEducationRegionLabel(row.regionKey, row.regionKey),
       adminComment: resolveLatestAdminCommentText(commentsQuery.data) ?? '',
       applicationDetail: application,

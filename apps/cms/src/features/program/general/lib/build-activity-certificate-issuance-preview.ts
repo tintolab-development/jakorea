@@ -15,8 +15,8 @@ function valueOrEmpty(value: string | null | undefined): string {
   return trimmed ? trimmed : ACTIVITY_CERTIFICATE_EMPTY_VALUE
 }
 
-function resolveProgramName(program?: Program | null): string {
-  return valueOrEmpty(program?.mainTitle?.trim() || program?.title)
+function resolveProgramName(program?: Program | null, programName?: string | null): string {
+  return valueOrEmpty(program?.mainTitle?.trim() || program?.title || programName)
 }
 
 /** 참여자 정보 마지막 줄(발급 목적) 기본값 — 발급 사유를 고르지 않는 흐름 */
@@ -29,6 +29,8 @@ export type ActivityCertificateParticipantInfoInput = {
   /** 소속 — 참여자 소속 학교/기관명. 없으면 '-' */
   affiliation?: string | null
   program?: Program | null
+  /** 프로그램 객체 없이 이름만 아는 화면(회원 상세 이력) — `program`이 있으면 그쪽을 쓴다 */
+  programName?: string | null
   /**
    * 참여기간 — 본인의 진행 완료된 첫 일정일 ~ 마지막 일정일(기획 회신 261113).
    * 서버 값이 아직 없어 비워 두면 '-'.
@@ -55,7 +57,7 @@ export function buildActivityCertificateParticipantInfoLines(
     valueOrEmpty(input.name),
     birthDateOrEmpty(input.birthDate),
     valueOrEmpty(input.affiliation),
-    resolveProgramName(input.program),
+    resolveProgramName(input.program, input.programName),
     valueOrEmpty(input.participationPeriod),
     input.issuanceReasonLabel?.trim() || ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
   ].join('\n')

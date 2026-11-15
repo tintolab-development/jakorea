@@ -7,6 +7,7 @@ import {
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { buildInterview2ProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
+import type { GeneralInterview2BulkPassType } from '@/features/program/general/lib/volunteer-screening-constants'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
@@ -142,4 +143,41 @@ export function requestGeneralVolunteerInterview2BulkFail({
     return
   }
   onOpenBulkFail()
+}
+
+/**
+ * 2차 면접 합격 확정 경로.
+ * - 기관형 봉사자 단건 「합격」 → 기관 배정 안내 후 final-result PASS + assignments
+ * - 개인 프로그램 봉사자 단건 「합격」 → 교육 배정 안내 후 봉사자 approve-with-education-scope
+ * - 일반 개인 프로그램 참여자 「합격」(단건·일괄) → 상세 「참여 승인」과 같은 개인 approve-with-education-scope.
+ *   GENERAL_INDIVIDUAL 참여자는 final-result PASS(교육 범위 없는 승인)를 쓰지 않는다.
+ * - 그 외(예비합격·봉사자 일괄 등) → 기존 final-result
+ */
+export type GeneralInterview2PassRoute =
+  | 'organization-assign'
+  | 'volunteer-education-assign'
+  | 'participant-education-scope'
+  | 'final-result'
+
+export function resolveGeneralInterview2PassRoute({
+  subjectKind,
+  isIndividualProgram,
+  isOrganizationProgram,
+  passType,
+  mode,
+}: {
+  subjectKind: ScreeningSubjectKind
+  isIndividualProgram: boolean
+  isOrganizationProgram: boolean
+  passType: GeneralInterview2BulkPassType | undefined
+  mode: 'single' | 'bulk'
+}): GeneralInterview2PassRoute {
+  if ((passType ?? 'pass') !== 'pass') return 'final-result'
+  if (subjectKind === 'participant') {
+    return isIndividualProgram ? 'participant-education-scope' : 'final-result'
+  }
+  if (mode === 'bulk') return 'final-result'
+  if (isOrganizationProgram) return 'organization-assign'
+  if (isIndividualProgram) return 'volunteer-education-assign'
+  return 'final-result'
 }

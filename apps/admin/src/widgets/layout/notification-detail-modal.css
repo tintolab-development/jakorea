@@ -18,9 +18,30 @@
   font-weight: 500;
   line-height: 150%;
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .notification-detail-modal.content-modal .teal-header-modal__footer {
   gap: 8px;
+}
+
+/*
+ * 동적 문구 영역 — 서버 제목이 길어지면 단어 단위로 줄바꿈한다(CMS 알림 안내 팝업과 같음).
+ * 공통 헤더는 높이 36 고정이라 넘친 줄이 본문과 겹치므로, 이 팝업만 최소 36으로 풀고 닫기(X)는 첫 줄에 맞춘다.
+ */
+.notification-detail-modal.content-modal .teal-header-modal__header {
+  height: auto;
+  max-height: none;
+  align-items: flex-start;
+}
+
+.notification-detail-modal.content-modal .teal-header-modal__title-text {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.notification-detail-modal.content-modal .teal-header-modal__header-actions {
+  min-height: 36px;
+  align-items: center;
 }

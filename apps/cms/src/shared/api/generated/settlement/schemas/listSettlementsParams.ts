@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ListSettlementsPayeeType } from './listSettlementsPayeeType';
 
 export type ListSettlementsParams = {
 /**
@@ -43,6 +44,10 @@ pendingItemBucket?: string;
  * true면 계좌 지급 완료(PAID) 건을 포함합니다. instructorMemberId가 필요하며 없으면 400입니다. 기본 false(지급조서 확인 목록 현행 유지).
  */
 includePaid?: boolean;
+/**
+ * 정산 대상자 구분. INSTRUCTOR=강사(Gemini 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 생략하면 전체
+ */
+payeeType?: ListSettlementsPayeeType;
 /**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */

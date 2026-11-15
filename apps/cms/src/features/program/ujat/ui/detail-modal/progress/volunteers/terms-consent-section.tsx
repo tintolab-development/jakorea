@@ -69,14 +69,12 @@ export const EMPTY_UJAT_VOLUNTEER_ADD_REGISTRATION_CONSENTS: UjatVolunteerAddReg
     sexOffenseCheck: '',
   }
 
+/**
+ * 작성본 열람 가능 여부는 BE `filledDocumentAvailable`만 따른다.
+ * false면 조회하지 않는다(이유는 `filledDocumentUnavailableReason` — 이유별 표시 시안 확정 전까지 기존 비활성 버튼 유지).
+ */
 function canViewSubmittedConsentDocument(record: MemberConsentRecordResponse | undefined): boolean {
-  if (record == null) return false
-  return (
-    record.filledDocumentAvailable === true ||
-    record.formResponseId != null ||
-    record.consentRecordId != null ||
-    record.filledDocumentId != null
-  )
+  return record?.filledDocumentAvailable === true
 }
 
 function findConsentRecordForLabel(
@@ -282,10 +280,10 @@ export function UjatEducationProgressVolunteerTermsConsentSection({
       consentType: record?.consentType,
       documentAgreed: record?.consentValue === true,
       filledDocumentAvailable: record?.filledDocumentAvailable,
-      formResponseId: record?.formResponseId,
-      consentRecordId: record?.consentRecordId,
-      filledDocumentId: record?.filledDocumentId,
-      filledDocumentRevealEndpoint: record?.filledDocumentRevealEndpoint,
+      formResponseId: record?.formResponseId ?? undefined,
+      consentRecordId: record?.consentRecordId ?? undefined,
+      filledDocumentId: record?.filledDocumentId ?? undefined,
+      filledDocumentRevealEndpoint: record?.filledDocumentRevealEndpoint ?? undefined,
     })
   }
 

@@ -140,6 +140,7 @@ export function UjatRecruitVolunteerInfoParagraph(props: UjatRecruitParagraphPro
         sectionTitle={props.sectionTitle}
         highlightParagraphId={props.highlightParagraphId}
         hideSectionHeader={props.hideSectionHeader}
+        registrationFormDesign={props.designPreset === 'registration-form'}
       />
     )
   }

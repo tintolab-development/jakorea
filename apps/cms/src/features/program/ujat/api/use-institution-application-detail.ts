@@ -8,6 +8,7 @@ import {
   approveOrganizationApplicationRemote,
   fetchOrganizationApplicationDetailRemote,
   rejectOrganizationApplicationRemote,
+  type OrganizationApplicationDetailDto,
   type OrganizationDecisionNotifyRequest,
 } from '@/features/program/general/api/applications-api-client'
 import { enrichUjatInstitutionDetailFromRemote } from '@/features/program/ujat/api/applications-adapters'
@@ -19,6 +20,13 @@ import {
   cancelUjatOrganizationTemporaryRejectionsIfRemote,
   rejectUjatOrganizationApplicationsIfRemote,
 } from '@/features/program/ujat/api/temporary-rejections'
+import {
+  assignUjatOrganizationApplicationsTemporarilyIfRemote,
+  cancelUjatOrganizationTemporaryAssignmentsIfRemote,
+  type TemporaryAssignmentBulkResponse,
+  type UjatTemporaryScheduleAssignedField,
+} from '@/features/program/ujat/api/temporary-assignments'
+import { patchUjatOrganizationApplicationTemporaryAssignmentProcessed } from '@/features/program/ujat/api/organization-application-list-cache'
 import {
   UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE,
   readUjatInstitutionWorkflowInput,
@@ -120,6 +128,29 @@ export function useUjatInstitutionApplicationDetail(input: {
     ])
   }
 
+  /** POST temporary-assignments(·:cancel) `processed[]` — 서버가 돌려준 값으로만 캐시를 맞춘다 */
+  const applyTemporaryAssignmentProcessed = (response: TemporaryAssignmentBulkResponse) => {
+    if (!programId) return
+    patchUjatOrganizationApplicationTemporaryAssignmentProcessed(
+      queryClient,
+      programId,
+      response.processed
+    )
+    const mine = response.processed.find(item => String(item.applicationId) === institutionId)
+    if (!mine) return
+    queryClient.setQueryData<OrganizationApplicationDetailDto & UjatTemporaryScheduleAssignedField>(
+      ujatQueryKeys.organizationDetail(programId, institutionId),
+      old =>
+        old
+          ? {
+              ...old,
+              temporaryAssignmentStatus: mine.temporaryAssignmentStatus,
+              temporaryScheduleAssigned: mine.temporaryScheduleAssigned,
+            }
+          : old
+    )
+  }
+
   return {
     row,
     detail,
@@ -156,6 +187,34 @@ export function useUjatInstitutionApplicationDetail(input: {
         throw new Error('원격 API가 비활성 상태라 임시 반려를 반영하지 않았습니다.')
       }
       await invalidate()
+    },
+    /**
+     * 평가 대기 → 임시 배정(일정 미배정). 일부 실패도 HTTP 200이라 응답을 돌려준다.
+     * 성공 건은 processed 값으로 캐시를 맞추고, 재조회(invalidate)는 완료 팝업을 닫을 때 호출한다.
+     */
+    tempAssignRemote: async (): Promise<TemporaryAssignmentBulkResponse> => {
+      const response = await assignUjatOrganizationApplicationsTemporarilyIfRemote({
+        programId,
+        applicationIds: [institutionId],
+      })
+      if (!response) {
+        throw new Error('원격 API가 비활성 상태라 임시 배정을 반영하지 않았습니다.')
+      }
+      applyTemporaryAssignmentProcessed(response)
+      return response
+    },
+    /** 일정 없는 임시 배정(temporaryScheduleAssigned === false) → 평가 대기(EVALUATION_PENDING) */
+    tempAssignCancelRemote: async (): Promise<TemporaryAssignmentBulkResponse> => {
+      const response = await cancelUjatOrganizationTemporaryAssignmentsIfRemote({
+        programId,
+        applicationIds: [institutionId],
+      })
+      if (!response) {
+        throw new Error('원격 API가 비활성 상태라 임시 배정을 취소하지 않았습니다.')
+      }
+      applyTemporaryAssignmentProcessed(response)
+      if (response.processed.length > 0) await invalidate()
+      return response
     },
     tempRejectCancelRemote: async () => {
       const persisted = await cancelUjatOrganizationTemporaryRejectionsIfRemote({

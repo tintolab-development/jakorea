@@ -294,6 +294,7 @@ export function AchievementSection({
             value={activeTab}
             onChange={key => setActiveTab(key as AchievementTabKey)}
             variant="category"
+            stretch
             ariaLabel="걸어온 길과 성과 카테고리"
           />
         </header>

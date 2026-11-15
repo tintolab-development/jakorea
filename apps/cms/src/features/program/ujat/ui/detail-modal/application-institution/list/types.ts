@@ -38,6 +38,11 @@ export type UjatInstitutionApplicationRow = {
   no: number
   institutionName: string
   tempAssignmentStatus: UjatInstitutionTempAssignmentStatus
+  /**
+   * 서버 `temporaryScheduleAssigned` — 임시 배정의 일정 미배정(false)/배정 완료(true) 구분 SSOT.
+   * TEMP_ASSIGNED가 아니면 null. false를 평가 대기로 읽지 않는다.
+   */
+  temporaryScheduleAssigned?: boolean | null
   gradeClassCounts: UjatInstitutionGradeClassCount[]
   totalClassCount: number | null
   scheduleSlots: Record<UjatInstitutionScheduleSlotKey, 'O' | '-'>

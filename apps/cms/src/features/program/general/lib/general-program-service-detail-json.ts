@@ -572,12 +572,26 @@ function mapCommonInfoEducationScheduleDateLabels(
     if (mapped !== line) changed = true
     return mapped
   })
-  const mapRows = <T extends { scheduleDateLabel?: string }>(rows: T[] | undefined): T[] | undefined => {
+  // 과제 제출 기한(assignmentPeriod)도 교육 예정일과 같은 서버 문장으로 저장한다.
+  // BE가 이 문장을 파싱해 assignment-submissions의 assignmentPeriodStart/End를 만든다(QA #96).
+  const mapRows = <T extends { scheduleDateLabel?: string; assignmentPeriod?: string }>(
+    rows: T[] | undefined
+  ): T[] | undefined => {
     if (!rows) return rows
     return rows.map(row => {
       const scheduleDateLabel = nextLine(row.scheduleDateLabel)
-      if (scheduleDateLabel === row.scheduleDateLabel) return row
-      return { ...row, scheduleDateLabel }
+      const assignmentPeriod = nextLine(row.assignmentPeriod)
+      if (
+        scheduleDateLabel === row.scheduleDateLabel &&
+        assignmentPeriod === row.assignmentPeriod
+      ) {
+        return row
+      }
+      return {
+        ...row,
+        ...(scheduleDateLabel !== row.scheduleDateLabel ? { scheduleDateLabel } : {}),
+        ...(assignmentPeriod !== row.assignmentPeriod ? { assignmentPeriod } : {}),
+      }
     })
   }
   const scheduleDetails = mapRows(common.scheduleDetails)

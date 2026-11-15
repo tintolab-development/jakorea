@@ -9,6 +9,7 @@ import {
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
   messageForApplicationBlockedReason,
+  resolveProgramApplicationErrorAlert,
 } from './application-api-error.ts'
 import { readApplicationApiErrorEnvelope } from './summarize-portal-application-submit.ts'
 import {
@@ -429,3 +430,22 @@ assert.equal(
 )
 
 console.log('application-api-error.selfcheck: ok')
+
+// 시안 「오류 제한 팝업」(14491-2533) — 신청 API 오류 팝업
+assert.deepEqual(resolveProgramApplicationErrorAlert(new Error('boom')), {
+  title: '요청을 처리하지 못했어요.',
+  description: '잠시 후 다시 시도해 주세요.',
+})
+assert.deepEqual(resolveProgramApplicationErrorAlert(axiosErr(mismatchBody)), {
+  title: '요청을 처리하지 못했어요.',
+  description: MISMATCH,
+})
+assert.equal(
+  resolveProgramApplicationErrorAlert({ isAxiosError: true, code: 'ERR_NETWORK' }).title,
+  '일시적인 네트워크 오류가 발생했어요.',
+)
+console.log('application-api-error resolveProgramApplicationErrorAlert: ok')
+assert.equal(
+  resolveProgramApplicationErrorAlert(axiosErr({ error: { code: 'FORM_REQUIRED_CONSENT_NOT_AGREED' } })).title,
+  '필수 항목에 동의해 주세요.',
+)

@@ -53,14 +53,13 @@
 }
 
 .instructor-register-modal__basic-info .detail-info-form__title::after,
-.instructor-register-career > .detail-info-form__header .detail-info-form__title::after,
-.instructor-register-consent-required > .detail-info-form__header .detail-info-form__title::after {
+.instructor-register-career > .detail-info-form__header .detail-info-form__title::after {
   content: '*';
   margin-left: 2px;
   color: var(--color-error, #ff4d4f);
 }
 
-/* 약관 및 동의 — 상위 섹션 제목 `*` 없음. 필수 작성 동의서만 헤딩 `*` */
+/* 약관 및 동의 — 시안(14661:55226): 섹션 제목 `*` 없음, 동의서 묶음 소제목 없음(표 2장) */
 
 .instructor-register-modal__affiliation-row {
   display: flex;
@@ -129,10 +128,11 @@
   overflow: visible;
 }
 
+/** 시안: 약관 표(서비스·개인정보·마케팅·초상권)와 동의서 표 사이 16 */
 .instructor-register-modal__consent-form-stack {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }
@@ -172,20 +172,6 @@
 
 .instructor-register-modal__consent-form-stack .detail-info-form__field-content--edit {
   align-items: center;
-}
-
-.instructor-register-modal__consent-document {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0;
-}
-
-.instructor-register-modal__consent-status {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
 }
 
 /** 경력·활동·자격·수상 — 라벨 1칸 통합 + 스택 행 */

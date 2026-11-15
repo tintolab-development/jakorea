@@ -25,6 +25,7 @@ import {
 } from '@/shared/ui'
 import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ConsentStatusValue } from '@/shared/ui/consent-status-value'
 import { FreeWriteItemsSection } from '@/shared/components/free-write-items-section'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
@@ -169,15 +170,15 @@ function ConsentDocumentFieldEdit({
   onWrite: () => void
 }) {
   return (
-    <span className="instructor-register-modal__consent-document">
-      <span className="instructor-register-modal__consent-status">
-        {value === 'agree' ? '동의' : '미동의'}
-      </span>
-      <DetailInfoForm.InputsSeparator />
-      <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
-        {value === 'agree' ? '동의서 보기' : '동의서 작성'}
-      </CmsButton>
-    </span>
+    <ConsentStatusValue
+      className="instructor-register-modal__consent-document"
+      status={value === 'agree' ? '동의' : '미동의'}
+      action={
+        <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
+          {value === 'agree' ? '동의서 보기' : '동의서 작성'}
+        </CmsButton>
+      }
+    />
   )
 }
 
@@ -243,7 +244,9 @@ export function InstructorProfileFormBody({
   const textInputWidth = isDetailEdit ? '100%' : 200
   const consentSurface = isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister'
   const formLayout = getInstructorFormLayout(consentSurface)
-  const consentDocumentGroups = getInstructorConsentDocumentGroups(consentSurface)
+  const consentDocumentItems = getInstructorConsentDocumentGroups(consentSurface).flatMap(
+    group => group.items
+  )
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
@@ -847,47 +850,42 @@ export function InstructorProfileFormBody({
                 </DetailInfoForm.Row>
               </DetailInfoForm>
 
-              {/* 동의서 — 공용 스키마 `documentGroups`: 필수 작성 동의서 / 행정정보 공동이용 동의서 */}
-              {showInstructorConsentDocuments
-                ? consentDocumentGroups.map(group => (
-                    <DetailInfoForm
-                      key={group.id}
-                      title={group.title}
-                      mode="edit"
-                      description={group.footerText}
-                      descriptionPlacement="below"
-                      className={[
-                        'instructor-register-modal__consent-block',
-                        group.required ? 'instructor-register-consent-required' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
+              {/*
+               * 시안(14661:55226 · 8248:145577): 동의서 4건은 소제목·안내 문구 없이 표 1장
+               * (지급조서 | 교육진행자 / 성범죄경력 | 행정정보). 묶음 순서·항목·필수 검증은
+               * 공용 스키마 `documentGroups` 그대로 — 화면에서만 한 표로 합친다.
+               */}
+              {showInstructorConsentDocuments && consentDocumentItems.length > 0 ? (
+                <DetailInfoForm
+                  title="동의서"
+                  hideHeader
+                  mode="edit"
+                  className="instructor-register-modal__consent-block"
+                >
+                  {chunkConsentDocumentRows(consentDocumentItems).map(row => (
+                    <DetailInfoForm.Row
+                      key={row.map(item => item.key).join('-')}
+                      type={row.length > 1 ? 'double' : 'single'}
                     >
-                      {chunkConsentDocumentRows(group.items).map(row => (
-                        <DetailInfoForm.Row
-                          key={row.map(item => item.key).join('-')}
-                          type={row.length > 1 ? 'double' : 'single'}
-                        >
-                          {row.map(item => (
-                            <DetailInfoForm.Field
-                              key={item.key}
-                              label={INSTRUCTOR_REGISTER_CONSENT_DOCUMENT_LABELS[item.key] ?? item.label}
-                              labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                              view="-"
-                              edit={
-                                <Form.Item name={item.key} noStyle>
-                                  <ConsentDocumentFieldEdit
-                                    onWrite={() => handleConsentWrite(item.key)}
-                                  />
-                                </Form.Item>
-                              }
-                            />
-                          ))}
-                        </DetailInfoForm.Row>
+                      {row.map(item => (
+                        <DetailInfoForm.Field
+                          key={item.key}
+                          label={INSTRUCTOR_REGISTER_CONSENT_DOCUMENT_LABELS[item.key] ?? item.label}
+                          labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                          view="-"
+                          edit={
+                            <Form.Item name={item.key} noStyle>
+                              <ConsentDocumentFieldEdit
+                                onWrite={() => handleConsentWrite(item.key)}
+                              />
+                            </Form.Item>
+                          }
+                        />
                       ))}
-                    </DetailInfoForm>
-                  ))
-                : null}
+                    </DetailInfoForm.Row>
+                  ))}
+                </DetailInfoForm>
+              ) : null}
             </div>
           </DetailInfoForm>
         ) : null}
@@ -987,14 +985,14 @@ export function InstructorProfileFormBody({
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaProgramName}
                                       inputSize="small"
-                                      width={200}
+                                      width={240}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'note']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaNote}
                                       inputSize="small"
-                                      width={200}
+                                      width={240}
                                     />
                                   </Form.Item>
                                   {index === 0 ? (
@@ -1055,14 +1053,14 @@ export function InstructorProfileFormBody({
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseTitle}
                                       inputSize="small"
-                                      width={200}
+                                      width={240}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'issuer']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
                                       inputSize="small"
-                                      width={200}
+                                      width={240}
                                     />
                                   </Form.Item>
                                   {index === 0 ? (
@@ -1123,14 +1121,14 @@ export function InstructorProfileFormBody({
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardTitle}
                                       inputSize="small"
-                                      width={200}
+                                      width={240}
                                     />
                                   </Form.Item>
                                   <Form.Item name={[field.name, 'issuer']} noStyle>
                                     <CmsInput
                                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
                                       inputSize="small"
-                                      width={200}
+                                      width={240}
                                     />
                                   </Form.Item>
                                   {index === 0 ? (

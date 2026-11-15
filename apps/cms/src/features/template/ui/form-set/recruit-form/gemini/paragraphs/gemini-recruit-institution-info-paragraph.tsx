@@ -235,8 +235,11 @@ export function GeminiRecruitInstitutionInfoParagraph() {
           onTrainingRequestPeriodChange={handleTrainingRequestPeriodChange}
           onMinStudentCountChange={handleMinStudentCountChange}
           onChange={handleChange}
-          // 템플릿 Gemini 모집 폼 — 교육 대상 고정 (QA 261113 #60)
-          fixedEducationTargetLabel={GEMINI_TEMPLATE_FIXED_EDUCATION_TARGET_LABEL}
+          // 템플릿 관리 Gemini 모집 폼만 교육 대상 고정 (QA 261113 #60).
+          // 프로그램 등록은 같은 단락을 쓰므로 고정하면 값이 비어 필수 검사에 막힌다.
+          fixedEducationTargetLabel={
+            isTemplateManagementScreen ? GEMINI_TEMPLATE_FIXED_EDUCATION_TARGET_LABEL : undefined
+          }
           placeholderOverrides={GEMINI_TEMPLATE_PLACEHOLDERS}
           inquiryInputLayout={GEMINI_TEMPLATE_INQUIRY_INPUT_LAYOUT}
         />

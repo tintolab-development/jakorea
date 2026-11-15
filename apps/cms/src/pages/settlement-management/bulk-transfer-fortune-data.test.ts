@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import {
+  buildBulkTransferColumnLengths,
   buildBulkTransferPreviewSheetRows,
   buildBulkTransferSheetRows,
 } from './bulk-transfer-fortune-data'
@@ -89,5 +90,24 @@ describe('buildBulkTransferSheetRows', () => {
     const fromServer = row('awaiting_confirmation', { maskedRecipientPhone: '010-****-1234' })
     expect(buildBulkTransferPreviewSheetRows([fromServer])[0]?.mobile).toBe('010-****-1234')
     expect(buildBulkTransferSheetRows([fromServer])[0]?.mobile).toBe('')
+  })
+})
+
+describe('buildBulkTransferColumnLengths', () => {
+  const base = [114, 156, 133, 114, 133, 133, 189, 114, 156]
+  const sum = (lengths: Record<string, number>) =>
+    Object.values(lengths).reduce((total, width) => total + width, 0)
+
+  it('시트 영역이 좁거나 폭이 없으면 원래 열 너비를 유지한다', () => {
+    expect(buildBulkTransferColumnLengths()).toEqual(
+      Object.fromEntries(base.map((width, index) => [String(index), width]))
+    )
+    expect(sum(buildBulkTransferColumnLengths(800))).toBe(1242)
+  })
+
+  it('시트 영역이 넓으면 열 경계선 1px씩을 포함해 폭을 꽉 채운다', () => {
+    const lengths = buildBulkTransferColumnLengths(1800)
+    expect(sum(lengths) + base.length).toBe(1800)
+    expect(lengths['0']!).toBeGreaterThan(114)
   })
 })

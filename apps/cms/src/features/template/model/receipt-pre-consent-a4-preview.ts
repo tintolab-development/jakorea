@@ -16,7 +16,8 @@ export const RECEIPT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS = new Set<st
   RECEIPT_PRE_CONSENT_IDS.paymentRecord,
 ])
 
-const RECEIPT_PRE_CONSENT_A4_SECTION_GAP_PX = 24
+/** 시안 16046:112875 — 문단 간격 40 */
+const RECEIPT_PRE_CONSENT_A4_SECTION_GAP_PX = 40
 
 export const getReceiptPreConsentA4ParagraphGap: FormDocumentPreviewParagraphGapResolver = (
   paragraph,

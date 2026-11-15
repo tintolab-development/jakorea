@@ -55,8 +55,12 @@ export type EducationSettlementItem = {
   amount?: number
   rejectReason?: string
   settlementApplicationId?: number
-  /** 강사 지급조서: 최신 정산 revision ID (재신청 API 경로). 정산 전이면 없음 */
+  /** 강사 지급조서: 최신 정산 revision ID (재신청·정정 요청 API 경로). 정산 전이면 없음 */
   settlementId?: number
+  /** 계좌 지급 상태. 확인 완료 후 정정 요청은 READY_TO_PAY·PAID가 아닐 때만 연다 */
+  paymentStatus?: string
+  /** CMS가 정산 전 신청서에 정정 요청을 보낸 경우. 회원 지급조서 정정과 구분한다. */
+  adminApplicationCorrection?: boolean
   receiptId?: number
   currentRevisionNo?: number
   canSubmitReceipt?: boolean
@@ -92,6 +96,10 @@ export type EducationSettlementItem = {
   operationEnded?: boolean
   /** 강사 지급조서: 사업 운영 종료일(YYYY-MM-DD). 마감 후 지연 제출 안내에 쓴다 */
   businessEndDate?: string
+  /** 영수증 일정: 승인 후 이체 예정일(YYYY-MM-DD). 승인 전이면 없음 */
+  expectedTransferDate?: string
+  /** 영수증 일정: 계좌 지급 완료 시각. 지급 전이면 없음 */
+  paidAt?: string
 }
 
 export const EDUCATION_SETTLEMENT_PAGE_SIZE = 7

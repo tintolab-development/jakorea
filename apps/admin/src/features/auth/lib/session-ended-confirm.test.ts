@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 /**
- * 세션 종료 확인 흐름 — 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인]·닫기 때 한 번만 로그아웃한다.
+ * 세션 종료 확인 흐름 — 지금 화면에서 「자동 로그아웃 안내」를 띄우고 [확인]·닫기 때 한 번만 로그아웃한다.
  */
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'

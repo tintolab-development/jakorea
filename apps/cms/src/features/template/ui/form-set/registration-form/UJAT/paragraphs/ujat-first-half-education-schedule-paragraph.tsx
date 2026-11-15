@@ -20,7 +20,16 @@ export function UjatHalfEducationScheduleParagraph({
     scheduleForm?.getValues() ?? EMPTY_UJAT_TYPED_DETAIL,
     half
   )
-  return <HalfEducationScheduleSection half={half} mode="edit" display={display} scheduleForm={scheduleForm} />
+  // 등록 양식 단락(템플릿 관리·등록 위저드) — 시안 4082:104345 값 적용
+  return (
+    <HalfEducationScheduleSection
+      half={half}
+      mode="edit"
+      display={display}
+      scheduleForm={scheduleForm}
+      designPreset="registration-form"
+    />
+  )
 }
 
 /** @deprecated `UjatHalfEducationScheduleParagraph` 사용 */

@@ -51,12 +51,26 @@ export type ExposureMode = 'program' | 'instructor'
 /** 지급조서 처리 현황 — `all`은 URL·필터에서 미선택 */
 export type PaymentOrderProcessingStatusFilter = 'all' | PaymentOrderAdminProcessingStatus
 
+/** 정산 대상자 구분 — `all`은 URL·필터에서 미선택. 제미나이 강사는 INSTRUCTOR에 포함 */
+export const PAYMENT_ORDER_PAYEE_TYPES = ['INSTRUCTOR', 'PARTICIPANT', 'VOLUNTEER'] as const
+export type PaymentOrderPayeeType = (typeof PAYMENT_ORDER_PAYEE_TYPES)[number]
+export type PaymentOrderPayeeTypeFilter = 'all' | PaymentOrderPayeeType
+
+export const PAYMENT_ORDERS_PAYEE_PARAM_KEY = `${P}_payee`
+
+export function parsePaymentOrderPayeeTypeFilter(raw: string | null): PaymentOrderPayeeTypeFilter {
+  return PAYMENT_ORDER_PAYEE_TYPES.includes(raw as PaymentOrderPayeeType)
+    ? (raw as PaymentOrderPayeeType)
+    : 'all'
+}
+
 export type PaymentOrdersPendingFilters = {
   exposureMode: ExposureMode
   programName: string
   instructorName: string
   processingStatus: PaymentOrderProcessingStatusFilter
   pendingItemBucket: PaymentOrderPendingItemBucketFilter
+  payeeType: PaymentOrderPayeeTypeFilter
   dateRange: [Dayjs | null, Dayjs | null] | null
 }
 
@@ -111,6 +125,9 @@ export function parsePaymentOrdersFiltersFromUrl(
     PENDING_BUCKET_PARAM_VALUES.includes(bucketRaw as PaymentOrderPendingItemBucket)
       ? (bucketRaw as PaymentOrderPendingItemBucket)
       : 'all'
+  const payeeType = parsePaymentOrderPayeeTypeFilter(
+    searchParams.get(PAYMENT_ORDERS_PAYEE_PARAM_KEY)
+  )
   const fromStr = searchParams.get(`${P}_from`)
   const toStr = searchParams.get(`${P}_to`)
   let dateRange: [Dayjs | null, Dayjs | null] | null = null
@@ -127,6 +144,7 @@ export function parsePaymentOrdersFiltersFromUrl(
     instructorName,
     processingStatus,
     pendingItemBucket,
+    payeeType,
     dateRange,
   }
 }
@@ -244,6 +262,13 @@ function searchSyncRules(): readonly TableSearchParamRule<PaymentOrdersPendingFi
       transform: v => String(v),
     },
     {
+      kind: 'param',
+      filterKey: 'payeeType',
+      paramKey: PAYMENT_ORDERS_PAYEE_PARAM_KEY,
+      condition: f => f.payeeType !== 'all',
+      transform: v => String(v),
+    },
+    {
       kind: 'apply',
       apply: (nextParams, filters) => {
         const range = filters.dateRange
@@ -274,6 +299,7 @@ export function createPaymentOrdersTablePageConfig(
         instructorName: '',
         processingStatus: 'all',
         pendingItemBucket: 'all',
+        payeeType: 'all',
         dateRange: null,
       },
       syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
@@ -285,6 +311,7 @@ export function createPaymentOrdersTablePageConfig(
             prev.instructorName === next.instructorName &&
             prev.processingStatus === next.processingStatus &&
             prev.pendingItemBucket === next.pendingItemBucket &&
+            prev.payeeType === next.payeeType &&
             isSamePendingDateRange(prev.dateRange, next.dateRange)
           ) {
             return prev
@@ -299,6 +326,8 @@ export function createPaymentOrdersTablePageConfig(
             (searchParams.get(`${P}_inst`) ?? '').trim() ||
             (searchParams.get(`${P}_status`) && searchParams.get(`${P}_status`) !== 'all') ||
             (searchParams.get(`${P}_bucket`) && searchParams.get(`${P}_bucket`) !== 'all') ||
+            parsePaymentOrderPayeeTypeFilter(searchParams.get(PAYMENT_ORDERS_PAYEE_PARAM_KEY)) !==
+              'all' ||
             (searchParams.get(`${P}_from`) || searchParams.get(`${P}_to`))
         ),
       getBaseCount: ({ filteredData }) => filteredData.length,
@@ -329,6 +358,12 @@ export function createPaymentOrdersTablePageConfig(
             pendingItemBucket: (value == null || value === ''
               ? 'all'
               : value) as PaymentOrderPendingItemBucketFilter,
+          }
+        }
+        if (key === 'payeeType') {
+          return {
+            ...prev,
+            payeeType: parsePaymentOrderPayeeTypeFilter(value == null ? null : String(value)),
           }
         }
         if (key === 'dateRange') {

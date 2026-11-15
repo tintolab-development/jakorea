@@ -62,7 +62,7 @@ describe('QA-0137 새로고침 복원 실패 안내 UI', () => {
 
   it('안내가 없으면 아무것도 띄우지 않는다', () => {
     render(<BootstrapSessionNotice />)
-    expect(hasText('로그인 정보를 확인하지 못했어요.')).toBe(false)
+    expect(hasText('네트워크 오류 안내')).toBe(false)
     expect(showAlert).not.toHaveBeenCalled()
   })
 
@@ -71,27 +71,26 @@ describe('QA-0137 새로고침 복원 실패 안내 UI', () => {
     render(<BootstrapSessionNotice />)
     expect(showAlert).toHaveBeenCalledTimes(1)
     expect(showAlert).toHaveBeenCalledWith({
-      title: '로그인이 종료되었어요.',
-      content: '로그인 유지 시간이 지났거나 로그아웃되어 다시 로그인이 필요해요.',
+      title: '자동 로그아웃 안내',
+      content: '보안을 위해 로그인 세션이 종료되었습니다.\n계속 이용하시려면 다시 로그인해 주세요.',
       confirmLabel: '확인',
     })
     expect(useAuthStore.getState().bootstrapNotice).toBeNull()
   })
 
-  it('unreachable은 [닫기] [다시 시도] 확인 모달을 띄우고 각각 연결된다', async () => {
+  it('unreachable은 시안 「네트워크 오류 안내」 [확인] Alert를 띄우고 확인하면 로그인 화면으로 보낸다', async () => {
     useAuthStore.setState({ bootstrapNotice: 'unreachable' })
     render(<BootstrapSessionNotice />)
-    expect(hasText('로그인 정보를 확인하지 못했어요.')).toBe(true)
-    expect(hasText('네트워크 상태를 확인한 뒤 다시 시도해 주세요.')).toBe(true)
+    expect(hasText('네트워크 오류 안내')).toBe(true)
+    expect(hasText('일시적인 네트워크 오류가 발생하였습니다.')).toBe(true)
+    expect(
+      Array.from(document.querySelectorAll('button')).some(b => b.textContent?.trim() === '다시 시도')
+    ).toBe(false)
 
     await act(async () => {
-      buttonNamed('다시 시도').click()
-    })
-    expect(retryBootstrapRestore).toHaveBeenCalledTimes(1)
-
-    await act(async () => {
-      buttonNamed('닫기').click()
+      buttonNamed('확인').click()
     })
     expect(dismissBootstrapUnreachable).toHaveBeenCalled()
+    expect(retryBootstrapRestore).not.toHaveBeenCalled()
   })
 })

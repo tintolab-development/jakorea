@@ -1,9 +1,9 @@
 /**
  * QA-0137 새로고침 세션 복원 — refresh 실패 분류 (Platform·CMS와 같은 기준).
  *
- * - session-invalid: 400·401·403, 그리고 다시 보낼 새 값이 없는 409 REFRESH_TOKEN_ALREADY_ROTATED. 세션을 되살릴 수 없다 → 로컬 로그아웃 후 로그인 화면에서 "로그인이 종료되었어요." 안내.
+ * - session-invalid: 400·401·403, 그리고 다시 보낼 새 값이 없는 409 REFRESH_TOKEN_ALREADY_ROTATED. 세션을 되살릴 수 없다 → 로컬 로그아웃 후 로그인 화면에서 「자동 로그아웃 안내」 안내.
  * - transient: 그 밖의 전부 (404·다른 409 등 4xx, 응답 형식 오류, 네트워크, 5xx, 요청 시간 초과).
- *   로그아웃하지 않고 "로그인 정보를 확인하지 못했어요." 재시도 안내로 보낸다.
+ *   로그아웃하지 않고 「네트워크 오류 안내」로 보낸다.
  */
 import axios from 'axios'
 

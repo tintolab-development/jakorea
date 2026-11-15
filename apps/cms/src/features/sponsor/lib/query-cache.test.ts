@@ -2,10 +2,12 @@ import { QueryClient, type InfiniteData } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   applyDeletedSponsorsToLists,
   discardDeletedSponsorCaches,
+  invalidateSponsorDonationAggregateCaches,
 } from './query-cache'
 
 function row(id: string, name = id): SponsorManagementRow {
@@ -110,5 +112,32 @@ describe('sponsor query-cache', () => {
     expect(queryClient.getQueryData(yearlyKey)).toBeUndefined()
     expect(queryClient.getQueryData(contactsKey)).toBeUndefined()
     expect(queryClient.getQueryData(historyKey)).toBeUndefined()
+  })
+
+  it('연도별 후원금 저장 후 목록·상세·예산 요약만 다시 조회하게 한다', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const sponsorId = '163301'
+    const listKey = dataManagementQueryKeys.sponsors.list('')
+    const detailKey = dataManagementQueryKeys.sponsors.detail(sponsorId)
+    const otherDetailKey = dataManagementQueryKeys.sponsors.detail('9')
+    const budgetKey = settlementQueryKeys.accountPayments.budgetSummary(2026)
+    const otherYearBudgetKey = settlementQueryKeys.accountPayments.budgetSummary(2025)
+    const paymentsListKey = settlementQueryKeys.accountPayments.list('year=2026')
+
+    queryClient.setQueryData(listKey, { pages: [], pageParams: [] })
+    queryClient.setQueryData(detailKey, { id: sponsorId })
+    queryClient.setQueryData(otherDetailKey, { id: '9' })
+    queryClient.setQueryData(budgetKey, { annualBudgetAmount: 1 })
+    queryClient.setQueryData(otherYearBudgetKey, { annualBudgetAmount: 2 })
+    queryClient.setQueryData(paymentsListKey, [])
+
+    await invalidateSponsorDonationAggregateCaches(queryClient, sponsorId)
+
+    expect(queryClient.getQueryState(listKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(detailKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(otherDetailKey)?.isInvalidated).toBe(false)
+    expect(queryClient.getQueryState(budgetKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(otherYearBudgetKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(paymentsListKey)?.isInvalidated).toBe(false)
   })
 })

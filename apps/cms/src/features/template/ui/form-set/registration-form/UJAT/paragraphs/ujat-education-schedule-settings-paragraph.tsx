@@ -22,6 +22,7 @@ export function UjatEducationScheduleSettingsParagraph({
       h1Display={h1Display}
       h2Display={h2Display}
       scheduleForm={scheduleForm}
+      designPreset="registration-form"
     />
   )
 }

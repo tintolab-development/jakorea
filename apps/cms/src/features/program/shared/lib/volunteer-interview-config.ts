@@ -9,6 +9,13 @@
 
 export const VOLUNTEER_INTERVIEW_OVERLAY_PREFIX = 'recruit.volunteer.interview'
 
+/**
+ * 일반 개인 참여자 모집 행(PARTICIPANT·INDIVIDUAL) 면접 일정 overlay 접두사.
+ * 봉사자와 같은 RecruitmentInterviewConfig 를 참여자 행 `interviewConfig` 에 저장한다(keonhee 2026-11).
+ * 참여자 키는 typed 행 값이 정본이라 serviceDetailJson 에 저장하지 않는다(BE overlay fallback 없음).
+ */
+export const PARTICIPANT_INTERVIEW_OVERLAY_PREFIX = 'recruit.individual.interview'
+
 export type RecruitmentInterviewExclusionState = {
   excludeSaturday?: boolean | null
   excludeSunday?: boolean | null
@@ -37,7 +44,19 @@ export const INTERVIEW_CONFIG_SCHEMA_VERSION = 1
 const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000
 const SLOT_KEY = /^(\d+)-(\d+)$/
 const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/
-const EXCEPTION_KEY = /^recruit\.volunteer\.interview\.exception\.([^.]+)\.(.+)$/
+function exceptionKeyPattern(prefix: string): RegExp {
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`^${escaped}\\.exception\\.([^.]+)\\.(.+)$`)
+}
+
+const EXCEPTION_KEY = exceptionKeyPattern(VOLUNTEER_INTERVIEW_OVERLAY_PREFIX)
+const PARTICIPANT_EXCEPTION_KEY = exceptionKeyPattern(PARTICIPANT_INTERVIEW_OVERLAY_PREFIX)
+
+function exceptionKeyPatternFor(prefix: string): RegExp {
+  if (prefix === VOLUNTEER_INTERVIEW_OVERLAY_PREFIX) return EXCEPTION_KEY
+  if (prefix === PARTICIPANT_INTERVIEW_OVERLAY_PREFIX) return PARTICIPANT_EXCEPTION_KEY
+  return exceptionKeyPattern(prefix)
+}
 
 /** overlay 면접 키 중 typed 값이 덮는 접미사 */
 const COVERED_SUFFIXES = [
@@ -134,10 +153,13 @@ function readOverlay(overlay: Record<string, unknown>, suffix: string): unknown 
   return undefined
 }
 
-function exceptionsFromOverlay(overlay: Record<string, unknown>): RecruitmentInterviewException[] {
+function exceptionsFromOverlay(
+  overlay: Record<string, unknown>,
+  pattern: RegExp = EXCEPTION_KEY
+): RecruitmentInterviewException[] {
   const drafts = new Map<string, RecruitmentInterviewException>()
   for (const [key, value] of Object.entries(overlay)) {
-    const m = EXCEPTION_KEY.exec(key)
+    const m = pattern.exec(key)
     if (!m) continue
     const [, id, suffix] = m
     const current = drafts.get(id) ?? { id, exceptionDate: null, selectedSlotKeys: [] }
@@ -238,8 +260,16 @@ function uniq(values: string[]): string[] {
 export function buildVolunteerInterviewConfigForSave(
   overlay: Record<string, unknown> | null | undefined
 ): RecruitmentInterviewConfig {
+  return buildInterviewConfigForSaveWithPrefix(overlay, VOLUNTEER_INTERVIEW_OVERLAY_PREFIX)
+}
+
+/** `buildVolunteerInterviewConfigForSave` 와 같은 규칙 — overlay 접두사만 다르다 */
+function buildInterviewConfigForSaveWithPrefix(
+  overlay: Record<string, unknown> | null | undefined,
+  prefix: string
+): RecruitmentInterviewConfig {
   const source = overlay ?? {}
-  const p = VOLUNTEER_INTERVIEW_OVERLAY_PREFIX
+  const p = prefix
   const config: RecruitmentInterviewConfig = { schemaVersion: INTERVIEW_CONFIG_SCHEMA_VERSION }
 
   const slotKeys = validSlotKeys(source[`${p}.selectedSlotKeys`])
@@ -270,7 +300,7 @@ export function buildVolunteerInterviewConfigForSave(
   }
 
   const exceptions: RecruitmentInterviewException[] = []
-  for (const block of exceptionsFromOverlay(source)) {
+  for (const block of exceptionsFromOverlay(source, exceptionKeyPatternFor(p))) {
     const keys = validSlotKeys(source[`${p}.exception.${block.id}.selectedSlotKeys`])
     if (block.exceptionDate == null && keys.length === 0) continue
     exceptions.push({
@@ -374,8 +404,17 @@ export function applyTypedVolunteerInterviewToOverlay(
   const fromSaveShape = buildVolunteerInterviewConfigForSave(base)
   if (volunteerInterviewConfigsEqual(config, fromSaveShape)) return overlay
   if (overlay == null && isEmptyConfig(config)) return overlay
+  return writeTypedInterviewConfigToOverlay(base, config, VOLUNTEER_INTERVIEW_OVERLAY_PREFIX)
+}
 
-  const p = VOLUNTEER_INTERVIEW_OVERLAY_PREFIX
+/** typed 값을 `prefix` 면접 overlay 키로 쓴다(덮는 키·남지 않은 예외 블록은 지운다). */
+function writeTypedInterviewConfigToOverlay(
+  base: Record<string, unknown>,
+  config: RecruitmentInterviewConfig,
+  prefix: string
+): Record<string, unknown> {
+  const p = prefix
+  const pattern = exceptionKeyPatternFor(p)
   const next: Record<string, unknown> = { ...base }
   for (const suffix of COVERED_SUFFIXES) delete next[`${p}.${suffix}`]
 
@@ -412,7 +451,7 @@ export function applyTypedVolunteerInterviewToOverlay(
     (config.exceptions ?? []).map(e => e.id).filter((id): id is string => !!id)
   )
   for (const key of Object.keys(next)) {
-    const m = EXCEPTION_KEY.exec(key)
+    const m = pattern.exec(key)
     if (m && !keepIds.has(m[1])) delete next[key]
   }
   for (const exception of config.exceptions ?? []) {
@@ -450,11 +489,15 @@ const TYPED_COVERED_EXCEPTION_SUFFIXES = new Set([
 ])
 
 export function isTypedCoveredVolunteerInterviewOverlayKey(key: string): boolean {
-  const p = `${VOLUNTEER_INTERVIEW_OVERLAY_PREFIX}.`
+  return isTypedCoveredInterviewOverlayKeyWithPrefix(key, VOLUNTEER_INTERVIEW_OVERLAY_PREFIX)
+}
+
+function isTypedCoveredInterviewOverlayKeyWithPrefix(key: string, prefix: string): boolean {
+  const p = `${prefix}.`
   if (!key.startsWith(p)) return false
   const rest = key.slice(p.length)
   if ((COVERED_SUFFIXES as readonly string[]).includes(rest)) return true
-  const m = EXCEPTION_KEY.exec(key)
+  const m = exceptionKeyPatternFor(prefix).exec(key)
   return m != null && TYPED_COVERED_EXCEPTION_SUFFIXES.has(m[2])
 }
 
@@ -628,12 +671,29 @@ export function buildVolunteerInterviewConfigForRowSave(
   overlay: Record<string, unknown> | null | undefined,
   stored: RecruitmentInterviewConfig | null | undefined
 ): RecruitmentInterviewConfig | undefined {
+  return buildInterviewConfigForRowSaveWithPrefix(
+    overlay,
+    stored,
+    VOLUNTEER_INTERVIEW_OVERLAY_PREFIX,
+    volunteerInterviewConfigFromOverlayLikeServer
+  )
+}
+
+function buildInterviewConfigForRowSaveWithPrefix(
+  overlay: Record<string, unknown> | null | undefined,
+  stored: RecruitmentInterviewConfig | null | undefined,
+  prefix: string,
+  legacyFallback?: (source: Record<string, unknown>) => RecruitmentInterviewConfig | null
+): RecruitmentInterviewConfig | undefined {
   const source = overlay ?? {}
-  const p = VOLUNTEER_INTERVIEW_OVERLAY_PREFIX
-  const keys = Object.keys(source).filter(isTypedCoveredVolunteerInterviewOverlayKey)
+  const p = prefix
+  const pattern = exceptionKeyPatternFor(p)
+  const keys = Object.keys(source).filter(key =>
+    isTypedCoveredInterviewOverlayKeyWithPrefix(key, p)
+  )
   if (keys.length === 0) return undefined
-  const fromForm = buildVolunteerInterviewConfigForSave(source)
-  const base = stored ?? volunteerInterviewConfigFromOverlayLikeServer(source) ?? {}
+  const fromForm = buildInterviewConfigForSaveWithPrefix(source, p)
+  const base = stored ?? legacyFallback?.(source) ?? {}
   const merged: RecruitmentInterviewConfig = { schemaVersion: INTERVIEW_CONFIG_SCHEMA_VERSION }
   for (const suffix of COVERED_SUFFIXES) {
     const field = CONFIG_FIELD_BY_SUFFIX[suffix]
@@ -643,8 +703,116 @@ export function buildVolunteerInterviewConfigForRowSave(
     ;(merged as Record<string, unknown>)[field] = value ?? null
   }
   const formOwnsExceptions =
-    keys.some(key => EXCEPTION_KEY.test(key)) ||
+    keys.some(key => pattern.test(key)) ||
     Object.prototype.hasOwnProperty.call(source, `${p}.selectedSlotKeys`)
   merged.exceptions = formOwnsExceptions ? (fromForm.exceptions ?? []) : (base.exceptions ?? [])
   return completeVolunteerInterviewConfig(merged)
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 일반 개인 참여자 모집 행(PARTICIPANT·INDIVIDUAL) interviewConfig — 봉사자와 같은 typed 모양.
+ * - 키: `recruit.individual.interview.*`(봉사자 `recruit.volunteer.interview.*` 와 같은 접미사)
+ * - 조회: 행 typed 가 정본. null = 저장 값 없음 → 참여자 면접 키를 비운다(봉사 일정을 기본값으로 쓰지 않는다)
+ * - 저장: 생성은 전체 객체, 행 PATCH 는 저장 typed + 폼 키 합본(폼에 면접 키가 없으면 보내지 않음 = 유지)
+ * ---------------------------------------------------------------------------------------------- */
+
+/** 참여자 면접 일정 overlay 키(`recruit.individual.interview.` 하위 전부) */
+export function isParticipantInterviewOverlayKey(key: string): boolean {
+  return key.startsWith(`${PARTICIPANT_INTERVIEW_OVERLAY_PREFIX}.`)
+}
+
+/** 참여자 typed 가 덮는 overlay 키 — 봉사자 `isTypedCoveredVolunteerInterviewOverlayKey` 와 같은 접미사 */
+export function isTypedCoveredParticipantInterviewOverlayKey(key: string): boolean {
+  return isTypedCoveredInterviewOverlayKeyWithPrefix(key, PARTICIPANT_INTERVIEW_OVERLAY_PREFIX)
+}
+
+/** 생성용 전체 typed — overlay 참여자 면접 키에서 만든다(값 없으면 빈 배열·null 을 명시) */
+export function buildParticipantInterviewConfigForSave(
+  overlay: Record<string, unknown> | null | undefined
+): RecruitmentInterviewConfig {
+  return completeVolunteerInterviewConfig(
+    buildInterviewConfigForSaveWithPrefix(overlay, PARTICIPANT_INTERVIEW_OVERLAY_PREFIX)
+  )
+}
+
+/**
+ * 조회 — 참여자 행 typed 를 overlay 참여자 면접 키로 쓴다.
+ * - `undefined`: 서버 조회가 아닌 Program(등록 미리보기 등) → overlay 그대로
+ * - `null`: 저장 값 없음 → 참여자 면접 키를 모두 지운다(빈 폼)
+ * - 값: 참여자 면접 키를 모두 지우고 typed 로 다시 쓴다
+ */
+export function applyTypedParticipantInterviewToOverlay(
+  overlay: Record<string, unknown> | undefined,
+  config: RecruitmentInterviewConfig | null | undefined
+): Record<string, unknown> | undefined {
+  if (config === undefined) return overlay
+  const base = overlay ?? {}
+  const kept = Object.fromEntries(
+    Object.entries(base).filter(([key]) => !isParticipantInterviewOverlayKey(key))
+  )
+  if (config === null) {
+    return Object.keys(kept).length === Object.keys(base).length ? overlay : kept
+  }
+  if (overlay == null && isEmptyConfig(config)) return overlay
+  return writeTypedInterviewConfigToOverlay(kept, config, PARTICIPANT_INTERVIEW_OVERLAY_PREFIX)
+}
+
+/**
+ * 참여자 행 PATCH 용 interviewConfig — `buildVolunteerInterviewConfigForRowSave` 와 같은 합본 규칙.
+ * 참여자는 구 overlay fallback 이 없다(저장 typed 없으면 폼 값만).
+ */
+export function buildParticipantInterviewConfigForRowSave(
+  overlay: Record<string, unknown> | null | undefined,
+  stored: RecruitmentInterviewConfig | null | undefined
+): RecruitmentInterviewConfig | undefined {
+  return buildInterviewConfigForRowSaveWithPrefix(
+    overlay,
+    stored,
+    PARTICIPANT_INTERVIEW_OVERLAY_PREFIX
+  )
+}
+
+/**
+ * 저장 본문 serviceDetailJson 에서 참여자 면접 overlay 키(`recruit.individual.interview.*`)를 뺀다.
+ * 정본은 참여자 행 typed interviewConfig. 뺄 것이 없으면 입력 문자열을 그대로 돌려준다.
+ */
+export function omitParticipantInterviewKeysFromServiceDetailJson(
+  serviceDetailJson: string | undefined
+): string | undefined {
+  if (!serviceDetailJson) return serviceDetailJson
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(serviceDetailJson)
+  } catch {
+    return serviceDetailJson
+  }
+  if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed))
+    return serviceDetailJson
+  const root = parsed as Record<string, unknown>
+  const registration = root.registration
+  if (registration == null || typeof registration !== 'object' || Array.isArray(registration)) {
+    return serviceDetailJson
+  }
+  const overlay = (registration as Record<string, unknown>).overlay
+  if (overlay == null || typeof overlay !== 'object' || Array.isArray(overlay)) {
+    return serviceDetailJson
+  }
+  const entries = Object.entries(overlay as Record<string, unknown>)
+  const kept = entries.filter(([key]) => !isParticipantInterviewOverlayKey(key))
+  if (kept.length === entries.length) return serviceDetailJson
+  ;(registration as Record<string, unknown>).overlay = Object.fromEntries(kept)
+  return JSON.stringify(root)
+}
+
+/** BE 가 참여자 행 interviewConfig 를 받는 프로그램 유형(GENERAL 계열) */
+const PARTICIPANT_INTERVIEW_CONFIG_PROGRAM_TYPES = new Set([
+  'GENERAL',
+  'GENERAL_INDIVIDUAL',
+  'GENERAL_ORGANIZATION',
+])
+
+export function supportsParticipantInterviewConfigProgramType(
+  programType: string | null | undefined
+): boolean {
+  return PARTICIPANT_INTERVIEW_CONFIG_PROGRAM_TYPES.has((programType ?? '').trim().toUpperCase())
 }

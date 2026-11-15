@@ -22,6 +22,11 @@ import {
   type SettlementDocumentInfoRow,
 } from '../lib/format-application-document'
 import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
+import { PFAlertModal } from '@/shared/ui'
+import {
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import styles from './application-document-view.module.css'
 import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
@@ -129,7 +134,7 @@ export function EducationSettlementApplicationDocumentView({
   refreshing = false,
 }: EducationSettlementApplicationDocumentViewProps) {
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<number | null>(null)
-  const [attachmentError, setAttachmentError] = useState<string | null>(null)
+  const [attachmentAlert, setAttachmentAlert] = useState<EducationAlert | null>(null)
 
   useEffect(() => {
     warnIfSettlementDocumentTotalMismatch(document)
@@ -148,7 +153,6 @@ export function EducationSettlementApplicationDocumentView({
     }
     const fileName = attachment.originalFileName?.trim() || `첨부파일-${validFileObjectId}`
     setDownloadingAttachmentId(validFileObjectId)
-    setAttachmentError(null)
     try {
       const resolved =
         await requestSettlementApplicationDocumentAttachmentDownload(validFileObjectId)
@@ -161,8 +165,9 @@ export function EducationSettlementApplicationDocumentView({
         throw new Error('empty attachment')
       }
       saveAttachmentBlob(fileName, blob)
-    } catch {
-      setAttachmentError('첨부파일 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+    } catch (error) {
+      // 시안 오류 팝업 — 네트워크·처리 제한·처리 실패
+      setAttachmentAlert(resolveEducationErrorAlert(error, () => ''))
       void Promise.resolve(onRefreshDocument()).catch(() => undefined)
     } finally {
       setDownloadingAttachmentId(null)
@@ -239,7 +244,13 @@ export function EducationSettlementApplicationDocumentView({
               })}
             </ul>
           )}
-          {attachmentError ? <p className={styles.attachmentError}>{attachmentError}</p> : null}
+          <PFAlertModal
+            open={attachmentAlert != null}
+            title={attachmentAlert?.title ?? ''}
+            description={attachmentAlert?.description}
+            backdropClassName={styles.alertBackdrop}
+            onConfirm={() => setAttachmentAlert(null)}
+          />
         </section>
       </div>
     )

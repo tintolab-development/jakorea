@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { buildSettlementWriteDraft } from './build-write-draft.ts'
 import {
+  collectSettlementWriteRequiredMissingLabels,
   resolveSettlementWriteValidationAlert,
   validateSettlementWriteDraft,
 } from './validate-write-draft.ts'
@@ -105,6 +106,10 @@ assert.equal(
   resolveSettlementWriteValidationAlert('required_incomplete').title,
   '입력하지 않은 필수 항목이 있어요.',
 )
+
+const missingAccount = buildSettlementWriteDraft({ ...base, bank: '', departAmount: '5,000' })
+assert.equal(validateSettlementWriteDraft(missingAccount), 'required_incomplete')
+assert.deepEqual(collectSettlementWriteRequiredMissingLabels(missingAccount), ['정산 계좌 정보'])
 
 const instructorPaymentMissingTransit = buildSettlementWriteDraft({
   ...base,

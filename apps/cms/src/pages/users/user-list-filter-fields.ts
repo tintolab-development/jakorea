@@ -55,8 +55,6 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
   width: FILTER_CONTROL_MAX_WIDTH_PX,
   options: [
     { label: '전체', value: 'ALL' },
-    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.INDIVIDUAL, value: 'INDIVIDUAL' },
-    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.SCHOOL_TEACHER, value: 'SCHOOL_TEACHER' },
     ...ALL_TAB_ROLE_SELECT_VALUES.map(value => ({
       label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS[value],
       value,

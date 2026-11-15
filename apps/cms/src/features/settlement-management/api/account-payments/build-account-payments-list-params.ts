@@ -11,6 +11,8 @@ export type AccountPaymentsListFilterInput = {
   toDate?: string
   /** fromDate/toDate가 없을 때 BE 연도 윈도우 (목록만; 연도 탭 예산과 분리) */
   year?: number
+  /** 신청자 유형(정산 대상자 구분). `all`·생략이면 전체 */
+  payeeType?: 'all' | NonNullable<ListAccountPaymentsParams['payeeType']>
 }
 
 /**
@@ -42,6 +44,10 @@ export function buildAccountPaymentsListParams(
   if (filters.toDate) params.toDate = filters.toDate
   if (!filters.fromDate && !filters.toDate && filters.year != null) {
     params.year = filters.year
+  }
+
+  if (filters.payeeType && filters.payeeType !== 'all') {
+    params.payeeType = filters.payeeType
   }
 
   return params

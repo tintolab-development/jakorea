@@ -61,7 +61,27 @@ export const PLATFORM_ALERT_COPY = {
     title: '비밀번호가 변경되었어요.',
     description: '다음부터는 새 비밀번호로 로그인해 주세요.',
   },
+  /** 미리보기 실패 시 */
+  previewFailed: {
+    title: '미리보기 화면을 불러오지 못했어요.',
+    description: '잠시 후 다시 시도해 주세요.',
+  },
 } as const satisfies Record<string, PlatformAlertCopy>
 
 /** 공통 제한 안내 / 필수 항목 미입력 — 설명은 빨간 `*`가 있어 `PFRequiredFieldsIncompleteDescription`을 쓴다 */
 export const PLATFORM_REQUIRED_NOT_FILLED_TITLE = '입력하지 않은 필수 항목이 있어요.'
+
+/** 파일 형식이 맞지 않는 경우 — 제목 */
+export const PLATFORM_FILE_TYPE_INVALID_TITLE = '첨부파일 형식을 확인해 주세요.'
+
+/**
+ * 파일 형식이 맞지 않는 경우 (14504-51207).
+ * 시안 설명은 「파일은 PDF, JPG, PNG 파일만 업로드할 수 있어요.」 — 문장 틀은 그대로 두고
+ * 형식 목록만 화면별 허용 형식(예: `JPG, PNG, HWP, Excel, PDF, Word`)으로 넣는다.
+ */
+export function buildFileTypeInvalidAlertCopy(formatsLabel: string): PlatformAlertCopy {
+  return {
+    title: PLATFORM_FILE_TYPE_INVALID_TITLE,
+    description: `파일은 ${formatsLabel.trim()} 파일만 업로드할 수 있어요.`,
+  }
+}

@@ -24,6 +24,8 @@ export interface GeminiTrainingReportItem {
   assistantInstructorNames?: string;
   assistantInstructorCount?: number;
   deliveryType?: string;
+  /** 연수 형태. 실적 업로드 때 받은 trainingType 원문(gemini_training_report.training_type). 값이 없거나 빈 문자열이면 null. 단가·deliveryType(연수 방식) 판정에는 쓰지 않는다. */
+  trainingType?: string | null;
   participantCount?: number;
   /** 지급 예정 강사비(원). 계좌 지급 대상이면 차시 단가 금액. 지급 제외(ZERO_CALCULATED_FEE·GEMINI_INSTRUCTOR_IDENTITY_BLANK·GEMINI_INSTRUCTOR_EXTERNAL_PAYEE)는 0. 단가 미설정(GEMINI_WAGE_RATE_NOT_CONFIGURED)은 0원이 아니므로 null. 단가 미설정 판정은 저장된 paymentExclusionReason 기준. */
   calculatedAmount?: number | null;

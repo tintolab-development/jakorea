@@ -81,6 +81,10 @@ export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED =
   'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED'
 export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE =
   '강사의 지급조서 사전 동의가 완료되지 않아 지급조서를 확인할 수 없습니다. 강사에게 사전 동의를 안내해 주세요.'
+/** 지급조서 확인 409 — 동의서 계좌 없음. 업로드 행 계좌가 아니라 지급조서 사전 동의서 작성을 안내한다 */
+export const SETTLEMENT_BANK_ACCOUNT_REQUIRED = 'SETTLEMENT_BANK_ACCOUNT_REQUIRED'
+export const SETTLEMENT_BANK_ACCOUNT_REQUIRED_MESSAGE =
+  '지급조서 사전 동의서로 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다. 강사에게 지급조서 사전 동의서 작성을 안내해 주세요.'
 export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED = 'GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED'
 export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE =
   '제미나이 지급조서는 지급 정정을 할 수 없습니다. 지급조서를 반려한 뒤 실적을 다시 등록해 주세요.'
@@ -135,8 +139,7 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
     '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_WAGE_RATE_NOT_CONFIGURED: '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
-  SETTLEMENT_BANK_ACCOUNT_REQUIRED:
-    '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
+  [SETTLEMENT_BANK_ACCOUNT_REQUIRED]: SETTLEMENT_BANK_ACCOUNT_REQUIRED_MESSAGE,
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
     '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
   [DOWNLOAD_PASSWORD_REQUIRED_CODE]: DOWNLOAD_PASSWORD_REQUIRED_MESSAGE,
@@ -156,7 +159,7 @@ const FORCE_FE_MAPPED_CODES = new Set([
   SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID,
   SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED,
   GEMINI_TRAINING_REPORT_MISSING,
-  'SETTLEMENT_BANK_ACCOUNT_REQUIRED',
+  SETTLEMENT_BANK_ACCOUNT_REQUIRED,
 ])
 
 export type NormalizedSettlementApiErrorCode = {
@@ -395,6 +398,21 @@ export function isGeminiPaymentStatementPreConsentRequiredError(error: unknown):
   const response = readAxiosResponse(error)
   if (response?.status !== 409) return false
   return getSettlementApiErrorCode(error) === GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED
+}
+
+/** 409 지급조서 확인 — 동의서 계좌 없음. 업로드 계좌를 다시 받지 않고 사전 동의서 작성을 안내한다 */
+export function isSettlementBankAccountRequiredError(error: unknown): boolean {
+  const response = readAxiosResponse(error)
+  if (response?.status !== 409) return false
+  return getSettlementApiErrorCode(error) === SETTLEMENT_BANK_ACCOUNT_REQUIRED
+}
+
+/** 지급조서 확인을 막는 동의서 미완료(사전 동의 없음·동의서 계좌 없음) */
+export function isPaymentStatementConfirmConsentBlockError(error: unknown): boolean {
+  return (
+    isGeminiPaymentStatementPreConsentRequiredError(error) ||
+    isSettlementBankAccountRequiredError(error)
+  )
 }
 
 export function isTaxReportIdentityOrSnapshotMissingError(error: unknown): boolean {

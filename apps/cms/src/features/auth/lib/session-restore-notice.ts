@@ -3,19 +3,22 @@
  * 새로고침 전에 로그인돼 있던 경우(저장된 사용자 + refresh 수단)에만 쓴다.
  * 비로그인·직접 로그아웃·다른 탭 로그아웃에는 띄우지 않는다.
  */
+import {
+  NETWORK_ERROR_ALERT_CONTENT,
+  NETWORK_ERROR_ALERT_TITLE,
+} from '@/shared/lib/extract-api-error-message'
 
 /** ① 세션이 끝남(refresh 거절) — 로그인 화면에서 확인 버튼만 있는 공통 Alert */
 export const SESSION_ENDED_NOTICE = {
-  title: '로그인이 종료되었어요.',
-  content: '로그인 유지 시간이 지났거나 로그아웃되어 다시 로그인이 필요해요.',
+  title: '자동 로그아웃 안내',
+  content: '보안을 위해 로그인 세션이 종료되었습니다.\n계속 이용하시려면 다시 로그인해 주세요.',
 } as const
 
-/** ② 네트워크·서버 오류로 확인하지 못함 — 복원 로딩 화면 위 닫기·다시 시도 */
+/** ② 네트워크·서버 오류로 확인하지 못함 — 복원 로딩 화면 위 시안 「네트워크 오류 안내」 [확인] */
 export const SESSION_RESTORE_NETWORK_FAILURE_NOTICE = {
-  title: '로그인 정보를 확인하지 못했어요.',
-  content: '네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
-  cancelLabel: '닫기',
-  retryLabel: '다시 시도',
+  title: NETWORK_ERROR_ALERT_TITLE,
+  content: NETWORK_ERROR_ALERT_CONTENT,
+  confirmLabel: '확인',
 } as const
 
 /**

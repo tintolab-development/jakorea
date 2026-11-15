@@ -169,6 +169,19 @@ import {
 } from '@/features/user/api/get-member-api-error'
 import { resolveInstructorRevokeBlockedAlert } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
+import { fetchCertificateEligibility } from '@/features/program/shared/api/certificate-serial-api'
+import {
+  resolveActivityCertificatePeriodHours,
+  type ActivityCertificateEligibilityResponse,
+  type ActivityCertificateEligibilityType,
+} from '@/features/program/general/lib/activity-certificate-period-hours'
+import {
+  ACTIVITY_CERTIFICATE_BLOCKED_TITLE,
+  activityCertificateBlockMessage,
+} from '@/features/program/general/lib/activity-certificate-issue-block'
+import { cmsQueryKeys } from '@/shared/api/query-keys'
+import { resolveMemberProgramTitle } from '@/features/user/detail/lib/member-program-history-display'
+import type { MemberActivityCertificatePdfContext } from '@/features/user/detail/ui/member-activity-certificate-pdf-export-host'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { parseContentModalDescriptionLine } from '@/shared/ui/content-modal-description'
@@ -774,6 +787,96 @@ export function useUserDetailController({
     [displayUser, membersRemote, refetchApplications, showAlert]
   )
 
+  /** 1건 활동인증서 PDF 출력 대상(헤드리스 캡처 중이면 값이 있다) */
+  const [activityCertificatePdfContext, setActivityCertificatePdfContext] =
+    useState<MemberActivityCertificatePdfContext | null>(null)
+  /** 자격 확인·원문 조회부터 PDF 저장까지 진행 중 — 연속 클릭으로 두 번 발급되지 않게 막는다 */
+  const activityCertificatePdfPendingRef = useRef(false)
+
+  /**
+   * 활동인증서 1건 — 프로그램 상세 활동인증서 미리보기와 같은 양식으로 PDF를 만든다(ZIP 아님).
+   * 발급 자격을 먼저 보고 막히면 '활동인증서 발급 불가 안내'(조회 실패는 막지 않고 발급 API가 최종 판정).
+   */
+  const startActivityCertificatePdf = useCallback(
+    async (
+      rowId: string,
+      participantId: number,
+      reasonLabel: string,
+      certificateType: ActivityCertificateEligibilityType
+    ) => {
+      if (!displayUser || activityCertificatePdfPendingRef.current) return
+      activityCertificatePdfPendingRef.current = true
+      let started = false
+      try {
+        started = await prepareActivityCertificatePdf()
+      } finally {
+        // PDF 캡처가 시작되면 완료 콜백에서 푼다.
+        if (!started) activityCertificatePdfPendingRef.current = false
+      }
+
+      async function prepareActivityCertificatePdf(): Promise<boolean> {
+        if (!displayUser) return false
+        let eligibility: ActivityCertificateEligibilityResponse | null = null
+        try {
+          eligibility = await queryClient.fetchQuery({
+            queryKey: cmsQueryKeys.certificates.eligibility(participantId, certificateType),
+            queryFn: async () =>
+              (await fetchCertificateEligibility({
+                participantId,
+                certificateType,
+              })) as ActivityCertificateEligibilityResponse,
+          })
+        } catch {
+          eligibility = null
+        }
+        const blockMessage = activityCertificateBlockMessage(eligibility)
+        if (blockMessage != null) {
+          showAlert({ title: ACTIVITY_CERTIFICATE_BLOCKED_TITLE, content: blockMessage })
+          return false
+        }
+        try {
+          const person =
+            displayUser.memberId != null
+              ? await unmaskMemberForCertificateIssue(displayUser.memberId, displayUser.role)
+              : {}
+          const row = [...applications, ...enrollmentApplications, ...volunteerHistories].find(
+            item => item.id === rowId
+          )
+          setActivityCertificatePdfContext({
+            certificateType,
+            participantId,
+            programId: row?.programId ?? null,
+            programName: row ? resolveMemberProgramTitle(row.programId, row) : '',
+            name: person.name ?? displayUser.name ?? '',
+            birthDate: person.birthDate ?? null,
+            // 상세 화면 소속은 마스킹·재직 현황이 붙은 표시값이라 쓰지 않는다 — 원문 조회 값만, 없으면 '-'.
+            affiliation: person.affiliation ?? null,
+            participationPeriod:
+              resolveActivityCertificatePeriodHours(eligibility).participationPeriod,
+            issuanceReasonLabel: reasonLabel,
+          })
+          return true
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content: getMemberApiErrorMessage(error, '개인정보 원문 조회에 실패했습니다.'),
+          })
+          return false
+        }
+      }
+    },
+    [applications, displayUser, enrollmentApplications, queryClient, showAlert, volunteerHistories]
+  )
+
+  const completeActivityCertificatePdf = useCallback(
+    (success: boolean) => {
+      activityCertificatePdfPendingRef.current = false
+      setActivityCertificatePdfContext(null)
+      if (success) void refetchApplications()
+    },
+    [refetchApplications]
+  )
+
   const handleCertificateBulkIssue = useCallback(
     async (
       rowIds: readonly string[],
@@ -793,6 +896,20 @@ export function useUserDetailController({
           content:
             '선택한 이력 중 증명서 발급 가능한 참여 건이 없습니다. 프로그램 배정이 완료된 이력을 선택해 주세요.',
         })
+        return
+      }
+      // 활동인증서 1건은 미리보기와 같은 양식의 PDF, 여러 건은 서버 ZIP.
+      if (
+        (certificateType === 'INSTRUCTOR_ACTIVITY' || certificateType === 'VOLUNTEER_ACTIVITY') &&
+        rowIds.length === 1 &&
+        participantIds.length === 1
+      ) {
+        await startActivityCertificatePdf(
+          rowIds[0],
+          participantIds[0],
+          reasonLabel,
+          certificateType
+        )
         return
       }
       try {
@@ -852,6 +969,7 @@ export function useUserDetailController({
       membersRemote,
       refetchApplications,
       showAlert,
+      startActivityCertificatePdf,
     ]
   )
 
@@ -1868,6 +1986,7 @@ export function useUserDetailController({
       jaGradeEvaluationOpen,
       personalInfoRevealModal,
       editUnmaskConfirmModal,
+      activityCertificatePdfContext,
     },
     actions: {
       setTabState,
@@ -1885,6 +2004,7 @@ export function useUserDetailController({
       handleStudentCertificateBulkIssue,
       handleVolunteerCertificateBulkIssue,
       handleInstructorCertificateBulkIssue,
+      completeActivityCertificatePdf,
       openWithdrawConfirm,
       closeWithdrawConfirm,
       closeInstitutionDeleteBlocked,

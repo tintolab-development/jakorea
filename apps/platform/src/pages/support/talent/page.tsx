@@ -1,4 +1,4 @@
-import { CtaSection, FloatingCta, HeroSection, MethodSection } from '@/features/talent-donation'
+import { CtaSection, HeroSection, MethodSection } from '@/features/talent-donation'
 import { usePublicTalentSponsorshipView } from '@/features/talent-donation/api/hooks'
 import { PublicContentPageLoading } from '@/shared/ui'
 import styles from './page.module.css'
@@ -15,7 +15,6 @@ export function TalentDonationPage() {
       <HeroSection />
       <MethodSection />
       <CtaSection />
-      <FloatingCta />
     </section>
   )
 }

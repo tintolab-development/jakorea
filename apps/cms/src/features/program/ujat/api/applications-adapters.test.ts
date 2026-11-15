@@ -15,6 +15,64 @@ describe('toSeoulYmd', () => {
   })
 })
 
+describe('UJAT 기관 신청 임시 배정 현황', () => {
+  it('temporaryAssignmentStatus null·EVALUATION_PENDING은 모두 평가 대기', () => {
+    const fromNull = mapOrganizationApplicationToUjatInstitutionRow(
+      { id: 1, applicationStatus: 'SUBMITTED', temporaryAssignmentStatus: null },
+      0
+    )
+    const fromCancelled = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 2,
+        applicationStatus: 'SUBMITTED',
+        temporaryAssignmentStatus: 'EVALUATION_PENDING',
+        temporaryScheduleAssigned: null,
+      },
+      0
+    )
+
+    expect(fromNull.tempAssignmentStatus).toBe('evaluation_pending')
+    expect(fromCancelled.tempAssignmentStatus).toBe('evaluation_pending')
+    expect(fromCancelled.temporaryScheduleAssigned).toBeNull()
+  })
+
+  it('TEMP_ASSIGNED의 temporaryScheduleAssigned false를 평가 대기로 읽지 않는다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 3,
+        applicationStatus: 'SUBMITTED',
+        temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+        temporaryScheduleAssigned: false,
+      },
+      0
+    )
+
+    expect(row.tempAssignmentStatus).toBe('temp_assigned')
+    expect(row.temporaryScheduleAssigned).toBe(false)
+  })
+
+  it('상세 응답의 temporaryScheduleAssigned를 행에 반영한다', () => {
+    const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
+      id: 4,
+      applicationStatus: 'SUBMITTED',
+      temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+      temporaryScheduleAssigned: true,
+    } as Parameters<typeof mapOrganizationApplicationDetailToUjatInstitutionRow>[0])
+
+    expect(row.temporaryScheduleAssigned).toBe(true)
+  })
+
+  it('새 필드가 없는 이전 응답도 행이 깨지지 않는다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      { id: 5, applicationStatus: 'SUBMITTED', temporaryAssignmentStatus: 'TEMP_ASSIGNED' },
+      0
+    )
+
+    expect(row.tempAssignmentStatus).toBe('temp_assigned')
+    expect(row.temporaryScheduleAssigned).toBeNull()
+  })
+})
+
 describe('UJAT 기관 신청 상세 adapter', () => {
   it('목록 페이지에 없는 신청도 상세 응답만으로 행을 만든다', () => {
     const row = mapOrganizationApplicationDetailToUjatInstitutionRow({

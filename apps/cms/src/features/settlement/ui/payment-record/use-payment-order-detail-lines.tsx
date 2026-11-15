@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
+import type { PaymentOrderPayeeTypeFilter } from '@/pages/settlement-management/payment-orders-table.config'
 import {
   instructorIdentityFromLine,
   mapSettlementDetailToInstructorPageCalculationStatement,
@@ -14,10 +15,28 @@ import { getPaymentOrdersDetailContextRemote } from '@/features/settlement-manag
 import { fetchSettlementDetailRemote } from '@/features/settlement-management/api/settlement-api-client'
 import {
   getSettlementApiErrorMessage,
-  isGeminiPaymentStatementPreConsentRequiredError,
+  isFileDownloadPasswordApiError,
+  isPaymentStatementConfirmConsentBlockError,
   isPaymentStatementStatusConflictError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
-import { canConfirmPaymentStatement } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import {
+  BULK_CONFIRM_PAYMENT_STATEMENT_ACTION,
+  canConfirmPaymentStatement,
+} from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import {
+  isIndividualSettlementApplicationListItem,
+  isSettlementApplicationListItem,
+} from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
+import {
+  downloadIndividualSettlementApplicationDocumentRemote,
+  fetchIndividualSettlementApplicationDocumentRemote,
+  isIndividualSettlementReviewConflict,
+} from '@/features/program/general/api/individual-settlement-review-remote'
+import {
+  buildReceiptSettlementDocumentFileName,
+  buildReceiptSettlementPreviewOptions,
+} from '@/features/program/general/lib/map-receipt-settlement-document-to-preview-options'
+import type { PaymentApplicationKind } from '@/features/settlement/lib/payment-application-copy'
 import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
@@ -69,7 +88,10 @@ import {
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
-import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
+import {
+  getApiErrorHttpStatus,
+  networkAwareAlertTitle,
+} from '@/shared/lib/extract-api-error-message'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -85,29 +107,31 @@ type PaymentOrderDetailLineExcelRow = {
   estimatedAmountLabel: string
 }
 
-interface DetailAppliedFilters {
+export interface DetailAppliedFilters {
   keyword: string
   institutionName: string
   status: AppliedLineStatus
   dateRange: [Dayjs, Dayjs] | null
 }
 
-function filterDetailRows(
+export function filterDetailRows(
   rows: PaymentOrderDetailLineRow[],
   mode: 'program' | 'instructor',
   applied: DetailAppliedFilters,
-  /** remote 조회 시 search·status·기간은 서버가 처리. 기관명만 클라이언트 보조 */
+  /** remote 조회 시 status·기간은 서버가 처리. 키워드·기관명은 클라이언트에서도 거른다 */
   remoteServerFiltered: boolean
 ): PaymentOrderDetailLineRow[] {
-  const keyword = applied.keyword.trim()
+  const keyword = applied.keyword.trim().toLowerCase()
   const qInstitution = applied.institutionName.trim()
   return rows.filter(row => {
-    if (!remoteServerFiltered && keyword) {
-      const keywordMatch =
+    // 서버 search는 프로그램명·회원명·기관명 OR라, 서버 조회 뒤에도 이름 열(프로그램 상세=신청자명,
+    // 신청자 상세=프로그램명)로 한 번 더 거른다. 안 그러면 프로그램명에 든 단어로 신청자명을 찾을 때 전원이 나온다.
+    if (keyword) {
+      const name =
         mode === 'program'
-          ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName.includes(keyword)
-          : (row as PaymentOrderAdminInstructorDetailProgramRow).programName.includes(keyword)
-      if (!keywordMatch) return false
+          ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName
+          : (row as PaymentOrderAdminInstructorDetailProgramRow).programName
+      if (!(name ?? '').toLowerCase().includes(keyword)) return false
     }
     if (qInstitution && !row.institutionName.includes(qInstitution)) return false
     if (
@@ -122,10 +146,32 @@ function filterDetailRows(
   })
 }
 
+/**
+ * 일괄 확인 가능 여부. 영수증(참여자·봉사자) 행은 지급조서 확인 대신 영수증 승인(APPROVE)으로 처리한다
+ * (일괄 확인 대상은 확인 대기 중·지급조서 재신청 건이고 신청자 유형으로 제외하지 않는다 — CMS-FUNC-0495).
+ * 확정 전 강사 신청서 행은 BULK_CONFIRM_PAYMENT_STATEMENT가 있을 때만 일괄 확인한다(신청서 승인 + 지급조서 확인).
+ */
+export function canBatchConfirmDetailLine(row: PaymentOrderDetailLineRow): boolean {
+  if (isIndividualSettlementApplicationListItem(row)) {
+    return (
+      row.individualSettlementApplicationId != null &&
+      row.revisionNo != null &&
+      (row.availableActions ?? []).includes('APPROVE')
+    )
+  }
+  if (isSettlementApplicationListItem(row)) {
+    return (
+      row.settlementApplicationId != null &&
+      (row.availableActions ?? []).includes(BULK_CONFIRM_PAYMENT_STATEMENT_ACTION)
+    )
+  }
+  return canConfirmPaymentStatement(row)
+}
+
 function mapLineStatusToStatementStatus(status: AppliedLineStatus): string | null {
   switch (status) {
     case 'pending':
-      return 'REQUESTED'
+      return 'WAITING_CONFIRM'
     case 'reapplication':
       return 'REAPPLICATION'
     case 'confirmed':
@@ -144,6 +190,8 @@ function mapLineStatusToStatementStatus(status: AppliedLineStatus): string | nul
 type RemoteDetailProps = {
   paymentOrdersRemote?: boolean
   detailContextQuery?: DetailContextQuery
+  /** 목록에 조회 적용된 정산 대상자 구분 — 상세 재조회에도 같이 건다 */
+  listPagePayeeType?: PaymentOrderPayeeTypeFilter
 }
 
 export type UsePaymentOrderDetailLinesControllerArgs = RemoteDetailProps &
@@ -188,6 +236,7 @@ export function usePaymentOrderDetailLinesController(
     registerStatementCommitSink,
     paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders'),
     detailContextQuery,
+    listPagePayeeType = 'all',
   } = args
 
   const { showAlert } = useCmsAlert()
@@ -224,6 +273,27 @@ export function usePaymentOrderDetailLinesController(
   /** remote에서 조회 API로 search/status/기간을 이미 걸었으면 true */
   const [remoteServerFiltered, setRemoteServerFiltered] = useState(false)
   const currentIssuancePayload = issuanceQueue[0] ?? null
+  /** 영수증 지급조서 다운로드 — 검토 모달 단건 발급과 같은 API·실패 안내 */
+  const currentReceiptIssuance = currentIssuancePayload?.receiptSettlementApplication ?? null
+  const downloadCurrentReceiptIssuancePdf = useMemo(() => {
+    if (!currentReceiptIssuance) return undefined
+    return async (password: string) => {
+      try {
+        await downloadIndividualSettlementApplicationDocumentRemote(
+          currentReceiptIssuance.settlementApplicationId,
+          { password, revisionNo: currentReceiptIssuance.revisionNo }
+        )
+      } catch (error) {
+        if (!isFileDownloadPasswordApiError(error)) {
+          showAlert({
+            title: networkAwareAlertTitle(error, '안내'),
+            content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+          })
+        }
+        throw error
+      }
+    }
+  }, [currentReceiptIssuance, showAlert])
 
   useEffect(() => {
     if (!isOpen) {
@@ -368,6 +438,7 @@ export function usePaymentOrderDetailLinesController(
       dateRange,
       search: nextApplied.keyword || null,
       statementStatus: mapLineStatusToStatementStatus(nextApplied.status),
+      payeeType: listPagePayeeType,
     })
       .then(data => {
         if (mode === 'program') {
@@ -396,6 +467,7 @@ export function usePaymentOrderDetailLinesController(
     draftStatus,
     paymentOrdersRemote,
     contextAggregateKey,
+    listPagePayeeType,
     mode,
     args,
     showAlert,
@@ -407,18 +479,31 @@ export function usePaymentOrderDetailLinesController(
 
       if (paymentOrdersRemote) {
         const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
-        if (selected.length === 0 || selected.some(row => !canConfirmPaymentStatement(row))) {
+        if (selected.length === 0 || selected.some(row => !canBatchConfirmDetailLine(row))) {
           showAlert({
             title: '안내',
             content: '확인할 수 없는 지급조서가 포함되어 있습니다. 목록을 새로고침해 주세요.',
           })
           return
         }
+        const receiptLines = selected.filter(row => isIndividualSettlementApplicationListItem(row))
+        const instructorApplicationLines = selected.filter(
+          row =>
+            isSettlementApplicationListItem(row) && !isIndividualSettlementApplicationListItem(row)
+        )
         const statementIds = selected
-          .map(r => r.statementId)
+          .filter(
+            row =>
+              !isSettlementApplicationListItem(row) && !isIndividualSettlementApplicationListItem(row)
+          )
+          .map(row => row.statementId)
           .filter((id): id is number => id != null)
 
-        if (statementIds.length === 0) {
+        if (
+          statementIds.length === 0 &&
+          receiptLines.length === 0 &&
+          instructorApplicationLines.length === 0
+        ) {
           showAlert({
             title: '안내',
             content: '지급조서 확인 API에 필요한 statementId가 없습니다.',
@@ -426,49 +511,49 @@ export function usePaymentOrderDetailLinesController(
           return
         }
 
-        void confirmMutation
-          .mutateAsync({
-            statementIds,
-            lectureFeePaymentScheduledDate: iso,
-          })
-          .then(async () => {
-            setRowsState(prev =>
-              prev.map(row =>
-                selectedRowKeys.includes(row.id)
-                  ? {
-                      ...row,
-                      processingStatus: 'awaiting_payment' as const,
-                      statementStatus: 'CONFIRMED',
-                      paymentStatus: 'WAITING_PAYMENT',
-                      lectureFeePaymentScheduledDate: iso,
-                      canConfirmPaymentStatement: false,
-                      availableActions: (row.availableActions ?? []).filter(
-                        action => action !== 'CONFIRM_PAYMENT_STATEMENT'
-                      ),
-                    }
-                  : row
-              )
-            )
+        void (async () => {
+          try {
+            // 강사 지급조서·확정 전 강사 신청서·영수증(참여자·봉사자)을 일괄 확인 API 한 번으로 처리한다
+            // — 한 트랜잭션, 전체 성공 또는 전체 롤백. 건별 호출로 나누지 않는다(부분 승인 방지).
+            await confirmMutation.mutateAsync({
+              statementIds,
+              lectureFeePaymentScheduledDate: iso,
+              individualSettlementApplications: receiptLines.map(line => ({
+                settlementApplicationId: line.individualSettlementApplicationId!,
+                expectedRevisionNo: line.revisionNo!,
+              })),
+              instructorSettlementApplications: instructorApplicationLines.map(line => ({
+                settlementApplicationId: line.settlementApplicationId!,
+              })),
+            })
             setBatchConfirmOpen(false)
             setSelectedRowKeys([])
             setBatchConfirmDoneOpen(true)
             await detailContextQuery?.refetch()
-          })
-          .catch(async error => {
+          } catch (error) {
+            const consentBlock = isPaymentStatementConfirmConsentBlockError(error)
             showAlert({
-              title: networkAwareAlertTitle(error, '안내'),
+              title: networkAwareAlertTitle(
+                error,
+                consentBlock ? '지급조서 확인 불가 안내' : '안내'
+              ),
               content: getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'),
             })
-            // 사전 동의 미완료(Gemini)도 상태 충돌처럼 목록을 다시 받아 확인 불가 행을 반영한다(일괄 확인은 전체 롤백됨)
+            // 사전 동의 미완료·동의서 계좌 없음·영수증 revision 불일치(STALE_REVISION)도 상태 충돌처럼 목록을 다시 받아
+            // 확인 불가 행을 반영한다(일괄 확인은 전체 롤백됨).
+            // 확정 전 강사 신청서가 섞인 요청의 409(이미 처리된 신청서·계좌/지급 동의서 없음 등)도 전체 롤백이므로 목록을 다시 받는다.
             if (
               isPaymentStatementStatusConflictError(error) ||
-              isGeminiPaymentStatementPreConsentRequiredError(error)
+              consentBlock ||
+              (receiptLines.length > 0 && isIndividualSettlementReviewConflict(error)) ||
+              (instructorApplicationLines.length > 0 && getApiErrorHttpStatus(error) === 409)
             ) {
               setBatchConfirmOpen(false)
               setSelectedRowKeys([])
               await detailContextQuery?.refetch()
             }
-          })
+          }
+        })()
         return
       }
 
@@ -506,6 +591,17 @@ export function usePaymentOrderDetailLinesController(
   }, [rowsState, selectedRowKeys])
 
   /** 일괄 확인 안내 — 「[첫 신청자] 님 외 N명」(신청자 기준 상세는 본인 1명) */
+  /**
+   * 일괄 확인 안내 문구 유형 — 선택이 모두 영수증(참여자·봉사자)이면 영수증·실비 문구(기획 2026-11-12 3차 2번).
+   * 강사와 영수증이 섞인 선택은 정해진 문구가 없어 기존 강사 문구를 둔다.
+   */
+  const batchConfirmApplicationKind = useMemo((): PaymentApplicationKind => {
+    if (selectedConfirmableRows.length === 0) return 'instructor'
+    return selectedConfirmableRows.every(row => isIndividualSettlementApplicationListItem(row))
+      ? 'receipt'
+      : 'instructor'
+  }, [selectedConfirmableRows])
+
   const batchConfirmApplicantSummary = useMemo(() => {
     const names =
       mode === 'program'
@@ -522,7 +618,7 @@ export function usePaymentOrderDetailLinesController(
 
   const canBatchConfirm = useMemo(() => {
     if (selectedConfirmableRows.length === 0) return false
-    return selectedConfirmableRows.every(row => canConfirmPaymentStatement(row))
+    return selectedConfirmableRows.every(row => canBatchConfirmDetailLine(row))
   }, [selectedConfirmableRows])
 
   /**
@@ -590,6 +686,30 @@ export function usePaymentOrderDetailLinesController(
 
   const buildIssuancePayloadForLine = useCallback(
     async (lineRow: PaymentOrderDetailLineRow): Promise<PaymentStatementIssuancePayload> => {
+      // 영수증(참여자·봉사자) 행 — 영수증 신청 지급조서 문서로 발급한다(확인 완료·계좌 지급 완료 건, CMS-FUNC-0492).
+      // 검토 모달의 단건 발급과 같은 문서·미리보기·다운로드 경로다.
+      if (isIndividualSettlementApplicationListItem(lineRow)) {
+        const settlementApplicationId = lineRow.individualSettlementApplicationId
+        if (!paymentOrdersRemote || settlementApplicationId == null) {
+          // 강사 행과 같다 — mock 지급조서를 만들지 않고 호출부의 기존 실패 안내로 보낸다.
+          throw new Error()
+        }
+        const document = await fetchIndividualSettlementApplicationDocumentRemote(
+          settlementApplicationId,
+          lineRow.revisionNo
+        )
+        return {
+          paragraphBodyOptions: buildReceiptSettlementPreviewOptions({
+            document,
+            settlementApplicationId,
+          }),
+          fileName: buildReceiptSettlementDocumentFileName(document),
+          receiptSettlementApplication: {
+            settlementApplicationId,
+            revisionNo: lineRow.revisionNo,
+          },
+        }
+      }
       if (mode === 'program') {
         if (!programDetail) {
           throw new Error('프로그램 상세를 불러오지 못했습니다.')
@@ -964,6 +1084,7 @@ export function usePaymentOrderDetailLinesController(
     batchConfirmDoneOpen,
     setBatchConfirmDoneOpen,
     batchConfirmApplicantSummary,
+    batchConfirmApplicationKind,
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
@@ -973,6 +1094,7 @@ export function usePaymentOrderDetailLinesController(
     closeIssuanceView,
     issuanceViewOpen,
     currentIssuancePayload,
+    downloadCurrentReceiptIssuancePdf,
     selectedRowKeys,
     setSelectedRowKeys,
     filterFields,
