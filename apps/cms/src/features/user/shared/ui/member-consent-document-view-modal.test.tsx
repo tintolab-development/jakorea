@@ -180,6 +180,35 @@ describe('member consent filled document rendering', () => {
     expect(document.body.textContent).not.toContain('당사자의 서면 동의')
   })
 
+  it('renders portrait response cells as text and consent radios with the disabled skin', async () => {
+    const draft = createAgreementPortraitDraft()
+    const table = draft.paragraphs.find(
+      p => p.kind === 'single_item' && p.variant === 'vertical_table'
+    )
+    if (table?.kind === 'single_item' && table.variant === 'vertical_table') {
+      const firstRow = table.rows[0]
+      if (firstRow) {
+        table.rows[0] = { ...firstRow, cells: ['MOCK_NAME_701', '소속 없음'] } as typeof firstRow
+      }
+    }
+    mutateAsync.mockResolvedValue({
+      filledDocumentId: 9001,
+      schemaJson: writingFormDraftToSchemaJson(draft),
+    })
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      filledDocumentAvailable: true,
+    })
+    await waitFor(() => expect(document.body.textContent).toContain('MOCK_NAME_701'))
+    const page = document.querySelector('.template-preview-modal__a4-frame') as HTMLElement
+    expect(page.querySelector('.form-editor-vertical-table__cell-input-shell--body-subjective')).toBeNull()
+    expect(page.querySelector('input:not([type="radio"])')).toBeNull()
+    const radios = [...page.querySelectorAll('.form-editor-table-bottom-consent input[type="radio"]')]
+    expect(radios.length).toBeGreaterThan(0)
+    expect(radios.every(radio => (radio as HTMLInputElement).disabled)).toBe(true)
+  })
+
   it('shows the portal e-signature image when signed-document returns a signed field', async () => {
     const draft = createAgreementPortraitDraft()
     mutateAsync.mockResolvedValue({

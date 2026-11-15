@@ -17,6 +17,11 @@ export interface MemberAdminCommentModalProps {
   loading?: boolean
   maxLength?: number
   allowEmpty?: boolean
+  /**
+   * 작성(기존 코멘트 없음) / 수정(기존 코멘트 있음) — QA: 수정 시 「코멘트 수정」 팝업, 필수 표기 없음.
+   * 기본값은 작성(기존 호출부 동작 유지).
+   */
+  mode?: 'create' | 'edit'
   onChange: (value: string) => void
   onCancel: () => void
   onConfirm: () => void
@@ -28,6 +33,7 @@ export function MemberAdminCommentModal({
   loading = false,
   maxLength = 1000,
   allowEmpty = false,
+  mode = 'create',
   onChange,
   onCancel,
   onConfirm,
@@ -63,7 +69,7 @@ export function MemberAdminCommentModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="코멘트 작성"
+      title={mode === 'edit' ? '코멘트 수정' : '코멘트 작성'}
       titleBodyGap="section"
       width={800}
       zIndex={2600}
@@ -94,7 +100,7 @@ export function MemberAdminCommentModal({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="코멘트"
-            required
+            required={mode !== 'edit'}
             fullRow
             view={value}
             edit={

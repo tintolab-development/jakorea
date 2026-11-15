@@ -294,6 +294,8 @@ function MemberConsentAgreementDocumentView({
       ...(base ?? {}),
       paragraphInteractionMode: 'preview' as const,
       paymentStatementDisplayMode: 'document' as const,
+      /** 시안 5767:42795 — 응답 칸 텍스트·동의 라디오 disabled 스킨(보기 전용) */
+      agreementDocumentReadOnlyView: true,
       ...(paymentValues != null ? { paymentStatementBasicInfoValues: paymentValues } : {}),
       ...(participantName != null && participantName !== ''
         ? { agreementSystemParticipantName: participantName }
