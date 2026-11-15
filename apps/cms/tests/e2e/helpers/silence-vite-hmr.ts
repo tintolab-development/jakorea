@@ -27,8 +27,26 @@ export function createHotContext() {
     data: {},
   }
 }
-export function updateStyle() {}
-export function removeStyle() {}
+// CSS 모듈은 updateStyle로 <style>을 주입한다 — no-op이면 화면 스타일이 빠져
+// 팝오버 위치가 뷰포트 밖으로 밀린다. HMR reload만 막고 스타일 주입은 유지한다.
+const sheets = new Map()
+export function updateStyle(id, content) {
+  let style = sheets.get(id)
+  if (!style) {
+    style = document.createElement('style')
+    style.setAttribute('type', 'text/css')
+    style.setAttribute('data-vite-dev-id', id)
+    document.head.appendChild(style)
+    sheets.set(id, style)
+  }
+  style.textContent = content
+}
+export function removeStyle(id) {
+  const style = sheets.get(id)
+  if (!style) return
+  style.remove()
+  sheets.delete(id)
+}
 export function injectQuery(url) { return url }
 `
 

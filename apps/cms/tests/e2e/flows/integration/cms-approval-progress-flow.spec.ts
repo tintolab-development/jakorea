@@ -368,13 +368,14 @@ async function createProgram(page: Page, kind: 'APPROVAL' | 'REJECTION'): Promis
   }
   const registration = new GeneralProgramRegistrationPage(page, registrationCase, {
     openRecruitment: true,
-    // case 5는 실제 교육 회차가 2개 생성되는 일정형 preset이다. 각 wizard는
-    // 별도 컨텍스트에서 실행하므로 동일 preset을 사용해도 입력 상태가 섞이지 않는다.
-    devAutofillCaseId: 5,
+    // DEV 자동입력은 현재 연도 10~12월 무작위 날짜와 숨은 educationScheduleLines를 남겨
+    // 운영 기간을 미래로 다시 잡으면 PROGRAM_DATE_OUTSIDE_OPEN_PERIOD로 거절된다.
+    // 화면에서 직접 입력하고, 일정형 세부 일정 2건을 운영 기간 안으로 다시 맞춘다.
     safeWagePaymentItems: true,
     skipOptionalUploads: true,
     skipApplicationFormEdits: true,
     ensureFutureDates: true,
+    strictRecruitment: true,
     programTitle: uniqueProgramTitle(kind),
   })
 
@@ -382,6 +383,7 @@ async function createProgram(page: Page, kind: 'APPROVAL' | 'REJECTION'): Promis
   await expectAuthenticatedShell(page)
   await registration.openNewRegistration()
   await registration.fillCommonInfo()
+  await registration.realignScheduleDetailDatesWithinOpenPeriod()
   await registration.goToRecruitment()
   await registration.fillRecruitmentInfo()
   await registration.goToApplication()
