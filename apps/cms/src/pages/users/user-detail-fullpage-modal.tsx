@@ -19,6 +19,7 @@ import {
   type UserDetailPermissionRole,
 } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-header-actions'
 import { UserDetailFullpageModalsStack } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-modals-stack'
+import { MemberActivityCertificatePdfExportHost } from '@/features/user/detail/ui/member-activity-certificate-pdf-export-host'
 import {
   UserDetailFullpageShellProvider,
   type UserDetailFullpageShellValue,
@@ -543,6 +544,12 @@ export function UserDetailFullPageModal({
       </UserDetailLayout>
 
       {shell ? <UserDetailFullpageModalsStack /> : null}
+      {state.activityCertificatePdfContext ? (
+        <MemberActivityCertificatePdfExportHost
+          context={state.activityCertificatePdfContext}
+          onComplete={actions.completeActivityCertificatePdf}
+        />
+      ) : null}
       <PermissionNotificationResendModal
         open={permissionNotificationResend != null}
         permissionRole={permissionNotificationResend?.permissionRole ?? 'instructor'}

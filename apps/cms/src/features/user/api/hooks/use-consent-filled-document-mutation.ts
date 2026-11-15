@@ -1,5 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
-import { fetchConsentFilledDocumentRemote } from '@/features/user/api/members-api-client'
+import {
+  fetchConsentFilledDocumentRemote,
+  postConsentDocumentRevealEndpoint,
+} from '@/features/user/api/members-api-client'
 import type { FilledDocumentResponse } from '@/shared/api/generated/members/schemas/filledDocumentResponse'
 
 export type ConsentFilledDocumentMutationInput = {
@@ -7,6 +10,8 @@ export type ConsentFilledDocumentMutationInput = {
   consentType: string
   reason: string
   consentRecordId?: number
+  /** BE `filledDocumentRevealEndpoint` — 있으면 이 주소로만 조회한다 */
+  filledDocumentRevealEndpoint?: string
 }
 
 /**
@@ -21,6 +26,10 @@ export function useConsentFilledDocumentMutation() {
       const reason = input.reason.trim()
       if (reason.length < 1 || reason.length > 500) {
         throw new Error('개인정보 열람 사유를 1자 이상 500자 이하로 입력해 주세요.')
+      }
+      const endpoint = input.filledDocumentRevealEndpoint?.trim()
+      if (endpoint) {
+        return postConsentDocumentRevealEndpoint<FilledDocumentResponse>(endpoint, { reason })
       }
       return fetchConsentFilledDocumentRemote(
         input.memberId,

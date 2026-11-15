@@ -18,6 +18,7 @@ import {
   isPaymentStatementStatusConflictError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import { canConfirmPaymentStatement } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import { isSettlementApplicationListItem } from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
 import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
@@ -125,7 +126,7 @@ function filterDetailRows(
 function mapLineStatusToStatementStatus(status: AppliedLineStatus): string | null {
   switch (status) {
     case 'pending':
-      return 'REQUESTED'
+      return 'WAITING_CONFIRM'
     case 'reapplication':
       return 'REAPPLICATION'
     case 'confirmed':
@@ -415,7 +416,8 @@ export function usePaymentOrderDetailLinesController(
           return
         }
         const statementIds = selected
-          .map(r => r.statementId)
+          .filter(row => !isSettlementApplicationListItem(row))
+          .map(row => row.statementId)
           .filter((id): id is number => id != null)
 
         if (statementIds.length === 0) {
@@ -432,23 +434,6 @@ export function usePaymentOrderDetailLinesController(
             lectureFeePaymentScheduledDate: iso,
           })
           .then(async () => {
-            setRowsState(prev =>
-              prev.map(row =>
-                selectedRowKeys.includes(row.id)
-                  ? {
-                      ...row,
-                      processingStatus: 'awaiting_payment' as const,
-                      statementStatus: 'CONFIRMED',
-                      paymentStatus: 'WAITING_PAYMENT',
-                      lectureFeePaymentScheduledDate: iso,
-                      canConfirmPaymentStatement: false,
-                      availableActions: (row.availableActions ?? []).filter(
-                        action => action !== 'CONFIRM_PAYMENT_STATEMENT'
-                      ),
-                    }
-                  : row
-              )
-            )
             setBatchConfirmOpen(false)
             setSelectedRowKeys([])
             setBatchConfirmDoneOpen(true)

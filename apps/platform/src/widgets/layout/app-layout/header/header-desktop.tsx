@@ -1,7 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { recordMenuClick } from '@/features/analytics'
-import { NotificationInboxPanel, useMyNotificationUnreadCountQuery } from '@/features/notification'
+import {
+  NotificationInboxPanel,
+  NotificationPopup,
+  useMyNotificationUnreadCountQuery,
+  type PortalNotificationPopup,
+} from '@/features/notification'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import notificationsActiveIconUrl from '../image/icon/notifications-active.svg'
@@ -120,6 +125,8 @@ export function HeaderDesktop({
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [menuPanelBottom, setMenuPanelBottom] = useState<number | null>(null)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  /** 알림 안내 팝업(공통_ 3종) — 드롭다운 밖에서 띄운다 */
+  const [notificationPopup, setNotificationPopup] = useState<PortalNotificationPopup | null>(null)
   const navigationRef = useRef<HTMLElement | null>(null)
   const notificationAnchorRef = useRef<HTMLDivElement | null>(null)
   const notificationButtonRef = useRef<HTMLButtonElement | null>(null)
@@ -340,7 +347,13 @@ export function HeaderDesktop({
                   </button>
                   {notificationOpen ? (
                     <div className={styles.notificationPopover} role="dialog" aria-label="알림">
-                      <NotificationInboxPanel onNavigate={() => setIsNotificationOpen(false)} />
+                      <NotificationInboxPanel
+                        onNavigate={() => setIsNotificationOpen(false)}
+                        onPopup={popup => {
+                          setIsNotificationOpen(false)
+                          setNotificationPopup(popup)
+                        }}
+                      />
                     </div>
                   ) : null}
                 </div>
@@ -396,6 +409,7 @@ export function HeaderDesktop({
           aria-hidden="true"
         />
       ) : null}
+      <NotificationPopup popup={notificationPopup} onClose={() => setNotificationPopup(null)} />
     </header>
   )
 }

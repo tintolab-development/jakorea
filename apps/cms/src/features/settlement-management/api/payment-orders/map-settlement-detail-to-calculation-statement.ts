@@ -32,6 +32,7 @@ import {
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import {
   mapTransportationSnapshotToBasisDetail,
+  resolveLectureSessionSegmentDisplay,
   type PaymentOrderCalculationBasisDetailTransportSnapshot,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import { mapSettlementPayeeToInstructorBasicFields } from '@/features/settlement-management/api/payment-orders/map-settlement-payee'
@@ -163,9 +164,10 @@ function withTransportationAmountFallback(
   }
 }
 
+/** 시안 `2026.12.08(월) │ 2회차` — BE 원문 앞 날짜·시간은 교육일 칸과 겹치므로 회차·차시만 쓴다. 없으면 '—' */
 function resolveLectureSessionDisplay(settlement: SettlementFrontendResponse): string {
-  const fromApi = settlement.lectureSessionDisplay?.trim()
-  return fromApi || '—'
+  const segment = resolveLectureSessionSegmentDisplay(settlement.lectureSessionDisplay)
+  return segment === '-' ? '—' : segment
 }
 
 function buildBlocks(

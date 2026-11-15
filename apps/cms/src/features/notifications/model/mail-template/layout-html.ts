@@ -81,6 +81,68 @@ export function mailDetailButton(
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;"><tr><td align="center" height="52" bgcolor="#01a1af" style="height:52px;border-radius:8px;background:#01a1af;text-align:center;"><a href="${href}" target="_blank" rel="noopener noreferrer" style="display:block;height:52px;box-sizing:border-box;padding:8px 20px;color:#ffffff;font-family:Pretendard,Arial,sans-serif;font-size:16px;line-height:36px;font-weight:600;text-decoration:none;">${label}</a></td></tr></table>`
 }
 
+/**
+ * 알림 메일 템플릿 버튼 — CMS primary 버튼(h40, admin-ui `cms-button--primary`) 값을 메일용 인라인 스타일로 옮긴다.
+ * 메일 클라이언트는 클래스·CSS 변수를 쓰지 못하므로 토큰 값을 직접 적는다.
+ * - 배경 `--Brand-500` #00a0af · 글자 흰색 14px/600 · 높이 40 · radius 8 · 테두리 1px rgba(61,61,61,0.1)
+ * - 높이 40 = 테두리 1×2 + 상하 padding 9×2 + line-height 20, 좌우 padding은 16에서 테두리 1px을 뺀 15
+ * - 폭은 라벨 길이만큼(본문 전체 폭인 프리셋 `mailDetailButton`과 다름)
+ * - 라벨은 말줄임·잘림 없이 단어 단위로 줄바꿈한다. td 높이 40은 최소 높이로 동작해 줄 수만큼 늘어난다.
+ * 상담·인재채용·재능기부 프리셋은 기존 `mailDetailButton`을 유지한다.
+ * `data-mail-button` 표식이 있어 메일 에디터가 이 표를 버튼 노드(`MailButton`)로 읽고 그대로 다시 쓴다.
+ */
+export const MAIL_BUTTON_ATTR = 'data-mail-button'
+
+export const MAIL_PRIMARY_BUTTON_ATTRS = {
+  table: {
+    role: 'presentation',
+    cellpadding: '0',
+    cellspacing: '0',
+    border: '0',
+    style: 'border-collapse:separate;border-spacing:0;',
+  },
+  td: {
+    height: '40',
+    bgcolor: '#00a0af',
+    style:
+      'height:40px;box-sizing:border-box;border:1px solid rgba(61,61,61,0.1);border-radius:8px;background:#00a0af;text-align:center;',
+  },
+  a: {
+    target: '_blank',
+    rel: 'noopener noreferrer',
+    style:
+      'display:inline-block;padding:9px 15px;color:#ffffff;font-family:Pretendard,Arial,sans-serif;font-size:14px;line-height:20px;font-weight:600;text-decoration:none;word-break:keep-all;overflow-wrap:break-word;',
+  },
+} as const
+
+function escapeHtmlAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+function escapeHtmlText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function htmlAttributes(attrs: Readonly<Record<string, string>>): string {
+  return Object.entries(attrs)
+    .map(([key, value]) => `${key}="${escapeHtmlAttribute(value)}"`)
+    .join(' ')
+}
+
+/** 라벨·href로 버튼 HTML을 만든다. 버튼 노드 renderHTML과 같은 속성을 쓴다. */
+export function mailPrimaryButtonHtml(label: string, href: string): string {
+  const { table, td, a } = MAIL_PRIMARY_BUTTON_ATTRS
+  return `<table ${MAIL_BUTTON_ATTR}="" ${htmlAttributes(table)}><tr><td ${htmlAttributes(td)}><a href="${escapeHtmlAttribute(href)}" ${htmlAttributes(a)}>${escapeHtmlText(label)}</a></td></tr></table>`
+}
+
+export function mailPrimaryButton(
+  label: string,
+  audience: MailLinkAudience,
+  hrefVariableLabel: string = MAIL_NOTIFICATION_LINK_PATH_VARIABLE_LABEL
+): string {
+  return mailPrimaryButtonHtml(label, mailNotificationLinkHref(audience, hrefVariableLabel))
+}
+
 export function mailGreetingParagraphs(lines: string[]): string {
   const paragraphStyle =
     'margin:0 0 24px 0;color:#3d3d3d;font-family:Pretendard,Arial,sans-serif;font-size:14px;line-height:1.5;'

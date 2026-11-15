@@ -8,7 +8,8 @@
 
 export type SignedConsentOriginalContentParams = {
 /**
- * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
+ * signed-document 응답의 documentId(전자서명 문서 id).
+ * @minimum 1
  */
 documentId: number;
 };

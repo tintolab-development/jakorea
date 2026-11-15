@@ -56,15 +56,39 @@ describe('resolveAdminNotificationActionLabel', () => {
       })
     expect(label('ADMIN_INSTRUCTOR_ROLE_REQUESTED', 'INSTRUCTOR_ROLE_REQUEST')).toBe('신청 목록 보기')
     expect(label('ADMIN_SIGNUP_APPROVAL_REQUESTED', 'ADMIN_APPROVAL_REQUEST')).toBe('신청 목록 보기')
-    expect(label('ADMIN_INDIVIDUAL_PROGRAM_INSTRUCTOR_UNASSIGNED', 'PROGRAM_SCHEDULE')).toBe('강사 배정')
+    expect(label('ADMIN_PROGRAM_APPLICATION_DAILY_SUMMARY')).toBe('신청 목록 보기')
     expect(label('ADMIN_STUDENT_ROSTER_UNSUBMITTED')).toBe('학생 명단 확인')
-    expect(label('ADMIN_SETTLEMENT_APPLICATION_RESUBMITTED', 'SETTLEMENT_APPLICATION')).toBe('신청 내역 확인')
+    expect(label('ADMIN_PORTRAIT_CONSENT_UNSUBMITTED')).toBe('학생 명단 확인')
+    expect(label('ADMIN_SETTLEMENT_APPLICATION_RESUBMITTED', 'SETTLEMENT_APPLICATION')).toBe(
+      '신청 내역 확인'
+    )
+    expect(label('ADMIN_EXPENSE_RECEIPT_CONFIRMED', 'SETTLEMENT')).toBe('지급 대상 목록 보기')
     expect(label('ADMIN_INQUIRY_CREATED', 'INQUIRY')).toBe('문의 내용 확인')
     expect(label('ADMIN_TEACHER_EMPLOYMENT_CHANGED', 'MEMBER')).toBe('회원 정보 보기')
     expect(label('ADMIN_PROGRAM_NOTICE_CREATED', 'PROGRAM_POST')).toBe('게시글 확인')
     expect(label('ADMIN_PROGRAM_POST_COMMENT_CREATED', 'PROGRAM_POST')).toBe('댓글 확인')
     expect(label('ADMIN_ROLE_CHANGED', 'ADMIN_ACCOUNT')).toBe('내 정보 보기')
-    // 시안: 프로그램 신청 취소는 [닫기]만
     expect(label('ADMIN_PROGRAM_APPLICATION_CANCELLED')).toBeNull()
+    expect(label('ADMIN_INDIVIDUAL_PROGRAM_INSTRUCTOR_UNASSIGNED', 'PROGRAM_SCHEDULE')).toBe(
+      '강사 배정'
+    )
+  })
+
+  it('교육진행자 미배정은 제목의 역할이 있으면 그 값으로 「… 배정」', () => {
+    const target = {
+      eventType: 'ADMIN_ORGANIZATION_PROGRAM_INSTRUCTOR_UNASSIGNED',
+      linkType: 'PROGRAM_SCHEDULE',
+      linkId: '3',
+      programId: '12',
+    }
+    expect(resolveAdminNotificationActionLabel({ target, title: '강사 미배정 건 안내' })).toBe(
+      '강사 배정'
+    )
+    expect(
+      resolveAdminNotificationActionLabel({
+        target,
+        title: '개인 프로그램 교육진행자 미배정 건 안내',
+      })
+    ).toBe('교육진행자 배정')
   })
 })

@@ -94,7 +94,18 @@ async function paintAnnotationOverlays(
   }
 }
 
-async function renderPdfPageToObjectUrl(page: PDFPageProxy): Promise<string> {
+export type PdfPreviewRenderOptions = {
+  /**
+   * false면 페이지 내용만 그린다.
+   * 서명 PDF는 BE가 라디오·서명을 본문에 넣어 두므로, 주석 fieldValue를 글자로 다시 쓰지 않는다.
+   */
+  paintAnnotationOverlays?: boolean
+}
+
+async function renderPdfPageToObjectUrl(
+  page: PDFPageProxy,
+  options?: PdfPreviewRenderOptions
+): Promise<string> {
   const baseViewport = page.getViewport({ scale: 1 })
   const scale = (CRIME_CONSENT_A4_PREVIEW_WIDTH_PX / baseViewport.width) * RENDER_PIXEL_RATIO
   const viewport = page.getViewport({ scale })
@@ -116,7 +127,9 @@ async function renderPdfPageToObjectUrl(page: PDFPageProxy): Promise<string> {
     intent: 'display',
     annotationMode: AnnotationMode.ENABLE,
   }).promise
-  await paintAnnotationOverlays(page, context, viewport)
+  if (options?.paintAnnotationOverlays !== false) {
+    await paintAnnotationOverlays(page, context, viewport)
+  }
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(result => {
       if (result) {
@@ -129,7 +142,10 @@ async function renderPdfPageToObjectUrl(page: PDFPageProxy): Promise<string> {
   return URL.createObjectURL(blob)
 }
 
-async function renderPdfBytesToPageObjectUrls(bytes: Uint8Array): Promise<string[]> {
+async function renderPdfBytesToPageObjectUrls(
+  bytes: Uint8Array,
+  options?: PdfPreviewRenderOptions
+): Promise<string[]> {
   ensurePdfWorker()
   const loadingTask: PDFDocumentLoadingTask = getDocument({
     data: bytes.slice(),
@@ -140,7 +156,7 @@ async function renderPdfBytesToPageObjectUrls(bytes: Uint8Array): Promise<string
   try {
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
       const page = await pdf.getPage(pageNumber)
-      urls.push(await renderPdfPageToObjectUrl(page))
+      urls.push(await renderPdfPageToObjectUrl(page, options))
     }
     return urls
   } catch (error) {
@@ -152,13 +168,19 @@ async function renderPdfBytesToPageObjectUrls(bytes: Uint8Array): Promise<string
   }
 }
 
-export async function renderPdfFileToPageObjectUrls(file: File): Promise<string[]> {
-  return renderPdfBytesToPageObjectUrls(new Uint8Array(await file.arrayBuffer()))
+export async function renderPdfFileToPageObjectUrls(
+  file: File,
+  options?: PdfPreviewRenderOptions
+): Promise<string[]> {
+  return renderPdfBytesToPageObjectUrls(new Uint8Array(await file.arrayBuffer()), options)
 }
 
 /** PDF를 브라우저 뷰어 없이 페이지별 PNG object URL로 렌더한다. */
-export async function renderPdfSrcToPageObjectUrls(src: string): Promise<string[]> {
+export async function renderPdfSrcToPageObjectUrls(
+  src: string,
+  options?: PdfPreviewRenderOptions
+): Promise<string[]> {
   const response = await fetch(src)
   if (!response.ok) throw new Error('pdf fetch failed')
-  return renderPdfBytesToPageObjectUrls(new Uint8Array(await response.arrayBuffer()))
+  return renderPdfBytesToPageObjectUrls(new Uint8Array(await response.arrayBuffer()), options)
 }

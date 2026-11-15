@@ -55,6 +55,23 @@ describe('shouldAttemptSubmittedConsentDocumentFetch', () => {
     expect(shouldAttemptSubmittedConsentDocumentFetch({ consentRecordId: 42 })).toBe(true)
     expect(shouldAttemptSubmittedConsentDocumentFetch({}, { documentAgreed: true })).toBe(false)
   })
+
+  it('filledDocumentAvailable=false면 consentRecordId 등이 있어도 조회하지 않는다', () => {
+    expect(
+      shouldAttemptSubmittedConsentDocumentFetch({
+        consentRecordId: 1696357,
+        filledDocumentAvailable: false,
+      })
+    ).toBe(false)
+    expect(
+      shouldFetchSubmittedConsentDocument({
+        consentRecordId: 1,
+        formResponseId: 2,
+        filledDocumentId: 3,
+        filledDocumentAvailable: false,
+      })
+    ).toBe(false)
+  })
 })
 
 describe('buildMemberConsentAgreeOnlyPreviewDraft', () => {

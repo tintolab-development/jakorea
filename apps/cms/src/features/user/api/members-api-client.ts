@@ -82,7 +82,7 @@ import type { ListMemberCommentsParams } from '@/shared/api/generated/members/sc
 import type { AdminPermissionResponse } from '@/shared/api/generated/members/schemas/adminPermissionResponse'
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
-import type { MemberPortalConsentSummary } from '@/shared/api/generated/members/schemas/memberPortalConsentSummary'
+import type { AdminMemberConsentSummary } from '@/shared/api/generated/members/schemas/adminMemberConsentSummary'
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
 import type { InstructorJaEvaluationInput } from '@/shared/api/generated/members/schemas/instructorJaEvaluationInput'
 import type { InstructorJaEvaluationResponse } from '@/shared/api/generated/members/schemas/instructorJaEvaluationResponse'
@@ -587,8 +587,8 @@ export async function fetchMemberConsentRecordsRemote(
 export async function fetchMemberConsentSummariesRemote(
   memberId: number,
   signal?: AbortSignal
-): Promise<MemberPortalConsentSummary[]> {
-  const body = await customInstance<MemberPortalConsentSummary[] | { data?: unknown }>(
+): Promise<AdminMemberConsentSummary[]> {
+  const body = await customInstance<AdminMemberConsentSummary[] | { data?: unknown }>(
     {
       url: `/api/admin/users/${memberId}/consents`,
       method: 'GET',
@@ -619,6 +619,94 @@ export async function fetchConsentFilledDocumentRemote(
 
 function consentRecordQuery(consentRecordId?: number) {
   return consentRecordId == null ? undefined : { consentRecordId }
+}
+
+/**
+ * BE가 내려준 작성본·서명본 조회 주소(`filledDocumentRevealEndpoint`·`signedDocumentRevealEndpoint`)로 POST.
+ * 주소를 consentType·consentRecordId·documentId로 조립하지 않는다. 민감정보 — 쿼리 캐시에 넣지 말 것.
+ */
+export async function postConsentDocumentRevealEndpoint<T>(
+  endpoint: string,
+  body: AdminPrivacyUnmaskRequest
+): Promise<T> {
+  return unwrapApiBody(
+    await customInstance<T>(
+      {
+        url: endpoint,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: body,
+      },
+      { skipGlobalErrorAlert: true }
+    )
+  )
+}
+
+/** blob 요청 오류 본문(JSON)을 객체로 되돌려 공통 오류 처리(ApiResponse.message)가 읽게 한다 */
+async function restoreBlobErrorBody(error: unknown): Promise<void> {
+  const response =
+    error && typeof error === 'object' && 'response' in error
+      ? (error as { response?: { data?: unknown } }).response
+      : undefined
+  if (!(response?.data instanceof Blob)) return
+  try {
+    response.data = JSON.parse(await response.data.text())
+  } catch {
+    /* JSON이 아니면 그대로 둔다 */
+  }
+}
+
+/**
+ * 서명 PDF·업로드 원본 화면 열람 (`signedPdfViewEndpoint`·`originalViewEndpoint`).
+ * 파일 암호 없이 원본 바이트를 받는다. 주소는 조립하지 않는다. 민감정보 — 쿼리 캐시에 넣지 말 것.
+ */
+export async function fetchConsentDocumentViewBlobRemote(
+  endpoint: string,
+  body: AdminPrivacyUnmaskRequest
+): Promise<Blob> {
+  try {
+    const payload = await customInstance<Blob>(
+      {
+        url: endpoint,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: body,
+        responseType: 'blob',
+      },
+      { skipGlobalErrorAlert: true }
+    )
+    const blob = asDownloadBlob(payload)
+    if (blob == null) throw new Error('empty consent document content')
+    return blob
+  } catch (error) {
+    await restoreBlobErrorBody(error)
+    throw error
+  }
+}
+
+/** `/api/admin/files/{fileObjectId}/sensitive-downloads` 주소에서 파일 id만 읽는다 (stream 폴백용) */
+function fileObjectIdFromSensitiveDownloadEndpoint(endpoint: string): number | null {
+  const match = /\/api\/admin\/files\/(\d+)\/sensitive-downloads/.exec(endpoint)
+  return match ? Number(match[1]) : null
+}
+
+/**
+ * 서명 PDF·업로드 원본 다운로드 (`signedPdfDownloadEndpoint`·`originalDownloadEndpoint`).
+ * 사유 + 파일 암호 → 암호 걸린 PDF(이미지 원본은 AES ZIP).
+ */
+export async function fetchConsentDocumentDownloadBlobRemote(input: {
+  downloadEndpoint: string
+  reason: string
+  password: string
+}): Promise<Blob> {
+  const fileObjectId = fileObjectIdFromSensitiveDownloadEndpoint(input.downloadEndpoint)
+  if (fileObjectId == null) throw new Error('invalid consent document download endpoint')
+  return loadSensitiveAdminFileBlob({
+    fileObjectId,
+    reason: input.reason,
+    claimPath: input.downloadEndpoint,
+    password: input.password,
+  })
 }
 
 function asDownloadBlob(payload: unknown): Blob | null {
@@ -653,33 +741,10 @@ export async function fetchConsentSignedDocumentRemote(
   )
 }
 
-/** POST 전자서명 이미지 Blob — 실패 시 null (본문 보기를 막지 않음) */
-export async function fetchConsentSignedSignatureImageRemote(
-  memberId: number,
-  consentType: string,
-  fieldKey: string,
-  body: AdminPrivacyUnmaskRequest,
-  consentRecordId?: number
-): Promise<Blob | null> {
-  const payload = await membersApi.signedConsentSignatureImage(
-    memberId,
-    consentType,
-    fieldKey,
-    body,
-    consentRecordQuery(consentRecordId),
-    {
-      skipGlobalErrorAlert: true,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'image/png,image/jpeg,image/webp,image/*,*/*',
-      },
-    }
-  )
-  const blob = asDownloadBlob(payload)
-  return isUsableSignatureImageBlob(blob) ? blob : null
-}
-
-/** signed-document + 서명 이미지. content 실패 시 회원 서명 파일 민감 다운로드로 폴백 */
+/**
+ * signed-document + 서명 이미지. 서명 이미지는 BE가 준 `signatureFields[].contentRevealEndpoint`로만 조회한다
+ * (fieldKey·documentId로 주소를 조립하지 않음). content 실패 시 회원 서명 파일 민감 다운로드로 폴백
+ */
 export async function loadConsentSignedSignatureBlobRemote(input: {
   memberId: number
   consentType: string
@@ -699,17 +764,15 @@ export async function loadConsentSignedSignatureBlobRemote(input: {
   }
   const field = resolveConsentSignedSignatureField(signed.signatureFields)
   if (field == null) return null
-  try {
-    const blob = await fetchConsentSignedSignatureImageRemote(
-      input.memberId,
-      input.consentType,
-      field.fieldKey,
-      { reason: input.reason },
-      input.consentRecordId
-    )
-    if (blob) return blob
-  } catch {
-    /* fileObjectId 폴백 */
+  if (field.contentRevealEndpoint) {
+    try {
+      const blob = await fetchConsentDocumentViewBlobRemote(field.contentRevealEndpoint, {
+        reason: input.reason,
+      })
+      if (isUsableSignatureImageBlob(blob)) return blob
+    } catch {
+      /* fileObjectId 폴백 */
+    }
   }
   if (field.signatureFileObjectId == null) return null
   try {

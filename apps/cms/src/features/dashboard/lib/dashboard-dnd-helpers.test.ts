@@ -8,6 +8,7 @@ import {
   FULL_WIDTH_CENTER_RATIO,
   areWidgetIdListsEqual,
   computeDragEndResult,
+  dashboardCollisionDetection,
   getInsertIndexFromPoint,
   isPointerInFullWidthCenterBand,
   type SlotRect,
@@ -200,5 +201,34 @@ describe('computeDragEndResult', () => {
     expect(r!.shouldSplit).toBe(false)
     expect(r!.splitTargetId).toBeNull()
     expect(r!.pairRowWithTargetId).toBeNull()
+  })
+})
+
+describe('dashboardCollisionDetection', () => {
+  // 화면: [general 1단] / [left 2단 | right 2단] / 끌고 가는 [active 1단]
+  const rects = new Map<string, { left: number; top: number; right: number; bottom: number; width: number; height: number }>([
+    ['general', { left: 0, top: 0, right: 1600, bottom: 400, width: 1600, height: 400 }],
+    ['left', { left: 0, top: 432, right: 800, bottom: 832, width: 800, height: 400 }],
+    ['right', { left: 800, top: 432, right: 1600, bottom: 832, width: 800, height: 400 }],
+    ['active', { left: 0, top: 864, right: 1600, bottom: 1264, width: 1600, height: 400 }],
+  ])
+  const containers = [...rects.keys()].map(id => ({ id, rect: { current: rects.get(id) } }))
+  // 핸들(왼쪽 위)을 잡고 포인터를 general 가운데(800, 200)에 둠 → 끌고 가는 상자 중심은 오른쪽 아래로 치우친다
+  const collisionRect = { left: 760, top: 180, right: 2360, bottom: 580, width: 1600, height: 400 }
+  const baseArgs = {
+    active: { id: 'active' },
+    collisionRect,
+    droppableRects: rects,
+    droppableContainers: containers,
+  } as unknown as Parameters<typeof dashboardCollisionDetection>[0]
+
+  it('포인터가 올라간 위젯을 대상으로 잡는다 (상자 중심이 다른 위젯에 더 가까워도)', () => {
+    const result = dashboardCollisionDetection({ ...baseArgs, pointerCoordinates: { x: 800, y: 200 } })
+    expect(result[0]?.id).toBe('general')
+  })
+
+  it('포인터 아래 위젯이 없으면(키보드 이동 등) 상자 중심 기준으로 판정한다', () => {
+    const result = dashboardCollisionDetection({ ...baseArgs, pointerCoordinates: null })
+    expect(result[0]?.id).toBe('right')
   })
 })

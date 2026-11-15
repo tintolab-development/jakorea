@@ -1,0 +1,38 @@
+/*
+ * 알림 안내 팝업 — 시안 CMS 「시스템 안내 팝업」 공통_ 3종
+ * 제목 ↔ 본문 16 · 본문 ↔ 버튼 30 · 버튼 120 폭 · 버튼 간격 8 · 우측 정렬
+ * 동적 문구(#{동의 항목} 등)가 길면 단어 단위로 줄바꿈한다.
+ */
+
+.content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.title {
+  margin: 0;
+  padding-right: var(--spacing-32);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.message {
+  margin: var(--spacing-16) 0 0;
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-28);
+}
+
+.actions > * {
+  min-width: 120px;
+}

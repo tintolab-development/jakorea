@@ -156,7 +156,11 @@ export async function fetchAdminMfaVerify(
     const { data: payload } = await axiosClient.post<unknown>(
       `${adminAuthPaths.mfaVerify()}`,
       body,
-      AUTH_COOKIE_CREDENTIALS
+      // 코드 불일치·일시 오류는 2단계 인증 팝업이 직접 안내한다 — 공통 「요청 실패」 알럿 생략
+      {
+        ...AUTH_COOKIE_CREDENTIALS,
+        skipGlobalErrorAlert: true,
+      } as InternalAxiosRequestConfig & { skipGlobalErrorAlert?: boolean }
     )
     return unwrapTokenResponse(payload)
   } catch (err) {

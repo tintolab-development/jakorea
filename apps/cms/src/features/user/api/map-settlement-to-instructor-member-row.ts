@@ -26,7 +26,7 @@ import {
   prepareSettlementFrontendItemsForStatement,
   resolveLectureFeeStandardAmountDisplay,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
-import { resolveCanonicalLectureSessionDisplay } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import { resolveLectureSessionSegmentDisplay } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 function paymentOrderStatusToInstructorUiStatus(
   s: ReturnType<typeof mapStatementStatusToProcessingStatus>
@@ -106,13 +106,6 @@ function seoulCalendarDateFromIso(iso?: string | null): string | undefined {
   return getSeoulCalendarDate(date)
 }
 
-function formatIsoDate(iso?: string | null): string {
-  const calendar = seoulCalendarDateFromIso(iso)
-  if (!calendar) return iso?.trim() ? iso : '-'
-  const label = formatDateDot(calendar)
-  return label === '-' ? (iso?.trim() || '-') : label
-}
-
 function formatIsoDateWithWeekday(iso?: string | null): string {
   const calendar = seoulCalendarDateFromIso(iso)
   if (!calendar) return iso?.trim() ? iso : '-'
@@ -162,7 +155,8 @@ export function mapSettlementDetailToInstructorInvoice(
           .join(' | ')
       : '-'
 
-  const sessionLabel = resolveCanonicalLectureSessionDisplay(settlement.lectureSessionDisplay)
+  // 시안: `2026.12.08(월) │ 2회차` — BE 원문 앞 날짜·시간은 떼고 회차·차시만
+  const sessionLabel = resolveLectureSessionSegmentDisplay(settlement.lectureSessionDisplay)
   const lectureDateSessions =
     sessionLabel !== '-' ? `${lectureDate} | ${sessionLabel}` : lectureDate
 
@@ -181,7 +175,8 @@ export function mapSettlementDetailToInstructorInvoice(
       formatDate: formatIsoDateWithWeekday,
     }),
     paymentStatementStatus: status,
-    expectedTransferDate: formatIsoDate(
+    // 시안: 이체 예정일 `2026.02.24(화)`
+    expectedTransferDate: formatIsoDateWithWeekday(
       settlement.expectedTransferDate ?? listItem.expectedTransferDate
     ),
     lectureFeeBasis,

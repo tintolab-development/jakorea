@@ -237,24 +237,25 @@
 }
 
 /*
- * ----- 년도·연월 선택 팝업 — 디자인 시스템 Calendar / Miniview (miniview on) -----
+ * ----- 년도·연월 선택 팝업 — 디자인 시스템 Popup / Date Picker (type=year · year-month) -----
+ * 시안: CMS 디자인 시스템 `11. 팝업 케이스` › `06. 캘린더 팝업` › Popup / Date Picker (17067:19517),
+ *       칸은 Calendar / Picker / Cell (17067:19440).
  * antd 패널 규칙보다 우선하도록 루트에 `.ant-picker-dropdown` 을 함께 건다.
- * 컨테이너 300 · padding 20 · radius 16 · Shadow/default, 헤더 ↔ 본문 16,
- * 헤더 Icon / Button / w20 꺾쇠 + 제목 Outfit Medium 16/18 #3d3d3d,
- * 칸 Calendar / Miniview / Date: radius 8 · Pretendard Medium 15
- *   - 기본 Neutral black / hover·올해·이번 달 = select(Brand 10%) / 선택 = focus(Brand-500·흰 글자)
- *   - 범위 밖(앞뒤 년도) = status off(Content/disabled) / 선택 불가 = disabled(#3d3d3d 16% 배경)
- * 년도·연월 패널 시안은 없어 칸 크기(폭 60)는 antd 기존 년도·월 칸 폭을 유지하고, 높이 30은 Miniview 날짜 칸 크기,
- * 본문 높이는 Miniview 전체 332에서 padding·헤더·간격을 뺀 값으로 날짜 팝업과 같은 크기를 맞춘다.
+ * 컨테이너 300 · padding 20 · radius 16 · Miniview 와 같은 그림자, 헤더 ↔ 본문 16,
+ * 헤더 Icon / Button / w20 꺾쇠 + 제목 Outfit Medium 16/18 #3d3d3d (연월 `2026`, 연도 `2020-2029`),
+ * 본문 3열 × 4행 격자 — 칸 높이 40 · 좌우 간격 8 · 위아래 간격 12 (폭은 3등분), radius 8 · Pretendard Medium 15
+ *   - default Neutral black / select(올해·이번 달, hover) Brand 10% / focus(선택) Brand-500·흰 글자
+ *   - off(앞뒤 10년대 밖 연도) Content/disabled / 선택 불가 = disabled(#3d3d3d 16% 배경)
+ * 10년 단위(decade) 패널은 시안이 없어 같은 격자·칸 스타일을 그대로 쓴다.
  */
 .cms-datepicker-popup--year-month.ant-picker-dropdown {
   --cms-ym-popup-width: 300px;
-  --cms-ym-popup-height: 332px;
   --cms-ym-popup-padding: var(--Spacing-20, 20px);
   --cms-ym-popup-header-h: 20px;
   --cms-ym-popup-header-gap: var(--Spacing-16, 16px);
-  --cms-ym-popup-cell-w: 60px;
-  --cms-ym-popup-cell-h: 30px;
+  --cms-ym-popup-cell-h: 40px;
+  --cms-ym-popup-col-gap: var(--Spacing-8, 8px);
+  --cms-ym-popup-row-gap: var(--Spacing-12, 12px);
 }
 
 .cms-datepicker-popup--year-month.ant-picker-dropdown .ant-picker-panel-container {
@@ -273,7 +274,7 @@
 .cms-datepicker-popup--year-month.ant-picker-dropdown .ant-picker-decade-panel {
   box-sizing: border-box;
   width: var(--cms-ym-popup-width);
-  height: var(--cms-ym-popup-height);
+  height: auto;
   padding: var(--cms-ym-popup-padding);
   gap: var(--cms-ym-popup-header-gap);
 }
@@ -314,15 +315,18 @@
   padding: 0;
 }
 
+/*
+ * 격자 간격: 칸(td) 안쪽 여백 = 간격의 절반, 표 바깥 여백 = -절반 → 칸 사이에만 8·12 간격이 남는다.
+ */
 .cms-datepicker-popup--year-month.ant-picker-dropdown .ant-picker-body .ant-picker-content {
-  height: calc(
-    var(--cms-ym-popup-height) - 2 * var(--cms-ym-popup-padding) - var(--cms-ym-popup-header-h) -
-      var(--cms-ym-popup-header-gap)
-  );
+  width: calc(100% + var(--cms-ym-popup-col-gap));
+  height: auto;
+  margin: calc(var(--cms-ym-popup-row-gap) / -2) calc(var(--cms-ym-popup-col-gap) / -2);
+  table-layout: fixed;
 }
 
 .cms-datepicker-popup--year-month.ant-picker-dropdown .ant-picker-cell {
-  padding: 0;
+  padding: calc(var(--cms-ym-popup-row-gap) / 2) calc(var(--cms-ym-popup-col-gap) / 2);
   color: var(--Netural-black, #3d3d3d);
 }
 
@@ -333,30 +337,21 @@
 
 .cms-datepicker-popup--year-month.ant-picker-dropdown .ant-picker-cell .ant-picker-cell-inner {
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   height: var(--cms-ym-popup-cell-h);
-  min-width: var(--cms-ym-popup-cell-h);
+  min-width: 0;
+  padding: 0;
   border-radius: var(--Radius-8, 8px);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 15px;
   font-style: normal;
   font-weight: 500;
-  line-height: var(--cms-ym-popup-cell-h);
+  line-height: 1.3;
   color: inherit;
-}
-
-.cms-datepicker-popup--year-month.ant-picker-dropdown
-  .ant-picker-year-panel
-  .ant-picker-cell-inner,
-.cms-datepicker-popup--year-month.ant-picker-dropdown
-  .ant-picker-month-panel
-  .ant-picker-cell-inner {
-  width: var(--cms-ym-popup-cell-w);
-  padding: 0;
-}
-
-/* 10년 단위(decade) 칸은 `2020-2029` 글자 폭에 맞춘다 (antd 기존 좌우 4px) */
-.cms-datepicker-popup--year-month.ant-picker-dropdown .ant-picker-decade-panel .ant-picker-cell-inner {
-  padding: 0 var(--Spacing-4, 4px);
+  white-space: nowrap;
 }
 
 /* status off — 앞뒤 범위 밖 년도 */
@@ -364,18 +359,10 @@
   color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
 }
 
-/* 오늘 테두리(antd) 대신 select 배경 */
+/* select — 올해·이번 달(`cms-datepicker__cell--current`, cellRender 로 붙임)·hover 는 Brand 10% 배경 */
 .cms-datepicker-popup--year-month.ant-picker-dropdown
-  .ant-picker-cell-in-view.ant-picker-cell-today
-  .ant-picker-cell-inner::before {
-  display: none;
-}
-
-.cms-datepicker-popup--year-month.ant-picker-dropdown
-  .ant-picker-cell-in-view.ant-picker-cell-today:not(.ant-picker-cell-selected):not(
-    .ant-picker-cell-disabled
-  )
-  .ant-picker-cell-inner,
+  .ant-picker-cell-in-view:not(.ant-picker-cell-selected):not(.ant-picker-cell-disabled)
+  .cms-datepicker__cell--current,
 .cms-datepicker-popup--year-month.ant-picker-dropdown
   .ant-picker-content
   .ant-picker-cell:hover:not(.ant-picker-cell-selected):not(.ant-picker-cell-disabled)

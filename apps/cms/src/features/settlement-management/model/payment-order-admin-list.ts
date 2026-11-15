@@ -4,6 +4,7 @@
  */
 
 import type { PaymentOrderCalculationBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import type { SettlementListItemResponseRowType } from '@/shared/api/generated/settlement/schemas'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 
 export type PaymentOrderAdminProcessingStatus =
@@ -133,6 +134,10 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   id: string
   no: number
   settlementId?: number
+  /** 확정 전 신청서 행의 신청서 ID. 정산 행이면 연결된 신청서 ID 또는 없음 */
+  settlementApplicationId?: number
+  /** 지급조서 확인 목록의 행 종류. 신청서 행은 SETTLEMENT_APPLICATION */
+  rowType?: SettlementListItemResponseRowType
   statementId?: number
   instructorName: string
   institutionName: string
@@ -177,6 +182,10 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   id: string
   no: number
   settlementId?: number
+  /** 확정 전 신청서 행의 신청서 ID. 정산 행이면 연결된 신청서 ID 또는 없음 */
+  settlementApplicationId?: number
+  /** 지급조서 확인 목록의 행 종류. 신청서 행은 SETTLEMENT_APPLICATION */
+  rowType?: SettlementListItemResponseRowType
   statementId?: number
   programName: string
   institutionName: string

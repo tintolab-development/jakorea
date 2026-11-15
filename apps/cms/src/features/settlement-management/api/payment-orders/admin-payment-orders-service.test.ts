@@ -25,14 +25,31 @@ describe('buildPaymentOrdersDetailListParams', () => {
     ).toEqual({ programId: 42 })
   })
 
-  it('강사 aggregateKey → instructorMemberId 스코프', () => {
+  it('강사 상세는 지급조서 확인 목록이라 instructorMemberId를 붙이지 않는다', () => {
     expect(
       buildPaymentOrdersDetailListParams({
         type: 'instructor',
         aggregateKey: '9001',
         dateRange: null,
       })
-    ).toEqual({ instructorMemberId: 9001 })
+    ).toEqual({})
+  })
+
+  it('강사 상세의 기간·검색은 instructorMemberId 없이 전달한다', () => {
+    expect(
+      buildPaymentOrdersDetailListParams({
+        type: 'instructor',
+        aggregateKey: '9001',
+        dateRange: { from: '2026-08-01', to: '2026-09-01' },
+        search: '홍길동',
+        statementStatus: 'WAITING_CONFIRM',
+      })
+    ).toEqual({
+      fromDate: '2026-08-01',
+      toDate: '2026-09-01',
+      search: '홍길동',
+      statementStatus: 'WAITING_CONFIRM',
+    })
   })
 
   it('목록 기간을 fromDate/toDate로 전달', () => {

@@ -12,6 +12,7 @@ import type {
 } from '@/shared/api/generated/settlement/schemas'
 import {
   canConfirmPaymentStatement,
+  CONFIRM_PAYMENT_STATEMENT_ACTION,
   mapSettlementAxesToLineStatus,
 } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import {
@@ -44,21 +45,37 @@ function resolveStatementId(
   return settlementId != null ? statementMap.get(settlementId) : undefined
 }
 
-function toProgramDetailInstructorRow(
+/** 지급조서 확인 목록의 확정 전 신청서 행. statementStatus만으로 구분하지 않는다. */
+export function isSettlementApplicationListItem(item: {
+  rowType?: string | null
+  settlementId?: number | null
+  settlementApplicationId?: number | null
+}): boolean {
+  if (item.rowType === 'SETTLEMENT_APPLICATION') return true
+  return item.settlementId == null && item.settlementApplicationId != null
+}
+
+function paymentOrderLineId(item: SettlementListItemResponse, index: number): string {
+  if (item.settlementId != null) return String(item.settlementId)
+  if (item.settlementApplicationId != null) return `application-${item.settlementApplicationId}`
+  return `line-${index}`
+}
+
+function sharedPaymentOrderLineFields(
   item: SettlementListItemResponse,
   index: number,
   statementMap: Map<number, number>
-): PaymentOrderAdminProgramDetailInstructorRow {
-  const settlementId = item.settlementId
+) {
   const availableActions = item.availableActions
+  const applicationLine = isSettlementApplicationListItem(item)
   return {
-    id: settlementId != null ? String(settlementId) : `line-${index}`,
+    id: paymentOrderLineId(item, index),
     no: index + 1,
-    settlementId: settlementId ?? undefined,
+    settlementId: item.settlementId ?? undefined,
+    settlementApplicationId: item.settlementApplicationId ?? undefined,
+    rowType: item.rowType ?? undefined,
     programId: item.programId ?? undefined,
-    statementId: resolveStatementId(item, statementMap),
-    instructorName: item.instructorName ?? '-',
-    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName) || '-',
+    statementId: applicationLine ? undefined : resolveStatementId(item, statementMap),
     lectureDate: item.lectureDate ?? '',
     sessionOrdinal: item.sessionOrdinal ?? null,
     processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
@@ -69,10 +86,24 @@ function toProgramDetailInstructorRow(
     statementStatus: item.statementStatus ?? undefined,
     paymentStatus: item.paymentStatus ?? undefined,
     availableActions,
-    canConfirmPaymentStatement: canConfirmPaymentStatement({
-      availableActions,
-      statementStatus: item.statementStatus,
-    }),
+    canConfirmPaymentStatement: applicationLine
+      ? (availableActions ?? []).includes(CONFIRM_PAYMENT_STATEMENT_ACTION)
+      : canConfirmPaymentStatement({
+          availableActions,
+          statementStatus: item.statementStatus,
+        }),
+  }
+}
+
+function toProgramDetailInstructorRow(
+  item: SettlementListItemResponse,
+  index: number,
+  statementMap: Map<number, number>
+): PaymentOrderAdminProgramDetailInstructorRow {
+  return {
+    ...sharedPaymentOrderLineFields(item, index, statementMap),
+    instructorName: item.instructorName ?? '-',
+    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName) || '-',
   }
 }
 
@@ -89,30 +120,10 @@ function toInstructorDetailProgramRow(
   index: number,
   statementMap: Map<number, number>
 ): PaymentOrderAdminInstructorDetailProgramRow {
-  const settlementId = item.settlementId
-  const availableActions = item.availableActions
   return {
-    id: settlementId != null ? String(settlementId) : `line-${index}`,
-    no: index + 1,
-    settlementId: settlementId ?? undefined,
-    programId: item.programId ?? undefined,
-    statementId: resolveStatementId(item, statementMap),
+    ...sharedPaymentOrderLineFields(item, index, statementMap),
     programName: item.programNameKo ?? '-',
     institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName) || '-',
-    lectureDate: item.lectureDate ?? '',
-    sessionOrdinal: item.sessionOrdinal ?? null,
-    processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
-    estimatedAmount: item.netPaymentAmount ?? 0,
-    lectureFeePaymentScheduledDate: item.expectedTransferDate ?? undefined,
-    correctionRequestId: item.settlementCorrectionRequestId ?? undefined,
-    correctionReason: item.correctionReason?.trim() || undefined,
-    statementStatus: item.statementStatus ?? undefined,
-    paymentStatus: item.paymentStatus ?? undefined,
-    availableActions,
-    canConfirmPaymentStatement: canConfirmPaymentStatement({
-      availableActions,
-      statementStatus: item.statementStatus,
-    }),
   }
 }
 

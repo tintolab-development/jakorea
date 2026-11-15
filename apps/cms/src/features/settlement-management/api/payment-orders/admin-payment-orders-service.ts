@@ -44,8 +44,13 @@ export function buildPaymentOrdersDetailListParams(
   const id = Number(params.aggregateKey)
   if (!Number.isFinite(id)) return {}
 
+  /**
+   * 강사별 상세도 지급조서 확인 목록이다.
+   * instructorMemberId를 붙이면 회원 상세 정산 탭 조회가 되어 신청서 행이 빠지고 CONFIRMED가 남는다.
+   * 강사 좁히기는 응답을 받은 뒤 instructorMemberId로 거른다.
+   */
   const listParams: Omit<ListSettlementsParams, 'page' | 'size'> =
-    params.type === 'program' ? { programId: id } : { instructorMemberId: id }
+    params.type === 'program' ? { programId: id } : {}
 
   if (params.dateRange?.from) listParams.fromDate = params.dateRange.from
   if (params.dateRange?.to) listParams.toDate = params.dateRange.to

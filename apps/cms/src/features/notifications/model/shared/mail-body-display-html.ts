@@ -49,13 +49,36 @@ export function mailBodyToDisplayHtml(template: string): string {
   return isPlainTextMailBody(template) ? renderPlainMailBodyAfterSubstitute(template) : template
 }
 
+/** 본문 맨 끝의 빈 문단(`<p></p>`, `<p><br></p>`)들. 에디터는 표·버튼 뒤에 빈 문단을 붙인다. */
+const TRAILING_EMPTY_MAIL_PARAGRAPHS_RE = /(?:\s*<p(?:\s[^>]*)?>(?:\s|<br\s*\/?>)*<\/p>)+\s*$/
+
+/**
+ * 에디터 저장 HTML의 빈 문단(`<p></p>`)을 `<p><br></p>`로 바꾼다.
+ * 메일 클라이언트는 내용 없는 `<p>`에 높이를 주지 않아 본문 빈 줄(개행)이 사라진다.
+ * 본문 맨 끝의 빈 문단은 메일 끝 여백만 만들므로 지운다(중간 빈 줄은 유지).
+ */
+export function keepEmptyMailParagraphLines(html: string): string {
+  return html
+    .replace(TRAILING_EMPTY_MAIL_PARAGRAPHS_RE, '')
+    .replace(/<p(\s[^>]*)?><\/p>/g, (_match, attrs: string | undefined) => `<p${attrs ?? ''}><br></p>`)
+}
+
+/**
+ * 저장용 빈 줄 `<p><br></p>`를 에디터·뷰어용 `<p></p>`로 되돌린다.
+ * 에디터는 `<p><br></p>`의 `<br>`을 줄바꿈 노드로 읽어 빈 줄이 두 줄 높이로 보이기 때문이다.
+ * 저장 시 {@link keepEmptyMailParagraphLines}가 다시 `<p><br></p>`로 바꾼다.
+ */
+export function mailHtmlEmptyLinesForEditor(html: string): string {
+  return html.replace(/<p(\s[^>]*)?>\s*<br\s*\/?>\s*<\/p>/g, (_match, attrs: string | undefined) => `<p${attrs ?? ''}></p>`)
+}
+
 /**
  * 평문 템플릿 → 메일 TipTap 에디터 초기 HTML.
  * 줄마다 `<p>`, 빈 줄은 `<p></p>`(`<br>` 없음). `#{변수}`는 에디터가 변수 노드로 파싱하는 span으로 만든다.
- * HTML 템플릿이면 그대로 반환.
+ * HTML 템플릿이면 저장용 빈 줄(`<p><br></p>`)만 `<p></p>`로 되돌려 반환.
  */
 export function mailBodyToEditorHtml(template: string): string {
-  if (!isPlainTextMailBody(template)) return template
+  if (!isPlainTextMailBody(template)) return mailHtmlEmptyLinesForEditor(template)
   return template
     .replace(/^(?:[ \t]*\r?\n)+|(?:\r?\n[ \t]*)+$/g, '')
     .split(/\r?\n/)

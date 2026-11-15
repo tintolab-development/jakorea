@@ -32,6 +32,7 @@ import {
 import { mapSettlementPayeeToInstructorBasicFields } from '@/features/settlement-management/api/payment-orders/map-settlement-payee'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { resolveLectureSessionSegmentDisplay } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 function formatTransferDateDisplay(iso: string): string {
   if (!iso) return '-'
@@ -91,7 +92,8 @@ function resolveSessionDisplay(
   lectureSessionDisplay?: string | null
 ): string {
   const fromApi = lectureSessionDisplay?.trim()
-  if (fromApi) return fromApi
+  // BE 원문 앞 날짜·시간은 교육일 칸과 겹치므로 회차·차시만. 뒤 조각이 없어도 다른 값으로 대체하지 않는다.
+  if (fromApi) return resolveLectureSessionSegmentDisplay(fromApi)
   if (row.sessionLabel && row.sessionLabel !== '-') return row.sessionLabel
   return '-'
 }

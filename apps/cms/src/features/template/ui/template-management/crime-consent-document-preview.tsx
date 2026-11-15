@@ -14,10 +14,12 @@ function CrimeConsentPdfPagePreview({
   src,
   file,
   alt,
+  paintAnnotationOverlays = true,
 }: {
   src: string
   file?: File | null
   alt: string
+  paintAnnotationOverlays?: boolean
 }) {
   const [pageUrls, setPageUrls] = useState<string[]>([])
   const [failed, setFailed] = useState(false)
@@ -29,9 +31,10 @@ function CrimeConsentPdfPagePreview({
     setFailed(false)
     setPageUrls([])
 
+    const renderOptions = { paintAnnotationOverlays }
     const render = file
-      ? renderPdfFileToPageObjectUrls(file)
-      : renderPdfSrcToPageObjectUrls(src)
+      ? renderPdfFileToPageObjectUrls(file, renderOptions)
+      : renderPdfSrcToPageObjectUrls(src, renderOptions)
 
     void render
       .then(urls => {
@@ -50,7 +53,7 @@ function CrimeConsentPdfPagePreview({
       cancelled = true
       objectUrls.forEach(url => URL.revokeObjectURL(url))
     }
-  }, [file, fileKey, src])
+  }, [file, fileKey, paintAnnotationOverlays, src])
 
   if (failed) {
     return <p className="crime-consent-doc-modal__a4-pdf-status">{PDF_PREVIEW_FAILED_MESSAGE}</p>
@@ -86,12 +89,15 @@ export function CrimeConsentDocumentPreview({
   fileName,
   mimeType,
   alt,
+  paintAnnotationOverlays = true,
 }: {
   src: string
   file?: File | null
   fileName?: string | null
   mimeType?: string | null
   alt: string
+  /** 서명 PDF는 false. 업로드 원본은 주석 값을 그대로 얹는다. */
+  paintAnnotationOverlays?: boolean
 }) {
   const isPdf =
     (file != null &&
@@ -99,7 +105,15 @@ export function CrimeConsentDocumentPreview({
     isCrimeConsentPdfPreviewSrc(src, fileName ?? file?.name, mimeType ?? file?.type)
 
   if (isPdf) {
-    return <CrimeConsentPdfPagePreview key={fileKeyOf(file, src)} src={src} file={file} alt={alt} />
+    return (
+      <CrimeConsentPdfPagePreview
+        key={fileKeyOf(file, src)}
+        src={src}
+        file={file}
+        alt={alt}
+        paintAnnotationOverlays={paintAnnotationOverlays}
+      />
+    )
   }
 
   return (
