@@ -55,8 +55,10 @@ export type EducationSettlementItem = {
   amount?: number
   rejectReason?: string
   settlementApplicationId?: number
-  /** 강사 지급조서: 최신 정산 revision ID (재신청 API 경로). 정산 전이면 없음 */
+  /** 강사 지급조서: 최신 정산 revision ID (재신청·정정 요청 API 경로). 정산 전이면 없음 */
   settlementId?: number
+  /** 계좌 지급 상태. 확인 완료 후 정정 요청은 READY_TO_PAY·PAID가 아닐 때만 연다 */
+  paymentStatus?: string
   /** CMS가 정산 전 신청서에 정정 요청을 보낸 경우. 회원 지급조서 정정과 구분한다. */
   adminApplicationCorrection?: boolean
   receiptId?: number

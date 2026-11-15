@@ -3,7 +3,13 @@ import type { SettlementAmountKind } from './settlement-rules.ts'
 
 export type SettlementDocumentKind = 'receipt' | 'payment_statement'
 
-export type SettlementStatusAction = 'write' | 'view' | 'reject-reason' | 'reapply' | 'view-correction'
+export type SettlementStatusAction =
+  | 'write'
+  | 'view'
+  | 'reject-reason'
+  | 'reapply'
+  | 'view-correction'
+  | 'request-correction'
 
 export type SettlementStatusUiConfig = {
   message?: string
@@ -80,6 +86,27 @@ export const PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE = '지급조서 재신청
 /** CMS가 정산 전 신청서에 정정을 요청했을 때. 기존 안내 칸(message)에 넣는다. */
 export const ADMIN_APPLICATION_CORRECTION_MESSAGE = '관리자가 정정을 요청했어요'
 
+const CORRECTION_REQUEST_BLOCKED_PAYMENT = new Set(['READY_TO_PAY', 'PAID'])
+const CORRECTION_REQUEST_STATUSES = new Set<EducationSettlementStatus>([
+  'waiting_confirm',
+  'reapplied',
+  'confirmed',
+])
+
+/** 강사 지급조서에서 회원 정정 요청을 연다. 확인 대기·재신청·확인 완료이고, 지급이 시작되지 않은 행만. */
+export function canRequestPaymentStatementCorrection(input: {
+  documentKind: SettlementDocumentKind
+  status: EducationSettlementStatus
+  settlementId?: number | null
+  paymentStatus?: string | null
+  gemini?: boolean
+}): boolean {
+  if (input.gemini || input.documentKind !== 'payment_statement') return false
+  if (!CORRECTION_REQUEST_STATUSES.has(input.status) || input.settlementId == null) return false
+  const payment = input.paymentStatus?.trim().toUpperCase() ?? ''
+  return !CORRECTION_REQUEST_BLOCKED_PAYMENT.has(payment)
+}
+
 export function resolveSettlementDocumentKind(
   applicationType: string | null | undefined,
 ): SettlementDocumentKind {
@@ -127,7 +154,7 @@ export function resolveSettlementStatusUi(
       guideVariant: 'submitted',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
-      actions: ['view'],
+      actions: kind === 'payment_statement' ? ['view', 'request-correction'] : ['view'],
     },
     reapplied: {
       message: copy.reappliedMessage,
@@ -138,7 +165,7 @@ export function resolveSettlementStatusUi(
       guideVariant: 'submitted',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
-      actions: ['view'],
+      actions: kind === 'payment_statement' ? ['view', 'request-correction'] : ['view'],
     },
     confirmed: {
       message: '담당자 확인이 완료되어 계좌 지급 예정이에요',
@@ -146,7 +173,7 @@ export function resolveSettlementStatusUi(
       markTone: 'success',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
-      actions: ['view'],
+      actions: kind === 'payment_statement' ? ['view', 'request-correction'] : ['view'],
     },
     paid: {
       message: '계좌 지급이 완료되었어요',

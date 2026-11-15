@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { PFButton, PFModal, PFRequiredMissingAlert, PFText, PFTextInput } from '@/shared/ui'
 import {
   buildRequiredMissingAlertCopy,
@@ -6,7 +6,8 @@ import {
 } from '@/shared/lib/required-missing-alert'
 import styles from './fee-correction-request-modal.module.css'
 
-/** BE `SettlementApplicationCreateRequest.correctionRequestReason` @Size(max = 500) */
+/** BE 정정 사유 @Size(min = 2, max = 500). 제출 전과 확인 후 정정 요청이 같다. */
+export const FEE_CORRECTION_REASON_MIN_LENGTH = 2
 export const FEE_CORRECTION_REASON_MAX_LENGTH = 500
 
 const REASON_LABEL = '정정 요청 사유'
@@ -14,6 +15,8 @@ const REASON_LABEL = '정정 요청 사유'
 type FeeCorrectionRequestModalProps = {
   open: boolean
   submitting?: boolean
+  /** 사유 최소 글자 수. 기본값은 서버와 같은 2자 */
+  minLength?: number
   onCancel: () => void
   /** 앞뒤 공백을 뺀 사유 */
   onSubmit: (reason: string) => void
@@ -21,11 +24,12 @@ type FeeCorrectionRequestModalProps = {
 
 /**
  * 시안 「03. 강사비 정정 요청 팝업」 — 지급조서 작성·제출 전 확인 화면의 [강사비 정정 요청하기].
- * 입력은 사유 한 줄뿐이고, [정정 요청하기]는 지급조서 제출과 정정 요청을 함께 보낸다.
+ * 입력은 사유 한 줄이다. 제출 전 화면은 지급조서 제출과 함께 보내고, 제출 후 카드는 정정 요청만 보낸다.
  */
 export function FeeCorrectionRequestModal({
   open,
   submitting = false,
+  minLength = FEE_CORRECTION_REASON_MIN_LENGTH,
   onCancel,
   onSubmit,
 }: FeeCorrectionRequestModalProps) {
@@ -34,28 +38,26 @@ export function FeeCorrectionRequestModal({
   const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
   const [showRequiredError, setShowRequiredError] = useState(false)
 
-  /** 닫을 때 입력을 비워 다음에 열면 빈 칸으로 시작한다 */
-  const reset = () => {
+  useEffect(() => {
+    if (open) return
     setReason('')
     setRequiredMissing(null)
     setShowRequiredError(false)
-  }
+  }, [open])
 
   const handleCancel = () => {
     if (submitting) return
-    reset()
     onCancel()
   }
 
   const handleSubmit = () => {
     if (submitting) return
     const trimmed = reason.trim()
-    if (!trimmed) {
+    if (trimmed.length < minLength) {
       setShowRequiredError(true)
       setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: [REASON_LABEL] }))
       return
     }
-    reset()
     onSubmit(trimmed)
   }
 
@@ -89,7 +91,7 @@ export function FeeCorrectionRequestModal({
             maxLength={FEE_CORRECTION_REASON_MAX_LENGTH}
             onValueChange={setReason}
             disabled={submitting}
-            error={showRequiredError && !reason.trim()}
+            error={showRequiredError && reason.trim().length < minLength}
           />
           <div className={styles.actions}>
             <PFButton

@@ -34,6 +34,10 @@ export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
   SETTLEMENT_REAPPLICATION_DEADLINE_UNAVAILABLE: '재제출 기한을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   SETTLEMENT_REAPPLICATION_NOT_AVAILABLE:
     '지금은 지급조서를 재신청할 수 없어요. 화면을 새로고침한 뒤 다시 확인해 주세요.',
+  PAYMENT_STATEMENT_STATUS_CONFLICT: '현재 상태에서는 지급조서 정정을 요청할 수 없습니다.',
+  SETTLEMENT_CORRECTION_ALREADY_REQUESTED: '이미 처리 대기 중인 정정 요청이 있습니다.',
+  GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED:
+    '제미나이 지급조서는 지급 정정을 할 수 없습니다. 지급조서를 반려한 뒤 실적을 다시 등록해 주세요.',
   SETTLEMENT_BUSINESS_PERIOD_CLOSED: '프로그램 운영이 종료되어 지급조서를 제출할 수 없어요',
   SETTLEMENT_BUSINESS_INCOME_STATUS_REQUIRED: '회원정보에서 사업소득자 여부를 선택해 주세요.',
   SETTLEMENT_CORRECTION_NOT_FOUND: '정정 내역을 찾을 수 없어요.',

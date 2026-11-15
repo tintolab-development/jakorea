@@ -5,6 +5,7 @@ import {
   ADMIN_APPLICATION_CORRECTION_MESSAGE,
   isInstructorSettlementResubmit,
   isSettlementWriteCtaDisabled,
+  canRequestPaymentStatementCorrection,
   resolveSettlementStatusUi,
 } from './settlement-status-ui.ts'
 import {
@@ -168,6 +169,10 @@ const case04 = build({
 assert.equal(case04?.status, 'waiting_confirm')
 assert.equal(case04?.amount, 300000)
 assert.equal(resolveSettlementStatusUi(case04!.status, 'payment_statement').markLabel, '확인 대기 중')
+assert.deepEqual(resolveSettlementStatusUi(case04!.status, 'payment_statement').actions, [
+  'view',
+  'request-correction',
+])
 
 const case05 = build({
   schedules: [completedSchedule],
@@ -185,7 +190,12 @@ const case05 = build({
 })[0]
 assert.equal(case05?.status, 'reapplied')
 assert.equal(resolveSettlementStatusUi(case05!.status, 'payment_statement').markLabel, '지급조서 재신청')
+assert.deepEqual(resolveSettlementStatusUi(case05!.status, 'payment_statement').actions, [
+  'view',
+  'request-correction',
+])
 assert.equal(resolveSettlementStatusUi('reapplied', 'receipt').markLabel, '재신청')
+assert.deepEqual(resolveSettlementStatusUi('reapplied', 'receipt').actions, ['view'])
 
 const application27 = build({
   schedules: [completedSchedule],
@@ -224,6 +234,63 @@ const case06 = build({
 })[0]
 assert.equal(case06?.status, 'confirmed')
 assert.equal(resolveSettlementStatusUi(case06!.status, 'payment_statement').markLabel, '지급조서 확인 완료')
+assert.deepEqual(resolveSettlementStatusUi(case06!.status, 'payment_statement').actions, [
+  'view',
+  'request-correction',
+])
+assert.equal(
+  canRequestPaymentStatementCorrection({
+    documentKind: 'payment_statement',
+    status: 'confirmed',
+    settlementId: 601,
+    paymentStatus: 'WAITING_PAYMENT',
+  }),
+  true,
+)
+assert.equal(
+  canRequestPaymentStatementCorrection({
+    documentKind: 'payment_statement',
+    status: 'waiting_confirm',
+    settlementId: 401,
+    paymentStatus: 'NOT_READY',
+  }),
+  true,
+)
+assert.equal(
+  canRequestPaymentStatementCorrection({
+    documentKind: 'payment_statement',
+    status: 'reapplied',
+    settlementId: 501,
+    paymentStatus: 'NOT_READY',
+  }),
+  true,
+)
+assert.equal(
+  canRequestPaymentStatementCorrection({
+    documentKind: 'payment_statement',
+    status: 'confirmed',
+    settlementId: 601,
+    paymentStatus: 'READY_TO_PAY',
+  }),
+  false,
+)
+assert.equal(
+  canRequestPaymentStatementCorrection({
+    documentKind: 'payment_statement',
+    status: 'rejected',
+    settlementId: 601,
+  }),
+  false,
+)
+assert.equal(
+  canRequestPaymentStatementCorrection({
+    documentKind: 'payment_statement',
+    status: 'confirmed',
+    settlementId: 601,
+    gemini: true,
+  }),
+  false,
+)
 
 const case07 = build({
   schedules: [completedSchedule],
