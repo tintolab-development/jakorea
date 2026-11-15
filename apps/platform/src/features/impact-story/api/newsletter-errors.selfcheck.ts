@@ -57,7 +57,7 @@ assert.equal(
     status: 'PENDING',
     message: '구독 확인 절차를 진행해주세요.',
   }).title,
-  '구독 확인 메일을 확인해 주세요',
+  '뉴스레터 구독이 완료되었어요.',
 )
 
 assert.equal(
@@ -65,12 +65,12 @@ assert.equal(
     status: 'PENDING',
     message: '구독 확인 절차를 진행해주세요.',
   }).description,
-  '구독 확인 절차를 진행해주세요.',
+  'JA Korea의 교육 프로그램과\n새로운 소식을 이메일로 전해드릴게요.',
 )
 
 assert.equal(
   getNewsletterSubscribeResultCopy({ status: 'SUBSCRIBED' }).title,
-  '뉴스레터 구독이 완료되었어요',
+  '뉴스레터 구독이 완료되었어요.',
 )
 
 assert.equal(
@@ -91,12 +91,12 @@ assert.equal(
 
 assert.notEqual(
   getNewsletterSubscribeResultCopy({ status: 'SKIPPED_LOCAL' }).title,
-  '뉴스레터 구독이 완료되었어요',
+  '뉴스레터 구독이 완료되었어요.',
 )
 
 assert.notEqual(
   getNewsletterSubscribeResultCopy({ status: 'UNKNOWN' }).title,
-  '뉴스레터 구독이 완료되었어요',
+  '뉴스레터 구독이 완료되었어요.',
 )
 
 assert.equal(isNewsletterSubscribeAccepted('PENDING'), true)

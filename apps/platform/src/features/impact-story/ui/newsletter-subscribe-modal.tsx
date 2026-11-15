@@ -14,6 +14,8 @@ export type NewsletterSubscribeModalProps = {
   open: boolean
   onClose: () => void
   onSuccess?: (result?: NewsletterSubscribeResponse | null) => void
+  /** 배너에서 약관 팝업으로 이미 동의한 뒤 열 때 동의 체크를 켠 채로 시작한다 (열 때마다 key로 다시 마운트) */
+  defaultAgreed?: boolean
 }
 
 type FieldErrors = {
@@ -32,12 +34,13 @@ export function NewsletterSubscribeModal({
   open,
   onClose,
   onSuccess,
+  defaultAgreed = false,
 }: NewsletterSubscribeModalProps) {
   const consentId = useId()
   const subscribeMutation = useNewsletterSubscribeMutation()
   const [name, setName] = useState(EMPTY_FORM.name)
   const [email, setEmail] = useState(EMPTY_FORM.email)
-  const [agreed, setAgreed] = useState(EMPTY_FORM.agreed)
+  const [agreed, setAgreed] = useState(defaultAgreed)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [errorMessage, setErrorMessage] = useState('')
 
