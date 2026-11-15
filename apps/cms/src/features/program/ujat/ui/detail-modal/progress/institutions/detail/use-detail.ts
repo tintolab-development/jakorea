@@ -79,6 +79,10 @@ export function useUjatEducationProgressInstitutionDetail(input: {
       participantId:
         typeof remoteDetail?.participantId === 'number' ? remoteDetail.participantId : null,
       participantState: readUjatInstitutionParticipantState(remoteDetail),
+      organizationId:
+        typeof remoteDetail?.organizationId === 'number' ? remoteDetail.organizationId : null,
+      teacherMemberId:
+        typeof remoteDetail?.teacherMemberId === 'number' ? remoteDetail.teacherMemberId : null,
       educationRegion: getUjatEducationRegionLabel(row.regionKey, row.regionKey),
       adminComment: resolveLatestAdminCommentText(commentsQuery.data) ?? '',
       applicationDetail: application,

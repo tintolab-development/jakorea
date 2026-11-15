@@ -33,6 +33,9 @@ import {
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { useAffiliatedTeachersQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
 import {
   getApiErrorCode,
   readApiErrorAlertMessage,
@@ -80,6 +83,10 @@ import {
   hasUjatInstitutionInfoUpdateFields,
 } from './application-info-update'
 import { canRequestUjatInstitutionGiveUp } from './participant-status'
+import {
+  buildUjatInstitutionTeacherOptions,
+  resolveUjatInstitutionTeacherMemberIdChange,
+} from './teacher-options'
 import './detail.css'
 
 const CLASS_ADD_ERROR_TITLES: Record<string, string> = {
@@ -196,6 +203,36 @@ export function UjatEducationProgressInstitutionDetailView({
     programId: program.id,
     accessItemLabel: `${detail.institutionName} 참여 기관 신청 정보`,
   })
+
+  // 담당 교사는 기관 소속 교사 선택(teacherMemberId)으로만 바뀐다 — 일반 참여 기관 상세와 같은 소속 교사 API·필터.
+  const organizationId = detail.organizationId ?? undefined
+  const canFetchAffiliatedTeachers = Boolean(isMembersRemoteEnabled() && organizationId != null)
+  const affiliatedTeachersQuery = useAffiliatedTeachersQuery(
+    detail.teacherMemberId ?? undefined,
+    canFetchAffiliatedTeachers && isApplicationInfoEditing,
+    organizationId
+  )
+  const teacherOptions = useMemo(
+    () =>
+      buildUjatInstitutionTeacherOptions({
+        rows:
+          canFetchAffiliatedTeachers && isApplicationInfoEditing && affiliatedTeachersQuery.data
+            ? affiliatedTeachersQuery.data.filter(row =>
+                isSchoolAffiliatedTeacherRowSelectable(row.employmentStatus)
+              )
+            : null,
+        currentTeacherName: isApplicationInfoEditing
+          ? teacherContactDraft.teacherName
+          : teacherContact.teacherName,
+      }),
+    [
+      affiliatedTeachersQuery.data,
+      canFetchAffiliatedTeachers,
+      isApplicationInfoEditing,
+      teacherContact.teacherName,
+      teacherContactDraft.teacherName,
+    ]
+  )
 
   const tabKeys = useMemo(
     () =>
@@ -507,6 +544,11 @@ export function UjatEducationProgressInstitutionDetailView({
       addressDetailBaseline: addressDetail,
       teacherContactDraft,
       teacherContactBaseline: teacherContact,
+      teacherMemberId: resolveUjatInstitutionTeacherMemberIdChange({
+        teacherNameDraft: teacherContactDraft.teacherName,
+        teacherOptions,
+        currentTeacherMemberId: detail.teacherMemberId,
+      }),
     })
     if (!hasUjatInstitutionInfoUpdateFields(body)) {
       setIsApplicationInfoEditing(false)
@@ -546,6 +588,7 @@ export function UjatEducationProgressInstitutionDetailView({
     addressDetail,
     addressDetailDraft,
     applicationNumericId,
+    detail.teacherMemberId,
     isApplicationInfoEditing,
     program.id,
     queryClient,
@@ -554,6 +597,7 @@ export function UjatEducationProgressInstitutionDetailView({
     showAlert,
     teacherContact,
     teacherContactDraft,
+    teacherOptions,
   ])
 
   const handleApplicationInfoCancel = useCallback(() => {
@@ -725,6 +769,8 @@ export function UjatEducationProgressInstitutionDetailView({
               onAddressDetailDraftChange={setAddressDetailDraft}
               teacherContactDraft={teacherContactDraft}
               onTeacherContactDraftChange={setTeacherContactDraft}
+              teacherOptions={teacherOptions}
+              isTeacherOptionsLoading={affiliatedTeachersQuery.isLoading}
               isAdminCommentEditing={false}
               adminCommentDraft=""
               onAdminCommentDraftChange={() => {}}

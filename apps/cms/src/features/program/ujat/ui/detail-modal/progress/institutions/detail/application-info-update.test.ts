@@ -48,7 +48,7 @@ describe('buildUjatInstitutionInfoUpdateRequest', () => {
     expect(body).toEqual({ organizationAddressDetail: null })
   })
 
-  it('담당 교사 이름 변경은 요청에 넣지 않는다', () => {
+  it('담당 교사 이름만으로는 요청에 넣지 않는다(teacherName 저장 컬럼 없음)', () => {
     const body = buildUjatInstitutionInfoUpdateRequest({
       addressDetailDraft: '1층 교무실',
       addressDetailBaseline: '1층 교무실',
@@ -56,5 +56,23 @@ describe('buildUjatInstitutionInfoUpdateRequest', () => {
       teacherContactBaseline: baselineContact,
     })
     expect(body).toEqual({})
+  })
+
+  it('소속 교사를 바꾸면 teacherMemberId를 넣고, 마스킹된 M/이메일은 보내지 않는다', () => {
+    const masked = { ...baselineContact, mobile: '010-****-5678', email: 't*****@example.com' }
+    const body = buildUjatInstitutionInfoUpdateRequest({
+      addressDetailDraft: '1층 교무실',
+      addressDetailBaseline: '1층 교무실',
+      teacherContactDraft: {
+        ...masked,
+        teacherName: '박제이',
+        mobile: '010-****-9999',
+        email: 'p*****@example.com',
+      },
+      teacherContactBaseline: masked,
+      teacherMemberId: 77,
+    })
+    expect(body).toEqual({ teacherMemberId: 77 })
+    expect(hasUjatInstitutionInfoUpdateFields(body)).toBe(true)
   })
 })

@@ -1,7 +1,8 @@
 /**
  * UJAT 교육 진행 · 참여 기관 상세 [정보 수정] → PATCH /api/admin/organization-applications/{id}
- * 상세 주소·담당 교사 Tel/M/이메일 중 바뀐 키만 보낸다. 담당 교사 이름은 PATCH 계약상
- * teacherMemberId로만 바뀌므로 여기서 보내지 않는다.
+ * 상세 주소·담당 교사 Tel/M/이메일 중 바뀐 키만 보낸다. 담당 교사는 PATCH 계약상
+ * teacherMemberId로만 바뀌므로(teacherName 저장 컬럼 없음) 기관 소속 교사를 고른 경우에만
+ * teacherMemberId를 넣는다. 교사를 바꾸고 M/이메일을 따로 고치지 않으면 서버가 새 교사 회원 값으로 갱신한다.
  */
 import type { OrganizationApplicationUpdateWire } from '@/features/program/general/api/applications-api-client'
 import { buildOrganizationApplicationTeacherContactPatch } from '@/features/program/general/lib/organization-application-teacher-contact-patch'
@@ -29,8 +30,11 @@ export function buildUjatInstitutionInfoUpdateRequest(input: {
   addressDetailBaseline: string
   teacherContactDraft: UjatInstitutionApplicationTeacherContact
   teacherContactBaseline: UjatInstitutionApplicationTeacherContact
+  /** 소속 교사 선택으로 바뀐 담당 교사 회원 ID. 바뀌지 않았으면 생략 */
+  teacherMemberId?: number
 }): UjatInstitutionInfoUpdateRequest {
   const body: UjatInstitutionInfoUpdateRequest = {
+    ...(input.teacherMemberId != null ? { teacherMemberId: input.teacherMemberId } : {}),
     ...buildOrganizationApplicationTeacherContactPatch(
       toFormTeacherContact(input.teacherContactDraft),
       toFormTeacherContact(input.teacherContactBaseline)
