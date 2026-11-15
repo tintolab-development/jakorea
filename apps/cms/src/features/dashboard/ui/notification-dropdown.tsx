@@ -7,7 +7,10 @@ import { Spin, Typography } from 'antd'
 import { useEffect, useMemo, useRef } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
 import { useDragScroll } from '../hooks/use-drag-scroll'
-import { formatNotificationDate } from '../lib/notification-inbox-display'
+import {
+  formatNotificationDate,
+  resolveNotificationSubLine,
+} from '../lib/notification-inbox-display'
 import {
   resolveNotificationServerCategory,
   type NotificationTabKey,
@@ -83,7 +86,9 @@ function NotificationRow({
   onActivate: (notification: Notification) => void
 }) {
   const read = notification.read
-  const message = notification.body || notification.title
+  /** 시안(1142:74207): 굵은 줄은 `[카테고리] 제목`, 제목이 비면 본문 */
+  const message = notification.title || notification.body
+  const subLine = resolveNotificationSubLine(notification)
   return (
     <div
       className={`notification-dropdown-item${read ? ' notification-dropdown-item--read' : ''}`}
@@ -107,9 +112,15 @@ function NotificationRow({
           </Text>
           <NotificationReadBadge read={read} />
         </div>
-        {notification.programName ? (
-          <Text className="notification-dropdown-item-sub">{notification.programName}</Text>
-        ) : null}
+        {/* QA: 프로그램명이 없으면 본문 첫 줄 — 회색 줄 자리를 항상 두어 항목 높이 유지 */}
+        <Text
+          className={`notification-dropdown-item-sub${
+            subLine.source === 'body' ? ' notification-dropdown-item-sub--body' : ''
+          }`}
+          title={subLine.source === 'body' ? subLine.text : undefined}
+        >
+          {subLine.text}
+        </Text>
       </div>
       <Text className="notification-dropdown-item-date">
         {formatNotificationDate(notification.createdAt)}
