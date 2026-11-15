@@ -30,6 +30,8 @@ import {
 } from '@/shared/ui/detail-modal-sidebar'
 import { PaymentOrderDetailFilterTable } from './payment-order-detail-filter-table'
 import { PaymentOrderCalculationStatementModalImpl } from './payment-order-calculation-statement-modal-impl'
+import { usePaymentOrderApplicationLineActions } from './use-payment-order-application-line-actions'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { PaymentOrderInstructorBasicInfo } from '@/pages/settlement-management/payment-order-instructor-basic-info'
 import { PaymentOrderProgramBasicInfo } from '@/pages/settlement-management/payment-order-program-basic-info'
 import { PaymentOrderStatusDetailLnbIcon } from '@/pages/settlement-management/payment-order-status-detail-lnb-icon'
@@ -63,6 +65,8 @@ type PaymentOrderDetailViewShared = {
   calcSettlementId?: number | null
   /** 산출 내역서 행의 프로그램 — 확인·반려·정정 버튼을 프로그램 역할로 판정 */
   calcProgramId?: number | null
+  calcLineRow?: PaymentOrderCalculationStatementLineRow | null
+  calcApplicationIssuanceOptions?: RenderFormParagraphBodyOptions
   calcAvailableActions?: readonly string[] | null
   /** 개인형 프로그램 — 산출 내역 「참여 기관명」열 미노출 */
   calcHideInstitutionColumn?: boolean
@@ -118,6 +122,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     calcStatementId,
     calcSettlementId,
     calcProgramId,
+    calcLineRow = null,
+    calcApplicationIssuanceOptions,
     calcAvailableActions,
     calcHideInstitutionColumn,
     openCalculationStatement,
@@ -134,6 +140,11 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
 
   const { registerStatementCommitSink, handleStatementLineCommitted } =
     usePaymentOrderStatementCommitBridge(closeCalculationStatement)
+  const applicationLineActions = usePaymentOrderApplicationLineActions({
+    line: calcLineRow,
+    detailContextQuery,
+    onDone: closeCalculationStatement,
+  })
 
   const {
     personalInfoRevealed,
@@ -242,8 +253,15 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
   return (
     <>
       {kind === 'instructor' ? personalInfoRevealModal : null}
+      {applicationLineActions.modals}
       <PaymentOrderCalculationStatementModalImpl
-        entryKind={kind === 'program' ? 'instructor' : 'program'}
+        entryKind={
+          applicationLineActions.statementActionOverride
+            ? 'program'
+            : kind === 'program'
+              ? 'instructor'
+              : 'program'
+        }
         entryClassName={
           kind === 'program'
             ? 'payment-order-calc-statement-modal--entry-instructor'
@@ -260,6 +278,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         programId={calcProgramId}
         availableActions={calcAvailableActions}
         hideInstitutionColumn={calcHideInstitutionColumn}
+        issuanceParagraphBodyOptionsOverride={calcApplicationIssuanceOptions}
+        statementActionOverride={applicationLineActions.statementActionOverride}
         detailContextQuery={detailContextQuery}
         onStatementLineCommitted={handleStatementLineCommitted}
         onAfterRejectResultClosed={closeCalculationStatement}
