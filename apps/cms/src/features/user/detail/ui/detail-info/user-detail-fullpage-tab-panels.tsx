@@ -35,6 +35,7 @@ export function UserDetailFullpageTabPanels() {
     basicInfoDraft,
     basicInfoEmailError,
     onBasicInfoDraftChange,
+    instructorEditDraftFlushRef,
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
     onTeacherEmploymentStatusChange,
@@ -68,6 +69,7 @@ export function UserDetailFullpageTabPanels() {
           memberInfoDraft={basicInfoDraft}
           memberInfoEmailError={basicInfoEmailError}
           onMemberInfoDraftChange={onBasicInfoDraftChange}
+          memberInfoDraftFlushRef={instructorEditDraftFlushRef}
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
           onEmploymentStatusChange={onTeacherEmploymentStatusChange}
