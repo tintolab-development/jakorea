@@ -80,7 +80,8 @@ export function readInstructorSettlementCalculation(
   const explanation = preview?.canSubmit === false
     ? (asText(preview.blockerCode) === 'SETTLEMENT_CALCULATION_ITEMS_REQUIRED'
         ? '정산 지급 항목이 없어 신청할 수 없습니다. 교육 시간과 지급 정책을 확인해 주세요.'
-        : asText(preview.blockerCode))
+        // 그 밖의 차단 코드는 화면 문구가 따로 있다(작성 화면 차단 상태). 코드 원문은 보여 주지 않는다.
+        : null)
     : null
 
   return {

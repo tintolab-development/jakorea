@@ -435,7 +435,10 @@ export function MypageEducationSettlementConfirmPage() {
       if (isInstructorSubmit) {
         const resubmit =
           draft.meta.resubmit === true && settlementApplicationId != null
-            ? buildInstructorSettlementResubmitRequest(draft)
+            ? {
+                ...buildInstructorSettlementResubmitRequest(draft),
+                ...(feeCorrectionReason ? { correctionRequestReason: feeCorrectionReason } : {}),
+              }
             : undefined
         // 지급 항목 0건 등 미리보기 차단 — 빈 항목 제출은 서버 오류가 날 수 있어 FE에서 막는다(BE 409 작업 전)
         if (!resubmit && instructorSettlementPreview.submitBlock) {
@@ -532,10 +535,8 @@ export function MypageEducationSettlementConfirmPage() {
     })
   }
 
-  /** 강사 지급조서 최초 제출에만 — 반려 후 재제출(/revisions)은 정정 요청을 함께 보낼 수 없다 */
-  const feeCorrectionAvailable =
-    isInstructorSubmit &&
-    !(draft.meta.resubmit === true && draft.meta.settlementApplicationId != null)
+  /** 강사 지급조서 — 최초 제출·반려 후 재제출 모두 정정 요청을 함께 보낼 수 있다 */
+  const feeCorrectionAvailable = isInstructorSubmit
 
   return (
     <PFFormPage

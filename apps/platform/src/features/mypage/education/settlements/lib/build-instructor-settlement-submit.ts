@@ -30,6 +30,8 @@ export type InstructorSettlementCreateRequest = {
 export type InstructorSettlementResubmitRequest = {
   requestedItems: InstructorSettlementRequestedItem[]
   evidenceAttachments: InstructorSettlementEvidenceAttachment[]
+  /** [강사비 정정 요청하기] 사유 — 있으면 재제출과 함께 지급 정정을 요청한다(최대 500자) */
+  correctionRequestReason?: string
 }
 
 const LECTURE_FEE_ITEM_TYPES = new Set<string>([
