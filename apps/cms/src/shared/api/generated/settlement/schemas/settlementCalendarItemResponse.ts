@@ -5,8 +5,6 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SettlementCalendarItemResponsePayeeType } from './settlementCalendarItemResponsePayeeType';
-import type { SettlementCalendarItemResponseRowType } from './settlementCalendarItemResponseRowType';
 
 export interface SettlementCalendarItemResponse {
   date?: string;
@@ -23,12 +21,8 @@ export interface SettlementCalendarItemResponse {
   slotEndTime?: string;
   calendarWeekGridLabel?: string;
   aggregateKey?: string;
-  /** SETTLEMENT=지급조서, SETTLEMENT_APPLICATION=확정 전 강사 정산 신청서, INDIVIDUAL_SETTLEMENT_APPLICATION=영수증 정산 신청. 신청 행은 settlementId가 null. */
-  rowType?: SettlementCalendarItemResponseRowType;
-  /** 정산 대상자 구분: INSTRUCTOR | PARTICIPANT | VOLUNTEER. */
-  payeeType?: SettlementCalendarItemResponsePayeeType;
-  /** rowType=SETTLEMENT_APPLICATION 행의 강사 정산 신청서 ID. 그 외 null. */
-  settlementApplicationId?: number | null;
-  /** rowType=INDIVIDUAL_SETTLEMENT_APPLICATION 행의 영수증 정산 신청 ID. 그 외 null. */
-  individualSettlementApplicationId?: number | null;
+  rowType?: string;
+  payeeType?: string;
+  settlementApplicationId?: number;
+  individualSettlementApplicationId?: number;
 }

@@ -7,7 +7,7 @@
  */
 
 /**
- * 정산 대상자 구분. INSTRUCTOR=강사(Gemini 실적 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 계좌 지급 목록의 payeeType과 같은 규칙.
+ * 정산 대상자 구분. INSTRUCTOR=강사(Gemini 실적 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 계좌 지급 목록의 payeeType과 같은 규칙이다.
  */
 export type SettlementListItemResponsePayeeType = typeof SettlementListItemResponsePayeeType[keyof typeof SettlementListItemResponsePayeeType];
 

@@ -7,7 +7,7 @@ import {
 } from '@/features/settlement-management/api/settlement-api-client'
 import { invalidateSettlementLedgerCaches } from '@/features/settlement-management/api/invalidate-settlement-ledger-caches'
 import type {
-  IndividualSettlementBulkApprovalTarget,
+  IndividualSettlementApprovalTarget,
   SettlementCorrectionApprovalRequest,
 } from '@/shared/api/generated/settlement/schemas'
 import type { PaymentOrderRejectNotificationType } from '@/features/settlement/lib/payment-order-reject-notification'
@@ -16,7 +16,7 @@ export type ConfirmPaymentStatementsInput = {
   statementIds: number[]
   lectureFeePaymentScheduledDate?: string
   /** 영수증(참여자·봉사자) 승인 대상 — 강사 지급조서와 한 트랜잭션(전체 성공 또는 전체 롤백) */
-  individualSettlementApplications?: IndividualSettlementBulkApprovalTarget[]
+  individualSettlementApplications?: IndividualSettlementApprovalTarget[]
 }
 
 export type RejectPaymentStatementInput = {
