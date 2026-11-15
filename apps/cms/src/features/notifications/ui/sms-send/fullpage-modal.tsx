@@ -4,6 +4,10 @@ import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton, CmsRadio, CmsSelect, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import {
+  NOTIFICATION_SEND_DISCARD_CONFIRM,
+  hasNotificationSendDraftInput,
+} from '@/features/notifications/model/shared/send-draft-input'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import {
   fetchAllSmsRecipientCandidates,
@@ -148,6 +152,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
   const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
   const [sending, setSending] = useState(false)
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
   const [recipientSearch, setRecipientSearch] = useState<SmsSendRecipientSearchParams>({
     typeValue: '',
     keyword: '',
@@ -433,7 +438,30 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setRecipientManualOpen(false)
     setSelectedRecipientIds([])
     setSendConfirmOpen(false)
+    setDiscardConfirmOpen(false)
     onClose()
+  }
+
+  /** 취소·닫기(X)·ESC — 작성 중인 입력이 있으면 「작성 취소 안내」 후 닫는다 (알림톡·메일과 같은 기준) */
+  function handleRequestClose() {
+    if (sending) return
+    const draft = form.getDraft()
+    const dirty = hasNotificationSendDraftInput({
+      programSelected: Boolean(form.programId),
+      // 템플릿 목록 「사용」으로 미리 지정된 템플릿은 사용자 입력으로 보지 않는다
+      templateSelected: Boolean(form.templateId) && form.templateId !== initialTemplateId,
+      sendTimingSelected: form.sendTiming != null,
+      recipientCount: form.recipients.length,
+      // 템플릿에서 채워진 제목·본문은 템플릿 선택으로 판단한다
+      subject: form.templateId ? undefined : draft.subject,
+      bodyHtml: form.templateId ? undefined : draft.bodyText,
+      attachmentCount: form.templateId ? 0 : form.attachmentFileNames.length,
+    })
+    if (dirty) {
+      setDiscardConfirmOpen(true)
+      return
+    }
+    handleClose()
   }
 
   function handleDeleteSelected() {
@@ -537,7 +565,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     <>
       <TealHeaderModal
         open={open}
-        onCancel={handleClose}
+        onCancel={handleRequestClose}
         title="문자 발송"
         size="full"
         hideHeader
@@ -549,7 +577,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             <button
               type="button"
               className="notification-fullpage-modal__title-close"
-              onClick={handleClose}
+              onClick={handleRequestClose}
               aria-label="닫기"
             >
               <ModalCloseIcon tone="white" />
@@ -559,7 +587,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           <div className="notification-fullpage-modal__body">
             <div className="notification-fullpage-modal__notice">
               <div className="notification-fullpage-modal__notice-actions">
-                <CmsButton variant="cancel" size="large" type="button" onClick={handleClose}>
+                <CmsButton variant="cancel" size="large" type="button" onClick={handleRequestClose}>
                   취소
                 </CmsButton>
                 <CmsButton
@@ -906,7 +934,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         values={form.recipients
           .filter(item => item.source === 'manual')
           .map(item => ({ contact: item.phone, variables: item.variables }))}
-        variableKeys={directManualKeys}
         normalize={normalizeSmsSendPhone}
         isValid={isValidKoreanPhoneNumber}
         invalidMessage="올바른 휴대폰 번호를 입력해 주세요."
@@ -935,6 +962,19 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         onCancel={() => {
           if (!sending) setSendConfirmOpen(false)
         }}
+      />
+      <ConfirmModal
+        open={open && discardConfirmOpen}
+        title={NOTIFICATION_SEND_DISCARD_CONFIRM.title}
+        content={NOTIFICATION_SEND_DISCARD_CONFIRM.content}
+        confirmText={NOTIFICATION_SEND_DISCARD_CONFIRM.confirmText}
+        cancelText={NOTIFICATION_SEND_DISCARD_CONFIRM.cancelText}
+        danger
+        onConfirm={() => {
+          setDiscardConfirmOpen(false)
+          handleClose()
+        }}
+        onCancel={() => setDiscardConfirmOpen(false)}
       />
       <SendRequestCompletedModal
         open={sendRequestCompletedOpen && open}

@@ -36,6 +36,9 @@ export function resolveUjatDefaultPaymentItemValues(): string[] {
   return id ? [id] : [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]
 }
 
+/** 지급 항목 코드값(p-1, w-2 등) — 라벨이 아니라 id로 저장된 예전 값 */
+const UJAT_PAYMENT_ITEM_CODE_TEXT_RE = /(^|,\s*)(p|w|d)-\d+(\s*,|$)/i
+
 export type UjatWageInfoDisplay = {
   paymentItemsText: string
   deductionItemsText: string
@@ -93,10 +96,20 @@ export function resolveUjatWageInfoDisplay(
   overlayInput?: Record<string, unknown>
 ): UjatWageInfoDisplay {
   const paymentItemIds = resolveUjatPaymentItemIdsFromProgram(program, overlayInput)
+  // 지급 항목명은 정산 항목 설정 카탈로그(`강사 교통비` 등)가 기준이다. 카탈로그와 매칭되지 않을 때만
+  // settlementPolicy itemType 라벨(`교통비` 등)을 그대로 쓴다. 코드값(p-1 등)은 라벨로 쓰지 않는다.
+  const rawPaymentItemsLabel = coerceProgramPaymentItemsText(
+    program.generalCommonInfo?.paymentItems
+  ).trim()
+  const paymentItemsLabel = UJAT_PAYMENT_ITEM_CODE_TEXT_RE.test(rawPaymentItemsLabel)
+    ? ''
+    : rawPaymentItemsLabel
+  // 공제 항목은 settlementPolicy.deductionType(어댑터가 라벨로 변환)이 정본 — 지급 항목으로 다시 계산하지 않는다.
+  const deductionItemsLabel = program.generalCommonInfo?.deductionItems?.trim()
   return {
     paymentItemIds,
-    paymentItemsText: ujatPaymentItemLabelsFromIds(paymentItemIds) || '-',
-    deductionItemsText: resolveUjatWageDeductionLabel(paymentItemIds),
+    paymentItemsText: ujatPaymentItemLabelsFromIds(paymentItemIds) || paymentItemsLabel || '-',
+    deductionItemsText: deductionItemsLabel || resolveUjatWageDeductionLabel(paymentItemIds),
   }
 }
 

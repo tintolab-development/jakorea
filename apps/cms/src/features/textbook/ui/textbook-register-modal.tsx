@@ -180,7 +180,7 @@ export function TextbookRegisterModal({
           <CmsRadio.Group
             label="사용 여부"
             required
-            size="large"
+            size="medium"
             value={form.useStatus || undefined}
             onChange={e => setForm(prev => ({ ...prev, useStatus: e.target.value }))}
           >
@@ -196,8 +196,8 @@ export function TextbookRegisterModal({
               required
               value={form.textbookName}
               onChange={e => setForm(prev => ({ ...prev, textbookName: e.target.value }))}
-              placeholder="교재명을 입력해 주세요."
-              inputSize="large"
+              placeholder="교재명을 입력해 주세요"
+              inputSize="medium"
               width="100%"
             />
           </div>
@@ -207,8 +207,8 @@ export function TextbookRegisterModal({
               required
               value={form.textbookNameEn}
               onChange={e => setForm(prev => ({ ...prev, textbookNameEn: e.target.value }))}
-              placeholder="교재명을 입력해 주세요."
-              inputSize="large"
+              placeholder="교재명을 입력해 주세요"
+              inputSize="medium"
               width="100%"
             />
           </div>
@@ -220,7 +220,7 @@ export function TextbookRegisterModal({
               label="사업 분야"
               required
               withAllOption={false}
-              inputSize="large"
+              inputSize="medium"
               placeholder="사업 분야를 선택해 주세요"
               value={form.businessArea || undefined}
               onChange={value =>
@@ -239,7 +239,7 @@ export function TextbookRegisterModal({
               required
               mode="multiple"
               withAllOption={false}
-              inputSize="large"
+              inputSize="medium"
               placeholder="교육 대상을 선택해 주세요"
               value={form.educationTargets}
               onChange={value => {
@@ -266,12 +266,8 @@ export function TextbookRegisterModal({
             required
             mode="multiple"
             withAllOption={false}
-            inputSize="large"
-            placeholder={
-              form.educationTargets.length > 0
-                ? '대상 학년을 선택해 주세요'
-                : '교육 대상을 선택해 주세요'
-            }
+            inputSize="medium"
+            placeholder="대상 학년을 선택해 주세요"
             value={form.educationTargets.length > 0 ? form.grades ?? [] : []}
             disabled={form.educationTargets.length === 0}
             onChange={value => {

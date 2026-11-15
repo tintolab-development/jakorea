@@ -1,3 +1,4 @@
+import { PLATFORM_ALERT_COPY } from '../../../shared/lib/platform-alert-copy.ts'
 import type { NewsletterSubscribeResponse, NewsletterSubscribeStatus } from './newsletter-client'
 
 export const NEWSLETTER_SUBSCRIBE_STATUSES = [
@@ -7,31 +8,14 @@ export const NEWSLETTER_SUBSCRIBE_STATUSES = [
   'SKIPPED_LOCAL',
 ] as const satisfies readonly NewsletterSubscribeStatus[]
 
+/** 구독 완료 팝업 — PENDING(확인 메일 발송)·SUBSCRIBED 모두 이 문구로 고정한다 */
 const COMPLETE_COPY = {
-  title: '뉴스레터 구독이 완료되었어요',
+  title: '뉴스레터 구독이 완료되었어요.',
   description: 'JA Korea의 교육 프로그램과\n새로운 소식을 이메일로 전해드릴게요.',
 }
 
-const PENDING_COPY = {
-  title: '구독 확인 메일을 확인해 주세요',
-  description:
-    '입력하신 이메일로 구독 확인 안내를 보냈어요.\n메일함에서 확인을 완료해야 뉴스레터를 받을 수 있어요.',
-}
-
-const FAILED_COPY = {
-  title: '뉴스레터 구독에 실패했어요',
-  description: '지금은 구독을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
-}
-
-const SKIPPED_LOCAL_COPY = {
-  title: '뉴스레터 구독에 실패했어요',
-  description: '지금은 구독을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
-}
-
-const UNKNOWN_COPY = {
-  title: '뉴스레터 구독에 실패했어요',
-  description: '지금은 구독을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
-}
+/** 구독이 접수되지 않은 결과(FAILED·SKIPPED_LOCAL·알 수 없음) — 시안 「공통 제한 안내 / 처리 실패」 */
+const FAILED_COPY = PLATFORM_ALERT_COPY.requestFailed
 
 export function normalizeNewsletterSubscribeStatus(
   status?: string,
@@ -81,29 +65,10 @@ export function getNewsletterSubscribeResultCopy(
   response?: NewsletterSubscribeResponse | null,
 ): { title: string; description: string } {
   const status = normalizeNewsletterSubscribeStatus(response?.status)
-  const message = response?.message?.trim()
 
-  if (status === 'PENDING') {
-    return {
-      title: PENDING_COPY.title,
-      description: message || PENDING_COPY.description,
-    }
+  if (status === 'PENDING' || status === 'SUBSCRIBED') {
+    return COMPLETE_COPY
   }
 
-  if (status === 'SUBSCRIBED') {
-    return {
-      title: COMPLETE_COPY.title,
-      description: message || COMPLETE_COPY.description,
-    }
-  }
-
-  if (status === 'FAILED') {
-    return FAILED_COPY
-  }
-
-  if (status === 'SKIPPED_LOCAL') {
-    return SKIPPED_LOCAL_COPY
-  }
-
-  return UNKNOWN_COPY
+  return FAILED_COPY
 }

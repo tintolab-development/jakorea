@@ -83,8 +83,12 @@ export function StudentCertificatePdfExportHost({
     pdfIssueDateRef.current = null
   }, [context.student.id, context.certificateKind, context.issuanceReasonLabel])
 
+  const templateSettingsLoaded = modalState.isTemplateSettingsLoaded
+
   useEffect(() => {
-    if (!captureMounted || completedRef.current) return
+    // 템플릿 설정(제목·로고·참여자 줄 배치)은 네트워크로 불러온다. 로드 전에 캡처하면 기본 양식으로 찍히고
+    // 고유번호·다운로드 이력은 그대로 남으므로, 설정을 받은 뒤에만 캡처를 시작한다.
+    if (!captureMounted || !templateSettingsLoaded || completedRef.current) return
 
     completedRef.current = true
     let cancelled = false
@@ -136,6 +140,7 @@ export function StudentCertificatePdfExportHost({
   }, [
     applyIssuedAt,
     captureMounted,
+    templateSettingsLoaded,
     certificateType,
     context.certificateKind,
     context.organizationApplicationId,

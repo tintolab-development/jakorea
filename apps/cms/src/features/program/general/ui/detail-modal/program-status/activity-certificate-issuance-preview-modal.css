@@ -83,11 +83,15 @@
   will-change: transform;
 }
 
+/*
+ * PDF 캡처 전용(화면 밖). html2canvas는 visibility: hidden 안의 내용을 그리지 않아 빈 PDF가 되므로
+ * 다른 캡처 영역(수료증·강의보고서)처럼 화면 밖 배치와 z-index로만 숨긴다.
+ */
 .activity-cert-issuance-preview-modal__pdf-host {
   position: fixed;
   left: -10000px;
   top: 0;
   width: var(--activity-cert-design-width);
   pointer-events: none;
-  visibility: hidden;
+  z-index: -1;
 }

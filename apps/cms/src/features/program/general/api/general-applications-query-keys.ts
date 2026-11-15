@@ -138,6 +138,14 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'organization-merge-groups', programId] as const,
   studentRoster: (organizationApplicationId: string) =>
     [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
+  /** 학생 명단 「강의 출석 내역」 열 — 회차(분모)·회차별 출결 원본 */
+  studentLectureAttendanceSource: (programId: string, organizationApplicationId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'student-lecture-attendance-source',
+      programId,
+      organizationApplicationId,
+    ] as const,
   instructorAssignments: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
   instructorAssignmentCalendar: (programId: string, instructorMemberId: string) =>
@@ -198,4 +206,7 @@ export const generalInterviewSlotsQueryKeys = {
   all: ['general-interview-slots'] as const,
   list: (programId: string, from?: string, to?: string) =>
     [...generalInterviewSlotsQueryKeys.all, programId, from ?? '', to ?? ''] as const,
+  /** 대상별 슬롯 목록(`?audience=`) — 참여자·봉사자 배정 캐시를 섞지 않는다 */
+  listByAudience: (programId: string, audience: 'PARTICIPANT' | 'VOLUNTEER') =>
+    [...generalInterviewSlotsQueryKeys.all, programId, '', '', audience] as const,
 }

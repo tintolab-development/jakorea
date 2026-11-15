@@ -343,19 +343,25 @@
     gap: var(--spacing-32);
   }
 
+  /* 시안 11001-146976 — 탭 3개가 1440 폭을 균등 분할, 탭 사이 20px (PFTabs stretch 기본 gap 0보다 우선) */
+  .header .tabs.tabs {
+    width: 100%;
+    gap: var(--spacing-20);
+  }
+
   .tabContent {
     margin-top: var(--spacing-72);
   }
 
   .historyLayout {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: 240px minmax(0, 1fr);
     gap: var(--spacing-100);
     align-items: start;
   }
 
   .historyNav {
-    width: 300px;
+    width: 240px;
     max-width: 100%;
     gap: 0;
   }
@@ -365,7 +371,7 @@
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
-    gap: var(--spacing-4);
+    gap: var(--spacing-12);
     overflow: visible;
   }
 
@@ -378,8 +384,10 @@
     gap: 0;
   }
 
+  /* 시안: 활성 기간 묶음 radius 16, 기간명과 연도 목록 사이 8px */
   .periodGroupActive {
-    border-radius: var(--radius-12);
+    gap: var(--spacing-8);
+    border-radius: var(--radius-16);
     background-color: var(--color-neutral-cool-50);
     box-sizing: border-box;
   }
@@ -433,7 +441,7 @@
     padding: var(--spacing-8) var(--spacing-16);
     box-sizing: border-box;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 400;
     line-height: 150%;
   }
 
@@ -508,7 +516,7 @@
   .itemDate {
     width: auto;
     color: var(--color-neutral-cool-500);
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 500;
     line-height: 150%;
     letter-spacing: -0.16px;

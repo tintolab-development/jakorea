@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 import styles from './pf-button.module.css'
 
-type PFButtonSize = 'small' | 'medium' | 'large' | 'xlarge' | 'formPage'
+type PFButtonSize = 'small' | 'medium' | 'large' | 'xlarge' | 'formPage' | 'textAction'
 type PFButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'text' | 'certificate'
 
 type PFButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -19,6 +19,8 @@ const sizeTypographyClassMap: Record<PFButtonSize, string> = {
   formPage: 'typo-bd-sm-md',
   large: 'typo-bd-md-sb',
   xlarge: 'typo-bd-lg-sb',
+  /** 기본 버튼 아래 [이전으로] 같은 텍스트 액션 — 시안 h52·16 SemiBold */
+  textAction: 'typo-bd-md-sb',
 }
 
 export function PFButton({

@@ -11,10 +11,12 @@ import type { TextbookBusinessAreaRow } from '@/features/textbook/model/business
 import { BusinessAreaDeleteBlockedModal } from '@/features/textbook/ui/business-area-delete-blocked-modal'
 import { BusinessAreaDuplicateAlertModal } from '@/features/textbook/ui/business-area-duplicate-alert-modal'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import './business-area-management-modal.css'
 
 /** 모달 가로 패딩 30×2 제외한 테이블 영역 (600 − 60) */
 const TABLE_INNER_WIDTH = 540
-const NAME_COL_WIDTH = 324
+/** 시안 9270:76577 — 사업 분야명 340 · 관리 200 (QA 2026-11-15 데이터 관리 C34) */
+const NAME_COL_WIDTH = 340
 const ACTIONS_COL_WIDTH = TABLE_INNER_WIDTH - NAME_COL_WIDTH
 const MODAL_Z = 1000
 const SUB_MODAL_Z = 1100
@@ -49,7 +51,14 @@ export function BusinessAreaManagementModal({
 
   const columns: ColumnsType<TextbookBusinessAreaRow> = [
     {
-      title: '사업 분야명',
+      title: (
+        <>
+          사업 분야명
+          <span className="business-area-management-modal__required" aria-hidden>
+            *
+          </span>
+        </>
+      ),
       dataIndex: 'name',
       key: 'name',
       width: NAME_COL_WIDTH,
@@ -159,7 +168,7 @@ export function BusinessAreaManagementModal({
           <div>
             <CmsDataTable<TextbookBusinessAreaRow>
               rowKey="id"
-              className="cms-data-table cms-data-table--skip-auto-no-col"
+              className="cms-data-table cms-data-table--skip-auto-no-col business-area-management-modal__table"
               tableLayout="fixed"
               pagination={false}
               columns={columns}
@@ -176,7 +185,7 @@ export function BusinessAreaManagementModal({
                               ref={ctrl.newInputRef}
                               inputSize="medium"
                               width="100%"
-                              placeholder="사업 분야명을 입력해주세요"
+                              placeholder="사업 분야명을 입력해 주세요"
                               value={ctrl.newDraft}
                               onChange={e => ctrl.setNewDraft(e.target.value)}
                               onPressEnter={() => {

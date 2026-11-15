@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import type { EducationScheduleItem } from '../../schedules/model/types.ts'
 import { buildAssignedSettlementItems } from './assigned-settlement-items.ts'
 import {
+  ADMIN_APPLICATION_CORRECTION_MESSAGE,
+  isInstructorSettlementResubmit,
   isSettlementWriteCtaDisabled,
   resolveSettlementStatusUi,
 } from './settlement-status-ui.ts'
@@ -158,6 +160,7 @@ const case04 = build({
       programId: 100,
       programScheduleId: 1,
       statementStatus: 'SUBMITTED',
+      confirmationStatus: 'WAITING_CONFIRM',
       netPaymentAmount: 300000,
     },
   ],
@@ -175,12 +178,35 @@ const case05 = build({
       programId: 100,
       programScheduleId: 1,
       statementStatus: 'REAPPLICATION',
+      confirmationStatus: 'REAPPLICATION',
       netPaymentAmount: 300000,
     },
   ],
 })[0]
 assert.equal(case05?.status, 'reapplied')
-assert.equal(resolveSettlementStatusUi(case05!.status, 'payment_statement').markLabel, '재신청')
+assert.equal(resolveSettlementStatusUi(case05!.status, 'payment_statement').markLabel, '지급조서 재신청')
+assert.equal(resolveSettlementStatusUi('reapplied', 'receipt').markLabel, '재신청')
+
+const application27 = build({
+  schedules: [completedSchedule],
+  lectureReports: [{ scheduleId: 1, reportStatus: 'SUBMITTED', lectureStatus: 'COMPLETED' }],
+  settlements: [
+    {
+      applicationId: 27,
+      programId: 100,
+      programScheduleId: 1,
+      status: 'SUBMITTED',
+      revisionNo: 2,
+      settlementId: null,
+      confirmationStatus: 'REAPPLICATION',
+    },
+  ],
+})[0]
+assert.equal(application27?.status, 'reapplied')
+assert.equal(
+  resolveSettlementStatusUi(application27!.status, 'payment_statement').markLabel,
+  '지급조서 재신청',
+)
 
 const case06 = build({
   schedules: [completedSchedule],
@@ -191,6 +217,7 @@ const case06 = build({
       programId: 100,
       programScheduleId: 1,
       statementStatus: 'CONFIRMED',
+      confirmationStatus: 'CONFIRMED',
       netPaymentAmount: 300000,
     },
   ],
@@ -207,6 +234,7 @@ const case07 = build({
       programId: 100,
       programScheduleId: 1,
       statementStatus: 'CONFIRMED',
+      confirmationStatus: 'CONFIRMED',
       paymentStatus: 'PAID',
       netPaymentAmount: 300000,
     },
@@ -224,13 +252,71 @@ const case08 = build({
       programId: 100,
       programScheduleId: 1,
       statementStatus: 'CORRECTION_REQUESTED',
+      confirmationStatus: 'CORRECTION_REQUESTED',
       netPaymentAmount: 300000,
     },
   ],
 })[0]
 assert.equal(case08?.status, 'correction_requested')
+assert.equal(case08?.adminApplicationCorrection, undefined)
 assert.equal(resolveSettlementStatusUi(case08!.status, 'payment_statement').markLabel, '지급 정정 요청')
 assert.deepEqual(resolveSettlementStatusUi(case08!.status, 'payment_statement').actions, ['view'])
+
+const adminApplicationCorrection = build({
+  schedules: [completedSchedule],
+  lectureReports: [{ scheduleId: 1, reportStatus: 'SUBMITTED', lectureStatus: 'COMPLETED' }],
+  settlements: [
+    {
+      applicationId: 802,
+      programId: 100,
+      programScheduleId: 1,
+      status: 'CORRECTION_REQUESTED',
+      confirmationStatus: 'CORRECTION_REQUESTED',
+      settlementId: null,
+      netPaymentAmount: 150000,
+    },
+  ],
+})[0]
+assert.equal(adminApplicationCorrection?.status, 'correction_requested')
+assert.equal(adminApplicationCorrection?.settlementId, undefined)
+assert.equal(adminApplicationCorrection?.adminApplicationCorrection, true)
+const adminCorrectionUi = resolveSettlementStatusUi(
+  adminApplicationCorrection!.status,
+  'payment_statement',
+  { adminApplicationCorrection: true },
+)
+assert.equal(adminCorrectionUi.message, ADMIN_APPLICATION_CORRECTION_MESSAGE)
+assert.equal(adminCorrectionUi.writeLabel, '지급조서 재신청')
+assert.deepEqual(adminCorrectionUi.actions, ['reapply'])
+assert.equal(
+  isInstructorSettlementResubmit({
+    status: adminApplicationCorrection?.status,
+    adminApplicationCorrection: adminApplicationCorrection?.adminApplicationCorrection,
+  }),
+  true,
+)
+assert.equal(
+  isInstructorSettlementResubmit({ status: 'correction_requested', adminApplicationCorrection: false }),
+  false,
+)
+const statementCorrection = build({
+  schedules: [completedSchedule],
+  lectureReports: [{ scheduleId: 1, reportStatus: 'SUBMITTED', lectureStatus: 'COMPLETED' }],
+  settlements: [
+    {
+      applicationId: 803,
+      programId: 100,
+      programScheduleId: 1,
+      status: 'CORRECTION_REQUESTED',
+      confirmationStatus: 'CORRECTION_REQUESTED',
+      settlementId: 9001,
+      statementStatus: 'CORRECTION_REQUESTED',
+      netPaymentAmount: 150000,
+    },
+  ],
+})[0]
+assert.equal(statementCorrection?.adminApplicationCorrection, undefined)
+assert.equal(statementCorrection?.settlementId, 9001)
 
 const case09 = build({
   schedules: [completedSchedule],
@@ -240,8 +326,9 @@ const case09 = build({
       applicationId: 901,
       programId: 100,
       programScheduleId: 1,
-      statementStatus: 'WAITING_CONFIRM',
-      correctionStatus: 'CORRECTION_COMPLETED',
+      statementStatus: 'DRAFT',
+      confirmationStatus: 'CORRECTION_REQUESTED',
+      statementReapplyAvailable: true,
       netPaymentAmount: 280000,
       previousNetPaymentAmount: 300000,
     },
@@ -263,6 +350,7 @@ const case10 = build({
       programId: 100,
       programScheduleId: 1,
       statementStatus: 'REJECTED',
+      confirmationStatus: 'REJECTED',
       netPaymentAmount: 200000,
       rejectedReason: '계좌 정보가 일치하지 않습니다.',
     },
@@ -295,6 +383,7 @@ const mixed = build({
       programId: 100,
       programScheduleId: 1,
       statementStatus: 'SUBMITTED',
+      confirmationStatus: 'WAITING_CONFIRM',
       netPaymentAmount: 300000,
     },
   ],

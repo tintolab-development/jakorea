@@ -1103,7 +1103,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         values={form.recipients
           .filter(item => item.source === 'manual')
           .map(item => ({ contact: item.email, variables: item.variables }))}
-        variableKeys={directManualKeys}
         normalize={normalizeMailSendEmail}
         isValid={isMailSendEmail}
         invalidMessage="올바른 이메일 주소를 입력해 주세요."

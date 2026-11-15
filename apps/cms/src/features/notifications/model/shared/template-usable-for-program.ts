@@ -1,4 +1,5 @@
 import { extractPlaceholderKeysFromTexts } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
+import { addNotificationLegacyVariableAliases } from '@/features/notifications/model/shared/legacy-variable-aliases'
 import {
   isNotificationCatalogVariableDisabled,
   isNotificationCatalogVariablePendingRecipientType,
@@ -27,6 +28,7 @@ function catalogByKey(
     const tokenInner = item.token?.replace(/^#\{/, '').replace(/\}$/, '').trim()
     if (tokenInner) byKey.set(tokenInner, item)
   }
+  addNotificationLegacyVariableAliases(byKey)
   return byKey
 }
 

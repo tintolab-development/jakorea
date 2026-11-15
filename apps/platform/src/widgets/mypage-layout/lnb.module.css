@@ -34,7 +34,7 @@
   align-items: center;
   gap: var(--spacing-12);
   border: 0;
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-12);
   cursor: pointer;
   text-align: left;
   background-color: white;

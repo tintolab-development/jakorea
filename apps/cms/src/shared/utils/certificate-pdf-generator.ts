@@ -7,6 +7,7 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { CertificateTextField } from '@/types/template'
 import { unknownErrorText } from '@/shared/utils/error-handler'
+import { waitForClonedDocumentFonts } from '@/shared/utils/capture-font-ready'
 
 /**
  * 이미지 로드 헬퍼
@@ -208,14 +209,17 @@ export async function generatePdfBlobFromHtmlElement(
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
-    onclone: clonedDoc => {
+    onclone: async clonedDoc => {
+      // html2canvas는 onclone의 Promise를 기다린 뒤 복제 문서를 그린다.
+      await waitForClonedDocumentFonts(clonedDoc, element)
       if (issuedSerialNumber == null || issuedSerialNumber === '') return
       clonedDoc
         .querySelectorAll('.form-certificate-preview__serial-text, [data-certificate-serial="text"]')
         .forEach(node => {
           if (!(node instanceof HTMLElement)) return
           node.textContent = issuedSerialNumber
-          node.style.color = '#606060'
+          // 시안 5767:47245 고유번호 색(form-certificate-preview.css와 같음)
+          node.style.color = 'rgba(61, 61, 61, 0.8)'
           node.style.fontWeight = '700'
           node.style.whiteSpace = 'nowrap'
           node.style.padding = '0'
@@ -247,15 +251,4 @@ export async function generatePdfBlobFromHtmlElement(
 
   pdf.addImage(imgData, 'PNG', x, y, drawW, drawH, undefined, 'SLOW')
   return pdf.output('blob')
-}
-
-/**
- * HTML 요소 ID로 PDF Blob 생성 (`generatePdfBlobFromHtmlElement` 위임)
- */
-export async function generatePdfFromElement(elementId: string): Promise<Blob> {
-  const element = document.getElementById(elementId)
-  if (!element) {
-    throw new Error(`요소를 찾을 수 없습니다: ${elementId}`)
-  }
-  return generatePdfBlobFromHtmlElement(element)
 }

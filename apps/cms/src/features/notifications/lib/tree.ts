@@ -48,6 +48,28 @@ export function childrenOf<T extends NotificationTreeTemplate>(
   ]
 }
 
+/**
+ * 폴더 안에서 트리 표시 순서(`childrenOf`: 하위 폴더 → 템플릿, 깊이 우선)로 처음 나오는 템플릿.
+ * 펼침 여부와 무관하게 폴더를 끝까지 내려가 찾는다. 템플릿이 하나도 없으면 undefined.
+ */
+export function firstTemplateInCategory<T extends NotificationTreeTemplate>(
+  categories: NotificationTreeCategory[],
+  templates: T[],
+  categoryId: string
+): T | undefined {
+  const seen = new Set<string>()
+  const walk = (parentId: string): T | undefined => {
+    if (seen.has(parentId)) return undefined
+    seen.add(parentId)
+    for (const node of childrenOf(categories, templates, parentId)) {
+      const found = node.kind === 'template' ? node.template : walk(node.category.id)
+      if (found) return found
+    }
+    return undefined
+  }
+  return walk(categoryId)
+}
+
 export function findCategory(
   categories: NotificationTreeCategory[],
   id: string

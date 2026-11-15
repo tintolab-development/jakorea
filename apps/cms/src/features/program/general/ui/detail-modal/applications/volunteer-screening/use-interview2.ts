@@ -13,7 +13,10 @@ import {
   type GeneralVolunteerApplicantRow,
   type GeneralVolunteerInterviewEvaluationPayload,
 } from '@/features/program/general/model/volunteer-applicant'
-import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
+import {
+  screeningSubjectNoun,
+  type ScreeningSubjectKind,
+} from '@/features/program/general/lib/screening-subject-kind'
 import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   filterGeneralInterview2Applicants,
@@ -63,7 +66,9 @@ import {
   requestGeneralVolunteerInterview2BulkFail,
   requestGeneralVolunteerInterview2BulkPass,
   isGeneralVolunteerInterview2SelectableForResult,
+  resolveGeneralInterview2PassRoute,
 } from './general-volunteer-interview2-actions'
+import { useGeneralParticipantInterview2ScopeApproval } from './use-participant-scope-approval'
 import {
   guardGeneralVolunteerInterview2Evaluation,
   guardGeneralVolunteerInterview2Fail,
@@ -99,10 +104,12 @@ export function useGeneralVolunteerInterview2({
   )
 
   const remoteEnabled = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
+  /** API 미사용 안내 호칭 — 봉사자 / 참여자 */
+  const subjectNoun = screeningSubjectNoun(subjectKind)
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled,
     'general-volunteer-interview2',
-    '프로그램 신청 · 봉사자 2차 면접'
+    `프로그램 신청 · ${subjectNoun} 2차 면접`
   )
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => [])
   const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
@@ -276,10 +283,13 @@ export function useGeneralVolunteerInterview2({
       if (volunteerRemote.remoteEnabled) {
         return volunteerRemote.applyRemoteFinalResult(ids, status, reason, notify, assignments)
       }
-      notifyProgramApiUnavailable('general-volunteer-interview2-action', '봉사자 2차 면접 심사')
+      notifyProgramApiUnavailable(
+        'general-volunteer-interview2-action',
+        `${subjectNoun} 2차 면접 심사`
+      )
       return false
     },
-    [volunteerRemote]
+    [subjectNoun, volunteerRemote]
   )
 
   const openPassModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
@@ -315,7 +325,9 @@ export function useGeneralVolunteerInterview2({
    * (BE: 면접 ON이면 면접 평가 완료 후 허용, final-result PASS와 같은 결정 경로라 둘을 함께 부르지 않는다)
    * 예비합격·참여자·기관형은 기존 final-result.
    */
-  const educationAssignOnPass = subjectKind === 'volunteer' && isGeneralIndividualProgram(program)
+  const individualProgram = isGeneralIndividualProgram(program)
+  const organizationProgram = isGeneralOrganizationProgram(program)
+  const educationAssignOnPass = subjectKind === 'volunteer' && individualProgram
   const educationAssign = useGeneralVolunteerEducationAssignApproval({
     programId,
     invalidateApplications: volunteerRemote.invalidateApplications,
@@ -332,7 +344,29 @@ export function useGeneralVolunteerInterview2({
    * final-result PASS + assignments 한 번으로 처리(BE A1, 합격·배정 한 트랜잭션). 배정은 선택 사항.
    * 예비합격·불합격·일괄 합격·참여자는 기존대로 assignments 없이.
    */
-  const organizationAssignOnPass = subjectKind === 'volunteer' && isGeneralOrganizationProgram(program)
+  const organizationAssignOnPass = subjectKind === 'volunteer' && organizationProgram
+
+  /**
+   * 일반 개인 프로그램 참여자 — 합격 유형 「합격」이면 상세 「참여 승인」과 같은
+   * approve-with-education-scope(교육 일정 선택 포함)로 처리한다. 예비합격은 기존 final-result RESERVE.
+   */
+  const participantScopeApprovalOnPass = subjectKind === 'participant' && individualProgram
+  const participantScopeApproval = useGeneralParticipantInterview2ScopeApproval({
+    programId,
+    onApproved: (target, notifyTiming) => {
+      setFinalResultNotifyById(prev => ({ ...prev, [target.applicationId]: notifyTiming }))
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== target.applicationId))
+      setPassCompleteVolunteerName(target.participantName)
+    },
+    onBulkApproved: successIds => {
+      if (successIds.length === 0) return
+      setSelectedRowKeys(prev => prev.filter(key => !successIds.includes(String(key))))
+      // 시안 12-2(9781:52820) — 봉사자·개인 참여자 공통(Note 9896:142852)
+      showAlert({ title: '합격 처리 완료', content: '면접 결과가 합격 처리되었습니다.' })
+    },
+  })
+  const openParticipantScopeApproval = participantScopeApproval.open
+  const openParticipantBulkScopeApproval = participantScopeApproval.openBulk
   const [organizationAssignTarget, setOrganizationAssignTarget] = useState<
     | ({ applicationId: string; volunteerName: string } & Pick<
         Interview2PassConfirmPayload,
@@ -377,7 +411,26 @@ export function useGeneralVolunteerInterview2({
     async (payload: Interview2PassConfirmPayload) => {
       if (!passModalVolunteer) return
       const { id, name: volunteerName } = passModalVolunteer
-      if (organizationAssignOnPass && (payload.passType ?? 'pass') === 'pass') {
+      const passRoute = resolveGeneralInterview2PassRoute({
+        subjectKind,
+        isIndividualProgram: individualProgram,
+        isOrganizationProgram: organizationProgram,
+        passType: payload.passType,
+        mode: 'single',
+      })
+      if (passRoute === 'participant-education-scope') {
+        closePassModal()
+        openParticipantScopeApproval({
+          applicationId: id,
+          participantName: volunteerName,
+          preferredEducationSchedules:
+            passModalVolunteer.participantApplicant?.preferredEducationSchedules,
+          // 16-1 면접 합격 안내에서 고른 알림 값을 그대로 보낸다(일정 팝업은 알림 선택 숨김)
+          notify: { notifyTiming: payload.notifyTiming, manualNotifyAt: payload.manualNotifyAt },
+        })
+        return
+      }
+      if (passRoute === 'organization-assign') {
         closePassModal()
         setOrganizationAssignTarget({
           applicationId: id,
@@ -387,7 +440,7 @@ export function useGeneralVolunteerInterview2({
         })
         return
       }
-      if (educationAssignOnPass && (payload.passType ?? 'pass') === 'pass') {
+      if (passRoute === 'volunteer-education-assign') {
         closePassModal()
         openEducationAssign({
           applicationId: id,
@@ -412,10 +465,12 @@ export function useGeneralVolunteerInterview2({
     [
       applySecondInterviewStatus,
       closePassModal,
-      educationAssignOnPass,
+      individualProgram,
       openEducationAssign,
-      organizationAssignOnPass,
+      openParticipantScopeApproval,
+      organizationProgram,
       passModalVolunteer,
+      subjectKind,
     ]
   )
 
@@ -501,6 +556,28 @@ export function useGeneralVolunteerInterview2({
   const confirmBulkPass = useCallback(
     async (payload: Interview2PassConfirmPayload) => {
       const ids = selectedRowKeys.map(String)
+      const passRoute = resolveGeneralInterview2PassRoute({
+        subjectKind,
+        isIndividualProgram: individualProgram,
+        isOrganizationProgram: organizationProgram,
+        passType: payload.passType,
+        mode: 'bulk',
+      })
+      if (passRoute === 'participant-education-scope') {
+        setBulkPassModalOpen(false)
+        openParticipantBulkScopeApproval(
+          list
+            .filter(row => ids.includes(row.id))
+            .map(row => ({
+              id: row.id,
+              name: row.name,
+              preferredEducationSchedules: row.participantApplicant?.preferredEducationSchedules,
+            })),
+          // 12-1 면접 일괄 합격 안내에서 고른 알림 값을 그대로 보낸다(일정 팝업은 알림 선택 숨김)
+          { notifyTiming: payload.notifyTiming, manualNotifyAt: payload.manualNotifyAt }
+        )
+        return
+      }
       const ok = await applySecondInterviewStatus(
         ids,
         payload.passType ?? 'pass',
@@ -513,7 +590,16 @@ export function useGeneralVolunteerInterview2({
       showAlert({ title: '합격 처리 완료', content: '면접 결과가 합격 처리되었습니다.' })
       setSelectedRowKeys([])
     },
-    [applySecondInterviewStatus, selectedRowKeys, showAlert]
+    [
+      applySecondInterviewStatus,
+      individualProgram,
+      list,
+      openParticipantBulkScopeApproval,
+      organizationProgram,
+      selectedRowKeys,
+      showAlert,
+      subjectKind,
+    ]
   )
 
   const requestWithdrawActivity = useCallback(
@@ -544,7 +630,7 @@ export function useGeneralVolunteerInterview2({
         return
       }
       if (!volunteerRemote.remoteEnabled) {
-        notifyProgramApiUnavailable('general-volunteer-give-up', '봉사자 활동 포기')
+        notifyProgramApiUnavailable('general-volunteer-give-up', `${subjectNoun} 활동 포기`)
         setWithdrawTargetId(null)
         return
       }
@@ -572,6 +658,7 @@ export function useGeneralVolunteerInterview2({
       list,
       program,
       programSchedulesQuery.data,
+      subjectNoun,
       volunteerRemote,
       withdrawSubmitting,
       withdrawTargetId,
@@ -674,7 +761,7 @@ export function useGeneralVolunteerInterview2({
       if (!volunteerRemote.remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-volunteer-interview2-cancel-fail',
-          '봉사자 면접 불합격 취소'
+          `${subjectNoun} 면접 불합격 취소`
         )
         setCancelFailVolunteer(null)
         return
@@ -702,7 +789,7 @@ export function useGeneralVolunteerInterview2({
         content: MESSAGES.success.cancelled,
       })
     },
-    [cancelFailVolunteer, showAlert, volunteerRemote]
+    [cancelFailVolunteer, showAlert, subjectNoun, volunteerRemote]
   )
 
   const saveInterviewEvaluation = useCallback(
@@ -713,7 +800,10 @@ export function useGeneralVolunteerInterview2({
       if (!guardGeneralVolunteerInterview2Evaluation(row)) return false
 
       if (!volunteerRemote.remoteEnabled) {
-        notifyProgramApiUnavailable('general-volunteer-interview-evaluation', '봉사자 면접 평가')
+        notifyProgramApiUnavailable(
+          'general-volunteer-interview-evaluation',
+          `${subjectNoun} 면접 평가`
+        )
         return false
       }
       const result = await volunteerRemote.applyRemoteInterviewEvaluation?.(
@@ -736,7 +826,7 @@ export function useGeneralVolunteerInterview2({
       }
       return false
     },
-    [showAlert, volunteerRemote]
+    [showAlert, subjectNoun, volunteerRemote]
   )
 
   const columns = useGeneralVolunteerInterview2Columns({ subjectKind })
@@ -744,6 +834,8 @@ export function useGeneralVolunteerInterview2({
   return {
     educationAssign,
     educationAssignOnPass,
+    participantScopeApproval,
+    participantScopeApprovalOnPass,
     organizationAssignOnPass,
     organizationAssignTarget,
     organizationAssignSubmitting,
@@ -768,8 +860,7 @@ export function useGeneralVolunteerInterview2({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount: selectedRowKeys.length,
-    bulkPassSubjectName:
-      list.find(row => selectedRowKeys.map(String).includes(row.id))?.name ?? '',
+    bulkPassSubjectName: list.find(row => selectedRowKeys.map(String).includes(row.id))?.name ?? '',
     bulkFailModalOpen,
     closeBulkFailModal,
     confirmBulkFail,

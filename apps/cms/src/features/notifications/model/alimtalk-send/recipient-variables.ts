@@ -1,3 +1,5 @@
+import { findNotificationCatalogEntry } from '@/features/notifications/model/shared/legacy-variable-aliases'
+
 /**
  * MEMBER actorId가 있을 때 서버가 채우는 본문 토큰.
  * DIRECT에는 enrich가 없다.
@@ -274,11 +276,7 @@ function findCatalogEntry(
   key: string
 ): AlimtalkVariableCatalogEntry | undefined {
   if (!catalog) return undefined
-  return catalog.find(item => {
-    if (item.key.trim() === key) return true
-    const tokenInner = item.token?.replace(/^#\{/, '').replace(/\}$/, '').trim()
-    return tokenInner === key
-  })
+  return findNotificationCatalogEntry(catalog, key)
 }
 
 function isMemberWithActor(recipient: RecipientLike): boolean {

@@ -1,7 +1,14 @@
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
-import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
+import {
+  resolveGeneralProgramParticipantRecruitmentDisplay,
+  resolveParticipantRecruitmentInterviewEnabled,
+} from '@/features/program/general/lib/participant-recruitment-display'
+import {
+  PARTICIPANT_INTERVIEW_OVERLAY_PREFIX,
+  supportsParticipantInterviewConfigProgramType,
+} from '@/features/program/shared/lib/volunteer-interview-config'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveVolunteerRecruitmentInterviewEnabled } from '@/features/program/general/lib/volunteer-recruitment-display'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
@@ -106,6 +113,22 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
   }
   if (values.participantRecruitmentNotesNotApplicable !== 'not_applicable') {
     push(keys, blankText(values.remarks), `${prefix}.notes`)
+  }
+  // 개인 참여자 면접 진행 가능 일정 — 봉사자와 같은 필수 규칙
+  if (
+    isIndividual &&
+    !isCompanySchool &&
+    !isTrainedTeachers &&
+    supportsParticipantInterviewConfigProgramType(program.backendProgramType) &&
+    !skipSchedule &&
+    resolveParticipantRecruitmentInterviewEnabled(program, values.participantRecruitmentInterviewEnabled)
+  ) {
+    const overlay = getGeneralRecruitOverlayRecord()
+    const ns = PARTICIPANT_INTERVIEW_OVERLAY_PREFIX
+    const rangeKey = buildVolunteerInterviewOverlayKey('recruit', 'interviewTimeRange', ns)
+    const slotsKey = buildVolunteerInterviewOverlayKey('recruit', 'selectedSlotKeys', ns)
+    push(keys, isInterviewTimeRangeIncomplete(overlay[rangeKey]), `${ns}.interviewTimeRange`)
+    push(keys, blankList(overlay[slotsKey]), `${ns}.selectedSlotKeys`)
   }
   return keys
 }

@@ -2,6 +2,7 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { countPdfImageSlices } from './count-pdf-image-slices'
+import { waitForCaptureFonts, waitForClonedDocumentFonts } from '@/shared/utils/capture-font-ready'
 
 async function waitForDocumentImages(root: HTMLElement): Promise<void> {
   const deadline = Date.now() + 12_000
@@ -46,6 +47,8 @@ export async function generateFormDocumentPdfBlobFromPageElements(
 
   for (const el of pageElements) {
     await waitForDocumentImages(el)
+    // 웹폰트 로드 전에 캡처하면 첫 다운로드에서 글자 폭·기준선이 미리보기와 달라진다(증명서 PDF와 같은 대기).
+    await waitForCaptureFonts(el)
     const captureWidth = Math.max(el.scrollWidth, el.offsetWidth, 1)
     const captureHeight = Math.max(el.scrollHeight, el.offsetHeight, 1)
     const canvas = await html2canvas(el, {
@@ -62,6 +65,9 @@ export async function generateFormDocumentPdfBlobFromPageElements(
       y: 0,
       scrollX: 0,
       scrollY: 0,
+      onclone: async clonedDoc => {
+        await waitForClonedDocumentFonts(clonedDoc, el)
+      },
     })
     const imgData = canvas.toDataURL('image/jpeg', 0.92)
     const imgHeightMm =

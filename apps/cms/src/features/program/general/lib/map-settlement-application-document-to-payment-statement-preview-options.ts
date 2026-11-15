@@ -15,6 +15,10 @@ import type {
   Line,
   SettlementApplicationDocumentResponse,
 } from '@/shared/api/generated/settlement/schemas'
+import {
+  formatLectureSessionLabel,
+  mapCalculationDetailToBasisDetail,
+} from '@/features/settlement-management/api/shared/map-frontend-fields'
 import type { PaymentOrderCalculationLineKind } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
@@ -68,6 +72,19 @@ export function formatEducationTimeRange(
   const end = dayjs(endAt)
   if (!start.isValid() || !end.isValid()) return ''
   return `${formatDateDotWithWeekday(start)} ${start.format('HH:mm')} ~ ${end.format('HH:mm')}`
+}
+
+/** 표시용 빈 값('-'·'—'·'–')은 ''로 */
+function presentDisplay(value: string | null | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  return trimmed === '-' || trimmed === '—' || trimmed === '–' ? '' : trimmed
+}
+
+/** 시간 없이 `YYYY.MM.DD(요일)` */
+function formatEducationDateOnly(value: string | null | undefined): string {
+  if (!value?.trim()) return ''
+  const date = dayjs(value)
+  return date.isValid() ? formatDateDotWithWeekday(date) : ''
 }
 
 function formatBusinessIncome(value: boolean | null | undefined): string {
@@ -155,13 +172,18 @@ function buildCalculationLines(
         institutionName: text(first?.institutionName),
         lectureDateDisplay: educationTime || text(first?.educationDate),
         lectureSessionDisplay: text(first?.sessionLabel),
-        lines: lines.map((line, index) => ({
-          id: `settlement-application-${applicationId}-line-${index}`,
-          itemLabel: text(line.category),
-          description: text(line.description),
-          amount: line.amount ?? 0,
-          kind: resolveLineKind(line),
-        })),
+        lines: lines.map((line, index) => {
+          // BE 제출 revision 근거(정산 상세 calculationDetail과 같은 스키마). 없으면 FE가 근거를 만들지 않는다.
+          const basisDetail = mapCalculationDetailToBasisDetail(line.calculationDetail)
+          return {
+            id: `settlement-application-${applicationId}-line-${index}`,
+            itemLabel: text(line.category),
+            description: text(line.description),
+            amount: line.amount ?? 0,
+            kind: resolveLineKind(line),
+            ...(basisDetail ? { basisDetail } : {}),
+          }
+        }),
       },
     ],
     formulaLabel: text(document.total?.formulaLabel),
@@ -194,13 +216,27 @@ export function buildPaymentStatementPreviewOptionsFromApplicationDocument(input
 export function applyApplicationDocumentToProgramCalculationStatement(
   base: PaymentOrderProgramCalculationStatement,
   document: SettlementApplicationDocumentResponse,
-  settlementApplicationId: number
+  settlementApplicationId: number,
+  /** 목록 행의 일정 회차(program_schedule.session_no). 서버 회차 표기가 없을 때 「N회차」로 쓴다 */
+  sessionOrdinal?: number | null
 ): PaymentOrderProgramCalculationStatement {
   if (base.context !== 'program') return base
   const calcInfo = document.calcInfo
   const linesModel = buildCalculationLines(document, settlementApplicationId)
-  const recognizedSessionCount = calcInfo?.recognizedSessionCount
   const [block] = linesModel.blocks
+  // 산출 내역서 교육 진행 일자 칸 = 시안 「2026.12.08(월) │ 2회차」 — 시간 없이 날짜, 뒤는 회차.
+  // 확정된 정산 행과 같은 규칙(목록 출강일 + 서버 회차 표기)을 쓰고, 없을 때만 신청서 교육일·목록 회차로 채운다.
+  // 「교육 진행 차시」(인정 차시)는 basic.recognizedSessionCount로 따로 둔다.
+  const baseBlock = base.blocks[0]
+  const baseDate = presentDisplay(baseBlock?.lectureDateDisplay)
+  const baseSession = presentDisplay(baseBlock?.lectureSessionDisplay)
+  const fallbackSession = presentDisplay(formatLectureSessionLabel(sessionOrdinal))
+  const lectureDateDisplay =
+    baseDate ||
+    formatEducationDateOnly(calcInfo?.educationStartAt) ||
+    formatEducationDateOnly(document.lines?.[0]?.educationDate) ||
+    '-'
+  const lectureSessionDisplay = baseSession || fallbackSession
 
   return {
     ...base,
@@ -214,14 +250,15 @@ export function applyApplicationDocumentToProgramCalculationStatement(
         .join(' · '),
       lectureFeeStandardAmount: formatWon(calcInfo?.instructorFeeAmount),
       businessIncomeEarnerLabel: formatBusinessIncome(calcInfo?.businessIncomeYn),
+      // 「교육 진행 차시」 = 신청서 문서의 인정 차시. 없으면 기존 값
+      recognizedSessionCount: calcInfo?.recognizedSessionCount ?? base.basic.recognizedSessionCount ?? null,
     },
     blocks: block
       ? [
           {
             ...block,
-            // 교육 진행 차시 = 인정 차시. educationSessionCount로 대체하지 않는다.
-            lectureSessionDisplay:
-              recognizedSessionCount != null ? `${recognizedSessionCount}차시` : '',
+            lectureDateDisplay,
+            lectureSessionDisplay,
           },
         ]
       : [],

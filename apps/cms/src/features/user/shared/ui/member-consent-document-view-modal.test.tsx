@@ -3,7 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemberConsentDocumentViewModal } from './member-consent-document-view-modal'
+import {
+  MemberConsentDocumentViewModal,
+  consentFileViewPaintsPdfAnnotations,
+} from './member-consent-document-view-modal'
 import { writingFormDraftToSchemaJson } from '@/features/template/api/adapters/form-template-draft-adapters'
 import {
   createAgreementNoticeDraft,
@@ -39,6 +42,7 @@ vi.mock('@/features/auth/model/auth-store', () => ({
 const loadConsentSignedSignatureBlobRemote = vi.fn()
 const fetchConsentSignedDocumentRemote = vi.fn()
 const fetchConsentOriginalFileBlobRemote = vi.fn()
+const fetchConsentDocumentViewBlobRemote = vi.fn()
 vi.mock('@/features/user/api/members-api-client', async importOriginal => {
   const actual = await importOriginal<typeof import('@/features/user/api/members-api-client')>()
   return {
@@ -49,6 +53,8 @@ vi.mock('@/features/user/api/members-api-client', async importOriginal => {
       fetchConsentSignedDocumentRemote(...args),
     fetchConsentOriginalFileBlobRemote: (...args: unknown[]) =>
       fetchConsentOriginalFileBlobRemote(...args),
+    fetchConsentDocumentViewBlobRemote: (...args: unknown[]) =>
+      fetchConsentDocumentViewBlobRemote(...args),
   }
 })
 
@@ -119,12 +125,7 @@ describe('member consent filled document rendering', () => {
     expect(document.body.textContent).not.toContain('MOCK_FILLED')
   })
 
-  it('loads the crime consent original after privacy reason instead of filled-document', async () => {
-    fetchConsentOriginalFileBlobRemote.mockResolvedValue(
-      new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' })
-    )
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-crime-original')
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+  it('loads only the crime signed-document after privacy reason and leaves the original for password download', async () => {
     renderModal({
       templateId: 'agreement-crime',
       consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
@@ -137,14 +138,23 @@ describe('member consent filled document rendering', () => {
     const buttons = [...(reason.closest('.ant-modal') ?? reason).querySelectorAll('button')]
     fireEvent.click(buttons[buttons.length - 1]!)
     await waitFor(() => expect(fetchConsentSignedDocumentRemote).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(fetchConsentOriginalFileBlobRemote).toHaveBeenCalledTimes(1))
+    // 원본(sensitive-downloads)은 BE 정책상 파일 암호가 필수 — 열람 단계에서 요청하지 않는다
+    expect(fetchConsentOriginalFileBlobRemote).not.toHaveBeenCalled()
     expect(mutateAsync).not.toHaveBeenCalled()
     await waitFor(() => {
-      expect(document.querySelector('.crime-consent-doc-modal__a4-outer')).toBeTruthy()
+      const download = [...document.querySelectorAll('button')].find(b =>
+        b.textContent?.includes('문서 다운로드')
+      )
+      expect(download?.hasAttribute('disabled')).toBe(false)
     })
+    expect(document.body.textContent).not.toContain('원본을 불러올 수 없습니다')
   })
 
   it('shows crime original unavailable when signed-document has no uploaded file', async () => {
+    fetchConsentSignedDocumentRemote.mockResolvedValue({
+      originalFileObjectId: null,
+      originalDownloadApi: null,
+    })
     renderModal({
       templateId: 'agreement-crime',
       consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
@@ -178,6 +188,39 @@ describe('member consent filled document rendering', () => {
     await waitFor(() => expect(document.body.textContent).toContain('동의자'))
     expect(document.body.textContent).toContain('(서명)')
     expect(document.body.textContent).not.toContain('당사자의 서면 동의')
+  })
+
+  it('renders portrait response cells as text and consent radios with the disabled skin', async () => {
+    const draft = createAgreementPortraitDraft()
+    const table = draft.paragraphs.find(
+      p => p.kind === 'single_item' && p.variant === 'vertical_table'
+    )
+    if (table?.kind === 'single_item' && table.variant === 'vertical_table') {
+      const firstRow = table.rows[0]
+      if (firstRow) {
+        table.rows[0] = { ...firstRow, cells: ['MOCK_NAME_701', '소속 없음'] } as typeof firstRow
+      }
+    }
+    mutateAsync.mockResolvedValue({
+      filledDocumentId: 9001,
+      schemaJson: writingFormDraftToSchemaJson(draft),
+    })
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      filledDocumentAvailable: true,
+    })
+    await waitFor(() => expect(document.body.textContent).toContain('MOCK_NAME_701'))
+    const page = document.querySelector('.template-preview-modal__a4-frame') as HTMLElement
+    expect(page.querySelector('.form-editor-vertical-table__cell-input-shell--body-subjective')).toBeNull()
+    expect(page.querySelector('input:not([type="radio"])')).toBeNull()
+    const radios = [...page.querySelectorAll('.form-editor-table-bottom-consent input[type="radio"]')]
+    expect(radios.length).toBeGreaterThan(0)
+    expect(radios.every(radio => (radio as HTMLInputElement).disabled)).toBe(true)
+    // 제출본 보기는 미리보기가 아니다 — 「미리보기」 배지·안내 문구 없음, 닫기 버튼은 「닫기」
+    expect(document.querySelector('.template-preview-modal__badge')).toBeNull()
+    expect(document.body.textContent).not.toContain('현재 화면은 미리보기 화면입니다.')
+    expect(document.body.textContent).not.toContain('미리보기 닫기')
   })
 
   it('shows the portal e-signature image when signed-document returns a signed field', async () => {
@@ -214,5 +257,166 @@ describe('member consent filled document rendering', () => {
     const view = render(<MemoryRouter><QueryClientProvider client={client}><MemberConsentDocumentViewModal open templateId="agreement-portrait" modalTitle="Mock" memberId={701} consentType="PORTRAIT_RIGHTS" membersRemote filledDocumentAvailable onClose={onClose} /></QueryClientProvider></MemoryRouter>)
     view.rerender(<MemoryRouter><QueryClientProvider client={client}><MemberConsentDocumentViewModal open={false} templateId="agreement-portrait" modalTitle="Mock" memberId={701} consentType="PORTRAIT_RIGHTS" membersRemote filledDocumentAvailable onClose={onClose} /></QueryClientProvider></MemoryRouter>)
     await waitFor(() => expect(reset).toHaveBeenCalled())
+  })
+})
+
+function confirmPrivacyReason() {
+  const reason = document.querySelector('.user-personal-info-reveal-confirm-modal') as HTMLElement
+  const input = reason.querySelector('textarea, input')
+  if (input) fireEvent.change(input, { target: { value: 'authorized review' } })
+  const buttons = [...(reason.closest('.ant-modal') ?? reason).querySelectorAll('button')]
+  fireEvent.click(buttons[buttons.length - 1]!)
+}
+
+describe('consentFileViewPaintsPdfAnnotations', () => {
+  it('does not repaint annotation text on the signed PDF', () => {
+    expect(
+      consentFileViewPaintsPdfAnnotations({
+        signedPdfAvailable: true,
+        signedPdfViewEndpoint: '/pdf/content?documentId=1694928',
+        viewEndpoint: '/pdf/content?documentId=1694928',
+      })
+    ).toBe(false)
+  })
+
+  it('keeps annotation text on the uploaded original', () => {
+    expect(
+      consentFileViewPaintsPdfAnnotations({
+        signedPdfAvailable: false,
+        signedPdfViewEndpoint: null,
+        viewEndpoint: '/original/content?documentId=1694929',
+      })
+    ).toBe(true)
+  })
+})
+
+describe('member detail consent file view (signed PDF · uploaded original)', () => {
+  afterEach(() => {
+    cleanup()
+    vi.restoreAllMocks()
+  })
+  beforeEach(() => {
+    mutateAsync.mockReset()
+    fetchConsentSignedDocumentRemote.mockReset()
+    fetchConsentDocumentViewBlobRemote.mockReset()
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-consent-file')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+  })
+
+  it('opens the signed PDF view endpoint and skips the filled/signed document APIs', async () => {
+    fetchConsentDocumentViewBlobRemote.mockResolvedValue(
+      new Blob([new Uint8Array([1])], { type: 'application/pdf' })
+    )
+    renderModal({
+      templateId: 'agreement-expense',
+      consentType: 'FACILITATOR_PLEDGE',
+      filledDocumentAvailable: true,
+      signedPdfAvailable: true,
+      signedPdfViewEndpoint: '/pdf/content?documentId=1694928',
+      signedPdfDownloadEndpoint: '/api/admin/files/2056930/sensitive-downloads',
+      originalAvailable: false,
+    })
+    await waitFor(() => expect(fetchConsentDocumentViewBlobRemote).toHaveBeenCalledTimes(1))
+    expect(fetchConsentDocumentViewBlobRemote.mock.calls[0]?.[0]).toBe('/pdf/content?documentId=1694928')
+    expect(fetchConsentDocumentViewBlobRemote.mock.calls[0]?.[1]).toMatchObject({
+      reason: expect.any(String),
+    })
+    expect(mutateAsync).not.toHaveBeenCalled()
+    expect(fetchConsentSignedDocumentRemote).not.toHaveBeenCalled()
+    await waitFor(() => expect(document.querySelector('.crime-consent-doc-modal__a4-outer')).toBeTruthy())
+    const download = [...document.querySelectorAll('button')].find(b =>
+      b.textContent?.includes('문서 다운로드')
+    )
+    expect(download?.hasAttribute('disabled')).toBe(false)
+  })
+
+  it('opens the crime uploaded original after the privacy reason and shows the image', async () => {
+    fetchConsentDocumentViewBlobRemote.mockResolvedValue(
+      new Blob([new Uint8Array([1])], { type: 'image/png' })
+    )
+    renderModal({
+      templateId: 'agreement-crime',
+      consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+      signedPdfAvailable: false,
+      originalAvailable: true,
+      originalViewEndpoint: '/original/content?documentId=1694929',
+      originalDownloadEndpoint: '/api/admin/files/2056932/sensitive-downloads',
+    })
+    expect(fetchConsentDocumentViewBlobRemote).not.toHaveBeenCalled()
+    confirmPrivacyReason()
+    await waitFor(() =>
+      expect(fetchConsentDocumentViewBlobRemote).toHaveBeenCalledWith(
+        '/original/content?documentId=1694929',
+        { reason: 'authorized review' }
+      )
+    )
+    await waitFor(() => {
+      const image = document.querySelector('.crime-consent-doc-modal__a4-outer img')
+      expect(image?.getAttribute('src')).toBe('blob:mock-consent-file')
+    })
+    expect(fetchConsentSignedDocumentRemote).not.toHaveBeenCalled()
+  })
+
+  it('prefers the signed PDF when both files are available', async () => {
+    fetchConsentDocumentViewBlobRemote.mockResolvedValue(
+      new Blob([new Uint8Array([1])], { type: 'application/pdf' })
+    )
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      signedPdfAvailable: true,
+      signedPdfViewEndpoint: '/pdf/content',
+      originalAvailable: true,
+      originalViewEndpoint: '/original/content',
+    })
+    await waitFor(() => expect(fetchConsentDocumentViewBlobRemote).toHaveBeenCalledTimes(1))
+    expect(fetchConsentDocumentViewBlobRemote.mock.calls[0]?.[0]).toBe('/pdf/content')
+  })
+
+  it('does not request anything and shows the existing empty message when no file is available', async () => {
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      filledDocumentAvailable: true,
+      signedPdfAvailable: false,
+      originalAvailable: false,
+    })
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('제출된 동의서를 불러올 수 없습니다.')
+    )
+    expect(fetchConsentDocumentViewBlobRemote).not.toHaveBeenCalled()
+    expect(mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows the existing empty message when the view endpoint fails', async () => {
+    fetchConsentDocumentViewBlobRemote.mockRejectedValue(new Error('410'))
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      signedPdfAvailable: true,
+      signedPdfViewEndpoint: '/pdf/content',
+    })
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('제출된 동의서를 불러올 수 없습니다.')
+    )
+  })
+
+  it('revokes the object URL when the modal closes', async () => {
+    fetchConsentDocumentViewBlobRemote.mockResolvedValue(
+      new Blob([new Uint8Array([1])], { type: 'image/png' })
+    )
+    const onClose = vi.fn()
+    renderModal({
+      templateId: 'agreement-portrait',
+      consentType: 'PORTRAIT_RIGHTS',
+      signedPdfAvailable: true,
+      signedPdfViewEndpoint: '/pdf/content',
+      onClose,
+    })
+    await waitFor(() => expect(document.querySelector('.crime-consent-doc-modal__a4-outer img')).toBeTruthy())
+    const close = [...document.querySelectorAll('button')].find(b => b.textContent?.trim() === '닫기')
+    fireEvent.click(close!)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-consent-file')
+    expect(onClose).toHaveBeenCalled()
   })
 })

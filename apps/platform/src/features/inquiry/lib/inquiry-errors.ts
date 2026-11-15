@@ -1,11 +1,5 @@
 import { isAxiosError } from 'axios'
 
-export const INQUIRY_CREATE_ERROR_FALLBACK =
-  '문의 접수에 실패했습니다. 입력 내용을 확인한 뒤 잠시 후 다시 시도해 주세요.'
-
-export const INQUIRY_DELETE_ERROR_FALLBACK =
-  '문의 삭제에 실패했습니다. 답변이 완료된 문의인지 확인한 뒤 다시 시도해 주세요.'
-
 function messageFromData(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined
   const body = data as {
@@ -46,14 +40,13 @@ const INQUIRY_ERROR_MESSAGES: Record<string, string> = {
   PORTAL_INQUIRY_DELETE_CONFLICT: '문의 상태가 변경되었습니다. 최신 목록을 확인해 주세요.',
 }
 
-export function getInquiryApiErrorMessage(
-  error: unknown,
-  fallback = INQUIRY_CREATE_ERROR_FALLBACK
-): string {
-  if (isAxiosError(error)) {
-    const code = getInquiryApiErrorCode(error)
-    return messageFromData(error.response?.data) ?? (code ? INQUIRY_ERROR_MESSAGES[code] : undefined) ?? fallback
-  }
-  if (error instanceof Error && error.message.trim()) return error.message.trim()
-  return fallback
+
+/**
+ * 오류 팝업 설명용 — 서버가 보낸 메시지·코드별 안내만 돌려준다(FE 기본 문구는 빈 값).
+ * `resolvePlatformErrorAlert`의 serverMessage로 넘긴다.
+ */
+export function readInquiryServerErrorMessage(error: unknown): string {
+  if (!isAxiosError(error)) return ''
+  const code = getInquiryApiErrorCode(error)
+  return messageFromData(error.response?.data) ?? (code ? INQUIRY_ERROR_MESSAGES[code] : undefined) ?? ''
 }

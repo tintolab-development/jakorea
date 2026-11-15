@@ -3,6 +3,7 @@ import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 import { resolveStudentCertificateTemplateName } from './student-certificate-template'
 import type { StudentCertificateKind } from './resolve-student-certificate-kind'
 import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
+import { formatCertificateDateText } from '@/pages/templates/form-certificate-preview-utils'
 import {
   COMPLETION_CERTIFICATE_BODY_CONTENT,
   PARTICIPATION_CERTIFICATE_BODY_CONTENT,
@@ -99,7 +100,7 @@ export function resolveStudentCertificateProgramPeriodLabel(input: {
   programEndDate?: Date | string | null
   requireCertifiedPeriod?: boolean
 }): string | null {
-  const certifiedLabel = input.certifiedPeriodLabel?.trim()
+  const certifiedLabel = formatCertificateDateText(input.certifiedPeriodLabel?.trim())
   if (certifiedLabel) return certifiedLabel
   const certifiedStart = formatProgramPeriodDate(input.certifiedPeriodStart)
   const certifiedEnd = formatProgramPeriodDate(input.certifiedPeriodEnd)
@@ -113,7 +114,8 @@ export function buildStudentCertificateParticipantInfo(
 ): string {
   return [
     ctx.student.name,
-    ctx.student.birthDate?.replace(/\s/g, '') ?? '-',
+    // 시안 5767:47203 날짜 표기 `YYYY.MM.DD`
+    formatCertificateDateText(ctx.student.birthDate?.replace(/\s/g, '')) || '-',
     formatAffiliation(ctx.schoolName, ctx.educationGrade, ctx.student.gradeClass) || '-',
     ctx.programTitle,
     ctx.programPeriodLabel,

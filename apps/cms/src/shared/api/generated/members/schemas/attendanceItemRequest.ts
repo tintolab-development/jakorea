@@ -11,6 +11,9 @@ export interface AttendanceItemRequest {
   status?: string;
   absenceReason?: string;
   arrivalTime?: string;
-  /** 사유 불참 증빙 fileObjectId. CMS UJAT 봉사 탭은 생략(null/[]). 없으면 absence-reasons에 사유 텍스트만 남고 파일은 없다. */
-  fileObjectIds?: number[] | null;
+  /**
+     * 사유 불참 증빙 fileObjectId. 최대 10개, 파일당 20MB, 합계 100MB, PDF/JPG/JPEG/PNG. null 또는 빈 배열이면 파일 없이 사유 텍스트만 남는다. CMS UJAT 봉사 탭은 생략할 수 있다.
+     * @maxItems 10
+     */
+  fileObjectIds?: number[];
 }

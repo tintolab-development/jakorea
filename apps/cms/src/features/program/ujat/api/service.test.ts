@@ -94,8 +94,17 @@ vi.mock('./ujat-typed-detail-sync', () => ({
 }))
 
 import { create, update } from './service'
+import { UJAT_DEFAULT_EDUCATION_REGIONS } from '@/features/program/ujat/lib/ujat-default-education-region-rows'
 
-const pending = { id: 'ujat-pending', title: 'pending' } as Program
+// 지역 정원은 활성 지역 학급·봉사자 수가 모두 있어야 PUT payload를 만든다(빈 칸 0 채움 금지).
+const filledRegionCapacity = Object.fromEntries(
+  UJAT_DEFAULT_EDUCATION_REGIONS.map(region => [region.label, { classCount: '1', volunteerCount: '2' }])
+)
+const pending = {
+  id: 'ujat-pending',
+  title: 'pending',
+  ujatRegionCapacity: { h1: filledRegionCapacity, h2: filledRegionCapacity },
+} as Program
 const created = {
   id: '186300',
   title: 'created',
@@ -155,6 +164,19 @@ describe('UJAT create media binding', () => {
       mocks.createWithForms.mock.invocationCallOrder[0]
     )
     expect(mocks.deleteProgram).not.toHaveBeenCalled()
+  })
+
+  it('지역 정원 빈 칸이 있으면 프로그램을 생성하지 않는다', async () => {
+    mocks.buildPendingProgram.mockReturnValue({
+      ...pending,
+      ujatRegionCapacity: {
+        h1: { ...filledRegionCapacity, 서울: { classCount: '', volunteerCount: '2' } },
+        h2: filledRegionCapacity,
+      },
+    })
+
+    await expect(create(input())).rejects.toThrow('UJAT_REGION_CAPACITY_INCOMPLETE')
+    expect(mocks.createWithForms).not.toHaveBeenCalled()
   })
 
   it('Typed common-info input removes stale basic-info and schedule overlay keys', async () => {

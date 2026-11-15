@@ -115,6 +115,32 @@ export function parseApplyGateRequiredConsentItemIds(
 }
 
 /**
+ * 동의 관리 「동의서·서약서」 카드 표시 순서 — 시안(강사 회원) 기준.
+ * 지급조서 → (영수증) → 교육진행자 서약서 → 성범죄경력 조회 → 행정정보 공동이용.
+ * 화면 표시 전용 — 서버 요약 순서(`buildConsentItemsFromSummaries`)는 그대로 둔다.
+ */
+const DOCUMENT_CONSENT_DISPLAY_ORDER: readonly SettingsConsentItemId[] = [
+  'paymentStatement',
+  'receiptPreConsent',
+  'educatorPledge',
+  'sexOffenseCheck',
+  'administrativeJoint',
+]
+
+export function sortDocumentConsentItemsForDisplay(
+  items: readonly SettingsConsentItem[],
+): SettingsConsentItem[] {
+  const rank = (item: SettingsConsentItem) => {
+    const index = DOCUMENT_CONSENT_DISPLAY_ORDER.indexOf(item.id as SettingsConsentItemId)
+    return index < 0 ? DOCUMENT_CONSENT_DISPLAY_ORDER.length : index
+  }
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => rank(a.item) - rank(b.item) || a.index - b.index)
+    .map(({ item }) => item)
+}
+
+/**
  * 신청 게이트가 요구한 동의서·서약서가 목록 데이터에 없으면 카탈로그 행을 보강한다.
  * (작성 전 비강사 회원 — 서버 요약 행이 빠진 경우에도 작성 진입 카드가 있어야 한다.)
  */

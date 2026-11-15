@@ -6,7 +6,19 @@ import {
   CmsSelect,
   useCmsAlert,
 } from '@/shared/ui'
-import { AttendanceCorrectionReasonForm } from '@/features/program/shared/ui/attendance-correction-reason-form'
+import {
+  AttendanceCorrectionReasonForm,
+  type AttendanceCorrectionReasonFormProps,
+} from '@/features/program/shared/ui/attendance-correction-reason-form'
+import {
+  ABSENCE_EVIDENCE_ACCEPT,
+  ABSENCE_EVIDENCE_GUIDE_LINE,
+  ABSENCE_EVIDENCE_MAX_FILES,
+  ABSENCE_EVIDENCE_MESSAGES,
+  ABSENCE_EVIDENCE_REASON_MAX_LENGTH,
+  resolveAbsenceEvidenceSaveErrorMessage,
+  screenAbsenceEvidenceFiles,
+} from '@/features/program/shared/lib/absence-evidence-policy'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
@@ -23,6 +35,52 @@ import {
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 import './attendance-correction-modal.css'
+
+/**
+ * - `default` — 기존 동작(셀렉트 170, 시간 placeholder `HH:mm`, 사유 `*`, 증빙 최대 5개·FileSelectField 기본 accept·용량).
+ * - `ujat` — UJAT 참여 봉사자 상세 출결 정정 Figma 4082:109940(16324:632039) + 결석 증빙 계약(2026-11-16):
+ *   셀렉트 120, 시간 placeholder 「출석 시간을 선택해 주세요」, 사유 `*` 없음·2000자,
+ *   증빙은 `absence-evidence-policy`(10개·파일당 20MiB·합계 100MiB·PDF/JPG/PNG),
+ *   저장 실패 시 결석 증빙 오류 코드는 서버 error.message를 팝업 인라인 오류로.
+ */
+export type ProgramAttendanceCorrectionModalVariant = 'default' | 'ujat'
+
+type AttendanceCorrectionVariantConfig = {
+  statusSelectWidth: number
+  timePlaceholder: string
+  reasonRequiredMark: boolean
+  /** true — `absence-evidence-policy` 검증·안내·인라인 저장 오류 사용 */
+  usesAbsenceEvidencePolicy: boolean
+}
+
+/** `default` 변형 전용 기존 클라이언트 제한(이번 변경 대상 아님) */
+const LEGACY_DEFAULT_MAX_EVIDENCE_FILES = 5
+
+const ATTENDANCE_CORRECTION_VARIANT_CONFIG: Record<
+  ProgramAttendanceCorrectionModalVariant,
+  AttendanceCorrectionVariantConfig
+> = {
+  default: {
+    statusSelectWidth: 170,
+    timePlaceholder: 'HH:mm',
+    reasonRequiredMark: true,
+    usesAbsenceEvidencePolicy: false,
+  },
+  ujat: {
+    statusSelectWidth: 120,
+    timePlaceholder: '출석 시간을 선택해 주세요',
+    reasonRequiredMark: false,
+    usesAbsenceEvidencePolicy: true,
+  },
+}
+
+const ABSENCE_EVIDENCE_FILE_FIELD_PROPS: AttendanceCorrectionReasonFormProps['evidenceFileFieldProps'] =
+  {
+    accept: ABSENCE_EVIDENCE_ACCEPT,
+    guideLines: [ABSENCE_EVIDENCE_GUIDE_LINE],
+    // 용량·개수·형식은 onFilesChange에서 absence-evidence-policy로 한 번에 검사(FileSelectField 기본 15MB 검사 끔)
+    maxTotalBytes: 0,
+  }
 
 function toStatus(
   attendance: ProgramAttendanceCorrectionInitialValue
@@ -59,8 +117,11 @@ export type ProgramAttendanceCorrectionModalProps = {
   statusOptions?: ReadonlyArray<ProgramAttendanceCorrectionStatusOption>
   /** 증빙 ownerId. 프로그램 id 나 1 이 아니다 */
   evidenceScheduleId?: string | number | null
+  /** 유형별 시안 차이 — 생략 시 `default`(기존 동작) */
+  variant?: ProgramAttendanceCorrectionModalVariant
   onCancel: () => void
-  onConfirm: (payload: ProgramAttendanceCorrectionConfirmPayload) => void
+  /** Promise를 돌려주면 실패 시 결석 증빙 오류 코드를 팝업 인라인 오류로 보여 준다(`ujat`) */
+  onConfirm: (payload: ProgramAttendanceCorrectionConfirmPayload) => void | Promise<void>
 }
 
 export function ProgramAttendanceCorrectionModal({
@@ -74,15 +135,21 @@ export function ProgramAttendanceCorrectionModal({
   confirmLabel = '출결 정정',
   statusOptions = PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   evidenceScheduleId,
+  variant = 'default',
   onCancel,
   onConfirm,
 }: ProgramAttendanceCorrectionModalProps) {
+  const variantConfig = ATTENDANCE_CORRECTION_VARIANT_CONFIG[variant]
+  const usesAbsenceEvidencePolicy = variantConfig.usesAbsenceEvidencePolicy
   const { showAlert } = useCmsAlert()
   const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus>('present')
   const [attendanceTime, setAttendanceTime] = useState<Dayjs | null>(null)
   const [reason, setReason] = useState('')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [uploadingEvidence, setUploadingEvidence] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  /** 저장 실패 — 서버 error.message 그대로(결석 증빙 코드만) */
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -90,7 +157,9 @@ export function ProgramAttendanceCorrectionModal({
     setAttendanceTime(toInitialTime(initialAttendance))
     setReason('')
     setEvidenceFiles([])
+    setSaveError(null)
   }, [initialAttendance, open])
+
 
   const isTimeEnabled = status === 'present' || status === 'late'
   const showReasonTable = status === 'excused_absence'
@@ -109,11 +178,27 @@ export function ProgramAttendanceCorrectionModal({
 
   const evidenceFileNames = evidenceFiles.map(f => f.name)
 
+  const handleEvidenceFilesChange = (files: File[]) => {
+    if (!usesAbsenceEvidencePolicy) {
+      setEvidenceFiles(prev => [...prev, ...files])
+      return
+    }
+    // 선택·드롭·붙여넣기 모두 FileSelectField → onFilesChange 하나로 들어온다
+    const { accepted, rejectionMessages } = screenAbsenceEvidenceFiles(evidenceFiles, files)
+    if (rejectionMessages.length > 0) {
+      showAlert({ title: '안내', content: rejectionMessages.join('\n') })
+    }
+    if (accepted.length > 0) {
+      setSaveError(null)
+      setEvidenceFiles(prev => [...prev, ...accepted])
+    }
+  }
+
   const canConfirm = useMemo(() => {
-    if (uploadingEvidence) return false
+    if (uploadingEvidence || submitting) return false
     if (isTimeEnabled && attendanceTime == null) return false
     return true
-  }, [attendanceTime, isTimeEnabled, uploadingEvidence])
+  }, [attendanceTime, isTimeEnabled, submitting, uploadingEvidence])
 
   return (
     <ContentModal
@@ -137,6 +222,7 @@ export function ProgramAttendanceCorrectionModal({
             type="button"
             disabled={!canConfirm}
             onClick={() => {
+              setSaveError(null)
               if (showReasonTable && reason.trim().length === 0) {
                 showAlert({
                   title: '안내',
@@ -146,11 +232,19 @@ export function ProgramAttendanceCorrectionModal({
               }
 
               void (async () => {
-                let evidenceFileObjectIds: number[] | undefined
-                if (showReasonTable && evidenceFiles.length > 5) {
+                // ujat: 출석·지각·결석은 [] (기존 파일 유지로 해석하지 않음), 사유 불참은 업로드 끝난 ID(없으면 [])
+                let evidenceFileObjectIds: number[] | undefined = usesAbsenceEvidencePolicy
+                  ? []
+                  : undefined
+                const maxEvidenceFiles = usesAbsenceEvidencePolicy
+                  ? ABSENCE_EVIDENCE_MAX_FILES
+                  : LEGACY_DEFAULT_MAX_EVIDENCE_FILES
+                if (showReasonTable && evidenceFiles.length > maxEvidenceFiles) {
                   showAlert({
                     title: '안내',
-                    content: '증빙 서류는 최대 5개까지 첨부할 수 있습니다.',
+                    content: usesAbsenceEvidencePolicy
+                      ? ABSENCE_EVIDENCE_MESSAGES.tooMany
+                      : `증빙 서류는 최대 ${maxEvidenceFiles}개까지 첨부할 수 있습니다.`,
                   })
                   return
                 }
@@ -172,6 +266,7 @@ export function ProgramAttendanceCorrectionModal({
                     )
                     evidenceFileObjectIds = []
                     for (const file of evidenceFiles) {
+                      // 기본 waitUntilAvailable=true — CLEAN+AVAILABLE 이후에만 ID를 받는다
                       const uploaded = await uploadAdminFileMaybeMock({ file, owner })
                       evidenceFileObjectIds.push(uploaded.fileObjectId)
                     }
@@ -186,13 +281,23 @@ export function ProgramAttendanceCorrectionModal({
                   }
                 }
 
-                onConfirm({
-                  status,
-                  attendanceTime: attendanceTime ? attendanceTime.format('H:mm') : null,
-                  reason: reason.trim(),
-                  evidenceFileName: evidenceFiles[0]?.name ?? null,
-                  evidenceFileObjectIds,
-                })
+                setSubmitting(true)
+                try {
+                  await onConfirm({
+                    status,
+                    attendanceTime: attendanceTime ? attendanceTime.format('H:mm') : null,
+                    reason: reason.trim(),
+                    evidenceFileName: evidenceFiles[0]?.name ?? null,
+                    evidenceFileObjectIds,
+                  })
+                } catch (error) {
+                  // 결석 증빙 코드만 인라인. 그 외 오류는 호출부(mutation onError)가 안내한다.
+                  if (usesAbsenceEvidencePolicy) {
+                    setSaveError(resolveAbsenceEvidenceSaveErrorMessage(error))
+                  }
+                } finally {
+                  setSubmitting(false)
+                }
               })()
             }} >
             {confirmLabel}
@@ -208,16 +313,24 @@ export function ProgramAttendanceCorrectionModal({
               *
             </span>
           </span>
-          <div className="program-attendance-correction-modal__status-row">
+          <div
+            className={[
+              'program-attendance-correction-modal__status-row',
+              variant === 'ujat' ? 'program-attendance-correction-modal__status-row--ujat' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
             <CmsSelect
               inputSize="large"
-              width={170}
+              width={variantConfig.statusSelectWidth}
               withAllOption={false}
               value={status}
               options={[...statusOptions]}
-              onChange={value =>
+              onChange={value => {
+                setSaveError(null)
                 setStatus((value as ProgramAttendanceCorrectionStatus) ?? 'present')
-              }
+              }}
               aria-label={fieldLabel}
             />
             <ParagraphTimePicker
@@ -225,7 +338,7 @@ export function ProgramAttendanceCorrectionModal({
               value={attendanceTime}
               onChange={setAttendanceTime}
               disabled={!isTimeEnabled}
-              placeholder="HH:mm"
+              placeholder={variantConfig.timePlaceholder}
               width="100%"
               inputSize="large"
               zIndex={2600}
@@ -237,13 +350,30 @@ export function ProgramAttendanceCorrectionModal({
         {showReasonTable ? (
           <AttendanceCorrectionReasonForm
             reason={reason}
-            onReasonChange={setReason}
+            onReasonChange={value => {
+              setSaveError(null)
+              setReason(value)
+            }}
             evidenceFileNames={evidenceFileNames}
-            onFilesChange={files => setEvidenceFiles(prev => [...prev, ...files])}
-            onRemoveFile={index =>
+            onFilesChange={handleEvidenceFilesChange}
+            onRemoveFile={index => {
+              setSaveError(null)
               setEvidenceFiles(prev => prev.filter((_, currentIndex) => currentIndex !== index))
+            }}
+            reasonRequiredMark={variantConfig.reasonRequiredMark}
+            reasonMaxLength={
+              usesAbsenceEvidencePolicy ? ABSENCE_EVIDENCE_REASON_MAX_LENGTH : undefined
+            }
+            evidenceFileFieldProps={
+              usesAbsenceEvidencePolicy ? ABSENCE_EVIDENCE_FILE_FIELD_PROPS : undefined
             }
           />
+        ) : null}
+
+        {saveError ? (
+          <p className="program-attendance-correction-modal__error" role="alert">
+            {saveError}
+          </p>
         ) : null}
       </div>
     </ContentModal>

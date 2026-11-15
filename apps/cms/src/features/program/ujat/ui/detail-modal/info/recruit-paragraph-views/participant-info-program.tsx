@@ -91,6 +91,7 @@ export function UjatRecruitParticipantInfoProgramView({
   highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
+  registrationFormDesign = false,
 }: {
   program: Program
   sponsorName?: string
@@ -102,9 +103,16 @@ export function UjatRecruitParticipantInfoProgramView({
   hideSectionHeader?: boolean
   /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
   isTemplateAuthoring?: boolean
+  /**
+   * UJAT 등록 위저드 — 시안(4082:105197) placeholder·모집 현황 안내만 적용.
+   * 값·연동 동작은 바꾸지 않는다(프로그램 상세는 false).
+   */
+  registrationFormDesign?: boolean
 }) {
   /** 템플릿 관리 화면 — 시안 치수 수식 클래스(문의처·발표 방법·면접 유형·활동 기수) */
   const isTemplateManagementScreen = useIsTemplateManagementScreen()
+  /** 시안 placeholder·안내 문구 — 템플릿 작성·등록 위저드 공통 */
+  const useDesignPlaceholders = isTemplateAuthoring || registrationFormDesign
   const lifecycle = getParticipantRecruitmentLifecycle(
     program,
     isEdit && form
@@ -200,7 +208,7 @@ export function UjatRecruitParticipantInfoProgramView({
                       inputSize="small"
                       width="100%"
                       placeholder={
-                        isTemplateAuthoring
+                        useDesignPlaceholders
                           ? UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER
                           : '공고용 프로그램명'
                       }
@@ -234,7 +242,7 @@ export function UjatRecruitParticipantInfoProgramView({
             label="참여자 모집 현황"
             readOnlyDisplay
             view={
-              isTemplateAuthoring ? (
+              useDesignPlaceholders ? (
                 <span className="form-editor-template-field-hint-text">
                   {UJAT_RECRUIT_PROGRESS_HINT}
                 </span>
@@ -312,7 +320,7 @@ export function UjatRecruitParticipantInfoProgramView({
                     startName="applicationStartDate"
                     endName="applicationEndDate"
                     placeholder={
-                      isTemplateAuthoring
+                      useDesignPlaceholders
                         ? UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER
                         : '참여자 모집 기간을 선택해 주세요'
                     }
@@ -336,7 +344,7 @@ export function UjatRecruitParticipantInfoProgramView({
                   dateName="resultAnnouncementDate"
                   methodName="resultAnnouncementMethod"
                   datePlaceholder={
-                    isTemplateAuthoring ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
+                    useDesignPlaceholders ? UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER : '합격자 발표일'
                   }
                   methodPlaceholder="발표 방법 안내"
                 />
@@ -445,7 +453,7 @@ export function UjatRecruitParticipantInfoProgramView({
                 <UjatRecruitParticipantNotesField
                   form={form}
                   placeholder={
-                    isTemplateAuthoring ? UJAT_TEMPLATE_NOTES_PLACEHOLDER : undefined
+                    useDesignPlaceholders ? UJAT_TEMPLATE_NOTES_PLACEHOLDER : undefined
                   }
                 />
               ) : undefined

@@ -20,6 +20,7 @@ import {
 import { isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { useCmsAlert } from '@/shared/ui'
+import { NotificationDetailModal } from './notification-detail-modal'
 import { NotificationDropdown, type HeaderNotification } from './notification-dropdown'
 import './main-header.css'
 import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
@@ -37,6 +38,8 @@ export function MainHeader() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  /** 알림 항목 클릭 → 읽음 처리 뒤 띄우는 시스템 안내 팝업 대상 */
+  const [detailNotification, setDetailNotification] = useState<HeaderNotification | null>(null)
   const pendingReadIds = useRef(new Set<string>())
 
   const adminId = user?.id
@@ -51,12 +54,13 @@ export function MainHeader() {
     () =>
       (listQuery.data ?? []).map(item => ({
         id: item.id,
-        type: 'system',
+        type: item.category,
         message: item.title,
-        programName: item.body,
+        body: item.body,
         createdAt: item.createdAt,
         read: item.read,
         link: item.link,
+        actionLabel: item.actionLabel,
       })),
     [listQuery.data]
   )
@@ -80,7 +84,7 @@ export function MainHeader() {
     const numericId = Number(notification.id)
     if (!Number.isFinite(numericId) || numericId <= 0) return
     if (notification.read) {
-      if (notification.link) navigate(notification.link)
+      setDetailNotification(notification)
       return
     }
     if (pendingReadIds.current.has(notification.id)) return
@@ -89,7 +93,7 @@ export function MainHeader() {
     void readMutation
       .mutateAsync(numericId)
       .then(() => {
-        if (notification.link) navigate(notification.link)
+        setDetailNotification({ ...notification, read: true })
       })
       .catch(error => {
         if (isSystemInboxForbidden(error)) {
@@ -111,6 +115,13 @@ export function MainHeader() {
       .finally(() => {
         pendingReadIds.current.delete(notification.id)
       })
+  }
+
+  /** 안내 팝업의 이동 버튼 — 팝업·드롭다운을 닫고 대상 화면으로 */
+  const handleDetailNavigate = (notification: HeaderNotification) => {
+    setDetailNotification(null)
+    setDropdownOpen(false)
+    if (notification.link) navigate(notification.link)
   }
 
   const handleLogout = () => {
@@ -158,7 +169,6 @@ export function MainHeader() {
                       void listQuery.refetch()
                       void unreadQuery.refetch()
                     }}
-                    onClose={() => setDropdownOpen(false)}
                   />
                 </div>
               )}
@@ -247,6 +257,11 @@ export function MainHeader() {
         </div>
       </div>
       <ProfileEditModal open={profileOpen} onCancel={() => setProfileOpen(false)} />
+      <NotificationDetailModal
+        notification={detailNotification}
+        onClose={() => setDetailNotification(null)}
+        onNavigate={handleDetailNavigate}
+      />
     </AntHeader>
   )
 }

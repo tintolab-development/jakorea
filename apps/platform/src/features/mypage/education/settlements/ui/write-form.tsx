@@ -9,6 +9,7 @@ import type { EducationSettlementItem } from '../model/types'
 import type {
   SettlementAmountItemDraft,
   SettlementReceiptAttachment,
+  SettlementWriteDraft,
   SettlementWriteDraftLocationState,
 } from '../model/write-draft'
 import {
@@ -54,6 +55,7 @@ import {
 import { useInstructorSettlementPreviewQuery } from '../api/use-instructor-settlement-preview-query'
 import {
   RECEIPT_UPLOAD_ACCEPT,
+  RECEIPT_UPLOAD_FORMATS_LABEL,
   RECEIPT_UPLOAD_HINTS,
   RECEIPT_UPLOAD_POLICY,
 } from '../lib/receipt-upload-policy'
@@ -67,11 +69,13 @@ import {
   SETTLEMENT_TRIP_TYPE_OPTIONS,
 } from '../lib/settlement-options'
 import {
+  isInstructorSettlementResubmit,
   PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
   type SettlementDocumentKind,
 } from '../lib/settlement-status-ui'
 import {
   SETTLEMENT_WRITE_ALERT_TITLE,
+  collectSettlementWriteRequiredMissingLabels,
   resolveSettlementWriteValidationAlert,
   validateSettlementWriteDraft,
 } from '../lib/validate-write-draft'
@@ -95,6 +99,16 @@ import {
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { isInstructorMypageProfile } from '@/features/mypage/lib/member-profile'
 import { sumUploadFileBytes, validateUploadBatch } from '@/shared/lib/file-upload-policy'
+import { buildFileTypeInvalidAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  isEducationAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import {
   MemberFileTooLargeError,
   MemberFileTypeNotAllowedError,
@@ -102,6 +116,7 @@ import {
 } from '@/features/mypage/instructor-apply/api/member-file-upload'
 import {
   PFAlertModal,
+  PFRequiredMissingAlert,
   PFButton,
   PFEmptyState,
   PFFormControlCluster,
@@ -120,6 +135,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import { FeeCorrectionRequestModal } from './fee-correction-request-modal'
 import styles from './write-form.module.css'
 
 type TripType = 'one_way' | 'round_trip'
@@ -232,7 +248,7 @@ function ReceiptUpload({
   onAttachmentsChange?: (next: SettlementReceiptAttachment[]) => void
   uploadEnabled: boolean
   ariaLabel: string
-  onError: (message: string) => void
+  onError: (message: string | EducationAlert) => void
 }) {
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -311,15 +327,20 @@ function ReceiptUpload({
                 }
                 onAttachmentsChange?.(uploaded)
               } catch (error) {
+                const serverMessage = resolveReceiptUploadServerErrorMessage(error)
                 if (error instanceof MemberFileTooLargeError) {
                   onError(error.message)
-                } else if (error instanceof MemberFileTypeNotAllowedError) {
-                  onError(RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE)
+                } else if (
+                  error instanceof MemberFileTypeNotAllowedError ||
+                  serverMessage === RECEIPT_UPLOAD_TYPE_NOT_ALLOWED_MESSAGE
+                ) {
+                  // 시안 「파일 형식이 맞지 않는 경우」 — 영수증 허용 형식
+                  onError(buildFileTypeInvalidAlertCopy(RECEIPT_UPLOAD_FORMATS_LABEL))
+                } else if (serverMessage) {
+                  onError(serverMessage)
                 } else {
-                  onError(
-                    resolveReceiptUploadServerErrorMessage(error) ??
-                      '영수증 업로드에 실패했습니다. 다시 시도해 주세요.'
-                  )
+                  // 시안 「오류 제한 팝업」 — 네트워크·처리 제한·처리 실패
+                  onError(resolveEducationErrorAlert(error))
                 }
               } finally {
                 setUploading(false)
@@ -385,7 +406,7 @@ function TripLegBlock({
   onAmountChange: (next: string) => void
   onFileNamesChange: (next: string[]) => void
   onAttachmentsChange?: (next: SettlementReceiptAttachment[]) => void
-  onError: (message: string) => void
+  onError: (message: string | EducationAlert) => void
 }) {
   return (
     <div className={styles.legBlock}>
@@ -457,7 +478,7 @@ function AmountReceiptSection({
   item: SettlementAmountItemDraft
   maxWon?: number | null
   onChange: (next: SettlementAmountItemDraft) => void
-  onError: (message: string) => void
+  onError: (message: string | EducationAlert) => void
 }) {
   return (
     <PFFormSection
@@ -638,6 +659,7 @@ export function EducationSettlementWriteForm({
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState(SETTLEMENT_WRITE_ALERT_TITLE)
   const [alertMessage, setAlertMessage] = useState<ReactNode>('')
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
   const prefilledFromDetail = useRef(Boolean(hydrated))
 
   const name = composedBasic.name
@@ -705,9 +727,18 @@ export function EducationSettlementWriteForm({
     return depart + back
   }, [departAmount, returnAmount, tripType])
 
-  const showAlert = (message: ReactNode, title = SETTLEMENT_WRITE_ALERT_TITLE) => {
-    setAlertTitle(title)
-    setAlertMessage(message)
+  /** 문구만 주면 제목 「안내」, 시안 팝업 문구(EducationAlert)면 그 제목·설명 */
+  const showAlert = (
+    message: ReactNode | EducationAlert,
+    title = SETTLEMENT_WRITE_ALERT_TITLE,
+  ) => {
+    if (isEducationAlert(message)) {
+      setAlertTitle(message.title)
+      setAlertMessage(message.description ?? '')
+    } else {
+      setAlertTitle(title)
+      setAlertMessage(message)
+    }
     setAlertOpen(true)
   }
 
@@ -752,28 +783,32 @@ export function EducationSettlementWriteForm({
 
   const settlementApplicationIdForSubmit =
     session?.settlementApplicationId ?? matchedIndividual?.settlementApplicationId ?? undefined
-  const resubmitRequested =
-    session?.canResubmitReceipt === true ||
-    matchedIndividual?.canResubmit === true ||
-    session?.status === 'rejected'
+  const resubmitRequested = isInstructorSettlementResubmit({
+    status: session?.status,
+    canResubmitReceipt: session?.canResubmitReceipt === true,
+    individualCanResubmit: matchedIndividual?.canResubmit === true,
+    adminApplicationCorrection: session?.adminApplicationCorrection === true,
+  })
   /**
    * 강사 최초 제출만 미리보기 canSubmit=false(지급 항목 0건 등)로 막는다 — blockerMessage 그대로.
    * 반려 후 재제출은 기존 신청서 경로라 미리보기 차단(ACTIVE_APPLICATION_EXISTS)을 적용하지 않는다.
    */
+  /** 반려·관리자 정정 요청 후 재제출 — 기존 신청서 경로라 새 신청 미리보기(ACTIVE_APPLICATION_EXISTS)를 쓰지 않는다 */
+  const instructorResubmitMode = resubmitRequested && settlementApplicationIdForSubmit != null
   const previewSubmitBlock =
-    !isReceipt && !(resubmitRequested && settlementApplicationIdForSubmit != null)
+    !isReceipt && !instructorResubmitMode
       ? instructorSettlementPreview.submitBlock
       : null
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  /** [신청하기]·[강사비 정정 요청하기] 공통 — 입력 검증을 통과하면 확인 화면으로 넘길 draft, 아니면 안내 후 null */
+  const prepareSubmitDraft = (): SettlementWriteDraft | null => {
     if (consentSidecarQuery.isLoading || profileQuery.isPending) {
       showAlert(
         isReceipt
           ? '영수증 발급 사전 동의서 정보를 불러오는 중입니다.'
           : '지급조서 사전 동의서 정보를 불러오는 중입니다.',
       )
-      return
+      return null
     }
     if (isReceipt && payableItems.length === 0) {
       showAlert(
@@ -781,14 +816,14 @@ export function EducationSettlementWriteForm({
           individualIneligibleMessage('NO_PAYABLE_ITEMS') ??
           '이 프로그램에 신청할 수 있는 지급 항목이 없습니다.',
       )
-      return
+      return null
     }
     if (isReceipt && evidencePolicyUnconfigured) {
       showAlert(
         individualIneligibleMessage('EVIDENCE_POLICY_UNCONFIGURED') ??
           '증빙 정책을 확인할 수 없어 신청할 수 없습니다',
       )
-      return
+      return null
     }
     if (isReceipt && (session?.eligible === false || matchedIndividual?.eligible === false)) {
       showAlert(
@@ -799,20 +834,20 @@ export function EducationSettlementWriteForm({
           ) ??
           '지금은 영수증을 제출할 수 없습니다.',
       )
-      return
+      return null
     }
     if (lectureFeeBlocked) {
       showAlert(lectureFeeBlockerMessage ?? INSTRUCTOR_SETTLEMENT_BLOCKED_FALLBACK_MESSAGE)
-      return
+      return null
     }
     // 사업 운영 종료 후 최초 제출 차단(A1) — 서버 409와 같은 문구
     if (instructorSettlementPreview.blockerCode === SETTLEMENT_BUSINESS_PERIOD_CLOSED_CODE) {
       showAlert(PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE)
-      return
+      return null
     }
     if (receiptLimitError) {
       showAlert(receiptLimitError)
-      return
+      return null
     }
 
     const draft = buildSettlementWriteDraft({
@@ -890,6 +925,14 @@ export function EducationSettlementWriteForm({
     })
 
     const validationError = validateSettlementWriteDraft(draft)
+    if (validationError === 'required_incomplete') {
+      // 시안 「필수 항목 미입력 (항목명 노출)」 — 항목명을 알 수 있으면 그대로 보여 준다
+      const missingLabels = collectSettlementWriteRequiredMissingLabels(draft)
+      if (missingLabels.length > 0) {
+        setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
+        return null
+      }
+    }
     if (validationError) {
       const alert = resolveSettlementWriteValidationAlert(validationError, documentKind)
       // 필수 항목 미입력 — 시안 설명(빨간 `*`)으로 보여 준다
@@ -901,9 +944,13 @@ export function EducationSettlementWriteForm({
         ),
         alert.title,
       )
-      return
+      return null
     }
 
+    return draft
+  }
+
+  const goToConfirm = (draft: SettlementWriteDraft, feeCorrectionReason?: string) => {
     saveSettlementWriteDraft(draft)
     navigate(
       buildSettlementConfirmPath({
@@ -912,8 +959,27 @@ export function EducationSettlementWriteForm({
         area: resolveSettlementAreaFromPathname(location.pathname),
         applicationType: applicationType ?? undefined,
       }),
-      { state: { draft } },
+      {
+        state: feeCorrectionReason
+          ? ({ draft, feeCorrectionReason } satisfies SettlementWriteDraftLocationState)
+          : { draft },
+      },
     )
+  }
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const draft = prepareSubmitDraft()
+    if (draft) goToConfirm(draft)
+  }
+
+  /** 시안 01 「지급조서 작성 전」의 [강사비 정정 요청하기] — 입력 검증 후 정정 요청 팝업 */
+  const [feeCorrectionDraft, setFeeCorrectionDraft] = useState<SettlementWriteDraft | null>(null)
+  /** 강사 지급조서 — 최초 제출·반려 후 재제출 모두 정정 요청을 함께 보낼 수 있다 */
+  const feeCorrectionAvailable = !isReceipt
+  const handleRequestFeeCorrection = () => {
+    const draft = prepareSubmitDraft()
+    if (draft) setFeeCorrectionDraft(draft)
   }
 
   let sectionNo = 1
@@ -980,7 +1046,7 @@ export function EducationSettlementWriteForm({
           </PFFormSection>
         ) : null}
 
-        {!isReceipt && instructorSettlementPreview.calculation ? (
+        {!isReceipt && !instructorResubmitMode && instructorSettlementPreview.calculation ? (
           <PFFormSection id="instructor-settlement-calculation" title="기본 정산 미리보기 (추가 신청 항목 제외)">
             <div className={styles.calculationPreview} aria-live="polite">
               <PFText as="p" typo="bd-md-rg" color="black">
@@ -1362,22 +1428,47 @@ export function EducationSettlementWriteForm({
               {lectureFeeBlockerMessage}
             </PFText>
           ) : null}
-          <PFButton
-            type="submit"
-            size="xlarge"
-            width={240}
-            disabled={receiptSubmitBlocked || lectureFeeBlocked || Boolean(receiptLimitError)}
-          >
-            신청하기
-          </PFButton>
+          <div className={styles.actionButtons}>
+            {feeCorrectionAvailable ? (
+              <PFButton
+                type="button"
+                variant="secondary"
+                size="xlarge"
+                width={240}
+                disabled={lectureFeeBlocked}
+                onClick={handleRequestFeeCorrection}
+              >
+                강사비 정정 요청하기
+              </PFButton>
+            ) : null}
+            <PFButton
+              type="submit"
+              size="xlarge"
+              width={240}
+              disabled={receiptSubmitBlocked || lectureFeeBlocked || Boolean(receiptLimitError)}
+            >
+              신청하기
+            </PFButton>
+          </div>
         </div>
       </form>
+      <FeeCorrectionRequestModal
+        open={feeCorrectionDraft != null}
+        onCancel={() => setFeeCorrectionDraft(null)}
+        onSubmit={reason => {
+          if (!feeCorrectionDraft) return
+          const draft = feeCorrectionDraft
+          setFeeCorrectionDraft(null)
+          goToConfirm(draft, reason)
+        }}
+      />
       <PFAlertModal
         open={alertOpen}
         title={alertTitle}
         description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
       />
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
     </>
   )
 }

@@ -20,6 +20,7 @@ import { SchoolAffiliatedTeachersSection } from '@/features/user/detail/ui/schoo
 import { UserDetailAdminCommentSection } from './user-detail-admin-comment-section'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
+import type { AdminProfileDraftFlushRef } from '@/features/user/detail/ui/user-basic-info/use-admin-profile-form'
 import {
   canEditAdminMemberInfo,
   shouldShowAdminCommentForAdminPermissionApplicationDetail,
@@ -93,6 +94,8 @@ export interface UserDetailFullpageBasicTabContentProps {
   /** 관리자 상세 이메일 입력란 서버 에러 문구 */
   memberInfoEmailError?: string | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  /** 관리자 기본정보 폼 — 저장 직전 폼 값을 draft로 꺼내는 ref */
+  memberInfoDraftFlushRef?: AdminProfileDraftFlushRef
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
@@ -122,6 +125,7 @@ export function UserDetailFullpageBasicTabContent({
   memberInfoDraft,
   memberInfoEmailError = null,
   onMemberInfoDraftChange,
+  memberInfoDraftFlushRef,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
   onEmploymentStatusChange,
@@ -161,7 +165,10 @@ export function UserDetailFullpageBasicTabContent({
           : INDIVIDUAL_CONSENT_CAPTION
         : consentPreset === 'school_teacher' || consentPreset === 'instructor_dual'
           ? INDIVIDUAL_CONSENT_CAPTION
-          : undefined
+          : /* 강사 상세(4427:53835, 관리자 등록 강사): 서면 동의 처리 안내 — 그 외는 기본 안내 유지 */
+            consentPreset === 'instructor_only' && shouldShowAdminRegisteredMemberDetailCaption(user)
+            ? INDIVIDUAL_ADMIN_REGISTERED_CONSENT_CAPTION
+            : undefined
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 
@@ -519,6 +526,7 @@ export function UserDetailFullpageBasicTabContent({
         memberInfoDraft={memberInfoDraft}
         memberInfoEmailError={memberInfoEmailError}
         onMemberInfoDraftChange={onMemberInfoDraftChange}
+        memberInfoDraftFlushRef={memberInfoDraftFlushRef}
         adminPermissionVariantPatching={adminPermissionVariantPatching}
         onPatchAdminPermissionVariantFromDetailView={
           onPatchAdminPermissionVariantFromDetailView

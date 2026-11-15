@@ -68,7 +68,7 @@
 .requiredMark {
   overflow: hidden;
   flex: 0 0 auto;
-  color: var(--color-red);
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
   text-overflow: ellipsis;
   font-family: var(--font-family-base);
   font-size: 14px;
@@ -139,23 +139,20 @@
   gap: var(--spacing-8);
 }
 
-.fileSelectionNotice {
-  margin: 0;
-}
-
-.formError {
-  margin: calc(var(--spacing-12) * -1) 0 0;
-}
-
 .actions {
+  position: sticky;
+  bottom: 0;
   display: flex;
   width: 100%;
   justify-content: flex-end;
   gap: var(--spacing-8);
+  padding-top: var(--spacing-12);
+  background: var(--color-neutral-white);
 }
 
 .actions > button {
-  width: min(320px, 100%);
+  flex: none;
+  width: 160px;
 }
 
 @media (--bp-below-pc) {

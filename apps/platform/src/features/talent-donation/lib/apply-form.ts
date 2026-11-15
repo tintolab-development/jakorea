@@ -20,8 +20,11 @@ export const TALENT_APPLY_PLACEHOLDERS = {
   periodEnd: '종료일',
 } as const
 
-export const TALENT_APPLY_FILE_GUIDE =
-  '공유해주실 자료가 있다면 자유롭게 첨부해 주세요'
+/** 첨부파일 안내 — 시안 2줄 */
+export const TALENT_APPLY_FILE_GUIDE_LINES = [
+  '공유해주실 자료가 있다면 자유롭게 첨부해 주세요.',
+  '파일은 JPG, PNG, HWP, Excel, PDF, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+] as const
 
 export const TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 
@@ -54,6 +57,38 @@ export type TalentApplyFormValues = {
 }
 
 export type TalentApplyFieldKey = Exclude<keyof TalentApplyFormValues, 'privacyAgreed'> | 'privacy'
+
+/**
+ * 필수 입력 누락 팝업(Figma 14550-2349)에 보이는 항목명 — 화면 표시 순서.
+ * 주소·기간처럼 두 칸이 한 항목이면 같은 이름을 쓰고 한 번만 보인다. 개인정보 동의는 미동의 팝업이 따로 있다.
+ */
+const TALENT_APPLY_FIELD_LABELS: ReadonlyArray<readonly [Exclude<TalentApplyFieldKey, 'privacy'>, string]> = [
+  ['name', '이름'],
+  ['birthDate', '생년월일'],
+  ['gender', '성별'],
+  ['phone', '휴대폰 번호'],
+  ['email', '이메일'],
+  ['affiliation', '소속/학교명'],
+  ['sido', '자택 주소'],
+  ['sigungu', '자택 주소'],
+  ['periodStart', '재능기부 가능 기간'],
+  ['periodEnd', '재능기부 가능 기간'],
+  ['bio', '간단한 약력 소개'],
+  ['talentIntro', '기부 가능한 재능 소개'],
+  ['motivation', '참여 동기'],
+  ['jaParticipation', 'JA 프로그램 참여 이력'],
+]
+
+/** 오류가 난 필수 항목명(중복 제거, 화면 순서) */
+export function collectTalentApplyMissingLabels(
+  errors: Partial<Record<TalentApplyFieldKey, boolean>>,
+): string[] {
+  const labels: string[] = []
+  for (const [key, label] of TALENT_APPLY_FIELD_LABELS) {
+    if (errors[key] && !labels.includes(label)) labels.push(label)
+  }
+  return labels
+}
 
 export const EMPTY_TALENT_APPLY_FORM_VALUES: TalentApplyFormValues = {
   name: '',

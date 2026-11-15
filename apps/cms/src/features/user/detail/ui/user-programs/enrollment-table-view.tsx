@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useSearchParams } from 'react-router-dom'
 import type { Application } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -23,7 +24,7 @@ export function EnrollmentTableView(props: RendererProps) {
   } = props
   const { enrollmentSectionTitle, enrollmentEmptyDescription } = programsHistoryConfig
   const [searchParams, setSearchParams] = useSearchParams()
-  const enrollmentTableContext = useMemo(() => ({} as const), [])
+  const enrollmentTableContext = useMemo(() => ({}) as const, [])
 
   const {
     handleFilterChange,
@@ -31,12 +32,12 @@ export function EnrollmentTableView(props: RendererProps) {
     displayedCount,
     hasActiveFilters,
   } = useTablePage(userProgramsEnrollmentStubTableConfig, {
-      data: enrollmentTableRows,
-      searchParams,
-      setSearchParams,
-      context: enrollmentTableContext,
-      disableUrlSync: true,
-    })
+    data: enrollmentTableRows,
+    searchParams,
+    setSearchParams,
+    context: enrollmentTableContext,
+    disableUrlSync: true,
+  })
 
   const programHistoryColumns = useMemo(
     () =>
@@ -68,7 +69,7 @@ export function EnrollmentTableView(props: RendererProps) {
     >
       <div className="user-detail-modal__program-tab">
         {loading ? (
-          <div className="user-detail-modal__loading">로딩 중...</div>
+          <FullscreenSpinner />
         ) : enrollmentTableRows.length > 0 ? (
           <CmsDataTable
             className="cms-data-table"

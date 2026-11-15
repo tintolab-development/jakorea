@@ -15,4 +15,6 @@ export interface SignedConsentSignatureField {
   signed?: boolean;
   signedAt?: string;
   signatureFileObjectId?: number;
+  /** 서명 이미지 조회 API(POST, 본문 reason 필수, 이미지 바이트 inline). signed=true일 때만 값이 있습니다. FE가 fieldKey·documentId로 주소를 조립하지 않도록 내려줍니다. */
+  contentRevealEndpoint?: string | null;
 }

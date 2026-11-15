@@ -138,7 +138,7 @@ export function ScheduleSection({
                 확인이 필요한 일정이에요
               </PFText>
               <PFText as="h3" typo="hl-lg" color="black" className={styles.listCount}>
-                총 {selectedEvents.length}개
+                {`총 ${selectedEvents.length}개`}
               </PFText>
             </div>
             <ul className={styles.listItems}>

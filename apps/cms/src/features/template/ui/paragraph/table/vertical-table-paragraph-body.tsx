@@ -210,6 +210,7 @@ export function VerticalTableParagraphBody({
   bottomConsentInteractive: bottomConsentInteractiveProp,
   bottomConsentDisplayOnly = false,
   consentFillMode = false,
+  documentReadOnlyView = false,
 }: {
   paragraph: VerticalTableParagraph
   onChange: (next: VerticalTableParagraph) => void
@@ -233,6 +234,11 @@ export function VerticalTableParagraphBody({
   bottomConsentDisplayOnly?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
+  /**
+   * 「동의서 보기」A4 문서 — 주관식 응답 칸은 인풋 테두리 없이 텍스트(빈 값은 placeholder 없이 빈칸),
+   * 하단 동의 라디오는 disabled 스킨(시안 5767:42795).
+   */
+  documentReadOnlyView?: boolean
 }) {
   const bottomConsentInteractive = bottomConsentInteractiveProp ?? isEditMode
   const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
@@ -808,6 +814,8 @@ export function VerticalTableParagraphBody({
                   interactive={false}
                   onChange={() => {}}
                 />
+              ) : stageKind === 'subjective' && documentReadOnlyView ? (
+                <VerticalTableCellText value={cell} placeholder="" variant="body" />
               ) : stageKind === 'subjective' ? (
                 <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective">
                   <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
@@ -857,7 +865,7 @@ export function VerticalTableParagraphBody({
               if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
             }}
-            disabled={false}
+            disabled={documentReadOnlyView}
             style={
               bottomConsentDisplayOnly || !bottomConsentInteractive
                 ? { pointerEvents: 'none' }

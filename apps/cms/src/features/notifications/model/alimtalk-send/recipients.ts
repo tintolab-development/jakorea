@@ -20,10 +20,10 @@ export const ALIMTALK_SEND_PARTICIPATION_TYPE_LABEL: Record<
 }
 
 export const ALIMTALK_SEND_MEMBER_TYPE_LABEL: Record<Exclude<AlimtalkSendMemberType, ''>, string> = {
-  general: '일반',
-  school_teacher: '교사',
+  general: '개인',
+  school_teacher: '학교(교사)',
   instructor: '강사',
-  teacher_instructor: '교사 겸 강사',
+  teacher_instructor: '학교(교사), 강사',
   admin: '관리자',
 }
 
@@ -54,12 +54,18 @@ export const ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS = (
   ][]
 ).map(([value, label]) => ({ value, label }))
 
+/**
+ * 회원 유형 필터 — 기획(CMS QA 261114 결정): 전체·개인·학교(교사)·강사·관리자 5개.
+ * 학교(교사)·강사 겸직은 별도 선택지 없이 「강사」 필터에 포함(서버 필터 계약).
+ */
 export const ALIMTALK_SEND_MEMBER_TYPE_OPTIONS = (
   Object.entries(ALIMTALK_SEND_MEMBER_TYPE_LABEL) as [
     Exclude<AlimtalkSendMemberType, ''>,
     string,
   ][]
-).map(([value, label]) => ({ value, label }))
+)
+  .filter(([value]) => value !== 'teacher_instructor')
+  .map(([value, label]) => ({ value, label }))
 
 export function resolveAlimtalkSendRecipientTypeMode(
   programId: string | undefined
@@ -87,7 +93,15 @@ export function alimtalkSendMemberTypeLabel(type: AlimtalkSendMemberType | undef
  * memberType / participantType 으로 재번역·덮어쓰기 금지.
  */
 export function alimtalkSendRecipientTypeLabel(recipient: AlimtalkSendRecipient): string {
-  return recipient.typeLabel?.trim() || ''
+  return resolveNotificationRecipientTypeLabel(recipient.typeLabel)
+}
+
+/**
+ * 수신자 유형 셀 — 서버 typeLabel을 그대로 쓴다(서버가 기획 라벨로 내려 준다).
+ * 서버가 모르는 코드면 typeLabel=null → 빈 값('-' 표시).
+ */
+export function resolveNotificationRecipientTypeLabel(typeLabel: string | null | undefined): string {
+  return typeLabel?.trim() || ''
 }
 
 export function normalizeAlimtalkSendPhone(value: string): string {

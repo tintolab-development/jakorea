@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
   getA4DocumentTitle,
@@ -177,6 +178,7 @@ export function IssuanceFormTab() {
 }
 
 function IssuanceFormTabContent() {
+  const { showAlert } = useCmsAlert()
   const {
     sections: issuanceSections,
     isLoading: isIssuanceSectionsLoading,
@@ -306,6 +308,7 @@ function IssuanceFormTabContent() {
   const {
     pages: paymentStatementPdfPages,
     overflowParagraphIds: paymentStatementPdfOverflowParagraphIds,
+    waitForPagesReady: waitForPaymentStatementPdfPages,
     measureLayer: paymentStatementPdfMeasureLayer } = useA4ParagraphPages({
     allParagraphs: paymentStatementPreviewParagraphs,
     titleNumbering: paymentStatementVm.draft.formSettings.titleNumbering,
@@ -336,6 +339,7 @@ function IssuanceFormTabContent() {
   const {
     pages: paymentStatementPreConsentPdfPages,
     overflowParagraphIds: paymentStatementPreConsentPdfOverflowParagraphIds,
+    waitForPagesReady: waitForPaymentStatementPreConsentPdfPages,
     measureLayer: paymentStatementPreConsentPdfMeasureLayer } = useA4ParagraphPages({
     allParagraphs: paymentStatementPreConsentPreviewParagraphs,
     titleNumbering: paymentStatementPreConsentVm.draft.formSettings.titleNumbering,
@@ -404,6 +408,7 @@ function IssuanceFormTabContent() {
   const {
     pages: lectureReportPdfPages,
     overflowParagraphIds: lectureReportPdfOverflowParagraphIds,
+    waitForPagesReady: waitForLectureReportPdfPages,
     measureLayer: lectureReportPdfMeasureLayer,
   } = useA4ParagraphPages({
     allParagraphs: lectureReportPreviewParagraphs,
@@ -447,6 +452,7 @@ function IssuanceFormTabContent() {
   const {
     pages: ujatStructuredPdfPages,
     overflowParagraphIds: ujatStructuredPdfOverflowParagraphIds,
+    waitForPagesReady: waitForUjatStructuredPdfPages,
     measureLayer: ujatStructuredPdfMeasureLayer,
   } = useA4ParagraphPages({
     allParagraphs: ujatStructuredPreviewParagraphs,
@@ -672,23 +678,34 @@ function IssuanceFormTabContent() {
 
   const handleDownloadPaymentStatementDocument = useCallback(async () => {
     const root = paymentStatementPdfHostRef.current
-    if (root == null) return
+    if (root == null) {
+      // 캡처 영역이 없으면 조용히 끝나던 것을 다른 PDF 다운로드와 같은 안내로 알린다.
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
+      return
+    }
     setPaymentStatementPdfLoading(true)
     try {
+      await waitForPaymentStatementPdfPages()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(paymentStatementA4Title))
     } catch (e) {
       handleError(e, { context: 'issuanceFormTab.downloadPaymentStatementPdf' })
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
     } finally {
       setPaymentStatementPdfLoading(false)
     }
-  }, [paymentStatementA4Title])
+  }, [paymentStatementA4Title, showAlert, waitForPaymentStatementPdfPages])
 
   const handleDownloadPaymentStatementPreConsentDocument = useCallback(async () => {
     const root = paymentStatementPreConsentPdfHostRef.current
-    if (root == null) return
+    if (root == null) {
+      // 캡처 영역이 없으면 조용히 끝나던 것을 다른 PDF 다운로드와 같은 안내로 알린다.
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
+      return
+    }
     setPaymentStatementPreConsentPdfLoading(true)
     try {
+      await waitForPaymentStatementPreConsentPdfPages()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(
         pageEls,
@@ -696,38 +713,51 @@ function IssuanceFormTabContent() {
       )
     } catch (e) {
       handleError(e, { context: 'issuanceFormTab.downloadPaymentStatementPreConsentPdf' })
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
     } finally {
       setPaymentStatementPreConsentPdfLoading(false)
     }
-  }, [paymentStatementPreConsentA4Title])
+  }, [paymentStatementPreConsentA4Title, showAlert, waitForPaymentStatementPreConsentPdfPages])
 
   const handleDownloadLectureReportDocument = useCallback(async () => {
     const root = lectureReportPdfHostRef.current
-    if (root == null) return
+    if (root == null) {
+      // 캡처 영역이 없으면 조용히 끝나던 것을 다른 PDF 다운로드와 같은 안내로 알린다.
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
+      return
+    }
     setLectureReportPdfLoading(true)
     try {
+      await waitForLectureReportPdfPages()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(lectureReportA4Title))
     } catch (e) {
       handleError(e, { context: 'issuanceFormTab.downloadLectureReportPdf' })
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
     } finally {
       setLectureReportPdfLoading(false)
     }
-  }, [lectureReportA4Title])
+  }, [lectureReportA4Title, showAlert, waitForLectureReportPdfPages])
 
   const handleDownloadUjatStructuredDocument = useCallback(async () => {
     const root = ujatStructuredPdfHostRef.current
-    if (root == null) return
+    if (root == null) {
+      // 캡처 영역이 없으면 조용히 끝나던 것을 다른 PDF 다운로드와 같은 안내로 알린다.
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
+      return
+    }
     setUjatStructuredPdfLoading(true)
     try {
+      await waitForUjatStructuredPdfPages()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(ujatStructuredA4Title))
     } catch (e) {
       handleError(e, { context: 'issuanceFormTab.downloadUjatStructuredPdf' })
+      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
     } finally {
       setUjatStructuredPdfLoading(false)
     }
-  }, [ujatStructuredA4Title])
+  }, [showAlert, ujatStructuredA4Title, waitForUjatStructuredPdfPages])
 
   return (
     <>

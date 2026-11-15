@@ -23,6 +23,7 @@ import {
 import {
   isGeminiSettlementProgram,
   mapPaymentStatementServerStatus,
+  mapReceiptScheduleOverviewStatus,
   PAYMENT_STATEMENT_AGGREGATE_LABEL,
 } from './payment-statement-status.ts'
 import { buildReceiptSubmitPath, buildReceiptViewPath } from './receipt-path.ts'
@@ -539,10 +540,10 @@ assert.equal(
 )
 assert.equal(buildReceiptViewPath({ applicationId: '1', sessionId: '2' }), null)
 
-// 영수증 처리 현황(R17): 한 가지 상태면 그 라벨, 섞이면 "확인 진행 중", 미작성 N건은 쓰지 않는다
-assert.equal(resolvePaymentStatementProcessLabel(oneUpcoming), '확인 진행 중')
+// 영수증 처리 현황(R17): 한 가지 상태면 그 라벨, 섞이면 "확인 진행중", 미작성 N건은 쓰지 않는다
+assert.equal(resolvePaymentStatementProcessLabel(oneUpcoming), '확인 진행중')
 assert.equal(resolvePaymentStatementProcessLabel(paid), '계좌 지급 완료')
-assert.equal(resolvePaymentStatementProcessLabel(fiveNoReceipts), '확인 진행 중')
+assert.equal(resolvePaymentStatementProcessLabel(fiveNoReceipts), '확인 진행중')
 assert.equal(
   resolvePaymentStatementProcessLabel([
     { ...fiveNoReceipts[0]!, status: 'waiting_confirm' },
@@ -556,7 +557,7 @@ assert.equal(
     { ...fiveNoReceipts[0]!, status: 'waiting_confirm' },
     { ...fiveNoReceipts[1]!, status: 'rejected' },
   ]),
-  '확인 진행 중',
+  '확인 진행중',
 )
 assert.equal(
   resolvePaymentStatementProcessLabel([{ ...fiveNoReceipts[0]!, status: 'reapplied' }]),
@@ -721,7 +722,7 @@ assert.equal(
 )
 assert.equal(
   resolveSettlementStatusUi('reapplied', 'payment_statement').markLabel,
-  '재신청',
+  '지급조서 재신청',
 )
 assert.equal(
   resolveSettlementStatusUi('confirmed', 'payment_statement').markLabel,
@@ -911,6 +912,7 @@ const instructorCorrection = buildAssignedSettlementItems({
       programId: 100,
       programScheduleId: 92,
       statementStatus: 'CORRECTION_REQUESTED',
+      confirmationStatus: 'CORRECTION_REQUESTED',
       netPaymentAmount: 120000,
     },
   ],
@@ -1060,6 +1062,7 @@ const rejectedCanResubmit = buildAssignedSettlementItems({
       canSubmit: false,
       canResubmit: true,
       status: 'REJECTED',
+      statementStatus: 'REJECTED',
       settlementApplicationId: 11,
       payableItems: [{ itemType: 'MEAL', itemName: '식사비', evidenceRequired: true }],
     },
@@ -1109,5 +1112,108 @@ assert.equal(lectureFeePreviewJoin[0]?.lectureFeePreview?.totalLectureFee, 45000
 assert.equal(lectureFeePreviewJoin[0]?.lectureFeePreview?.educationSessionCount, 2)
 assert.equal(lectureFeePreviewJoin[0]?.instructorTransportPreview?.calculatedTransportAmount, 209810)
 assert.equal(lectureFeePreviewJoin[0]?.instructorTransportPreview?.oneWayDistanceKm, 528.6)
+
+const receiptAxesBase = {
+  schedules: [
+    schedule({
+      id: '301',
+      scheduleId: 301,
+      sessionNumber: 1,
+      heldAt: '2026-04-01T10:00:00+09:00',
+    }),
+  ],
+  scopeStatus: 'ASSIGNMENT_SCOPED' as const,
+  now: NOW,
+  programId: '100',
+}
+const receiptBeforeApproval = buildAssignedSettlementItems({
+  ...receiptAxesBase,
+  individualSchedules: [
+    {
+      scheduleId: 301,
+      status: 'SUBMITTED',
+      statementStatus: null,
+      paymentStatus: null,
+      canSubmit: true,
+      settlementApplicationId: 1,
+      payableItems: [{ itemType: 'MEAL', itemName: '식사비', evidenceRequired: false }],
+    },
+  ],
+})
+assert.equal(receiptBeforeApproval[0]?.status, 'pending_submit')
+
+const receiptWaiting = buildAssignedSettlementItems({
+  ...receiptAxesBase,
+  individualSchedules: [
+    {
+      scheduleId: 301,
+      statementStatus: 'WAITING_CONFIRM',
+      paymentStatus: null,
+      canSubmit: false,
+      settlementApplicationId: 2,
+      payableItems: [{ itemType: 'MEAL', itemName: '식사비', evidenceRequired: false }],
+    },
+  ],
+})
+assert.equal(receiptWaiting[0]?.status, 'waiting_confirm')
+
+const receiptPaid = buildAssignedSettlementItems({
+  ...receiptAxesBase,
+  individualSchedules: [
+    {
+      scheduleId: 301,
+      statementStatus: 'CONFIRMED',
+      paymentStatus: 'PAID',
+      expectedTransferDate: '2026-11-20',
+      paidAt: '2026-11-20T01:00:00Z',
+      settlementApplicationId: 3,
+      payableItems: [{ itemType: 'MEAL', itemName: '식사비', evidenceRequired: false }],
+    },
+  ],
+})
+assert.equal(receiptPaid[0]?.status, 'paid')
+assert.equal(receiptPaid[0]?.expectedTransferDate, '2026-11-20')
+assert.equal(receiptPaid[0]?.paidAt, '2026-11-20T01:00:00Z')
+
+const instructorWithoutConfirmation = buildAssignedSettlementItems({
+  ...receiptAxesBase,
+  deadlinePolicy: 'payment_statement',
+  lectureReports: [{ scheduleId: 301, reportStatus: 'SUBMITTED', lectureStatus: 'COMPLETED' }],
+  settlements: [
+    {
+      applicationId: 25,
+      programId: 100,
+      programScheduleId: 301,
+      statementStatus: 'WAITING_CONFIRM',
+      confirmationStatus: null,
+    },
+  ],
+})
+assert.equal(instructorWithoutConfirmation[0]?.status, 'waiting_confirm')
+
+assert.equal(
+  mapPaymentStatementServerStatus({ status: 'SUBMITTED', confirmationStatus: 'REAPPLICATION' }),
+  'reapplied',
+)
+assert.equal(
+  mapPaymentStatementServerStatus({
+    statementStatus: 'DRAFT',
+    confirmationStatus: 'CORRECTION_REQUESTED',
+    statementReapplyAvailable: true,
+  }),
+  'correction_completed',
+)
+assert.equal(
+  mapPaymentStatementServerStatus({ confirmationStatus: null, statementStatus: 'WAITING_CONFIRM' }),
+  'waiting_confirm',
+)
+assert.equal(mapReceiptScheduleOverviewStatus({ statementStatus: null, paymentStatus: null }), null)
+assert.equal(
+  mapReceiptScheduleOverviewStatus({
+    statementStatus: 'CONFIRMED',
+    paymentStatus: 'WAITING_PAYMENT',
+  }),
+  'confirmed',
+)
 
 console.log('assigned-settlement-items.selfcheck: ok')

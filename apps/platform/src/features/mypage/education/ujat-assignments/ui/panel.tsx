@@ -1,6 +1,7 @@
 import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
 import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { resolveEducationErrorAlert } from '../../shared/lib/education-error-alert'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   useDownloadUjatClassAssignmentConsentDocuments,
@@ -171,6 +172,9 @@ export function UjatVolunteerAssignmentPanel({
 }: UjatVolunteerAssignmentPanelProps) {
   const query = useUjatClassAssignmentsQuery(applicationType, applicationId)
   const downloadMutation = useDownloadUjatClassAssignmentConsentDocuments()
+  const downloadAlert = downloadMutation.isError
+    ? resolveEducationErrorAlert(downloadMutation.error)
+    : null
 
   if (query.isLoading) {
     return <VolunteerAssignmentPanelSkeleton statusMessage="봉사자 배정 현황을 불러오는 중입니다." />
@@ -209,11 +213,13 @@ export function UjatVolunteerAssignmentPanel({
         </div>
       )}
 
-      {downloadMutation.isError ? (
-        <PFText as="p" typo="bd-md-rg" color="error" className={styles.status}>
-          동의서 다운로드에 실패했습니다.
-        </PFText>
-      ) : null}
+      {/* 동의서 다운로드 실패 — 시안 오류 팝업(네트워크·처리 제한·처리 실패) */}
+      <PFAlertModal
+        open={downloadMutation.isError}
+        title={downloadAlert?.title ?? ''}
+        description={downloadAlert?.description}
+        onConfirm={() => downloadMutation.reset()}
+      />
     </div>
   )
 }

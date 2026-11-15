@@ -38,6 +38,7 @@ import {
   collectDeleteIds,
   filterNotificationTree,
   findTemplate,
+  firstTemplateInCategory,
   isVirtualUnclassifiedCategoryId,
   moveCategoryToParent,
   moveTemplateToCategory,
@@ -292,13 +293,21 @@ export function MailTemplateList() {
     )
   }, [appliedFilters.categoryName, appliedFilters.templateName, categories, remote, templates])
 
-  const selectedTemplateId = selection?.kind === 'template' ? selection.id : null
+  /** QA: 폴더를 선택하면 폴더 안 첫 템플릿(트리 표시 순서)을 상세에 보여 준다. 빈 폴더는 빈 상태 */
+  const selectedTemplateId =
+    selection?.kind === 'template'
+      ? selection.id
+      : selection?.kind === 'category'
+        ? (firstTemplateInCategory(visibleTree.categories, visibleTree.templates, selection.id)
+            ?.id ?? null)
+        : null
   const detailQuery = useMailTemplateDetailQuery(
     selectedTemplateId,
     remote && Boolean(selectedTemplateId)
   )
-  const treeTemplate =
-    selection?.kind === 'template' ? (findTemplate(templates, selection.id) ?? null) : null
+  const treeTemplate = selectedTemplateId
+    ? (findTemplate(templates, selectedTemplateId) ?? null)
+    : null
   const selectedTemplate = (remote ? detailQuery.data : null) ?? treeTemplate
   const detailLoading =
     remote && Boolean(selectedTemplateId) && detailQuery.isLoading && !detailQuery.data
@@ -814,6 +823,7 @@ export function MailTemplateList() {
               />
               <DetailPanel
                 template={detailLoading ? null : selectedTemplate}
+                emptyFolder={selection?.kind === 'category' && !selectedTemplateId}
                 categoryName={selectedCategoryName}
                 loading={detailLoading}
                 onPreview={() => setPreviewOpen(true)}

@@ -15,6 +15,8 @@ import {
   ujatGeneralSurveyMenuKeysFromOverlay,
   ujatSurveyItemsFromProgramKeys,
   UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
+  UJAT_SATISFACTION_SURVEY_MENU_KEY,
+  UJAT_SATISFACTION_SURVEY_MENU_LABEL,
   UJAT_SURVEY_MENU_KEY_BY_ITEM,
 } from '@/features/program/ujat/lib/registration-survey-items'
 import { ujatSponsorManagerContactIdsForApi } from '@/features/program/ujat/lib/ujat-sponsor-contact-api-payload'
@@ -141,17 +143,11 @@ export function resolveUjatSurveyMenuItems(program?: Program): UjatSurveyMenuIte
     })
   }
 
-  if (surveyItems.volunteer_satisfaction) {
+  // 시안 4082:115365 — 봉사단·학교 만족도조사는 「만족도조사」 한 메뉴(탭: 교사·상반기·하반기 봉사자)
+  if (surveyItems.volunteer_satisfaction || surveyItems.school_satisfaction) {
     items.push({
-      key: UJAT_SURVEY_MENU_KEY_BY_ITEM.volunteer_satisfaction,
-      label: UJAT_REGISTRATION_SURVEY_ITEM_LABELS.volunteer_satisfaction,
-    })
-  }
-
-  if (surveyItems.school_satisfaction) {
-    items.push({
-      key: UJAT_SURVEY_MENU_KEY_BY_ITEM.school_satisfaction,
-      label: UJAT_REGISTRATION_SURVEY_ITEM_LABELS.school_satisfaction,
+      key: UJAT_SATISFACTION_SURVEY_MENU_KEY,
+      label: UJAT_SATISFACTION_SURVEY_MENU_LABEL,
     })
   }
 
@@ -458,5 +454,14 @@ export function resolveUjatAnnouncementTitle(program: Program): string {
 export function applyUjatRegistrationTemplateDefaults(program: Program): Program {
   const overlay = readUjatRegistrationOverlayFromProgram(program)
   if (Object.keys(overlay).length === 0) return program
-  return applyUjatRegistrationOverlayToProgram(program, overlay, { fillDefaults: false })
+  const applied = applyUjatRegistrationOverlayToProgram(program, overlay, { fillDefaults: false })
+  // 상세 조회의 지급·공제 항목은 remote API 응답(settlementPolicy)이 SSOT — overlay로 덮지 않는다.
+  return {
+    ...applied,
+    generalCommonInfo: {
+      ...applied.generalCommonInfo,
+      paymentItems: program.generalCommonInfo?.paymentItems,
+      deductionItems: program.generalCommonInfo?.deductionItems,
+    },
+  }
 }

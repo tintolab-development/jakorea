@@ -12,7 +12,7 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
   const { step, password } = signUp
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title="비밀번호를 입력해 주세요."
         description={
@@ -44,7 +44,7 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
             size="xlarge"
             label="비밀번호"
             type="password"
-            placeholder="비밀번호를 입력해 주세요."
+            placeholder="비밀번호를 입력해 주세요"
             required
             value={password.password}
             onValueChange={password.setPassword}
@@ -61,7 +61,7 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
             value={password.confirm}
             onValueChange={password.setConfirm}
             message={
-              password.isMismatch ? '비밀번호가 서로 달라요. 다시 한 번 확인해 주세요.' : undefined
+              password.isMismatch ? '비밀번호가 일치하지 않아요. 다시 한 번 확인해 주세요.' : undefined
             }
             messageStatus="error"
             error={password.isMismatch}

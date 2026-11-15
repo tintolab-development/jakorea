@@ -25,6 +25,9 @@ import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/p
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { useIsTemplateManagementScreen } from '@/features/template/ui/template-management/detail-view-mode-context'
+import { RecruitFormIndividualInterviewScheduleSection } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
+import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-individual-draft'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './applicant-recruit-individual-participant-info-paragraph.css'
 
@@ -40,6 +43,7 @@ type RangeSeal = { start: string; end: string } | null
 
 /** 프로그램 참여자 모집 폼 (개인) — 참여자 모집 정보 */
 export function ApplicantRecruitIndividualParticipantInfoParagraph() {
+  const isTemplateManagementScreen = useIsTemplateManagementScreen()
   const [announcementPublished, setAnnouncementPublished] =
     useIndividualRecruitField<ParticipantRecruitmentAnnouncementPublishedValue | ''>(
       'recruit.individual.announcementPublished',
@@ -340,6 +344,14 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
           validationKey="recruit.individual.notes"
         />
       </DetailInfoForm>
+
+      {/* 면접 있음 — 봉사자 모집과 같은 「면접 진행 가능 일정」(참여자 행 interviewConfig). 템플릿 관리 화면은 제외 */}
+      {interviewEnabled && !isTemplateManagementScreen ? (
+        <RecruitFormIndividualInterviewScheduleSection
+          interviewPeriodRange={interviewRange}
+          highlightParagraphId={APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS.participantRecruitInfo}
+        />
+      ) : null}
     </div>
   )
 }

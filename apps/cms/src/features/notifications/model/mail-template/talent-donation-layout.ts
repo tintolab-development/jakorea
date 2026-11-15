@@ -140,7 +140,7 @@ export function buildTalentDonationMailLayoutHtml(): string {
   ${applicantInfoTable()}
   ${mailSectionHeading('추가 정보')}
   ${additionalInfoTable()}
-  ${mailDetailButton('재능기부 신청 상세보기', TALENT_DONATION_MAIL_DETAIL_LINK_VARIABLE_LABEL)}
+  ${mailDetailButton('재능기부 신청 상세보기', TALENT_DONATION_MAIL_DETAIL_LINK_VARIABLE_LABEL, null)}
 `
   )
 }

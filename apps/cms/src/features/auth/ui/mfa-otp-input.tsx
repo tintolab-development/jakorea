@@ -89,10 +89,14 @@ export function MfaOtpInput({
         {({ getFieldValue, setFieldValue, getFieldError }) => {
           const formValue = getFieldValue('otpCode') || ''
           const errors = getFieldError('otpCode')
+          const showFailure = failedAttempts > 0 && !disabled
 
           return (
             <div className="mfa-otp-input">
-              <div className="mfa-otp-input__boxes" ref={boxesRef}>
+              <div
+                className={`mfa-otp-input__boxes${showFailure ? ' mfa-otp-input__boxes--error' : ''}`}
+                ref={boxesRef}
+              >
                 <Input.OTP
                   key={otpInstanceKey}
                   length={OTP_LENGTH}
@@ -107,9 +111,9 @@ export function MfaOtpInput({
                   disabled={disabled}
                 />
               </div>
-              {failedAttempts > 0 && !disabled ? (
+              {showFailure ? (
                 <p className="mfa-otp-input__failure">
-                  잘못된 코드를 입력하였습니다. (실패 횟수{' '}
+                  잘못된 코드를 입력하였습니다. (실패 횟수:{' '}
                   {Math.min(Math.floor(failedAttempts), maxFailedAttempts)} / {maxFailedAttempts})
                 </p>
               ) : null}

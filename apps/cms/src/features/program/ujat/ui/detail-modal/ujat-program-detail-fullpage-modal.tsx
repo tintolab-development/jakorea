@@ -122,7 +122,11 @@ import {
   replaceUjatRegionCapacitiesRemote,
   type UjatRegionCapacityUpsert,
 } from '@/features/program/ujat/api/region-capacities-client'
-import { ujatRegionCapacityUpsertsFromState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
+import {
+  listIncompleteUjatRegionCapacityKeys,
+  ujatRegionCapacityStateSnapshot,
+  ujatRegionCapacityUpsertsFromState,
+} from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
@@ -227,7 +231,7 @@ function buildUjatRegionCapacityUpserts(program: Program): UjatRegionCapacityUps
 }
 
 function ujatRegionCapacitySnapshot(program: Program): string {
-  return JSON.stringify(buildUjatRegionCapacityUpserts(program))
+  return ujatRegionCapacityStateSnapshot(program.ujatRegionCapacity)
 }
 
 export interface UjatProgramDetailFullPageModalProps {
@@ -722,7 +726,17 @@ function UjatProgramDetailFullPageModalContent({
     institutionApplicationDetailRow.institutionName !== '-'
       ? institutionApplicationDetailRow.institutionName
       : null
-  const eduInstitutionDetailName: string | null = null
+  // 교육 진행 · 참여 기관 상세 — 같은 기관 신청 상세 쿼리(캐시 공유)에서 기관명을 읽는다.
+  const { row: eduInstitutionApplicationDetailRow } = useUjatInstitutionApplicationDetail({
+    institutionId: eduInstitutionDetailId ?? '',
+    programId: displayProgram?.id ?? programId,
+  })
+  const eduInstitutionDetailName =
+    eduInstitutionDetailId &&
+    eduInstitutionApplicationDetailRow?.institutionName &&
+    eduInstitutionApplicationDetailRow.institutionName !== '-'
+      ? eduInstitutionApplicationDetailRow.institutionName
+      : null
 
   const eduInstitutionDetailTab = open
     ? parseUjatEduInstTab(searchParams)
@@ -1079,6 +1093,23 @@ function UjatProgramDetailFullPageModalContent({
       void showAlert({
         title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
         content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+      })
+      return
+    }
+    // 지역 정원 빈 칸은 0(배정 불가)으로 바꿔 보내지 않는다 — 활성 지역 학급·봉사자 수 모두 필수.
+    // 정원을 바꾸지 않았으면 PUT을 보내지 않으므로 검사하지 않는다(정원 미입력 기존 프로그램의 다른 항목 저장 허용).
+    const capacityState = infoValues.ujatRegionCapacity ?? displayProgram.ujatRegionCapacity
+    const capacityChanged =
+      ujatRegionCapacityStateSnapshot(capacityState) !==
+      ujatRegionCapacityStateSnapshot(displayProgram.ujatRegionCapacity)
+    const capacityIncompleteKeys = capacityChanged
+      ? listIncompleteUjatRegionCapacityKeys(capacityState)
+      : []
+    if (capacityIncompleteKeys.length > 0) {
+      detailRequiredHighlight.report(capacityIncompleteKeys)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
     }
@@ -1576,7 +1607,7 @@ function UjatProgramDetailFullPageModalContent({
     eduVolunteerDetailMeta?.title ??
         volunteerApplicantDetailMeta?.title ??
         (eduInstitutionDetailName
-          ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
+          ? `참여 기관 상세 (${eduInstitutionDetailName})`
           : institutionDetailName
             ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
             : programTitle)
@@ -1647,10 +1678,15 @@ function UjatProgramDetailFullPageModalContent({
           : { label: lnbLabel }
       )
     } else {
+      // 시안 4082:101647 — 참여 기관 상세에서만 중간 항목을 「참여 기관 목록」으로 표기
+      const childBreadcrumbLabel =
+        nestedDetailLabel && nestedDetailLabel === eduInstitutionDetailName
+          ? '참여 기관 목록'
+          : childLabel
       items.push(
         nestedDetailLabel && childParams
-          ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
-          : { label: childLabel }
+          ? makeBreadcrumbItem(childBreadcrumbLabel, location.pathname, childParams)
+          : { label: childBreadcrumbLabel }
       )
     }
 
@@ -1793,9 +1829,6 @@ function UjatProgramDetailFullPageModalContent({
                 key={institutionListVersion}
                 programId={programId}
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
-                onOpenScheduleAssign={() =>
-                  setLnbTab('institution_applications', 'inst_schedule_assign')
-                }
               />
             ))}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_assign' && (
@@ -1947,7 +1980,11 @@ function UjatProgramDetailFullPageModalContent({
 
           {activeLnb === 'managers' && displayProgram.id ? (
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-              <ProgramManagersTab programId={displayProgram.id} />
+              <ProgramManagersTab
+                programId={displayProgram.id}
+                blockLastManagerDelete
+                variant="ujat"
+              />
             </div>
           ) : null}
         </>

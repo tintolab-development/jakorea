@@ -217,7 +217,7 @@ function RecordsContent({
     <div className={styles.recordsLayout}>
       <div className={styles.recordsToolbar}>
         <PFText as="p" typo="hd-sm" color="black" className={styles.recordsCount}>
-          총 {filtered.length.toLocaleString('ko-KR')}건
+          {`총 ${filtered.length.toLocaleString('ko-KR')}건`}
         </PFText>
         <PFSearchInput
           className={styles.recordsSearch}
@@ -294,6 +294,7 @@ export function AchievementSection({
             value={activeTab}
             onChange={key => setActiveTab(key as AchievementTabKey)}
             variant="category"
+            stretch
             ariaLabel="걸어온 길과 성과 카테고리"
           />
         </header>

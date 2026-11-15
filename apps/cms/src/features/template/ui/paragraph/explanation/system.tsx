@@ -8,6 +8,7 @@ import {
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
 } from '@/features/template/model/writing-form-draft.schema'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './explanation-system.css'
@@ -15,12 +16,17 @@ import './explanation-system.css'
 const AUTHORING_DATE_LABEL = 'YYYY년 MM월 DD일'
 const AUTHORING_SIGNATURE_LABEL = '동의자 (서명)'
 
+/** 지급조서·영수증 사전 동의서 날짜·서명 — 다른 동의 양식과 같은 회색 고정 칸·A4 표시 규칙 */
 function isPaymentStatementPreConsentSheetBarSystemParagraph(p: SystemParagraph): boolean {
   return (
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midDate ||
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature ||
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate ||
-    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature
+    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature ||
+    p.id === RECEIPT_PRE_CONSENT_IDS.midDate ||
+    p.id === RECEIPT_PRE_CONSENT_IDS.midSignature ||
+    p.id === RECEIPT_PRE_CONSENT_IDS.tailDate ||
+    p.id === RECEIPT_PRE_CONSENT_IDS.tailSignature
   )
 }
 

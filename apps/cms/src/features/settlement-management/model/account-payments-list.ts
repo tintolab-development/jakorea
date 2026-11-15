@@ -32,6 +32,11 @@ export interface AccountPaymentRow {
   institutionName: string
   sessionLabel: string
   accountPaymentStatus: AccountPaymentTransferStatus
+  /**
+   * BE 목록 `paymentFailureYn`. 내부 FAILED는 `paymentStatus=WAITING_PAYMENT`로 내려오므로
+   * 상태만으로는 지급 대기와 구분되지 않는다. 대량이체 발급 대상에서 제외할 때 쓴다.
+   */
+  paymentFailureYn?: boolean
   amount: number
   lectureDate?: string
   transferScheduledDate: string

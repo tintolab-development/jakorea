@@ -10,6 +10,7 @@ import type {
   RecipientCandidateResponse,
   RecipientRequest,
 } from '@/shared/api/generated/notifications/schemas'
+import { withNotificationRenamedVariableKeys } from '@/features/notifications/model/shared/legacy-variable-aliases'
 import { normalizeAlimtalkCatalogSourceMode } from '@/features/notifications/model/alimtalk-send/recipient-variables'
 import {
   ListNotificationTemplateVariablesCategory as TemplateVariablesCategoryEnum,
@@ -382,7 +383,7 @@ export function templateUsesProgramRequiredVariable(
   catalog: AlimtalkTemplateVariable[],
   template: Parameters<typeof collectTemplatePlaceholderKeys>[0]
 ): boolean {
-  const used = collectTemplatePlaceholderKeys(template)
+  const used = withNotificationRenamedVariableKeys(collectTemplatePlaceholderKeys(template))
   if (used.size === 0) return false
   return catalog.some(variable => {
     if (!variable.requiresProgram) return false

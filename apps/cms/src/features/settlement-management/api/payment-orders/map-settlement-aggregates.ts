@@ -78,7 +78,7 @@ export function mapAggregatesToInstructorRows(
         instructorMemberId:
           typeof instructorMemberId === 'number' ? instructorMemberId : Number(instructorMemberId),
         aggregateKey: String(instructorMemberId),
-        instructorName: item.instructorName ?? `강사 ${instructorMemberId}`,
+        instructorName: item.instructorName ?? `신청자 ${instructorMemberId}`,
         programCount: participation,
         processingStatus: resolveAggregateProcessingStatus(item, pending, participation),
         estimatedAmount: item.estimatedAmount ?? 0,

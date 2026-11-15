@@ -16,7 +16,7 @@ export interface MemberGuardianVerificationCreateRequest {
      * @minLength 0
      * @maxLength 64
      */
-  guardianRelation: string;
+  guardianRelation?: string;
   programId?: number;
   /**
      * @minLength 0

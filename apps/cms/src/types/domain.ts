@@ -611,10 +611,18 @@ export interface Program {
   ujatProgressStatus?: UjatProgramProgressStatus
   /** 목록 DTO 기준 삭제 불가(교육 예정 참여자·교육 진행 이력) — 목록 체크박스 비활성 */
   listDeleteBlocked?: boolean
-  /** UJAT 목록 — 상반기 봉사자 모집 인원(현재) */
+  /** UJAT 등록·수정 — 상반기 봉사자 모집 정원(VOLUNTEER FIRST_HALF maxCount). 목록 표시에는 쓰지 않음 */
   ujatFirstHalfVolunteerCount?: number
-  /** UJAT 목록 — 하반기 봉사자 모집 인원(현재) */
+  /** UJAT 등록·수정 — 하반기 봉사자 모집 정원(VOLUNTEER SECOND_HALF maxCount). 목록 표시에는 쓰지 않음 */
   ujatSecondHalfVolunteerCount?: number
+  /** UJAT 목록 — 상반기 봉사자 모집 정원. null = 정원 미입력 */
+  ujatFirstHalfVolunteerCapacity?: number | null
+  /** UJAT 목록 — 하반기 봉사자 모집 정원. null = 정원 미입력 */
+  ujatSecondHalfVolunteerCapacity?: number | null
+  /** UJAT 목록 — 상반기 봉사자 모집된 인원(최종 합격) */
+  ujatFirstHalfVolunteerSelectedCount?: number
+  /** UJAT 목록 — 하반기 봉사자 모집된 인원(최종 합격) */
+  ujatSecondHalfVolunteerSelectedCount?: number
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
@@ -775,6 +783,12 @@ export interface Program {
    * `undefined` = 서버 조회가 아닌 Program 또는 UJAT·봉사 행 여러 개.
    */
   volunteerInterviewConfigFromServer?: ProgramVolunteerInterviewConfig | null
+  /**
+   * 일반 프로그램(GENERAL 계열) 개인 참여자 모집 행(PARTICIPANT·INDIVIDUAL) 1개의 typed `interviewConfig`.
+   * 참여자 「면접 진행 가능 일정」 표시·수정 초기값 SSOT. `null` = 저장 값 없음(봉사 일정으로 채우지 않는다),
+   * `undefined` = 서버 조회가 아닌 Program 또는 대상 행 없음.
+   */
+  participantInterviewConfigFromServer?: ProgramVolunteerInterviewConfig | null
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
   /**

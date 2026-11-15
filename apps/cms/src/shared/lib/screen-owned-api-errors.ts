@@ -27,13 +27,17 @@ export const PASSWORD_RESET_SCREEN_OWNED_CODES: ReadonlySet<string> = new Set([
   IDENTITY_VERIFICATION_SESSION_REQUIRED_CODE,
 ])
 
-const IDENTITY_CONTACT_PATH = /\/api\/admin\/me\/identity-contact(?:$|[?#])/
+/** 세금신고 양식 발급·미리보기 — 선택 건이 모두 영수증이라 대상 없음. 계좌 지급 화면이 「양식 발급 불가 안내」를 띄운다 */
+export const TAX_REPORT_NO_ELIGIBLE_SELECTION_CODE = 'TAX_REPORT_NO_ELIGIBLE_SELECTION'
+
+const IDENTITY_CONTACT_PATH =/\/api\/admin\/me\/identity-contact(?:$|[?#])/
 const ADMIN_ACCOUNT_BASIC_INFO_PATH = /\/api\/admin\/admin-accounts\/\d+\/basic-info(?:$|[?#])/
 const ADMIN_ACCOUNT_CREATE_PATH = /\/api\/admin\/admin-accounts(?:$|[?#])/
 const MEMBER_PRE_REGISTER_PATH =
   /\/api\/admin\/users\/pre-register\/(?:individual|instructor)(?:$|[?#])/
 const ADMIN_PASSWORD_RESET_PATH =
   /\/api\/admin\/auth\/password-reset\/(?:confirm|eligibility)(?:$|[?#])/
+const TAX_REPORT_EXPORT_PATH = /\/api\/admin\/settlements\/exports\/tax-report(?:\/preview)?(?:$|[?#])/
 
 export function isScreenOwnedApiError(input: {
   url: string | undefined
@@ -70,6 +74,10 @@ export function isScreenOwnedApiError(input: {
     PASSWORD_RESET_SCREEN_OWNED_CODES.has(input.code) &&
     ADMIN_PASSWORD_RESET_PATH.test(url)
   ) {
+    return true
+  }
+  // 세금신고 대상 없음 — 계좌 지급 화면이 시안 팝업을 띄운다.
+  if (input.code === TAX_REPORT_NO_ELIGIBLE_SELECTION_CODE && TAX_REPORT_EXPORT_PATH.test(url)) {
     return true
   }
   return false

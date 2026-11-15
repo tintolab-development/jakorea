@@ -10,6 +10,7 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { toLectureSessionCellSegment } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import { resolvePaymentStatementIssuanceCategoryLabel } from './payment-statement-issuance-category-label'
 import './payment-statement-issuance-calculation-lines-table.css'
 
@@ -87,10 +88,13 @@ function renderAmountText(
  * 열 구성.
  * - `issuance`(기본): 지급조서 양식(템플릿 문단) — 참여 기관명·강의 진행 일자·지급/공제·구분·항목명·금액
  * - `calculation-statement`: 정산 산출 내역서(관리자) — 참여 기관명·교육 진행 일자·산정 항목·항목 설명·정산 금액(부호)
+ * - `receipt-settlement`: 영수증 정산 신청서(시안 14680:103216) — 교육 진행 일자·지급/공제·구분(행 description)·
+ *   항목 설명(행 itemLabel)·정산 금액(부호)
  */
 export type PaymentStatementIssuanceCalculationLinesColumnPreset =
   | 'issuance'
   | 'calculation-statement'
+  | 'receipt-settlement'
 
 
 export type PaymentStatementIssuanceCalculationLinesTableProps = {
@@ -124,6 +128,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
   className,
 }: PaymentStatementIssuanceCalculationLinesTableProps) {
   const isCalculationStatement = columnPreset === 'calculation-statement'
+  const isReceiptSettlement = columnPreset === 'receipt-settlement'
   const leadingColumnCount = hideInstitutionColumn ? 1 : 2
   const bodyColumnCount = isCalculationStatement ? 3 : 4
   const columnCount = leadingColumnCount + bodyColumnCount + (trailingColumn ? 1 : 0)
@@ -179,11 +184,13 @@ export function PaymentStatementIssuanceCalculationLinesTable({
                 </>
               ) : (
                 <>
-                  <th>강의 진행 일자</th>
+                  <th>{isReceiptSettlement ? '교육 진행 일자' : '강의 진행 일자'}</th>
                   <th>지급/공제</th>
                   <th>구분</th>
-                  <th>{itemColumn === 'description' ? '항목 설명' : '항목명'}</th>
-                  <th>금액</th>
+                  <th>
+                    {isReceiptSettlement || itemColumn === 'description' ? '항목 설명' : '항목명'}
+                  </th>
+                  <th>{isReceiptSettlement ? '정산 금액' : '금액'}</th>
                 </>
               )}
               {trailingColumn ? <th>{trailingColumn.title}</th> : null}
@@ -211,7 +218,8 @@ export function PaymentStatementIssuanceCalculationLinesTable({
                         <div className="payment-statement-issuance-calculation-lines-table__date-cell">
                           {withProgramDetailTdDivider([
                             row.lectureDateDisplay,
-                            row.lectureSessionDisplay,
+                            // 뒤 조각 없으면 날짜만(서버 지급조서 PDF와 동일)
+                            toLectureSessionCellSegment(row.lectureSessionDisplay),
                           ])}
                         </div>
                       </td>
@@ -222,6 +230,12 @@ export function PaymentStatementIssuanceCalculationLinesTable({
                       <td>{row.itemLabel}</td>
                       <td>{row.description}</td>
                     </>
+                  ) : isReceiptSettlement ? (
+                    <>
+                      <td>{row.paymentDeductionLabel}</td>
+                      <td>{row.description.trim() || '-'}</td>
+                      <td>{row.itemLabel}</td>
+                    </>
                   ) : (
                     <>
                       <td>{row.paymentDeductionLabel}</td>
@@ -230,7 +244,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
                     </>
                   )}
                   <td className="payment-statement-issuance-calculation-lines-table__amount">
-                    {renderAmountText(row.amount, row, isCalculationStatement)}
+                    {renderAmountText(row.amount, row, isCalculationStatement || isReceiptSettlement)}
                   </td>
                   {trailingColumn ? <td>{trailingColumn.renderCell(row)}</td> : null}
                 </tr>

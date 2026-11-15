@@ -358,7 +358,8 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 50%;
+    /* 공개 상태(작은 소개 2줄 + 메시지 2줄) 묶음이 화면 정중앙에 오도록 24px 올린다 */
+    top: calc(50% - 24px);
     z-index: 0;
     margin-top: 0;
     font-size: 60px;
@@ -379,7 +380,7 @@
     font-weight: 400;
     line-height: 144%;
     letter-spacing: -0.68px;
-    transform: translateY(-72px);
+    transform: translateY(-96px);
     color: var(--color-primary-800);
     pointer-events: auto;
   }

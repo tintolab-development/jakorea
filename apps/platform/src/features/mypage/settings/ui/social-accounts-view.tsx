@@ -16,10 +16,13 @@ import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
   NaverSocialLoginIcon,
+  PFAlertModal,
   PFButton,
   PFText,
 } from '@/shared/ui'
 import styles from './social-accounts-view.module.css'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
 
 type SocialConnectItem = {
   provider: SocialProvider
@@ -71,12 +74,10 @@ function StatusDot({ connected }: { connected: boolean }) {
   )
 }
 
+/** 연결 화면에서 돌아온 업무 안내 — 연결 실패는 시안 「처리 실패」 팝업으로 띄운다 */
 function socialErrorMessage(reason: string | null): string | null {
   if (reason === 'already-linked') {
     return '이 소셜 계정은 다른 JA Korea 계정에 연결되어 있어요.'
-  }
-  if (reason === 'connection-failed') {
-    return '소셜 계정을 연결하지 못했어요. 잠시 후 다시 시도해 주세요.'
   }
   return null
 }
@@ -93,10 +94,13 @@ export function SettingsSocialAccountsView({
   const [busyProvider, setBusyProvider] = useState<SocialProvider | null>(null)
   const [consentProvider, setConsentProvider] = useState<SocialProvider | null>(null)
   const [listError, setListError] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+  /** 연결·해제 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(() =>
+    linkErrorReason === 'connection-failed' ? PLATFORM_ALERT_COPY.requestFailed : null,
+  )
   const remote = isPortalSocialAuthLinkRemoteEnabled() && Boolean(getAccessToken())
   const returnError = socialErrorMessage(linkErrorReason)
-  const displayError = returnError ?? listError ?? actionError
+  const displayError = returnError ?? listError
 
   useEffect(() => {
     if (!remote) return
@@ -126,11 +130,10 @@ export function SettingsSocialAccountsView({
   const startLink = (provider: SocialProvider) => {
     if (!remote) {
       setConsentProvider(null)
-      setActionError('소셜 계정 연결을 시작할 수 없어요.')
+      setErrorAlert(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
 
-    setActionError(null)
     setBusyProvider(provider)
     rememberSettingsSocialLinkReturn()
     void platformSocialAuthClient
@@ -141,22 +144,21 @@ export function SettingsSocialAccountsView({
         }
         window.location.assign(url)
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         setBusyProvider(null)
         setConsentProvider(null)
-        setActionError('소셜 계정을 연결하지 못했어요. 잠시 후 다시 시도해 주세요.')
+        setErrorAlert(resolvePlatformErrorAlert(error))
       })
   }
 
   const unlink = async (provider: SocialProvider) => {
     if (!remote) return
-    setActionError(null)
     setBusyProvider(provider)
     try {
       await platformSocialAuthClient.unlinkAccount(provider)
       setConnectedMap(prev => ({ ...prev, [provider]: false }))
-    } catch {
-      setActionError('소셜 계정 연결을 해제하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    } catch (error) {
+      setErrorAlert(resolvePlatformErrorAlert(error))
     } finally {
       setBusyProvider(null)
     }
@@ -245,6 +247,12 @@ export function SettingsSocialAccountsView({
           setConsentProvider(null)
         }}
         onConfirm={confirmConnect}
+      />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </section>
   )

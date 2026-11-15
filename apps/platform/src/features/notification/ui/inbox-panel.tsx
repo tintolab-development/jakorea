@@ -9,9 +9,14 @@ import {
 import { formatNotificationBodyFirstLine, formatNotificationDate } from '../lib/format'
 import { resolvePortalNotificationPath } from '../lib/resolve-portal-notification-path'
 import {
+  resolvePortalNotificationPopup,
+  type PortalNotificationPopup,
+} from '../lib/resolve-portal-notification-popup'
+import {
   NOTIFICATION_CATEGORY_ALL,
   NOTIFICATION_CATEGORY_TABS,
   type NotificationCategoryTabKey,
+  toPlatformNotificationCategoryLabel,
 } from '../model/categories'
 import styles from './inbox-panel.module.css'
 
@@ -25,6 +30,11 @@ type NotificationInboxPanelProps = {
   className?: string
   unreadOnly?: boolean
   onNavigate?: () => void
+  /**
+   * 시안 안내 팝업이 있는 알림(공통_ 3종)을 눌렀을 때. 팝업은 드롭다운 밖에서 띄워야 해서
+   * 헤더가 받아 알림 목록을 닫고 `NotificationPopup`을 연다. 없으면 기존처럼 바로 이동.
+   */
+  onPopup?: (popup: PortalNotificationPopup) => void
 }
 
 function NotificationInboxItem({
@@ -35,7 +45,8 @@ function NotificationInboxItem({
   onSelect: (item: MemberNotificationResponse) => void
 }) {
   const isRead = item.readAt !== null
-  const categoryLabel = item.notificationCategoryLabel?.trim()
+  const rawCategoryLabel = item.notificationCategoryLabel?.trim()
+  const categoryLabel = rawCategoryLabel ? toPlatformNotificationCategoryLabel(rawCategoryLabel) : ''
 
   return (
     <li className={styles.itemRow}>
@@ -89,6 +100,7 @@ export function NotificationInboxPanel({
   variant = 'popover',
   className,
   onNavigate,
+  onPopup,
   unreadOnly = false,
 }: NotificationInboxPanelProps) {
   const [category, setCategory] = useState<NotificationCategoryTabKey>(NOTIFICATION_CATEGORY_ALL)
@@ -132,6 +144,11 @@ export function NotificationInboxPanel({
     if (markClicked.isPending) return
     const path = resolvePortalNotificationPath(item)
     markClicked.mutate(item.recipientId)
+    const popup = onPopup ? resolvePortalNotificationPopup(item) : null
+    if (popup && onPopup) {
+      onPopup(popup)
+      return
+    }
     if (!path) return
     onNavigate?.()
     navigate(path)

@@ -95,3 +95,47 @@ describe('useDashboardDnd — 경우 ① (기획 확정 2026-11-14)', () => {
     expect(setOrderedIds).toHaveBeenCalledWith('ADMIN', ['target', 'drag'])
   })
 })
+
+describe('useDashboardDnd — 제자리 드롭', () => {
+  it('끌던 위젯을 자기 원래 자리 위에 놓으면 순서·폭을 바꾸지 않는다', () => {
+    const setOrderedIds = vi.fn()
+    const setWidgetWidth = vi.fn()
+    const onLayoutSaved = vi.fn()
+    const rect = (left: number, top: number, width: number, height: number) =>
+      ({
+        left,
+        top,
+        width,
+        height,
+        right: left + width,
+        bottom: top + height,
+        x: left,
+        y: top,
+      }) as DOMRect
+
+    const { result } = renderHook(() =>
+      useDashboardDnd({
+        orderedIds: ['a', 'b', 'c'],
+        setOrderedIds,
+        userRole: 'ADMIN',
+        roleWidths: { a: 12, b: 12, c: 24 },
+        displayItemsMeta: [],
+        setWidgetWidth,
+        getSlotRects: () => [
+          { id: 'a', rect: rect(0, 0, 800, 400) },
+          { id: 'b', rect: rect(800, 0, 800, 400) },
+          { id: 'c', rect: rect(0, 432, 1600, 400) },
+        ],
+        onLayoutSaved,
+      })
+    )
+
+    act(() => {
+      result.current.handleDragEnd(dragEnd('a', 'a'))
+    })
+
+    expect(setOrderedIds).not.toHaveBeenCalled()
+    expect(setWidgetWidth).not.toHaveBeenCalled()
+    expect(onLayoutSaved).not.toHaveBeenCalled()
+  })
+})

@@ -3,6 +3,7 @@
  */
 import {
   STUDENT_ROSTER_UPLOAD_MAX_BYTES,
+  isStudentRosterUploadFileTypeAllowed,
   validateStudentRosterUploadFile,
 } from './student-roster-upload-policy.ts'
 
@@ -25,5 +26,9 @@ assert(
   )?.includes('20MB'),
   'oversize rejected'
 )
+
+assert(isStudentRosterUploadFileTypeAllowed({ name: '명단.CSV' }), 'csv type allowed')
+assert(!isStudentRosterUploadFileTypeAllowed({ name: '명단.xls' }), 'xls type rejected')
+assert(!isStudentRosterUploadFileTypeAllowed({ name: '명단.pdf' }), 'pdf type rejected')
 
 console.log('student-roster-upload-policy.selfcheck: ok')

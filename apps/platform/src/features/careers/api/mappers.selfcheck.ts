@@ -85,21 +85,21 @@ const fallback: CareersGuideView = {
       categoryLabel: '스토리',
       title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울',
       titleLines: ['메트라이프생명 사회공헌재단과 JA', 'Korea의 여름과 겨울'],
-      publishedAtLabel: '2026년 08월 15일',
+      publishedAtLabel: '2026년 8월 15일',
       imageUrl: '/bundle/story.png',
     },
     {
       id: 'story-summer-camp',
       categoryLabel: '스토리',
       title: '청소년과 함께한 JA Korea 여름 캠프 이야기',
-      publishedAtLabel: '2025년 07월 20일',
+      publishedAtLabel: '2025년 7월 20일',
       imageUrl: '/bundle/story.png',
     },
     {
       id: 'story-volunteer-day',
       categoryLabel: '스토리',
       title: '임직원 봉사로 이어진 따뜻한 하루',
-      publishedAtLabel: '2025년 03월 10일',
+      publishedAtLabel: '2025년 3월 10일',
       imageUrl: '/bundle/story.png',
     },
   ],
@@ -265,7 +265,7 @@ const linkedOne = mapPublicCareerGuide(
 assert.equal(linkedOne.featuredStories.length, 1)
 assert.equal(linkedOne.featuredStories[0]?.id, '7')
 assert.equal(linkedOne.featuredStories[0]?.categoryLabel, '뉴스레터')
-assert.equal(linkedOne.featuredStories[0]?.publishedAtLabel, '2026년 01월 07일')
+assert.equal(linkedOne.featuredStories[0]?.publishedAtLabel, '2026년 1월 7일')
 assert.equal(linkedOne.featuredStories[0]?.imageUrl, '')
 
 const emptyInterviews = mapPublicCareerGuide({ ...sample, interviews: [] }, fallback)
@@ -315,8 +315,8 @@ assert.equal(highDisplayOrder.featuredStories[0]?.imageUrl, 'https://cdn.example
 
 console.log('careers mapPublicCareerGuide selfcheck: ok')
 
-assert.equal(formatCareerPublishedAtLabel('2026-05-08'), '2026년 05월 08일')
-assert.equal(formatCareerPublishedAtLabel('2026-05-08T00:00:00Z'), '2026년 05월 08일')
+assert.equal(formatCareerPublishedAtLabel('2026-05-08'), '2026년 5월 8일')
+assert.equal(formatCareerPublishedAtLabel('2026-05-08T00:00:00Z'), '2026년 5월 8일')
 
 const postingSample: PublicCareerPostingListResponse = {
   items: [
@@ -356,9 +356,9 @@ assert.equal(jobs.length, 3)
 assert.equal(jobs[0]?.id, 'job-2')
 assert.equal(jobs[0]?.status, 'recruiting')
 assert.equal(jobs[0]?.statusLabel, '모집중')
-assert.equal(jobs[0]?.publishedAtLabel, '2026년 04월 22일')
+assert.equal(jobs[0]?.publishedAtLabel, '2026년 4월 22일')
 assert.equal(jobs[1]?.id, 'job-1')
-assert.equal(jobs[1]?.publishedAtLabel, '2026년 05월 08일')
+assert.equal(jobs[1]?.publishedAtLabel, '2026년 5월 8일')
 assert.equal(jobs[2]?.id, 'job-3')
 assert.equal(jobs[2]?.statusLabel, '결과발표')
 assert.ok(jobs.every(job => job.status !== 'closed'))
@@ -366,14 +366,14 @@ assert.ok(jobs.every(job => !('buttonLabel' in job) && !('linkUrl' in job)))
 
 console.log('careers mapPublicCareerPostings selfcheck: ok')
 
-assert.equal(formatCareerPublishedAtDetailLabel('2026-01-15'), '2026년 01월 15일')
+assert.equal(formatCareerPublishedAtDetailLabel('2026-01-15'), '2026년 1월 15일')
 assert.equal(
   formatCareerPublishedAtDetailLabel('2026-01-15T15:00:00'),
-  '2026년 01월 15일 오후 3:00',
+  '2026년 1월 15일 오후 3:00',
 )
 assert.equal(
   formatCareerPublishedAtDetailLabel('2026-01-15T15:00:00Z'),
-  '2026년 01월 16일 오전 12:00',
+  '2026년 1월 16일 오전 12:00',
 )
 assert.equal(
   formatCareerRecruitPeriodLabel('2026-04-03', '2026-11-20'),
@@ -409,7 +409,7 @@ const detailSample: PublicCareerPostingDetail = {
 const detail = mapPublicCareerPostingDetail(detailSample)
 assert.equal(detail?.id, 'job-1')
 assert.equal(detail?.statusLabel, '모집중')
-assert.equal(detail?.publishedAtDetailLabel, '2026년 05월 08일')
+assert.equal(detail?.publishedAtDetailLabel, '2026년 5월 8일')
 assert.equal(detail?.recruitPeriodLabel, '2026년 4월 3일 ~ 11월 20일')
 assert.equal(detail?.viewCount, 1232)
 assert.equal(detail?.content, '<p>본문</p>')
@@ -439,8 +439,8 @@ const detailFromPublishedAt = mapPublicCareerPostingDetail({
   publishedOn: undefined,
   publishedAt: '2026-05-08T15:00:00',
 })
-assert.equal(detailFromPublishedAt?.publishedAtLabel, '2026년 05월 08일')
-assert.equal(detailFromPublishedAt?.publishedAtDetailLabel, '2026년 05월 08일 오후 3:00')
+assert.equal(detailFromPublishedAt?.publishedAtLabel, '2026년 5월 8일')
+assert.equal(detailFromPublishedAt?.publishedAtDetailLabel, '2026년 5월 8일 오후 3:00')
 assert.equal(detail?.attachments[0]?.fileUrl, 'https://example.test/file.pdf')
 assert.equal(
   mapPublicCareerPostingDetail({

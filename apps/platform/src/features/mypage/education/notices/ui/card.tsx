@@ -21,7 +21,11 @@ export function EducationInProgressNoticeCard({
   const publishedAtLabel = formatEducationNoticePublishedAt(notice.publishedAt)
 
   return (
-    <button type="button" className={styles.card} onClick={onClick}>
+    <button
+      type="button"
+      className={notice.read ? styles.card : `${styles.card} ${styles.cardUnread}`}
+      onClick={onClick}
+    >
       <div className={styles.upper}>
         <PFText as="p" typo="hl-sm" color="black" className={styles.title}>
           {title}
@@ -36,7 +40,7 @@ export function EducationInProgressNoticeCard({
           <PFText
             as="p"
             typo="bd-md-sb"
-            color={notice.authorIsStaff ? 'primary-500' : 'black'}
+            color="black"
             className={styles.author}
           >
             {notice.authorName}
@@ -58,6 +62,7 @@ export function EducationInProgressNoticeCard({
         </div>
 
         <EducationNoticeStats
+          className={styles.stats}
           viewCount={notice.viewCount}
           commentCount={notice.commentCount}
           reactionCount={notice.reactionCount}

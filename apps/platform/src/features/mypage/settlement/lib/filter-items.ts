@@ -12,13 +12,16 @@ function itemOverlapsMonth(item: SettlementOverviewItem, monthKey: string) {
   return startKey <= monthEnd && endKey >= monthStart
 }
 
-/** 대체된 이전 신청은 원래 결과 상태로 필터에 포함한다. 원래 결과가 없는 옛 데이터는 '전체'에서만 보인다 */
+/**
+ * 대체된 이전 신청은 원래 결과 상태로 필터에 포함한다. 원래 결과가 없는 옛 데이터와
+ * 정산 대상 상태가 없는 행(제미나이 0원·미설정)은 '전체'에서만 보인다
+ */
 function matchesSettlementStatus(
   item: SettlementOverviewItem,
   status: SettlementOverviewParams['status'],
 ) {
   if (status === 'all') return true
-  return !item.supersededStatusUnknown && item.status === status
+  return !item.supersededStatusUnknown && !item.statusUnavailable && item.status === status
 }
 
 export function matchesSettlementSearch(item: SettlementOverviewItem, q: string) {

@@ -4,7 +4,7 @@ export const EMAIL_ID_LOCAL_PART_MAX_LENGTH = 64
 export const EMAIL_ID_MESSAGES = {
   empty: '이메일을 입력해 주세요.',
   invalidFormat: '이메일 형식에 맞게 입력해 주세요.',
-  duplicate: '이미 가입된 이메일이에요. 로그인하거나 다른 이메일을 입력해 주세요.',
+  duplicate: '이미 가입된 이메일이에요.',
   forbidden: '사용할 수 없는 이메일이에요. 다른 이메일을 입력해 주세요.',
   lengthExceeded: '이메일은 최대 254자까지 입력할 수 있어요.',
   whitespace: '이메일에는 공백을 사용할 수 없어요.',

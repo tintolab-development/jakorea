@@ -10,7 +10,9 @@ import type { EducationInProgressFile, EducationInProgressNotice } from '../mode
 import { deriveNoticeTitleFromHtml, isNoticeHtmlContentEmpty } from '../lib/derive-notice-title'
 import {
   NOTICE_ATTACH_ACCEPT,
+  NOTICE_ATTACH_FORMATS_LABEL,
   NOTICE_ATTACH_HINT,
+  isNoticeAttachmentTypeAllowed,
   validateNoticeAttachmentFile,
   validateNoticeAttachmentsBatch,
   PORTAL_PROGRAM_POST_INLINE_IMAGE_FILE_PURPOSE,
@@ -25,9 +27,20 @@ import {
   type PostWriteAudienceApiKey,
 } from '../lib/post-write-audience'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { PLATFORM_ALERT_COPY, buildFileTypeInvalidAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
+  educationNoticeAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import { PfRichTextEditor, useRichTextEditor } from '@/shared/rich-text'
 import {
   PFAlertModal,
+  PFRequiredMissingAlert,
   PFButton,
   PFCheckbox,
   PFDescriptionList,
@@ -76,8 +89,8 @@ export function EducationProgramNoticeWriteModal({
     []
   )
   const [attachments, setAttachments] = useState<PendingAttachment[]>([])
-  const [attachError, setAttachError] = useState<string | null>(null)
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
+  const [requiredMissing, setRequiredMissing] = useState<RequiredMissingAlertCopy | null>(null)
 
   const audienceOptions = useMemo(() => buildPostWriteAudienceOptions(program), [program])
   const [editorEpoch, setEditorEpoch] = useState(0)
@@ -103,7 +116,7 @@ export function EducationProgramNoticeWriteModal({
     enabled: open,
     initialContent: notice?.content ?? '',
     contentFormat: 'html',
-    placeholder: '안내사항을 입력해 주세요.',
+    placeholder: '안내사항을 입력해 주세요',
     resetKey: editorResetKey,
     resolveImageSrc: resolveNoticeImageSrc,
   })
@@ -116,8 +129,8 @@ export function EducationProgramNoticeWriteModal({
     setAudience(defaultPostWriteAudience(program))
     setExistingAttachmentItems([...existingAttachments])
     setAttachments([])
-    setAttachError(null)
-    setAlertMessage(null)
+    setAlert(null)
+    setRequiredMissing(null)
   }, [editing, existingAttachments, open, program])
 
   const toggleAudience = (value: PostWriteAudienceApiKey, checked: boolean) => {
@@ -128,9 +141,14 @@ export function EducationProgramNoticeWriteModal({
   }
 
   const handleAddFile = (file: File) => {
+    if (!isNoticeAttachmentTypeAllowed(file)) {
+      setAlert(buildFileTypeInvalidAlertCopy(NOTICE_ATTACH_FORMATS_LABEL))
+      return
+    }
+    // 용량·개수 초과는 시안에 따로 없어 「안내」 팝업
     const validationError = validateNoticeAttachmentFile(file)
     if (validationError) {
-      setAttachError(validationError)
+      setAlert(educationNoticeAlert(validationError))
       return
     }
     const batchError = validateNoticeAttachmentsBatch(
@@ -141,10 +159,9 @@ export function EducationProgramNoticeWriteModal({
       [file]
     )
     if (batchError) {
-      setAttachError(batchError)
+      setAlert(educationNoticeAlert(batchError))
       return
     }
-    setAttachError(null)
     setAttachments(prev => [...prev, { id: `${Date.now()}-${file.name}`, file }])
   }
 
@@ -157,19 +174,19 @@ export function EducationProgramNoticeWriteModal({
   }
 
   const handleSubmit = async () => {
-    if (audience.length === 0) {
-      setAlertMessage('게시글 공개 범위를 선택해 주세요.')
-      return
-    }
-
     const content = (api?.getHTML() ?? '').trim()
-    if (isNoticeHtmlContentEmpty(content)) {
-      setAlertMessage('안내사항 내용을 입력해 주세요.')
+    // 시안 「필수 항목 미입력 (항목명 노출)」 — 빠진 필수 항목명을 모두 보여 준다
+    const missingLabels = [
+      ...(audience.length === 0 ? ['게시글 공개 범위'] : []),
+      ...(isNoticeHtmlContentEmpty(content) ? ['안내사항 내용'] : []),
+    ]
+    if (missingLabels.length > 0) {
+      setRequiredMissing(buildRequiredMissingAlertCopy({ kind: 'field', labels: missingLabels }))
       return
     }
     const inlineImageFileObjectIds = collectNoticeInlineImageFileObjectIds(content)
     if (inlineImageFileObjectIds == null) {
-      setAlertMessage('본문 이미지는 파일로 삽입해 주세요.')
+      setAlert(educationNoticeAlert('본문 이미지는 파일로 삽입해 주세요.'))
       return
     }
 
@@ -180,7 +197,7 @@ export function EducationProgramNoticeWriteModal({
         : []
     })
     if (editing && attachmentFileObjectIds.length !== existingAttachmentItems.length) {
-      setAlertMessage('기존 첨부파일 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해 주세요.')
+      setAlert(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
 
@@ -194,7 +211,7 @@ export function EducationProgramNoticeWriteModal({
         : undefined
 
     if (!isRemoteApiConfigured()) {
-      setAlertMessage('API가 설정되지 않아 등록할 수 없습니다.')
+      setAlert(educationNoticeAlert('API가 설정되지 않아 등록할 수 없습니다.'))
       return
     }
 
@@ -220,7 +237,7 @@ export function EducationProgramNoticeWriteModal({
       onSaved?.()
       onClose()
     } catch (error) {
-      setAlertMessage(resolvePortalNoticeWriteErrorMessage(error))
+      setAlert(resolveEducationErrorAlert(error, resolvePortalNoticeWriteErrorMessage))
     }
   }
 
@@ -278,6 +295,7 @@ export function EducationProgramNoticeWriteModal({
           <div className={styles.editorWrap}>
             <PfRichTextEditor
               editor={editor}
+              className={styles.editor}
               allowImageUrl={false}
               resolveImageSrc={resolveNoticeImageSrc}
             />
@@ -296,7 +314,6 @@ export function EducationProgramNoticeWriteModal({
               buttonFullWidth
               disabled={submitting}
               onFileSelect={handleAddFile}
-              error={attachError}
             />
             <PFDescriptionList
               items={[
@@ -372,12 +389,12 @@ export function EducationProgramNoticeWriteModal({
       </PFModal>
 
       <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        onConfirm={() => setAlertMessage(null)}
-      >
-        {alertMessage}
-      </PFAlertModal>
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
+      />
+      <PFRequiredMissingAlert copy={requiredMissing} onConfirm={() => setRequiredMissing(null)} />
     </>
   )
 }

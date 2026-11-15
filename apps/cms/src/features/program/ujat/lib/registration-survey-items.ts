@@ -26,6 +26,13 @@ export const UJAT_SURVEY_MENU_KEY_BY_ITEM: Record<UjatSurveyRowId, string> = {
   lecture_evaluation: 'survey-lecture-eval',
 }
 
+/**
+ * 상세 설문 관리 LNB 2depth — 봉사단·학교 만족도조사를 「만족도조사」 한 메뉴로 묶는다
+ * (시안 4082:115365, 탭 교사·상반기 봉사자·하반기 봉사자). 등록 폼·저장 키는 4종 그대로 둔다.
+ */
+export const UJAT_SATISFACTION_SURVEY_MENU_KEY = 'survey-satisfaction'
+export const UJAT_SATISFACTION_SURVEY_MENU_LABEL = '만족도조사'
+
 export function createUjatSurveyItemsDefault(
   allOn = true
 ): Record<UjatSurveyRowId, boolean> {

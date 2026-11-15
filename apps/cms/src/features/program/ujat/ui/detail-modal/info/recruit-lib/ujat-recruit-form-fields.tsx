@@ -18,7 +18,7 @@ import '@/features/template/ui/form-editor/form-editor.css'
 import '../recruit-paragraph-views/volunteer-info-program.css'
 export const UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 export const UJAT_RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
-/** 템플릿 관리 UJAT 모집 폼 시안(5800:157724·158529) 플레이스홀더 — 프로그램 상세·등록은 기존 문구 */
+/** UJAT 모집 폼 시안(템플릿 관리 5800:157724·158529 · 등록 위저드 4082:105197·105354·105632) 플레이스홀더 — 프로그램 상세는 기존 문구 */
 export const UJAT_TEMPLATE_ANNOUNCEMENT_TITLE_PLACEHOLDER = '모집 시 노출될 프로그램명을 입력해 주세요'
 export const UJAT_TEMPLATE_RECRUIT_PERIOD_PLACEHOLDER = '모집 기간을 선택해 주세요'
 export const UJAT_TEMPLATE_ANNOUNCE_DATE_PLACEHOLDER = '합격자 발표일을 선택해 주세요'

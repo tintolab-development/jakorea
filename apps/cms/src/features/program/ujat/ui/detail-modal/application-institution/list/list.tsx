@@ -18,11 +18,9 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatInstitutionApplicationList({
   onOpenDetail,
-  onOpenScheduleAssign,
   programId,
 }: {
   onOpenDetail: (row: UjatInstitutionApplicationRow) => void
-  onOpenScheduleAssign?: () => void
   programId?: string | null
 }) {
   const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
@@ -207,14 +205,10 @@ export function UjatInstitutionApplicationList({
           ).map(row => row.institutionName)}
           loading={tempActionLoading}
           onCancel={closeTempActionModal}
-          onConfirm={() => {
-            if (pendingTempAction === 'temp_assign') {
-              confirmBulkTempAssign()
-              onOpenScheduleAssign?.()
-              return
-            }
-            void confirmBulkTempReject()
-          }}
+          onConfirm={() =>
+            // 임시 배정은 상태 POST로 끝난다 — 일정 탭으로 자동 이동하지 않는다.
+            pendingTempAction === 'temp_assign' ? confirmBulkTempAssign() : confirmBulkTempReject()
+          }
         />
       ) : null}
 

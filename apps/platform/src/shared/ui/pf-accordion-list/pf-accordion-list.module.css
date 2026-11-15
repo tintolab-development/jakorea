@@ -93,6 +93,15 @@
   background: var(--color-neutral-cool-50);
 }
 
+.panelRow:last-child {
+  padding-bottom: var(--spacing-48);
+}
+
+/* 시안: 답변(마지막 행) 본문은 SemiBold */
+.panelRow:last-child .body {
+  font-weight: 600;
+}
+
 .label {
   display: flex;
   width: 74px;
@@ -158,17 +167,26 @@
 
   .panelRow {
     flex-direction: column;
-    padding: var(--spacing-24) var(--spacing-16);
-    gap: var(--spacing-8);
+    padding: var(--spacing-16) var(--spacing-16) var(--spacing-4);
+    gap: var(--spacing-4);
+  }
+
+  .panelRow:last-child {
+    padding: var(--spacing-4) var(--spacing-16) var(--spacing-16);
   }
 
   .label {
     width: auto;
     justify-content: flex-start;
-    font-size: 18px !important;
+    font-size: 20px !important;
     font-weight: 600;
-    line-height: 145%;
+    line-height: 30px;
     letter-spacing: 0;
+  }
+
+  .panelRow .body {
+    font-size: 14px;
+    line-height: 21px;
   }
 }
 

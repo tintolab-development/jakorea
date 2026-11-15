@@ -196,7 +196,11 @@ function toPreferredScheduleCardsFromBlocks(
 
     return {
       id: scheduleId != null ? `preferred-schedule-${scheduleId}` : `preferred-schedule-${index + 1}`,
-      label: `진행 희망 교육 일정 ${index + 1}`,
+      // 1사1교 시안 — 「진행 희망 교육 일정 N지망」(1·2지망 고정)
+      label:
+        detailMode === 'company-school'
+          ? `진행 희망 교육 일정 ${index + 1}지망`
+          : `진행 희망 교육 일정 ${index + 1}`,
       value,
       ...(trainedTeacher && trainedTeacher.sessionLines.length > 0
         ? { sessionLines: trainedTeacher.sessionLines }

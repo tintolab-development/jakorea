@@ -1,10 +1,15 @@
 import dayjs from 'dayjs'
+import { AdminEmptyState } from '@jakorea/admin-ui/empty'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import {
   ALIMTALK_MESSAGE_TYPE_LABEL,
   type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
+
+/** 시안 17119:169121 — 템플릿 미선택 빈 상태(아이콘 없음) */
+const UNSELECTED_TITLE = '템플릿을 먼저 선택해 주세요.'
+const UNSELECTED_DESCRIPTION = '항목이 선택되면 이곳에 목록이 표시됩니다.'
 
 type DetailPanelProps = {
   template: AlimtalkTemplateItem | null
@@ -13,8 +18,13 @@ type DetailPanelProps = {
 }
 
 export function DetailPanel({ template, categoryName, onPreview }: DetailPanelProps) {
+  /** 템플릿 미선택·빈 폴더 선택 모두 시안 빈 상태 */
   if (!template) {
-    return <div className="alimtalk-template-detail alimtalk-template-detail--empty" />
+    return (
+      <div className="alimtalk-template-detail alimtalk-template-detail--empty">
+        <AdminEmptyState title={UNSELECTED_TITLE} description={UNSELECTED_DESCRIPTION} />
+      </div>
+    )
   }
 
   return (

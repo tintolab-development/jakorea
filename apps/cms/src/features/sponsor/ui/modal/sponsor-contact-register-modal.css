@@ -1,17 +1,24 @@
-.content-modal.sponsor-contact-register-modal .teal-header-modal__body {
+/*
+ * 후원사 담당자 신규 등록 — 시안 9270:73909 600×750 (QA 2026-11-15 데이터 관리 C19~C23)
+ * 컨트롤 medium(40 · padding 9/16 · 15px) · 필드 간격 30 · 2열 간격 12 · 라벨 22(lh20 + 2) #525252
+ * · 라디오 줄 40 · 타이틀 ↔ 본문 14 + 16
+ */
+.content-modal.content-modal--title-body-gap-always.sponsor-contact-register-modal
+  .teal-header-modal__body {
   margin-top: var(--spacing-14);
+  padding-top: 16px;
 }
 
 .sponsor-contact-register-modal__form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-24, 24px);
+  gap: 30px;
 }
 
 .sponsor-contact-register-modal__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-8);
+  gap: 12px;
   align-items: start;
 }
 
@@ -28,10 +35,19 @@
   min-width: 0;
 }
 
+.sponsor-contact-register-modal__field > .app-radio-group.ant-radio-group {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
 .sponsor-contact-register-modal__label {
+  box-sizing: border-box;
+  padding-bottom: 2px;
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-500);
-  color: var(--color-text-label, #262626);
+  line-height: 20px;
+  color: var(--Content-secondary, #525252);
 }
 
 .sponsor-contact-register-modal__required {

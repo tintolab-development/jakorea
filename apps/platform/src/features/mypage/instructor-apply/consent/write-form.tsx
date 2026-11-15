@@ -4,8 +4,6 @@ import {
   buildPlatformConsentFillOptions,
   collectMemberConsentUnagreedRequiredLabels,
   createConsentTemplateSeedDraft,
-  formatMemberConsentDisagreedRequiredAlertMessage,
-  formatMemberConsentIncompleteRequiredAlertMessage,
   getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
   hasMemberConsentInvalidResidentNumberFormat,
@@ -36,10 +34,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isAxiosError } from 'axios'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
-import { PLATFORM_ALERT_COPY, PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
+import {
+  PLATFORM_ALERT_COPY,
+  PLATFORM_REQUIRED_NOT_FILLED_TITLE,
+  type PlatformAlertCopy,
+} from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequestFailedAlertCopy,
+  resolvePlatformErrorAlert,
+} from '@/shared/lib/platform-error-alert'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
 import {
   PFAlertModal,
   PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
   PFButton,
   PFFormDraftSignatureProvider,
   PFFormDraftSignatureTitleAsideBridge,
@@ -133,12 +144,12 @@ function isSchemaConsentWriteIncomplete(
 
 export type ConsentWriteSubmitContext = 'instructorApply' | 'mypageSettings'
 
-const PORTAL_SUBMIT_FAILED_MESSAGE =
-  '동의서를 제출하지 못했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
-const SIGNATURE_REQUIRED_ALERT_MESSAGE = '전자서명을 완료해 주세요'
+/** 전자서명 미완료 — 시안 「필수 항목 미입력(항목명 노출)」 */
+const SIGNATURE_REQUIRED_ALERT_COPY = buildRequiredMissingAlertCopy({
+  kind: 'field',
+  labels: ['전자서명'],
+})
 const SERVER_DRAFT_LOADING_MESSAGE = '동의서 양식을 불러오는 중입니다.'
-const SERVER_DRAFT_UNAVAILABLE_MESSAGE =
-  '동의서 양식을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
 const PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE =
   '동의서 양식이 변경되었습니다. 최신 양식을 다시 확인해 주세요.'
 const MEMBER_PROFILE_LOADING_MESSAGE = '회원 정보를 불러오는 중입니다.'
@@ -159,7 +170,6 @@ const PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES: Record<string, string> = {
   CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED: CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE,
   RECEIPT_CONSENT_BASIC_INFO_REQUIRED: RECEIPT_CONSENT_BASIC_INFO_REQUIRED_MESSAGE,
   RECEIPT_CONSENT_PURPOSE_INVALID: RECEIPT_CONSENT_PURPOSE_INVALID_MESSAGE,
-  PORTAL_CONSENT_REQUIRED_SIGNATURE_MISSING: SIGNATURE_REQUIRED_ALERT_MESSAGE,
   PORTAL_CONSENT_TEMPLATE_VERSION_CHANGED: PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE,
 }
 
@@ -255,6 +265,15 @@ export function SchemaConsentWriteForm({
     setAlertMessage(message)
     setAlertOpen(true)
   }, [])
+  /** 시안 「오류 제한 팝업」(14491-2533) 제목·설명 */
+  const openAlertCopy = useCallback(
+    (copy: PlatformAlertCopy) => openAlert(copy.description, copy.title),
+    [openAlert],
+  )
+  /** 필수 항목 미입력(항목명 노출) — 여러 개면 목록 상자 */
+  const [requiredMissingCopy, setRequiredMissingCopy] = useState<RequiredMissingAlertCopy | null>(
+    null,
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const portalSubmitEnabled = isRemoteApiConfigured() && Boolean(getAccessToken())
   const serverDraftInitializedRef = useRef(false)
@@ -352,7 +371,7 @@ export function SchemaConsentWriteForm({
         applyServerDraftDocument(document)
         if (document.documentId == null || document.formTemplateVersion?.schemaJson == null) {
           setServerDraftUnavailable(true)
-          openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
+          openAlertCopy(PLATFORM_ALERT_COPY.requestFailed)
           return
         }
         setServerDraftUnavailable(false)
@@ -360,10 +379,10 @@ export function SchemaConsentWriteForm({
       .catch(error => {
         setServerDraftUnavailable(true)
         console.debug('portal consent draft create failed', error)
-        openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
+        openAlertCopy(resolvePlatformErrorAlert(error))
       })
       .finally(() => setIsServerDraftLoading(false))
-  }, [applyServerDraftDocument, consentKey, openAlert, portalSubmitEnabled, readOnly, templateId])
+  }, [applyServerDraftDocument, consentKey, openAlertCopy, portalSubmitEnabled, readOnly, templateId])
 
   const recoverPortalDraftVersion = useCallback(async () => {
     const consentType = resolvePortalConsentCreateType(consentKey)
@@ -408,7 +427,8 @@ export function SchemaConsentWriteForm({
       return
     }
     if (serverDraftUnavailable) {
-      openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
+      // 양식 준비 요청이 실패한 상태 — 시안 「처리 실패」
+      openAlertCopy(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     if (templateId === 'agreement-notice' && isLockedBasicLoading && !lockedBasic.name.trim()) {
@@ -418,19 +438,17 @@ export function SchemaConsentWriteForm({
     if (incomplete) {
       const unagreedLabels = collectMemberConsentUnagreedRequiredLabels(state.draft)
       if (unagreedLabels.length > 0) {
-        // 시안 「필수 항목 미동의」 제목 — 본문은 미동의 항목명을 그대로 안내한다
-        openAlert(
-          formatMemberConsentDisagreedRequiredAlertMessage(unagreedLabels),
-          PLATFORM_ALERT_COPY.requiredNotAgreed.title,
-        )
+        // 시안 「필수 항목 미동의」 — 제목·설명 고정
+        openAlertCopy(PLATFORM_ALERT_COPY.requiredNotAgreed)
       } else {
-        // 시안 「필수 항목 미입력」 제목 — 빠진 항목명을 알 수 있으면 그대로, 없으면 시안 설명
-        openAlert(
-          formatMemberConsentIncompleteRequiredAlertMessage(incompleteRequiredFields) || (
-            <PFRequiredFieldsIncompleteDescription />
-          ),
-          PLATFORM_REQUIRED_NOT_FILLED_TITLE,
-        )
+        // 시안 「필수 항목 미입력(항목명 노출)」 — 항목명을 모르면 「‘*’ 표시된 필수 항목」 설명
+        const labels = [...new Set(incompleteRequiredFields.map(field => field.label.trim()))]
+          .filter(Boolean)
+        if (labels.length > 0) {
+          setRequiredMissingCopy(buildRequiredMissingAlertCopy({ kind: 'field', labels }))
+        } else {
+          openAlert(<PFRequiredFieldsIncompleteDescription />, PLATFORM_REQUIRED_NOT_FILLED_TITLE)
+        }
       }
       return
     }
@@ -459,7 +477,7 @@ export function SchemaConsentWriteForm({
       signatureSlots.length > 0 &&
       !isConsentSignaturesComplete(state.signatures, signatureSlots)
     ) {
-      openAlert(SIGNATURE_REQUIRED_ALERT_MESSAGE)
+      setRequiredMissingCopy(SIGNATURE_REQUIRED_ALERT_COPY)
       return
     }
 
@@ -480,12 +498,17 @@ export function SchemaConsentWriteForm({
           const code = readPortalConsentTemplateErrorCode(error)
           if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_CHANGED') {
             void recoverPortalDraftVersion().finally(() => {
-              openAlert(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
+              openAlertCopy(buildRequestFailedAlertCopy(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE))
             })
             return
           }
+          if (code === 'PORTAL_CONSENT_REQUIRED_SIGNATURE_MISSING') {
+            setRequiredMissingCopy(SIGNATURE_REQUIRED_ALERT_COPY)
+            return
+          }
           if (code && PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code]) {
-            openAlert(PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code])
+            // 오류 코드별 안내 — 시안 「처리 실패」 제목 아래 설명으로
+            openAlertCopy(buildRequestFailedAlertCopy(PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code]))
             return
           }
           if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_MISMATCH') {
@@ -499,18 +522,18 @@ export function SchemaConsentWriteForm({
             )
               .catch(() => recoverPortalDraftVersion())
               .finally(() => {
-                openAlert(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
+                openAlertCopy(buildRequestFailedAlertCopy(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE))
               })
             return
           }
-          openAlert(PORTAL_SUBMIT_FAILED_MESSAGE)
+          openAlertCopy(resolvePlatformErrorAlert(error))
         })
         .finally(() => setIsSubmitting(false))
       return
     }
 
     if (consentKey === RECEIPT_PRE_CONSENT_WRITE_KEY) {
-      openAlert(PORTAL_SUBMIT_FAILED_MESSAGE)
+      openAlertCopy(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     markInstructorApplyConsentAgreed(consentKey)
@@ -892,6 +915,10 @@ export function SchemaConsentWriteForm({
         title={alertTitle}
         description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
+      />
+      <PFRequiredMissingAlert
+        copy={requiredMissingCopy}
+        onConfirm={() => setRequiredMissingCopy(null)}
       />
     </>
   )

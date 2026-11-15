@@ -11,6 +11,8 @@ interface BasicInfoParagraphProps {
   onlyPaymentPurposeLocked?: boolean
   lockedProfileFields?: boolean
   hideResidentFields?: boolean
+  /** 영수증 정산 신청서 — 주민등록번호 행만 숨김(소속은 유지) */
+  hideResidentNumberRow?: boolean
   onValuesChange?: (values: PaymentStatementBasicInfoAutofillValues) => void
   /** 발급 양식 편집기(지급조서·정산 신청서) — 템플릿 관리 화면 시안 레이아웃 */
   issuanceLayout?: PaymentStatementBasicInfoIssuanceLayout
@@ -22,6 +24,7 @@ export function BasicInfoParagraph({
   onlyPaymentPurposeLocked,
   lockedProfileFields,
   hideResidentFields,
+  hideResidentNumberRow,
   onValuesChange,
   issuanceLayout,
 }: BasicInfoParagraphProps) {
@@ -33,6 +36,7 @@ export function BasicInfoParagraph({
         onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
         lockedProfileFields={lockedProfileFields}
         hideResidentFields={hideResidentFields}
+        hideResidentNumberRow={hideResidentNumberRow}
         onValuesChange={onValuesChange}
         issuanceLayout={issuanceLayout}
       />

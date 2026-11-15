@@ -46,4 +46,20 @@ describe('resolveConsentSignedSignatureField', () => {
       resolveConsentSignedSignatureField([{ signed: true, signatureFileObjectId: 12 }])
     ).toBeNull()
   })
+
+  it('BE가 준 서명 이미지 조회 주소(contentRevealEndpoint)를 그대로 넘긴다', () => {
+    expect(
+      resolveConsentSignedSignatureField([
+        {
+          fieldKey: 'final',
+          signed: true,
+          contentRevealEndpoint: '/api/admin/users/1/consent-records/PORTRAIT_RIGHTS/signed-document/signature-fields/final/content?documentId=9',
+        },
+      ])
+    ).toEqual({
+      fieldKey: 'final',
+      contentRevealEndpoint:
+        '/api/admin/users/1/consent-records/PORTRAIT_RIGHTS/signed-document/signature-fields/final/content?documentId=9',
+    })
+  })
 })

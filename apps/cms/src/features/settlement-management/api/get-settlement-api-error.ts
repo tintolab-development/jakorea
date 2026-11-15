@@ -81,6 +81,10 @@ export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED =
   'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED'
 export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE =
   '강사의 지급조서 사전 동의가 완료되지 않아 지급조서를 확인할 수 없습니다. 강사에게 사전 동의를 안내해 주세요.'
+/** 지급조서 확인 409 — 동의서 계좌 없음. 업로드 행 계좌가 아니라 지급조서 사전 동의서 작성을 안내한다 */
+export const SETTLEMENT_BANK_ACCOUNT_REQUIRED = 'SETTLEMENT_BANK_ACCOUNT_REQUIRED'
+export const SETTLEMENT_BANK_ACCOUNT_REQUIRED_MESSAGE =
+  '지급조서 사전 동의서로 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다. 강사에게 지급조서 사전 동의서 작성을 안내해 주세요.'
 export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED = 'GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED'
 export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE =
   '제미나이 지급조서는 지급 정정을 할 수 없습니다. 지급조서를 반려한 뒤 실적을 다시 등록해 주세요.'
@@ -89,12 +93,16 @@ export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE =
 export const ACCOUNT_PAYMENT_ACCOUNT_MISSING = 'ACCOUNT_PAYMENT_ACCOUNT_MISSING'
 /** 고른 건이 모두 영수증이라 세금신고 대상이 없음(E1) — 발급·미리보기 */
 export const TAX_REPORT_NO_ELIGIBLE_SELECTION = 'TAX_REPORT_NO_ELIGIBLE_SELECTION'
+/** Figma 11. 팝업 케이스 > type=세금 신고 발급 불가 */
+export const TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE = '양식 발급 불가 안내'
+export const TAX_REPORT_NO_ELIGIBLE_SELECTION_MESSAGE =
+  '선택한 신청 건에 세금신고 대상 항목이 없습니다.\n세금신고 대상 항목이 포함된 건을 선택해 주세요.'
 
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   [ACCOUNT_PAYMENT_ACCOUNT_MISSING]:
     '지급 계좌 정보가 없어 지급 완료 처리할 수 없어요. 회원의 사전 동의서 계좌 정보를 확인해 주세요.',
-  [TAX_REPORT_NO_ELIGIBLE_SELECTION]: '선택한 건 중 세금신고 대상이 없어요.',
+  [TAX_REPORT_NO_ELIGIBLE_SELECTION]: TAX_REPORT_NO_ELIGIBLE_SELECTION_MESSAGE,
   SCHEDULED_PAYMENT_DATE_REQUIRED: '계좌 지급 예정일을 입력해 주세요.',
   PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
   PAYMENT_STATEMENT_NOT_FOUND:
@@ -131,8 +139,7 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
     '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_WAGE_RATE_NOT_CONFIGURED: '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
-  SETTLEMENT_BANK_ACCOUNT_REQUIRED:
-    '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
+  [SETTLEMENT_BANK_ACCOUNT_REQUIRED]: SETTLEMENT_BANK_ACCOUNT_REQUIRED_MESSAGE,
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
     '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
   [DOWNLOAD_PASSWORD_REQUIRED_CODE]: DOWNLOAD_PASSWORD_REQUIRED_MESSAGE,
@@ -147,11 +154,12 @@ const FORCE_FE_MAPPED_CODES = new Set([
   SENSITIVE_FILE_RELAY_REQUIRED,
   LEGACY_GEMINI_TAX_SNAPSHOT_MISSING,
   TAX_REPORT_REQUIRED_IDENTITY_MISSING,
+  TAX_REPORT_NO_ELIGIBLE_SELECTION,
   SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED,
   SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID,
   SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED,
   GEMINI_TRAINING_REPORT_MISSING,
-  'SETTLEMENT_BANK_ACCOUNT_REQUIRED',
+  SETTLEMENT_BANK_ACCOUNT_REQUIRED,
 ])
 
 export type NormalizedSettlementApiErrorCode = {
@@ -390,6 +398,21 @@ export function isGeminiPaymentStatementPreConsentRequiredError(error: unknown):
   const response = readAxiosResponse(error)
   if (response?.status !== 409) return false
   return getSettlementApiErrorCode(error) === GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED
+}
+
+/** 409 지급조서 확인 — 동의서 계좌 없음. 업로드 계좌를 다시 받지 않고 사전 동의서 작성을 안내한다 */
+export function isSettlementBankAccountRequiredError(error: unknown): boolean {
+  const response = readAxiosResponse(error)
+  if (response?.status !== 409) return false
+  return getSettlementApiErrorCode(error) === SETTLEMENT_BANK_ACCOUNT_REQUIRED
+}
+
+/** 지급조서 확인을 막는 동의서 미완료(사전 동의 없음·동의서 계좌 없음) */
+export function isPaymentStatementConfirmConsentBlockError(error: unknown): boolean {
+  return (
+    isGeminiPaymentStatementPreConsentRequiredError(error) ||
+    isSettlementBankAccountRequiredError(error)
+  )
 }
 
 export function isTaxReportIdentityOrSnapshotMissingError(error: unknown): boolean {

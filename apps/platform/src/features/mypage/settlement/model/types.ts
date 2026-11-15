@@ -39,6 +39,15 @@ export type SettlementOverviewItem = {
   superseded?: boolean
   /** 대체된 이전 신청인데 서버 supersededReason이 없는 옛 데이터 — 상태 라벨을 '-'로 둔다 */
   supersededStatusUnknown?: boolean
+  /** 정산 대상 상태가 없는 행(제미나이 강사비 0원·미설정) — 상태 '-', 합계 제외 */
+  statusUnavailable?: boolean
+  /** 실제 이체 완료 시각(영수증·제미나이). 있으면 지급 완료 월 집계를 이 날짜의 KST 월로 한다 */
+  paidAt?: string
+  /**
+   * 금액 카드 합계용 실지급액. 표시 금액(appliedAmount)과 다를 때만 둔다.
+   * 제미나이는 목록에 산정 강사비, 합계에 실지급액을 쓴다.
+   */
+  summaryAmount?: number | null
 }
 
 export type SettlementOverviewSummary = {

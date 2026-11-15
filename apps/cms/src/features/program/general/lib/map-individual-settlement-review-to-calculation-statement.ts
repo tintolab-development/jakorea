@@ -8,10 +8,12 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import {
   INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL,
   individualSettlementReviewStatusLabel,
   isIndividualSettlementLodgingType,
+  isIndividualSettlementResubmission,
   latestIndividualSettlementReviewRevision,
   normalizeIndividualSettlementReviewStatus,
 } from './individual-settlement-review-status'
@@ -52,12 +54,16 @@ export function mapIndividualSettlementItemKind(
 }
 
 export function mapIndividualSettlementProcessingStatusClass(
-  status: string | null | undefined
+  status: string | null | undefined,
+  latestRevisionNo?: number | null
 ): PaymentOrderAdminLineProcessingStatus {
   const key = normalizeIndividualSettlementReviewStatus(status)
   if (key === 'APPROVED') return 'confirmed'
   if (key === 'REJECTED') return 'application_rejected'
-  if (key === 'SUBMITTED') return 'pending'
+  // 1차 제출 확인 대기 중, 2차 이상 제출 지급조서 재신청(모든 화면 공통 차수 기준)
+  if (key === 'SUBMITTED') {
+    return isIndividualSettlementResubmission(latestRevisionNo) ? 'reapplication' : 'pending'
+  }
   return 'pending'
 }
 
@@ -83,6 +89,11 @@ export type IndividualSettlementReviewBasicExtras = {
    * 화면에서도 쓰지 않는다(열·팝업 모두 비노출, 기획 2026-11-12 2차 1번).
    */
   includeInstitution?: boolean
+  /**
+   * 일정 회차 번호. 영수증 검토 상세에는 회차가 없어 목록 행(지급조서 확인 라인·배정 일정)에서 받는다.
+   * 산출 내역서 교육 진행 일자 칸 「YYYY.MM.DD(요일) │ N회차」(시안)에 쓴다.
+   */
+  sessionOrdinal?: number | null
 }
 
 export function mapIndividualSettlementReviewToCalculationStatement(
@@ -95,7 +106,9 @@ export function mapIndividualSettlementReviewToCalculationStatement(
   const lectureDateDisplay = detail.scheduleStartAt
     ? formatDateDotWithWeekday(detail.scheduleStartAt)
     : displayOrDash(formatCmsScheduleDisplayLabel(detail.scheduleName ?? '') || detail.scheduleName)
-  const lectureSessionDisplay = extractSessionLabel(detail.scheduleName)
+  const ordinalLabel = formatLectureSessionLabel(extras?.sessionOrdinal)
+  const lectureSessionDisplay =
+    extractSessionLabel(detail.scheduleName) || (ordinalLabel === '-' ? '' : ordinalLabel)
   const receiptsByItemId: Record<string, IndividualSettlementReviewReceipt[]> = {}
 
   const lines = items.map(item => {
@@ -126,6 +139,7 @@ export function mapIndividualSettlementReviewToCalculationStatement(
 
   const rejectionReason = latest?.rejectionReason?.trim()
   const status = latest?.status ?? detail.status
+  const revisionNo = latest?.revisionNo ?? detail.latestRevisionNo ?? null
 
   return {
     basic: {
@@ -133,8 +147,8 @@ export function mapIndividualSettlementReviewToCalculationStatement(
       instructorNameKo: displayOrDash(detail.memberName),
       businessPeriodDisplay: displayOrDash(extras?.businessPeriodDisplay),
       programSessionProgressDisplay: displayOrDash(extras?.programSessionProgressDisplay),
-      processingStatusDisplay: individualSettlementReviewStatusLabel(status),
-      processingStatusClass: mapIndividualSettlementProcessingStatusClass(status),
+      processingStatusDisplay: individualSettlementReviewStatusLabel(status, revisionNo),
+      processingStatusClass: mapIndividualSettlementProcessingStatusClass(status, revisionNo),
       processingRejectionReason: rejectionReason || undefined,
       // 계좌 지급 건의 현재 이체 예정일. 승인 전·반려처럼 지급 건이 없으면 null → 화면 '-'
       lectureFeePaymentScheduledDateDisplay: detail.scheduledPaymentDate

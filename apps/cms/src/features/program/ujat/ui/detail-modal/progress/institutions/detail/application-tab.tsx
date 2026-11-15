@@ -5,6 +5,7 @@ import { CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { formatNumberDisplay } from '@/shared/utils'
 import { InstitutionTeacherEdit } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
+import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { withProgramDetailTdDivider, renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -44,6 +45,8 @@ export function UjatEducationProgressInstitutionApplicationTab({
   onAddressDetailDraftChange,
   teacherContactDraft,
   onTeacherContactDraftChange,
+  teacherOptions,
+  isTeacherOptionsLoading = false,
   isAdminCommentEditing,
   adminCommentDraft,
   onAdminCommentDraftChange,
@@ -60,6 +63,9 @@ export function UjatEducationProgressInstitutionApplicationTab({
   onAddressDetailDraftChange: (next: string) => void
   teacherContactDraft: UjatInstitutionApplicationTeacherContact
   onTeacherContactDraftChange: (next: UjatInstitutionApplicationTeacherContact) => void
+  /** 담당 교사 선택지(기관 소속 교사). 담당 교사는 teacherMemberId로만 바뀌어 자유 입력을 두지 않는다 */
+  teacherOptions: InstitutionAffiliatedTeacherOption[]
+  isTeacherOptionsLoading?: boolean
   isAdminCommentEditing: boolean
   adminCommentDraft: string
   onAdminCommentDraftChange: (next: string) => void
@@ -149,6 +155,8 @@ export function UjatEducationProgressInstitutionApplicationTab({
                 phone={teacherContactDraft.tel}
                 mobile={teacherContactDraft.mobile}
                 email={teacherContactDraft.email}
+                teacherOptions={teacherOptions}
+                isTeacherOptionsLoading={isTeacherOptionsLoading}
                 onChange={patch =>
                   onTeacherContactDraftChange({
                     ...teacherContactDraft,

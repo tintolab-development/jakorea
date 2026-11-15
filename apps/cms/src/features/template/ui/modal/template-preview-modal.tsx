@@ -91,6 +91,11 @@ export interface TemplatePreviewModalProps {
   showDocumentDownload?: boolean
   /** 지정 시 클라이언트 html2pdf 대신 이 핸들러만 호출한다 */
   onDocumentDownloadClick?: () => void
+  /**
+   * false면 「미리보기」 배지와 「현재 화면은 미리보기 화면입니다.」 문구를 숨기고 닫기 버튼을 「닫기」로 둔다.
+   * 제출된 동의서 보기처럼 미리보기가 아닌 실제 문서 보기용. @default true
+   */
+  showPreviewChrome?: boolean
 }
 
 /**
@@ -117,6 +122,7 @@ export function TemplatePreviewModal({
   agreementClosingFooter,
   showDocumentDownload = true,
   onDocumentDownloadClick,
+  showPreviewChrome = true,
 }: TemplatePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const previewBodyRef = useRef<HTMLDivElement>(null)
@@ -157,6 +163,7 @@ export function TemplatePreviewModal({
   const {
     pages: pagedParagraphs,
     overflowParagraphIds,
+    waitForPagesReady,
     measureLayer,
   } = useA4ParagraphPages({
     allParagraphs: previewParagraphs,
@@ -256,6 +263,7 @@ export function TemplatePreviewModal({
     if (root == null || pdfLoading) return
     setPdfLoading(true)
     try {
+      await waitForPagesReady()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(a4DocumentTitle))
     } catch (error) {
@@ -267,7 +275,7 @@ export function TemplatePreviewModal({
     } finally {
       setPdfLoading(false)
     }
-  }, [a4DocumentTitle, pdfLoading, showAlert])
+  }, [a4DocumentTitle, pdfLoading, showAlert, waitForPagesReady])
 
   if (isAgreementPreviewLayout && previewLayout !== 'a4-document') {
     return (
@@ -301,7 +309,9 @@ export function TemplatePreviewModal({
           <header className="template-preview-modal__title-row">
             <div className="template-preview-modal__title-left">
               <span className="template-preview-modal__title-text">{headerTitle}</span>
-              <span className="template-preview-modal__badge">미리보기</span>
+              {showPreviewChrome ? (
+                <span className="template-preview-modal__badge">미리보기</span>
+              ) : null}
             </div>
             <button
               type="button"
@@ -317,9 +327,13 @@ export function TemplatePreviewModal({
             {isA4DocumentPreviewLayout || isCardUserPreviewLayout ? (
               <div className="template-preview-modal__notice-wrap">
                 <div className="template-preview-modal__notice">
-                  <span className="template-preview-modal__notice-text">
-                    현재 화면은 미리보기 화면입니다.
-                  </span>
+                  {showPreviewChrome ? (
+                    <span className="template-preview-modal__notice-text">
+                      현재 화면은 미리보기 화면입니다.
+                    </span>
+                  ) : (
+                    <span />
+                  )}
                   <div className="template-preview-modal__notice-actions">
                     {isA4DocumentPreviewLayout && showDocumentDownload ? (
                       <CmsButton
@@ -341,7 +355,7 @@ export function TemplatePreviewModal({
                       </CmsButton>
                     ) : null}
                     <CmsButton type="button" variant="secondary" size="large" onClick={handleClose}>
-                      미리보기 닫기
+                      {showPreviewChrome ? '미리보기 닫기' : '닫기'}
                     </CmsButton>
                     {onEditForm != null ? (
                       <CmsButton type="button" variant="primary" size="large" onClick={onEditForm}>

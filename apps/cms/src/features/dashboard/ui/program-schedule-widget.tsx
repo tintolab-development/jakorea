@@ -7,7 +7,15 @@
 import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { Card, List, Popover } from 'antd'
 import { ButtonLeftIcon, ButtonRightIcon } from '@/shared/ui/icons'
-import { useState, useMemo, Fragment, type ReactElement } from 'react'
+import {
+  useState,
+  useMemo,
+  useRef,
+  Fragment,
+  cloneElement,
+  type MouseEvent as ReactMouseEvent,
+  type ReactElement,
+} from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
@@ -307,6 +315,101 @@ function ProgramScheduleEventPreviewPopover({
       }
     >
       {children}
+    </Popover>
+  )
+}
+
+/** 미리보기 최대 높이: 내용 239 + 패딩 16×2 + 테두리 1×2 */
+const POINTER_PREVIEW_MAX_HEIGHT_PX = 273
+/** 마우스 포인터와 미리보기 사이 간격 */
+const POINTER_PREVIEW_GAP_PX = 4
+
+type PointerInCell = { dx: number; dy: number; clientY: number }
+
+/**
+ * 월간 날짜 칸 전체 호버 미리보기 — 시안: 열릴 때의 마우스 위치 기준 우하단에 노출,
+ * 화면 아래 공간이 모자라면 마우스 기준 우상단(위로) 노출. 열린 뒤에는 위치를 고정해 미리보기 안으로 마우스를 옮길 수 있다.
+ */
+function ProgramScheduleCellPointerPreviewPopover({
+  dayEvents,
+  onEventClick,
+  children,
+}: {
+  dayEvents: ScheduleEvent[]
+  onEventClick?: (ev: ScheduleEvent) => void
+  children: ReactElement<{
+    onMouseEnter?: (e: ReactMouseEvent<HTMLElement>) => void
+    onMouseMove?: (e: ReactMouseEvent<HTMLElement>) => void
+  }>
+}) {
+  const [open, setOpen] = useState(false)
+  const [align, setAlign] = useState<{
+    points: [string, string]
+    offset: [number, number]
+    overflow: { adjustX: boolean; adjustY: boolean; shiftX: boolean; shiftY: boolean }
+  }>()
+  const pointerRef = useRef<PointerInCell | null>(null)
+
+  const recordPointer = (e: ReactMouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    pointerRef.current = {
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top,
+      clientY: e.clientY,
+    }
+  }
+
+  const trigger = cloneElement(children, {
+    onMouseEnter: (e: ReactMouseEvent<HTMLElement>) => {
+      children.props.onMouseEnter?.(e)
+      recordPointer(e)
+    },
+    onMouseMove: (e: ReactMouseEvent<HTMLElement>) => {
+      children.props.onMouseMove?.(e)
+      recordPointer(e)
+    },
+  })
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      const p = pointerRef.current
+      if (p) {
+        const fitsBelow =
+          window.innerHeight - p.clientY >=
+          POINTER_PREVIEW_MAX_HEIGHT_PX + POINTER_PREVIEW_GAP_PX * 2
+        setAlign({
+          // 칸 좌상단 기준으로 마우스 위치만큼 옮긴다: 아래 → 미리보기 좌상단, 위 → 미리보기 좌하단을 마우스에 맞춘다
+          points: fitsBelow ? ['tl', 'tl'] : ['bl', 'tl'],
+          offset: [
+            p.dx + POINTER_PREVIEW_GAP_PX,
+            fitsBelow ? p.dy + POINTER_PREVIEW_GAP_PX : p.dy - POINTER_PREVIEW_GAP_PX,
+          ],
+          // 좌우·상하 뒤집기는 하지 않고, 화면 밖으로 나가는 만큼만 밀어 넣는다
+          overflow: { adjustX: false, adjustY: false, shiftX: true, shiftY: true },
+        })
+      }
+    }
+    setOpen(next)
+  }
+
+  return (
+    <Popover
+      arrow={false}
+      trigger="hover"
+      open={open}
+      onOpenChange={handleOpenChange}
+      placement="bottomLeft"
+      align={align}
+      overlayClassName={EVENT_PREVIEW_POPOVER_CLASS}
+      classNames={{ root: EVENT_PREVIEW_POPOVER_CLASS }}
+      mouseEnterDelay={0.12}
+      mouseLeaveDelay={0.08}
+      getPopupContainer={() => document.body}
+      content={
+        <ScheduleWidgetWeekCellPreview dayEvents={dayEvents} onEventClick={onEventClick} />
+      }
+    >
+      {trigger}
     </Popover>
   )
 }
@@ -620,7 +723,7 @@ export function ProgramScheduleWidget({
 
   const headerTitle =
     viewMode === 'week'
-      ? `${weekDates[0].format('MM.DD')} - ${weekDates[6].format('MM.DD')}`
+      ? `${weekDates[0].format('MM.DD')} ~ ${weekDates[6].format('MM.DD')}`
       : currentMonth.format('YY.MM')
 
   const renderMonthCell = (date: Dayjs) => {
@@ -652,68 +755,56 @@ export function ProgramScheduleWidget({
         {hasEvents && !isHalfColumn && (
           <div className="program-schedule-widget__cell-badges">
             {isSingleBlock ? (
-              <ProgramScheduleEventPreviewPopover
-                dayEvents={dayEvents}
-                onEventClick={handleEventClick}
-              >
-                <span className="program-schedule-widget__month-cell-badge-host">
-                  <div
-                    className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--single"
-                    style={{
-                      backgroundColor: (scheduleColorMap.get(programIds[0]) ?? SCHEDULE_COLORS[0])
-                        .bg,
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    onClick={e => {
+              <span className="program-schedule-widget__month-cell-badge-host">
+                <div
+                  className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--single"
+                  style={{
+                    backgroundColor: (scheduleColorMap.get(programIds[0]) ?? SCHEDULE_COLORS[0]).bg,
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onClick={e => {
+                    e.stopPropagation()
+                    const ev = dayEvents.find(x => x.programId === programIds[0])
+                    if (ev) handleEventClick(ev)
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
                       e.stopPropagation()
                       const ev = dayEvents.find(x => x.programId === programIds[0])
                       if (ev) handleEventClick(ev)
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        const ev = dayEvents.find(x => x.programId === programIds[0])
-                        if (ev) handleEventClick(ev)
-                      }
-                    }}
-                  />
-                </span>
-              </ProgramScheduleEventPreviewPopover>
+                    }
+                  }}
+                />
+              </span>
             ) : (
               programIds.map(pid => {
                 const pair = scheduleColorMap.get(pid) ?? SCHEDULE_COLORS[0]
                 return (
-                  <ProgramScheduleEventPreviewPopover
-                    key={pid}
-                    dayEvents={dayEvents}
-                    onEventClick={handleEventClick}
-                  >
-                    <span className="program-schedule-widget__month-cell-badge-host">
-                      <div
-                        className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--multi"
-                        style={{
-                          backgroundColor: pair.bg,
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onClick={e => {
+                  <span key={pid} className="program-schedule-widget__month-cell-badge-host">
+                    <div
+                      className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--multi"
+                      style={{
+                        backgroundColor: pair.bg,
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onClick={e => {
+                        e.stopPropagation()
+                        const ev = dayEvents.find(x => x.programId === pid)
+                        if (ev) handleEventClick(ev)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
                           e.stopPropagation()
                           const ev = dayEvents.find(x => x.programId === pid)
                           if (ev) handleEventClick(ev)
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            const ev = dayEvents.find(x => x.programId === pid)
-                            if (ev) handleEventClick(ev)
-                          }
-                        }}
-                      />
-                    </span>
-                  </ProgramScheduleEventPreviewPopover>
+                        }
+                      }}
+                    />
+                  </span>
                 )
               })
             )}
@@ -721,6 +812,19 @@ export function ProgramScheduleWidget({
         )}
       </div>
     )
+
+    // 배지가 보이는 1단 월간에서만 칸 전체 호버 미리보기 (2단은 배지·미리보기 없음 — 기존 동작 유지)
+    if (hasEvents && !isHalfColumn) {
+      return (
+        <ProgramScheduleCellPointerPreviewPopover
+          key={dateKey}
+          dayEvents={dayEvents}
+          onEventClick={handleEventClick}
+        >
+          {monthCell}
+        </ProgramScheduleCellPointerPreviewPopover>
+      )
+    }
 
     return <Fragment key={dateKey}>{monthCell}</Fragment>
   }

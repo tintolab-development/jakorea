@@ -121,3 +121,29 @@
   gap: var(--spacing-12);
   margin-top: var(--spacing-8);
 }
+
+/*
+ * 시안 PC: 안내사항 작성하기 팝업
+ * - 공개 범위 필수 표시(*) 14 / 500
+ * - 공개 범위 체크박스 라벨 14 (공용 PFCheckbox 기본 16은 유지)
+ * - 에디터 280 · radius 16 · placeholder neutral-cool-500
+ */
+@media (--bp-pc-up) {
+  .audienceLabel .audienceLabelRequired {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .audienceCheck :global(.typo-bd-md-md) {
+    font-size: 14px;
+  }
+
+  /* PfRichTextEditor 루트(className) — 공용 기본값은 두고 이 팝업만 `--rt-*`로 조정. 래퍼는 에디터 높이(280)를 따른다 */
+  .editorWrap .editor {
+    --rt-min-height: 280px;
+    --rt-radius: var(--radius-16);
+    --rt-placeholder-color: var(--color-neutral-cool-500);
+
+    height: 280px;
+  }
+}

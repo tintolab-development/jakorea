@@ -180,10 +180,17 @@
     white-space: nowrap;
   }
 
+  /* 시안: 본문 행 높이 94 (상하 31.5 + 1px 구분선) — 헤더 78은 그대로 */
+  .row .cell {
+    height: auto;
+    padding-block: 31.5px;
+  }
+
+  /* 시안: 수익총계 행 라벨·비율·금액 모두 palette/forest */
   .totalRow .cell {
     padding-block: var(--spacing-32);
     background: var(--color-neutral-cool-80);
-    color: #2f8a4f;
+    color: var(--color-palette-forest);
   }
 }
 

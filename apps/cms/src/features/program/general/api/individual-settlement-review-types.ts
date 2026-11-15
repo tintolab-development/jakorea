@@ -33,6 +33,8 @@ type VolunteerSettlementStatusFields = {
   status?: string | null
   totalAmount?: number | null
   latestRevisionNo?: number | null
+  /** 계좌 지급 건 상태 WAITING_PAYMENT | FAILED | PAID. PAID=계좌 지급 완료. 계좌 지급 건이 없으면 null */
+  paymentStatus?: 'WAITING_PAYMENT' | 'FAILED' | 'PAID' | string | null
 }
 
 export type IndividualSettlementReviewListItemView = Omit<

@@ -32,6 +32,7 @@ import {
 } from '@/shared/ui'
 import { AdminInquiryDetailModal } from '@/features/posts/ui/admin-inquiry-detail-modal'
 import { selectedPostRowKeysToBulkIds } from '@/features/posts/lib/posts-bulk-delete-ids'
+import { INQUIRY_DETAIL_ID_PARAM } from '@/features/posts/lib/inquiry-detail-link'
 import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { CategoryManagementModal } from '@/features/posts/ui/category-management-modal'
@@ -161,6 +162,28 @@ export function AdminInquiryPage() {
     setDetailInquiryId(id)
     setDetailOpen(true)
   }, [])
+
+  // 알림 [문의 내용 확인] — `?inquiryId=` 로 들어오면 상세를 열고(렌더 중 1회) URL에서 지운다
+  const linkedInquiryId = searchParams.get(INQUIRY_DETAIL_ID_PARAM)?.trim() ?? ''
+  const [openedLinkedInquiryId, setOpenedLinkedInquiryId] = useState('')
+  if (linkedInquiryId !== openedLinkedInquiryId) {
+    setOpenedLinkedInquiryId(linkedInquiryId)
+    if (linkedInquiryId) {
+      setDetailInquiryId(linkedInquiryId)
+      setDetailOpen(true)
+    }
+  }
+  useEffect(() => {
+    if (!linkedInquiryId) return
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(INQUIRY_DETAIL_ID_PARAM)
+        return next
+      },
+      { replace: true }
+    )
+  }, [linkedInquiryId, setSearchParams])
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return

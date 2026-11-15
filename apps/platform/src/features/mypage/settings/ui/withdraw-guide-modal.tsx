@@ -42,7 +42,7 @@ export function SettingsWithdrawGuideModal({
         <PFText
           as="p"
           typo="bd-md-rg"
-          color="neutral-cool-600"
+          color="black"
           id={descriptionId}
           className={styles.description}
         >

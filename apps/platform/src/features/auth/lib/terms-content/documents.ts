@@ -55,9 +55,12 @@ export const TERMS_OF_SERVICE_CONTENT: TermsDocumentContent = {
         '2.	회원이란 본 약관에 동의하고 JA Korea가 정한 절차에 따라 회원가입을 완료하여 JA Korea가 제공하는 회원 서비스를 이용할 수 있는 자를 말합니다.',
         '3.	일반 회원이란 개인 자격으로 JA Korea 회원가입을 완료한 회원을 말합니다.',
         '4.	교사 회원이란 학교 또는 기관에 소속된 교사로서, JA Korea가 정한 교사 정보 및 소속 학교/기관 정보를 입력하고 회원가입을 완료한 회원을 말합니다.',
-        '5.	만 14세 미만 회원이란 회원가입 시 입력한 생년월일 또는 본인확인 절차를 통해 만 14세 미만으로 확인된 일반 회원을 말합니다.',
+        '5.	만 14세 미만 회원이란 회원가입 시 입력한 생년월일 또는 본인확인 절차를 통해 만 14세 미만으로 확인된 일반 회원을 말하며, 만 14세가 된 후에도 제4조에 따라 만 14세 이상 회원으로 전환하기 전까지(이하 ‘미전환 회원’)는 만 14세 미만 회원으로 봅니다.',
         '6.	법정대리인이란 만 14세 미만 회원의 회원가입 및 개인정보 수집·이용에 대하여 동의할 수 있는 부모 등 법정대리인을 말합니다.',
         '7.	만 14세 이상 회원 전환이란 만 14세 미만 회원이 만 14세가 된 후 본인 명의 휴대폰 본인인증을 거쳐 기존 계정을 유지한 채 만 14세 이상 회원으로 전환하는 절차를 말하며, 이 절차를 완료한 날을 ‘전환일’이라 합니다.',
+        '8.	이메일 ID란 회원 식별 및 로그인에 사용되는 이메일 주소를 말합니다.',
+        '9.	본인인증이란 회원가입 및 계정 보호를 위해 휴대폰 본인인증 등 JA Korea가 정한 방식으로 본인 여부를 확인하는 절차를 말합니다.',
+        '10.	소셜 계정 연결이란 회원가입을 완료한 회원이 Google, 네이버, 카카오 등 외부 계정을 JA Korea 계정과 연결하여 이후 간편 로그인에 이용할 수 있도록 하는 절차를 말합니다.',
       ],
     },
     {
@@ -457,6 +460,36 @@ const GUARDIAN_LEGAL_CONTENT: TermsDocumentContent = {
   ],
 }
 
+/** 임팩트 스토리 뉴스레터 구독 — 비회원 포함 이름·이메일 수집 및 광고성 정보 수신 동의 */
+export const NEWSLETTER_CONSENT_CONTENT: TermsDocumentContent = {
+  intro:
+    '본인은 「개인정보 보호법」 제15조 및 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 제50조에 따라 아래 개인정보의 수집·이용과 광고성 정보 수신에 대해 안내받고 동의합니다',
+  sections: [
+    {
+      heading: '개인정보 수집항목',
+      paragraphs: ['필수 : 이름, 이메일 주소'],
+    },
+    {
+      heading: '수신 정보 및 채널',
+      paragraphs: ['JA Korea 뉴스레터(교육 프로그램·행사·캠페인 등 광고성 정보 포함) / 이메일'],
+    },
+    {
+      heading: '개인정보의 수집, 이용 목적',
+      paragraphs: ['JA Korea 뉴스레터 발송 및 구독 관리(발송은 스티비(Stibee)에 위탁)'],
+    },
+    {
+      heading: '개인정보의 보유 및 이용기간',
+      paragraphs: [
+        '구독 해지(수신 거부) 시까지. 동의일로부터 2년마다 수신 동의 여부를 확인하며, 뉴스레터 하단의 수신 거부 링크로 언제든 구독을 해지할 수 있습니다. 동의를 거부할 권리가 있으며, 동의하지 않으면 뉴스레터 구독이 제한됩니다. 동의하지 않아도 회원가입 및 서비스 이용에는 영향이 없습니다.',
+      ],
+    },
+    {
+      heading: '개인정보 보호책임자',
+      paragraphs: ['이선아 사무국장 salee@jakorea.org 02-783-2367'],
+    },
+  ],
+}
+
 export const TERMS_DOCUMENT_BY_TYPE: Record<TermsViewType, TermsDocumentContent> = {
   serviceTerms: TERMS_OF_SERVICE_CONTENT,
   privacyCollection: PRIVACY_POLICY_CONTENT,
@@ -466,4 +499,5 @@ export const TERMS_DOCUMENT_BY_TYPE: Record<TermsViewType, TermsDocumentContent>
   teacherInfo: TEACHER_INFO_COLLECTION_CONTENT,
   guardianLegal: GUARDIAN_LEGAL_CONTENT,
   privacyNotice: PRIVACY_NOTICE_CONTENT,
+  newsletter: NEWSLETTER_CONSENT_CONTENT,
 }

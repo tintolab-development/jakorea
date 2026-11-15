@@ -1,5 +1,29 @@
+/*
+ * 시안 9270:78633 — 버튼 줄 y84 · 섹션 제목 y128 · 표 y163 (QA 2026-11-15 데이터 관리 C29·C30)
+ * 상단 여백 0 · 버튼 줄 ↔ 제목 간격 0 · 섹션 제목 Bold 18 / 140%
+ */
 .textbook-detail-fullpage-modal.detail-fullpage-modal .detail-fullpage-modal__content {
-  padding-top: 16px;
+  padding-top: 0;
+}
+
+.textbook-detail-fullpage-modal .detail-fullpage-modal__content-actions-wrapper {
+  gap: 0;
+}
+
+.textbook-detail-fullpage-modal .detail-info-form__title {
+  font-size: 18px;
+  line-height: 140%;
+}
+
+/* 등록일 │ 등록자 구분선 양옆 16 (공통 12) — C31 */
+.textbook-detail-fullpage-modal__registered-value .detail-info-form-inputs-separator {
+  margin: 0 16px;
+}
+
+/* 수정 모드 입력 셀 좌우 padding 12 (입력 569) — C32 */
+.textbook-detail-fullpage-modal__basic-info-section .detail-info-form__field-content--edit {
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .textbook-detail-fullpage-modal__root {
@@ -20,13 +44,6 @@
   min-height: 24px;
   /* 시안: 등록일 | 등록자명 한 줄 */
   white-space: nowrap;
-}
-
-.textbook-detail-fullpage-modal__registered-divider {
-  display: inline-flex;
-  align-items: center;
-  margin: 0 16px;
-  opacity: 0.5 !important;
 }
 
 .textbook-detail-fullpage-modal__header-actions {

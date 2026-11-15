@@ -16,7 +16,11 @@ import {
   insertMailVariableInText,
   isMailEditorEmpty,
 } from '@/features/notifications/model/mail-template/insert-variable'
-import { mailBodyToEditorHtml } from '@/features/notifications/model/shared/mail-body-display-html'
+import {
+  keepEmptyMailParagraphLines,
+  mailBodyToEditorHtml,
+} from '@/features/notifications/model/shared/mail-body-display-html'
+import { MailButton } from '@/features/notifications/model/mail-template/button-node'
 import { MailVariable } from '@/features/notifications/model/mail-template/variable-node'
 import {
   mailAttachmentRejectMessage,
@@ -82,7 +86,7 @@ export function useMailCompose(
 
   /** 평문(\n) 템플릿은 에디터에서 줄바꿈이 사라지므로 <p> HTML로 변환해 로드 (저장 baseline은 원문 유지) */
   const initialEditorHtml = useMemo(() => mailBodyToEditorHtml(initial.bodyHtml), [initial.bodyHtml])
-  const mailVariableExtensions = useMemo(() => [MailVariable], [])
+  const mailVariableExtensions = useMemo(() => [MailVariable, MailButton], [])
   const fileUploadOwner = useMemo(
     () => mailTemplateInlineImageOwner(parseFileObjectId(templateId)),
     [templateId]
@@ -242,7 +246,7 @@ export function useMailCompose(
     const bodyHtml = apiRef.current?.getHTML() ?? api?.getHTML() ?? ''
     const plainText = apiRef.current?.getText() ?? api?.getText() ?? ''
     if (isMailEditorEmpty(bodyHtml, plainText)) return ''
-    return ensureMailTemplateLayoutMarker(templateId, bodyHtml)
+    return ensureMailTemplateLayoutMarker(templateId, keepEmptyMailParagraphLines(bodyHtml))
   }, [api, templateId])
 
   const getSubject = useCallback(() => subjectRef.current, [])

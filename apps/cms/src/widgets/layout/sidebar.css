@@ -87,14 +87,14 @@
 .sidebar-menu.ant-menu {
   --sidebar-open-bg: #1d4352;
   --sidebar-selected-bg: #345663;
-  --sidebar-selected-stack:
-    linear-gradient(var(--sidebar-selected-bg), var(--sidebar-selected-bg)), var(--color-sidebar-bg);
   --sidebar-hover-overlay: linear-gradient(
     var(--color-sidebar-overlay-15),
     var(--color-sidebar-overlay-15)
   );
   --sidebar-hover-on-base: var(--sidebar-hover-overlay), var(--color-sidebar-bg);
-  --sidebar-hover-on-selected: var(--sidebar-hover-overlay), var(--sidebar-selected-stack);
+  /* 선택 항목이 속한 그룹의 행(기본 면 open-bg) 호버 — 비선택 그룹과 같은 흰색 15% 오버레이를 open-bg 위에 얹음 */
+  --sidebar-hover-on-open:
+    var(--sidebar-hover-overlay), linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg));
   box-sizing: border-box;
   width: 100% !important;
   max-width: 100%;
@@ -122,6 +122,23 @@
   color: var(--color-sidebar-text) !important;
 }
 
+/*
+ * 메뉴 선택 시 깜빡임 방지 — 배경 전환 애니메이션 끔.
+ * antd 기본 `transition: background 0.3s`는 그라데이션 레이어(호버 오버레이)는 즉시 빠지고
+ * 바탕색만 0.3초에 걸쳐 바뀌어, 클릭 순간 원래 면이 한 번 드러났다가 선택 면으로 바뀐다.
+ * 그룹 선택이 바뀌면 그룹 전체 행·패널이 base ↔ open-bg로 함께 페이드되어 더 크게 번쩍인다.
+ * `.ant-menu-sub` 펼침·접힘 높이 애니메이션은 `.ant-motion-collapse`(!important)가 따로 맡으므로 영향 없음.
+ */
+.sidebar-menu.ant-menu .ant-menu-item,
+.sidebar-menu.ant-menu .ant-menu-submenu-title,
+.sidebar-menu.ant-menu li.ant-menu-submenu {
+  transition: none !important;
+}
+
+.sidebar-menu.ant-menu .ant-menu-submenu .ant-menu-sub {
+  transition: none;
+}
+
 /* 1·2·3뎁스 메뉴 행 공통: border-radius 0 */
 .sidebar-menu.ant-menu .ant-menu-item,
 .sidebar-menu.ant-menu .ant-menu-submenu-title,
@@ -147,9 +164,6 @@
   font-size: 18px !important;
   font-weight: var(--font-weight-700) !important;
   line-height: 120%;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
   gap: 8px !important;
 }
 
@@ -336,13 +350,19 @@
   color: var(--color-sidebar-text) !important;
 }
 
-.sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected:hover,
+/*
+ * 선택 그룹 안 일반 행 호버: 기본 면이 open-bg이므로 open-bg 기준 오버레이.
+ * 선택된 2·3뎁스 항목(#345663)은 이미 밝은 면이라 호버 오버레이를 겹치지 않는다(두 번 밝아짐 방지).
+ */
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu.ant-menu-submenu-selected
   > .ant-menu-submenu-title:hover,
-.sidebar-menu li.ant-menu-submenu-selected .ant-menu-sub .ant-menu-item:hover,
+.sidebar-menu
+  li.ant-menu-submenu-selected
+  .ant-menu-sub
+  .ant-menu-item:not(.ant-menu-item-selected):hover,
 .sidebar-menu li.ant-menu-submenu-selected .ant-menu-sub .ant-menu-submenu-title:hover {
-  background: var(--sidebar-hover-on-selected) !important;
+  background: var(--sidebar-hover-on-open) !important;
   color: var(--color-sidebar-text) !important;
 }
 
@@ -358,8 +378,7 @@
 }
 
 .sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected:hover {
-  background:
-    var(--sidebar-hover-overlay), linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
+  background: var(--sidebar-hover-on-open) !important;
 }
 
 /* 2뎁스 리프(자식 없는 메뉴) 선택 배경 명시 적용 */
@@ -377,10 +396,6 @@
  */
 .sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected {
   background: var(--sidebar-selected-bg) !important;
-}
-
-.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected:hover {
-  background: var(--sidebar-hover-on-selected) !important;
 }
 
 /* ---- 타이포: 3뎁스 16px / 500(비선택), 700(선택) ---- */

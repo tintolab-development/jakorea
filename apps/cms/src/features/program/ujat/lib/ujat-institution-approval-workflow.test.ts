@@ -141,6 +141,68 @@ describe('resolveUjatInstitutionWorkflow', () => {
   })
 })
 
+describe('상태만 임시 배정(temporaryScheduleAssigned)', () => {
+  it('TEMP_ASSIGNED + 일정 미배정이면 주 버튼(임시 일정 배정·최종 승인)을 열지 않는다', () => {
+    const view = resolveUjatInstitutionWorkflow({
+      applicationStatus: 'SUBMITTED',
+      temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+      institutionConfirmationStatus: null,
+      temporaryScheduleAssigned: false,
+    })
+
+    expect(view.primaryAction).toBe('none')
+    expect(view.primaryDisabled).toBe(true)
+    expect(view.canFinalApprove).toBe(false)
+  })
+
+  it('일정 미배정 구분은 temporaryScheduleAssigned로만 한다 — 확인 상태가 남아 있어도 주 버튼 없음', () => {
+    const view = resolveUjatInstitutionWorkflow({
+      applicationStatus: 'SUBMITTED',
+      temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+      institutionConfirmationStatus: 'CONFIRMED',
+      temporaryScheduleAssigned: false,
+    })
+
+    expect(view.primaryAction).toBe('none')
+    expect(view.canFinalApprove).toBe(false)
+  })
+
+  it('일정 저장 후(true, CHECKING)는 기존 기관 확인 대기 흐름을 유지한다', () => {
+    const view = resolveUjatInstitutionWorkflow({
+      applicationStatus: 'SUBMITTED',
+      temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+      institutionConfirmationStatus: 'CHECKING',
+      temporaryScheduleAssigned: true,
+    })
+
+    expect(view.displayLabel).toBe('기관 확인 대기')
+    expect(view.primaryAction).toBe('none')
+  })
+
+  it('EVALUATION_PENDING은 평가 대기와 같이 [임시 배정] 주 버튼을 연다', () => {
+    const view = resolveUjatInstitutionWorkflow({
+      applicationStatus: 'SUBMITTED',
+      temporaryAssignmentStatus: 'EVALUATION_PENDING',
+      temporaryScheduleAssigned: null,
+    })
+
+    expect(view.primaryAction).toBe('open_schedule_assign')
+  })
+
+  it('상세 응답의 temporaryScheduleAssigned boolean을 읽는다', () => {
+    expect(
+      readUjatInstitutionWorkflowInput(
+        { temporaryAssignmentStatus: 'TEMP_ASSIGNED', temporaryScheduleAssigned: false },
+        null
+      ).temporaryScheduleAssigned
+    ).toBe(false)
+    expect(
+      readUjatInstitutionWorkflowInput({ temporaryAssignmentStatus: 'TEMP_ASSIGNED' }, null)
+        .temporaryScheduleAssigned
+    ).toBeNull()
+  })
+})
+
 describe('readUjatInstitutionWorkflowInput', () => {
   it('상세에 없는 기관 확인 상태는 임시 일정 응답을 쓴다', () => {
     const input = readUjatInstitutionWorkflowInput(

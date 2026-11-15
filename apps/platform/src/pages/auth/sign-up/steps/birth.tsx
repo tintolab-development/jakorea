@@ -14,7 +14,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
   const isTeacherSignup = memberType.selected === 'teacher'
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
         title="생년월일과 성별을 알려주세요."
         description={
@@ -34,7 +34,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
             >
               다음
             </PFButton>
-            <PFButton size="large" variant="text" onClick={step.goPrevious}>
+            <PFButton size="textAction" variant="text" width="100%" onClick={step.goPrevious}>
               이전으로
             </PFButton>
           </>

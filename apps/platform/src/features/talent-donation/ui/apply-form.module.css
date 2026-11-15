@@ -68,7 +68,7 @@
 
 .requiredMark {
   flex-shrink: 0;
-  color: #c32f4a;
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
 }
 
 .control {
@@ -122,7 +122,7 @@
   max-height: none;
   padding: var(--spacing-12) var(--spacing-16);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-12);
   resize: vertical;
   overflow: auto;
   font-family: var(--font-family-base);
@@ -188,23 +188,28 @@
   gap: var(--spacing-12);
 }
 
-.fileGuideBox {
+/* 시안 13279:85129 — 13px Medium · cool-600 · 투명도 60% · 점 목록(들여쓰기 19.5px) */
+.fileGuide {
   display: flex;
   width: 100%;
   min-width: 0;
-  min-height: 53px;
-  align-items: center;
-  padding: var(--spacing-12) var(--spacing-16);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-white);
+  flex-direction: column;
+  margin: 0;
+  padding: 0 var(--spacing-4) 0 calc(var(--spacing-4) + 19.5px);
   box-sizing: border-box;
+  color: var(--color-neutral-cool-600);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  list-style: disc;
+  opacity: 0.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
-.fileGuide {
-  margin: 0;
-  width: 100%;
-  word-break: break-all;
+/* 시안 Input-area gap 28 — 버튼·안내 묶음(gap 12)과 첨부 목록 사이 */
+.fileList {
+  margin-top: var(--spacing-16);
 }
 
 .visuallyHiddenFile {

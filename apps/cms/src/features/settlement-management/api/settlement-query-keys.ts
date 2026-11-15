@@ -43,8 +43,8 @@ export const settlementQueryKeys = {
   },
   calendar: {
     all: () => [...settlementQueryKeys.all, 'calendar'] as const,
-    range: (fromDate: string, toDate: string) =>
-      [...settlementQueryKeys.calendar.all(), 'range', fromDate, toDate] as const,
+    range: (fromDate: string, toDate: string, payeeType = 'all') =>
+      [...settlementQueryKeys.calendar.all(), 'range', fromDate, toDate, payeeType] as const,
     summary: (year: number, month: number) =>
       [...settlementQueryKeys.calendar.all(), 'summary', year, month] as const,
     date: (date: string) => [...settlementQueryKeys.calendar.all(), 'date', date] as const,

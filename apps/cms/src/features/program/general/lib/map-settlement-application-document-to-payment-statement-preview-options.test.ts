@@ -111,6 +111,79 @@ describe('buildPaymentStatementPreviewOptionsFromApplicationDocument', () => {
     expect(formatEducationTimeRange(null, '2026-11-07T14:00:00Z')).toBe('')
   })
 
+  it('calculationDetail 없는 행은 basisDetail을 만들지 않는다', () => {
+    const lines = options.paymentStatementCalculationLines?.blocks[0]?.lines ?? []
+    expect(lines.every(line => line.basisDetail === undefined)).toBe(true)
+  })
+
+  it('id=23: BE line.calculationDetail을 산정 기준 상세 basisDetail로 연결한다', () => {
+    const next = buildPaymentStatementPreviewOptionsFromApplicationDocument({
+      document: {
+        ...document14,
+        lines: [
+          { direction: 'PAYMENT', category: '강사비', amount: 500000, calculationDetail: null },
+          {
+            direction: 'PAYMENT',
+            category: '활동비',
+            amount: 23000,
+            calculationDetail: {
+              layout: 'activity',
+              basisJson:
+                '{"layout":"activity","itemType":"ACTIVITY","categoryLabel":"활동비","activityFee":{"amountWon":23000},"totalWon":23000}',
+              resultAmount: 23000,
+            },
+          },
+          {
+            direction: 'PAYMENT',
+            category: '식사비',
+            amount: 30000,
+            calculationDetail: {
+              layout: 'meal',
+              basisJson:
+                '{"layout":"meal","itemType":"MEAL","categoryLabel":"식사비","mealFee":{"amountWon":30000,"receiptFileName":"식사 영수증.jpg","receiptFileObjectId":901},"totalWon":30000}',
+              resultAmount: 30000,
+            },
+          },
+          {
+            direction: 'DEDUCTION',
+            category: '원천징수',
+            amount: -16500,
+            calculationDetail: {
+              layout: 'withholding',
+              basisJson:
+                '{"taxIncomeType":"BUSINESS_INCOME","rate":0.033,"grossAmount":553000,"taxableAmount":500000,"smallTaxExemptionThreshold":1000,"withholdingTaxAmount":16500}',
+              resultAmount: 16500,
+              title: '원천세 산출 내역',
+              formulaText: '원천징수액 = 과세대상금액 x 세율(0.033), 원 단위 절삭',
+            },
+          },
+        ],
+      },
+      settlementApplicationId: 23,
+    })
+    const lines = next.paymentStatementCalculationLines?.blocks[0]?.lines ?? []
+    expect(lines[0]?.basisDetail).toBeUndefined()
+    expect(lines[1]?.basisDetail).toMatchObject({
+      layout: 'activity',
+      activityFee: { amountWon: 23000 },
+      totalWon: 23000,
+    })
+    expect(lines[2]?.basisDetail).toMatchObject({
+      layout: 'meal',
+      mealFee: { amountWon: 30000, receiptFileName: '식사 영수증.jpg', receiptFileObjectId: 901 },
+      totalWon: 30000,
+    })
+    expect(lines[3]?.basisDetail).toMatchObject({
+      layout: 'withholdingRate',
+      taxIncomeTypeLabel: '사업소득',
+      ratePercent: 3.3,
+      taxableAmountWon: 500000,
+      withholdingTaxAmountWon: 16500,
+    })
+    // 금액은 서버 값 그대로
+    expect(lines.map(line => line.amount)).toEqual([500000, 23000, 30000, -16500])
+  })
+
   it('calcInfo null(영수증 등)이어도 예외 없이 값 없음', () => {
     const next = buildPaymentStatementPreviewOptionsFromApplicationDocument({
       document: { ...document14, calcInfo: null as unknown as undefined },
@@ -150,9 +223,47 @@ describe('applyApplicationDocumentToProgramCalculationStatement', () => {
       lectureFeeStandardAmount: '450,000원',
       businessIncomeEarnerLabel: '해당',
     })
-    expect(statement.blocks[0]?.lectureSessionDisplay).toBe('1차시')
+    // 「교육 진행 차시」(인정 차시)는 basic에 두고, 교육 진행 일자 칸 뒤는 회차(시안 「날짜 │ N회차」)
+    expect(statement.basic.recognizedSessionCount).toBe(1)
     expect(statement.totalAmount).toBe(488150)
     expect(statement.formulaLabel).toBe('강의비 + 활동비 + 식비 - 원천징수')
+  })
+
+  it('교육 진행 일자 칸은 시간 없이 날짜, 뒤는 목록 행 회차(서버 회차 표기가 없을 때)', () => {
+    const statement = applyApplicationDocumentToProgramCalculationStatement(
+      base,
+      {
+        ...document14,
+        calcInfo: {
+          ...document14.calcInfo,
+          educationStartAt: '2026-12-08T06:00:00Z',
+          educationEndAt: '2026-12-08T08:00:00Z',
+        },
+      },
+      14,
+      2
+    )
+    expect(statement.blocks[0]?.lectureDateDisplay).toBe('2026.12.08(화)')
+    expect(statement.blocks[0]?.lectureDateDisplay).not.toMatch(/\d{2}:\d{2}/)
+    expect(statement.blocks[0]?.lectureSessionDisplay).toBe('2회차')
+  })
+
+  it('확정된 정산 행과 같은 base 날짜·회차가 있으면 그대로 쓰고, 회차가 없으면 날짜만', () => {
+    const withBase = applyApplicationDocumentToProgramCalculationStatement(
+      {
+        ...base,
+        blocks: [
+          { institutionName: '-', lectureDateDisplay: '2026.11.06(금)', lectureSessionDisplay: '3회차', lines: [] },
+        ],
+      },
+      document14,
+      14,
+      9
+    )
+    expect(withBase.blocks[0]).toMatchObject({ lectureDateDisplay: '2026.11.06(금)', lectureSessionDisplay: '3회차' })
+
+    const noSession = applyApplicationDocumentToProgramCalculationStatement(base, document14, 14, null)
+    expect(noSession.blocks[0]?.lectureSessionDisplay).toBe('')
   })
 })
 

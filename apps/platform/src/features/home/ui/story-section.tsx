@@ -70,7 +70,7 @@ function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
         <PFText as="h3" typo="hd-lg" color="black" className={styles.featuredTitle}>
           {story.title}
         </PFText>
-        <PFText as="p" typo="hl-lg" color="black" className={styles.featuredDate}>
+        <PFText as="p" typo="hl-lg" color="inherit" className={styles.featuredDate}>
           {story.publishedAtLabel}
         </PFText>
       </div>

@@ -51,6 +51,21 @@ describe('buildPaymentOrdersListAggregateParams', () => {
     ).toEqual({ groupBy: 'program' })
   })
 
+  it('정산 대상자 구분은 선택했을 때만 payeeType으로 보낸다', () => {
+    expect(
+      buildPaymentOrdersListAggregateParams('program', {
+        ...emptyFilters,
+        payeeType: 'PARTICIPANT',
+      })
+    ).toEqual({ groupBy: 'program', payeeType: 'PARTICIPANT' })
+    expect(
+      buildPaymentOrdersListAggregateParams('instructor', {
+        ...emptyFilters,
+        payeeType: 'all',
+      })
+    ).toEqual({ groupBy: 'instructor' })
+  })
+
   it('기간 필터', () => {
     expect(
       buildPaymentOrdersListAggregateParams('program', {

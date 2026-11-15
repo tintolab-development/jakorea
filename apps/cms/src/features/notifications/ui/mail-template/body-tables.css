@@ -215,14 +215,15 @@
   line-height: 150%;
 }
 
-.mail-template-rich-body .rich-text-content table:has(td a) {
+/* 프리셋(상담·인재채용·재능기부) 전체 폭 버튼 — mailDetailButton */
+.mail-template-rich-body .rich-text-content table:has(td a):not([data-mail-button]) {
   width: 100%;
   border: 0;
   border-radius: 8px;
   background: transparent;
 }
 
-.mail-template-rich-body .rich-text-content table:has(td a) td {
+.mail-template-rich-body .rich-text-content table:has(td a):not([data-mail-button]) td {
   padding: 0;
   border: 0;
   border-radius: 8px;
@@ -230,11 +231,11 @@
   text-align: center;
 }
 
-.mail-template-rich-body .rich-text-content table:has(td a) td > p {
+.mail-template-rich-body .rich-text-content table:has(td a):not([data-mail-button]) td > p {
   margin: 0;
 }
 
-.mail-template-rich-body .rich-text-content table:has(td a) a {
+.mail-template-rich-body .rich-text-content table:has(td a):not([data-mail-button]) a {
   display: block;
   height: 52px;
   box-sizing: border-box;
@@ -245,4 +246,27 @@
   line-height: 36px;
   font-weight: 600;
   text-decoration: none;
+}
+
+/*
+ * 알림 메일 버튼(CMS primary h40) — mailPrimaryButtonHtml / MailButton 노드.
+ * 버튼 모양(배경·테두리·모서리·글자·여백)은 버튼 HTML 인라인 스타일이 정본이다(layout-html.ts MAIL_PRIMARY_BUTTON_ATTRS).
+ * 여기서는 수정 화면·미리보기에서 에디터 표 기본 스타일 중 인라인에 없는 값
+ * (.rich-text-content table width:100%, td padding·line-height)만 지워 메일과 같은 모양으로 보이게 한다.
+ * 인라인과 같은 값을 여기 다시 적지 않는다.
+ */
+.mail-template-rich-body .rich-text-content table[data-mail-button] {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0;
+}
+
+.mail-template-rich-body .rich-text-content table[data-mail-button] td {
+  padding: 0;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+.mail-template-rich-body .rich-text-content table[data-mail-button] a {
+  vertical-align: top;
 }

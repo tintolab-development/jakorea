@@ -1,0 +1,47 @@
+/**
+ * 시스템 안내 팝업 — 시안 「10. 자동발송 메일 및 시스템 안내 팝업」 (600 폭)
+ * 타이틀 ↔ 본문 16 · 본문 16px Medium · [닫기] + 이동 버튼 8 간격 (CMS 알림 안내 팝업과 같음)
+ */
+
+.notification-detail-modal.content-modal .teal-header-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.notification-detail-modal__body {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.notification-detail-modal.content-modal .teal-header-modal__footer {
+  gap: 8px;
+}
+
+/*
+ * 동적 문구 영역 — 서버 제목이 길어지면 단어 단위로 줄바꿈한다(CMS 알림 안내 팝업과 같음).
+ * 공통 헤더는 높이 36 고정이라 넘친 줄이 본문과 겹치므로, 이 팝업만 최소 36으로 풀고 닫기(X)는 첫 줄에 맞춘다.
+ */
+.notification-detail-modal.content-modal .teal-header-modal__header {
+  height: auto;
+  max-height: none;
+  align-items: flex-start;
+}
+
+.notification-detail-modal.content-modal .teal-header-modal__title-text {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.notification-detail-modal.content-modal .teal-header-modal__header-actions {
+  min-height: 36px;
+  align-items: center;
+}

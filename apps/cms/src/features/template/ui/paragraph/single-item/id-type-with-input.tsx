@@ -31,6 +31,7 @@ export function IdTypeWithInputBody({
   documentMode = false,
   lockResidentIdType = false,
   radioUnselectedDisplay = false,
+  templateSingleInputPreview = false,
 }: {
   paragraph: IdTypeWithInputParagraph
   onChange: (next: IdTypeWithInputParagraph) => void
@@ -44,6 +45,11 @@ export function IdTypeWithInputBody({
    * 사용자 결정 2026-11-13: 템플릿 관리 화면 라디오는 모두 미선택.
    */
   radioUnselectedDisplay?: boolean
+  /**
+   * 템플릿 관리 작성 화면 — 주민등록번호 앞·뒤 분리칸 대신 시안 5767:41434의 단일 입력칸(안내 문구)만 보인다.
+   * 서식 화면이라 값은 받지 않는다(읽기 전용). 회원 작성·문서 미리보기는 기존 분리칸 그대로.
+   */
+  templateSingleInputPreview?: boolean
 }) {
   const options = paragraph.options?.length ? paragraph.options : []
   const selectedId = lockResidentIdType
@@ -191,7 +197,17 @@ export function IdTypeWithInputBody({
           </CmsRadio>
         ))}
       </CmsRadio.Group>
-      {isResident ? (
+      {templateSingleInputPreview ? (
+        <CmsInput
+          className="id-type-with-input__input id-type-with-input__input--template-preview"
+          inputSize="medium"
+          width={240}
+          value=""
+          placeholder={paragraph.inputPlaceholder.trim() || ph}
+          readOnly
+          allowClear={false}
+        />
+      ) : isResident ? (
         <div className="id-type-with-input__resident">
           <CmsNumericInput
             className="id-type-with-input__resident-input"

@@ -24,6 +24,8 @@ import {
 import { isValidJakoreaEmail } from '@/features/auth/lib/jakorea-email'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { REGISTER_PASSWORD_MISMATCH_MESSAGE } from '@/features/auth/lib/validate-register-password'
+import { PASSWORD_RECENTLY_USED_ALERT } from '@/shared/lib/password-recently-used-alert'
+import { useCmsAlert } from '@/shared/ui'
 
 import './find-password-page.css'
 // 「일치하는 가입 정보 없음」 화면(FindEmailNotFoundView) 스타일 — 이메일 찾기와 같은 화면을 재사용
@@ -37,6 +39,7 @@ function normalizeEmail(value: string): string {
 
 export function FindPasswordPage() {
   const navigate = useNavigate()
+  const { showAlert } = useCmsAlert()
   const [emailForm] = Form.useForm<{ email: string }>()
   const [passwordForm] = Form.useForm<{
     newPassword: string
@@ -264,6 +267,13 @@ export function FindPasswordPage() {
 
       if (result.kind === 'api_error') {
         setPasswordSubmitError(result.message)
+        return
+      }
+
+      // 최근 사용 비밀번호 — 시안 「비밀번호 재사용 불가 안내」 팝업(입력칸 문구 없음).
+      // 공통 API 오류 팝업이 이미 띄웠으면 다시 띄우지 않는다.
+      if (result.kind === 'recently_used') {
+        if (!result.globalAlertShown) showAlert({ ...PASSWORD_RECENTLY_USED_ALERT })
         return
       }
 

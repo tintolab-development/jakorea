@@ -94,6 +94,11 @@
   .shellSubpage .sidebarWithLeading {
     padding-top: var(--spacing-100);
   }
+
+  /* 시안: 백 링크가 있는 서브페이지(회원정보 설정) 상단 9 */
+  .shellSubpageWithLeading {
+    padding-top: 9px;
+  }
 }
 
 .sidebarLeading {

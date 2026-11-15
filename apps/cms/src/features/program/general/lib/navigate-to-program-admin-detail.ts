@@ -36,6 +36,8 @@ export function navigateToProgramAdminDetail(
     /** 회원 상세 URL sync가 이탈 후 search를 덮어쓰지 않도록 먼저 호출 */
     onBeforeNavigate?: () => void
     queryClient?: QueryClient
+    /** 유형별 상세 URL(기본 정보 탭)을 확정한 뒤 바꿀 때 — 예: 알림 버튼의 진행 현황 탭 지정 */
+    transformUrl?: (url: string) => string
   }
 ): void {
   const id = programId.trim()
@@ -57,13 +59,15 @@ function navigateAfterAccessCheck(
   options?: {
     onBeforeNavigate?: () => void
     queryClient?: QueryClient
+    transformUrl?: (url: string) => string
   }
 ): void {
   options?.onBeforeNavigate?.()
+  const go = (url: string) => navigate(options?.transformUrl ? options.transformUrl(url) : url)
 
   const known = tryGetProgramAdminDetailInfoTabUrlByIdPrefix(id)
   if (known) {
-    navigate(known)
+    go(known)
     return
   }
 
@@ -74,11 +78,11 @@ function navigateAfterAccessCheck(
     )
   )
   if (cachedUrl) {
-    navigate(cachedUrl)
+    go(cachedUrl)
     return
   }
 
   void resolveProgramAdminDetailInfoTabUrl(id, options?.queryClient).then(resolved => {
-    navigate(resolved)
+    go(resolved)
   })
 }

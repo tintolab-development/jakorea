@@ -102,11 +102,14 @@ export function getCompletedRowsOrderedForBulkTransfer(rows: AccountPaymentRow[]
   return out
 }
 
-/** 대량이체 export는 CONFIRMED + WAITING_PAYMENT만 대상으로 한다. */
-export function getWaitingPaymentRowsOrderedForBulkTransfer(
-  rows: AccountPaymentRow[]
-): AccountPaymentRow[] {
-  const waiting = rows.filter(r => r.accountPaymentStatus === 'awaiting_confirmation')
+/** 대량이체 export는 지급 대기·계좌 지급 완료 건을 대상으로 하고, 지급 실패(`paymentFailureYn`) 건은 제외한다. */
+export function getBulkTransferRowsOrdered(rows: AccountPaymentRow[]): AccountPaymentRow[] {
+  const waiting = rows.filter(
+    r =>
+      (r.accountPaymentStatus === 'awaiting_confirmation' ||
+        r.accountPaymentStatus === 'account_paid') &&
+      r.paymentFailureYn !== true
+  )
   const byInstructor = new Map<string, AccountPaymentRow[]>()
   for (const row of waiting) {
     const list = byInstructor.get(row.instructorName) ?? []
@@ -163,7 +166,7 @@ function buildBulkTransferSheetRowsByMode(
   rows: AccountPaymentRow[],
   mode: 'preview' | 'download'
 ): BulkTransferSheetRow[] {
-  const ordered = getWaitingPaymentRowsOrderedForBulkTransfer(rows)
+  const ordered = getBulkTransferRowsOrdered(rows)
   const lines: BulkTransferSheetRow[] = []
   for (const row of ordered) {
     lines.push(toSheetLine(payoutMetaFromRow(row, mode), row.amount))
@@ -199,8 +202,32 @@ function lineToCells(line: BulkTransferSheetRow): Cell[] {
   ]
 }
 
+const BULK_TRANSFER_BASE_COLUMN_WIDTHS = [114, 156, 133, 114, 133, 133, 189, 114, 156] as const
+
+/**
+ * 열 너비(px). fitWidth(행 머리 제외 시트 영역 폭)가 열 너비 합보다 넓으면 비율대로 늘려
+ * 마지막 열 오른쪽에 빈 칸이 남지 않게 한다. 좁으면 원래 너비를 유지한다(가로 스크롤).
+ * Fortune Sheet는 열마다 경계선 1px을 더하므로 그만큼 빼고 계산한다. (세금신고 미리보기와 같은 방식)
+ */
+export function buildBulkTransferColumnLengths(fitWidth?: number): Record<string, number> {
+  const base = [...BULK_TRANSFER_BASE_COLUMN_WIDTHS]
+  const baseTotal = base.reduce((sum, width) => sum + width, 0)
+  const target =
+    fitWidth != null && Number.isFinite(fitWidth) ? Math.floor(fitWidth) - base.length : 0
+  if (target <= baseTotal) {
+    return Object.fromEntries(base.map((width, index) => [String(index), width]))
+  }
+  const scaled = base.map(width => Math.floor((width * target) / baseTotal))
+  const remainder = target - scaled.reduce((sum, width) => sum + width, 0)
+  scaled[scaled.length - 1]! += remainder
+  return Object.fromEntries(scaled.map((width, index) => [String(index), width]))
+}
+
 /** Fortune `Workbook`용 시트 1개 (celldata + 열 너비 + 첫 행 고정) */
-export function buildBulkTransferFortuneSheet(rows: AccountPaymentRow[]): Sheet {
+export function buildBulkTransferFortuneSheet(
+  rows: AccountPaymentRow[],
+  options: { fitWidth?: number } = {}
+): Sheet {
   const lines = buildBulkTransferPreviewSheetRows(rows)
   const dataRowCount = lines.length
   const totalRows = Math.max(36, 1 + dataRowCount + 8)
@@ -228,17 +255,7 @@ export function buildBulkTransferFortuneSheet(rows: AccountPaymentRow[]): Sheet 
    * 대략 usable ≈ 내부폭 - 행머리(~45) - 9 - 120 → 열 합 ~1200–1260px면 1400 모달에서 여백·스크롤 균형.
    * 시안(12432:444679) 열 비율 120·165·140·120·140·140·200·120·165(합 1310)을 합계 1242px로 축소.
    */
-  const columnlen: Record<string, number> = {
-    '0': 114,
-    '1': 156,
-    '2': 133,
-    '3': 114,
-    '4': 133,
-    '5': 133,
-    '6': 189,
-    '7': 114,
-    '8': 156,
-  }
+  const columnlen = buildBulkTransferColumnLengths(options.fitWidth)
   /** 시안 행 높이: 헤더 31 · 본문 25 (Fortune 행 높이 + 격자선 1px) */
   const rowlen: Record<string, number> = { '0': 30 }
 

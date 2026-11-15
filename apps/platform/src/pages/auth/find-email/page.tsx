@@ -10,14 +10,14 @@ import {
   useFindEmailIdentityVerification,
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
-import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
+import { readLoginApiServerMessage, resolveLoginApiFailureAlert } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFText } from '@/shared/ui'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const IDENTITY_ERROR_MESSAGE = '본인인증에 실패했어요. 다시 시도해 주세요.'
-const LOOKUP_ERROR_MESSAGE = '이메일 찾기에 실패했어요. 다시 시도해 주세요.'
 
 function normalizeName(value: string | undefined): string {
   return value?.trim().replace(/\s+/g, ' ') ?? ''
@@ -28,6 +28,8 @@ export function FindEmailPage() {
   const remoteApi = isRemoteApiConfigured()
   const [isLookupLoading, setIsLookupLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  /** 이메일 조회 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [lookupErrorAlert, setLookupErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   const runLookup = useCallback(
     async (identityResult: IdentityChallengeCompleteResult) => {
@@ -56,7 +58,13 @@ export function FindEmailPage() {
 
         navigate('/auth/find-email/not-found', { replace: true })
       } catch (error) {
-        setSubmitError(getLoginApiErrorMessage(error, LOOKUP_ERROR_MESSAGE))
+        // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+        const failureAlert = resolveLoginApiFailureAlert(error)
+        if (failureAlert) {
+          setLookupErrorAlert(failureAlert)
+        } else {
+          setSubmitError(readLoginApiServerMessage(error))
+        }
       } finally {
         setIsLookupLoading(false)
       }
@@ -98,10 +106,10 @@ export function FindEmailPage() {
     <section>
       <div className={styles.header}>
         <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
-          가입한 이메일을 찾아드릴게요
+          가입한 이메일을 찾아드릴게요.
         </PFText>
         <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
-          본인 확인 후 가입한 이메일을 확인할 수 있어요
+          본인인증 후 가입한 이메일을 확인할 수 있어요.
         </PFText>
       </div>
 
@@ -129,6 +137,13 @@ export function FindEmailPage() {
           {busy ? '본인인증 진행 중…' : '본인인증 후 이메일 찾기'}
         </PFButton>
       </div>
+
+      <PFAlertModal
+        open={lookupErrorAlert != null}
+        title={lookupErrorAlert?.title ?? ''}
+        description={lookupErrorAlert?.description}
+        onConfirm={() => setLookupErrorAlert(null)}
+      />
     </section>
   )
 }

@@ -6,6 +6,11 @@ import { settingsConsentWritePath } from '@/features/mypage'
 import { useQueryClient } from '@tanstack/react-query'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequestFailedAlertCopy,
+  resolvePlatformErrorAlert,
+} from '@/shared/lib/platform-error-alert'
 import {
   PFAlertModal,
   PFButton,
@@ -30,9 +35,11 @@ import {
   ensureApplyGateRequiredDocumentConsentItems,
   filterListedDocumentConsentItems,
   parseApplyGateRequiredConsentItemIds,
+  sortDocumentConsentItemsForDisplay,
 } from '../lib/consent-visibility'
 import {
   canWithdrawConsent,
+  CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY,
   CONSENT_WITHDRAW_CONFLICT_MESSAGE,
   CONSENT_WITHDRAW_FAILED_MESSAGE,
   logConsentWithdrawBackendRegression,
@@ -53,6 +60,7 @@ import {
   downloadSubmittedCrimeConsent,
 } from '../lib/download-submitted-crime-consent'
 import { CRIME_CONSENT_MESSAGES } from '../../instructor-apply/consent/crime-consent-original'
+import { toCrimeConsentFailureAlert } from '../../instructor-apply/consent/crime-consent-alert'
 import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
   PortraitGuardianVerificationCancelledError,
@@ -63,7 +71,6 @@ import {
   formatPortraitGuardianVerifiedDate,
   PORTRAIT_GUARDIAN_CARD_COPY,
   PORTRAIT_GUARDIAN_CONFIRM_COPY,
-  PORTRAIT_GUARDIAN_ERROR_TITLE,
   PORTRAIT_GUARDIAN_MISSING_MESSAGE,
   PORTRAIT_GUARDIAN_VERIFIED_COPY,
   validatePortraitGuardianRelation,
@@ -74,11 +81,22 @@ import { ConsentDocumentPreviewOverlay } from './consent-document-preview-overla
 import styles from './consents-view.module.css'
 
 const WITHDRAW_REASON = '회원 마이페이지에서 직접 철회'
-const DOWNLOAD_FAILED_MESSAGE =
-  '업로드한 동의서를 다운로드하지 못했어요. 잠시 후 다시 시도해 주세요.'
-const MARKETING_FAILED_MESSAGE =
-  '마케팅 정보 수신 동의 변경에 실패했어요. 잠시 후 다시 시도해 주세요.'
 const MARKETING_CONFLICT_MESSAGE = CONSENT_WITHDRAW_CONFLICT_MESSAGE
+
+/** 원본 동의서 다운로드 실패 → 시안 「오류 제한 팝업」 문구 */
+function crimeDownloadFailureAlert(error: unknown): PlatformAlertCopy {
+  if (error instanceof CrimeConsentDownloadError) return toCrimeConsentFailureAlert(error.message)
+  return resolvePlatformErrorAlert(error)
+}
+
+/** 보호자 본인인증 실패 — 인증 서비스 기본 문구는 시안 「처리 실패」, 인증 결과 안내는 설명으로 둔다 */
+function portraitGuardianFailureAlert(error: unknown): PlatformAlertCopy {
+  const message = error instanceof Error ? error.message.trim() : ''
+  return resolvePlatformErrorAlert(error, {
+    serverMessage: () =>
+      message && message !== PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE ? message : '',
+  })
+}
 const CRIME_ORIGINAL_MISSING_COPY = {
   title: '원본 동의서 제출이 필요해요',
   description: CRIME_CONSENT_MESSAGES.signedFileNotReady,
@@ -136,7 +154,11 @@ type WithdrawCopy = {
   description: string
   completeTitle: string
   completeGuide: string
+  /** 완료 팝업 일시 라벨 — 기본값: `동의 철회일시` (시안: 콜론 없음) */
+  completeDateLabel?: string
 }
+
+const DEFAULT_WITHDRAW_COMPLETE_DATE_LABEL = '동의 철회일시'
 
 const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy>> = {
   paymentStatement: {
@@ -155,8 +177,9 @@ const DOCUMENT_WITHDRAW_COPY: Partial<Record<SettingsConsentItemId, WithdrawCopy
       '철회 시 제출하신 교육진행자 서약서를 더 이상 확인하거나 활용하지 않아요.',
       '서약하지 않은 상태에서는 교육진행자 활동이 제한돼요.',
     ].join('\n'),
-    completeTitle: '교육진행자 서약 동의가 철회되었어요.',
-    completeGuide: '다시 참여하려면 [약관 및 정책 동의 관리]에서 서약서를 작성해 주세요.',
+    completeTitle: '교육진행자 서약이 철회되었어요.',
+    completeDateLabel: '서약 철회일시',
+    completeGuide: '교육진행자 활동을 원하시면 [약관 및 정책 동의 관리]에서 다시 서약해 주세요.',
   },
   administrativeJoint: {
     title: '행정정보 공동이용 사전동의를 철회할까요?',
@@ -482,7 +505,7 @@ export function SettingsConsentsView() {
   const [isMarketingSaving, setIsMarketingSaving] = useState(false)
   const [marketingAgreeOpen, setMarketingAgreeOpen] = useState(false)
   const [marketingAgreedAt, setMarketingAgreedAt] = useState<string | null>(null)
-  const [notice, setNotice] = useState<{ title: string; description: string } | null>(null)
+  const [notice, setNotice] = useState<PlatformAlertCopy | null>(null)
   const [withdrawComplete, setWithdrawComplete] = useState<{
     id: SettingsConsentItemId
     withdrawnAt: string
@@ -540,10 +563,7 @@ export function SettingsConsentsView() {
   const handlePortraitGuardianConfirm = () => {
     if (!guardian) {
       setPortraitGuardianStep(null)
-      setNotice({
-        title: PORTRAIT_GUARDIAN_ERROR_TITLE,
-        description: PORTRAIT_GUARDIAN_MISSING_MESSAGE,
-      })
+      setNotice(buildRequestFailedAlertCopy(PORTRAIT_GUARDIAN_MISSING_MESSAGE))
       return
     }
     setPortraitGuardianStep('info')
@@ -570,13 +590,7 @@ export function SettingsConsentsView() {
         return
       }
       setPortraitGuardianStep(null)
-      setNotice({
-        title: PORTRAIT_GUARDIAN_ERROR_TITLE,
-        description:
-          error instanceof Error && error.message
-            ? error.message
-            : PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE,
-      })
+      setNotice(portraitGuardianFailureAlert(error))
     } finally {
       setIsPortraitGuardianVerifying(false)
     }
@@ -599,13 +613,13 @@ export function SettingsConsentsView() {
     if (consents.isRemoteSession) {
       try {
         documentId = await resolveLatestCrimeConsentDocumentId()
-      } catch {
-        setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      } catch (error) {
+        setNotice(resolvePlatformErrorAlert(error))
         return
       }
     }
     if (documentId == null) {
-      setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      setNotice(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     try {
@@ -618,17 +632,13 @@ export function SettingsConsentsView() {
         setCrimeOriginalMissingOpen(true)
         return
       }
-      setNotice({
-        title: '다운로드 실패',
-        description:
-          error instanceof CrimeConsentDownloadError ? error.message : DOWNLOAD_FAILED_MESSAGE,
-      })
+      setNotice(crimeDownloadFailureAlert(error))
     }
   }
 
   const handleDownloadDocument = (item: SettingsConsentItem) => {
     if (item.id !== 'sexOffenseCheck') {
-      setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      setNotice(PLATFORM_ALERT_COPY.requestFailed)
       return
     }
     if (crimeDownloadingRef.current) return
@@ -692,16 +702,18 @@ export function SettingsConsentsView() {
 
   const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
   const applyGateRequiredIds = parseApplyGateRequiredConsentItemIds(applyGateRequiredRaw)
-  const documentItems = filterListedDocumentConsentItems(
-    applyLocalWithdrawn(
-      ensureApplyGateRequiredDocumentConsentItems(consents.documentItems, applyGateRequiredIds),
-      withdrawnIds,
+  const documentItems = sortDocumentConsentItemsForDisplay(
+    filterListedDocumentConsentItems(
+      applyLocalWithdrawn(
+        ensureApplyGateRequiredDocumentConsentItems(consents.documentItems, applyGateRequiredIds),
+        withdrawnIds,
+      ),
+      {
+        isRemoteSession: consents.isRemoteSession,
+        isInstructor: consents.isInstructor,
+        requiredIds: applyGateRequiredIds,
+      },
     ),
-    {
-      isRemoteSession: consents.isRemoteSession,
-      isInstructor: consents.isInstructor,
-      requiredIds: applyGateRequiredIds,
-    },
   )
 
   /**
@@ -731,9 +743,9 @@ export function SettingsConsentsView() {
     } catch (error) {
       if (isConflictError(error)) {
         await refetchConsents()
-        setNotice({ title: '안내', description: MARKETING_CONFLICT_MESSAGE })
+        setNotice(buildRequestFailedAlertCopy(MARKETING_CONFLICT_MESSAGE))
       } else {
-        setNotice({ title: '동의 변경 실패', description: MARKETING_FAILED_MESSAGE })
+        setNotice(resolvePlatformErrorAlert(error))
       }
       return { ok: false }
     } finally {
@@ -795,6 +807,11 @@ export function SettingsConsentsView() {
       })
     } catch (error) {
       const parsed = parseConsentWithdrawError(error, consentType)
+      if (parsed.activeProgramBlocked) {
+        closeWithdrawConfirm()
+        setNotice({ ...CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY })
+        return
+      }
       if (parsed.backendRegression) {
         logConsentWithdrawBackendRegression(parsed.code, consentType)
       }
@@ -802,10 +819,13 @@ export function SettingsConsentsView() {
         await refetchConsents(consentType)
       }
       closeWithdrawConfirm()
-      setNotice({
-        title: parsed.refetch ? '안내' : '동의 철회 실패',
-        description: parsed.message || CONSENT_WITHDRAW_FAILED_MESSAGE,
-      })
+      // 서버 기본 거절 문구가 없으면 시안 「처리 실패」, 코드별 안내는 설명으로 둔다
+      setNotice(
+        resolvePlatformErrorAlert(error, {
+          serverMessage: () =>
+            parsed.message === CONSENT_WITHDRAW_FAILED_MESSAGE ? '' : parsed.message,
+        }),
+      )
     } finally {
       withdrawingRef.current = false
       setIsWithdrawing(false)
@@ -830,8 +850,10 @@ export function SettingsConsentsView() {
 
   return (
     <div className={styles.page}>
-      <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.pageLead}>
+      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.pageLead}>
         초상권 수집·이용 항목 미동의 시 프로그램 신청·참여가 제한돼요.
+        <br />
+        마케팅 정보 수신 동의 여부는 서비스 이용과 무관해요.
       </PFText>
       <section className={styles.section}>
         <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
@@ -906,7 +928,7 @@ export function SettingsConsentsView() {
         title={completeCopy?.completeTitle}
         description={
           completeCopy && withdrawComplete
-            ? `동의 철회일시: ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
+            ? `${completeCopy.completeDateLabel ?? DEFAULT_WITHDRAW_COMPLETE_DATE_LABEL} ${withdrawComplete.withdrawnAt}\n${completeCopy.completeGuide}`
             : null
         }
         onClose={closeWithdrawComplete}

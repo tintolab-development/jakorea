@@ -6,6 +6,7 @@ import {
   formatSettingsDateDot,
   formatSettingsEmployment,
   formatSettingsGender,
+  formatSettingsJoinedAt,
   formatSettingsPhone,
   formatSettingsText,
   type SettingsInfoRow,
@@ -16,13 +17,6 @@ const SOCIAL_PROVIDER_LABEL: Record<string, string> = {
   kakao: '카카오',
   google: '구글',
   naver: '네이버',
-}
-
-export function formatSettingsJoinedAtDot(value: string | undefined): string {
-  if (!value?.trim()) return EMPTY_SETTINGS_VALUE
-  const matched = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (!matched) return EMPTY_SETTINGS_VALUE
-  return `${matched[1]}.${matched[2]}.${matched[3]}`
 }
 
 export function formatSettingsLinkedSocialAccounts(accounts: string[] | undefined): string {
@@ -118,7 +112,7 @@ export function mapInstructorBasicSettingsRows(
     : [{ label: '소속', value: formatInstructorAffiliation(cms, profile) }]
 
   return [
-    { label: '가입일', value: formatSettingsJoinedAtDot(profile.joinedAt) },
+    { label: '가입일', value: formatSettingsJoinedAt(profile.joinedAt) },
     { label: '이메일 ID', value: formatSettingsText(profile.email) },
     { label: '이름', value: formatSettingsText(profile.name), dividerBefore: true },
     { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },

@@ -25,6 +25,10 @@ import {
 import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-keys'
 import dayjs from 'dayjs'
 import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
+import {
+  buildParticipantInterviewConfigForSave,
+  isParticipantInterviewOverlayKey,
+} from '@/features/program/shared/lib/volunteer-interview-config'
 
 export type { VolunteerInterviewScheduleEditSeed }
 
@@ -301,7 +305,14 @@ export function resolveGeneralProgramVolunteerInterviewScheduleEditSeed(
 ): VolunteerInterviewScheduleEditSeed | undefined {
   const config = program.volunteerInterviewConfigFromServer
   if (config == null) return resolveGeneralProgramVolunteerInterviewSchedulePreviewSeed(program)
-  const display = displayFromTypedConfig(config, program.volunteerInterviewScheduleInfoFromServer)
+  return editSeedFromTypedConfig(config, program.volunteerInterviewScheduleInfoFromServer)
+}
+
+function editSeedFromTypedConfig(
+  config: ProgramVolunteerInterviewConfig,
+  server: GeneralProgramVolunteerInterviewScheduleInfo | null | undefined
+): VolunteerInterviewScheduleEditSeed | undefined {
+  const display = displayFromTypedConfig(config, server)
   const dateIsos = typedVolunteerInterviewUnavailableDateIsos(config)
   const selectedTimeSlotLabels = splitSlotLabels(
     formatAvailableTimeSlotsFromSelectedKeys(config.selectedSlotKeys ?? [])
@@ -361,4 +372,42 @@ export function resolveGeneralProgramVolunteerInterviewSchedulePreviewSeed(
 
 export function isGeneralProgramVolunteerInterviewScheduleVisible(program: Program): boolean {
   return program.generalVolunteerInterviewEnabled !== false
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 일반 개인 참여자 모집 「면접 진행 가능 일정」 — 참여자 행 typed(`participantInterviewConfigFromServer`)만 쓴다.
+ * null(저장 값 없음)이면 빈 일정. 봉사자 typed·표시 객체·DEFAULT mock 으로 채우지 않는다.
+ * ---------------------------------------------------------------------------------------------- */
+
+const EMPTY_INTERVIEW_SCHEDULE_DISPLAY: GeneralProgramVolunteerInterviewScheduleDisplay = {
+  recurringUnavailable: '-',
+  specificUnavailableDates: '-',
+  availableTimeSlots: '-',
+  exceptions: [],
+}
+
+/** 서버 조회 Program 은 행 typed, 아니면(등록 미리보기) overlay 참여자 면접 키로 만든 typed */
+function resolveParticipantInterviewConfig(program: Program): ProgramVolunteerInterviewConfig | null {
+  if (program.participantInterviewConfigFromServer !== undefined) {
+    return program.participantInterviewConfigFromServer
+  }
+  const overlay = readRegistrationOverlay(program)
+  if (!Object.keys(overlay).some(isParticipantInterviewOverlayKey)) return null
+  return buildParticipantInterviewConfigForSave(overlay)
+}
+
+export function resolveGeneralProgramParticipantInterviewScheduleDisplay(
+  program: Program
+): GeneralProgramVolunteerInterviewScheduleDisplay {
+  const config = resolveParticipantInterviewConfig(program)
+  if (config == null) return EMPTY_INTERVIEW_SCHEDULE_DISPLAY
+  return displayFromTypedConfig(config, null)
+}
+
+export function resolveGeneralProgramParticipantInterviewScheduleEditSeed(
+  program: Program
+): VolunteerInterviewScheduleEditSeed | undefined {
+  const config = resolveParticipantInterviewConfig(program)
+  if (config == null) return undefined
+  return editSeedFromTypedConfig(config, null)
 }

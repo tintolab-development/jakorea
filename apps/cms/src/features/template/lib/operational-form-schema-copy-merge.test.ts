@@ -4,6 +4,10 @@ import { createRecruitFormInstructorDraft } from '@/features/template/model/recr
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { RECRUIT_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-instructor-draft'
 import {
+  createUjatProgramApplicationFormInstitutionDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
+} from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
+import {
   createUjatProgramApplicationFormVolunteerDraft,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
 } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
@@ -181,6 +185,88 @@ describe('buildOperationalImmutableFormSchemaDraft', () => {
         ? seedParagraph.items
         : null
     )
+  })
+
+  it('UJAT 봉사자 신청 COPY — 제3자 동의 「제공받는 곳」은 에디터 값, 보유기간 칸·표 구조는 카탈로그', () => {
+    const seed = createUjatProgramApplicationFormVolunteerDraft()
+    const thirdPartyId = UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent
+    const seedParagraph = seed.paragraphs.find(p => p.id === thirdPartyId)
+    expect(seedParagraph?.variant).toBe('horizontal_table')
+    if (seedParagraph?.kind !== 'single_item' || seedParagraph.variant !== 'horizontal_table') {
+      return
+    }
+    const seedRow = seedParagraph.fieldDataRows[0]!
+    const lastIndex = seedRow.length - 1
+
+    const editorDraft = {
+      ...seed,
+      paragraphs: seed.paragraphs.map(p =>
+        p.id === thirdPartyId && p.kind === 'single_item' && p.variant === 'horizontal_table'
+          ? {
+              ...p,
+              dataRows: [['JA코리아', ...p.dataRows[0]!.slice(1, -1), '바꾼 보유기간']],
+              fieldDataRows: [
+                [
+                  { kind: 'text' as const, value: 'JA코리아' },
+                  ...p.fieldDataRows[0]!.slice(1, -1),
+                  { kind: 'text' as const, value: '바꾼 보유기간' },
+                ],
+                [{ kind: 'text' as const, value: '추가 행' }],
+              ],
+            }
+          : p
+      ),
+    }
+
+    const merged = buildOperationalImmutableFormSchemaDraft({
+      templateCode: 'application-ujat-volunteer-copy-1',
+      editorDraft,
+      baseTemplateCode: 'application-ujat-volunteer',
+      catalogBaseline: seed,
+    })
+    const mergedParagraph = merged?.paragraphs.find(p => p.id === thirdPartyId)
+    if (mergedParagraph?.kind !== 'single_item' || mergedParagraph.variant !== 'horizontal_table') {
+      throw new Error('제3자 동의 표가 아님')
+    }
+    expect(mergedParagraph.fieldDataRows).toHaveLength(seedParagraph.fieldDataRows.length)
+    expect(mergedParagraph.fieldDataRows[0]![0]).toEqual({ kind: 'text', value: 'JA코리아' })
+    expect(mergedParagraph.fieldDataRows[0]![lastIndex]).toEqual(seedRow[lastIndex])
+    expect(mergedParagraph.dataRows[0]![0]).toBe('JA코리아')
+    expect(mergedParagraph.dataRows[0]![lastIndex]).toBe(seedParagraph.dataRows[0]![lastIndex])
+  })
+
+  it('UJAT 기관 신청 COPY — 제3자 동의 「제공받는 곳」은 에디터 값으로 보낸다', () => {
+    const seed = createUjatProgramApplicationFormInstitutionDraft()
+    const thirdPartyId = UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent
+    const editorDraft = {
+      ...seed,
+      paragraphs: seed.paragraphs.map(p =>
+        p.id === thirdPartyId && p.kind === 'single_item' && p.variant === 'horizontal_table'
+          ? {
+              ...p,
+              dataRows: p.dataRows.map((row, ri) =>
+                ri === 0 ? ['배정 학교', ...row.slice(1)] : row
+              ),
+              fieldDataRows: p.fieldDataRows.map((row, ri) =>
+                ri === 0 ? [{ kind: 'text' as const, value: '배정 학교' }, ...row.slice(1)] : row
+              ),
+            }
+          : p
+      ),
+    }
+
+    const merged = buildOperationalImmutableFormSchemaDraft({
+      templateCode: 'application-ujat-school-copy-1',
+      editorDraft,
+      baseTemplateCode: 'application-ujat-school',
+      catalogBaseline: seed,
+    })
+    const mergedParagraph = merged?.paragraphs.find(p => p.id === thirdPartyId)
+    if (mergedParagraph?.kind !== 'single_item' || mergedParagraph.variant !== 'horizontal_table') {
+      throw new Error('제3자 동의 표가 아님')
+    }
+    expect(mergedParagraph.fieldDataRows[0]![0]).toEqual({ kind: 'text', value: '배정 학교' })
+    expect(mergedParagraph.dataRows[0]![0]).toBe('배정 학교')
   })
 
   it('서버 저장본에 남은 예전 시드 설명은 현재 시드 문구로 바꾸고, 관리자가 고친 설명은 유지한다', () => {

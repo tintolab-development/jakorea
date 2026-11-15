@@ -18,13 +18,19 @@ import {
   InstructorLicenseProfileFields,
   type InstructorProfileFieldPlaceholders,
 } from '@/features/mypage/instructor-apply/instructor-profile-fields'
+import { resolveInstructorRegisterMissingLabels } from '@/features/mypage/instructor-apply/lib/instructor-register-missing-labels'
 import { toInstructorFormEmploymentStatus } from '@/features/mypage/instructor-apply/map-locked-basic-info'
 import { isRemoteApiConfigured } from '@/shared/lib'
 import { PLATFORM_REQUIRED_NOT_FILLED_TITLE } from '@/shared/lib/platform-alert-copy'
 import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import {
   PFAlertModal,
   PFButton,
   PFRequiredFieldsIncompleteDescription,
+  PFRequiredMissingAlert,
   PFText,
 } from '@/shared/ui'
 import {
@@ -79,7 +85,14 @@ export function resolveInstructorFullEditSectionDomId(target: InstructorFullEdit
   return `settings-instructor-full-edit-${target}`
 }
 
-function validateInstructorFullEdit(values: InstructorSharedProfileFormValues): string | null {
+type InstructorFullEditValidationError =
+  | { kind: 'requiredMissing'; copy: RequiredMissingAlertCopy }
+  | { kind: 'message'; message: string }
+
+function validateInstructorFullEdit(
+  values: InstructorSharedProfileFormValues,
+  isDualTeacher: boolean
+): InstructorFullEditValidationError | null {
   const result = collectInstructorRegisterValidation(
     values,
     {},
@@ -90,8 +103,20 @@ function validateInstructorFullEdit(values: InstructorSharedProfileFormValues): 
       requireFreeWrite: false,
     }
   )
-  if (result.missingRequired) return REQUIRED_INCOMPLETE
-  if (result.formatMessages[0]) return result.formatMessages[0]
+  if (result.missingRequired) {
+    // 시안 「필수 항목 미입력 (항목명 노출)」 — 화면에 없는 키뿐이면 '*' 안내로 둔다
+    const labels = resolveInstructorRegisterMissingLabels(result.missingRequiredKeys, 'settings', {
+      isDualTeacher,
+    })
+    if (labels.length > 0) {
+      return {
+        kind: 'requiredMissing',
+        copy: buildRequiredMissingAlertCopy({ kind: 'field', labels }),
+      }
+    }
+    return { kind: 'message', message: REQUIRED_INCOMPLETE }
+  }
+  if (result.formatMessages[0]) return { kind: 'message', message: result.formatMessages[0] }
   return null
 }
 
@@ -181,6 +206,9 @@ export function SettingsInstructorFullEditForm({
   const [selectedSchool, setSelectedSchool] = useState<SelectedSchool | null>(null)
   const [isReverifying, setIsReverifying] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [requiredMissingAlert, setRequiredMissingAlert] = useState<RequiredMissingAlertCopy | null>(
+    null
+  )
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false)
   const profileUpdateMutation = usePortalProfileUpdateMutation()
@@ -211,9 +239,13 @@ export function SettingsInstructorFullEditForm({
   const handleSave = async () => {
     if (isBusy) return
     setSubmitError(null)
-    const validationError = validateInstructorFullEdit(values)
+    const validationError = validateInstructorFullEdit(values, isDual)
+    if (validationError?.kind === 'requiredMissing') {
+      setRequiredMissingAlert(validationError.copy)
+      return
+    }
     if (validationError) {
-      setAlertMessage(validationError)
+      setAlertMessage(validationError.message)
       return
     }
 
@@ -359,6 +391,10 @@ export function SettingsInstructorFullEditForm({
         </PFButton>
       </div>
 
+      <PFRequiredMissingAlert
+        copy={requiredMissingAlert}
+        onConfirm={() => setRequiredMissingAlert(null)}
+      />
       <PFAlertModal
         open={alertMessage != null}
         title={alertMessage === REQUIRED_INCOMPLETE ? PLATFORM_REQUIRED_NOT_FILLED_TITLE : '안내'}
@@ -378,6 +414,7 @@ export function SettingsInstructorFullEditForm({
         description="수정한 내용이 저장되지 않습니다."
         cancelLabel="계속 수정하기"
         confirmLabel="나가기"
+        emphasis="cancel"
         onCancel={() => setIsLeaveConfirmOpen(false)}
         onConfirm={leave}
       />

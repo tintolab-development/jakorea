@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from 'react'
-import { Spin } from 'antd'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import type { Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralInterviewSlots } from '@/features/program/general/hooks/use-general-interview-slots'
+import type { InterviewSlotAudience } from '@/features/program/general/api/applications-api-client'
 import {
   mergeApplicantAvailabilityIntoSchedule,
   mergeRemoteSlotsIntoProgramSchedule,
@@ -39,6 +40,12 @@ export type GeneralVolunteerInterviewAssignModalProps = {
   applicationsUseRemote?: boolean
   /** 본문 호칭 — 기본 `봉사자` */
   subjectNoun?: string
+  /**
+   * 면접 슬롯 대상 — 기본 `VOLUNTEER`(봉사자 기존 동작).
+   * `PARTICIPANT`(개인 참여자)는 GET interview-slots?audience=PARTICIPANT 만 쓴다.
+   * 비어 있으면(참여자 일정 저장 전) 빈 캘린더 — 봉사자 일정·DEFAULT mock 으로 채우지 않는다.
+   */
+  audience?: InterviewSlotAudience
   onCancel: () => void
   onConfirm: (payload: GeneralInterviewAssignConfirmPayload) => void
 }
@@ -52,9 +59,11 @@ export function GeneralVolunteerInterviewAssignModal({
   mode,
   applicationsUseRemote = false,
   subjectNoun = '봉사자',
+  audience = 'VOLUNTEER',
   onCancel,
   onConfirm,
 }: GeneralVolunteerInterviewAssignModalProps) {
+  const participantAudience = audience === 'PARTICIPANT'
   const useRemoteSchedule = shouldUseRemoteInterviewSchedule(program.id, {
     applicationsUseRemote,
   })
@@ -62,6 +71,7 @@ export function GeneralVolunteerInterviewAssignModal({
   const useLocalInterviewSchedule = !useRemoteSchedule && localProgramDetail != null
   const slotsQuery = useGeneralInterviewSlots(program.id, open && useRemoteSchedule, {
     applicationsUseRemote,
+    audience,
   })
   const interviewRange = program.generalCommonInfo?.volunteerInterviewScheduleInfo
   const publicHolidayDateKeys = useKoreanPublicHolidayDateKeys({
@@ -83,8 +93,16 @@ export function GeneralVolunteerInterviewAssignModal({
   }, [open, onCancel, useLocalInterviewSchedule, useRemoteSchedule])
 
   const schedule = useMemo(() => {
+    if (participantAudience) {
+      /** 개인 참여자 — PARTICIPANT 슬롯 ∩ 신청 가능 일정만. 봉사자 일정·mock 폴백 없음(로컬 프로그램은 빈 일정) */
+      return mergeApplicantAvailabilityIntoSchedule(
+        parseGeneralInterviewScheduleFromRemoteSlots(useRemoteSchedule ? (slotsQuery.data ?? []) : []),
+        applicant.interviewAvailability ?? []
+      )
+    }
     /** 배정 가능 시간 SSOT = interview-slots. 신청 가능 일정과 겹치는 슬롯만 남긴다. */
-    const scheduleProgram = useLocalInterviewSchedule && localProgramDetail ? localProgramDetail : program
+    const scheduleProgram =
+      useLocalInterviewSchedule && localProgramDetail ? localProgramDetail : program
     const fromProgram = parseGeneralInterviewScheduleFromProgram(
       scheduleProgram,
       publicHolidayDateKeys
@@ -100,6 +118,7 @@ export function GeneralVolunteerInterviewAssignModal({
   }, [
     applicant.interviewAvailability,
     localProgramDetail,
+    participantAudience,
     program,
     publicHolidayDateKeys,
     slotsQuery.data,
@@ -120,13 +139,7 @@ export function GeneralVolunteerInterviewAssignModal({
   return (
     <>
       {waitingRemoteSlots ? (
-        <div
-          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/45"
-          role="status"
-          aria-live="polite"
-        >
-          <Spin size="large" tip="면접 일정을 불러오는 중…" />
-        </div>
+        <FullscreenSpinner />
       ) : (
         <UjatVolunteerInterviewAssignModal
           open={open}

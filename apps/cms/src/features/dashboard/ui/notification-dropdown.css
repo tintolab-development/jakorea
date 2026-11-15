@@ -159,14 +159,9 @@
 }
 
 .notification-dropdown-loading {
-  display: block;
+  display: flex;
+  justify-content: center;
   padding: 4px 0 8px;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.55;
-  text-align: center;
 }
 
 .notification-dropdown-item:hover {
@@ -241,6 +236,8 @@
 .notification-dropdown-item-sub {
   display: block;
   width: 100%;
+  /* 프로그램명·본문이 모두 없어도 한 줄 높이를 유지(QA: 항목 높이 줄어듦 방지) */
+  min-height: 1.5em;
   padding-right: 4px;
   color: var(--default-BK, #3d3d3d);
   text-align: left;
@@ -249,6 +246,13 @@
   font-weight: 500;
   line-height: 150%;
   opacity: 0.6;
+}
+
+/* 본문 첫 줄 대체 — 한 줄 말줄임(긴 본문으로 항목 높이가 늘지 않게) */
+.notification-dropdown-item-sub--body {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 날짜 — 시안 #3d3d3d 불투명도 30% */

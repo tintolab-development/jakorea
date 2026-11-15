@@ -17,15 +17,15 @@ export const CAREERS_TALENT_APPLY_PLACEHOLDERS = {
   educationLevel: '최종 학력을 선택해 주세요',
   schoolName: '학교명',
   major: '학부/과',
-  evidenceFile: '경력 증빙 서류를 첨부해 주세요',
+  /** 2줄 안내 — `.fileGuide`가 `white-space: pre-line`으로 줄을 나눈다 */
+  evidenceFile:
+    '경력 증빙 서류를 첨부해 주세요.\n파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
 } as const
 
 export const CAREERS_TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 
 export const CAREERS_TALENT_APPLY_SUBMIT_SUCCESS_MESSAGE = '인재 정보 등록이 접수되었습니다.'
 
-export const CAREERS_TALENT_APPLY_SUBMIT_ERROR_MESSAGE =
-  '신청 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 
 export type CareersTalentJobInterest =
   | 'managementPlanning'
@@ -64,6 +64,48 @@ export type CareersTalentApplyFormValues = {
 export type CareersTalentApplyFieldKey =
   | Exclude<keyof CareersTalentApplyFormValues, 'privacyAgreed'>
   | 'privacy'
+
+/**
+ * 필수 입력 누락 팝업(Figma 14550-2349)에 보이는 항목명 — 화면 표시 순서.
+ * 학교명·학부/과는 선택 항목이라 넣지 않는다. 개인정보 동의는 미동의 팝업이 따로 있다.
+ */
+const CAREERS_TALENT_APPLY_FIELD_LABELS: ReadonlyArray<
+  readonly [Exclude<CareersTalentApplyFieldKey, 'privacy'>, string]
+> = [
+  ['jobInterest', '관심 직무/분야'],
+  ['name', '이름'],
+  ['phone', '휴대폰 번호'],
+  ['email', '이메일'],
+  ['addressRoad', '자택 주소'],
+  ['addressDetail', '자택 주소'],
+  ['educationLevel', '최종학력'],
+  ['educationInfo', '학력정보'],
+  ['careerType', '경력'],
+  ['careerInfo', '경력/경험/자격정보'],
+]
+
+/** 오류가 난 필수 항목명(중복 제거, 화면 순서) */
+export function collectCareersTalentApplyMissingLabels(
+  errors: Partial<Record<CareersTalentApplyFieldKey, boolean>>,
+): string[] {
+  const labels: string[] = []
+  for (const [key, label] of CAREERS_TALENT_APPLY_FIELD_LABELS) {
+    if (errors[key] && !labels.includes(label)) labels.push(label)
+  }
+  return labels
+}
+
+/** 경력 증빙 첨부 허용 형식 — 안내 문구(PDF, JPG, PNG)와 같다 */
+export const CAREERS_TALENT_EVIDENCE_FORMATS_LABEL = 'PDF, JPG, PNG'
+
+const CAREERS_TALENT_EVIDENCE_MIME = new Set(['application/pdf', 'image/jpeg', 'image/png'])
+const CAREERS_TALENT_EVIDENCE_EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'png'])
+
+export function isCareersTalentEvidenceFileTypeAllowed(file: { name: string; type: string }): boolean {
+  const mime = file.type.trim().toLowerCase()
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
+  return CAREERS_TALENT_EVIDENCE_MIME.has(mime) || CAREERS_TALENT_EVIDENCE_EXTENSIONS.has(extension)
+}
 
 export const EMPTY_CAREERS_TALENT_APPLY_FORM_VALUES: CareersTalentApplyFormValues = {
   jobInterest: '',

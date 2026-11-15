@@ -144,6 +144,22 @@
   max-width: 360px;
 }
 
+/* 동의서 미리보기 — 번호 값은 마지막 라디오 항목 텍스트 바로 옆(34px)에 붙인다 */
+.idTypeWithInputPreview {
+  column-gap: 34px;
+}
+
+.idTypeWithInputPreview .idTypeWithInputResident,
+.idTypeWithInputPreview .idTypeWithInputInput {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+}
+
+.idTypeWithInputPreview .cellText {
+  text-align: left;
+}
+
 .portraitAffiliationRow {
   display: flex;
   flex-wrap: wrap;

@@ -10,12 +10,12 @@ import {
   type OneToOneInquiryItem,
   type OneToOneInquiryWritePayload,
 } from '@/features/inquiry'
-import { PFButton, PFModal, PFPagination, PFText } from '@/shared/ui'
+import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import { PFAlertModal, PFButton, PFModal, PFPagination, PFText } from '@/shared/ui'
 import cancelConfirmStyles from '@/features/mypage/education/applications/ui/cancel-confirm.module.css'
-import {
-  getInquiryApiErrorMessage,
-  INQUIRY_DELETE_ERROR_FALLBACK,
-} from '../lib/inquiry-errors'
+import { readInquiryServerErrorMessage } from '../lib/inquiry-errors'
 import { InquiryAccordionList } from './inquiry-accordion-list'
 import { OneToOneInquiryWriteModal } from './one-to-one-inquiry-write-modal'
 import styles from './inquiry-tab-content.module.css'
@@ -25,12 +25,6 @@ type InquiryTabContentProps = {
   onParamsChange: (next: Partial<InquiryListParams>) => void
 }
 
-function formatCreatedAt(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}년 ${month}월 ${day}일`
-}
 
 function createInquiryItem(
   payload: OneToOneInquiryWritePayload,
@@ -41,7 +35,7 @@ function createInquiryItem(
     category: payload.category,
     title: payload.title,
     status: 'pending',
-    createdAt: formatCreatedAt(new Date()),
+    createdAt: formatDisplayDateTime(new Date()),
     programName: payload.programName,
     question: payload.content,
     order,
@@ -55,7 +49,8 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
-  const [inquiryError, setInquiryError] = useState<string | null>(null)
+  /** 삭제 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [deleteErrorAlert, setDeleteErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const remoteDetail = useMyInquiryDetailQuery(remoteInquiries.enabled ? expandedId : null)
   const writeOptions = useInquiryWriteOptionsQuery(remoteInquiries.enabled)
   const createInquiry = useCreateMyInquiryMutation()
@@ -64,7 +59,11 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const items = useMemo(() => {
     const source = remoteInquiries.enabled ? remoteInquiries.items : localItems
     if (!remoteDetail.detail || !expandedId) return source
-    return source.map(item => (item.id === expandedId ? { ...item, ...remoteDetail.detail } : item))
+    // 상세에 없는 값(undefined)이 목록 값(프로그램명 '해당 없음' 등)을 지우지 않게 정의된 값만 덮는다
+    const detail = Object.fromEntries(
+      Object.entries(remoteDetail.detail).filter(([, value]) => value !== undefined)
+    ) as Partial<OneToOneInquiryItem>
+    return source.map(item => (item.id === expandedId ? { ...item, ...detail } : item))
   }, [expandedId, localItems, remoteDetail.detail, remoteInquiries.enabled, remoteInquiries.items])
 
   const sortedItems = useMemo(
@@ -81,7 +80,6 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
 
   const handleDelete = (id: string) => {
     if (deletingId) return
-    setInquiryError(null)
     setPendingDeleteId(id)
   }
 
@@ -93,13 +91,16 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const handleConfirmDelete = async () => {
     const id = pendingDeleteId
     if (!id || deletingId) return
-    setInquiryError(null)
     if (remoteInquiries.enabled) {
       setDeletingId(id)
       try {
         await deleteInquiry.mutateAsync(id)
       } catch (error) {
-        setInquiryError(getInquiryApiErrorMessage(error, INQUIRY_DELETE_ERROR_FALLBACK))
+        // 확인 창을 닫고 오류 팝업을 띄운다
+        setPendingDeleteId(null)
+        setDeleteErrorAlert(
+          resolvePlatformErrorAlert(error, { serverMessage: readInquiryServerErrorMessage }),
+        )
         return
       } finally {
         setDeletingId(null)
@@ -133,20 +134,11 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
         <PFButton
           size="xlarge"
           type="button"
-          onClick={() => {
-            setInquiryError(null)
-            setIsWriteModalOpen(true)
-          }}
+          onClick={() => setIsWriteModalOpen(true)}
         >
           1:1 문의 작성하기
         </PFButton>
       </div>
-
-      {inquiryError ? (
-        <PFText as="p" typo="bd-sm-md" color="error" role="alert" className={styles.error}>
-          {inquiryError}
-        </PFText>
-      ) : null}
 
       <InquiryAccordionList
         items={pageItems}
@@ -182,7 +174,7 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
             <PFText as="div" typo="hl-lg" color="black" className={cancelConfirmStyles.title}>
               문의를 삭제할까요?
             </PFText>
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={cancelConfirmStyles.description}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={cancelConfirmStyles.description}>
               삭제한 문의는 되돌릴 수 없습니다.
             </PFText>
           </div>
@@ -210,6 +202,13 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
           </div>
         </div>
       </PFModal>
+
+      <PFAlertModal
+        open={deleteErrorAlert != null}
+        title={deleteErrorAlert?.title ?? ''}
+        description={deleteErrorAlert?.description}
+        onConfirm={() => setDeleteErrorAlert(null)}
+      />
 
       <OneToOneInquiryWriteModal
         open={isWriteModalOpen}

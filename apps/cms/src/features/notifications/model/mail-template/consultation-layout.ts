@@ -109,7 +109,7 @@ export function buildConsultationMailLayoutHtml(): string {
   ${companyInfoTable()}
   ${mailSectionHeading('상담 정보')}
   ${consultInfoTable()}
-  ${mailDetailButton('후원 상담 신청 상세보기', CONSULTATION_MAIL_DETAIL_LINK_VARIABLE_LABEL)}
+  ${mailDetailButton('후원 상담 신청 상세보기', CONSULTATION_MAIL_DETAIL_LINK_VARIABLE_LABEL, null)}
 `
   )
 }

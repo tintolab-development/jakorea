@@ -1,0 +1,45 @@
+/* 시안 14553:2358 — 타이틀 아래 4 + 8 · 목록 상자 ↔ 안내 문구 8 */
+.extra {
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-8);
+  text-align: center;
+}
+
+/* 목록 상자 — warm-80 · 16/12 · radius 16, 내용은 가운데 블록에 왼쪽 정렬 */
+.box {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding: var(--spacing-12) var(--spacing-16);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-warm-80);
+}
+
+.items {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.items li {
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.guide {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .guide {
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+}

@@ -10,6 +10,7 @@ import {
 import {
   PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER,
   programEnrollmentEconomyListLabels,
+  type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
@@ -212,11 +213,21 @@ export function createMemberProgramLectureTablePageConfig(
   }
 }
 
+/** 학교 참여 이력은 서류·면접 심사가 없어 「1차 서류 합격」「면접 불합격」을 검색 항목에서 뺀다 (QA: 학교 상세 > 참여 이력) */
+const SCHOOL_PARTICIPATION_EXCLUDED_ENROLLMENT_STATUSES: ReadonlySet<ProgramEnrollmentDisplayStatus> =
+  new Set<ProgramEnrollmentDisplayStatus>(['DOCUMENT_PASS', 'INTERVIEW_FAILED'])
+
 /** enrollmentStatus select 옵션(라벨) — 필터 카드와 동기 */
-export function memberProgramEnrollmentStatusFieldOptions() {
+export function memberProgramEnrollmentStatusFieldOptions(mode?: MemberProgramHistoryMode) {
+  const statuses =
+    mode === 'schoolProgramParticipation'
+      ? PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.filter(
+          value => !SCHOOL_PARTICIPATION_EXCLUDED_ENROLLMENT_STATUSES.has(value)
+        )
+      : PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER
   return [
     { label: '전체', value: ALL },
-    ...PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(value => ({
+    ...statuses.map(value => ({
       label: programEnrollmentEconomyListLabels[value],
       value,
     })),

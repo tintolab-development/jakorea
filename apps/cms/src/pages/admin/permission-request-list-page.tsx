@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { showApplicationRejectionCompletedAlert } from '@/shared/ui/show-application-rejection-completed-alert'
 import '@/shared/ui/detail-fullpage-modal.css'
 import type { User } from '@/types/user'
 import { updateMockUserById } from '@/entities/user/api/user-service'
@@ -1054,6 +1055,8 @@ export function PermissionRequestListPage() {
         }
         instructorListRef.current?.clearRowSelection()
         setInstructorRejectModal(null)
+        // QA(강사 권한): 반려 완료 시 공통 완료 팝업 — 프로그램 신청 반려와 같은 copy
+        showApplicationRejectionCompletedAlert()
       }
 
       const finishBulk = (userIds: string[]) => {
@@ -1064,6 +1067,7 @@ export function PermissionRequestListPage() {
         }
         instructorListRef.current?.clearRowSelection()
         setInstructorRejectModal(null)
+        showApplicationRejectionCompletedAlert()
       }
 
       if (instructorRemote) {
@@ -1128,6 +1132,8 @@ export function PermissionRequestListPage() {
         }
         adminListRef.current?.clearRowSelection()
         setAdminRejectModal(null)
+        // 관리자 권한 반려도 강사 권한과 같은 공통 완료 팝업
+        showApplicationRejectionCompletedAlert()
       }
 
       const finishBulk = (userIds: string[]) => {
@@ -1138,6 +1144,7 @@ export function PermissionRequestListPage() {
         }
         adminListRef.current?.clearRowSelection()
         setAdminRejectModal(null)
+        showApplicationRejectionCompletedAlert()
       }
 
       if (adminRemote) {

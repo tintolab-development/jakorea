@@ -37,8 +37,12 @@ export class CertificateBulkDownloadError extends Error {
   readonly code?: string
   readonly traceId?: string
 
-  constructor(message: string, options?: { status?: number; code?: string; traceId?: string }) {
-    super(message)
+  constructor(
+    message: string,
+    options?: { status?: number; code?: string; traceId?: string; cause?: unknown },
+  ) {
+    // cause: 응답 없는 오류(네트워크)도 팝업에서 「네트워크 오류 안내」로 고를 수 있게 원래 오류를 남긴다
+    super(message, options?.cause === undefined ? undefined : { cause: options.cause })
     this.name = 'CertificateBulkDownloadError'
     this.status = options?.status
     this.code = options?.code
@@ -232,7 +236,7 @@ export async function toCertificateBulkDownloadError(
 ): Promise<CertificateBulkDownloadError> {
   if (error instanceof CertificateBulkDownloadError) return error
   const response = (error as ErrorWithResponse | null)?.response
-  if (!response) return new CertificateBulkDownloadError(GENERIC_DOWNLOAD_ERROR_MESSAGE)
+  if (!response) return new CertificateBulkDownloadError(GENERIC_DOWNLOAD_ERROR_MESSAGE, { cause: error })
 
   const payload = await parseCertificateBulkDownloadErrorBody(response.data)
   const requestId =

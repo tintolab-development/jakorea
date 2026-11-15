@@ -9,7 +9,8 @@ import {
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
 import {
-  getLoginApiErrorMessage,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
   usePortalPhoneIdentityConfirmMutation,
 } from '@/features/auth/sign-in'
 import { AddressSearchModal, SchoolSearchModal, type SelectedSchool } from '@/features/auth/sign-up'
@@ -18,7 +19,7 @@ import {
   mapInstructorFormValuesToPortalSettlement,
 } from '@/features/mypage/instructor-apply/api/map-create-request'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFText, PFTextInput } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFText, PFTextInput } from '@/shared/ui'
 import { EMPTY_SETTINGS_VALUE } from '../../lib/constants'
 import type { InstructorBasicSettingsAddressMeta } from '../../lib/map-instructor-basic-profile-update'
 import {
@@ -32,6 +33,7 @@ import {
   type SettingsProfileInput,
 } from '../../lib/map-view'
 import styles from '../edit-form.module.css'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 
 export type SettingsInstructorBasicFieldsProps = {
   profile: SettingsProfileInput
@@ -62,6 +64,8 @@ export function SettingsInstructorBasicFields({
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [isSchoolSearchOpen, setIsSchoolSearchOpen] = useState(false)
   const [phoneError, setPhoneError] = useState<string | undefined>()
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const { mutateAsync: confirmPhone, isPending: isConfirmingPhone } =
     usePortalPhoneIdentityConfirmMutation()
 
@@ -90,12 +94,13 @@ export function SettingsInstructorBasicFields({
               contact: nextPhone ? formatKoreanPhoneNumber(nextPhone) : values.contact,
             })
           } catch (error) {
-            setPhoneError(
-              getLoginApiErrorMessage(
-                error,
-                '휴대폰 번호를 변경하지 못했습니다. 다시 인증해 주세요.',
-              ),
-            )
+            // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+            const failureAlert = resolveLoginApiFailureAlert(error)
+            if (failureAlert) {
+              setErrorAlert(failureAlert)
+            } else {
+              setPhoneError(readLoginApiServerMessage(error))
+            }
             return
           } finally {
             clearMypagePhoneIdentityConfirmPending()
@@ -159,6 +164,14 @@ export function SettingsInstructorBasicFields({
   return (
     <>
         <div className={styles.fields}>
+          {/* 시안: 이메일 ID가 기본 정보 첫 필드 (조회 화면과 같은 라벨) */}
+          <PFTextInput
+            size="xlarge"
+            label="이메일 ID"
+            value={displayEmail === EMPTY_SETTINGS_VALUE ? '' : displayEmail}
+            disabled
+          />
+
           <PFTextInput
             size="xlarge"
             label="이름"
@@ -183,7 +196,7 @@ export function SettingsInstructorBasicFields({
                 disabled={isReverifying}
                 onClick={handleReverify}
               >
-                {isReverifying ? '본인인증 진행 중…' : '재인증 하기'}
+                {isReverifying ? '본인인증 진행 중…' : '재인증하기'}
               </PFButton>
             </div>
             {identityError ? (
@@ -227,13 +240,6 @@ export function SettingsInstructorBasicFields({
               </PFButton>
             </div>
           </div>
-
-          <PFTextInput
-            size="xlarge"
-            label="이메일"
-            value={displayEmail === EMPTY_SETTINGS_VALUE ? '' : displayEmail}
-            disabled
-          />
 
           {isDual ? (
             <div className={styles.addressField}>
@@ -392,6 +398,12 @@ export function SettingsInstructorBasicFields({
           }}
         />
       ) : null}
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </>
   )
 }

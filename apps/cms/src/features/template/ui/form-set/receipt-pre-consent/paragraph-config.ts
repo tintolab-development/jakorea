@@ -42,9 +42,20 @@ const {
   ...sheetLayoutBaseOptions
 } = RECEIPT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
 
+/**
+ * 템플릿 관리 시안 16046:109928 「지급 목적」 문구.
+ * 회원 작성은 업무 상수 `RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE`를 그대로 쓴다.
+ */
+export const RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PAYMENT_PURPOSE =
+  '교통비·식사비·활동비 등 실비 지급'
+
 export const RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS = {
   ...sheetLayoutBaseOptions,
-  paymentPreConsentSheetLayout: true,
+  paymentStatementBasicInfoValues: {
+    ...sheetLayoutBaseOptions.paymentStatementBasicInfoValues,
+    paymentPurpose: RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_PAYMENT_PURPOSE,
+  },
+  agreementConfirmSheetLayout: true,
 } satisfies RenderFormParagraphBodyOptions
 
 export const RECEIPT_PRE_CONSENT_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS: ReadonlySet<string> =

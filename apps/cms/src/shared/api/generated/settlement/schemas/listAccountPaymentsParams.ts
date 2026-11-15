@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ListAccountPaymentsPayeeType } from './listAccountPaymentsPayeeType';
 import type { ListAccountPaymentsStatus } from './listAccountPaymentsStatus';
 
 export type ListAccountPaymentsParams = {
@@ -32,6 +33,10 @@ programName?: string;
  * 이체일 기준 전년-12-01~당해-12-31. fromDate/toDate가 있으면 그 값 우선.
  */
 year?: number;
+/**
+ * 정산 대상자 구분. INSTRUCTOR=강사(Gemini 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 생략하면 전체
+ */
+payeeType?: ListAccountPaymentsPayeeType;
 /**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */

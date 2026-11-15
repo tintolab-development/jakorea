@@ -47,6 +47,21 @@ describe('listAssignableSchoolsForDate', () => {
     expect(schools.map(item => item.id)).toEqual(['1691444'])
   })
 
+  it('상태만 임시 배정된 기관(일정 미배정)도 학교 선택 후보에 넣는다', () => {
+    const schools = listAssignableSchoolsForDate(
+      [
+        row({
+          id: 'temp-unscheduled',
+          tempAssignmentStatus: 'temp_assigned',
+          temporaryScheduleAssigned: false,
+        }),
+      ],
+      'gyeonggi_south',
+      '2027-04-30'
+    )
+    expect(schools.map(item => item.id)).toEqual(['temp-unscheduled'])
+  })
+
   it('희망일이 아니거나 반려된 기관은 제외한다', () => {
     const schools = listAssignableSchoolsForDate(
       [

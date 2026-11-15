@@ -157,7 +157,7 @@ export type RenderFormParagraphBodyOptions = {
    * 확인 문구는 흰 문구 카드(카드 선택 시 문구 수정), 날짜·서명·「JA KOREA 귀하」는 회색 고정 카드로 따로 그린다.
    * 회원 대리 동의(`agreementAdminProxyConfirm`)와 함께 쓰지 않는다.
    */
-  paymentPreConsentSheetLayout?: boolean
+  agreementConfirmSheetLayout?: boolean
   /**
    * 기본 authoring.
    * - user: 카드 선택은 유지(우측 패널 등)하되, 본문 입력은 카드 비선택에서도 가능(`isBodyInteractive`).
@@ -174,6 +174,8 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementBasicInfoLockedProfileFields?: boolean
   /** 영수증 발급 사전 동의서 — 주민등록번호·소속 행 숨김 */
   paymentStatementBasicInfoHideResidentFields?: boolean
+  /** 영수증 정산 신청서(시안 14680:103216) — 주민등록번호 행만 숨김, 소속은 유지 */
+  paymentStatementBasicInfoHideResidentNumberRow?: boolean
   /** 편집 가능 모드 — 기본정보 값 변경(성명 → 확인·서명란 동기화) */
   paymentStatementBasicInfoOnValuesChange?: (
     values: PaymentStatementBasicInfoAutofillValues
@@ -280,6 +282,11 @@ export type RenderFormParagraphBodyOptions = {
   templateAuthoringConsentChoiceUnselected?: boolean
   /** 초상권 동의 fill — 1번 표 성명·소속 응답 입력만 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
+  /**
+   * 회원·강사 「동의서 보기」A4 문서(`FormDocumentPreviewBody`) — 응답 칸은 텍스트로, 동의 라디오는 disabled 스킨으로 표시.
+   * 시안 5767:42795 등 동의 양식 미리보기 프레임. 템플릿 관리 미리보기·동의서 작성(fill)에는 넘기지 않는다.
+   */
+  agreementDocumentReadOnlyView?: boolean
   /**
    * 회원 동의 작성(user) — 양식 본문(표 셀·설명글)은 잠금, 하단 동의·지급조서 등 응답 입력은 허용.
    * `preview` 대신 사용(CSS pointer-events 차단 회피).
@@ -482,7 +489,7 @@ export function renderFormParagraphBody(
         )
       }
       if (
-        options?.paymentPreConsentSheetLayout === true &&
+        options?.agreementConfirmSheetLayout === true &&
         options.agreementAdminProxyConfirm !== true &&
         isAgreementAdminProxyConfirmHostId(p.id)
       ) {
@@ -630,6 +637,9 @@ export function renderFormParagraphBody(
           paymentStatementBasicInfoValues={options?.paymentStatementBasicInfoValues}
           paymentStatementBasicInfoOnlyPaymentPurposeLocked={
             options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked
+          }
+          paymentStatementBasicInfoHideResidentNumberRow={
+            options?.paymentStatementBasicInfoHideResidentNumberRow
           }
           lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
@@ -841,7 +851,7 @@ export function renderFormParagraphBody(
         )
       }
       if (
-        options?.paymentPreConsentSheetLayout === true &&
+        options?.agreementConfirmSheetLayout === true &&
         p.kind === 'description' &&
         p.variant === 'closing' &&
         (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient ||
@@ -849,6 +859,58 @@ export function renderFormParagraphBody(
       ) {
         /** 「JA KOREA 귀하」 — 날짜·서명과 같은 회색 고정 카드 (시안 5767:42072·16046:109928) */
         return <PaymentPreConsentFixedBlock tone="disabled">{p.body}</PaymentPreConsentFixedBlock>
+      }
+      if (
+        options?.agreementConfirmSheetLayout === true &&
+        options.agreementAdminProxyConfirm !== true &&
+        p.kind === 'description' &&
+        p.variant === 'closing' &&
+        isAgreementAdminProxyConfirmHostId(p.id)
+      ) {
+        /**
+         * 확인 문구 — 흰 문구 카드, 카드 선택 시 문구 수정.
+         * 첫 줄은 확인 문구(24/700), 둘째 줄부터는 회색 안내(18/500) — 행정정보 5767:41434 · 교육진행자 서약서 5767:41865.
+         */
+        const closingAuthoring = paragraphInteractionMode === 'authoring' && !isPreviewReadonly
+        const [confirmLine = '', ...noteLines] = p.body.split('\n')
+        const noteText = noteLines.join('\n')
+        const hasNote = noteLines.length > 0
+        const updateBody = (nextConfirm: string, nextNote: string) =>
+          updateParagraph(p.id, cur =>
+            cur.kind === 'description' && cur.variant === 'closing'
+              ? { ...cur, body: hasNote ? `${nextConfirm}\n${nextNote}` : nextConfirm }
+              : cur
+          )
+        return (
+          <PaymentPreConsentFixedBlock tone="white" className="payment-pre-consent-fixed-block--consent-line">
+            {closingAuthoring ? (
+              <ParagraphInput
+                type="description"
+                className="paragraph-input--explanation-body payment-pre-consent-fixed-block__consent-input"
+                isEditMode={isBodyInteractive}
+                value={confirmLine}
+                placeholder="텍스트를 작성해 주세요"
+                onChange={isBodyInteractive ? next => updateBody(next, noteText) : undefined}
+              />
+            ) : (
+              confirmLine
+            )}
+            {hasNote ? (
+              closingAuthoring ? (
+                <ParagraphInput
+                  type="description"
+                  className="paragraph-input--explanation-body payment-pre-consent-fixed-block__note-input"
+                  isEditMode={isBodyInteractive}
+                  value={noteText}
+                  placeholder="안내 문구를 작성해 주세요"
+                  onChange={isBodyInteractive ? next => updateBody(confirmLine, next) : undefined}
+                />
+              ) : (
+                <span className="payment-pre-consent-fixed-block__note">{noteText}</span>
+              )
+            ) : null}
+          </PaymentPreConsentFixedBlock>
+        )
       }
       return null
     }

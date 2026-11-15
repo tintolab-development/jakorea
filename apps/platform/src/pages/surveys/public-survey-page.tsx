@@ -23,7 +23,22 @@ import {
 } from '@/features/mypage/education/surveys/ui/survey-form-body'
 import { EducationSurveyHeader } from '@/features/mypage/education/surveys/ui/survey-header'
 import { EducationSurveySubmitConfirm } from '@/features/mypage/education/surveys/ui/submit-confirm'
-import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import {
+  PFAlertModal,
+  PFButton,
+  PFLoadingSpinner,
+  PFRequiredMissingAlert,
+  PFText,
+} from '@/shared/ui'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  buildRequestFailedAlertCopy,
+  resolvePlatformErrorAlert,
+} from '@/shared/lib/platform-error-alert'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   fetchPublicSurveyForm,
@@ -61,14 +76,11 @@ function getPublicSurveyErrorMessage(error: unknown): string {
   }
 }
 
-function getPublicSurveySubmitErrorMessage(error: unknown): string {
+/** 제출 오류 중 서버 코드로 안내할 업무 메시지 — 그 밖은 null(공통 「처리 실패」) */
+function getPublicSurveySubmitBusinessMessage(error: unknown): string | null {
   switch (readPublicSurveyErrorCode(error)) {
-    case 'FORM_ANSWER_REQUIRED':
-      return '필수 문항에 답변해 주세요.'
     case 'FORM_ANSWER_TOO_LONG':
       return '입력값이 허용 길이를 초과했습니다.'
-    case 'FORM_REQUIRED_CONSENT_NOT_AGREED':
-      return '필수 동의 항목에 동의해 주세요.'
     case 'FORM_ANSWER_NOT_ALLOWED':
       return '제출할 수 없는 항목이 포함되어 있습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
     case 'FORM_SUBMISSION_NOT_STARTED':
@@ -82,7 +94,7 @@ function getPublicSurveySubmitErrorMessage(error: unknown): string {
     case 'PUBLIC_SURVEY_NOT_FOUND':
       return '유효하지 않거나 삭제된 설문 링크입니다.'
     default:
-      return '설문 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      return null
   }
 }
 
@@ -115,10 +127,13 @@ export function PublicSurveyPage() {
   const token = shareToken.trim()
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [requiredMissingAlert, setRequiredMissingAlert] =
+    useState<RequiredMissingAlertCopy | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [successAlertOpen, setSuccessAlertOpen] = useState(false)
+  /** 시안 「오류 제한 팝업」(14491-2533) — 제출 실패 */
+  const [submitErrorAlert, setSubmitErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   const surveyQuery = useQuery({
     queryKey: platformQueryKeys.publicSurvey.form(token),
@@ -147,7 +162,6 @@ export function PublicSurveyPage() {
     if (!remoteDraft) return
     setDraft(remoteDraft)
     setSidecar(EMPTY_SURVEY_SIDECAR)
-    setSubmitError(null)
     setSubmitted(false)
   }, [remoteDraft])
 
@@ -157,15 +171,31 @@ export function PublicSurveyPage() {
       setConfirmOpen(false)
       const form = surveyQuery.data
       if (form && !publicSurveySubmitMatchesForm(form, submitted)) {
-        setSubmitError('제출이 올바른 설문에 저장되지 않았습니다. 관리자에게 문의해 주세요.')
+        // 다른 설문에 저장된 경우 — 시안 「처리 실패」 제목, 안내는 설명에
+        setSubmitErrorAlert(
+          buildRequestFailedAlertCopy('제출이 올바른 설문에 저장되지 않았습니다. 관리자에게 문의해 주세요.'),
+        )
         return
       }
-      setSubmitError(null)
       setSuccessAlertOpen(true)
     },
     onError: error => {
       setConfirmOpen(false)
-      setSubmitError(getPublicSurveySubmitErrorMessage(error))
+      const code = readPublicSurveyErrorCode(error)
+      if (code === 'FORM_ANSWER_REQUIRED') {
+        // 시안 「필수 항목 미입력 (항목명 노출)」 — 서버는 문항명을 주지 않아 설문 문항 기본 설명
+        setRequiredMissingAlert(buildRequiredMissingAlertCopy({ kind: 'question', labels: [] }))
+        return
+      }
+      if (code === 'FORM_REQUIRED_CONSENT_NOT_AGREED') {
+        // 시안 「공통 제한 안내 / 필수 항목 미동의」
+        setSubmitErrorAlert(PLATFORM_ALERT_COPY.requiredNotAgreed)
+        return
+      }
+      // 시안 「네트워크 오류 / 처리 제한 / 처리 실패」 — 서버 코드 안내는 설명에 그대로
+      setSubmitErrorAlert(
+        resolvePlatformErrorAlert(error, { serverMessage: getPublicSurveySubmitBusinessMessage }),
+      )
     },
   })
 
@@ -221,13 +251,17 @@ export function PublicSurveyPage() {
 
   const handleSubmit = () => {
     if (submitMutation.isPending) return
-    setSubmitError(null)
     const validation = validateEducationSurveyFill(draft, sidecar, {
       requireUserInfoAnswers: true,
       requiredUserInfoFieldKeys: PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS,
     })
     if (!validation.ok) {
-      setSubmitError(validation.message)
+      if (validation.missingRequired) {
+        setRequiredMissingAlert(buildRequiredMissingAlertCopy(validation.missingRequired))
+        return
+      }
+      // 글자 수·첨부 개수 등 시안 팝업이 없는 제한 안내
+      setSubmitErrorAlert({ title: '안내', description: validation.message })
       return
     }
     setConfirmOpen(true)
@@ -256,12 +290,6 @@ export function PublicSurveyPage() {
           userInfoRequiredFieldKeys={PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS}
         />
 
-        {submitError ? (
-          <PFText as="p" role="alert" typo="bd-md-rg" color="error" className={styles.error}>
-            {submitError}
-          </PFText>
-        ) : null}
-
         <div className={styles.actions}>
           <PFButton
             type="button"
@@ -286,6 +314,16 @@ export function PublicSurveyPage() {
           if (submitMutation.isPending) return
           submitMutation.mutate(buildEducationSurveyAnswers(draft, sidecar))
         }}
+      />
+      <PFRequiredMissingAlert
+        copy={requiredMissingAlert}
+        onConfirm={() => setRequiredMissingAlert(null)}
+      />
+      <PFAlertModal
+        open={submitErrorAlert != null}
+        title={submitErrorAlert?.title ?? ''}
+        description={submitErrorAlert?.description}
+        onConfirm={() => setSubmitErrorAlert(null)}
       />
       <PFAlertModal
         open={successAlertOpen}

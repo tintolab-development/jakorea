@@ -295,6 +295,7 @@ export function IndividualApproveScopeModal({
   title = '프로그램 신청 승인 안내',
   confirmLabel = '승인',
   message,
+  showNotifyTiming = true,
   onCancel,
   onConfirm,
 }: {
@@ -308,6 +309,11 @@ export function IndividualApproveScopeModal({
   title?: string
   confirmLabel?: string
   message?: string
+  /**
+   * false면 알림 발송 선택을 숨긴다 — 앞 팝업(2차 면접 합격 안내)에서 이미 고른 알림을 호출부가 보낼 때.
+   * 생략 = 기존처럼 노출.
+   */
+  showNotifyTiming?: boolean
   onCancel: () => void
   onConfirm: (
     payload: IndividualApproveScopeConfirmPayload
@@ -409,6 +415,7 @@ export function IndividualApproveScopeModal({
       onCancel={onCancel}
       onConfirm={handleConfirm}
       width={600}
+      showNotifyTiming={showNotifyTiming}
       notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
     >
       <PermissionModalMessage
@@ -444,6 +451,7 @@ export function IndividualBulkApproveScopeModal({
   programId,
   program,
   confirmLoading = false,
+  showNotifyTiming = true,
   onCancel,
   onConfirm,
 }: {
@@ -452,6 +460,8 @@ export function IndividualBulkApproveScopeModal({
   programId?: string
   program: ApprovalProgram
   confirmLoading?: boolean
+  /** false면 알림 발송 선택을 숨긴다(앞 팝업 알림을 호출부가 보낼 때). 생략 = 기존처럼 노출 */
+  showNotifyTiming?: boolean
   onCancel: () => void
   onConfirm: (
     payload: IndividualBulkApproveScopeConfirmPayload
@@ -574,6 +584,7 @@ export function IndividualBulkApproveScopeModal({
       onCancel={onCancel}
       onConfirm={handleConfirm}
       width={640}
+      showNotifyTiming={showNotifyTiming}
       notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
     >
       <PermissionModalMessage

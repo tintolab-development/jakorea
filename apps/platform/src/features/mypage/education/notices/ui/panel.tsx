@@ -30,6 +30,10 @@ import { EducationProgramInfoModal } from './program-info-modal'
 import { EducationProgramNoticeWriteModal } from './notice-write-modal'
 import { resolvePortalNoticeWriteErrorMessage } from '../lib/notice-write-errors'
 import { PFAlertModal, PFButton, PFSearchInput, PFText } from '@/shared/ui'
+import {
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import styles from './panel.module.css'
 
 const SEARCH_DEBOUNCE_MS = 500
@@ -84,8 +88,7 @@ export function EducationInProgressNoticePanel({
   const remoteNotices = useApplicationNoticesQuery(applicationType, applicationId)
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(readNoticeIdFromLocation)
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(readCommentIdFromLocation)
-  const [downloadErrorOpen, setDownloadErrorOpen] = useState(false)
-  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null)
+  const [errorAlert, setErrorAlert] = useState<EducationAlert | null>(null)
   const deleteNoticeMutation = useDeleteApplicationNoticeMutation(applicationType, applicationId)
   /** 이 패널이 push 한 history 엔트리 위에 있으면 닫을 때 back 으로 되돌린다. */
   const pushedNoticeEntryRef = useRef(false)
@@ -182,7 +185,9 @@ export function EducationInProgressNoticePanel({
       downloadEducationNoticeFile(file)
       return
     }
-    downloadRemoteEducationNoticeFile(file).catch(() => setDownloadErrorOpen(true))
+    downloadRemoteEducationNoticeFile(file).catch(error =>
+      setErrorAlert(resolveEducationErrorAlert(error)),
+    )
   }
 
   const handleViewOriginal = (file: EducationInProgressFile) => {
@@ -201,12 +206,7 @@ export function EducationInProgressNoticePanel({
         closeNoticeDetail()
       },
       onError: error => {
-        setDeleteErrorMessage(
-          resolvePortalNoticeWriteErrorMessage(
-            error,
-            '안내사항을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-          ),
-        )
+        setErrorAlert(resolveEducationErrorAlert(error, resolvePortalNoticeWriteErrorMessage))
       },
     })
   }
@@ -297,11 +297,19 @@ export function EducationInProgressNoticePanel({
         )}
 
         <div className={styles.footer}>
-          <PFButton variant="text" onClick={() => setIsProgramInfoOpen(true)}>
+          <PFButton
+            variant="text"
+            className={styles.footerAction}
+            onClick={() => setIsProgramInfoOpen(true)}
+          >
             프로그램 정보
           </PFButton>
           <span className={styles.actionDivider} aria-hidden="true" />
-          <PFButton variant="text" onClick={() => setIsApplicationInfoOpen(true)}>
+          <PFButton
+            variant="text"
+            className={styles.footerAction}
+            onClick={() => setIsApplicationInfoOpen(true)}
+          >
             신청 정보
           </PFButton>
         </div>
@@ -374,14 +382,10 @@ export function EducationInProgressNoticePanel({
       ) : null}
 
       <PFAlertModal
-        open={downloadErrorOpen}
-        title="첨부파일을 내려받지 못했습니다."
-        onConfirm={() => setDownloadErrorOpen(false)}
-      />
-      <PFAlertModal
-        open={deleteErrorMessage != null}
-        title={deleteErrorMessage ?? ''}
-        onConfirm={() => setDeleteErrorMessage(null)}
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </div>
   )

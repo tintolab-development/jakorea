@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { LineDirection } from './lineDirection';
+import type { SettlementFrontendCalculationDetailResponse } from './settlementFrontendCalculationDetailResponse';
 
 export interface Line {
   institutionName?: string;
@@ -17,4 +18,6 @@ export interface Line {
   description?: string | null;
   /** 공제 행은 음수 */
   amount?: number;
+  /** CMS 산정 기준 상세 근거. 정산 상세 items[].calculationDetail과 같은 스키마. 이 revision에 저장된 제출 스냅샷 값만 담고 현재 정책으로 다시 계산하지 않는다. 원천징수=settlement_application_calculation_detail, 식사비·활동비·숙박비=제출 금액(같은 유형 영수증이 1건일 때만 연결), 교통비=calcInfo 거리 스냅샷. 근거를 만들 수 없는 행(강사비 등)은 null. */
+  calculationDetail?: SettlementFrontendCalculationDetailResponse | null;
 }

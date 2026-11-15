@@ -138,6 +138,20 @@
   padding-top: var(--spacing-16);
 }
 
+/* 시안 01: [강사비 정정 요청하기](외곽선) · [신청하기](채움) 가로 배치 */
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-12);
+}
+
+@media (--bp-below-pc) {
+  .actionButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 /* PFText는 기본 inline이라 문장마다 줄을 나누려면 세로로 쌓는다 */
 .noteLines {
   display: flex;

@@ -227,12 +227,11 @@ function SessionValue({ content }: { content: TextbookContent }) {
     return (
       <PFText as="p" typo="bd-sm-rg" color="black" className={styles.sessionValue}>
         <PFText as="span" typo="bd-sm-sb" color="black">
-          총 {content.unitCount}단원
+          {`총 ${content.unitCount}단원`}
         </PFText>
         {content.unitSessionText ? (
           <PFText as="span" typo="bd-sm-rg" color="black">
-            {' '}
-            ({content.unitSessionText})
+            {` (${content.unitSessionText})`}
           </PFText>
         ) : null}
       </PFText>

@@ -13,3 +13,22 @@ export const EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS = {
   /** A4 미리보기 전용 스코프 — 작성 화면 대리동의 카드는 유지 */
   documentPreviewClassName: AGREEMENT_EXPENSE_A4_PREVIEW_BODY_CLASS_NAME,
 } satisfies RenderFormParagraphBodyOptions
+
+/**
+ * 템플릿 관리 작성 화면 전용 — 시안 5767:41865.
+ * 대리 확인 2단 카드(회원 대리 동의용) 대신 흰 위반 동의 문구 카드(안내 한 줄 포함)·회색 날짜·서명 카드를 따로 보인다.
+ */
+const {
+  agreementAdminProxyConfirm: _proxyConfirm,
+  hiddenParagraphIds: _proxyHiddenIds,
+  ...sheetLayoutBaseOptions
+} = EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS
+
+export const EDUCATOR_FACILITATOR_PLEDGE_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS = {
+  ...sheetLayoutBaseOptions,
+  agreementConfirmSheetLayout: true,
+} satisfies RenderFormParagraphBodyOptions
+
+/** 우측 「커스텀 필드」 목록은 기존처럼 날짜·서명을 뺀다(캔버스에는 회색 카드로 보인다) */
+export const EDUCATOR_FACILITATOR_PLEDGE_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS: ReadonlySet<string> =
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS.hiddenParagraphIds

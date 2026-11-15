@@ -33,9 +33,14 @@ import {
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import {
+  isParticipantInterviewOverlayKey,
+  supportsParticipantInterviewConfigProgramType,
+} from '@/features/program/shared/lib/volunteer-interview-config'
 
 const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
 const VOLUNTEER_INTERVIEW_PREFIX = 'recruit.volunteer.interview'
+const PARTICIPANT_INDIVIDUAL_RECRUIT_CATALOG = 'recruitment-participant-individual'
 const keys = GENERAL_RECRUIT_OVERLAY_KEYS
 const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
 
@@ -264,6 +269,34 @@ function peekVolunteerInterviewOverlayForSave(catalogCodes: readonly string[]): 
   )
 }
 
+/**
+ * 개인 참여자 면접 일정(`recruit.individual.interview.*`) — 화면이 읽는 활성 스코프 값이 저장 값.
+ * 활성 스코프가 참여자 모집 버킷이 아니면 첫 참여자 모집 버킷 값.
+ */
+function peekParticipantInterviewOverlayForSave(
+  catalogCodes: readonly string[]
+): Record<string, unknown> {
+  const candidates = [...new Set([...catalogCodes, PARTICIPANT_INDIVIDUAL_RECRUIT_CATALOG])]
+  const activeScope = getGeneralRecruitOverlayScope()
+  const source = candidates.includes(activeScope) ? activeScope : candidates[0]
+  const record = peekGeneralRecruitOverlayRecord(source)
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (isParticipantInterviewOverlayKey(key)) out[key] = value
+  }
+  return out
+}
+
+function omitParticipantInterviewOverlayKeys(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(overlay)) {
+    if (!isParticipantInterviewOverlayKey(key)) out[key] = value
+  }
+  return out
+}
+
 function skipLiveCatalogPeekForTypedRecruitSave(program: Program): boolean {
   return (
     isGeneralRecruitmentRowProgram(program) ||
@@ -296,11 +329,23 @@ export function buildMergedRegistrationOverlayForRecruitSave(args: {
     !args.strictRemote && args.audience === 'volunteer'
       ? peekVolunteerInterviewOverlayForSave(catalogCodes)
       : {}
-  return {
+  const participantInterview =
+    !args.strictRemote &&
+    args.audience === 'participant' &&
+    supportsParticipantInterviewConfigProgramType(args.program.backendProgramType)
+      ? peekParticipantInterviewOverlayForSave(catalogCodes)
+      : {}
+  const base = {
     ...(args.program.registrationOverlay ?? {}),
     ...(args.remotePatch.registrationOverlay ?? {}),
     ...peeked,
+  }
+  // 참여자 면접 일정은 화면 값으로 통째로 바꾼다(삭제한 예외 블록이 조회 overlay 에서 되살아나지 않게).
+  const hasLiveParticipantInterview = Object.keys(participantInterview).length > 0
+  return {
+    ...(hasLiveParticipantInterview ? omitParticipantInterviewOverlayKeys(base) : base),
     ...volunteerInterview,
+    ...participantInterview,
     ...formPatch,
   }
 }

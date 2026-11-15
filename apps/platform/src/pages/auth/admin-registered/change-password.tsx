@@ -9,12 +9,13 @@ import {
 } from '@/features/auth/admin-registered'
 import { MEMBER_PASSWORD_HELP_TEXT } from '@/features/auth/sign-up'
 import {
-  getLoginApiErrorMessage,
   isPasswordRecentlyUsedApiError,
+  readLoginApiServerMessage,
+  resolveLoginApiFailureAlert,
   usePortalPasswordChangeMutation,
 } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
+import { PLATFORM_ALERT_COPY, type PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
 import { PFAlertModal, PFButton, PFText, PFTextInput } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
@@ -37,6 +38,8 @@ export function AdminRegisteredChangePasswordPage() {
   const [submitError, setSubmitError] = useState<string>()
   /** 최근 사용한 비밀번호 재사용 — 시안 「비밀번호 재사용 시」 팝업 */
   const [passwordReusedOpen, setPasswordReusedOpen] = useState(false)
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
 
   useEffect(() => {
     if (remoteApi) return
@@ -99,8 +102,13 @@ export function AdminRegisteredChangePasswordPage() {
           setPasswordReusedOpen(true)
           return
         }
-        const message = getLoginApiErrorMessage(error, '비밀번호를 변경하지 못했습니다.')
-        setCurrentPasswordError(message)
+        // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+        const failureAlert = resolveLoginApiFailureAlert(error)
+        if (failureAlert) {
+          setErrorAlert(failureAlert)
+        } else {
+          setCurrentPasswordError(readLoginApiServerMessage(error))
+        }
         return
       }
 
@@ -117,12 +125,13 @@ export function AdminRegisteredChangePasswordPage() {
         navigate(resolveAdminProvisionedOnboardingPath(step) ?? '/auth/admin-registered/confirm')
         return
       } catch (error) {
-        setSubmitError(
-          getLoginApiErrorMessage(
-            error,
-            '비밀번호는 변경되었습니다. 가입 정보 확인으로 이어가지 못했습니다. 다시 시도해 주세요.'
-          )
-        )
+        // 서버 업무 메시지는 화면 문구로, 그 밖의 실패는 시안 공통 팝업으로
+        const failureAlert = resolveLoginApiFailureAlert(error)
+        if (failureAlert) {
+          setErrorAlert(failureAlert)
+        } else {
+          setSubmitError(readLoginApiServerMessage(error))
+        }
         return
       } finally {
         setIsContinuingSession(false)
@@ -154,7 +163,7 @@ export function AdminRegisteredChangePasswordPage() {
             size="xlarge"
             label="현재 비밀번호"
             type="password"
-            placeholder="현재 비밀번호를 입력해 주세요."
+            placeholder="현재 비밀번호를 입력해 주세요"
             autoComplete="current-password"
             required
             value={currentPassword}
@@ -223,6 +232,12 @@ export function AdminRegisteredChangePasswordPage() {
         title={PLATFORM_ALERT_COPY.passwordRecentlyUsed.title}
         description={PLATFORM_ALERT_COPY.passwordRecentlyUsed.description}
         onConfirm={() => setPasswordReusedOpen(false)}
+      />
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
     </section>
   )

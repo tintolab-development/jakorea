@@ -408,7 +408,7 @@ describe('institution assignment sources', () => {
         volunteerA: '안재원',
         volunteerB: '백소리',
         textbookName: 'UJAT 초등 경제교육 교재 05',
-        textbookQuantityLabel: '2키트 (41권)',
+        textbookQuantityLabel: '20권',
       }),
       expect.objectContaining({
         gradeLabel: '2학년',
@@ -416,7 +416,7 @@ describe('institution assignment sources', () => {
         volunteerA: '김민수',
         volunteerB: '이서연',
         textbookName: 'UJAT 초등 경제교육 교재 05',
-        textbookQuantityLabel: '2키트 (41권)',
+        textbookQuantityLabel: '21권',
       }),
     ])
   })
@@ -578,5 +578,70 @@ describe('institution assignment sources', () => {
 
     expect(fetchUjatPartnerAssignments).toHaveBeenCalledWith('186495', 187580, 1691554)
     expect(loaded.partnerAssignmentsByScheduleId['187580']).toEqual([])
+  })
+
+  it('봉사자가 일부 학급에만 배정돼도 확정 학급 전체 행을 만들고 미배정 학급은 봉사자만 - 로 둔다', () => {
+    const detail = {
+      institutionId: '100',
+      half: 'h1',
+      confirmedScheduleRows: [
+        {
+          id: '100-2026-05-08',
+          dateDisplay: '2026.05.08(금)',
+          classLabels: ['3학년 1반', '3학년 2반', '4학년 1반'],
+        },
+      ],
+      applicationDetail: {
+        gradeBlocks: [
+          {
+            gradeLabel: '3',
+            classCount: 2,
+            classes: [
+              { classNo: 1, studentCount: 25 },
+              { classNo: 2, studentCount: 24 },
+            ],
+            textbookName: '3학년 교재',
+          },
+          {
+            gradeLabel: '4',
+            classCount: 1,
+            classes: [{ classNo: 1, studentCount: 30 }],
+            textbookName: '4학년 교재',
+          },
+        ],
+      },
+    } as unknown as UjatEducationProgressInstitutionDetail
+
+    const [section] = buildAssignmentScheduleSections(detail, sources)
+    expect(section?.rows).toEqual([
+      expect.objectContaining({
+        gradeLabel: '3학년',
+        classNo: 1,
+        gradeRowSpan: 2,
+        volunteerA: '김봉사',
+        volunteerB: '이봉사',
+        textbookName: '3학년 교재',
+        textbookQuantityLabel: '25권',
+      }),
+      expect.objectContaining({
+        gradeLabel: '3학년',
+        classNo: 2,
+        volunteerA: '-',
+        volunteerB: '-',
+        textbookName: '3학년 교재',
+        textbookQuantityLabel: '24권',
+      }),
+      expect.objectContaining({
+        gradeLabel: '4학년',
+        classNo: 1,
+        gradeRowSpan: 1,
+        volunteerA: '-',
+        volunteerB: '-',
+        textbookName: '4학년 교재',
+        textbookQuantityLabel: '30권',
+      }),
+    ])
+    expect(section?.totalClassCount).toBe(3)
+    expect(section?.assignmentEmptyMessage).toBeNull()
   })
 })

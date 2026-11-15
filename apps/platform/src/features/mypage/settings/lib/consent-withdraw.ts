@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 
-/** 마이페이지 5종 동의 — 참여 상태와 무관하게 서버 withdrawable/status로 철회 */
+/** 마이페이지 5종 동의 — 서버 withdrawable/status로 철회 버튼을 노출한다 */
 export const FIVE_POLICY_CONSENT_TYPES = [
   'PORTRAIT_RIGHTS',
   'PAYMENT_STATEMENT_CONSENT',
@@ -17,6 +17,40 @@ export const TYPE_WITHDRAWABLE_CONSENT_TYPES = [
 ] as const
 
 export type TypeWithdrawableConsentType = (typeof TYPE_WITHDRAWABLE_CONSENT_TYPES)[number]
+
+/**
+ * 신청(승인 대기) 중이거나 진행 중인 프로그램이 있으면 철회할 수 없는 동의 4종.
+ * 지급조서 사전 동의는 제외. 판정은 서버가 하고, FE는 서버 거절 코드를 받아 안내 팝업만 띄운다.
+ */
+export const ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CONSENT_TYPES = [
+  'PORTRAIT_RIGHTS',
+  'FACILITATOR_PLEDGE',
+  'ADMINISTRATIVE_INFO_CONSENT',
+  'CRIMINAL_HISTORY_CHECK_CONSENT',
+] as const
+
+/** 진행 중 프로그램으로 철회가 거절됐을 때 서버 코드 (유형 공통 + 예전 초상권 전용) */
+const ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CODES: readonly string[] = [
+  'PORTAL_CONSENT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS',
+  'PORTAL_PORTRAIT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS',
+]
+
+/** 예전 서버 초상권 전용 문구 — 시안 문구가 아니므로 화면에 그대로 내보내지 않는다 */
+const LEGACY_PORTRAIT_ACTIVE_PROGRAM_MESSAGE =
+  '진행 중인 프로그램 참여가 있어 초상권 동의만 단독으로 철회할 수 없습니다. 먼저 해당 프로그램의 활동 포기를 진행해 주세요.'
+
+/** 시안: 사용자 플랫폼 13286:85166 — 철회 불가 안내 팝업 */
+export const CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY = {
+  title: '지금은 동의를 철회할 수 없어요.',
+  description:
+    '신청(승인 대기) 중이거나 진행 중인 프로그램이 있어요.\n동의를 철회하려면 신청을 취소하거나 프로그램이 끝난 후 다시 시도해 주세요.\n진행 중인 프로그램은 담당자에게 활동 포기를 문의해 주세요.',
+} as const
+
+export function isActiveProgramWithdrawBlockedConsentType(value: string | undefined): boolean {
+  return (ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CONSENT_TYPES as readonly string[]).includes(
+    value?.trim().toUpperCase() ?? '',
+  )
+}
 
 export type ConsentWithdrawMutationResponse = {
   documentId?: number | null
@@ -37,9 +71,6 @@ export const CONSENT_DRAFT_DOCUMENT_NOT_WITHDRAWABLE_MESSAGE =
 export const CONSENT_DOCUMENT_NOT_FOUND_MESSAGE =
   '동의서를 찾을 수 없습니다. 본인 문서를 다시 확인해 주세요.'
 
-const LEGACY_PORTRAIT_ACTIVE_PROGRAM_MESSAGE =
-  '진행 중인 프로그램 참여가 있어 초상권 동의만 단독으로 철회할 수 없습니다. 먼저 해당 프로그램의 활동 포기를 진행해 주세요.'
-
 const WITHDRAW_ERROR_MESSAGES: Record<string, string> = {
   PORTAL_CONSENT_TYPE_INVALID: CONSENT_TYPE_INVALID_MESSAGE,
   PORTAL_CONSENT_TYPE_WITHDRAWAL_NOT_ALLOWED: CONSENT_TYPE_WITHDRAWAL_NOT_ALLOWED_MESSAGE,
@@ -48,7 +79,6 @@ const WITHDRAW_ERROR_MESSAGES: Record<string, string> = {
     CONSENT_DRAFT_DOCUMENT_NOT_WITHDRAWABLE_MESSAGE,
   PORTAL_CONSENT_DOCUMENT_NOT_FOUND: CONSENT_DOCUMENT_NOT_FOUND_MESSAGE,
   PORTAL_CONSENT_WITHDRAWAL_CONFLICT: CONSENT_WITHDRAW_CONFLICT_MESSAGE,
-  PORTAL_PORTRAIT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS: CONSENT_WITHDRAW_FAILED_MESSAGE,
 }
 
 export type ConsentWithdrawTarget =
@@ -60,6 +90,8 @@ export type ConsentWithdrawErrorInfo = {
   message: string
   refetch: boolean
   backendRegression: boolean
+  /** 진행 중·승인 대기 프로그램으로 철회 불가 — 철회 불가 안내 팝업을 띄운다 */
+  activeProgramBlocked: boolean
 }
 
 export function isFivePolicyConsentType(value: string | undefined): boolean {
@@ -141,8 +173,21 @@ export function parseConsentWithdrawError(
 ): ConsentWithdrawErrorInfo {
   const code = readApiErrorCode(error)
   const nestedMessage = readApiErrorMessage(error)
+  const activeProgramBlocked =
+    code != null &&
+    ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CODES.includes(code) &&
+    isActiveProgramWithdrawBlockedConsentType(normalizeWithdrawConsentType(consentType))
+  if (activeProgramBlocked) {
+    return {
+      code,
+      message: CONSENT_WITHDRAW_ACTIVE_PROGRAM_COPY.description,
+      refetch: false,
+      backendRegression: false,
+      activeProgramBlocked: true,
+    }
+  }
   const backendRegression =
-    code === 'PORTAL_PORTRAIT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS' ||
+    (code != null && ACTIVE_PROGRAM_WITHDRAW_BLOCKED_CODES.includes(code)) ||
     (code === 'PORTAL_CONSENT_WITHDRAWAL_NOT_ALLOWED' && isFivePolicyConsentType(consentType))
   const mapped = code ? WITHDRAW_ERROR_MESSAGES[code] : undefined
   const usesNestedMessage =
@@ -160,6 +205,7 @@ export function parseConsentWithdrawError(
       code === 'PORTAL_CONSENT_WITHDRAWAL_CONFLICT' ||
       (isAxiosError(error) && error.response?.status === 409),
     backendRegression,
+    activeProgramBlocked: false,
   }
 }
 

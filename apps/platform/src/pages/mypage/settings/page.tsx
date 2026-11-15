@@ -192,6 +192,18 @@ export function MypageSettingsPage() {
     setSearchParams(params, { replace: true })
   }, [isMinorMember, searchParams, setSearchParams, tab])
 
+  /**
+   * 설정 화면에 머문 채 URL `tab`만 바뀌는 경우(예: 알림 팝업 「내 정보 보기」·「동의 내역 보기」)에도 탭을 맞춘다.
+   * 동의·소셜 탭으로 바뀌면 LNB 선택과 같이 보기 모드로 돌린다.
+   */
+  const urlTab = readSettingsTab(searchParams)
+  const [syncedUrlTab, setSyncedUrlTab] = useState<SettingsTab>(urlTab)
+  if (syncedUrlTab !== urlTab) {
+    setSyncedUrlTab(urlTab)
+    setTab(urlTab)
+    if (urlTab !== 'profile') setMode('view')
+  }
+
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
     if (hasRemoteToken) {
@@ -236,15 +248,22 @@ export function MypageSettingsPage() {
   }
 
   const backButton = (
-    <ProgramBackButton size="small" label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
+    <ProgramBackButton label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
   )
 
   const showSettlementAccountGuide = tab === 'profile'
   const settlementAccountGuide = isInstructor
     ? INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE
     : GENERAL_SETTLEMENT_ACCOUNT_GUIDE
+  const isCompactHeadingTab = tab === 'social' || tab === 'consents'
   const pageTitleNode = (
-    <div className={styles.pageHeading}>
+    <div
+      className={
+        isCompactHeadingTab
+          ? `${styles.pageHeading} ${styles.pageHeadingCompact}`
+          : styles.pageHeading
+      }
+    >
       <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
         {pageTitle}
       </PFText>

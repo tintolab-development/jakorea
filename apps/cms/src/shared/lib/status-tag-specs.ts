@@ -160,7 +160,7 @@ export function getAdminPermissionTag(variant: AdminPermissionTagVariant): Statu
   return { label: ADMIN_PERMISSION_TAG_LABEL[variant], tone: ADMIN_PERMISSION_TONE[variant] }
 }
 
-/** 관리자 회원 목록 권한 유형 — 시안 4427:77793 태그 140×32 고정 (상세·권한 승인 상세는 기본 폭) */
+/** 관리자 권한 유형 드롭다운 — 시안 4427:77793 태그 140×32 고정 (회원 목록·관리자 상세 드롭다운. 읽기 전용 태그는 기본 폭) */
 export function getAdminListPermissionTag(variant: AdminPermissionTagVariant): StatusTagSpec {
   return { ...getAdminPermissionTag(variant), width: 'fixed140' }
 }

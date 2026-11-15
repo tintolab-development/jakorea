@@ -35,8 +35,10 @@ import type {
   SettlementAggregateResponse,
   SettlementConfigUpdateRequest,
 } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementCalendarParams } from '@/shared/api/generated/settlement/schemas'
 import type { SettlementListResponse } from '@/shared/api/generated/settlement/schemas/settlementListResponse'
 import type { SettlementApplicationDocumentResponse } from '@/shared/api/generated/settlement/schemas'
+import { readSettlementBulkConfirmResult } from '@/features/settlement-management/api/read-bulk-confirm-result'
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
 
@@ -116,8 +118,10 @@ export async function confirmPaymentStatementRemote(
 
 export async function bulkConfirmPaymentStatementsRemote(
   body: SettlementBulkStatusChangeRequest
-): Promise<void> {
-  await unwrapApiBody(await settlementApi.bulkConfirmPaymentStatements(body))
+) {
+  return readSettlementBulkConfirmResult(
+    await unwrapApiBody(await settlementApi.bulkConfirmPaymentStatements(body)),
+  )
 }
 
 export async function bulkMarkAccountPaymentsPaidRemote(
@@ -444,8 +448,18 @@ export async function deleteSettlementConfigPaymentItemRemote(
   return unwrapApiBody(await settlementApi.deleteConfigItem('payment', itemId))
 }
 
-export async function fetchSettlementCalendarRemote(fromDate: string, toDate: string) {
-  const data = await unwrapApiBody(await settlementApi.settlementCalendar({ fromDate, toDate }))
+export async function fetchSettlementCalendarRemote(
+  fromDate: string,
+  toDate: string,
+  payeeType?: SettlementCalendarParams['payeeType']
+) {
+  const data = await unwrapApiBody(
+    await settlementApi.settlementCalendar({
+      fromDate,
+      toDate,
+      ...(payeeType ? { payeeType } : {}),
+    })
+  )
   return Array.isArray(data) ? data : []
 }
 

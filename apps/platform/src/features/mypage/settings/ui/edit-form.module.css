@@ -87,8 +87,17 @@
   gap: var(--spacing-12);
 }
 
+/* 시안: 수정 화면 성별(비활성) — 테두리 #D9D9D9, 선택값만 #F5F7F7 배경 */
+.genderOptions .genderOption:disabled {
+  border-color: var(--color-border-default);
+}
+
+.genderOptions .genderOptionSelected:disabled {
+  background: var(--color-neutral-cool-50);
+}
+
 .inlineRequiredMark {
-  color: var(--color-red);
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
 }
 
 .inlineRow {
@@ -145,4 +154,12 @@
   min-width: 0;
   flex-direction: column;
   gap: var(--spacing-16);
+}
+
+/* 시안 PC: 휴대폰 재인증 버튼 160 고정 (입력칸이 나머지 폭) */
+@media (--bp-pc-up) {
+  .inlineRow > .reverifyButton {
+    flex: none;
+    width: 160px;
+  }
 }

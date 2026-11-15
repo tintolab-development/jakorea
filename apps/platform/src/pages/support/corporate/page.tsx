@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   CtaSection,
   CorporateDonationInquiryModal,
-  FloatingCta,
   HeroSection,
   PartnerSection,
   ProcessSection,
@@ -28,7 +27,6 @@ export function CorporateDonationPage() {
         <ProcessSection />
         <CtaSection onInquiryClick={() => setIsInquiryOpen(true)} />
         <PartnerSection />
-        <FloatingCta onInquiryClick={() => setIsInquiryOpen(true)} />
       </section>
       <CorporateDonationInquiryModal
         open={isInquiryOpen}

@@ -195,50 +195,34 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* 초상권 A4 — 패딩·갭 축소로 1페이지 수용                                       */
+/* 초상권 A4 — 시안 5767:42795(05-6. 폼 양식 관리_초상권 동의서_미리보기)            */
+/* 머리글 44 → 40 → 안내문 → 40 → 문단(제목 28 → 16 → 표 → 16 → 안내문 → 16 → 라디오) */
+/* → 40 → 구분선 → 40 → 확인 문구 → 40 → 날짜 → 16 → 서명                          */
 /* -------------------------------------------------------------------------- */
+
+.a4-document-page-layout:has(.form-document-preview-body--agreement-portrait)
+  .a4-document-page-layout__header {
+  height: 44px;
+  padding-bottom: 0;
+}
 
 .form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph__content-header {
-  margin-bottom: 4px;
+  margin-bottom: 16px;
+  padding: 0 8px;
 }
 
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-closing,
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-confirm {
-  margin-bottom: 12px;
-}
-
-.form-document-preview-body--agreement-portrait .explanation-system--document-date {
-  margin-bottom: 6px;
-}
-
-.form-document-preview-body--agreement-portrait .explanation-system--document-signature {
-  margin-bottom: 0;
-}
-
-.form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent {
-  margin-top: 8px;
-}
-
-.form-document-preview-body--agreement-portrait .form-editor-vertical-table__th,
-.form-document-preview-body--agreement-portrait .form-editor-vertical-table__td {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-.form-document-preview-body--agreement-portrait
-  .form-editor-vertical-table__td--portrait-retention,
-.form-document-preview-body--agreement-portrait
-  .form-editor-vertical-table__td--portrait-retention
-  .form-editor-vertical-table__cell-text--body {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
+.form-document-preview-body--agreement-portrait .form-document-preview-paragraph__title-text {
   font-size: 20px;
-  font-style: normal;
   font-weight: 700;
-  line-height: 150%; /* 30px */
+  line-height: 140%; /* 28px */
+}
+
+/* 첫 안내문 — 좌우 8, 20px Regular */
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph[data-paragraph-id='agreement-portrait-intro'] {
+  margin-top: 0;
+  padding: 0 8px;
 }
 
 .form-document-preview-body--agreement-portrait
@@ -249,9 +233,44 @@
   line-height: 150%;
 }
 
+/* 표 — Table / Vertical / Medium: 라벨 180·14px Bold, 값 14px Medium, 행 최소 52 */
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__th {
+  width: 180px;
+  min-width: 180px;
+  min-height: 52px;
+  padding: 8px 16px;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__td {
+  min-height: 52px;
+  padding: 12px 16px;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__cell-text--header,
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__cell-text--body,
 .form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph[data-paragraph-id='agreement-portrait-intro'] {
-  margin-top: 0;
+  .form-editor-vertical-table__td--portrait-retention,
+.form-document-preview-body--agreement-portrait
+  .form-editor-vertical-table__td--portrait-retention
+  .form-editor-vertical-table__cell-text--body {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  line-height: 150%; /* 21px */
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__cell-text--header {
+  font-weight: 700;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__cell-text--body,
+.form-document-preview-body--agreement-portrait
+  .form-editor-vertical-table__td--portrait-retention,
+.form-document-preview-body--agreement-portrait
+  .form-editor-vertical-table__td--portrait-retention
+  .form-editor-vertical-table__cell-text--body {
+  font-weight: 500;
 }
 
 .form-document-preview-body--agreement-portrait
@@ -260,49 +279,112 @@
   justify-content: flex-start;
 }
 
+/* 표 아래 안내문(좌우 16·16px Medium) → 16 → 라디오(높이 40·좌우 8·간격 16) */
+/* 표 ↔ 표 아래 영역 16은 `.form-editor-vertical-table-wrap` gap */
 .form-document-preview-body--agreement-portrait .form-editor-vertical-table__bottom {
-  gap: 8px;
+  gap: 16px;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__bottom-static {
+  padding: 0 16px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
 }
 
 .form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent {
-  margin-top: 4px;
+  min-height: 40px;
+  margin-top: 0;
+  padding: 0 8px;
+  gap: 16px;
 }
 
-/* A4 문서 — 읽기 전용 회색 라디오(실제 선택값은 유지) */
 .form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent .ant-radio-wrapper {
-  color: var(--main-BK, #3d3d3d);
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 130%;
 }
 
-.form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent .ant-radio-inner {
-  border-color: #c4c4c4;
-  background-color: #fff;
+/*
+ * 라디오 — 시안 읽기 전용 스킨(20px, 선택 rgba(34,64,75,.2)+점 #22404d 40%, 미선택 rgba(61,61,61,.16)).
+ * 비활성이 아닌 라디오(템플릿 관리 미리보기)에만 적용 — 「동의서 보기」의 disabled 라디오는 공통 스킨(app-radio.css).
+ */
+.form-document-preview-body--agreement-portrait
+  .form-editor-table-bottom-consent
+  .ant-radio-wrapper:where(:not(.ant-radio-wrapper-disabled)) {
+  color: rgba(61, 61, 61, 0.5);
 }
 
 .form-document-preview-body--agreement-portrait
   .form-editor-table-bottom-consent
-  .ant-radio-checked
+  :where(.ant-radio-wrapper:not(.ant-radio-wrapper-disabled))
   .ant-radio-inner {
-  border-color: #85969d;
-  background-color: #85969d;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(61, 61, 61, 0.1);
+  background-color: #e0e0e0;
 }
 
 .form-document-preview-body--agreement-portrait
+  .form-editor-table-bottom-consent
+  :where(.ant-radio-wrapper:not(.ant-radio-wrapper-disabled))
+  .ant-radio-checked
+  .ant-radio-inner {
+  border-color: rgba(34, 64, 75, 0.2);
+  background-color: #d3d9db;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-editor-table-bottom-consent
+  :where(.ant-radio-wrapper:not(.ant-radio-wrapper-disabled))
+  .ant-radio-checked
+  .ant-radio-inner::after {
+  background-color: rgba(34, 64, 77, 0.4);
+}
+
+/* 마지막 문단 → 40 → 구분선 → 40 → 확인 문구(20px Bold/28) → 40 → 날짜 */
+.form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule {
-  padding-top: 24px;
+  padding-top: 40px;
 }
 
 .form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph--content-only-confirm-rule::before {
-  margin-bottom: 24px;
+  margin-bottom: 40px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-closing,
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-confirm {
+  margin-bottom: 40px;
 }
 
 .form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph--content-only-closing
   .form-document-preview-paragraph__body-text {
+  color: var(--main-BK, #3d3d3d);
+  line-height: 140%; /* 28px */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+/* 날짜 20px Regular → 16 → 서명 */
+.form-document-preview-body--agreement-portrait .explanation-system--document-date {
+  margin-bottom: 16px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .explanation-system--document-date
+  .explanation-system-pill {
+  font-weight: 400;
+}
+
+.form-document-preview-body--agreement-portrait .explanation-system--document-signature {
+  margin-bottom: 0;
 }
 
 .form-document-preview-body--agreement-portrait .agreement-sheet-closing-footer--document {
@@ -310,59 +392,156 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* 지급조서 사전 동의서 A4 — 1페이지 확인 스택 수용 · 시안 정렬                    */
+/* 지급조서 사전 동의서 A4 — 시안 5767:42423(1쪽)·5767:42928(2쪽)                  */
+/* 영수증 사전 동의서(시안 16046:112875)도 같은 규격 — 영수증 미리보기 본문에는 전용 클래스가 없어 문단 id로 잡는다 */
+/* 머리글 44 → 40 → 문단(제목 28 → 16 → 표 → 16 → 안내문 → 16 → 라디오 44) 간격 40   */
+/* → 40 → 구분선 → 40 → 확인 문구 → 40 → 날짜 → 10 → 서명 (2쪽은 → 40 → JA KOREA 귀하) */
 /* -------------------------------------------------------------------------- */
 
-.form-document-preview-body--payment-pre-consent
-  .form-document-preview-paragraph__content-header {
-  margin-bottom: 4px;
+.a4-document-page-layout:is(
+    :has(:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))),
+    :has([data-paragraph-id^='receipt-pre-consent-seed-'])
+  )
+  .a4-document-page-layout__header {
+  height: 44px;
+  padding-bottom: 0;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .form-document-preview-paragraph__content-header {
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-document-preview-paragraph__title-text {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%; /* 28px */
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph__body-text--explanation-filled,
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph__body-text--explanation-placeholder {
   font-size: 20px;
   font-weight: 400;
   line-height: 150%;
 }
 
-.form-document-preview-body--payment-pre-consent .form-editor-horizontal-table-wrap {
-  gap: 8px;
+/* 첫 안내문 — 좌우 8 */
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  [data-paragraph-id$='-pre-consent-seed-intro']
+  .form-document-preview-paragraph__body-text--explanation-filled,
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  [data-paragraph-id$='-pre-consent-seed-intro']
+  .form-document-preview-paragraph__body-text--explanation-placeholder {
+  padding: 0 8px;
 }
 
-.form-document-preview-body--payment-pre-consent .form-editor-horizontal-table__bottom {
-  gap: 8px;
+/* 표 — Table / h54 Horizontal: 행 52(칸 50 + 아래선), 칸 위아래 8·좌우 12, 머리 14px Bold */
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table-wrap {
+  gap: 16px;
 }
 
-.form-document-preview-body--payment-pre-consent .form-editor-table-bottom-consent {
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table__row {
+  min-height: 52px;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table__th,
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table__td {
+  min-height: 50px;
+  padding: 8px 12px;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table__cell-text--header,
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .form-editor-horizontal-table-wrap[class*='--payment-pre-consent']
+  .form-editor-horizontal-table__row--header {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* 값 칸 — 강조 17px Bold, 일반 14px Medium (p1: 1열 일반 / p2: 2열 일반 / p3·p4: 2열 일반) */
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table-wrap[class*='--payment-pre-consent'] {
+  --ht-pay-lh: 150%;
+  --ht-pay-header-size: 14px;
+  --ht-pay-header-weight: 700;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .form-editor-horizontal-table-wrap[class*='--payment-pre-consent']
+  .form-editor-horizontal-table__td--field {
+  --ht-pay-body-size: 17px;
+  --ht-pay-body-weight: 700;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field:nth-child(1),
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field:nth-child(2),
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__td--field:nth-child(2) {
+  --ht-pay-body-size: 14px;
+  --ht-pay-body-weight: 500;
+}
+
+/* 표 아래 안내문(좌우 8·16px Medium/24, 줄바꿈 유지) → 16 → 라디오(높이 44·좌우 8·간격 16) */
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table__bottom {
+  gap: 16px;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-horizontal-table__bottom-static {
+  padding: 0 8px;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-line;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-table-bottom-consent {
+  min-height: 44px;
   margin-top: 0;
+  padding: 0 8px;
+  gap: 16px;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .form-editor-table-bottom-consent .ant-radio-wrapper {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+/* 마지막 표 → 40 → 구분선 → 40 → 확인 문구(20px Bold/30) → 40 → 날짜 */
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph--content-only-closing,
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph--content-only-confirm {
-  margin-bottom: 16px;
+  margin-bottom: 40px;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
-  padding-top: 24px;
+  padding-top: 40px;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph--content-only-confirm-rule::before {
-  margin-bottom: 24px;
+  margin-bottom: 40px;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph--content-only-confirm
   .form-document-preview-paragraph__body-text,
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph--content-only-confirm
   .form-document-preview-paragraph__body-text--explanation-filled,
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .form-document-preview-paragraph--content-only-confirm
   .payment-pre-consent-fixed-block {
   color: #000;
@@ -380,37 +559,59 @@
   padding: 0;
 }
 
-.form-document-preview-body--payment-pre-consent .explanation-system--document-date {
-  margin-bottom: 8px;
+/* 날짜 20px Regular → 10 → 서명 → 40 → 「JA KOREA 귀하」(24px Bold/36) */
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .explanation-system--document-date {
+  margin-bottom: 10px;
 }
 
-.form-document-preview-body--payment-pre-consent .explanation-system--document-signature {
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .explanation-system--document-date
+  .explanation-system-pill {
+  font-weight: 400;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .explanation-system--document-signature {
   margin-bottom: 0;
 }
 
-.form-document-preview-body--payment-pre-consent .agreement-sheet-closing-footer--document {
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-'])) .agreement-sheet-closing-footer--document {
   margin-top: 24px;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  [data-paragraph-id$='-pre-consent-seed-closing-recipient']
+  .form-document-preview-paragraph__body-text {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
+}
+
+/* 2쪽 지급조서 표 — 라벨 180, 행 52(칸 51 + 행 아래선) */
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .payment-statement-basic-info-detail-form
   .detail-info-form__field {
   height: auto;
-  min-height: 54px;
+  min-height: 51px;
   max-height: none;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
+  .payment-statement-basic-info-detail-form
+  :is(.detail-info-form__field-label, .detail-info-form__field-content) {
+  min-height: 51px;
+}
+
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .payment-statement-basic-info-detail-form
   .detail-info-form__field-label {
   text-align: center;
   justify-content: center;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .payment-statement-basic-info-detail-form
   .detail-info-form__field-content,
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .payment-statement-basic-info-detail-form
   .detail-info-form__field-content--view {
   justify-content: flex-start;
@@ -421,7 +622,7 @@
   word-break: break-word;
 }
 
-.form-document-preview-body--payment-pre-consent
+:is(.form-document-preview-body--payment-pre-consent, .form-document-preview-body:has([data-paragraph-id^='receipt-pre-consent-seed-']))
   .payment-statement-basic-info-detail-form
   .detail-info-form__field-content--view
   > span {
@@ -432,16 +633,55 @@
   word-break: break-word;
 }
 
+/* 영수증 표 값 칸 — 강조 17px Bold, 일반 14px Medium(1번 1열·2번 2열) */
+.form-document-preview-body
+  :is(
+    [data-paragraph-id='receipt-pre-consent-seed-p1-collection'],
+    [data-paragraph-id='receipt-pre-consent-seed-p2-third-party']
+  )
+  .form-editor-horizontal-table__td
+  .form-editor-horizontal-table__cell-text--body {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.form-document-preview-body
+  [data-paragraph-id='receipt-pre-consent-seed-p1-collection']
+  .form-editor-horizontal-table__td:nth-child(1)
+  .form-editor-horizontal-table__cell-text--body,
+.form-document-preview-body
+  [data-paragraph-id='receipt-pre-consent-seed-p2-third-party']
+  .form-editor-horizontal-table__td:nth-child(2)
+  .form-editor-horizontal-table__cell-text--body {
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* -------------------------------------------------------------------------- */
-/* 교육진행자 서약서 A4 — 시안 1페이지 · 확인 스택 플랫                           */
+/* 교육진행자 서약서 A4 — 시안 5767:42711(05-5. 교육진행자 서약서(안)_미리보기)       */
+/* 머리글 44 → 40 → 안내문 → 40 → 조항(제목 28 → 10 → 본문 → 16 → 라디오 40) × 4 */
+/* → 40 → 구분선 → 40 → 확인 문구(20 Bold/28 → 8 → 16 Medium 회색) → 40 → 날짜 → 16 → 서명 */
 /* -------------------------------------------------------------------------- */
 
+.a4-document-page-layout:has(.form-document-preview-body--agreement-expense)
+  .a4-document-page-layout__header {
+  height: 44px;
+  padding-bottom: 0;
+}
+
 .form-document-preview-body--agreement-expense .form-document-preview-paragraph__content-header {
-  margin-bottom: 4px;
+  margin-bottom: 10px;
+  padding: 0 8px;
 }
 
 .form-document-preview-body--agreement-expense .form-document-preview-paragraph__required {
   display: none;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph[data-paragraph-id='agreement-expense-pledge-intro'] {
+  padding: 0 8px;
 }
 
 .form-document-preview-body--agreement-expense
@@ -458,7 +698,7 @@
 .form-document-preview-body--agreement-expense .form-document-preview-paragraph__title-text {
   font-size: 20px;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 140%; /* 28px */
 }
 
 .form-document-preview-body--agreement-expense
@@ -468,60 +708,97 @@
   line-height: 150%;
 }
 
-.form-document-preview-body--agreement-expense .form-document-preview-multiple-choice {
-  gap: 8px;
-  margin-top: 4px;
+/* 조항 본문(좌우 8, 20px Regular) → 16 → 라디오(높이 40, 좌우 8) */
+.form-document-preview-body--agreement-expense
+  .form-editor-body:has(> .form-document-preview-multiple-choice__description) {
+  gap: 16px;
 }
 
 .form-document-preview-body--agreement-expense .form-document-preview-multiple-choice__description {
+  padding: 0 8px;
   font-size: 20px;
   line-height: 150%;
 }
 
-.form-document-preview-body--agreement-expense .form-document-preview-multiple-choice__row {
-  font-size: 20px;
-  gap: 12px;
+.form-document-preview-body--agreement-expense
+  .form-editor-body:has(> .form-document-preview-multiple-choice__description)
+  > .ant-radio-group {
+  min-height: 40px;
+  padding: 0 8px;
+  gap: 16px;
 }
 
+.form-document-preview-body--agreement-expense
+  .form-editor-body:has(> .form-document-preview-multiple-choice__description)
+  .ant-radio-wrapper {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-editor-body:has(> .form-document-preview-multiple-choice__description)
+  .ant-radio-inner {
+  width: 20px;
+  height: 20px;
+}
+
+/* 마지막 조항 → 40 → 구분선 → 40 → 확인 문구 → 40 → 날짜 */
 .form-document-preview-body--agreement-expense
   .form-document-preview-paragraph--content-only-closing,
 .form-document-preview-body--agreement-expense
   .form-document-preview-paragraph--content-only-confirm {
-  margin-bottom: 16px;
+  margin-bottom: 40px;
 }
 
 .form-document-preview-body--agreement-expense
-  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
-  padding-top: 24px;
+  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule,
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 40px;
 }
 
 .form-document-preview-body--agreement-expense
   .form-document-preview-paragraph--content-only-confirm-rule::before {
-  margin-bottom: 24px;
+  margin-bottom: 40px;
 }
 
 .form-document-preview-body--agreement-expense
-  .form-document-preview-paragraph--content-only-confirm
-  .form-document-preview-paragraph__body-text,
-.form-document-preview-body--agreement-expense
-  .form-document-preview-paragraph--content-only-confirm
-  .form-document-preview-paragraph__body-text--explanation-filled {
-  color: #000;
+  .form-document-preview-paragraph__body-text--pledge-closing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
   text-align: right;
+}
+
+.form-document-preview-body--agreement-expense .form-document-preview-paragraph__pledge-closing-lead {
+  color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 20px;
-  font-style: normal;
   font-weight: 700;
-  line-height: 150%;
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
+  line-height: 140%; /* 28px */
+  white-space: pre-wrap;
 }
 
+.form-document-preview-body--agreement-expense .form-document-preview-paragraph__pledge-closing-note {
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%; /* 22.4px */
+  white-space: pre-wrap;
+}
+
+/* 날짜 20px Regular → 16 → 서명 */
 .form-document-preview-body--agreement-expense .explanation-system--document-date {
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.form-document-preview-body--agreement-expense
+  .explanation-system--document-date
+  .explanation-system-pill {
+  font-weight: 400;
 }
 
 .form-document-preview-body--agreement-expense .explanation-system--document-signature {
@@ -533,24 +810,36 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* 행정정보 공동이용 사전동의서 A4 — 시안 1페이지 · 표·식별번호·확인 스택          */
+/* 행정정보 공동이용 사전동의서 A4 — 시안 5767:42587(05-4. 행정정보 공동이용 사전동의서_미리보기) */
+/* 머리글 44 → 40 → 문단(제목 28 → 16 → 내용) 간격 40 → 구분선 40 → 확인 문구 → 40 → 날짜 → 16 → 서명 */
 /* -------------------------------------------------------------------------- */
 
-.form-document-preview-body--agreement-notice .form-document-preview-paragraph__content-header {
-  margin-bottom: 4px;
+.a4-document-page-layout:has(.form-document-preview-body--agreement-notice)
+  .a4-document-page-layout__header {
+  height: 44px;
+  padding-bottom: 0;
 }
 
-.form-document-preview-body--agreement-notice
-  .form-document-preview-paragraph__body-text--explanation-filled,
-.form-document-preview-body--agreement-notice
-  .form-document-preview-paragraph__body-text--explanation-placeholder {
-  font-size: 20px;
-  line-height: 150%;
+.form-document-preview-body--agreement-notice .form-document-preview-paragraph__content-header {
+  margin-bottom: 16px;
+  padding: 0 8px;
 }
 
 .form-document-preview-body--agreement-notice .form-document-preview-paragraph__title-text {
   font-size: 20px;
   font-weight: 700;
+  line-height: 140%; /* 28px */
+}
+
+/* 1·2번 본문, 4번 동의사항 — 좌우 8, 20px Regular/30 */
+.form-document-preview-body--agreement-notice
+  .form-document-preview-paragraph__body-text--explanation-filled,
+.form-document-preview-body--agreement-notice
+  .form-document-preview-paragraph__body-text--explanation-placeholder,
+.form-document-preview-body--agreement-notice .static-description-lines__line {
+  padding: 0 8px;
+  font-size: 20px;
+  font-weight: 400;
   line-height: 150%;
 }
 
@@ -561,48 +850,140 @@
   line-height: 150%;
 }
 
+/* 3번 표 — Table / h54 Horizontal: 행 52, 칸 위아래 8·좌우 12, 14px(머리 Bold·값 Medium) */
 .form-document-preview-body--agreement-notice .form-editor-horizontal-table-wrap {
-  gap: 0;
+  gap: 16px;
 }
 
 .form-document-preview-body--agreement-notice
   [data-paragraph-id='agreement-notice-table']
   .form-editor-horizontal-table__row {
-  min-height: 54px;
+  min-height: 52px;
+}
+
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__th,
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__td {
+  min-height: 50px; /* 칸 50 + 행 아래선 = 52 */
+  padding: 8px 12px;
+}
+
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-text {
+  font-size: 14px;
+  line-height: 150%; /* 21px */
+}
+
+/* 표 아래 안내문(좌우 16·16px Medium/24) → 16 → 식별번호 줄(높이 40·좌우 8·간격 16) */
+.form-document-preview-body--agreement-notice .form-editor-horizontal-table__bottom {
+  gap: 16px;
+}
+
+.form-document-preview-body--agreement-notice .form-editor-horizontal-table__bottom-static {
+  padding: 0 16px;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .form-document-preview-body--agreement-notice .id-type-with-input {
-  gap: 12px;
+  min-height: 40px;
+  padding: 0 8px;
+  gap: 16px;
 }
 
-.form-document-preview-body--agreement-notice .id-type-with-input__radios {
-  gap: 12px;
+.form-document-preview-body--agreement-notice .id-type-with-input__radios,
+.form-document-preview-body--agreement-notice .id-type-with-input .ant-radio-group {
+  gap: 16px;
 }
 
 .form-document-preview-body--agreement-notice .id-type-with-input__doc-label,
 .form-document-preview-body--agreement-notice .id-type-with-input .ant-radio-wrapper {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+.form-document-preview-body--agreement-notice .id-type-with-input .ant-radio-inner {
+  width: 20px;
+  height: 20px;
+}
+
+.form-document-preview-body--agreement-notice .id-type-with-input .cms-field__box,
+.form-document-preview-body--agreement-notice .id-type-with-input .cms-input__control,
+.form-document-preview-body--agreement-notice .id-type-with-input .cms-resident-back-input__control {
+  height: 40px;
+  min-height: 40px;
+}
+
+/* 대상자 본인 표 — 3칸 같은 폭, 머리 #F1F3F5·14px Bold, 값 14px Medium, 행 52, 둥근 8 */
+.form-document-preview-body--agreement-notice .form-document-short-essay-table {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .form-document-preview-body--agreement-notice .form-document-short-essay-table th,
 .form-document-preview-body--agreement-notice .form-document-short-essay-table td {
-  font-size: 16px;
-  padding: 10px 12px;
+  width: calc(100% / 3);
+  height: 52px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 150%;
+  text-align: center;
 }
 
+.form-document-preview-body--agreement-notice .form-document-short-essay-table th {
+  background: #f1f3f5;
+  font-weight: 700;
+}
+
+.form-document-preview-body--agreement-notice .form-document-short-essay-table td {
+  font-weight: 500;
+}
+
+/* 마지막 문단 → 40 → 구분선 → 40 → 확인 문구(양식 15) → 40 → 날짜 */
 .form-document-preview-body--agreement-notice
   .form-document-preview-paragraph--content-only-stack-divider {
-  padding: 24px 0;
+  padding: 40px 0;
 }
 
 .form-document-preview-body--agreement-notice
   .form-document-preview-paragraph--notice-date-stack
   .form-document-preview-paragraph__content-slot {
-  margin-top: 24px;
+  margin-top: 40px;
 }
 
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-confirmation-closing'].form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 40px;
+  padding-bottom: 40px;
+  margin-bottom: 0;
+}
+
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-confirmation-closing'].form-document-preview-paragraph--content-only-confirm-rule::before {
+  margin-bottom: 40px;
+}
+
+/* 날짜 20px Regular → 16 → 서명 */
 .form-document-preview-body--agreement-notice .explanation-system--document-date {
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.form-document-preview-body--agreement-notice
+  .explanation-system--document-date
+  .explanation-system-pill {
+  font-weight: 400;
 }
 
 .form-document-preview-body--agreement-notice .explanation-system--document-signature {

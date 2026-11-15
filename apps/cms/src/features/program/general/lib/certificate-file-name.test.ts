@@ -65,7 +65,7 @@ describe('parseCertificateIssuedAt', () => {
 describe('증명서 본문 발급일 표기', () => {
   it('Asia/Seoul 날짜로 표기해 파일명 날짜와 같다', () => {
     const issuedAt = new Date('2026-11-09T16:30:00Z')
-    expect(formatCertificateIssueDate(issuedAt)).toBe('2026년 11월 10일')
+    expect(formatCertificateIssueDate(issuedAt)).toBe('2026.11.10')
     expect(certificateIssueDateIso(issuedAt)).toBe('2026-11-10')
   })
 })

@@ -11,7 +11,7 @@
  */
 export interface SettlementExportRequest {
   /**
-     * 지급 상태 필터. 대량이체는 WAITING_PAYMENT만, 세금신고는 PAID만 허용합니다.
+     * 지급 상태 필터. 대량이체는 생략(대기·완료 함께), WAITING_PAYMENT, PAID 중 하나이고 세금신고는 PAID만 허용합니다.
      * @minLength 0
      * @maxLength 80
      */
@@ -43,12 +43,12 @@ export interface SettlementExportRequest {
      */
   businessPurpose: string;
   /**
-     * export 정책. XLSX는 Worker 생성이며 MASKED_ONLY 또는 RAW_PRIVACY_APPROVAL_REQUIRED를 사용합니다. MASKED_CLIENT_SIDE는 전환 호환 입력으로만 수용됩니다.
+     * export 정책. 일반 발급(rawPrivacyIncluded=false)은 생략하거나 MASKED_ONLY를 보냅니다. 서버가 기록하는 실제 정책은 응답 exportPolicy를 따르며, MASTER·ACCOUNTING_MANAGER 일반 발급은 RAW_ROLE_AUTHORIZED(원문 파일)입니다. RAW_PRIVACY_APPROVAL_REQUIRED는 승인형 원문 발급(rawPrivacyIncluded=true + approvalReference)에만 씁니다. MASKED_CLIENT_SIDE는 전환 호환 입력으로만 수용됩니다.
      * @minLength 0
      * @maxLength 80
      */
   exportPolicy?: string;
-  /** true면 RAW_PRIVACY_APPROVAL_REQUIRED와 approvalReference가 필요합니다. false(MASKED_ONLY)도 대량이체·세금신고 SERVER_FILE에는 원문 계좌·주민번호를 넣습니다. 원문 노출 감사는 POST /api/admin/files/{fileObjectId}/sensitive-downloads 의 reason으로 남깁니다. 미리보기 GET만으로는 이력이 생기지 않습니다. */
+  /** false(일반 발급, 승인 없음): MASTER·ACCOUNTING_MANAGER가 발급한 대량이체·세금신고 SERVER_FILE에는 원문 입금계좌번호·예상예금주·받는분 휴대폰(대량이체), 원문 이름·주민등록번호(세금신고)가 들어가며 응답은 exportPolicy=RAW_ROLE_AUTHORIZED, rawPrivacyIncluded=true입니다. 세금신고에서 이름·주민등록번호가 없는 행은 '-'로 넣고 TAX_REPORT_REQUIRED_IDENTITY_MISSING 경고를 남긴 채 발급합니다. true: exportPolicy=RAW_PRIVACY_APPROVAL_REQUIRED와 다른 MASTER가 승인한 approvalReference가 필요한 승인형 원문 발급입니다. 원문 파일 다운로드는 POST /api/admin/files/{fileObjectId}/sensitive-downloads 로만 받으며 reason이 개인정보 조회 이력에 남습니다. 세금신고 미리보기(POST /api/admin/settlements/exports/tax-report/preview)는 계속 마스킹입니다. */
   rawPrivacyIncluded?: boolean;
   /**
      * 원본 개인정보 export 승인 reference

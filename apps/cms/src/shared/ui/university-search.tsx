@@ -11,6 +11,7 @@ import type { ReactNode } from 'react'
 import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { toPublicSearchErrorMessage } from '@/shared/lib/public-search-error-message'
 import {
   CAREER_NET_UNIV_SCH1,
   filterCareerNetUniversitiesBySigungu,
@@ -356,7 +357,7 @@ export function UniversitySearch({
               ) : null}
               {error ? (
                 <div className="school-search__result-error" role="alert">
-                  <p>{error.message}</p>
+                  <p>{toPublicSearchErrorMessage(error)}</p>
                 </div>
               ) : null}
               {!loading && !error && !hasResults ? (

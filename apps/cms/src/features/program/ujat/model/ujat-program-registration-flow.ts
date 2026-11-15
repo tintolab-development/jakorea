@@ -35,7 +35,8 @@ export function getUjatProgramRegistrationPhaseValidationTarget(
 }
 
 export const UJAT_PROGRAM_REGISTRATION_PHASE_HINT: Record<UjatProgramRegistrationPhaseKey, string> = {
-  program: '* 프로그램 공통 정보를 작성해 주세요',
+  // 시안 4082:104352 「※ 프로그램 공통 정보를 작성해 주세요」
+  program: '※ 프로그램 공통 정보를 작성해 주세요',
   recruitment: '',
   application: '',
 }

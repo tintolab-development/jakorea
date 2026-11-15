@@ -1,15 +1,20 @@
 /* 레이아웃 크롬은 notification-fullpage-modal.css SSOT */
 
 .mail-send-fullpage__section-intro {
+  /* 시안: `1. 기본 설정` 오른쪽 같은 줄에 안내 (QA 2026-11-15 알림 메시지 관리 행 25) */
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  flex-direction: row;
+  align-items: center;
   gap: 8px;
   width: 100%;
 }
 
 .mail-send-fullpage__section-title {
+  /* 시안 제목 글자 시작 x=80 (본문 72 + 8) — 메일·문자 발송 공통 (QA 행 24) */
+  flex: none;
   margin: 0;
+  padding-left: 8px;
+  white-space: nowrap;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 20px;

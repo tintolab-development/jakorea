@@ -190,17 +190,21 @@ async function createProgram(
   await page.goto('/programs/general')
   await expectAuthenticatedShell(page)
 
+  // DEV 자동입력은 현재 연도 10~12월에서 무작위 날짜를 고르고 숨은 educationScheduleLines를
+  // 남겨, 운영 기간을 미래로 다시 잡으면 PROGRAM_DATE_OUTSIDE_OPEN_PERIOD로 거절된다.
+  // general-program-end-to-end와 같이 화면에서 직접 입력한다.
   const registration = new GeneralProgramRegistrationPage(page, regCase, {
     openRecruitment: true,
-    devAutofillCaseId: session === 'SINGLE' ? 4 : 5,
     safeWagePaymentItems: true,
     skipOptionalUploads: true,
     skipApplicationFormEdits: true,
     ensureFutureDates: true,
+    strictRecruitment: true,
     programTitle: uniqueIntegrationTitle(session),
   })
   await registration.openNewRegistration()
   await registration.fillCommonInfo()
+  if (session === 'MULTI') await registration.realignScheduleDetailDatesWithinOpenPeriod()
   await registration.goToRecruitment()
   await registration.fillRecruitmentInfo()
   await registration.goToApplication()

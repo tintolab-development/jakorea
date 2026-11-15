@@ -30,6 +30,10 @@ export interface MemberNotificationResponse {
   sourceId?: number;
   /** 연결 프로그램 ID */
   programId?: number;
+  /** 안내 팝업 제목 아래 회색 줄 값. 발행 시점 프로그램명 스냅샷(회원에게 보이는 프로그램명). 「활동 기관 배정 취소」(INSTRUCTOR_ORGANIZATION_ASSIGNMENT_CANCELLED·GENERAL_ORGANIZATION_VOLUNTEER_ASSIGNMENT_CANCELLED·ACTIVITY_ORGANIZATION_ASSIGNMENT_CANCELLED)만 배정 기관명. 시안에 회색 줄이 없는 알림(시스템·강사 권한·문의)과 이 필드 도입 전 발행분은 null. FE는 값이 있을 때만 [값] 줄을 그린다. */
+  programName?: string | null;
+  /** 안내 팝업 사유 상자 본문(취소·반려·거절·해제 사유, UJAT 수정 요청 사항). 사유 상자가 없는 알림, 사유가 입력되지 않은 건, 이 필드 도입 전 발행분은 null. 상자 제목(「취소 사유」 등)은 FE가 시안대로 붙이고 message에는 사유를 섞지 않는다. */
+  reason?: string | null;
   /** 링크 유형 */
   linkType?: string;
   /** 링크 대상 ID */

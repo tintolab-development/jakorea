@@ -7,6 +7,8 @@
  */
 import type { EligibilityItem } from './eligibilityItem';
 import type { IndividualSettlementTransportPreview } from './individualSettlementTransportPreview';
+import type { ScheduleSettlementPaymentStatus } from './scheduleSettlementPaymentStatus';
+import type { ScheduleSettlementStatementStatus } from './scheduleSettlementStatementStatus';
 import type { SubmittedItemSummary } from './submittedItemSummary';
 
 export interface ScheduleSettlement {
@@ -27,4 +29,12 @@ export interface ScheduleSettlement {
   submittedItems?: SubmittedItemSummary[];
   /** 회차별 학생 교통비 편도 거리 안내. FE는 이 값만 표시하고 거리를 계산하지 않는다. */
   transportPreview?: IndividualSettlementTransportPreview | null;
+  /** CMS 지급조서 확인과 같은 기준의 처리 상태. 제출 revision 1=WAITING_CONFIRM, revision 2 이상=REAPPLICATION, 반려=REJECTED, 승인=CONFIRMED. 신청 전·임시저장·철회는 null. FE는 이 값을 그대로 쓴다. */
+  statementStatus?: ScheduleSettlementStatementStatus;
+  /** 승인된 신청의 계좌 지급 상태. WAITING_PAYMENT=계좌 지급 대기(내부 지급 실패 포함), PAID=계좌 지급 완료. 승인 전이면 null. */
+  paymentStatus?: ScheduleSettlementPaymentStatus;
+  /** 승인된 신청의 계좌 이체 예정일(KST 날짜). 승인 전이면 null. */
+  expectedTransferDate?: string | null;
+  /** 계좌 지급 완료 시각. 지급 전이면 null. */
+  paidAt?: string | null;
 }

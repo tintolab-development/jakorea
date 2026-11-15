@@ -46,7 +46,7 @@ export function PlatformIdTypeWithInputFields({
 
   if (readOnly) {
     return (
-      <div className={styles.idTypeWithInput}>
+      <div className={[styles.idTypeWithInput, styles.idTypeWithInputPreview].join(' ')}>
         <div className={styles.idTypeWithInputRadios} role="radiogroup" aria-label="식별번호 종류">
           {options.map(opt => (
             <label key={opt.id} className={styles.radioOption}>
@@ -138,6 +138,7 @@ export function PlatformIdTypeWithInputFields({
       {isResident ? (
         <div className={styles.idTypeWithInputResident}>
           <PFFormResidentNumberInput
+            fillRow
             frontValue={residentParts.front}
             backValue={residentParts.back}
             onFrontChange={value =>

@@ -9,4 +9,5 @@ export const TERMS_VIEW_TITLES: Record<TermsViewType, string> = {
   teacherInfo: '교사 회원 가입 및 학교/기관 정보 수집·이용 동의 약관',
   guardianLegal: '만 14세 미만 아동 회원가입 법정대리인 동의 약관',
   privacyNotice: '개인정보처리방침',
+  newsletter: '뉴스레터 구독 개인정보 수집·이용 및 광고성 정보 수신 동의',
 }

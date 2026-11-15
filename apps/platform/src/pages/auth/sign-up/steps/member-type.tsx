@@ -13,10 +13,10 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
   const { step, memberType, navigation } = signUp
 
   return (
-    <SignUpLayout currentStep={step.current} totalSteps={step.total}>
+    <SignUpLayout currentStep={step.progress.current} totalSteps={step.progress.total}>
       <SignUpStepLayout
-        title="회원 유형을 선택해 주세요."
-        description="회원가입을 진행할 유형을 선택해 주세요."
+        title="어떤 회원으로 가입할까요?"
+        description="회원 유형에 따라 필요한 정보가 조금 달라요."
         actions={
           <PFButton
             size="xlarge"
@@ -34,7 +34,7 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
             </PFText>
             <button className={styles.signInLink} type="button" onClick={navigation.signIn}>
               <PFText typo="bd-md-md" color="black">
-                로그인 하기
+                로그인하기
               </PFText>
             </button>
           </div>

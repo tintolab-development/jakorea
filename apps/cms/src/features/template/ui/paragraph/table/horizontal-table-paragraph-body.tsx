@@ -477,10 +477,13 @@ export function HorizontalTableParagraphBody({
   bottomConsentDisplayOnly = false,
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode = false,
+  /** 「동의서 보기」A4 문서 — 하단 동의 라디오 disabled 스킨 */
+  documentReadOnlyView = false,
   tableRowSelection: controlledSelection,
   onTableRowSelectionChange,
   paymentStatementBasicInfoValues,
   paymentStatementBasicInfoOnlyPaymentPurposeLocked,
+  paymentStatementBasicInfoHideResidentNumberRow,
   lectureFeeCalculationValues,
   paymentStatementCalculationLines,
   paymentStatementDisplayMode,
@@ -535,11 +538,15 @@ export function HorizontalTableParagraphBody({
   bottomConsentDisplayOnly?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
+  /** 「동의서 보기」A4 문서 — 하단 동의 라디오 disabled 스킨(시안 동의 양식 미리보기) */
+  documentReadOnlyView?: boolean
   /** 있으면 상위(우측 패널)와 행 선택 동기화 */
   tableRowSelection?: HorizontalTableRowSelection | null
   onTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
   paymentStatementBasicInfoOnlyPaymentPurposeLocked?: boolean
+  /** 영수증 정산 신청서 — 기본 정보에서 주민등록번호 행만 숨김 */
+  paymentStatementBasicInfoHideResidentNumberRow?: boolean
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
@@ -886,6 +893,7 @@ export function HorizontalTableParagraphBody({
     },
     displayMode: paymentStatementDisplayMode,
     onlyPaymentPurposeLocked: paymentStatementBasicInfoOnlyPaymentPurposeLocked,
+    hideResidentNumberRow: paymentStatementBasicInfoHideResidentNumberRow,
   })
   if (paymentStatementBody != null) return paymentStatementBody
 
@@ -1009,8 +1017,11 @@ export function HorizontalTableParagraphBody({
       !PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id))
 
   const isAgreementNoticeTable = p.id === 'agreement-notice-table'
-  /** 템플릿 관리 작성 — 행정정보 식별번호 「주민등록번호」 라디오 미선택 표시(사용자 결정 2026-11-13, 저장값 무관) */
-  const agreementNoticeIdTypeRadioUnselected =
+  /**
+   * 템플릿 관리 작성 — 행정정보 식별번호는 시안 5767:41434대로 「주민등록번호」 선택 표시 + 단일 입력칸 미리보기.
+   * 사용자 결정 2026-11-15: 11/13 「미선택 표시」를 뒤집어 선택 표시로 바꾼다(하단 동의 라디오 미선택 규칙과 별개).
+   */
+  const agreementNoticeIdTypeTemplatePreview =
     isAgreementNoticeTable &&
     numberedCanvasPlaceholders &&
     paragraphInteractionMode === 'authoring' &&
@@ -1401,7 +1412,7 @@ export function HorizontalTableParagraphBody({
               isEditMode={effectiveEditMode || agreementNoticeIdTypeInteractive}
               documentMode={paymentStatementDisplayMode === 'document'}
               lockResidentIdType={isAgreementNoticeTable}
-              radioUnselectedDisplay={agreementNoticeIdTypeRadioUnselected}
+              templateSingleInputPreview={agreementNoticeIdTypeTemplatePreview}
             />
           ) : null}
           {p.showBottomConsent ? (
@@ -1420,7 +1431,7 @@ export function HorizontalTableParagraphBody({
                 if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
               }}
-              disabled={false}
+              disabled={documentReadOnlyView}
               style={
                 bottomConsentDisplayOnly || !bottomConsentInteractive
                   ? { pointerEvents: 'none' }

@@ -226,14 +226,14 @@ function preserveUnlockedAgreementConfirmBodyOptions(
   if (options == null) return undefined
   if (
     options.agreementAdminProxyConfirm !== true &&
-    options.paymentPreConsentSheetLayout !== true &&
+    options.agreementConfirmSheetLayout !== true &&
     (options.hiddenParagraphIds == null || options.hiddenParagraphIds.size === 0)
   ) {
     return undefined
   }
   return {
     agreementAdminProxyConfirm: options.agreementAdminProxyConfirm,
-    paymentPreConsentSheetLayout: options.paymentPreConsentSheetLayout,
+    agreementConfirmSheetLayout: options.agreementConfirmSheetLayout,
     hiddenParagraphIds: options.hiddenParagraphIds,
     agreementSystemParticipantName: options.agreementSystemParticipantName,
     agreementSystemNow: options.agreementSystemNow,
@@ -508,7 +508,11 @@ export function AgreementWritingFormShell({
       a4PageBreakBeforeParagraphIds,
       a4RenderMode,
       a4ParagraphGapPx,
-      paragraphBodyOptions: effectiveParagraphBodyOptions,
+      /** 시안 5767:42795(템플릿 관리 / 폼 양식 관리_초상권 동의서_미리보기) — 응답 칸 텍스트·동의 라디오 비활성 스킨 */
+      paragraphBodyOptions:
+        previewLayout === 'a4-document'
+          ? { ...effectiveParagraphBodyOptions, agreementDocumentReadOnlyView: true }
+          : effectiveParagraphBodyOptions,
       agreementClosingFooter,
       /** 사용자 모드(미리보기·응답 입력)에서도 필수(*) 표시 */
       hideParagraphRequiredChrome: false,
@@ -686,8 +690,8 @@ export function AgreementWritingFormShell({
               structureControlLockedParagraphIds != null
                 ? 'agreement-writing-form-left--structure-control-locked'
                 : '',
-              leftPanelParagraphBodyOptions?.paymentPreConsentSheetLayout === true
-                ? 'agreement-writing-form-left--pre-consent-sheet'
+              leftPanelParagraphBodyOptions?.agreementConfirmSheetLayout === true
+                ? 'agreement-writing-form-left--confirm-sheet'
                 : '',
             ]
               .filter(Boolean)

@@ -24,7 +24,11 @@ import {
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
 import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register-step-progress'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
-import { CmsButton, CmsInput } from '@/shared/ui'
+import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import {
+  isPasswordRecentlyUsedCode,
+  PASSWORD_RECENTLY_USED_ALERT,
+} from '@/shared/lib/password-recently-used-alert'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
 import './register-page.css'
@@ -37,6 +41,7 @@ type FormValues = {
 
 export function PasswordChangeRequiredChangePasswordPage() {
   const navigate = useNavigate()
+  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<FormValues>()
   const [submitting, setSubmitting] = useState(false)
   const { isReady } = usePasswordChangeRequiredGuard()
@@ -94,6 +99,10 @@ export function PasswordChangeRequiredChangePasswordPage() {
       if (error instanceof AdminMfaApiError && error.code === 'ADMIN_IDENTITY_NOT_VERIFIED') {
         setIdentityVerificationRequired(true)
         navigate(passwordChangeRequiredPaths.identity, { replace: true })
+        return
+      }
+      if (error instanceof AdminMfaApiError && isPasswordRecentlyUsedCode(error.code)) {
+        showAlert({ ...PASSWORD_RECENTLY_USED_ALERT })
         return
       }
       const message =

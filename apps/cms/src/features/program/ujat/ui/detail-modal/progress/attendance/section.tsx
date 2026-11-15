@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ExcelButton, FilterTableToolbarButton } from '@/shared/ui'
@@ -122,20 +123,21 @@ export function UjatEducationProgressAttendanceSection({
           firstSessionTitle != null ? (
             <div className="program-application-list-toolbar">
               <>
-              <FilterTableToolbarButton
-                type="button"
-                variant="secondary"
-                onClick={() => openFirstSessionCorrection?.()} >
-                출결 정정
-              </FilterTableToolbarButton>
-              <ExcelButton loading={isFirstSessionExporting} onClick={exportFirstSessionExcel} />
-                </>
+                <FilterTableToolbarButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => openFirstSessionCorrection?.()}
+                >
+                  출결 정정
+                </FilterTableToolbarButton>
+                <ExcelButton loading={isFirstSessionExporting} onClick={exportFirstSessionExcel} />
+              </>
             </div>
           ) : null
         }
       >
         {isLoading ? (
-          <div className="ujat-education-progress-attendance__empty">출석 정보를 불러오는 중입니다.</div>
+          <FullscreenSpinner />
         ) : isError ? (
           <div className="ujat-education-progress-attendance__empty" role="alert">
             출석 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.

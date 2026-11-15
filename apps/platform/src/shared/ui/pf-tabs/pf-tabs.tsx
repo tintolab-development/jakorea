@@ -3,8 +3,8 @@ import styles from './pf-tabs.module.css'
 
 export type PFTabsVariant = 'underline' | 'pill' | 'category'
 export type PFTabsUnderlineStyle = 'isolated' | 'bordered'
-/** pill: large·medium. underline: small만 적용(16px·44px·가로 스크롤) */
-export type PFTabsSize = 'large' | 'medium' | 'small'
+/** pill: xlarge(60px)·large·medium. underline: small만 적용(16px·44px·가로 스크롤) */
+export type PFTabsSize = 'xlarge' | 'large' | 'medium' | 'small'
 
 export type PFTabItem = {
   key: string
@@ -27,6 +27,8 @@ export type PFTabsProps = {
    * 임계 거리 이상 끌었으면 손을 뗄 때 탭을 선택하지 않는다.
    */
   dragScroll?: boolean
+  /** category 전용 — PC에서 탭 영역 전체 폭을 탭 수만큼 균등 분할한다 */
+  stretch?: boolean
 }
 
 export function PFTabs({
@@ -39,6 +41,7 @@ export function PFTabs({
   className,
   ariaLabel = '탭',
   dragScroll = false,
+  stretch = false,
 }: PFTabsProps) {
   const { containerRef, dragScrollHandlers } = useDragScroll<HTMLElement>()
 
@@ -49,6 +52,7 @@ export function PFTabs({
     styles[variant],
     variant === 'underline' ? styles[underlineStyle] : undefined,
     variant === 'pill' || (variant === 'underline' && size === 'small') ? styles[size] : undefined,
+    variant === 'category' && stretch ? styles.stretch : undefined,
     className,
   ]
     .filter(Boolean)

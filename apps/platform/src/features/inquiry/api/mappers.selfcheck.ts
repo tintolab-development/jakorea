@@ -7,7 +7,7 @@ const listed = mapInquiryListItem(
     category: '프로그램',
     title: '문의 제목',
     status: 'ANSWERED',
-    inquiredAt: '2026-10-25T01:30:00Z',
+    inquiredAt: '2026-10-25T10:30:00+09:00',
     answeredAt: '2026-10-26T02:45:00+09:00',
     programName: '테스트 프로그램',
   },
@@ -15,7 +15,7 @@ const listed = mapInquiryListItem(
 )
 
 assert(listed)
-assert.equal(listed.createdAt, '2026년 10월 25일')
+assert.equal(listed.createdAt, '2026년 10월 25일(일) 10:30')
 assert.equal(listed.answeredAt, '2026년 10월 26일(월) 02:45')
 assert.equal(listed.status, 'answered')
 

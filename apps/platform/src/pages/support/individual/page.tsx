@@ -1,6 +1,5 @@
 import {
   CtaSection,
-  FloatingCta,
   HeroSection,
   ImpactSection,
   WhySection,
@@ -22,7 +21,6 @@ export function IndividualDonationPage() {
       <WhySection />
       <CtaSection />
       <ImpactSection />
-      <FloatingCta />
     </section>
   )
 }

@@ -104,7 +104,9 @@ export async function issuePersonalCertificate(
     const unwrapped = unwrapEnvelope<PortalCertificateIssueResponse>(data)
     return unwrapped
   } catch (error) {
-    throw new Error(await readErrorFromUnknown(error, GENERIC_ISSUE_ERROR))
+    throw new Error(await readErrorFromUnknown(error, GENERIC_ISSUE_ERROR), {
+      cause: error,
+    })
   }
 }
 
@@ -120,7 +122,9 @@ export async function downloadPersonalCertificate(
     await savePortalCertificatePdfDownload(certificateIssueId, options)
   } catch (error) {
     if (error instanceof Error && error.message.trim()) throw error
-    throw new Error(await readErrorFromUnknown(error, GENERIC_DOWNLOAD_ERROR))
+    throw new Error(await readErrorFromUnknown(error, GENERIC_DOWNLOAD_ERROR), {
+      cause: error,
+    })
   }
 }
 

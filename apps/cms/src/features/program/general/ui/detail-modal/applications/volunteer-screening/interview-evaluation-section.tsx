@@ -88,13 +88,15 @@ export interface GeneralVolunteerApplicantInterviewEvaluationSectionProps {
   canFillBothSlots: boolean
   currentAdminId: number | null
   onSave: (payload: GeneralVolunteerInterviewEvaluationPayload) => Promise<boolean>
+  /** 섹션 루트 추가 클래스 — 개인 참여자 상세 레이아웃용. 봉사자는 생략 */
+  className?: string
 }
 
 export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
   GeneralVolunteerApplicantInterviewEvaluationSectionHandle,
   GeneralVolunteerApplicantInterviewEvaluationSectionProps
 >(function GeneralVolunteerApplicantInterviewEvaluationSection(
-  { applicant, isEditing, canFillBothSlots, currentAdminId, onSave },
+  { applicant, isEditing, canFillBothSlots, currentAdminId, onSave, className },
   ref
 ) {
   const [managerAScore, setManagerAScore] = useState<number | null>(null)
@@ -163,7 +165,13 @@ export const GeneralVolunteerApplicantInterviewEvaluationSection = forwardRef<
     : '-'
 
   return (
-    <section className="general-volunteer-applicant-interview-evaluation">
+    <section
+      className={
+        className
+          ? `general-volunteer-applicant-interview-evaluation ${className}`
+          : 'general-volunteer-applicant-interview-evaluation'
+      }
+    >
       <DetailInfoForm
         title="면접 평가"
         mode={isEditing ? 'edit' : 'view'}

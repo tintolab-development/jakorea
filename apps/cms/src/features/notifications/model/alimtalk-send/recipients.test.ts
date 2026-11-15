@@ -5,6 +5,7 @@ import {
   formatAlimtalkPhoneDuplicateMessage,
   listAlimtalkPhoneDuplicateNotices,
   mergeAlimtalkSendRecipients,
+  resolveNotificationRecipientTypeLabel,
 } from './recipients'
 import type { AlimtalkSendRecipient } from './types'
 
@@ -92,5 +93,19 @@ describe('mergeAlimtalkSendRecipients phone dedupe', () => {
     const incoming = member(2, '010-****-5678')
     expect(listAlimtalkPhoneDuplicateNotices([current], [incoming])).toEqual([])
     expect(mergeAlimtalkSendRecipients([current], [incoming])).toHaveLength(2)
+  })
+})
+
+describe('resolveNotificationRecipientTypeLabel', () => {
+  it('shows the server typeLabel as is (server sends planning labels)', () => {
+    expect(resolveNotificationRecipientTypeLabel('참여자')).toBe('참여자')
+    expect(resolveNotificationRecipientTypeLabel('학교(교사), 강사')).toBe('학교(교사), 강사')
+    expect(resolveNotificationRecipientTypeLabel('  개인 ')).toBe('개인')
+  })
+
+  it('returns an empty value for a missing typeLabel (shown as -)', () => {
+    expect(resolveNotificationRecipientTypeLabel(null)).toBe('')
+    expect(resolveNotificationRecipientTypeLabel(undefined)).toBe('')
+    expect(resolveNotificationRecipientTypeLabel('  ')).toBe('')
   })
 })

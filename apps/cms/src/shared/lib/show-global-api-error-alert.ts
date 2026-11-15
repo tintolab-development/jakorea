@@ -26,6 +26,10 @@ import { readVolunteer1365ApprovalBlockedAlert } from '@/features/program/shared
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { isScreenOwnedApiError } from '@/shared/lib/screen-owned-api-errors'
+import {
+  isPasswordRecentlyUsedCode,
+  PASSWORD_RECENTLY_USED_ALERT,
+} from '@/shared/lib/password-recently-used-alert'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 const DEDUPE_MS = 2_000
@@ -192,6 +196,18 @@ export function showGlobalApiErrorAlert(
       return false
     }
     return showForbiddenAccessDeniedAlert(error)
+  }
+
+  // 최근 사용 비밀번호 — 서버 문구 대신 시안 「비밀번호 재사용 불가 안내」
+  const responseData = error.response?.data
+  const responseCode =
+    responseData && typeof responseData === 'object' && 'error' in responseData
+      ? (responseData as { error?: { code?: string } }).error?.code
+      : undefined
+  if (isPasswordRecentlyUsedCode(responseCode)) {
+    markGlobalErrorAlertShown(error)
+    cmsAlertModal.show({ ...PASSWORD_RECENTLY_USED_ALERT })
+    return true
   }
 
   if (isMemberDeleteCurrentPasswordInvalidError(error)) {

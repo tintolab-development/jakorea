@@ -209,7 +209,7 @@ export function UjatAssignmentDocumentViewerModal({
   const a4RenderMode = ujatA4Preview?.a4PreviewOptions.a4RenderMode ?? 'contentOnly'
   const a4ParagraphGapPx = ujatA4Preview?.a4ParagraphGapPx
 
-  const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
+  const { pages, overflowParagraphIds, waitForPagesReady, measureLayer } = useA4ParagraphPages({
     allParagraphs: previewParagraphs,
     titleNumbering: draft?.formSettings.titleNumbering ?? 'numeric',
     editorKind: 'survey',
@@ -302,6 +302,7 @@ export function UjatAssignmentDocumentViewerModal({
     if (!root || pdfLoading) return
     setPdfLoading(true)
     try {
+      await waitForPagesReady()
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(
         pageEls,
@@ -313,7 +314,7 @@ export function UjatAssignmentDocumentViewerModal({
     } finally {
       setPdfLoading(false)
     }
-  }, [fileName, pdfLoading, showAlert])
+  }, [fileName, pdfLoading, showAlert, waitForPagesReady])
 
   const actionButtons = (
     <div className="full-page-modal__actions ujat-doc-viewer-modal__actions">

@@ -12,6 +12,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { formatDateDot, formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
+  ACCOUNT_PAYMENT_PAYEE_TYPE_LABELS,
   ACCOUNT_PAYMENT_STATUS_LABELS,
   mockAccountPaymentRows,
   formatAccountPaymentInstitutionDisplay,
@@ -27,6 +28,8 @@ import {
   getSettlementApiErrorCode,
   getSettlementApiErrorMessage,
   readAccountPaymentMissingAccountIds,
+  TAX_REPORT_NO_ELIGIBLE_SELECTION,
+  TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import {
@@ -47,7 +50,6 @@ import { useSettlementBudgetSummaryQuery } from '@/features/settlement-managemen
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
 import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
@@ -68,11 +70,17 @@ import '@/features/program/general/ui/detail-modal/program-status/program-progre
 import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
+import {
+  PAYMENT_ORDER_PAYEE_TYPES,
+  parsePaymentOrderPayeeTypeFilter,
+  type PaymentOrderPayeeTypeFilter,
+} from './payment-orders-table.config'
 import { getPaymentOrdersDefaultDateRange } from './payment-orders-date-range'
 import { AccountPaymentStatusText } from './account-payment-status-text'
 import {
   AP_YEAR_PARAM,
   parseAccountPaymentsYearParam,
+  reconcileAccountPaymentsPendingYear,
   shiftTransferDateRangeToYear,
 } from './account-payments-year'
 import {
@@ -115,6 +123,8 @@ interface AppliedFilters {
   instructorName: string
   programName: string
   accountStatus: AppliedAccountStatus
+  /** 신청자 유형 — 제미나이 강사는 INSTRUCTOR에 포함 */
+  payeeType: PaymentOrderPayeeTypeFilter
   transferDateRange: [Dayjs | null, Dayjs | null] | null
 }
 
@@ -158,6 +168,7 @@ function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): Account
     if (qp && !row.programName.includes(qp)) return false
     if (applied.accountStatus !== 'all' && row.accountPaymentStatus !== applied.accountStatus)
       return false
+    if (applied.payeeType !== 'all' && row.payeeType !== applied.payeeType) return false
     // 목록 「이체 예정일」필터 = transferScheduledDate (캘린더 배치도 동일)
     if (!matchesDateRange(row.transferScheduledDate, applied.transferDateRange)) return false
     return true
@@ -173,6 +184,15 @@ const statusSelectOptions: { value: AppliedAccountStatus; label: string }[] = [
   ...ACCOUNT_PAYMENT_LIST_FILTER_STATUSES.map(value => ({
     value,
     label: ACCOUNT_PAYMENT_STATUS_LABELS[value],
+  })),
+]
+
+/** 신청자 유형 — 지급조서 확인과 같은 옵션·라벨 */
+const payeeTypeSelectOptions: { value: PaymentOrderPayeeTypeFilter; label: string }[] = [
+  { value: 'all', label: '전체' },
+  ...PAYMENT_ORDER_PAYEE_TYPES.map(value => ({
+    value,
+    label: ACCOUNT_PAYMENT_PAYEE_TYPE_LABELS[value],
   })),
 ]
 
@@ -205,8 +225,8 @@ export default function AccountPaymentsPage() {
     [calendarYear]
   )
 
-  /** 탭 구간(금년~3년 전) — URL `ap_year`가 SSOT */
-  const selectedYearScoped = useMemo(() => {
+  /** 탭 구간(금년~3년 전) — URL `ap_year` */
+  const yearFromUrl = useMemo(() => {
     const lo = calendarYear - 3
     const hi = calendarYear
     return parseAccountPaymentsYearParam(searchParams.get(AP_YEAR_PARAM), {
@@ -215,11 +235,25 @@ export default function AccountPaymentsPage() {
       fallback: hi,
     })
   }, [calendarYear, searchParams])
+  /**
+   * 탭 클릭 연도. `setSearchParams`는 transition이라 이체 기간보다 늦게 반영되고,
+   * 그 한 프레임에 예산 조회 키가 두 번 갈리며 금액이 비워진다.
+   */
+  const pendingYearRef = useRef<number | null>(null)
+  const selectedYearScoped = pendingYearRef.current ?? yearFromUrl
+
+  useEffect(() => {
+    pendingYearRef.current = reconcileAccountPaymentsPendingYear(
+      yearFromUrl,
+      pendingYearRef.current
+    )
+  }, [yearFromUrl])
 
   const [viewMode, setViewMode] = useState<PageViewMode>('list')
   const [draftInstructor, setDraftInstructor] = useState('')
   const [draftProgram, setDraftProgram] = useState('')
   const [draftAccountStatus, setDraftAccountStatus] = useState<AppliedAccountStatus>('all')
+  const [draftPayeeType, setDraftPayeeType] = useState<PaymentOrderPayeeTypeFilter>('all')
   const [draftDateRange, setDraftDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(() =>
     getPaymentOrdersDefaultDateRange()
   )
@@ -227,6 +261,7 @@ export default function AccountPaymentsPage() {
     instructorName: '',
     programName: '',
     accountStatus: 'all',
+    payeeType: 'all',
     transferDateRange: getPaymentOrdersDefaultDateRange(),
   }))
 
@@ -320,6 +355,14 @@ export default function AccountPaymentsPage() {
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
+        key: 'payeeType',
+        type: 'select',
+        label: '신청자 유형',
+        placeholder: '전체',
+        options: payeeTypeSelectOptions,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
+      },
+      {
         key: 'transferDateRange',
         type: 'dateRange',
         label: '이체 예정일',
@@ -333,9 +376,10 @@ export default function AccountPaymentsPage() {
       instructorName: draftInstructor,
       programName: draftProgram,
       accountStatus: draftAccountStatus === 'all' ? undefined : draftAccountStatus,
+      payeeType: draftPayeeType === 'all' ? undefined : draftPayeeType,
       transferDateRange: draftDateRange,
     }),
-    [draftAccountStatus, draftDateRange, draftInstructor, draftProgram]
+    [draftAccountStatus, draftDateRange, draftInstructor, draftPayeeType, draftProgram]
   )
   const handleUnifiedFilterChange = useCallback((key: string, value: unknown) => {
     if (key === 'instructorName') {
@@ -348,6 +392,10 @@ export default function AccountPaymentsPage() {
     }
     if (key === 'accountStatus') {
       setDraftAccountStatus((value == null || value === '' ? 'all' : value) as AppliedAccountStatus)
+      return
+    }
+    if (key === 'payeeType') {
+      setDraftPayeeType(parsePaymentOrderPayeeTypeFilter(value == null ? null : String(value)))
       return
     }
     if (key === 'transferDateRange') {
@@ -367,6 +415,7 @@ export default function AccountPaymentsPage() {
         applied.accountStatus === 'account_paid'
           ? applied.accountStatus
           : ('all' as const),
+      payeeType: applied.payeeType,
       fromDate: applied.transferDateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: applied.transferDateRange?.[1]?.format('YYYY-MM-DD'),
       /** 이체일 구간이 있으면 BE가 year보다 from/to 우선. 구간 없을 때만 year 윈도우 */
@@ -471,13 +520,15 @@ export default function AccountPaymentsPage() {
       instructorName: draftInstructor.trim(),
       programName: draftProgram.trim(),
       accountStatus: draftAccountStatus,
+      payeeType: draftPayeeType,
       transferDateRange: draftDateRange,
     })
     setSelectedRowKeys([])
-  }, [draftAccountStatus, draftDateRange, draftInstructor, draftProgram])
+  }, [draftAccountStatus, draftDateRange, draftInstructor, draftPayeeType, draftProgram])
 
   const handleYearTabSelect = useCallback(
     (y: number) => {
+      pendingYearRef.current = y
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -548,7 +599,7 @@ export default function AccountPaymentsPage() {
         render: (v: string) => formatAccountPaymentInstitutionDisplay(v),
       },
       {
-        title: '강의 진행 차시',
+        title: '진행 차시',
         dataIndex: 'sessionLabel',
         key: 'sessionLabel',
         className: 'account-payments-page__col-session',
@@ -594,7 +645,7 @@ export default function AccountPaymentsPage() {
 
   /**
    * 툴바 양식 발급: 선택한 행만 대상.
-   * 대량이체 = 지급 대기, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
+   * 대량이체 = 지급 대기·지급 완료, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
    */
   const resolveToolbarFormIssueRows = useCallback(
     (kind: 'bulk-transfer' | 'tax-report'): AccountPaymentRow[] | null => {
@@ -622,7 +673,10 @@ export default function AccountPaymentsPage() {
   const notifyExportError = useCallback((error: unknown, fallback: string) => {
     if (isGlobalApiErrorAlertShown(error)) return
     cmsAlertModal.show({
-      title: networkAwareAlertTitle(error, '발급 불가'),
+      title:
+        getSettlementApiErrorCode(error) === TAX_REPORT_NO_ELIGIBLE_SELECTION
+          ? TAX_REPORT_NO_ELIGIBLE_SELECTION_TITLE
+          : networkAwareAlertTitle(error, '발급 불가'),
       content: getSettlementApiErrorMessage(error, fallback),
     })
   }, [])
@@ -702,8 +756,8 @@ export default function AccountPaymentsPage() {
       }
       setIssuedFormPreviewRows(rows)
       setIssuedFormExport(readyExport)
+      // 「발급 완료」 안내는 미리보기의 엑셀 다운로드 성공 시점에 노출한다.
       setBulkTransferPreviewOpen(true)
-      showIssueCompletedAlert()
     })()
   }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
 
@@ -1059,7 +1113,6 @@ export default function AccountPaymentsPage() {
 
   /**
    * 일괄 완료 모달「세금신고 양식 발급」— 방금 계좌 지급 완료한 행은 세금신고 대상이다.
-   * (대량이체는 지급 대기 건만 서버가 허용하므로 완료 직후에는 발급할 수 없다.)
    */
   const handleIssueTaxReportFromSuccessModal = useCallback(() => {
     const ctx = accountPaymentCompleteSuccessContext
@@ -1234,6 +1287,7 @@ export default function AccountPaymentsPage() {
                 applied.instructorName,
                 applied.programName,
                 applied.accountStatus,
+                applied.payeeType,
                 applied.transferDateRange?.[0]?.valueOf() ?? '',
                 applied.transferDateRange?.[1]?.valueOf() ?? '',
               ].join('|')}

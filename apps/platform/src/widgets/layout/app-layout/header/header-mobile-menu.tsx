@@ -4,7 +4,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { recordMenuClick } from '@/features/analytics'
 import {
   NotificationInboxPanel,
+  NotificationPopup,
   useMyNotificationUnreadCountQuery,
+  type PortalNotificationPopup,
 } from '@/features/notification'
 import { PFModal } from '@/shared/ui'
 import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
@@ -101,6 +103,8 @@ export function HeaderMobileMenu({
   const navigate = useNavigate()
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  /** 알림 안내 팝업(공통_ 3종) — 알림 목록을 닫고 띄운다 */
+  const [notificationPopup, setNotificationPopup] = useState<PortalNotificationPopup | null>(null)
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(open)
   const isNotificationOpenRef = useRef(false)
   const unreadNotificationCount = useMyNotificationUnreadCountQuery(isLoggedIn)
@@ -109,11 +113,13 @@ export function HeaderMobileMenu({
   if (notificationMenuOpen !== open) {
     setNotificationMenuOpen(open)
     setIsNotificationOpen(false)
+    setNotificationPopup(null)
   }
 
   useEffect(() => {
-    isNotificationOpenRef.current = notificationOpen
-  }, [notificationOpen])
+    /** 알림 목록·안내 팝업이 열려 있으면 Escape는 그쪽만 닫고 메뉴는 유지 */
+    isNotificationOpenRef.current = notificationOpen || notificationPopup != null
+  }, [notificationOpen, notificationPopup])
 
   useEffect(() => {
     if (!open) return
@@ -297,8 +303,13 @@ export function HeaderMobileMenu({
         <NotificationInboxPanel
           variant="embedded"
           onNavigate={() => setIsNotificationOpen(false)}
+          onPopup={popup => {
+            setIsNotificationOpen(false)
+            setNotificationPopup(popup)
+          }}
         />
       </PFModal>
+      <NotificationPopup popup={notificationPopup} onClose={() => setNotificationPopup(null)} />
     </div>,
     document.body
   )

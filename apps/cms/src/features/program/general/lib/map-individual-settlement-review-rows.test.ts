@@ -5,10 +5,13 @@ import type { ParticipatingSchoolSession } from '@/features/program/general/mode
 import type { IndividualSettlementReviewListItemView } from '@/features/program/general/api/individual-settlement-review-types'
 import {
   assignedSessionsForIndividualSettlementReview,
+  filterIndividualSettlementDocumentDownloadRows,
   isIndividualSettlementRowNotApplicable,
+  mapIndividualSettlementStatusRows,
   mapIndividualSettlementReviewListRows,
   resolveIndividualSettlementReviewRowsForQueryState,
   resolveIndividualSettlementReviewSummaryLabel,
+  summarizeIndividualSettlementReviewRows,
 } from './map-individual-settlement-review-rows'
 import {
   canReviewIndividualSettlement,
@@ -282,6 +285,24 @@ describe('individual settlement review detail display', () => {
     expect(individualSettlementTableProcessingLabel('SUBMITTED')).toBe('확인 대기 중')
   })
 
+  it('SUBMITTED는 차수로 나눈다 — 1차 확인 대기 중, 2차 이상 지급조서 재신청(모든 화면 공통)', () => {
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', 1)).toBe('확인 대기 중')
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', null)).toBe('확인 대기 중')
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', 2)).toBe('지급조서 재신청')
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', 3)).toBe('지급조서 재신청')
+    // 확인·반려 뒤에는 차수와 관계없이 그 상태
+    expect(individualSettlementReviewStatusLabel('APPROVED', 2)).toBe('지급조서 확인 완료')
+    expect(individualSettlementReviewStatusLabel('REJECTED', 2)).toBe('신청 반려')
+  })
+
+  it('목록 행 statusLabel도 최신 차수 기준이다', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [session(187231)],
+      applications: [{ ...submittedApplication, latestRevisionNo: 2 }],
+    })
+    expect(rows[0]).toMatchObject({ status: 'SUBMITTED', statusLabel: '지급조서 재신청' })
+  })
+
   it('shows APPROVED as 지급조서 확인 완료 and PAID as 계좌 지급 완료', () => {
     expect(individualSettlementReviewStatusLabel('APPROVED')).toBe('지급조서 확인 완료')
     expect(individualSettlementReviewStatusLabel('REJECTED')).toBe('신청 반려')
@@ -329,6 +350,39 @@ describe('resolveIndividualSettlementReviewSummaryLabel', () => {
     // 미신청만 있으면 '-' (기획 2026-11-12 2차 4-2)
     expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, total: 3 }, false)).toBe('-')
     expect(resolveIndividualSettlementReviewSummaryLabel(empty, false)).toBe('-')
+  })
+
+  it('확인 전 건이 모두 2차 이상 제출이면 지급조서 재신청, 1차가 섞이면 확인 대기 중', () => {
+    expect(
+      resolveIndividualSettlementReviewSummaryLabel(
+        { ...empty, submitted: 1, reapplication: 1, total: 1 },
+        false
+      )
+    ).toBe('지급조서 재신청')
+    expect(
+      resolveIndividualSettlementReviewSummaryLabel(
+        { ...empty, submitted: 2, reapplication: 1, total: 2 },
+        false
+      )
+    ).toBe('확인 대기 중')
+    // 확인·반려가 섞이면 차수와 관계없이 확인 진행 중
+    expect(
+      resolveIndividualSettlementReviewSummaryLabel(
+        { ...empty, submitted: 1, reapplication: 1, rejected: 1, total: 2 },
+        false
+      )
+    ).toBe('확인 진행 중')
+  })
+
+  it('요약 집계가 2차 이상 제출 건수를 센다', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [session(187231)],
+      applications: [{ ...submittedApplication, latestRevisionNo: 2 }],
+    })
+    expect(summarizeIndividualSettlementReviewRows(rows)).toMatchObject({
+      submitted: 1,
+      reapplication: 1,
+    })
   })
 })
 
@@ -512,5 +566,57 @@ describe('참여자 정산 현황 일정 칸 표기', () => {
       applications: [],
     })
     expect(rows[0]?.educationScheduleLabel).toContain('2026.10.24')
+  })
+})
+
+describe('계좌 지급 완료·지급조서 일괄 다운로드 대상 (CMS-FUNC-0248·0252)', () => {
+  const base: IndividualSettlementReviewListItemView = {
+    settlementApplicationId: 41,
+    programId: 1,
+    participantId: 2,
+    programScheduleId: 3,
+    scheduleName: '교육',
+    scheduleStartAt: '2026-11-09T03:00:00Z',
+    scheduleEndAt: '2026-11-09T04:00:00Z',
+    status: 'APPROVED',
+    totalAmount: 10_000,
+    latestRevisionNo: 1,
+    applicationType: 'VOLUNTEER',
+    rowType: 'SETTLEMENT_APPLICATION',
+    lectureProgressStatus: 'COMPLETED',
+  }
+
+  it('확인 완료 뒤 계좌 지급이 끝난 건은 처리 현황을 계좌 지급 완료로 보인다', () => {
+    const [paid, waiting] = mapIndividualSettlementStatusRows([
+      { ...base, paymentStatus: 'PAID' },
+      { ...base, settlementApplicationId: 42, programScheduleId: 4, paymentStatus: 'WAITING_PAYMENT' },
+    ])
+    expect(paid.status).toBe('PAID')
+    expect(paid.statusLabel).toBe('계좌 지급 완료')
+    expect(waiting.status).toBe('APPROVED')
+    expect(waiting.statusLabel).toBe('지급조서 확인 완료')
+  })
+
+  it('확인 전 상태는 지급 상태가 있어도 그대로 둔다', () => {
+    const [row] = mapIndividualSettlementStatusRows([{ ...base, status: 'SUBMITTED', paymentStatus: 'PAID' }])
+    expect(row.status).toBe('SUBMITTED')
+  })
+
+  it('요약은 계좌 지급 완료도 확인 완료로 센다', () => {
+    const rows = mapIndividualSettlementStatusRows([{ ...base, paymentStatus: 'PAID' }])
+    expect(summarizeIndividualSettlementReviewRows(rows).approved).toBe(1)
+  })
+
+  it('일괄 다운로드 대상은 확인 완료·계좌 지급 완료 건만이다', () => {
+    const rows = mapIndividualSettlementStatusRows([
+      { ...base, settlementApplicationId: 51, programScheduleId: 11 },
+      { ...base, settlementApplicationId: 52, programScheduleId: 12, paymentStatus: 'PAID' },
+      { ...base, settlementApplicationId: 53, programScheduleId: 13, status: 'SUBMITTED' },
+      { ...base, settlementApplicationId: 54, programScheduleId: 14, status: 'REJECTED' },
+      { ...base, settlementApplicationId: null, programScheduleId: 15, status: null, rowType: 'NOT_APPLIED' },
+    ])
+    expect(filterIndividualSettlementDocumentDownloadRows(rows).map(row => row.settlementApplicationId)).toEqual([
+      51, 52,
+    ])
   })
 })

@@ -8,6 +8,7 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { Spin } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -22,6 +23,8 @@ import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { handleError } from '@/shared/utils/error-handler'
 import type { Program } from '@/types/domain'
+import { resolveUjatSurveyItemFlags } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { GENERAL_SATISFACTION_SHARE_EMPTY_COPY } from '@/features/program/shared/lib/survey-management/survey-copy'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { usePushUserPreviewHistoryWhenOpen } from '@/features/template/hooks/use-push-user-preview-history-when-open'
@@ -246,6 +249,8 @@ export function UjatSurveyManagementView({
   const [lectureEvalDeleteConfirmWord, setLectureEvalDeleteConfirmWord] = useState('')
   const [satisfactionDownloadModalOpen, setSatisfactionDownloadModalOpen] = useState(false)
   const [downloadingSatisfactionResults, setDownloadingSatisfactionResults] = useState(false)
+  /** 설문 결과 PDF 생성 중 — CMS 공통 「PDF 생성 중…」 로더를 띄운다(엑셀은 버튼 로딩만). */
+  const [exportingResultsPdf, setExportingResultsPdf] = useState(false)
   const [shareToastOpen, setShareToastOpen] = useState(false)
   const [shareToastLines, setShareToastLines] = useState<{ line1: string; line2: string }>(
     UJAT_SATISFACTION_SHARE_TOAST_COPY
@@ -606,18 +611,28 @@ export function UjatSurveyManagementView({
     [adminAccountId, lectureEvalResponses]
   )
 
+  const satisfactionSurveyItemFlags = useMemo(() => {
+    const flags = resolveUjatSurveyItemFlags(program)
+    return {
+      volunteer_satisfaction: flags.volunteer_satisfaction,
+      school_satisfaction: flags.school_satisfaction,
+    }
+  }, [program])
+
   const satisfactionAudienceTabs = useMemo(
-    () => getSatisfactionAudienceTabsForSurveyTab(activeTab),
-    [activeTab]
+    () => getSatisfactionAudienceTabsForSurveyTab(activeTab, satisfactionSurveyItemFlags),
+    [activeTab, satisfactionSurveyItemFlags]
   )
 
   useEffect(() => {
     if (!isUjatSatisfactionSurveyTab(activeTab)) return
     const allowed = new Set(satisfactionAudienceTabs.map(tab => tab.key))
     if (!allowed.has(activeSatisfactionAudience)) {
-      setActiveSatisfactionAudience(defaultSatisfactionAudienceForSurveyTab(activeTab))
+      setActiveSatisfactionAudience(
+        defaultSatisfactionAudienceForSurveyTab(activeTab, satisfactionSurveyItemFlags)
+      )
     }
-  }, [activeTab, activeSatisfactionAudience, satisfactionAudienceTabs])
+  }, [activeTab, activeSatisfactionAudience, satisfactionAudienceTabs, satisfactionSurveyItemFlags])
   const handleOpenSurveyCreateModal = useCallback(() => {
     setSelectedSurveyTemplateId(null)
     setSelectedSurveyScheduleValue(null)
@@ -813,6 +828,7 @@ export function UjatSurveyManagementView({
       setDownloadingPollResults(true)
       try {
         if (format === 'pdf') {
+          setExportingResultsPdf(true)
           const root = pollResultsExportRef.current
           if (root == null) {
             throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
@@ -841,6 +857,7 @@ export function UjatSurveyManagementView({
           content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       } finally {
+        setExportingResultsPdf(false)
         setDownloadingPollResults(false)
       }
     },
@@ -1056,7 +1073,12 @@ export function UjatSurveyManagementView({
   ])
 
   const handleShareSatisfactionSurvey = useCallback(() => {
-    if (!activeSatisfactionSurvey || programId == null) return
+    if (programId == null) return
+    // 등록 전 공유 — 일반 프로그램(기관)과 같은 안내 (시안 16324:638096 「그 외 화면 일반 프로그램(기관)과 동일」)
+    if (!activeSatisfactionSurvey) {
+      void showAlert(GENERAL_SATISFACTION_SHARE_EMPTY_COPY)
+      return
+    }
     if (!surveysRemote) {
       void showAlert({
         title: '공유',
@@ -1113,6 +1135,7 @@ export function UjatSurveyManagementView({
       setDownloadingSatisfactionResults(true)
       try {
         if (format === 'pdf') {
+          setExportingResultsPdf(true)
           const root = satisfactionResultsExportRef.current
           if (root == null) {
             throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
@@ -1141,6 +1164,7 @@ export function UjatSurveyManagementView({
           content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       } finally {
+        setExportingResultsPdf(false)
         setDownloadingSatisfactionResults(false)
       }
     },
@@ -1600,6 +1624,7 @@ export function UjatSurveyManagementView({
       setDownloadingLectureEvalResults(true)
       try {
         if (format === 'pdf') {
+          setExportingResultsPdf(true)
           const root = lectureEvalResultsExportRef.current
           if (root == null) {
             throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
@@ -1625,6 +1650,7 @@ export function UjatSurveyManagementView({
           content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       } finally {
+        setExportingResultsPdf(false)
         setDownloadingLectureEvalResults(false)
       }
     },
@@ -1643,6 +1669,7 @@ export function UjatSurveyManagementView({
 
   return (
     <>
+      <FormCertificatePdfExportOverlay visible={exportingResultsPdf} />
       {activeTab === 'survey-poll' ? (
         surveysRemote && surveysLoading && registeredSurveys.length === 0 ? (
           surveyPanelSpinner

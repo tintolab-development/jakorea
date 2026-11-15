@@ -182,7 +182,12 @@ function parseDisplayDateTime(value: string | null | undefined): { date: string;
   if (!formatted) return null
   const match = /^(.*) (\d{2}:\d{2})$/.exec(formatted)
   if (!match) return { date: formatted, time: '' }
-  return { date: match[1], time: match[2] }
+  return { date: match[1], time: stripHourZeroPadding(match[2]) }
+}
+
+/** 시안 — 시각의 시(hour)는 0을 채우지 않는다. `09:00` → `9:00`, `05:05` → `5:05` */
+export function stripHourZeroPadding(time: string): string {
+  return time.replace(/^0(\d):/, '$1:')
 }
 
 export type InstructorEducationScheduleLineParts = {

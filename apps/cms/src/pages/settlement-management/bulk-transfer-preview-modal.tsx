@@ -3,7 +3,7 @@
  * Workbook·ExcelJS는 동적 import 청크로 분리해 Vite dev에서 모듈 fetch 실패를 줄입니다.
  */
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -17,6 +17,7 @@ import {
 } from '@/features/settlement-management/api/account-payments/download-issued-export-file'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import {
   BULK_TRANSFER_SHEET_COLUMN_COUNT,
   buildBulkTransferFortuneSheet,
@@ -30,6 +31,9 @@ import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-downlo
 import './bulk-transfer-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
+
+/** Fortune Sheet 기본 행 머리(1, 2, 3…) 폭 */
+const FORTUNE_ROW_HEADER_WIDTH = 46
 
 export interface BulkTransferPreviewModalProps {
   open: boolean
@@ -73,10 +77,28 @@ export function BulkTransferPreviewModal({
     }
   }, [open, rows])
 
+  // 시트 영역 폭(행 머리 제외)을 재서 열을 꽉 채운다 — 우측 빈 칸 방지 (세금신고 미리보기와 동일)
+  const [sheetFitWidth, setSheetFitWidth] = useState<number | undefined>(undefined)
+  const sheetHostObserverRef = useRef<ResizeObserver | null>(null)
+  const sheetHostRef = useCallback((host: HTMLDivElement | null) => {
+    sheetHostObserverRef.current?.disconnect()
+    sheetHostObserverRef.current = null
+    if (!host) return
+    const measure = () => {
+      const width = host.clientWidth - FORTUNE_ROW_HEADER_WIDTH
+      if (width > 0) setSheetFitWidth(width)
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(host)
+    sheetHostObserverRef.current = observer
+  }, [])
+
   const sheetData: Sheet[] = useMemo(() => {
-    const sheet = buildBulkTransferFortuneSheet(previewRows)
+    const sheet = buildBulkTransferFortuneSheet(previewRows, { fitWidth: sheetFitWidth })
     return [sheet]
-  }, [previewRows])
+  }, [previewRows, sheetFitWidth])
 
   const handleDownload = useCallback(() => {
     runProtectedDownload({
@@ -94,12 +116,13 @@ export function BulkTransferPreviewModal({
           return
         }
         if (onReissueExport) {
-          await downloadIssuedSettlementExportFileOrReissue({
+          const downloaded = await downloadIssuedSettlementExportFileOrReissue({
             serverExport,
             kind: 'bulk-transfer',
             password,
             onReissue: onReissueExport,
           })
+          if (!downloaded) return
         } else {
           await downloadIssuedSettlementExportFile({
             serverExport,
@@ -107,6 +130,8 @@ export function BulkTransferPreviewModal({
             password,
           })
         }
+        // 「발급 완료」 안내를 닫으면(확인·X·Esc) 미리보기도 닫는다 — 발급 파일은 1회만 받을 수 있다.
+        showIssueCompletedAlert({ onConfirm: onCancel, onDismiss: onCancel })
         return
       }
       if (shouldUseSettlementRemote('accountPayments')) {
@@ -120,6 +145,7 @@ export function BulkTransferPreviewModal({
       const { exportBulkTransferExcel } =
         await import('@/pages/settlement-management/bulk-transfer-excel')
       await exportBulkTransferExcel(previewRows, { password })
+      showIssueCompletedAlert({ onConfirm: onCancel, onDismiss: onCancel })
     } catch (error) {
       notifySettlementExportDownloadError({
         error,
@@ -162,7 +188,7 @@ export function BulkTransferPreviewModal({
         </>
       }
     >
-      <div className="bulk-transfer-preview-modal__sheet-host">
+      <div ref={sheetHostRef} className="bulk-transfer-preview-modal__sheet-host">
         {open ? (
           <Suspense
             fallback={
@@ -172,7 +198,7 @@ export function BulkTransferPreviewModal({
             }
           >
             <Workbook
-              key={sheetData[0]?.celldata?.length ?? 0}
+              key={`${sheetData[0]?.celldata?.length ?? 0}_${sheetFitWidth ?? 0}`}
               data={sheetData}
               column={BULK_TRANSFER_SHEET_COLUMN_COUNT}
               showToolbar={false}

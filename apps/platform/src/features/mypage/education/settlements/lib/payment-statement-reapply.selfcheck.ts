@@ -4,9 +4,13 @@ import {
   mapPaymentStatementServerStatus,
   resolveInstructorPaymentStatementAggregateLabel,
 } from './payment-statement-status.ts'
-import { resolveSettlementStatusUi } from './settlement-status-ui.ts'
+import {
+  isSettlementResubmitDisabled,
+  isStatementReapplyDeadlinePassed,
+  PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE,
+  resolveSettlementStatusUi,
+} from './settlement-status-ui.ts'
 import { INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE } from './instructor-settlement-contract.ts'
-import { PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE } from './settlement-status-ui.ts'
 import {
   correctionGradeOrBasisLabel,
   correctionPricingModeLabel,
@@ -20,6 +24,24 @@ assert.equal(
 )
 // 재신청 후에는 REAPPLICATION → 지급조서 재신청
 assert.equal(mapPaymentStatementServerStatus({ statementStatus: 'REAPPLICATION' }), 'reapplied')
+assert.equal(
+  mapPaymentStatementServerStatus({ status: 'SUBMITTED', confirmationStatus: 'REAPPLICATION' }),
+  'reapplied',
+)
+assert.equal(
+  mapPaymentStatementServerStatus({
+    statementStatus: 'DRAFT',
+    confirmationStatus: 'CORRECTION_REQUESTED',
+  }),
+  'correction_completed',
+)
+assert.equal(
+  mapPaymentStatementServerStatus({ paymentStatus: 'PAID', confirmationStatus: 'CONFIRMED' }),
+  'paid',
+)
+assert.equal(mapPaymentStatementServerStatus({ status: 'SUBMITTED' }), 'waiting_confirm')
+assert.equal(resolveSettlementStatusUi('reapplied', 'payment_statement').markLabel, '지급조서 재신청')
+assert.equal(resolveSettlementStatusUi('reapplied', 'receipt').markLabel, '재신청')
 // 지급 완료가 우선
 assert.equal(
   mapPaymentStatementServerStatus({ paymentStatus: 'PAID', statementReapplyAvailable: true }),
@@ -75,5 +97,28 @@ assert.equal(correctionGradeOrBasisLabel({ pricingMode: 'OTHER_LABOR', calculati
 // "등급 카탈로그 기준"은 표시하지 않는다
 assert.equal(correctionGradeOrBasisLabel({ pricingMode: 'SPECIAL_LECTURE', calculationUnit: 'CATALOG_TIER' }), '-')
 assert.equal(formatCorrectionWon(350000), '350,000원')
+
+assert.equal(isSettlementResubmitDisabled({ documentKind: 'receipt', canResubmit: false }), true)
+assert.equal(isSettlementResubmitDisabled({ documentKind: 'receipt', canResubmit: true }), false)
+assert.equal(
+  isSettlementResubmitDisabled({ documentKind: 'payment_statement', statementReapplyDeadlineDate: null }),
+  false,
+)
+assert.equal(
+  isStatementReapplyDeadlinePassed('2026-11-16', new Date('2026-11-16T14:59:00Z')),
+  false,
+)
+assert.equal(
+  isStatementReapplyDeadlinePassed('2026-11-16', new Date('2026-11-16T15:00:00Z')),
+  true,
+)
+assert.equal(
+  isSettlementResubmitDisabled({
+    documentKind: 'payment_statement',
+    statementReapplyDeadlineDate: '2026-11-16',
+    now: new Date('2026-11-16T15:00:00Z'),
+  }),
+  true,
+)
 
 console.log('payment-statement-reapply.selfcheck: ok')

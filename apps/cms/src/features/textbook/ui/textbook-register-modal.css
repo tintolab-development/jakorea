@@ -120,3 +120,13 @@
   align-items: center;
   gap: 10px;
 }
+
+/*
+ * 시안 9270:77671 600×554 (QA 2026-11-15 데이터 관리 C27)
+ * 컨트롤 medium(40 · 15px) · 라벨 22(lh20 + padding-bottom 2) · 라디오 줄 40(공통 choice field)
+ */
+.content-modal.textbook-register-modal :is(.cms-field__label, .cms-choice-field__label) {
+  box-sizing: border-box;
+  padding-bottom: 2px;
+  line-height: 20px;
+}

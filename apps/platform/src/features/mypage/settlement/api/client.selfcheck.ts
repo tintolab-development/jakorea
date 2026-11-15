@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict'
 import {
+  buildSummary,
   findSupersededInstructorApplicationIds,
+  mapIndividualScheduleItem,
+  mapInstructorSettlementOverviewStatus,
+  mapReceiptScheduleOverviewStatus,
   mapSettlementOverviewStatus,
   mapSupersededResultStatus,
   resolveInstructorSettlementAmount,
   resolveInstructorSettlementPeriod,
 } from './client.ts'
+import { settlementStatusListLabel } from '../lib/status-presentation.ts'
 
 // 강사 정산의 교육 진행 일자는 목록 응답의 회차 일시. 둘 다 없을 때만 제출(없으면 생성) 시각
 {
@@ -105,5 +110,162 @@ assert.equal(
   'correction_requested',
 )
 assert.equal(mapSettlementOverviewStatus({ status: 'UNKNOWN_XYZ' }), null)
+
+assert.equal(
+  mapInstructorSettlementOverviewStatus({ confirmationStatus: 'WAITING_CONFIRM' }),
+  'waiting_confirm',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({ confirmationStatus: 'REAPPLICATION' }),
+  'reapplied',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({ confirmationStatus: 'CORRECTION_REQUESTED' }),
+  'correction_requested',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({
+    confirmationStatus: 'CORRECTION_REQUESTED',
+    statementReapplyAvailable: true,
+  }),
+  'correction_requested',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({ confirmationStatus: 'REJECTED' }),
+  'rejected',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({ confirmationStatus: 'CONFIRMED' }),
+  'confirmed',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({
+    confirmationStatus: 'CONFIRMED',
+    paymentStatus: 'PAID',
+  }),
+  'paid',
+)
+assert.equal(mapInstructorSettlementOverviewStatus({ confirmationStatus: null }), null)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({
+    confirmationStatus: null,
+    statementStatus: 'WAITING_CONFIRM',
+  }),
+  'waiting_confirm',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({ confirmationStatus: 'REAPPLICATION', status: 'SUBMITTED' }),
+  'reapplied',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({ confirmationStatus: null, status: 'SUBMITTED' }),
+  'waiting_confirm',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({
+    statementStatus: 'DRAFT',
+    confirmationStatus: 'CORRECTION_REQUESTED',
+    statementReapplyAvailable: false,
+  }),
+  'correction_requested',
+)
+assert.equal(
+  mapInstructorSettlementOverviewStatus({
+    paymentStatus: 'PAID',
+    confirmationStatus: 'REAPPLICATION',
+  }),
+  'paid',
+)
+assert.equal(mapReceiptScheduleOverviewStatus({ statementStatus: null, paymentStatus: null }), null)
+assert.equal(mapReceiptScheduleOverviewStatus({ status: 'SUBMITTED' } as never), null)
+assert.equal(
+  mapReceiptScheduleOverviewStatus({ statementStatus: 'WAITING_CONFIRM' }),
+  'waiting_confirm',
+)
+assert.equal(
+  mapReceiptScheduleOverviewStatus({ statementStatus: 'REAPPLICATION' }),
+  'reapplied',
+)
+assert.equal(mapReceiptScheduleOverviewStatus({ statementStatus: 'REJECTED' }), 'rejected')
+assert.equal(
+  mapReceiptScheduleOverviewStatus({
+    statementStatus: 'CONFIRMED',
+    paymentStatus: 'WAITING_PAYMENT',
+  }),
+  'confirmed',
+)
+assert.equal(
+  mapReceiptScheduleOverviewStatus({ statementStatus: 'CONFIRMED', paymentStatus: 'PAID' }),
+  'paid',
+)
+assert.equal(settlementStatusListLabel({ status: 'reapplied', documentKind: 'receipt' }), '영수증 재신청')
+assert.equal(settlementStatusListLabel({ status: 'paid', documentKind: 'receipt' }), '계좌 지급 완료')
+assert.equal(settlementStatusListLabel({ status: 'confirmed', documentKind: 'receipt' }), '확인 완료')
+
+const receipt15 = mapIndividualScheduleItem({
+  programTitle: '영수증 프로그램',
+  schedule: {
+    settlementApplicationId: 15,
+    status: 'SUBMITTED',
+    statementStatus: 'REAPPLICATION',
+    paymentStatus: null,
+    startAt: '2026-10-06T00:00:00+09:00',
+    endAt: '2026-10-06T01:00:00+09:00',
+    submittedItems: [{ amount: 15000 }],
+  },
+})
+assert.equal(receipt15?.status, 'reapplied')
+assert.equal(receipt15?.documentKind, 'receipt')
+assert.equal(receipt15?.paidAt, undefined)
+
+const receipt17 = mapIndividualScheduleItem({
+  programTitle: '영수증 프로그램',
+  schedule: {
+    settlementApplicationId: 17,
+    statementStatus: 'CONFIRMED',
+    paymentStatus: 'PAID',
+    paidAt: '2026-11-16T15:00:00Z',
+    startAt: '2026-10-06T00:00:00+09:00',
+    endAt: '2026-10-06T01:00:00+09:00',
+    submittedItems: [{ amount: 17000 }],
+  },
+})
+assert.equal(receipt17?.status, 'paid')
+assert.equal(receipt17?.paidAt, '2026-11-16T15:00:00Z')
+
+const receipt14 = mapIndividualScheduleItem({
+  programTitle: '영수증 프로그램',
+  schedule: {
+    settlementApplicationId: 14,
+    statementStatus: 'CONFIRMED',
+    paymentStatus: 'WAITING_PAYMENT',
+    startAt: '2026-11-14T00:00:00+09:00',
+    endAt: '2026-11-14T01:00:00+09:00',
+    submittedItems: [{ amount: 14000 }],
+  },
+})
+assert.equal(receipt14?.status, 'confirmed')
+assert.equal(receipt14?.paidAt, undefined)
+
+assert.equal(
+  mapIndividualScheduleItem({
+    programTitle: '영수증 프로그램',
+    schedule: {
+      settlementApplicationId: 18,
+      status: 'SUBMITTED',
+      statementStatus: null,
+      paymentStatus: null,
+    },
+  }),
+  null,
+)
+
+const november = buildSummary([receipt17!, receipt14!], '2026-11')
+assert.equal(november.totalPaidAmount, 17000)
+assert.equal(november.monthPaidAmount, 17000)
+assert.equal(november.monthExpectedAmount, 14000)
+const october = buildSummary([receipt17!], '2026-10')
+assert.equal(october.monthPaidAmount, null)
+assert.equal(october.monthExpectedAmount, null)
 
 console.log('settlement api client.selfcheck: ok')

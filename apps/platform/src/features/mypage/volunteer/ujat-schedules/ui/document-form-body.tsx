@@ -25,7 +25,9 @@ import {
   sumUploadFileBytes,
   validateUploadBatch,
 } from '@/shared/lib/file-upload-policy'
-import { PFButton, PFFormSection, PFText } from '@/shared/ui'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
+import { PFAlertModal, PFButton, PFFormSection, PFText } from '@/shared/ui'
 import {
   fileQuestionKey,
   type UjatDocumentAttachedFile,
@@ -248,7 +250,8 @@ function DocumentFileField({
   downloadingFileObjectId?: number | null
 }) {
   const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  /** 업로드 안내·실패 팝업 — 용량·개수·보안 검사는 「안내」, 그 밖의 실패는 시안 공통 오류 팝업 */
+  const [uploadAlert, setUploadAlert] = useState<PlatformAlertCopy | null>(null)
   const ownFiles = files.filter(file => file.questionKey === questionKey)
 
   const handleSelect = (fileList: FileList | null) => {
@@ -260,10 +263,9 @@ function DocumentFileField({
       incoming: [file],
     })
     if (policyError) {
-      setUploadError(policyError)
+      setUploadAlert({ title: '안내', description: policyError })
       return
     }
-    setUploadError(null)
     setUploading(true)
     void uploadMemberPortalFile({ file, filePurpose: 'ASSIGNMENT_ATTACHMENT' })
       .then(fileObjectId => {
@@ -273,14 +275,14 @@ function DocumentFileField({
         ])
       })
       .catch((error: unknown) => {
-        setUploadError(
+        setUploadAlert(
           error instanceof MemberFileRejectedError
-            ? '보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.'
+            ? { title: '안내', description: '보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.' }
             : error instanceof MemberFileTooLargeError
-              ? FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE
+              ? { title: '안내', description: FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE }
               : error instanceof MemberFileEmptyError || isMemberFileSizeUploadError(error)
-                ? '빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.'
-                : '파일 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+                ? { title: '안내', description: '빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.' }
+                : resolvePlatformErrorAlert(error),
         )
       })
       .finally(() => setUploading(false))
@@ -358,11 +360,12 @@ function DocumentFileField({
           {disabled ? '첨부된 파일 없음' : '선택된 파일 없음'}
         </PFText>
       )}
-      {uploadError ? (
-        <PFText as="p" typo="bd-sm-rg" color="error">
-          {uploadError}
-        </PFText>
-      ) : null}
+      <PFAlertModal
+        open={uploadAlert != null}
+        title={uploadAlert?.title ?? ''}
+        description={uploadAlert?.description}
+        onConfirm={() => setUploadAlert(null)}
+      />
     </div>
   )
 }

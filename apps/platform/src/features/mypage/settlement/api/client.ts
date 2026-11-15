@@ -9,6 +9,7 @@ import {
 import { fetchMyProgramApplications } from '@/features/mypage/education/applications/api/client'
 import type { PortalProgramApplicationListItem } from '@/features/mypage/education/applications/api/types'
 import { shouldUseVolunteerSettlementSchedulesApi } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
+import { mapReceiptScheduleOverviewStatus as mapReceiptScheduleStatus } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { EMPTY_SETTLEMENT_OVERVIEW } from '../lib/empty-overview'
 import type {
   SettlementOverviewItem,
@@ -57,17 +58,25 @@ export function mapSettlementOverviewStatus(input: {
   statementStatus?: string | null
   paymentStatus?: string | null
   statementReapplyAvailable?: boolean | null
+  confirmationStatus?: string | null
 }): SettlementOverviewStatus | null {
   const payment = normalizeStatusToken(input.paymentStatus)
   const statement = normalizeStatusToken(input.statementStatus ?? input.status)
+  const confirmation = normalizeStatusToken(input.confirmationStatus)
 
   if (payment === 'PAID' || statement === 'PAID') return 'paid'
-  // DRAFT = 정정 승인 후 강사 재신청 대기. 강의 상세 정산 탭·CMS와 같이 "지급 정정 요청"으로 본다
+  // DRAFT·재신청 가능은 confirmationStatus 보다 먼저. 목록 라벨은 '지급 정정 요청'.
+  if (statement === 'DRAFT' || input.statementReapplyAvailable === true) {
+    return 'correction_requested'
+  }
+  if (confirmation === 'WAITING_CONFIRM') return 'waiting_confirm'
+  if (confirmation === 'REAPPLICATION') return 'reapplied'
+  if (confirmation === 'CORRECTION_REQUESTED') return 'correction_requested'
+  if (confirmation === 'REJECTED') return 'rejected'
+  if (confirmation === 'CONFIRMED') return 'confirmed'
   if (
     statement === 'CORRECTION_REQUESTED' ||
-    payment === 'CORRECTION_REQUESTED' ||
-    statement === 'DRAFT' ||
-    input.statementReapplyAvailable === true
+    payment === 'CORRECTION_REQUESTED'
   ) {
     return 'correction_requested'
   }
@@ -96,6 +105,25 @@ export function mapSettlementOverviewStatus(input: {
     return 'waiting_confirm'
   }
   return null
+}
+
+/** 강사 정산 목록. confirmationStatus 가 없으면 statementStatus ?? status. */
+export function mapInstructorSettlementOverviewStatus(row: {
+  confirmationStatus?: string | null
+  paymentStatus?: string | null
+  statementStatus?: string | null
+  status?: string | null
+  statementReapplyAvailable?: boolean | null
+}): SettlementOverviewStatus | null {
+  return mapSettlementOverviewStatus(row)
+}
+
+/** 영수증 일정. statementStatus·paymentStatus가 모두 없으면 신청 전/미승인 — 목록에 넣지 않는다. */
+export function mapReceiptScheduleOverviewStatus(input: {
+  statementStatus?: string | null
+  paymentStatus?: string | null
+}): SettlementOverviewStatus | null {
+  return mapReceiptScheduleStatus(input)
 }
 
 function sumSubmittedAmounts(
@@ -173,10 +201,11 @@ function mapInstructorSettlementItem(
   const supersededStatus = superseded ? mapSupersededResultStatus(row.supersededReason) : null
   const status =
     supersededStatus ??
-    mapSettlementOverviewStatus({
-      status: row.status,
-      statementStatus: row.statementStatus,
+    mapInstructorSettlementOverviewStatus({
+      confirmationStatus: row.confirmationStatus,
       paymentStatus: row.paymentStatus,
+      statementStatus: row.statementStatus,
+      status: row.status,
       statementReapplyAvailable: row.statementReapplyAvailable,
     })
   if (!status) return null
@@ -199,17 +228,21 @@ function mapInstructorSettlementItem(
   }
 }
 
-function mapIndividualScheduleItem(input: {
+export function mapIndividualScheduleItem(input: {
   schedule: PortalIndividualScheduleSettlement
   programTitle: string
 }): SettlementOverviewItem | null {
   const { schedule, programTitle } = input
   const id = readOptionalNumber(schedule.settlementApplicationId)
   if (id == null) return null
-  const status = mapSettlementOverviewStatus({ status: schedule.status })
+  const status = mapReceiptScheduleOverviewStatus({
+    statementStatus: schedule.statementStatus,
+    paymentStatus: schedule.paymentStatus,
+  })
   if (!status) return null
   const startsAt = readOptionalText(schedule.startAt) ?? ''
   const endsAt = readOptionalText(schedule.endAt) ?? startsAt
+  const paidAt = readOptionalText(schedule.paidAt)
   return {
     id: String(id),
     programName: programTitle.trim() || '-',
@@ -220,10 +253,92 @@ function mapIndividualScheduleItem(input: {
     status,
     documentKind: 'receipt',
     appliedAmount: sumSubmittedAmounts(schedule),
+    ...(paidAt ? { paidAt } : {}),
   }
 }
 
-function buildSummary(
+/** ISO instant → KST 기준 YYYY-MM. 해석할 수 없으면 '' */
+export function kstMonthKey(iso: string): string {
+  const time = Date.parse(iso)
+  if (!Number.isFinite(time)) return ''
+  const kst = new Date(time + 9 * 60 * 60 * 1000)
+  return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+/** GET /api/portal/me/gemini-settlements 행 (연수 실적 1건 = 1행) */
+export type PortalGeminiSettlement = {
+  reportId?: number | null
+  programId?: number | null
+  programName?: string | null
+  institutionName?: string | null
+  trainingDate?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  /** 인정 차시 — 실제 시작·종료 시각으로 계산(엑셀 '연수 차시' 아님) */
+  recognizedClassCount?: number | null
+  calculatedAmount?: number | null
+  settlementId?: number | null
+  statementStatus?: string | null
+  paymentStatus?: string | null
+  netPaymentAmount?: number | null
+  paidAt?: string | null
+}
+
+/** 제미나이 실적 정산 목록. 실패해도 다른 정산 현황은 막지 않는다. */
+async function fetchGeminiSettlements(signal?: AbortSignal): Promise<PortalGeminiSettlement[]> {
+  try {
+    const { data } = await axiosClient.get<unknown>('/api/portal/me/gemini-settlements', { signal })
+    const unwrapped = unwrapEnvelope<{ items?: unknown }>(data)
+    const items = unwrapped && typeof unwrapped === 'object' ? unwrapped.items : null
+    return Array.isArray(items) ? (items as PortalGeminiSettlement[]) : []
+  } catch (error) {
+    if (signal?.aborted) throw error
+    return []
+  }
+}
+
+/**
+ * 제미나이 실적 1건 → 정산현황 행.
+ * - 정산 전 유효 실적은 '확인 대기 중', 지급조서·계좌 지급 상태는 공통 상태로 매핑한다.
+ * - 강사비 0원·미설정은 상태 '-'(statusUnavailable)로 두고 합계에서 뺀다. 0원은 0, 미설정은 null.
+ * - 목록·캘린더 금액(정산 신청 금액)은 상태와 관계없이 산정 강사비, 금액 카드 합계는 실지급액이다.
+ * - 교육 진행 일자 뒤에 인정 차시(N차시)를 붙인다.
+ */
+export function mapGeminiSettlementItem(row: PortalGeminiSettlement): SettlementOverviewItem | null {
+  const reportId = readOptionalNumber(row.reportId)
+  if (reportId == null) return null
+  const trainingDate = readOptionalText(row.trainingDate)
+  const startsAt =
+    readOptionalText(row.startAt) ?? (trainingDate ? `${trainingDate}T00:00:00+09:00` : '')
+  if (!startsAt) return null
+  const endsAt = readOptionalText(row.endAt) ?? startsAt
+  const calculatedAmount = readOptionalNumber(row.calculatedAmount)
+  const statusUnavailable = calculatedAmount == null || calculatedAmount === 0
+  const status =
+    mapSettlementOverviewStatus({
+      statementStatus: row.statementStatus,
+      paymentStatus: row.paymentStatus,
+    }) ?? 'waiting_confirm'
+  const paidAt = readOptionalText(row.paidAt)
+  const classCount = readOptionalNumber(row.recognizedClassCount)
+  return {
+    id: `gemini-${reportId}`,
+    programName: readOptionalText(row.programName) ?? '제미나이 아카데미',
+    organizationName: readOptionalText(row.institutionName) ?? '-',
+    startsAt,
+    endsAt,
+    sessionLabel: classCount != null && classCount > 0 ? `${classCount}차시` : '',
+    status,
+    appliedAmount: calculatedAmount,
+    summaryAmount: statusUnavailable
+      ? null
+      : (readOptionalNumber(row.netPaymentAmount) ?? calculatedAmount),
+    ...(statusUnavailable ? { statusUnavailable: true } : {}),
+    ...(paidAt ? { paidAt } : {}),
+  }
+}
+
+export function buildSummary(
   items: SettlementOverviewItem[],
   monthKey: string,
 ): SettlementOverviewSummary {
@@ -232,15 +347,17 @@ function buildSummary(
   let monthExpectedAmount: number | null = null
 
   for (const item of items) {
-    const amount = item.appliedAmount
-    // 대체된 이전 신청은 합계에서 뺀다
-    if (amount == null || item.superseded) continue
+    const amount = item.summaryAmount !== undefined ? item.summaryAmount : item.appliedAmount
+    // 대체된 이전 신청·정산 대상 상태가 없는 행(제미나이 0원·미설정)은 합계에서 뺀다
+    if (amount == null || item.superseded || item.statusUnavailable) continue
     const inMonth =
       item.startsAt.slice(0, 7) === monthKey || item.endsAt.slice(0, 7) === monthKey
+    // 영수증·제미나이 지급 완료는 paidAt의 KST 월. paidAt이 없으면 교육 진행 월(startsAt 앞 7자)을 쓴다.
+    const paidInMonth = item.paidAt ? kstMonthKey(item.paidAt) === monthKey : inMonth
 
     if (item.status === 'paid') {
       totalPaidAmount = (totalPaidAmount ?? 0) + amount
-      if (inMonth) monthPaidAmount = (monthPaidAmount ?? 0) + amount
+      if (paidInMonth) monthPaidAmount = (monthPaidAmount ?? 0) + amount
     }
     if (item.status === 'confirmed' && inMonth) {
       monthExpectedAmount = (monthExpectedAmount ?? 0) + amount
@@ -288,9 +405,10 @@ export async function fetchSettlementOverviewPageData(input?: {
   const signal = input?.signal
   const month = input?.month?.trim() || ''
 
-  const [instructorRows, applications] = await Promise.all([
+  const [instructorRows, applications, geminiRows] = await Promise.all([
     fetchSettlementApplications(signal),
     fetchAllMyProgramApplications(signal),
+    fetchGeminiSettlements(signal),
   ])
 
   const programTitleByProgramId = new Map<string, string>()
@@ -314,6 +432,12 @@ export async function fetchSettlementOverviewPageData(input?: {
     const applicationId = readOptionalNumber(row.applicationId)
     const superseded = applicationId != null && supersededIds.has(applicationId)
     const mapped = mapInstructorSettlementItem(row, programTitleByProgramId, superseded)
+    if (mapped) items.push(mapped)
+  }
+
+  // 제미나이: 신청·배정과 무관하게 연수 실적 기준(기획 2026-11-12 강사 LNB 기능정의)
+  for (const row of geminiRows) {
+    const mapped = mapGeminiSettlementItem(row)
     if (mapped) items.push(mapped)
   }
 

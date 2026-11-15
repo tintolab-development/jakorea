@@ -116,7 +116,12 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
           <PFDivider orientation="vertical" className={styles.asideDivider} />
           <div className={styles.asideScheduleGroup}>
             <div className={styles.recruitment}>
-              <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+              <PFText
+                as="span"
+                typo="bd-sm-rg"
+                color="neutral-cool-600"
+                className={styles.recruitmentLabel}
+              >
                 모집 기간
               </PFText>
               <PFText

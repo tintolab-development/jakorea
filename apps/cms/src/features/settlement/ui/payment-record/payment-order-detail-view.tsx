@@ -30,6 +30,8 @@ import {
 } from '@/shared/ui/detail-modal-sidebar'
 import { PaymentOrderDetailFilterTable } from './payment-order-detail-filter-table'
 import { PaymentOrderCalculationStatementModalImpl } from './payment-order-calculation-statement-modal-impl'
+import { usePaymentOrderApplicationLineActions } from './use-payment-order-application-line-actions'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { PaymentOrderInstructorBasicInfo } from '@/pages/settlement-management/payment-order-instructor-basic-info'
 import { PaymentOrderProgramBasicInfo } from '@/pages/settlement-management/payment-order-program-basic-info'
 import { PaymentOrderStatusDetailLnbIcon } from '@/pages/settlement-management/payment-order-status-detail-lnb-icon'
@@ -37,6 +39,7 @@ import {
   PAYMENT_ORDERS_DETAIL_KEY_PARAM,
   PAYMENT_ORDERS_DETAIL_NO_PARAM,
   PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
+  type PaymentOrderPayeeTypeFilter,
 } from '@/pages/settlement-management/payment-orders-table.config'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/pages/settlement-management/payment-order-program-status-detail-fullpage-modal.css'
@@ -50,6 +53,8 @@ type PaymentOrderDetailViewShared = {
   isOpen: boolean
   /** 목록 페이지에 조회 적용된 기간 — 상세 기간 필터와 동기화 */
   listPageDateRange: [Dayjs | null, Dayjs | null] | null
+  /** 목록 페이지에 조회 적용된 정산 대상자 구분 */
+  listPagePayeeType?: PaymentOrderPayeeTypeFilter
   lineAggregateStatus: PaymentOrderDetailAggregateStatus
   handleAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
   /** rowsState 기준 반려·정정 제외 합산. null이면 detail.totalEstimatedAmount 사용 */
@@ -63,6 +68,8 @@ type PaymentOrderDetailViewShared = {
   calcSettlementId?: number | null
   /** 산출 내역서 행의 프로그램 — 확인·반려·정정 버튼을 프로그램 역할로 판정 */
   calcProgramId?: number | null
+  calcLineRow?: PaymentOrderCalculationStatementLineRow | null
+  calcApplicationIssuanceOptions?: RenderFormParagraphBodyOptions
   calcAvailableActions?: readonly string[] | null
   /** 개인형 프로그램 — 산출 내역 「참여 기관명」열 미노출 */
   calcHideInstitutionColumn?: boolean
@@ -107,6 +114,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     detail,
     row,
     listPageDateRange,
+    listPagePayeeType,
     lineAggregateStatus,
     handleAggregateChange,
     lineCountableAmount,
@@ -118,6 +126,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     calcStatementId,
     calcSettlementId,
     calcProgramId,
+    calcLineRow = null,
+    calcApplicationIssuanceOptions,
     calcAvailableActions,
     calcHideInstitutionColumn,
     openCalculationStatement,
@@ -134,6 +144,11 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
 
   const { registerStatementCommitSink, handleStatementLineCommitted } =
     usePaymentOrderStatementCommitBridge(closeCalculationStatement)
+  const applicationLineActions = usePaymentOrderApplicationLineActions({
+    line: calcLineRow,
+    detailContextQuery,
+    onDone: closeCalculationStatement,
+  })
 
   const {
     personalInfoRevealed,
@@ -207,6 +222,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           programRow={row}
           isOpen={isOpen}
           listPageDateRange={listPageDateRange}
+          listPagePayeeType={listPagePayeeType}
           onAggregateChange={handleAggregateChange}
           onCountableAmountChange={handleCountableAmountChange}
           onOpenCalculationStatement={openCalculationStatement}
@@ -229,6 +245,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           instructorRow={row}
           isOpen={isOpen}
           listPageDateRange={listPageDateRange}
+          listPagePayeeType={listPagePayeeType}
           onAggregateChange={handleAggregateChange}
           onCountableAmountChange={handleCountableAmountChange}
           onOpenCalculationStatement={openCalculationStatement}
@@ -242,8 +259,15 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
   return (
     <>
       {kind === 'instructor' ? personalInfoRevealModal : null}
+      {applicationLineActions.modals}
       <PaymentOrderCalculationStatementModalImpl
-        entryKind={kind === 'program' ? 'instructor' : 'program'}
+        entryKind={
+          applicationLineActions.statementActionOverride
+            ? 'program'
+            : kind === 'program'
+              ? 'instructor'
+              : 'program'
+        }
         entryClassName={
           kind === 'program'
             ? 'payment-order-calc-statement-modal--entry-instructor'
@@ -260,6 +284,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         programId={calcProgramId}
         availableActions={calcAvailableActions}
         hideInstitutionColumn={calcHideInstitutionColumn}
+        issuanceParagraphBodyOptionsOverride={calcApplicationIssuanceOptions}
+        statementActionOverride={applicationLineActions.statementActionOverride}
         detailContextQuery={detailContextQuery}
         onStatementLineCommitted={handleStatementLineCommitted}
         onAfterRejectResultClosed={closeCalculationStatement}

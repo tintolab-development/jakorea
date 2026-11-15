@@ -9,7 +9,13 @@ import {
   EMPTY_SURVEY_SIDECAR,
   type SurveySidecarState,
 } from '@/features/mypage/education/surveys/lib/survey-sidecar'
-import { PFAlertModal, PFButton, PFModal, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFModal, PFRequiredMissingAlert, PFText } from '@/shared/ui'
+import {
+  buildRequiredMissingAlertCopy,
+  type RequiredMissingAlertCopy,
+} from '@/shared/lib/required-missing-alert'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
 import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
 import {
   useReviseUjatEducationDocumentMutation,
@@ -137,9 +143,20 @@ export function UjatEducationDocumentFillModal({
   const [files, setFiles] = useState<UjatDocumentAttachedFile[]>(seedFiles)
   const [seededKey, setSeededKey] = useState(seedKey)
   const [alertOpen, setAlertOpen] = useState(false)
+  const [requiredMissingAlert, setRequiredMissingAlert] =
+    useState<RequiredMissingAlertCopy | null>(null)
   const [alertTitle, setAlertTitle] = useState('안내')
   const [alertDescription, setAlertDescription] = useState('')
   const [closeAfterAlert, setCloseAfterAlert] = useState(false)
+  /** 제출·다운로드 실패 — 시안 「오류 제한 팝업」(14491-2533), 서버 안내는 설명으로 */
+  const showRequestFailedAlert = useCallback((error: unknown) => {
+    const copy: PlatformAlertCopy = resolvePlatformErrorAlert(error, {
+      serverMessage: cause => getProgramApplicationApiErrorMessage(cause, ''),
+    })
+    setAlertTitle(copy.title)
+    setAlertDescription(copy.description)
+    setAlertOpen(true)
+  }, [])
   const [downloadingFileObjectId, setDownloadingFileObjectId] = useState<number | null>(null)
 
   if (seededKey !== seedKey) {
@@ -171,7 +188,11 @@ export function UjatEducationDocumentFillModal({
 
     const validation = validateUjatDocumentFill(draft, sidecar, files)
     if (!validation.ok) {
-      setAlertTitle('입력 확인')
+      if (validation.missingRequired) {
+        setRequiredMissingAlert(buildRequiredMissingAlertCopy(validation.missingRequired))
+        return
+      }
+      setAlertTitle('안내')
       setAlertDescription(validation.message)
       setAlertOpen(true)
       return
@@ -180,7 +201,7 @@ export function UjatEducationDocumentFillModal({
     const answers = buildUjatDocumentAnswers(draft, sidecar, bindingQuery.document?.form ?? null)
     const fileObjectIdsByQuestion = buildUjatDocumentFileObjectIds(files)
     if (!hasUjatDocumentSubmitPayload(answers, files)) {
-      setAlertTitle('입력 확인')
+      setAlertTitle('안내')
       setAlertDescription('제출할 내용이 없습니다.')
       setAlertOpen(true)
       return
@@ -204,16 +225,7 @@ export function UjatEducationDocumentFillModal({
             setCloseAfterAlert(true)
             setAlertOpen(true)
           },
-          onError: error => {
-            setAlertTitle('제출 실패')
-            setAlertDescription(
-              getProgramApplicationApiErrorMessage(
-                error,
-                `${title} 수정 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.`,
-              ),
-            )
-            setAlertOpen(true)
-          },
+          onError: showRequestFailedAlert,
         },
       )
       return
@@ -242,16 +254,7 @@ export function UjatEducationDocumentFillModal({
           setCloseAfterAlert(true)
           setAlertOpen(true)
         },
-        onError: error => {
-          setAlertTitle('제출 실패')
-          setAlertDescription(
-            getProgramApplicationApiErrorMessage(
-              error,
-              `${title} 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.`,
-            ),
-          )
-          setAlertOpen(true)
-        },
+        onError: showRequestFailedAlert,
       },
     )
   }
@@ -266,18 +269,11 @@ export function UjatEducationDocumentFillModal({
         downloadable: file.downloadable,
       })
     } catch (error) {
-      setAlertTitle('다운로드 실패')
-      setAlertDescription(
-        getProgramApplicationApiErrorMessage(
-          error,
-          '첨부파일을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-        ),
-      )
-      setAlertOpen(true)
+      showRequestFailedAlert(error)
     } finally {
       setDownloadingFileObjectId(null)
     }
-  }, [readOnly])
+  }, [readOnly, showRequestFailedAlert])
 
   const loading =
     (canLoadBinding && bindingQuery.isLoading) ||
@@ -355,6 +351,10 @@ export function UjatEducationDocumentFillModal({
           )}
         </div>
       </PFModal>
+      <PFRequiredMissingAlert
+        copy={requiredMissingAlert}
+        onConfirm={() => setRequiredMissingAlert(null)}
+      />
       <PFAlertModal
         open={alertOpen}
         title={alertTitle}

@@ -38,9 +38,9 @@ import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { ProfilePasswordChangeModal } from '@/shared/ui/profile-password-change-modal'
+import { ConsentStatusValue } from '@/shared/ui/consent-status-value'
 import type { User, TermsAgreementRow } from '@/types/user'
 import { formatDateDot } from '@/shared/utils'
-import '@/features/user/detail/ui/user-consent-agreement-section.css'
 import './profile-edit-modal.css'
 
 interface ProfileEditModalProps {
@@ -179,37 +179,13 @@ async function resolveMarketingConsentVersion(
   throw new Error('약관 버전을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
 }
 
-function ConsentValueDisplay({ value }: { value: ReactNode }) {
-  if (typeof value !== 'string') return value
-  const idx = value.indexOf('|')
-  if (idx === -1) return value
-  const status = value.slice(0, idx).trim()
-  const datetime = value.slice(idx + 1).trim()
-  if (!datetime) return value
-  return (
-    <span className="user-consent-agreement-section__value-inner">
-      <span className="user-consent-agreement-section__value-status">{status}</span>
-      <span className="user-consent-agreement-section__value-sep" aria-hidden>
-        |
-      </span>
-      <span className="user-consent-agreement-section__value-datetime">{datetime}</span>
-    </span>
-  )
-}
-
+/** 시안 16299:623421 — 미동의는 상태만, 동의는 「동의 | 일시」 */
 function consentReadonlyContent(agreed: boolean, agreedAtDisplay?: string) {
-  if (!agreed) {
-    return (
-      <span className="user-consent-agreement-section__value-inner">
-        <ConsentValueDisplay value="미동의" />
-      </span>
-    )
-  }
-  const text = agreedAtDisplay ? `동의 | ${agreedAtDisplay}` : '동의'
   return (
-    <span className="user-consent-agreement-section__value-inner">
-      <ConsentValueDisplay value={text} />
-    </span>
+    <ConsentStatusValue
+      status={agreed ? '동의' : '미동의'}
+      datetime={agreed ? agreedAtDisplay : undefined}
+    />
   )
 }
 
@@ -710,30 +686,25 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
               labelWidth={180}
               readOnlyDisplay
               view={
-                <span className="profile-edit-modal__marketing-consent">
-                  <span className="user-consent-agreement-section__value-status">
-                    {marketingConsent === 'agree' ? '동의' : '미동의'}
-                  </span>
-                  <DetailInfoForm.TdDivider />
-                  <CmsButton
-                    variant="secondary"
-                    size="h32"
-                    className="profile-edit-modal__field-action-btn"
-                    type="button"
-                    disabled={marketingConsentUpdating}
-                    loading={marketingConsentUpdating && !marketingWithdrawConfirmOpen}
-                    onClick={() =>
-                      handleMarketingChange(marketingConsent === 'agree' ? 'disagree' : 'agree')
-                    }
-                  >
-                    {marketingConsent === 'agree' ? '동의 철회하기' : '동의하기'}
-                  </CmsButton>
-                  {marketingConsent === 'agree' && marketingAgreedAt !== '-' ? (
-                    <span className="user-consent-agreement-section__value-datetime">
-                      {marketingAgreedAt}
-                    </span>
-                  ) : null}
-                </span>
+                <ConsentStatusValue
+                  className="profile-edit-modal__marketing-consent"
+                  status={marketingConsent === 'agree' ? '동의' : '미동의'}
+                  action={
+                    <CmsButton
+                      variant="secondary"
+                      size="h32"
+                      type="button"
+                      disabled={marketingConsentUpdating}
+                      loading={marketingConsentUpdating && !marketingWithdrawConfirmOpen}
+                      onClick={() =>
+                        handleMarketingChange(marketingConsent === 'agree' ? 'disagree' : 'agree')
+                      }
+                    >
+                      {marketingConsent === 'agree' ? '동의 철회하기' : '동의하기'}
+                    </CmsButton>
+                  }
+                  datetime={marketingConsent === 'agree' ? marketingAgreedAt : undefined}
+                />
               }
             />
             <DetailInfoForm.Field

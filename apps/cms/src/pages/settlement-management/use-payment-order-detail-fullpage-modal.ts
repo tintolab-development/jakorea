@@ -7,6 +7,8 @@ import type { Dayjs } from 'dayjs'
 import {
   buildInstructorDetailFromSettlements,
   buildProgramDetailFromSettlements,
+  isIndividualSettlementApplicationListItem,
+  isSettlementApplicationListItem,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
 import {
   instructorIdentityFromLine,
@@ -17,10 +19,21 @@ import { mapCalculationDetailToBasisDetail } from '@/features/settlement-managem
 import { mapTransportationSnapshotToBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import { usePaymentOrdersDetailContextQuery } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import { useSettlementDetailQuery } from '@/features/settlement-management/hooks/use-settlement-detail-query'
+import { fetchSettlementApplicationDocumentRemote } from '@/features/settlement-management/api/settlement-api-client'
+import {
+  applyApplicationDocumentToProgramCalculationStatement,
+  buildPaymentStatementPreviewOptionsFromApplicationDocument,
+} from '@/features/program/general/lib/map-settlement-application-document-to-payment-statement-preview-options'
+import type {
+  SettlementFrontendResponse,
+  SettlementListItemResponse,
+} from '@/shared/api/generated/settlement/schemas'
 import { useSettlementTransportationSnapshotQuery } from '@/features/settlement-management/hooks/use-settlement-transportation-snapshot-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { useCmsAlert } from '@/shared/ui'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
+import type { PaymentOrderPayeeTypeFilter } from './payment-orders-table.config'
 import { generalProgramDetailQueryOptions } from '@/features/program/general/hooks/use-general-program-detail'
 import { isIndividualProgramForSettlement } from '@/features/settlement/lib/settlement-program-individual'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
@@ -43,13 +56,24 @@ export type PaymentOrderDetailFullPageModalInput = {
   onClose: () => void
   data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
   listPageDateRange: [Dayjs | null, Dayjs | null] | null
+  /** 목록 페이지에 조회 적용된 정산 대상자 구분 */
+  listPagePayeeType?: PaymentOrderPayeeTypeFilter
+}
+
+/** 영수증 정산 신청 행 — 기존 영수증 검토 모달로 여는 대상 */
+export type PaymentOrderReceiptReviewTarget = {
+  individualSettlementApplicationId: number
+  programId: number | null
+  /** 목록 행의 일정 회차 — 산출 내역서 「N회차」 */
+  sessionOrdinal: number | null
 }
 
 export function usePaymentOrderDetailFullPageModalState(
   input: PaymentOrderDetailFullPageModalInput
 ) {
-  const { type, isOpen, onClose, data, listPageDateRange } = input
+  const { type, isOpen, onClose, data, listPageDateRange, listPagePayeeType = 'all' } = input
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
 
   const row = data
   const paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders')
@@ -59,7 +83,8 @@ export function usePaymentOrderDetailFullPageModalState(
     type,
     aggregateKey,
     listPageDateRange,
-    isOpen && paymentOrdersRemote
+    isOpen && paymentOrdersRemote,
+    listPagePayeeType
   )
 
   const [lineAggregateStatus, setLineAggregateStatus] =
@@ -69,19 +94,35 @@ export function usePaymentOrderDetailFullPageModalState(
   const [calcLineRow, setCalcLineRow] = useState<CalcLineRow | null>(null)
   const [calcStatementData, setCalcStatementData] =
     useState<PaymentOrderProgramCalculationStatement | null>(null)
+  /** 영수증 행은 지급조서가 없어 산출 내역서 대신 영수증 검토 모달을 연다 */
+  const [receiptReviewTarget, setReceiptReviewTarget] =
+    useState<PaymentOrderReceiptReviewTarget | null>(null)
 
   const calcSettlementId = calcLineRow?.settlementId ?? null
+  const calcApplicationLine =
+    calcLineRow != null && isSettlementApplicationListItem(calcLineRow)
+  const calcApplicationId = calcApplicationLine
+    ? (calcLineRow.settlementApplicationId ?? null)
+    : null
   const settlementDetailQuery = useSettlementDetailQuery(
     calcSettlementId,
-    calcStatementOpen && paymentOrdersRemote
+    calcStatementOpen && paymentOrdersRemote && !calcApplicationLine
   )
+  const applicationDocumentQuery = useQuery({
+    queryKey: ['payment-order-settlement-application-document', calcApplicationId],
+    enabled: calcStatementOpen && paymentOrdersRemote && calcApplicationId != null,
+    queryFn: () => fetchSettlementApplicationDocumentRemote(calcApplicationId!),
+    retry: false,
+  })
 
   /**
    * 산출 내역서 — 개인형 프로그램이면 「참여 기관명」열 미노출.
    * 정산 응답에는 프로그램 유형이 없어 정산 상세의 programId로 프로그램 정본(GET /programs/{id})을 읽는다.
    * 조회 실패·비숫자 id면 기관명 열을 그대로 둔다.
    */
-  const calcProgramId = settlementDetailQuery.data?.programId?.trim() ?? ''
+  const calcProgramId =
+    settlementDetailQuery.data?.programId?.trim() ||
+    (calcLineRow?.programId != null ? String(calcLineRow.programId) : '')
   const calcProgramQuery = useQuery({
     ...generalProgramDetailQueryOptions(calcProgramId),
     enabled: calcStatementOpen && paymentOrdersRemote && /^\d+$/.test(calcProgramId),
@@ -149,14 +190,17 @@ export function usePaymentOrderDetailFullPageModalState(
       setCalcStatementOpen(false)
       setCalcLineRow(null)
       setCalcStatementData(null)
+      setReceiptReviewTarget(null)
     }
-  }, [isOpen, type, row])
+    // row 객체가 아니라 aggregateKey 기준 — 승인 뒤 목록 재조회로 row만 새로 와도 열린 검토 모달·완료 안내를 닫지 않는다
+  }, [isOpen, type, aggregateKey])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!paymentOrdersRemote || !calcStatementOpen || !calcLineRow || !row || !detail) {
       return
     }
+    if (calcApplicationLine) return
     if (!settlementDetailQuery.data) return
     if (shouldFetchTransportationSnapshot && !transportationSnapshotQuery.isFetched) return
     const transportationSnapshot = transportationSnapshotQuery.data?.find(snapshot => {
@@ -215,6 +259,87 @@ export function usePaymentOrderDetailFullPageModalState(
     settlementDetailQuery.data,
     transportationSnapshotQuery.data,
     transportationSnapshotQuery.isFetched,
+    calcApplicationLine,
+  ])
+
+  useEffect(() => {
+    if (
+      !paymentOrdersRemote ||
+      !calcStatementOpen ||
+      !calcApplicationLine ||
+      !calcLineRow ||
+      calcApplicationId == null ||
+      !applicationDocumentQuery.data
+    ) {
+      return
+    }
+    const items = detailContextQuery.data?.items ?? []
+    const item: SettlementListItemResponse =
+      items.find(
+        entry =>
+          entry.settlementId == null && entry.settlementApplicationId === calcApplicationId
+      ) ??
+      items.find(entry => entry.settlementApplicationId === calcApplicationId) ?? {
+        settlementApplicationId: calcApplicationId,
+        programId: calcLineRow.programId,
+        programNameKo: 'programName' in calcLineRow ? calcLineRow.programName : undefined,
+        instructorName: 'instructorName' in calcLineRow ? calcLineRow.instructorName : undefined,
+        institutionName: calcLineRow.institutionName,
+        lectureDate: calcLineRow.lectureDate,
+        sessionOrdinal: calcLineRow.sessionOrdinal ?? undefined,
+        netPaymentAmount: calcLineRow.estimatedAmount,
+        statementStatus: calcLineRow.statementStatus,
+        paymentStatus: calcLineRow.paymentStatus,
+      }
+
+    const applicationDetail: SettlementFrontendResponse = {
+      programNameKo: item.programNameKo,
+      businessPeriodStart: item.businessPeriodStart,
+      businessPeriodEnd: item.businessPeriodEnd,
+      sessionCompleted: item.sessionCompleted,
+      sessionTotal: item.sessionTotal,
+      programSessionProgressDisplay: item.programSessionProgressDisplay,
+      sessionOrdinal: item.sessionOrdinal,
+      institutionName: item.institutionName,
+      instructorName: item.instructorName,
+      expectedTransferDate: item.expectedTransferDate,
+      totalAmount: item.netPaymentAmount,
+      statementStatus: item.statementStatus,
+      paymentStatus: item.paymentStatus ?? undefined,
+    }
+    const programName =
+      item.programNameKo?.trim() ||
+      (row && 'programName' in row ? row.programName : '') ||
+      ('programName' in calcLineRow ? calcLineRow.programName : '') ||
+      '-'
+    const instructorName =
+      item.instructorName?.trim() ||
+      ('instructorName' in calcLineRow ? calcLineRow.instructorName : '') ||
+      (row && 'instructorName' in row ? row.instructorName : '') ||
+      '-'
+    const base = mapSettlementDetailToProgramCalculationStatement(
+      calcLineRow,
+      applicationDetail,
+      programName,
+      instructorName
+    )
+    setCalcStatementData(
+      applyApplicationDocumentToProgramCalculationStatement(
+        base,
+        applicationDocumentQuery.data,
+        calcApplicationId,
+        calcLineRow.sessionOrdinal
+      )
+    )
+  }, [
+    applicationDocumentQuery.data,
+    calcApplicationId,
+    calcApplicationLine,
+    calcLineRow,
+    calcStatementOpen,
+    detailContextQuery.data?.items,
+    paymentOrdersRemote,
+    row,
   ])
 
   const openCalculationStatement = useCallback(
@@ -222,7 +347,18 @@ export function usePaymentOrderDetailFullPageModalState(
       if (!row || !detail) return
 
       if (paymentOrdersRemote) {
-        if (lineRow.settlementId == null) {
+        if (
+          isIndividualSettlementApplicationListItem(lineRow) &&
+          lineRow.individualSettlementApplicationId != null
+        ) {
+          setReceiptReviewTarget({
+            individualSettlementApplicationId: lineRow.individualSettlementApplicationId,
+            programId: lineRow.programId ?? null,
+            sessionOrdinal: lineRow.sessionOrdinal ?? null,
+          })
+          return
+        }
+        if (lineRow.settlementId == null && !isSettlementApplicationListItem(lineRow)) {
           showAlert({
             title: '안내',
             content: '산출 내역서 API에 필요한 settlementId가 없습니다.',
@@ -251,8 +387,22 @@ export function usePaymentOrderDetailFullPageModalState(
     setCalcStatementOpen(false)
     setCalcLineRow(null)
     setCalcStatementData(null)
+    setReceiptReviewTarget(null)
     onClose()
   }, [onClose])
+
+  const closeReceiptReview = useCallback(() => {
+    setReceiptReviewTarget(null)
+  }, [])
+
+  /** 영수증 승인·반려 뒤 목록·상세 라인·캘린더와 계좌 지급 목록을 다시 읽는다 */
+  const handleReceiptReviewed = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.all() }),
+      queryClient.invalidateQueries({ queryKey: settlementQueryKeys.calendar.all() }),
+      queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.all() }),
+    ])
+  }, [queryClient])
 
   const title = useMemo(() => {
     if (type === 'program' && row && 'programName' in row) {
@@ -264,12 +414,24 @@ export function usePaymentOrderDetailFullPageModalState(
     return '지급 현황 상세'
   }, [row, type])
 
+  const calcApplicationIssuanceOptions = useMemo(() => {
+    if (calcApplicationId == null || !applicationDocumentQuery.data) return undefined
+    return buildPaymentStatementPreviewOptionsFromApplicationDocument({
+      document: applicationDocumentQuery.data,
+      settlementApplicationId: calcApplicationId,
+      hideInstitutionColumn: calcHideInstitutionColumn,
+    })
+  }, [applicationDocumentQuery.data, calcApplicationId, calcHideInstitutionColumn])
+
   const calcStatementLoading =
     paymentOrdersRemote &&
     calcStatementOpen &&
-    (settlementDetailQuery.isLoading ||
-      (shouldFetchTransportationSnapshot && transportationSnapshotQuery.isLoading) ||
-      (settlementDetailQuery.isSuccess && !calcStatementData))
+    (calcApplicationLine
+      ? applicationDocumentQuery.isLoading ||
+        (applicationDocumentQuery.isSuccess && !calcStatementData)
+      : settlementDetailQuery.isLoading ||
+        (shouldFetchTransportationSnapshot && transportationSnapshotQuery.isLoading) ||
+        (settlementDetailQuery.isSuccess && !calcStatementData))
 
   const sharedViewProps = {
     isOpen,
@@ -280,11 +442,18 @@ export function usePaymentOrderDetailFullPageModalState(
     calcStatementOpen,
     calcStatementData,
     calcStatementLoading,
-    calcStatementError: paymentOrdersRemote ? settlementDetailQuery.error : null,
+    calcStatementError: paymentOrdersRemote
+      ? calcApplicationLine
+        ? applicationDocumentQuery.error
+        : settlementDetailQuery.error
+      : null,
     calcStatementId: calcLineRow?.statementId ?? null,
     calcSettlementId: calcLineRow?.settlementId ?? null,
     calcProgramId: calcLineRow?.programId ?? null,
-    calcAvailableActions: settlementDetailQuery.data?.availableActions,
+    calcLineRow,
+    calcApplicationIssuanceOptions,
+    calcAvailableActions:
+      calcLineRow?.availableActions ?? settlementDetailQuery.data?.availableActions,
     calcHideInstitutionColumn,
     openCalculationStatement,
     closeCalculationStatement,
@@ -302,6 +471,11 @@ export function usePaymentOrderDetailFullPageModalState(
   return {
     detailLoading,
     detailError: paymentOrdersRemote ? detailContextQuery.error : null,
+    receiptReview: {
+      target: receiptReviewTarget,
+      close: closeReceiptReview,
+      onReviewed: handleReceiptReviewed,
+    },
     sharedViewProps,
     viewBranch: row
       ? {
@@ -311,6 +485,7 @@ export function usePaymentOrderDetailFullPageModalState(
           detail,
           row,
           listPageDateRange,
+          listPagePayeeType,
         }
       : null,
   }

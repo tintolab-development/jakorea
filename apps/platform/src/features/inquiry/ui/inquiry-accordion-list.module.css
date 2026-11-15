@@ -50,7 +50,7 @@
 
 .badge {
   flex-shrink: 0;
-  background: var(--color-element-default-gray);
+  background: var(--color-element-default-blue);
   color: var(--color-primary-700);
 }
 
@@ -59,7 +59,7 @@
   min-width: 0;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-2);
 }
 
 .rowPrimary {
@@ -164,7 +164,7 @@
   width: 1px;
   height: 58px;
   flex-shrink: 0;
-  margin: 0 var(--spacing-40);
+  margin: 0;
   background: var(--color-neutral-black-10);
 }
 
@@ -223,6 +223,39 @@
 
   .panelRow {
     padding: var(--spacing-40) var(--spacing-32) var(--spacing-40) var(--spacing-56);
+  }
+
+  /* 모바일 시안 확정 전 임시 배치(사용자 승인): 배지·제목·메타 세로, 버튼 줄은 오른쪽 */
+  .trigger {
+    flex-wrap: wrap;
+    gap: var(--spacing-12);
+    padding: var(--spacing-16) 0;
+  }
+
+  .expandButton {
+    width: 100%;
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-12);
+  }
+
+  .textArea {
+    width: 100%;
+  }
+
+  .rowPrimary {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: var(--spacing-16);
+  }
+
+  .actionDivider {
+    margin: 0;
   }
 }
 

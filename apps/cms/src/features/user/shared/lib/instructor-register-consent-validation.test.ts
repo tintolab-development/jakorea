@@ -74,13 +74,10 @@ describe('instructor register consent validation', () => {
     expect(result.missingRequired).toBe(false)
   })
 
-  it('강사 신규 등록 필수 동의 키는 이용약관·개인정보 + 필수 작성 동의서 3종이다', () => {
+  it('강사 신규 등록은 이용약관·개인정보만 필수다 (동의서는 시안·정책대로 선택, 2026-11-15)', () => {
     expect([...getInstructorRequiredConsentAgreeKeys('cmsRegister')]).toEqual([
       'consentTermsOfService',
       'consentPersonal',
-      'consentPaymentStatement',
-      'consentEducatorPledge',
-      'consentSexOffenseCheck',
     ])
   })
 
@@ -101,7 +98,7 @@ describe('instructor register consent validation', () => {
     ])
   })
 
-  it('필수 작성 동의서 1건이라도 미동의하면 CMS 강사 신규 등록 필수 누락이다', () => {
+  it('동의서를 미동의해도 CMS 강사 신규 등록 필수 누락이 아니다', () => {
     const allAgreed = {
       consentPaymentStatement: 'agree',
       consentEducatorPledge: 'agree',
@@ -111,23 +108,15 @@ describe('instructor register consent validation', () => {
     const options = {
       requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('cmsRegister')],
     }
-    expect(collectInstructorRegisterValidation(baseValues(allAgreed), {}, options).missingRequired).toBe(
-      false
-    )
-    expect(
-      collectInstructorRegisterValidation(
-        baseValues({ ...allAgreed, consentPaymentStatement: 'disagree' }),
-        {},
-        options
-      ).missingRequired
-    ).toBe(true)
-    expect(
-      collectInstructorRegisterValidation(
-        baseValues({ ...allAgreed, consentAdministrativeJoint: 'disagree' }),
-        {},
-        options
-      ).missingRequired
-    ).toBe(false)
+    for (const key of Object.keys(allAgreed) as (keyof typeof allAgreed)[]) {
+      expect(
+        collectInstructorRegisterValidation(
+          baseValues({ ...allAgreed, [key]: 'disagree' }),
+          {},
+          options
+        ).missingRequired
+      ).toBe(false)
+    }
   })
 
   it('동의서 1건이라도 미작성(미동의)이면 Platform 강사 신청 필수 누락이다', () => {

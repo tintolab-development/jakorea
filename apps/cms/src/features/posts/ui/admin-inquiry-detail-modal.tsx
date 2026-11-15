@@ -23,6 +23,7 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { CONTENT_MODAL_FOOTER_START_CLASS } from '@jakorea/admin-ui/modal'
 import './admin-inquiry-detail-modal.css'
 
 export interface AdminInquiryDetailModalProps {
@@ -104,7 +105,9 @@ export function AdminInquiryDetailModal({
 
   const footer = (
     <>
+      {/* 시안: [삭제]는 왼쪽 끝, [취소][답변 등록]은 오른쪽 — 공용 팝업 하단 왼쪽 고정 클래스 */}
       <CmsButton
+        className={CONTENT_MODAL_FOOTER_START_CLASS}
         variant="delete"
         size="medium"
         onClick={handleDelete}

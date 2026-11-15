@@ -1,6 +1,7 @@
 /**
  * 교육 진행 > 참여 봉사자 — Figma Popup / Multiple / w1200 (10014:42865)
- * 일반 프로그램 참여 봉사자 추가 등록 폼과 동일. UJAT은 recruitHalf만 붙인다.
+ * 일반 프로그램 참여 봉사자 추가 등록 폼을 `preset="ujat"`(경험 여부 「있음 / 없음」, 자유 작성 문항 `*` 숨김)으로 쓴다.
+ * 전송값은 일반과 같고 UJAT은 recruitHalf만 붙인다.
  */
 
 import { useQueryClient } from '@tanstack/react-query'
@@ -51,6 +52,7 @@ export function UjatVolunteerAddRegistrationModal({
       memberId={memberId || null}
       programId={program.id}
       hideBasicInfoSection
+      preset="ujat"
       zIndex={1200}
       onClose={onClose}
       onConfirm={async request => {

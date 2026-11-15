@@ -8,7 +8,6 @@
 
 /**
  * PORTRAIT_RIGHTS 전용 상태
- * @nullable
  */
 export type MemberConsentRecordResponseConsentStatus = typeof MemberConsentRecordResponseConsentStatus[keyof typeof MemberConsentRecordResponseConsentStatus] | null;
 

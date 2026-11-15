@@ -86,3 +86,19 @@
   overflow-wrap: anywhere;
   white-space: pre-line;
 }
+
+/*
+ * 시안 PC: 신청 내용 표(신청 내용 탭·신청 정보 팝업 공통) — 행 간격 54(마지막 53).
+ * 라벨·값 칸 min-height 53 + 행 하단 1px 선 = 54. 공용 pf-form 기본(64)은 그대로 둔다.
+ * 값: 16 Medium neutral-black.
+ */
+@media (--bp-pc-up) {
+  .root {
+    --pf-form-field-min-height: 53px;
+  }
+
+  .fieldValue {
+    color: var(--color-neutral-black);
+    font-weight: 500;
+  }
+}

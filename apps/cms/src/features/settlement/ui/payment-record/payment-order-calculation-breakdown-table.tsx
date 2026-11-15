@@ -16,7 +16,10 @@ import type {
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
-import type { PaymentOrderCalculationBasisDetail } from './payment-order-calculation-basis-detail'
+import {
+  toLectureSessionCellSegment,
+  type PaymentOrderCalculationBasisDetail,
+} from './payment-order-calculation-basis-detail'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './payment-order-program-calculation-statement-modal.css'
 
@@ -28,6 +31,8 @@ export interface PaymentOrderCalculationTableRow {
   key: string
   blockRowSpan: number
   isFirstInBlock: boolean
+  /** 마지막 일정 블록의 행 — 합친 칸(기관명·교육 진행 일자)이 표 맨 아래까지 내려온다 */
+  isInLastBlock?: boolean
   institutionName: string
   lectureDateDisplay: string
   lectureSessionDisplay: string
@@ -51,6 +56,7 @@ export function buildPaymentOrderCalculationTableRows(
         key: `${bi}-${line.id}`,
         blockRowSpan: span,
         isFirstInBlock: li === 0,
+        isInLastBlock: bi === blocks.length - 1,
         institutionName: block.institutionName,
         lectureDateDisplay: block.lectureDateDisplay,
         lectureSessionDisplay: block.lectureSessionDisplay,
@@ -67,6 +73,21 @@ export function buildPaymentOrderCalculationTableRows(
   return out
 }
 
+/**
+ * 공통 `cms-data-table`은 본문 마지막 `tr`의 아래 선을 지우고 합계 행 위 선 하나만 남긴다.
+ * 여러 행을 합친 칸(기관명·교육 진행 일자)은 블록 첫 `tr`에 있어 그 규칙에 안 걸려 아래 선이 남고,
+ * 합계 위 선과 겹쳐 그 칸 아래만 두 줄·1px 어긋나 보인다 → 표 맨 아래까지 내려오는 합친 칸만 아래 선을 지운다.
+ */
+const SPANNED_CELL_REACHING_BOTTOM_CLASS = 'payment-order-calc-breakdown__span-cell--reaches-bottom'
+
+function spannedCellReachingTableBottomClass(
+  record: PaymentOrderCalculationTableRow
+): string | undefined {
+  return record.isFirstInBlock && record.isInLastBlock && record.blockRowSpan > 1
+    ? SPANNED_CELL_REACHING_BOTTOM_CLASS
+    : undefined
+}
+
 /** 지급 `+`, 공제 `-`, 0원은 부호 없이 `0원` */
 function formatSignedWon(n: number): string {
   const sign = n > 0 ? '+' : ''
@@ -80,11 +101,11 @@ export function formatPaymentOrderCalculationWonPlain(n: number | null | undefin
 }
 
 /**
- * 일정 칸 세션 구간은 `lectureSessionDisplay` 원문 그대로 쓴다.
+ * 일정 칸 세션 구간 = 회차·차시·일정명 조각(`toLectureSessionCellSegment`). 없으면 '' → 날짜만 표시(서버 PDF와 동일).
  * 회차와 차시는 다른 값이므로 차시 → 회차(또는 반대)로 단위를 바꾸지 않는다. `_mode`는 호출 호환용.
  */
 function formatLectureSessionSegment(raw: string, _mode: 'session' | 'round' | undefined): string {
-  return raw
+  return toLectureSessionCellSegment(raw)
 }
 
 export function getPaymentOrderCalculationColumns(options?: {
@@ -144,6 +165,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       align: 'center',
       onCell: (record: PaymentOrderCalculationTableRow) => ({
         rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
+        className: spannedCellReachingTableBottomClass(record),
       }),
     },
     {
@@ -153,6 +175,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       align: 'center',
       onCell: (record: PaymentOrderCalculationTableRow) => ({
         rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
+        className: spannedCellReachingTableBottomClass(record),
       }),
       render: (_: unknown, row: PaymentOrderCalculationTableRow) => (
         <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--center">

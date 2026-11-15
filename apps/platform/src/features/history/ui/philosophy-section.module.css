@@ -136,6 +136,8 @@
 @media (--bp-pc-up) {
   .section {
     gap: var(--spacing-80);
+    /* 시안: PC 좌우 패딩 없음 (셸 폭 기준) */
+    padding-inline: 0;
     padding-block: var(--spacing-120);
   }
 

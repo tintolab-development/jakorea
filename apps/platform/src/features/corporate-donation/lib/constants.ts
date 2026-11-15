@@ -29,7 +29,7 @@ export const WHY_CARDS: readonly WhyCardContent[] = [
   },
   {
     id: 'transparent_ops',
-    badge: '최고수준의 투명성',
+    badge: '최고 수준의 투명성',
     titleLines: ['투명한 조직운영'],
     description: 'JA Worldwide 기준에 따른 투명한 조직 운영 체계',
   },

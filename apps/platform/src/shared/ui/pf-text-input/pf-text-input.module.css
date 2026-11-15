@@ -25,7 +25,7 @@
 .requiredMark {
   overflow: hidden;
   flex: 0 0 auto;
-  color: var(--color-red);
+  color: var(--color-status-error-default); /* 시안 필수 * #c31d20 */
   text-overflow: ellipsis;
   font-family: var(--font-family-base);
   font-size: 13px;
@@ -107,7 +107,7 @@
   cursor: not-allowed;
 }
 
-/* Platform 양식 페이지 전용 — 타이포만 분기 (.field radius-16 유지) */
+/* Platform 양식 페이지 전용 — 타이포만 분기 (.field radius는 size 클래스 기준) */
 
 .formPageInput {
   overflow: hidden;

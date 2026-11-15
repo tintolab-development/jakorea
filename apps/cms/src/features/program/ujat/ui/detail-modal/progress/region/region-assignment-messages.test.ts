@@ -24,6 +24,32 @@ describe('resolveRegionAssignmentErrorMessage', () => {
     ).toBe('해당 교육일에 배정된 봉사자만 지정할 수 있습니다.')
   })
 
+  it('지역 봉사자 상한 초과 409는 details와 관계없이 서버 error.message를 그대로 쓴다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          data: null,
+          error: {
+            code: 'UJAT_REGION_VOLUNTEER_CAPACITY_EXCEEDED',
+            message: '지역별 정원을 초과하여 배정할 수 없습니다.',
+            field: null,
+            details: {
+              semesterType: 'FIRST_HALF',
+              educationRegionCode: 'SEOUL',
+              maxCount: '12',
+              projectedCount: '13',
+            },
+          },
+        },
+      },
+    }
+    expect(resolveRegionAssignmentErrorMessage(error, 'fallback')).toBe(
+      '지역별 정원을 초과하여 배정할 수 없습니다.'
+    )
+  })
+
   it('클라이언트 내부 오류 코드는 노출하지 않고 fallback을 쓴다', () => {
     expect(resolveRegionAssignmentErrorMessage(new Error('NO_SCHEDULES_FOR_DATES'), '설정 실패')).toBe(
       '설정 실패'

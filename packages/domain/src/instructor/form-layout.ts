@@ -128,11 +128,11 @@ const CMS_CONSENT_LAYOUT_BASE: InstructorFormConsentLayout = {
   documentGroups: INSTRUCTOR_CONSENT_DOCUMENT_GROUPS,
 }
 
-/** CMS 강사 신규 등록 — 필수 작성 동의서 묶음은 제출 시 동의·작성 필수. 행정정보·초상권·마케팅은 선택 */
-const CMS_REGISTER_CONSENT_LAYOUT: InstructorFormConsentLayout = {
-  ...CMS_CONSENT_LAYOUT_BASE,
-  allItemsRequired: true,
-}
+/**
+ * CMS 강사 신규 등록 — 이용약관·개인정보만 필수, 동의서(지급조서·교육진행자·성범죄경력·행정정보·초상권)·마케팅은 선택.
+ * 시안(14661:55226)에 동의서 필수(*) 표기 없음 + terms-and-consent-policy 선택 정책 (2026-11-15 결정, 155e28f56 필수화 해제).
+ */
+const CMS_REGISTER_CONSENT_LAYOUT: InstructorFormConsentLayout = CMS_CONSENT_LAYOUT_BASE
 
 /** CMS 강사 상세 수정 — 약관 8건 전체 노출, 동의서는 모두 선택 */
 const CMS_DETAIL_CONSENT_LAYOUT: InstructorFormConsentLayout = CMS_CONSENT_LAYOUT_BASE

@@ -120,9 +120,9 @@
   }
 
   .thumb {
-    width: 176px;
+    width: 160px;
     height: 220px;
-    border-radius: var(--radius-16);
+    border-radius: var(--radius-12);
   }
 
   .content {

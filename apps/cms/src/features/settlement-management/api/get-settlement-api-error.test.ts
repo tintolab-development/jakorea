@@ -16,6 +16,8 @@ import {
   isSettlementExportReissueRequiredError,
   isPaymentStatementStatusConflictError,
   isGeminiPaymentStatementPreConsentRequiredError,
+  isPaymentStatementConfirmConsentBlockError,
+  isSettlementBankAccountRequiredError,
   isTaxReportIdentityOrSnapshotMissingError,
   normalizeSettlementApiErrorCode,
   LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
@@ -25,6 +27,7 @@ import {
   SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED_MESSAGE,
   GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
   GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE,
+  SETTLEMENT_BANK_ACCOUNT_REQUIRED_MESSAGE,
   GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE,
 } from './get-settlement-api-error'
 
@@ -374,8 +377,15 @@ describe('normalizeSettlementApiErrorCode', () => {
       },
     }
     expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
-      '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.'
+      SETTLEMENT_BANK_ACCOUNT_REQUIRED_MESSAGE
     )
+    expect(isSettlementBankAccountRequiredError(error)).toBe(true)
+    expect(isPaymentStatementConfirmConsentBlockError(error)).toBe(true)
+    expect(
+      isSettlementBankAccountRequiredError({
+        response: { status: 400, data: { error: { code: 'SETTLEMENT_BANK_ACCOUNT_REQUIRED' } } },
+      })
+    ).toBe(false)
   })
 
   it('400 DOWNLOAD_PASSWORD_REQUIRED/INVALID는 서버 파일 암호 문구를 쓴다', () => {
@@ -485,7 +495,23 @@ describe('normalizeSettlementApiErrorCode', () => {
     const error = {
       response: { status: 400, data: { error: { code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION' } } },
     }
-    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe('선택한 건 중 세금신고 대상이 없어요.')
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '선택한 신청 건에 세금신고 대상 항목이 없습니다.\n세금신고 대상 항목이 포함된 건을 선택해 주세요.'
+    )
+  })
+
+  it('TAX_REPORT_NO_ELIGIBLE_SELECTION: 서버 message가 있어도 시안 문구를 쓴다', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          error: { code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION', message: '세금신고 대상 없음' },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '선택한 신청 건에 세금신고 대상 항목이 없습니다.\n세금신고 대상 항목이 포함된 건을 선택해 주세요.'
+    )
   })
 })
 

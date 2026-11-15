@@ -1,0 +1,15 @@
+/**
+ * 로그 관리 4화면(CMS 관리자 로그인·파일 다운로드·개인정보 조회·버그/이슈 이력) 공통 보정
+ * 시안: 9. 실적 / 로그 관리 > 로그 관리 (9270:98287), QA 2026-11-15 로그 CSS 1절.
+ * 공통 `FilterTableLayout` 규칙은 그대로 두고 이 화면들만 맞춘다.
+ */
+
+/* 필터 ↔ 목록 구분선 위·아래 24 (시안 블록 49 = 24/1/24 → 툴바 y237, 표 y293) */
+.logs-history-page.filter-table-layout .filter-table-layout__divider {
+  padding: 24px 0;
+}
+
+/* CMS 관리자 로그인 이력 안내줄 구분선 색 — 시안 #3D3D3D 50% */
+.logs-history-page.filter-table-layout .filter-table-layout__description-divider {
+  background: rgba(61, 61, 61, 0.5);
+}

@@ -1,4 +1,5 @@
 import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
@@ -12,9 +13,7 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  cacheProjectedProgramPrivacy,
-} from '@/features/program/shared/lib/program-my-assignment'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CmsButton,
@@ -622,7 +621,9 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const [approveAssignStep, setApproveAssignStep] = useState<'guide' | 'fee' | 'overflow' | null>(
     null
   )
-  const [approveAssignFeePolicyError, setApproveAssignFeePolicyError] = useState<string | null>(null)
+  const [approveAssignFeePolicyError, setApproveAssignFeePolicyError] = useState<string | null>(
+    null
+  )
   const pendingApproveAssignDetailRef = useRef<InstructorFeeApprovalConfirmDetail | null>(null)
   const [selectAssignNewGuideOpen, setSelectAssignNewGuideOpen] = useState(false)
   const [selectAssignFeeApprovalOpen, setSelectAssignFeeApprovalOpen] = useState(false)
@@ -873,7 +874,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const applicationTabScheduleEmptyMessage = useMemo(() => {
     if (!isGeneralOrgProgram) return '등록된 교육 일정이 없습니다.'
     if (organizationScheduleAssignmentsEnabled && organizationScheduleAssignmentsQuery.isLoading) {
-      return '배정된 교육 일정을 불러오는 중입니다.'
+      return ''
     }
     if (
       organizationScheduleAssignmentsQuery.isError &&
@@ -956,8 +957,9 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const waitingHopeSessionLabel = isCompanySchool
     ? ('preference-only' as const)
     : isGeneralOrgProgram &&
-        String(program.generalCommonInfo?.educationScheduleMode ?? '').trim().toLowerCase() ===
-          'period'
+        String(program.generalCommonInfo?.educationScheduleMode ?? '')
+          .trim()
+          .toLowerCase() === 'period'
       ? ('preference' as const)
       : ('round' as const)
   const requestedScheduleAlreadyConfirmed = hasConfirmedRequestedSchedule(
@@ -1306,7 +1308,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     revealWithReason,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
+    programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
     onRemask: clearTeacherPrivacyOverlay,
@@ -1706,9 +1708,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         ? (assignmentBoard.pendingInstructorApplications ?? [])
         : []
       const pendingApplicationById = new Map(
-        pendingApplications
-          .filter(app => app.id != null)
-          .map(app => [String(app.id), app] as const)
+        pendingApplications.filter(app => app.id != null).map(app => [String(app.id), app] as const)
       )
       return buildCompanySchoolWaitingInstructorRows({
         schoolName: row.schoolName,
@@ -1942,7 +1942,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 getParticipationConsentRequiredMessage(error) ??
                 getGeneralProgramApiErrorMessage(
                   error,
-                  '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+                  '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
                 )),
           })
         } finally {
@@ -2070,7 +2070,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const approveAssignUnapprovedNames = useMemo(() => {
     const names = new Map<string, string>()
     for (const w of selectedWaitingRows) {
-      if (w.programApprovalPending) names.set(getWaitingInstructorRowInstructorId(w), w.instructorName)
+      if (w.programApprovalPending)
+        names.set(getWaitingInstructorRowInstructorId(w), w.instructorName)
     }
     return Array.from(names.values())
   }, [selectedWaitingRows])
@@ -2097,7 +2098,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       const rows = selectedWaitingRows
       if (rows.length === 0) return
       if (!programHasActiveInstructorRecruitment(program)) {
-        showAlert({ title: '배정 실패', content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE })
+        showAlert({
+          title: '배정 실패',
+          content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+        })
         return
       }
       if (!assignmentBoardRemoteEnabled) {
@@ -2117,7 +2121,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         return
       }
       if (!assignmentBoard) {
-        showAlert({ title: '안내', content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.' })
+        showAlert({
+          title: '안내',
+          content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.',
+        })
         return
       }
       const plan = buildInstitutionApproveAssignPlan({
@@ -2125,7 +2132,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           instructorId: getWaitingInstructorRowInstructorId(w),
           instructorName: w.instructorName,
           instructorMemberId: (w as { instructorMemberId?: string }).instructorMemberId,
-          instructorApplicationId: (w as { instructorApplicationId?: string }).instructorApplicationId,
+          instructorApplicationId: (w as { instructorApplicationId?: string })
+            .instructorApplicationId,
           programApprovalPending: w.programApprovalPending,
           instructorFeeGradeLabel: w.instructorFeeGradeLabel,
           hopeDate: w.hopeDate,
@@ -2286,7 +2294,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const handleApproveAssignFeeConfirm = useCallback(
     (detail: InstructorFeeApprovalConfirmDetail) => {
       setApproveAssignFeePolicyError(null)
-      if (currentAssignedCount + approveAssignSelection.selectedInstructorCount > requiredInstructorCount) {
+      if (
+        currentAssignedCount + approveAssignSelection.selectedInstructorCount >
+        requiredInstructorCount
+      ) {
         pendingApproveAssignDetailRef.current = detail
         setApproveAssignStep('overflow')
         return
@@ -2421,7 +2432,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               getParticipationConsentRequiredMessage(error) ??
               getGeneralProgramApiErrorMessage(
                 error,
-                '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+                '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
               )),
         })
       } finally {
@@ -2559,9 +2570,9 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             if (!assignmentId) continue
             // 일반 기관형: 배정마다 발송 전이면 `{}`, 발송 후(·미상)면 사유·알림 시점
             const rowBody = toInstructorUnassignCancelBody(
-                payload,
-                assignmentNotificationSentById.get(String(assignmentId))
-              )
+              payload,
+              assignmentNotificationSentById.get(String(assignmentId))
+            )
             pendingAssignmentId = String(assignmentId)
             pendingBodyWasEmpty = Object.keys(rowBody).length === 0
             await cancelInstructorAssignmentRemote(String(assignmentId), rowBody)
@@ -2581,7 +2592,9 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             setForcedSentAssignmentIds(prev => new Set(prev).add(sentId))
             await invalidateAssignmentBoard()
             if (cancelledRowIds.length > 0) {
-              setSelectedAssignedKeys(prev => prev.filter(key => !cancelledRowIds.includes(String(key))))
+              setSelectedAssignedKeys(prev =>
+                prev.filter(key => !cancelledRowIds.includes(String(key)))
+              )
             }
             setUnassignConfirmOpen(true)
             showAlert({
@@ -2594,7 +2607,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             await invalidateAssignmentBoard()
             setUnassignConfirmOpen(false)
             setSelectedAssignedKeys([])
-            showAlert({ title: '배정 취소 실패', content: INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE })
+            showAlert({
+              title: '배정 취소 실패',
+              content: INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE,
+            })
             return
           }
           showAlert({
@@ -2749,10 +2765,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     (instructorId: string, newRole: InstructorRoleKey) => {
       const roleSource = assignmentBoardRemoteEnabled ? assignedRows : instructors
       // 일반 기관형·1사1교 공통(시안 15): 대표 강사는 반드시 1명 — 대표 → 일반 직접 전환은 막고 안내만 띄운다
-      if (
-        newRole !== 'lead' &&
-        roleSource.find(inv => inv.id === instructorId)?.role === 'lead'
-      ) {
+      if (newRole !== 'lead' && roleSource.find(inv => inv.id === instructorId)?.role === 'lead') {
         setOpenRoleDropdownId(null)
         showAlert({
           title: LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_TITLE,
@@ -3013,7 +3026,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     exportExcel: exportAssignedInstructorsExcel,
     isExporting: isAssignedInstructorsExcelExporting,
   } = useTableExcelExport({
-    accessLog: { downloadKind: 'PROGRAM_SCHOOL_INSTRUCTOR_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
+    accessLog: {
+      downloadKind: 'PROGRAM_SCHOOL_INSTRUCTOR_ASSIGNMENT_EXPORT',
+      containedPiiTypes: ['NAME'],
+    },
     columns: assignedInstructorExportColumns,
     data: assignedInstructorExportRows,
     filename: '배정된 강사 목록',
@@ -3024,7 +3040,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     exportExcel: exportWaitingInstructorsExcel,
     isExporting: isWaitingInstructorsExcelExporting,
   } = useTableExcelExport({
-    accessLog: { downloadKind: 'PROGRAM_SCHOOL_INSTRUCTOR_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
+    accessLog: {
+      downloadKind: 'PROGRAM_SCHOOL_INSTRUCTOR_ASSIGNMENT_EXPORT',
+      containedPiiTypes: ['NAME'],
+    },
     columns: waitingInstructorExportColumns,
     data: waitingInstructorExportRows,
     filename: '배정 대기 강사 목록',
@@ -3245,7 +3264,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                   variant="delete"
                   size="h40"
                   disabled={!canRequestActivityWithdraw || activityWithdrawSubmitting}
-                  onClick={handleRequestActivityWithdraw} >
+                  onClick={handleRequestActivityWithdraw}
+                >
                   활동 포기
                 </CmsButton>
               ) : null}
@@ -3258,30 +3278,27 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                 saving={scheduleChangeSaving}
                 onSave={() => {
                   void handleApplicationInfoSave()
-                }} />
+                }}
+              />
               {!isApplicationInfoEditing ? (
                 <>
                   {showAdminCommentSection ? (
-                    <CmsButton
-                      variant="primary"
-                      size="h40"
-                      onClick={handleAdminCommentEditEnter} >
+                    <CmsButton variant="primary" size="h40" onClick={handleAdminCommentEditEnter}>
                       코멘트 작성
                     </CmsButton>
                   ) : null}
-                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                  <PersonalInfoRevealButton
+                    disabled={programPrivacyPending}
                     labelMode="toggle"
                     revealed={personalInfoRevealed}
                     cmsSize="h40"
-                    onClick={handlePrivacyToggleClick} />
+                    onClick={handlePrivacyToggleClick}
+                  />
                 </>
               ) : null}
             </>
           ) : activeTab === 'posts' ? (
-            <CmsButton
-              variant="primary"
-              size="large"
-              onClick={() => setPostWriteModalOpen(true)} >
+            <CmsButton variant="primary" size="large" onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
             </CmsButton>
           ) : null
@@ -3291,6 +3308,11 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__application-tab">
+            {isGeneralOrgProgram &&
+            organizationScheduleAssignmentsEnabled &&
+            organizationScheduleAssignmentsQuery.isLoading ? (
+              <FullscreenSpinner />
+            ) : null}
             <ParticipatingInstitutionApplicationInfo
               copyVariant={isCompanySchool ? 'default' : 'general-institution'}
               isBasicInfoEditing={isApplicationInfoEditing}
@@ -3419,7 +3441,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                     variant="secondary"
                     size="h40"
                     disabled={scheduleChangeLines.length === 0 || scheduleChangeSaving}
-                    onClick={() => setScheduleChangeModalOpen(true)} >
+                    onClick={() => setScheduleChangeModalOpen(true)}
+                  >
                     일정 변경
                   </CmsButton>
                 ) : null
@@ -3472,9 +3495,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               <div className="table-header-actions">
                 <div className="table-header-title--wrapper">
                   <span className="table-title">배정된 강사 목록</span>
-                  <span className="table-description">
-                    {`총 ${assignedTableRows.length}건`}
-                  </span>
+                  <span className="table-description">{`총 ${assignedTableRows.length}건`}</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
                   <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
@@ -3482,19 +3503,22 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
-                    size="h40" className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
+                    size="h40"
+                    className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (currentAssignedCount >= requiredInstructorCount) {
                         setAddAssignOverflowOpen(true)
                       } else {
                         setAddAssignModalOpen(true)
                       }
-                    }} >
+                    }}
+                  >
                     추가 배정
                   </CmsButton>
                   <ExcelButton
                     onClick={exportAssignedInstructorsExcel}
-                    loading={isAssignedInstructorsExcelExporting} />
+                    loading={isAssignedInstructorsExcelExporting}
+                  />
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
@@ -3522,28 +3546,30 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               <div className="table-header-actions">
                 <div className="table-header-title--wrapper">
                   <span className="table-title">배정 대기 강사 목록</span>
-                  <span className="table-description">
-                    {`총 ${waitingRows.length}건`}
-                  </span>
+                  <span className="table-description">{`총 ${waitingRows.length}건`}</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
                   {showRequestedScheduleConfirmAction ? (
                     <CmsButton
                       variant="secondary"
                       size="h40"
-                      onClick={() => setRequestedScheduleConfirmOpen(true)} >
+                      onClick={() => setRequestedScheduleConfirmOpen(true)}
+                    >
                       {requestedScheduleAlreadyConfirmed ? '희망 일정 변경' : '희망 일정 확정'}
                     </CmsButton>
                   ) : null}
                   <CmsButton
                     variant="secondary"
-                    size="h40" className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
-                    onClick={handleSelectAssignClick} >
+                    size="h40"
+                    className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
+                    onClick={handleSelectAssignClick}
+                  >
                     선택 배정
                   </CmsButton>
                   <ExcelButton
                     onClick={exportWaitingInstructorsExcel}
-                    loading={isWaitingInstructorsExcelExporting} />
+                    loading={isWaitingInstructorsExcelExporting}
+                  />
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
@@ -3564,7 +3590,9 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
                   columns={waitingInstructorColumns}
                   dataSource={waitingRows}
                   locale={{ emptyText: renderWaitingInstructorTableEmpty(!isCompanySchool) }}
-                  rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "school-instructor")}
+                  rowClassName={record =>
+                    getProgramAssignmentRowClass(record.assignmentStatus, 'school-instructor')
+                  }
                 />
               </div>
             </div>
@@ -3903,9 +3931,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             <EnrollmentProgramDetailPostsTab
               deleteGuideWithPostPreview
               program={program}
-              schoolId={
-                row.organizationApplicationId?.trim() || detail.id
-              }
+              schoolId={row.organizationApplicationId?.trim() || detail.id}
               showWriteButtonInSection={false}
               writeModalOpen={postWriteModalOpen}
               onWriteModalOpenChange={setPostWriteModalOpen}

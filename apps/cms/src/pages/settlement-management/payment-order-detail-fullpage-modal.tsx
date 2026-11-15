@@ -13,6 +13,8 @@ import {
   type PaymentOrderDetailViewProps,
 } from '@/features/settlement/ui/payment-record'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { IndividualSettlementReviewDetailModal } from '@/features/program/general/ui/detail-modal/program-status/individual-settlement-review-detail-modal'
+import type { PaymentOrderPayeeTypeFilter } from './payment-orders-table.config'
 import { usePaymentOrderDetailFullPageModalState } from './use-payment-order-detail-fullpage-modal'
 
 export type PaymentOrderDetailFullPageModalProps = {
@@ -23,6 +25,8 @@ export type PaymentOrderDetailFullPageModalProps = {
   data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
   /** 목록 페이지에 조회 적용된 기간(URL) — 상세 기간 필터 초기값 */
   listPageDateRange: [Dayjs | null, Dayjs | null] | null
+  /** 목록 페이지에 조회 적용된 정산 대상자 구분 */
+  listPagePayeeType?: PaymentOrderPayeeTypeFilter
 }
 
 function resolveDetailContentError(
@@ -40,7 +44,7 @@ function resolveDetailContentError(
 
 export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
   const { isOpen, onClose } = props
-  const { detailLoading, detailError, sharedViewProps, viewBranch } =
+  const { detailLoading, detailError, sharedViewProps, viewBranch, receiptReview } =
     usePaymentOrderDetailFullPageModalState(props)
 
   if (!isOpen) {
@@ -66,13 +70,27 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
   }
 
   return (
-    <PaymentOrderDetailView
-      {...({
-        ...sharedViewProps,
-        ...viewBranch,
-        contentLoading: detailLoading,
-        contentError,
-      } as PaymentOrderDetailViewProps)}
-    />
+    <>
+      <PaymentOrderDetailView
+        {...({
+          ...sharedViewProps,
+          ...viewBranch,
+          contentLoading: detailLoading,
+          contentError,
+        } as PaymentOrderDetailViewProps)}
+      />
+      {/* 영수증 정산 신청 행(개인 참여자·봉사자) — 프로그램 상세의 영수증 검토 모달을 그대로 쓴다 */}
+      <IndividualSettlementReviewDetailModal
+        open={receiptReview.target != null}
+        programId={
+          receiptReview.target?.programId != null ? String(receiptReview.target.programId) : ''
+        }
+        participantId=""
+        settlementApplicationId={receiptReview.target?.individualSettlementApplicationId ?? null}
+        sessionOrdinal={receiptReview.target?.sessionOrdinal ?? null}
+        onClose={receiptReview.close}
+        onReviewed={receiptReview.onReviewed}
+      />
+    </>
   )
 }

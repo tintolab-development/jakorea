@@ -1,4 +1,5 @@
 import { getAgreementNoticeAdminProxyHiddenIds } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
+import { AGREEMENT_NOTICE_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
 import { AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-notice-a4-preview'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
@@ -13,3 +14,28 @@ export const AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS = {
   /** A4 미리보기 전용 스코프 — 작성 화면 대리동의 카드는 유지 */
   documentPreviewClassName: AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME,
 } satisfies RenderFormParagraphBodyOptions
+
+/**
+ * 템플릿 관리 작성 화면 전용 — 시안 5767:41434.
+ * 대리 확인 2단 카드(회원 대리 동의용) 대신 흰 확인 문구 카드·회색 날짜·서명 카드를 따로 보인다.
+ */
+const {
+  agreementAdminProxyConfirm: _proxyConfirm,
+  hiddenParagraphIds: _proxyHiddenIds,
+  ...sheetLayoutBaseOptions
+} = AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS
+
+export const AGREEMENT_NOTICE_TEMPLATE_MANAGEMENT_PARAGRAPH_BODY_OPTIONS = {
+  ...sheetLayoutBaseOptions,
+  agreementConfirmSheetLayout: true,
+} satisfies RenderFormParagraphBodyOptions
+
+/**
+ * 우측 「커스텀 필드」 목록 — 시안은 「5. 대상자 본인」까지만 보인다.
+ * 5번 카드 하단 안내·확인 문구·날짜·서명은 목록에서 뺀다(캔버스에는 보인다).
+ */
+export const AGREEMENT_NOTICE_TEMPLATE_MANAGEMENT_NAV_HIDDEN_IDS: ReadonlySet<string> = new Set([
+  ...getAgreementNoticeAdminProxyHiddenIds(),
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.subjectNote,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+])

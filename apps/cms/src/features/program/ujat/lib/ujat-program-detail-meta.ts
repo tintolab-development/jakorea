@@ -12,6 +12,7 @@ import {
   resolveUjatSurveyMenuItems,
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { UJAT_SATISFACTION_SURVEY_MENU_KEY } from '@/features/program/ujat/lib/registration-survey-items'
 import {
   isUjatPrimaryProgramId,
   looksLikeUjatProgramId,
@@ -43,11 +44,15 @@ export function getUjatVolunteerInterviewEnabled(_program: Program): boolean {
   return true
 }
 
-/** 레거시 URL `tab` → 현행 키 */
+/**
+ * 레거시 URL `tab` → 현행 키.
+ * 봉사단·학교 만족도조사 메뉴를 시안처럼 「만족도조사」 하나로 묶었으므로 이전 키는 모두 그 화면으로 연다.
+ */
 export const UJAT_SURVEY_LEGACY_TAB_MAP: Record<string, string> = {
-  'survey-student-satisfaction': 'survey-volunteer-satisfaction',
-  'survey-teacher-satisfaction': 'survey-school-satisfaction',
-  'survey-satisfaction': 'survey-volunteer-satisfaction',
+  'survey-student-satisfaction': UJAT_SATISFACTION_SURVEY_MENU_KEY,
+  'survey-teacher-satisfaction': UJAT_SATISFACTION_SURVEY_MENU_KEY,
+  'survey-volunteer-satisfaction': UJAT_SATISFACTION_SURVEY_MENU_KEY,
+  'survey-school-satisfaction': UJAT_SATISFACTION_SURVEY_MENU_KEY,
 }
 
 /** 공통 정보 > 설문 진행 항목 기준 LNB 2depth (항목 1개여도 2depth) */

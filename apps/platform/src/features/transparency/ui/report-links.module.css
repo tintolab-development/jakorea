@@ -73,15 +73,19 @@
 }
 
 @media (--bp-pc-up) {
+  /* 시안: PC 버튼 간격 22 */
   .actions {
     flex-direction: row;
     align-items: center;
+    gap: 22px;
   }
 
+  /* 시안: PC 240×53 — 상하 12 */
   .actions .reportButton,
   .actions .ntsButton {
     width: 240px;
     min-width: 160px;
+    padding-block: var(--spacing-12);
     font-size: 18px;
   }
 }

@@ -1,3 +1,4 @@
+import { resolveNotificationRecipientTypeLabel } from '@/features/notifications/model/alimtalk-send/recipients'
 import type {
   MailSendMemberType,
   MailSendParticipationType,
@@ -16,10 +17,10 @@ export const MAIL_SEND_PARTICIPATION_TYPE_LABEL: Record<
 }
 
 export const MAIL_SEND_MEMBER_TYPE_LABEL: Record<Exclude<MailSendMemberType, ''>, string> = {
-  general: '일반',
-  school_teacher: '교사',
+  general: '개인',
+  school_teacher: '학교(교사)',
   instructor: '강사',
-  teacher_instructor: '교사 겸 강사',
+  teacher_instructor: '학교(교사), 강사',
   admin: '관리자',
 }
 
@@ -30,9 +31,12 @@ export const MAIL_SEND_PARTICIPATION_TYPE_OPTIONS = (
   ][]
 ).map(([value, label]) => ({ value, label }))
 
+/** 회원 유형 필터 5개(전체 포함) — 알림톡 `ALIMTALK_SEND_MEMBER_TYPE_OPTIONS` 주석 참고 */
 export const MAIL_SEND_MEMBER_TYPE_OPTIONS = (
   Object.entries(MAIL_SEND_MEMBER_TYPE_LABEL) as [Exclude<MailSendMemberType, ''>, string][]
-).map(([value, label]) => ({ value, label }))
+)
+  .filter(([value]) => value !== 'teacher_instructor')
+  .map(([value, label]) => ({ value, label }))
 
 export function mailSendParticipationTypeLabel(type: MailSendParticipationType): string {
   if (!type) return ''
@@ -67,8 +71,9 @@ export function mailSendRecipientTypeColumnTitle(mode: MailSendRecipientTypeMode
   return mode === 'member' ? '회원 유형' : '참여 유형'
 }
 
+/** 서버 typeLabel 표시. 영문 코드만 온 경우는 알림톡과 같이 라벨로 바꾼다. */
 export function mailSendRecipientTypeLabel(recipient: MailSendRecipient): string {
-  return recipient.typeLabel?.trim() || ''
+  return resolveNotificationRecipientTypeLabel(recipient.typeLabel)
 }
 
 export function toMailSendParticipantTypeApi(type: string): string | undefined {

@@ -45,6 +45,10 @@ export type MemberNotificationResponse = {
   notificationCategoryLabel: string
   title: string
   message: string
+  /** 안내 팝업 회색 [프로그램명] 줄. 문의·강사 권한·시스템 알림과 예전 알림은 null */
+  programName?: string | null
+  /** 안내 팝업 사유 상자 본문. 사유가 없는 알림과 예전 알림은 null */
+  reason?: string | null
   sourceDomain?: string
   sourceId?: number
   programId?: number
@@ -89,7 +93,11 @@ function parseNotification(value: unknown): MemberNotificationResponse {
   ) {
     throw new NotificationApiError(value)
   }
-  return value as unknown as MemberNotificationResponse
+  return {
+    ...(value as unknown as MemberNotificationResponse),
+    programName: typeof value.programName === 'string' ? value.programName : null,
+    reason: typeof value.reason === 'string' ? value.reason : null,
+  }
 }
 
 function parseNotificationPage(value: unknown): MemberNotificationPageResponse {

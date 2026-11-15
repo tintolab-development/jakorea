@@ -69,12 +69,12 @@ export const RECEIPT_PROCESS_LABEL = {
   confirmed: '확인 완료',
   paid: '계좌 지급 완료',
   rejected: '신청 반려',
-  mixed: '확인 진행 중',
+  mixed: '확인 진행중',
 } as const
 
 /**
- * 영수증 처리 현황 — 강사식 집계 (R17): 제출된 회차의 상태가 한 가지면 그 라벨, 여러 가지면 "확인 진행 중".
- * "미작성 N건"은 쓰지 않는다. 제출된 회차가 없을 때도 "확인 진행 중"(기존 기본값 유지).
+ * 영수증 처리 현황 — 강사식 집계 (R17): 제출된 회차의 상태가 한 가지면 그 라벨, 여러 가지면 "확인 진행중".
+ * "미작성 N건"은 쓰지 않는다. 제출된 회차가 없을 때도 "확인 진행중"(기존 기본값 유지).
  */
 export function resolveReceiptProcessLabel(items: readonly EducationSettlementItem[]): string {
   const labels = items
@@ -160,6 +160,11 @@ export type ResolveEducationSettlementStatusInput = {
   correctionStatus?: string | null
   /** 정정 승인 후 지급조서 재신청 대기 — 서버 statementReapplyAvailable */
   statementReapplyAvailable?: boolean | null
+  /**
+   * 강사 목록 confirmationStatus. 있으면 PAID·DRAFT·재신청 가능 다음으로 이 값을 쓴다.
+   * 영수증 일정은 넘기지 않는다.
+   */
+  confirmationStatus?: string | null
   receiptDeadlineAt?: string | null
   /** 강사 지급조서: 제출 마감일(운영 기간 종료일). 영수증: 사업 운영 종료일 */
   operationEndAt?: string | null
@@ -211,6 +216,7 @@ export function resolveEducationSettlementStatusResult(
     paymentStatus: input.paymentStatus,
     correctionStatus: input.correctionStatus,
     statementReapplyAvailable: input.statementReapplyAvailable,
+    confirmationStatus: input.confirmationStatus,
   })
 
   if (input.deadlinePolicy === 'payment_statement') {

@@ -33,7 +33,6 @@ export const PORTRAIT_GUARDIAN_VERIFIED_COPY = {
   confirmLabel: '초상권 수집·이용 동의서 작성하기',
 } as const
 
-export const PORTRAIT_GUARDIAN_ERROR_TITLE = '보호자 본인인증 실패'
 export const PORTRAIT_GUARDIAN_MISSING_MESSAGE =
   '등록된 보호자 정보를 확인할 수 없어요. 회원정보 수정에서 보호자 정보를 확인해 주세요.'
 

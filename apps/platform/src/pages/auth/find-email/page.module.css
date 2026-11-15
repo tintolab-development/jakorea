@@ -21,8 +21,8 @@
   justify-content: center;
   gap: var(--spacing-12);
   padding: var(--spacing-24);
-  border-radius: var(--radius-8);
-  background: var(--color-neutral-white-60);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
   text-align: center;
 }
 

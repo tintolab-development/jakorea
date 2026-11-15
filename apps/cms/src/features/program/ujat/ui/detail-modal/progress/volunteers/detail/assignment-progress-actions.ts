@@ -153,9 +153,14 @@ export async function correctVolunteerAttendance(input: {
   payload: ProgramAttendanceCorrectionConfirmPayload
 }) {
   const uiStatus = toApiAttendanceStatus(input.payload.status)
-  const fileObjectIds = (input.payload.evidenceFileObjectIds ?? []).filter(
-    (id): id is number => Number.isInteger(id) && id > 0
-  )
+  // 결석 증빙 계약(2026-11-16): 증빙은 사유 불참에만. 출석·지각·결석과 「파일 모두 삭제」는 []로 명시한다.
+  // null/[]는 이번 정정의 증빙 없음이며 기존 파일 유지가 아니다.
+  const fileObjectIds =
+    input.payload.status === 'excused_absence'
+      ? (input.payload.evidenceFileObjectIds ?? []).filter(
+          (id): id is number => Number.isInteger(id) && id > 0
+        )
+      : []
   return bulkUpsertUjatAttendances(input.programId, {
     scheduleId: input.scheduleId,
     attendances: [
@@ -166,7 +171,7 @@ export async function correctVolunteerAttendance(input: {
           input.payload.status === 'excused_absence' ? input.payload.reason.trim() || null : null,
         arrivalTime:
           input.payload.status === 'late' ? toIsoLocalTime(input.payload.attendanceTime) : null,
-        ...(fileObjectIds.length > 0 ? { fileObjectIds } : {}),
+        fileObjectIds,
       },
     ],
   })

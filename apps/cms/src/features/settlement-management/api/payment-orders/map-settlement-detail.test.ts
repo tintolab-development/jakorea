@@ -216,4 +216,135 @@ describe('buildInstructorDetailFromSettlements', () => {
     expect(detail.programRows.every(r => r.institutionName === '-')).toBe(true)
     expect(detail.totalEstimatedAmount).toBe(100_000)
   })
+
+  it('신청서 행은 settlementId 없이 신청서 ID로 그리고 지급조서 확인 대상이 아니다', () => {
+    const detail = buildInstructorDetailFromSettlements(
+      instructorRow,
+      [
+        listItem({
+          settlementId: undefined,
+          statementId: undefined,
+          settlementApplicationId: 1001,
+          rowType: 'SETTLEMENT_APPLICATION',
+          statementStatus: 'WAITING_CONFIRM',
+          paymentStatus: undefined,
+          netPaymentAmount: 106700,
+          availableActions: [
+            'VIEW',
+            'CONFIRM_SETTLEMENT_APPLICATION',
+            'REJECT_SETTLEMENT_APPLICATION',
+            'REQUEST_CORRECTION',
+          ],
+        }),
+        listItem({
+          settlementId: 4101,
+          settlementApplicationId: 1001,
+          statementId: 5101,
+          rowType: null,
+          statementStatus: 'WAITING_CONFIRM',
+          paymentStatus: 'NOT_READY',
+          availableActions: ['VIEW', 'CONFIRM_PAYMENT_STATEMENT'],
+        }),
+      ],
+      [{ settlementId: 4101, statementId: 9999 }]
+    )
+
+    expect(detail.programRows[0]).toMatchObject({
+      id: 'application-1001',
+      settlementId: undefined,
+      settlementApplicationId: 1001,
+      statementId: undefined,
+      rowType: 'SETTLEMENT_APPLICATION',
+      processingStatus: 'pending',
+      estimatedAmount: 106700,
+      canConfirmPaymentStatement: false,
+    })
+    expect(detail.programRows[1]).toMatchObject({
+      id: '4101',
+      settlementId: 4101,
+      statementId: 5101,
+      canConfirmPaymentStatement: true,
+    })
+  })
+
+  it('신청서 행에 BULK_CONFIRM_PAYMENT_STATEMENT가 있으면 일괄 확인 대상이고 statementId는 비워 둔다', () => {
+    const detail = buildInstructorDetailFromSettlements(
+      instructorRow,
+      [
+        listItem({
+          settlementId: undefined,
+          statementId: undefined,
+          settlementApplicationId: 26,
+          rowType: 'SETTLEMENT_APPLICATION',
+          statementStatus: 'WAITING_CONFIRM',
+          paymentStatus: undefined,
+          availableActions: [
+            'VIEW',
+            'BULK_CONFIRM_PAYMENT_STATEMENT',
+            'CONFIRM_SETTLEMENT_APPLICATION',
+            'REJECT_SETTLEMENT_APPLICATION',
+            'REQUEST_CORRECTION',
+          ],
+        }),
+      ],
+      []
+    )
+
+    expect(detail.programRows[0]).toMatchObject({
+      id: 'application-26',
+      settlementApplicationId: 26,
+      statementId: undefined,
+      canConfirmPaymentStatement: true,
+    })
+  })
+
+  it('영수증 행은 영수증 신청 ID로 그리고 지급조서 확인 대상이 아니다', () => {
+    const detail = buildInstructorDetailFromSettlements(
+      instructorRow,
+      [
+        listItem({
+          settlementId: undefined,
+          statementId: undefined,
+          settlementApplicationId: null,
+          individualSettlementApplicationId: 77,
+          rowType: 'INDIVIDUAL_SETTLEMENT_APPLICATION',
+          payeeType: 'PARTICIPANT',
+          statementStatus: 'REAPPLICATION',
+          paymentStatus: undefined,
+          netPaymentAmount: 12000,
+          availableActions: ['APPROVE', 'REJECT'],
+        }),
+        listItem({
+          settlementId: undefined,
+          statementId: undefined,
+          settlementApplicationId: null,
+          individualSettlementApplicationId: 78,
+          rowType: 'INDIVIDUAL_SETTLEMENT_APPLICATION',
+          payeeType: 'VOLUNTEER',
+          statementStatus: 'CONFIRMED',
+          paymentStatus: 'PAID',
+          availableActions: ['VIEW'],
+        }),
+      ],
+      []
+    )
+
+    expect(detail.programRows[0]).toMatchObject({
+      id: 'receipt-77',
+      settlementId: undefined,
+      statementId: undefined,
+      individualSettlementApplicationId: 77,
+      payeeType: 'PARTICIPANT',
+      processingStatus: 'reapplication',
+      estimatedAmount: 12000,
+      canConfirmPaymentStatement: false,
+    })
+    // 계좌 지급 완료 건도 지급조서 확인 화면에서는 「지급조서 확인 완료」로 남는다
+    expect(detail.programRows[1]).toMatchObject({
+      id: 'receipt-78',
+      payeeType: 'VOLUNTEER',
+      processingStatus: 'confirmed',
+      canConfirmPaymentStatement: false,
+    })
+  })
 })

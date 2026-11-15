@@ -24,15 +24,23 @@ describe('resolvePasswordChangeFailureAlert', () => {
     expect(alert.title).toBe('비밀번호 불일치 안내')
   })
 
-  it('그 외 코드는 서버 message를 그대로 보여 준다', () => {
+  it('최근 사용 비밀번호는 서버 문구 대신 시안 「비밀번호 재사용 불가 안내」를 쓴다', () => {
     const alert = resolvePasswordChangeFailureAlert(
       new AdminMfaApiError(
         'PASSWORD_RECENTLY_USED',
         '최근에 사용한 비밀번호는 다시 사용할 수 없습니다. 다른 비밀번호를 입력해 주세요.'
       )
     )
-    expect(alert.content).toBe(
-      '최근에 사용한 비밀번호는 다시 사용할 수 없습니다. 다른 비밀번호를 입력해 주세요.'
+    expect(alert).toEqual({
+      title: '비밀번호 재사용 불가 안내',
+      content: '최근에 사용한 비밀번호 5개는 다시 쓸 수 없습니다.\n다른 비밀번호를 입력해 주세요.',
+    })
+  })
+
+  it('그 외 코드는 서버 message를 그대로 보여 준다', () => {
+    const alert = resolvePasswordChangeFailureAlert(
+      new AdminMfaApiError('PASSWORD_POLICY_VIOLATION', '서버가 준 안내 문구입니다.')
     )
+    expect(alert.content).toBe('서버가 준 안내 문구입니다.')
   })
 })

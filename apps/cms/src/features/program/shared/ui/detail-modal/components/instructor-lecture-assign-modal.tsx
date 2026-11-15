@@ -5,6 +5,7 @@
  */
 
 import fieldDeleteUrl from '@/shared/assets/icons/inputs/delete-20-default.svg'
+import { FullscreenSpinner } from '@/shared/ui/fullscreen-spinner'
 import { useRef } from 'react'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { formatIndividualLectureAssignTagLabel } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
@@ -165,6 +166,7 @@ export function InstructorLectureAssignModal({
     availableSlots,
     useSlotListLayout,
     slotsEmptyText,
+    slotsLoading,
     showNoApprovedOrganizationBanner,
     preferredDateKeys,
     assignedDateKeys,
@@ -258,7 +260,8 @@ export function InstructorLectureAssignModal({
             size="medium"
             type="button"
             disabled={!canConfirm}
-            onClick={handleConfirm} >
+            onClick={handleConfirm}
+          >
             {isIndividual ? '강의 배정' : '기관 배정'}
           </CmsButton>
         </div>
@@ -305,7 +308,7 @@ export function InstructorLectureAssignModal({
           <div className="instructor-lecture-assign-modal__slots-list">
             {availableSlots.length === 0 ? (
               <div className="instructor-lecture-assign-modal__slots-empty" role="status">
-                {slotsEmptyText}
+                {slotsLoading ? <FullscreenSpinner /> : slotsEmptyText}
               </div>
             ) : (
               availableSlots.map(slot => {

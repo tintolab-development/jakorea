@@ -166,3 +166,21 @@
   pointer-events: none;
   cursor: default;
 }
+
+/* PDF 캡처 전용 — 화면 밖 실제 크기(1464px). visibility·display로 숨기면 html2canvas가 빈 PDF를 만든다. */
+.agreement-template-preview-modal__pdf-host {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  width: 1464px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.agreement-template-preview-modal__pdf-host-page-body {
+  width: 100%;
+  padding-bottom: 16px;
+  box-sizing: border-box;
+}

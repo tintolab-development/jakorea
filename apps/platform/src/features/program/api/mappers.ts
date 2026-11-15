@@ -57,6 +57,7 @@ import {
 import {
   formatDisplayDate,
   formatDisplayDateRange,
+  formatDisplayDateRangeCompact,
   formatDisplayDateTime,
   formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
@@ -268,6 +269,16 @@ function toIsoDateOnlyFromPortal(value: string | null | undefined): string | nul
 
 function formatRange(start: Date | null, end: Date | null): string {
   return formatDisplayDateRange(start, end, { empty: '-' })
+}
+
+/** 참여하기 목록 카드 운영 기간 — 시안: 요일 없이 `2026년 8월 15일 ~ 2026년 9월 16일` */
+function formatListOperatingRange(start: Date | null, end: Date | null): string {
+  return formatDisplayDateRange(start, end, { empty: '-', weekday: false })
+}
+
+/** 참여하기 목록 카드 모집 기간 — 시안: 같은 해면 종료 연도 생략 `2026년 5월 15일 ~ 6월 15일` */
+function formatListRecruitmentRange(start: Date | null, end: Date | null): string {
+  return formatDisplayDateRangeCompact(start, end, { empty: '-' })
 }
 
 function mapEducationForm(value: string | undefined): EducationForm {
@@ -1769,13 +1780,13 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     categories,
     categoryLabel: programTabLabels(categories),
     title,
-    operatingPeriodLabel: formatRange(opStart, opEnd),
+    operatingPeriodLabel: formatListOperatingRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
     businessEndDate: readString(remote.businessEndDate) ?? null,
     applicationStartDate: appStart ? formatYmd(appStart) : null,
     applicationEndDate: appEnd ? formatYmd(appEnd) : null,
-    recruitmentPeriodLabel: formatRange(appStart, appEnd),
+    recruitmentPeriodLabel: formatListRecruitmentRange(appStart, appEnd),
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,

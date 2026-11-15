@@ -6,9 +6,22 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
   StatusDropdownCell,
 } from '@/shared/components/status-dropdown-cell'
+import type { StatusTagSpec } from '@/shared/components/status-tag'
 import { getSponsorSponsorshipStatusTag } from '@/shared/lib/status-tag-specs'
 
 const SPONSORSHIP_STATUS_OPTIONS = SPONSOR_SPONSORSHIP_STATUS_VALUES
+
+/**
+ * 후원사 목록 후원 상태 태그 — 시안 80×32(`compact`), 후원 종료는 배경 6%·테두리 10%
+ * (공통 red 프리셋 배경 10%보다 옅음 → accentColor로 지정). QA 2026-11-15 데이터 관리 C2
+ */
+function getSponsorListStatusTag(status: SponsorSponsorshipStatus): StatusTagSpec {
+  const tag = getSponsorSponsorshipStatusTag(status)
+  if (status === 'ended') {
+    return { label: tag.label, accentColor: 'var(--editable-badge-red-text, #c32f4a)', width: 'compact' }
+  }
+  return { ...tag, width: 'compact' }
+}
 
 type SponsorSponsorshipStatusCellProps = {
   row: SponsorManagementRow
@@ -38,7 +51,7 @@ export const SponsorSponsorshipStatusCell = memo(function SponsorSponsorshipStat
     <StatusDropdownCell<SponsorSponsorshipStatus>
       status={row.sponsorshipStatus ?? 'active'}
       statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-      getTag={getSponsorSponsorshipStatusTag}
+      getTag={getSponsorListStatusTag}
       isItemDisabled={(cur, opt) => cur === opt}
       onChange={canWrite ? handleChange : undefined}
       isOpen={open}

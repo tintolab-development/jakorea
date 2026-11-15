@@ -1,5 +1,8 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
-import { alimtalkSendPhoneDedupKey } from '@/features/notifications/model/alimtalk-send/recipients'
+import {
+  alimtalkSendPhoneDedupKey,
+  resolveNotificationRecipientTypeLabel,
+} from '@/features/notifications/model/alimtalk-send/recipients'
 import type {
   SmsSendMemberType,
   SmsSendParticipationType,
@@ -18,10 +21,10 @@ export const SMS_SEND_PARTICIPATION_TYPE_LABEL: Record<
 }
 
 export const SMS_SEND_MEMBER_TYPE_LABEL: Record<Exclude<SmsSendMemberType, ''>, string> = {
-  general: '일반',
-  school_teacher: '교사',
+  general: '개인',
+  school_teacher: '학교(교사)',
   instructor: '강사',
-  teacher_instructor: '교사 겸 강사',
+  teacher_instructor: '학교(교사), 강사',
   admin: '관리자',
 }
 
@@ -49,9 +52,12 @@ export const SMS_SEND_PARTICIPATION_TYPE_OPTIONS = (
   ][]
 ).map(([value, label]) => ({ value, label }))
 
+/** 회원 유형 필터 5개(전체 포함) — 알림톡 `ALIMTALK_SEND_MEMBER_TYPE_OPTIONS` 주석 참고 */
 export const SMS_SEND_MEMBER_TYPE_OPTIONS = (
   Object.entries(SMS_SEND_MEMBER_TYPE_LABEL) as [Exclude<SmsSendMemberType, ''>, string][]
-).map(([value, label]) => ({ value, label }))
+)
+  .filter(([value]) => value !== 'teacher_instructor')
+  .map(([value, label]) => ({ value, label }))
 
 export function resolveSmsSendRecipientTypeMode(
   programId: string | undefined
@@ -64,12 +70,12 @@ export function smsSendRecipientTypeColumnTitle(mode: SmsSendRecipientTypeMode):
   return mode === 'member' ? '회원 유형' : '참여 유형'
 }
 
-/** 유형 컬럼은 서버 typeLabel만 표시한다. memberType으로 덮어쓰지 않는다. */
+/** 유형 컬럼은 서버 typeLabel만 표시한다. memberType으로 덮어쓰지 않는다. (영문 코드만 온 경우는 알림톡과 같이 라벨로 바꾼다) */
 export function smsSendRecipientTypeLabel(
   recipient: SmsSendRecipient,
   _mode: SmsSendRecipientTypeMode = 'member'
 ): string {
-  return recipient.typeLabel?.trim() || ''
+  return resolveNotificationRecipientTypeLabel(recipient.typeLabel)
 }
 
 export function normalizeSmsSendPhone(value: string): string {

@@ -8,4 +8,13 @@
 
 export interface MemberPortalConsentSignFieldRequest {
   signatureProfileId?: number;
+  /**
+     * 만 14세 미만 RECEIPT_PRE_CONSENT 보호자 서명란 전용. 토큰은 complete에서 소비
+     * @minLength 0
+     * @maxLength 256
+     */
+  guardianVerificationToken?: string;
+  /** 회원 서명 프로필과 분리된 보호자 직접 서명 이미지 파일 */
+  guardianSignatureFileObjectId?: number;
+  guardianSignConfirmed?: boolean;
 }

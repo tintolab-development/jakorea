@@ -124,7 +124,7 @@
   min-width: 0;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-24);
+  gap: var(--spacing-16);
 }
 
 .viewCount {

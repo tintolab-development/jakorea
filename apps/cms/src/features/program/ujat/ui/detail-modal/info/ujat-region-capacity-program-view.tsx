@@ -38,7 +38,7 @@ export function UjatRegionCapacityProgramView({
   const { labels: regionLabels } = useUjatEducationRegions()
   const isFormEdit = isEdit && form != null
 
-  // 조회: 상세 시안(4082:89939) 한 줄 4지역 · 학급 수만 / 수정: 등록 양식과 동일(학급·봉사자 수)
+  // 조회: 상세 시안(4082:89939) 한 줄 4지역 · 학급·봉사자 수 / 수정: 등록 양식과 동일(학급·봉사자 수)
   if (!isFormEdit) {
     return (
       <section className="program-detail-fullpage-modal__info-tab-block">

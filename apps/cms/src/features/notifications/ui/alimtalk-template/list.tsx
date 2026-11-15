@@ -26,6 +26,7 @@ import {
   categoryNameById,
   filterAlimtalkTree,
   findTemplate,
+  firstTemplateInCategory,
   isVirtualUnclassifiedCategoryId,
   moveCategoryToParent,
   moveTemplateToCategory,
@@ -59,8 +60,9 @@ import {
   ALIMTALK_DND_CATEGORY_MOVE_PREFIX,
 } from './category-tree'
 import {
-  ALIMTALK_TEMPLATE_LIST_NHN_EDIT_GUIDE,
-  ALIMTALK_TEMPLATE_LIST_REGISTER_GUIDE,
+  ALIMTALK_TEMPLATE_LIST_GUIDE_LINK,
+  ALIMTALK_TEMPLATE_LIST_GUIDE_PREFIX,
+  ALIMTALK_TEMPLATE_LIST_GUIDE_SUFFIX,
 } from '@/features/notifications/model/alimtalk-template/list-guide'
 import { DetailPanel } from './detail-panel'
 import { PreviewModal } from './preview-modal'
@@ -302,14 +304,24 @@ export function AlimtalkTemplateList({
     wasTreeSearchingRef.current = isTreeSearching
   }, [categories, isTreeSearching, visibleTree.categories])
 
-  const selectedTemplateId = selection?.kind === 'template' ? selection.id : null
+  /** QA: 폴더를 선택하면 폴더 안 첫 템플릿(트리 표시 순서)을 상세에 보여 준다. 빈 폴더는 빈 상태 */
+  const selectedTemplateId =
+    selection?.kind === 'template'
+      ? selection.id
+      : selection?.kind === 'category'
+        ? (firstTemplateInCategory(visibleTree.categories, visibleTree.templates, selection.id)
+            ?.id ?? null)
+        : null
   const detailQuery = useAlimtalkTemplateDetailQuery(
     selectedTemplateId,
     remote && Boolean(selectedTemplateId)
   )
-  const treeTemplate =
-    selection?.kind === 'template' ? (findTemplate(templates, selection.id) ?? null) : null
+  const treeTemplate = selectedTemplateId
+    ? (findTemplate(templates, selectedTemplateId) ?? null)
+    : null
   const selectedTemplate = (remote ? detailQuery.data : null) ?? treeTemplate
+  /** NHN Console 이동은 템플릿을 직접 선택했을 때만 그 템플릿 주소를 쓴다(폴더 선택 시 기존처럼 기본 주소) */
+  const consoleTemplate = selection?.kind === 'template' ? selectedTemplate : null
   const selectedCategoryName = selectedTemplate
     ? categoryNameById(categories, selectedTemplate.categoryId)
     : ''
@@ -512,7 +524,7 @@ export function AlimtalkTemplateList({
           ),
           confirmLabel: 'NHN Console 열기',
           onConfirm: () => {
-            window.open(resolveNhnConsoleUrl(selectedTemplate), '_blank', 'noopener,noreferrer')
+            window.open(resolveNhnConsoleUrl(consoleTemplate), '_blank', 'noopener,noreferrer')
           },
         })
         setDeleteDialog(null)
@@ -545,7 +557,7 @@ export function AlimtalkTemplateList({
     mutations.deleteTemplate,
     remote,
     runNhnSync,
-    selectedTemplate,
+    consoleTemplate,
     selection,
     showAlert,
   ])
@@ -625,6 +637,19 @@ export function AlimtalkTemplateList({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="알림톡 템플릿"
+        description={
+          <>
+            {ALIMTALK_TEMPLATE_LIST_GUIDE_PREFIX}
+            <a
+              className="alimtalk-template-list__guide-link"
+              href={resolveNhnConsoleUrl(null)}
+              target="_blank"
+              rel="noopener noreferrer" >
+              {ALIMTALK_TEMPLATE_LIST_GUIDE_LINK}
+            </a>
+            {ALIMTALK_TEMPLATE_LIST_GUIDE_SUFFIX}
+          </>
+        }
         actions={
           <>
             <FilterTableToolbarButton
@@ -657,17 +682,13 @@ export function AlimtalkTemplateList({
               variant="primary"
               type="button"
               onClick={() =>
-                window.open(resolveNhnConsoleUrl(selectedTemplate), '_blank', 'noopener,noreferrer')
+                window.open(resolveNhnConsoleUrl(consoleTemplate), '_blank', 'noopener,noreferrer')
               } >
               템플릿 등록
             </FilterTableToolbarButton>
           </>
         }
       >
-        <div className="alimtalk-template-list__guide" role="note">
-          <p>{ALIMTALK_TEMPLATE_LIST_NHN_EDIT_GUIDE}</p>
-          <p>{ALIMTALK_TEMPLATE_LIST_REGISTER_GUIDE}</p>
-        </div>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="alimtalk-template-split">
             <CategoryTree

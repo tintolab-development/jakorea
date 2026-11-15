@@ -1,13 +1,16 @@
 export type ConsentSignedSignatureFieldRef = {
   fieldKey?: string
   signed?: boolean
-  signedAt?: string
-  signatureFileObjectId?: number
+  signedAt?: string | null
+  signatureFileObjectId?: number | null
+  /** BE가 준 서명 이미지 조회 주소 — signed=true일 때만 값 있음 */
+  contentRevealEndpoint?: string | null
 }
 
 export type ResolvedConsentSignedSignatureField = {
   fieldKey: string
-  signatureFileObjectId?: number
+  signatureFileObjectId?: number | null
+  contentRevealEndpoint?: string
 }
 
 function trimmedFieldKey(field: ConsentSignedSignatureFieldRef): string | null {
@@ -44,6 +47,9 @@ export function resolveConsentSignedSignatureField(
     fieldKey,
     ...(hasSignatureFile(preferred)
       ? { signatureFileObjectId: preferred.signatureFileObjectId }
+      : {}),
+    ...(preferred.contentRevealEndpoint?.trim()
+      ? { contentRevealEndpoint: preferred.contentRevealEndpoint.trim() }
       : {}),
   }
 }

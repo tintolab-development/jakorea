@@ -38,10 +38,10 @@ describe('smsSendRecipientTypeLabel', () => {
   it('shows server typeLabel and does not replace it with memberType', () => {
     expect(
       smsSendRecipientTypeLabel(
-        recipient({ memberType: 'teacher_instructor', typeLabel: '교사 겸 강사' }),
+        recipient({ memberType: 'teacher_instructor', typeLabel: '학교(교사), 강사' }),
         'member'
       )
-    ).toBe('교사 겸 강사')
+    ).toBe('학교(교사), 강사')
     expect(
       smsSendRecipientTypeLabel(
         recipient({

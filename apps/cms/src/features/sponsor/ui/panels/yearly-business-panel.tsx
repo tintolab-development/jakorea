@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { saveSponsorYearlyBusinesses } from '@/features/sponsor/api/admin-sponsors-service'
 import { mergeYearlyBusinessRows } from '@/features/sponsor/api/adapters/sponsor-adapters'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import { invalidateSponsorDonationAggregateCaches } from '@/features/sponsor/lib/query-cache'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { useYearlyBusinessesQuery } from '@/features/sponsor/hooks/use-yearly-businesses-query'
 import { sumProgramParticipantCount } from '@/features/sponsor/lib/program-participant-count'
@@ -97,6 +98,7 @@ export function YearlyBusinessPanel({
       } else {
         queryClient.setQueryData(yearlyKey, draftRows)
       }
+      await invalidateSponsorDonationAggregateCaches(queryClient, sponsorId)
       setIsEditing(false)
       showUpdateCompletedAlert()
     } catch (error) {

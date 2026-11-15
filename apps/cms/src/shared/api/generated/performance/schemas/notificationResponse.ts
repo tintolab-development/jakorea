@@ -28,6 +28,8 @@ export interface NotificationResponse {
   sourceId?: number;
   /** 연결 프로그램 ID */
   programId?: number;
+  /** 발행 시점 프로그램명 스냅샷(variables_json 프로그램명). 없으면 null */
+  programName?: string | null;
   /** 링크 유형 */
   linkType?: string;
   /** 링크 대상 ID */

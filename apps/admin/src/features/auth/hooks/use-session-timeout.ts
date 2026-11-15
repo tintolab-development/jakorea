@@ -68,7 +68,7 @@ export function useSessionTimeout() {
       if (!isCurrent()) return
       if (isAdminAuthUnauthorizedError(error)) {
         // Axios has already performed the single permitted Refresh/retry for GET Session.
-        // 지금 화면에서 「로그인이 종료되었어요.」를 띄우고 [확인] 때 로그아웃한다.
+        // 지금 화면에서 「자동 로그아웃 안내」를 띄우고 [확인] 때 로그아웃한다.
         setVisibleKind(null)
         endExpiredSession()
         return

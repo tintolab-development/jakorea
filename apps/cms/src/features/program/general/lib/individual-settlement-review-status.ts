@@ -23,12 +23,26 @@ const INDIVIDUAL_SETTLEMENT_REVIEW_UI_STATUS: Record<string, InstructorSettlemen
   PAID: 'account_paid',
 }
 
+/**
+ * 영수증 제출(SUBMITTED)은 차수로 나눈다 — 1차 제출 「확인 대기 중」, 반려 뒤 다시 낸 2차 이상 제출 「지급조서 재신청」.
+ * 모든 화면(정산 관리·프로그램 상세 참여자·봉사자) 공통 기준(기획 2026-11-16, USER-FUNC-0163·CMS-FUNC-0495).
+ * 서버 지급조서 확인 판정(latest_revision_no >= 2 → REAPPLICATION)과 같은 기준이다.
+ */
 export function resolveIndividualSettlementReviewUiStatus(
-  status: string | null | undefined
+  status: string | null | undefined,
+  latestRevisionNo?: number | null
 ): InstructorSettlementUiStatus | null {
   const key = normalizeIndividualSettlementReviewStatus(status)
   if (!key) return 'none'
+  if (key === 'SUBMITTED' && isIndividualSettlementResubmission(latestRevisionNo)) {
+    return 'payment_statement_reapplication'
+  }
   return INDIVIDUAL_SETTLEMENT_REVIEW_UI_STATUS[key] ?? null
+}
+
+/** 2차 이상 제출(반려 뒤 재제출) */
+export function isIndividualSettlementResubmission(latestRevisionNo: number | null | undefined): boolean {
+  return typeof latestRevisionNo === 'number' && Number.isFinite(latestRevisionNo) && latestRevisionNo >= 2
 }
 
 export const INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL = '지급 대상 아님'
@@ -45,19 +59,26 @@ export function normalizeIndividualSettlementReviewStatus(
 
 /** 목록·엑셀 처리 현황 — 상세·산출내역과 같은 라벨 */
 export function individualSettlementTableProcessingLabel(
-  status: string | null | undefined
+  status: string | null | undefined,
+  latestRevisionNo?: number | null
 ): string {
-  return individualSettlementReviewStatusLabel(status)
+  return individualSettlementReviewStatusLabel(status, latestRevisionNo)
 }
 
-export function individualSettlementReviewStatusLabel(status: string | null | undefined): string {
-  const uiStatus = resolveIndividualSettlementReviewUiStatus(status)
+export function individualSettlementReviewStatusLabel(
+  status: string | null | undefined,
+  latestRevisionNo?: number | null
+): string {
+  const uiStatus = resolveIndividualSettlementReviewUiStatus(status, latestRevisionNo)
   if (uiStatus) return getInstructorSettlementStatusLabel(uiStatus)
   return status?.trim() ?? ''
 }
 
-export function individualSettlementReviewStatusAccent(status: string | null | undefined): string {
-  const uiStatus = resolveIndividualSettlementReviewUiStatus(status)
+export function individualSettlementReviewStatusAccent(
+  status: string | null | undefined,
+  latestRevisionNo?: number | null
+): string {
+  const uiStatus = resolveIndividualSettlementReviewUiStatus(status, latestRevisionNo)
   return uiStatus
     ? getInstructorSettlementStatusPresentation(uiStatus, 'text').color
     : 'var(--Netural-black, #3d3d3d)'

@@ -10,6 +10,8 @@ import {
   type PFDataTableColumn,
 } from '@/shared/ui'
 import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import { resolvePlatformErrorAlert } from '@/shared/lib/platform-error-alert'
 import {
   useDownloadPortalEducationJournal,
   usePortalEducationJournals,
@@ -36,25 +38,23 @@ function journalRowKey(journal: PortalEducationJournal): string {
   return String(journal.journalId ?? `${journal.fileObjectId}-${journal.submittedAt}`)
 }
 
-function errorMessage(error: unknown): string {
+/** 교육일지 오류 코드별 안내 · 서버 업무 메시지. 그 밖은 빈 값(→ 시안 「처리 실패」) */
+function journalServerMessage(error: unknown): string {
   const responseData = (error as { response?: { data?: unknown } } | null)?.response?.data
   const responseError =
     responseData && typeof responseData === 'object'
       ? (responseData as { error?: { code?: unknown; message?: unknown } }).error
       : undefined
   const code = typeof responseError?.code === 'string' ? responseError.code : ''
-  const message = [
-    code,
-    error instanceof Error ? error.message : '',
-    typeof responseError?.message === 'string' ? responseError.message : '',
-  ]
+  const serverMessage = typeof responseError?.message === 'string' ? responseError.message.trim() : ''
+  const message = [code, error instanceof Error ? error.message : '', serverMessage]
     .filter(Boolean)
     .join(' ')
   if (
     message.includes('파일 저장소 업로드에 실패했습니다') ||
     message.includes('INTERNAL_SERVER_ERROR')
   ) {
-    return '교육일지 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+    return ''
   }
   if (message.includes('TRAINED_TEACHER_EDUCATION_JOURNAL_DISABLED')) {
     return '교육일지를 사용하지 않는 프로그램입니다.'
@@ -83,7 +83,15 @@ function errorMessage(error: unknown): string {
   if (message.includes('EDUCATION_JOURNAL_APPLICATION_NOT_APPROVED')) {
     return '승인 완료된 기관 신청만 교육일지를 제출할 수 있습니다.'
   }
-  return message || '교육일지 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+  return serverMessage
+}
+
+/** 목록 조회 실패 인라인 문구 (팝업 아님) */
+const JOURNAL_LIST_INLINE_ERROR = '교육일지 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+
+/** 시안 「오류 제한 팝업」(14491-2533) — 네트워크·처리 제한·처리 실패 */
+function journalErrorAlert(error: unknown): PlatformAlertCopy {
+  return resolvePlatformErrorAlert(error, { serverMessage: journalServerMessage })
 }
 
 function submittedDateLabel(value: string | undefined): string {
@@ -109,7 +117,7 @@ export function EducationJournalPanel({
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [page, setPage] = useState(1)
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<PlatformAlertCopy | null>(null)
   const journalsQuery = usePortalEducationJournals(programId, organizationApplicationId)
   const submitMutation = useSubmitPortalEducationJournal(programId, organizationApplicationId)
   const downloadMutation = useDownloadPortalEducationJournal()
@@ -148,7 +156,7 @@ export function EducationJournalPanel({
                 onClick={() =>
                   downloadMutation.mutate(
                     { fileObjectId, fileName },
-                    { onError: error => setAlertMessage(errorMessage(error)) }
+                    { onError: error => setAlert(journalErrorAlert(error)) }
                   )
                 }
                 disabled={downloadMutation.isPending}
@@ -175,7 +183,7 @@ export function EducationJournalPanel({
     if (inputRef.current) inputRef.current.value = ''
     const sizeError = validateUploadFileSize(file)
     if (sizeError) {
-      setAlertMessage(sizeError)
+      setAlert({ title: '안내', description: sizeError })
       return
     }
     submitMutation.mutate(file, {
@@ -183,7 +191,7 @@ export function EducationJournalPanel({
         setPage(1)
       },
       onError: error => {
-        setAlertMessage(errorMessage(error))
+        setAlert(journalErrorAlert(error))
       },
     })
   }
@@ -244,7 +252,7 @@ export function EducationJournalPanel({
         </PFText>
       ) : journalsQuery.isError ? (
         <PFText as="p" typo="bd-md-rg" color="error">
-          {errorMessage(journalsQuery.error)}
+          {journalServerMessage(journalsQuery.error) || JOURNAL_LIST_INLINE_ERROR}
         </PFText>
       ) : (
         <>
@@ -269,10 +277,10 @@ export function EducationJournalPanel({
       )}
 
       <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? undefined}
-        onConfirm={() => setAlertMessage(null)}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
       />
 
       {submitMutation.isPending ? (

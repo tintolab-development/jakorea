@@ -8,7 +8,7 @@ export const EMPTY_SETTINGS_VALUE = '-'
 export const SETTINGS_WITHDRAW_GUIDE = {
   title: '회원 탈퇴 안내',
   description:
-    'JA KOREA 서비스를 탈퇴하시겠습니까?\n탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제·처리됩니다. 삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 로그인 비밀번호를 입력해 주세요.',
+    'JA KOREA 서비스를 탈퇴하시겠습니까?\n탈퇴 시 개인정보는 관련 법령 및 개인정보처리방침에 따라 삭제·처리되며,\n수료증 재발급 등 로그인이 필요한 서비스를 이용할 수 없습니다.\n삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 계정 비밀번호를 입력해 주세요.',
   passwordPlaceholder: '현재 사용 중인 비밀번호를 입력해 주세요',
   cancelLabel: '취소',
   confirmLabel: '탈퇴하기',

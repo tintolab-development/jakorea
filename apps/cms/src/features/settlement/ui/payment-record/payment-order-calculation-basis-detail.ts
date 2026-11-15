@@ -979,6 +979,30 @@ export function resolveCanonicalLectureSessionDisplay(
 }
 
 /**
+ * 교육 진행 일자 칸 뒤 조각(회차·차시·일정명).
+ * BE `lectureSessionDisplay` = `YYYY-MM-DD[ HH:mm~HH:mm][ · 회차·차시·일정명]` (SettlementLectureSessionDisplay).
+ * 시안 8248:147086 `2026.12.08(월) │ 2회차` — 앞 날짜·시간은 교육일 칸과 겹치므로 떼고 뒤 조각만 쓴다.
+ * 뒤 조각이 없으면 `-`. 형식이 다르면 원문 그대로(회차·차시 단위는 바꾸지 않음).
+ */
+export function resolveLectureSessionSegmentDisplay(lectureSessionDisplay?: string | null): string {
+  const canonical = resolveCanonicalLectureSessionDisplay(lectureSessionDisplay)
+  const matched = canonical.match(
+    /^\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}~\d{2}:\d{2})?(?:\s*·\s*(.+))?$/u
+  )
+  if (!matched) return canonical
+  return matched[1]?.trim() || '-'
+}
+
+/**
+ * 교육 진행 일자 칸에 그릴 뒤 조각. 뒤 조각이 없거나 표시용 빈 값(`-`·`—`·`–`)이면 ''를 돌려
+ * 구분선 없이 날짜만 가운데 정렬되게 한다(서버 지급조서 PDF와 동일). BE 원문이 그대로 들어와도 뒤 조각만 남긴다.
+ */
+export function toLectureSessionCellSegment(lectureSessionDisplay?: string | null): string {
+  const segment = resolveLectureSessionSegmentDisplay(lectureSessionDisplay)
+  return segment === '-' || segment === '—' || segment === '–' ? '' : segment
+}
+
+/**
  * calculationDetail(basisJson) 필드만으로 모달 강의 시간을 만든다.
  * lectureTimeDisplay 원문 우선. sessionOrdinal+"차시"로 덮지 않는다.
  */
@@ -1066,12 +1090,25 @@ function enrichLectureFeeBasisDetailFromContext(
       next = { ...next, tier: resolveLectureFeeTier(categoryLabel) }
     }
   }
-  if (amountWon != null && amountWon > 0) {
-    if (next.layout === 'lectureFeeGemini') {
-      next = { ...next, feeAssessmentWon: amountWon }
-    } else {
-      next = { ...next, feeAssessmentWon: amountWon, totalWon: amountWon }
-    }
+  return applyLectureFeeAmounts(next, amountWon, row.amount)
+}
+
+/**
+ * 「강사비 책정」= 책정 단가(context 정본), 「합계」= 서버가 준 강사비 행 금액.
+ * 2차시 이상이면 단가 ≠ 합계이므로 합계를 단가로 덮지 않는다. 금액은 재계산하지 않는다.
+ */
+function applyLectureFeeAmounts<
+  T extends
+    | PaymentOrderCalculationBasisDetailLectureFeeTier
+    | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+    | PaymentOrderCalculationBasisDetailLectureFeeGemini,
+>(detail: T, standardAmountWon: number | null | undefined, rowAmountWon: number): T {
+  let next = detail
+  if (standardAmountWon != null && standardAmountWon > 0) {
+    next = { ...next, feeAssessmentWon: standardAmountWon }
+  }
+  if (next.layout !== 'lectureFeeGemini' && Number.isFinite(rowAmountWon) && rowAmountWon > 0) {
+    next = { ...next, totalWon: rowAmountWon }
   }
   return next
 }
@@ -1099,10 +1136,14 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
         sourceLayout === 'lectureFeeSpecial' ||
         sourceLayout === 'lectureFeeGemini')
     ) {
-      return buildLectureFeeBasisDetailFromStandardTitle(
-        resolveLectureFeeStandardTitleForRow(row, context),
-        context?.lectureFeeStandardAmountWon ?? row.amount,
-        resolveLectureTimeDisplayForRow(row)
+      return applyLectureFeeAmounts(
+        buildLectureFeeBasisDetailFromStandardTitle(
+          resolveLectureFeeStandardTitleForRow(row, context),
+          row.amount,
+          resolveLectureTimeDisplayForRow(row)
+        ),
+        context?.lectureFeeStandardAmountWon,
+        row.amount
       )
     }
     return row.basisDetail

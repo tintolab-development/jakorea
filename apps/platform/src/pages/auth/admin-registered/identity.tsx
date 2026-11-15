@@ -23,10 +23,16 @@ import {
 } from '@/features/auth/identity-verification'
 import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import { normalizeBirthDateDigits } from '@jakorea/identity-verification'
 import sharedStyles from './shared.module.css'
+import type { PlatformAlertCopy } from '@/shared/lib/platform-alert-copy'
+import {
+  isPlatformNetworkError,
+  isPlatformRateLimitedError,
+  resolvePlatformErrorAlert,
+} from '@/shared/lib/platform-error-alert'
 
 const IDENTITY_MISMATCH_MESSAGE =
   '입력하신 생년월일이 본인인증 정보와 일치하지 않습니다. 다시 확인해 주세요.'
@@ -40,6 +46,8 @@ export function AdminRegisteredIdentityPage() {
   const remote = isRemoteApiConfigured()
   const hasBirthAndGender = Boolean(wizardState?.birthDate && wizardState.gender)
   const [confirmError, setConfirmError] = useState<string | null>(null)
+  /** 요청 실패 — 시안 「처리 실패 / 처리 제한 / 네트워크 오류」 팝업 */
+  const [errorAlert, setErrorAlert] = useState<PlatformAlertCopy | null>(null)
   const identityConfirmMutation = useAdminProvisionedIdentityConfirmMutation()
   const confirmIdentity = identityConfirmMutation.mutateAsync
   const isConfirming = identityConfirmMutation.isPending
@@ -90,6 +98,11 @@ export function AdminRegisteredIdentityPage() {
             }
             applyAdminProvisionedOnboardingResponse(onboarding)
           } catch (error) {
+            // 응답 없음·429는 시안 공통 팝업, 본인인증 불일치 등은 화면 문구
+            if (isPlatformNetworkError(error) || isPlatformRateLimitedError(error)) {
+              setErrorAlert(resolvePlatformErrorAlert(error))
+              return
+            }
             setConfirmError(
               getLoginApiErrorMessage(
                 error,
@@ -194,6 +207,12 @@ export function AdminRegisteredIdentityPage() {
           이전으로
         </PFButton>
       </div>
+      <PFAlertModal
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
+      />
     </section>
   )
 }
