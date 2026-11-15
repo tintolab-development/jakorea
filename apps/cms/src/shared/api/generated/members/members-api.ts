@@ -21,6 +21,7 @@ import type {
   AdminMemberBasicInfoUpdateRequest,
   AdminMemberBulkDeleteRequest,
   AdminMemberCommentCreateRequest,
+  AdminMemberConsentSummary,
   AdminMemberDeleteRequest,
   AdminPermissionResponse,
   AdminPreRegisterIndividualRequest,
@@ -98,7 +99,6 @@ import type {
   MemberEnrollmentSummaryResponse,
   MemberLectureAttendanceResponse,
   MemberLectureReportResponse,
-  MemberPortalConsentSummary,
   MemberWorkflowResponse,
   NotificationResendRequest,
   PageResponse,
@@ -4956,8 +4956,8 @@ const externalIdentifiers = (
  */
 const currentConsents = (
     memberId: number,
- options?: SecondParameter<typeof customInstance<MemberPortalConsentSummary[]>>,) => {
-      return customInstance<MemberPortalConsentSummary[]>(
+ options?: SecondParameter<typeof customInstance<AdminMemberConsentSummary[]>>,) => {
+      return customInstance<AdminMemberConsentSummary[]>(
       {url: `/api/admin/users/${memberId}/consents`, method: 'GET'
     },
       options);

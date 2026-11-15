@@ -5826,7 +5826,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MemberPortalConsentSummary"
+                    "$ref": "#/components/schemas/AdminMemberConsentSummary"
                   }
                 }
               }
@@ -42608,6 +42608,15 @@
             "type": "integer",
             "format": "int64",
             "description": "공제 행은 음수"
+          },
+          "calculationDetail": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettlementFrontendCalculationDetailResponse"
+              }
+            ],
+            "nullable": true,
+            "description": "CMS 산정 기준 상세 근거. 정산 상세 items[].calculationDetail과 같은 스키마. 이 revision 제출 스냅샷 값만 담고 다시 계산하지 않는다. 근거를 만들 수 없는 행은 null."
           }
         }
       },
@@ -47761,6 +47770,15 @@
           },
           "filledDocumentRevealEndpoint": {
             "type": "string"
+          },
+          "filledDocumentUnavailableReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FilledDocumentUnavailableReason"
+              }
+            ],
+            "nullable": true,
+            "description": "filledDocumentAvailable=false일 때만 값이 있다. 이 기록의 작성본을 열 수 없는 이유. filledDocumentAvailable 판정 자체는 바뀌지 않는다."
           }
         }
       },
@@ -61871,6 +61889,191 @@
             "description": "파일 암호. 8자 이상, 영문+숫자+특수문자, 공백 불가. 쿼리/로그/분석에 넣지 않는다."
           }
         }
+      },
+      "AdminMemberConsentSummary": {
+        "type": "object",
+        "required": [
+          "consentType",
+          "title",
+          "applicable",
+          "required",
+          "agreed",
+          "signed",
+          "status",
+          "expired",
+          "withdrawable",
+          "participationRestricted",
+          "paymentRestricted",
+          "reconsentRequired",
+          "policyUpdated",
+          "withdrawBlocked",
+          "filledDocumentAvailable",
+          "signedDocumentAvailable"
+        ],
+        "properties": {
+          "consentType": {
+            "type": "string",
+            "description": "Canonical consent type; PAYMENT_STATEMENT_PRE_CONSENT is returned as PAYMENT_STATEMENT_CONSENT."
+          },
+          "title": {
+            "type": "string"
+          },
+          "applicable": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean",
+            "description": "Current effective consent after expiry, withdrawal, policy update, and required signature checks."
+          },
+          "signed": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_APPLICABLE",
+              "NOT_AGREED",
+              "AGREED",
+              "SIGNED",
+              "CONSENTED",
+              "EXPIRED",
+              "WITHDRAWN",
+              "POLICY_UPDATED",
+              "SIGNATURE_REQUIRED",
+              "DRAFT",
+              "VOID"
+            ],
+            "description": "현재 동의 상태. 화면 문구는 이 값으로 정한다. NOT_APPLICABLE=회원 유형상 해당 없음, NOT_AGREED=동의한 적 없음(동의 기록 없음 포함), AGREED=동의(전자서명이 필요 없는 유형), SIGNED=전자서명 동의, CONSENTED=보호자 동의 완료(GUARDIAN_CONSENT 원천 값), EXPIRED=동의 유효기간 만료(재동의 필요), WITHDRAWN=철회(재동의 필요), POLICY_UPDATED=동의한 약관 버전이 현재 게시 버전과 다름(재동의 필요), SIGNATURE_REQUIRED=동의 기록은 있으나 필요한 서명/작성본 증빙이 없음(재동의 필요), DRAFT=전자서명 작성 중(서명 전), VOID=무효 처리된 전자서명 문서(초상권). 만료되면 agreed는 항상 false다(agreed=true와 expired=true는 함께 오지 않는다). EXPIRED와 WITHDRAWN은 서로 다른 값이다. 부분 동의 여부는 status가 아니라 consentStatus(PARTIAL/DISAGREED)와 allItemsAgreed로 표시한다."
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "withdrawable": {
+            "type": "boolean"
+          },
+          "participationRestricted": {
+            "type": "boolean"
+          },
+          "paymentRestricted": {
+            "type": "boolean"
+          },
+          "reconsentRequired": {
+            "type": "boolean"
+          },
+          "documentId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "현재 상태를 결정한 전자서명 문서 id(consent_document_instance). 동의 기록으로 정해졌으면 null."
+          },
+          "termsVersion": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentTermsVersion": {
+            "type": "string",
+            "nullable": true
+          },
+          "policyUpdated": {
+            "type": "boolean"
+          },
+          "consentStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "programEligible": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "allItemsAgreed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다."
+          },
+          "listed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Always true or false for the four consent card types. Omitted for all other consent types, including PORTRAIT_RIGHTS. It records portal card visibility only and does not indicate consent effectiveness."
+          },
+          "withdrawBlocked": {
+            "type": "boolean",
+            "description": "지금 철회하면 409 PORTAL_CONSENT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS로 거절되는지 여부. PORTRAIT_RIGHTS(개인 신청), FACILITATOR_PLEDGE·ADMINISTRATIVE_INFO_CONSENT·CRIMINAL_HISTORY_CHECK_CONSENT(강사·봉사자 신청)에 대해, 해당 유형 신청 중 회원포탈 현황 탭 기준 결과 대기·서류 합격·승인 대기·진행 중인 건이 있으면 true. 그 외 유형은 항상 false. 동의·철회 상태와 무관한 차단 사유 플래그이므로 철회 버튼 노출은 기존처럼 withdrawable·agreed로 판단합니다."
+          },
+          "withdrawBlockedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "withdrawBlocked=true일 때의 사유 코드. 현재 값은 PORTAL_CONSENT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS 하나이며, false이면 null.",
+            "example": "PORTAL_CONSENT_WITHDRAWAL_ACTIVE_PROGRAM_EXISTS"
+          },
+          "currentConsentRecordId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "이 유형의 현재 상태를 결정한 동의 기록 id(consent-records의 consentRecordId). 대응하는 동의 기록이 없으면 null."
+          },
+          "filledDocumentAvailable": {
+            "type": "boolean",
+            "description": "currentConsentRecordId 기록의 작성본을 지금 열 수 있으면 true. true이면 filled-document 조회가 성공하는 조건과 같다(권한 검사는 별도)."
+          },
+          "filledDocumentRevealEndpoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "filledDocumentAvailable=true일 때만 값이 있다. consent-records의 filledDocumentRevealEndpoint와 같은 형식(POST, 본문 reason 필수).",
+            "example": "/api/admin/users/190076/consent-records/PORTRAIT_RIGHTS/filled-document?consentRecordId=1696576"
+          },
+          "filledDocumentUnavailableReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FilledDocumentUnavailableReason"
+              }
+            ],
+            "nullable": true,
+            "description": "filledDocumentAvailable=false일 때만 값이 있다."
+          },
+          "signedDocumentAvailable": {
+            "type": "boolean",
+            "description": "documentId의 전자서명본을 지금 열 수 있으면 true. true이면 signed-document 조회가 성공하는 조건과 같다(권한 검사는 별도). 범죄경력 동의처럼 작성본이 없고 서명본만 있는 유형은 이 값으로 「동의서 보기」를 판단한다."
+          },
+          "signedDocumentId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "signedDocumentAvailable=true일 때만 값이 있다(= documentId)."
+          },
+          "signedDocumentRevealEndpoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "signedDocumentAvailable=true일 때만 값이 있다. POST, 본문 reason 필수.",
+            "example": "/api/admin/users/190114/consent-records/CRIMINAL_HISTORY_CHECK_CONSENT/signed-document?documentId=1694929"
+          }
+        },
+        "description": "관리자 회원 상세 현재 동의 상태. consentType~withdrawBlockedReason은 포털 MemberPortalConsentSummary와 같은 값이다. currentConsentRecordId 이후 필드는 관리자 전용이며 이 유형의 현재 상태를 결정한 기록 하나만 기준으로 한다(이전 기록의 작성본으로 대체하지 않는다). 대표 기록 선택: 현재 상태가 전자서명 문서(documentId)로 정해졌으면 그 문서의 포털 전자서명 동의 기록(source_flow=PORTAL_E_SIGNATURE_{documentId})을, 동의 기록으로 정해졌으면 그 기록을 쓴다. 동의 기록은 유형별 updated_at DESC, id DESC, 초상권은 포털 동의 요약과 같은 증빙 순서로 하나를 고른다. 강사 역할 승인 등으로 같은 시각에 복사된 기록이 있어도 전자서명 문서가 현재 상태를 정했으면 그 문서의 기록이 선택된다."
+      },
+      "FilledDocumentUnavailableReason": {
+        "type": "string",
+        "enum": [
+          "NOT_SUPPORTED",
+          "WITHDRAWN",
+          "NOT_AGREED",
+          "CONSENT_EXPIRED",
+          "RETENTION_EXPIRED",
+          "TERMS_VERSION_MISMATCH",
+          "NOT_SUBMITTED"
+        ],
+        "description": "작성본을 지금 열 수 없는 이유. 여러 이유가 겹치면 우선순위가 가장 높은 하나만 내려준다. 우선순위: NOT_SUPPORTED > WITHDRAWN > NOT_AGREED > CONSENT_EXPIRED > RETENTION_EXPIRED > TERMS_VERSION_MISMATCH > NOT_SUBMITTED. NOT_SUPPORTED=작성본이 없는 유형(MARKETING·SERVICE_TERMS·PRIVACY_COLLECTION 등, CONSENT_FILLED_DOCUMENT_TYPE_NOT_SUPPORTED). WITHDRAWN=철회. NOT_AGREED=동의한 적 없음·동의 기록 없음. CONSENT_EXPIRED=동의 유효기간 만료(초상권은 동의일로부터 1년, 진행자 서약·행정정보·범죄경력 동의는 만료일이 없거나 지난 경우 포함). RETENTION_EXPIRED=보관 기간이 지나 작성본 파기(CONSENT_FILLED_DOCUMENT_RETENTION_EXPIRED). TERMS_VERSION_MISMATCH=초상권 동의 버전이 현재 게시 약관 버전과 다름(초상권 전용). NOT_SUBMITTED=작성본을 지원하는 유형이지만 저장된 작성본 없음(CONSENT_FILLED_DOCUMENT_NOT_FOUND)."
       }
     },
     "responses": {
