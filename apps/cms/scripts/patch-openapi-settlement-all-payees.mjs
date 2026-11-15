@@ -7,6 +7,8 @@
  * - SettlementCalendarItemResponse: rowType, payeeType, settlementApplicationId, individualSettlementApplicationId
  * - SettlementListItemResponse: payeeBankName·payeeAccountNumberMasked·payeeAccountHolder(영수증 행 신청 당시 계좌)
  * - SettlementBulkStatusChangeRequest: individualSettlementApplications(IndividualSettlementBulkApprovalTarget) — 영수증 일괄 승인
+ * - SettlementBulkStatusChangeRequest: instructorSettlementApplications(InstructorSettlementBulkConfirmTarget) — 확정 전 강사 신청서 일괄 확인
+ * - SettlementBulkStatusChangeResponse: instructorSettlementApplicationResults(SettlementApplicationAdminActionResponse[])
  *
  * backend 스냅샷과 이미 필터된 스펙 모두에 적용한다. 멱등.
  *   node scripts/patch-openapi-settlement-all-payees.mjs
@@ -138,6 +140,38 @@ const bulkIndividualSettlementApplicationsProperty = {
     '지급조서 일괄 확인에 함께 처리할 영수증 정산 신청(개인 참여자·봉사자). 강사 지급조서와 같은 트랜잭션에서 승인하며 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.',
 }
 
+/** 지급조서 일괄 확인에 확정 전 강사 정산 신청서를 함께 보낸다(신청서 승인 → 지급조서 확인, 한 트랜잭션) */
+const instructorSettlementBulkConfirmTarget = {
+  type: 'object',
+  required: ['settlementApplicationId'],
+  description:
+    '확정 전 강사 정산 신청서 일괄 확인 대상. 재제출은 새 신청서 ID를 만들므로 별도 revision 값은 받지 않는다.',
+  properties: {
+    settlementApplicationId: {
+      type: 'integer',
+      format: 'int64',
+      minimum: 1,
+      description:
+        '강사 정산 신청서 ID. 지급조서 확인 라인(rowType=SETTLEMENT_APPLICATION)의 settlementApplicationId',
+    },
+  },
+}
+
+const bulkInstructorSettlementApplicationsProperty = {
+  type: 'array',
+  maxItems: 500,
+  items: { $ref: '#/components/schemas/InstructorSettlementBulkConfirmTarget' },
+  description:
+    '지급조서 일괄 확인에 함께 처리할 확정 전 강사 정산 신청서. 신청서마다 승인 후 지급조서 확인까지 한 번에 처리하며 강사 지급조서·영수증과 같은 트랜잭션에서 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.',
+}
+
+const bulkInstructorSettlementApplicationResultsProperty = {
+  type: 'array',
+  description:
+    '지급조서 일괄 확인에서 함께 처리한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양). 없으면 빈 배열',
+  items: { $ref: '#/components/schemas/SettlementApplicationAdminActionResponse' },
+}
+
 for (const file of readdirSync(openapiDir).filter(name => name.endsWith('.openapi.json'))) {
   const path = join(openapiDir, file)
   const raw = readFileSync(path, 'utf8')
@@ -167,6 +201,14 @@ for (const file of readdirSync(openapiDir).filter(name => name.endsWith('.openap
   if (bulkRequestProps) {
     schemas.IndividualSettlementBulkApprovalTarget = individualSettlementBulkApprovalTarget
     bulkRequestProps.individualSettlementApplications = bulkIndividualSettlementApplicationsProperty
+    schemas.InstructorSettlementBulkConfirmTarget = instructorSettlementBulkConfirmTarget
+    bulkRequestProps.instructorSettlementApplications = bulkInstructorSettlementApplicationsProperty
+    changed = true
+  }
+  const bulkResponseProps = schemas?.SettlementBulkStatusChangeResponse?.properties
+  if (bulkResponseProps && schemas?.SettlementApplicationAdminActionResponse) {
+    bulkResponseProps.instructorSettlementApplicationResults =
+      bulkInstructorSettlementApplicationResultsProperty
     changed = true
   }
   const calendarProps = schemas?.SettlementCalendarItemResponse?.properties

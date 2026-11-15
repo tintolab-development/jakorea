@@ -786,6 +786,7 @@ export * from './instructorRoleReviewRequestChannelType';
 export * from './instructorRoleWorkflowResponse';
 export * from './instructorScheduleDistanceResponse';
 export * from './instructorSessionSummary';
+export * from './instructorSettlementBulkConfirmTarget';
 export * from './instructorVerificationConsentResponse';
 export * from './instructorVerificationConsentUpsertRequest';
 export * from './instructorVerificationRequestCreateRequest';

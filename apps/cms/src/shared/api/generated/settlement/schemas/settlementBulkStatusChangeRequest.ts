@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { IndividualSettlementApprovalTarget } from './individualSettlementApprovalTarget';
+import type { InstructorSettlementBulkConfirmTarget } from './instructorSettlementBulkConfirmTarget';
 
 /**
  * 정산/지급 일괄 상태 변경 요청. 프론트 핸드오프 호환을 위해 statementIds/paymentIds와 legacy ids를 모두 허용합니다.
@@ -45,4 +46,9 @@ export interface SettlementBulkStatusChangeRequest {
      * @maxItems 500
      */
   individualSettlementApplications?: IndividualSettlementApprovalTarget[];
+  /**
+     * 지급조서 일괄 확인에 함께 처리할 확정 전 강사 정산 신청서. 신청서마다 승인 후 지급조서 확인까지 한 번에 처리하며 강사 지급조서·영수증과 같은 트랜잭션에서 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.
+     * @maxItems 500
+     */
+  instructorSettlementApplications?: InstructorSettlementBulkConfirmTarget[];
 }

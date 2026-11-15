@@ -38,6 +38,7 @@ import type {
 import type { SettlementCalendarParams } from '@/shared/api/generated/settlement/schemas'
 import type { SettlementListResponse } from '@/shared/api/generated/settlement/schemas/settlementListResponse'
 import type { SettlementApplicationDocumentResponse } from '@/shared/api/generated/settlement/schemas'
+import { readSettlementBulkConfirmResult } from '@/features/settlement-management/api/read-bulk-confirm-result'
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
 
@@ -117,8 +118,10 @@ export async function confirmPaymentStatementRemote(
 
 export async function bulkConfirmPaymentStatementsRemote(
   body: SettlementBulkStatusChangeRequest
-): Promise<void> {
-  await unwrapApiBody(await settlementApi.bulkConfirmPaymentStatements(body))
+) {
+  return readSettlementBulkConfirmResult(
+    await unwrapApiBody(await settlementApi.bulkConfirmPaymentStatements(body)),
+  )
 }
 
 export async function bulkMarkAccountPaymentsPaidRemote(

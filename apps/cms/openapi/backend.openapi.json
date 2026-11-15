@@ -85652,6 +85652,14 @@
             },
             "maxItems": 500,
             "minItems": 0
+          },
+          "instructorSettlementApplications": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "$ref": "#/components/schemas/InstructorSettlementBulkConfirmTarget"
+            },
+            "description": "지급조서 일괄 확인에 함께 처리할 확정 전 강사 정산 신청서. 신청서마다 승인 후 지급조서 확인까지 한 번에 처리하며 강사 지급조서·영수증과 같은 트랜잭션에서 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다."
           }
         },
         "required": [
@@ -85731,7 +85739,7 @@
           "requestedCount": {
             "type": "integer",
             "format": "int32",
-            "description": "요청 건수. 지급조서 일괄 확인이면 지급조서 + 영수증 정산 신청 건수"
+            "description": "요청 건수. 지급조서 일괄 확인이면 지급조서 + 확정 전 강사 신청서 + 영수증 합계"
           },
           "successCount": {
             "type": "integer",
@@ -85749,6 +85757,13 @@
             "description": "지급조서 일괄 확인에서 함께 승인한 영수증 정산 신청 결과(단건 승인 응답과 같은 모양). 없으면 빈 배열",
             "items": {
               "$ref": "#/components/schemas/Decision"
+            }
+          },
+          "instructorSettlementApplicationResults": {
+            "type": "array",
+            "description": "지급조서 일괄 확인에서 함께 처리한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양). 없으면 빈 배열",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationAdminActionResponse"
             }
           }
         }
@@ -128458,6 +128473,21 @@
             "writeOnly": true,
             "minLength": 8,
             "description": "파일 암호. 8자 이상, 영문+숫자+특수문자, 공백 불가. 쿼리/로그/분석에 넣지 않는다."
+          }
+        }
+      },
+      "InstructorSettlementBulkConfirmTarget": {
+        "type": "object",
+        "required": [
+          "settlementApplicationId"
+        ],
+        "description": "확정 전 강사 정산 신청서 일괄 확인 대상. 재제출은 새 신청서 ID를 만들므로 별도 revision 값은 받지 않는다.",
+        "properties": {
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "강사 정산 신청서 ID. 지급조서 확인 라인(rowType=SETTLEMENT_APPLICATION)의 settlementApplicationId"
           }
         }
       }

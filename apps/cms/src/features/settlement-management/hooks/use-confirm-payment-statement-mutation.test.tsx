@@ -63,6 +63,22 @@ describe('useConfirmPaymentStatementMutation — 영수증 일괄 승인 함께 
     )
   })
 
+  it('확정 전 강사 신청서는 settlementApplicationId만 보내고 revision은 넣지 않는다', async () => {
+    const { result } = setup()
+    await act(async () => {
+      await result.current.mutateAsync({
+        statementIds: [],
+        lectureFeePaymentScheduledDate: '2026-11-20',
+        instructorSettlementApplications: [{ settlementApplicationId: 25 }],
+      })
+    })
+    const body = bulkConfirmMock.mock.calls[0][0] as Record<string, unknown>
+    expect(body.instructorSettlementApplications).toEqual([{ settlementApplicationId: 25 }])
+    expect(body).not.toHaveProperty('individualSettlementApplications')
+    expect(JSON.stringify(body)).not.toContain('expectedRevisionNo')
+    expect(body.reason).toBe('지급조서 확인')
+  })
+
   it('강사·영수증 모두 없으면 호출하지 않고, 영수증이 없으면 필드를 보내지 않는다', async () => {
     const { result } = setup()
     await act(async () => {

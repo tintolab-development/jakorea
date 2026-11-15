@@ -7,6 +7,12 @@ import type { AccountPaymentTransferStatus } from '@/features/settlement-managem
 /** BE settlement/payment-statement availableActions */
 export const CONFIRM_PAYMENT_STATEMENT_ACTION = 'CONFIRM_PAYMENT_STATEMENT'
 
+/**
+ * 확정 전 강사 정산 신청서 행(rowType=SETTLEMENT_APPLICATION)의 일괄 확인 가능 표시.
+ * statementId가 없어 단건 「지급조서 확인」(CONFIRM_PAYMENT_STATEMENT)은 쓰지 않고, 일괄 확인에서만 신청서 승인 + 지급조서 확인을 한 번에 처리한다.
+ */
+export const BULK_CONFIRM_PAYMENT_STATEMENT_ACTION = 'BULK_CONFIRM_PAYMENT_STATEMENT'
+
 /** API statementStatus → UI 지급조서 처리 현황 */
 export function mapStatementStatusToProcessingStatus(
   status: string | null | undefined

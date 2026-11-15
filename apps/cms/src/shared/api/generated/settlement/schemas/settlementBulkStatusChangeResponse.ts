@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { Decision } from './decision';
+import type { SettlementApplicationAdminActionResponse } from './settlementApplicationAdminActionResponse';
 import type { SettlementStatusChangeResponse } from './settlementStatusChangeResponse';
 
 export interface SettlementBulkStatusChangeResponse {
@@ -18,4 +19,6 @@ export interface SettlementBulkStatusChangeResponse {
   results?: SettlementStatusChangeResponse[];
   /** 지급조서 일괄 확인에서 함께 승인한 영수증 정산 신청 결과(단건 승인 응답과 같은 모양). 없으면 빈 배열 */
   individualSettlementApplicationResults?: Decision[];
+  /** 지급조서 일괄 확인에서 함께 처리한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양). 없으면 빈 배열 */
+  instructorSettlementApplicationResults?: SettlementApplicationAdminActionResponse[];
 }

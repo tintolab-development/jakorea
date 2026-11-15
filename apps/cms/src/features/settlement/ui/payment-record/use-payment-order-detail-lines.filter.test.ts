@@ -70,3 +70,38 @@ describe('canBatchConfirmDetailLine — 영수증 행도 일괄 확인 대상', 
     expect(canBatchConfirmDetailLine(instructor(['VIEW']))).toBe(false)
   })
 })
+
+describe('canBatchConfirmDetailLine — 확정 전 강사 정산 신청서 행', () => {
+  const application = (overrides: Record<string, unknown> = {}) =>
+    ({
+      rowType: 'SETTLEMENT_APPLICATION',
+      settlementApplicationId: 26,
+      statementStatus: 'WAITING_CONFIRM',
+      availableActions: [
+        'VIEW',
+        'BULK_CONFIRM_PAYMENT_STATEMENT',
+        'CONFIRM_SETTLEMENT_APPLICATION',
+        'REJECT_SETTLEMENT_APPLICATION',
+        'REQUEST_CORRECTION',
+      ],
+      ...overrides,
+    }) as unknown as PaymentOrderDetailLineRow
+
+  it('BULK_CONFIRM_PAYMENT_STATEMENT가 있으면 확인 가능', () => {
+    expect(canBatchConfirmDetailLine(application())).toBe(true)
+  })
+
+  it('BULK 코드가 없으면(정정 요청·반려·BE 미배포) 확인 불가 — statementStatus로 추정하지 않는다', () => {
+    expect(
+      canBatchConfirmDetailLine(
+        application({ availableActions: ['VIEW', 'CONFIRM_SETTLEMENT_APPLICATION'] })
+      )
+    ).toBe(false)
+  })
+
+  it('신청서 ID가 없으면 확인 불가', () => {
+    expect(canBatchConfirmDetailLine(application({ settlementApplicationId: undefined }))).toBe(
+      false
+    )
+  })
+})

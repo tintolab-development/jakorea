@@ -11,8 +11,8 @@ import type {
   SettlementListItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
 import {
+  BULK_CONFIRM_PAYMENT_STATEMENT_ACTION,
   canConfirmPaymentStatement,
-  CONFIRM_PAYMENT_STATEMENT_ACTION,
   mapSettlementAxesToLineStatus,
 } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import {
@@ -104,8 +104,9 @@ function sharedPaymentOrderLineFields(
     statementStatus: item.statementStatus ?? undefined,
     paymentStatus: item.paymentStatus ?? undefined,
     availableActions,
+    // 확정 전 강사 신청서 행은 일괄 확인 전용 코드로 판단한다(단건 지급조서 확인 코드는 내려오지 않음).
     canConfirmPaymentStatement: applicationLine
-      ? (availableActions ?? []).includes(CONFIRM_PAYMENT_STATEMENT_ACTION)
+      ? (availableActions ?? []).includes(BULK_CONFIRM_PAYMENT_STATEMENT_ACTION)
       : canConfirmPaymentStatement({
           availableActions,
           statementStatus: item.statementStatus,
