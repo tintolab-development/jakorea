@@ -6,6 +6,7 @@ import {
   MYPAGE_INQUIRIES_PATH,
   MYPAGE_LECTURE_PATH,
   MYPAGE_SETTINGS_CONSENTS_TAB,
+  MYPAGE_SETTINGS_PATH,
   MYPAGE_SETTLEMENT_PATH,
   MYPAGE_VOLUNTEER_PATH,
   volunteerApplicationDetailPath,
@@ -44,6 +45,13 @@ export function resolvePortalNotificationPath(
 
   if (hasToken(tokens, 'CONSENT') || hasToken(tokens, 'MARKETING')) {
     return MYPAGE_SETTINGS_CONSENTS_TAB
+  }
+  /**
+   * 본인인증 완료(linkType MEMBER_PROFILE) — 서버 본문 「회원정보 설정에서 확인할 수 있습니다」에 맞춰 회원정보 설정.
+   * 같은 MEMBER_PROFILE을 쓰는 가입 완료·휴면·탈퇴·교사 재직 변경 알림은 이동 대상을 정하지 않아 그대로 둔다.
+   */
+  if (eventType === 'MEMBER_IDENTITY_VERIFIED') {
+    return MYPAGE_SETTINGS_PATH
   }
   if (linkType === 'NOTICE' || eventType === 'NOTICE' || sourceDomain === 'NOTICE') {
     return targetId != null ? `/notices/${targetId}` : '/notices'
