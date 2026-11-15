@@ -18,6 +18,12 @@ import {
 import { resolveStudentDocumentsErrorMessage } from '../lib/student-documents-errors'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
+import {
+  educationNoticeAlert,
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
+import { PLATFORM_ALERT_COPY } from '@/shared/lib/platform-alert-copy'
 import fileDownloadBlackUrl from '@/shared/assets/icons/file-download-black.svg'
 import { PFAlertModal, PFButton, PFCheckbox, PFLoadingSpinner, PFModal, PFText } from '@/shared/ui'
 import styles from './students-panel-certificate-modal.module.css'
@@ -39,7 +45,7 @@ export function StudentsPanelCertificateModal({
     applicationId,
     keys: new Set(),
   }))
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alert, setAlert] = useState<EducationAlert | null>(null)
   const downloadCertificates = useDownloadOrganizationStudentCertificatesMutation(applicationId)
   const { displayName } = useMypageMember()
   const isDownloading = downloadCertificates.isPending
@@ -63,7 +69,7 @@ export function StudentsPanelCertificateModal({
 
   useEffect(() => {
     setSelection({ applicationId, keys: new Set() })
-    setAlertMessage(null)
+    setAlert(null)
   }, [open, rows, applicationId])
 
   const allSelected =
@@ -87,9 +93,14 @@ export function StudentsPanelCertificateModal({
 
   const handleDownload = async () => {
     if (isDownloading || downloadInFlightRef.current) return
+    // 시안 「공통 제한 안내 / 항목 선택」 — 버튼은 늘 활성, 선택 없이 누르면 안내 팝업
+    if (selectedRosterIds.length === 0) {
+      setAlert(PLATFORM_ALERT_COPY.noItemSelected)
+      return
+    }
     const validationMessage = validateCertificateRosterIds(selectedRosterIds)
     if (validationMessage) {
-      setAlertMessage(validationMessage)
+      setAlert(educationNoticeAlert(validationMessage))
       return
     }
     downloadInFlightRef.current = true
@@ -103,7 +114,7 @@ export function StudentsPanelCertificateModal({
       })
       onClose()
     } catch (error) {
-      setAlertMessage(resolveStudentDocumentsErrorMessage(error, '수료증을 다운로드하지 못했습니다.'))
+      setAlert(resolveEducationErrorAlert(error, resolveStudentDocumentsErrorMessage))
     } finally {
       downloadInFlightRef.current = false
     }
@@ -247,7 +258,7 @@ export function StudentsPanelCertificateModal({
               className={styles.footerButton}
               variant="primary"
               size="xlarge"
-              disabled={isDownloading || selectedRosterIds.length === 0}
+              disabled={isDownloading}
               onClick={handleDownload}
             >
               <span className={styles.downloadInner}>
@@ -267,11 +278,11 @@ export function StudentsPanelCertificateModal({
       </PFModal>
 
       <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? ''}
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
         confirmLabel="확인"
-        onConfirm={() => setAlertMessage(null)}
+        onConfirm={() => setAlert(null)}
       />
       {isDownloading ? <PFLoadingSpinner blocking label="수료증을 다운로드하는 중" /> : null}
     </>

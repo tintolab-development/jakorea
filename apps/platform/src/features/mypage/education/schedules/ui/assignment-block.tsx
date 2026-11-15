@@ -20,6 +20,10 @@ import {
 } from '@/features/mypage/instructor-apply/api/member-file-upload'
 import { EducationSessionGuideBlock } from '../../shared'
 import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import {
+  resolveEducationErrorAlert,
+  type EducationAlert,
+} from '../../shared/lib/education-error-alert'
 import { usePortalFormResponseFeedbackQuery } from '../api/use-portal-form-response-feedback-query'
 import {
   AssignmentFileCountExceededError,
@@ -35,16 +39,20 @@ import {
 } from './assignment-submit-modal'
 import styles from './assignment-block.module.css'
 
-const ASSIGNMENT_UPLOAD_FAILED_MESSAGE = '과제 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 const EMPTY_ASSIGNMENT_FILES: readonly EducationScheduleAssignmentFile[] = []
 
-const UPLOAD_ERROR_CLASSES = [
+/** 제출 전 개수·용량·필수 검사 — 시안에 따로 없는 업무 안내라 「과제 제출 안내」로 보여 준다 */
+const UPLOAD_VALIDATION_ERROR_CLASSES = [
   AssignmentFileCountExceededError,
   AssignmentSubmissionLimitExceededError,
   AssignmentSubmissionRequiredError,
   AssignmentUploadPolicyError,
   MemberFileTooLargeError,
   MemberFileEmptyError,
+] as const
+
+/** 업로드 단계 오류 — 업무 안내(보안 검사 등)는 설명에 쓰고, 일반 실패 문구는 시안 「처리 실패」 */
+const UPLOAD_ERROR_CLASSES = [
   MemberFileRejectedError,
   MemberFileScanTimeoutError,
   MemberFileUploadRequestError,
@@ -53,11 +61,15 @@ const UPLOAD_ERROR_CLASSES = [
   MemberFileStatusCheckError,
 ] as const
 
-function assignmentSubmitErrorMessage(error: unknown): string {
-  if (UPLOAD_ERROR_CLASSES.some(ErrorClass => error instanceof ErrorClass)) {
-    return (error as Error).message
+function assignmentSubmitErrorAlert(error: unknown): EducationAlert {
+  if (UPLOAD_VALIDATION_ERROR_CLASSES.some(ErrorClass => error instanceof ErrorClass)) {
+    return { title: '과제 제출 안내', description: (error as Error).message }
   }
-  return getProgramApplicationApiErrorMessage(error, ASSIGNMENT_UPLOAD_FAILED_MESSAGE)
+  return resolveEducationErrorAlert(error, (target, fallback) =>
+    UPLOAD_ERROR_CLASSES.some(ErrorClass => target instanceof ErrorClass)
+      ? (target as Error).message
+      : getProgramApplicationApiErrorMessage(target, fallback),
+  )
 }
 
 type EducationScheduleAssignmentBlockProps = {
@@ -80,7 +92,7 @@ export function EducationScheduleAssignmentBlock({
 }: EducationScheduleAssignmentBlockProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorAlert, setErrorAlert] = useState<EducationAlert | null>(null)
   const filesMutation = useScheduleAssignmentFilesMutation(applicationType, applicationId)
 
   const feedbackQuery = usePortalFormResponseFeedbackQuery({
@@ -144,7 +156,7 @@ export function EducationScheduleAssignmentBlock({
       },
       {
         onError: error => {
-          setErrorMessage(assignmentSubmitErrorMessage(error))
+          setErrorAlert(assignmentSubmitErrorAlert(error))
         },
       },
     )
@@ -240,10 +252,10 @@ export function EducationScheduleAssignmentBlock({
         ) : null}
       </EducationSessionGuideBlock>
       <PFAlertModal
-        open={errorMessage != null}
-        title="과제 제출 안내"
-        description={errorMessage ?? ''}
-        onConfirm={() => setErrorMessage(null)}
+        open={errorAlert != null}
+        title={errorAlert?.title ?? ''}
+        description={errorAlert?.description}
+        onConfirm={() => setErrorAlert(null)}
       />
       <EducationAssignmentFeedbackModal
         open={feedbackOpen}

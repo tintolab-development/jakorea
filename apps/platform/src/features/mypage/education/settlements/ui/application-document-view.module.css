@@ -248,8 +248,7 @@
   font-size: 18px;
 }
 
-.attachmentError {
-  margin: 0;
-  color: var(--color-status-error-default, #d92d20);
-  font-size: 20px;
+/* 첨부 다운로드 오류 팝업 — 전체 화면 미리보기(z-index 1200·1201) 위에 띄운다 */
+.alertBackdrop.alertBackdrop {
+  z-index: 1300;
 }

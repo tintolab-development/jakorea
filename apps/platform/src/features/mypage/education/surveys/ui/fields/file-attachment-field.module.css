@@ -91,15 +91,6 @@
   gap: 8px;
 }
 
-.fileError {
-  margin: 0;
-  color: var(--color-red, #e5484d);
-  font-family: var(--font-family-base);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 140%;
-}
-
 @media (--bp-below-pc) {
   .attachRow {
     flex-direction: column;

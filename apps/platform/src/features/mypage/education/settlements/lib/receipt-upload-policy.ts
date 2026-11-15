@@ -6,8 +6,11 @@ export const RECEIPT_UPLOAD_MAX_BYTES = FILE_UPLOAD_MAX_BYTES
 export const RECEIPT_UPLOAD_ACCEPT =
   '.jpg,.jpeg,.png,.xls,.xlsx,.pdf,.doc,.docx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
+/** 영수증 허용 형식 — 첨부 안내와 「파일 형식이 맞지 않는 경우」 팝업 설명에 같이 쓴다 */
+export const RECEIPT_UPLOAD_FORMATS_LABEL = 'JPG, PNG, Excel, PDF, Word'
+
 export const RECEIPT_UPLOAD_HINTS = [
-  formatMultiFileUploadHint('JPG, PNG, Excel, PDF, Word'),
+  formatMultiFileUploadHint(RECEIPT_UPLOAD_FORMATS_LABEL),
   '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
