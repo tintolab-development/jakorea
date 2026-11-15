@@ -246,6 +246,9 @@ export function ParticipatingParticipantSettlementSection({
         programId={programId}
         participantId={participantId}
         settlementApplicationId={detailApplicationId}
+        sessionOrdinal={
+          rows.find(row => row.settlementApplicationId === detailApplicationId)?.sessionOrdinal ?? null
+        }
         programSessionProgressDisplay={programSessionProgressDisplay}
         businessPeriodDisplay={businessPeriodDisplay}
         onClose={() => setDetailApplicationId(null)}

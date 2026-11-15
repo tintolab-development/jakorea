@@ -112,6 +112,8 @@ export type IndividualSettlementReviewDetailModalProps = {
   businessPeriodDisplay?: string | null
   /** 기관형 프로그램만 true — 산출 내역 표에 '참여 기관명' 열을 보인다(개인형은 숨김) */
   showInstitutionColumn?: boolean
+  /** 일정 회차 번호 — 산출 내역서 교육 진행 일자 칸 「N회차」. 영수증 검토 상세에 없어 여는 쪽 행에서 넘긴다 */
+  sessionOrdinal?: number | null
   onClose: () => void
   onReviewed?: () => Promise<void> | void
 }
@@ -124,6 +126,7 @@ export function IndividualSettlementReviewDetailModal({
   programSessionProgressDisplay,
   businessPeriodDisplay,
   showInstitutionColumn = false,
+  sessionOrdinal,
   onClose,
   onReviewed,
 }: IndividualSettlementReviewDetailModalProps) {
@@ -183,9 +186,10 @@ export function IndividualSettlementReviewDetailModal({
             programSessionProgressDisplay,
             businessPeriodDisplay,
             includeInstitution: showInstitutionColumn,
+            sessionOrdinal,
           })
         : null,
-    [businessPeriodDisplay, detail, programSessionProgressDisplay, showInstitutionColumn]
+    [businessPeriodDisplay, detail, programSessionProgressDisplay, sessionOrdinal, showInstitutionColumn]
   )
 
   const rejectStatement = useMemo((): PaymentOrderProgramCalculationStatement | null => {

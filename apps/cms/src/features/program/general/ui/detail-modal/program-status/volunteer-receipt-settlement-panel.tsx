@@ -311,6 +311,9 @@ export function VolunteerReceiptSettlementPanel({
         programId={programId}
         participantId={reviewKey}
         settlementApplicationId={detailApplicationId}
+        sessionOrdinal={
+          rows.find(row => row.settlementApplicationId === detailApplicationId)?.sessionOrdinal ?? null
+        }
         programSessionProgressDisplay={programSessionProgressDisplay}
         businessPeriodDisplay={businessPeriodDisplay}
         showInstitutionColumn={showInstitutionColumn}

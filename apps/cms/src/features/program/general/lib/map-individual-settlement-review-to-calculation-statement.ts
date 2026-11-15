@@ -8,6 +8,7 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import {
   INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL,
   individualSettlementReviewStatusLabel,
@@ -88,6 +89,11 @@ export type IndividualSettlementReviewBasicExtras = {
    * 화면에서도 쓰지 않는다(열·팝업 모두 비노출, 기획 2026-11-12 2차 1번).
    */
   includeInstitution?: boolean
+  /**
+   * 일정 회차 번호. 영수증 검토 상세에는 회차가 없어 목록 행(지급조서 확인 라인·배정 일정)에서 받는다.
+   * 산출 내역서 교육 진행 일자 칸 「YYYY.MM.DD(요일) │ N회차」(시안)에 쓴다.
+   */
+  sessionOrdinal?: number | null
 }
 
 export function mapIndividualSettlementReviewToCalculationStatement(
@@ -100,7 +106,9 @@ export function mapIndividualSettlementReviewToCalculationStatement(
   const lectureDateDisplay = detail.scheduleStartAt
     ? formatDateDotWithWeekday(detail.scheduleStartAt)
     : displayOrDash(formatCmsScheduleDisplayLabel(detail.scheduleName ?? '') || detail.scheduleName)
-  const lectureSessionDisplay = extractSessionLabel(detail.scheduleName)
+  const ordinalLabel = formatLectureSessionLabel(extras?.sessionOrdinal)
+  const lectureSessionDisplay =
+    extractSessionLabel(detail.scheduleName) || (ordinalLabel === '-' ? '' : ordinalLabel)
   const receiptsByItemId: Record<string, IndividualSettlementReviewReceipt[]> = {}
 
   const lines = items.map(item => {
