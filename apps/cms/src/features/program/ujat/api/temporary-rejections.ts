@@ -10,7 +10,8 @@ export function parseNumericResourceId(value: string | number | null | undefined
   return Number.isFinite(numeric) && numeric > 0 ? numeric : null
 }
 
-function resolveRemoteIds(input: {
+/** 임시 반려·임시 배정 일괄 POST 공통 — 원격 비활성·유효 id 없음이면 null */
+export function resolveRemoteIds(input: {
   programId?: string | number | null
   applicationIds: Array<string | number>
 }): { programId: number; applicationIds: number[] } | null {

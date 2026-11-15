@@ -156,8 +156,10 @@ export function buildProgressConfirmedScheduleRowsFromTemporarySchedule(input: {
   temporarySchedule: UjatOrganizationScheduleResponse | null | undefined
   resolveHalf: (isoDate: string) => ProgressConfirmedScheduleHalf | null
   formatDateDisplay: (isoDate: string) => string
-}): Array<{ id: string; dateDisplay: string; classLabels: string[] }> {
+}): Array<{ id: string; dateDisplay: string; classLabels: string[]; scheduleId?: number }> {
   const grouped = new Map<string, string[]>()
+  /** 날짜별 slot.scheduleId. 같은 날짜에 서로 다른 값이 오면 null(특정 불가) */
+  const scheduleIdByIso = new Map<string, number | null>()
 
   for (const slot of input.temporarySchedule?.slots ?? []) {
     const iso = toSeoulYmd(slot.scheduleStartAt)
@@ -168,19 +170,32 @@ export function buildProgressConfirmedScheduleRowsFromTemporarySchedule(input: {
     const labels = grouped.get(iso) ?? []
     if (!labels.includes(label)) labels.push(label)
     grouped.set(iso, labels)
+    const slotScheduleId =
+      typeof slot.scheduleId === 'number' && Number.isSafeInteger(slot.scheduleId) && slot.scheduleId > 0
+        ? slot.scheduleId
+        : null
+    if (!scheduleIdByIso.has(iso)) {
+      scheduleIdByIso.set(iso, slotScheduleId)
+    } else if (scheduleIdByIso.get(iso) !== slotScheduleId) {
+      scheduleIdByIso.set(iso, null)
+    }
   }
 
   return [...grouped.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([iso, labels]) => ({
-      id: `${input.institutionId}-${iso}`,
-      dateDisplay: input.formatDateDisplay(iso),
-      classLabels: [...labels].sort((a, b) => {
-        const left = classLabelSortKey(a)
-        const right = classLabelSortKey(b)
-        return left.grade - right.grade || left.classNo - right.classNo
-      }),
-    }))
+    .map(([iso, labels]) => {
+      const scheduleId = scheduleIdByIso.get(iso)
+      return {
+        id: `${input.institutionId}-${iso}`,
+        dateDisplay: input.formatDateDisplay(iso),
+        classLabels: [...labels].sort((a, b) => {
+          const left = classLabelSortKey(a)
+          const right = classLabelSortKey(b)
+          return left.grade - right.grade || left.classNo - right.classNo
+        }),
+        ...(scheduleId != null ? { scheduleId } : {}),
+      }
+    })
 }
 
 /**

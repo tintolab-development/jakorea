@@ -61,8 +61,8 @@ export function collectScheduleAssignPendingInstitutionNames(
 
 /**
  * 해당 날짜에 배정 가능한 기관.
- * 목록 일괄 「임시 배정」은 상태 PATCH를 하지 않으므로 SUBMITTED(평가 대기)도 포함한다.
- * 해당 일 희망일(O)이 있는 기관만.
+ * 상태만 임시 배정(POST temporary-assignments, 일정 미배정)된 기관과 평가 대기 기관을 모두 포함한다.
+ * 신청 반려·임시 반려만 제외. 해당 일 희망일(O)이 있는 기관만.
  */
 export function listAssignableSchoolsForDate(
   rows: UjatInstitutionApplicationRow[],

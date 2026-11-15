@@ -13,15 +13,21 @@ import { TemporaryActionModal } from '../temporary-action-modal'
 import type { UjatTemporaryActionKind } from '../temporary-action-copy'
 import { releaseUjatTemporarySchedules } from '../list/temp-release'
 import {
-  getUjatInstitutionTempRejectCompleteContent,
   UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
   UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
   UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_CONTENT,
   UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_TITLE,
-  UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
+  UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_TITLE,
+  UJAT_INSTITUTION_TEMP_REJECT_DETAIL_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_TEMP_REJECT_DETAIL_COMPLETE_TITLE,
   UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_CONTENT,
   UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_TITLE,
 } from '../list/temp-assign-complete'
+import {
+  buildTemporaryAssignmentFailureLines,
+  type TemporaryAssignmentBulkResponse,
+} from '@/features/program/ujat/api/temporary-assignments'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import {
@@ -52,6 +58,9 @@ export function UjatInstitutionApplicationDetailPage({
     rejectRemote,
     tempRejectRemote,
     tempRejectCancelRemote,
+    tempAssignRemote,
+    tempAssignCancelRemote,
+    invalidate,
     workflow,
     workflowReady,
   } = useUjatInstitutionApplicationDetail({ institutionId, programId })
@@ -143,9 +152,9 @@ export function UjatInstitutionApplicationDetailPage({
           reason,
           toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
         )
+        // 상세에 머문다 — rejectRemote가 상세·목록 쿼리를 무효화해 서버 재조회로 상태·버튼이 바뀐다.
         setPendingAction(null)
         onStatusUpdated()
-        onBack()
         showAlert({
           title: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
           content: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
@@ -166,20 +175,53 @@ export function UjatInstitutionApplicationDetailPage({
     setPendingTempKind(null)
   }, [actionLoading])
 
+  /** 건별 실패(HTTP 200 failures[]) — 서버 message 그대로. 재조회로 최신 상태를 맞춘다 */
+  const showTemporaryAssignmentFailure = useCallback(
+    (response: TemporaryAssignmentBulkResponse, fallback: string) => {
+      const lines = buildTemporaryAssignmentFailureLines(response.failures, { fallback })
+      showAlert({ title: '안내', content: lines.length > 0 ? lines.join('\n') : fallback })
+      void invalidate()
+    },
+    [invalidate, showAlert]
+  )
+
   const handleTempActionConfirm = useCallback(async () => {
     if (!pendingTempKind || !row) return
-    if (pendingTempKind === 'temp_assign') {
+    if (pendingTempKind === 'temp_assign' && row.tempAssignmentStatus !== 'evaluation_pending') {
+      // 일정 저장 이후(기관 수정 요청 등) 주 버튼은 기존대로 「신청 기관 임시 배정」 탭에서 일정을 고친다.
       setPendingTempKind(null)
       onOpenScheduleAssign?.()
       return
     }
+    // 완료 팝업은 상세 위에 띄우고 상세에 머문다(시안 06-2 → 07). 각 remote 호출이 상세 쿼리를
+    // 무효화하므로 서버 재조회 결과로 임시 배정 현황·버튼이 바뀐다.
     setActionLoading(true)
     try {
+      if (pendingTempKind === 'temp_assign') {
+        // 평가 대기 → 임시 배정(일정 미배정). 일정 탭으로 이동하지 않는다(시안 09-1 → 09-2 → 10).
+        const response = await tempAssignRemote()
+        setPendingTempKind(null)
+        if (response.successCount < 1) {
+          showTemporaryAssignmentFailure(response, '임시 배정에 실패했습니다.')
+          return
+        }
+        onStatusUpdated()
+        // 팝업을 닫으면 상세를 다시 조회한다 — processed로 맞춘 캐시를 서버 값으로 덮어쓴다.
+        const refetchDetail = () => {
+          void invalidate()
+        }
+        showAlert({
+          title: UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_TITLE,
+          content: UJAT_INSTITUTION_TEMP_ASSIGN_COMPLETE_CONTENT,
+          onConfirm: refetchDetail,
+          onDismiss: refetchDetail,
+        })
+        return
+      }
       if (pendingTempKind === 'temp_reject_cancel') {
         await tempRejectCancelRemote()
         setPendingTempKind(null)
         onStatusUpdated()
-        onBack()
         showAlert({
           title: UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_TITLE,
           content: UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_CONTENT,
@@ -190,14 +232,30 @@ export function UjatInstitutionApplicationDetailPage({
         await tempRejectRemote()
         setPendingTempKind(null)
         onStatusUpdated()
-        onBack()
         showAlert({
-          title: UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
-          content: getUjatInstitutionTempRejectCompleteContent(1),
+          title: UJAT_INSTITUTION_TEMP_REJECT_DETAIL_COMPLETE_TITLE,
+          content: UJAT_INSTITUTION_TEMP_REJECT_DETAIL_COMPLETE_CONTENT,
+        })
+        return
+      }
+      if (pendingTempKind === 'temp_assign_cancel' && row.temporaryScheduleAssigned === false) {
+        // 일정 없는 임시 배정 → 평가 대기: POST temporary-assignments:cancel
+        // (temporary-rejections:cancel은 TEMP_REJECTED 전용이라 쓰지 않는다)
+        const response = await tempAssignCancelRemote()
+        setPendingTempKind(null)
+        if (response.successCount < 1) {
+          showTemporaryAssignmentFailure(response, '임시 배정 취소에 실패했습니다.')
+          return
+        }
+        onStatusUpdated()
+        showAlert({
+          title: UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_TITLE,
+          content: UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_CONTENT,
         })
         return
       }
       if (pendingTempKind === 'temp_assign_cancel') {
+        // 활성 교육일 슬롯이 있는 임시 배정의 일정 해제 — 기존 PUT temporary-schedule { slots: [] }
         if (!programId) {
           showAlert({ title: '안내', content: '프로그램 정보가 없어 임시 배정을 취소할 수 없습니다.' })
           return
@@ -213,9 +271,9 @@ export function UjatInstitutionApplicationDetailPage({
           })
           return
         }
+        await invalidate()
         setPendingTempKind(null)
         onStatusUpdated()
-        onBack()
         showAlert({
           title: UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_TITLE,
           content: UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_CONTENT,
@@ -230,13 +288,16 @@ export function UjatInstitutionApplicationDetailPage({
       setActionLoading(false)
     }
   }, [
-    onBack,
+    invalidate,
     onOpenScheduleAssign,
     onStatusUpdated,
     pendingTempKind,
     programId,
     row,
     showAlert,
+    showTemporaryAssignmentFailure,
+    tempAssignCancelRemote,
+    tempAssignRemote,
     tempRejectCancelRemote,
     tempRejectRemote,
   ])
