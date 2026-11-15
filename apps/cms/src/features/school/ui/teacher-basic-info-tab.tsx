@@ -3,6 +3,7 @@
  */
 
 import { CmsButton } from '@/shared/ui'
+import { ConsentStatusValue } from '@/shared/ui/consent-status-value'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { formatDate } from '@/shared/utils'
 import type { TeacherDetailData } from '@/features/school/model/school-detail-types'
@@ -174,19 +175,19 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                 <span>개인정보 수집 동의</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {inlineSegmentsWithDividers([
-                  detail.personalInfoConsentDate,
-                  detail.personalInfoConsent ? '동의' : '미동의',
-                ])}
+                <ConsentStatusValue
+                  status={detail.personalInfoConsent ? '동의' : '미동의'}
+                  datetime={detail.personalInfoConsent ? detail.personalInfoConsentDate : undefined}
+                />
               </td>
               <td className="teacher-detail-modal__cell--label">
                 <span>마케팅 제공 동의</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {inlineSegmentsWithDividers([
-                  detail.marketingConsentDate,
-                  detail.marketingConsent ? '동의' : '미동의',
-                ])}
+                <ConsentStatusValue
+                  status={detail.marketingConsent ? '동의' : '미동의'}
+                  datetime={detail.marketingConsent ? detail.marketingConsentDate : undefined}
+                />
               </td>
             </tr>
           </tbody>

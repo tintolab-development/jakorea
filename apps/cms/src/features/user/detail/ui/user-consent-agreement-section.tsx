@@ -8,6 +8,7 @@ import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/require
 import type { User } from '@/types/user'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { ConsentStatusValue } from '@/shared/ui/consent-status-value'
 import { CmsRadioGroup } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
@@ -394,23 +395,6 @@ export interface ConsentRenderCtx {
   onEditableConsentChange?: (label: string, agreed: boolean) => void
 }
 
-/** `동의 | 2026.01.15 09:15:42` 형태면 상태·구분자·날짜시간으로 나누어 날짜에 전용 스타일 적용 */
-function ConsentValueDisplay({ value }: { value: ReactNode }) {
-  if (typeof value !== 'string') return value
-  const idx = value.indexOf('|')
-  if (idx === -1) return value
-  const status = value.slice(0, idx).trim()
-  const datetime = value.slice(idx + 1).trim()
-  if (!datetime) return value
-  return (
-    <span className="user-consent-agreement-section__value-inner">
-      <span className="user-consent-agreement-section__value-status">{status}</span>
-      <DetailInfoForm.TdDivider />
-      <span className="user-consent-agreement-section__value-datetime">{datetime}</span>
-    </span>
-  )
-}
-
 const PORTRAIT_CONSENT_FIELD_LABEL = '초상권 수집·이용 동의'
 
 /**
@@ -461,37 +445,18 @@ function ConsentDocumentRow({
   const datetimeDisplay = expired ? expiredAtDisplay : agreedAtDisplay
 
   return (
-    <span className="user-consent-agreement-section__value-inner">
-      <span className="user-consent-agreement-section__value-status">
-        {statusLabel}
-      </span>
-      {/* 시안: 미동의는 상태 문구만 — 구분선·동의서 보기 없음 */}
-      {agreed ? (
-        <>
-          <DetailInfoForm.TdDivider />
+    <ConsentStatusValue
+      status={statusLabel}
+      action={
+        agreed ? (
           <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
-          {datetimeDisplay ? (
-            <span className="user-consent-agreement-section__value-datetime">
-              {datetimeDisplay}
-            </span>
-          ) : null}
-        </>
-      ) : expired && datetimeDisplay ? (
-        <span className="user-consent-agreement-section__value-datetime">
-          {datetimeDisplay}
-        </span>
-      ) : null}
-    </span>
-  )
-}
-
-function consentFieldContent(value: ReactNode) {
-  return (
-    <span className="user-consent-agreement-section__value-inner">
-      <ConsentValueDisplay value={value} />
-    </span>
+        ) : undefined
+      }
+      // 시안: 미동의는 상태 문구만 — 만료만 만료일을 둔다
+      datetime={agreed || expired ? datetimeDisplay : undefined}
+    />
   )
 }
 
@@ -502,9 +467,12 @@ function resolveConsentFieldView(
 ): ReactNode {
   switch (value.type) {
     case 'remote_consent': {
-      const status = resolveConsentFieldStatusLabel(value, fieldLabel)
-      const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
-      return consentFieldContent(text)
+      return (
+        <ConsentStatusValue
+          status={resolveConsentFieldStatusLabel(value, fieldLabel)}
+          datetime={value.agreedAtDisplay}
+        />
+      )
     }
     case 'document': {
       /**
@@ -535,15 +503,14 @@ function resolveConsentFieldView(
 
 function ConsentDocumentFieldEdit({ agreed, onWrite }: { agreed: boolean; onWrite: () => void }) {
   return (
-    <span className="user-consent-agreement-section__document-edit">
-      <span className="user-consent-agreement-section__document-edit-status">
-        {agreed ? '동의' : '미동의'}
-      </span>
-      <DetailInfoForm.TdDivider />
-      <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
-        동의서 작성
-      </CmsButton>
-    </span>
+    <ConsentStatusValue
+      status={agreed ? '동의' : '미동의'}
+      action={
+        <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
+          동의서 작성
+        </CmsButton>
+      }
+    />
   )
 }
 

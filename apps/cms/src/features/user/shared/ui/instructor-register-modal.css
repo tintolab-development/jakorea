@@ -174,20 +174,6 @@
   align-items: center;
 }
 
-.instructor-register-modal__consent-document {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0;
-}
-
-.instructor-register-modal__consent-status {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-}
-
 /** 경력·활동·자격·수상 — 라벨 1칸 통합 + 스택 행 */
 .instructor-register-modal__period {
   display: inline-flex;

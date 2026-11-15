@@ -22,6 +22,7 @@ import {
   isBirthDateInputIncomplete,
 } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ConsentStatusValue } from '@/shared/ui/consent-status-value'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
@@ -140,22 +141,17 @@ function ConsentDocumentFieldEdit({
   onWrite: () => void
 }) {
   return (
-    <span className="add-user-individual__consent-document">
+    <ConsentStatusValue
+      className="add-user-individual__consent-document"
+      status={value === 'agree' ? '동의' : '미동의'}
+      action={
+        <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
+          동의서 작성
+        </CmsButton>
+      }
+    >
       <Form.Item name={name} hidden preserve />
-      <span className="add-user-individual__consent-status">
-        {value === 'agree' ? '동의' : '미동의'}
-      </span>
-      <DetailInfoForm.InputsSeparator />
-      <CmsButton
-        variant="secondary"
-        size="small"
-        type="button"
-        className="add-user-individual__consent-write-btn"
-        onClick={onWrite}
-      >
-        동의서 작성
-      </CmsButton>
-    </span>
+    </ConsentStatusValue>
   )
 }
 
