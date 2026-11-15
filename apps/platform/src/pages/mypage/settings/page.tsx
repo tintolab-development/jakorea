@@ -192,6 +192,18 @@ export function MypageSettingsPage() {
     setSearchParams(params, { replace: true })
   }, [isMinorMember, searchParams, setSearchParams, tab])
 
+  /**
+   * 설정 화면에 머문 채 URL `tab`만 바뀌는 경우(예: 알림 팝업 「내 정보 보기」·「동의 내역 보기」)에도 탭을 맞춘다.
+   * 동의·소셜 탭으로 바뀌면 LNB 선택과 같이 보기 모드로 돌린다.
+   */
+  const urlTab = readSettingsTab(searchParams)
+  const [syncedUrlTab, setSyncedUrlTab] = useState<SettingsTab>(urlTab)
+  if (syncedUrlTab !== urlTab) {
+    setSyncedUrlTab(urlTab)
+    setTab(urlTab)
+    if (urlTab !== 'profile') setMode('view')
+  }
+
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
     if (hasRemoteToken) {
