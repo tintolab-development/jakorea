@@ -4,6 +4,10 @@ import { test } from '../../fixtures/test'
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
 import { withAuthenticatedPage } from '../../helpers/with-authenticated-page'
 import {
+  buildProgramCreatePayloadFromTemplate,
+  programCreateTemplatePath,
+} from '../../helpers/program-create-template'
+import {
   activateCmsProgramRecruitmentsForIntegration,
   fetchCmsProgramSnapshot,
   recruitmentForType,
@@ -11,6 +15,7 @@ import {
   type CmsProgramSnapshot,
   type PlatformAccount,
   type PortalApplicationResult,
+  PlatformApplicationFlowPage,
 } from '../../pages/platform-application-flow.page'
 import {
   GeneralProgramRegistrationPage,
@@ -47,9 +52,14 @@ type RejectionFixture = ProgramFixture & {
 }
 
 type RunFixture = {
-  approval: ApprovalFixture
-  rejection: RejectionFixture
+  approval?: ApprovalFixture
+  rejection?: RejectionFixture
 }
+
+/** E2E_APPROVAL_ONLY=1: 반려용 준비·테스트를 건너뛰어 실서버 부하와 실행 시간을 줄인다. */
+const APPROVAL_ONLY = process.env.E2E_APPROVAL_ONLY === '1'
+/** E2E_REJECTION_ONLY=1: 승인용 준비·테스트를 건너뛴다(승인 흐름을 이미 검증한 뒤 반려만 볼 때). */
+const REJECTION_ONLY = process.env.E2E_REJECTION_ONLY === '1'
 
 const APPROVAL_ORGANIZATION: PlatformAccount = {
   email: 'teacher@test.com',
@@ -57,34 +67,46 @@ const APPROVAL_ORGANIZATION: PlatformAccount = {
   mypagePath: '/mypage/education',
 }
 
+// 같은 강사가 반복 실행으로 같은 날짜에 이미 신청·배정돼 있으면 일정이 '배정 불가'로 빠져
+// 「강의 진행 가능 일정」 선택지가 0개가 된다 — 실행마다 seed 강사 4명을 돌려 쓴다.
+const ROTATING_INSTRUCTORS = [
+  'seed.instructor.02@example.com',
+  'seed.instructor.03@example.com',
+  'seed.instructor.04@example.com',
+  'seed.instructor.05@example.com',
+]
+
 const APPROVAL_INSTRUCTOR: PlatformAccount = {
-  email: 'general.instructor@test.com',
+  email: ROTATING_INSTRUCTORS[Math.floor(Date.now() / 60_000) % ROTATING_INSTRUCTORS.length],
   applicationType: 'INSTRUCTOR',
   mypagePath: '/mypage/lectures',
 }
 
 const APPROVAL_VOLUNTEER: PlatformAccount = {
-  // volunteer@test.com은 반복 실행으로 기존 기관형 봉사 배정 일정과
-  // 겹칠 수 있으므로, 상대적으로 배정 이력이 적은 계정을 사용한다.
-  email: 'general@test.com',
+  // general@test.com은 초상권 동의가 SIGNATURE_REQUIRED(programEligible=false)라 신청이 막힌다.
+  // 초상권 서명이 끝난 seed 개인회원을 쓴다(volunteer@test.com은 기존 배정 일정과 겹칠 수 있음).
+  email: 'demo-a@test.jakorea.local',
   applicationType: 'VOLUNTEER',
   mypagePath: '/mypage/volunteer',
 }
 
 const REJECTION_ORGANIZATION: PlatformAccount = {
-  email: 'teacher2@test.com',
+  // teacher2@test.com은 초상권 동의 서명 필요(programEligible=false) — 서명 완료 seed 교사 사용
+  email: 'seed.teacher.03@example.com',
   applicationType: 'ORGANIZATION',
   mypagePath: '/mypage/education',
 }
 
 const REJECTION_INSTRUCTOR: PlatformAccount = {
-  email: 'teacher.instructor@test.com',
+  // teacher.instructor@test.com은 공통 비밀번호로 로그인되지 않는다 — seed 강사 사용
+  email: 'seed.instructor.01@example.com',
   applicationType: 'INSTRUCTOR',
   mypagePath: '/mypage/lectures',
 }
 
 const REJECTION_VOLUNTEER_DOCUMENT: PlatformAccount = {
-  email: 'general@test.com',
+  // general@test.com은 초상권 동의 서명 필요 상태 — 서명 완료 seed 개인회원 사용
+  email: 'demo-b@test.jakorea.local',
   applicationType: 'VOLUNTEER',
   mypagePath: '/mypage/volunteer',
 }
@@ -195,9 +217,11 @@ async function adminRequest(
       ...(data === undefined ? {} : { data }),
     })
   let response = await send()
-  // 조회(GET)만 일시적 5xx에 한해 다시 시도한다. 변경 요청은 중복 반영 위험이 있어 재시도하지 않는다.
-  for (let retry = 1; method === 'GET' && response.status() >= 500 && retry <= 2; retry += 1) {
-    console.log(`[BE-RETRY] ${method} ${path} → HTTP ${response.status()} (재시도 ${retry}/2)`)
+  // 조회(GET)와 같은 값을 다시 보내도 결과가 같은 PUT만 일시적 5xx에 한해 다시 시도한다.
+  // POST·PATCH는 중복 반영 위험이 있어 재시도하지 않는다(PUT은 최대 1회).
+  const maxRetry = method === 'GET' ? 4 : method === 'PUT' ? 1 : 0
+  for (let retry = 1; response.status() >= 500 && retry <= maxRetry; retry += 1) {
+    console.log(`[BE-RETRY] ${method} ${path} → HTTP ${response.status()} (재시도 ${retry}/${maxRetry})`)
     await new Promise(resolve => setTimeout(resolve, 1_500 * retry))
     response = await send()
   }
@@ -231,7 +255,8 @@ function uniqueScheduleOffsets(programTitle: string): [number, number] {
   // 종료월부터 열리는 Platform 동작과도 맞고, 실행 간 충돌 범위도 분산된다.
   const hash = scheduleTitleHash(programTitle)
   const today = new Date()
-  const firstDate = new Date(today.getFullYear(), today.getMonth() + 1, 10 + (hash % 9))
+  // 날짜 폭이 좁으면(9일) 반복 실행 데이터와 같은 날짜가 겹쳐 강사·봉사자 일정이 '배정 불가'가 된다.
+  const firstDate = new Date(today.getFullYear(), today.getMonth() + 1, 1 + (hash % 20))
   const firstOffset = Math.round((firstDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
   return [firstOffset, firstOffset + 7]
 }
@@ -388,16 +413,25 @@ async function createProgram(page: Page, kind: 'APPROVAL' | 'REJECTION'): Promis
 
   await page.goto('/programs/general')
   await expectAuthenticatedShell(page)
-  await registration.openNewRegistration()
-  await registration.fillCommonInfo()
-  await registration.realignScheduleDetailDatesWithinOpenPeriod()
-  await registration.goToRecruitment()
-  await registration.fillRecruitmentInfo()
-  await registration.goToApplication()
-  await registration.fillApplicationInfo()
-
-  const created = await registration.completeRegistration()
-  const program = await fetchCmsProgramSnapshot(page, created.programId)
+  const templatePath = programCreateTemplatePath()
+  let createdProgramId: string
+  if (templatePath) {
+    // 빠른 경로: 화면 등록에서 성공한 생성 요청을 날짜만 바꿔 API로 생성한다(화면 등록은 별도 스펙이 검증).
+    const payload = buildProgramCreatePayloadFromTemplate(templatePath, uniqueProgramTitle(kind))
+    const createdBody = asRecord(unwrap(await adminRequest(page, '/api/admin/programs', 'POST', payload)))
+    createdProgramId = String(createdBody.id ?? createdBody.programId ?? '')
+    expect(createdProgramId, 'API 생성 응답에 프로그램 ID가 없습니다').toMatch(/^\d+$/)
+  } else {
+    await registration.openNewRegistration()
+    await registration.fillCommonInfo()
+    await registration.realignScheduleDetailDatesWithinOpenPeriod()
+    await registration.goToRecruitment()
+    await registration.fillRecruitmentInfo()
+    await registration.goToApplication()
+    await registration.fillApplicationInfo()
+    createdProgramId = (await registration.completeRegistration()).programId
+  }
+  const program = await fetchCmsProgramSnapshot(page, createdProgramId)
   expect(program.programType).toBe('GENERAL_ORGANIZATION')
   expect(program.recruitments).toHaveLength(3)
 
@@ -418,7 +452,7 @@ async function createProgram(page: Page, kind: 'APPROVAL' | 'REJECTION'): Promis
   return { program, schedules }
 }
 
-async function submitPlatformApplication(
+async function submitPlatformApplicationOnce(
   browser: Browser,
   program: CmsProgramSnapshot,
   account: PlatformAccount,
@@ -441,6 +475,57 @@ async function submitPlatformApplication(
   }
 }
 
+/** 제출 5xx 뒤 신청이 실제로 생겼는지 application-options의 existingApplication으로 확인한다. */
+async function findExistingPortalApplication(
+  browser: Browser,
+  program: CmsProgramSnapshot,
+  account: PlatformAccount,
+  password: string
+): Promise<PortalApplicationResult | null> {
+  const context = await browser.newContext({ baseURL: process.env.PLATFORM_BASE_URL })
+  try {
+    const page = await context.newPage()
+    const flow = new PlatformApplicationFlowPage(page, process.env.PLATFORM_BASE_URL!.trim(), password)
+    await flow.signIn(account.email)
+    const recruitment = recruitmentForType(program, account.applicationType)
+    const row = asRecord(await flow.getApplicationOption(program.programId, recruitment, account.applicationType))
+    const existing = asRecord(row.existingApplication)
+    const applicationId = Number(existing.applicationId ?? existing.id ?? 0)
+    if (!Number.isFinite(applicationId) || applicationId <= 0) return null
+    return {
+      applicationId,
+      recruitmentId: recruitment.recruitmentId,
+      applicationType: account.applicationType,
+      formBindingId: recruitment.formBindingId,
+      requestBody: {},
+      scheduleTokens: [],
+      activityScheduleTokens: [],
+    }
+  } finally {
+    await context.close()
+  }
+}
+
+async function submitPlatformApplication(
+  browser: Browser,
+  program: CmsProgramSnapshot,
+  account: PlatformAccount,
+  password: string
+) {
+  try {
+    return await submitPlatformApplicationOnce(browser, program, account, password)
+  } catch (error) {
+    // 실서버 BE 간헐 5xx: 신청이 이미 생겼으면 그 신청을 쓰고, 없을 때만 한 번 더 제출한다(중복 신청 방지).
+    if (!(error instanceof Error) || !/HTTP 5\d\d/.test(error.message)) throw error
+    const existing = await findExistingPortalApplication(browser, program, account, password)
+    console.log(
+      `[BE-RETRY] ${account.applicationType} 신청 제출 5xx → 기존 신청 ${existing ? existing.applicationId : '없음'}`
+    )
+    if (existing) return existing
+    return await submitPlatformApplicationOnce(browser, program, account, password)
+  }
+}
+
 async function createElapsedInterviewSlot(page: Page, programId: number): Promise<number> {
   const end = new Date(Date.now() - 10 * 60 * 1000)
   const start = new Date(end.getTime() - 30 * 60 * 1000)
@@ -459,16 +544,23 @@ async function createElapsedInterviewSlot(page: Page, programId: number): Promis
 }
 
 async function approveOrganization(page: Page, applicationId: number, scheduleId: number) {
-  const payload = await adminRequest(
-    page,
-    `/api/admin/organization-applications/${applicationId}/approve`,
-    'POST',
-    {
+  const approve = () =>
+    adminRequest(page, `/api/admin/organization-applications/${applicationId}/approve`, 'POST', {
       timing: 'IMMEDIATE',
       selectedScheduleId: scheduleId,
-    }
-  )
-  expect(applicationStatus(asRecord(unwrap(payload)))).toBe('APPROVED')
+    })
+  try {
+    const payload = await approve()
+    expect(applicationStatus(asRecord(unwrap(payload)))).toBe('APPROVED')
+  } catch (error) {
+    // 실서버 BE 간헐 5xx: 승인이 실제 반영됐는지 먼저 조회하고, 미반영일 때만 한 번 더 승인한다(중복 승인 방지).
+    if (!(error instanceof Error) || !/HTTP 5\d\d/.test(error.message)) throw error
+    const detail = await fetchDetail(page, `/api/admin/organization-applications/${applicationId}`)
+    console.log(`[BE-RETRY] 기관 승인 5xx → 현재 상태 ${applicationStatus(detail)}`)
+    if (applicationStatus(detail) === 'APPROVED') return
+    const payload = await approve()
+    expect(applicationStatus(asRecord(unwrap(payload)))).toBe('APPROVED')
+  }
 }
 
 // 새 관리자 컨텍스트는 화면 요청이 있어야 access token을 읽을 수 있다 — 목록을 연 뒤 승인한다.
@@ -689,7 +781,7 @@ async function attachSummary(summary: unknown) {
 }
 
 test.describe('기관·강사·봉사자 승인/반려 및 진행 현황 통합 E2E', () => {
-  let fixture: RunFixture
+  let fixture: RunFixture = {}
 
   test.beforeAll(async ({ browser }) => {
     test.setTimeout(1_800_000)
@@ -698,111 +790,109 @@ test.describe('기관·강사·봉사자 승인/반려 및 진행 현황 통합 
     if (!platformBaseUrl) throw new Error('PLATFORM_BASE_URL 환경변수가 필요합니다.')
     if (!password) throw new Error('E2E_PLATFORM_PASSWORD 환경변수가 필요합니다.')
 
-    // 각 등록 wizard를 새 관리자 컨텍스트에서 실행해 이전 프로그램의
-    // 지급 항목·모집 입력 상태가 다음 프로그램에 누적되지 않도록 한다.
-    const approval = await withAuthenticatedPage(browser, page =>
-      createProgram(page, 'APPROVAL')
-    )
-    const approvalOrganization = await submitPlatformApplication(
-      browser,
-      approval.program,
-      APPROVAL_ORGANIZATION,
-      password
-    )
-    // 일반(기관) 강사 「강의 진행 가능 일정」은 승인·일정 배정된 기관의 일정만 선택지로 내려온다.
-    // 기관 신청만 있고 승인 전이면 문단이 숨겨지므로 강사 신청 전에 기관을 승인한다.
-    await withAuthenticatedPage(browser, page =>
-      approveOrganizationFromAdminScreen(
-        page,
-        approvalOrganization.applicationId,
-        selectEducationScheduleId(approval.schedules)
+    // 준비 단계 전체에서 관리자 창 하나를 유지한다. 창을 여러 번 열면 refresh token이 매번 rotate되고,
+    // 그 사이 BE 간헐 오류로 갱신이 한 번만 실패해도 세션이 끊긴다(화면 요청에 Bearer 없음).
+    await withAuthenticatedPage(browser, async adminPage => {
+      if (!REJECTION_ONLY) {
+        const approval = await createProgram(adminPage, 'APPROVAL')
+        const approvalOrganization = await submitPlatformApplication(
+          browser,
+          approval.program,
+          APPROVAL_ORGANIZATION,
+          password
+        )
+        // 일반(기관) 강사 「강의 진행 가능 일정」은 승인·일정 배정된 기관의 일정만 선택지로 내려온다.
+        // 기관 신청만 있고 승인 전이면 문단이 숨겨지므로 강사 신청 전에 기관을 승인한다.
+        await approveOrganizationFromAdminScreen(
+            adminPage,
+            approvalOrganization.applicationId,
+            selectEducationScheduleId(approval.schedules)
+          )
+        const approvalInstructor = await submitPlatformApplication(
+          browser,
+          approval.program,
+          APPROVAL_INSTRUCTOR,
+          password
+        )
+        const approvalVolunteer = await submitPlatformApplication(
+          browser,
+          approval.program,
+          APPROVAL_VOLUNTEER,
+          password
+        )
+
+        // 각 신규 프로그램이 역할별 독립 신청을 모두 보유하는지, 다른 모집 ID가
+        // 섞이지 않았는지를 fixture 확정 전에 검증한다.
+        assertRoleApplicationMapping(approval.program, approvalOrganization, 'ORGANIZATION')
+        assertRoleApplicationMapping(approval.program, approvalInstructor, 'INSTRUCTOR')
+        assertRoleApplicationMapping(approval.program, approvalVolunteer, 'VOLUNTEER')
+        fixture = {
+          approval: {
+            ...approval,
+            organization: approvalOrganization,
+            instructor: approvalInstructor,
+            volunteer: approvalVolunteer,
+          },
+        }
+        if (APPROVAL_ONLY) return
+      }
+
+      const rejection = await createProgram(adminPage, 'REJECTION')
+      const rejectionOrganization = await submitPlatformApplication(
+        browser,
+        rejection.program,
+        REJECTION_ORGANIZATION,
+        password
       )
-    )
-    const approvalInstructor = await submitPlatformApplication(
-      browser,
-      approval.program,
-      APPROVAL_INSTRUCTOR,
-      password
-    )
-    const approvalVolunteer = await submitPlatformApplication(
-      browser,
-      approval.program,
-      APPROVAL_VOLUNTEER,
-      password
-    )
-
-    const rejection = await withAuthenticatedPage(browser, page =>
-      createProgram(page, 'REJECTION')
-    )
-    const rejectionOrganization = await submitPlatformApplication(
-      browser,
-      rejection.program,
-      REJECTION_ORGANIZATION,
-      password
-    )
-    // 반려 대상 기관은 대기로 두고, 강사가 고를 일정이 생기도록 별도 기관을 승인해 둔다.
-    const rejectionScheduleHost = await submitPlatformApplication(
-      browser,
-      rejection.program,
-      APPROVAL_ORGANIZATION,
-      password
-    )
-    await withAuthenticatedPage(browser, page =>
-      approveOrganizationFromAdminScreen(
-        page,
-        rejectionScheduleHost.applicationId,
-        selectEducationScheduleId(rejection.schedules)
+      // 반려 대상 기관은 대기로 두고, 강사가 고를 일정이 생기도록 별도 기관을 승인해 둔다.
+      const rejectionScheduleHost = await submitPlatformApplication(
+        browser,
+        rejection.program,
+        APPROVAL_ORGANIZATION,
+        password
       )
-    )
-    const rejectionInstructor = await submitPlatformApplication(
-      browser,
-      rejection.program,
-      REJECTION_INSTRUCTOR,
-      password
-    )
-    const rejectionVolunteerDocument = await submitPlatformApplication(
-      browser,
-      rejection.program,
-      REJECTION_VOLUNTEER_DOCUMENT,
-      password
-    )
-    const rejectionVolunteerFinal = await submitPlatformApplication(
-      browser,
-      rejection.program,
-      REJECTION_VOLUNTEER_FINAL,
-      password
-    )
+      await approveOrganizationFromAdminScreen(
+          adminPage,
+          rejectionScheduleHost.applicationId,
+          selectEducationScheduleId(rejection.schedules)
+        )
+      const rejectionInstructor = await submitPlatformApplication(
+        browser,
+        rejection.program,
+        REJECTION_INSTRUCTOR,
+        password
+      )
+      const rejectionVolunteerDocument = await submitPlatformApplication(
+        browser,
+        rejection.program,
+        REJECTION_VOLUNTEER_DOCUMENT,
+        password
+      )
+      const rejectionVolunteerFinal = await submitPlatformApplication(
+        browser,
+        rejection.program,
+        REJECTION_VOLUNTEER_FINAL,
+        password
+      )
 
-    // 각 신규 프로그램이 역할별 독립 신청을 모두 보유하는지, 다른 모집 ID가
-    // 섞이지 않았는지를 fixture 확정 전에 검증한다.
-    assertRoleApplicationMapping(approval.program, approvalOrganization, 'ORGANIZATION')
-    assertRoleApplicationMapping(approval.program, approvalInstructor, 'INSTRUCTOR')
-    assertRoleApplicationMapping(approval.program, approvalVolunteer, 'VOLUNTEER')
-    assertRoleApplicationMapping(rejection.program, rejectionOrganization, 'ORGANIZATION')
-    assertRoleApplicationMapping(rejection.program, rejectionInstructor, 'INSTRUCTOR')
-    assertRoleApplicationMapping(rejection.program, rejectionVolunteerDocument, 'VOLUNTEER')
-    assertRoleApplicationMapping(rejection.program, rejectionVolunteerFinal, 'VOLUNTEER')
-
-    fixture = {
-      approval: {
-        ...approval,
-        organization: approvalOrganization,
-        instructor: approvalInstructor,
-        volunteer: approvalVolunteer,
-      },
-      rejection: {
+      assertRoleApplicationMapping(rejection.program, rejectionOrganization, 'ORGANIZATION')
+      assertRoleApplicationMapping(rejection.program, rejectionInstructor, 'INSTRUCTOR')
+      assertRoleApplicationMapping(rejection.program, rejectionVolunteerDocument, 'VOLUNTEER')
+      assertRoleApplicationMapping(rejection.program, rejectionVolunteerFinal, 'VOLUNTEER')
+      fixture.rejection = {
         ...rejection,
         organization: rejectionOrganization,
         instructor: rejectionInstructor,
         volunteerDocument: rejectionVolunteerDocument,
         volunteerFinal: rejectionVolunteerFinal,
-      },
-    }
+      }
+    })
   })
 
   test('승인 플로우가 participant·배정·출석 조회·진행현황까지 도달한다', async ({ page }) => {
     test.setTimeout(600_000)
-    const { program, schedules, organization, instructor, volunteer } = fixture.approval
+    test.skip(REJECTION_ONLY || !fixture.approval, 'E2E_REJECTION_ONLY=1 — 승인 흐름은 건너뜀')
+    const { program, schedules, organization, instructor, volunteer } = fixture.approval!
     const educationScheduleId = selectEducationScheduleId(schedules)
 
     // beforeAll에서 강사 신청 전에 이미 승인했다(강사 일정 선택지 조건). 아니면 여기서 승인한다.
@@ -940,7 +1030,8 @@ test.describe('기관·강사·봉사자 승인/반려 및 진행 현황 통합 
 
   test('반려 플로우는 상태만 반영되고 participant·진행현황에는 진입하지 않는다', async ({ page }) => {
     test.setTimeout(600_000)
-    const { program, organization, instructor, volunteerDocument, volunteerFinal } = fixture.rejection
+    test.skip(APPROVAL_ONLY || !fixture.rejection, 'E2E_APPROVAL_ONLY=1 — 반려 흐름은 건너뜀')
+    const { program, organization, instructor, volunteerDocument, volunteerFinal } = fixture.rejection!
 
     await rejectOrganization(page, organization.applicationId)
     const rejectedOrganization = await fetchDetail(

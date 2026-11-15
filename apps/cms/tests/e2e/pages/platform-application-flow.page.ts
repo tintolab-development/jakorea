@@ -53,12 +53,21 @@ type GetOptions = Parameters<Page['request']['get']>[1]
 /** 조회(GET)만 일시적 5xx에 한해 최대 2회 다시 시도한다(실서버 BE 간헐 500 대응, 변경 요청은 재시도하지 않음). */
 async function getWithRetry(page: Page, url: string, options?: GetOptions) {
   let response = await page.request.get(url, options)
-  for (let retry = 1; response.status() >= 500 && retry <= 2; retry += 1) {
-    console.log(`[BE-RETRY] GET ${url} → HTTP ${response.status()} (재시도 ${retry}/2)`)
+  for (let retry = 1; response.status() >= 500 && retry <= 4; retry += 1) {
+    console.log(`[BE-RETRY] GET ${url} → HTTP ${response.status()} (재시도 ${retry}/4)`)
     await new Promise(resolve => setTimeout(resolve, 1_500 * retry))
     response = await page.request.get(url, options)
   }
   return response
+}
+
+/** antd 라디오는 숨은 input을 강제 클릭해도 상태가 바뀌지 않을 수 있다 — 실패하면 감싼 label을 누르고 선택을 확인한다. */
+async function checkAntRadio(radio: import('@playwright/test').Locator) {
+  if (await radio.isChecked().catch(() => false)) return
+  await radio.check({ force: true, timeout: 3_000 }).catch(async () => {
+    await radio.locator('xpath=ancestor::label[1]').click()
+  })
+  await expect(radio).toBeChecked()
 }
 
 async function readJson(response: { ok(): boolean; status(): number; text(): Promise<string> }) {
@@ -167,6 +176,12 @@ export async function fetchCmsProgramSnapshot(
  * 모집 기간은 생성 화면에서 현재 날짜를 포함하도록 설정한다. 이미 시작된 모집을
  * 사후 PATCH로 덮어쓰지 않아 백엔드의 모집 수정 잠금 정책을 우회하지 않는다.
  */
+/**
+ * 통합 E2E 봉사자 모집 대상: 테스트 계정마다 회원 구분이 달라(초등학생·대학생·성인 등)
+ * 한 구분만 두면 VOLUNTEER_RECRUITMENT_TARGET_MISMATCH로 막힌다 — 모든 구분을 연다.
+ */
+const INTEGRATION_VOLUNTEER_TARGETS = ['elementary', 'middle', 'high', 'university', 'adult']
+
 export async function activateCmsProgramRecruitmentsForIntegration(
   page: Page,
   program: CmsProgramSnapshot
@@ -181,7 +196,7 @@ export async function activateCmsProgramRecruitmentsForIntegration(
   }
   const registration = (serviceDetailJson.registration ?? {}) as Record<string, unknown>
   const overlay = (registration.overlay ?? {}) as Record<string, unknown>
-  overlay['recruit.volunteer.volunteerTargets'] = ['elementary']
+  overlay['recruit.volunteer.volunteerTargets'] = INTEGRATION_VOLUNTEER_TARGETS
   registration.overlay = overlay
   serviceDetailJson.registration = registration
   // GENERAL 상세 응답은 같은 overlay를 registration.overlay와 루트
@@ -189,13 +204,13 @@ export async function activateCmsProgramRecruitmentsForIntegration(
   // 지키지 않으면 nested 값만 바꿔도 기존 대상(university)이 복원된다.
   serviceDetailJson.registrationOverlay = {
     ...((serviceDetailJson.registrationOverlay ?? {}) as Record<string, unknown>),
-    'recruit.volunteer.volunteerTargets': ['elementary'],
+    'recruit.volunteer.volunteerTargets': INTEGRATION_VOLUNTEER_TARGETS,
   }
   const response = await page.request.patch(`/api/admin/programs/${program.programId}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     data: {
-      targetLevel: 'elementary',
-      targetLevels: ['elementary'],
+      targetLevel: INTEGRATION_VOLUNTEER_TARGETS[0],
+      targetLevels: INTEGRATION_VOLUNTEER_TARGETS,
       serviceDetailJson: JSON.stringify(serviceDetailJson),
     },
   })
@@ -208,12 +223,12 @@ export async function activateCmsProgramRecruitmentsForIntegration(
   const refreshedDetail = JSON.parse(refreshed.serviceDetailJson) as Record<string, unknown>
   const refreshedRegistration = refreshedDetail.registration as Record<string, unknown>
   const refreshedOverlay = refreshedRegistration.overlay as Record<string, unknown>
-  expect(refreshedOverlay['recruit.volunteer.volunteerTargets']).toEqual(['elementary'])
+  expect(refreshedOverlay['recruit.volunteer.volunteerTargets']).toEqual(INTEGRATION_VOLUNTEER_TARGETS)
   // 루트 registrationOverlay는 남아 있으면 nested보다 우선 적용된다. 응답에 없으면 복원될 값도 없으므로
   // 있을 때만 같은 값인지 확인한다(현재 BE는 저장 시 루트 사본을 내려주지 않는다).
   const refreshedRootOverlay = refreshedDetail.registrationOverlay as Record<string, unknown> | undefined
   if (refreshedRootOverlay && 'recruit.volunteer.volunteerTargets' in refreshedRootOverlay) {
-    expect(refreshedRootOverlay['recruit.volunteer.volunteerTargets']).toEqual(['elementary'])
+    expect(refreshedRootOverlay['recruit.volunteer.volunteerTargets']).toEqual(INTEGRATION_VOLUNTEER_TARGETS)
   }
 }
 
@@ -282,7 +297,33 @@ export class PlatformApplicationFlowPage {
         continue
       }
 
-      await expect(this.page).not.toHaveURL(/\/auth\/sign-in/, { timeout: 30_000 })
+      const leftSignIn = await expect(this.page)
+        .not.toHaveURL(/\/auth\/sign-in/, { timeout: 30_000 })
+        .then(() => true)
+        .catch(() => false)
+      if (!leftSignIn) {
+        // 진단: 로그인 응답 상태·메시지와 화면에 뜬 안내 문구를 함께 남긴다.
+        const body = response ? await response.text().catch(() => '') : '(로그인 요청 없음)'
+        const message = (() => {
+          try {
+            return String((JSON.parse(body) as { message?: unknown }).message ?? '')
+          } catch {
+            return body.slice(0, 120)
+          }
+        })()
+        const visibleText = (
+          await this.page
+            .locator('[role="dialog"]:visible, [role="alert"]:visible, [class*="error"]:visible')
+            .allInnerTexts()
+            .catch(() => [])
+        )
+          .join(' | ')
+          .replace(/\s+/g, ' ')
+          .slice(0, 300)
+        throw new Error(
+          `Platform 로그인 후 로그인 화면에 머묾: ${email} status=${status ?? '없음'} message=${message} 화면=${visibleText}`
+        )
+      }
       rememberAccessToken(
         this.page.context(),
         'platform',
@@ -357,6 +398,16 @@ export class PlatformApplicationFlowPage {
     return row
   }
 
+  /** 포털 안내 모달(PFModal)이 떠 있으면 조작이 가려진다 — 문구를 담아 바로 실패시킨다. */
+  private async throwIfBlockingModal(stage: string) {
+    const blockingModal = this.page.locator('[role="dialog"]:visible, [class*="pf-modal"]:visible').last()
+    if (!(await blockingModal.isVisible().catch(() => false))) return
+    const modalText = (await blockingModal.innerText().catch(() => '')).replace(/\s+/g, ' ').trim()
+    if (modalText) {
+      throw new Error(`${stage} 중 안내 모달이 떠 있어 입력할 수 없습니다: ${modalText.slice(0, 400)}`)
+    }
+  }
+
   private async fillVisibleStandardFields(options?: { includeRadios?: boolean }) {
     const checkboxes = this.page.locator('input[type="checkbox"]:visible')
     for (let index = 0; index < (await checkboxes.count()); index += 1) {
@@ -368,15 +419,12 @@ export class PlatformApplicationFlowPage {
 
     // 필수 동의(개인정보 수집·이용, 제3자 제공 등)는 「동의」 라디오를 이름으로 정확히 체크한다.
     // 보이는 라디오의 첫 항목만 고르는 일반 처리로는 렌더 시점에 따라 놓쳐 「필수 항목에 동의해 주세요」로 막힌다.
+    await this.throwIfBlockingModal('신청 화면 진입')
+
     const agreeRadios = this.page.getByRole('radio', { name: '동의', exact: true })
     for (let index = 0; index < (await agreeRadios.count()); index += 1) {
       const agree = agreeRadios.nth(index)
-      if (await agree.isChecked().catch(() => false)) continue
-      // antd 라디오는 숨은 input을 강제 클릭해도 상태가 바뀌지 않을 수 있다 — 감싼 label을 누른다.
-      await agree.check({ force: true, timeout: 3_000 }).catch(async () => {
-        await agree.locator('xpath=ancestor::label[1]').click()
-      })
-      await expect(agree).toBeChecked()
+      await checkAntRadio(agree)
     }
 
     if (options?.includeRadios !== false) {
@@ -539,7 +587,7 @@ export class PlatformApplicationFlowPage {
       const crimeRecord = this.page.locator(
         '[role="radiogroup"][aria-label="apply-instructor-crime-record-confirm"] input[type="radio"]'
       )
-      if ((await crimeRecord.count()) > 0) await crimeRecord.first().check({ force: true })
+      if ((await crimeRecord.count()) > 0) await checkAntRadio(crimeRecord.first())
       await this.chooseAvailableSchedule(scheduleIndex, '강의 진행 가능 일정 날짜')
       return
     }
@@ -552,8 +600,7 @@ export class PlatformApplicationFlowPage {
         .locator('[data-paragraph-id="program-volunteer-application-seed-ja-experience"]')
         .getByRole('radio', { name: '없음', exact: true })
       if ((await noJaExperience.count()) > 0 && (await noJaExperience.first().isVisible())) {
-        await noJaExperience.first().check({ force: true })
-        await expect(noJaExperience.first()).toBeChecked()
+        await checkAntRadio(noJaExperience.first())
       }
       const year = this.page.getByPlaceholder('진행년도').first()
       if ((await year.count()) > 0 && (await year.isVisible().catch(() => false))) {
@@ -578,6 +625,8 @@ export class PlatformApplicationFlowPage {
       timeout: 30_000,
     })
     await this.fillVisibleStandardFields()
+    // 체크박스 일괄 체크가 안내 모달을 열 수 있다 — 역할별 입력 전에 확인한다.
+    await this.throwIfBlockingModal(`${applicationType} 공통 항목 입력 직후`)
     await this.fillRoleSpecificFields(applicationType, scheduleIndex)
     // 역할별 라디오(특히 봉사자 경험 여부)는 위에서 확정한 값을 유지한다.
     // 일반 라디오 자동 선택을 다시 수행하면 「없음」이 첫 옵션 「있음」으로 되돌아간다.
@@ -751,7 +800,8 @@ export class PlatformApplicationFlowPage {
     // The shared my-page list is paginated independently from the API assertion above.
     // The read model can become visible slightly after the submit response, so retry the
     // full list query before treating an empty page as a failure.
-    for (let attempt = 0; attempt < 4; attempt += 1) {
+    // 실서버 목록 반영이 제출 응답보다 수 초 늦을 수 있다(확인됨) — 재조회 횟수·간격을 넉넉히 둔다.
+    for (let attempt = 0; attempt < 8; attempt += 1) {
       await this.page.goto(`${this.baseUrl}${account.mypagePath}`)
       await this.page.waitForLoadState('networkidle').catch(() => undefined)
       await this.page.waitForTimeout(500)
@@ -779,7 +829,7 @@ export class PlatformApplicationFlowPage {
         await this.page.waitForTimeout(500)
       }
 
-      if (attempt < 3) await this.page.waitForTimeout(1_000)
+      if (attempt < 7) await this.page.waitForTimeout(2_500)
     }
 
     await expect(this.page.getByText(portalProgramTitle, { exact: true }).first()).toBeVisible({
