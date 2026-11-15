@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import {
   AP_YEAR_PARAM,
   parseAccountPaymentsYearParam,
+  reconcileAccountPaymentsPendingYear,
   shiftTransferDateRangeToYear,
 } from './account-payments-year'
 
@@ -17,6 +18,21 @@ describe('parseAccountPaymentsYearParam', () => {
     expect(parseAccountPaymentsYearParam(null, opts)).toBe(2026)
     expect(parseAccountPaymentsYearParam('abc', opts)).toBe(2026)
     expect(parseAccountPaymentsYearParam('2010', opts)).toBe(2026)
+  })
+})
+
+describe('reconcileAccountPaymentsPendingYear', () => {
+  it('탭으로 고른 연도가 URL보다 앞이면 유지한다', () => {
+    expect(reconcileAccountPaymentsPendingYear(2026, 2025)).toBe(2025)
+    expect(reconcileAccountPaymentsPendingYear(2025, 2024)).toBe(2024)
+  })
+
+  it('URL이 고른 연도에 닿으면 로컬 대기를 끝낸다', () => {
+    expect(reconcileAccountPaymentsPendingYear(2025, 2025)).toBeNull()
+  })
+
+  it('탭 클릭이 없으면 URL 연도를 따른다', () => {
+    expect(reconcileAccountPaymentsPendingYear(2024, null)).toBeNull()
   })
 })
 
