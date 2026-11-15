@@ -1,10 +1,17 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   applyDeletedIdsToArrayLists,
   invalidateArrayLists,
 } from '@/shared/lib/query-list-cache'
+
+/** 연도별 기부금 합이 바뀌면 다시 읽어야 하는 예산 카드. 계좌 지급 목록·상세는 포함하지 않는다. */
+const SETTLEMENT_BUDGET_SUMMARY_KEY = [
+  ...settlementQueryKeys.accountPayments.all(),
+  'budgetSummary',
+] as const
 
 function sponsorRowId(row: SponsorManagementRow): string {
   return String(row.id ?? '')
@@ -52,6 +59,27 @@ export function applyDeletedSponsorsToLists(
     ids,
     sponsorRowId
   )
+}
+
+/**
+ * 연도별 후원금 저장 이후의 파생 조회.
+ * 목록 `totalDonationAmount`, 상세의 같은 필드, 계좌 지급 `annualBudgetAmount`는
+ * yearly-business 응답이 아니라 각자 GET이 정본이다.
+ */
+export async function invalidateSponsorDonationAggregateCaches(
+  queryClient: QueryClient,
+  sponsorId: string
+): Promise<void> {
+  const id = sponsorId.trim()
+  await Promise.all([
+    invalidateSponsorListCaches(queryClient),
+    id
+      ? queryClient.invalidateQueries({
+          queryKey: dataManagementQueryKeys.sponsors.detail(id),
+        })
+      : Promise.resolve(),
+    queryClient.invalidateQueries({ queryKey: SETTLEMENT_BUDGET_SUMMARY_KEY }),
+  ])
 }
 
 export async function invalidateSponsorListCaches(queryClient: QueryClient): Promise<void> {

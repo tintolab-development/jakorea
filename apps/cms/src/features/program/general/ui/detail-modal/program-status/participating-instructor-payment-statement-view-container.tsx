@@ -201,7 +201,8 @@ export function useParticipatingInstructorPaymentStatementView(input: {
       return applyApplicationDocumentToProgramCalculationStatement(
         base,
         documentQuery.data,
-        activeRow.settlementApplicationId
+        activeRow.settlementApplicationId,
+        lineRow.sessionOrdinal
       )
     }
     return base

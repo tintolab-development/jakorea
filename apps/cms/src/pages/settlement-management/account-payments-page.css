@@ -197,6 +197,8 @@
   align-items: baseline;
   /* 숫자 ↔ 원 가로 간격만 좁힘 (줄 바꿈 시 세로는 유지) */
   gap: 4px 2px;
+  /* 32px 숫자 줄. 로딩 점·접미사 유무로 카드 높이가 줄지 않게 */
+  min-height: 38px;
 }
 
 .account-payments-page__card-amount-num {

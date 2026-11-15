@@ -64,6 +64,8 @@ export type PaymentOrderDetailFullPageModalInput = {
 export type PaymentOrderReceiptReviewTarget = {
   individualSettlementApplicationId: number
   programId: number | null
+  /** 목록 행의 일정 회차 — 산출 내역서 「N회차」 */
+  sessionOrdinal: number | null
 }
 
 export function usePaymentOrderDetailFullPageModalState(
@@ -325,7 +327,8 @@ export function usePaymentOrderDetailFullPageModalState(
       applyApplicationDocumentToProgramCalculationStatement(
         base,
         applicationDocumentQuery.data,
-        calcApplicationId
+        calcApplicationId,
+        calcLineRow.sessionOrdinal
       )
     )
   }, [
@@ -351,6 +354,7 @@ export function usePaymentOrderDetailFullPageModalState(
           setReceiptReviewTarget({
             individualSettlementApplicationId: lineRow.individualSettlementApplicationId,
             programId: lineRow.programId ?? null,
+            sessionOrdinal: lineRow.sessionOrdinal ?? null,
           })
           return
         }

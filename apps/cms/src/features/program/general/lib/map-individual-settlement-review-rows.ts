@@ -23,6 +23,8 @@ export type IndividualSettlementReviewListRow = {
   id: string
   no: number
   programScheduleId: number | null
+  /** 일정 회차 번호(program_schedule.session_no). 배정 일정에서만 알 수 있고, 없으면 null — 산출 내역서 「N회차」 */
+  sessionOrdinal: number | null
   educationScheduleLabel: string
   lectureProgress: ParticipatingIndividualInstructorLectureProgress
   status: string
@@ -184,6 +186,7 @@ export function mapIndividualSettlementStatusRows(
           : `NOT_APPLIED:${scheduleId ?? `index-${index}`}`,
       no: index + 1,
       programScheduleId: scheduleId,
+      sessionOrdinal: null,
       educationScheduleLabel: label,
       lectureProgress: statusRowLectureProgress(item),
       orphanApplication: false,
@@ -244,6 +247,7 @@ export function mapIndividualSettlementReviewListRows(input: {
       id: `schedule:${scheduleId}`,
       no: rows.length + 1,
       programScheduleId: scheduleId,
+      sessionOrdinal: session.sessionNo ?? null,
       educationScheduleLabel: sessionScheduleLabel(session),
       lectureProgress: sessionLectureProgress(session),
       orphanApplication: false,
@@ -268,6 +272,7 @@ export function mapIndividualSettlementReviewListRows(input: {
       id: orphanId,
       no: rows.length + 1,
       programScheduleId: scheduleId,
+      sessionOrdinal: null,
       educationScheduleLabel: buildSettlementScheduleDisplayLabel(item) || applicationScheduleLabel(item),
       lectureProgress: 'scheduled',
       orphanApplication: true,

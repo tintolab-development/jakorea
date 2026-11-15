@@ -17,6 +17,7 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
   UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
   UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
@@ -762,6 +763,22 @@ function renderBody(
       ) {
         /** 구버전(본문 빈 값)은 구분선만 — 확인 문구가 있으면 시안(C10)대로 표시 */
         return null
+      }
+      if (
+        renderMode === 'contentOnly' &&
+        c.id === EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing
+      ) {
+        /** 시안 5767:42711 — 첫 줄은 확인 문구, 나머지 줄은 유효기간·보관 안내(회색 작은 글씨) */
+        const [lead = '', ...rest] = safeTrim(c.body).split('\n')
+        const note = rest.join('\n').trim()
+        return (
+          <div className="form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--pledge-closing">
+            <span className="form-document-preview-paragraph__pledge-closing-lead">{lead.trim() || ' '}</span>
+            {note ? (
+              <span className="form-document-preview-paragraph__pledge-closing-note">{note}</span>
+            ) : null}
+          </div>
+        )
       }
       return (
         <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>

@@ -11,7 +11,7 @@ describe('agreement-portrait A4 preview', () => {
     )
   })
 
-  it('uses compact section gap for 1-page layout', () => {
-    expect(AGREEMENT_PORTRAIT_A4_SECTION_GAP_PX).toBeLessThan(40)
+  it('uses the 40px section gap from design 5767:42795', () => {
+    expect(AGREEMENT_PORTRAIT_A4_SECTION_GAP_PX).toBe(40)
   })
 })

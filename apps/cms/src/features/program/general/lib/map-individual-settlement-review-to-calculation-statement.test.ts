@@ -192,3 +192,20 @@ describe('처리 현황 — 차수 기준 재신청(모든 화면 공통)', () =
     expect(view.basic.processingStatusClass).toBe('confirmed')
   })
 })
+
+describe('교육 진행 일자 칸 — 시안 「YYYY.MM.DD(요일) │ N회차」', () => {
+  it('목록 행 회차를 받아 뒤 칸에 「N회차」를 쓴다(시간은 쓰지 않는다)', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement(
+      { ...detail, scheduleName: '가상 일정' },
+      { sessionOrdinal: 2 }
+    )
+    expect(view.blocks[0]?.lectureDateDisplay).toBe('2026.01.28(수)')
+    expect(view.blocks[0]?.lectureDateDisplay).not.toMatch(/\d{2}:\d{2}/)
+    expect(view.blocks[0]?.lectureSessionDisplay).toBe('2회차')
+  })
+
+  it('회차를 모르면 뒤 칸을 비워 날짜만 보인다', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement({ ...detail, scheduleName: '가상 일정' })
+    expect(view.blocks[0]?.lectureSessionDisplay).toBe('')
+  })
+})

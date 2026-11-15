@@ -21,8 +21,8 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME =
 export const PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS =
   new Set<string>([PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord])
 
-/** 표 구간 간격 — 1페이지에 mid 확인 스택이 들어가도록 공통 40px보다 축소 */
-const PAYMENT_STATEMENT_PRE_CONSENT_A4_SECTION_GAP_PX = 24
+/** 표 구간 간격 — 시안 5767:42423 40 */
+const PAYMENT_STATEMENT_PRE_CONSENT_A4_SECTION_GAP_PX = 40
 
 export const getPaymentStatementPreConsentA4ParagraphGap: FormDocumentPreviewParagraphGapResolver = (
   paragraph,

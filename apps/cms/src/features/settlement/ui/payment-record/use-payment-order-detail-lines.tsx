@@ -16,10 +16,13 @@ import { fetchSettlementDetailRemote } from '@/features/settlement-management/ap
 import {
   getSettlementApiErrorMessage,
   isFileDownloadPasswordApiError,
-  isGeminiPaymentStatementPreConsentRequiredError,
+  isPaymentStatementConfirmConsentBlockError,
   isPaymentStatementStatusConflictError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
-import { canConfirmPaymentStatement } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import {
+  BULK_CONFIRM_PAYMENT_STATEMENT_ACTION,
+  canConfirmPaymentStatement,
+} from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import {
   isIndividualSettlementApplicationListItem,
   isSettlementApplicationListItem,
@@ -85,7 +88,10 @@ import {
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
-import { networkAwareAlertTitle } from '@/shared/lib/extract-api-error-message'
+import {
+  getApiErrorHttpStatus,
+  networkAwareAlertTitle,
+} from '@/shared/lib/extract-api-error-message'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -143,6 +149,7 @@ export function filterDetailRows(
 /**
  * 일괄 확인 가능 여부. 영수증(참여자·봉사자) 행은 지급조서 확인 대신 영수증 승인(APPROVE)으로 처리한다
  * (일괄 확인 대상은 확인 대기 중·지급조서 재신청 건이고 신청자 유형으로 제외하지 않는다 — CMS-FUNC-0495).
+ * 확정 전 강사 신청서 행은 BULK_CONFIRM_PAYMENT_STATEMENT가 있을 때만 일괄 확인한다(신청서 승인 + 지급조서 확인).
  */
 export function canBatchConfirmDetailLine(row: PaymentOrderDetailLineRow): boolean {
   if (isIndividualSettlementApplicationListItem(row)) {
@@ -150,6 +157,12 @@ export function canBatchConfirmDetailLine(row: PaymentOrderDetailLineRow): boole
       row.individualSettlementApplicationId != null &&
       row.revisionNo != null &&
       (row.availableActions ?? []).includes('APPROVE')
+    )
+  }
+  if (isSettlementApplicationListItem(row)) {
+    return (
+      row.settlementApplicationId != null &&
+      (row.availableActions ?? []).includes(BULK_CONFIRM_PAYMENT_STATEMENT_ACTION)
     )
   }
   return canConfirmPaymentStatement(row)
@@ -474,6 +487,10 @@ export function usePaymentOrderDetailLinesController(
           return
         }
         const receiptLines = selected.filter(row => isIndividualSettlementApplicationListItem(row))
+        const instructorApplicationLines = selected.filter(
+          row =>
+            isSettlementApplicationListItem(row) && !isIndividualSettlementApplicationListItem(row)
+        )
         const statementIds = selected
           .filter(
             row =>
@@ -482,7 +499,11 @@ export function usePaymentOrderDetailLinesController(
           .map(row => row.statementId)
           .filter((id): id is number => id != null)
 
-        if (statementIds.length === 0 && receiptLines.length === 0) {
+        if (
+          statementIds.length === 0 &&
+          receiptLines.length === 0 &&
+          instructorApplicationLines.length === 0
+        ) {
           showAlert({
             title: '안내',
             content: '지급조서 확인 API에 필요한 statementId가 없습니다.',
@@ -492,7 +513,8 @@ export function usePaymentOrderDetailLinesController(
 
         void (async () => {
           try {
-            // 강사 지급조서와 영수증(참여자·봉사자)을 일괄 확인 API 한 번으로 처리한다 — 한 트랜잭션, 전체 성공 또는 전체 롤백.
+            // 강사 지급조서·확정 전 강사 신청서·영수증(참여자·봉사자)을 일괄 확인 API 한 번으로 처리한다
+            // — 한 트랜잭션, 전체 성공 또는 전체 롤백. 건별 호출로 나누지 않는다(부분 승인 방지).
             await confirmMutation.mutateAsync({
               statementIds,
               lectureFeePaymentScheduledDate: iso,
@@ -500,22 +522,31 @@ export function usePaymentOrderDetailLinesController(
                 settlementApplicationId: line.individualSettlementApplicationId!,
                 expectedRevisionNo: line.revisionNo!,
               })),
+              instructorSettlementApplications: instructorApplicationLines.map(line => ({
+                settlementApplicationId: line.settlementApplicationId!,
+              })),
             })
             setBatchConfirmOpen(false)
             setSelectedRowKeys([])
             setBatchConfirmDoneOpen(true)
             await detailContextQuery?.refetch()
           } catch (error) {
+            const consentBlock = isPaymentStatementConfirmConsentBlockError(error)
             showAlert({
-              title: networkAwareAlertTitle(error, '안내'),
+              title: networkAwareAlertTitle(
+                error,
+                consentBlock ? '지급조서 확인 불가 안내' : '안내'
+              ),
               content: getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'),
             })
-            // 사전 동의 미완료(Gemini)·영수증 revision 불일치(STALE_REVISION)도 상태 충돌처럼 목록을 다시 받아
+            // 사전 동의 미완료·동의서 계좌 없음·영수증 revision 불일치(STALE_REVISION)도 상태 충돌처럼 목록을 다시 받아
             // 확인 불가 행을 반영한다(일괄 확인은 전체 롤백됨).
+            // 확정 전 강사 신청서가 섞인 요청의 409(이미 처리된 신청서·계좌/지급 동의서 없음 등)도 전체 롤백이므로 목록을 다시 받는다.
             if (
               isPaymentStatementStatusConflictError(error) ||
-              isGeminiPaymentStatementPreConsentRequiredError(error) ||
-              (receiptLines.length > 0 && isIndividualSettlementReviewConflict(error))
+              consentBlock ||
+              (receiptLines.length > 0 && isIndividualSettlementReviewConflict(error)) ||
+              (instructorApplicationLines.length > 0 && getApiErrorHttpStatus(error) === 409)
             ) {
               setBatchConfirmOpen(false)
               setSelectedRowKeys([])

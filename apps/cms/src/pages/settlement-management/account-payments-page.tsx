@@ -80,6 +80,7 @@ import { AccountPaymentStatusText } from './account-payment-status-text'
 import {
   AP_YEAR_PARAM,
   parseAccountPaymentsYearParam,
+  reconcileAccountPaymentsPendingYear,
   shiftTransferDateRangeToYear,
 } from './account-payments-year'
 import {
@@ -224,8 +225,8 @@ export default function AccountPaymentsPage() {
     [calendarYear]
   )
 
-  /** 탭 구간(금년~3년 전) — URL `ap_year`가 SSOT */
-  const selectedYearScoped = useMemo(() => {
+  /** 탭 구간(금년~3년 전) — URL `ap_year` */
+  const yearFromUrl = useMemo(() => {
     const lo = calendarYear - 3
     const hi = calendarYear
     return parseAccountPaymentsYearParam(searchParams.get(AP_YEAR_PARAM), {
@@ -234,6 +235,19 @@ export default function AccountPaymentsPage() {
       fallback: hi,
     })
   }, [calendarYear, searchParams])
+  /**
+   * 탭 클릭 연도. `setSearchParams`는 transition이라 이체 기간보다 늦게 반영되고,
+   * 그 한 프레임에 예산 조회 키가 두 번 갈리며 금액이 비워진다.
+   */
+  const pendingYearRef = useRef<number | null>(null)
+  const selectedYearScoped = pendingYearRef.current ?? yearFromUrl
+
+  useEffect(() => {
+    pendingYearRef.current = reconcileAccountPaymentsPendingYear(
+      yearFromUrl,
+      pendingYearRef.current
+    )
+  }, [yearFromUrl])
 
   const [viewMode, setViewMode] = useState<PageViewMode>('list')
   const [draftInstructor, setDraftInstructor] = useState('')
@@ -514,6 +528,7 @@ export default function AccountPaymentsPage() {
 
   const handleYearTabSelect = useCallback(
     (y: number) => {
+      pendingYearRef.current = y
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)

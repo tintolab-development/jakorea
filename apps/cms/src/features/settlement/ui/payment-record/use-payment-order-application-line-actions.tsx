@@ -1,12 +1,11 @@
 /**
- * 지급조서 확인 — 확정 전 정산 신청서 행의 승인·반려·보정 요청.
+ * 지급조서 확인 — 확정 전 정산 신청서 행의 승인·반려.
  * 신청서 승인만 호출하고, 지급조서 확인(예정일)은 호출하지 않는다.
  */
 import { useCallback, useState, type ReactNode } from 'react'
 import {
   confirmSettlementApplicationRemote,
   rejectSettlementApplicationRemote,
-  requestSettlementApplicationCorrectionRemote,
   SETTLEMENT_APPLICATION_ACTIONS,
 } from '@/features/program/general/api/settlement-application-actions-remote'
 import { SettlementApplicationReasonModal } from '@/features/program/general/ui/detail-modal/program-status/settlement-application-reason-modal'
@@ -29,8 +28,6 @@ import {
 
 const APPLICATION_ACTION_MODAL_Z_INDEX = 1300
 
-type ApplicationReasonKind = 'reject' | 'requestCorrection'
-
 export function usePaymentOrderApplicationLineActions(input: {
   line: PaymentOrderApplicationLine | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
@@ -42,7 +39,7 @@ export function usePaymentOrderApplicationLineActions(input: {
   const applicationId = isApplicationLine ? (line.settlementApplicationId ?? null) : null
   const actions = line?.availableActions ?? []
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [reasonKind, setReasonKind] = useState<ApplicationReasonKind | null>(null)
+  const [reasonOpen, setReasonOpen] = useState(false)
   const [pending, setPending] = useState(false)
 
   const refetchList = useCallback(async () => {
@@ -77,15 +74,11 @@ export function usePaymentOrderApplicationLineActions(input: {
 
   const submitReason = useCallback(
     async (reason: string) => {
-      if (applicationId == null || reasonKind == null || pending) return
+      if (applicationId == null || !reasonOpen || pending) return
       setPending(true)
       try {
-        if (reasonKind === 'reject') {
-          await rejectSettlementApplicationRemote(applicationId, { reason })
-        } else {
-          await requestSettlementApplicationCorrectionRemote(applicationId, { reason })
-        }
-        setReasonKind(null)
+        await rejectSettlementApplicationRemote(applicationId, { reason })
+        setReasonOpen(false)
         await refetchList()
         onDone()
       } catch (error) {
@@ -94,7 +87,7 @@ export function usePaymentOrderApplicationLineActions(input: {
         setPending(false)
       }
     },
-    [applicationId, fail, onDone, pending, reasonKind, refetchList]
+    [applicationId, fail, onDone, pending, reasonOpen, refetchList]
   )
 
   const statementActionOverride = isApplicationLine
@@ -102,10 +95,7 @@ export function usePaymentOrderApplicationLineActions(input: {
         onConfirm: async () => {
           setConfirmOpen(true)
         },
-        onRejectClick: () => setReasonKind('reject'),
-        onRequestCorrectionClick: actions.includes(SETTLEMENT_APPLICATION_ACTIONS.requestCorrection)
-          ? () => setReasonKind('requestCorrection')
-          : undefined,
+        onRejectClick: () => setReasonOpen(true),
         pending,
         confirmEnabled: actions.includes(SETTLEMENT_APPLICATION_ACTIONS.confirm),
         rejectEnabled: actions.includes(SETTLEMENT_APPLICATION_ACTIONS.reject),
@@ -130,12 +120,12 @@ export function usePaymentOrderApplicationLineActions(input: {
         zIndex={APPLICATION_ACTION_MODAL_Z_INDEX}
       />
       <SettlementApplicationReasonModal
-        kind={reasonKind === 'requestCorrection' ? 'requestCorrection' : 'reject'}
-        open={reasonKind != null}
+        kind="reject"
+        open={reasonOpen}
         confirming={pending}
         onCancel={() => {
           if (pending) return
-          setReasonKind(null)
+          setReasonOpen(false)
         }}
         onConfirm={reason => submitReason(reason)}
         zIndex={APPLICATION_ACTION_MODAL_Z_INDEX}

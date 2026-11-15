@@ -86,7 +86,9 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
           receiptReview.target?.programId != null ? String(receiptReview.target.programId) : ''
         }
         participantId=""
-        settlementApplicationId={receiptReview.target?.individualSettlementApplicationId ?? null}        onClose={receiptReview.close}
+        settlementApplicationId={receiptReview.target?.individualSettlementApplicationId ?? null}
+        sessionOrdinal={receiptReview.target?.sessionOrdinal ?? null}
+        onClose={receiptReview.close}
         onReviewed={receiptReview.onReviewed}
       />
     </>

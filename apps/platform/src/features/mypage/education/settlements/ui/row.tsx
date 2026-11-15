@@ -6,7 +6,7 @@ import { formatSettlementGradeLabel } from '../lib/format-write-draft'
 import { isLectureFeeSettlementBlocked } from '../lib/lecture-fee-preview'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
 import {
-  isSettlementDeadlinePassed,
+  isSettlementResubmitDisabled,
   isSettlementWriteCtaDisabled,
   PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
   PAYMENT_STATEMENT_OVERDUE_MESSAGE,
@@ -94,7 +94,9 @@ export function EducationSettlementRow({
     setErrorAlert(resolveEducationErrorAlert(error, instructorSettlementApiErrorMessage))
   }, [])
   const reapplyMutation = useReapplyPaymentStatementMutation()
-  const config = resolveSettlementStatusUi(item.status, documentKind)
+  const config = resolveSettlementStatusUi(item.status, documentKind, {
+    adminApplicationCorrection: item.adminApplicationCorrection === true,
+  })
   /** 정정 승인 후 강사 재신청 대기 — [지급조서 재신청]이 재신청 API를 부른다 */
   const isCorrectionReapply =
     documentKind === 'payment_statement' && item.status === 'correction_completed'
@@ -243,11 +245,11 @@ export function EducationSettlementRow({
         iconSrc={MARK_ICON[config.markTone]}
       />
     ) : null
-  const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
-  const receiptReapplyUnavailable =
-    documentKind === 'receipt' &&
-    (item.canResubmitReceipt === false ||
-      (item.hasPayableItems === false && item.canResubmitReceipt !== true))
+  const resubmitDisabled = isSettlementResubmitDisabled({
+    documentKind,
+    canResubmit: item.canResubmitReceipt,
+    statementReapplyDeadlineDate: item.reapplyDeadlineDate,
+  })
 
   const renderAction = (action: SettlementStatusAction) => {
     if (action === 'write') {
@@ -357,16 +359,15 @@ export function EducationSettlementRow({
       )
     }
     const reapplyPath = documentKind === 'receipt' ? receiptSubmitPath : writePath
-    const reapplyUnavailable = receiptReapplyUnavailable
     return (
       <PFButton
         key={action}
         type="button"
         variant="primary"
         size="large"
-        disabled={reapplyDisabled || reapplyUnavailable}
+        disabled={resubmitDisabled}
         onClick={() => {
-          if (reapplyDisabled || reapplyUnavailable) return
+          if (resubmitDisabled) return
           if (onWrite) {
             onWrite(reapplyPath)
             return
@@ -512,9 +513,9 @@ export function EducationSettlementRow({
                 variant="primary"
                 size="xlarge"
                 className={styles.rejectButton}
-                disabled={reapplyDisabled}
+                disabled={resubmitDisabled}
                 onClick={() => {
-                  if (reapplyDisabled) return
+                  if (resubmitDisabled) return
                   closeRejectReason()
                   if (onWrite) {
                     onWrite(writePath)
@@ -532,9 +533,9 @@ export function EducationSettlementRow({
                 variant="primary"
                 size="xlarge"
                 className={styles.rejectButton}
-                disabled={reapplyDisabled || receiptReapplyUnavailable}
+                disabled={resubmitDisabled}
                 onClick={() => {
-                  if (reapplyDisabled || receiptReapplyUnavailable) return
+                  if (resubmitDisabled) return
                   closeRejectReason()
                   if (onWrite) {
                     onWrite(receiptSubmitPath)

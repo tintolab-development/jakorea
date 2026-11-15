@@ -267,6 +267,37 @@ describe('buildInstructorDetailFromSettlements', () => {
     })
   })
 
+  it('신청서 행에 BULK_CONFIRM_PAYMENT_STATEMENT가 있으면 일괄 확인 대상이고 statementId는 비워 둔다', () => {
+    const detail = buildInstructorDetailFromSettlements(
+      instructorRow,
+      [
+        listItem({
+          settlementId: undefined,
+          statementId: undefined,
+          settlementApplicationId: 26,
+          rowType: 'SETTLEMENT_APPLICATION',
+          statementStatus: 'WAITING_CONFIRM',
+          paymentStatus: undefined,
+          availableActions: [
+            'VIEW',
+            'BULK_CONFIRM_PAYMENT_STATEMENT',
+            'CONFIRM_SETTLEMENT_APPLICATION',
+            'REJECT_SETTLEMENT_APPLICATION',
+            'REQUEST_CORRECTION',
+          ],
+        }),
+      ],
+      []
+    )
+
+    expect(detail.programRows[0]).toMatchObject({
+      id: 'application-26',
+      settlementApplicationId: 26,
+      statementId: undefined,
+      canConfirmPaymentStatement: true,
+    })
+  })
+
   it('영수증 행은 영수증 신청 ID로 그리고 지급조서 확인 대상이 아니다', () => {
     const detail = buildInstructorDetailFromSettlements(
       instructorRow,

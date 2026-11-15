@@ -223,9 +223,47 @@ describe('applyApplicationDocumentToProgramCalculationStatement', () => {
       lectureFeeStandardAmount: '450,000원',
       businessIncomeEarnerLabel: '해당',
     })
-    expect(statement.blocks[0]?.lectureSessionDisplay).toBe('1차시')
+    // 「교육 진행 차시」(인정 차시)는 basic에 두고, 교육 진행 일자 칸 뒤는 회차(시안 「날짜 │ N회차」)
+    expect(statement.basic.recognizedSessionCount).toBe(1)
     expect(statement.totalAmount).toBe(488150)
     expect(statement.formulaLabel).toBe('강의비 + 활동비 + 식비 - 원천징수')
+  })
+
+  it('교육 진행 일자 칸은 시간 없이 날짜, 뒤는 목록 행 회차(서버 회차 표기가 없을 때)', () => {
+    const statement = applyApplicationDocumentToProgramCalculationStatement(
+      base,
+      {
+        ...document14,
+        calcInfo: {
+          ...document14.calcInfo,
+          educationStartAt: '2026-12-08T06:00:00Z',
+          educationEndAt: '2026-12-08T08:00:00Z',
+        },
+      },
+      14,
+      2
+    )
+    expect(statement.blocks[0]?.lectureDateDisplay).toBe('2026.12.08(화)')
+    expect(statement.blocks[0]?.lectureDateDisplay).not.toMatch(/\d{2}:\d{2}/)
+    expect(statement.blocks[0]?.lectureSessionDisplay).toBe('2회차')
+  })
+
+  it('확정된 정산 행과 같은 base 날짜·회차가 있으면 그대로 쓰고, 회차가 없으면 날짜만', () => {
+    const withBase = applyApplicationDocumentToProgramCalculationStatement(
+      {
+        ...base,
+        blocks: [
+          { institutionName: '-', lectureDateDisplay: '2026.11.06(금)', lectureSessionDisplay: '3회차', lines: [] },
+        ],
+      },
+      document14,
+      14,
+      9
+    )
+    expect(withBase.blocks[0]).toMatchObject({ lectureDateDisplay: '2026.11.06(금)', lectureSessionDisplay: '3회차' })
+
+    const noSession = applyApplicationDocumentToProgramCalculationStatement(base, document14, 14, null)
+    expect(noSession.blocks[0]?.lectureSessionDisplay).toBe('')
   })
 })
 
