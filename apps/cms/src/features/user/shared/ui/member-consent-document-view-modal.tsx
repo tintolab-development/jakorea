@@ -429,6 +429,8 @@ function MemberConsentAgreementDocumentView({
           ? onDownloadFile
           : undefined
       }
+      // 제출본 보기는 미리보기가 아니므로 배지·안내 문구를 숨긴다(동의만 한 경우 합성 미리보기만 노출)
+      showPreviewChrome={isSyntheticPreview}
     />
   )
 }

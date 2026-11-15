@@ -460,6 +460,36 @@ const GUARDIAN_LEGAL_CONTENT: TermsDocumentContent = {
   ],
 }
 
+/** 임팩트 스토리 뉴스레터 구독 — 비회원 포함 이름·이메일 수집 및 광고성 정보 수신 동의 */
+export const NEWSLETTER_CONSENT_CONTENT: TermsDocumentContent = {
+  intro:
+    '본인은 「개인정보 보호법」 제15조 및 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 제50조에 따라 아래 개인정보의 수집·이용과 광고성 정보 수신에 대해 안내받고 동의합니다',
+  sections: [
+    {
+      heading: '개인정보 수집항목',
+      paragraphs: ['필수 : 이름, 이메일 주소'],
+    },
+    {
+      heading: '수신 정보 및 채널',
+      paragraphs: ['JA Korea 뉴스레터(교육 프로그램·행사·캠페인 등 광고성 정보 포함) / 이메일'],
+    },
+    {
+      heading: '개인정보의 수집, 이용 목적',
+      paragraphs: ['JA Korea 뉴스레터 발송 및 구독 관리(발송은 스티비(Stibee)에 위탁)'],
+    },
+    {
+      heading: '개인정보의 보유 및 이용기간',
+      paragraphs: [
+        '구독 해지(수신 거부) 시까지. 동의일로부터 2년마다 수신 동의 여부를 확인하며, 뉴스레터 하단의 수신 거부 링크로 언제든 구독을 해지할 수 있습니다. 동의를 거부할 권리가 있으며, 동의하지 않으면 뉴스레터 구독이 제한됩니다. 동의하지 않아도 회원가입 및 서비스 이용에는 영향이 없습니다.',
+      ],
+    },
+    {
+      heading: '개인정보 보호책임자',
+      paragraphs: ['이선아 사무국장 salee@jakorea.org 02-783-2367'],
+    },
+  ],
+}
+
 export const TERMS_DOCUMENT_BY_TYPE: Record<TermsViewType, TermsDocumentContent> = {
   serviceTerms: TERMS_OF_SERVICE_CONTENT,
   privacyCollection: PRIVACY_POLICY_CONTENT,
@@ -469,4 +499,5 @@ export const TERMS_DOCUMENT_BY_TYPE: Record<TermsViewType, TermsDocumentContent>
   teacherInfo: TEACHER_INFO_COLLECTION_CONTENT,
   guardianLegal: GUARDIAN_LEGAL_CONTENT,
   privacyNotice: PRIVACY_NOTICE_CONTENT,
+  newsletter: NEWSLETTER_CONSENT_CONTENT,
 }

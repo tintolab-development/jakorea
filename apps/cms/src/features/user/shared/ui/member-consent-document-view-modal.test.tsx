@@ -211,6 +211,10 @@ describe('member consent filled document rendering', () => {
     const radios = [...page.querySelectorAll('.form-editor-table-bottom-consent input[type="radio"]')]
     expect(radios.length).toBeGreaterThan(0)
     expect(radios.every(radio => (radio as HTMLInputElement).disabled)).toBe(true)
+    // 제출본 보기는 미리보기가 아니다 — 「미리보기」 배지·안내 문구 없음, 닫기 버튼은 「닫기」
+    expect(document.querySelector('.template-preview-modal__badge')).toBeNull()
+    expect(document.body.textContent).not.toContain('현재 화면은 미리보기 화면입니다.')
+    expect(document.body.textContent).not.toContain('미리보기 닫기')
   })
 
   it('shows the portal e-signature image when signed-document returns a signed field', async () => {

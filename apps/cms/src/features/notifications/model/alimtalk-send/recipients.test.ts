@@ -97,43 +97,15 @@ describe('mergeAlimtalkSendRecipients phone dedupe', () => {
 })
 
 describe('resolveNotificationRecipientTypeLabel', () => {
-  it('keeps the server Korean typeLabel as is', () => {
-    expect(resolveNotificationRecipientTypeLabel('참여자', 'participation')).toBe('참여자')
-    expect(resolveNotificationRecipientTypeLabel('강사', 'member')).toBe('강사')
-    expect(resolveNotificationRecipientTypeLabel('관리자', 'member')).toBe('관리자')
+  it('shows the server typeLabel as is (server sends planning labels)', () => {
+    expect(resolveNotificationRecipientTypeLabel('참여자')).toBe('참여자')
+    expect(resolveNotificationRecipientTypeLabel('학교(교사), 강사')).toBe('학교(교사), 강사')
+    expect(resolveNotificationRecipientTypeLabel('  개인 ')).toBe('개인')
   })
 
-  it('turns legacy server member labels into the planning member label', () => {
-    expect(resolveNotificationRecipientTypeLabel('일반', 'member')).toBe('개인')
-    expect(resolveNotificationRecipientTypeLabel('교사', 'member')).toBe('학교(교사)')
-    expect(resolveNotificationRecipientTypeLabel('교사·강사', 'member')).toBe('학교(교사), 강사')
-    expect(resolveNotificationRecipientTypeLabel('교사', 'participation')).toBe('교사')
-  })
-
-  it('turns a raw participation code into the planning participation label', () => {
-    expect(resolveNotificationRecipientTypeLabel('INDIVIDUAL', 'participation')).toBe('참여자')
-    expect(resolveNotificationRecipientTypeLabel('ORGANIZATION', 'participation')).toBe('참여자')
-    expect(resolveNotificationRecipientTypeLabel('PARTICIPANT', 'participation')).toBe('참여자')
-    expect(resolveNotificationRecipientTypeLabel('VOLUNTEER', 'participation')).toBe('봉사자')
-    expect(resolveNotificationRecipientTypeLabel('INSTRUCTOR', 'participation')).toBe('강사')
-  })
-
-  it('turns a raw member code into the planning member label', () => {
-    expect(resolveNotificationRecipientTypeLabel('INDIVIDUAL', 'member')).toBe('개인')
-    expect(resolveNotificationRecipientTypeLabel('GENERAL', 'member')).toBe('개인')
-    expect(resolveNotificationRecipientTypeLabel('SCHOOL_TEACHER', 'member')).toBe('학교(교사)')
-    expect(resolveNotificationRecipientTypeLabel('SCHOOL', 'member')).toBe('학교(교사)')
-    expect(resolveNotificationRecipientTypeLabel('INSTRUCTOR', 'member')).toBe('강사')
-    expect(resolveNotificationRecipientTypeLabel('TEACHER_AND_INSTRUCTOR', 'member')).toBe(
-      '학교(교사), 강사'
-    )
-    expect(resolveNotificationRecipientTypeLabel('ADMIN', 'member')).toBe('관리자')
-  })
-
-  it('does not show an unknown English code', () => {
-    expect(resolveNotificationRecipientTypeLabel('VOLUNTEER', 'member')).toBe('')
-    expect(resolveNotificationRecipientTypeLabel('ADMIN', 'participation')).toBe('')
-    expect(resolveNotificationRecipientTypeLabel(undefined, 'member')).toBe('')
-    expect(resolveNotificationRecipientTypeLabel('  ', 'participation')).toBe('')
+  it('returns an empty value for a missing typeLabel (shown as -)', () => {
+    expect(resolveNotificationRecipientTypeLabel(null)).toBe('')
+    expect(resolveNotificationRecipientTypeLabel(undefined)).toBe('')
+    expect(resolveNotificationRecipientTypeLabel('  ')).toBe('')
   })
 })

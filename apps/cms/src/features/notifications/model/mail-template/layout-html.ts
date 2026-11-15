@@ -38,8 +38,47 @@ export function mailFirstRowSpanRestLock(): string {
   return `<td ${labelCellAttributes} style="${valueCellStyle}width:${MAIL_TABLE_LABEL_COL_WIDTH_PX}px;min-width:${MAIL_TABLE_LABEL_COL_WIDTH_PX}px;max-width:${MAIL_TABLE_LABEL_COL_WIDTH_PX}px;">&nbsp;</td><td style="${valueCellStyle}">&nbsp;</td>`
 }
 
-export function mailDetailButton(label: string, hrefVariableLabel: string): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;"><tr><td align="center" height="52" bgcolor="#01a1af" style="height:52px;border-radius:8px;background:#01a1af;text-align:center;"><a href="#{${hrefVariableLabel}}" target="_blank" rel="noopener noreferrer" style="display:block;height:52px;box-sizing:border-box;padding:8px 20px;color:#ffffff;font-family:Pretendard,Arial,sans-serif;font-size:16px;line-height:36px;font-weight:600;text-decoration:none;">${label}</a></td></tr></table>`
+/**
+ * 알림 메일 버튼 링크 (BE 회신 방식 A-2, 2026-11).
+ * - `#{알림 링크 경로}`는 상대경로 그대로, 도메인은 수신자 유형별 별도 변수(서버 설정 `ja.notification.links.*`, scheme·경로 없이 호스트만).
+ * - 회원(MEMBER): `https://#{홈페이지 도메인}#{알림 링크 경로}` / 관리자(ADMIN, CMS 화면): `https://#{CMS 어드민 도메인}#{알림 링크 경로}`.
+ * - 회원 템플릿에 관리자 도메인 변수, 관리자 템플릿에 `#{홈페이지 도메인}`을 넣지 않는다(값이 비면 필수 변수 누락으로 발송 실패).
+ * - 링크 버튼은 BE가 링크 경로를 채우는 이벤트의 템플릿에만 넣는다. 수신자 유형·이벤트 바인딩은 서버 정본이며 FE에 매핑을 두지 않는다.
+ */
+export const MAIL_NOTIFICATION_LINK_PATH_VARIABLE_LABEL = '알림 링크 경로'
+export const MAIL_HOMEPAGE_DOMAIN_VARIABLE_LABEL = '홈페이지 도메인'
+export const MAIL_CMS_ADMIN_DOMAIN_VARIABLE_LABEL = 'CMS 어드민 도메인'
+
+export type MailLinkAudience = 'MEMBER' | 'ADMIN'
+
+export const MAIL_LINK_DOMAIN_VARIABLE_LABEL_BY_AUDIENCE: Readonly<
+  Record<MailLinkAudience, string>
+> = {
+  MEMBER: MAIL_HOMEPAGE_DOMAIN_VARIABLE_LABEL,
+  ADMIN: MAIL_CMS_ADMIN_DOMAIN_VARIABLE_LABEL,
+}
+
+/**
+ * 버튼 href. `audience`가 null이면 도메인 없이 경로 변수만 쓴다 —
+ * 발송 주체가 확인되지 않은 상담·인재채용·재능기부 프리셋 전용(BE 회신: href 변경 보류).
+ */
+export function mailNotificationLinkHref(
+  audience: MailLinkAudience | null,
+  pathVariableLabel: string = MAIL_NOTIFICATION_LINK_PATH_VARIABLE_LABEL
+): string {
+  const path = `#{${pathVariableLabel}}`
+  if (audience == null) return path
+  return `https://#{${MAIL_LINK_DOMAIN_VARIABLE_LABEL_BY_AUDIENCE[audience]}}${path}`
+}
+
+/** 버튼은 `<table>` 블록이라 이 버튼이 든 본문은 BE 평문 판정(블록 태그 없음)에 걸리지 않는다. */
+export function mailDetailButton(
+  label: string,
+  hrefVariableLabel: string,
+  audience: MailLinkAudience | null
+): string {
+  const href = mailNotificationLinkHref(audience, hrefVariableLabel)
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;"><tr><td align="center" height="52" bgcolor="#01a1af" style="height:52px;border-radius:8px;background:#01a1af;text-align:center;"><a href="${href}" target="_blank" rel="noopener noreferrer" style="display:block;height:52px;box-sizing:border-box;padding:8px 20px;color:#ffffff;font-family:Pretendard,Arial,sans-serif;font-size:16px;line-height:36px;font-weight:600;text-decoration:none;">${label}</a></td></tr></table>`
 }
 
 export function mailGreetingParagraphs(lines: string[]): string {

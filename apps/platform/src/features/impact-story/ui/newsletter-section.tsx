@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
+import { TermsViewModal } from '@/features/auth'
 import { isValidEmailId } from '@/shared/lib'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import type { NewsletterSubscribeResponse } from '../api/newsletter-client'
@@ -20,7 +21,10 @@ export function NewsletterSection() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [agreed, setAgreed] = useState(false)
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false)
+  /** 신청 모달을 열 때마다 다시 마운트해 배너 동의 상태로 시작한다 */
+  const [subscribeModalKey, setSubscribeModalKey] = useState(0)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [subscribeResult, setSubscribeResult] = useState<NewsletterSubscribeResponse | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -43,6 +47,7 @@ export function NewsletterSection() {
     const isComplete = Boolean(trimmedName) && isValidEmailId(trimmedEmail)
 
     if (!isComplete) {
+      setSubscribeModalKey(previous => previous + 1)
       setIsSubscribeOpen(true)
       return
     }
@@ -66,9 +71,19 @@ export function NewsletterSection() {
     }
   }
 
+  /** [뉴스레터 구독하기] — 관련 약관 동의 팝업을 먼저 띄운다 */
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    void trySubscribeFromBanner()
+    if (subscribeMutation.isPending) return
+    setIsTermsOpen(true)
+  }
+
+  /** 약관 팝업 [닫기] — 「동의합니다」를 골랐으면 이어서 구독을 진행한다 */
+  const handleTermsClose = () => {
+    setIsTermsOpen(false)
+    if (agreed) {
+      void trySubscribeFromBanner()
+    }
   }
 
   return (
@@ -165,7 +180,17 @@ export function NewsletterSection() {
         </form>
       </div>
 
+      <TermsViewModal
+        open={isTermsOpen}
+        type="newsletter"
+        agreed={agreed}
+        onAgreedChange={setAgreed}
+        onClose={handleTermsClose}
+      />
+
       <NewsletterSubscribeModal
+        key={subscribeModalKey}
+        defaultAgreed={agreed}
         open={isSubscribeOpen}
         onClose={() => setIsSubscribeOpen(false)}
         onSuccess={showSuccess}

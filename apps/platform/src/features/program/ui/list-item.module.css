@@ -93,6 +93,11 @@
   align-self: stretch;
 }
 
+/* 시안 디바이더 1px #d9d9d9 — PFDivider `.vertical.default`(2px)보다 우선 */
+.asideDivider.asideDivider {
+  border-left: 1px solid var(--color-border-default, #d9d9d9);
+}
+
 .recruitmentDate {
   min-width: 0;
   max-width: 100%;
