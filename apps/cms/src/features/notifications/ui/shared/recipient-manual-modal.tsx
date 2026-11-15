@@ -6,12 +6,14 @@ import './recipient-manual-modal.css'
 
 const PICKER_Z_INDEX = 1100
 const TABLE_MAX_HEIGHT = 400
-const TABLE_HEADER_HEIGHT = 54
-const TABLE_ROW_HEIGHT = 54
+/** recipient-manual-modal.css 시안 값(헤더 44·행 56)과 맞춘다 — 넘치면 표 본문만 스크롤 */
+const TABLE_HEADER_HEIGHT = 44
+const TABLE_ROW_HEIGHT = 56
 const CONTACT_PLACEHOLDER = '수신자 정보를 입력해 주세요'
 
 export type RecipientManualEntry = {
   contact: string
+  /** 변수값은 발송 화면 「수신자 설정」 표에서 입력한다. 팝업은 받은 값을 그대로 돌려준다. */
   variables?: Record<string, string>
 }
 
@@ -29,7 +31,6 @@ export type RecipientManualModalProps = {
   open: boolean
   contact: 'email' | 'phone'
   values: RecipientManualEntry[]
-  variableKeys?: string[]
   normalize: (raw: string) => string
   isValid: (normalized: string) => boolean
   invalidMessage: string
@@ -66,7 +67,6 @@ export function RecipientManualModal({
   open,
   contact,
   values,
-  variableKeys = [],
   normalize,
   isValid,
   invalidMessage,
@@ -92,7 +92,6 @@ export function RecipientManualModal({
     [rows]
   )
   const needScroll = rows.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
-  const hasVariableColumns = variableKeys.length > 0
 
   const handleRegister = (key: string) => {
     const current = rows.find(row => row.key === key)
@@ -169,39 +168,26 @@ export function RecipientManualModal({
   }
 
   const handleAdd = () => {
-    setRows(prev => {
-      if (prev.some(row => row.mode === 'input' && !row.originContact && !row.contact.trim())) {
-        return prev
-      }
-      return [...prev, emptyRow()]
-    })
+    setRows(prev => [...prev, emptyRow()])
   }
 
   const handleConfirm = () => {
-    const pending = rows.find(row => row.mode === 'input' && row.contact.trim())
-    if (pending && pending.mode === 'input') {
+    // 빈 입력 행은 무시하고, 값이 있는데 [등록]하지 않은 행은 모두 검증해 함께 넘긴다
+    // (수신자 추가로 입력 행이 여러 개일 수 있어 첫 행만 넘기면 나머지가 빠진다)
+    const pendingRows = rows.filter(row => row.mode === 'input' && row.contact.trim())
+    const merged = [...savedEntries]
+    for (const pending of pendingRows) {
       const nextContact = normalize(pending.contact)
       if (!isValid(nextContact)) {
         showAlert({ title: '안내', content: invalidMessage })
         return
       }
-      const merged = [...savedEntries]
       const nextId = identityKey(contact, nextContact)
       if (!merged.some(item => identityKey(contact, item.contact) === nextId)) {
         merged.push({ contact: nextContact, variables: pending.variables })
       }
-      onConfirm(merged)
-      return
     }
-    onConfirm(savedEntries)
-  }
-
-  const updateVariable = (key: string, variableKey: string, value: string) => {
-    setRows(prev =>
-      prev.map(row =>
-        row.key === key ? { ...row, variables: { ...row.variables, [variableKey]: value } } : row
-      )
-    )
+    onConfirm(merged)
   }
 
   const updateContact = (key: string, value: string) => {
@@ -297,42 +283,13 @@ export function RecipientManualModal({
     },
   ]
 
-  if (hasVariableColumns) {
-    columns.splice(1, 0, {
-      title: '변수값',
-      key: 'variables',
-      width: 280,
-      render: (_, record) => (
-        <div className="send-recipient-manual-modal__variables">
-          {variableKeys.map(variableKey => (
-            <label key={variableKey} className="send-recipient-manual-modal__variable">
-              <span className="send-recipient-manual-modal__variable-label">{variableKey}</span>
-              <CmsInput
-                inputSize="small"
-                width="100%"
-                allowClear={false}
-                value={record.variables[variableKey] ?? ''}
-                placeholder="변수값을 입력해 주세요"
-                onChange={event => updateVariable(record.key, variableKey, event.target.value)}
-              />
-            </label>
-          ))}
-        </div>
-      ),
-    })
-  }
-
   return (
     <ContentModal
       open={open}
       onCancel={onClose}
       title="수신자 직접 입력"
-      size={hasVariableColumns ? 'default' : 'compact'}
-      className={
-        hasVariableColumns
-          ? 'send-recipient-manual-modal send-recipient-manual-modal--with-variables'
-          : 'send-recipient-manual-modal'
-      }
+      size="compact"
+      className="send-recipient-manual-modal"
       titleBodyGap="none"
       zIndex={zIndex}
       footer={
