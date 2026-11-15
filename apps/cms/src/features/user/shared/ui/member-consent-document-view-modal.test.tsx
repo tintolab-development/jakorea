@@ -119,12 +119,7 @@ describe('member consent filled document rendering', () => {
     expect(document.body.textContent).not.toContain('MOCK_FILLED')
   })
 
-  it('loads the crime consent original after privacy reason instead of filled-document', async () => {
-    fetchConsentOriginalFileBlobRemote.mockResolvedValue(
-      new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' })
-    )
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-crime-original')
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+  it('loads only the crime signed-document after privacy reason and leaves the original for password download', async () => {
     renderModal({
       templateId: 'agreement-crime',
       consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
@@ -137,14 +132,23 @@ describe('member consent filled document rendering', () => {
     const buttons = [...(reason.closest('.ant-modal') ?? reason).querySelectorAll('button')]
     fireEvent.click(buttons[buttons.length - 1]!)
     await waitFor(() => expect(fetchConsentSignedDocumentRemote).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(fetchConsentOriginalFileBlobRemote).toHaveBeenCalledTimes(1))
+    // 원본(sensitive-downloads)은 BE 정책상 파일 암호가 필수 — 열람 단계에서 요청하지 않는다
+    expect(fetchConsentOriginalFileBlobRemote).not.toHaveBeenCalled()
     expect(mutateAsync).not.toHaveBeenCalled()
     await waitFor(() => {
-      expect(document.querySelector('.crime-consent-doc-modal__a4-outer')).toBeTruthy()
+      const download = [...document.querySelectorAll('button')].find(b =>
+        b.textContent?.includes('문서 다운로드')
+      )
+      expect(download?.hasAttribute('disabled')).toBe(false)
     })
+    expect(document.body.textContent).not.toContain('원본을 불러올 수 없습니다')
   })
 
   it('shows crime original unavailable when signed-document has no uploaded file', async () => {
+    fetchConsentSignedDocumentRemote.mockResolvedValue({
+      originalFileObjectId: null,
+      originalDownloadApi: null,
+    })
     renderModal({
       templateId: 'agreement-crime',
       consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
