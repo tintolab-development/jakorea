@@ -89,11 +89,18 @@ function compareGradeClass(a: GradeClassSection, b: GradeClassSection): number {
   return a.gradeLabel.localeCompare(b.gradeLabel, 'ko')
 }
 
+/** "2" / "2학년" 표기 차이를 같은 학급으로 본다(sameAssignmentGradeLabel과 같은 기준) */
+function gradeClassKey(section: GradeClassSection): string {
+  const grade = Number.parseInt(section.gradeLabel, 10)
+  const gradeKey = Number.isFinite(grade) ? String(grade) : section.gradeLabel.trim()
+  return `${gradeKey}:${section.classNo}`
+}
+
 function uniqueSortedSections(sections: GradeClassSection[]): GradeClassSection[] {
   const seen = new Set<string>()
   const unique: GradeClassSection[] = []
   for (const section of sections) {
-    const key = `${section.gradeLabel}:${section.classNo}`
+    const key = gradeClassKey(section)
     if (seen.has(key)) continue
     seen.add(key)
     unique.push(section)
@@ -180,14 +187,17 @@ function resolveGradeValuesForSchedule(input: {
   scheduleId: number | null
   confirmedClassLabels?: readonly string[]
 }): GradeClassSection[] {
-  // partner / matrix classLabel 이 있으면 학급 행 SSOT. temporary-schedule·로컬 store 로 덮지 않는다.
-  if (input.sources && input.scheduleId != null) {
-    const fromRemote = getGradeValuesFromSources(input.sources, input.scheduleId)
-    if (fromRemote.length > 0) return fromRemote
-  }
-
+  // 그날 교육 학급 = temporary-schedule 확정 학급(slots) ∪ 봉사자 배정(partner / matrix classLabel).
+  // 봉사자가 일부 학급에만 배정돼도 나머지 확정 학급 행(교재명·준비 수량)은 그대로 보이고 봉사자 칸만 '-'다.
+  // 두 소스 모두 서버 응답이며 학급 변경(remap)은 slot·봉사자 배정을 함께 갱신한다. 로컬 store 로 덮지 않는다.
+  const fromRemote =
+    input.sources && input.scheduleId != null
+      ? getGradeValuesFromSources(input.sources, input.scheduleId)
+      : []
   const fromConfirmed = getGradeValuesFromConfirmedLabels(input.confirmedClassLabels)
-  if (fromConfirmed.length > 0) return fromConfirmed
+  if (fromRemote.length > 0 || fromConfirmed.length > 0) {
+    return uniqueSortedSections([...fromRemote, ...fromConfirmed])
+  }
 
   const institutionRow = getUjatInstitutionApplicationRowById(input.detail.institutionId)
   if (!institutionRow) return []
