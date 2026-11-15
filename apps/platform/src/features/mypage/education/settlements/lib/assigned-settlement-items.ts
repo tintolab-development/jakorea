@@ -27,6 +27,7 @@ import {
   type ScheduleSettlementAudience,
 } from './individual-settlement-contract.ts'
 import { normalizePayableItems } from './payment-items.ts'
+import { isAdminApplicationCorrectionRequest } from './payment-statement-status.ts'
 import { seoulBusinessEndDeadlineAt } from './seoul-deadline.ts'
 import {
   isNewerReceiptRecord,
@@ -307,6 +308,11 @@ function indexLatestByScheduleId<T>(
   return indexed
 }
 
+function blankToNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : null
+}
+
 function hasKnownSubmission(
   receipt: PortalExpenseReceipt | undefined,
   settlement: PortalSettlementApplication | undefined,
@@ -410,17 +416,33 @@ export function buildAssignedSettlementItems(
       lecture,
       now,
     )
-    const reviewStatus =
-      individual?.status ?? settlement?.status ?? receipt?.receiptStatus
-    const statementStatus = settlement?.statementStatus ?? settlement?.status
-    const paymentStatus = readPaymentStatus(settlement) ?? readPaymentStatus(receipt)
+    const scheduleStatement = blankToNull(individual?.statementStatus)
+    const schedulePayment = blankToNull(individual?.paymentStatus)
+    const scheduleAxesPresent = individual != null && (scheduleStatement != null || schedulePayment != null)
+    const scheduleAxesAbsent = individual != null && !scheduleAxesPresent
+    const instructorList = input.deadlinePolicy === 'payment_statement' && !individual && settlement != null
+    const reviewStatus = scheduleAxesPresent
+      ? scheduleStatement
+      : scheduleAxesAbsent
+        ? null
+        : (individual?.status ?? settlement?.status ?? receipt?.receiptStatus)
+    const statementStatus = scheduleAxesPresent
+      ? scheduleStatement
+      : (settlement?.statementStatus ?? settlement?.status)
+    const paymentStatus = scheduleAxesPresent
+      ? schedulePayment
+      : scheduleAxesAbsent
+        ? null
+        : (readPaymentStatus(settlement) ?? readPaymentStatus(receipt))
     // 강사 지급조서 제출 마감은 강의보고서 배정의 settlementSubmitDeadlineAt (K20)
     const deadlineAt =
       seoulBusinessEndDeadlineAt(individual?.businessEndDate) ??
       (lecture?.settlementSubmitDeadlineAt?.trim() || undefined) ??
       readSettlementDeadlineAt(settlement) ??
       readReceiptDeadlineAt(receipt)
-    const submitted = hasKnownSubmission(receipt, settlement) || individual?.settlementApplicationId != null
+    const submitted =
+      !scheduleAxesAbsent &&
+      (hasKnownSubmission(receipt, settlement) || individual?.settlementApplicationId != null)
     const actions = readAvailableActions(settlement) ?? readAvailableActions(receipt)
     const submitAllowed = canSubmitFromAvailableActions(actions)
     const resolved = resolveEducationSettlementStatusResult({
@@ -430,6 +452,7 @@ export function buildAssignedSettlementItems(
       paymentStatus,
       correctionStatus: settlement?.correctionStatus,
       statementReapplyAvailable: settlement?.statementReapplyAvailable === true,
+      confirmationStatus: instructorList ? (settlement?.confirmationStatus ?? null) : null,
       receiptDeadlineAt: deadlineAt,
       operationEndAt: seoulBusinessEndDeadlineAt(input.operationEndAt) ?? input.operationEndAt,
       businessEndAt: businessEndAt ?? null,
@@ -464,6 +487,8 @@ export function buildAssignedSettlementItems(
         submitAllowed !== false &&
         hasPayableItems !== false
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
+    const expectedTransferDate = blankToNull(individual?.expectedTransferDate)
+    const paidAt = blankToNull(individual?.paidAt)
     /** 교통비만 지급 항목이었고 거리 미달·주소 없음으로 빠진 회차 — 빈 payableItems를 설정 오류로 보지 않는다 */
     const ineligibleMessage =
       individualIneligibleRowMessage(
@@ -495,6 +520,8 @@ export function buildAssignedSettlementItems(
       status,
       ...(deadlineAt ? { deadlineAt } : {}),
       ...(submittedAt ? { submittedAt } : {}),
+      ...(expectedTransferDate ? { expectedTransferDate } : {}),
+      ...(paidAt ? { paidAt } : {}),
       ...(amount != null ? { amount } : {}),
       ...(ineligibleMessage
         ? { submitBlockedReason: ineligibleMessage }
@@ -516,6 +543,12 @@ export function buildAssignedSettlementItems(
           : {}),
       ...(!individual && settlement?.settlementId != null
         ? { settlementId: settlement.settlementId }
+        : {}),
+      ...(isAdminApplicationCorrectionRequest({
+        applicationStatus: settlement?.status,
+        settlementId: settlement?.settlementId,
+      })
+        ? { adminApplicationCorrection: true }
         : {}),
       ...(individual?.currentRevisionNo != null
         ? { currentRevisionNo: individual.currentRevisionNo }

@@ -9,6 +9,7 @@ import {
 import { fetchMyProgramApplications } from '@/features/mypage/education/applications/api/client'
 import type { PortalProgramApplicationListItem } from '@/features/mypage/education/applications/api/types'
 import { shouldUseVolunteerSettlementSchedulesApi } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
+import { mapReceiptScheduleOverviewStatus as mapReceiptScheduleStatus } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { EMPTY_SETTLEMENT_OVERVIEW } from '../lib/empty-overview'
 import type {
   SettlementOverviewItem,
@@ -57,17 +58,25 @@ export function mapSettlementOverviewStatus(input: {
   statementStatus?: string | null
   paymentStatus?: string | null
   statementReapplyAvailable?: boolean | null
+  confirmationStatus?: string | null
 }): SettlementOverviewStatus | null {
   const payment = normalizeStatusToken(input.paymentStatus)
   const statement = normalizeStatusToken(input.statementStatus ?? input.status)
+  const confirmation = normalizeStatusToken(input.confirmationStatus)
 
   if (payment === 'PAID' || statement === 'PAID') return 'paid'
-  // DRAFT = 정정 승인 후 강사 재신청 대기. 강의 상세 정산 탭·CMS와 같이 "지급 정정 요청"으로 본다
+  // DRAFT·재신청 가능은 confirmationStatus 보다 먼저. 목록 라벨은 '지급 정정 요청'.
+  if (statement === 'DRAFT' || input.statementReapplyAvailable === true) {
+    return 'correction_requested'
+  }
+  if (confirmation === 'WAITING_CONFIRM') return 'waiting_confirm'
+  if (confirmation === 'REAPPLICATION') return 'reapplied'
+  if (confirmation === 'CORRECTION_REQUESTED') return 'correction_requested'
+  if (confirmation === 'REJECTED') return 'rejected'
+  if (confirmation === 'CONFIRMED') return 'confirmed'
   if (
     statement === 'CORRECTION_REQUESTED' ||
-    payment === 'CORRECTION_REQUESTED' ||
-    statement === 'DRAFT' ||
-    input.statementReapplyAvailable === true
+    payment === 'CORRECTION_REQUESTED'
   ) {
     return 'correction_requested'
   }
@@ -96,6 +105,25 @@ export function mapSettlementOverviewStatus(input: {
     return 'waiting_confirm'
   }
   return null
+}
+
+/** 강사 정산 목록. confirmationStatus 가 없으면 statementStatus ?? status. */
+export function mapInstructorSettlementOverviewStatus(row: {
+  confirmationStatus?: string | null
+  paymentStatus?: string | null
+  statementStatus?: string | null
+  status?: string | null
+  statementReapplyAvailable?: boolean | null
+}): SettlementOverviewStatus | null {
+  return mapSettlementOverviewStatus(row)
+}
+
+/** 영수증 일정. statementStatus·paymentStatus가 모두 없으면 신청 전/미승인 — 목록에 넣지 않는다. */
+export function mapReceiptScheduleOverviewStatus(input: {
+  statementStatus?: string | null
+  paymentStatus?: string | null
+}): SettlementOverviewStatus | null {
+  return mapReceiptScheduleStatus(input)
 }
 
 function sumSubmittedAmounts(
@@ -173,10 +201,11 @@ function mapInstructorSettlementItem(
   const supersededStatus = superseded ? mapSupersededResultStatus(row.supersededReason) : null
   const status =
     supersededStatus ??
-    mapSettlementOverviewStatus({
-      status: row.status,
-      statementStatus: row.statementStatus,
+    mapInstructorSettlementOverviewStatus({
+      confirmationStatus: row.confirmationStatus,
       paymentStatus: row.paymentStatus,
+      statementStatus: row.statementStatus,
+      status: row.status,
       statementReapplyAvailable: row.statementReapplyAvailable,
     })
   if (!status) return null
@@ -199,17 +228,21 @@ function mapInstructorSettlementItem(
   }
 }
 
-function mapIndividualScheduleItem(input: {
+export function mapIndividualScheduleItem(input: {
   schedule: PortalIndividualScheduleSettlement
   programTitle: string
 }): SettlementOverviewItem | null {
   const { schedule, programTitle } = input
   const id = readOptionalNumber(schedule.settlementApplicationId)
   if (id == null) return null
-  const status = mapSettlementOverviewStatus({ status: schedule.status })
+  const status = mapReceiptScheduleOverviewStatus({
+    statementStatus: schedule.statementStatus,
+    paymentStatus: schedule.paymentStatus,
+  })
   if (!status) return null
   const startsAt = readOptionalText(schedule.startAt) ?? ''
   const endsAt = readOptionalText(schedule.endAt) ?? startsAt
+  const paidAt = readOptionalText(schedule.paidAt)
   return {
     id: String(id),
     programName: programTitle.trim() || '-',
@@ -220,6 +253,7 @@ function mapIndividualScheduleItem(input: {
     status,
     documentKind: 'receipt',
     appliedAmount: sumSubmittedAmounts(schedule),
+    ...(paidAt ? { paidAt } : {}),
   }
 }
 
@@ -318,7 +352,7 @@ export function buildSummary(
     if (amount == null || item.superseded || item.statusUnavailable) continue
     const inMonth =
       item.startsAt.slice(0, 7) === monthKey || item.endsAt.slice(0, 7) === monthKey
-    // 제미나이 지급 완료는 실제 이체 완료일(KST) 월로 집계한다
+    // 영수증·제미나이 지급 완료는 paidAt의 KST 월. paidAt이 없으면 교육 진행 월(startsAt 앞 7자)을 쓴다.
     const paidInMonth = item.paidAt ? kstMonthKey(item.paidAt) === monthKey : inMonth
 
     if (item.status === 'paid') {

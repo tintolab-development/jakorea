@@ -440,15 +440,21 @@ export type PortalSettlementApplication = {
   programScheduleId?: number
   assignmentId?: number
   status?: string
-  statementStatus?: string
-  paymentStatus?: string
+  statementStatus?: string | null
+  paymentStatus?: string | null
+  /**
+   * 강사 목록 확인 분기. WAITING_CONFIRM | REAPPLICATION | CORRECTION_REQUESTED | REJECTED | CONFIRMED.
+   * 재제출로 대체된 이전 신청·임시저장·취소는 null. 키 생략과 null은 같다. statementStatus와 별개다.
+   */
+  confirmationStatus?: string | null
   netPaymentAmount?: number
   grossAmount?: number
   previousNetPaymentAmount?: number
   originalNetPaymentAmount?: number
   submittedAt?: string
   createdAt?: string
-  revisionNo?: number
+  /** 1부터. 2 이상이면 반려·정정 뒤 재제출. 없으면 null */
+  revisionNo?: number | null
   originalApplicationId?: number
   rejectedReason?: string
   rejectedAt?: string
@@ -1110,6 +1116,17 @@ export type PortalIndividualScheduleSettlement = {
   status?: string | null
   canSubmit?: boolean
   canResubmit?: boolean
+  /**
+   * 제출 revision 1 = WAITING_CONFIRM, 2 이상 = REAPPLICATION, 반려 = REJECTED, 승인 = CONFIRMED.
+   * 신청 전·임시저장·철회·승인 전이면 null.
+   */
+  statementStatus?: string | null
+  /** 승인 후 계좌 지급 대기 = WAITING_PAYMENT, 계좌 지급 완료 = PAID. 승인 전이면 null */
+  paymentStatus?: string | null
+  /** 승인 전 null. YYYY-MM-DD */
+  expectedTransferDate?: string | null
+  /** 지급 전 null */
+  paidAt?: string | null
   businessEndDate?: string
   payableItems?: PortalIndividualPayableItem[]
   submittedItems?: PortalIndividualSubmittedItem[]

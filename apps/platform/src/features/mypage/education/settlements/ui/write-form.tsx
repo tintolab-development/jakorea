@@ -67,6 +67,7 @@ import {
   SETTLEMENT_TRIP_TYPE_OPTIONS,
 } from '../lib/settlement-options'
 import {
+  isInstructorSettlementResubmit,
   PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
   type SettlementDocumentKind,
 } from '../lib/settlement-status-ui'
@@ -752,10 +753,12 @@ export function EducationSettlementWriteForm({
 
   const settlementApplicationIdForSubmit =
     session?.settlementApplicationId ?? matchedIndividual?.settlementApplicationId ?? undefined
-  const resubmitRequested =
-    session?.canResubmitReceipt === true ||
-    matchedIndividual?.canResubmit === true ||
-    session?.status === 'rejected'
+  const resubmitRequested = isInstructorSettlementResubmit({
+    status: session?.status,
+    canResubmitReceipt: session?.canResubmitReceipt === true,
+    individualCanResubmit: matchedIndividual?.canResubmit === true,
+    adminApplicationCorrection: session?.adminApplicationCorrection === true,
+  })
   /**
    * 강사 최초 제출만 미리보기 canSubmit=false(지급 항목 0건 등)로 막는다 — blockerMessage 그대로.
    * 반려 후 재제출은 기존 신청서 경로라 미리보기 차단(ACTIVE_APPLICATION_EXISTS)을 적용하지 않는다.
