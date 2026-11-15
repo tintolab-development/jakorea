@@ -283,6 +283,11 @@ export type RenderFormParagraphBodyOptions = {
   /** 초상권 동의 fill — 1번 표 성명·소속 응답 입력만 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
   /**
+   * 회원·강사 「동의서 보기」A4 문서(`FormDocumentPreviewBody`) — 응답 칸은 텍스트로, 동의 라디오는 disabled 스킨으로 표시.
+   * 시안 5767:42795 등 동의 양식 미리보기 프레임. 템플릿 관리 미리보기·동의서 작성(fill)에는 넘기지 않는다.
+   */
+  agreementDocumentReadOnlyView?: boolean
+  /**
    * 회원 동의 작성(user) — 양식 본문(표 셀·설명글)은 잠금, 하단 동의·지급조서 등 응답 입력은 허용.
    * `preview` 대신 사용(CSS pointer-events 차단 회피).
    */

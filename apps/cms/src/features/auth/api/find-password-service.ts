@@ -9,6 +9,8 @@ import {
   parseAdminRegisterApiError,
 } from '@/features/auth/model/admin-register-api.types'
 import { axiosClient } from '@/shared/api'
+import { isPasswordRecentlyUsedCode } from '@/shared/lib/password-recently-used-alert'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import type {
   PasswordResetConfirmRequest,
   PasswordResetConfirmResponse,
@@ -58,6 +60,8 @@ export type ChangePasswordAfterResetResult =
   | { kind: 'success' }
   | { kind: 'invalid_new_password' }
   | { kind: 'api_error'; message: string }
+  /** 400 PASSWORD_RECENTLY_USED — 안내는 공통 팝업 「비밀번호 재사용 불가 안내」(입력칸 문구 없음) */
+  | { kind: 'recently_used'; globalAlertShown: boolean }
   /** 401 PASSWORD_RESET_CONFIRM_MISMATCH(field newPasswordConfirm) — 확인값 칸 오류 */
   | { kind: 'confirm_mismatch' }
   | PasswordResetScreenError
@@ -208,6 +212,9 @@ async function changePasswordAfterResetRemote(
     return { kind: 'success' }
   } catch (error) {
     if (error instanceof AdminRegisterApiError) {
+      if (isPasswordRecentlyUsedCode(error.code)) {
+        return { kind: 'recently_used', globalAlertShown: isGlobalApiErrorAlertShown(error) }
+      }
       return { kind: 'api_error', message: error.message }
     }
     const screenError = classifyPasswordResetScreenError(error)
@@ -221,6 +228,9 @@ async function changePasswordAfterResetRemote(
     }
     if (axiosErr.response?.data) {
       const parsed = parseAdminRegisterApiError(axiosErr.response.data)
+      if (isPasswordRecentlyUsedCode(parsed.code)) {
+        return { kind: 'recently_used', globalAlertShown: isGlobalApiErrorAlertShown(error) }
+      }
       return { kind: 'api_error', message: parsed.message }
     }
     return {

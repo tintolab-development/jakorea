@@ -470,7 +470,7 @@ function renderBody(
               className="form-editor-table-bottom-consent"
               size="medium"
               value={p.bottomConsent ?? 'agree'}
-              disabled={false}
+              disabled={paragraphBodyOptions?.agreementDocumentReadOnlyView === true}
               style={{ pointerEvents: 'none' }}
             >
               <CmsRadio value="agree">동의</CmsRadio>
@@ -487,6 +487,7 @@ function renderBody(
           onChange={noopOnParagraphChange}
           isEditMode={false}
           tableCanvasInteractive={false}
+          documentReadOnlyView={paragraphBodyOptions?.agreementDocumentReadOnlyView === true}
           paymentStatementBasicInfoValues={paragraphBodyOptions?.paymentStatementBasicInfoValues}
           paymentStatementBasicInfoHideResidentNumberRow={
             paragraphBodyOptions?.paymentStatementBasicInfoHideResidentNumberRow
@@ -597,6 +598,7 @@ function renderBody(
           onChange={noopOnParagraphChange}
           isEditMode={false}
           tableCanvasInteractive={false}
+          documentReadOnlyView={paragraphBodyOptions?.agreementDocumentReadOnlyView === true}
         />
       )
     case 'multiple_choice':
