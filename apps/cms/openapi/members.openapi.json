@@ -22256,6 +22256,14 @@
             "example": "프론트 CMS 일괄 처리",
             "maxLength": 500,
             "minLength": 2
+          },
+          "individualSettlementApplications": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "$ref": "#/components/schemas/IndividualSettlementBulkApprovalTarget"
+            },
+            "description": "지급조서 일괄 확인에 함께 처리할 영수증 정산 신청(개인 참여자·봉사자). 강사 지급조서와 같은 트랜잭션에서 승인하며 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다."
           }
         },
         "required": [
@@ -49122,10 +49130,11 @@
           },
           "rowType": {
             "type": "string",
-            "description": "프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null.",
+            "description": "SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, INDIVIDUAL_SETTLEMENT_APPLICATION=개인 참여자·봉사자 영수증 정산 신청 행(지급조서 확인 목록만), NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행. 지급조서 확인 목록의 정산 행과 회원 상세 정산 탭에서는 null.",
             "enum": [
               "SETTLEMENT",
               "SETTLEMENT_APPLICATION",
+              "INDIVIDUAL_SETTLEMENT_APPLICATION",
               "NOT_APPLIED"
             ],
             "nullable": true
@@ -49167,6 +49176,36 @@
               "SESSION"
             ],
             "nullable": true
+          },
+          "payeeType": {
+            "type": "string",
+            "enum": [
+              "INSTRUCTOR",
+              "PARTICIPANT",
+              "VOLUNTEER"
+            ],
+            "description": "정산 대상자 구분. INSTRUCTOR=강사(Gemini 실적 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 계좌 지급 목록의 payeeType과 같은 규칙."
+          },
+          "individualSettlementApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "영수증 정산 신청 ID. rowType=INDIVIDUAL_SETTLEMENT_APPLICATION 행만 값이 있다. 상세·승인·반려는 /api/admin/individual-settlement-applications/{id} 계열. 이 행은 settlementId·statementId·settlementApplicationId·instructorAssignmentId가 null이고 instructorMemberId·instructorName에 신청 회원 ID·이름이 들어간다."
+          },
+          "payeeBankName": {
+            "type": "string",
+            "nullable": true,
+            "description": "영수증 정산 신청 행의 정산 계좌 은행명. 신청 당시 사전 동의서 계좌 스냅샷(지급조서 사전 동의서가 있으면 그 계좌, 없으면 영수증 사전 동의서 계좌)이며 신청 뒤 계좌를 바꿔도 그대로다. 강사 행과 스냅샷에 계좌가 없는 신청은 null."
+          },
+          "payeeAccountNumberMasked": {
+            "type": "string",
+            "nullable": true,
+            "description": "영수증 정산 신청 행의 정산 계좌번호(마스킹). 강사 정산 상세 accountNumber와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null."
+          },
+          "payeeAccountHolder": {
+            "type": "string",
+            "nullable": true,
+            "description": "영수증 정산 신청 행의 예금주(마스킹). 강사 정산 상세 accountHolder와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null."
           }
         }
       },
@@ -50283,6 +50322,38 @@
           },
           "aggregateKey": {
             "type": "string"
+          },
+          "rowType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "SETTLEMENT",
+              "SETTLEMENT_APPLICATION",
+              "INDIVIDUAL_SETTLEMENT_APPLICATION"
+            ],
+            "description": "SETTLEMENT=지급조서, SETTLEMENT_APPLICATION=확정 전 강사 정산 신청서, INDIVIDUAL_SETTLEMENT_APPLICATION=영수증 정산 신청. 신청 행은 settlementId가 null."
+          },
+          "payeeType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "INSTRUCTOR",
+              "PARTICIPANT",
+              "VOLUNTEER"
+            ],
+            "description": "정산 대상자 구분: INSTRUCTOR | PARTICIPANT | VOLUNTEER."
+          },
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "rowType=SETTLEMENT_APPLICATION 행의 강사 정산 신청서 ID. 그 외 null."
+          },
+          "individualSettlementApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "rowType=INDIVIDUAL_SETTLEMENT_APPLICATION 행의 영수증 정산 신청 ID. 그 외 null."
           }
         }
       },
@@ -62579,6 +62650,28 @@
           "NOT_SUBMITTED"
         ],
         "description": "작성본을 지금 열 수 없는 이유. 여러 이유가 겹치면 우선순위가 가장 높은 하나만 내려준다. 우선순위: NOT_SUPPORTED > WITHDRAWN > NOT_AGREED > CONSENT_EXPIRED > RETENTION_EXPIRED > NOT_SUBMITTED. NOT_SUPPORTED=작성본이 없는 유형(MARKETING·SERVICE_TERMS·PRIVACY_COLLECTION 등, CONSENT_FILLED_DOCUMENT_TYPE_NOT_SUPPORTED). WITHDRAWN=철회. NOT_AGREED=동의한 적 없음·동의 기록 없음. CONSENT_EXPIRED=동의 유효기간 만료(초상권은 동의일로부터 1년, 진행자 서약·행정정보·범죄경력 동의는 만료일이 없거나 지난 경우 포함). RETENTION_EXPIRED=보관 기간이 지나 작성본 파기(CONSENT_FILLED_DOCUMENT_RETENTION_EXPIRED). NOT_SUBMITTED=작성본을 지원하는 유형이지만 저장된 작성본 없음(CONSENT_FILLED_DOCUMENT_NOT_FOUND). 약관 버전이 현재 게시 버전과 달라도 열람을 막지 않는다(작성 당시 양식 그대로 조회). 재동의 필요 여부는 reconsentRequired로만 표현한다."
+      },
+      "IndividualSettlementBulkApprovalTarget": {
+        "type": "object",
+        "required": [
+          "settlementApplicationId",
+          "expectedRevisionNo"
+        ],
+        "description": "영수증 정산 신청 일괄 승인 대상. expectedRevisionNo는 단건 승인과 같은 낙관적 잠금 값(지급조서 확인 라인의 revisionNo).",
+        "properties": {
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "영수증 정산 신청 ID. 지급조서 확인 라인의 individualSettlementApplicationId"
+          },
+          "expectedRevisionNo": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "description": "확인할 최신 revision 번호"
+          }
+        }
       }
     },
     "responses": {
