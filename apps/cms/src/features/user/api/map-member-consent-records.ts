@@ -82,6 +82,8 @@ type AgreementOverlay = {
   expired?: boolean
   /** Summary `expiresAt` — 만료일 표시용 */
   expiresAt?: string
+  /** Summary `withdrawnAt` — status=WITHDRAWN일 때 철회 일시 표시용 */
+  withdrawnAt?: string
   consentRecordId?: number
   formResponseId?: number
   filledDocumentId?: number
@@ -91,7 +93,18 @@ type AgreementOverlay = {
   signedDocumentAvailable?: boolean
   signedDocumentId?: number
   signedDocumentRevealEndpoint?: string
+  /** Summary 전용 — 서명 PDF·업로드 원본 열람/다운로드 주소 (BE 회신 1~3번) */
+  signedPdfAvailable?: boolean
+  signedPdfViewEndpoint?: string
+  signedPdfDownloadEndpoint?: string
+  originalAvailable?: boolean
+  originalViewEndpoint?: string
+  originalDownloadEndpoint?: string
   consentType?: string
+  /** Summary 기준 확정 상태 문구 (기획 결정 4·5번). 없으면 화면이 기존 규칙으로 계산 */
+  statusLabel?: string
+  /** 「동의서 보기」 노출 — 동의 상태이고 서명 PDF·업로드 원본 중 하나라도 열 수 있을 때만 (BE 회신 1번) */
+  documentViewable?: boolean
 }
 
 export function resolveTermsTypeToConsentLabel(type: string | undefined): string | undefined {
@@ -143,6 +156,9 @@ function agreementToFieldValue(
       ...(expired
         ? { expired: true, expiredAtDisplay: formatConsentDate(agreement.expiresAt) }
         : {}),
+      ...(agreement.withdrawnAt
+        ? { withdrawnAtDisplay: formatConsentedAt(agreement.withdrawnAt) }
+        : {}),
       formResponseId: agreement.formResponseId,
       filledDocumentId: agreement.filledDocumentId,
       filledDocumentAvailable: agreement.filledDocumentAvailable,
@@ -151,8 +167,26 @@ function agreementToFieldValue(
       signedDocumentAvailable: agreement.signedDocumentAvailable,
       signedDocumentId: agreement.signedDocumentId,
       signedDocumentRevealEndpoint: agreement.signedDocumentRevealEndpoint,
+      ...(agreement.signedPdfAvailable != null
+        ? {
+            signedPdfAvailable: agreement.signedPdfAvailable,
+            signedPdfViewEndpoint: agreement.signedPdfViewEndpoint,
+            signedPdfDownloadEndpoint: agreement.signedPdfDownloadEndpoint,
+          }
+        : {}),
+      ...(agreement.originalAvailable != null
+        ? {
+            originalAvailable: agreement.originalAvailable,
+            originalViewEndpoint: agreement.originalViewEndpoint,
+            originalDownloadEndpoint: agreement.originalDownloadEndpoint,
+          }
+        : {}),
       consentType: agreement.consentType,
       consentRecordId: agreement.consentRecordId,
+      ...(agreement.statusLabel ? { statusLabel: agreement.statusLabel } : {}),
+      ...(agreement.documentViewable != null
+        ? { documentViewable: agreement.documentViewable }
+        : {}),
     }
   }
 
@@ -160,9 +194,13 @@ function agreementToFieldValue(
     type: 'remote_consent',
     agreed,
     agreedAtDisplay,
+    ...(agreement.withdrawnAt
+      ? { withdrawnAtDisplay: formatConsentedAt(agreement.withdrawnAt) }
+      : {}),
     consentStatus: agreement.consentStatus,
     consentType: agreement.consentType,
     allItemsAgreed: agreement.allItemsAgreed,
+    ...(agreement.statusLabel ? { statusLabel: agreement.statusLabel } : {}),
   }
 }
 
@@ -273,25 +311,77 @@ function overlayAgreementByLabel(
   }))
 }
 
-/** Summary `status` 중 「동의」로 표시하는 값. 그 외(NOT_AGREED·WITHDRAWN·POLICY_UPDATED 등)는 미동의 */
-const AGREED_SUMMARY_STATUSES = new Set(['AGREED', 'SIGNED', 'CONSENTED'])
+/**
+ * Summary `status` → CMS 상태 (기획 결정 4번, CMS-FUNC-0424·0759).
+ * - 동의: AGREED·SIGNED·CONSENTED·POLICY_UPDATED (양식이 바뀌어도 기존 동의는 유효 — CMS에 재동의 문구를 쓰지 않음)
+ * - 동의 만료: EXPIRED / 동의 철회: WITHDRAWN
+ * - 미동의: 그 외(NOT_AGREED·NOT_APPLICABLE·SIGNATURE_REQUIRED·DRAFT). VOID·정의되지 않은 값은 기획 미정 — 미동의로 둔다
+ */
+const AGREED_SUMMARY_STATUSES = new Set(['AGREED', 'SIGNED', 'CONSENTED', 'POLICY_UPDATED'])
 const EXPIRED_SUMMARY_STATUS = 'EXPIRED'
+const WITHDRAWN_SUMMARY_STATUS = 'WITHDRAWN'
+
+export const CONSENT_STATUS_LABEL = {
+  agreed: '동의',
+  partial: '부분 동의',
+  expiringSoon: '만료 예정',
+  expired: '동의 만료',
+  withdrawn: '동의 철회',
+  notAgreed: '미동의',
+} as const
+
+/**
+ * 부분 동의 표시는 초상권만 (BE 회신 6번 — consentStatus는 PORTRAIT_RIGHTS에만 값이 있음).
+ * 지급조서·영수증 사전 동의의 부분 동의는 BE에 표현 값이 없어 보류(기획·BE 후속).
+ */
+
+/** 만료 1개월 전부터 「만료 예정」 */
+const EXPIRING_SOON_MONTHS = 1
 
 /** 상태 문구는 Summary `status` 하나로 정한다 (`agreed`·`expired` 조합을 쓰지 않음) */
 export function resolveConsentSummaryStatusState(status: string | null | undefined): {
   agreed: boolean
   expired: boolean
+  withdrawn: boolean
 } {
   const normalized = (status ?? '').trim().toUpperCase()
   return {
     agreed: AGREED_SUMMARY_STATUSES.has(normalized),
     expired: normalized === EXPIRED_SUMMARY_STATUS,
+    withdrawn: normalized === WITHDRAWN_SUMMARY_STATUS,
   }
+}
+
+function isPartialSummary(summary: AdminMemberConsentSummary): boolean {
+  const type = (summary.consentType ?? '').trim().toUpperCase()
+  if (type !== 'PORTRAIT_RIGHTS') return false
+  /** 초상권은 동의 시 consentStatus가 항상 PARTIAL — 1·2·3 모두 동의(allItemsAgreed)로만 판정 */
+  return summary.allItemsAgreed !== true
+}
+
+function isExpiringSoon(expiresAt: string | null | undefined, now = dayjs()): boolean {
+  if (!expiresAt?.trim()) return false
+  const expires = dayjs(expiresAt)
+  if (!expires.isValid() || expires.isBefore(now)) return false
+  return !expires.isAfter(now.add(EXPIRING_SOON_MONTHS, 'month'))
+}
+
+export function resolveConsentSummaryStatusLabel(
+  summary: AdminMemberConsentSummary,
+  now = dayjs()
+): string {
+  const { agreed, expired, withdrawn } = resolveConsentSummaryStatusState(summary.status)
+  if (expired) return CONSENT_STATUS_LABEL.expired
+  if (withdrawn) return CONSENT_STATUS_LABEL.withdrawn
+  if (!agreed) return CONSENT_STATUS_LABEL.notAgreed
+  if (isPartialSummary(summary)) return CONSENT_STATUS_LABEL.partial
+  if (isExpiringSoon(summary.expiresAt, now)) return CONSENT_STATUS_LABEL.expiringSoon
+  return CONSENT_STATUS_LABEL.agreed
 }
 
 /** Summary 한 건 → 표시 값. 작성본·서명본 열람 메타도 BE가 고른 대표 기록 값만 쓴다 */
 function toSummaryOverlay(summary: AdminMemberConsentSummary): AgreementOverlay {
-  const { agreed, expired } = resolveConsentSummaryStatusState(summary.status)
+  const { agreed, expired, withdrawn } = resolveConsentSummaryStatusState(summary.status)
   return {
     agreed,
     agreedAt: agreed ? (summary.agreedAt ?? undefined) : undefined,
@@ -301,6 +391,7 @@ function toSummaryOverlay(summary: AdminMemberConsentSummary): AgreementOverlay 
     allItemsAgreed: summary.allItemsAgreed,
     expired,
     expiresAt: expired ? (summary.expiresAt ?? undefined) : undefined,
+    withdrawnAt: withdrawn ? (summary.withdrawnAt ?? undefined) : undefined,
     consentRecordId: summary.currentConsentRecordId ?? undefined,
     filledDocumentAvailable: summary.filledDocumentAvailable === true,
     filledDocumentRevealEndpoint: summary.filledDocumentRevealEndpoint ?? undefined,
@@ -308,6 +399,16 @@ function toSummaryOverlay(summary: AdminMemberConsentSummary): AgreementOverlay 
     signedDocumentAvailable: summary.signedDocumentAvailable === true,
     signedDocumentId: summary.signedDocumentId ?? undefined,
     signedDocumentRevealEndpoint: summary.signedDocumentRevealEndpoint ?? undefined,
+    signedPdfAvailable: summary.signedPdfAvailable === true,
+    signedPdfViewEndpoint: summary.signedPdfViewEndpoint ?? undefined,
+    signedPdfDownloadEndpoint: summary.signedPdfDownloadEndpoint ?? undefined,
+    originalAvailable: summary.originalAvailable === true,
+    originalViewEndpoint: summary.originalViewEndpoint ?? undefined,
+    originalDownloadEndpoint: summary.originalDownloadEndpoint ?? undefined,
+    statusLabel: resolveConsentSummaryStatusLabel(summary),
+    /** filled/signedDocumentAvailable은 노출 판단에 쓰지 않는다 (BE 회신 1번) */
+    documentViewable:
+      agreed && (summary.signedPdfAvailable === true || summary.originalAvailable === true),
   }
 }
 

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import dayjs from 'dayjs'
 import {
   applyMemberConsentToSchema,
   applyTermsAgreementsToSchema,
-  resolveConsentSummaryStatusState,
+  resolveConsentSummaryStatusLabel,
   resolveTermsTypeToConsentLabel,
 } from './map-member-consent-records'
 import { CONSENT_PRESET_SCHEMA } from '@/features/user/detail/ui/user-consent-agreement-section'
@@ -141,6 +142,8 @@ function summary(
     withdrawBlocked: false,
     filledDocumentAvailable: false,
     signedDocumentAvailable: false,
+    signedPdfAvailable: false,
+    originalAvailable: false,
     ...overrides,
   }
 }
@@ -148,24 +151,50 @@ function summary(
 const fieldValue = (rows: ReturnType<typeof applyMemberConsentToSchema>, label: string) =>
   rows.flatMap(r => r.fields).find(f => f.label === label)?.value
 
-describe('resolveConsentSummaryStatusState', () => {
-  it('status만으로 동의·만료를 정한다', () => {
-    for (const status of ['AGREED', 'SIGNED', 'CONSENTED']) {
-      expect(resolveConsentSummaryStatusState(status)).toEqual({ agreed: true, expired: false })
+describe('resolveConsentSummaryStatusLabel (기획 결정 4·5번)', () => {
+  const now = dayjs('2026-11-15T00:00:00Z')
+  const label = (overrides: Partial<AdminMemberConsentSummary>) =>
+    resolveConsentSummaryStatusLabel(summary({ consentType: 'FACILITATOR_PLEDGE', ...overrides }), now)
+
+  it('BE status를 기준 상태 문구로 바꾼다', () => {
+    for (const status of ['AGREED', 'SIGNED', 'CONSENTED', 'POLICY_UPDATED'] as const) {
+      expect(label({ status })).toBe('동의')
     }
-    expect(resolveConsentSummaryStatusState('EXPIRED')).toEqual({ agreed: false, expired: true })
-    for (const status of [
-      'NOT_APPLICABLE',
-      'NOT_AGREED',
-      'WITHDRAWN',
-      'POLICY_UPDATED',
-      'SIGNATURE_REQUIRED',
-      'DRAFT',
-      'VOID',
-      undefined,
-    ]) {
-      expect(resolveConsentSummaryStatusState(status)).toEqual({ agreed: false, expired: false })
+    expect(label({ status: 'EXPIRED' })).toBe('동의 만료')
+    expect(label({ status: 'WITHDRAWN' })).toBe('동의 철회')
+    for (const status of ['NOT_AGREED', 'NOT_APPLICABLE', 'SIGNATURE_REQUIRED', 'DRAFT'] as const) {
+      expect(label({ status })).toBe('미동의')
     }
+  })
+
+  it('만료 1개월 전부터 만료 예정으로 표시한다', () => {
+    expect(label({ status: 'SIGNED', expiresAt: '2026-12-10T00:00:00Z' })).toBe('만료 예정')
+    expect(label({ status: 'SIGNED', expiresAt: '2027-01-20T00:00:00Z' })).toBe('동의')
+  })
+
+  it('부분 동의는 초상권에만 쓰고 지급조서·영수증은 보류한다 (BE 회신 6번)', () => {
+    const partial = (consentType: string, extra: Partial<AdminMemberConsentSummary> = {}) =>
+      resolveConsentSummaryStatusLabel(
+        summary({ consentType, status: 'AGREED', consentStatus: 'PARTIAL', ...extra }),
+        now
+      )
+    expect(partial('PORTRAIT_RIGHTS', { allItemsAgreed: false })).toBe('부분 동의')
+    expect(partial('PORTRAIT_RIGHTS', { allItemsAgreed: true })).toBe('동의')
+    expect(partial('PAYMENT_STATEMENT_CONSENT')).toBe('동의')
+    expect(partial('RECEIPT_PRE_CONSENT')).toBe('동의')
+    // 190001 서비스 약관 등 — PARTIAL이 와도 동의
+    expect(partial('SERVICE_TERMS')).toBe('동의')
+    expect(partial('MARKETING')).toBe('동의')
+    expect(partial('ADMINISTRATIVE_INFO_CONSENT')).toBe('동의')
+  })
+
+  it('철회·만료는 PARTIAL이 와도 상태 문구를 따른다', () => {
+    expect(
+      resolveConsentSummaryStatusLabel(
+        summary({ consentType: 'PORTRAIT_RIGHTS', status: 'WITHDRAWN', consentStatus: 'PARTIAL' }),
+        now
+      )
+    ).toBe('동의 철회')
   })
 })
 
@@ -534,5 +563,124 @@ describe('applyMemberConsentToSchema', () => {
     })
 
     expect(fieldValue(rows, '지급조서 사전 동의서')).toMatchObject({ type: 'document', agreed: true })
+  })
+
+  it('「동의서 보기」는 signedPdfAvailable || originalAvailable로만 보인다 (BE 회신 1번)', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        // 190111 초상권 — 시드 데이터, 열 문서 없음
+        summary({
+          consentType: 'PORTRAIT_RIGHTS',
+          status: 'SIGNED',
+          allItemsAgreed: true,
+          filledDocumentUnavailableReason: 'NOT_SUBMITTED',
+        }),
+        // 190114 성범죄 — 업로드 원본
+        summary({
+          consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+          status: 'SIGNED',
+          signedDocumentAvailable: true,
+          originalAvailable: true,
+          originalViewEndpoint: '/original/content?documentId=1694929',
+        }),
+        // 190114 지급조서 — 작성본·서명본은 있지만 서명 PDF 생성 실패
+        summary({
+          consentType: 'PAYMENT_STATEMENT_CONSENT',
+          status: 'SIGNED',
+          filledDocumentAvailable: true,
+          signedDocumentAvailable: true,
+          signedPdfAvailable: false,
+        }),
+        // 190114 교육진행자 서약서 — 서명 PDF
+        summary({
+          consentType: 'FACILITATOR_PLEDGE',
+          status: 'SIGNED',
+          signedPdfAvailable: true,
+          signedPdfViewEndpoint: '/pdf/content?documentId=1694928',
+        }),
+      ],
+    })
+    expect(fieldValue(rows, '초상권 수집·이용 동의')).toMatchObject({
+      agreed: true,
+      statusLabel: '동의',
+      documentViewable: false,
+    })
+    expect(fieldValue(rows, '성범죄경력 조회 동의서')).toMatchObject({ documentViewable: true })
+    expect(fieldValue(rows, '지급조서 사전 동의서')).toMatchObject({
+      agreed: true,
+      documentViewable: false,
+    })
+    expect(fieldValue(rows, '교육진행자 서약서')).toMatchObject({ documentViewable: true })
+  })
+
+  it('철회·만료 상태는 열 수 있는 PDF가 있어도 「동의서 보기」를 숨긴다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        summary({ consentType: 'FACILITATOR_PLEDGE', status: 'WITHDRAWN', signedPdfAvailable: true }),
+        summary({ consentType: 'PORTRAIT_RIGHTS', status: 'EXPIRED', signedPdfAvailable: true }),
+      ],
+    })
+    expect(fieldValue(rows, '교육진행자 서약서')).toMatchObject({ documentViewable: false })
+    expect(fieldValue(rows, '초상권 수집·이용 동의')).toMatchObject({ documentViewable: false })
+  })
+
+  it('철회 상태면 withdrawnAt을 철회 일시로 싣고 동의 일시는 숨긴다 (190001)', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        summary({
+          consentType: 'ADMINISTRATIVE_INFO_CONSENT',
+          status: 'WITHDRAWN',
+          agreedAt: '2026-11-01T00:00:00',
+          withdrawnAt: '2026-11-08T10:20:30',
+        }),
+        summary({
+          consentType: 'MARKETING',
+          status: 'WITHDRAWN',
+          withdrawnAt: '2026-11-08T10:20:30',
+        }),
+        // 철회가 아니면 withdrawnAt이 와도 쓰지 않는다
+        summary({
+          consentType: 'SERVICE_TERMS',
+          status: 'AGREED',
+          agreedAt: '2026-11-01T09:00:00',
+          withdrawnAt: '2026-11-08T10:20:30',
+        }),
+      ],
+    })
+    const admin = fieldValue(rows, '행정정보 공동이용 동의서')
+    expect(admin).toMatchObject({
+      type: 'document',
+      agreed: false,
+      statusLabel: '동의 철회',
+      withdrawnAtDisplay: '2026.11.08 10:20:30',
+    })
+    if (admin?.type !== 'document') throw new Error('Expected document value')
+    expect(admin.agreedAtDisplay).toBeUndefined()
+    expect(fieldValue(rows, '마케팅 제공 동의')).toMatchObject({
+      type: 'remote_consent',
+      statusLabel: '동의 철회',
+      withdrawnAtDisplay: '2026.11.08 10:20:30',
+    })
+    const terms = fieldValue(rows, '서비스 이용약관')
+    if (terms?.type !== 'remote_consent') throw new Error('Expected remote_consent value')
+    expect(terms.withdrawnAtDisplay).toBeUndefined()
+  })
+
+  it('재동의 필요(POLICY_UPDATED)는 동의로 보고 열 수 있으면 「동의서 보기」를 보인다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        summary({
+          consentType: 'FACILITATOR_PLEDGE',
+          status: 'POLICY_UPDATED',
+          agreedAt: '2026-11-01T00:00:00Z',
+          signedPdfAvailable: true,
+          signedPdfViewEndpoint: '/pdf/content',
+        }),
+      ],
+    })
+    expect(fieldValue(rows, '교육진행자 서약서')).toMatchObject({
+      agreed: true,
+      documentViewable: true,
+    })
   })
 })
