@@ -51,7 +51,7 @@ export const PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<Ind
       render: (_value, record) =>
         isIndividualSettlementRowNotApplicable(record)
           ? '-'
-          : individualSettlementTableProcessingLabel(record.status),
+          : individualSettlementTableProcessingLabel(record.status, record.latestRevisionNo),
     },
     {
       title: '정산 예정 금액',

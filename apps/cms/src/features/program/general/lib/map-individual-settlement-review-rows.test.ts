@@ -285,6 +285,24 @@ describe('individual settlement review detail display', () => {
     expect(individualSettlementTableProcessingLabel('SUBMITTED')).toBe('확인 대기 중')
   })
 
+  it('SUBMITTED는 차수로 나눈다 — 1차 확인 대기 중, 2차 이상 지급조서 재신청(모든 화면 공통)', () => {
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', 1)).toBe('확인 대기 중')
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', null)).toBe('확인 대기 중')
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', 2)).toBe('지급조서 재신청')
+    expect(individualSettlementTableProcessingLabel('SUBMITTED', 3)).toBe('지급조서 재신청')
+    // 확인·반려 뒤에는 차수와 관계없이 그 상태
+    expect(individualSettlementReviewStatusLabel('APPROVED', 2)).toBe('지급조서 확인 완료')
+    expect(individualSettlementReviewStatusLabel('REJECTED', 2)).toBe('신청 반려')
+  })
+
+  it('목록 행 statusLabel도 최신 차수 기준이다', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [session(187231)],
+      applications: [{ ...submittedApplication, latestRevisionNo: 2 }],
+    })
+    expect(rows[0]).toMatchObject({ status: 'SUBMITTED', statusLabel: '지급조서 재신청' })
+  })
+
   it('shows APPROVED as 지급조서 확인 완료 and PAID as 계좌 지급 완료', () => {
     expect(individualSettlementReviewStatusLabel('APPROVED')).toBe('지급조서 확인 완료')
     expect(individualSettlementReviewStatusLabel('REJECTED')).toBe('신청 반려')
@@ -332,6 +350,39 @@ describe('resolveIndividualSettlementReviewSummaryLabel', () => {
     // 미신청만 있으면 '-' (기획 2026-11-12 2차 4-2)
     expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, total: 3 }, false)).toBe('-')
     expect(resolveIndividualSettlementReviewSummaryLabel(empty, false)).toBe('-')
+  })
+
+  it('확인 전 건이 모두 2차 이상 제출이면 지급조서 재신청, 1차가 섞이면 확인 대기 중', () => {
+    expect(
+      resolveIndividualSettlementReviewSummaryLabel(
+        { ...empty, submitted: 1, reapplication: 1, total: 1 },
+        false
+      )
+    ).toBe('지급조서 재신청')
+    expect(
+      resolveIndividualSettlementReviewSummaryLabel(
+        { ...empty, submitted: 2, reapplication: 1, total: 2 },
+        false
+      )
+    ).toBe('확인 대기 중')
+    // 확인·반려가 섞이면 차수와 관계없이 확인 진행 중
+    expect(
+      resolveIndividualSettlementReviewSummaryLabel(
+        { ...empty, submitted: 1, reapplication: 1, rejected: 1, total: 2 },
+        false
+      )
+    ).toBe('확인 진행 중')
+  })
+
+  it('요약 집계가 2차 이상 제출 건수를 센다', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [session(187231)],
+      applications: [{ ...submittedApplication, latestRevisionNo: 2 }],
+    })
+    expect(summarizeIndividualSettlementReviewRows(rows)).toMatchObject({
+      submitted: 1,
+      reapplication: 1,
+    })
   })
 })
 

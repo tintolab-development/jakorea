@@ -12,6 +12,7 @@ import {
   INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL,
   individualSettlementReviewStatusLabel,
   isIndividualSettlementLodgingType,
+  isIndividualSettlementResubmission,
   latestIndividualSettlementReviewRevision,
   normalizeIndividualSettlementReviewStatus,
 } from './individual-settlement-review-status'
@@ -52,12 +53,16 @@ export function mapIndividualSettlementItemKind(
 }
 
 export function mapIndividualSettlementProcessingStatusClass(
-  status: string | null | undefined
+  status: string | null | undefined,
+  latestRevisionNo?: number | null
 ): PaymentOrderAdminLineProcessingStatus {
   const key = normalizeIndividualSettlementReviewStatus(status)
   if (key === 'APPROVED') return 'confirmed'
   if (key === 'REJECTED') return 'application_rejected'
-  if (key === 'SUBMITTED') return 'pending'
+  // 1차 제출 확인 대기 중, 2차 이상 제출 지급조서 재신청(모든 화면 공통 차수 기준)
+  if (key === 'SUBMITTED') {
+    return isIndividualSettlementResubmission(latestRevisionNo) ? 'reapplication' : 'pending'
+  }
   return 'pending'
 }
 
@@ -126,6 +131,7 @@ export function mapIndividualSettlementReviewToCalculationStatement(
 
   const rejectionReason = latest?.rejectionReason?.trim()
   const status = latest?.status ?? detail.status
+  const revisionNo = latest?.revisionNo ?? detail.latestRevisionNo ?? null
 
   return {
     basic: {
@@ -133,8 +139,8 @@ export function mapIndividualSettlementReviewToCalculationStatement(
       instructorNameKo: displayOrDash(detail.memberName),
       businessPeriodDisplay: displayOrDash(extras?.businessPeriodDisplay),
       programSessionProgressDisplay: displayOrDash(extras?.programSessionProgressDisplay),
-      processingStatusDisplay: individualSettlementReviewStatusLabel(status),
-      processingStatusClass: mapIndividualSettlementProcessingStatusClass(status),
+      processingStatusDisplay: individualSettlementReviewStatusLabel(status, revisionNo),
+      processingStatusClass: mapIndividualSettlementProcessingStatusClass(status, revisionNo),
       processingRejectionReason: rejectionReason || undefined,
       // 계좌 지급 건의 현재 이체 예정일. 승인 전·반려처럼 지급 건이 없으면 null → 화면 '-'
       lectureFeePaymentScheduledDateDisplay: detail.scheduledPaymentDate
