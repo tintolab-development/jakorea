@@ -194,7 +194,8 @@ export function resolveAdminNotificationNavigation(
   }
 
   // 시안 17149:68688 강사비 확인 완료 → [지급 대상 목록 보기]
-  if (eventType === 'ADMIN_PAYMENT_STATEMENT_CONFIRMED') {
+  // 영수증 확인 완료(BE `ADMIN_EXPENSE_RECEIPT_CONFIRMED`, linkType ACCOUNT_PAYMENT)도 같은 지급 대상 목록
+  if (eventType === 'ADMIN_PAYMENT_STATEMENT_CONFIRMED' || eventType === 'ADMIN_EXPENSE_RECEIPT_CONFIRMED') {
     return { kind: 'path', path: ACCOUNT_PAYMENTS_PATH }
   }
 
