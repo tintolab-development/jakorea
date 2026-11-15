@@ -92,7 +92,7 @@ export function mapGeminiTrainingReportItemToRow(
           : instructorNameTrimmed
             ? 1
             : null,
-    trainingFormat: '-',
+    trainingFormat: dash(dto.trainingType),
     trainingMethod: resolveListTrainingMethod(dto),
     contact: '',
     instructorMemberId:

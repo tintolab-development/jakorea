@@ -56,6 +56,21 @@ describe('gemini performance adapters', () => {
     expect(row.trainingMethod).toBe('OFFLINE')
   })
 
+  it('maps 연수 형태 from the server trainingType and shows - when it is blank', () => {
+    expect(
+      mapGeminiTrainingReportItemToRow({ trainingReportId: 9, trainingType: ' 찾아가는 연수 ' }, 0)
+        .trainingFormat
+    ).toBe('찾아가는 연수')
+    expect(
+      mapGeminiTrainingReportItemToRow({ trainingReportId: 10, trainingType: null }, 0)
+        .trainingFormat
+    ).toBe('-')
+    expect(
+      mapGeminiTrainingReportItemToRow({ trainingReportId: 11, trainingType: '  ' }, 0)
+        .trainingFormat
+    ).toBe('-')
+  })
+
   it('omits accountPaymentId when the list item has none', () => {
     const row = mapGeminiTrainingReportItemToRow({ trainingReportId: 1 }, 0)
     expect(row.accountPaymentId).toBeUndefined()
