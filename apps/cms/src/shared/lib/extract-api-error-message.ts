@@ -132,7 +132,7 @@ const SETTLEMENT_ACCOUNT_ERROR_MESSAGES: Record<string, string> = {
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
     '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
   SETTLEMENT_BANK_ACCOUNT_REQUIRED:
-    '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
+    '지급조서 사전 동의서로 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다. 강사에게 지급조서 사전 동의서 작성을 안내해 주세요.',
 }
 
 /** 수료증·참가인증서 — 서버 message가 비거나 code만 있을 때 */

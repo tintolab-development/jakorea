@@ -13,7 +13,7 @@ import {
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   getSettlementApiErrorMessage,
-  isGeminiPaymentStatementPreConsentRequiredError,
+  isPaymentStatementConfirmConsentBlockError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   useApproveSettlementCorrectionMutation,
@@ -115,7 +115,6 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   statementActionOverride?: {
     onConfirm: (lectureFeePaymentScheduledDateIso: string) => Promise<void>
     onRejectClick: () => void
-    onRequestCorrectionClick?: () => void
     pending?: boolean
     /** false면 확인 버튼을 비활성화. 생략하면 활성 */
     confirmEnabled?: boolean
@@ -451,14 +450,14 @@ export function PaymentOrderCalculationStatementModalImpl({
       setPaymentConfirmOpen(false)
       setPaymentConfirmDoneOpen(true)
     } catch (error) {
-      const preConsentRequired = isGeminiPaymentStatementPreConsentRequiredError(error)
+      const consentBlock = isPaymentStatementConfirmConsentBlockError(error)
       showAlert({
-        // 사전 동의 미완료(Gemini)는 시안 팝업 '지급조서 확인 불가 안내' 제목에 서버 안내를 본문으로 쓴다
-        title: networkAwareAlertTitle(error, preConsentRequired ? '지급조서 확인 불가 안내' : '안내'),
+        // 사전 동의 미완료·동의서 계좌 없음은 시안 팝업 '지급조서 확인 불가 안내' 제목에 안내를 본문으로 쓴다
+        title: networkAwareAlertTitle(error, consentBlock ? '지급조서 확인 불가 안내' : '안내'),
         content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
       })
-      // 사전 동의 미완료(Gemini)면 목록을 다시 받아 그 행의 확인 가능 여부를 갱신한다
-      if (preConsentRequired) {
+      // 동의서 미완료면 목록을 다시 받아 그 행의 확인 가능 여부를 갱신한다
+      if (consentBlock) {
         await detailContextQuery?.refetch()
       }
     }
@@ -569,16 +568,6 @@ export function PaymentOrderCalculationStatementModalImpl({
                 >
                   신청 반려
                 </CmsButton>
-                {statementActionOverride.onRequestCorrectionClick ? (
-                  <CmsButton
-                    variant="secondary"
-                    size="medium"
-                    disabled={statementActionOverride.pending}
-                    onClick={statementActionOverride.onRequestCorrectionClick}
-                  >
-                    보정 요청
-                  </CmsButton>
-                ) : null}
                 <CmsButton
                   variant="primary"
                   size="medium"
