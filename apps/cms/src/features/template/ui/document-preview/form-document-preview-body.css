@@ -614,6 +614,19 @@
   margin-top: 24px;
 }
 
+/* 행정정보 확인 문구(양식 15) — 문구가 있을 때도 기존 구분선 리듬(위 24 · 선 · 24 · 문구 · 24 · 날짜)을 유지 */
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-confirmation-closing'].form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 24px;
+  padding-bottom: 24px;
+  margin-bottom: 0;
+}
+
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-confirmation-closing'].form-document-preview-paragraph--content-only-confirm-rule::before {
+  margin-bottom: 24px;
+}
+
 .form-document-preview-body--agreement-notice .explanation-system--document-date {
   margin-bottom: 8px;
 }

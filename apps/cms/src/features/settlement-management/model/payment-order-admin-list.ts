@@ -4,7 +4,10 @@
  */
 
 import type { PaymentOrderCalculationBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
-import type { SettlementListItemResponseRowType } from '@/shared/api/generated/settlement/schemas'
+import type {
+  SettlementListItemResponsePayeeType,
+  SettlementListItemResponseRowType,
+} from '@/shared/api/generated/settlement/schemas'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 
 export type PaymentOrderAdminProcessingStatus =
@@ -136,8 +139,18 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   settlementId?: number
   /** 확정 전 신청서 행의 신청서 ID. 정산 행이면 연결된 신청서 ID 또는 없음 */
   settlementApplicationId?: number
-  /** 지급조서 확인 목록의 행 종류. 신청서 행은 SETTLEMENT_APPLICATION */
+  /** 지급조서 확인 목록의 행 종류. 신청서 행은 SETTLEMENT_APPLICATION, 영수증 행은 INDIVIDUAL_SETTLEMENT_APPLICATION */
   rowType?: SettlementListItemResponseRowType
+  /** 정산 대상자 구분 — INSTRUCTOR(제미나이 포함) | PARTICIPANT | VOLUNTEER */
+  payeeType?: SettlementListItemResponsePayeeType
+  /** 영수증 정산 신청 ID. 영수증 행만 값이 있고 settlementId·statementId는 없다 */
+  individualSettlementApplicationId?: number
+  /** 행의 revision. 영수증 행은 최신 revision — 영수증 승인 expectedRevisionNo로 쓴다 */
+  revisionNo?: number
+  /** 영수증 행의 신청 당시 정산 계좌(은행·마스킹 계좌번호·마스킹 예금주). 강사 행·스냅샷 없는 신청은 없음 */
+  payeeBankName?: string
+  payeeAccountNumberMasked?: string
+  payeeAccountHolder?: string
   statementId?: number
   instructorName: string
   institutionName: string
@@ -184,8 +197,18 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   settlementId?: number
   /** 확정 전 신청서 행의 신청서 ID. 정산 행이면 연결된 신청서 ID 또는 없음 */
   settlementApplicationId?: number
-  /** 지급조서 확인 목록의 행 종류. 신청서 행은 SETTLEMENT_APPLICATION */
+  /** 지급조서 확인 목록의 행 종류. 신청서 행은 SETTLEMENT_APPLICATION, 영수증 행은 INDIVIDUAL_SETTLEMENT_APPLICATION */
   rowType?: SettlementListItemResponseRowType
+  /** 정산 대상자 구분 — INSTRUCTOR(제미나이 포함) | PARTICIPANT | VOLUNTEER */
+  payeeType?: SettlementListItemResponsePayeeType
+  /** 영수증 정산 신청 ID. 영수증 행만 값이 있고 settlementId·statementId는 없다 */
+  individualSettlementApplicationId?: number
+  /** 행의 revision. 영수증 행은 최신 revision — 영수증 승인 expectedRevisionNo로 쓴다 */
+  revisionNo?: number
+  /** 영수증 행의 신청 당시 정산 계좌(은행·마스킹 계좌번호·마스킹 예금주). 강사 행·스냅샷 없는 신청은 없음 */
+  payeeBankName?: string
+  payeeAccountNumberMasked?: string
+  payeeAccountHolder?: string
   statementId?: number
   programName: string
   institutionName: string

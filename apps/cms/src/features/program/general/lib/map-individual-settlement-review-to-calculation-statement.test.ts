@@ -161,3 +161,34 @@ describe('mapIndividualSettlementReviewToCalculationStatement', () => {
     expect(submitted.basic.lectureFeePaymentScheduledDateDisplay).toBeUndefined()
   })
 })
+
+describe('처리 현황 — 차수 기준 재신청(모든 화면 공통)', () => {
+  const resubmitted: IndividualSettlementReviewDetail = {
+    ...detail,
+    latestRevisionNo: 2,
+    revisions: [{ ...detail.revisions![0], revisionId: 2, revisionNo: 2 }],
+  }
+
+  it('2차 이상 제출이면 「지급조서 재신청」', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement(resubmitted)
+    expect(view.basic.processingStatusDisplay).toBe('지급조서 재신청')
+    expect(view.basic.processingStatusClass).toBe('reapplication')
+  })
+
+  it('1차 제출이면 「확인 대기 중」', () => {
+    const view = mapIndividualSettlementReviewToCalculationStatement(detail)
+    expect(view.basic.processingStatusDisplay).toBe('확인 대기 중')
+    expect(view.basic.processingStatusClass).toBe('pending')
+  })
+
+  it('2차 제출이 승인되면 「지급조서 확인 완료」', () => {
+    const approved: IndividualSettlementReviewDetail = {
+      ...resubmitted,
+      status: 'APPROVED',
+      revisions: [{ ...resubmitted.revisions![0], status: 'APPROVED' }],
+    }
+    const view = mapIndividualSettlementReviewToCalculationStatement(approved)
+    expect(view.basic.processingStatusDisplay).toBe('지급조서 확인 완료')
+    expect(view.basic.processingStatusClass).toBe('confirmed')
+  })
+})

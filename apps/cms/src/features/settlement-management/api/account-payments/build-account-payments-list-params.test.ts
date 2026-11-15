@@ -41,6 +41,21 @@ describe('buildAccountPaymentsListParams', () => {
     })
   })
 
+  it('신청자 유형을 고르면 payeeType을 보낸다', () => {
+    expect(buildAccountPaymentsListParams({ year: 2026, payeeType: 'PARTICIPANT' })).toEqual({
+      year: 2026,
+      payeeType: 'PARTICIPANT',
+    })
+    expect(buildAccountPaymentsListParams({ year: 2026, payeeType: 'VOLUNTEER' }).payeeType).toBe(
+      'VOLUNTEER'
+    )
+  })
+
+  it('신청자 유형이 전체(all)·생략이면 payeeType을 보내지 않는다', () => {
+    expect(buildAccountPaymentsListParams({ year: 2026, payeeType: 'all' })).toEqual({ year: 2026 })
+    expect(buildAccountPaymentsListParams({ year: 2026 })).not.toHaveProperty('payeeType')
+  })
+
   it('시작일만 있어도 fromDate만 보내고 year는 생략', () => {
     expect(
       buildAccountPaymentsListParams({

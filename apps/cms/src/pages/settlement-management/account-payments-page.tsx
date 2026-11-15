@@ -12,6 +12,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { formatDateDot, formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
+  ACCOUNT_PAYMENT_PAYEE_TYPE_LABELS,
   ACCOUNT_PAYMENT_STATUS_LABELS,
   mockAccountPaymentRows,
   formatAccountPaymentInstitutionDisplay,
@@ -69,6 +70,11 @@ import '@/features/program/general/ui/detail-modal/program-status/program-progre
 import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
+import {
+  PAYMENT_ORDER_PAYEE_TYPES,
+  parsePaymentOrderPayeeTypeFilter,
+  type PaymentOrderPayeeTypeFilter,
+} from './payment-orders-table.config'
 import { getPaymentOrdersDefaultDateRange } from './payment-orders-date-range'
 import { AccountPaymentStatusText } from './account-payment-status-text'
 import {
@@ -116,6 +122,8 @@ interface AppliedFilters {
   instructorName: string
   programName: string
   accountStatus: AppliedAccountStatus
+  /** 신청자 유형 — 제미나이 강사는 INSTRUCTOR에 포함 */
+  payeeType: PaymentOrderPayeeTypeFilter
   transferDateRange: [Dayjs | null, Dayjs | null] | null
 }
 
@@ -159,6 +167,7 @@ function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): Account
     if (qp && !row.programName.includes(qp)) return false
     if (applied.accountStatus !== 'all' && row.accountPaymentStatus !== applied.accountStatus)
       return false
+    if (applied.payeeType !== 'all' && row.payeeType !== applied.payeeType) return false
     // 목록 「이체 예정일」필터 = transferScheduledDate (캘린더 배치도 동일)
     if (!matchesDateRange(row.transferScheduledDate, applied.transferDateRange)) return false
     return true
@@ -174,6 +183,15 @@ const statusSelectOptions: { value: AppliedAccountStatus; label: string }[] = [
   ...ACCOUNT_PAYMENT_LIST_FILTER_STATUSES.map(value => ({
     value,
     label: ACCOUNT_PAYMENT_STATUS_LABELS[value],
+  })),
+]
+
+/** 신청자 유형 — 지급조서 확인과 같은 옵션·라벨 */
+const payeeTypeSelectOptions: { value: PaymentOrderPayeeTypeFilter; label: string }[] = [
+  { value: 'all', label: '전체' },
+  ...PAYMENT_ORDER_PAYEE_TYPES.map(value => ({
+    value,
+    label: ACCOUNT_PAYMENT_PAYEE_TYPE_LABELS[value],
   })),
 ]
 
@@ -221,6 +239,7 @@ export default function AccountPaymentsPage() {
   const [draftInstructor, setDraftInstructor] = useState('')
   const [draftProgram, setDraftProgram] = useState('')
   const [draftAccountStatus, setDraftAccountStatus] = useState<AppliedAccountStatus>('all')
+  const [draftPayeeType, setDraftPayeeType] = useState<PaymentOrderPayeeTypeFilter>('all')
   const [draftDateRange, setDraftDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(() =>
     getPaymentOrdersDefaultDateRange()
   )
@@ -228,6 +247,7 @@ export default function AccountPaymentsPage() {
     instructorName: '',
     programName: '',
     accountStatus: 'all',
+    payeeType: 'all',
     transferDateRange: getPaymentOrdersDefaultDateRange(),
   }))
 
@@ -321,6 +341,14 @@ export default function AccountPaymentsPage() {
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
+        key: 'payeeType',
+        type: 'select',
+        label: '신청자 유형',
+        placeholder: '전체',
+        options: payeeTypeSelectOptions,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
+      },
+      {
         key: 'transferDateRange',
         type: 'dateRange',
         label: '이체 예정일',
@@ -334,9 +362,10 @@ export default function AccountPaymentsPage() {
       instructorName: draftInstructor,
       programName: draftProgram,
       accountStatus: draftAccountStatus === 'all' ? undefined : draftAccountStatus,
+      payeeType: draftPayeeType === 'all' ? undefined : draftPayeeType,
       transferDateRange: draftDateRange,
     }),
-    [draftAccountStatus, draftDateRange, draftInstructor, draftProgram]
+    [draftAccountStatus, draftDateRange, draftInstructor, draftPayeeType, draftProgram]
   )
   const handleUnifiedFilterChange = useCallback((key: string, value: unknown) => {
     if (key === 'instructorName') {
@@ -349,6 +378,10 @@ export default function AccountPaymentsPage() {
     }
     if (key === 'accountStatus') {
       setDraftAccountStatus((value == null || value === '' ? 'all' : value) as AppliedAccountStatus)
+      return
+    }
+    if (key === 'payeeType') {
+      setDraftPayeeType(parsePaymentOrderPayeeTypeFilter(value == null ? null : String(value)))
       return
     }
     if (key === 'transferDateRange') {
@@ -368,6 +401,7 @@ export default function AccountPaymentsPage() {
         applied.accountStatus === 'account_paid'
           ? applied.accountStatus
           : ('all' as const),
+      payeeType: applied.payeeType,
       fromDate: applied.transferDateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: applied.transferDateRange?.[1]?.format('YYYY-MM-DD'),
       /** 이체일 구간이 있으면 BE가 year보다 from/to 우선. 구간 없을 때만 year 윈도우 */
@@ -472,10 +506,11 @@ export default function AccountPaymentsPage() {
       instructorName: draftInstructor.trim(),
       programName: draftProgram.trim(),
       accountStatus: draftAccountStatus,
+      payeeType: draftPayeeType,
       transferDateRange: draftDateRange,
     })
     setSelectedRowKeys([])
-  }, [draftAccountStatus, draftDateRange, draftInstructor, draftProgram])
+  }, [draftAccountStatus, draftDateRange, draftInstructor, draftPayeeType, draftProgram])
 
   const handleYearTabSelect = useCallback(
     (y: number) => {
@@ -549,7 +584,7 @@ export default function AccountPaymentsPage() {
         render: (v: string) => formatAccountPaymentInstitutionDisplay(v),
       },
       {
-        title: '강의 진행 차시',
+        title: '진행 차시',
         dataIndex: 'sessionLabel',
         key: 'sessionLabel',
         className: 'account-payments-page__col-session',
@@ -1237,6 +1272,7 @@ export default function AccountPaymentsPage() {
                 applied.instructorName,
                 applied.programName,
                 applied.accountStatus,
+                applied.payeeType,
                 applied.transferDateRange?.[0]?.valueOf() ?? '',
                 applied.transferDateRange?.[1]?.valueOf() ?? '',
               ].join('|')}

@@ -5,6 +5,7 @@ import {
   formatIndividualSettlementDateTime,
   formatIndividualSettlementWon,
   individualSettlementReviewStatusLabel,
+  isIndividualSettlementResubmission,
   normalizeIndividualSettlementReviewStatus,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
@@ -125,7 +126,7 @@ function mapApplicationFields(item: IndividualSettlementReviewListItemView | und
       : null
   return {
     status,
-    statusLabel: individualSettlementReviewStatusLabel(status),
+    statusLabel: individualSettlementReviewStatusLabel(status, latestRevisionNo),
     totalAmount,
     totalAmountLabel: formatIndividualSettlementWon(totalAmount),
     latestRevisionNo,
@@ -315,28 +316,51 @@ export function filterIndividualSettlementDocumentDownloadRows<
 
 export function summarizeIndividualSettlementReviewRows(
   rows: ReadonlyArray<IndividualSettlementReviewListRow>
-): { submitted: number; approved: number; rejected: number; none: number; total: number } {
+): {
+  submitted: number
+  /** submitted 중 2차 이상 제출(지급조서 재신청) */
+  reapplication: number
+  approved: number
+  rejected: number
+  none: number
+  total: number
+} {
   let submitted = 0
+  let reapplication = 0
   let approved = 0
   let rejected = 0
   let none = 0
   for (const row of rows) {
-    if (row.status === 'SUBMITTED') submitted += 1
+    if (row.status === 'SUBMITTED') {
+      submitted += 1
+      if (isIndividualSettlementResubmission(row.latestRevisionNo)) reapplication += 1
+    }
     // 계좌 지급 완료(PAID)도 확인 완료된 건이라 요약 집계는 지금처럼 확인 완료로 센다
     else if (row.status === 'APPROVED' || row.status === 'PAID') approved += 1
     else if (row.status === 'REJECTED') rejected += 1
     else if (row.status === 'NONE') none += 1
   }
-  return { submitted, approved, rejected, none, total: rows.length }
+  return { submitted, reapplication, approved, rejected, none, total: rows.length }
 }
 
 /** 정산 현황 요약 「지급조서 처리 현황」 — 참여자 정산 현황 탭과 같은 판정 */
 export function resolveIndividualSettlementReviewSummaryLabel(
-  summary: { submitted: number; approved: number; rejected: number; total: number },
+  summary: {
+    submitted: number
+    reapplication?: number
+    approved: number
+    rejected: number
+    total: number
+  },
   isError: boolean
 ): string {
   if (isError) return '조회 실패'
   if (summary.submitted > 0 && (summary.approved > 0 || summary.rejected > 0)) return '확인 진행 중'
+  // 확인 전 건이 모두 2차 이상 제출이면 재신청, 1차 제출이 하나라도 있으면 확인 대기 중
+  // (서버 지급조서 확인 묶음 상태 판정과 같은 기준)
+  if (summary.submitted > 0 && summary.reapplication === summary.submitted) {
+    return getInstructorSettlementStatusLabel('payment_statement_reapplication')
+  }
   if (summary.submitted > 0) return '확인 대기 중'
   if (summary.approved > 0) return getInstructorSettlementStatusLabel('payment_statement_verified')
   if (summary.rejected > 0) return '신청 반려'

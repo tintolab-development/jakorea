@@ -19045,12 +19045,11 @@
           },
           "individualSettlementApplications": {
             "type": "array",
-            "description": "지급조서 일괄 확인에 함께 처리할 영수증 정산 신청(개인 참여자·봉사자) 목록. 지급조서 확인 목록 영수증 행의 individualSettlementApplicationId·revisionNo를 그대로 보낸다. 강사 지급조서와 같은 트랜잭션에서 승인하며 한 건이라도 실패하면 전체를 롤백한다. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.",
-            "items": {
-              "$ref": "#/components/schemas/IndividualSettlementApprovalTarget"
-            },
             "maxItems": 500,
-            "minItems": 0
+            "items": {
+              "$ref": "#/components/schemas/IndividualSettlementBulkApprovalTarget"
+            },
+            "description": "지급조서 일괄 확인에 함께 처리할 영수증 정산 신청(개인 참여자·봉사자). 강사 지급조서와 같은 트랜잭션에서 승인하며 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다."
           }
         },
         "required": [
@@ -46369,7 +46368,7 @@
           },
           "rowType": {
             "type": "string",
-            "description": "프로그램 참여 강사 정산 현황(programId+instructorMemberId)과 지급조서 확인 목록의 확정 전 신청서 행에서 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, INDIVIDUAL_SETTLEMENT_APPLICATION=승인 전 개인 참여자·봉사자 영수증 정산 신청 행(지급조서 확인 목록만), NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 지급조서 확인 목록의 정산 행과 회원 상세 정산 탭에서는 null.",
+            "description": "SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, INDIVIDUAL_SETTLEMENT_APPLICATION=개인 참여자·봉사자 영수증 정산 신청 행(지급조서 확인 목록만), NOT_APPLIED=정산 신청 전인 배정 교육·사전교육 일정 행. 지급조서 확인 목록의 정산 행과 회원 상세 정산 탭에서는 null.",
             "enum": [
               "SETTLEMENT",
               "SETTLEMENT_APPLICATION",
@@ -46418,33 +46417,33 @@
           },
           "payeeType": {
             "type": "string",
-            "description": "정산 대상자 구분. INSTRUCTOR=강사(Gemini 실적 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 계좌 지급 목록의 payeeType과 같은 규칙이다.",
             "enum": [
               "INSTRUCTOR",
               "PARTICIPANT",
               "VOLUNTEER"
-            ]
+            ],
+            "description": "정산 대상자 구분. INSTRUCTOR=강사(Gemini 실적 포함), PARTICIPANT=개인 참여자 영수증, VOLUNTEER=봉사자 영수증. 계좌 지급 목록의 payeeType과 같은 규칙."
           },
           "individualSettlementApplicationId": {
             "type": "integer",
             "format": "int64",
-            "description": "영수증 정산 신청 ID(individual_settlement_application.id). rowType=INDIVIDUAL_SETTLEMENT_APPLICATION 행만 값이 있다. 상세·승인·반려는 /api/admin/individual-settlement-applications/{id} 계열을 쓴다. 이 행은 settlementId·statementId·settlementApplicationId·instructorAssignmentId가 null이고 instructorMemberId·instructorName에는 신청 회원 ID·이름이 들어간다.",
-            "nullable": true
+            "nullable": true,
+            "description": "영수증 정산 신청 ID. rowType=INDIVIDUAL_SETTLEMENT_APPLICATION 행만 값이 있다. 상세·승인·반려는 /api/admin/individual-settlement-applications/{id} 계열. 이 행은 settlementId·statementId·settlementApplicationId·instructorAssignmentId가 null이고 instructorMemberId·instructorName에 신청 회원 ID·이름이 들어간다."
           },
           "payeeBankName": {
             "type": "string",
-            "description": "영수증 정산 신청 행의 정산 계좌 은행명. 신청 당시 사전 동의서 계좌 스냅샷(지급조서 사전 동의서가 있으면 그 계좌, 없으면 영수증 사전 동의서 계좌)이며, 신청 뒤 계좌를 바꿔도 그대로다. 강사 행과 스냅샷에 계좌가 없는 신청은 null.",
-            "nullable": true
+            "nullable": true,
+            "description": "영수증 정산 신청 행의 정산 계좌 은행명. 신청 당시 사전 동의서 계좌 스냅샷(지급조서 사전 동의서가 있으면 그 계좌, 없으면 영수증 사전 동의서 계좌)이며 신청 뒤 계좌를 바꿔도 그대로다. 강사 행과 스냅샷에 계좌가 없는 신청은 null."
           },
           "payeeAccountNumberMasked": {
             "type": "string",
-            "description": "영수증 정산 신청 행의 정산 계좌번호(마스킹). 강사 정산 상세의 accountNumber와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null.",
-            "nullable": true
+            "nullable": true,
+            "description": "영수증 정산 신청 행의 정산 계좌번호(마스킹). 강사 정산 상세 accountNumber와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null."
           },
           "payeeAccountHolder": {
             "type": "string",
-            "description": "영수증 정산 신청 행의 예금주(마스킹). 강사 정산 상세의 accountHolder와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null.",
-            "nullable": true
+            "nullable": true,
+            "description": "영수증 정산 신청 행의 예금주(마스킹). 강사 정산 상세 accountHolder와 같은 마스킹 규칙. 강사 행과 스냅샷에 계좌가 없는 신청은 null."
           }
         }
       },
@@ -47500,18 +47499,36 @@
             "type": "string"
           },
           "rowType": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "SETTLEMENT",
+              "SETTLEMENT_APPLICATION",
+              "INDIVIDUAL_SETTLEMENT_APPLICATION"
+            ],
+            "description": "SETTLEMENT=지급조서, SETTLEMENT_APPLICATION=확정 전 강사 정산 신청서, INDIVIDUAL_SETTLEMENT_APPLICATION=영수증 정산 신청. 신청 행은 settlementId가 null."
           },
           "payeeType": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "INSTRUCTOR",
+              "PARTICIPANT",
+              "VOLUNTEER"
+            ],
+            "description": "정산 대상자 구분: INSTRUCTOR | PARTICIPANT | VOLUNTEER."
           },
           "settlementApplicationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "description": "rowType=SETTLEMENT_APPLICATION 행의 강사 정산 신청서 ID. 그 외 null."
           },
           "individualSettlementApplicationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "description": "rowType=INDIVIDUAL_SETTLEMENT_APPLICATION 행의 영수증 정산 신청 ID. 그 외 null."
           }
         }
       },
@@ -59609,6 +59626,28 @@
             "writeOnly": true,
             "minLength": 8,
             "description": "파일 암호. 8자 이상, 영문+숫자+특수문자, 공백 불가. 쿼리/로그/분석에 넣지 않는다."
+          }
+        }
+      },
+      "IndividualSettlementBulkApprovalTarget": {
+        "type": "object",
+        "required": [
+          "settlementApplicationId",
+          "expectedRevisionNo"
+        ],
+        "description": "영수증 정산 신청 일괄 승인 대상. expectedRevisionNo는 단건 승인과 같은 낙관적 잠금 값(지급조서 확인 라인의 revisionNo).",
+        "properties": {
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "영수증 정산 신청 ID. 지급조서 확인 라인의 individualSettlementApplicationId"
+          },
+          "expectedRevisionNo": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "description": "확인할 최신 revision 번호"
           }
         }
       }

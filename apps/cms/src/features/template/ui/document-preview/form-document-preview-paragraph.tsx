@@ -888,7 +888,16 @@ export function FormDocumentPreviewParagraph({
     const noticeConfirmationClosingVisible = allParagraphs.some(
       p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
     )
-    const isNoticeStackDivider = paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+    const isNoticeConfirmationClosing =
+      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+    /** 행정정보 확인 문구(약관·동의서 최신본 양식 15)가 있으면 다른 동의서처럼 구분선 + 확인 문구로 보인다 */
+    const noticeClosingHasText =
+      isNoticeConfirmationClosing &&
+      paragraph.kind === 'description' &&
+      paragraph.variant === 'closing' &&
+      paragraph.body.trim() !== ''
+    /** 문구가 빈 구버전 확인 단락만 구분선 전용으로 그린다 */
+    const isNoticeStackDivider = isNoticeConfirmationClosing && !noticeClosingHasText
     /** 구버전(confirmationClosing 없음)만 날짜 단락에서 대체 구분선 */
     const isNoticeDateWithDivider =
       paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate &&
@@ -900,7 +909,7 @@ export function FormDocumentPreviewParagraph({
     const isPaymentStatementIssuanceClosingDate =
       paragraph.id === PAYMENT_STATEMENT_ISSUANCE_IDS.closingDate
     const useConfirmRuleChrome =
-      viewModel.isConfirmTextRule || isPaymentStatementIssuanceClosingDate
+      viewModel.isConfirmTextRule || isPaymentStatementIssuanceClosingDate || noticeClosingHasText
 
     return (
       <div
