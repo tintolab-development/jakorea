@@ -18,7 +18,7 @@ import {
   normalizePermissionApprovalStatus,
   PermissionApprovalStatusWithResend,
 } from './status'
-import { useAdminProfileForm } from './use-admin-profile-form'
+import { useAdminProfileForm, type AdminProfileDraftFlushRef } from './use-admin-profile-form'
 
 const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
 
@@ -37,6 +37,8 @@ export type AdminBasicInfoSectionProps = {
   /** 저장 실패 `error.field === 'email'` 서버 문구 — 이메일 입력란에 표시 */
   emailError?: string | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  /** 저장 직전 폼 값을 draft로 꺼내는 ref — 입력마다 상위 draft를 갱신하지 않는다 */
+  draftFlushRef?: AdminProfileDraftFlushRef
   adminMemberProfileFieldsEditableWhenEditing?: boolean
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
@@ -57,6 +59,7 @@ export function AdminBasicInfoSection({
   memberInfoDraft,
   emailError = null,
   onMemberInfoDraftChange,
+  draftFlushRef,
   adminMemberProfileFieldsEditableWhenEditing = true,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
@@ -74,6 +77,7 @@ export function AdminBasicInfoSection({
     mode,
     profileFieldsEditable,
     onMemberInfoDraftChange,
+    draftFlushRef,
   })
 
   const permissionTypeField = (

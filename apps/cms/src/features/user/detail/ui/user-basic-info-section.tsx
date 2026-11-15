@@ -12,6 +12,7 @@ import { shouldShowCmsBasicProfileFieldsEdit } from '@/features/user/shared/lib/
 import { resolveBasicInfoLayout, type BasicInfoBodyKey } from './user-basic-info-layout-resolver'
 import { BasicInfoLayoutRenderer } from './user-basic-info-layout-renderer'
 import { AdminBasicInfoSection } from './user-basic-info/admin-basic-info-section'
+import type { AdminProfileDraftFlushRef } from './user-basic-info/use-admin-profile-form'
 import type { BasicInfoSectionRenderContext } from './user-basic-info-section-renderer'
 import {
   parseUserBasicInfoEntryQuery,
@@ -52,6 +53,8 @@ export interface UserBasicInfoSectionProps {
   /** 관리자 상세 이메일 입력란 서버 에러 문구 */
   memberInfoEmailError?: string | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  /** 관리자 기본정보 폼 — 저장 직전 폼 값을 draft로 꺼내는 ref */
+  memberInfoDraftFlushRef?: AdminProfileDraftFlushRef
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
@@ -76,6 +79,7 @@ export function UserBasicInfoSection({
   memberInfoDraft,
   memberInfoEmailError = null,
   onMemberInfoDraftChange,
+  memberInfoDraftFlushRef,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
   adminMemberProfileFieldsEditableWhenEditing = true,
@@ -142,6 +146,7 @@ export function UserBasicInfoSection({
             memberInfoDraft={memberInfoDraft}
             emailError={memberInfoEmailError}
             onMemberInfoDraftChange={onMemberInfoDraftChange}
+            draftFlushRef={memberInfoDraftFlushRef}
             adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
             adminPermissionVariantPatching={adminPermissionVariantPatching}
             onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
