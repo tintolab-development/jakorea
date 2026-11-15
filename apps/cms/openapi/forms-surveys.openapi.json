@@ -4599,7 +4599,7 @@
           },
           "slots": {
             "type": "array",
-            "description": "임시 교육일·학급 배정. 빈 배열 []이면 임시 일정 해제: 활성 슬롯을 취소하고 temporaryAssignmentStatus·institutionConfirmationStatus를 null로 되돌리며 assignmentRevision을 1 올린다. 기관 확인 완료/잠금 상태면 409, 봉사자 배정이 남아 있으면 409 UJAT_TEMPORARY_SCHEDULE_HAS_VOLUNTEER_ASSIGNMENTS. 이미 해제된 신청에 []를 다시 보내면 변경 없이 현재 상태를 반환한다.",
+            "description": "임시 교육일·학급 배정. 빈 배열 []이고 활성 슬롯이 있으면 임시 일정 해제: 활성 슬롯을 취소하고 temporaryAssignmentStatus·institutionConfirmationStatus를 null로 되돌리며 assignmentRevision을 1 올린다. 활성 슬롯이 없는 상태만 임시 배정(TEMP_ASSIGNED)은 바꾸지 않는다. 그 취소는 POST .../temporary-assignments:cancel. 기관 확인 완료/잠금 상태면 409, 봉사자 배정이 남아 있으면 409 UJAT_TEMPORARY_SCHEDULE_HAS_VOLUNTEER_ASSIGNMENTS. 이미 해제된 신청에 []를 다시 보내면 변경 없이 현재 상태를 반환한다. 슬롯 저장은 temporaryAssignmentStatus를 TEMP_ASSIGNED로 유지하고 institutionConfirmationStatus를 CHECKING으로 두며 UJAT_ORGANIZATION_SCHEDULE_SUBMITTED 알림을 보낸다. 상태만 임시 배정하는 POST temporary-assignments는 알림을 보내지 않는다.",
             "items": {
               "$ref": "#/components/schemas/TemporaryScheduleSlotRequest"
             }
@@ -6259,12 +6259,12 @@
           },
           "fileObjectIds": {
             "type": "array",
-            "description": "사유 불참 증빙 fileObjectId. CMS UJAT 봉사 탭은 생략(null/[]). 없으면 absence-reasons에 사유 텍스트만 남고 파일은 없다.",
+            "description": "사유 불참 증빙 fileObjectId. 최대 10개, 파일당 20MB, 합계 100MB, PDF/JPG/JPEG/PNG. null 또는 빈 배열이면 파일 없이 사유 텍스트만 남는다. CMS UJAT 봉사 탭은 생략할 수 있다.",
             "items": {
               "type": "integer",
               "format": "int64"
             },
-            "nullable": true
+            "maxItems": 10
           }
         }
       },
@@ -8735,6 +8735,14 @@
             "items": {
               "$ref": "#/components/schemas/SettlementApplicationEvidenceAttachmentRequest"
             }
+          },
+          "correctionRequestReason": {
+            "type": "string",
+            "description": "강사비 정정 요청 사유(선택). 지급조서 작성·제출 전 확인 화면의 [강사비 정정 요청하기]로 제출할 때만 보낸다. 값이 있으면 지급조서를 제출하면서 같은 거래에서 지급 정정을 요청한다: 정산·지급조서가 바로 만들어지고 지급조서 상태는 CORRECTION_REQUESTED(목록 「지급 정정 요청」)가 된다. 관리자가 정정을 승인하면 정정된 지급조서(DRAFT)가 만들어져 POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply로 재신청하고, 정정을 반려하면 확인 대기로 돌아간다. Gemini 실적 지급조서는 409 GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED이며 제출도 되지 않는다. 비우거나 공백이면 일반 제출이다.",
+            "example": "강사 등급이 잘못 적용되었습니다.",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
           }
         },
         "required": [
@@ -16852,12 +16860,11 @@
           },
           "instructorSettlementApplications": {
             "type": "array",
-            "description": "지급조서 일괄 확인에 함께 처리할 확정 전 강사 정산 신청서 목록. 지급조서 확인 목록 rowType=SETTLEMENT_APPLICATION 행(availableActions에 BULK_CONFIRM_PAYMENT_STATEMENT)의 settlementApplicationId를 보낸다. 신청서마다 승인(settlement·지급조서 생성) 후 지급조서 확인까지 한 번에 처리하며 강사 지급조서·영수증과 같은 트랜잭션이다. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다.",
-            "items": {
-              "$ref": "#/components/schemas/InstructorSettlementApplicationTarget"
-            },
             "maxItems": 500,
-            "minItems": 0
+            "items": {
+              "$ref": "#/components/schemas/InstructorSettlementBulkConfirmTarget"
+            },
+            "description": "지급조서 일괄 확인에 함께 처리할 확정 전 강사 정산 신청서. 신청서마다 승인 후 지급조서 확인까지 한 번에 처리하며 강사 지급조서·영수증과 같은 트랜잭션에서 한 건이라도 실패하면 전체 롤백. 이체 예정일은 scheduledPaymentDate(또는 lectureFeePaymentScheduledDate)를 같이 쓴다."
           }
         },
         "required": [
@@ -16984,7 +16991,7 @@
           },
           "instructorSettlementApplicationResults": {
             "type": "array",
-            "description": "지급조서 일괄 확인에서 승인·확인한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양: applicationId, status=CONFIRMED, settlementId, paymentStatementId). 지급조서는 이미 CONFIRMED로 확인된 상태다. 없으면 빈 배열",
+            "description": "지급조서 일괄 확인에서 함께 처리한 확정 전 강사 정산 신청서 결과(단건 신청서 승인 응답과 같은 모양). 없으면 빈 배열",
             "items": {
               "$ref": "#/components/schemas/SettlementApplicationAdminActionResponse"
             }
@@ -18773,6 +18780,92 @@
         "required": [
           "applicationIds"
         ]
+      },
+      "TemporaryAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "applicationIds": {
+            "type": "array",
+            "description": "대상 기관 신청 id. 1~100개. 중복·0 이하·null은 400 UJAT_TEMPORARY_ASSIGNMENT_APPLICATION_INVALID. 요청 전체가 거절되며 어떤 행도 바꾸지 않는다.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "applicationIds"
+        ]
+      },
+      "TemporaryAssignmentBulkResponse": {
+        "type": "object",
+        "description": "임시 배정 상태 변경 일괄 결과. 요청 형식이 유효하면 HTTP 200이다. 성공한 건은 그 건의 트랜잭션으로 커밋되고, 실패 건은 failures에만 남는다. 앞선 성공을 롤백하지 않는다. successCount가 0이어도 200이며 failureCount로 구분한다. 권한 없음(403 PERMISSION_DENIED)과 목록 형식 오류(400)는 쓰기 전에 전체를 거절한다.",
+        "properties": {
+          "requestedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failureCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemporaryAssignmentItem"
+            }
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemporaryAssignmentFailure"
+            }
+          }
+        }
+      },
+      "TemporaryAssignmentFailure": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "code": {
+            "type": "string",
+            "description": "UJAT_TEMPORARY_ASSIGNMENT_STATUS_NOT_ALLOWED | UJAT_TEMPORARY_ASSIGNMENT_ALREADY_ASSIGNED | UJAT_TEMPORARY_ASSIGNMENT_CANCEL_NOT_ALLOWED | UJAT_TEMPORARY_ASSIGNMENT_CONCURRENTLY_CHANGED | ORGANIZATION_APPLICATION_NOT_FOUND | PROGRAM_SCOPE_DENIED"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "TemporaryAssignmentItem": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "temporaryAssignmentStatus": {
+            "type": "string",
+            "description": "배정 성공은 TEMP_ASSIGNED. 취소 성공은 EVALUATION_PENDING(평가 대기).",
+            "enum": [
+              "TEMP_ASSIGNED",
+              "EVALUATION_PENDING"
+            ]
+          },
+          "temporaryScheduleAssigned": {
+            "type": "boolean",
+            "description": "temporaryAssignmentStatus가 TEMP_ASSIGNED일 때만 boolean. false는 일정·학급 슬롯이 없는 임시 배정, true는 활성 임시 교육일 슬롯이 있는 상태. EVALUATION_PENDING이면 null.",
+            "nullable": true
+          }
+        }
       },
       "Ujat1365SemesterRegistrationFormRequest": {
         "type": "object",
@@ -23177,6 +23270,11 @@
             "type": "integer",
             "format": "int32",
             "description": "저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다.",
+            "nullable": true
+          },
+          "temporaryScheduleAssigned": {
+            "type": "boolean",
+            "description": "UJAT이고 temporaryAssignmentStatus가 TEMP_ASSIGNED일 때만 boolean. false는 임시 배정(일정 미배정), true는 활성 임시 교육일 슬롯이 있는 임시 배정(일정 배정 완료). 평가 대기·임시 반려·UJAT가 아니면 null. null과 false를 구분한다. false를 평가 대기로 읽지 않는다.",
             "nullable": true
           }
         }
@@ -29000,7 +29098,7 @@
           },
           "filePurpose": {
             "type": "string",
-            "description": "파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다. CRIMINAL_HISTORY_CONSENT_ORIGINAL은 CMS가 받은 성범죄 경력 조회 동의서 서명 원본입니다: ownerDomain=MEMBER, ownerType=CONSENT, ownerId=현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 문서 id(회원 상세·신규 등록 공통, memberId 아님), PDF/JPG/JPEG/PNG 20MB, PRIVATE_SENSITIVE, SIGNED_CONSENT_EVIDENCE_RESTRICTED_3Y, SERVER_RELAY. 성범죄 경력 조회 결과·증빙(CRIMINAL_HISTORY_EVIDENCE)은 관리자 업로드를 허용하지 않습니다.",
+            "description": "파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. ABSENCE_EVIDENCE는 출결 정정 결석 증빙이며 PDF/JPG/JPEG/PNG, 파일당 20MB, PRIVATE_SENSITIVE입니다. 개수 10개·합계 100MB는 출결 저장 API에서 검증합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다. CRIMINAL_HISTORY_CONSENT_ORIGINAL은 CMS가 받은 성범죄 경력 조회 동의서 서명 원본입니다: ownerDomain=MEMBER, ownerType=CONSENT, ownerId=현재 게시된 CRIMINAL_HISTORY_CHECK_CONSENT 약관 문서 id(회원 상세·신규 등록 공통, memberId 아님), PDF/JPG/JPEG/PNG 20MB, PRIVATE_SENSITIVE, SIGNED_CONSENT_EVIDENCE_RESTRICTED_3Y, SERVER_RELAY. 성범죄 경력 조회 결과·증빙(CRIMINAL_HISTORY_EVIDENCE)은 관리자 업로드를 허용하지 않습니다.",
             "example": "STUDENT_ROSTER",
             "maxLength": 80,
             "minLength": 0
@@ -39022,6 +39120,47 @@
               "ADMIN_REGISTERED"
             ],
             "nullable": true
+          },
+          "availableScheduleSlots": {
+            "type": "array",
+            "description": "강사(INSTRUCTOR) 신청 시 선택한 「강의 진행 가능 일정」 표시 행(「강사 개인 프로그램 신청 내용 팝업 조회」). 관리자 상세 availableScheduleSlots와 같은 원천에서 회차·시작·종료·표시 라벨만 노출하며, 관리자 판단용 거리·배정 가능 여부는 포함하지 않는다. 강사 외 신청 유형이거나 선택 일정이 없으면 [].",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalInstructorAvailableScheduleSlot"
+            }
+          }
+        }
+      },
+      "MemberPortalInstructorAvailableScheduleSlot": {
+        "type": "object",
+        "description": "회원 포탈 강사 신청 상세의 「강의 진행 가능 일정」 한 행. 관리자 상세와 같은 원천에서 표시용 값만 노출한다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_schedule id"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "description": "회차 번호(program_schedule.session_no). 없으면 null.",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "진행 시작 시각(ISO-8601).",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "진행 종료 시각(ISO-8601).",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "description": "교육 진행 예정일 구간 표시 문자열. PERIOD 단일/다중 구간 선택이면 non-null, 지정일·운영일정만 선택한 경우 null.",
+            "nullable": true
           }
         }
       },
@@ -48366,6 +48505,11 @@
               "$ref": "#/components/schemas/GradeBlock"
             },
             "nullable": true
+          },
+          "temporaryScheduleAssigned": {
+            "type": "boolean",
+            "description": "UJAT이고 temporaryAssignmentStatus가 TEMP_ASSIGNED일 때만 boolean. false는 임시 배정(일정 미배정): 상태만 바뀌고 활성 교육일 슬롯이 없다. true는 임시 배정(일정 배정 완료): 활성 임시 교육일 슬롯이 하나 이상 있다. 평가 대기·임시 반려·UJAT가 아니면 null. false를 평가 대기로 읽지 않는다.",
+            "nullable": true
           }
         }
       },
@@ -53324,15 +53468,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -57517,6 +57661,21 @@
             "format": "int32",
             "minimum": 1,
             "description": "확인할 최신 revision 번호"
+          }
+        }
+      },
+      "InstructorSettlementBulkConfirmTarget": {
+        "type": "object",
+        "required": [
+          "settlementApplicationId"
+        ],
+        "description": "확정 전 강사 정산 신청서 일괄 확인 대상. 재제출은 새 신청서 ID를 만들므로 별도 revision 값은 받지 않는다.",
+        "properties": {
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "강사 정산 신청서 ID. 지급조서 확인 라인(rowType=SETTLEMENT_APPLICATION)의 settlementApplicationId"
           }
         }
       }

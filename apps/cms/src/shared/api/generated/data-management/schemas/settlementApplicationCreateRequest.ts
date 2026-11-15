@@ -24,4 +24,10 @@ export interface SettlementApplicationCreateRequest {
   attachmentFileIds?: number[];
   requestedItems?: SettlementApplicationRequestedItemRequest[];
   evidenceAttachments?: SettlementApplicationEvidenceAttachmentRequest[];
+  /**
+     * 강사비 정정 요청 사유(선택). 지급조서 작성·제출 전 확인 화면의 [강사비 정정 요청하기]로 제출할 때만 보낸다. 값이 있으면 지급조서를 제출하면서 같은 거래에서 지급 정정을 요청한다: 정산·지급조서가 바로 만들어지고 지급조서 상태는 CORRECTION_REQUESTED(목록 「지급 정정 요청」)가 된다. 관리자가 정정을 승인하면 정정된 지급조서(DRAFT)가 만들어져 POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply로 재신청하고, 정정을 반려하면 확인 대기로 돌아간다. Gemini 실적 지급조서는 409 GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED이며 제출도 되지 않는다. 비우거나 공백이면 일반 제출이다.
+     * @minLength 0
+     * @maxLength 500
+     */
+  correctionRequestReason?: string | null;
 }

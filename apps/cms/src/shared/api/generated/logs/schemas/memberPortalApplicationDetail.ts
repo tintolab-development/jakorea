@@ -11,6 +11,7 @@ import type { MemberPortalApplicationDetailAnswers } from './memberPortalApplica
 import type { MemberPortalApplicationDetailApplicationSource } from './memberPortalApplicationDetailApplicationSource';
 import type { MemberPortalApplicationDetailDisplayStatus } from './memberPortalApplicationDetailDisplayStatus';
 import type { MemberPortalApplicationDetailRecruitTerm } from './memberPortalApplicationDetailRecruitTerm';
+import type { MemberPortalInstructorAvailableScheduleSlot } from './memberPortalInstructorAvailableScheduleSlot';
 import type { MemberPortalOrganizationApplicationSnapshot } from './memberPortalOrganizationApplicationSnapshot';
 import type { MemberPortalProgramSummary } from './memberPortalProgramSummary';
 import type { MemberPortalTeacherAssignment } from './memberPortalTeacherAssignment';
@@ -68,4 +69,6 @@ export interface MemberPortalApplicationDetail {
   thumbnailFileObjectId?: number | null;
   /** 강사(INSTRUCTOR) 신청의 출처. MEMBER_SUBMITTED=회원이 직접 신청, ADMIN_REGISTERED=CMS 관리자가 참여 강사로 직접 등록(신청 행 자동 생성). ADMIN_REGISTERED이면 FE는 안내사항 [신청 정보] 버튼을 숨긴다(USER-FUNC-0252). 승인 완료 상태라 '신청 내용' 탭은 노출되지 않으며, 기관별 강의 가능 일정에 '-' 같은 대체 표시나 별도 문구를 만들지 않는다. 강사 외 신청 유형은 null. */
   applicationSource?: MemberPortalApplicationDetailApplicationSource;
+  /** 강사(INSTRUCTOR) 신청 시 선택한 「강의 진행 가능 일정」 표시 행(「강사 개인 프로그램 신청 내용 팝업 조회」). 관리자 상세 availableScheduleSlots와 같은 원천에서 회차·시작·종료·표시 라벨만 노출하며, 관리자 판단용 거리·배정 가능 여부는 포함하지 않는다. 강사 외 신청 유형이거나 선택 일정이 없으면 []. */
+  availableScheduleSlots?: MemberPortalInstructorAvailableScheduleSlot[];
 }
