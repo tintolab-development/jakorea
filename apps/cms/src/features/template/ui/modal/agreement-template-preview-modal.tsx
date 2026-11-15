@@ -47,7 +47,7 @@ export function AgreementTemplatePreviewModal({
   focusedParagraphId = null }: AgreementTemplatePreviewModalProps) {
   void updateParagraph
   const previewScrollRef = useRef<HTMLDivElement>(null)
-  const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
+  const { pages, overflowParagraphIds, pagesReady, measureLayer } = useA4ParagraphPages({
     allParagraphs: draft.paragraphs,
     titleNumbering: draft.formSettings.titleNumbering,
     editorKind,
@@ -90,6 +90,7 @@ export function AgreementTemplatePreviewModal({
   }, [headerTitle])
 
   return (
+    <>
     <TealHeaderModal
       open={open}
       onCancel={onClose}
@@ -151,7 +152,8 @@ export function AgreementTemplatePreviewModal({
                 adminAction="download"
                 onClick={() => void handlePdfDownload()}
                 loading={pdfLoading}
-                disabled={pdfLoading || pages.length === 0} >
+                // 쪽 나눔 측정 전(pages=[[]])에 캡처하면 본문 없는 빈 쪽이 저장되므로 측정 완료 후에만 연다.
+                disabled={pdfLoading || !pagesReady || pages.length === 0} >
                 문서 다운로드
               </CmsButton>
               <CmsButton
@@ -166,7 +168,7 @@ export function AgreementTemplatePreviewModal({
 
           <div className="agreement-template-preview-modal__preview-wrapper">
             <div className="agreement-template-preview-modal__a4-stage">
-              <div ref={pdfHostRef} className="agreement-template-preview-modal__a4-stack">
+              <div className="agreement-template-preview-modal__a4-stack">
                 {pages.map((pageParagraphs, pageIndex) => (
                   <div key={pageIndex} className="agreement-template-preview-modal__a4-frame">
                     <div className="agreement-template-preview-modal__a4-scale-inner">
@@ -191,5 +193,27 @@ export function AgreementTemplatePreviewModal({
         </div>
       </div>
     </TealHeaderModal>
+      {/*
+       * PDF 캡처 전용(화면 밖, 실제 크기 1464px). 화면 미리보기는 축소(scale)·스크롤·잘림이 걸려 있고 편집 포커스
+       * 표시도 있어 그대로 캡처하면 PDF가 작게·잘려 나온다. TemplatePreviewModal의 pdf-host와 같은 방식.
+       */}
+      {open ? (
+        <div ref={pdfHostRef} className="agreement-template-preview-modal__pdf-host" aria-hidden="true">
+          {pages.map((pageParagraphs, pageIndex) => (
+            <A4DocumentPageLayout key={pageIndex} title={headerTitle} pageIndex={pageIndex} pdfCapture>
+              <div className="agreement-template-preview-modal__pdf-host-page-body">
+                <FormDocumentPreviewBody
+                  paragraphs={pageParagraphs}
+                  allParagraphs={draft.paragraphs}
+                  titleNumbering={draft.formSettings.titleNumbering}
+                  editorKind={editorKind}
+                  overflowParagraphIds={overflowParagraphIds}
+                />
+              </div>
+            </A4DocumentPageLayout>
+          ))}
+        </div>
+      ) : null}
+    </>
   )
 }

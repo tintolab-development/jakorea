@@ -34,6 +34,7 @@ import {
 } from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { useParticipatingParticipantSettlementList } from '@/features/program/general/hooks/use-participating-participant-settlement-list'
+import { useIndividualSettlementDocumentBulkDownload } from '@/features/program/general/hooks/use-individual-settlement-document-bulk-download'
 import { formatBusinessPeriodDisplay } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -67,6 +68,12 @@ export function ParticipatingParticipantSettlementSection({
     })
 
   const [detailApplicationId, setDetailApplicationId] = useState<number | null>(null)
+  // CMS-FUNC-0252: 지급조서 확인 완료·계좌 지급 완료 건 일괄 다운로드(강사 정산 현황과 같은 흐름)
+  const bulkDownload = useIndividualSettlementDocumentBulkDownload({
+    rows,
+    remoteEnabled,
+    context: 'participatingParticipantSettlementSection',
+  })
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     accessLog: { downloadKind: 'PROGRAM_SETTLEMENT_EXPORT', containedPiiTypes: ['NAME'] },
@@ -205,13 +212,8 @@ export function ParticipatingParticipantSettlementSection({
             variant="secondary"
             size="h40"
             icon={<ButtonDownloadIcon />}
-            onClick={() =>
-              showAlert({
-                title: '안내',
-                content:
-                  '다운로드할 지급조서가 없습니다. 개인 참여자 정산은 일정별 정산 신청이며, 지급조서 일괄 다운로드 대상이 아닙니다.',
-              })
-            }
+            loading={bulkDownload.loading}
+            onClick={bulkDownload.handleBulkDownload}
           >
             지급조서 일괄 다운로드
           </CmsButton>
@@ -249,6 +251,7 @@ export function ParticipatingParticipantSettlementSection({
         onClose={() => setDetailApplicationId(null)}
         onReviewed={invalidate}
       />
+      {bulkDownload.filePasswordModal}
     </div>
   )
 }

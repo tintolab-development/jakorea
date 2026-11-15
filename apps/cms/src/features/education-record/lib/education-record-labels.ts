@@ -65,10 +65,32 @@ export function formatEducationRecordTargetLevel(value?: string): string {
   return TARGET_LEVEL_DISPLAY[trimmed] ?? trimmed
 }
 
+/** 맵에 없는 값(예: 기관 유형 `SCHOOL`)은 기관 안/밖을 판단할 수 없으므로 `-` (엑셀 다운로드와 동일) */
 export function formatEducationRecordInstitutionType(value?: string): string {
   if (!value) return '-'
   const trimmed = value.trim()
-  return INSTITUTION_TYPE_DISPLAY[trimmed] ?? trimmed
+  return INSTITUTION_TYPE_DISPLAY[trimmed] ?? '-'
+}
+
+/** 미설정은 `-` — `JA` 기본값을 채우지 않는다 (엑셀 다운로드와 동일) */
+export function formatEducationRecordIpOwned(value?: string | null): string {
+  return value?.trim() || '-'
+}
+
+const PARTNER_INVOLVEMENT_YES = new Set(['true', 'yes'])
+const PARTNER_INVOLVEMENT_NO = new Set(['false', 'no'])
+
+/** 과거 데이터의 `true`/`false` 문자열도 Yes/No 로, 값이 없으면 `-` (No 로 간주하지 않음) */
+export function formatEducationRecordPartnerInvolvement(value?: boolean | string | null): string {
+  if (value === true) return 'Yes'
+  if (value === false) return 'No'
+  if (value == null) return '-'
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  const lowered = trimmed.toLowerCase()
+  if (PARTNER_INVOLVEMENT_YES.has(lowered)) return 'Yes'
+  if (PARTNER_INVOLVEMENT_NO.has(lowered)) return 'No'
+  return trimmed
 }
 
 export function formatEducationRecordEducationType(value?: string): string {

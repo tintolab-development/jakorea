@@ -50,6 +50,21 @@ export function individualSettlementApplicationDocumentDownloadUrl(
   return revisionNo != null ? `${base}?revisionNo=${revisionNo}` : base
 }
 
+/** 승인 건 서버 PDF 일괄 암호화 ZIP — 한 건이라도 범위 밖·미승인이면 서버가 요청 전체를 거부한다 */
+export const INDIVIDUAL_SETTLEMENT_DOCUMENT_BULK_DOWNLOAD_URL = `${INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL}/application-document/bulk-download`
+
+export async function bulkDownloadIndividualSettlementDocumentsRemote(body: {
+  settlementApplicationIds: number[]
+  password: string
+}): Promise<void> {
+  await postEncryptedAdminFile({
+    url: INDIVIDUAL_SETTLEMENT_DOCUMENT_BULK_DOWNLOAD_URL,
+    password: body.password,
+    extraBody: { settlementApplicationIds: body.settlementApplicationIds },
+    fallbackFileName: `[JA Korea] 정산 신청서_일괄_${formatAsiaSeoulYymmdd()}.zip`,
+  })
+}
+
 export function parseIndividualSettlementNumericId(
   value: string | number | undefined | null
 ): number | null {

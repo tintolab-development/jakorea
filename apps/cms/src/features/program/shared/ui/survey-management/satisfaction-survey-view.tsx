@@ -194,7 +194,24 @@ export function SatisfactionSurveyView<TKey extends string>({
             onDeleteClick={onDeleteClick}
             onOpenTemplatePreview={onOpenTemplatePreview}
           />
-        ) : (
+        ) : null}
+        {activeSurvey.status === 'before_start' && resultsExportRef ? (
+          // 진행 전 일정도 상단 다운로드(시안 16057:315805)가 열려 있다. 엑셀은 빈 결과로 내려받으므로 PDF도
+          // 같은 빈 결과를 화면 밖에 그려 캡처한다(결과 영역이 없으면 PDF 다운로드가 실패했다).
+          <div ref={resultsExportRef} className="satisfaction-survey-view__offscreen-results" aria-hidden="true">
+            <SurveyPollResultsView
+              templateId={activeSurvey.templateId}
+              templateVersionId={resultsTemplateVersionId}
+              responseCount={activeSurvey.responseCount}
+              participantTotal={activeSurvey.participantTotal}
+              responses={resultsResponses}
+              questionSummaries={resultsQuestionSummaries}
+              pdfTitle="만족도조사 결과"
+              {...(showResultsStatusBadge ? { statusBadge: activeSurvey.status } : {})}
+            />
+          </div>
+        ) : null}
+        {activeSurvey.status === 'before_start' ? null : (
           <div ref={resultsExportRef}>
             <SurveyPollResultsView
               templateId={activeSurvey.templateId}

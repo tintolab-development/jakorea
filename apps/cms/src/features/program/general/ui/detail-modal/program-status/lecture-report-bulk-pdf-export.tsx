@@ -81,7 +81,8 @@ export interface LectureReportBulkPdfExportRunnerProps {
   instructor: ParticipatingInstructorRow
   program?: Program | null
   rows: ParticipatingInstructorLectureReportRow[]
-  onComplete: (files: LectureReportPdfFile[]) => void
+  /** failedCount — 본문 조회·PDF 생성에 실패한 건수. 0이 아니면 호출부가 저장하지 않는다. */
+  onComplete: (files: LectureReportPdfFile[], failedCount: number) => void
 }
 
 export function LectureReportBulkPdfExportRunner({
@@ -94,12 +95,14 @@ export function LectureReportBulkPdfExportRunner({
   const [index, setIndex] = useState(0)
   const [context, setContext] = useState<LectureReportPreviewContext | null>(null)
   const filesRef = useRef<LectureReportPdfFile[]>([])
+  const failedCountRef = useRef(0)
   const finishedRef = useRef(false)
   const onCompleteRef = useRef(onComplete)
   onCompleteRef.current = onComplete
 
   useEffect(() => {
     filesRef.current = []
+    failedCountRef.current = 0
     finishedRef.current = false
     setIndex(0)
     setContext(null)
@@ -109,7 +112,7 @@ export function LectureReportBulkPdfExportRunner({
     if (finishedRef.current) return
     if (index >= rows.length) {
       finishedRef.current = true
-      onCompleteRef.current(filesRef.current)
+      onCompleteRef.current(filesRef.current, failedCountRef.current)
       return
     }
 
@@ -130,7 +133,9 @@ export function LectureReportBulkPdfExportRunner({
         )
       })
       .catch(() => {
-        if (!cancelled) setIndex(current => current + 1)
+        if (cancelled) return
+        failedCountRef.current += 1
+        setIndex(current => current + 1)
       })
 
     return () => {
@@ -141,6 +146,8 @@ export function LectureReportBulkPdfExportRunner({
   const handleHostComplete = useCallback((result: LectureReportPdfFile | null) => {
     if (result != null && result.blob.size > 0) {
       filesRef.current = [...filesRef.current, result]
+    } else {
+      failedCountRef.current += 1
     }
     setIndex(current => current + 1)
   }, [])
@@ -223,9 +230,14 @@ export function useLectureReportBulkPdfExport(options: {
   ])
 
   const handleExportComplete = useCallback(
-    async (files: LectureReportPdfFile[]) => {
+    async (files: LectureReportPdfFile[], failedCount: number) => {
       setExportRows(null)
       try {
+        // 일부 건이 빠진 ZIP을 저장하지 않는다(빠진 줄 모른 채 보관되는 것을 막는다).
+        if (failedCount > 0) {
+          showAlert({ title: '안내', content: '강의보고서 일괄 다운로드에 실패했습니다.' })
+          return
+        }
         if (files.length === 0) {
           showAlert({
             title: '안내',
@@ -256,8 +268,8 @@ export function useLectureReportBulkPdfExport(options: {
         instructor={options.instructor}
         program={options.program}
         rows={exportRows}
-        onComplete={files => {
-          void handleExportComplete(files)
+        onComplete={(files, failedCount) => {
+          void handleExportComplete(files, failedCount)
         }}
       />
     ) : null

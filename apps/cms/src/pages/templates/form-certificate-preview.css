@@ -97,12 +97,18 @@
   white-space: nowrap;
 }
 
+/*
+ * 시안 5767:47266 — 로고 영역 left 76 / top 208 / 280×87 고정(CMS-FUNC-0630 시스템 발급 양식).
+ * 업로드 로고(orgLogo)도 이 영역 안으로만 비율 유지 축소해 로고–타이틀 간격이 템플릿마다 달라지지 않게 한다.
+ * object-fit은 html2canvas(1.4.1) 캡처와 어긋날 수 있어 max-width·max-height로 맞춘다.
+ */
 .form-certificate-preview__logo-wrap {
   position: absolute;
   top: 208px;
   left: 76px;
   z-index: 1;
-  max-width: calc(100% - 76px);
+  width: 280px;
+  height: 87px;
   pointer-events: none;
 }
 
@@ -110,7 +116,8 @@
   display: block;
   width: auto;
   height: auto;
-  max-width: 100%;
+  max-width: 280px;
+  max-height: 87px;
 }
 
 .form-certificate-preview__education-wrap {
@@ -492,7 +499,7 @@
   left: 35px;
   white-space: nowrap;
   color: var(--main-WT, #fff);
-  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
@@ -506,7 +513,7 @@
   bottom: 0;
   white-space: nowrap;
   color: var(--main-WT, #fff);
-  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;

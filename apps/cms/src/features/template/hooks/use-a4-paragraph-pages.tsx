@@ -27,6 +27,11 @@ export interface UseA4ParagraphPagesResult {
   overflowParagraphIds: ReadonlySet<string>
   /** 단락 높이 측정·페이지 분할이 현재 paragraphs/config 기준으로 완료됐는지 */
   pagesReady: boolean
+  /**
+   * PDF 캡처 직전에 호출 — 쪽 나눔 측정이 끝날 때까지(최대 timeoutMs) 기다린다. 측정 전에는 pages가 `[[]]`라
+   * 그대로 캡처하면 본문 없는 빈 쪽이 저장된다(미리보기를 열자마자·편집 직후 다운로드).
+   */
+  waitForPagesReady: (timeoutMs?: number) => Promise<void>
   measureLayer: ReactNode
 }
 
@@ -193,5 +198,19 @@ export function useA4ParagraphPages({
     ]
   )
 
-  return { pages, overflowParagraphIds, pagesReady, measureLayer }
+  const pagesReadyRef = useRef(pagesReady)
+  useLayoutEffect(() => {
+    pagesReadyRef.current = pagesReady
+  }, [pagesReady])
+  const waitForPagesReady = useCallback(async (timeoutMs = 5000) => {
+    const nextFrame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+    const deadline = Date.now() + timeoutMs
+    while (!pagesReadyRef.current && Date.now() < deadline) {
+      await nextFrame()
+    }
+    // 측정 완료 후 쪽 DOM이 커밋·페인트되도록 한 프레임 더 기다린다.
+    await nextFrame()
+  }, [])
+
+  return { pages, overflowParagraphIds, pagesReady, waitForPagesReady, measureLayer }
 }

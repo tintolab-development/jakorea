@@ -11,6 +11,7 @@ import {
 } from '@/features/program/shared/lib/certificate-serial'
 import { FORM_CERTIFICATE_SERIAL_TEXT_SELECTOR } from '@/pages/templates/form-certificate-preview-utils'
 import { waitForCertificatePreviewCaptureReady } from '@/pages/templates/wait-for-certificate-preview-capture-ready'
+import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 
 export function paintIssuedSerialOnCertificatePreview(
   exportRoot: HTMLElement | null,
@@ -84,6 +85,9 @@ export async function downloadIssuedCertificatePdf(args: {
     beforeSave?: (fileName: string) => Promise<void>
   ) => Promise<void>
 }): Promise<void> {
+  // downloadBlob과 같은 다운로드 권한 가드를 먼저 본다. 저장 단계에서 막히면 고유번호·다운로드 이력만 남고
+  // 파일은 저장되지 않으므로, 막히는 경우 번호 부여 전에 끝낸다(권한 없음 알림은 가드가 띄운다).
+  if (!guardAdminDownload()) return
   const allocated = await applyAllocatedSerialForPdfCapture(args)
   await args.downloadPdf(allocated.serialNumber, fileName =>
     logCertificateIssueDownload(allocated.issueId, { fileName })
