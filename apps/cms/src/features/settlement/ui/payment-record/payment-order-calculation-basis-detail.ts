@@ -1228,3 +1228,43 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
 
   return undefined
 }
+
+/**
+ * 서버 산정 기준 상세가 없어 안내 팝업을 띄워야 할 때만 쓰는 대체 상세.
+ * 식사비·활동비·숙박비만 행 이름·행 금액으로 기존 모달을 채운다(금액 재계산 없음, 영수증 링크 없음).
+ * 숙박일수는 프론트가 알 수 없어 '-'로 둔다. 그 외 항목은 undefined(기존 안내 팝업 유지).
+ */
+export function buildFallbackBasisDetailFromRow(row: {
+  kind: string
+  itemLabel: string
+  amount: number
+}): PaymentOrderCalculationBasisDetail | undefined {
+  if (!Number.isFinite(row.amount)) return undefined
+  const label = row.itemLabel.trim()
+  const fee = { amountWon: row.amount }
+
+  if (row.kind === 'meal' || label === '식사비') {
+    return { layout: 'meal', categoryLabel: label || '식사비', mealFee: fee, totalWon: row.amount }
+  }
+
+  if (row.kind === 'activity' || label === '활동비') {
+    return {
+      layout: 'activity',
+      categoryLabel: label || '활동비',
+      activityFee: fee,
+      totalWon: row.amount,
+    }
+  }
+
+  if (row.kind === 'lodging' || label.startsWith('숙박비')) {
+    return {
+      layout: label.includes('1사1교') ? 'lodging1s1g' : 'lodgingGeneral',
+      categoryLabel: label || '숙박비',
+      nightsDisplay: '-',
+      lodgingFee: fee,
+      totalWon: row.amount,
+    }
+  }
+
+  return undefined
+}
