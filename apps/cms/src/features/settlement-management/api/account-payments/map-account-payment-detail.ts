@@ -77,21 +77,27 @@ function formatLectureDateDisplay(iso: string | null | undefined): string {
   return formatTransferDateDisplay(iso)
 }
 
-function resolveInstitutionName(
-  row: AccountPaymentRow,
-  institutionName?: string | null
-): string {
+function resolveInstitutionName(row: AccountPaymentRow, institutionName?: string | null): string {
   const fromApi = institutionName?.trim()
   if (fromApi) return fromApi
   if (row.institutionName && row.institutionName !== '-') return row.institutionName
   return '-'
 }
 
+/** `06:05 ~ 06:40`처럼 날짜·회차 없이 시간 범위만 있는 값 */
+const BARE_TIME_RANGE_PATTERN = /^\d{1,2}:\d{2}\s*~\s*\d{1,2}:\d{2}$/u
+
 function resolveSessionDisplay(
   row: AccountPaymentRow,
-  lectureSessionDisplay?: string | null
+  lectureSessionDisplay?: string | null,
+  sessionOrdinal?: number | null
 ): string {
   const fromApi = lectureSessionDisplay?.trim()
+  // 영수증 건 이전 BE는 시간 범위만 내려 준다. 교육 진행 일자 칸은 날짜 | 회차이므로 시간 대신 회차 번호를 쓴다.
+  // (제미나이 등 강사 건의 시간 범위 표기는 그대로 둔다.)
+  if (isReceiptAccountPayment(row) && fromApi && BARE_TIME_RANGE_PATTERN.test(fromApi)) {
+    return sessionOrdinal != null && sessionOrdinal > 0 ? `${sessionOrdinal}회차` : '-'
+  }
   // BE 원문 앞 날짜·시간은 교육일 칸과 겹치므로 회차·차시만. 뒤 조각이 없어도 다른 값으로 대체하지 않는다.
   if (fromApi) return resolveLectureSessionSegmentDisplay(fromApi)
   if (row.sessionLabel && row.sessionLabel !== '-') return row.sessionLabel
@@ -146,13 +152,19 @@ function buildBlocksFromFrontendSettlement(
     {
       institutionName: resolveInstitutionName(row, settlement.institutionName),
       lectureDateDisplay: formatLectureDateDisplay(row.lectureDate ?? row.transferScheduledDate),
-      lectureSessionDisplay: resolveSessionDisplay(row, settlement.lectureSessionDisplay),
+      lectureSessionDisplay: resolveSessionDisplay(
+        row,
+        settlement.lectureSessionDisplay,
+        settlement.sessionOrdinal
+      ),
       lines,
     },
   ]
 }
 
-function buildFallbackBlocks(row: AccountPaymentRow): PaymentOrderCalculationStatementSessionBlock[] {
+function buildFallbackBlocks(
+  row: AccountPaymentRow
+): PaymentOrderCalculationStatementSessionBlock[] {
   return [
     {
       institutionName: resolveInstitutionName(row),
@@ -458,14 +470,15 @@ export function mapAccountPaymentDetailFromGetApi(
     lectureDate: payment?.lectureDate ?? row.lectureDate,
     amount: payment?.netPaymentAmount ?? row.amount,
     transferScheduledDate:
-      payment?.scheduledPaymentDate ?? settlement?.expectedTransferDate ?? row.transferScheduledDate,
+      payment?.scheduledPaymentDate ??
+      settlement?.expectedTransferDate ??
+      row.transferScheduledDate,
     paidAt: payment?.paidAt ?? settlement?.paidAt ?? row.paidAt,
     bankName: displayBankName,
     maskedAccountNo: displayMaskedAccountNo,
     accountHolder: displayHolder,
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(payment?.paymentStatus),
-    instructorMemberId:
-      resolveAccountPaymentMemberId(detail, row) ?? row.instructorMemberId,
+    instructorMemberId: resolveAccountPaymentMemberId(detail, row) ?? row.instructorMemberId,
     ...(payment?.payeeType ? { payeeType: payment.payeeType } : {}),
     ...(payment?.sourceType?.trim() ? { sourceType: payment.sourceType.trim() } : {}),
   }
@@ -482,28 +495,24 @@ export function mapAccountPaymentDetailFromGetApi(
 
   const base = settlement
     ? mapAccountPaymentDetailRemote(mergedRow, settlement)
-    : buildAccountPaymentStatusDetail(
-        mergedRow,
-        buildFallbackBlocks(mergedRow),
-        mergedRow.amount,
-        {
-          programName: mergedRow.programName,
-          accountPaymentStatus: mergedRow.accountPaymentStatus,
-          transferScheduledDate: mergedRow.transferScheduledDate,
-          paidAt: mergedRow.paidAt,
-          ...payeeExtras,
-          plainBankAndNumber,
-          plainHolder,
-        }
-      )
+    : buildAccountPaymentStatusDetail(mergedRow, buildFallbackBlocks(mergedRow), mergedRow.amount, {
+        programName: mergedRow.programName,
+        accountPaymentStatus: mergedRow.accountPaymentStatus,
+        transferScheduledDate: mergedRow.transferScheduledDate,
+        paidAt: mergedRow.paidAt,
+        ...payeeExtras,
+        plainBankAndNumber,
+        plainHolder,
+      })
 
   const programId =
     settlement?.programId?.toString().trim() ||
     (mergedRow.programId != null ? String(mergedRow.programId) : undefined)
   // BE 응답 필드(OpenAPI AccountPaymentDetailResponse.programType). 생성 타입 갱신 전이라 좁혀 읽는다.
   const programType =
-    (detail as AccountPaymentDetailResponse & { programType?: string | null }).programType?.trim() ||
-    undefined
+    (
+      detail as AccountPaymentDetailResponse & { programType?: string | null }
+    ).programType?.trim() || undefined
 
   if (!settlement && !payeeExtras && !plainBankAndNumber) return { ...base, programId, programType }
 
@@ -523,12 +532,8 @@ export function mapAccountPaymentDetailFromGetApi(
         : formatAccountHolderForDisplay(mergedRow.accountHolder),
     },
     plainAccountForPaymentConfirm: {
-      bankAndNumber:
-        plainBankAndNumber || base.plainAccountForPaymentConfirm?.bankAndNumber || '-',
-      holder:
-        plainHolder ||
-        base.plainAccountForPaymentConfirm?.holder ||
-        mergedRow.instructorName,
+      bankAndNumber: plainBankAndNumber || base.plainAccountForPaymentConfirm?.bankAndNumber || '-',
+      holder: plainHolder || base.plainAccountForPaymentConfirm?.holder || mergedRow.instructorName,
     },
   }
 }

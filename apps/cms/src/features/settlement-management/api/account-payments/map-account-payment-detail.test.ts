@@ -225,7 +225,11 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
           affiliation: '**학교',
         } as never,
       },
-      sensitiveAccount: { bankName: '국민', accountNo: '11048200123456', accountHolder: '가상강사' },
+      sensitiveAccount: {
+        bankName: '국민',
+        accountNo: '11048200123456',
+        accountHolder: '가상강사',
+      },
     }
 
     const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
@@ -592,6 +596,32 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapAccountPaymentDetailFromGetApi(baseRow, detail).programType).toBeUndefined()
   })
 
+  it('영수증 지급 건: 시간 범위만 오면 교육 진행 일자 뒤 칸을 회차 번호로, 회차가 없으면 -로 둔다', () => {
+    const build = (settlement: Record<string, unknown>) =>
+      mapAccountPaymentDetailFromGetApi(baseRow, {
+        payment: {
+          accountPaymentId: 603,
+          sourceType: 'INDIVIDUAL_SETTLEMENT',
+          payeeType: 'VOLUNTEER',
+        },
+        settlement: { items: [{ type: 'meal', amount: 12000 }], ...settlement },
+      } as unknown as Parameters<typeof mapAccountPaymentDetailFromGetApi>[1])
+
+    expect(
+      build({ lectureSessionDisplay: '06:05 ~ 06:40', sessionOrdinal: 2 }).blocks[0]
+        ?.lectureSessionDisplay
+    ).toBe('2회차')
+    expect(
+      build({ lectureSessionDisplay: '06:05 ~ 06:40', sessionOrdinal: null }).blocks[0]
+        ?.lectureSessionDisplay
+    ).toBe('-')
+    // 새 BE 형식(날짜 시간 · 회차)은 회차 조각만 쓴다.
+    expect(
+      build({ lectureSessionDisplay: '2026-11-13 06:05~06:40 · 2회차', sessionOrdinal: 2 })
+        .blocks[0]?.lectureSessionDisplay
+    ).toBe('2회차')
+  })
+
   it('영수증 지급 건: 실비 항목만 순서대로, 강사비·원천징수 행 없음, 강사 전용 값은 -, 첨부 담기 (E3)', () => {
     const detail = {
       payment: {
@@ -635,7 +665,11 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
 
   it('영수증 건은 실비 항목이 없어도 강사비 대체 행을 만들지 않는다', () => {
     const detail = {
-      payment: { accountPaymentId: 602, sourceType: 'INDIVIDUAL_SETTLEMENT', payeeType: 'PARTICIPANT' },
+      payment: {
+        accountPaymentId: 602,
+        sourceType: 'INDIVIDUAL_SETTLEMENT',
+        payeeType: 'PARTICIPANT',
+      },
       settlement: { totalAmount: 0, items: [] },
     } as unknown as Parameters<typeof mapAccountPaymentDetailFromGetApi>[1]
     const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
