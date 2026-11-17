@@ -33,7 +33,7 @@ export function ThemeSection({ section, onRowClick }: ThemeSectionProps) {
             <li key={row.id} className={styles.listItem}>
               <DirectoryListItem
                 titles={row.titles}
-                level={row.level}
+                levels={row.levels}
                 onClick={
                   contentId && onRowClick
                     ? () => {

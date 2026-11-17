@@ -25,11 +25,30 @@ function themeFromField(code: string | undefined): TextbookThemeKey | null {
   return FIELD_CODE_TO_THEME[code] ?? null
 }
 
-function levelFromTargets(targets: PublicTextbookListItem['targets']): EducationLevelKey {
-  const code = targets?.[0]?.targetCode?.trim()
-  if (code && TARGET_CODE_TO_LEVEL[code]) return TARGET_CODE_TO_LEVEL[code]
-  if (code && isEducationLevelKey(code.toLowerCase())) return code.toLowerCase() as EducationLevelKey
-  return 'notice'
+function levelFromTargetCode(code: string | undefined): EducationLevelKey | null {
+  const trimmed = code?.trim()
+  if (!trimmed) return null
+  if (TARGET_CODE_TO_LEVEL[trimmed]) return TARGET_CODE_TO_LEVEL[trimmed]
+  const lower = trimmed.toLowerCase()
+  return isEducationLevelKey(lower) ? lower : null
+}
+
+/** Admin에서 복수 선택한 교육 대상 전부 — 서버 displayOrder 순, 중복 제거. 없으면 안내사항 */
+function levelsFromTargets(targets: PublicTextbookListItem['targets']): EducationLevelKey[] {
+  const ordered = (targets ?? [])
+    .map((target, index) => ({ target, index }))
+    .sort((a, b) => {
+      const order =
+        (a.target.displayOrder ?? Number.MAX_SAFE_INTEGER) -
+        (b.target.displayOrder ?? Number.MAX_SAFE_INTEGER)
+      return order !== 0 ? order : a.index - b.index
+    })
+  const levels: EducationLevelKey[] = []
+  for (const { target } of ordered) {
+    const level = levelFromTargetCode(target.targetCode)
+    if (level && !levels.includes(level)) levels.push(level)
+  }
+  return levels.length > 0 ? levels : ['notice']
 }
 
 function sessionSummary(unitCount: number, sessionDescription: string): string {
@@ -75,7 +94,7 @@ export function mapPublicTextbookListItem(row: PublicTextbookListItem): Textbook
     thumbnailUrl: row.thumbnailUrl?.trim() || undefined,
     listThumbnail: mapPublicTextbookListThumbnail(row),
     theme,
-    level: levelFromTargets(row.targets),
+    levels: levelsFromTargets(row.targets),
     tags,
     modalTags,
     sessionSummary: sessionSummary(unitCount, unitSessionText ?? ''),
@@ -131,7 +150,7 @@ export function buildThemeSections(items: TextbookContent[]): TextbookThemeSecti
         rows: rows.map(item => ({
           id: item.id,
           titles: [item.title],
-          level: item.level,
+          levels: item.levels,
           contentId: item.id,
         })),
       },

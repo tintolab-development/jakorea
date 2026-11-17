@@ -9,7 +9,8 @@ import styles from './directory-list-item.module.css'
 
 type DirectoryListItemProps = {
   titles: string[]
-  level: EducationLevelKey
+  /** 교육 대상(복수). 비어 있으면 안내사항 */
+  levels: readonly EducationLevelKey[]
   onClick?: () => void
 }
 
@@ -26,9 +27,14 @@ function DotSeparator() {
   )
 }
 
-export function DirectoryListItem({ titles, level, onClick }: DirectoryListItemProps) {
-  const levelColor = getEducationLevelColor(level)
-  const labelColor = level === 'notice' ? NOTICE_LABEL_COLOR : levelColor
+function levelLabelColor(level: EducationLevelKey): string {
+  return level === 'notice' ? NOTICE_LABEL_COLOR : getEducationLevelColor(level)
+}
+
+export function DirectoryListItem({ titles, levels, onClick }: DirectoryListItemProps) {
+  const shownLevels: readonly EducationLevelKey[] = levels.length > 0 ? levels : ['notice']
+  // 좌측 보더는 하나뿐이라 첫 대상 색을 쓴다. 라벨은 대상마다 각자 색으로 모두 표시한다.
+  const borderColor = getEducationLevelColor(shownLevels[0] ?? 'notice')
   const interactive = Boolean(onClick)
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -56,7 +62,7 @@ export function DirectoryListItem({ titles, level, onClick }: DirectoryListItemP
       className={[styles.item, interactive ? styles.itemInteractive : null]
         .filter(Boolean)
         .join(' ')}
-      style={{ borderLeftColor: levelColor } as CSSProperties}
+      style={{ borderLeftColor: borderColor } as CSSProperties}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
       onClick={onClick}
@@ -64,8 +70,16 @@ export function DirectoryListItem({ titles, level, onClick }: DirectoryListItemP
     >
       <div className={styles.titles}>{titleNodes}</div>
 
-      <span className={styles.level} style={{ color: labelColor } as CSSProperties}>
-        <span className="typo-bd-md-sb">{EDUCATION_LEVEL_LABELS[level]}</span>
+      <span className={styles.levels}>
+        {shownLevels.map(level => (
+          <span
+            key={level}
+            className={styles.level}
+            style={{ color: levelLabelColor(level) } as CSSProperties}
+          >
+            <span className="typo-bd-md-sb">{EDUCATION_LEVEL_LABELS[level]}</span>
+          </span>
+        ))}
       </span>
     </div>
   )
