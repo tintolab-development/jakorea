@@ -35,49 +35,23 @@ const career = overlaid.groups[0]?.children.find(item => item.menuCode === 'EDU_
 assert.equal(career?.label, '진로·취업')
 assert.equal(career?.href, '/education/career')
 
-const designLabelOverlay = mapPublicGnb([
-  {
-    groupCode: 'EDUCATION',
-    groupName: '교육 소개',
-    menus: [
-      { menuCode: 'EDU_ENTREPRENEURSHIP', displayName: '기업가 정신' },
-      { menuCode: 'EDU_DIGITAL_LITERACY', displayName: '디지털 리터러시' },
-      { menuCode: 'EDU_MATERIAL', displayName: '교재 소개' },
-    ],
-  },
-])
-const careerSpacingOverlay = mapPublicGnb([
+// 하위 메뉴명은 Admin 입력값 그대로 — 시안 표기(진로·취업 등)로 덮어쓰지 않는다.
+const adminLabelOverlay = mapPublicGnb([
   {
     groupCode: 'EDUCATION',
     groupName: '교육 소개',
     menus: [
       { menuCode: 'EDU_CAREER', displayName: '진로취업' },
       { menuCode: 'EDU_ECONOMY', displayName: '경제금융' },
+      { menuCode: 'EDU_ENTREPRENEURSHIP', displayName: '기업가 정신' },
+      { menuCode: 'EDU_DIGITAL_LITERACY', displayName: '디지털리터러시' },
+      { menuCode: 'EDU_MATERIAL', displayName: '교재 소개' },
     ],
   },
 ])
-assert.equal(
-  careerSpacingOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_CAREER')?.label,
-  '진로·취업',
-)
-assert.equal(
-  careerSpacingOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_ECONOMY')?.label,
-  '경제·금융',
-)
-
-assert.equal(
-  designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_ENTREPRENEURSHIP')
-    ?.label,
-  '기업가정신'
-)
-assert.equal(
-  designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_DIGITAL_LITERACY')
-    ?.label,
-  '디지털 리터러시'
-)
-assert.equal(
-  designLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'EDU_MATERIAL')?.label,
-  '교재'
+assert.deepEqual(
+  adminLabelOverlay?.groups[0]?.children.map(item => item.label),
+  ['진로취업', '경제금융', '기업가 정신', '디지털리터러시', '교재 소개'],
 )
 assert.equal(
   overlaid.groups[0]?.children.some(item => item.menuCode === 'NOT_A_MENU'),
@@ -94,7 +68,7 @@ const directionsLabelOverlay = mapPublicGnb([
 assert.equal(
   directionsLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'JA_DIRECTIONS')
     ?.label,
-  '오시는 길',
+  '오시는길',
 )
 
 const mobileMenuDesignOverlay = mapPublicGnb([
@@ -116,11 +90,53 @@ const mobileMenuDesignOverlay = mapPublicGnb([
 assert.equal(mobileMenuDesignOverlay?.groups[0]?.label, 'JA Korea')
 assert.deepEqual(
   mobileMenuDesignOverlay?.groups[0]?.children.map(item => item.menuCode),
-  ['JA_ORGANIZATION', 'JA_HISTORY'],
+  ['JA_ORGANIZATION', 'JA_NOTICE', 'JA_HISTORY'],
+)
+
+// Admin GNB 관리에서 바꾼 순서·노출 메뉴를 그대로 따른다(시안 고정 순서로 재정렬·숨김 금지).
+const adminOrderOverlay = mapPublicGnb([
+  {
+    groupCode: 'JA_KOREA',
+    groupName: 'JA Korea',
+    menus: [
+      { menuCode: 'JA_TRANSPARENCY', displayName: '투명경영', displayOrder: 7 },
+      { menuCode: 'JA_HISTORY', displayName: 'JA History', displayOrder: 1 },
+      { menuCode: 'JA_RECRUIT', displayName: '채용', displayOrder: 6 },
+      { menuCode: 'JA_ORGANIZATION', displayName: '기관소개', displayOrder: 2 },
+      { menuCode: 'JA_NOTICE', displayName: '공지사항', displayOrder: 3 },
+      { menuCode: 'JA_DIRECTIONS', displayName: '오시는 길', displayOrder: 4 },
+      { menuCode: 'JA_PEOPLE', displayName: '함께하는 사람들', displayOrder: 5 },
+    ],
+  },
+  {
+    groupCode: 'PARTICIPATION',
+    groupName: '참여하기',
+    menus: [
+      { menuCode: 'PARTICIPATION_ALUMNI', displayName: 'Alumni', displayOrder: 1 },
+      { menuCode: 'PARTICIPATION_RESULT', displayName: '결과 확인', displayOrder: 2 },
+      { menuCode: 'PARTICIPATION_APPLY', displayName: '프로그램 신청', displayOrder: 3 },
+    ],
+  },
+])
+assert.deepEqual(
+  adminOrderOverlay?.groups[0]?.children.map(item => item.menuCode),
+  [
+    'JA_HISTORY',
+    'JA_ORGANIZATION',
+    'JA_NOTICE',
+    'JA_DIRECTIONS',
+    'JA_PEOPLE',
+    'JA_RECRUIT',
+    'JA_TRANSPARENCY',
+  ],
+)
+assert.deepEqual(
+  adminOrderOverlay?.groups[1]?.children.map(item => item.menuCode),
+  ['PARTICIPATION_ALUMNI', 'PARTICIPATION_RESULT', 'PARTICIPATION_APPLY'],
 )
 assert.equal(mobileMenuDesignOverlay?.groups[1]?.label, '임팩트')
 const impactGroup = mobileMenuDesignOverlay?.groups.find(g => g.groupCode === 'IMPACT_STORY')
-assert.equal(impactGroup?.children[0]?.label, '임팩트 스토리')
+assert.equal(impactGroup?.children[0]?.label, '임팩트')
 
 const empty = mapPublicGnb([])
 assert.ok(empty)
