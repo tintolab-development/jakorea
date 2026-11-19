@@ -6,6 +6,7 @@ import {
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isAdminRegisterRemoteEnabled } from '@/features/auth/api/admin-register-remote-capabilities'
 import { buildAdminSelfSignupRequest } from '@/features/auth/lib/map-admin-register-signup-request'
+import { parseAdminSignupCompleteResponse } from '@/features/auth/lib/parse-admin-signup-complete-response'
 import { resolveAdminSelfSignupTermsVersion } from '@/features/auth/lib/resolve-admin-self-signup-terms-version'
 import {
   persistSignupSocialLinkHandoff,
@@ -58,14 +59,17 @@ async function completeAdminSignupRemote(
       adminAuthPaths.signupComplete(),
       body
     )
-    const result = unwrapApiData<AdminSelfSignupResponse>(payload)
+    const result = parseAdminSignupCompleteResponse(
+      unwrapApiData<AdminSelfSignupResponse>(payload),
+      body.email
+    )
     persistSignupSocialLinkHandoff(
       result.signupSocialLinkToken,
       result.signupSocialLinkExpiresAt
     )
     return {
-      adminId: result.adminId ?? result.adminAccountId,
-      email: result.email ?? body.email,
+      adminId: result.adminId,
+      email: result.email,
       status: result.status,
       nextStep: result.nextStep,
       signupSocialLinkToken: result.signupSocialLinkToken,
