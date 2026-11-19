@@ -4,12 +4,10 @@
  * - `VITE_API_BASE_URL`: 브라우저가 직접 호출할 오리진 (배포·CORS)
  * - `VITE_API_SERVER`: 로컬은 Vite `/api` 프록시 타깃, 배포는 프록시가 없으므로 동일 오리진으로 사용
  *
- * Production(`vite build` / Vercel): localhost·127.0.0.1 등은 무시하고
- * {@link CMS_DEPLOY_API_ORIGIN}(CloudFront 실서버)으로 고정한다.
+ * Production: localhost·127.0.0.1 등은 무시한다. 별도 오리진이 설정되지
+ * 않았다면 현재 사이트와 동일한 출처에서 /api 경로를 호출한다.
+ * NEWPROD와 QA를 혼용하는 고정된 fallback은 사용하지 않는다.
  */
-
-/** CMS 배포 기본 API (CloudFront). Vercel·`.env.production`과 동일 오리진. */
-export const CMS_DEPLOY_API_ORIGIN = 'https://d3r1iaa0sy4tcq.cloudfront.net'
 
 function normalizeOrigin(origin: string): string {
   return origin.replace(/\/$/, '')
@@ -65,12 +63,13 @@ export function getApiBaseUrl(): string {
   }
 
   // Production: 프록시 없음. VITE_API_BASE_URL이 비어 있어도 VITE_API_SERVER를 사용한다.
-  // localhost 오염·env 누락 시에는 CloudFront 실서버로 고정한다.
+  // 환경에 지정된 API 오리진을 우선 사용한다.
   const fromServer = backendOriginFromEnv()
   if (fromServer) return fromServer
 
   if (import.meta.env.PROD) {
-    return CMS_DEPLOY_API_ORIGIN
+    // Same-origin /api is routed by the deployment's CloudFront behavior.
+    return ''
   }
 
   return ''
