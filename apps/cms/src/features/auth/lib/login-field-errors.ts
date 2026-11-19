@@ -10,6 +10,9 @@ export const LOGIN_EMAIL_NOT_FOUND_MESSAGE =
 export const LOGIN_PASSWORD_MISMATCH_MESSAGE =
   '비밀번호가 일치하지 않습니다. 다시 한 번 확인해 주세요.'
 
+export const LOGIN_INVALID_CREDENTIALS_MESSAGE =
+  '이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해 주세요.'
+
 type LoginFieldName = 'email' | 'password'
 type LoginFieldErrorTarget = LoginFieldName | 'both'
 
@@ -89,6 +92,17 @@ export function applyLoginFieldErrors(form: FormInstance, error?: unknown): void
     const field = extractLoginErrorField(error)?.toLowerCase()
     form.setFields([
       { name: field === 'email' ? 'email' : 'password', errors: [validationMessage] },
+    ])
+    return
+  }
+
+  const code = error ? extractAdminLoginErrorCode(getLoginErrorPayload(error)) : undefined
+  // INVALID_CREDENTIALS deliberately does not reveal whether an account exists.
+  // Do not contradict the server by claiming both a missing e-mail and a wrong password.
+  if (code?.toUpperCase() === 'INVALID_CREDENTIALS') {
+    form.setFields([
+      { name: 'email', errors: [] },
+      { name: 'password', errors: [LOGIN_INVALID_CREDENTIALS_MESSAGE] },
     ])
     return
   }
