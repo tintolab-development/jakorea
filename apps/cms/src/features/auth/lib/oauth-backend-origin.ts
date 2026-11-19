@@ -3,10 +3,10 @@
  * IdP 콘솔·POST /api/admin/auth/sso/login body.redirectUri 에 사용합니다.
  *
  * 프론트 origin(`localhost:3000`)이나 Vite 프록시 타깃(`VITE_DEV_PROXY_TARGET`)은 사용하지 않습니다.
- * Production에서는 localhost 오염 시 CloudFront 실서버로 고정합니다.
+ * Production에서는 명시적인 백엔드 URL을 사용하거나 현재 사이트 출처로 제한합니다.
  */
 import {
-  CMS_DEPLOY_API_ORIGIN,
+  getApiBaseUrl,
   pickRemoteApiOrigin,
 } from '@/shared/lib/api-remote-env'
 
@@ -39,7 +39,9 @@ export function resolveBackendApiOrigin(): string {
   }
 
   if (import.meta.env.PROD) {
-    return CMS_DEPLOY_API_ORIGIN
+    const sameOrigin = getApiBaseUrl()
+    if (sameOrigin) return normalizeOrigin(sameOrigin)
+    if (typeof window !== 'undefined') return window.location.origin
   }
 
   throw new Error(
