@@ -1,0 +1,90 @@
+name: NEWPROD CMS admin rejoin - trusted local regression
+
+on:
+  push:
+    branches:
+      - fix/newprod-admin-auth-rejoin-20261119
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newprod-admin-rejoin-fe-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+
+jobs:
+  targeted-frontend-auth-regression:
+    if: github.repository == 'tintolab-development/jakorea' && github.ref == 'refs/heads/fix/newprod-admin-auth-rejoin-20261119'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Guard exact trusted checkout and prevent production mutation
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_REPOSITORY -ne 'tintolab-development/jakorea') { throw 'Wrong repository' }
+          if ($env:GITHUB_REF -ne 'refs/heads/fix/newprod-admin-auth-rejoin-20261119') { throw 'Wrong branch' }
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'Unexpected commit' }
+          foreach ($key in @('AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_PROFILE')) {
+            if ([Environment]::GetEnvironmentVariable($key)) { throw "Unsafe AWS environment: $key" }
+          }
+          Write-Host 'TRUSTED_LOCAL_GUARD=PASS'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install locked dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
+      - name: Build shared workspace dependencies
+        run: |
+          pnpm --filter cms build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw 'CMS workspace build failed' }
+          pnpm --filter admin build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw 'Admin workspace build failed' }
+      - name: Typecheck CMS and homepage Admin
+        run: |
+          pnpm --filter cms typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'CMS typecheck failed' }
+          pnpm --filter admin typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'Admin typecheck failed' }
+      - name: Targeted CMS auth and delete regression
+        run: |
+          pnpm --filter cms exec vitest run src/features/auth/lib/login-field-errors.test.ts src/features/auth/lib/parse-admin-signup-complete-response.test.ts src/features/auth/errors/admin-login-approval-pending-error.test.ts src/features/auth/api/admin-login-fetcher.test.ts src/features/user/api/lib/assert-bulk-action-succeeded.test.ts
+          if ($LASTEXITCODE -ne 0) { throw 'CMS auth regression failed' }
+      - name: Homepage Admin 423 response regression
+        run: |
+          pnpm --filter admin exec vitest run src/features/auth/errors/admin-login-approval-pending-error.test.ts
+          if ($LASTEXITCODE -ne 0) { throw 'Homepage Admin auth regression failed' }
+      - name: Verify production bundles without deployment
+        run: |
+          pnpm --filter cms build
+          if ($LASTEXITCODE -ne 0) { throw 'CMS build failed' }
+          pnpm --filter admin build
+          if ($LASTEXITCODE -ne 0) { throw 'Homepage Admin build failed' }
+          if (-not (Test-Path 'apps/cms/dist/index.html')) { throw 'CMS build output missing' }
+          if (-not (Test-Path 'apps/admin/dist/index.html')) { throw 'Admin build output missing' }
+          Write-Host 'FRONTEND_BUILD=PASS|DEPLOYMENT=NONE'
