@@ -24,7 +24,7 @@ describe('parseAdminSignupCompleteResponse', () => {
     [{ ...valid, status: undefined }, 'missing status'],
     [{ ...valid, email: 'other@jakorea.org' }, 'mismatched email'],
     [{ ...valid, email: undefined }, 'missing email'],
-  ])('rejects %s (%s) without showing a completed signup', result => {
+  ])('rejects %s (%s) without showing a completed signup', (result, _caseName) => {
     expect(() => parseAdminSignupCompleteResponse(result, 'person@jakorea.org')).toThrow(
       '가입 완료 결과를 확인할 수 없습니다.'
     )
