@@ -13,6 +13,8 @@ export interface WorldwideUpdateRequest {
      * @maxLength 10000
      */
   guidanceText?: string;
+  /** Optional for legacy admin clients. */
+  statNumber?: number;
   settingVersion: number;
   /**
      * @minItems 7
