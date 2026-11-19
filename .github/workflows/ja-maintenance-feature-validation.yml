@@ -87,17 +87,17 @@ jobs:
           node --experimental-strip-types --experimental-transform-types apps/platform/src/features/textbook/lib/build-directory-rows.selfcheck.ts
           if ($LASTEXITCODE -ne 0) { throw "Textbook target rows selfcheck failed ($LASTEXITCODE)" }
 
-      - name: Platform complete selfcheck regression suite
-        run: |
-          pnpm --filter platform test
-          if ($LASTEXITCODE -ne 0) { throw "Platform regression selfchecks failed ($LASTEXITCODE)" }
-
       - name: Typecheck admin and platform
         run: |
           pnpm --filter admin typecheck
           if ($LASTEXITCODE -ne 0) { throw "Admin typecheck failed ($LASTEXITCODE)" }
           pnpm --filter platform typecheck
           if ($LASTEXITCODE -ne 0) { throw "Platform typecheck failed ($LASTEXITCODE)" }
+
+      - name: Platform complete selfcheck regression suite
+        run: |
+          pnpm --filter platform test
+          if ($LASTEXITCODE -ne 0) { throw "Platform regression selfchecks failed ($LASTEXITCODE)" }
 
       - name: Lint admin and platform
         run: |
