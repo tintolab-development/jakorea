@@ -6,6 +6,7 @@ import {
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isAdminRegisterRemoteEnabled } from '@/features/auth/api/admin-register-remote-capabilities'
 import { buildAdminSelfSignupRequest } from '@/features/auth/lib/map-admin-register-signup-request'
+import { validateAdminSignupCompletion } from '@/features/auth/lib/validate-admin-signup-response'
 import { resolveAdminSelfSignupTermsVersion } from '@/features/auth/lib/resolve-admin-self-signup-terms-version'
 import {
   persistSignupSocialLinkHandoff,
@@ -59,22 +60,7 @@ async function completeAdminSignupRemote(
       body
     )
     const result = unwrapApiData<AdminSelfSignupResponse>(payload)
-    const accountId = result.adminId ?? result.adminAccountId
-    if (
-      typeof accountId !== 'number' ||
-      !Number.isSafeInteger(accountId) ||
-      accountId <= 0 ||
-      result.status !== 'PENDING_VERIFICATION' ||
-      result.loginEnabled !== false ||
-      result.nextStep !== 'MASTER_ADMIN_APPROVAL_REQUIRED' ||
-      typeof result.email !== 'string' ||
-      result.email.trim().toLowerCase() !== body.email.trim().toLowerCase()
-    ) {
-      throw new AdminRegisterApiError(
-        'ADMIN_SIGNUP_INVALID_RESPONSE',
-        '회원가입 완료 결과를 확인하지 못했습니다. 관리자에게 문의해 주세요.'
-      )
-    }
+    const accountId = validateAdminSignupCompletion(result, body.email)
     persistSignupSocialLinkHandoff(
       result.signupSocialLinkToken,
       result.signupSocialLinkExpiresAt
