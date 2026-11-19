@@ -16,7 +16,7 @@ if (!Array.isArray(tests) || tests.length === 0 || new Set(tests).size !== tests
 }
 
 for (const [index, test] of tests.entries()) {
-  if (typeof test !== 'string' || !/^src\\/[a-zA-Z0-9_./-]+\\.selfcheck\\.ts$/.test(test) || test.includes('..')) {
+  if (typeof test !== 'string' || !test.startsWith('src/') || !test.endsWith('.selfcheck.ts') || !/^[a-zA-Z0-9_./-]+$/.test(test) || test.includes('..')) {
     throw new Error('Unexpected selfcheck path at index ' + index)
   }
   if (!existsSync(resolve(root, test))) {
