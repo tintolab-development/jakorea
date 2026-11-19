@@ -23,8 +23,9 @@ export function parseAdminSignupCompleteResponse(
   const adminId = result.adminId ?? result.adminAccountId
   const responseEmail = result.email?.trim()
   if (
+    typeof adminId !== 'number' ||
     !Number.isSafeInteger(adminId) ||
-    (adminId ?? 0) <= 0 ||
+    adminId <= 0 ||
     result.status !== 'PENDING_VERIFICATION' ||
     !responseEmail ||
     responseEmail.toLowerCase() !== submittedEmail.trim().toLowerCase()
