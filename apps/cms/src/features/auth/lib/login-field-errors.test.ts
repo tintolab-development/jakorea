@@ -3,7 +3,6 @@ import { AxiosError } from 'axios'
 
 import { AdminLoginApiError } from '@/features/auth/api/admin-login-fetcher'
 import {
-  LOGIN_EMAIL_NOT_FOUND_MESSAGE,
   LOGIN_INVALID_CREDENTIALS_MESSAGE,
   LOGIN_PASSWORD_MISMATCH_MESSAGE,
   applyLoginFieldErrors,
