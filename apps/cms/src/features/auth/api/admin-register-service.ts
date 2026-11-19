@@ -61,8 +61,9 @@ async function completeAdminSignupRemote(
     const result = unwrapApiData<AdminSelfSignupResponse>(payload)
     const accountId = result.adminId ?? result.adminAccountId
     if (
+      typeof accountId !== 'number' ||
       !Number.isSafeInteger(accountId) ||
-      (accountId ?? 0) <= 0 ||
+      accountId <= 0 ||
       result.status !== 'PENDING_VERIFICATION' ||
       result.loginEnabled !== false ||
       result.nextStep !== 'MASTER_ADMIN_APPROVAL_REQUIRED' ||
