@@ -1,0 +1,51 @@
+name: JA maintenance 4 items feature validation
+on:
+  push:
+    branches:
+      - feat/ja-maintenance-four-items-20261119
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ja-maintenance-fe-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  HUSKY: '0'
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+jobs:
+  frontend-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install pinned dependencies
+        run: pnpm install --frozen-lockfile
+      - name: One-wheel-step and textbook-row checks
+        working-directory: apps/platform
+        run: |
+          node --experimental-strip-types --experimental-transform-types src/features/introduction/lib/introduction-scroll-phase.selfcheck.ts
+          node --experimental-strip-types --experimental-transform-types src/features/textbook/lib/build-directory-rows.selfcheck.ts
+      - name: Typecheck admin and platform
+        run: |
+          pnpm --filter admin typecheck
+          pnpm --filter platform typecheck
+      - name: Build admin and platform (no deployment)
+        run: |
+          pnpm --filter admin build
+          pnpm --filter platform build
