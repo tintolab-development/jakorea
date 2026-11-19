@@ -5,6 +5,7 @@ const valid = {
   adminId: 42,
   email: 'person@jakorea.org',
   status: 'PENDING_VERIFICATION',
+  loginEnabled: false,
   nextStep: 'MASTER_ADMIN_APPROVAL_REQUIRED',
 }
 
@@ -22,6 +23,10 @@ describe('parseAdminSignupCompleteResponse', () => {
     [{ ...valid, adminId: -1 }, 'invalid ID'],
     [{ ...valid, status: 'ACTIVE' }, 'unexpected status'],
     [{ ...valid, status: undefined }, 'missing status'],
+    [{ ...valid, loginEnabled: true }, 'unexpected login enabled'],
+    [{ ...valid, loginEnabled: undefined }, 'missing login policy'],
+    [{ ...valid, nextStep: 'LOGIN' }, 'unexpected next step'],
+    [{ ...valid, nextStep: undefined }, 'missing approval next step'],
     [{ ...valid, email: 'other@jakorea.org' }, 'mismatched email'],
     [{ ...valid, email: undefined }, 'missing email'],
   ])('rejects %s (%s) without showing a completed signup', (result, _caseName) => {
