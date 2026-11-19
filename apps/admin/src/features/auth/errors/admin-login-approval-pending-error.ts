@@ -15,7 +15,6 @@ const ADMIN_LOGIN_APPROVAL_PENDING_CODES = new Set([
   'PENDING_VERIFICATION',
   'APPROVAL_REQUIRED',
   'ADMIN_APPROVAL_PENDING',
-  'ACCOUNT_INACTIVE',
 ])
 
 export function isAdminLoginApprovalPendingCode(code: string): boolean {
@@ -36,7 +35,8 @@ export function isAdminLoginApprovalPendingResponse(
   payload: unknown,
   httpStatus?: number
 ): boolean {
-  if (httpStatus === 423) return true
+  // 423 is shared by pending, locked and inactive accounts. Inspect the error code.
+  void httpStatus
   const code = extractAdminLoginErrorCode(payload)
   return Boolean(code && isAdminLoginApprovalPendingCode(code))
 }
