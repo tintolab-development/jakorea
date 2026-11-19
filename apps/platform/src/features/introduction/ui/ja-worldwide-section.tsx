@@ -8,7 +8,6 @@ import {
   JA_WORLDWIDE_EYEBROW,
   JA_WORLDWIDE_GLOBAL_LINK,
   JA_WORLDWIDE_GUIDE,
-  JA_WORLDWIDE_STAT,
   type JaWorldwideRegionId,
 } from '../lib/ja-worldwide-layout'
 import type { IntroductionWorldwideContent } from '../model/types'
@@ -72,7 +71,7 @@ export const JaWorldwideSection = memo(function JaWorldwideSection({
         <header className={styles.header}>
           <div>
             <p className={styles.eyebrow}>{JA_WORLDWIDE_EYEBROW}</p>
-            <p className={styles.stat}>{JA_WORLDWIDE_STAT}</p>
+            <p className={styles.stat}>{worldwide.statNumber.toLocaleString('en-US')}</p>
           </div>
           <a
             className={styles.globalLink}

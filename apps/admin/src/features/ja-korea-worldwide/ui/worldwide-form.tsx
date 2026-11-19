@@ -27,6 +27,7 @@ function cloneWorldwide(data: JaKoreaWorldwide): JaKoreaWorldwide {
   return {
     branches: data.branches.map(b => ({ ...b })),
     bottomText: data.bottomText,
+    statNumber: data.statNumber,
     updatedAt: data.updatedAt,
     settingVersion: data.settingVersion,
   }
@@ -79,6 +80,7 @@ export function WorldwideFormCard({ data }: Props) {
   const mode = isEditing ? 'edit' : 'view'
   const branches = isEditing ? draft.branches : data.branches
   const bottomText = isEditing ? draft.bottomText : data.bottomText
+  const statNumber = isEditing ? draft.statNumber : data.statNumber
 
   return (
     <div className="admin-list-card ja-worldwide-card">
@@ -120,8 +122,10 @@ export function WorldwideFormCard({ data }: Props) {
         <BranchesTable branches={branches} mode={mode} onChangeLink={updateLink} />
         <BottomTextTable
           value={bottomText}
+          statNumber={statNumber}
           mode={mode}
           onChange={next => setDraft(prev => ({ ...prev, bottomText: next }))}
+          onStatNumberChange={next => setDraft(prev => ({ ...prev, statNumber: next }))}
         />
       </div>
     </div>

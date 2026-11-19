@@ -9,6 +9,7 @@ import type { WorldwideLinkResponse } from './worldwideLinkResponse';
 
 export interface WorldwideResponse {
   guidanceText?: string;
+  statNumber?: number;
   settingVersion?: number;
   links?: WorldwideLinkResponse[];
 }

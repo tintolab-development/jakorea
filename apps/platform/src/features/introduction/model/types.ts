@@ -23,6 +23,8 @@ export type IntroductionHeroContent = {
 }
 
 export type IntroductionWorldwideContent = {
+  /** Public API number with a temporary fallback while the backend rolls out. */
+  statNumber: number
   description: string
   globalLinkHref: string
   regions: readonly JaWorldwideRegion[]

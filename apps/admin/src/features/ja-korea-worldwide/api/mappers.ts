@@ -73,6 +73,7 @@ export function mapWorldwideResponseToDomain(row: WorldwideResponse): JaKoreaWor
   return {
     branches,
     bottomText: row.guidanceText ?? '',
+    statNumber: row.statNumber ?? 15140800,
     updatedAt: '',
     settingVersion: row.settingVersion ?? 0,
   }
@@ -81,6 +82,7 @@ export function mapWorldwideResponseToDomain(row: WorldwideResponse): JaKoreaWor
 export function toWorldwideUpdateRequest(data: JaKoreaWorldwide): WorldwideUpdateRequest {
   return {
     guidanceText: data.bottomText.trimEnd() || undefined,
+    statNumber: data.statNumber,
     settingVersion: data.settingVersion,
     links: data.branches.map(branch => ({
       id: branch.apiId,
