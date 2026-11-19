@@ -35,6 +35,7 @@ export type PublicWorldwideLinkResponse = {
 }
 
 export type PublicWorldwideResponse = {
+  statNumber?: number
   guidanceText?: string
   links?: PublicWorldwideLinkResponse[]
 }

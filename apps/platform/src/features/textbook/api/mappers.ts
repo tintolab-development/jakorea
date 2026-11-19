@@ -147,12 +147,15 @@ export function buildThemeSections(items: TextbookContent[]): TextbookThemeSecti
         key: theme.key,
         title: theme.label,
         description,
-        rows: rows.map(item => ({
-          id: item.id,
-          titles: [item.title],
-          levels: item.levels,
-          contentId: item.id,
-        })),
+        // Render one educational target per directory row. All rows open the same textbook.
+        rows: rows.flatMap(item =>
+          item.levels.map(level => ({
+            id: `${item.id}-${level}`,
+            titles: [item.title],
+            levels: [level],
+            contentId: item.id,
+          })),
+        ),
       },
     ]
   })

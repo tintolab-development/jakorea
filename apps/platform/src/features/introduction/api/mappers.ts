@@ -11,6 +11,7 @@ import {
 } from '../lib/global-value-data.ts'
 import {
   JA_WORLDWIDE_GLOBAL_LINK,
+  JA_WORLDWIDE_STAT,
   JA_WORLDWIDE_REGION_LAYOUT,
   type JaWorldwideRegion,
   type JaWorldwideRegionId,
@@ -161,7 +162,16 @@ function mapWorldwide(
     }
   })
 
+  const receivedStat = row?.statNumber
+  const statNumber =
+    typeof receivedStat === 'number' &&
+    Number.isSafeInteger(receivedStat) &&
+    receivedStat >= 0
+      ? receivedStat
+      : JA_WORLDWIDE_STAT
+
   return {
+    statNumber,
     description: asText(row?.guidanceText),
     globalLinkHref,
     regions,
