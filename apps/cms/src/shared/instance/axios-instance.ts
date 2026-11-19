@@ -105,6 +105,32 @@ function resolveRequestUrl(config: InternalAxiosRequestConfig): string {
   return config.url ?? raw
 }
 
+/**
+ * Support-only diagnostics for NEWPROD admin auth failures.
+ * Never log email, password, request body, token, IP or raw response payload.
+ */
+function reportAdminAuthFailure(path: string, status: number, code: string | undefined, headers: unknown): void {
+  const cleanPath = path.split('?')[0] ?? path
+  const endpoint = cleanPath.endsWith('/api/admin/auth/login')
+    ? 'login'
+    : cleanPath.endsWith('/api/admin/auth/signup/complete')
+      ? 'signup-complete'
+      : null
+  if (!endpoint) return
+
+  const headerObject = headers as { get?: (name: string) => unknown; [name: string]: unknown } | undefined
+  const rawId = headerObject?.get?.('x-request-id') ?? headerObject?.['x-request-id']
+  const requestId = typeof rawId === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(rawId)
+    ? rawId
+    : 'UNAVAILABLE'
+  console.warn('[ADMIN_AUTH_HTTP_FAILURE]', {
+    endpoint,
+    status,
+    errorCode: code ?? 'UNKNOWN',
+    requestId,
+  })
+}
+
 function isExcludedFromBearerAuth(url?: string): boolean {
   if (!url) return false
   const path = url.split('?')[0] ?? url
@@ -468,6 +494,7 @@ axiosClient.interceptors.response.use(
     const requestUrl = resolveRequestUrl(originalRequest)
     const status = response.status
     const code = getErrorCode(response.data)
+    reportAdminAuthFailure(requestUrl, status, code, response.headers)
 
     // A late 401 from an access token superseded by login/Refresh in this tab
     // must not refresh or revoke the newly active admin session.
