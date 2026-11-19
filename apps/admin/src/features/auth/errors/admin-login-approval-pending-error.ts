@@ -13,6 +13,7 @@ export class AdminLoginApprovalPendingError extends Error {
 
 const ADMIN_LOGIN_APPROVAL_PENDING_CODES = new Set([
   'PENDING_VERIFICATION',
+  'ACCOUNT_PENDING_APPROVAL',
   'APPROVAL_REQUIRED',
   'ADMIN_APPROVAL_PENDING',
 ])
