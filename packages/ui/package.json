@@ -23,7 +23,7 @@
     "clsx": "^2.1.1"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && cp src/privacy/privacy-home-address-display.css dist/privacy/",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-privacy-css.mjs",
     "dev": "tsc -w -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
