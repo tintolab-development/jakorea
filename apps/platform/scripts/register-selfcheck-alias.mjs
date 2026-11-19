@@ -10,7 +10,27 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const srcRoot = join(appRoot, 'src')
 
+// Vite supplies import.meta.env during app builds. Node selfchecks need a small
+// test-only equivalent for modules that reference DEV mock content.
+globalThis.__platformSelfcheckEnv = Object.freeze({
+  DEV: true,
+  PROD: false,
+  MODE: 'test',
+  SSR: false,
+})
+
 registerHooks({
+  load(url, context, nextLoad) {
+    const result = nextLoad(url, context)
+    if (url.endsWith('.ts') && result.source != null) {
+      // Only selfcheck Node execution is affected; Vite production code is unchanged.
+      return {
+        ...result,
+        source: String(result.source).replaceAll('import.meta.env', 'globalThis.__platformSelfcheckEnv'),
+      }
+    }
+    return result
+  },
   resolve(specifier, context, nextResolve) {
     if (!specifier.startsWith('@/')) return nextResolve(specifier, context)
     const relative = specifier.slice(2)
