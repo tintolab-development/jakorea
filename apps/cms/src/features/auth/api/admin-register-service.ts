@@ -59,12 +59,27 @@ async function completeAdminSignupRemote(
       body
     )
     const result = unwrapApiData<AdminSelfSignupResponse>(payload)
+    const accountId = result.adminId ?? result.adminAccountId
+    if (
+      !Number.isSafeInteger(accountId) ||
+      (accountId ?? 0) <= 0 ||
+      result.status !== 'PENDING_VERIFICATION' ||
+      result.loginEnabled !== false ||
+      result.nextStep !== 'MASTER_ADMIN_APPROVAL_REQUIRED' ||
+      typeof result.email !== 'string' ||
+      result.email.trim().toLowerCase() !== body.email.trim().toLowerCase()
+    ) {
+      throw new AdminRegisterApiError(
+        'ADMIN_SIGNUP_INVALID_RESPONSE',
+        '회원가입 완료 결과를 확인하지 못했습니다. 관리자에게 문의해 주세요.'
+      )
+    }
     persistSignupSocialLinkHandoff(
       result.signupSocialLinkToken,
       result.signupSocialLinkExpiresAt
     )
     return {
-      adminId: result.adminId ?? result.adminAccountId,
+      adminId: accountId,
       email: result.email ?? body.email,
       status: result.status,
       nextStep: result.nextStep,
