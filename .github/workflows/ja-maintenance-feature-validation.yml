@@ -1,16 +1,27 @@
-name: JA maintenance 4 items feature validation
+name: JA maintenance 4 items - trusted local Windows validation
+
 on:
   push:
     branches:
       - feat/ja-maintenance-four-items-20261119
-  workflow_dispatch:
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/ja-maintenance-feature-validation.yml'
+
 permissions:
   contents: read
+
 concurrency:
-  group: ja-maintenance-fe-${{ github.ref }}
+  group: ja-maintenance-fe-local-${{ github.ref }}
   cancel-in-progress: true
+
 env:
   HUSKY: '0'
+  NODE_OPTIONS: --max-old-space-size=5120
   VITE_API_BASE_URL: https://example.invalid
   VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
   VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
@@ -18,34 +29,85 @@ env:
   VITE_ADDRESS_API_KEY: ci-placeholder
   VITE_NEIS_API_KEY: ci-placeholder
   VITE_CAREER_NET_API_KEY: ci-placeholder
+
 jobs:
-  frontend-verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  trusted-local-windows-verify:
+    if: github.repository == 'tintolab-development/jakorea' && github.ref == 'refs/heads/feat/ja-maintenance-four-items-20261119' && github.event_name == 'push'
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: 'powershell -NoProfile -ExecutionPolicy Bypass -Command ". ''{0}''"'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout exact feature commit without persisted credentials
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
-      - uses: pnpm/action-setup@v4
+
+      - name: Guard local runner against production environment and wrong revision
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_REPOSITORY -ne 'tintolab-development/jakorea') { throw 'Wrong repository' }
+          if ($env:GITHUB_REF -ne 'refs/heads/feat/ja-maintenance-four-items-20261119') { throw 'Wrong branch' }
+          if ($env:GITHUB_EVENT_NAME -ne 'push') { throw 'Only trusted push allowed on local runner' }
+          foreach ($key in @('AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_PROFILE')) {
+            if ([Environment]::GetEnvironmentVariable($key)) { throw "Unsafe AWS environment: $key" }
+          }
+          Write-Host "LOCAL_RUNNER_GUARD=PASS|RUNNER=$env:RUNNER_NAME"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9.12.3
           run_install: false
-      - uses: actions/setup-node@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install pinned dependencies
-        run: pnpm install --frozen-lockfile
-      - name: One-wheel-step and textbook-row checks
-        working-directory: apps/platform
+
+      - name: Install locked dependencies
         run: |
-          node --experimental-strip-types --experimental-transform-types src/features/introduction/lib/introduction-scroll-phase.selfcheck.ts
-          node --experimental-strip-types --experimental-transform-types src/features/textbook/lib/build-directory-rows.selfcheck.ts
+          pnpm install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { throw "pnpm install failed ($LASTEXITCODE)" }
+
+      - name: Build internal workspace dependencies
+        run: |
+          pnpm --filter admin build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw "Admin workspace dependencies failed ($LASTEXITCODE)" }
+          pnpm --filter platform build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw "Platform workspace dependencies failed ($LASTEXITCODE)" }
+
+      - name: Validate Global Value steps and textbook education targets
+        run: |
+          node --experimental-strip-types --experimental-transform-types apps/platform/src/features/introduction/lib/introduction-scroll-phase.selfcheck.ts
+          if ($LASTEXITCODE -ne 0) { throw "Global Value selfcheck failed ($LASTEXITCODE)" }
+          node --experimental-strip-types --experimental-transform-types apps/platform/src/features/textbook/lib/build-directory-rows.selfcheck.ts
+          if ($LASTEXITCODE -ne 0) { throw "Textbook target rows selfcheck failed ($LASTEXITCODE)" }
+
       - name: Typecheck admin and platform
         run: |
           pnpm --filter admin typecheck
+          if ($LASTEXITCODE -ne 0) { throw "Admin typecheck failed ($LASTEXITCODE)" }
           pnpm --filter platform typecheck
-      - name: Build admin and platform (no deployment)
+          if ($LASTEXITCODE -ne 0) { throw "Platform typecheck failed ($LASTEXITCODE)" }
+
+      - name: Lint admin and platform
+        run: |
+          pnpm --filter admin lint
+          if ($LASTEXITCODE -ne 0) { throw "Admin lint failed ($LASTEXITCODE)" }
+          pnpm --filter platform lint
+          if ($LASTEXITCODE -ne 0) { throw "Platform lint failed ($LASTEXITCODE)" }
+
+      - name: Build admin and platform without deployment
         run: |
           pnpm --filter admin build
+          if ($LASTEXITCODE -ne 0) { throw "Admin build failed ($LASTEXITCODE)" }
           pnpm --filter platform build
+          if ($LASTEXITCODE -ne 0) { throw "Platform build failed ($LASTEXITCODE)" }
+          foreach ($path in @('apps/admin/dist/index.html','apps/platform/dist/index.html')) {
+            if (-not (Test-Path -LiteralPath $path)) { throw "Missing output: $path" }
+          }
+          Write-Host 'FRONTEND_BUILD=PASS|DEPLOYMENT=NONE'
