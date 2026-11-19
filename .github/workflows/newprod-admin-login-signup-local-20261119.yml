@@ -1,0 +1,92 @@
+name: NEWPROD administrator login and signup - isolated Windows local verification
+
+on:
+  push:
+    branches:
+      - fix/newprod-admin-login-signup-20261119
+    paths:
+      - 'apps/cms/src/features/auth/**'
+      - 'apps/cms/src/features/user/api/members-api-client.ts'
+      - 'apps/admin/src/features/auth/**'
+      - '.github/workflows/newprod-admin-login-signup-local-20261119.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newprod-admin-auth-local-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+
+jobs:
+  verify:
+    if: github.repository == 'tintolab-development/jakorea' && github.ref == 'refs/heads/fix/newprod-admin-login-signup-20261119'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Guard feature-branch SHA and production AWS credentials
+        run: |
+          @echo off
+          if not "%GITHUB_REF%"=="refs/heads/fix/newprod-admin-login-signup-20261119" exit /b 1
+          if not "%GITHUB_REPOSITORY%"=="tintolab-development/jakorea" exit /b 1
+          for /f %%H in ('git rev-parse HEAD') do set "ACTUAL_SHA=%%H"
+          if not "%ACTUAL_SHA%"=="${{ github.sha }}" exit /b 1
+          if defined AWS_ACCESS_KEY_ID exit /b 1
+          if defined AWS_SECRET_ACCESS_KEY exit /b 1
+          if defined AWS_SESSION_TOKEN exit /b 1
+          if defined AWS_PROFILE exit /b 1
+          echo LOCAL_RUNNER_GUARD=PASS
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install frozen dependencies
+        run: |
+          @echo off
+          pnpm install --frozen-lockfile
+          if errorlevel 1 exit /b 1
+      - name: Build workspace dependencies for CMS/Admin tests
+        run: |
+          @echo off
+          pnpm --filter cms run build:workspace-deps
+          if errorlevel 1 exit /b 1
+          pnpm --filter admin run build:workspace-deps
+          if errorlevel 1 exit /b 1
+      - name: Focused CMS login and signup regression tests
+        run: |
+          @echo off
+          pnpm --filter cms exec vitest run src/features/auth/lib/login-field-errors.test.ts src/features/auth/lib/validate-admin-signup-response.test.ts src/features/auth/errors/admin-login-approval-pending-error.test.ts src/features/auth/api/admin-login-fetcher.test.ts
+          if errorlevel 1 exit /b 1
+      - name: Focused Homepage admin login regression tests
+        run: |
+          @echo off
+          pnpm --filter admin exec vitest run src/features/auth/errors/admin-login-approval-pending-error.test.ts
+          if errorlevel 1 exit /b 1
+      - name: Typecheck both changed applications
+        run: |
+          @echo off
+          pnpm --filter cms run typecheck
+          if errorlevel 1 exit /b 1
+          pnpm --filter admin run typecheck
+          if errorlevel 1 exit /b 1
