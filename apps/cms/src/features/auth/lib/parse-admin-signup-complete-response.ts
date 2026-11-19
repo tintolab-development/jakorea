@@ -27,6 +27,8 @@ export function parseAdminSignupCompleteResponse(
     !Number.isSafeInteger(adminId) ||
     adminId <= 0 ||
     result.status !== 'PENDING_VERIFICATION' ||
+    result.loginEnabled !== false ||
+    result.nextStep !== 'MASTER_ADMIN_APPROVAL_REQUIRED' ||
     !responseEmail ||
     responseEmail.toLowerCase() !== submittedEmail.trim().toLowerCase()
   ) {
