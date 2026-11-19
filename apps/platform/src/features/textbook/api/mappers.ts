@@ -2,6 +2,7 @@ import { isEducationLevelKey, type EducationLevelKey } from '@/shared/lib'
 import type { TextbookContent, TextbookThemeKey, TextbookThemeSection } from '../model/types'
 import { TEXTBOOK_THEME_ITEMS } from '../lib/constants'
 import { mapPublicTextbookListThumbnail } from '../lib/list-thumbnail'
+import { buildDirectoryRows } from '../lib/build-directory-rows'
 import type { PublicTextbookDetail, PublicTextbookListItem } from './types'
 
 const FIELD_CODE_TO_THEME: Record<string, TextbookThemeKey> = {
@@ -147,15 +148,8 @@ export function buildThemeSections(items: TextbookContent[]): TextbookThemeSecti
         key: theme.key,
         title: theme.label,
         description,
-        // Render one educational target per directory row. All rows open the same textbook.
-        rows: rows.flatMap(item =>
-          item.levels.map(level => ({
-            id: `${item.id}-${level}`,
-            titles: [item.title],
-            levels: [level],
-            contentId: item.id,
-          })),
-        ),
+        // One row per educational target; all rows open the same original textbook.
+        rows: buildDirectoryRows(rows),
       },
     ]
   })
