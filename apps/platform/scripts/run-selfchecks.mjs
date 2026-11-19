@@ -28,7 +28,7 @@ for (const [index, test] of tests.entries()) {
   console.log('SELFCHECK_START|' + (index + 1) + '/' + tests.length + '|' + test)
   const result = spawnSync(
     process.execPath,
-    ['--experimental-strip-types', '--experimental-transform-types', test],
+    ['--experimental-strip-types', '--experimental-transform-types', '--import', './scripts/register-selfcheck-alias.mjs', test],
     { cwd: root, stdio: 'inherit', shell: false },
   )
   if (result.error || result.status !== 0) {
