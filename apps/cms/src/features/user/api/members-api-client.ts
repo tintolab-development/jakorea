@@ -139,7 +139,9 @@ export async function bulkDeleteMembersRemote(body: AdminMemberBulkDeleteRequest
 
 /** Swagger `bulkDeleteAdmins` — `POST /api/admin/admin-accounts/bulk-delete` */
 export async function bulkDeleteAdminsRemote(body: BulkDecisionRequest) {
-  return unwrapApiBody(await membersApi.bulkDeleteAdmins(body))
+  const result = unwrapApiBody<MembersBulkActionResponse>(await membersApi.bulkDeleteAdmins(body))
+  assertBulkActionSucceeded(result, '관리자 일괄 삭제 중 일부 항목이 실패했습니다.')
+  return result
 }
 
 /** Swagger `bulkDeleteSchools` — `POST /api/admin/organizations/schools/bulk-delete` */
