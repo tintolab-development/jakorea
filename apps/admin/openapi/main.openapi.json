@@ -2488,6 +2488,13 @@
             },
             "maxItems": 7,
             "minItems": 7
+          },
+          "statNumber": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "JA Worldwide reach figure; optional for legacy requests"
           }
         },
         "required": [
@@ -2532,6 +2539,13 @@
             "items": {
               "$ref": "#/components/schemas/WorldwideLinkResponse"
             }
+          },
+          "statNumber": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "JA Worldwide reach figure; optional for legacy requests"
           }
         }
       },
@@ -8638,6 +8652,13 @@
             "items": {
               "$ref": "#/components/schemas/PublicWorldwideLinkResponse"
             }
+          },
+          "statNumber": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "JA Worldwide reach figure; optional for legacy requests"
           }
         }
       },
