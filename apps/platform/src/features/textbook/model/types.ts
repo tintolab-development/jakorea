@@ -37,7 +37,8 @@ export type TextbookContent = {
    */
   listThumbnail?: { src: string; srcSet?: string }
   theme: TextbookThemeKey
-  level: EducationLevelKey
+  /** 교육 대상(복수) — 서버 displayOrder 순. 대상이 없으면 ['notice'] */
+  levels: EducationLevelKey[]
   /** 구성 종류 — 있을 때만 목록에 「구성」행 노출 */
   compositions?: string[]
   /** 목록 카드용 태그 라벨 */
@@ -61,7 +62,8 @@ export type DirectoryRow = {
   id: string
   /** 점(·)으로 구분되는 제목들 */
   titles: string[]
-  level: EducationLevelKey
+  /** 교육 대상(복수). 좌측 보더는 첫 대상 색 */
+  levels: EducationLevelKey[]
   /** 클릭 시 상세 모달에 연결할 콘텐츠 id */
   contentId?: string
 }

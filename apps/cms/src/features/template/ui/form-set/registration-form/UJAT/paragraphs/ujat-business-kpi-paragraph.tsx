@@ -16,6 +16,7 @@ export function UjatBusinessKpiParagraph({
       program={{ generalParticipantTypes: infoForm?.watch('generalParticipantTypes') } as Program}
       isEdit
       form={infoForm}
+      hideSectionHeader
     />
   )
 }

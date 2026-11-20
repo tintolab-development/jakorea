@@ -7,6 +7,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import type { PaymentOrderCalculationTableRow } from './payment-order-calculation-breakdown-table'
 import {
+  buildFallbackBasisDetailFromRow,
   isSupportedBasisDetailLayout,
   resolvePaymentOrderCalculationBasisDetailForRow,
   resolveBasisDetailModalTitle,
@@ -151,10 +152,17 @@ export function usePaymentOrderCalculationBasisDetailModal(
         return
       }
 
+      // 서버 상세가 없을 때만 식사비·활동비·숙박비를 행 이름·금액으로 대신 보여 준다.
+      const fallbackDetail = buildFallbackBasisDetailFromRow(row)
+      if (fallbackDetail) {
+        setSelectedBasisDetail(fallbackDetail)
+        setBasisDetailOpen(true)
+        return
+      }
+
       showAlert({
         title: '안내',
-        content:
-          '이 지급 항목의 산정 기준 상세 레이아웃이 없습니다. 항목 유형과 API basisDetail.layout을 확인해 주세요.',
+        content: '서버에서 산정 기준 상세를 불러오지 못했습니다.',
       })
     },
     [context, showAlert]

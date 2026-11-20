@@ -1,6 +1,7 @@
 /**
  * GNB href SSOT. 공개 API는 경로를 주지 않는다.
- * 라벨·순서·사용 여부는 원격을 기본으로 쓰되, 디자인 고정 표기·위치는 예외로 정규화한다.
+ * 하위 메뉴명·순서·사용 여부는 원격(Admin GNB 관리)을 쓴다.
+ * Admin에서 편집하지 않는 대메뉴명만 시안 표기로 정규화한다.
  * href/external 은 이 표만 쓴다.
  */
 
@@ -43,17 +44,6 @@ export const GNB_MENU_ROUTES = {
 
 export type GnbMenuCode = keyof typeof GNB_MENU_ROUTES
 
-/** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 메뉴 표기. */
-export const GNB_DESIGN_LABEL_OVERRIDES: Partial<Record<GnbMenuCode, string>> = {
-  JA_DIRECTIONS: '오시는 길',
-  EDU_CAREER: '진로·취업',
-  EDU_ECONOMY: '경제·금융',
-  EDU_ENTREPRENEURSHIP: '기업가정신',
-  EDU_DIGITAL_LITERACY: '디지털 리터러시',
-  EDU_MATERIAL: '교재',
-  IMPACT_STORY: '임팩트 스토리',
-}
-
 const KNOWN_GROUP_CODES = [
   'JA_KOREA',
   'IMPACT_STORY',
@@ -64,26 +54,19 @@ const KNOWN_GROUP_CODES = [
 
 export type GnbGroupCode = (typeof KNOWN_GROUP_CODES)[number]
 
-/** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 상위 메뉴 표기. */
-export const GNB_DESIGN_GROUP_LABEL_OVERRIDES: Partial<Record<GnbGroupCode, string>> = {
-  IMPACT_STORY: '임팩트',
-}
-
-/** 메가메뉴에서 시안 미포함 항목 — 공지·채용·결과 확인은 단독 라우트로만 연다. */
-export const GNB_MEGA_HIDDEN_MENU_CODES = new Set<string>([
-  'JA_NOTICE',
-  'JA_RECRUIT',
-  'PARTICIPATION_RESULT',
-])
-
-/** 메가메뉴 하위 항목 시안 순서. 없는 코드는 숨긴다. */
-export const GNB_DESIGN_CHILD_ORDER: Partial<Record<GnbGroupCode, readonly string[]>> = {
+/**
+ * 대메뉴별 소속 하위 메뉴 코드 (Admin GNB 관리 20개 메뉴와 동일).
+ * 원격 응답의 소속 검증용 — 노출 순서·사용 여부는 원격이 SSOT다.
+ */
+export const GNB_GROUP_MENU_CODES: Record<GnbGroupCode, readonly GnbMenuCode[]> = {
   JA_KOREA: [
     'JA_ORGANIZATION',
     'JA_TRANSPARENCY',
-    'JA_HISTORY',
     'JA_PEOPLE',
     'JA_DIRECTIONS',
+    'JA_NOTICE',
+    'JA_HISTORY',
+    'JA_RECRUIT',
   ],
   IMPACT_STORY: ['IMPACT_STORY'],
   EDUCATION: [
@@ -93,7 +76,18 @@ export const GNB_DESIGN_CHILD_ORDER: Partial<Record<GnbGroupCode, readonly strin
     'EDU_DIGITAL_LITERACY',
     'EDU_MATERIAL',
   ],
-  PARTICIPATION: ['PARTICIPATION_APPLY', 'PARTICIPATION_ONLINE', 'PARTICIPATION_ALUMNI'],
+  PARTICIPATION: [
+    'PARTICIPATION_APPLY',
+    'PARTICIPATION_RESULT',
+    'PARTICIPATION_ONLINE',
+    'PARTICIPATION_ALUMNI',
+  ],
+  SPONSORSHIP: ['SPONSOR_PERSONAL', 'SPONSOR_CORPORATE', 'SPONSOR_TALENT'],
+}
+
+/** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 상위 메뉴 표기. */
+export const GNB_DESIGN_GROUP_LABEL_OVERRIDES: Partial<Record<GnbGroupCode, string>> = {
+  IMPACT_STORY: '임팩트',
 }
 
 export function isKnownGnbGroupCode(code: string): code is GnbGroupCode {

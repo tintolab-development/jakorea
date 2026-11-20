@@ -147,6 +147,33 @@ export function resolveIntroductionScrollState(
   }
 }
 
+/** One deliberate desktop wheel/keyboard step advances one Global Value row.
+ * Outside the accordion/reveal this returns null for ordinary page scrolling.
+ */
+export function getValueStepScrollY(
+  scrollPx: number,
+  totalScrollRange: number,
+  valueCount: number,
+  direction: 1 | -1,
+): number | null {
+  const count = normalizeValueCount(valueCount)
+  const range = Math.max(1, totalScrollRange)
+  const valueStart = heroScrollRange(range) + pushScrollRange(range)
+  const valueRange = valueAccordionScrollRange(range)
+  const valueEnd = valueStart + valueRange
+  if (scrollPx < valueStart || scrollPx > range) return null
+  if (scrollPx >= valueEnd) {
+    if (direction > 0) return null
+    return valueStart + valueRange * ((count - 0.5) / count)
+  }
+  const progress = Math.max(0, Math.min(1, (scrollPx - valueStart) / valueRange))
+  const index = resolveActiveValueIndex(progress, count)
+  const nextIndex = index + direction
+  if (nextIndex < 0) return heroScrollRange(range) + pushScrollRange(range) * 0.5
+  if (nextIndex >= count) return Math.min(range, valueEnd + (range - valueEnd) * 0.95)
+  return valueStart + valueRange * ((nextIndex + 0.5) / count)
+}
+
 export function getIntroductionScrollY(
   state: IntroductionScrollState,
   totalScrollRange: number,
