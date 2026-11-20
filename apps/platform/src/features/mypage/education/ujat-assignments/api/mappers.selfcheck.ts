@@ -229,7 +229,8 @@ const dateWinsOverStartAt = mapPortalUjatClassAssignments({
 })
 assert.equal(dateWinsOverStartAt[0]?.dateLabel, '2026.11.20(금)')
 assert.equal(dateWinsOverStartAt[0]?.rows[0]?.classLabel, '2반')
-assert.equal(dateWinsOverStartAt[0]?.rows[0]?.volunteerA, '-')
+// The API supplied a volunteer name; display it, consistent with the other assignment cases.
+assert.equal(dateWinsOverStartAt[0]?.rows[0]?.volunteerA, '김도영')
 assert.equal(dateWinsOverStartAt[0]?.rows[0]?.volunteerB, '-')
 assert.equal(dateWinsOverStartAt[0]?.rows[0]?.textbookName, '-')
 assert.equal(dateWinsOverStartAt[0]?.attendanceManagerName, '-')

@@ -219,7 +219,8 @@
 
 @media (--bp-pc-up) {
   .section {
-    margin-top: 24.6354vw;
+    /* Reduced whitespace between Global Value and JA Worldwide. */
+    margin-top: clamp(48px, 5vw, 96px);
   }
 
   .background {

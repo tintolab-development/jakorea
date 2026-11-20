@@ -25,6 +25,8 @@ export type WorldwideBranch = {
 export type JaKoreaWorldwide = {
   branches: WorldwideBranch[]
   bottomText: string
+  /** Published JA Worldwide numeric figure. */
+  statNumber: number
   updatedAt: string
   /** setting row version (remote PUT 필수). mock은 0 */
   settingVersion: number

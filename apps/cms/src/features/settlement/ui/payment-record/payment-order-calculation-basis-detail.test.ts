@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildActivityBasisDetail,
+  buildFallbackBasisDetailFromRow,
   buildLectureFeeGeminiBasisDetail,
   buildLectureFeeSpecialBasisDetail,
   buildLectureFeeTierBasisDetail,
@@ -788,6 +789,58 @@ describe('mapWithholdingRateCalculationDetailToBasisDetail', () => {
       mapWithholdingRateCalculationDetailToBasisDetail(
         detail({ taxIncomeType: 'BUSINESS_INCOME', withholdingTaxAmount: 100 })
       )
+    ).toBeUndefined()
+  })
+})
+
+describe('buildFallbackBasisDetailFromRow', () => {
+  it('식사비·활동비는 행 이름·금액으로 기존 모달 payload를 만든다', () => {
+    expect(
+      buildFallbackBasisDetailFromRow({ kind: 'meal', itemLabel: '식사비', amount: 12000 })
+    ).toEqual({
+      layout: 'meal',
+      categoryLabel: '식사비',
+      mealFee: { amountWon: 12000 },
+      totalWon: 12000,
+    })
+    expect(
+      buildFallbackBasisDetailFromRow({ kind: 'activity', itemLabel: '활동비', amount: 15000 })
+    ).toEqual({
+      layout: 'activity',
+      categoryLabel: '활동비',
+      activityFee: { amountWon: 15000 },
+      totalWon: 15000,
+    })
+  })
+
+  it('숙박비는 숙박일수를 알 수 없어 "-"로 두고, 1사1교 표기면 1사1교 레이아웃을 쓴다', () => {
+    expect(
+      buildFallbackBasisDetailFromRow({ kind: 'lodging', itemLabel: '숙박비', amount: 60000 })
+    ).toEqual({
+      layout: 'lodgingGeneral',
+      categoryLabel: '숙박비',
+      nightsDisplay: '-',
+      lodgingFee: { amountWon: 60000 },
+      totalWon: 60000,
+    })
+    expect(
+      buildFallbackBasisDetailFromRow({
+        kind: 'lodging',
+        itemLabel: '숙박비(1사1교)',
+        amount: 80000,
+      })?.layout
+    ).toBe('lodging1s1g')
+  })
+
+  it('원천징수·교통비·기타 항목은 대체 상세를 만들지 않는다', () => {
+    expect(
+      buildFallbackBasisDetailFromRow({ kind: 'withholding', itemLabel: '원천징수', amount: -990 })
+    ).toBeUndefined()
+    expect(
+      buildFallbackBasisDetailFromRow({ kind: 'travel', itemLabel: '교통비', amount: 15000 })
+    ).toBeUndefined()
+    expect(
+      buildFallbackBasisDetailFromRow({ kind: 'other', itemLabel: '기타', amount: 1000 })
     ).toBeUndefined()
   })
 })

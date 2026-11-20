@@ -50,10 +50,13 @@ export function UjatBusinessKpiProgramView({
   program,
   isEdit = false,
   form,
+  hideSectionHeader = false,
 }: {
   program: Program
   isEdit?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  /** 등록 폼 — 바깥 단락 카드가 제목을 그리므로 자체 헤더를 숨긴다 */
+  hideSectionHeader?: boolean
 }) {
   const display = resolveUjatBusinessKpiDisplay(program)
   const isFormEdit = isEdit && form != null
@@ -71,7 +74,7 @@ export function UjatBusinessKpiProgramView({
 
   return (
     <section className="program-detail-fullpage-modal__info-tab-block">
-      {isFormEdit ? (
+      {isFormEdit && !hideSectionHeader ? (
         <FormParagraphSectionHeader
           title="사업 KPI 목표"
           surface="responseEntry"

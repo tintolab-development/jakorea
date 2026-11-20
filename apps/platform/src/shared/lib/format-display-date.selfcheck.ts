@@ -17,15 +17,22 @@ import {
 
 assert.equal(formatDisplayDate('2026-04-20'), '2026년 4월 20일(월)')
 assert.equal(formatDisplayDate('2026-04-24'), '2026년 4월 24일(금)')
-assert.equal(formatDisplayDateTime('2026-04-20T00:00:00+09:00'), '2026년 4월 20일(월) 00:00')
+// The current presentation contract deliberately hides all-midnight clocks.
+assert.equal(formatDisplayDateTime('2026-04-20T00:00:00+09:00'), '2026년 4월 20일(월)')
+assert.equal(formatDisplayDateTime('2026-04-20T09:30:00+09:00'), '2026년 4월 20일(월) 09:30')
 
 assert.equal(
   formatDisplayDateTimeRange('2026-04-20T00:00:00+09:00', '2026-04-20T00:00:00+09:00'),
-  '2026년 4월 20일(월) 00:00 ~ 00:00',
+  '2026년 4월 20일(월)',
 )
 assert.equal(
   formatDisplayDateTimeRange('2026-04-20T00:00:00+09:00', '2026-04-21T00:00:00+09:00'),
-  '2026년 4월 20일(월) 00:00 ~ 2026년 4월 21일(화) 00:00',
+  '2026년 4월 20일(월) ~ 2026년 4월 21일(화)',
+)
+// Explicit non-midnight ranges still render a clock.
+assert.equal(
+  formatDisplayDateTimeRange('2026-04-20T09:30:00+09:00', '2026-04-20T12:20:00+09:00'),
+  '2026년 4월 20일(월) 09:30 ~ 12:20',
 )
 
 assert.equal(

@@ -21,7 +21,8 @@ export type JaWorldwideRegion = {
 
 export const JA_WORLDWIDE_EYEBROW = 'JA Worldwide'
 
-export const JA_WORLDWIDE_STAT = '15,140,800'
+/** Legacy public value used while the older API is still deployed. */
+export const JA_WORLDWIDE_STAT = 15140800
 
 export const JA_WORLDWIDE_GLOBAL_LINK = {
   label: 'JA Worldwide 바로가기',

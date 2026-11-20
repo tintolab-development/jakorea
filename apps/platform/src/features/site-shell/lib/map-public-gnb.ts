@@ -3,11 +3,8 @@ import {
   isKnownGnbGroupCode,
   isKnownGnbMenuCode,
   GNB_MENU_ROUTES,
-  GNB_DESIGN_CHILD_ORDER,
   GNB_DESIGN_GROUP_LABEL_OVERRIDES,
-  GNB_DESIGN_LABEL_OVERRIDES,
-  GNB_MEGA_HIDDEN_MENU_CODES,
-  type GnbGroupCode,
+  GNB_GROUP_MENU_CODES,
   type GnbNavGroup,
   type GnbNavItem,
 } from './menu-routes.ts'
@@ -63,28 +60,10 @@ function overlayMenu(menuCode: string, label: string): GnbNavItem | null {
   return { menuCode, label }
 }
 
-function applyDesignMenuOrder(groupCode: string, children: GnbNavItem[]): GnbNavItem[] {
-  const visible = children.filter(item => !GNB_MEGA_HIDDEN_MENU_CODES.has(item.menuCode))
-  const order = isKnownGnbGroupCode(groupCode)
-    ? GNB_DESIGN_CHILD_ORDER[groupCode as GnbGroupCode]
-    : undefined
-  if (!order || order.length === 0) return visible
-
-  const byCode = new Map(visible.map(item => [item.menuCode, item]))
-  const ordered: GnbNavItem[] = []
-  for (const menuCode of order) {
-    const item = byCode.get(menuCode)
-    if (item) ordered.push(item)
-  }
-  for (const item of visible) {
-    if (!order.includes(item.menuCode)) ordered.push(item)
-  }
-  return ordered
-}
-
 /**
  * `{ success, data }` 래퍼는 벗긴다. 배열이 아니면 null. 호출측이 fallback을 쓴다.
  * 배열이면 원격이 SSOT. 빈 배열은 빈 GNB다.
+ * 하위 메뉴 순서·노출은 Admin GNB 관리값(displayOrder·응답 포함 여부)을 그대로 쓴다.
  */
 export function mapPublicGnb(remote: unknown): SiteGnbView | null {
   const body = unwrapPayload(remote)
@@ -105,20 +84,18 @@ export function mapPublicGnb(remote: unknown): SiteGnbView | null {
     const displayGroupName = canonicalGroupLabel ?? groupName
     if (!displayGroupName || !Array.isArray(rawGroup.menus)) continue
 
-    const fallbackMenus = new Set<string>(fallbackGroup.children.map(menu => menu.menuCode))
+    const groupMenus = new Set<string>(GNB_GROUP_MENU_CODES[groupCode])
     const seenMenus = new Set<string>()
     const children: GnbNavItem[] = []
 
     for (const rawMenu of sortByDisplayOrder(rawGroup.menus)) {
       if (!isRecord(rawMenu)) continue
       const menuCode = typeof rawMenu.menuCode === 'string' ? rawMenu.menuCode : ''
-      if (!fallbackMenus.has(menuCode) || seenMenus.has(menuCode)) continue
+      if (!groupMenus.has(menuCode) || seenMenus.has(menuCode)) continue
       const displayName = readLabel(rawMenu.displayName)
       if (!displayName) continue
-      const canonicalLabel = isKnownGnbMenuCode(menuCode)
-        ? GNB_DESIGN_LABEL_OVERRIDES[menuCode]
-        : undefined
-      const menu = overlayMenu(menuCode, canonicalLabel ?? displayName)
+      // 하위 메뉴명은 Admin GNB 관리 입력값(displayName)을 그대로 쓴다.
+      const menu = overlayMenu(menuCode, displayName)
       if (!menu) continue
       seenMenus.add(menuCode)
       children.push(menu)
@@ -127,12 +104,11 @@ export function mapPublicGnb(remote: unknown): SiteGnbView | null {
     if (children.length === 0) continue
     seenGroups.add(groupCode)
     const href = 'href' in fallbackGroup ? fallbackGroup.href : undefined
-    const orderedChildren = applyDesignMenuOrder(groupCode, children)
     groups.push({
       groupCode,
       label: displayGroupName,
       ...(href ? { href } : {}),
-      children: orderedChildren,
+      children,
     })
   }
 
