@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { PFText } from '@/shared/ui'
 import { GLOBAL_VALUE_SECTION_TITLE, type GlobalValueItem } from '../lib/global-value-data'
 import type { IntroductionWorldwideContent } from '../model/types'
@@ -76,12 +76,56 @@ function ValueListBlock({
   isDesktopMotion: boolean
   afterList?: ReactNode
 }) {
+  const listRef = useRef<HTMLDivElement>(null)
+  const isLastStage = isDesktopMotion && items.length > 1 && activeValueIndex >= items.length - 1
+
+  /*
+   * 마지막 단계: 06은 콘텐츠 높이 유지 → list가 넘치면 넘친 만큼 행을 위로 올린다.
+   * 05 접힘 transition 중간값이 아닌 최종 높이가 필요하므로, 같은 자리에 숨긴 복제본으로 측정한다
+   * (복제본은 transition 시작 상태가 없어 바로 최종 레이아웃).
+   */
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    if (!isLastStage) {
+      list.style.setProperty('--value-shift', '0px')
+      return
+    }
+
+    const measure = () => {
+      const listHeight = list.clientHeight
+      const clone = list.cloneNode(true) as HTMLDivElement
+      clone.setAttribute('aria-hidden', 'true')
+      clone.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;left:0;width:${list.clientWidth}px;height:${listHeight}px;`
+      list.parentElement?.appendChild(clone)
+      const last = clone.lastElementChild
+      const contentBottom = last ? last.getBoundingClientRect().bottom - clone.getBoundingClientRect().top : 0
+      clone.remove()
+      const shift = Math.max(0, Math.ceil(contentBottom - listHeight))
+      list.style.setProperty('--value-shift', `${shift}px`)
+    }
+
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    let width = list.clientWidth
+    let height = list.clientHeight
+    const observer = new ResizeObserver(() => {
+      if (list.clientWidth === width && list.clientHeight === height) return
+      width = list.clientWidth
+      height = list.clientHeight
+      measure()
+    })
+    observer.observe(list)
+    return () => observer.disconnect()
+  }, [isLastStage])
+
   return (
     <div className={styles.inner}>
       <h2 className={styles.title}>{GLOBAL_VALUE_SECTION_TITLE}</h2>
 
       {/* 접힌 항목 존재 여부를 클래스로 전달 — `:has()` 스타일 무효화 비용 회피 */}
       <div
+        ref={listRef}
         className={
           isDesktopMotion && activeValueIndex > 0
             ? `${styles.list} ${styles.hasCollapsed}`

@@ -239,7 +239,8 @@
     transition:
       padding var(--value-motion),
       min-height var(--value-motion),
-      flex-grow var(--value-motion);
+      flex-grow var(--value-motion),
+      transform var(--value-motion);
   }
 
   /* collapsed: 최소 높이 72px, 콘텐츠 줄바꿈 시 높이 자동 증가 */
@@ -268,34 +269,31 @@
   }
 
   /*
-   * collapsed가 하나라도 있으면: 마지막 expanded(06)만
-   * list 남은 높이를 차지. 접힌 항목 높이만큼 뺀 나머지가 06 영역.
-   * (초기 전체 expanded에는 .isCollapsed가 없어 이 규칙 미적용)
-   * flex-grow 0→1 을 위 항목 접힘과 같은 motion으로 보간해 06만 높이 점프하지 않게 함.
+   * 마지막 expanded(06)도 다른 항목처럼 콘텐츠 높이 고정(시안 06 행 = 60 + 콘텐츠 + 80).
+   * 남은 높이를 채우면(grow) 05 접힘 시 06 높이가 화면마다 달라지고 번호·영문 간격이 벌어진다.
+   * 줄어들지도 않게 해(shrink 0) 낮은 화면에서 영문이 사라지거나 국문이 아이콘에 겹치지 않게 하고,
+   * 넘치는 만큼은 --value-shift 로 행 전체를 위로 올린다.
    */
   .isAccordion .list.hasCollapsed .item.isExpanded:last-child {
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: 0;
-    min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
   }
 
-  .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentLeft,
-  .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentRight {
-    min-height: 0;
-  }
-
+  /*
+   * 시안: 번호 상단 = 아이콘 상단, 영문 하단 = 국문 하단.
+   * center면 남은 높이만큼 번호가 아래로·영문이 위로 밀려 오른쪽 열과 어긋난다.
+   */
   .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentLeft {
-    justify-content: center;
-    overflow: hidden;
+    justify-content: space-between;
   }
 
-  .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentRight {
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
+  /*
+   * 마지막 단계에서 list가 넘치면 행만 위로 이동(합성 전용 transform).
+   * list 박스는 그대로라 위쪽 접힌 행은 list 상단에서 잘리고 제목과 겹치지 않는다.
+   */
+  .isAccordion .list > .item {
+    transform: translate3d(0, calc(-1 * var(--value-shift, 0px)), 0);
   }
 
   .contentLeft {
