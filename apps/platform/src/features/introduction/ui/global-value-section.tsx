@@ -54,6 +54,7 @@ function ValueItem({
           alt=""
           width={84}
           height={84}
+          decoding="async"
           draggable={false}
         />
         <PFText as="p" typo="hd-sm" color="palette-ice" className={styles.korean}>
@@ -79,7 +80,14 @@ function ValueListBlock({
     <div className={styles.inner}>
       <h2 className={styles.title}>{GLOBAL_VALUE_SECTION_TITLE}</h2>
 
-      <div className={styles.list}>
+      {/* 접힌 항목 존재 여부를 클래스로 전달 — `:has()` 스타일 무효화 비용 회피 */}
+      <div
+        className={
+          isDesktopMotion && activeValueIndex > 0
+            ? `${styles.list} ${styles.hasCollapsed}`
+            : styles.list
+        }
+      >
         {items.map((item, index) => (
           <ValueItem
             key={item.id}

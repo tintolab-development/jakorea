@@ -230,13 +230,15 @@
     min-width: 0;
     box-sizing: border-box;
     overflow: hidden;
+    /* 항목 내부 레이아웃·페인트를 항목 안으로 한정(overflow:hidden이라 시각 변화 없음) */
+    contain: layout paint;
     flex-grow: 0;
     flex-shrink: 0;
     flex-basis: auto;
+    /* gap은 expanded/collapsed 모두 --spacing-80 → 보간 대상에서 제외 */
     transition:
       padding var(--value-motion),
       min-height var(--value-motion),
-      gap var(--value-motion),
       flex-grow var(--value-motion);
   }
 
@@ -271,7 +273,7 @@
    * (초기 전체 expanded에는 .isCollapsed가 없어 이 규칙 미적용)
    * flex-grow 0→1 을 위 항목 접힘과 같은 motion으로 보간해 06만 높이 점프하지 않게 함.
    */
-  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child {
+  .isAccordion .list.hasCollapsed .item.isExpanded:last-child {
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 0;
@@ -280,17 +282,17 @@
     overflow-y: auto;
   }
 
-  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentLeft,
-  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentRight {
+  .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentLeft,
+  .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentRight {
     min-height: 0;
   }
 
-  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentLeft {
+  .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentLeft {
     justify-content: center;
     overflow: hidden;
   }
 
-  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentRight {
+  .isAccordion .list.hasCollapsed .item.isExpanded:last-child .contentRight {
     height: 100%;
     min-height: 0;
     overflow: hidden;
