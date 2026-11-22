@@ -38,18 +38,29 @@ export function WorldwideFormCard({ data }: Props) {
   const saveMutation = useSaveJaKoreaWorldwide()
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<JaKoreaWorldwide>(() => cloneWorldwide(data))
+  /** 수치 입력란이 비어 있으면 0으로 저장하지 않고 저장을 막는다(포털에 0 노출 방지). */
+  const [isStatNumberEmpty, setIsStatNumberEmpty] = useState(false)
 
   const handleEdit = useCallback(() => {
     setDraft(cloneWorldwide(data))
+    setIsStatNumberEmpty(false)
     setIsEditing(true)
   }, [data])
 
   const handleCancel = useCallback(() => {
     setDraft(cloneWorldwide(data))
+    setIsStatNumberEmpty(false)
     setIsEditing(false)
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (isStatNumberEmpty) {
+      showAlert({
+        title: '입력 확인',
+        content: 'JA Worldwide 수치를 입력해 주세요.',
+      })
+      return
+    }
     const invalidLink = draft.branches.find(branch => {
       const trimmed = branch.linkUrl.trim()
       return trimmed.length > 0 && !isValidHttpLinkUrl(trimmed)
@@ -68,7 +79,7 @@ export function WorldwideFormCard({ data }: Props) {
         content: 'JA Worldwide 저장에 실패했습니다. 다시 시도해 주세요.',
       })
     }
-  }, [draft, saveMutation, showAlert])
+  }, [draft, isStatNumberEmpty, saveMutation, showAlert])
 
   const updateLink = useCallback((id: WorldwideBranchId, linkUrl: string) => {
     setDraft(prev => ({
@@ -125,7 +136,10 @@ export function WorldwideFormCard({ data }: Props) {
           statNumber={statNumber}
           mode={mode}
           onChange={next => setDraft(prev => ({ ...prev, bottomText: next }))}
-          onStatNumberChange={next => setDraft(prev => ({ ...prev, statNumber: next }))}
+          onStatNumberChange={next => {
+            setIsStatNumberEmpty(next === null)
+            if (next !== null) setDraft(prev => ({ ...prev, statNumber: next }))
+          }}
         />
       </div>
     </div>
