@@ -147,8 +147,11 @@ export function resolveIntroductionScrollState(
   }
 }
 
-/** One deliberate desktop wheel/keyboard step advances one Global Value row.
- * Outside the accordion/reveal this returns null for ordinary page scrolling.
+/**
+ * Mission 이후 휠/키보드 한 번 = 화면 변화 한 번.
+ * 정지점: Mission → Push 정착(01~06 전체 펼침) → 01 접힘 … 05 접힘(06 Active) → Worldwide reveal.
+ * Value index 0은 Push 정착과 화면이 같아 정지점에서 제외한다(빈 스크롤 방지).
+ * Mission 이전·Mission 위 방향·Worldwide 아래 방향은 null (Hero 스텝 / 일반 스크롤).
  */
 export function getValueStepScrollY(
   scrollPx: number,
@@ -158,20 +161,40 @@ export function getValueStepScrollY(
 ): number | null {
   const count = normalizeValueCount(valueCount)
   const range = Math.max(1, totalScrollRange)
-  const valueStart = heroScrollRange(range) + pushScrollRange(range)
+  const heroRange = heroScrollRange(range)
+  const pushRange = pushScrollRange(range)
+  const valueStart = heroRange + pushRange
   const valueRange = valueAccordionScrollRange(range)
   const valueEnd = valueStart + valueRange
-  if (scrollPx < valueStart || scrollPx > range) return null
-  if (scrollPx >= valueEnd) {
-    if (direction > 0) return null
-    return valueStart + valueRange * ((count - 0.5) / count)
+  if (scrollPx > range) return null
+  if (scrollPx <= heroRange && resolveHeroPhase(scrollPx, heroRange) !== 'mission') return null
+
+  const stops = [
+    getHeroPhaseScrollY('mission', heroRange),
+    heroRange + pushRange * 0.5,
+    ...Array.from({ length: count - 1 }, (_, i) => valueStart + valueRange * ((i + 1.5) / count)),
+    Math.min(range, valueEnd + (range - valueEnd) * 0.95),
+  ]
+
+  let current: number
+  if (scrollPx <= heroRange) current = 0
+  else if (scrollPx <= valueStart) current = 1
+  else if (scrollPx >= valueEnd) current = stops.length - 1
+  else {
+    const progress = Math.max(0, Math.min(1, (scrollPx - valueStart) / valueRange))
+    current = Math.max(1, resolveActiveValueIndex(progress, count) + 1)
   }
-  const progress = Math.max(0, Math.min(1, (scrollPx - valueStart) / valueRange))
-  const index = resolveActiveValueIndex(progress, count)
-  const nextIndex = index + direction
-  if (nextIndex < 0) return heroScrollRange(range) + pushScrollRange(range) * 0.5
-  if (nextIndex >= count) return Math.min(range, valueEnd + (range - valueEnd) * 0.95)
-  return valueStart + valueRange * ((nextIndex + 0.5) / count)
+
+  const next = current + direction
+  if (next < 0 || next >= stops.length) return null
+  return stops[next] ?? null
+}
+
+/** 같은 제스처(짧은 간격)에서 |deltaY|가 줄어드는 중이면 트랙패드 관성으로 본다. 마우스 휠(고정 delta)은 통과. */
+export const WHEEL_GESTURE_GAP_MS = 150
+
+export function isWheelInertia(gapMs: number, absDelta: number, prevAbsDelta: number): boolean {
+  return gapMs < WHEEL_GESTURE_GAP_MS && absDelta < prevAbsDelta
 }
 
 export function getIntroductionScrollY(

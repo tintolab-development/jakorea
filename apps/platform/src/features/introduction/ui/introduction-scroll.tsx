@@ -6,6 +6,7 @@ import {
   getNextIntroductionScrollY,
   getPreviousIntroductionScrollY,
   getValueStepScrollY,
+  isWheelInertia,
   resolveHeroPhaseWheelStep,
   resolveIntroductionScrollState,
   resolveWorldwideRevealProgress,
@@ -79,6 +80,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
     let wheelAccum = 0
     let stepLockedUntil = 0
     let lastWheelEventAt = 0
+    let lastWheelAbsDelta = 0
 
     const currentHeroState = (): IntroductionScrollState => scrollStateRef.current
 
@@ -153,22 +155,27 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       const state = currentHeroState()
       const now = performance.now()
       const goingDown = event.deltaY > 0
-      const isValuePhase = state.isFramePushed && state.heroPhase === 'exit'
+      /* Mission 이후(Push·accordion·Worldwide 진입)는 정지점 스텝 */
+      const isValuePhase =
+        getValueStepScrollY(
+          Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, goingDown ? 1 : -1,
+        ) != null
       if (!isValuePhase) {
         if (state.isFramePushed || state.heroPhase === 'exit') return
         if (goingDown && state.heroPhase === 'mission') return
         if (!goingDown && state.heroPhase === 'idle') return
-      } else {
-        const destination = getValueStepScrollY(
-          Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, goingDown ? 1 : -1,
-        )
-        if (destination == null) return
       }
 
       event.preventDefault()
-      if (now < stepLockedUntil) return
-      if (now - lastWheelEventAt > 220) wheelAccum = 0
+      const gap = now - lastWheelEventAt
+      const absDelta = Math.abs(event.deltaY)
+      const prevAbsDelta = lastWheelAbsDelta
       lastWheelEventAt = now
+      lastWheelAbsDelta = absDelta
+      /* 잠금 중·잠금 직후 관성 꼬리는 새 스텝으로 세지 않음(항목 건너뜀 방지) */
+      if (now < stepLockedUntil) return
+      if (isWheelInertia(gap, absDelta, prevAbsDelta)) return
+      if (gap > 220) wheelAccum = 0
       const stepped = resolveHeroPhaseWheelStep(wheelAccum, event.deltaY, HERO_PHASE_STEP_DELTA)
       wheelAccum = stepped.accumulated
       if (stepped.direction === 0) return
@@ -205,11 +212,11 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       if (downKeys.has(event.key)) direction = 1
       if (upKeys.has(event.key)) direction = -1
       if (direction === 0) return
-      if (state.isFramePushed && state.heroPhase === 'exit') {
-        const top = getValueStepScrollY(
-          Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, direction,
-        )
-        if (top == null) return
+      const valueTop = getValueStepScrollY(
+        Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, direction,
+      )
+      if (valueTop != null) {
+        const top = valueTop
         event.preventDefault()
         const now = performance.now()
         if (now < stepLockedUntil) return

@@ -5,10 +5,18 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
+import {
+  applyKoreanBusinessNumberInputChange,
+  isValidKoreanBusinessNumber,
+} from '@jakorea/domain/shared/korean-business-number'
 import type { FooterOrgInfo, FooterOrgInfoSaveInput } from '@/entities/footer/model/types'
 import { useFooterOrgInfo, useSaveFooterOrgInfo } from '@/features/footer/api/hooks'
 import { footerOrgSaveFailureAlert } from '@/features/footer/lib/mutation-failure-alert'
 import { readApiErrorField } from '@/shared/lib/api-error-message'
+import {
+  applyOrgContactPhoneInputChange,
+  isValidOrgContactPhone,
+} from '@/shared/lib/org-contact-phone'
 import {
   CmsButton,
   CmsInput,
@@ -64,17 +72,58 @@ function pickOrgText(source: FooterOrgInfoSaveInput): OrgTextDraft {
   }
 }
 
+/** 입력 종류별 처리 — phone: 전화·팩스 하이픈(일반·대표번호·050), businessNumber: 000-00-00000, zipCode: 숫자 5자리, email: 공백 제거 */
+type OrgInputKind = 'text' | 'phone' | 'businessNumber' | 'zipCode' | 'email'
+
+const ZIP_CODE_DIGITS = 5
+
+/** 입력 종류에 맞춘 표시값·커서. 커서가 null이면 브라우저 기본 위치를 쓴다. */
+function formatOrgInput(
+  kind: OrgInputKind,
+  previous: string,
+  raw: string,
+  caret: number | null
+): { value: string; caret: number | null } {
+  switch (kind) {
+    case 'phone': {
+      const r = applyOrgContactPhoneInputChange(previous, raw, caret)
+      return { value: r.formatted, caret: r.caret }
+    }
+    case 'businessNumber': {
+      const r = applyKoreanBusinessNumberInputChange(previous, raw, caret)
+      return { value: r.formatted, caret: r.caret }
+    }
+    case 'zipCode':
+      return { value: raw.replace(/\D/g, '').slice(0, ZIP_CODE_DIGITS), caret: null }
+    case 'email':
+      return { value: raw.replace(/\s/g, ''), caret: null }
+    default:
+      return { value: raw, caret: null }
+  }
+}
+
+const ORG_INPUT_ATTRS: Partial<
+  Record<OrgInputKind, { inputMode: 'numeric' | 'email'; type?: 'tel' }>
+> = {
+  phone: { inputMode: 'numeric', type: 'tel' },
+  businessNumber: { inputMode: 'numeric' },
+  zipCode: { inputMode: 'numeric' },
+  email: { inputMode: 'email' },
+}
+
 const OrgInlineField = memo(function OrgInlineField({
   sourceValue,
   isEditing,
   resetKey,
   error,
+  inputKind = 'text',
   onDraftChange,
 }: {
   sourceValue: string
   isEditing: boolean
   resetKey: number
   error?: string
+  inputKind?: OrgInputKind
   onDraftChange: (value: string) => void
 }) {
   const [localValue, setLocalValue] = useState(sourceValue)
@@ -94,11 +143,17 @@ const OrgInlineField = memo(function OrgInlineField({
         readOnly={!isEditing}
         tabIndex={isEditing ? 0 : -1}
         aria-invalid={Boolean(error)}
+        {...ORG_INPUT_ATTRS[inputKind]}
         onChange={e => {
           if (!isEditing) return
-          const next = e.target.value
-          setLocalValue(next)
-          onDraftChange(next)
+          const input = e.target
+          const next = formatOrgInput(inputKind, localValue, input.value, input.selectionStart)
+          if (next.value !== input.value) {
+            input.value = next.value
+            if (next.caret != null) input.setSelectionRange(next.caret, next.caret)
+          }
+          setLocalValue(next.value)
+          onDraftChange(next.value)
         }}
       />
       {error ? (
@@ -249,6 +304,31 @@ export function FooterOrgInfoSection() {
     }
     if (!draft.logoUrl.trim() && !draft.logoFile && draft.logoAssetId == null) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    if (!/^\d{5}$/.test(text.zipCode.trim())) {
+      showAlert({ title: '우편번호 입력 오류', content: '우편번호는 숫자 5자리로 입력해 주세요.' })
+      return
+    }
+    if (!isValidKoreanBusinessNumber(text.businessNumber)) {
+      showAlert({
+        title: '사업자번호 입력 오류',
+        content: '올바른 사업자번호 형식이 아닙니다 (예: 107-82-10367)',
+      })
+      return
+    }
+    if (!isValidOrgContactPhone(text.phone)) {
+      showAlert({
+        title: '대표전화 입력 오류',
+        content: '올바른 전화번호 형식이 아닙니다 (예: 02-783-2367)',
+      })
+      return
+    }
+    if (!isValidOrgContactPhone(text.fax)) {
+      showAlert({
+        title: '팩스 입력 오류',
+        content: '올바른 팩스 번호 형식이 아닙니다 (예: 070-4275-5115)',
+      })
       return
     }
     if (!EMAIL_RE.test(text.email.trim())) {
@@ -417,6 +497,7 @@ export function FooterOrgInfoSection() {
                   sourceValue={data.zipCode}
                   isEditing={isEditing}
                   resetKey={textResetKey}
+                  inputKind="zipCode"
                   onDraftChange={handleZipCodeChange}
                 />
               }
@@ -445,6 +526,7 @@ export function FooterOrgInfoSection() {
                   sourceValue={data.businessNumber}
                   isEditing={isEditing}
                   resetKey={textResetKey}
+                  inputKind="businessNumber"
                   onDraftChange={handleBusinessNumberChange}
                 />
               }
@@ -458,6 +540,7 @@ export function FooterOrgInfoSection() {
                   sourceValue={data.phone}
                   isEditing={isEditing}
                   resetKey={textResetKey}
+                  inputKind="phone"
                   onDraftChange={handlePhoneChange}
                 />
               }
@@ -473,6 +556,7 @@ export function FooterOrgInfoSection() {
                   sourceValue={data.fax}
                   isEditing={isEditing}
                   resetKey={textResetKey}
+                  inputKind="phone"
                   onDraftChange={handleFaxChange}
                 />
               }
@@ -487,6 +571,7 @@ export function FooterOrgInfoSection() {
                   isEditing={isEditing}
                   resetKey={textResetKey}
                   error={emailError}
+                  inputKind="email"
                   onDraftChange={handleEmailChange}
                 />
               }

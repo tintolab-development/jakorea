@@ -10,10 +10,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import {
-  applyKoreanPhoneInputChange,
-  formatKoreanPhoneNumber,
-} from '@jakorea/domain/shared/korean-phone'
 import type { DirectionsInfo } from '@/entities/directions/model/types'
 import { useSaveDirections } from '@/features/directions/api/hooks'
 import { directionsQueryKeys } from '@/features/directions/api/query-keys'
@@ -21,6 +17,10 @@ import {
   directionsSaveFailureAlert,
   validateDirectionsBeforeSave,
 } from '@/features/directions/lib/save-validation'
+import {
+  applyOrgContactPhoneInputChange,
+  formatOrgContactPhone,
+} from '@/shared/lib/org-contact-phone'
 import { CmsButton, CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './directions-form-card.css'
@@ -34,8 +34,8 @@ function cloneDirections(data: DirectionsInfo): DirectionsInfo {
     addressKo: data.addressKo,
     addressEn: data.addressEn,
     kakaoMapHtml: data.kakaoMapHtml,
-    phone: formatKoreanPhoneNumber(data.phone),
-    fax: data.fax,
+    phone: formatOrgContactPhone(data.phone),
+    fax: formatOrgContactPhone(data.fax),
     email: data.email,
     updatedAt: data.updatedAt,
     version: data.version,
@@ -249,7 +249,7 @@ export function DirectionsFormCard({ data }: Props) {
                   inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
-                    const result = applyKoreanPhoneInputChange(
+                    const result = applyOrgContactPhoneInputChange(
                       draft.phone,
                       e.target.value,
                       e.target.selectionStart
@@ -276,12 +276,25 @@ export function DirectionsFormCard({ data }: Props) {
                   className={fieldClass(isEditing)}
                   inputSize="medium"
                   width="100%"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={draft.fax}
                   readOnly={!isEditing}
                   inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
-                    updateDraft({ fax: e.target.value })
+                    // 전화번호와 같은 하이픈 자동 처리 (일반·대표번호·050, 예: 070-4275-5115)
+                    const result = applyOrgContactPhoneInputChange(
+                      draft.fax,
+                      e.target.value,
+                      e.target.selectionStart
+                    )
+                    e.target.value = result.formatted
+                    updateDraft({ fax: result.formatted })
+                    requestAnimationFrame(() => {
+                      e.target.setSelectionRange(result.caret, result.caret)
+                    })
                   }}
                   placeholder="Fax 번호 입력"
                 />
@@ -299,12 +312,15 @@ export function DirectionsFormCard({ data }: Props) {
                   className={fieldClass(isEditing)}
                   inputSize="medium"
                   width="100%"
+                  inputMode="email"
+                  autoComplete="email"
                   value={draft.email}
                   readOnly={!isEditing}
                   inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
-                    updateDraft({ email: e.target.value })
+                    // 이메일에는 공백이 올 수 없으므로 입력 즉시 제거
+                    updateDraft({ email: e.target.value.replace(/\s/g, '') })
                   }}
                   placeholder="이메일 주소 입력"
                 />
