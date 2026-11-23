@@ -60,8 +60,18 @@ export function HeroStage({
             className={styles.intro}
             aria-hidden={isDesktopMotion && !showHeadline ? true : undefined}
           >
+            {/*
+              PC: 헤드라인(큰 글자)과 소개 문장(작은 글자)을 같은 자리에 겹쳐 두고
+              opacity만 교차한다. font-size를 전환하면 매 프레임 줄바꿈이 다시 계산돼
+              글자가 하나씩 움직여 보이므로, 글자 규격은 각자 고정한다.
+            */}
             <span className={styles.introDesktop}>
-              <Lines lines={hero.introLines} />
+              <span className={styles.introHeadline}>
+                <Lines lines={hero.introLines} />
+              </span>
+              <span className={styles.introCaption} aria-hidden="true">
+                <Lines lines={hero.introLines} />
+              </span>
             </span>
             <span className={styles.introMobile}>{hero.introMobile}</span>
           </h1>
