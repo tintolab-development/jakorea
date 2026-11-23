@@ -317,8 +317,62 @@
     overflow: hidden;
   }
 
+  /* 헤드라인·소개 문장을 같은 grid 칸에 겹쳐 중앙 정렬 (두 문장 중심이 같다) */
   .introDesktop {
-    display: inline;
+    display: grid;
+    place-items: center;
+  }
+
+  .introHeadline,
+  .introCaption {
+    grid-area: 1 / 1;
+    /* 보이는 쪽만 클릭·선택을 받는다 (투명한 큰 헤드라인이 메시지 윗부분을 덮지 않게) */
+    pointer-events: none;
+  }
+
+  .introHeadline {
+    color: var(--color-neutral-black);
+    font-size: 60px;
+    font-weight: 700;
+    line-height: 140%;
+    letter-spacing: -0.6px;
+  }
+
+  .introCaption {
+    color: var(--color-primary-800);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 144%;
+    letter-spacing: -0.68px;
+    opacity: 0;
+  }
+
+  .isHeadline .introHeadline,
+  .isRevealed .introCaption {
+    pointer-events: auto;
+  }
+
+  .isRevealed .introHeadline {
+    opacity: 0;
+  }
+
+  .isRevealed .introCaption {
+    opacity: 1;
+  }
+
+  /*
+   * 겹침 최소화: 사라지는 쪽은 0~400ms, 나타나는 쪽은 300~700ms에 opacity 전환
+   * (가운데 100ms만 겹쳐 빈 순간이 없게). transition은 도착 상태 규칙을 따르므로
+   * 위로 스크롤할 때도 같은 순서가 된다.
+   */
+  .introHeadline,
+  .isRevealed .introCaption {
+    transition: opacity 400ms ease-in-out 300ms;
+  }
+
+  .introCaption,
+  .isRevealed .introHeadline {
+    transition: opacity 400ms ease-in-out;
   }
 
   .introMobile {
@@ -329,29 +383,22 @@
     min-height: 280px;
   }
 
+  /* 글자 규격은 .introHeadline / .introCaption 이 고정 — 여기서는 덩어리 이동·노출만 */
   .intro {
     position: relative;
     z-index: 1;
-    font-size: 60px;
-    font-weight: 700;
-    line-height: 140%;
-    letter-spacing: -0.6px;
     opacity: 0;
     transform: translateY(40px);
     pointer-events: none;
     transition:
-      font-size 700ms ease-in-out,
-      font-weight 700ms ease-in-out,
-      line-height 700ms ease-in-out,
-      letter-spacing 700ms ease-in-out,
       opacity 700ms ease-in-out,
       transform 700ms ease-in-out;
   }
 
+  /* h1 상자(두 문장 중 큰 쪽 높이)는 클릭을 받지 않고, 보이는 문장 span만 받는다 */
   .isHeadline .intro {
     opacity: 1;
     transform: none;
-    pointer-events: auto;
   }
 
   .message {
@@ -376,13 +423,7 @@
 
   .isRevealed .intro {
     opacity: 1;
-    font-size: 34px;
-    font-weight: 400;
-    line-height: 144%;
-    letter-spacing: -0.68px;
     transform: translateY(-96px);
-    color: var(--color-primary-800);
-    pointer-events: auto;
   }
 
   .isRevealed .message {
@@ -739,6 +780,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .intro,
+  .introHeadline,
+  .introCaption,
+  /* .isRevealed 쪽 교차 전환 규칙(클래스 2개)을 덮으려면 같은 우선순위가 필요하다 */
+  .isRevealed .introHeadline,
+  .isRevealed .introCaption,
   .message,
   .brandPanel,
   .contentPanel,

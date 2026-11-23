@@ -6,12 +6,12 @@
  * - 상단 테이블 영역이 남은 세로 공간을 채움 (하단 문구는 카드 하단 고정)
  */
 
+/* 최소 페이지 높이를 채우고, 내용이 더 길면 늘어난다 (잘리지 않게 고정 높이 없음) */
 .ja-worldwide-card.admin-list-card {
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  height: 100%;
+  height: auto;
   margin-bottom: 0;
 }
 
@@ -23,16 +23,14 @@
 .ja-worldwide-card__body {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   gap: 24px;
   min-width: 0;
-  min-height: 0;
 }
 
-/* 상단 관리 테이블: 남은 높이까지 박스 확장 (행 아래 빈 여백) */
+/* 상단 관리 테이블: 남은 높이까지 박스 확장 (행 아래 빈 여백), 행보다 작게 줄지 않음 */
 .ja-worldwide-card__body > .ja-worldwide-table-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 0 auto;
 }
 
 /* 하단 문구: 높이 고정, 카드 하단 */
