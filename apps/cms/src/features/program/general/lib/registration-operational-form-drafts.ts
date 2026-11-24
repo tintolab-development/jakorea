@@ -359,7 +359,8 @@ export function mergeOperationalOverlayForPersist(
 
 function applySidecarMediaToPersistOverlay(
   overlay: Record<string, unknown>,
-  catalogId: string
+  catalogId: string,
+  includeUnconfirmedThumbnail = false
 ): Record<string, unknown> {
   const prefix = recruitDetailInfoOverlayPrefixForCatalogId(catalogId)
   if (prefix == null) return overlay
@@ -373,6 +374,10 @@ function applySidecarMediaToPersistOverlay(
     next[thumbKey] = sidecar.thumbFileObjectId
     next[contentKey] = contentUrlForFileObjectId(sidecar.thumbFileObjectId)
     if (sidecar.thumbFileName?.trim()) next[nameKey] = sidecar.thumbFileName.trim()
+  } else if (includeUnconfirmedThumbnail && sidecar.thumbFileName?.trim()) {
+    next[thumbKey] = null
+    next[contentKey] = null
+    next[nameKey] = sidecar.thumbFileName.trim()
   }
   const liveAttachmentIds = overlay[recruitDetailAttachmentFileObjectIdsKey(prefix)]
   const hasLiveAttachments =
@@ -601,14 +606,17 @@ export function collectOperationalOverlayForCatalogId(
  * 활성 스코프(`getRecord`)는 신청 단계로 넘어가면 비므로 persist에 쓰지 않는다.
  */
 export function collectSelectedRecruitOverlaysForProgram(
-  program: Program
+  program: Program,
+  includeGeneralDraftMedia = false
 ): Record<string, unknown> {
   const merged: Record<string, unknown> = {}
   for (const spec of listVisibleOperationalFormSpecs(program)) {
     if (spec.formType !== 'RECRUITMENT') continue
     const overlay = collectOperationalOverlayForCatalogId(spec.templateCode)
     if (overlay == null) continue
-    Object.assign(merged, overlay)
+    Object.assign(merged, includeGeneralDraftMedia
+      ? applySidecarMediaToPersistOverlay(overlay, spec.templateCode, true)
+      : overlay)
   }
   return merged
 }
@@ -943,7 +951,8 @@ export async function persistRegistrationOperationalOverlaysToLocal(
         liveOverlay ?? {},
         operationalOverlayKeyPrefixesForCatalogId(catalogId)
       ),
-      catalogId
+      catalogId,
+      variant === 'general'
     )
     await persistRegistrationWizardFormDraft({
       programType,

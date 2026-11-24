@@ -49,6 +49,20 @@ function bucketKey(scope: string, prefix: string): string {
   return `${scope}::${prefix}`
 }
 
+// A token belongs to the draft scope and field, not to a mounted React component.
+const thumbnailSelections = new Map<string, symbol>()
+
+export function beginRecruitDetailThumbnailSelection(scope: string, prefix: string): () => boolean {
+  const key = bucketKey(scope, prefix)
+  const token = Symbol()
+  thumbnailSelections.set(key, token)
+  return () => thumbnailSelections.get(key) === token
+}
+
+export function invalidateRecruitDetailThumbnailSelection(scope: string, prefix: string): void {
+  thumbnailSelections.delete(bucketKey(scope, prefix))
+}
+
 function readStore(): DraftMediaStore {
   const storage = sessionStore()
   if (storage == null) return {}
@@ -152,20 +166,23 @@ export function persistRecruitDetailDraftMediaFromOverlay(
 }
 
 export function clearRecruitDetailDraftMedia(scope: string, prefix: string): void {
+  invalidateRecruitDetailThumbnailSelection(scope, prefix)
   const next = { ...readStore() }
   delete next[bucketKey(scope, prefix)]
   writeStore(next)
 }
 
 export function clearAllRecruitDetailDraftMedia(): void {
+  thumbnailSelections.clear()
   writeStore({})
 }
 
-/** overlay에 미디어 ID가 없을 때만 session sidecar를 얹는다. */
+/** Restore confirmed media and, for GENERAL only, an explicitly unconfirmed selection. */
 export function recruitDetailDraftMediaRestorePatch(
   scope: string,
   prefix: string,
-  overlay: Record<string, unknown> = peekRecruitDetailInfoRecord(scope)
+  overlay: Record<string, unknown> = peekRecruitDetailInfoRecord(scope),
+  includeUnconfirmedThumbnail = false
 ): Record<string, unknown> | null {
   const stored = peekRecruitDetailDraftMedia(scope, prefix)
   if (stored == null) return null
@@ -174,7 +191,13 @@ export function recruitDetailDraftMediaRestorePatch(
     overlay[recruitDetailThumbFileObjectIdKey(prefix)],
     overlay[recruitDetailThumbContentUrlKey(prefix)]
   )
-  if (liveThumbId == null && stored.thumbFileObjectId != null) {
+  if (includeUnconfirmedThumbnail && stored.thumbFileObjectId == null && stored.thumbFileName?.trim()) {
+    // The sidecar is written when selection starts, before its upload can complete.
+    // Never restore an older confirmed ID over this newer, unconfirmed selection.
+    patch[recruitDetailThumbFileObjectIdKey(prefix)] = null
+    patch[recruitDetailThumbContentUrlKey(prefix)] = null
+    patch[recruitDetailThumbFileNameKey(prefix)] = stored.thumbFileName.trim()
+  } else if (liveThumbId == null && stored.thumbFileObjectId != null) {
     patch[recruitDetailThumbFileObjectIdKey(prefix)] = stored.thumbFileObjectId
     patch[recruitDetailThumbContentUrlKey(prefix)] = contentUrlForFileObjectId(
       stored.thumbFileObjectId

@@ -213,9 +213,18 @@ describe('recruitmentCreateMediaFieldsFromOverlay', () => {
     expect(() => withRecruitmentCreateMedia(rows, overlay, 'general')).toThrow('썸네일 업로드가 완료되지 않았습니다')
     expect(withRecruitmentCreateMedia(rows, { ...overlay, 'recruit.detailInfo.thumbFileObjectId': 22 }, 'general'))
       .toEqual([{ ...rows[0], thumbnailFileObjectId: 22 }])
-    expect(withRecruitmentCreateMedia(rows, { 'recruit.detailInfo.thumbFileName': null }, 'general')).toEqual(rows)
-    expect(withRecruitmentCreateMedia([{ ...rows[0], thumbnailFileObjectId: 23 }], overlay, 'general'))
-      .toEqual([{ ...rows[0], thumbnailFileObjectId: 23 }])
+    expect(withRecruitmentCreateMedia(rows, { 'recruit.detailInfo.thumbFileName': null }, 'general'))
+      .toEqual([{ ...rows[0], thumbnailFileObjectId: null }])
+    expect(() => withRecruitmentCreateMedia([{ ...rows[0], thumbnailFileObjectId: 23 }], overlay, 'general'))
+      .toThrow('썸네일 업로드가 완료되지 않았습니다')
+    expect(withRecruitmentCreateMedia([{ ...rows[0], thumbnailFileObjectId: 23 }], {
+      'recruit.detailInfo.thumbFileObjectId': null,
+      'recruit.detailInfo.thumbFileName': null,
+      'recruit.detailInfo.thumbContentUrl': null,
+    }, 'general')).toEqual([{ ...rows[0], thumbnailFileObjectId: null }])
+    expect(withRecruitmentCreateMedia([{ ...rows[0], thumbnailFileObjectId: 23 }], {
+      'recruit.detailInfo.thumbFileObjectId': 24,
+    }, 'general')).toEqual([{ ...rows[0], thumbnailFileObjectId: 24 }])
   })
 
   it('실패한 강사 썸네일은 참여자 행에 영향을 주지 않는다', () => {

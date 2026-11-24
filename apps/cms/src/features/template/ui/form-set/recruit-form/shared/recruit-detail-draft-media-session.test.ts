@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
+  beginRecruitDetailThumbnailSelection,
   clearAllRecruitDetailDraftMedia,
+  invalidateRecruitDetailThumbnailSelection,
   clearRecruitDetailDraftMedia,
   peekRecruitDetailDraftMedia,
   persistRecruitDetailDraftMedia,
@@ -65,6 +67,38 @@ describe('recruit-detail-draft-media-session', () => {
         'recruit.detailInfo.thumbFileObjectId': 88,
       })
     ).toBeNull()
+  })
+
+  it('일반 모집의 미확정 선택을 복원하고 기존 ID를 되살리지 않는다', () => {
+    const scope = 'recruitment-participant-individual'
+    const prefix = 'recruit.detailInfo'
+    persistRecruitDetailDraftMedia(scope, prefix, { thumbFileName: 'failed.png' })
+    expect(recruitDetailDraftMediaRestorePatch(scope, prefix, {}, true)).toEqual({
+      'recruit.detailInfo.thumbFileObjectId': null,
+      'recruit.detailInfo.thumbContentUrl': null,
+      'recruit.detailInfo.thumbFileName': 'failed.png',
+    })
+    expect(recruitDetailDraftMediaRestorePatch(scope, prefix, {
+      'recruit.detailInfo.thumbFileObjectId': 99,
+    }, true)).toMatchObject({ 'recruit.detailInfo.thumbFileObjectId': null })
+    expect(recruitDetailDraftMediaRestorePatch(scope, prefix, {})).toBeNull()
+    expect(recruitDetailDraftMediaRestorePatch('other-scope', prefix, {}, true)).toBeNull()
+    clearRecruitDetailDraftMedia(scope, prefix)
+    expect(recruitDetailDraftMediaRestorePatch(scope, prefix, {}, true)).toBeNull()
+  })
+
+  it('새 선택, 삭제 및 초안 초기화는 지연된 업로드 응답만 무효화한다', () => {
+    const first = beginRecruitDetailThumbnailSelection('a', 'recruit.detailInfo')
+    const other = beginRecruitDetailThumbnailSelection('b', 'recruitInstructor.detailInfo')
+    const newer = beginRecruitDetailThumbnailSelection('a', 'recruit.detailInfo')
+    expect(first()).toBe(false)
+    expect(newer()).toBe(true)
+    expect(other()).toBe(true)
+    invalidateRecruitDetailThumbnailSelection('a', 'recruit.detailInfo')
+    expect(newer()).toBe(false)
+    expect(other()).toBe(true)
+    clearAllRecruitDetailDraftMedia()
+    expect(other()).toBe(false)
   })
 
   it('overlay에서 읽어 저장하고 삭제하면 비운다', () => {

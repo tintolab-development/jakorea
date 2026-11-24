@@ -728,7 +728,7 @@ export async function persistGeneralProgramRegistration(args: {
 
   // 생성 요청 전에 스냅샷 — 일반은 recruitments[] 미디어 필드, 1사1교·교육받은 교사는 생성 후 PUT
   const recruitMediaOverlay = (() => {
-    const leftover = collectSelectedRecruitOverlaysForProgram(program)
+    const leftover = collectSelectedRecruitOverlaysForProgram(program, variant === 'general')
     if (variant !== 'economy') return leftover
     const rhf = peekCompanySchoolRegistrationRhf()
     if (rhf == null) return leftover

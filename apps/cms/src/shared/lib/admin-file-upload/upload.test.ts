@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   confirmUpload,
   copyRequiredHeaders,
@@ -31,7 +31,16 @@ function wrapData<T>(data: T) {
 describe('admin file upload', () => {
   beforeEach(() => {
     vi.mocked(customInstance).mockReset()
-    global.fetch = vi.fn() as typeof fetch
+    vi.stubGlobal('fetch', vi.fn())
+    vi.stubEnv('VITE_API_BASE_URL', '')
+    vi.stubEnv('VITE_API_SERVER', '')
+    vi.stubEnv('VITE_DEV_PROXY_TARGET', '')
+    vi.stubEnv('VITE_NGROK_SERVER', '')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
   })
 
   it('uploadToS3는 requiredHeaders만 넣고 Authorization·credentials를 붙이지 않는다', async () => {
@@ -85,6 +94,13 @@ describe('admin file upload', () => {
   it('상대 경로 uploadUrl은 현재 origin 기준으로 해석한다', () => {
     expect(resolvePresignedUploadUrl('/api/admin/files/uploads/raw/key?signature=test')).toBe(
       'http://localhost/api/admin/files/uploads/raw/key?signature=test'
+    )
+  })
+
+  it('배포 API origin을 설정하면 상대 경로 signed URL은 해당 origin에서 해석한다', () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://example.invalid')
+    expect(resolvePresignedUploadUrl('/api/admin/files/uploads/raw/key?signature=test')).toBe(
+      'https://example.invalid/api/admin/files/uploads/raw/key?signature=test'
     )
   })
 
