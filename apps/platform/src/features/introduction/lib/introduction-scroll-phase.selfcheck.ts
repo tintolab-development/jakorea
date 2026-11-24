@@ -51,9 +51,10 @@ assert.deepEqual(upStates, ['P5:exit', 'P4:exit', 'P3:exit', 'P2:exit', 'P1:exit
 // 네이티브 스크롤로 index0 구간에 있어도 아래 한 번이면 01 접힘
 assert.equal(resolveIntroductionScrollState(getValueStepScrollY(start + 1, range, 6, 1)!, range, 6).activeValueIndex, 1)
 
-// 관성: 같은 제스처에서 감소하는 delta만 무시, 마우스 고정 delta·새 제스처는 통과
+// 스텝 직후 같은 손짓 꼬리: 간격 150ms 미만 + |delta| 커지지 않음. 새 손짓·다시 미는 동작은 통과
 assert.equal(isWheelInertia(16, 40, 60), true)
-assert.equal(isWheelInertia(16, 100, 100), false)
+assert.equal(isWheelInertia(16, 14, 14), true) // 관성 끝부분 같은 값 반복
+assert.equal(isWheelInertia(16, 100, 100), true) // 스텝 직후 이어지는 고정 delta도 같은 손짓
 assert.equal(isWheelInertia(400, 10, 60), false)
 assert.equal(isWheelInertia(16, 80, 40), false)
 

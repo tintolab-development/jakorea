@@ -12,6 +12,7 @@ import {
   resolveIntroductionScrollState,
   resolveWorldwideRevealProgress,
   resolveWorldwideStopProgress,
+  WHEEL_GESTURE_GAP_MS,
   type IntroductionScrollState,
 } from '../lib/introduction-scroll-phase'
 import type { IntroductionPageContent } from '../model/types'
@@ -19,6 +20,9 @@ import { GlobalValuePanel } from './global-value-section'
 import { HeroStage } from './hero-section'
 import heroStyles from './hero-section.module.css'
 import styles from './introduction-scroll.module.css'
+
+/** 스텝 부드러운 스크롤이 목표에 도착하지 못해도 휠 차단을 푸는 상한 */
+const STEP_MAX_FLIGHT_MS = 1500
 
 const INITIAL_STATE: IntroductionScrollState = {
   heroPhase: 'idle',
@@ -85,6 +89,31 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
     let stepLockedUntil = 0
     let lastWheelEventAt = 0
     let lastWheelAbsDelta = 0
+    /** 진행 중인 스텝의 목표 위치 — 도착 전에는 휠이 기본 스크롤로 새어 부드러운 스크롤을 끊지 않게 막는다 */
+    let stepTargetY: number | null = null
+    let stepStartedAt = 0
+    /** 마지막 스텝을 일으킨 손짓이 아직 이어지는 중인지(간격 WHEEL_GESTURE_GAP_MS 미만) */
+    let stepGesture = false
+
+    const startStep = (top: number, now: number) => {
+      stepLockedUntil = now + HERO_PHASE_STEP_MS
+      stepTargetY = top
+      stepStartedAt = now
+      stepGesture = true
+      wheelAccum = 0
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
+
+    /** 잠금 시간 안이거나 목표에 아직 도착하지 않음(최대 STEP_MAX_FLIGHT_MS) */
+    const isStepInFlight = (now: number) => {
+      if (now < stepLockedUntil) return true
+      if (stepTargetY == null) return false
+      if (Math.abs(window.scrollY - stepTargetY) <= 2 || now - stepStartedAt > STEP_MAX_FLIGHT_MS) {
+        stepTargetY = null
+        return false
+      }
+      return true
+    }
 
     const currentHeroState = (): IntroductionScrollState => scrollStateRef.current
 
@@ -97,9 +126,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
           ? getNextIntroductionScrollY(state, scrollRangeRef.current, valueCount)
           : getPreviousIntroductionScrollY(state, scrollRangeRef.current, valueCount)
       if (top == null) return false
-      stepLockedUntil = now + HERO_PHASE_STEP_MS
-      wheelAccum = 0
-      window.scrollTo({ top, behavior: 'smooth' })
+      startStep(top, now)
       return true
     }
 
@@ -171,8 +198,25 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       const target = event.target
       if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable="true"]')) return
 
-      const state = currentHeroState()
       const now = performance.now()
+      const gap = now - lastWheelEventAt
+      const absDelta = Math.abs(event.deltaY)
+      const prevAbsDelta = lastWheelAbsDelta
+      lastWheelEventAt = now
+      lastWheelAbsDelta = absDelta
+      if (gap >= WHEEL_GESTURE_GAP_MS) stepGesture = false
+      /*
+       * 스텝 이동 중, 그리고 그 스텝을 일으킨 손짓의 관성 꼬리는 막는다.
+       * 막지 않으면 06 구간을 지난 뒤(정지점 계산상 '일반 스크롤')의 휠이 기본 스크롤로 새어
+       * 부드러운 스크롤을 끊고 지나쳐 Worldwide 상단이 잘린 채 멈춘다.
+       */
+      if (isStepInFlight(now) || (stepGesture && isWheelInertia(gap, absDelta, prevAbsDelta))) {
+        event.preventDefault()
+        wheelAccum = 0
+        return
+      }
+
+      const state = currentHeroState()
       const goingDown = event.deltaY > 0
       /* Mission 이후(Push·accordion·Worldwide 진입)는 정지점 스텝 */
       const isValuePhase =
@@ -186,14 +230,6 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       }
 
       event.preventDefault()
-      const gap = now - lastWheelEventAt
-      const absDelta = Math.abs(event.deltaY)
-      const prevAbsDelta = lastWheelAbsDelta
-      lastWheelEventAt = now
-      lastWheelAbsDelta = absDelta
-      /* 잠금 중·잠금 직후 관성 꼬리는 새 스텝으로 세지 않음(항목 건너뜀 방지) */
-      if (now < stepLockedUntil) return
-      if (isWheelInertia(gap, absDelta, prevAbsDelta)) return
       if (gap > 220) wheelAccum = 0
       const stepped = resolveHeroPhaseWheelStep(wheelAccum, event.deltaY, HERO_PHASE_STEP_DELTA)
       wheelAccum = stepped.accumulated
@@ -204,9 +240,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
           Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, stepped.direction, worldwideStopRef.current,
         )
         if (top == null) return
-        stepLockedUntil = now + HERO_PHASE_STEP_MS
-        wheelAccum = 0
-        window.scrollTo({ top, behavior: 'smooth' })
+        startStep(top, now)
         return
       }
       stepHeroPhase(stepped.direction)
@@ -231,6 +265,11 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       if (downKeys.has(event.key)) direction = 1
       if (upKeys.has(event.key)) direction = -1
       if (direction === 0) return
+      /* 스텝 이동 중 키 입력이 기본 스크롤로 새어 부드러운 스크롤을 끊지 않게 */
+      if (isStepInFlight(performance.now())) {
+        event.preventDefault()
+        return
+      }
       const valueTop = getValueStepScrollY(
         Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, direction, worldwideStopRef.current,
       )
@@ -238,10 +277,8 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
         const top = valueTop
         event.preventDefault()
         const now = performance.now()
-        if (now < stepLockedUntil) return
-        stepLockedUntil = now + HERO_PHASE_STEP_MS
-        wheelAccum = 0
-        window.scrollTo({ top, behavior: 'smooth' })
+        if (isStepInFlight(now)) return
+        startStep(top, now)
         return
       }
       if (state.isFramePushed || state.heroPhase === 'exit') return

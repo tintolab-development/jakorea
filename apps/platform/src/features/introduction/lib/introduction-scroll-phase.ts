@@ -210,11 +210,15 @@ export function getValueStepScrollY(
   return stops[next] ?? null
 }
 
-/** 같은 제스처(짧은 간격)에서 |deltaY|가 줄어드는 중이면 트랙패드 관성으로 본다. 마우스 휠(고정 delta)은 통과. */
+/**
+ * 스텝을 일으킨 손짓의 꼬리(트랙패드 관성 포함)인지: 짧은 간격으로 이어지면서 |deltaY|가 커지지 않음.
+ * 관성 끝부분은 14, 14, 13 처럼 같은 값이 이어지므로 '같음'도 꼬리로 본다.
+ * |deltaY|가 다시 커지면 같은 손짓 안에서 새로 미는 동작으로 보고 통과.
+ */
 export const WHEEL_GESTURE_GAP_MS = 150
 
 export function isWheelInertia(gapMs: number, absDelta: number, prevAbsDelta: number): boolean {
-  return gapMs < WHEEL_GESTURE_GAP_MS && absDelta < prevAbsDelta
+  return gapMs < WHEEL_GESTURE_GAP_MS && absDelta <= prevAbsDelta
 }
 
 export function getIntroductionScrollY(
