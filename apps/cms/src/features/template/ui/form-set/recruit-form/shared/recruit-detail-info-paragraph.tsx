@@ -55,7 +55,11 @@ import {
   trackRecruitDetailMediaUpload,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import {
+  captureProgramThumbnailPreviewSession,
+  createProgramThumbnailPreviewUrl,
   forgetProgramThumbnailPreviewBlob,
+  isProgramThumbnailPreviewSessionCurrent,
+  releaseProgramThumbnailPreviewUrl,
   loadProgramThumbnailPreviewUrl,
   rememberProgramThumbnailPreviewBlob,
 } from '@/features/program/shared/api/program-thumbnail'
@@ -416,7 +420,7 @@ export function RecruitDetailInfoParagraph({
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
 
   const revokeThumb = useCallback((url: string | null | undefined) => {
-    if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+    releaseProgramThumbnailPreviewUrl(url)
   }, [])
 
   useEffect(() => () => revokeThumb(livePreview?.url), [livePreview, revokeThumb])
@@ -471,7 +475,8 @@ export function RecruitDetailInfoParagraph({
     (files: File[]) => {
       const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
       if (!image) return
-      const blobUrl = URL.createObjectURL(image)
+      const previewSession = captureProgramThumbnailPreviewSession()
+      const blobUrl = createProgramThumbnailPreviewUrl(image, previewSession)
       setLivePreview({ scope: editorResetKey, url: blobUrl })
       setStoredPreview(null)
       setThumbFileName(image.name)
@@ -482,6 +487,7 @@ export function RecruitDetailInfoParagraph({
       const draftGeneration = getRecruitDetailContentResetGeneration()
       const isLatestSelection = beginRecruitDetailThumbnailSelection(overlayScope, overlayKeyPrefix)
       const isCurrentDraft = () =>
+        isProgramThumbnailPreviewSessionCurrent(previewSession) &&
         isLatestSelection() &&
         getRecruitDetailContentResetGeneration() === draftGeneration &&
         !isRecruitDetailContentPersistSuppressed()
@@ -506,8 +512,8 @@ export function RecruitDetailInfoParagraph({
               owner: programThumbnailOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID),
               waitUntilAvailable: true,
             })
-            if (isGeneralWizard && !isCurrentDraft()) return
-            rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image)
+            if (!isProgramThumbnailPreviewSessionCurrent(previewSession) || (isGeneralWizard && !isCurrentDraft())) return
+            rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image, previewSession)
             writeThumbnail({
               [thumbFileNameKey]: image.name,
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
@@ -516,7 +522,7 @@ export function RecruitDetailInfoParagraph({
             })
             persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } catch {
-            if (isGeneralWizard && !isCurrentDraft()) return
+            if (!isProgramThumbnailPreviewSessionCurrent(previewSession) || (isGeneralWizard && !isCurrentDraft())) return
             writeThumbnail({
               [thumbFileNameKey]: isGeneralWizard ? image.name : null,
               [thumbFileObjectIdKey]: null,
@@ -534,7 +540,7 @@ export function RecruitDetailInfoParagraph({
                 : '썸네일 업로드에 실패했습니다. 다시 선택해 주세요.',
             })
           } finally {
-            if (!isGeneralWizard || isCurrentDraft()) {
+            if (isProgramThumbnailPreviewSessionCurrent(previewSession) && (!isGeneralWizard || isCurrentDraft())) {
               setUploadingThumbnailScope(prev => prev === editorResetKey ? null : prev)
             }
           }

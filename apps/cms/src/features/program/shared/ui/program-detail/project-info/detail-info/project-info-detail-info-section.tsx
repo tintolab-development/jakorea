@@ -22,6 +22,10 @@ import {
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 import {
+  captureProgramThumbnailPreviewSession,
+  createProgramThumbnailPreviewUrl,
+  isProgramThumbnailPreviewSessionCurrent,
+  releaseProgramThumbnailPreviewUrl,
   loadProgramThumbnailPreviewUrl,
   rememberProgramThumbnailPreviewBlob,
 } from '@/features/program/shared/api/program-thumbnail'
@@ -133,7 +137,7 @@ function axiosErrorData(error: unknown): unknown {
 }
 
 function revokeBlobUrl(url: string | null | undefined) {
-  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+  if (url?.startsWith('blob:')) releaseProgramThumbnailPreviewUrl(url)
 }
 
 /** `/content` 경로는 대표 이미지를 열지 못한다. http(s)·blob 만 미리보기로 쓴다. */
@@ -486,7 +490,7 @@ function useDetailInfoEditorBlock(
   useEffect(() => {
     if (isEditMode) return
     setThumbnailPreviewBlobUrl(prev => {
-      if (prev) URL.revokeObjectURL(prev)
+      if (prev) releaseProgramThumbnailPreviewUrl(prev)
       return null
     })
   }, [isEditMode])
@@ -559,6 +563,7 @@ function useDetailInfoEditorBlock(
     let cancelled = false
     let createdUrl: string | null = null
     void (async () => {
+      const previewSession = captureProgramThumbnailPreviewSession()
       let fileObjectId: number | null = null
       let fileName = ''
       if (hasProgramMediaTarget(program)) {
@@ -572,6 +577,7 @@ function useDetailInfoEditorBlock(
       } else {
         return
       }
+      if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
       if (cancelled || fileObjectId == null) {
         if (!cancelled) {
           setLinkedThumbnail(prev => {
@@ -709,10 +715,11 @@ function ThumbnailImageField({
             ? async file => {
                   if (!form) return
                   setThumbnailPreviewBlobUrl(prev => {
-                    if (prev) URL.revokeObjectURL(prev)
+                    if (prev) releaseProgramThumbnailPreviewUrl(prev)
                     return null
                   })
-                  const blobUrl = URL.createObjectURL(file)
+                  const previewSession = captureProgramThumbnailPreviewSession()
+                  const blobUrl = createProgramThumbnailPreviewUrl(file, previewSession)
                   setThumbnailPreviewBlobUrl(blobUrl)
                   setUploadingThumbnail(true)
                   const task = (async () => {
@@ -723,10 +730,12 @@ function ThumbnailImageField({
                         owner,
                         waitUntilAvailable: true,
                       })
-                      rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file)
+                      if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
+                      rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file, previewSession)
                       if (hasProgramMediaTarget(program)) {
                         await putProgramMediaThumbnail(program, uploaded.fileObjectId)
                       }
+                      if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
                       if (isUjatTypedRecruitmentDraftProgram(program) && form) {
                         form.setValue('recruitmentThumbnailFileObjectId', uploaded.fileObjectId, {
                           shouldDirty: true,
@@ -744,9 +753,13 @@ function ThumbnailImageField({
                       let previewUrl = blobUrl
                       try {
                         previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
-                        if (previewUrl !== blobUrl) URL.revokeObjectURL(blobUrl)
+                        if (previewUrl !== blobUrl) releaseProgramThumbnailPreviewUrl(blobUrl)
                       } catch {
                         previewUrl = blobUrl
+                      }
+                      if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) {
+                        releaseProgramThumbnailPreviewUrl(previewUrl)
+                        return
                       }
                       setLinkedThumbnail(prev => {
                         if (prev?.url !== previewUrl) revokeBlobUrl(prev?.url)
@@ -754,7 +767,8 @@ function ThumbnailImageField({
                       })
                       setThumbnailPreviewBlobUrl(null)
                     } catch (error) {
-                      URL.revokeObjectURL(blobUrl)
+                      releaseProgramThumbnailPreviewUrl(blobUrl)
+                      if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
                       setThumbnailPreviewBlobUrl(null)
                       showAlert({
                         title: '안내',
@@ -775,7 +789,7 @@ function ThumbnailImageField({
           !disabled && isFormEdit
             ? () => {
                   setThumbnailPreviewBlobUrl(prev => {
-                    if (prev) URL.revokeObjectURL(prev)
+                    if (prev) releaseProgramThumbnailPreviewUrl(prev)
                     return null
                   })
                   if (form) {

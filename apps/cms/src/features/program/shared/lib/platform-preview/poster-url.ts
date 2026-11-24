@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
-import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
+import { loadProgramThumbnailPreviewUrl, releaseProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { getRecruitDetailInfoRecord } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
@@ -188,7 +188,7 @@ export function usePreviewPosterUrl(
 
     const apply = (nextUrl: string) => {
       if (cancelled) {
-        if (nextUrl.startsWith('blob:')) URL.revokeObjectURL(nextUrl)
+        if (nextUrl.startsWith('blob:')) releaseProgramThumbnailPreviewUrl(nextUrl)
         return
       }
       objectUrl = nextUrl.startsWith('blob:') ? nextUrl : null
@@ -208,7 +208,7 @@ export function usePreviewPosterUrl(
 
     return () => {
       cancelled = true
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      if (objectUrl) releaseProgramThumbnailPreviewUrl(objectUrl)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- program 객체 대신 식별 필드로 재조회
   }, [enabled, programId, audience, seedFileId])
