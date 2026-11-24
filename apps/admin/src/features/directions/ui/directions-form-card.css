@@ -4,6 +4,24 @@
  * 카드 fill·조회 모양은 공통(admin-document-card · inlineReadOnly) — 여기엔 화면 고유 규칙만 둔다
  */
 
+/*
+ * 상단 타이틀·버튼 영역 — 안내 문구가 길어 좁은 화면에서 버튼이 다음 줄로 넘어가면
+ * 툴바 높이가 한 줄로 계산돼 버튼이 표 위로 겹친다.
+ * 버튼은 시안처럼 같은 줄 오른쪽에 두고, 넘치는 것은 안내 문구가 줄바꿈되게 한다.
+ */
+.directions-card > .admin-list-toolbar {
+  flex-wrap: nowrap;
+}
+
+.directions-card > .admin-list-toolbar .table-header-title--wrapper {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.directions-card > .admin-list-toolbar .table-header-actions--wrapper {
+  flex-shrink: 0;
+}
+
 .directions-card__body {
   gap: 16px;
 }

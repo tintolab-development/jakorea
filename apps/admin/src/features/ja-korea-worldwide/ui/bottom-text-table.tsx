@@ -2,8 +2,9 @@
  * JA Worldwide — 하단 문구 영역 (상단 지부 테이블과 분리)
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
+import { formatThousands, handleThousandsInputEvent } from '@/shared/lib/thousands-input'
 import { CmsInput, CmsTextArea } from '@/shared/ui'
 
 type BottomTextTableProps = {
@@ -11,44 +12,42 @@ type BottomTextTableProps = {
   statNumber: number
   mode: 'view' | 'edit'
   onChange: (value: string) => void
-  onStatNumberChange: (value: number) => void
+  /** 입력란을 비우면 null — 저장 시 필수값 검증 대상 */
+  onStatNumberChange: (value: number | null) => void
 }
 
 export function BottomTextTable({
   value, statNumber, mode, onChange, onStatNumberChange,
 }: BottomTextTableProps) {
-  const [statDraft, setStatDraft] = useState(() => statNumber.toLocaleString('en-US'))
+  const [statDraft, setStatDraft] = useState(() => formatThousands(statNumber))
 
-  // Do not reformat a focused edit on every keystroke (caret would jump).
+  // 조회 모드로 돌아가면(저장·취소) 서버 값 기준으로 다시 맞춘다.
   useEffect(() => {
-    if (mode === 'view') setStatDraft(statNumber.toLocaleString('en-US'))
+    if (mode === 'view') setStatDraft(formatThousands(statNumber))
   }, [mode, statNumber])
 
-  const updateStat = (raw: string) => {
-    if (!/^[0-9,]*$/.test(raw)) return
-    const digits = raw.replaceAll(',', '')
-    if (digits.length > 16) return
-    const next = digits === '' ? 0 : Number(digits)
-    if (!Number.isSafeInteger(next) || next < 0) return
-    setStatDraft(raw)
-    onStatNumberChange(next)
+  /** 입력 즉시 세 자리 콤마를 붙이고, 커서는 입력한 숫자 기준 위치를 유지한다. */
+  const updateStat = (e: ChangeEvent<HTMLInputElement>) => {
+    const result = handleThousandsInputEvent(e, { maxDigits: 16 })
+    if (!result) return
+    setStatDraft(result.formatted)
+    onStatNumberChange(result.value)
   }
 
   return (
     <DetailInfoForm title="JA Worldwide 문구" hideHeader mode={mode} className="ja-worldwide-bottom">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="상단 텍스트"
-          view={<span className="ja-worldwide-bottom__text">{statNumber.toLocaleString('en-US')}</span>}
+          label="JA Worldwide 수치"
+          view={<span className="ja-worldwide-bottom__text">{formatThousands(statNumber)}</span>}
           edit={
             <CmsInput
               inputSize="medium"
               width="100%"
               inputMode="numeric"
-              aria-label="JA Worldwide 상단 텍스트 숫자"
+              aria-label="JA Worldwide 수치"
               value={statDraft}
-              onChange={e => updateStat(e.target.value)}
-              onBlur={() => setStatDraft(statNumber.toLocaleString('en-US'))}
+              onChange={updateStat}
             />
           }
         />

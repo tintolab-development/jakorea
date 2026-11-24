@@ -10,6 +10,7 @@ import {
   type MainContentFieldErrors,
   PERFORMANCE_METRIC_FIELDS,
 } from '@/features/main-content/lib/validate'
+import { handleThousandsInputEvent } from '@/shared/lib/thousands-input'
 import { CmsInput } from '@/shared/ui'
 
 /** Figma Table / Vertical / Cell required — 라벨 텍스트 shrink 래퍼 */
@@ -106,7 +107,13 @@ export function MetricsNestedTable({
                     value={metric.value}
                     error={Boolean(error)}
                     message={error}
-                    onChange={e => onChangeMetric(metric.id, { value: e.target.value })}
+                    inputMode="numeric"
+                    onChange={e => {
+                      // 숫자만, 입력 즉시 세 자리 콤마 (저장 시 parseMetricCount가 콤마 제거)
+                      const result = handleThousandsInputEvent(e)
+                      if (!result) return
+                      onChangeMetric(metric.id, { value: result.formatted })
+                    }}
                     placeholder="수치"
                     aria-label={`${metric.label} 수치`}
                   />

@@ -5,9 +5,10 @@
 
 import type { ReactNode } from 'react'
 import type { DirectionsInfo } from '@/entities/directions/model/types'
-import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { isValidOrgContactPhone } from '@/shared/lib/org-contact-phone'
 import {
   isOptimisticLockConflictError,
+  readApiErrorField,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
@@ -115,7 +116,7 @@ export function validateDirectionsBeforeSave(data: DirectionsInfo): DirectionsAl
       content: `전화번호는 ${FIELD_LIMITS.phone}자 이내로 입력해 주세요.`,
     }
   }
-  if (phone && !isValidKoreanPhoneNumber(phone)) {
+  if (phone && !isValidOrgContactPhone(phone)) {
     return {
       title: '전화번호 입력 오류',
       content: '올바른 전화번호 형식이 아닙니다 (예: 02-783-2367)',
@@ -125,6 +126,12 @@ export function validateDirectionsBeforeSave(data: DirectionsInfo): DirectionsAl
     return {
       title: 'Fax 번호 입력 오류',
       content: `Fax 번호는 ${FIELD_LIMITS.fax}자 이내로 입력해 주세요.`,
+    }
+  }
+  if (fax && !isValidOrgContactPhone(fax)) {
+    return {
+      title: 'Fax 번호 입력 오류',
+      content: '올바른 Fax 번호 형식이 아닙니다 (예: 070-4275-5115)',
     }
   }
   if (email.length > FIELD_LIMITS.email) {
@@ -156,6 +163,37 @@ export function directionsSaveFailureAlert(error: unknown): DirectionsAlert {
   if (/Kakao map HTML/i.test(message)) {
     return kakaoMapHtmlFormatAlert()
   }
+
+  // 서버 VALIDATION_ERROR의 field를 먼저 본다 — 사유 문구에 다른 필드 단어가 섞여도 오판하지 않게
+  const field = readApiErrorField(error)
+  if (field) {
+    const fieldAlert = DIRECTIONS_FIELD_ALERTS[field]
+    if (fieldAlert) return fieldAlert
+  } else {
+    // field가 없는 기존 응답만 message 정규식으로 판정
+    const legacyAlert = legacyDirectionsMessageAlert(message)
+    if (legacyAlert) return legacyAlert
+  }
+
+  if (/Permission is denied|FORBIDDEN/i.test(message)) {
+    return { ...ADMIN_ACCESS_DENIED_ALERT }
+  }
+
+  return {
+    title: '저장 실패',
+    content: '오시는 길 정보 저장에 실패했습니다. 다시 시도해 주세요.',
+  }
+}
+
+const DIRECTIONS_FIELD_ALERTS: Record<string, DirectionsAlert> = {
+  koreanAddress: { title: '국문 주소지 입력 오류', content: '국문 주소지 입력을 확인해 주세요.' },
+  englishAddress: { title: '영문 주소지 입력 오류', content: '영문 주소지 입력을 확인해 주세요.' },
+  email: { title: '이메일 주소 형식 오류', content: '올바른 이메일 주소 형식으로 입력해 주세요.' },
+  phone: { title: '전화번호 입력 오류', content: '전화번호 입력을 확인해 주세요.' },
+  fax: { title: 'Fax 번호 입력 오류', content: 'Fax 번호 입력을 확인해 주세요.' },
+}
+
+function legacyDirectionsMessageAlert(message: string): DirectionsAlert | null {
   if (/koreanAddress|korean.?address/i.test(message)) {
     return {
       title: '국문 주소지 입력 오류',
@@ -186,12 +224,5 @@ export function directionsSaveFailureAlert(error: unknown): DirectionsAlert {
       content: 'Fax 번호 입력을 확인해 주세요.',
     }
   }
-  if (/Permission is denied|FORBIDDEN/i.test(message)) {
-    return { ...ADMIN_ACCESS_DENIED_ALERT }
-  }
-
-  return {
-    title: '저장 실패',
-    content: '오시는 길 정보 저장에 실패했습니다. 다시 시도해 주세요.',
-  }
+  return null
 }

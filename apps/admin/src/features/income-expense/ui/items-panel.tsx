@@ -27,8 +27,11 @@ import {
   formatRatioDisplay,
   parseAmountInput,
   parseRatioInput,
+  sanitizeRatioInput,
 } from '@/features/income-expense/lib/format'
+import { financeValidationFailureAlert } from '@/features/income-expense/lib/save-failure-alert'
 import { ItemFormModal } from '@/features/income-expense/ui/item-form-modal'
+import { formatThousands, handleThousandsInputEvent } from '@/shared/lib/thousands-input'
 import {
   FinanceItemDragHandle,
   FinanceItemsSortableTable,
@@ -94,6 +97,15 @@ function itemsTitle(section: FinanceSection, view: FinanceViewKind): string {
   return '테이블 지출 항목'
 }
 
+/**
+ * 금액 입력 초기값 — 원 단위 정수 + 세 자리 콤마 (저장 시 parseAmountInput이 콤마 제거).
+ * 소수가 오면 목록 표시(formatAmount)와 같이 반올림해 보여 준다 — 그대로 두면 콤마 입력에서 수정할 수 없다.
+ */
+function toAmountInputValue(amount: number): string {
+  const won = Math.round(amount)
+  return Number.isSafeInteger(won) && won >= 0 ? formatThousands(won) : String(amount)
+}
+
 function buildDraftMap(rows: FinanceItem[]): DraftMap {
   return Object.fromEntries(
     rows.map(row => [
@@ -101,7 +113,7 @@ function buildDraftMap(rows: FinanceItem[]): DraftMap {
       {
         name: row.name,
         ratio: String(row.ratio),
-        amount: String(row.amount),
+        amount: toAmountInputValue(row.amount),
         ...(row.category ? { category: row.category } : {}),
       },
     ])
@@ -220,6 +232,12 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
           return
         }
       }
+      // 서버 검증 실패(field: items[n].amount 등) — 영어 원문 대신 필드별 안내
+      const validationAlert = financeValidationFailureAlert(err)
+      if (validationAlert) {
+        showAlert(validationAlert)
+        return
+      }
       showAlert({
         title: '저장 실패',
         content: '항목 저장에 실패했습니다. 다시 시도해 주세요.',
@@ -274,10 +292,13 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
           })
           return
         }
-        showAlert({
-          title: '등록 실패',
-          content: err instanceof Error ? err.message : '항목 등록에 실패했습니다.',
-        })
+        // 서버 검증 실패는 필드별 안내, 그 외에는 기존 문구 — 서버 영어 원문은 노출하지 않는다
+        showAlert(
+          financeValidationFailureAlert(err) ?? {
+            title: '등록 실패',
+            content: '항목 등록에 실패했습니다.',
+          }
+        )
       }
     },
     [createMutation, showAlert]
@@ -388,7 +409,12 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   inputSize="medium"
                   width="100%"
                   value={raw}
-                  onChange={e => handleDraftChange(record.id, { ratio: e.target.value })}
+                  onChange={e => {
+                    // 숫자·소수점만, 0~100 · 소수 4자리
+                    const next = sanitizeRatioInput(e.target.value)
+                    if (next === null) return
+                    handleDraftChange(record.id, { ratio: next })
+                  }}
                   placeholder="0"
                   inputMode="decimal"
                   aria-label={`비율 ${record.sortOrder}`}
@@ -406,7 +432,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
         align: isEditing ? 'left' : 'center',
         className: 'income-expense-table__col--amount',
         render: (_value, record) => {
-          const raw = drafts[record.id]?.amount ?? String(record.amount)
+          const raw = drafts[record.id]?.amount ?? toAmountInputValue(record.amount)
           if (isEditing) {
             return (
               <div className="income-expense-panel__input-suffix income-expense-panel__input-suffix--amount">
@@ -414,7 +440,12 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   inputSize="medium"
                   width="100%"
                   value={raw}
-                  onChange={e => handleDraftChange(record.id, { amount: e.target.value })}
+                  onChange={e => {
+                    // 숫자만, 입력 즉시 세 자리 콤마
+                    const result = handleThousandsInputEvent(e)
+                    if (!result) return
+                    handleDraftChange(record.id, { amount: result.formatted })
+                  }}
                   placeholder="0"
                   inputMode="numeric"
                   aria-label={`금액 ${record.sortOrder}`}

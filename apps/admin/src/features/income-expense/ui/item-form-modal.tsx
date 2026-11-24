@@ -8,7 +8,12 @@ import {
   type FinanceSection,
   type FinanceViewKind,
 } from '@/entities/income-expense/model/types'
-import { parseAmountInput, parseRatioInput } from '@/features/income-expense/lib/format'
+import {
+  parseAmountInput,
+  parseRatioInput,
+  sanitizeRatioInput,
+} from '@/features/income-expense/lib/format'
+import { handleThousandsInputEvent } from '@/shared/lib/thousands-input'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
@@ -190,7 +195,11 @@ export function ItemFormModal({
                   width="100%"
                   placeholder="비율을 입력해 주세요"
                   value={ratio}
-                  onChange={e => setRatio(e.target.value)}
+                  onChange={e => {
+                    // 숫자·소수점만, 0~100 · 소수 4자리
+                    const next = sanitizeRatioInput(e.target.value)
+                    if (next !== null) setRatio(next)
+                  }}
                   inputMode="decimal"
                 />
                 <span className="income-expense-item-form-modal__suffix">%</span>
@@ -211,7 +220,12 @@ export function ItemFormModal({
                   width="100%"
                   placeholder="금액을 입력해 주세요"
                   value={amount}
-                  onChange={e => setAmount(e.target.value)}
+                  onChange={e => {
+                    // 숫자만, 입력 즉시 세 자리 콤마
+                    const result = handleThousandsInputEvent(e)
+                    if (!result) return
+                    setAmount(result.formatted)
+                  }}
                   inputMode="numeric"
                 />
                 <span className="income-expense-item-form-modal__suffix">원</span>
