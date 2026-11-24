@@ -9,6 +9,8 @@ import {
 } from '@/features/textbook/api/admin-business-areas-service'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import { invalidateBusinessAreaReferenceCaches } from '@/features/data-management/api/master-reference-cache'
+import { planBusinessAreaSave, rebasePendingBusinessAreaDraft, type BusinessAreaSaveOperation } from '@/features/textbook/lib/business-area-save-plan'
 import { hasDuplicateBusinessAreaName } from '@/features/textbook/lib/business-area-domain'
 import type { TextbookBusinessAreaRow } from '@/features/textbook/model/business-area.types'
 import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
@@ -86,6 +88,8 @@ export function useBusinessAreaManagementModal({
   const [settingsCompleteOpen, setSettingsCompleteOpen] = useState(false)
   const baselineRowsRef = useRef<TextbookBusinessAreaRow[]>([])
   const draftIdSequenceRef = useRef(0)
+  const savingRef = useRef(false)
+  const recoveryPendingRef = useRef<BusinessAreaSaveOperation[] | null>(null)
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
 
@@ -99,44 +103,30 @@ export function useBusinessAreaManagementModal({
     setDuplicateAlertOpen(false)
   }, [])
 
-  /** 로컬 rows를 RQ 캐시에 반영 — invalidate로 BA GET을 다시 치지 않음 */
-  const syncBusinessAreasCache = useCallback(
-    (nextRows: TextbookBusinessAreaRow[]) => {
-      queryClient.setQueryData(dataManagementQueryKeys.textbooks.businessAreas(), nextRows)
-    },
-    [queryClient]
-  )
-
-  /** 사업 분야명 변경 시에만 교재 목록 refetch (목록에 문자열로 노출) */
-  const invalidateTextbookLists = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: dataManagementQueryKeys.textbooks.lists(),
-    })
+  // Fetch the canonical list before building a write plan. Cancel a stale in-flight GET.
+  const fetchCanonicalRows = useCallback(async () => {
+    const queryKey = dataManagementQueryKeys.textbooks.businessAreas()
+    await queryClient.cancelQueries({ queryKey, exact: true })
+    const next = await listTextbookBusinessAreas()
+    queryClient.setQueryData(queryKey, next)
+    return next
   }, [queryClient])
 
   const reloadRows = useCallback(async () => {
-    const cached = queryClient.getQueryData<TextbookBusinessAreaRow[]>(
-      dataManagementQueryKeys.textbooks.businessAreas()
-    )
-    if (cached !== undefined) {
-      setRows(cached)
-      baselineRowsRef.current = cached
-      return
-    }
     setLoading(true)
     try {
-      const next = await listTextbookBusinessAreas()
+      const next = await fetchCanonicalRows()
       setRows(next)
       baselineRowsRef.current = next
-      queryClient.setQueryData(dataManagementQueryKeys.textbooks.businessAreas(), next)
+      recoveryPendingRef.current = null
     } catch (error) {
-      setSaveError(
-        getDataManagementApiErrorMessage(error, '사업 분야 목록을 불러오지 못했습니다.')
-      )
+      // A stale baseline must never be used to issue writes.
+      recoveryPendingRef.current ??= []
+      setSaveError(getDataManagementApiErrorMessage(error, '사업 분야 목록을 불러오지 못했습니다.'))
     } finally {
       setLoading(false)
     }
-  }, [queryClient])
+  }, [fetchCanonicalRows])
 
   useEffect(() => {
     if (!open) {
@@ -220,58 +210,68 @@ export function useBusinessAreaManagementModal({
   }, [cancelEdit])
 
   const applySettings = useCallback(async () => {
-    const baselineById = new Map(baselineRowsRef.current.map(row => [row.id, row]))
-    const draftIds = new Set(rows.map(row => row.id))
-    const deletedRows = baselineRowsRef.current.filter(row => !draftIds.has(row.id))
-    const addedRows = rows.filter(row => !baselineById.has(row.id))
-    const updatedRows = rows.filter(row => {
-      const baseline = baselineById.get(row.id)
-      return baseline != null && baseline.name !== row.name
-    })
-
-    if (deletedRows.length === 0 && addedRows.length === 0 && updatedRows.length === 0) {
-      resetEphemeralUi()
-      onClose()
-      setSettingsCompleteOpen(true)
-      return
-    }
-
+    if (savingRef.current || loading) return
+    savingRef.current = true
     setSaving(true)
     setSaveError(null)
+    let pending = recoveryPendingRef.current ?? planBusinessAreaSave(baselineRowsRef.current, rows)
+    let attempted = false
     try {
-      for (const row of updatedRows) {
-        await updateTextbookBusinessArea(row.id, row.name)
+      if (recoveryPendingRef.current !== null) {
+        // The preceding recovery GET failed. Reload/rebase first, without replaying writes.
+        const canonical = await fetchCanonicalRows()
+        baselineRowsRef.current = canonical
+        setRows(rebasePendingBusinessAreaDraft(canonical, pending))
+        recoveryPendingRef.current = null
+        setSaveError('서버 최신 상태를 불러왔습니다. 남은 변경 사항을 확인한 후 다시 저장해 주세요.')
+        return
       }
-      for (const row of addedRows) {
-        await createTextbookBusinessArea(row.name)
+      if (pending.length > 0) {
+        for (const op of [...pending]) {
+          attempted = true
+          if (op.kind === 'update') await updateTextbookBusinessArea(op.row.id, op.row.name)
+          else if (op.kind === 'create') await createTextbookBusinessArea(op.row.name)
+          else await deleteTextbookBusinessArea(op.row.id)
+          pending = pending.slice(1)
+        }
+        const nextRows = await fetchCanonicalRows()
+        baselineRowsRef.current = nextRows
+        setRows(nextRows)
+        await invalidateBusinessAreaReferenceCaches(queryClient)
+        onSaved?.()
       }
-      for (const row of deletedRows) {
-        await deleteTextbookBusinessArea(row.id)
-      }
-
-      const nextRows = await listTextbookBusinessAreas()
-      baselineRowsRef.current = nextRows
-      setRows(nextRows)
-      syncBusinessAreasCache(nextRows)
-      await invalidateTextbookLists()
-      onSaved?.()
       resetEphemeralUi()
       onClose()
       setSettingsCompleteOpen(true)
     } catch (error) {
-      if (isBusinessAreaDuplicateError(error)) {
-        setDuplicateAlertOpen(true)
-        return
+      if (attempted) {
+        // Writes are independent API calls, so even a failed response can leave committed changes.
+        // Refresh dependent caches and reconcile the remaining draft against the server.
+        recoveryPendingRef.current = pending
+        await queryClient.invalidateQueries({
+          queryKey: dataManagementQueryKeys.textbooks.businessAreas(),
+          refetchType: 'none',
+        })
+        await invalidateBusinessAreaReferenceCaches(queryClient)
+        try {
+          const canonical = await fetchCanonicalRows()
+          baselineRowsRef.current = canonical
+          setRows(rebasePendingBusinessAreaDraft(canonical, pending))
+          recoveryPendingRef.current = null
+          setSaveError('일부 변경 사항이 이미 반영되었을 수 있습니다. 최신 상태와 남은 변경 사항을 확인해 주세요.')
+        } catch {
+          setSaveError('서버 최신 상태를 확인하지 못했습니다. 다시 저장을 누르면 목록을 먼저 불러옵니다.')
+        }
+      } else {
+        setSaveError(getDataManagementApiErrorMessage(error, '사업 분야 설정 저장에 실패했습니다.'))
       }
-      if (isBusinessAreaInUseError(error)) {
-        setDeleteBlockedOpen(true)
-        return
-      }
-      setSaveError(getDataManagementApiErrorMessage(error, '사업 분야 설정 저장에 실패했습니다.'))
+      if (isBusinessAreaDuplicateError(error)) setDuplicateAlertOpen(true)
+      if (isBusinessAreaInUseError(error)) setDeleteBlockedOpen(true)
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
-  }, [invalidateTextbookLists, onClose, onSaved, resetEphemeralUi, rows, syncBusinessAreasCache])
+  }, [fetchCanonicalRows, loading, onClose, onSaved, queryClient, resetEphemeralUi, rows])
 
   return {
     rows,

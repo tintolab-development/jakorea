@@ -5,6 +5,7 @@ import {
   createDetailedProgram,
   deleteDetailedPrograms,
 } from '@/features/detailed-program/api/admin-detailed-programs-service'
+import { invalidateDetailedProgramOptions } from '@/features/data-management/api/master-reference-cache'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { DetailedProgramManagementRow } from '@/features/detailed-program/model/detailed-program-management.types'
 import {
@@ -43,6 +44,7 @@ export function useDetailedProgramMutations() {
   const createMutation = useMutation({
     mutationFn: createDetailedProgram,
     retry: false,
+    onSettled: () => invalidateDetailedProgramOptions(queryClient),
     onSuccess: async created => {
       if (!created.id) {
         await invalidateArrayLists(queryClient, listsKey)
@@ -62,6 +64,7 @@ export function useDetailedProgramMutations() {
   const bulkUpdateMutation = useMutation({
     mutationFn: bulkUpdateDetailedPrograms,
     retry: false,
+    onSettled: () => invalidateDetailedProgramOptions(queryClient),
     onSuccess: async updatedRows => {
       if (updatedRows.length === 0) {
         await invalidateArrayLists(queryClient, listsKey)
@@ -84,6 +87,7 @@ export function useDetailedProgramMutations() {
   const bulkChangesMutation = useMutation({
     mutationFn: bulkChangeDetailedPrograms,
     retry: false,
+    onSettled: () => invalidateDetailedProgramOptions(queryClient),
     onSuccess: async result => {
       for (const updated of result.updated) {
         if (!updated.id) continue
@@ -106,6 +110,7 @@ export function useDetailedProgramMutations() {
   const deleteMutation = useMutation({
     mutationFn: deleteDetailedPrograms,
     retry: false,
+    onSettled: () => invalidateDetailedProgramOptions(queryClient),
     onSuccess: (_data, ids) => {
       for (const id of ids) {
         queryClient.removeQueries({ queryKey: dataManagementQueryKeys.detailedPrograms.detail(id) })
