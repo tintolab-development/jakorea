@@ -3,6 +3,7 @@ import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
 import { HERO_PHASE_STEP_DELTA, HERO_PHASE_STEP_MS } from '../lib/hero-copy'
 import {
+  DEFAULT_WORLDWIDE_STOP_PROGRESS,
   getNextIntroductionScrollY,
   getPreviousIntroductionScrollY,
   getValueStepScrollY,
@@ -10,6 +11,7 @@ import {
   resolveHeroPhaseWheelStep,
   resolveIntroductionScrollState,
   resolveWorldwideRevealProgress,
+  resolveWorldwideStopProgress,
   type IntroductionScrollState,
 } from '../lib/introduction-scroll-phase'
 import type { IntroductionPageContent } from '../model/types'
@@ -36,6 +38,8 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
   const lastRevealPxRef = useRef(0)
   const scrollRangeRef = useRef(1)
   const maxRevealRef = useRef(0)
+  /** 06 다음 정지점: Worldwide 프레임 상단이 화면 맨 위에 오는 hold 진행도 */
+  const worldwideStopRef = useRef(DEFAULT_WORLDWIDE_STOP_PROGRESS)
   const prefersReducedMotion = usePrefersReducedMotion()
   const isPcUp = useMediaQuery('(min-width: 1080px)')
   const [mediaReady, setMediaReady] = useState(false)
@@ -107,6 +111,21 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
         0,
         (content?.offsetHeight ?? 0) - (viewport?.clientHeight ?? 0),
       )
+      measureWorldwideStop()
+    }
+
+    /*
+     * Worldwide 상단(content 기준) → 정지 진행도. 목록 영역은 항상 100vh라 단계와 무관하게 일정하고,
+     * reveal transform은 content 전체에 걸려 상대 위치에 영향이 없다.
+     */
+    const measureWorldwideStop = () => {
+      const content = valueContentRef.current
+      const worldwide = content?.querySelector<HTMLElement>('[data-ja-worldwide]')
+      const worldwideTop =
+        content && worldwide
+          ? worldwide.getBoundingClientRect().top - content.getBoundingClientRect().top
+          : 0
+      worldwideStopRef.current = resolveWorldwideStopProgress(worldwideTop, maxRevealRef.current)
     }
 
     const applyWorldwideReveal = (revealPx: number) => {
@@ -158,7 +177,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       /* Mission 이후(Push·accordion·Worldwide 진입)는 정지점 스텝 */
       const isValuePhase =
         getValueStepScrollY(
-          Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, goingDown ? 1 : -1,
+          Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, goingDown ? 1 : -1, worldwideStopRef.current,
         ) != null
       if (!isValuePhase) {
         if (state.isFramePushed || state.heroPhase === 'exit') return
@@ -182,7 +201,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
 
       if (isValuePhase) {
         const top = getValueStepScrollY(
-          Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, stepped.direction,
+          Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, stepped.direction, worldwideStopRef.current,
         )
         if (top == null) return
         stepLockedUntil = now + HERO_PHASE_STEP_MS
@@ -213,7 +232,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       if (upKeys.has(event.key)) direction = -1
       if (direction === 0) return
       const valueTop = getValueStepScrollY(
-        Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, direction,
+        Math.max(0, window.scrollY), scrollRangeRef.current, valueCount, direction, worldwideStopRef.current,
       )
       if (valueTop != null) {
         const top = valueTop

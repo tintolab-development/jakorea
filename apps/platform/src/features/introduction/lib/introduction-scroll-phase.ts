@@ -147,9 +147,28 @@ export function resolveIntroductionScrollState(
   }
 }
 
+/** Worldwide가 화면보다 짧을 때(전체가 보일 때) 마지막 정지점 — hold 구간 95% */
+export const DEFAULT_WORLDWIDE_STOP_PROGRESS = 0.95
+
+/**
+ * 06 다음 정지점: Worldwide 프레임 상단이 화면 맨 위에 오는 hold 진행도
+ * (시안 가치_스크롤 5단계 — 프레임 상단 0, 'JA Worldwide' 문구는 프레임 안쪽 62px).
+ * reveal 이동량 = maxReveal × progress, Worldwide 상단 화면 위치 = worldwideTop − 이동량.
+ * 끝까지 올리면 Worldwide 바닥 맞춤 → 화면보다 높은 Worldwide 상단(문구·숫자·링크)이 잘린다.
+ */
+export function resolveWorldwideStopProgress(
+  worldwideTopPx: number,
+  maxRevealPx: number,
+  topOffsetPx = 0,
+): number {
+  const revealPx = worldwideTopPx - topOffsetPx
+  if (!(maxRevealPx > 0) || !(revealPx > 0)) return DEFAULT_WORLDWIDE_STOP_PROGRESS
+  return Math.min(DEFAULT_WORLDWIDE_STOP_PROGRESS, revealPx / maxRevealPx)
+}
+
 /**
  * Mission 이후 휠/키보드 한 번 = 화면 변화 한 번.
- * 정지점: Mission → Push 정착(01~06 전체 펼침) → 01 접힘 … 05 접힘(06 Active) → Worldwide reveal.
+ * 정지점: Mission → Push 정착(01~06 전체 펼침) → 01 접힘 … 05 접힘(06 Active) → Worldwide reveal(worldwideStopProgress).
  * Value index 0은 Push 정착과 화면이 같아 정지점에서 제외한다(빈 스크롤 방지).
  * Mission 이전·Mission 위 방향·Worldwide 아래 방향은 null (Hero 스텝 / 일반 스크롤).
  */
@@ -158,6 +177,7 @@ export function getValueStepScrollY(
   totalScrollRange: number,
   valueCount: number,
   direction: 1 | -1,
+  worldwideStopProgress = DEFAULT_WORLDWIDE_STOP_PROGRESS,
 ): number | null {
   const count = normalizeValueCount(valueCount)
   const range = Math.max(1, totalScrollRange)
@@ -173,7 +193,7 @@ export function getValueStepScrollY(
     getHeroPhaseScrollY('mission', heroRange),
     heroRange + pushRange * 0.5,
     ...Array.from({ length: count - 1 }, (_, i) => valueStart + valueRange * ((i + 1.5) / count)),
-    Math.min(range, valueEnd + (range - valueEnd) * 0.95),
+    Math.min(range, valueEnd + (range - valueEnd) * worldwideStopProgress),
   ]
 
   let current: number

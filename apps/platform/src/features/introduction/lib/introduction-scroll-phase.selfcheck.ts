@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {
-  getValueStepScrollY, isWheelInertia, resolveIntroductionScrollState, resolveWorldwideRevealProgress,
+  getValueStepScrollY, isWheelInertia, resolveWorldwideStopProgress, DEFAULT_WORLDWIDE_STOP_PROGRESS, resolveIntroductionScrollState, resolveWorldwideRevealProgress,
   INTRODUCTION_HERO_VH, INTRODUCTION_PUSH_VH, INTRODUCTION_VALUE_VH, INTRODUCTION_TRACK_VH,
 } from './introduction-scroll-phase.ts'
 
@@ -56,4 +56,19 @@ assert.equal(isWheelInertia(16, 40, 60), true)
 assert.equal(isWheelInertia(16, 100, 100), false)
 assert.equal(isWheelInertia(400, 10, 60), false)
 assert.equal(isWheelInertia(16, 80, 40), false)
+
+// 06 다음 정지점: Worldwide 프레임 상단이 화면 맨 위에 오는 진행도에서 멈춘다
+// (1920×1080 실측: Worldwide 상단 1176px, 최대 이동량 1472px)
+const wwStop = resolveWorldwideStopProgress(1176, 1472)
+assert.ok(Math.abs(wwStop - 1176 / 1472) < 1e-9)
+assert.equal(Math.round(1176 - 1472 * wwStop), 0)
+assert.ok(Math.abs(resolveWorldwideStopProgress(1176, 1472, 62) - (1176 - 62) / 1472) < 1e-9)
+assert.equal(resolveWorldwideStopProgress(1600, 1472), DEFAULT_WORLDWIDE_STOP_PROGRESS) // 짧으면 기존 95%
+assert.equal(resolveWorldwideStopProgress(0, 0), DEFAULT_WORLDWIDE_STOP_PROGRESS) // 측정 전
+const stop06 = at(5)
+const toWorldwide = getValueStepScrollY(stop06, range, 6, 1, wwStop)!
+assert.ok(Math.abs(resolveWorldwideRevealProgress(toWorldwide, range) - wwStop) < 1e-6)
+assert.equal(resolveIntroductionScrollState(toWorldwide, range, 6).activeValueIndex, 5)
+assert.equal(getValueStepScrollY(toWorldwide, range, 6, 1, wwStop), null) // 이후 일반 스크롤
+assert.equal(resolveIntroductionScrollState(getValueStepScrollY(toWorldwide, range, 6, -1, wwStop)!, range, 6).activeValueIndex, 5)
 console.log('introduction-scroll-phase.selfcheck: ok')

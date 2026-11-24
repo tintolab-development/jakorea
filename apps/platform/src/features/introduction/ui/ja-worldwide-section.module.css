@@ -231,8 +231,9 @@
     background-size: contain;
   }
 
+  /* 시안(가치_스크롤 5단계): Worldwide 프레임 상단 → 'JA Worldwide' 문구 62px */
   .inner {
-    padding-top: 0;
+    padding-top: 62px;
     padding-bottom: 0;
   }
 
