@@ -1,4 +1,4 @@
-import { loadAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
+import { fetchFileContentBlob } from '@/shared/lib/admin-file-upload/attachments'
 import customInstance from '@/shared/api/orval-mutator'
 
 export type ProgramThumbnailResponse = {
@@ -30,7 +30,7 @@ export async function fetchProgramThumbnail(programId: number): Promise<ProgramT
 }
 
 function isPreviewableImageBlob(blob: Blob): boolean {
-  return blob.size > 0 && blob.type !== 'application/json'
+  return blob.size > 0 && blob.type.toLowerCase().startsWith('image/')
 }
 
 /** 등록 위저드 단계 이동 시 같은 세션에서 다시 받지 않도록 File/Blob을 기억한다. */
@@ -50,13 +50,13 @@ export function resetProgramThumbnailPreviewBlobsForTests(): void {
   thumbnailPreviewBlobs.clear()
 }
 
-/** img에 넣을 주소. `/content` fallback은 이 purpose에서 404라 쓰지 않는다. */
+/** Scoped inline preview (JABACK #200). Never fall back to download after an access denial. */
 export async function loadProgramThumbnailPreviewUrl(fileObjectId: number): Promise<string> {
   const cached = thumbnailPreviewBlobs.get(fileObjectId)
   if (cached && isPreviewableImageBlob(cached)) {
     return URL.createObjectURL(cached)
   }
-  const blob = await loadAdminFileBlob(fileObjectId, { skipGlobalErrorAlert: true })
+  const blob = await fetchFileContentBlob(fileObjectId, { skipGlobalErrorAlert: true })
   if (!isPreviewableImageBlob(blob)) {
     throw new Error('대표 이미지를 불러오지 못했습니다.')
   }

@@ -12,6 +12,7 @@ import { useIsTemplateManagementScreen } from '@/features/template/ui/template-m
 import {
   getRecruitDetailInfoRecord,
   getRecruitDetailInfoScope,
+  recruitDetailInfoFieldForm,
   patchRecruitDetailInfo,
   updateRecruitDetailInfoKey,
   useRecruitDetailInfoField,
@@ -29,6 +30,7 @@ import {
   GENERAL_RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
+  getRecruitDetailContentResetGeneration,
   isRecruitDetailContentPersistSuppressed,
   recruitDetailAdditionalContentOverlayKey,
   registerRecruitDetailRichTextHtml,
@@ -227,6 +229,7 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   overlayKey: string
   placeholder?: string
 }) {
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
   const initialHtmlRef = useRef(readOverlayHtml(overlayKey))
   const fileUploadOwner = programInlineImageOwner(null)
   const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
@@ -319,6 +322,7 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
           editor={editor}
           className="recruit-detail-info-paragraph__rich-text-editor"
           minHeight={editorMinHeight}
+          resizeInScrollableContainer={isGeneralWizard}
           fileUploadOwner={fileUploadOwner}
         />
       </div>
@@ -438,7 +442,10 @@ export function RecruitDetailInfoParagraph({
     let cancelled = false
     void loadProgramThumbnailPreviewUrl(id)
       .then(url => {
-        if (cancelled) return
+        if (cancelled) {
+          revokeThumb(url)
+          return
+        }
         setStoredPreviewUrl(prev => {
           if (prev !== url) revokeThumb(prev)
           return url
@@ -469,6 +476,25 @@ export function RecruitDetailInfoParagraph({
       setThumbFileName(image.name)
       setPersistedThumbObjectUrl(null)
       setUploadingThumbnail(true)
+      // Media keys live in the scoped field form, not in wizard recruitmentKv.
+      // Keep late upload results in the originating tab; never resurrect a reset draft.
+      const draftGeneration = getRecruitDetailContentResetGeneration()
+      const isCurrentDraft = () =>
+        getRecruitDetailContentResetGeneration() === draftGeneration &&
+        !isRecruitDetailContentPersistSuppressed()
+      const writeThumbnail = (partial: Record<string, unknown>) => {
+        if (isGeneralWizard) recruitDetailInfoFieldForm.patchFor(overlayScope, partial)
+        else patchRecruitDetailInfo(partial)
+      }
+      if (isGeneralWizard) {
+        writeThumbnail({
+          [thumbFileNameKey]: image.name,
+          [thumbFileObjectIdKey]: null,
+          [thumbContentUrlKey]: null,
+          [thumbObjectUrlKey]: null,
+        })
+        persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
+      }
       trackRecruitDetailMediaUpload(
         (async () => {
           try {
@@ -477,15 +503,19 @@ export function RecruitDetailInfoParagraph({
               owner: programThumbnailOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID),
               waitUntilAvailable: true,
             })
+            if (isGeneralWizard && !isCurrentDraft()) return
             rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image)
-            patchRecruitDetailInfo({
+            writeThumbnail({
+              [thumbFileNameKey]: image.name,
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
               [thumbObjectUrlKey]: null,
             })
             persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } catch {
-            patchRecruitDetailInfo({
+            if (isGeneralWizard && !isCurrentDraft()) return
+            writeThumbnail({
+              [thumbFileNameKey]: isGeneralWizard ? image.name : null,
               [thumbFileObjectIdKey]: null,
               [thumbContentUrlKey]: null,
               [thumbObjectUrlKey]: null,
@@ -495,7 +525,14 @@ export function RecruitDetailInfoParagraph({
               revokeThumb(prev)
               return null
             })
-            setThumbFileName(null)
+            // Retain the failed selection in GENERAL until the user removes/retries it.
+            // The create adapter rejects a named thumbnail without a confirmed ID.
+            cmsAlertModal.show({
+              title: '안내',
+              content: isGeneralWizard
+                ? '썸네일 업로드에 실패했습니다. 실패한 파일을 삭제한 후 다시 선택해 주세요.'
+                : '썸네일 업로드에 실패했습니다. 다시 선택해 주세요.',
+            })
           } finally {
             setUploadingThumbnail(false)
           }
@@ -506,9 +543,11 @@ export function RecruitDetailInfoParagraph({
       revokeThumb,
       setPersistedThumbObjectUrl,
       setThumbFileName,
+      isGeneralWizard,
       overlayKeyPrefix,
       overlayScope,
       thumbContentUrlKey,
+      thumbFileNameKey,
       thumbFileObjectIdKey,
       thumbObjectUrlKey,
     ]
@@ -641,7 +680,9 @@ export function RecruitDetailInfoParagraph({
       className={
         isTemplateManagementScreen
           ? `recruit-detail-info-paragraph__forms ${RECRUIT_DETAIL_TEMPLATE_SPEC_CLASS}`
-          : 'recruit-detail-info-paragraph__forms'
+          : isGeneralWizard
+            ? 'recruit-detail-info-paragraph__forms recruit-detail-info-paragraph__forms--general-wizard'
+            : 'recruit-detail-info-paragraph__forms'
       }
     >
       <DetailInfoForm title="상세 정보" hideHeader mode="edit">

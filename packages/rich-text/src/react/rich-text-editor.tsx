@@ -44,6 +44,7 @@ export function RichTextEditor({
   className,
   minHeight = RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX,
   height,
+  resizeInScrollableContainer = false,
   toolbar,
   'aria-label': ariaLabel = '본문 편집',
 }: RichTextEditorProps) {
@@ -73,7 +74,7 @@ export function RichTextEditor({
 
       const startY = event.clientY
       const startHeight = root.getBoundingClientRect().height
-      const maxInModal = maxEditorHeightInModal(root, startHeight)
+      const maxInModal = resizeInScrollableContainer ? null : maxEditorHeightInModal(root, startHeight)
       const pointerId = event.pointerId
       event.currentTarget.setPointerCapture(pointerId)
 
@@ -102,7 +103,7 @@ export function RichTextEditor({
       document.addEventListener('pointerup', handlePointerUp)
       document.addEventListener('pointercancel', handlePointerUp)
     },
-    [minResizeHeight]
+    [minResizeHeight, resizeInScrollableContainer]
   )
 
   if (!isRichTextEditorReady(editor)) {

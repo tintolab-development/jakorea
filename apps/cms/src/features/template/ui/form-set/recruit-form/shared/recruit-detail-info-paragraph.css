@@ -108,3 +108,14 @@
   min-width: 180px !important;
   max-width: 180px !important;
 }
+
+/* GENERAL registration is a scrollable full-page form. Keep the existing toolbar
+   and let the body shrink/scroll inside the height selected by the resize handle. */
+.recruit-detail-info-paragraph__forms--general-wizard
+  .recruit-detail-info-paragraph__editor-host
+  .rich-text-editor[data-resized='true']
+  .rich-text-editor__body {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: auto;
+}
