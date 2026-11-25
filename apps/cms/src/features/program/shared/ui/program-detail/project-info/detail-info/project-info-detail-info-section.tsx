@@ -587,7 +587,7 @@ function useDetailInfoEditorBlock(
         }
         return
       }
-      const nextUrl = await loadProgramThumbnailPreviewUrl(fileObjectId)
+      const nextUrl = await loadProgramThumbnailPreviewUrl(fileObjectId, { allowLocalUpload: typedDraftMedia })
       if (cancelled) {
         revokeBlobUrl(nextUrl)
         return
@@ -731,7 +731,7 @@ function ThumbnailImageField({
                         waitUntilAvailable: true,
                       })
                       if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
-                      rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file, previewSession)
+                      if (!hasProgramMediaTarget(program)) rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file, previewSession)
                       if (hasProgramMediaTarget(program)) {
                         await putProgramMediaThumbnail(program, uploaded.fileObjectId)
                       }
@@ -752,7 +752,7 @@ function ThumbnailImageField({
                       }
                       let previewUrl = blobUrl
                       try {
-                        previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
+                        previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId, { allowLocalUpload: !hasProgramMediaTarget(program) })
                         if (previewUrl !== blobUrl) releaseProgramThumbnailPreviewUrl(blobUrl)
                       } catch {
                         previewUrl = blobUrl

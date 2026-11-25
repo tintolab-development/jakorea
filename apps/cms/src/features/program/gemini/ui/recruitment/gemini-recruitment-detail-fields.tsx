@@ -192,7 +192,7 @@ export function GeminiRecruitmentDetailFields({
           owner: programThumbnailOwner(programNumericId),
         })
         if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
-        rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file, previewSession)
+        if (programNumericId == null) rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file, previewSession)
         onChange({ thumbnailFileName: file.name, thumbnailFileObjectId: uploaded.fileObjectId })
       } catch {
         if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return

@@ -1,3 +1,4 @@
+import { captureProgramThumbnailPreviewSession, forgetCommittedRecruitmentThumbnailPreviews } from '@/features/program/shared/api/program-thumbnail-preview-cache'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import {
   syncProgramInlineImages,
@@ -191,6 +192,7 @@ export async function fetchAdminProgramSponsorsRemote(
 export async function createAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<AdminProgramResponseDto> {
+  const session = captureProgramThumbnailPreviewSession()
   const created = unwrapApiBody<AdminProgramResponseDto>(
     await customInstance({
       url: '/api/admin/programs',
@@ -198,6 +200,7 @@ export async function createAdminProgramRemote(
       data: payload,
     })
   )
+  forgetCommittedRecruitmentThumbnailPreviews(payload.recruitments, session)
   const createdId = created.id
   if (createdId) {
     await syncProgramInlineImagesKeepProgram(createdId, payload)
@@ -210,6 +213,7 @@ export async function updateAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
 ): Promise<AdminProgramResponseDto> {
   const safePayload = omitSchedulesFromProgramUpdateRequest(payload)
+  const session = captureProgramThumbnailPreviewSession()
   const updated = unwrapApiBody<AdminProgramResponseDto>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}`,
@@ -217,6 +221,7 @@ export async function updateAdminProgramRemote(
       data: safePayload,
     })
   )
+  forgetCommittedRecruitmentThumbnailPreviews(safePayload.recruitments, session)
   await syncProgramInlineImages(programId, safePayload)
   return updated
 }

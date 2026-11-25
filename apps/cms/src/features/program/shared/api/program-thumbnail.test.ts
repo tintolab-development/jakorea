@@ -16,8 +16,10 @@ import {
   loadProgramThumbnailPreviewUrl,
   rememberProgramThumbnailPreviewBlob,
   resetProgramThumbnailPreviewBlobsForTests,
+  putProgramThumbnail,
 } from '@/features/program/shared/api/program-thumbnail'
-import { clearProgramThumbnailPreviewCache } from './program-thumbnail-preview-cache'
+import { clearProgramThumbnailPreviewCache, forgetCommittedRecruitmentThumbnailPreviews } from './program-thumbnail-preview-cache'
+import customInstance from '@/shared/api/orval-mutator'
 import { bumpAuthGeneration } from '@/features/auth/lib/auth-generation'
 
 describe('loadProgramThumbnailPreviewUrl', () => {
@@ -33,7 +35,7 @@ describe('loadProgramThumbnailPreviewUrl', () => {
   it('업로드 직후 기억한 blob이면 download/content를 다시 치지 않는다', async () => {
     const file = new File(['img'], 'thumb.png', { type: 'image/png' })
     rememberProgramThumbnailPreviewBlob(42, file, captureProgramThumbnailPreviewSession())
-    const url = await loadProgramThumbnailPreviewUrl(42)
+    const url = await loadProgramThumbnailPreviewUrl(42, { allowLocalUpload: true })
     expect(url.startsWith('blob:')).toBe(true)
     expect(fetchFileContentBlob).not.toHaveBeenCalled()
   })
@@ -48,7 +50,7 @@ describe('loadProgramThumbnailPreviewUrl', () => {
 
   it('content 접근 거부 시 다운로드 경로로 우회하지 않는다', async () => {
     fetchFileContentBlob.mockRejectedValue(new Error('403'))
-    await expect(loadProgramThumbnailPreviewUrl(9)).rejects.toThrow('403')
+    await expect(loadProgramThumbnailPreviewUrl(9, { allowLocalUpload: true })).rejects.toThrow('403')
     expect(fetchFileContentBlob).toHaveBeenCalledTimes(1)
   })
 
@@ -77,30 +79,62 @@ describe('loadProgramThumbnailPreviewUrl', () => {
     finish(image)
     await expect(pending).rejects.toThrow('인증 세션이 변경')
     fetchFileContentBlob.mockRejectedValue(new Error('403'))
-    await expect(loadProgramThumbnailPreviewUrl(7)).rejects.toThrow('403')
-    await expect(loadProgramThumbnailPreviewUrl(9)).rejects.toThrow('403')
+    await expect(loadProgramThumbnailPreviewUrl(7, { allowLocalUpload: true })).rejects.toThrow('403')
+    await expect(loadProgramThumbnailPreviewUrl(9, { allowLocalUpload: true })).rejects.toThrow('403')
   })
 
   it('session boundary revokes issued URLs and rejects late uploads', async () => {
     const session = captureProgramThumbnailPreviewSession()
     const blob = new Blob(['image'], { type: 'image/png' })
     rememberProgramThumbnailPreviewBlob(13, blob, session)
-    const url = await loadProgramThumbnailPreviewUrl(13)
+    const url = await loadProgramThumbnailPreviewUrl(13, { allowLocalUpload: true })
     const revoke = vi.spyOn(URL, 'revokeObjectURL')
     try {
       clearProgramThumbnailPreviewCache()
       expect(revoke).toHaveBeenCalledWith(url)
       rememberProgramThumbnailPreviewBlob(13, blob, session)
       fetchFileContentBlob.mockRejectedValue(new Error('403'))
-      await expect(loadProgramThumbnailPreviewUrl(13)).rejects.toThrow('403')
+      await expect(loadProgramThumbnailPreviewUrl(13, { allowLocalUpload: true })).rejects.toThrow('403')
     } finally { revoke.mockRestore() }
+  })
+
+  it('persisted preview does not use local upload bytes without explicit opt in', async () => {
+    const session = captureProgramThumbnailPreviewSession()
+    rememberProgramThumbnailPreviewBlob(21, new Blob(['image'], { type: 'image/png' }), session)
+    fetchFileContentBlob.mockRejectedValue(new Error('403'))
+    await expect(loadProgramThumbnailPreviewUrl(21)).rejects.toThrow('403')
+    expect(fetchFileContentBlob).toHaveBeenCalledTimes(1)
+    await expect(loadProgramThumbnailPreviewUrl(21, { allowLocalUpload: true })).resolves.toMatch(/^blob:/)
+  })
+
+  it('successful recruitment writes retire only committed local files', async () => {
+    const session = captureProgramThumbnailPreviewSession()
+    const blob = new Blob(['image'], { type: 'image/png' })
+    rememberProgramThumbnailPreviewBlob(22, blob, session)
+    rememberProgramThumbnailPreviewBlob(23, blob, session)
+    forgetCommittedRecruitmentThumbnailPreviews([{ thumbnailFileObjectId: 22 }], session)
+    fetchFileContentBlob.mockRejectedValue(new Error('403'))
+    await expect(loadProgramThumbnailPreviewUrl(22, { allowLocalUpload: true })).rejects.toThrow('403')
+    await expect(loadProgramThumbnailPreviewUrl(23, { allowLocalUpload: true })).resolves.toMatch(/^blob:/)
+  })
+
+  it('successful program thumbnail PUT retires the draft, failed PUT retains it', async () => {
+    const session = captureProgramThumbnailPreviewSession()
+    rememberProgramThumbnailPreviewBlob(24, new Blob(['image'], { type: 'image/png' }), session)
+    vi.mocked(customInstance).mockRejectedValueOnce(new Error('write failed'))
+    await expect(putProgramThumbnail(100, 24)).rejects.toThrow('write failed')
+    await expect(loadProgramThumbnailPreviewUrl(24, { allowLocalUpload: true })).resolves.toMatch(/^blob:/)
+    vi.mocked(customInstance).mockResolvedValueOnce(undefined)
+    await putProgramThumbnail(100, 24)
+    fetchFileContentBlob.mockRejectedValue(new Error('403'))
+    await expect(loadProgramThumbnailPreviewUrl(24, { allowLocalUpload: true })).rejects.toThrow('403')
   })
 
   it('삭제한 썸네일 캐시는 다시 받는다', async () => {
     rememberProgramThumbnailPreviewBlob(3, new File(['img'], 'a.png', { type: 'image/png' }), captureProgramThumbnailPreviewSession())
     forgetProgramThumbnailPreviewBlob(3)
     fetchFileContentBlob.mockResolvedValue(new Blob(['img'], { type: 'image/png' }))
-    await loadProgramThumbnailPreviewUrl(3)
+    await loadProgramThumbnailPreviewUrl(3, { allowLocalUpload: true })
     expect(fetchFileContentBlob).toHaveBeenCalledTimes(1)
   })
 })

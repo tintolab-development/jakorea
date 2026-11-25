@@ -61,6 +61,15 @@ export function rememberProgramThumbnailPreviewBlob(
   localBytes += blob.size
 }
 
+/** Retire temporary bytes immediately after a successful canonical link/write. */
+export function forgetCommittedRecruitmentThumbnailPreviews(
+  rows: readonly { thumbnailFileObjectId?: number | null }[] | null | undefined,
+  session: number
+): void {
+  if (!isProgramThumbnailPreviewSessionCurrent(session)) return
+  for (const row of rows ?? []) forgetProgramThumbnailPreviewBlob(row.thumbnailFileObjectId)
+}
+
 export function readLocalProgramThumbnailPreviewBlob(fileObjectId: number): Blob | undefined {
   synchronizeAuthGeneration()
   return localUploads.get(fileObjectId)

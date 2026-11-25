@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Program } from '@/types/domain'
+import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import { loadProgramThumbnailPreviewUrl, releaseProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
@@ -198,7 +199,7 @@ export function usePreviewPosterUrl(
     void (async () => {
       try {
         if (seed.fileObjectId == null) return
-        apply(await loadProgramThumbnailPreviewUrl(seed.fileObjectId))
+        apply(await loadProgramThumbnailPreviewUrl(seed.fileObjectId, { allowLocalUpload: parseFileObjectId(program.id) == null }))
       } catch {
         if (!cancelled) {
           setPosterUrl(seed.displayUrl?.startsWith('blob:') ? undefined : seed.displayUrl)

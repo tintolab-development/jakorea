@@ -453,7 +453,7 @@ export function RecruitDetailInfoParagraph({
       return
     }
     let cancelled = false
-    void loadProgramThumbnailPreviewUrl(id)
+    void loadProgramThumbnailPreviewUrl(id, { allowLocalUpload: true })
       .then(url => {
         if (cancelled) {
           revokeThumb(url)

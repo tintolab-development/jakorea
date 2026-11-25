@@ -4,6 +4,7 @@ import {
   captureProgramThumbnailPreviewSession,
   clearProgramThumbnailPreviewCache,
   createProgramThumbnailPreviewUrl,
+  forgetProgramThumbnailPreviewBlob,
   isPreviewableImageBlob,
   isProgramThumbnailPreviewSessionCurrent,
   readLocalProgramThumbnailPreviewBlob,
@@ -50,9 +51,13 @@ export function resetProgramThumbnailPreviewBlobsForTests(): void {
 }
 
 /** Persisted thumbnails must pass scoped inline authorization every time. No download fallback. */
-export async function loadProgramThumbnailPreviewUrl(fileObjectId: number): Promise<string> {
+export async function loadProgramThumbnailPreviewUrl(
+  fileObjectId: number,
+  options: { allowLocalUpload?: boolean } = {}
+): Promise<string> {
   const session = captureProgramThumbnailPreviewSession()
-  const cached = readLocalProgramThumbnailPreviewBlob(fileObjectId)
+  // Only a caller displaying an unsaved upload may opt in to local bytes.
+  const cached = options.allowLocalUpload ? readLocalProgramThumbnailPreviewBlob(fileObjectId) : undefined
   if (cached) return createProgramThumbnailPreviewUrl(cached, session)
   const blob = await fetchFileContentBlob(fileObjectId, { skipGlobalErrorAlert: true })
   if (!isProgramThumbnailPreviewSessionCurrent(session)) {
@@ -69,9 +74,11 @@ export async function putProgramThumbnail(
   programId: number,
   fileObjectId: number | null
 ): Promise<void> {
+  const session = captureProgramThumbnailPreviewSession()
   await customInstance({
     url: `/api/admin/programs/${programId}/thumbnail`,
     method: 'PUT',
     data: { fileObjectId },
   })
+  if (isProgramThumbnailPreviewSessionCurrent(session)) forgetProgramThumbnailPreviewBlob(fileObjectId)
 }
