@@ -1,0 +1,58 @@
+name: Naver callback trusted Windows verification
+on:
+  push:
+    branches:
+      - fix/newprod-naver-login-callback-20261125
+    paths:
+      - 'packages/social-auth/**'
+      - 'apps/platform/tests/naver-login-callback.test.ts'
+      - '.github/workflows/naver-login-callback-windows-20261125.yml'
+permissions:
+  contents: read
+concurrency:
+  group: naver-callback-frontend-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  HUSKY: '0'
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+jobs:
+  verify:
+    if: github.repository == 'tintolab-development/jakorea' && github.event_name == 'push' && github.ref == 'refs/heads/fix/newprod-naver-login-callback-20261125'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Verify exact revision and safe environment
+        run: |
+          node -e "const e=process.env; if(require('child_process').execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()!==e.GITHUB_SHA || ['AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_PROFILE','AWS_WEB_IDENTITY_TOKEN_FILE'].some(k=>e[k])) process.exit(1); console.log('NAVER_CALLBACK_LOCAL_GUARD=PASS')"
+          if errorlevel 1 exit /b 1
+      - name: Install locked dependencies
+        run: |
+          call pnpm install --frozen-lockfile
+          if errorlevel 1 exit /b 1
+      - name: Compile and typecheck social auth
+        run: |
+          call pnpm --filter @jakorea/social-auth typecheck
+          if errorlevel 1 exit /b 1
+          call pnpm --filter @jakorea/social-auth build
+          if errorlevel 1 exit /b 1
+      - name: Focused portal OAuth regression
+        run: |
+          call pnpm --filter cms exec vitest run --environment node --root ../platform tests/naver-login-callback.test.ts tests/recent-social-login-provider.test.ts
+          if errorlevel 1 exit /b 1
+          echo NAVER_CALLBACK_FRONTEND=PASS
