@@ -21,7 +21,8 @@ type SsoAuthorizationStartPayload = {
 
 function resolveSsoAuthorizationStartResult(
   payload: SsoAuthorizationStartPayload | null | undefined,
-  redirectUri: string
+  redirectUri: string,
+  preserveBackendRedirect = false
 ): { authorizationUrl: string; state?: string } {
   const authorizationUrl =
     typeof payload?.authorizationUrl === 'string' && payload.authorizationUrl.length > 0
@@ -52,7 +53,9 @@ function resolveSsoAuthorizationStartResult(
   }
 
   return {
-    authorizationUrl: rewriteOAuthAuthorizationRedirectUri(authorizationUrl, redirectUri),
+    authorizationUrl: preserveBackendRedirect
+      ? authorizationUrl
+      : rewriteOAuthAuthorizationRedirectUri(authorizationUrl, redirectUri),
     state: typeof payload?.state === 'string' ? payload.state : undefined,
   }
 }
@@ -173,7 +176,10 @@ export function createPortalSsoAdapter(options: CreatePortalSsoAdapterOptions): 
 
         return resolveSsoAuthorizationStartResult(
           unwrapApiData<SsoAuthorizationStartPayload>(data),
-          redirectUri
+          redirectUri,
+          // Naver portal login uses the server's exact URI for both authorization
+          // and token exchange. A frontend rewrite would defeat server overrides.
+          input.provider === 'naver'
         )
       } catch (err) {
         rethrowSocialAuthApiError(
