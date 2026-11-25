@@ -43,6 +43,10 @@ export function useDetailedProgramMutations() {
   const createMutation = useMutation({
     mutationFn: createDetailedProgram,
     retry: false,
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: dataManagementQueryKeys.detailedPrograms.options(),
+      exact: true,
+    }),
     onSuccess: async created => {
       if (!created.id) {
         await invalidateArrayLists(queryClient, listsKey)
@@ -62,6 +66,10 @@ export function useDetailedProgramMutations() {
   const bulkUpdateMutation = useMutation({
     mutationFn: bulkUpdateDetailedPrograms,
     retry: false,
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: dataManagementQueryKeys.detailedPrograms.options(),
+      exact: true,
+    }),
     onSuccess: async updatedRows => {
       if (updatedRows.length === 0) {
         await invalidateArrayLists(queryClient, listsKey)
@@ -84,6 +92,10 @@ export function useDetailedProgramMutations() {
   const bulkChangesMutation = useMutation({
     mutationFn: bulkChangeDetailedPrograms,
     retry: false,
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: dataManagementQueryKeys.detailedPrograms.options(),
+      exact: true,
+    }),
     onSuccess: async result => {
       for (const updated of result.updated) {
         if (!updated.id) continue
@@ -106,6 +118,10 @@ export function useDetailedProgramMutations() {
   const deleteMutation = useMutation({
     mutationFn: deleteDetailedPrograms,
     retry: false,
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: dataManagementQueryKeys.detailedPrograms.options(),
+      exact: true,
+    }),
     onSuccess: (_data, ids) => {
       for (const id of ids) {
         queryClient.removeQueries({ queryKey: dataManagementQueryKeys.detailedPrograms.detail(id) })
