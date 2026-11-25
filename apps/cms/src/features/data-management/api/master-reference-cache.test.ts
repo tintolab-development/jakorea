@@ -24,6 +24,7 @@ describe('master reference caches', () => {
       keys.textbooks.detail('1'),
       keys.textbooks.matches('catalog'),
       keys.textbooks.kitQuantities(),
+      [...keys.textbooks.programBusinessAreaOptions(), 'session'],
       keys.detailedPrograms.options(),
       ['general-programs', 'list', 'all', ''],
       ['general-programs', 'detail', '1'],

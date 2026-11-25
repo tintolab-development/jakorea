@@ -56,7 +56,7 @@ function reverseBusinessField(value: string | undefined): string {
   return (
     TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(
       option => normalizeProgramBusinessAreaValue(option.label) === normalized
-    )?.value ?? 'economy_finance'
+    )?.value ?? normalized
   )
 }
 

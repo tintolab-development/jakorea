@@ -1,3 +1,4 @@
+import { useProgramBusinessAreaOptions } from '@/features/program/shared/hooks/use-program-business-area-options'
 /**
  * 기본 정보 섹션 (프로그램 상세 정보 탭)
  * - 상단 테이블: 최초 등록일, 마지막 수정일, 프로그램 진행 방식, 프로그램 진행 현황
@@ -272,6 +273,7 @@ export function BasicInfoSection({
   announcementTitlePlaceholder = '공고용 프로그램명을 입력해 주세요',
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
+  const businessAreas = useProgramBusinessAreaOptions(form?.watch('businessArea') ?? program.businessArea, 'master', Boolean(isFormEdit))
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
   /** 1사1교만. 교육받은 교사는 hideIpsTypeField / fixedParticipantTypeLabel 로 구분 */
   const isEconomyCommonInfo = companySchoolLayout && !hideIpsTypeField && !fixedParticipantTypeLabel
@@ -776,9 +778,9 @@ export function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="사업 분야를 선택해 주세요"
+                      placeholder={businessAreas.placeholder ?? '사업 분야를 선택해 주세요'}
                       value={resolveStoredBusinessArea(field.value) || undefined}
-                      options={[...BUSINESS_AREA_OPTIONS]}
+                      options={businessAreas.options}
                       onChange={next => {
                         const resolved = resolveStoredBusinessArea(next == null ? '' : String(next))
                         field.onChange(resolved || undefined)
@@ -1420,9 +1422,9 @@ export function BasicInfoSection({
                 <CmsSelect
                   inputSize="small"
                   withAllOption={false}
-                  placeholder="사업 분야를 선택해 주세요"
+                  placeholder={businessAreas.placeholder ?? '사업 분야를 선택해 주세요'}
                   value={resolveStoredBusinessArea(field.value) || undefined}
-                  options={[...BUSINESS_AREA_OPTIONS]}
+                  options={businessAreas.options}
                   onChange={next => {
                     const resolved = resolveStoredBusinessArea(next == null ? '' : String(next))
                     field.onChange(resolved || undefined)

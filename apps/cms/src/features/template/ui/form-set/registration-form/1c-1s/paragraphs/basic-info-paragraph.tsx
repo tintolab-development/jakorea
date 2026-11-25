@@ -1,3 +1,4 @@
+import { useProgramBusinessAreaOptions } from '@/features/program/shared/hooks/use-program-business-area-options'
 /**
  * 1사 1교 프로그램 등록 폼 — 기본 정보
  * (참여자 유형: 학교/기관·강사 checked·disabled 고정. 상단: 일반 프로그램 정보 / 하단: 교육 과정·IP·Partner·IPS)
@@ -33,7 +34,6 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import {
   TEMPLATE_FORM_IPS_FIELD_LABELS,
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
@@ -184,6 +184,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     'economyRegistration.basicInfo.businessField',
     selectDefaults.businessField
   )
+  const businessAreas = useProgramBusinessAreaOptions(businessField)
   const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.ipOwned',
     selectDefaults.ipOwned
@@ -495,9 +496,9 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="사업 분야를 선택해 주세요"
+                  placeholder={businessAreas.placeholder ?? '사업 분야를 선택해 주세요'}
                   width={compactSelectWidth}
-                  options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+                  options={businessAreas.options}
                   value={businessField}
                   onChange={v => setBusinessField(String(v ?? ''))}
                 />

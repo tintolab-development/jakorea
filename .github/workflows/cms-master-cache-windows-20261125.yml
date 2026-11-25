@@ -1,4 +1,4 @@
-name: CMS master reference caches - trusted Windows regression
+name: CMS integrated recruitment and master catalog - trusted Windows regression
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - fix/cms-master-cache-20261124
     paths:
       - 'apps/cms/**'
+      - 'packages/rich-text/**'
       - 'packages/rich-text/**'
       - '.github/workflows/cms-master-cache-windows-20261125.yml'
 
@@ -67,9 +68,9 @@ jobs:
         run: |
           pnpm --filter cms build:workspace-deps
           if ($LASTEXITCODE -ne 0) { throw 'Workspace dependency build failed' }
-      - name: Run focused master cache regression tests
+      - name: Run focused combined CMS regression tests
         run: |
-          pnpm --filter cms exec vitest run src/features/data-management/api/master-reference-cache.test.ts src/features/data-management/api/data-management-query-keys.test.ts src/features/textbook/lib/business-area-domain.test.ts src/features/textbook/lib/business-area-save-plan.test.ts src/features/program/general/api/adapters/general-program-adapters.test.ts src/features/program/general/lib/registration-payload-smoke.test.ts
+          pnpm --filter cms exec vitest run src/features/data-management/api/master-reference-cache.test.ts src/features/data-management/api/data-management-query-keys.test.ts src/features/textbook/lib/business-area-domain.test.ts src/features/textbook/lib/business-area-save-plan.test.ts src/features/program/general/api/adapters/general-program-adapters.test.ts src/features/program/general/lib/registration-payload-smoke.test.ts src/features/textbook/api/business-areas-api-client.test.ts src/features/program/shared/lib/program-business-area-options.test.ts src/features/program/1c-1s/api/adapters.test.ts src/features/program/ujat/api/adapters.test.ts src/features/program/trained-teachers/api/adapters.test.ts src/features/program/general/lib/overlay-phase1/build-registration-create-from-rhf.test.ts src/features/program/general/lib/overlay-phase1/registration-wizard-create-parity.test.ts src/features/program/shared/api/program-thumbnail.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush.test.ts src/features/program/shared/api/program-media-target.test.ts src/shared/lib/admin-file-upload/upload.test.ts src/features/program/ujat/api/service.test.ts src/features/auth/model/auth-store.refresh-cookie-logout.test.ts src/shared/instance/axios-instance.logout-race.test.ts src/features/program/shared/lib/platform-preview/poster-url.test.ts
           if ($LASTEXITCODE -ne 0) { throw 'CMS master cache regression failed' }
       - name: CMS typecheck
         run: |
@@ -80,4 +81,4 @@ jobs:
           pnpm --filter cms build
           if ($LASTEXITCODE -ne 0) { throw 'CMS build failed' }
           if (-not (Test-Path -LiteralPath 'apps/cms/dist/index.html')) { throw 'Missing CMS build output' }
-          Write-Host 'CMS_MASTER_CACHE_GATE=PASS|DEPLOYMENT=NONE'
+          Write-Host 'CMS_INTEGRATED_MEDIA_MASTER_GATE=PASS|DEPLOYMENT=NONE'

@@ -8,14 +8,35 @@ import type {
 
 const LIST_PAGE_SIZE = 20
 
-export async function fetchTextbookBusinessAreasRemote(): Promise<TextbookBusinessAreaResponse[]> {
+type BusinessAreaListOptions = { signal?: AbortSignal; skipGlobalErrorAlert?: boolean }
+
+export async function fetchTextbookBusinessAreasRemote(options?: BusinessAreaListOptions): Promise<TextbookBusinessAreaResponse[]> {
   const rows: TextbookBusinessAreaResponse[] = []
   const seen = new Set<string>()
-  for (let pageIndex = 0; ; pageIndex += 1) {
+  let expectedTotalPages: number | undefined
+  let expectedTotalElements: number | undefined
+  for (let pageIndex = 0; pageIndex < 1000; pageIndex += 1) {
     const page = unwrapApiBody<PageResponseTextbookBusinessAreaResponse>(
-      await getDataManagementSubsetApi().list1({ page: pageIndex, size: LIST_PAGE_SIZE })
+      await getDataManagementSubsetApi().list1({ page: pageIndex, size: LIST_PAGE_SIZE }, options)
     )
-    const items = page.items ?? []
+    const items = page.items
+    if (!Array.isArray(items) || items.length > LIST_PAGE_SIZE) {
+      throw new Error('사업 분야 목록의 페이지 응답이 올바르지 않습니다.')
+    }
+    if (page.totalPages != null) {
+      if (!Number.isInteger(page.totalPages) || page.totalPages < 0 ||
+          (expectedTotalPages != null && page.totalPages !== expectedTotalPages)) {
+        throw new Error('사업 분야 목록이 변경되었습니다. 다시 시도해 주세요.')
+      }
+      expectedTotalPages = page.totalPages
+    }
+    if (page.totalElements != null) {
+      if (!Number.isInteger(page.totalElements) || page.totalElements < 0 ||
+          (expectedTotalElements != null && page.totalElements !== expectedTotalElements)) {
+        throw new Error('사업 분야 목록이 변경되었습니다. 다시 시도해 주세요.')
+      }
+      expectedTotalElements = page.totalElements
+    }
     if (page.page != null && page.page !== pageIndex) {
       throw new Error('사업 분야 목록의 페이지 응답이 올바르지 않습니다.')
     }
@@ -24,10 +45,20 @@ export async function fetchTextbookBusinessAreasRemote(): Promise<TextbookBusine
       if (item.id) seen.add(item.id)
       rows.push(item)
     }
-    if (items.length === 0 || (page.totalPages != null
-      ? pageIndex + 1 >= page.totalPages
-      : items.length < LIST_PAGE_SIZE)) return rows
+    const lastPage = expectedTotalPages != null
+      ? pageIndex + 1 >= expectedTotalPages
+      : items.length < LIST_PAGE_SIZE
+    if (lastPage) {
+      if (expectedTotalElements != null && rows.length !== expectedTotalElements) {
+        throw new Error('사업 분야 목록이 변경되었습니다. 다시 시도해 주세요.')
+      }
+      return rows
+    }
+    if (items.length === 0 || items.length < LIST_PAGE_SIZE) {
+      throw new Error('사업 분야 목록이 변경되었습니다. 다시 시도해 주세요.')
+    }
   }
+  throw new Error('사업 분야 목록의 페이지 제한을 초과했습니다.')
 }
 
 export async function createTextbookBusinessAreaRemote(

@@ -1,3 +1,4 @@
+import { useProgramBusinessAreaOptions } from '@/features/program/shared/hooks/use-program-business-area-options'
 /**
  * 일반 프로그램 상세 — 공통 정보 (조회 / 정보 수정)
  * 프로그램 등록 양식 overlay(단락 title + DetailInfoForm hideHeader)와 동일 레이아웃
@@ -401,6 +402,7 @@ function BasicInfoSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const isFormEdit = isEditMode && !!form
+  const businessAreas = useProgramBusinessAreaOptions(form?.watch('businessArea') ?? v.businessArea, 'master', isFormEdit)
   // 등록 폼과 동일 — 저장된 program이 아니라 현재 교육 진행 구조로 세부 프로그램명 잠금
   const watchedEducationStructure = isFormEdit ? form.watch('educationStructure') : undefined
   const lockDetailedProgramToNone =
@@ -852,9 +854,9 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="사업 분야를 선택해 주세요"
+                      placeholder={businessAreas.placeholder ?? '사업 분야를 선택해 주세요'}
                       width="100%"
-                      options={[...BUSINESS_AREA_OPTIONS]}
+                      options={businessAreas.options}
                       value={field.value || undefined}
                       onChange={v => {
                         const next = String(v ?? '')

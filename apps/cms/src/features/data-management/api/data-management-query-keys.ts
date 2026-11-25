@@ -20,6 +20,7 @@ export const dataManagementQueryKeys = {
       [...dataManagementQueryKeys.textbooks.all(), 'matches', catalogKey] as const,
     kitQuantities: () => [...dataManagementQueryKeys.textbooks.all(), 'kit-quantities'] as const,
     businessAreas: () => [...dataManagementQueryKeys.textbooks.all(), 'business-areas'] as const,
+    programBusinessAreaOptions: () => [...dataManagementQueryKeys.textbooks.businessAreas(), 'program-options'] as const,
   },
   sponsors: {
     all: () => [...dataManagementQueryKeys.all, 'sponsors'] as const,

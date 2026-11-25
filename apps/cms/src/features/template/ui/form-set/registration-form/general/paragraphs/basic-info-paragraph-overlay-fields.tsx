@@ -1,3 +1,4 @@
+import { useProgramBusinessAreaOptions } from '@/features/program/shared/hooks/use-program-business-area-options'
 import { memo, useMemo, type ReactNode } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
@@ -8,7 +9,6 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_IPS_FIELD_LABELS,
 } from '@/features/template/lib/template-form-select-options'
 import {
@@ -253,14 +253,16 @@ export const ProgramRegistrationBasicInfoBusinessFieldField = memo(
       trainedTeachersDefaults,
       GENERAL_TEMPLATE_BUSINESS_FIELD_SELECT_WIDTH
     )
+    const [businessField] = useProgramRegistrationOverlayKv(`${overlayPrefix}.businessField`, '')
+    const businessAreas = useProgramBusinessAreaOptions(businessField)
     return (
       <ProgramRegistrationOverlaySelectField
         label="사업 분야"
         width={width}
         validationKey="basicInfo.businessField"
         overlayKey={`${overlayPrefix}.businessField`}
-        placeholder="사업 분야를 선택해 주세요"
-        options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+        placeholder={businessAreas.placeholder ?? '사업 분야를 선택해 주세요'}
+        options={businessAreas.options}
         // 교육받은 교사 시안(9899:221372): 사업 분야 미선택(placeholder)
         defaultValue=""
       />

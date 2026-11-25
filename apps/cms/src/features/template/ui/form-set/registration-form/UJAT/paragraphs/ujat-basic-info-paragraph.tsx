@@ -1,3 +1,4 @@
+import { useProgramBusinessAreaOptions } from '@/features/program/shared/hooks/use-program-business-area-options'
 /**
  * UJAT 프로그램 등록 폼 — 기본 정보
  * (1사 1교 프로그램 등록 폼 기본 정보와 동일하게 DetailInfoForm 3구역: 프로그램명 / 운영·설문 / 교육·IPS)
@@ -27,7 +28,6 @@ import {
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   TEMPLATE_FORM_IPS_FIELD_LABELS,
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
@@ -342,6 +342,7 @@ function UjatBasicInfoLegacyParagraph({
     'ujat.basicInfo.businessField',
     ''
   )
+  const businessAreas = useProgramBusinessAreaOptions(businessField)
   // 템플릿 관리 화면 라디오는 미선택으로 시작(시안 5767:194428 교육 장소 3개 모두 미선택)
   const [educationVenueKind, setEducationVenueKind] = useUjatProgramRegistrationOverlayKv<
     'inside' | 'outside' | 'other' | ''
@@ -882,9 +883,9 @@ function UjatBasicInfoLegacyParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="사업 분야를 선택해 주세요"
+                  placeholder={businessAreas.placeholder ?? '사업 분야를 선택해 주세요'}
                   width={compactFieldWidth('100%')}
-                  options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+                  options={businessAreas.options}
                   value={businessField}
                   onChange={v => setBusinessField(String(v ?? ''))}
                 />

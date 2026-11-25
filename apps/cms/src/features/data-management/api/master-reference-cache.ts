@@ -24,6 +24,7 @@ export async function invalidateBusinessAreaReferenceCaches(client: QueryClient)
     [...textbooks.all(), 'detail'],
     [...textbooks.all(), 'matches'],
     textbooks.kitQuantities(),
+    textbooks.programBusinessAreaOptions(),
     dataManagementQueryKeys.detailedPrograms.all(),
     general.lists(),
     performanceQueryKeys.all,

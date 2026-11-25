@@ -1,3 +1,4 @@
+import { useProgramBusinessAreaOptions } from '@/features/program/shared/hooks/use-program-business-area-options'
 /**
  * UJAT 등록 Wizard 공통정보 입력.
  *
@@ -30,7 +31,6 @@ import {
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   UJAT_FORM_IPS_FIELD_LABELS,
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
@@ -96,6 +96,7 @@ export function UjatBasicInfoRHFParagraph({
   lockDetailedProgramToNone = false,
 }: UjatBasicInfoRHFParagraphProps) {
   const formValues = useWatch({ control: infoForm.control }) as ProgramDetailEditFormValues
+  const businessAreas = useProgramBusinessAreaOptions(formValues.businessArea)
   const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady()
   const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
   // 등록 양식 담당자 선택지 — contactPrivacy=MASKED(후원사 선택 후에만 조회, 데이터 관리 RAW 캐시와 분리, 정책 32·37)
@@ -429,9 +430,9 @@ export function UjatBasicInfoRHFParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택해 주세요"
+                  placeholder={businessAreas.placeholder ?? '선택해 주세요'}
                   width={UJAT_BASIC_INFO_COMPACT_SELECT_WIDTH}
-                  options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+                  options={businessAreas.options}
                   value={String(formValues.businessArea ?? '')}
                   onChange={value => setField(infoForm, 'businessArea', String(value ?? ''))}
                 />

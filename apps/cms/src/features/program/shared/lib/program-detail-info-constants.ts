@@ -305,18 +305,17 @@ const BUSINESS_AREA_VALUE_ALIASES: Record<string, string> = {
 export function normalizeProgramBusinessAreaValue(value: string | undefined | null): string {
   const trimmed = value?.trim() ?? ''
   if (!trimmed) return ''
-  const aliased =
-    BUSINESS_AREA_VALUE_ALIASES[trimmed] ?? BUSINESS_AREA_VALUE_ALIASES[trimmed.toLowerCase()]
-  if (aliased) return aliased
+  const aliases = BUSINESS_AREA_VALUE_ALIASES
+  const aliased = [trimmed, trimmed.toLowerCase()]
+    .find(key => Object.prototype.hasOwnProperty.call(aliases, key))
+  if (aliased !== undefined) return aliases[aliased]
   const matched = BUSINESS_AREA_OPTIONS.find(o => o.value === trimmed || o.label === trimmed)
   return matched?.value ?? trimmed
 }
 
-/** 셀렉트·PATCH에 실을 수 있는 마스터명. 목록에 없으면 빈 문자열 */
+/** Preserve server-supplied master names; validation remains the server's responsibility. */
 export function resolveStoredBusinessArea(value: string | undefined | null): string {
-  const normalized = normalizeProgramBusinessAreaValue(value)
-  if (!normalized) return ''
-  return BUSINESS_AREA_OPTIONS.some(option => option.value === normalized) ? normalized : ''
+  return normalizeProgramBusinessAreaValue(value)
 }
 
 export const TYPE_LABEL: Record<string, string> = {
