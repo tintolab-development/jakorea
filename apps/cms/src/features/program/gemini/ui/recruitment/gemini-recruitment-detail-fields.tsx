@@ -20,8 +20,12 @@ import {
   programThumbnailOwner,
 } from '@/features/program/shared/api/program-attachments'
 import {
+  captureProgramThumbnailPreviewSession,
+  createProgramThumbnailPreviewUrl,
   fetchProgramThumbnail,
   forgetProgramThumbnailPreviewBlob,
+  isProgramThumbnailPreviewSessionCurrent,
+  releaseProgramThumbnailPreviewUrl,
   loadProgramThumbnailPreviewUrl,
   rememberProgramThumbnailPreviewBlob,
 } from '@/features/program/shared/api/program-thumbnail'
@@ -53,7 +57,7 @@ const THUMBNAIL_GUIDE_LINES = [
 ]
 
 function revokeBlobUrl(url: string | null) {
-  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+  releaseProgramThumbnailPreviewUrl(url)
 }
 
 /** 시안 — 첨부 안내·허용 형식·상한 (QA 2026-11-13 Gemini #10, 등록·상세 공통) */
@@ -150,8 +154,9 @@ export function GeminiRecruitmentDetailFields({
     let loadedUrl: string | null = null
     void (async () => {
       try {
+        const previewSession = captureProgramThumbnailPreviewSession()
         const thumb = await fetchProgramThumbnail(programNumericId)
-        if (cancelled || thumb.fileObjectId == null) return
+        if (cancelled || !isProgramThumbnailPreviewSessionCurrent(previewSession) || thumb.fileObjectId == null) return
         loadedUrl = await loadProgramThumbnailPreviewUrl(thumb.fileObjectId)
         if (cancelled) {
           revokeBlobUrl(loadedUrl)
@@ -172,11 +177,12 @@ export function GeminiRecruitmentDetailFields({
   const handleThumbnailFile = useCallback(
     async (file: File) => {
       if (!onChange) return
+      const previewSession = captureProgramThumbnailPreviewSession()
       const previousName = values.thumbnailFileName
       const previousFileObjectId = values.thumbnailFileObjectId
       setThumbObjectUrl(prev => {
         revokeBlobUrl(prev)
-        return URL.createObjectURL(file)
+        return createProgramThumbnailPreviewUrl(file, previewSession)
       })
       onChange({ thumbnailFileName: file.name })
       setUploadingThumbnail(true)
@@ -185,9 +191,11 @@ export function GeminiRecruitmentDetailFields({
           file,
           owner: programThumbnailOwner(programNumericId),
         })
-        rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file)
+        if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
+        if (programNumericId == null) rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file, previewSession)
         onChange({ thumbnailFileName: file.name, thumbnailFileObjectId: uploaded.fileObjectId })
       } catch {
+        if (!isProgramThumbnailPreviewSessionCurrent(previewSession)) return
         setThumbObjectUrl(prev => {
           revokeBlobUrl(prev)
           return null

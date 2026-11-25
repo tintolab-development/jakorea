@@ -309,6 +309,17 @@ export function withRecruitmentCreateMedia<T extends RecruitmentCreateMediaMatch
   return rows?.map(row => {
     const fromOverlay = recruitmentCreateMediaFieldsFromOverlay(overlay, row, variant)
     const rowThumb = (row as { thumbnailFileObjectId?: number | null }).thumbnailFileObjectId
+    const prefixes = overlayPrefixesForRecruitmentCreateMedia(row, variant)
+    const hasExplicitGeneralThumbnail = variant === 'general' && prefixes.some(prefix =>
+      [recruitDetailThumbFileObjectIdKey(prefix), recruitDetailThumbContentUrlKey(prefix), recruitDetailThumbFileNameKey(prefix)]
+        .some(key => Object.prototype.hasOwnProperty.call(overlay, key))
+    )
+    if (variant === 'general') {
+      const media = readRecruitDetailMediaFromOverlay(overlay, prefixes)
+      if (media.thumbFileName && fromOverlay.thumbnailFileObjectId == null) {
+        throw new Error('썸네일 업로드가 완료되지 않았습니다. 실패한 파일을 삭제하거나 다시 업로드해 주세요.')
+      }
+    }
     const rowAttachments = (row as { attachments?: { fileObjectId?: number }[] }).attachments
     const rowAttachmentIds = rowAttachments
       ?.map(item => item.fileObjectId)
@@ -316,9 +327,11 @@ export function withRecruitmentCreateMedia<T extends RecruitmentCreateMediaMatch
     return {
       ...row,
       ...fromOverlay,
-      ...(typeof rowThumb === 'number' && rowThumb > 0
-        ? { thumbnailFileObjectId: rowThumb }
-        : {}),
+      ...(hasExplicitGeneralThumbnail
+        ? { thumbnailFileObjectId: fromOverlay.thumbnailFileObjectId ?? null }
+        : typeof rowThumb === 'number' && rowThumb > 0
+          ? { thumbnailFileObjectId: rowThumb }
+          : {}),
       ...(rowAttachmentIds && rowAttachmentIds.length > 0
         ? { attachmentFileObjectIds: rowAttachmentIds }
         : {}),

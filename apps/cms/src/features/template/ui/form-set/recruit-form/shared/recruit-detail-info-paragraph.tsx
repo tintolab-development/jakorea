@@ -12,6 +12,7 @@ import { useIsTemplateManagementScreen } from '@/features/template/ui/template-m
 import {
   getRecruitDetailInfoRecord,
   getRecruitDetailInfoScope,
+  recruitDetailInfoFieldForm,
   patchRecruitDetailInfo,
   updateRecruitDetailInfoKey,
   useRecruitDetailInfoField,
@@ -29,12 +30,15 @@ import {
   GENERAL_RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
+  getRecruitDetailContentResetGeneration,
   isRecruitDetailContentPersistSuppressed,
   recruitDetailAdditionalContentOverlayKey,
   registerRecruitDetailRichTextHtml,
   useRecruitDetailContentResetGeneration,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
+  beginRecruitDetailThumbnailSelection,
+  invalidateRecruitDetailThumbnailSelection,
   persistRecruitDetailDraftMediaFromOverlay,
   recruitDetailDraftMediaRestorePatch,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session'
@@ -51,7 +55,11 @@ import {
   trackRecruitDetailMediaUpload,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import {
+  captureProgramThumbnailPreviewSession,
+  createProgramThumbnailPreviewUrl,
   forgetProgramThumbnailPreviewBlob,
+  isProgramThumbnailPreviewSessionCurrent,
+  releaseProgramThumbnailPreviewUrl,
   loadProgramThumbnailPreviewUrl,
   rememberProgramThumbnailPreviewBlob,
 } from '@/features/program/shared/api/program-thumbnail'
@@ -227,6 +235,7 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   overlayKey: string
   placeholder?: string
 }) {
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
   const initialHtmlRef = useRef(readOverlayHtml(overlayKey))
   const fileUploadOwner = programInlineImageOwner(null)
   const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
@@ -319,6 +328,7 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
           editor={editor}
           className="recruit-detail-info-paragraph__rich-text-editor"
           minHeight={editorMinHeight}
+          resizeInScrollableContainer={isGeneralWizard}
           fileUploadOwner={fileUploadOwner}
         />
       </div>
@@ -398,20 +408,30 @@ export function RecruitDetailInfoParagraph({
     thumbFileObjectId,
     thumbContentUrl
   )
-  const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null)
-  const [storedPreviewUrl, setStoredPreviewUrl] = useState<string | null>(null)
-  const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
+  const [livePreview, setLivePreview] = useState<{ scope: string; url: string } | null>(null)
+  const [storedPreview, setStoredPreview] = useState<{ scope: string; id: number; url: string } | null>(null)
+  const [uploadingThumbnailScope, setUploadingThumbnailScope] = useState<string | null>(null)
+  const livePreviewUrl = livePreview?.scope === editorResetKey ? livePreview.url : null
+  const storedPreviewUrl =
+    storedPreview?.scope === editorResetKey && storedPreview.id === resolvedThumbFileObjectId
+      ? storedPreview.url
+      : null
+  const uploadingThumbnail = uploadingThumbnailScope === editorResetKey
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
 
   const revokeThumb = useCallback((url: string | null | undefined) => {
-    if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+    releaseProgramThumbnailPreviewUrl(url)
   }, [])
 
+  useEffect(() => () => revokeThumb(livePreview?.url), [livePreview, revokeThumb])
+  useEffect(() => () => revokeThumb(storedPreview?.url), [storedPreview, revokeThumb])
+
   useEffect(() => {
-    const patch = recruitDetailDraftMediaRestorePatch(overlayScope, overlayKeyPrefix)
+    const patch = recruitDetailDraftMediaRestorePatch(overlayScope, overlayKeyPrefix, undefined, isGeneralWizard)
     if (patch == null) return
-    patchRecruitDetailInfo(patch)
-  }, [overlayKeyPrefix, overlayScope])
+    if (isGeneralWizard) recruitDetailInfoFieldForm.patchFor(overlayScope, patch)
+    else patchRecruitDetailInfo(patch)
+  }, [isGeneralWizard, overlayKeyPrefix, overlayScope])
 
   useEffect(() => {
     if (!isEphemeralThumbPreviewUrl(persistedThumbObjectUrl)) return
@@ -429,46 +449,61 @@ export function RecruitDetailInfoParagraph({
     if (livePreviewUrl) return
     const id = resolvedThumbFileObjectId
     if (id == null) {
-      setStoredPreviewUrl(prev => {
-        revokeThumb(prev)
-        return null
-      })
+      setStoredPreview(null)
       return
     }
     let cancelled = false
-    void loadProgramThumbnailPreviewUrl(id)
+    void loadProgramThumbnailPreviewUrl(id, { allowLocalUpload: true })
       .then(url => {
-        if (cancelled) return
-        setStoredPreviewUrl(prev => {
-          if (prev !== url) revokeThumb(prev)
-          return url
-        })
+        if (cancelled) {
+          revokeThumb(url)
+          return
+        }
+        setStoredPreview({ scope: editorResetKey, id, url })
       })
       .catch(() => {
         if (!cancelled) {
-          setStoredPreviewUrl(prev => {
-            revokeThumb(prev)
-            return null
-          })
+          setStoredPreview(null)
         }
       })
     return () => {
       cancelled = true
     }
-  }, [livePreviewUrl, resolvedThumbFileObjectId, revokeThumb])
+  }, [editorResetKey, livePreviewUrl, resolvedThumbFileObjectId, revokeThumb])
 
   const handleThumbnailFiles = useCallback(
     (files: File[]) => {
       const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
       if (!image) return
-      const blobUrl = URL.createObjectURL(image)
-      setLivePreviewUrl(prev => {
-        revokeThumb(prev)
-        return blobUrl
-      })
+      const previewSession = captureProgramThumbnailPreviewSession()
+      const blobUrl = createProgramThumbnailPreviewUrl(image, previewSession)
+      setLivePreview({ scope: editorResetKey, url: blobUrl })
+      setStoredPreview(null)
       setThumbFileName(image.name)
       setPersistedThumbObjectUrl(null)
-      setUploadingThumbnail(true)
+      setUploadingThumbnailScope(editorResetKey)
+      // Media keys live in the scoped field form, not in wizard recruitmentKv.
+      // Keep late upload results in the originating tab; never resurrect a reset draft.
+      const draftGeneration = getRecruitDetailContentResetGeneration()
+      const isLatestSelection = beginRecruitDetailThumbnailSelection(overlayScope, overlayKeyPrefix)
+      const isCurrentDraft = () =>
+        isProgramThumbnailPreviewSessionCurrent(previewSession) &&
+        isLatestSelection() &&
+        getRecruitDetailContentResetGeneration() === draftGeneration &&
+        !isRecruitDetailContentPersistSuppressed()
+      const writeThumbnail = (partial: Record<string, unknown>) => {
+        if (isGeneralWizard) recruitDetailInfoFieldForm.patchFor(overlayScope, partial)
+        else patchRecruitDetailInfo(partial)
+      }
+      if (isGeneralWizard) {
+        writeThumbnail({
+          [thumbFileNameKey]: image.name,
+          [thumbFileObjectIdKey]: null,
+          [thumbContentUrlKey]: null,
+          [thumbObjectUrlKey]: null,
+        })
+        persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
+      }
       trackRecruitDetailMediaUpload(
         (async () => {
           try {
@@ -477,69 +512,81 @@ export function RecruitDetailInfoParagraph({
               owner: programThumbnailOwner(RECRUIT_DETAIL_DRAFT_PROGRAM_OWNER_ID),
               waitUntilAvailable: true,
             })
-            rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image)
-            patchRecruitDetailInfo({
+            if (!isProgramThumbnailPreviewSessionCurrent(previewSession) || (isGeneralWizard && !isCurrentDraft())) return
+            rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image, previewSession)
+            writeThumbnail({
+              [thumbFileNameKey]: image.name,
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
               [thumbObjectUrlKey]: null,
             })
             persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } catch {
-            patchRecruitDetailInfo({
+            if (!isProgramThumbnailPreviewSessionCurrent(previewSession) || (isGeneralWizard && !isCurrentDraft())) return
+            writeThumbnail({
+              [thumbFileNameKey]: isGeneralWizard ? image.name : null,
               [thumbFileObjectIdKey]: null,
               [thumbContentUrlKey]: null,
               [thumbObjectUrlKey]: null,
             })
             persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
-            setLivePreviewUrl(prev => {
-              revokeThumb(prev)
-              return null
+            setLivePreview(prev => prev?.url === blobUrl ? null : prev)
+            // Retain the failed selection in GENERAL until the user removes/retries it.
+            // The create adapter rejects a named thumbnail without a confirmed ID.
+            cmsAlertModal.show({
+              title: '안내',
+              content: isGeneralWizard
+                ? '썸네일 업로드에 실패했습니다. 실패한 파일을 삭제한 후 다시 선택해 주세요.'
+                : '썸네일 업로드에 실패했습니다. 다시 선택해 주세요.',
             })
-            setThumbFileName(null)
           } finally {
-            setUploadingThumbnail(false)
+            if (isProgramThumbnailPreviewSessionCurrent(previewSession) && (!isGeneralWizard || isCurrentDraft())) {
+              setUploadingThumbnailScope(prev => prev === editorResetKey ? null : prev)
+            }
           }
         })()
       )
     },
     [
-      revokeThumb,
+      editorResetKey,
       setPersistedThumbObjectUrl,
       setThumbFileName,
+      isGeneralWizard,
       overlayKeyPrefix,
       overlayScope,
       thumbContentUrlKey,
+      thumbFileNameKey,
       thumbFileObjectIdKey,
       thumbObjectUrlKey,
     ]
   )
 
   const handleRemoveThumbnail = useCallback(() => {
-    setLivePreviewUrl(prev => {
-      revokeThumb(prev)
-      return null
-    })
-    setStoredPreviewUrl(prev => {
-      revokeThumb(prev)
-      return null
-    })
+    invalidateRecruitDetailThumbnailSelection(overlayScope, overlayKeyPrefix)
+    setLivePreview(null)
+    setStoredPreview(null)
+    setUploadingThumbnailScope(null)
     setThumbFileName(null)
     setPersistedThumbObjectUrl(null)
     forgetProgramThumbnailPreviewBlob(resolvedThumbFileObjectId)
-    patchRecruitDetailInfo({
+    const removal = {
+      [thumbFileNameKey]: null,
       [thumbFileObjectIdKey]: null,
       [thumbContentUrlKey]: null,
       [thumbObjectUrlKey]: null,
-    })
+    }
+    if (isGeneralWizard) recruitDetailInfoFieldForm.patchFor(overlayScope, removal)
+    else patchRecruitDetailInfo(removal)
     persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
   }, [
+    isGeneralWizard,
     overlayKeyPrefix,
     overlayScope,
     resolvedThumbFileObjectId,
-    revokeThumb,
     setPersistedThumbObjectUrl,
     setThumbFileName,
     thumbContentUrlKey,
+    thumbFileNameKey,
     thumbFileObjectIdKey,
     thumbObjectUrlKey,
   ])
@@ -641,7 +688,9 @@ export function RecruitDetailInfoParagraph({
       className={
         isTemplateManagementScreen
           ? `recruit-detail-info-paragraph__forms ${RECRUIT_DETAIL_TEMPLATE_SPEC_CLASS}`
-          : 'recruit-detail-info-paragraph__forms'
+          : isGeneralWizard
+            ? 'recruit-detail-info-paragraph__forms recruit-detail-info-paragraph__forms--general-wizard'
+            : 'recruit-detail-info-paragraph__forms'
       }
     >
       <DetailInfoForm title="상세 정보" hideHeader mode="edit">

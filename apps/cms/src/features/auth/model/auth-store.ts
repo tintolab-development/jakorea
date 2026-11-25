@@ -5,7 +5,8 @@
 
 import { create } from 'zustand'
 import { readJwtSidClaim } from '@jakorea/domain/session'
-import { bumpAuthGeneration } from '@/features/auth/lib/auth-generation'
+import { bumpAuthGeneration, getAuthGeneration } from '@/features/auth/lib/auth-generation'
+import { clearProgramThumbnailPreviewCache } from '@/features/program/shared/api/program-thumbnail-preview-cache'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import {
@@ -994,8 +995,29 @@ export async function refreshAdminSessionFromMe(): Promise<void> {
 
 // QA-0137: access token 메모리 보관소는 스토어 상태만 따른다 (axios·auth-service·소셜 로그인이 읽는다)
 writeAccessTokenToMemory(useAuthStore.getState().token)
-useAuthStore.subscribe(state => {
+
+function thumbnailPermissionIdentity(user: AuthState['user']): string {
+  if (!user) return ''
+  return JSON.stringify([
+    user.id, user.adminAccountId, user.role, user.roleCode, user.adminLevel, user.isActive,
+    [...(user.permissionCodes ?? [])].sort(),
+    Object.entries(user.programRoles ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+  ])
+}
+
+let thumbnailAuthGeneration = getAuthGeneration()
+useAuthStore.subscribe((state, previous) => {
   if (readAccessTokenFromMemory() !== state.token) writeAccessTokenToMemory(state.token)
+  const generation = getAuthGeneration()
+  const previousSid = readJwtSidClaim(previous.token)
+  const sameSessionRotation = Boolean(previousSid) && readJwtSidClaim(state.token) === previousSid
+  if (generation !== thumbnailAuthGeneration ||
+      state.isAuthenticated !== previous.isAuthenticated ||
+      thumbnailPermissionIdentity(state.user) !== thumbnailPermissionIdentity(previous.user) ||
+      (state.token !== previous.token && !sameSessionRotation)) {
+    clearProgramThumbnailPreviewCache()
+  }
+  thumbnailAuthGeneration = generation
 })
 
 registerAdminSessionSyncPendingReader(

@@ -6,6 +6,7 @@ import { ADMIN_FILE_PURPOSE } from '@/shared/lib/admin-file-upload'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
 import type { ProgramRecruitmentAttachmentResponse } from '@/shared/api/generated/dashboard/schemas/programRecruitmentAttachmentResponse'
 import type { ProgramRecruitmentResponse } from '@/shared/api/generated/dashboard/schemas/programRecruitmentResponse'
+import { captureProgramThumbnailPreviewSession, isProgramThumbnailPreviewSessionCurrent, forgetProgramThumbnailPreviewBlob } from '@/features/program/shared/api/program-thumbnail-preview-cache'
 import type { ProgramThumbnailResponse } from '@/features/program/shared/api/program-thumbnail'
 
 function unwrapApiBody<T>(payload: unknown): T {
@@ -96,11 +97,14 @@ export async function putProgramRecruitmentThumbnail(
   recruitmentId: number,
   fileObjectId: number | null
 ): Promise<ProgramThumbnailResponse> {
-  return unwrapApiBody(
+  const session = captureProgramThumbnailPreviewSession()
+  const result = unwrapApiBody<ProgramThumbnailResponse>(
     await customInstance({
       url: `${rowPath(programId, recruitmentId)}/thumbnail`,
       method: 'PUT',
       data: { fileObjectId },
     })
   )
+  if (isProgramThumbnailPreviewSessionCurrent(session)) forgetProgramThumbnailPreviewBlob(fileObjectId)
+  return result
 }

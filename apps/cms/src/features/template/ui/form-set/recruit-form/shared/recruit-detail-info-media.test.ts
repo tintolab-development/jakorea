@@ -207,6 +207,31 @@ describe('recruitmentCreateMediaFieldsFromOverlay', () => {
     })
   })
 
+  it('일반 모집에서 선택한 썸네일이 confirm되지 않으면 생성 요청을 차단한다', () => {
+    const rows = [{ recruitmentType: 'PARTICIPANT', targetType: 'ORGANIZATION' }]
+    const overlay = { 'recruit.detailInfo.thumbFileName': 'failed.png' }
+    expect(() => withRecruitmentCreateMedia(rows, overlay, 'general')).toThrow('썸네일 업로드가 완료되지 않았습니다')
+    expect(withRecruitmentCreateMedia(rows, { ...overlay, 'recruit.detailInfo.thumbFileObjectId': 22 }, 'general'))
+      .toEqual([{ ...rows[0], thumbnailFileObjectId: 22 }])
+    expect(withRecruitmentCreateMedia(rows, { 'recruit.detailInfo.thumbFileName': null }, 'general'))
+      .toEqual([{ ...rows[0], thumbnailFileObjectId: null }])
+    expect(() => withRecruitmentCreateMedia([{ ...rows[0], thumbnailFileObjectId: 23 }], overlay, 'general'))
+      .toThrow('썸네일 업로드가 완료되지 않았습니다')
+    expect(withRecruitmentCreateMedia([{ ...rows[0], thumbnailFileObjectId: 23 }], {
+      'recruit.detailInfo.thumbFileObjectId': null,
+      'recruit.detailInfo.thumbFileName': null,
+      'recruit.detailInfo.thumbContentUrl': null,
+    }, 'general')).toEqual([{ ...rows[0], thumbnailFileObjectId: null }])
+    expect(withRecruitmentCreateMedia([{ ...rows[0], thumbnailFileObjectId: 23 }], {
+      'recruit.detailInfo.thumbFileObjectId': 24,
+    }, 'general')).toEqual([{ ...rows[0], thumbnailFileObjectId: 24 }])
+  })
+
+  it('실패한 강사 썸네일은 참여자 행에 영향을 주지 않는다', () => {
+    const rows = [{ recruitmentType: 'PARTICIPANT', targetType: 'ORGANIZATION' }]
+    expect(withRecruitmentCreateMedia(rows, { 'recruitInstructor.detailInfo.thumbFileName': 'failed.png' }, 'general')).toEqual(rows)
+  })
+
   it('미완료 blob만 있으면 생성 요청 미디어 필드를 생략한다', () => {
     expect(
       recruitmentCreateMediaFieldsFromOverlay(

@@ -57,6 +57,8 @@ export type RichTextEditorProps = {
   minHeight?: string | number
   /** 초기 높이. 생략 시 minHeight만 적용. 사용자 리사이즈가 있으면 그 값이 우선 */
   height?: string | number
+  /** Opt in only for a scrollable full-page form, not fixed-height dialogs. */
+  resizeInScrollableContainer?: boolean
   /**
    * `true`이고 `toolbar`가 없으면 툴바 영역만 비워 둠.
    * 앱별 툴바는 `toolbar` 슬롯으로 주입.

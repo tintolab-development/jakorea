@@ -1,5 +1,22 @@
-import { loadAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
+import { fetchFileContentBlob } from '@/shared/lib/admin-file-upload/attachments'
 import customInstance from '@/shared/api/orval-mutator'
+import {
+  captureProgramThumbnailPreviewSession,
+  clearProgramThumbnailPreviewCache,
+  createProgramThumbnailPreviewUrl,
+  forgetProgramThumbnailPreviewBlob,
+  isPreviewableImageBlob,
+  isProgramThumbnailPreviewSessionCurrent,
+  readLocalProgramThumbnailPreviewBlob,
+} from './program-thumbnail-preview-cache'
+export {
+  captureProgramThumbnailPreviewSession,
+  createProgramThumbnailPreviewUrl,
+  forgetProgramThumbnailPreviewBlob,
+  isProgramThumbnailPreviewSessionCurrent,
+  releaseProgramThumbnailPreviewUrl,
+  rememberProgramThumbnailPreviewBlob,
+} from './program-thumbnail-preview-cache'
 
 export type ProgramThumbnailResponse = {
   fileObjectId: number | null
@@ -29,39 +46,27 @@ export async function fetchProgramThumbnail(programId: number): Promise<ProgramT
   )
 }
 
-function isPreviewableImageBlob(blob: Blob): boolean {
-  return blob.size > 0 && blob.type !== 'application/json'
-}
-
-/** 등록 위저드 단계 이동 시 같은 세션에서 다시 받지 않도록 File/Blob을 기억한다. */
-const thumbnailPreviewBlobs = new Map<number, Blob>()
-
-export function rememberProgramThumbnailPreviewBlob(fileObjectId: number, blob: Blob): void {
-  if (fileObjectId < 1 || blob.size < 1) return
-  thumbnailPreviewBlobs.set(fileObjectId, blob)
-}
-
-export function forgetProgramThumbnailPreviewBlob(fileObjectId: number | null | undefined): void {
-  if (fileObjectId == null || fileObjectId < 1) return
-  thumbnailPreviewBlobs.delete(fileObjectId)
-}
-
 export function resetProgramThumbnailPreviewBlobsForTests(): void {
-  thumbnailPreviewBlobs.clear()
+  clearProgramThumbnailPreviewCache()
 }
 
-/** img에 넣을 주소. `/content` fallback은 이 purpose에서 404라 쓰지 않는다. */
-export async function loadProgramThumbnailPreviewUrl(fileObjectId: number): Promise<string> {
-  const cached = thumbnailPreviewBlobs.get(fileObjectId)
-  if (cached && isPreviewableImageBlob(cached)) {
-    return URL.createObjectURL(cached)
+/** Persisted thumbnails must pass scoped inline authorization every time. No download fallback. */
+export async function loadProgramThumbnailPreviewUrl(
+  fileObjectId: number,
+  options: { allowLocalUpload?: boolean } = {}
+): Promise<string> {
+  const session = captureProgramThumbnailPreviewSession()
+  // Only a caller displaying an unsaved upload may opt in to local bytes.
+  const cached = options.allowLocalUpload ? readLocalProgramThumbnailPreviewBlob(fileObjectId) : undefined
+  if (cached) return createProgramThumbnailPreviewUrl(cached, session)
+  const blob = await fetchFileContentBlob(fileObjectId, { skipGlobalErrorAlert: true })
+  if (!isProgramThumbnailPreviewSessionCurrent(session)) {
+    throw new Error('미리보기 인증 세션이 변경되었습니다.')
   }
-  const blob = await loadAdminFileBlob(fileObjectId, { skipGlobalErrorAlert: true })
   if (!isPreviewableImageBlob(blob)) {
     throw new Error('대표 이미지를 불러오지 못했습니다.')
   }
-  thumbnailPreviewBlobs.set(fileObjectId, blob)
-  return URL.createObjectURL(blob)
+  return createProgramThumbnailPreviewUrl(blob, session)
 }
 
 /** PUT /api/admin/programs/{programId}/thumbnail — null 이면 대표 이미지를 지운다 */
@@ -69,9 +74,11 @@ export async function putProgramThumbnail(
   programId: number,
   fileObjectId: number | null
 ): Promise<void> {
+  const session = captureProgramThumbnailPreviewSession()
   await customInstance({
     url: `/api/admin/programs/${programId}/thumbnail`,
     method: 'PUT',
     data: { fileObjectId },
   })
+  if (isProgramThumbnailPreviewSessionCurrent(session)) forgetProgramThumbnailPreviewBlob(fileObjectId)
 }

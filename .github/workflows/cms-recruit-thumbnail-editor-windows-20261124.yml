@@ -1,0 +1,83 @@
+name: CMS recruitment media and editor - trusted Windows regression
+
+on:
+  push:
+    branches:
+      - fix/cms-recruit-thumbnail-editor-20261124
+    paths:
+      - 'apps/cms/**'
+      - 'packages/rich-text/**'
+      - '.github/workflows/cms-recruit-thumbnail-editor-windows-20261124.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cms-recruit-media-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+
+jobs:
+  targeted:
+    if: github.repository == 'tintolab-development/jakorea' && github.ref == 'refs/heads/fix/cms-recruit-thumbnail-editor-20261124' && github.event_name == 'push'
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: 'powershell -NoProfile -ExecutionPolicy Bypass -Command ". ''{0}''"'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify exact revision and no production credentials
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_REPOSITORY -ne 'tintolab-development/jakorea' -or $env:GITHUB_REF -ne 'refs/heads/fix/cms-recruit-thumbnail-editor-20261124' -or $env:GITHUB_EVENT_NAME -ne 'push') { throw 'Unexpected source' }
+          if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'Wrong revision' }
+          foreach ($key in @('AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_PROFILE')) {
+            if ([Environment]::GetEnvironmentVariable($key)) { throw "Unsafe AWS environment: $key" }
+          }
+          git diff --check 5ab19cbf2e4be2eec532054fb2e2d58c01f6a527 HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Invalid patch' }
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install locked dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
+      - name: Build workspace dependencies
+        run: |
+          pnpm --filter cms build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw 'Workspace dependency build failed' }
+      - name: Run focused recruitment regression tests
+        run: |
+          pnpm --filter cms exec vitest run src/features/program/shared/api/program-thumbnail.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush.test.ts src/features/program/general/api/adapters/general-program-adapters.test.ts src/features/program/general/lib/registration-payload-smoke.test.ts src/features/program/shared/api/program-media-target.test.ts src/shared/lib/admin-file-upload/upload.test.ts src/features/program/ujat/api/service.test.ts src/features/auth/model/auth-store.refresh-cookie-logout.test.ts src/shared/instance/axios-instance.logout-race.test.ts src/features/program/shared/lib/platform-preview/poster-url.test.ts
+          if ($LASTEXITCODE -ne 0) { throw 'CMS focused regression failed' }
+      - name: CMS typecheck
+        run: |
+          pnpm --filter cms typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'CMS typecheck failed' }
+      - name: CMS build without deployment
+        run: |
+          pnpm --filter cms build
+          if ($LASTEXITCODE -ne 0) { throw 'CMS build failed' }
+          if (-not (Test-Path -LiteralPath 'apps/cms/dist/index.html')) { throw 'Missing CMS build output' }
+          Write-Host 'CMS_RECRUIT_MEDIA_GATE=PASS|DEPLOYMENT=NONE'
