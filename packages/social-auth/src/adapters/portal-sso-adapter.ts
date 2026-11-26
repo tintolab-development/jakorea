@@ -19,10 +19,39 @@ type SsoAuthorizationStartPayload = {
   message?: string
 }
 
+// Only the known NEWPROD backend can opt into the exact canonical portal callback.
+const NAVER_PRODUCTION_LOGIN_PATH = '/api/portal/auth/sso/login/naver/callback'
+const NAVER_PRODUCTION_BACKEND_CALLBACK =
+  'https://d2yfe3hmramof9.cloudfront.net' + NAVER_PRODUCTION_LOGIN_PATH
+const NAVER_PRODUCTION_PORTAL_CALLBACK =
+  'https://jakorea.org' + NAVER_PRODUCTION_LOGIN_PATH
+
+function shouldPreserveNaverProductionCallback(
+  authorizationUrl: string,
+  expectedRedirectUri: string
+): boolean {
+  if (expectedRedirectUri !== NAVER_PRODUCTION_BACKEND_CALLBACK) return false
+  try {
+    const url = new URL(authorizationUrl)
+    const redirects = url.searchParams.getAll('redirect_uri')
+    return (
+      url.origin === 'https://nid.naver.com' &&
+      url.pathname === '/oauth2.0/authorize' &&
+      !url.username &&
+      !url.password &&
+      !url.hash &&
+      redirects.length === 1 &&
+      redirects[0] === NAVER_PRODUCTION_PORTAL_CALLBACK
+    )
+  } catch {
+    return false
+  }
+}
+
 function resolveSsoAuthorizationStartResult(
   payload: SsoAuthorizationStartPayload | null | undefined,
   redirectUri: string,
-  preserveBackendRedirect = false
+  allowNaverProductionCallback = false
 ): { authorizationUrl: string; state?: string } {
   const authorizationUrl =
     typeof payload?.authorizationUrl === 'string' && payload.authorizationUrl.length > 0
@@ -53,9 +82,11 @@ function resolveSsoAuthorizationStartResult(
   }
 
   return {
-    authorizationUrl: preserveBackendRedirect
-      ? authorizationUrl
-      : rewriteOAuthAuthorizationRedirectUri(authorizationUrl, redirectUri),
+    authorizationUrl:
+      allowNaverProductionCallback &&
+      shouldPreserveNaverProductionCallback(authorizationUrl, redirectUri)
+        ? authorizationUrl
+        : rewriteOAuthAuthorizationRedirectUri(authorizationUrl, redirectUri),
     state: typeof payload?.state === 'string' ? payload.state : undefined,
   }
 }
@@ -177,8 +208,8 @@ export function createPortalSsoAdapter(options: CreatePortalSsoAdapterOptions): 
         return resolveSsoAuthorizationStartResult(
           unwrapApiData<SsoAuthorizationStartPayload>(data),
           redirectUri,
-          // Naver portal login uses the server's exact URI for both authorization
-          // and token exchange. A frontend rewrite would defeat server overrides.
+          // Accept only the explicitly supported NEWPROD Naver callback;
+          // preserve the existing QA/local and other-provider rewrite contract.
           input.provider === 'naver'
         )
       } catch (err) {
