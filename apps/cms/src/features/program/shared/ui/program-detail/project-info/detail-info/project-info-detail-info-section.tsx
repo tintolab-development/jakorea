@@ -251,11 +251,13 @@ function DetailInfoRichTextFieldEditor({
   program,
   placeholder,
   error,
+  resizeInScrollableContainer,
 }: {
   field: ControllerRenderProps<ProgramDetailEditFormValues, FieldPath<ProgramDetailEditFormValues>>
   program: Program
   placeholder: string
   error?: unknown
+  resizeInScrollableContainer: boolean
 }) {
   const value = typeof field.value === 'string' ? field.value : String(field.value ?? '')
   const owner = programInlineImageOwner(parseFileObjectId(program.id))
@@ -304,8 +306,11 @@ function DetailInfoRichTextFieldEditor({
       <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
         <RichTextEditor
           editor={editor}
-          className="program-detail-info-tab__rich-text-editor"
+          className={resizeInScrollableContainer
+            ? 'program-detail-info-tab__rich-text-editor program-detail-info-tab__rich-text-editor--scrollable'
+            : 'program-detail-info-tab__rich-text-editor'}
           minHeight={editorMinHeight}
+          resizeInScrollableContainer={resizeInScrollableContainer}
           fileUploadOwner={owner}
         />
       </div>
@@ -409,6 +414,7 @@ function RichTextDetailField({
   name,
   placeholder,
   readContent,
+  resizeInScrollableContainer,
 }: {
   label: string
   showRequiredStar: boolean
@@ -418,6 +424,7 @@ function RichTextDetailField({
   name: FieldPath<ProgramDetailEditFormValues>
   placeholder: string
   readContent: ReactNode
+  resizeInScrollableContainer: boolean
 }) {
   return (
     <DetailInfoForm.Row type="single">
@@ -444,6 +451,7 @@ function RichTextDetailField({
                       program={program}
                       placeholder={placeholder}
                       error={fieldState.error}
+                      resizeInScrollableContainer={resizeInScrollableContainer}
                     />
                   )}
                 />
@@ -1150,6 +1158,7 @@ export function DetailInfoSection({
           )}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="모집 안내"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1165,6 +1174,7 @@ export function DetailInfoSection({
         />
         {showRecruitmentMethod ? (
           <RichTextDetailField
+            resizeInScrollableContainer={variant === 'general'}
             label={recruitmentMethodLabel}
             showRequiredStar={false}
             isFormEdit={isFormEdit}
@@ -1180,6 +1190,7 @@ export function DetailInfoSection({
           />
         ) : null}
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="학습 지원 내용"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1198,6 +1209,7 @@ export function DetailInfoSection({
           )}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="추가 내용"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1313,6 +1325,7 @@ export function InstructorDetailInfoSection({
           )}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="모집 안내"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1327,6 +1340,7 @@ export function InstructorDetailInfoSection({
           )}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="지원 방법"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1337,6 +1351,7 @@ export function InstructorDetailInfoSection({
           readContent={applicationMethod}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="추가 내용"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1347,6 +1362,7 @@ export function InstructorDetailInfoSection({
           readContent={additionalContentReadContent(program, emptyReadDisplay)}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="기타사항"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1482,6 +1498,7 @@ export function VolunteerDetailInfoSection({
           )}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="모집 안내"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1496,6 +1513,7 @@ export function VolunteerDetailInfoSection({
           )}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="지원 방법"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1510,6 +1528,7 @@ export function VolunteerDetailInfoSection({
           readContent={applicationMethod}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="추가 내용"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
@@ -1520,6 +1539,7 @@ export function VolunteerDetailInfoSection({
           readContent={additionalContentReadContent(program, emptyReadDisplay)}
         />
         <RichTextDetailField
+          resizeInScrollableContainer={variant === 'general'}
           label="기타사항"
           showRequiredStar={false}
           isFormEdit={isFormEdit}
