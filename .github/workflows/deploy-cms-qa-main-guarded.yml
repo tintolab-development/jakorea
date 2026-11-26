@@ -14,7 +14,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: cms-qa-deploy
@@ -30,9 +29,11 @@ env:
 jobs:
   deploy:
     name: Build and deploy CMS QA main
-    if: ${{ github.repository == 'tintolab-development/jakorea' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirmation == 'QA_ONLY_RETAIN_ASSETS' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -42,8 +43,13 @@ jobs:
         shell: bash
         env:
           EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
         run: |
           set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'tintolab-development/jakorea'
+          test "$GITHUB_EVENT_NAME" = 'workflow_dispatch'
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test "$CONFIRMATION" = 'QA_ONLY_RETAIN_ASSETS'
           [[ "$EXPECTED_MAIN_SHA" =~ ^[a-f0-9]{40}$ ]]
           test "$GITHUB_SHA" = "$EXPECTED_MAIN_SHA"
           test "$(git rev-parse HEAD)" = "$EXPECTED_MAIN_SHA"
@@ -64,6 +70,48 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build workspace dependencies and verify focused regressions
+        shell: bash
+        env:
+          HUSKY: '0'
+          VITE_API_BASE_URL: https://example.invalid
+          VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+          VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+          VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+          VITE_ADDRESS_API_KEY: ci-placeholder
+          VITE_NEIS_API_KEY: ci-placeholder
+          VITE_CAREER_NET_API_KEY: ci-placeholder
+        run: |
+          set -euo pipefail
+          pnpm --filter cms build:workspace-deps
+          tests=(
+            src/features/program/shared/api/program-thumbnail.test.ts
+            src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media.test.ts
+            src/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session.test.ts
+            src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf.test.ts
+            src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush.test.ts
+            src/features/program/general/api/adapters/general-program-adapters.test.ts
+            src/features/program/general/lib/registration-payload-smoke.test.ts
+            src/features/program/shared/api/program-media-target.test.ts
+            src/shared/lib/admin-file-upload/upload.test.ts
+            src/features/program/ujat/api/service.test.ts
+            src/features/auth/model/auth-store.refresh-cookie-logout.test.ts
+            src/shared/instance/axios-instance.logout-race.test.ts
+            src/features/program/shared/lib/platform-preview/poster-url.test.ts
+            src/features/detailed-program/hooks/use-detailed-program-mutations.test.tsx
+            src/features/dashboard/hooks/use-dashboard-dnd.test.ts
+            src/features/dashboard/hooks/use-dashboard-program-schedules.test.tsx
+            src/features/dashboard/lib/dashboard-dnd-helpers.test.ts
+            src/features/dashboard/lib/layout-snapshot.test.ts
+            src/features/dashboard/lib/revision-conflict-retry.test.ts
+            src/features/dashboard/lib/resolve-dashboard-shortcut-items.test.ts
+            src/features/dashboard/lib/widget-program-filter.test.ts
+          )
+          for file in "${tests[@]}"; do test -f "apps/cms/$file"; done
+          pnpm --filter cms exec vitest run --passWithNoTests=false "${tests[@]}"
+          pnpm --filter cms typecheck
+          echo 'CMS_QA_REGRESSION=PASS|FILES=21'
 
       - name: Verify CMS address env
         shell: bash
@@ -94,8 +142,47 @@ jobs:
           VITE_PLATFORM_PUBLIC_ORIGIN: ${{ secrets.VITE_PLATFORM_PUBLIC_ORIGIN }}
         run: pnpm --filter cms build
 
-      - name: Verify build output
-        run: test -f apps/cms/dist/index.html
+      - name: Verify build output and deployment entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s apps/cms/dist/index.html
+          test -s apps/cms/dist/platform-preview/preview.html
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlsplit, unquote
+          root = Path('apps/cms/dist').resolve()
+          entries = sorted(root.rglob('*.html'))
+          assert root / 'index.html' in entries
+          assert root / 'platform-preview/preview.html' in entries
+          class Entry(HTMLParser):
+              def __init__(self, path):
+                  super().__init__()
+                  self.path = path
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  if tag == 'script':
+                      url = attrs.get('src')
+                  elif tag == 'link' and attrs.get('rel') in ('stylesheet', 'modulepreload'):
+                      url = attrs.get('href')
+                  else:
+                      return
+                  if not url:
+                      return
+                  parsed = urlsplit(url)
+                  if parsed.scheme or parsed.netloc:
+                      return
+                  local = unquote(parsed.path)
+                  if not local:
+                      return
+                  target = (root / local.lstrip('/') if local.startswith('/') else self.path.parent / local).resolve()
+                  assert target.is_relative_to(root) and target.is_file(), 'Missing local entry asset: ' + local
+          for entry in entries:
+              Entry(entry).feed(entry.read_text(encoding='utf-8'))
+          assert not any(p.is_symlink() for p in root.rglob('*'))
+          print('CMS_QA_BUILD=PASS|HTML_ENTRIES=' + str(len(entries)))
+          PY
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -117,6 +204,8 @@ jobs:
           test "$CMS_BUCKET" = 'ja-prod-frontend-cms-264015108093'
           test "$CMS_DISTRIBUTION_ID" = 'E1H6YN0NW3269W'
           aws s3api head-bucket --bucket "$CMS_BUCKET" --expected-bucket-owner 264015108093
+          aws s3api put-object --generate-cli-skeleton input > "$RUNNER_TEMP/cms-qa-put-model.json"
+          python3 -c 'import json,os; d=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"cms-qa-put-model.json"))); assert {"IfMatch","ChecksumAlgorithm","ExpectedBucketOwner"} <= d.keys()'
           aws cloudfront get-distribution --id "$CMS_DISTRIBUTION_ID" --output json > "$RUNNER_TEMP/cms-qa-distribution.json"
           python3 - <<'PY'
           import json, os
@@ -138,6 +227,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/cms-qa-previous"
           aws s3api get-object --bucket "$CMS_BUCKET" --key index.html --expected-bucket-owner 264015108093 "$RUNNER_TEMP/cms-qa-previous/index.html" > "$RUNNER_TEMP/cms-qa-previous/index-metadata.json"
           test -s "$RUNNER_TEMP/cms-qa-previous/index.html"
+          aws s3api get-object --bucket "$CMS_BUCKET" --key platform-preview/preview.html --expected-bucket-owner 264015108093 "$RUNNER_TEMP/cms-qa-previous/preview.html" > "$RUNNER_TEMP/cms-qa-previous/preview-metadata.json"
+          test -s "$RUNNER_TEMP/cms-qa-previous/preview.html"
 
       - name: Preserve previous index for manual recovery
         uses: actions/upload-artifact@v4
@@ -151,10 +242,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          aws s3 sync apps/cms/dist/ "s3://${CMS_BUCKET}/" \
-            --exclude index.html \
+          aws s3 cp apps/cms/dist/ "s3://${CMS_BUCKET}/" \
+            --recursive \
+            --exclude '*.html' \
+            --only-show-errors \
             --no-progress \
             --cache-control "public,max-age=0,must-revalidate"
+
+      - name: Publish non-root HTML after assets
+        shell: bash
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN_SHA"
+          aws s3 cp apps/cms/dist/ "s3://${CMS_BUCKET}/" \
+            --recursive \
+            --exclude '*' \
+            --include '*.html' \
+            --exclude 'index.html' \
+            --exclude 'platform-preview/preview.html' \
+            --only-show-errors \
+            --no-progress \
+            --content-type "text/html; charset=utf-8" \
+            --cache-control "public,max-age=0,must-revalidate"
+          previous_etag="$(python3 -c 'import json,os; print(json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"cms-qa-previous","preview-metadata.json")))["ETag"])')"
+          aws s3api put-object --bucket "$CMS_BUCKET" --key platform-preview/preview.html --body apps/cms/dist/platform-preview/preview.html --expected-bucket-owner 264015108093 --if-match "$previous_etag" --content-type "text/html; charset=utf-8" --cache-control "public,max-age=0,must-revalidate" --metadata "git-sha=$EXPECTED_MAIN_SHA" --checksum-algorithm SHA256 > /dev/null
+          aws s3api get-object --bucket "$CMS_BUCKET" --key platform-preview/preview.html --expected-bucket-owner 264015108093 "$RUNNER_TEMP/cms-qa-current-preview.html" > /dev/null
+          cmp apps/cms/dist/platform-preview/preview.html "$RUNNER_TEMP/cms-qa-current-preview.html"
+          echo "CMS_QA_PREVIEW=PASS|COMMIT=$EXPECTED_MAIN_SHA"
 
       - name: Publish entry point last and verify exact bytes
         shell: bash
@@ -190,4 +306,14 @@ jobs:
             --distribution-id "${CMS_DISTRIBUTION_ID}" \
             --id "${INVALIDATION_ID}"
 
-          echo "CMS_QA_DEPLOY=PASS|NEWPROD=NOT_TARGETED|OLD_ASSET_DELETE=NONE"
+      - name: Verify live QA entry points
+        shell: bash
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+        run: |
+          set -euo pipefail
+          for entry in index.html platform-preview/preview.html; do
+            curl --fail --silent --show-error --compressed --connect-timeout 10 --max-time 60 --retry 3 "https://d39lkvqlx43zyt.cloudfront.net/$entry" -o "$RUNNER_TEMP/cms-qa-live.html"
+            cmp "apps/cms/dist/$entry" "$RUNNER_TEMP/cms-qa-live.html"
+          done
+          echo "CMS_QA_DEPLOY=PASS|COMMIT=$EXPECTED_MAIN_SHA|NEWPROD=NOT_TARGETED|OLD_ASSET_DELETE=NONE"
