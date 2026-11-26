@@ -54,3 +54,13 @@
   max-height: none !important;
 }
 
+/* Full-page GENERAL recruitment only: the surrounding page scrolls, and the
+ * resized editor body must fit the selected height rather than its content. */
+.project-info-detail-info-section__frame
+  .program-detail-info-tab__editor-host--field
+  .program-detail-info-tab__rich-text-editor--scrollable[data-resized='true']
+  .rich-text-editor__body {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: auto;
+}
