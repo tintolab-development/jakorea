@@ -1041,3 +1041,12 @@ describe('mapCompanySchoolListItemToProgram — 목록 열 값 (시안 4175:6555
     expect(mapped.instructors).toBe(1)
   })
 })
+
+describe('program deletion selection regression', () => {
+  it('allows empty in-progress/completed rows without relaxing participant protection', () => {
+    const base0 = { id: 900001, programType: 'COMPANY_SCHOOL', participantApprovedCount: 0, approvedOrganizationApplicationCount: 0, participatingSchoolCount: 0, participatingStudentCount: 0 } as const
+    expect(mapCompanySchoolListItemToProgram({ ...base0, periodStatus: 'IN_PROGRESS' }).listDeleteBlocked).toBe(false)
+    expect(mapCompanySchoolListItemToProgram({ ...base0, periodStatus: 'COMPLETED' }).listDeleteBlocked).toBe(false)
+    expect(mapCompanySchoolListItemToProgram({ ...base0, periodStatus: 'COMPLETED', participantApprovedCount: 1 }).listDeleteBlocked).toBe(true)
+  })
+})

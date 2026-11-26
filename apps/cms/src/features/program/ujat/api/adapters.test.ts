@@ -1801,3 +1801,12 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
     expect(participant).not.toHaveProperty('operationEndDate')
   })
 })
+
+describe('program deletion selection regression', () => {
+  it('allows empty in-progress/completed rows without relaxing participant protection', () => {
+    const base0 = { id: 900001, programType: 'UJAT', participantApprovedCount: 0, approvedOrganizationApplicationCount: 0, participatingSchoolCount: 0, participatingStudentCount: 0 } as const
+    expect(fromListItem({ ...base0, ujatProgressStatus: 'EDUCATION_IN_PROGRESS' }).listDeleteBlocked).toBe(false)
+    expect(fromListItem({ ...base0, ujatProgressStatus: 'PROGRAM_ENDED' }).listDeleteBlocked).toBe(false)
+    expect(fromListItem({ ...base0, ujatProgressStatus: 'PROGRAM_ENDED', participantApprovedCount: 1 }).listDeleteBlocked).toBe(true)
+  })
+})

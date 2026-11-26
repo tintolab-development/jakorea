@@ -1857,3 +1857,16 @@ describe('등록 위저드 강사 모집 비고 「해당 없음」 → 생성 �
     )
   })
 })
+
+describe('program deletion selection regression', () => {
+  it('allows empty in-progress/completed rows without relaxing participant protection', () => {
+    const base0 = { id: 900001, programType: 'GENERAL_INDIVIDUAL', participantApprovedCount: 0, approvedOrganizationApplicationCount: 0, participatingSchoolCount: 0, participatingStudentCount: 0 } as const
+    expect(mapAdminProgramListItemToProgram({ ...base0, periodStatus: 'IN_PROGRESS' }).listDeleteBlocked).toBe(false)
+    expect(mapAdminProgramListItemToProgram({ ...base0, periodStatus: 'COMPLETED' }).listDeleteBlocked).toBe(false)
+    expect(mapAdminProgramListItemToProgram({ ...base0, periodStatus: 'COMPLETED', participantApprovedCount: 1 }).listDeleteBlocked).toBe(true)
+    const base1 = { id: 900002, programType: 'GENERAL_ORGANIZATION', participantApprovedCount: 0, approvedOrganizationApplicationCount: 0, participatingSchoolCount: 0, participatingStudentCount: 0 } as const
+    expect(mapAdminProgramListItemToProgram({ ...base1, periodStatus: 'IN_PROGRESS' }).listDeleteBlocked).toBe(false)
+    expect(mapAdminProgramListItemToProgram({ ...base1, periodStatus: 'COMPLETED' }).listDeleteBlocked).toBe(false)
+    expect(mapAdminProgramListItemToProgram({ ...base1, periodStatus: 'COMPLETED', participantApprovedCount: 1 }).listDeleteBlocked).toBe(true)
+  })
+})
