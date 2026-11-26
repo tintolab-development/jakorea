@@ -1,0 +1,82 @@
+name: CMS program delete eligibility - trusted Windows regression
+
+on:
+  push:
+    branches:
+      - fix/cms-program-delete-no-activity-20261126
+    paths:
+      - 'apps/cms/**'
+      - '.github/workflows/cms-program-delete-eligibility-windows-20261126.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cms-program-delete-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+
+jobs:
+  targeted:
+    if: github.repository == 'tintolab-development/jakorea' && github.ref == 'refs/heads/fix/cms-program-delete-no-activity-20261126' && github.event_name == 'push'
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: 'powershell -NoProfile -ExecutionPolicy Bypass -Command ". ''{0}''"'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify source and prohibit production credentials
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_REPOSITORY -ne 'tintolab-development/jakorea' -or $env:GITHUB_REF -ne 'refs/heads/fix/cms-program-delete-no-activity-20261126' -or $env:GITHUB_EVENT_NAME -ne 'push') { throw 'Unexpected source' }
+          if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'Wrong revision' }
+          foreach ($key in @('AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_PROFILE')) {
+            if ([Environment]::GetEnvironmentVariable($key)) { throw "Unsafe AWS environment: $key" }
+          }
+          git diff --check 9dc6addd15a859f5ab7178f3e3830a76a2bb96e6 HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Invalid patch' }
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install locked dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
+      - name: Build workspace dependencies
+        run: |
+          pnpm --filter cms build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw 'Workspace dependency build failed' }
+      - name: Program delete policy and adapter regressions
+        run: |
+          pnpm --filter cms exec vitest run src/features/program/shared/lib/program-delete-eligibility.test.ts src/features/program/shared/lib/program-delete-guide.test.ts src/features/program/shared/lib/program-role-action-check.test.ts src/features/program/shared/lib/invalidate-program-list-caches-after-registration.test.ts src/features/program/general/api/adapters/general-program-adapters.test.ts src/features/program/1c-1s/api/adapters.test.ts src/features/program/trained-teachers/api/adapters.test.ts src/features/program/ujat/api/adapters.test.ts src/features/program/general/lib/program-calendar-events.test.ts src/features/program/1c-1s/api/service.test.ts src/features/program/trained-teachers/api/service.test.ts src/features/program/ujat/api/service.test.ts
+          if ($LASTEXITCODE -ne 0) { throw 'Program deletion regressions failed' }
+      - name: CMS typecheck
+        run: |
+          pnpm --filter cms typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'CMS typecheck failed' }
+      - name: Build CMS without deployment
+        run: |
+          pnpm --filter cms build
+          if ($LASTEXITCODE -ne 0) { throw 'CMS build failed' }
+          if (-not (Test-Path -LiteralPath 'apps/cms/dist/index.html')) { throw 'Missing CMS build output' }
+          Write-Host 'PROGRAM_DELETE_GATE=PASS|DEPLOYMENT=NONE'
