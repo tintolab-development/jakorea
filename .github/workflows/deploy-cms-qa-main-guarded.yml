@@ -1,0 +1,193 @@
+name: Deploy CMS QA Main - retain assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_main_sha:
+        description: 'Exact current main commit SHA (40 lowercase hex)'
+        required: true
+        type: string
+      confirmation:
+        description: 'Enter QA_ONLY_RETAIN_ASSETS'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cms-qa-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ROLE_ARN: arn:aws:iam::264015108093:role/ja-prod-github-cms-deploy-role
+  CMS_BUCKET: ja-prod-frontend-cms-264015108093
+  CMS_DISTRIBUTION_ID: E1H6YN0NW3269W
+  NODE_OPTIONS: --max-old-space-size=5120
+
+jobs:
+  deploy:
+    name: Build and deploy CMS QA main
+    if: ${{ github.repository == 'tintolab-development/jakorea' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirmation == 'QA_ONLY_RETAIN_ASSETS' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify exact main release
+        shell: bash
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_MAIN_SHA" =~ ^[a-f0-9]{40}$ ]]
+          test "$GITHUB_SHA" = "$EXPECTED_MAIN_SHA"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_MAIN_SHA"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN_SHA"
+          echo "CMS_QA_SOURCE=PASS|COMMIT=$EXPECTED_MAIN_SHA"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.2
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify CMS address env
+        shell: bash
+        env:
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+          VITE_PLATFORM_PUBLIC_ORIGIN: ${{ secrets.VITE_PLATFORM_PUBLIC_ORIGIN }}
+        run: |
+          if [ -z "${VITE_ADDRESS_API_KEY:-}" ]; then
+            echo "VITE_ADDRESS_API_KEY=MISSING"
+            exit 1
+          fi
+
+          if [ -z "${VITE_PLATFORM_PUBLIC_ORIGIN:-}" ]; then
+            echo "VITE_PLATFORM_PUBLIC_ORIGIN=MISSING"
+            exit 1
+          fi
+
+          echo "VITE_ADDRESS_API_KEY=SET"
+          echo "VITE_PLATFORM_PUBLIC_ORIGIN=${VITE_PLATFORM_PUBLIC_ORIGIN}"
+
+      - name: Build CMS
+        env:
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+          VITE_JUSO_ADDRESS_API_URL: https://business.juso.go.kr/addrlink/addrLinkApi.do
+          VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
+          VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+          VITE_NAVER_CLIENT_ID: ${{ secrets.VITE_NAVER_CLIENT_ID }}
+          VITE_PLATFORM_PUBLIC_ORIGIN: ${{ secrets.VITE_PLATFORM_PUBLIC_ORIGIN }}
+        run: pnpm --filter cms build
+
+      - name: Verify build output
+        run: test -f apps/cms/dist/index.html
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-cms-qa-guarded-deploy
+          allowed-account-ids: '264015108093'
+
+      - name: Verify QA AWS destination and back up current entry point
+        shell: bash
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN_SHA"
+          test "$(aws sts get-caller-identity --query Account --output text)" = '264015108093'
+          test "$(aws sts get-caller-identity --query Arn --output text)" = 'arn:aws:sts::264015108093:assumed-role/ja-prod-github-cms-deploy-role/github-cms-qa-guarded-deploy'
+          test "$CMS_BUCKET" = 'ja-prod-frontend-cms-264015108093'
+          test "$CMS_DISTRIBUTION_ID" = 'E1H6YN0NW3269W'
+          aws s3api head-bucket --bucket "$CMS_BUCKET" --expected-bucket-owner 264015108093
+          aws cloudfront get-distribution --id "$CMS_DISTRIBUTION_ID" --output json > "$RUNNER_TEMP/cms-qa-distribution.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          d = json.loads((Path(os.environ['RUNNER_TEMP']) / 'cms-qa-distribution.json').read_text())['Distribution']
+          assert d['Id'] == 'E1H6YN0NW3269W'
+          assert d['ARN'] == 'arn:aws:cloudfront::264015108093:distribution/E1H6YN0NW3269W'
+          assert d['DomainName'] == 'd39lkvqlx43zyt.cloudfront.net'
+          assert d['Status'] == 'Deployed'
+          cfg = d['DistributionConfig']
+          assert cfg['Enabled']
+          origin = [x for x in cfg['Origins']['Items'] if x['Id'] == cfg['DefaultCacheBehavior']['TargetOriginId']]
+          assert len(origin) == 1
+          bucket = os.environ['CMS_BUCKET']
+          assert origin[0]['DomainName'] in {bucket + '.s3.amazonaws.com', bucket + '.s3.ap-northeast-2.amazonaws.com', bucket + '.s3-ap-northeast-2.amazonaws.com'}
+          assert not origin[0].get('OriginPath')
+          print('CMS_QA_DESTINATION=PASS')
+          PY
+          mkdir -p "$RUNNER_TEMP/cms-qa-previous"
+          aws s3api get-object --bucket "$CMS_BUCKET" --key index.html --expected-bucket-owner 264015108093 "$RUNNER_TEMP/cms-qa-previous/index.html" > "$RUNNER_TEMP/cms-qa-previous/index-metadata.json"
+          test -s "$RUNNER_TEMP/cms-qa-previous/index.html"
+
+      - name: Preserve previous index for manual recovery
+        uses: actions/upload-artifact@v4
+        with:
+          name: cms-qa-previous-index-${{ github.run_id }}
+          path: ${{ runner.temp }}/cms-qa-previous/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Deploy CMS assets without deleting old objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws s3 sync apps/cms/dist/ "s3://${CMS_BUCKET}/" \
+            --exclude index.html \
+            --no-progress \
+            --cache-control "public,max-age=0,must-revalidate"
+
+      - name: Publish entry point last and verify exact bytes
+        shell: bash
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$EXPECTED_MAIN_SHA"
+          current_etag="$(aws s3api head-object --bucket "$CMS_BUCKET" --key index.html --expected-bucket-owner 264015108093 --query ETag --output text)"
+          previous_etag="$(python3 -c 'import json,os; print(json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"cms-qa-previous","index-metadata.json")))["ETag"])')"
+          test "$current_etag" = "$previous_etag"
+          aws s3api put-object --bucket "$CMS_BUCKET" --key index.html --body apps/cms/dist/index.html --expected-bucket-owner 264015108093 --if-match "$previous_etag" --content-type "text/html; charset=utf-8" --cache-control "public,max-age=0,must-revalidate" --metadata "git-sha=$EXPECTED_MAIN_SHA" --checksum-algorithm SHA256 > /dev/null
+          aws s3api get-object --bucket "$CMS_BUCKET" --key index.html --expected-bucket-owner 264015108093 "$RUNNER_TEMP/cms-qa-current-index.html" > /dev/null
+          cmp apps/cms/dist/index.html "$RUNNER_TEMP/cms-qa-current-index.html"
+          test "$(aws s3api head-object --bucket "$CMS_BUCKET" --key index.html --expected-bucket-owner 264015108093 --query 'Metadata."git-sha"' --output text)" = "$EXPECTED_MAIN_SHA"
+          echo "CMS_QA_INDEX=PASS|COMMIT=$EXPECTED_MAIN_SHA|OLD_ASSET_DELETE=NONE"
+
+      - name: Invalidate CloudFront
+        shell: bash
+        run: |
+          set -euo pipefail
+          INVALIDATION_ID="$(
+            aws cloudfront create-invalidation \
+              --distribution-id "${CMS_DISTRIBUTION_ID}" \
+              --paths '/*' \
+              --query 'Invalidation.Id' \
+              --output text
+          )"
+
+          test -n "${INVALIDATION_ID}"
+
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${CMS_DISTRIBUTION_ID}" \
+            --id "${INVALIDATION_ID}"
+
+          echo "CMS_QA_DEPLOY=PASS|NEWPROD=NOT_TARGETED|OLD_ASSET_DELETE=NONE"
