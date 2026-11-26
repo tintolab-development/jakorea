@@ -1,0 +1,132 @@
+name: CMS QA main release validation - trusted Windows
+
+on:
+  push:
+    branches:
+      - ops/qa-cms-recruitment-pinned-20261126
+    paths:
+      - 'apps/cms/**'
+      - 'packages/rich-text/**'
+      - '.github/workflows/deploy-cms-qa-main-guarded.yml'
+      - '.github/workflows/cms-qa-main-release-validation-windows-20261126.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cms-qa-main-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_PLATFORM_PUBLIC_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+
+jobs:
+  targeted:
+    if: github.repository == 'tintolab-development/jakorea' && github.ref == 'refs/heads/ops/qa-cms-recruitment-pinned-20261126' && github.event_name == 'push'
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: 'powershell -NoProfile -ExecutionPolicy Bypass -Command ". ''{0}''"'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify exact revision and no production credentials
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_REPOSITORY -ne 'tintolab-development/jakorea' -or $env:GITHUB_REF -ne 'refs/heads/ops/qa-cms-recruitment-pinned-20261126' -or $env:GITHUB_EVENT_NAME -ne 'push') { throw 'Unexpected source' }
+          if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'Wrong revision' }
+          foreach ($key in @('AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_PROFILE')) {
+            if ([Environment]::GetEnvironmentVariable($key)) { throw "Unsafe AWS environment: $key" }
+          }
+          git diff --check d53f34954802f7bb9c7f19bd809d7769a1e710b6 HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Invalid patch' }
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install locked dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
+      - name: Check deployment workflow structure (no AWS access)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = '.github/workflows/deploy-cms-qa-main-guarded.yml'
+          pnpm exec prettier --parser yaml $path | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw 'Invalid YAML' }
+          $source = Get-Content $path -Raw
+          foreach ($marker in @('workflow_dispatch:', 'refs/heads/main', 'QA_ONLY_RETAIN_ASSETS', 'cms-qa-deploy', '264015108093', 'ja-prod-frontend-cms-264015108093', 'E1H6YN0NW3269W', 'CMS_QA_REGRESSION=PASS', '--if-match', 'CMS_QA_DEPLOY=PASS')) {
+            if (-not $source.Contains($marker)) { throw "Missing guard: $marker" }
+          }
+          if ($source.Contains('--delete') -or $source.Contains('ja-newprod-')) { throw 'Unexpected unsafe deployment operation' }
+          if ($source.IndexOf('Build workspace dependencies and verify focused regressions') -ge $source.IndexOf('Configure AWS credentials')) { throw 'AWS setup precedes regression tests' }
+          if ($source.IndexOf('Deploy CMS assets without deleting old objects') -ge $source.IndexOf('Publish non-root HTML after assets') -or $source.IndexOf('Publish non-root HTML after assets') -ge $source.IndexOf('Publish entry point last')) { throw 'Invalid asset ordering' }
+          $expected = [regex]::Matches($source, '(?m)^\s{12}(src/[^\r\n]+\.test\.tsx?)\s*        run: |
+          pnpm --filter cms build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw 'Workspace dependency build failed' }
+      - name: Run focused recruitment and dashboard regression tests
+        run: |
+          pnpm --filter cms exec vitest run --passWithNoTests=false src/features/program/shared/api/program-thumbnail.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush.test.ts src/features/program/general/api/adapters/general-program-adapters.test.ts src/features/program/general/lib/registration-payload-smoke.test.ts src/features/program/shared/api/program-media-target.test.ts src/shared/lib/admin-file-upload/upload.test.ts src/features/program/ujat/api/service.test.ts src/features/auth/model/auth-store.refresh-cookie-logout.test.ts src/shared/instance/axios-instance.logout-race.test.ts src/features/program/shared/lib/platform-preview/poster-url.test.ts src/features/detailed-program/hooks/use-detailed-program-mutations.test.tsx src/features/dashboard/hooks/use-dashboard-dnd.test.ts src/features/dashboard/hooks/use-dashboard-program-schedules.test.tsx src/features/dashboard/lib/dashboard-dnd-helpers.test.ts src/features/dashboard/lib/layout-snapshot.test.ts src/features/dashboard/lib/revision-conflict-retry.test.ts src/features/dashboard/lib/resolve-dashboard-shortcut-items.test.ts src/features/dashboard/lib/widget-program-filter.test.ts --reporter=default --reporter=json --outputFile=qa-main-release-test-results.json
+          if ($LASTEXITCODE -ne 0) { throw 'CMS focused regression failed' }
+      - name: Verify exact test suite coverage
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $result = Get-Content 'apps/cms/qa-main-release-test-results.json' -Raw | ConvertFrom-Json
+          if ($result.testResults.Count -ne 21 -or $result.numFailedTests -ne 0 -or $result.numFailedTestSuites -ne 0 -or $result.numTotalTests -lt 196) { throw 'Incomplete focused regression proof' }
+          Write-Host "CMS_QA_FOCUSED_TESTS=PASS|FILES=$($result.testResults.Count)|TESTS=$($result.numTotalTests)|PASSED=$($result.numPassedTests)|FAILED=$($result.numFailedTests)|SKIPPED=$($result.numPendingTests)"
+      - name: CMS typecheck
+        run: |
+          pnpm --filter cms typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'CMS typecheck failed' }
+      - name: CMS build without deployment
+        run: |
+          pnpm --filter cms build
+          if ($LASTEXITCODE -ne 0) { throw 'CMS build failed' }
+          if (-not (Test-Path -LiteralPath 'apps/cms/dist/index.html')) { throw 'Missing CMS build output' }
+          if (-not (Test-Path -LiteralPath 'apps/cms/dist/platform-preview/preview.html')) { throw 'Missing preview HTML' }
+          Write-Host 'CMS_QA_MAIN_RELEASE_GATE=PASS|DEPLOYMENT=NONE'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cms-qa-main-test-receipt-${{ github.sha }}
+          path: apps/cms/qa-main-release-test-results.json
+          if-no-files-found: warn
+          retention-days: 7
+) | ForEach-Object { $_.Groups[1].Value }
+          if ($expected.Count -ne 21) { throw 'Expected 21 focused suites' }
+          foreach ($file in $expected) { if (-not (Test-Path -LiteralPath "apps/cms/$file")) { throw "Missing suite: $file" } }
+          Write-Host 'CMS_QA_WORKFLOW_STATIC=PASS|TEST_PATHS=21|AWS_WRITE=NONE'
+      - name: Build workspace dependencies
+        run: |
+          pnpm --filter cms build:workspace-deps
+          if ($LASTEXITCODE -ne 0) { throw 'Workspace dependency build failed' }
+      - name: Run focused recruitment and dashboard regression tests
+        run: |
+          pnpm --filter cms exec vitest run --passWithNoTests=false src/features/program/shared/api/program-thumbnail.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf.test.ts src/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush.test.ts src/features/program/general/api/adapters/general-program-adapters.test.ts src/features/program/general/lib/registration-payload-smoke.test.ts src/features/program/shared/api/program-media-target.test.ts src/shared/lib/admin-file-upload/upload.test.ts src/features/program/ujat/api/service.test.ts src/features/auth/model/auth-store.refresh-cookie-logout.test.ts src/shared/instance/axios-instance.logout-race.test.ts src/features/program/shared/lib/platform-preview/poster-url.test.ts src/features/detailed-program/hooks/use-detailed-program-mutations.test.tsx src/features/dashboard/hooks/use-dashboard-dnd.test.ts src/features/dashboard/hooks/use-dashboard-program-schedules.test.tsx src/features/dashboard/lib/dashboard-dnd-helpers.test.ts src/features/dashboard/lib/layout-snapshot.test.ts src/features/dashboard/lib/revision-conflict-retry.test.ts src/features/dashboard/lib/resolve-dashboard-shortcut-items.test.ts src/features/dashboard/lib/widget-program-filter.test.ts --reporter=default --reporter=json --outputFile=qa-main-release-test-results.json
+          if ($LASTEXITCODE -ne 0) { throw 'CMS focused regression failed' }
+      - name: CMS typecheck
+        run: |
+          pnpm --filter cms typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'CMS typecheck failed' }
+      - name: CMS build without deployment
+        run: |
+          pnpm --filter cms build
+          if ($LASTEXITCODE -ne 0) { throw 'CMS build failed' }
+          if (-not (Test-Path -LiteralPath 'apps/cms/dist/index.html')) { throw 'Missing CMS build output' }
+          Write-Host 'CMS_QA_MAIN_RELEASE_GATE=PASS|DEPLOYMENT=NONE'
