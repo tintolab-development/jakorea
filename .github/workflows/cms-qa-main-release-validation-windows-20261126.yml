@@ -92,9 +92,25 @@ jobs:
       - name: Verify exact test suite coverage
         run: |
           $ErrorActionPreference = 'Stop'
-          $result = Get-Content 'apps/cms/qa-main-release-test-results.json' -Raw | ConvertFrom-Json
-          if ($result.testResults.Count -ne 21 -or $result.numFailedTests -ne 0 -or $result.numFailedTestSuites -ne 0 -or $result.numTotalTests -lt 196 -or $result.numPendingTests -ne 0) { throw 'Incomplete focused regression proof' }
-          Write-Host "CMS_QA_FOCUSED_TESTS=PASS|FILES=$($result.testResults.Count)|TESTS=$($result.numTotalTests)|PASSED=$($result.numPassedTests)"
+          @'
+          import { readFileSync } from 'node:fs';
+          function verifyReceipt(result,expected) {
+            const check=(v,label)=>{if(!v)throw new Error(label)};
+            check(expected.length===21 && new Set(expected).size===21,"Expected suite list");
+            check(Array.isArray(result.testResults)&&result.testResults.length===expected.length,"Wrong file count");
+            check(result.numTotalTests>=252&&result.numPassedTests===result.numTotalTests&&result.numFailedTests===0&&result.numPendingTests===0&&result.numTodoTests===0&&result.numFailedTestSuites===0&&result.numPendingTestSuites===0,"Incomplete test pass");
+            const files=result.testResults.map(s=>String(s.name).replaceAll("\\","/"));
+            check(expected.every(p=>files.filter(f=>f.endsWith("/apps/cms/"+p)).length===1),"Unexpected suite files");
+            check(result.testResults.every(s=>s.status==="passed"&&Array.isArray(s.assertionResults)&&s.assertionResults.length>0&&s.assertionResults.every(a=>a.status==="passed")),"Non-passing assertion");
+            check(result.testResults.reduce((n,s)=>n+s.assertionResults.length,0)===result.numTotalTests,"Assertion count mismatch");
+            return `CMS_QA_FOCUSED_TESTS=PASS|FILES=${files.length}|TESTS=${result.numTotalTests}|PASSED=${result.numPassedTests}|FAILED=0|SKIPPED=0`;
+          }
+          const result = JSON.parse(readFileSync('apps/cms/qa-main-release-test-results.json', 'utf8').replace(/^\uFEFF/, ''));
+          const source = readFileSync('.github/workflows/deploy-cms-qa-main-guarded.yml', 'utf8');
+          const expected = [...source.matchAll(/^ {12}(src\/[^\r\n]+\.test\.tsx?)[ \t]*\r?$/gm)].map(m => m[1]);
+          console.log(verifyReceipt(result, expected));
+          '@ | node --input-type=module
+          if ($LASTEXITCODE -ne 0) { throw 'Incomplete focused regression proof' }
       - name: CMS typecheck
         run: |
           pnpm --filter cms typecheck
