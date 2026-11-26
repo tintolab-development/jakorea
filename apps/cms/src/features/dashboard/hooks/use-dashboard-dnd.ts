@@ -3,7 +3,7 @@
  * 비즈니스 로직: orderedIds 변경 시 setOrderedIds(role, next) 호출 — 동일 유지
  *
  * - 1단(100%) 위젯을 1단 위젯 위에 놓으면 둘 다 2단(50%)으로 한 줄([대상][끌고 온 위젯])
- * - 그 밖의 위젯 위 드롭은 1:1 교환(폭 유지)
+ * - 그 밖의 위젯 위 드롭은 칸 교환(1:1 교환, 폭이 다르면 폭도 자리를 따라 맞바꿈)
  * - 빈 공간 드롭: over가 없을 때 포인터 위치로 삽입 인덱스 계산
  *
  * 순수 계산은 lib/dashboard-dnd-helpers.ts
@@ -180,9 +180,14 @@ export function useDashboardDnd({
 
       if (areWidgetIdListsEqual(orderedIds, next)) return
 
-      setOrderedIds(userRole, next)
+      if (computed.swapWidths && computed.swapTargetId) {
+        // 칸 교환: 1단↔2단이면 폭도 자리를 따라가 줄 모양(빈칸 없음)을 그대로 둔다
+        const targetId = computed.swapTargetId
+        setWidgetWidth(userRole, activeIdStr, getEffectiveColSpan(targetId))
+        setWidgetWidth(userRole, targetId, getEffectiveColSpan(activeIdStr))
+      }
 
-      // 그 밖의 드롭은 순서 이동만 처리하고, 위젯 너비(12/24)는 리사이즈 핸들에서만 변경한다.
+      setOrderedIds(userRole, next)
       onLayoutSaved?.()
     },
     [

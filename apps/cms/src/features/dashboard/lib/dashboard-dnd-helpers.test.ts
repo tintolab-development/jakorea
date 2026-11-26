@@ -135,7 +135,7 @@ describe('computeDragEndResult', () => {
     expect(r!.operation).toBe('swap')
   })
 
-  it('2단 위젯을 끌었을 때는 기존 동작(1:1 교환, 폭 변경 없음) 유지', () => {
+  it('2단 위젯을 1단 위젯 위에 놓으면 1:1 교환하고 폭도 맞바꾼다(칸 교환)', () => {
     const span = (id: string) => (id === 'drag' ? COL_SPAN_HALF : COL_SPAN_FULL) as 12 | 24
     const r = computeDragEndResult(
       ['target', 'drag', 'other-half'],
@@ -149,6 +149,23 @@ describe('computeDragEndResult', () => {
     expect(r!.pairRowWithTargetId).toBeNull()
     expect(r!.operation).toBe('swap')
     expect(r!.swapTargetId).toBe('target')
+    expect(r!.swapWidths).toBe(true)
+  })
+
+  it('50%를 지원하지 않는 위젯과 교환하면 폭은 맞바꾸지 않는다', () => {
+    const span = (id: string) => (id === 'drag' ? COL_SPAN_HALF : COL_SPAN_FULL) as 12 | 24
+    const r = computeDragEndResult(
+      ['kpi', 'drag', 'other-half'],
+      'drag',
+      'kpi',
+      { x: 0, y: 0 },
+      [],
+      span,
+      (id: string) => id !== 'kpi'
+    )
+    expect(r!.operation).toBe('swap')
+    expect(r!.swapTargetId).toBe('kpi')
+    expect(r!.swapWidths).toBe(false)
   })
 
   it('50%↔50% 같은 크기면 스왑 인덱스만', () => {
@@ -161,6 +178,7 @@ describe('computeDragEndResult', () => {
     const r = computeDragEndResult(ordered, 'a', 'b', { x: 150, y: 25 }, slots, half, resizable)
     expect(r!.operation).toBe('swap')
     expect(r!.swapTargetId).toBe('b')
+    expect(r!.swapWidths).toBe(false)
     expect(r!.shouldSplit).toBe(false)
     expect(r!.newIndex).toBe(1)
   })
@@ -179,7 +197,7 @@ describe('computeDragEndResult', () => {
     expect(r!.swapTargetId).toBeNull()
   })
 
-  it('경우 ②: 1단 위젯을 2단 줄의 위젯 위에 놓으면 그 위젯과 순서만 바꾸고 분할하지 않는다', () => {
+  it('경우 ②: 1단 위젯을 2단 줄의 위젯 위에 놓으면 그 위젯과 칸을 바꾸고(폭 포함) 분할하지 않는다', () => {
     // 2단 줄 [left | right] 아래 1단 위젯 wide — wide를 right 위에 드롭
     const ordered = ['left', 'right', 'wide']
     const slots: SlotRect[] = [
@@ -198,6 +216,7 @@ describe('computeDragEndResult', () => {
     )
     expect(r!.operation).toBe('swap')
     expect(r!.swapTargetId).toBe('right')
+    expect(r!.swapWidths).toBe(true)
     expect(r!.shouldSplit).toBe(false)
     expect(r!.splitTargetId).toBeNull()
     expect(r!.pairRowWithTargetId).toBeNull()

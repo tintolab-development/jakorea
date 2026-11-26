@@ -48,6 +48,12 @@ export interface DragEndComputed {
    * 값은 대상 위젯 id. 이때 operation은 'move', newIndex는 대상 바로 뒤 자리다.
    */
   pairRowWithTargetId: string | null
+  /**
+   * swap 대상과 폭(12/24)이 다를 때 폭도 자리를 따라 맞바꾼다(칸 교환) — 기획 확정 2026-11-26.
+   * 폭을 위젯에 붙여 두면 2단 줄 한쪽이 비어 빈칸이 생기고, 상단 빈칸 방지 재정렬이 드롭 결과를 뒤집는다.
+   * 50%를 지원하지 않는 위젯이 끼면 false(기존처럼 폭 유지).
+   */
+  swapWidths: boolean
 }
 
 /**
@@ -183,10 +189,18 @@ export function computeDragEndResult(
     return null
   }
 
+  const swapWidths =
+    operation === 'swap' &&
+    swapTargetId != null &&
+    getEffectiveColSpan(swapTargetId) !== getEffectiveColSpan(activeIdStr) &&
+    isResizable(swapTargetId) &&
+    isResizable(activeIdStr)
+
   return {
     newIndex,
     operation,
     swapTargetId,
+    swapWidths,
     shouldSplit,
     splitTargetId: shouldSplit ? splitTargetId : null,
     droppedInEmptySpace,

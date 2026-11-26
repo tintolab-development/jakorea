@@ -13,21 +13,22 @@ function dragEnd(activeId: string, overId: string | null): DragEndEvent {
   } as unknown as DragEndEvent
 }
 
-describe('useDashboardDnd — 경우 ② (기획 확정 2026-11-14)', () => {
-  it('1단 위젯을 2단 줄의 위젯 위에 놓으면 순서만 바뀌고 각 위젯 폭은 그대로다', () => {
+describe('useDashboardDnd — 칸 교환 (기획 확정 2026-11-26)', () => {
+  it('1단 위젯을 2단 줄의 위젯 위에 놓으면 자리를 바꾸고 폭도 자리를 따라 맞바꾼다', () => {
     const setOrderedIds = vi.fn()
     const setWidgetWidth = vi.fn()
-    const roleWidths: Record<string, 12 | 24> = { left: 12, right: 12, wide: 24 }
+    const onLayoutSaved = vi.fn()
 
     const { result } = renderHook(() =>
       useDashboardDnd({
         orderedIds: ['left', 'right', 'wide'],
         setOrderedIds,
         userRole: 'ADMIN',
-        roleWidths,
+        roleWidths: { left: 12, right: 12, wide: 24 },
         displayItemsMeta: [],
         setWidgetWidth,
         getSlotRects: () => [],
+        onLayoutSaved,
       })
     )
 
@@ -37,8 +38,59 @@ describe('useDashboardDnd — 경우 ② (기획 확정 2026-11-14)', () => {
 
     expect(setOrderedIds).toHaveBeenCalledTimes(1)
     expect(setOrderedIds).toHaveBeenCalledWith('ADMIN', ['left', 'wide', 'right'])
+    expect(setWidgetWidth).toHaveBeenCalledTimes(2)
+    expect(setWidgetWidth).toHaveBeenCalledWith('ADMIN', 'wide', 12)
+    expect(setWidgetWidth).toHaveBeenCalledWith('ADMIN', 'right', 24)
+    expect(onLayoutSaved).toHaveBeenCalledTimes(1)
+  })
+
+  it('2단 위젯을 맨 위 1단 위젯 위에 놓아도 드롭이 그대로 반영된다(제자리로 돌아가지 않음)', () => {
+    const setOrderedIds = vi.fn()
+    const setWidgetWidth = vi.fn()
+
+    const { result } = renderHook(() =>
+      useDashboardDnd({
+        orderedIds: ['top', 'h1', 'h2', 'rest'],
+        setOrderedIds,
+        userRole: 'ADMIN',
+        roleWidths: { top: 24, h1: 12, h2: 12, rest: 24 },
+        displayItemsMeta: [],
+        setWidgetWidth,
+        getSlotRects: () => [],
+      })
+    )
+
+    act(() => {
+      result.current.handleDragEnd(dragEnd('h1', 'top'))
+    })
+
+    expect(setOrderedIds).toHaveBeenCalledWith('ADMIN', ['h1', 'top', 'h2', 'rest'])
+    expect(setWidgetWidth).toHaveBeenCalledWith('ADMIN', 'h1', 24)
+    expect(setWidgetWidth).toHaveBeenCalledWith('ADMIN', 'top', 12)
+  })
+
+  it('같은 폭끼리 교환하면 폭은 건드리지 않는다', () => {
+    const setOrderedIds = vi.fn()
+    const setWidgetWidth = vi.fn()
+
+    const { result } = renderHook(() =>
+      useDashboardDnd({
+        orderedIds: ['a', 'b', 'c'],
+        setOrderedIds,
+        userRole: 'ADMIN',
+        roleWidths: { a: 12, b: 12, c: 24 },
+        displayItemsMeta: [],
+        setWidgetWidth,
+        getSlotRects: () => [],
+      })
+    )
+
+    act(() => {
+      result.current.handleDragEnd(dragEnd('a', 'b'))
+    })
+
+    expect(setOrderedIds).toHaveBeenCalledWith('ADMIN', ['b', 'a', 'c'])
     expect(setWidgetWidth).not.toHaveBeenCalled()
-    expect(roleWidths).toEqual({ left: 12, right: 12, wide: 24 })
   })
 })
 

@@ -121,17 +121,21 @@ export function useDashboardLayout({
     return fullLayoutOrder.filter(id => id !== 'menu-shortcut-widget')
   }, [fullLayoutOrder, hasVisibleMenuShortcuts])
 
+  /**
+   * DnD 결과는 놓은 그대로 저장한다. 여기서 reorderToAvoidTopGap을 다시 걸면 드롭과 같은 틱에 바뀐 폭을
+   * 모르는 채(이전 폭 기준) 맨 앞 두 위젯을 바꿔 드롭 결과가 뒤집힌다. 상단 빈칸 방지는 displayOrder에서만 한다.
+   */
   const setOrderedIds = useCallback(
     (role: string, next: string[]) => {
       const full = reorderToAvoidTopGap(orderedIds, getColSpanForId)
       const menuIndex = full.indexOf('menu-shortcut-widget')
       if (menuIndex === -1 || hasVisibleMenuShortcuts) {
-        setOrderedIdsRaw(role, reorderToAvoidTopGap(next, getColSpanForId))
+        setOrderedIdsRaw(role, next)
         return
       }
       const nextFull = [...next]
       nextFull.splice(menuIndex, 0, 'menu-shortcut-widget')
-      setOrderedIdsRaw(role, reorderToAvoidTopGap(nextFull, getColSpanForId))
+      setOrderedIdsRaw(role, nextFull)
     },
     [orderedIds, getColSpanForId, hasVisibleMenuShortcuts, setOrderedIdsRaw]
   )
