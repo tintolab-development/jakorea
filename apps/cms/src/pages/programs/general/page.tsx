@@ -245,7 +245,6 @@ export function GeneralProgramListPageContent() {
   })
 
   const isScheduledFilter = statusFilter === 'scheduled'
-  const showBulkSelection = statusFilter == null || isScheduledFilter
   const [, setHasListFilters] = useState(false)
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)
@@ -435,11 +434,9 @@ export function GeneralProgramListPageContent() {
 
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
-      {showBulkSelection && (
-        <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
-          선택 삭제
-        </FilterTableToolbarButton>
-      )}
+      <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
+        선택 삭제
+      </FilterTableToolbarButton>
       <FilterTableToolbarButton
         variant="secondary"
         icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
@@ -481,11 +478,11 @@ export function GeneralProgramListPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={generalDetailModalOpen}
-        onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
-        selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
-        calendarSelectedProgramIds={showBulkSelection ? calendarSelectedProgramIds : undefined}
-        onCalendarSelectionChange={showBulkSelection ? setCalendarSelectedProgramIds : undefined}
-        showRowSelection={showBulkSelection}
+        onSelectionChange={setSelectedRowKeys}
+        selectedRowKeys={selectedRowKeys}
+        calendarSelectedProgramIds={calendarSelectedProgramIds}
+        onCalendarSelectionChange={setCalendarSelectedProgramIds}
+        showRowSelection
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant="overview"
@@ -540,6 +537,7 @@ export function GeneralProgramListPageContent() {
         title={programBulkDeleteGuide.title}
         lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
+        confirmLoading={deleteGeneralProgramsMutation.isPending}
         onConfirm={() => {
           void (async () => {
             try {
@@ -565,6 +563,7 @@ export function GeneralProgramListPageContent() {
             } catch (error) {
               if (isProgramHardDeleteBlockedError(error)) {
                 const count = programIdsPendingBulkDelete.length
+                clearProgramSelections()
                 setProgramDeleteBlockedCopy(resolveProgramHardDeleteBlockedModalCopy(count))
                 setBulkDeleteModalOpen(false)
                 setProgramIdsPendingBulkDelete([])

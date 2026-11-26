@@ -142,7 +142,6 @@ function TrainedTeachersProgramPageContent() {
     isTrainedTeachersProgramListPath(normalizedPath) &&
     searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
   const isScheduledFilter = statusFilter === 'scheduled'
-  const showBulkSelection = statusFilter == null || isScheduledFilter
   const isAdmin = user?.role === 'ADMIN'
   const showCalendarView = isAdmin
 
@@ -440,6 +439,7 @@ function TrainedTeachersProgramPageContent() {
       } catch (error) {
         if (isProgramHardDeleteBlockedError(error)) {
           const count = idsToDelete.length
+          clearProgramSelections()
           setProgramDeleteBlockedCopy(resolveProgramHardDeleteBlockedModalCopy(count))
           setProgramDeleteBlockedOpen(true)
         } else {
@@ -475,11 +475,9 @@ function TrainedTeachersProgramPageContent() {
 
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
-      {showBulkSelection && (
-        <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
-          선택 삭제
-        </FilterTableToolbarButton>
-      )}
+      <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
+        선택 삭제
+      </FilterTableToolbarButton>
       <FilterTableToolbarButton
         variant="secondary"
         icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
@@ -529,11 +527,11 @@ function TrainedTeachersProgramPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
-        onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
-        selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
-        calendarSelectedProgramIds={showBulkSelection ? calendarSelectedProgramIds : undefined}
-        onCalendarSelectionChange={showBulkSelection ? setCalendarSelectedProgramIds : undefined}
-        showRowSelection={showBulkSelection}
+        onSelectionChange={setSelectedRowKeys}
+        selectedRowKeys={selectedRowKeys}
+        calendarSelectedProgramIds={calendarSelectedProgramIds}
+        onCalendarSelectionChange={setCalendarSelectedProgramIds}
+        showRowSelection
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant="overview"
@@ -602,6 +600,7 @@ function TrainedTeachersProgramPageContent() {
         title={programBulkDeleteGuide.title}
         lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
+        confirmLoading={deleteProgramsMutation.isPending}
         onConfirm={() => {
           void handleBulkDeleteConfirm()
         }}

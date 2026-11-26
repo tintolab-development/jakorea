@@ -1595,3 +1595,12 @@ describe('mapTrainedTeacherToUpdateRequest', () => {
     expect(requestRecord.homeDisplayOrder).toBeUndefined()
   })
 })
+
+describe('program deletion selection regression', () => {
+  it('allows empty in-progress/completed rows without relaxing participant protection', () => {
+    const base0 = { id: 900001, programType: 'TRAINED_TEACHER', participantApprovedCount: 0, approvedOrganizationApplicationCount: 0, participatingSchoolCount: 0, participatingStudentCount: 0 } as const
+    expect(mapTrainedTeacherListItemToProgram({ ...base0, periodStatus: 'IN_PROGRESS' }).listDeleteBlocked).toBe(false)
+    expect(mapTrainedTeacherListItemToProgram({ ...base0, periodStatus: 'COMPLETED' }).listDeleteBlocked).toBe(false)
+    expect(mapTrainedTeacherListItemToProgram({ ...base0, periodStatus: 'COMPLETED', participantApprovedCount: 1 }).listDeleteBlocked).toBe(true)
+  })
+})

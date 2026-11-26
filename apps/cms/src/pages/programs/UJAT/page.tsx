@@ -3,6 +3,7 @@
  * 레이아웃·공통 컴포넌트는 `program-list-page.tsx` / `ProgramList` 와 동일하게 FilterTableLayout + cms-data-table 사용
  */
 
+import { PROGRAM_DELETE_LIST_NOTICE } from '@/features/program/shared/lib/program-delete-eligibility'
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -102,7 +103,7 @@ import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program
 /** `/programs/ujat?new` — 5단계 UJAT 등록 플로우 풀페이지. `userPreview`는 상단「미리보기」시 `TemplatePreviewModal` 동기화용. */
 const PROGRAMS_UJAT_NEW_QUERY_KEY = 'new'
 /** 목록 헤더「총 N건」옆 삭제 불가 안내 — 일반·1사1교·교육받은 교사 목록과 같은 문구 */
-const UJAT_PROGRAM_LIST_HEADER_NOTICE = '진행 중이거나 완료된 프로그램은 삭제할 수 없습니다.'
+const UJAT_PROGRAM_LIST_HEADER_NOTICE = PROGRAM_DELETE_LIST_NOTICE
 const UJAT_PROGRESS_STATUS_ALL = '__all__' as const
 type UjatProgressStatusFilter = UjatProgramProgressStatus | typeof UJAT_PROGRESS_STATUS_ALL
 
@@ -419,6 +420,7 @@ function UjatProgramListPageContent() {
         setProgramDeleteBlockedCopy(
           resolveProgramHardDeleteBlockedModalCopy(selectedRowKeys.length)
         )
+        setSelectedRowKeys([])
         setProgramDeleteBlockedOpen(true)
         return
       }

@@ -1,3 +1,4 @@
+import { PROGRAM_DELETE_LIST_NOTICE } from '@/features/program/shared/lib/program-delete-eligibility'
 import dayjs from 'dayjs'
 import { useCallback, useMemo } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -12,7 +13,7 @@ import {
 } from '@/features/program/trained-teachers/api/list-params'
 import { resolveTrainedTeachersListFilterFields } from '@/features/program/trained-teachers/lib/list-filter-fields'
 
-const TRAINED_TEACHERS_LIST_HEADER_NOTICE = '진행 중이거나 완료된 프로그램은 삭제할 수 없습니다.'
+const TRAINED_TEACHERS_LIST_HEADER_NOTICE = PROGRAM_DELETE_LIST_NOTICE
 
 export type TrainedTeachersOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
